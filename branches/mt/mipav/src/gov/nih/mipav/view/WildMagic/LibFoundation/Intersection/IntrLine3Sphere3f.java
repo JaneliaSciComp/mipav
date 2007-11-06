@@ -86,10 +86,12 @@ public class IntrLine3Sphere3f extends Intersector
      */
     public boolean Test ()
     {
-        Vector3f kDiff = m_rkLine.Origin.sub( m_rkSphere.Center );
+        Vector3f kDiff = new Vector3f();
+        m_rkLine.Origin.sub( m_rkSphere.Center, kDiff );
         float fA0 = kDiff.Dot(kDiff) - m_rkSphere.Radius*m_rkSphere.Radius;
         float fA1 = m_rkLine.Direction.Dot(kDiff);
         float fDiscr = fA1*fA1 - fA0;
+        kDiff = null;
         return (fDiscr >= (float)0.0);
     }
 
@@ -99,11 +101,12 @@ public class IntrLine3Sphere3f extends Intersector
      */
     public boolean Find ()
     {
-        Vector3f kDiff = m_rkLine.Origin.sub( m_rkSphere.Center );
+        Vector3f kDiff = new Vector3f();
+        m_rkLine.Origin.sub( m_rkSphere.Center, kDiff );
         float fA0 = kDiff.Dot(kDiff) - m_rkSphere.Radius*m_rkSphere.Radius;
         float fA1 = m_rkLine.Direction.Dot(kDiff);
         float fDiscr = fA1*fA1 - fA0;
-
+        kDiff = null;
         if (fDiscr < (float)0.0)
         {
             m_iQuantity = 0;
@@ -113,15 +116,24 @@ public class IntrLine3Sphere3f extends Intersector
             float fRoot = (float)Math.sqrt(fDiscr);
             m_afLineT[0] = -fA1 - fRoot;
             m_afLineT[1] = -fA1 + fRoot;
-            m_akPoint[0] = m_rkLine.Origin.add( m_rkLine.Direction.scale(m_afLineT[0]) );
-            m_akPoint[1] = m_rkLine.Origin.add( m_rkLine.Direction.scale(m_afLineT[1]) );
+
+            Vector3f kScale = new Vector3f(m_rkLine.Direction);
+            kScale.scaleEquals(m_afLineT[0]);
+            m_rkLine.Origin.add( kScale, m_akPoint[0] );
+            kScale.scaleEquals(m_afLineT[1]);
+            kScale.SetData(m_rkLine.Direction);
+            m_rkLine.Origin.add( kScale, m_akPoint[1] );
             m_iQuantity = 2;
+            kScale = null;
         }
         else
         {
             m_afLineT[0] = -fA1;
-            m_akPoint[0] = m_rkLine.Origin.add( m_rkLine.Direction.scale(m_afLineT[0]) );
+            Vector3f kScale = new Vector3f(m_rkLine.Direction);
+            kScale.scaleEquals(m_afLineT[0]);
+            m_rkLine.Origin.add( kScale, m_akPoint[0] );
             m_iQuantity = 1;
+            kScale = null;
         }
 
         return (m_iQuantity > 0);
@@ -166,7 +178,7 @@ public class IntrLine3Sphere3f extends Intersector
     /** information about the intersection set: number of intersections */
     private int m_iQuantity;
     /** information about the intersection set: intersection points */
-    private Vector3f[] m_akPoint = new Vector3f[2];
+    private Vector3f[] m_akPoint = new Vector3f[] { new Vector3f(), new Vector3f() };
     /** information about the intersection set: line equation T-values of
      * intersections */
     private float[] m_afLineT = new float[2];

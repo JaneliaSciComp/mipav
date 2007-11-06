@@ -2912,9 +2912,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 		!(frame instanceof ViewJFrameLightBox)) {
 
                     if (intensityLabel) {
-
+                    	if (frame instanceof ViewJFrameImage) {
                         // display intensity values on screen
-                        repaintImageIntensityLabelFast(offscreenGraphics2d);
+                    		repaintImageIntensityLabelFast(offscreenGraphics2d);
+                    	}
                     }
                 }
             }
@@ -3940,6 +3941,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public void setImageExtents(int[] imageExtents) {
         this.imageExtents = imageExtents;
+        if (m_kPatientSlice != null) {
+            m_kPatientSlice.setImageExtents();
+        }
     }
 
     /**

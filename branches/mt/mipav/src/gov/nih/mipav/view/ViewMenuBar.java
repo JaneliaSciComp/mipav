@@ -89,7 +89,7 @@ public class ViewMenuBar {
             throw error;
         }
 
-        setEnabledMenuItems(menuBar, numberOfDimensions, type);
+        setEnabledMenuItems(numberOfDimensions, type);
         menuBar.validate();
 
         return menuBar;
@@ -816,7 +816,8 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem("Open image from SRB", "OpenSRBFile", 0, "open.gif",
                                                                   true), saveImageToSRBItem,
                                         menuBuilder.buildMenuItem("SRB transfer", "TransferSRBFiles", 0, null, true),
-                                        menuBuilder.buildMenuItem("NDAR image import", "TransferNDAR", 0, null, true)
+                                        menuBuilder.buildMenuItem("NDAR image import", "TransferNDAR", 0, null, true),
+                                        menuBuilder.buildMenuItem("NDAR Genomics import", "TransferNDARGenomics", 0, null, true)
                                      //   menuBuilder.buildCheckBoxMenuItem("Enable auto SRB upload", "AutoUploadToSRB",
                                      //                                     isAutoUploadEnabled)
                                     });
@@ -880,7 +881,6 @@ public class ViewMenuBar {
                                                                  menuBuilder.buildMenuItem("Swap dims 3<->4", "Swap34",
                                                                                            0, null, false),
                                                              }),
-                                        menuBuilder.buildMenuItem("Add image margins", "Add margins", 0, null, false),
                                         menuBuilder.buildMenuItem("Clone (copy)", "Clone", 0, null, false),
                                         menuBuilder.makeMenu("Conversion tools", false,
                                                              new JMenuItem[] {
@@ -1199,11 +1199,10 @@ public class ViewMenuBar {
     /**
      * Enable or disable items in a menubar based on the image dimensionality and storage type.
      *
-     * @param  menu                the menubar with elements to enable / disable
      * @param  numberOfDimensions  Dimensionality of image (2D, 3D, 4D...)
      * @param  type                Data type from <code>ModelStorageBase</code>, byte, short, argb, etc.
      */
-    protected void setEnabledMenuItems(JMenuBar menu, int numberOfDimensions, int type) {
+    protected void setEnabledMenuItems(int numberOfDimensions, int type) {
 
         // if (!InsightToolkitSupport.isLibraryPresent()) {
         // menuBuilder.setMenuItemEnabled("Insight toolkit (ITK)", false);
@@ -1222,6 +1221,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Anisotropic diffusion", false);
             menuBuilder.setMenuItemEnabled("Boundary attenuation", false);
             menuBuilder.setMenuItemEnabled("Laplacian", false);
+            menuBuilder.setMenuItemEnabled("Maximum intensity projection (MIP)", false);
             menuBuilder.setMenuItemEnabled("Mean", false);
             menuBuilder.setMenuItemEnabled("Median", false);
             menuBuilder.setMenuItemEnabled("Mode", false);
@@ -1236,13 +1236,11 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("FRET efficiency", false);
             menuBuilder.setMenuItemEnabled("Graph based", false);
             menuBuilder.setMenuItemEnabled("Multispectral", false);
-            menuBuilder.setMenuItemEnabled("Image calculator", false);
             menuBuilder.setMenuItemEnabled("Inhomogeneity N3 correction", false);
             menuBuilder.setMenuItemEnabled("Levelset", false);
             menuBuilder.setMenuItemEnabled("Levelset diffusion", false);
             menuBuilder.setMenuItemEnabled("Morphological", false);
             menuBuilder.setMenuItemEnabled("MRI combined info", false);
-            menuBuilder.setMenuItemEnabled("Noise", false);
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Adaptive path smooth", false);
             menuBuilder.setMenuItemEnabled("Nonlinear noise reduction", false);
@@ -1268,11 +1266,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Subtract VOI background", false);
             menuBuilder.setMenuItemEnabled("Single channel", false);
             menuBuilder.setMenuItemEnabled("Watershed", false);
-            menuBuilder.setMenuItemEnabled("Clone (copy)", false);
             menuBuilder.setMenuItemEnabled("Histogram summary", false);
-            menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
-            menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
-            menuBuilder.setMenuItemEnabled("RGB -> HSB", false);
             menuBuilder.setMenuItemEnabled("Surface plotter", false);
             menuBuilder.setMenuItemEnabled("Evolve boundary 2D", false);
             menuBuilder.setMenuItemEnabled("Convert 3D to 4D", false);
@@ -1281,8 +1275,10 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
             menuBuilder.setMenuItemEnabled("Pad slices to power of 2", false);
             menuBuilder.setMenuItemEnabled("Replace blanks with averages", false);
+            menuBuilder.setMenuItemEnabled("Replace slice", false);
             menuBuilder.setMenuItemEnabled("Insert missing slices", false);
-            menuBuilder.setMenuItemEnabled("Menu distortion correction", false);
+            menuBuilder.setMenuItemEnabled("Randomize slice order", false);
+            menuBuilder.setMenuItemEnabled("Barrel distortion correction", false);
             menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
             menuBuilder.setMenuItemEnabled("Circle to rectangle", false);
             menuBuilder.setMenuItemEnabled("Ellipse to circle", false);
@@ -1326,6 +1322,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("FRAP", false);
             menuBuilder.setMenuItemEnabled("Inverse slice order", false);
             menuBuilder.setMenuItemEnabled("Light box", false);
+            menuBuilder.setMenuItemEnabled("Maximum intensity projection (MIP)", false);
             menuBuilder.setMenuItemEnabled("Propagate", false);
             menuBuilder.setMenuItemEnabled("Triplanar", false);
             menuBuilder.setMenuItemEnabled("Volume renderers", false);
@@ -1384,6 +1381,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Levelset", false);
             menuBuilder.setMenuItemEnabled("Levelset diffusion", false);
             menuBuilder.setMenuItemEnabled("Local normalization", false);
+            menuBuilder.setMenuItemEnabled("Maximum intensity projection (MIP)", false);
             menuBuilder.setMenuItemEnabled("Mode", false);
             menuBuilder.setMenuItemEnabled("Morphological", false);
             menuBuilder.setMenuItemEnabled("MRI combined info", false);
@@ -1418,5 +1416,142 @@ public class ViewMenuBar {
 
         menuBuilder.setMenuItemEnabled("DICOM database access",
                                        Preferences.is(Preferences.PREF_AUTOSTART_DICOM_RECEIVER));
+    }
+    
+    /**
+     * Enable all items in a menubar.
+     *
+     */
+    protected void enableAllMenuItems() {
+
+        // if (!InsightToolkitSupport.isLibraryPresent()) {
+        // menuBuilder.setMenuItemEnabled("Insight toolkit (ITK)", false);
+        // }
+
+            menuBuilder.setMenuItemEnabled("Density based clustering", true);
+            menuBuilder.setMenuItemEnabled("Edge detection", true);
+            menuBuilder.setMenuItemEnabled("Evaluate segmentation", true); // vois
+            menuBuilder.setMenuItemEnabled("Entropy minimization", true);
+            menuBuilder.setMenuItemEnabled("Evolve surface", true);
+            menuBuilder.setMenuItemEnabled("Extract surface (marching cubes)", true);
+            menuBuilder.setMenuItemEnabled("FFT", true);
+            menuBuilder.setMenuItemEnabled("Filters (wavelet)", true);
+            menuBuilder.setMenuItemEnabled("Anisotropic diffusion", true);
+            menuBuilder.setMenuItemEnabled("Boundary attenuation", true);
+            menuBuilder.setMenuItemEnabled("Laplacian", true);
+            menuBuilder.setMenuItemEnabled("Mean", true);
+            menuBuilder.setMenuItemEnabled("Median", true);
+            menuBuilder.setMenuItemEnabled("Mode", true);
+            menuBuilder.setMenuItemEnabled("Zero X non-maximum suppression", true);
+            menuBuilder.setMenuItemEnabled("Slice averaging", true);
+            menuBuilder.setMenuItemEnabled("Unsharp mask", true);
+            menuBuilder.setMenuItemEnabled("Fill image", true);
+            menuBuilder.setMenuItemEnabled("Filters (frequency)", true);
+            menuBuilder.setMenuItemEnabled("FRAP", true);
+            menuBuilder.setMenuItemEnabled("FRET", true);
+            menuBuilder.setMenuItemEnabled("FRET bleed thru", true);
+            menuBuilder.setMenuItemEnabled("FRET efficiency", true);
+            menuBuilder.setMenuItemEnabled("Graph based", true);
+            menuBuilder.setMenuItemEnabled("Multispectral", true);
+            menuBuilder.setMenuItemEnabled("Inhomogeneity N3 correction", true);
+            menuBuilder.setMenuItemEnabled("Levelset", true);
+            menuBuilder.setMenuItemEnabled("Levelset diffusion", true);
+            menuBuilder.setMenuItemEnabled("Morphological", true);
+            menuBuilder.setMenuItemEnabled("MRI combined info", true);
+            menuBuilder.setMenuItemEnabled("Noise", true);
+            menuBuilder.setMenuItemEnabled("Adaptive noise reduction", true);
+            menuBuilder.setMenuItemEnabled("Adaptive path smooth", true);
+            menuBuilder.setMenuItemEnabled("Nonlinear noise reduction", true);
+            menuBuilder.setMenuItemEnabled("Point area average intensities", true);
+            menuBuilder.setMenuItemEnabled("Principal component", true);
+            menuBuilder.setMenuItemEnabled("Quantify using mask", true);
+            menuBuilder.setMenuItemEnabled("Shading correction", true);
+            menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", true);
+            menuBuilder.setMenuItemEnabled("Skeletonize", true);
+
+            // menuBuilder.setMenuItemEnabled("AFNI - Shear", true);
+            menuBuilder.setMenuItemEnabled("Optimized automatic registration", true);
+            menuBuilder.setMenuItemEnabled("Constrained optimized automatic registration", true);
+            menuBuilder.setMenuItemEnabled("Optimized automatic registration 2.5D", true);
+            menuBuilder.setMenuItemEnabled("B-Spline automatic registration 2D/3D", true);
+            menuBuilder.setMenuItemEnabled("B-Spline automatic registration 2.5D", true);
+            menuBuilder.setMenuItemEnabled("Least squares", true);
+            menuBuilder.setMenuItemEnabled("Thin plate spline", true);
+            menuBuilder.setMenuItemEnabled("Manual 2D series", true);
+            menuBuilder.setMenuItemEnabled("Align patient position", true);
+            menuBuilder.setMenuItemEnabled("VOI landmark", true);
+            menuBuilder.setMenuItemEnabled("Reslice - isotropic voxels", true);
+            menuBuilder.setMenuItemEnabled("Subtract VOI background", true);
+            menuBuilder.setMenuItemEnabled("Single channel", true);
+            menuBuilder.setMenuItemEnabled("Watershed", true);
+            menuBuilder.setMenuItemEnabled("Histogram summary", true);
+            menuBuilder.setMenuItemEnabled("RGB -> Gray", true);
+            menuBuilder.setMenuItemEnabled("RGB -> Grays", true);
+            menuBuilder.setMenuItemEnabled("RGB -> HSB", true);
+            menuBuilder.setMenuItemEnabled("Surface plotter", true);
+            menuBuilder.setMenuItemEnabled("Evolve boundary 2D", true);
+            menuBuilder.setMenuItemEnabled("Convert 3D to 4D", true);
+            menuBuilder.setMenuItemEnabled("Capture images to new frame", true);
+            menuBuilder.setMenuItemEnabled("Haralick texture", true);
+            menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", true);
+            menuBuilder.setMenuItemEnabled("Pad slices to power of 2", true);
+            menuBuilder.setMenuItemEnabled("Replace blanks with averages", true);
+            menuBuilder.setMenuItemEnabled("Insert missing slices", true);
+            menuBuilder.setMenuItemEnabled("Barrel distortion correction", true);
+            menuBuilder.setMenuItemEnabled("Circular sector to rectangle", true);
+            menuBuilder.setMenuItemEnabled("Circle to rectangle", true);
+            menuBuilder.setMenuItemEnabled("Ellipse to circle", true);
+            menuBuilder.setMenuItemEnabled("Nearly circle to circle", true);
+            menuBuilder.setMenuItemEnabled("Hough transform", true);
+            menuBuilder.setMenuItemEnabled("Convert 4D to RGB", true);
+            menuBuilder.setMenuItemEnabled("Convert 4D to 3D", true);
+            menuBuilder.setMenuItemEnabled("Denoising BLS GSM", true);
+            menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", true);
+            menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", true);
+            menuBuilder.setMenuItemEnabled("Remove time volumes", true);
+            menuBuilder.setMenuItemEnabled("Swap dims 3<->4", true);
+            menuBuilder.setMenuItemEnabled("Time series optimized automatic registration", true);
+            menuBuilder.setMenuItemEnabled("3D rectangle", true);
+            menuBuilder.setMenuItemEnabled("Animate", true);
+            menuBuilder.setMenuItemEnabled("Anonymize face (BET)", true);
+            menuBuilder.setMenuItemEnabled("Cine (movie)", true);
+            menuBuilder.setMenuItemEnabled("Extract slices / volumes", true);
+            menuBuilder.setMenuItemEnabled("Replace slice", true);
+            menuBuilder.setMenuItemEnabled("Extract brain", true);
+            menuBuilder.setMenuItemEnabled("Inverse slice order", true);
+            menuBuilder.setMenuItemEnabled("Light box", true);
+            menuBuilder.setMenuItemEnabled("Propagate", true);
+            menuBuilder.setMenuItemEnabled("Triplanar", true);
+            menuBuilder.setMenuItemEnabled("Volume renderers", true);
+            menuBuilder.setMenuItemEnabled("Insert slice", true);
+            menuBuilder.setMenuItemEnabled("Remove slices", true);
+            menuBuilder.setMenuItemEnabled("2.5D total intensity", true);
+            menuBuilder.setMenuItemEnabled("2.5D average intensity", true);
+            menuBuilder.setMenuItemEnabled("X axis 180", true);
+            menuBuilder.setMenuItemEnabled("X axis +90", true);
+            menuBuilder.setMenuItemEnabled("X axis -90", true);
+            menuBuilder.setMenuItemEnabled("Y axis 180", true);
+            menuBuilder.setMenuItemEnabled("Y axis +90", true);
+            menuBuilder.setMenuItemEnabled("Y axis -90", true);
+            menuBuilder.setMenuItemEnabled("Randomize slice order", true);
+            menuBuilder.setMenuItemEnabled("Slice averaging", true);
+            menuBuilder.setMenuItemEnabled("Link to another image", true);
+            menuBuilder.setMenuItemEnabled("Correct image spacing", true);
+            menuBuilder.setMenuItemSelected("ShowSliceNum", true);
+            menuBuilder.setMenuItemEnabled("Show slice number overlay", true);
+            menuBuilder.setMenuItemEnabled("4D tools", true);
+            menuBuilder.setMenuItemEnabled("Depth", true);
+            menuBuilder.setMenuItemEnabled("Filters (Gabor)", true);
+            menuBuilder.setMenuItemEnabled("Filters (homomorphic)", true);
+            menuBuilder.setMenuItemEnabled("Grays -> RGB", true);
+            menuBuilder.setMenuItemEnabled("Image math", true);
+            menuBuilder.setMenuItemEnabled("Local normalization", true);
+            menuBuilder.setMenuItemEnabled("Nonmaximum suppression", true);
+            menuBuilder.setMenuItemEnabled("Single MRI image", true);
+            menuBuilder.setMenuItemEnabled("Two MRI images", true);
+            menuBuilder.setMenuItemEnabled("Hough transform", true);
+            menuBuilder.setMenuItemEnabled("Color edge", true);
+
+        menuBuilder.setMenuItemEnabled("DICOM database access", true);
     }
 }

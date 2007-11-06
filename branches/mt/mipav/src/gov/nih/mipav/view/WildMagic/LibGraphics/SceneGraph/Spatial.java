@@ -287,6 +287,10 @@ public abstract class Spatial extends GraphicsObject
     /** Detach all lights. */
     public void DetachAllLights ()
     {
+        //for ( int i = 0; i < m_kLights.size(); i++ )
+        //{
+         //   m_kLights.remove(i);
+        //}
         m_kLights.clear();
     }
 

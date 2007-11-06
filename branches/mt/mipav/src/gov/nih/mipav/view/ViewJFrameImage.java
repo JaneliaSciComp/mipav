@@ -233,93 +233,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * Creates and initializes the LUT for an image.
-     *
-     * @param   img  the image to create a LUT for
-     *
-     * @return  a LUT for the image <code>img</code> (null if a color image)
-     *
-     * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
-     */
-    public static ModelLUT initLUT(ModelImage img) throws OutOfMemoryError {
-        ModelLUT newLUT = null;
-
-        // only make a lut for non color images
-        if (img.isColorImage() == false) {
-            int[] dimExtentsLUT = new int[2];
-
-            dimExtentsLUT[0] = 4;
-            dimExtentsLUT[1] = 256;
-
-            newLUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
-
-            float min, max;
-
-            if (img.getType() == ModelStorageBase.UBYTE) {
-                min = 0;
-                max = 255;
-            } else if (img.getType() == ModelStorageBase.BYTE) {
-                min = -128;
-                max = 127;
-            } else {
-                min = (float) img.getMin();
-                max = (float) img.getMax();
-            }
-
-            float imgMin = (float) img.getMin();
-            float imgMax = (float) img.getMax();
-
-            newLUT.resetTransferLine(min, imgMin, max, imgMax);
-        }
-
-        return newLUT;
-    }
-
-    /**
-     * Creates and initializes the ModelRGB for an image.
-     *
-     * @param   img  the image to create a ModelRGB for
-     *
-     * @return  a ModelRGB for the image <code>img</code> (null if NOT a color image)
-     *
-     * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
-     */
-    public static ModelRGB initRGB(ModelImage img) throws OutOfMemoryError {
-        ModelRGB newRGB = null;
-
-        if (img.isColorImage()) {
-            float[] x = new float[4];
-            float[] y = new float[4];
-            Dimension dim = new Dimension(256, 256);
-
-            // Set ModelRGB min max values;
-            x[0] = 0;
-            y[0] = dim.height - 1;
-
-            x[1] = 255 * 0.333f;
-            y[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
-
-            x[2] = 255 * 0.667f;
-            y[2] = (dim.height - 1) - ((dim.height - 1) * 0.67f);
-
-            x[3] = 255;
-            y[3] = 0;
-
-            int[] RGBExtents = new int[2];
-            RGBExtents[0] = 4;
-            RGBExtents[1] = 256;
-            newRGB = new ModelRGB(RGBExtents);
-            newRGB.getRedFunction().importArrays(x, y, 4);
-            newRGB.getGreenFunction().importArrays(x, y, 4);
-            newRGB.getBlueFunction().importArrays(x, y, 4);
-            newRGB.makeRGB(-1);
-        }
-
-        return newRGB;
-    }
-
-
+    
     /**
      * Makes an aboutDialog box and displays information of the image plane presently being displayed.
      */
@@ -352,8 +266,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         	ViewDirectoryChooser dirChooser = new ViewDirectoryChooser();
         	String dir = dirChooser.getImageDirectory();
         	if (dir != null) {
-        		AlgorithmParseMIPAVDownloads pd = new AlgorithmParseMIPAVDownloads(dir);
-        		pd.runAlgorithm();
+        		// AlgorithmParseMIPAVDownloads pd = new AlgorithmParseMIPAVDownloads(dir);
+        		// pd.runAlgorithm();
         	}
         } else if (command.equals("ScrollLink")) {
             linkedScrolling = !linkedScrolling;
@@ -456,8 +370,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.transferSRBFiles();
         } else if (command.equals("TransferNDAR")) {
         	userInterface.transferNDAR();
-        }
-        else if (command.equals("AutoUploadToSRB")) {
+        } else if (command.equals("TransferNDARGenomics")) {
+        	userInterface.transferNDARGenomics();
+        } else if (command.equals("AutoUploadToSRB")) {
             NDARPipeline pipeline = userInterface.getNDARPipeline();
 
             if (pipeline == null) {
@@ -875,14 +790,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.setCursorMode(ViewJComponentEditImage.DEFAULT);
         } else if (command.equals("Point")) {
 
-            if (!checkForVOICompatibility(VOI.POINT)) {
+            if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.POINT, lastVOI_UID, getControls())) {
                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
             componentImage.setCursorMode(ViewJComponentEditImage.POINT_VOI);
         } else if (command.equals("Line")) {
 
-            if (!checkForVOICompatibility(VOI.LINE)) {
+            if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.LINE, lastVOI_UID, getControls())) {
                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
@@ -891,54 +806,52 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.setCursorMode(ViewJComponentEditImage.SPLIT_VOI);
         } else if (command.equals("Polyslice")) {
 
-            if (!checkForVOICompatibility(VOI.POLYLINE_SLICE)) {
-                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-            }
+        	 if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.POLYLINE_SLICE, lastVOI_UID, getControls())) {
+                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+             }
 
             componentImage.setCursorMode(ViewJComponentEditImage.POLYLINE_SLICE_VOI);
         } else if (command.equals("protractor")) {
 
-            if (!checkForVOICompatibility(VOI.PROTRACTOR)) {
-                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-            }
+        	 if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.PROTRACTOR, lastVOI_UID, getControls())) {
+                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+             }
 
             componentImage.setCursorMode(ViewJComponentEditImage.PROTRACTOR);
         } else if (command.equals("Polyline")) {
 
-            if (!checkForVOICompatibility(VOI.POLYLINE)) {
+        	if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.POLYLINE, lastVOI_UID, getControls())) {
                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
             componentImage.setCursorMode(ViewJComponentEditImage.POLYLINE);
         } else if (command.equals("TextVOI")) {
 
-            if (!checkForVOICompatibility(VOI.CONTOUR)) {
-                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-            }
+        	componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+           
 
             componentImage.setCursorMode(ViewJComponentEditImage.ANNOTATION);
         } else if (command.equals("RectVOI")) {
 
-            if (!checkForVOICompatibility(VOI.CONTOUR)) {
+        	if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, lastVOI_UID, getControls())) {
                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
             componentImage.setCursorMode(ViewJComponentEditImage.RECTANGLE);
         } else if (command.equals("EllipseVOI")) {
-
-            if (!checkForVOICompatibility(VOI.CONTOUR)) {
+        	if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, lastVOI_UID, getControls())) {
                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
             componentImage.setCursorMode(ViewJComponentEditImage.ELLIPSE);
         } else if (command.equals("LevelSetVOI")) {
-            checkForVOICompatibility(VOI.CONTOUR);
+        	componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, lastVOI_UID, getControls());
             componentImage.setCursorMode(ViewJComponentEditImage.LEVELSET);
         } else if (command.equals("Rect3DVOI")) {
-            checkForVOICompatibility(VOI.CONTOUR);
+        	componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, lastVOI_UID, getControls());
             componentImage.setCursorMode(ViewJComponentEditImage.RECTANGLE3D);
         } else if (command.equals("LiveWireVOI")) {
-            checkForVOICompatibility(VOI.CONTOUR);
+        	componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, lastVOI_UID, getControls());
 
             if (componentImage.getVOIHandler().isLivewireNull()) {
                 JDialogLivewire dialog = new JDialogLivewire(this);
@@ -1717,7 +1630,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("Crop")) {
             new JDialogCrop(this, getActiveImage());
         } else if (command.equals("Pad")) {
-             new JDialogPad(this, getActiveImage());
+             new JDialogAddMargins(this, getActiveImage());
         } else if (command.equals("CropParam")) {
             new JDialogCropParam(this, getActiveImage());
         } else if (command.equals("FFT")) {
@@ -2286,7 +2199,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 MipavUtil.displayError("Out of memory: unable to open Tri-planar frame.");
             }
         } else if (command.equals("VolTriplanar") || 
-                   command.equals("WMVolTriplanar") ) {
+                   command.equals("WMVolTriplanar") ||
+                   command.equals("WMStandAlone") ) {
 
             // 3 space representation makes no sense on a 2d image!
             if (componentImage.getImageA().getNDims() == 2) {
@@ -2465,11 +2379,19 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                         }
                     }
 
-                    if (getActiveImage().getVOIs().size() == 0) {
-                        histogramDialog.histogramLUT(true);
-                    } else {
-                        histogramDialog.constructDialog();
-                    }
+                    
+                    //if there is no VOI Contour type present, do not allow VOI histogram option
+                    boolean foundContour = false;
+                	for (int i = 0; i < getActiveImage().getVOIs().size(); i++) {
+                		if (getActiveImage().getVOIs().VOIAt(i).getCurveType() == VOI.CONTOUR) {
+                			foundContour = true;
+                		}
+                	}
+                	if (foundContour) {
+                		histogramDialog.constructDialog();
+                	} else {
+                		histogramDialog.histogramLUT(true);
+                	}
                 }
             }
         } else if (command.equals("winLevel")) { // new win-level window when it does not exist
@@ -3192,6 +3114,16 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         menuBuilder.setMenuItemEnabled("Close image(B)", enable);
         menuBuilder.setMenuItemEnabled("Extract image(B)", enable);
     }
+    
+    /**
+     * Routine to enable some menu items and disable othter menu items when the 
+     * dimensionality or type of the image is changed.
+     *
+     */
+    public void changeMenuEnables() {
+        menuBarMaker.enableAllMenuItems();
+        menuBarMaker.setEnabledMenuItems(imageA.getNDims(), imageA.getType());
+    }
 
     /**
      * Cleans memory.
@@ -3365,6 +3297,21 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else {
             return null;
         }
+    }
+    
+    /**
+     * 
+     * @return menuBarMaker
+     */
+    public ViewMenuBar getViewMenuBar() {
+        return menuBarMaker;
+    }
+    
+    /**
+     *  @return menuBar
+     */
+    public JMenuBar getJMenuBar() {
+        return menuBar;
     }
 
     /**
@@ -4806,216 +4753,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
     }
 
-    /**
-     * Get the extents of an image. (don't know why this is really needed...)
-     *
-     * @param   img  the image
-     *
-     * @return  the image's extents
-     */
-    protected static int[] initExtents(ModelImage img) {
-        int[] extents = null;
+    
 
-        if (img.getNDims() == 2) {
-            extents = new int[2];
-            extents[0] = Math.round(img.getExtents()[0]);
-            extents[1] = Math.round(img.getExtents()[1]);
-        } else if (img.getNDims() == 3) {
-            extents = new int[3];
-            extents[0] = Math.round(img.getExtents()[0]);
-            extents[1] = Math.round(img.getExtents()[1]);
-            extents[2] = Math.round(img.getExtents()[2]);
-        } else if (img.getNDims() == 4) {
-            extents = new int[4];
-            extents[0] = Math.round(img.getExtents()[0]);
-            extents[1] = Math.round(img.getExtents()[1]);
-            extents[2] = Math.round(img.getExtents()[2]);
-            extents[3] = Math.round(img.getExtents()[3]);
-        }
-
-        return extents;
-    }
-
-    /**
-     * Create the intensity buffer for an image.
-     *
-     * @param   extents  the extents of the image
-     * @param   isColor  whether the image is in color
-     *
-     * @return  a buffer which is big enough to contain the image intensity data
-     */
-    protected static float[] initImageBuffer(int[] extents, boolean isColor) {
-        int bufferFactor = 1;
-
-        if (isColor) {
-            bufferFactor = 4;
-        }
-
-        return new float[bufferFactor * extents[0] * extents[1]];
-    }
-
-    /**
-     * Get the total number of time slices and volume slices.
-     *
-     * @param   img  the image to get the slices of
-     *
-     * @return  an array containing the number of volume slices (in the first element) and the number of time slices in
-     *          the image (in the second element)
-     */
-    protected static int[] initNumSlices(ModelImage img) {
-        int[] numImages = new int[2];
-
-        if (img.getNDims() == 4) {
-            numImages[0] = img.getExtents()[2];
-            numImages[1] = img.getExtents()[3];
-        } else if (img.getNDims() == 3) {
-            numImages[0] = img.getExtents()[2];
-            numImages[1] = 0;
-        } else {
-            numImages[0] = 1;
-            numImages[1] = 0;
-        }
-
-        return numImages;
-    }
-
-    /**
-     * Create the pixel buffer for an image.
-     *
-     * @param   extents  the extents of the image
-     *
-     * @return  a buffer which is big enough to contain the image pixel data
-     */
-    protected static int[] initPixelBuffer(int[] extents) {
-        return new int[extents[0] * extents[1]];
-    }
-
-    /**
-     * Get the resolution correction needed for non-isotropic images.
-     *
-     * @param   imgResols  the image resolution
-     * @param   imgUnits   the image units of measure
-     *
-     * @return  the resolution correction factor in the x (the first element) and y (the second element) dimensions
-     */
-    protected static float[] initResFactor(float[] imgResols, int[] imgUnits) {
-        float[] resFactor = new float[2];
-
-        resFactor[0] = 1.0f;
-        resFactor[1] = 1.0f;
-
-        if ((imgResols[1] >= imgResols[0]) && (imgResols[1] < (20.0f * imgResols[0])) && (imgUnits[0] == imgUnits[1])) {
-            resFactor[1] = imgResols[1] / imgResols[0];
-        } else if ((imgResols[0] > imgResols[1]) && (imgResols[0] < (20.0f * imgResols[1])) &&
-                       (imgUnits[0] == imgUnits[1])) {
-            resFactor[0] = imgResols[0] / imgResols[1];
-        }
-
-        return resFactor;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param   img  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    protected static float[] initResolutions(ModelImage img) {
-        float[] res = img.getFileInfo(0).getResolutions();
-
-        for (int r = 0; r < img.getNDims(); r++) {
-
-            if (res[r] < 0) {
-                res[r] = Math.abs(res[r]);
-            } else if (res[r] == 0) {
-                res[r] = 1.0f;
-            }
-        }
-
-        return res;
-    }
-
-    /**
-     * Get the initial time and volume slice positions.
-     *
-     * @param   img  the image to get the slice positions of
-     *
-     * @return  an array containing the slice in the volume (in the first element) and the time slice (in the second
-     *          element)
-     */
-    protected static int[] initSlicePositions(ModelImage img) {
-        int[] slices = new int[2];
-
-        if (img.getNDims() == 4) {
-            slices[0] = (img.getExtents()[2] - 1) / 2;
-            slices[1] = 0;
-        } else if (img.getNDims() == 3) {
-            slices[0] = (img.getExtents()[2] - 1) / 2;
-            slices[1] = 0;
-        } else {
-            slices[0] = 0;
-            slices[1] = 0;
-        }
-
-        return slices;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param   img  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    protected static int[] initUnits(ModelImage img) {
-        return img.getFileInfo(0).getUnitsOfMeasure();
-    }
-
-    /**
-     * Initializes the zoom variables for an image.
-     *
-     * @param   img         the image to use to initialize the zoom
-     * @param   xResFactor  correction factor in the x direction for images that are do not have isotropic voxels
-     * @param   yResFactor  correction factor in the x direction for images that are do not have isotropic voxels
-     *
-     * @return  the initial zoom to use for this image
-     */
-    protected static float initZoom(ModelImage img, float xResFactor, float yResFactor) {
-
-        float imgZoom;
-        float zoomX = 1, zoomY = 1;
-
-        if ((img.getExtents()[0] * xResFactor) > (xScreen - 300)) {
-            zoomX = (xScreen - 300.0f) / (img.getExtents()[0] * xResFactor);
-        }
-
-        if ((img.getExtents()[1] * yResFactor) > (yScreen - 300)) {
-            zoomY = (yScreen - 300.0f) / (img.getExtents()[1] * yResFactor);
-        }
-
-        imgZoom = Math.min(zoomX, zoomY);
-
-        if (imgZoom < 1) {
-
-            if (imgZoom > 0.5) {
-                imgZoom = 0.5f;
-            } else if (imgZoom > 0.25) {
-                imgZoom = 0.25f;
-            } else if (imgZoom > 0.125) {
-                imgZoom = 0.125f;
-            } else if (imgZoom > 0.0625) {
-                imgZoom = 0.0625f;
-            } else if (imgZoom > 0.03125) {
-                imgZoom = 0.03125f;
-            } else {
-                imgZoom = 0.015625f;
-            }
-        }
-
-        return imgZoom;
-
-    } // end initZoom()
+   
 
     /**
      * Create the buffers for imageA and imageB.
@@ -5192,7 +4932,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * Initializes the zoom variables for the first image (imageA).
      */
     protected void initZoom() {
-        zoom = initZoom(imageA, widthResFactor, heightResFactor);
+        zoom = initZoom(imageA, widthResFactor, heightResFactor, xScreen, yScreen);
     } // end initZoom()
 
     /**
@@ -5340,66 +5080,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         };
         SwingUtilities.invokeLater(adjustScrollbarsAWTEvent);
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param   type  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    private boolean checkForVOICompatibility(int type) {
-
-        // System.err.println("Type is: " + type);
-        int numVOI = getActiveImage().getVOIs().size();
-        int lastType = -1;
-
-        if (numVOI == 0) {
-            return true;
-        } else if (numVOI == 1) {
-            lastType = ((VOI) (getActiveImage().getVOIs().elementAt(0))).getCurveType();
-        } else {
-
-            for (int i = 0; i < numVOI; i++) {
-
-                if (((VOI) (getActiveImage().getVOIs().elementAt(i))).getUID() == lastVOI_UID) {
-                    lastType = ((VOI) (getActiveImage().getVOIs().elementAt(i))).getCurveType();
-
-                    break;
-                }
-            }
-        }
-
-        if (lastType == -1) {
-            return true;
-        }
-
-        switch (type) {
-
-            case VOI.CONTOUR:
-            case VOI.POLYLINE:
-                if ((lastType != VOI.CONTOUR) && (lastType != VOI.POLYLINE)) {
-                    int id = (((VOI) (getActiveImage().getVOIs().lastElement())).getID() + 1);
-
-                    getControls().setVOIColor(id);
-
-                    return false;
-                }
-
-                break;
-
-            default:
-                if (type != lastType) {
-                    int id = (((VOI) (getActiveImage().getVOIs().lastElement())).getID() + 1);
-
-                    getControls().setVOIColor(id);
-
-                    return false;
-                }
-        }
-
-        return true;
     }
 
     /**

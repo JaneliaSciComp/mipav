@@ -6,6 +6,10 @@ import java.util.concurrent.Executors;
 public class MipavUtil {
     public static final int nthreads = 8;
     public static final Executor threadPool = Executors.newFixedThreadPool(nthreads);
+    
+    /**
+     * Return the available processors in your machine.
+     */
     public static int getAvailableCores(){
         return Runtime.getRuntime().availableProcessors();
     }
@@ -14,6 +18,15 @@ public class MipavUtil {
         System.out.println(MipavUtil.getAvailableCores());
     }
     
+    /**
+     * Swap slices in order to apply FFT algorithm.
+     * @param rdata
+     * @param idata
+     * @param xdim
+     * @param ydim
+     * @param zdim
+     * @param plane
+     */
     public static void swapSlices(float[] rdata, float[] idata, int xdim, int ydim, int zdim, int plane){
         int[] indices = null;
         int sliceLength = xdim * ydim;
@@ -103,4 +116,27 @@ public class MipavUtil {
         }
         return indices;
     }
+    /**
+     * Calculate the minimum power of two which is greater or equal to the number.
+     * @return the minimum power of two which is greater or equal to the value
+     */
+    public static int findMinimumPowerOfTwo(int num){
+    	int ret = 1;
+    	while(ret < num){
+    		ret >>= 1;
+    	}
+    	return ret;
+    }
+    
+	public static void shift(float[] srcData, float[] desData, int x, int y, int srcXDim, int srcYDim, int desXDim, int desYDim){
+		int sliceLen = srcXDim * srcYDim;
+		for(int i = 0; i < srcData.length; i += sliceLen){
+			
+		}
+	}
+    
+	public static void shift(float[] srcData, float[] desData, int x, int y, int z, int srcXDim, int srcYDim, int srcZDim, int desXDim, int desYDim, int desZDim){
+		
+	}
+
 }

@@ -47,6 +47,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
     /** DOCUMENT ME! */
     private JPanel bottomPanel;
+    
+    /** DOCUMENT ME! */
+    private JPanel closePanel;
 
     /** DOCUMENT ME! */
     private JToggleButton buttonShortkeys;
@@ -299,7 +302,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             image.getParentFrame().getComponentImage().setFocusable(false);
             dispose();
         } else if (command.equals("Help")) {
-            // MipavUtil.showHelp("10027");
+            MipavUtil.showHelp("PT0003");
         } else if (command.startsWith("PaintMask")) {
 
             int num = Integer.valueOf(command.substring(command.indexOf(" ") + 1)).intValue();
@@ -1658,6 +1661,15 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         optionPanel.add(leftRightPanel, gbc);
         gbc.gridy = 2;
         optionPanel.add(buttonShortkeys, gbc);
+        
+        bottomPanel = new JPanel(new GridBagLayout());
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = new Insets(0, 2, 2, 2);
+        bottomPanel.add(indeterminateProgressBar, gbc);
 
         mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setName("mainPanel");
@@ -1676,23 +1688,34 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         mainPanel.add(scrollPane, gbc);
         gbc.gridy = 3;
         mainPanel.add(lockPanel, gbc);
+        gbc.gridy = 4;
+        mainPanel.add(bottomPanel, gbc);
 
-        bottomPanel = new JPanel(new GridBagLayout());
+        //bottomPanel = new JPanel(new GridBagLayout());
+        //gbc.weightx = 0;
+        //gbc.fill = GridBagConstraints.BOTH;
+        //gbc.gridx = 0;
+        //gbc.gridy = 0;
+        //gbc.anchor = GridBagConstraints.CENTER;
+        //gbc.insets = new Insets(0, 2, 2, 2);
+        //bottomPanel.add(indeterminateProgressBar, gbc);
+        //mainPanel.add(bottomPanel, gbc);
+        
+        closePanel = new JPanel(new GridBagLayout());
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.insets = new Insets(0, 2, 2, 2);
-        bottomPanel.add(indeterminateProgressBar, gbc);
-        gbc.gridy = 1;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.weightx = 1;
-        bottomPanel.add(buildCloseButton(), gbc);
-        // bottomPanel.add(buildHelpButton());
+        closePanel.add(buildCloseButton(), gbc);
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        closePanel.add(buildHelpButton(), gbc);
 
         getContentPane().add(mainPanel);
-        getContentPane().add(bottomPanel, BorderLayout.SOUTH);
+        //getContentPane().add(bottomPanel, BorderLayout.SOUTH);
+        getContentPane().add(closePanel, BorderLayout.SOUTH);
 
         initBlankPaint(1);
 

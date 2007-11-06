@@ -264,7 +264,7 @@ public class ModelImage extends ModelStorageBase {
         int nVOI = VOIs.size();
 
         for (int i = 0; i < nVOI; i++) {
-            voiVector.add(VOIs.VOIAt(i).clone());
+            voiVector.add((VOI)VOIs.VOIAt(i).clone());
         }
 
         System.gc();
@@ -388,9 +388,19 @@ public class ModelImage extends ModelStorageBase {
             lut.resetTransferLine(min, imgMin, max, imgMax);
         }
     }
+    
+    /**
+     * @param dims new dimensions for image
+     */
+    public void setExtents(int[] dims) {
+        super.setExtents(dims);
+        if (this.getParentFrame() != null) {
+            this.getParentFrame().changeMenuEnables();
+        }
+    }
 
     /**
-     * Changes the image dimensionality or extents ( used in FFT exclusively ).
+     * Changes the image dimensionality or extents.
      *
      * @param  dimExtents  new dimensions for mask, maskBU, and fileInfo
      */
@@ -2011,6 +2021,20 @@ public class ModelImage extends ModelStorageBase {
             return false;
         }
     }
+    
+    /**
+     * Accessor that returns whether or not the image is a COMPLEX or DCOMPLEX image.
+     *
+     * @return  <code>true</code> if complex, <code>false</code> if not complex.
+     */
+    public boolean isComplexImage() {
+
+        if ((getType() == COMPLEX) || (getType() == DCOMPLEX)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     /**
      * Accessor that returns whether or not the image is a DICOM image.
@@ -2105,7 +2129,7 @@ public class ModelImage extends ModelStorageBase {
                         ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(null, LUT, forceShow, -1);
                     }
                 } else if ((frameList.elementAt(i) instanceof
-                        gov.nih.mipav.view.dialogs.JDialogDTIInput)) {
+                        gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDWI2DTI)) {
                     ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages();
                 }
 
@@ -2764,7 +2788,7 @@ public class ModelImage extends ModelStorageBase {
         int nVOI = VOIs.size();
 
         for (int i = 0; i < nVOI; i++) {
-            voiVector.add(VOIs.VOIAt(i).clone());
+            voiVector.add((VOI)VOIs.VOIAt(i).clone());
         }
 
         System.gc();

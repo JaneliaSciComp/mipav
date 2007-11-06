@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.srb.SRBFileTransferer;
+import gov.nih.mipav.model.srb.SRBUtility;
 import gov.nih.mipav.model.structures.*;
 
 
@@ -13,6 +14,7 @@ import gov.nih.mipav.view.components.*;
 import java.awt.*;
 import java.awt.event.*;
 
+import java.util.*;
 import java.io.*;
 
 import javax.swing.*;
@@ -46,6 +48,8 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 	
 	private JTextField piNameField, piEmailField, piPhoneField, piTitleField;
 	
+	private JTextField privateField;
+	
 	private JTextField [] guidFields;
 	
 	/** Scrolling text area for abstract */
@@ -62,15 +66,15 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 	
 	private JButton nextButton, previousButton, addSourceButton, removeSourceButton, openAbstractButton;
 	
-	private JRadioButton publicButton, organizationButton, privateButton;
+	private JButton privateBrowseButton;
+	
+	private JRadioButton publicButton, privateButton;
 	
 	private JTabbedPane tabbedPane;
 	
 	private JPanel guidPanel;
 	
 	private DefaultListModel sourceModel;
-
-	private JComboBox organizationBox;
 	
 	private JCheckBox anonConfirmBox;
 	
@@ -86,6 +90,8 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 	
 	private static final String SPACE = " ";
 
+	private Hashtable<File, Boolean> multiFileTable = null;
+	
 	/** Static tab indices */
 	private static final int TAB_MAIN = 0;
 	private static final int TAB_PI = 1;
@@ -93,19 +99,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 	private static final int TAB_SOURCE = 3;
 	private static final int TAB_GUID = 4;
 	private static final int TAB_DESTINATION = 5;
-	
-	private static final String [] ORGANIZATIONS = { "ACE Location 1",
-													 "ACE Location 2",
-													 "ACE Location 3",
-													 "ACE Location 4",
-													 "ACE Location 5",
-													 "ACE Location 6",
-													 "ACE Location 7",
-													 "ACE Location 8",
-													 "ACE Location 9",
-													 "ACE Location 10" };
-	
-	
+		
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
   
@@ -140,8 +134,8 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         	
         	if (index == TAB_DESTINATION) {
         		if (setVariables()) {
-        			MipavUtil.displayInfo("Transfer not yet supported.");
-        			//transfer();
+        			//MipavUtil.displayInfo("Transfer not yet supported.");
+        			transfer();
         		}
         	} else if (index == TAB_SOURCE) {
         		if (!doneAddingFiles) {
@@ -186,18 +180,23 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         		tabbedPane.setSelectedIndex(index - 1);
         	}
         } else if (command.equals("AddSource")) {
-        	JFileChooser chooser = new JFileChooser();
-            chooser.setMultiSelectionEnabled(true);
-            
-            chooser.setFont(MipavUtil.defaultMenuFont);
-            
+        	ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
+            JFileChooser chooser = fileChooser.getFileChooser();
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+
             int returnVal = chooser.showOpenDialog(null);
-            
+
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-            	File [] files = chooser.getSelectedFiles();
-            	for (int i = 0; i < files.length; i++) {
-            		sourceModel.addElement(files[i]);            	
-            	}
+                boolean isMultiFile = fileChooser.isMulti();
+                
+                File[] files = chooser.getSelectedFiles();
+                ViewUserInterface.getReference().setDefaultDirectory(files[0].getParent());
+                for (int i = 0; i < files.length; i++) {
+                	if (!sourceModel.contains(files[i])) {
+                		sourceModel.addElement(files[i]);  
+                		multiFileTable.put(files[i], new Boolean(isMultiFile));
+                	}
+                }
             }
             removeSourceButton.setEnabled(sourceModel.size() > 0);
             nextButton.setEnabled(sourceModel.size() > 0);
@@ -208,6 +207,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         	int [] selected = sourceList.getSelectedIndices();
         	for (int i = selected.length - 1; i >= 0; i--) {
         		sourceModel.removeElementAt(selected[i]);
+        		multiFileTable.remove(selected[i]);
         	}
         	removeSourceButton.setEnabled(sourceModel.size() > 0);
         	nextButton.setEnabled(sourceModel.size() > 0);
@@ -239,7 +239,9 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
             	
             }
         } else if (command.equals("Help")) {
-        	//MipavUtil.showHelp("");
+        	MipavUtil.showHelp("20040");
+        } else if (command.equals("Browse")) {
+        	browseSRB();
         }
         
         
@@ -291,9 +293,55 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     			tabbedPane.setEnabledAt(TAB_DESTINATION, true);
     			privacyTextArea.setBackground(helpButton.getBackground());
     		}
+    	} else if (e.getSource().equals(privateButton)) {
+    		privateBrowseButton.setEnabled(privateButton.isSelected());
+			privateField.setEnabled(privateButton.isSelected());
     	}
     }
     
+    private void browseSRB() {
+    	if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
+            new JDialogLoginSRB("Connect to", false);
+
+            if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
+                return;
+            }
+        }
+
+
+        /**
+         * Uses the JargonFileChooser to retrieve the file that the user wants to open.
+         */
+        JargonFileChooser chooser = null;
+
+        try {
+            chooser = new JargonFileChooser(JDialogLoginSRB.srbFileSystem);
+        } catch (OutOfMemoryError e) {
+            e.printStackTrace(System.err);
+            MipavUtil.displayError("Out of memory!");
+
+            return;
+        } catch (IOException e) {
+            e.printStackTrace(System.err);
+            MipavUtil.displayError(e.getMessage());
+
+            return;
+        }
+
+        chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        chooser.setMultiSelectionEnabled(false);
+
+        int returnValue = chooser.showDialog(ViewUserInterface.getReference().getMainFrame(), "Open");
+
+        if (returnValue == JargonFileChooser.APPROVE_OPTION) {
+
+            /**
+             * According to the files selected by user, tries to create the srb file list.
+             */
+            SRBFile[] files = chooser.getSelectedFiles();
+            privateField.setText(SRBUtility.convertToString(files));
+        }
+    }
 
     private void loadAbstract(File abstractFile) {
     	RandomAccessFile raFile;
@@ -343,6 +391,8 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     private void init() {
         setTitle("NDAR Imaging Import Tool");
 
+        multiFileTable = new Hashtable<File, Boolean>();
+        
         tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Main", buildMainTab());
         tabbedPane.addTab("P.I.", buildPITab());
@@ -405,34 +455,57 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.anchor = GridBagConstraints.NORTHWEST;
         gbc2.fill = GridBagConstraints.HORIZONTAL;
-        gbc2.weightx = 1;
-        
-        
-        
-        
+        gbc2.weightx = 1;        
         gbc2.gridy = 0;
         gbc2.gridx = 0;
-        gbc2.insets = new Insets(5, 10, 5, 0);
-        destPanel.add(organizationBox, gbc2);
         
-        JPanel visPanel = new JPanel();
+        JPanel visPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();        
         
         ButtonGroup group = new ButtonGroup();
         publicButton = WidgetFactory.buildRadioButton("Public", true, group);
-        organizationButton = WidgetFactory.buildRadioButton("Organization", true, group);
         privateButton = WidgetFactory.buildRadioButton("Private", true, group);
+        privateButton.addItemListener(this);
         
-        visPanel.add(publicButton);
-        visPanel.add(organizationButton);
-        visPanel.add(privateButton);
-
+        privateField = WidgetFactory.buildTextField("");
+        privateBrowseButton = WidgetFactory.buildTextButton("Browse", "Browse for directory on SRB", "Browse", this);
+        
+        privateField.setEnabled(false);
+        privateBrowseButton.setEnabled(false);
+        
+        gbc.weightx = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        
+        gbc.fill = GridBagConstraints.NONE;
+        visPanel.add(publicButton, gbc);
+        
+        gbc.gridy = 1;
+        visPanel.add(privateButton, gbc);
+        
+        gbc.gridx++;
+        gbc.gridwidth = 3;
+        gbc.weightx = 1;
+        gbc.fill = gbc.BOTH;
+        gbc.insets = new Insets(0,5,0,5);
+        visPanel.add(privateField, gbc);
+        
+        gbc.insets = new Insets(0,0,0,0);
+        gbc.weightx = 0;
+        gbc.gridx+=3;
+        gbc.gridwidth = 1;
+        gbc.fill = gbc.NONE;
+        visPanel.add(privateBrowseButton, gbc);
+        
+        
         visPanel.setBorder(buildTitledBorder("Destination visibility"));
 
         gbc2.gridy++;
         destPanel.add(visPanel, gbc2);
         
         logOutputArea = WidgetFactory.buildScrollTextArea(Color.white);
-        logOutputArea.getTextArea().setBorder(buildTitledBorder("Output log")); 
+        logOutputArea.setBorder(buildTitledBorder("Output log")); 
         logOutputArea.getTextArea().setEditable(false);
     	
         gbc2.fill = GridBagConstraints.BOTH;
@@ -529,11 +602,6 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         gbc.insets = insets2;
         irbField = WidgetFactory.buildTextField(SPACE);
         piPanel.add(irbField, gbc);
-    	        
-    	organizationBox = new JComboBox(ORGANIZATIONS);
-        organizationBox.setFont(MipavUtil.font12);        
-              
-               	
     	return piPanel;
     }
     
@@ -676,6 +744,11 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	return validGUID;
     }
     
+    /**
+     * Checks to see if the given string is a valid NDAR GUID
+     * @param checkString the string to check
+     * @return whether this is a valid guid
+     */
     private boolean isValidGUID(String checkString) {
     	if (checkString.length() != GUID_LENGTH) {
     		return false;
@@ -694,11 +767,21 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	return false;
     }
     
+    /**
+     * Is the char a valid number character
+     * @param checkChar char to check
+     * @return whether is a number
+     */
     private boolean isNumChar(char checkChar) {
     	
     	return (checkChar >= '0' && checkChar <= '9');
     }
     
+    /**
+     * Check if this is a valid NDAR character ( no I, O, Q, or S)
+     * @param checkChar char to check
+     * @return is the char valid
+     */
     private boolean isValidChar(char checkChar) {
     	if ((checkChar >= 'a' && checkChar <= 'z') ||
     			(checkChar >= 'A' && checkChar <= 'Z')) {
@@ -717,15 +800,17 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	return false;
     }
     
+    /**
+     * Open the file(s), save header off to local temp folder
+     * transfer the file(s) to the given destination
+     *
+     */
     private void transfer() {
     	//Create the FileIO
     	FileIO fileIO = new FileIO();
     	fileIO.setQuiet(true);
     	SRBFileTransferer transferer = new SRBFileTransferer();
-    	
-    	
-    	transferer.setNDAR(true);
-    	
+    	    	
     	int numImages = sourceModel.size();
     	ModelImage tempImage = null;
     	
@@ -742,14 +827,20 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	
     	for (int i = 0; i < numImages; i++) {
     		currentImageFile = (File)sourceModel.elementAt(i);
+    		
+    		logOutputArea.getTextArea().append("Opening: " + currentImageFile + ", multifile: " + 
+    				multiFileTable.get(currentImageFile).booleanValue() + "\n");
     		tempImage = fileIO.readImage(currentImageFile.getAbsolutePath());
     		//Save the image's XML to disk
     		
+    		    		
     		//set the valid GUID into the NDAR data object, and set up the filewriteoptions for this image
     		ndarData.validGUID = guidFields[i].getText();
+    		options.setMultiFile(multiFileTable.get(currentImageFile).booleanValue());
     		options.setWriteHeaderOnly(true);
     		options.setNDARData(ndarData);
     		
+    		// get the image file name and add .xml to it (maintain the previous extension in the name)
     		fName = tempImage.getImageFileName();
     		if (!fName.endsWith(".xml")) {
     			fName += ".xml";
@@ -770,6 +861,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     		options.setMultiFile(false);
     		options.setOptionsSet(true);
     		
+    		logOutputArea.getTextArea().append("Saving header: " + fName + " to: " + tempDir + "\n");
     		
     		//write out only the header to userdir/mipav/temp
     		fileIO.writeImage(tempImage, options);
@@ -791,8 +883,12 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	
     }
     
+    /**
+     * Parses each JTextField for GUIDs... highlights first bad field found (if present) and returns false,
+     * otherwise returns true if all fields valid
+     * @return whether the GUIDs are all valid
+     */
     private boolean checkGUIDs() {
-//    	check to see that valid GUIDs are present for all listed files
     	int numImages = sourceModel.size();
     	for (int i = 0; i < numImages; i++) {
     		if (!isValidGUID(guidFields[i].getText())) {
@@ -807,6 +903,10 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	return true;
     }
     
+    /**
+     * Puts all available information (JTextField/JTextArea) into an NDARData object
+     * @return true
+     */
     private boolean setVariables() {
     	 	    	
     	//parse out the information from the text fields/abstract info etc

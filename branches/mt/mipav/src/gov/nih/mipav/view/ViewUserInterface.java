@@ -463,6 +463,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             transferSRBFiles();
         } else if (command.equals("TransferNDAR")) {
             transferNDAR();
+        } else if (command.equals("TransferNDARGenomics")) {
+            transferNDARGenomics();
         } else if (command.equals("AutoUploadToSRB")) {
 
             if (menuBuilder.isMenuItemSelected("Enable auto SRB upload")) {
@@ -848,7 +850,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         JMenu genericMenu = ViewMenuBuilder.buildMenu("General", 0, false);
 
         File pluginsDir = new File(userPlugins);
-
         if (pluginsDir.isDirectory()) {
 
             File[] allFiles = pluginsDir.listFiles(new FileFilter() {
@@ -2196,6 +2197,32 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     Preferences.debug("cmd var:\tDefining parameter variable value " + varName + " -> " + varValue +
                                       "\n", Preferences.DEBUG_SCRIPTING);
                     VariableTable.getReference().storeVariable(varName, varValue);
+                } else if (arg.equalsIgnoreCase("-p")) {
+                   
+                    
+                    Object thePlugIn = null;
+
+//                  grab the plugin name
+                    String plugInName = args[++i];
+                    // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+
+                    try {
+                        thePlugIn = Class.forName(plugInName).newInstance();
+
+                        if (thePlugIn instanceof PlugInGeneric) {
+                            ((PlugInGeneric) thePlugIn).run();
+                        } else {
+                            MipavUtil.displayError("Plug-in " + plugInName +
+                                                   " claims to be an generic PlugIn, but does not implement PlugInGeneric.");
+                        }
+                    } catch (ClassNotFoundException e) {
+                        MipavUtil.displayError("PlugIn not found: " + plugInName);
+                    } catch (InstantiationException e) {
+                        MipavUtil.displayError("Unable to load plugin (ins)");
+                    } catch (IllegalAccessException e) {
+                        MipavUtil.displayError("Unable to load plugin (acc)");
+                    }
+                    
                 } else {
                     printUsageAndExit();
                 }
@@ -2732,6 +2759,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
     
     /**
+     * Starts up an SRB NDAR genomics transfer dialog
+     *
+     */
+    public void transferNDARGenomics() {    	
+    	JDialogNDARGenomics gen = new JDialogNDARGenomics(this.getMainFrame());
+    }
+    
+    /**
      * Method that unregisters an image frame by removing it from the image frame vector.
      *
      * @param  frame  Frame to be unregistered with this the main UI.
@@ -2874,8 +2909,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         if (reply == JOptionPane.YES_OPTION) {
 
             if (Preferences.is(Preferences.PREF_DATA_PROVENANCE)) {
+            	try {
             	ProvenanceRecorder.getReference().addLine(new ActionStopMipav());
                 writeDataProvenance();
+            	} catch (Exception e) {
+            		//nada
+            	}
             }
 
             memoryUsageThread.shutdown();

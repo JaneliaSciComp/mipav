@@ -1,15 +1,18 @@
 
 package gov.nih.mipav.view.renderer.volumeview;
 
+import java.awt.GraphicsConfiguration;
 import java.io.File;
 import java.io.IOException;
+
+import com.sun.j3d.utils.universe.SimpleUniverse;
 
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
-
+import gov.nih.mipav.view.renderer.surfaceview.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.model.file.*;
@@ -712,8 +715,11 @@ public class VolumeShaderEffect extends ShaderEffect
      */
     private byte[] calcImageNormals( )
     {
-        javax.vecmath.Vector3f[] akNormalsImageA =
-            gov.nih.mipav.view.renderer.RenderViewBase.getNormals();
+       //  javax.vecmath.Vector3f[] akNormalsImageA =
+          //   gov.nih.mipav.view.renderer.RenderViewBase.getNormals();
+        GraphicsConfiguration kConfig = SimpleUniverse.getPreferredConfiguration();
+        SurfaceRender sr = new SurfaceRender(m_kImageA, m_kImageB, kConfig);
+        javax.vecmath.Vector3f[] akNormalsImageA = sr.getNormals();
 
         byte[] acData = new byte[akNormalsImageA.length*3];
         for (int i = 0; i < akNormalsImageA.length; i++ )
@@ -722,6 +728,7 @@ public class VolumeShaderEffect extends ShaderEffect
             acData[i*3+1] = (byte)(akNormalsImageA[i].y*127 + 127);
             acData[i*3+2] = (byte)(akNormalsImageA[i].z*127 + 127);
         }
+        akNormalsImageA = null;
         return acData;
     }
 
@@ -835,7 +842,7 @@ public class VolumeShaderEffect extends ShaderEffect
                 for (iX = 1; iX < (iXBound - 1); iX++) {
                     int i = iX + offset;
 
-                    kNormal.copy(Vector3f.ZERO);
+                    kNormal.SetData(Vector3f.ZERO);
                     for ( int iN = 0; iN < aiNormalAverageIndex.length; iN++ )
                     {
                         int index = i + aiNormalAverageIndex[iN];

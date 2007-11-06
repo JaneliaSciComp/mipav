@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.JDialogBase.OKAction;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -16,7 +17,7 @@ import javax.swing.*;
  * @version  1.0
  * @see      RubberbandLivewire
  */
-public class JDialogLivewire extends JDialogBase {
+public class JDialogLivewire extends JDialogBase{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -36,17 +37,27 @@ public class JDialogLivewire extends JDialogBase {
 
     /** DOCUMENT ME! */
     private int selection = 0;
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates dialog for choosing cost function for live wire.
+     * 
+     * Note:  When user hits "Enter" keystroke, it is same as if user clicked "OK"
+     *        This code was already in the super constructor, but was not working
+     *        I brought it over to this constructor...but what made it work was by moving the
+     *        setVisible(true) from the end of the init() to the end of the constructor...weird.
      *
      * @param  parent  DOCUMENT ME!
      */
     public JDialogLivewire(Frame parent) {
         super(parent, true);
-        init();
+        init();     
+        setVisible(true);
+        
+        
+        
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -93,8 +104,9 @@ public class JDialogLivewire extends JDialogBase {
     private void init() {
         setTitle("Live wire cost function");
 
-        JPanel mainPanel = new JPanel(new GridLayout(3, 1));
-        mainPanel.setBorder(buildTitledBorder("Choose cost function for live wire"));
+        mainDialogPanel.setLayout(new GridLayout(3, 1));
+
+        mainDialogPanel.setBorder(buildTitledBorder("Choose cost function for live wire"));
 
         ButtonGroup group = new ButtonGroup();
 
@@ -102,31 +114,36 @@ public class JDialogLivewire extends JDialogBase {
         radioGradient.setForeground(Color.black);
         radioGradient.setFont(serif12);
         radioGradient.setSelected(true);
+        
         group.add(radioGradient);
-        mainPanel.add(radioGradient);
+        mainDialogPanel.add(radioGradient);
 
         radioMedial = new JRadioButton("Laplacian medialness");
         radioMedial.setForeground(Color.black);
         radioMedial.setFont(serif12);
         group.add(radioMedial);
-        mainPanel.add(radioMedial);
+        mainDialogPanel.add(radioMedial);
 
         radioIntensity = new JRadioButton("Intensity");
         radioIntensity.setForeground(Color.black);
         radioIntensity.setFont(serif12);
         group.add(radioIntensity);
-        mainPanel.add(radioIntensity);
-
+        mainDialogPanel.add(radioIntensity);
+        
         JPanel buttonPanel = new JPanel();
         buildOKButton();
         buttonPanel.add(OKButton);
+
         buildCancelButton();
         buttonPanel.add(cancelButton);
-
-        getContentPane().add(mainPanel);
+        
+        getContentPane().add(mainDialogPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+        
         pack();
-        setVisible(true);
+
     }
+
+
 
 }

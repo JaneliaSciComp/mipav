@@ -87,7 +87,7 @@ import java.util.concurrent.CountDownLatch;
  */
 
 public class AlgorithmFFT extends AlgorithmBase {
-
+	public static int count = 0;
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -652,18 +652,18 @@ public class AlgorithmFFT extends AlgorithmBase {
             displayError("Source Image is null");
 
             return;
-        }
+        } 
 
         
 
         if (destImage != null) {
-            calcStoreInDest();
-//            try{
-//                makeComplexData();
-//                perform(realData, imagData, newDimLengths[0], newDimLengths[1], newDimLengths[2]);
-//            }catch(InterruptedException e){
-//                
-//            }
+//            calcStoreInDest();
+            try{
+                makeComplexData();
+                perform(realData, imagData, newDimLengths[0], newDimLengths[1], newDimLengths[2]);
+            }catch(InterruptedException e){
+                
+            }
         } else {
             try{
                 makeComplexData();
@@ -2073,10 +2073,19 @@ public class AlgorithmFFT extends AlgorithmBase {
 
     public void perform(final float[] rdata, final float[] idata, final int xdim, final int ydim, final int zdim) throws InterruptedException{
 //        int ncores = MipavUtil.getAvailableCores();
-        final CountDownLatch doneSignalX = new CountDownLatch(MipavUtil.nthreads);
-        MipavUtil.swapSlices(rdata, idata, xdim, ydim, zdim, MipavConstants.SLICE_YZ);
 //        int n = xdim % ncores;
 //        int length = 0;
+    	if(threadStopped){
+    		return;
+    	}
+    	/**
+    	 * Initialize the progress step.
+    	 */
+    	setProgressStep((float)(1.0/(MipavUtil.nthreads * Math.log(xdim * ydim * zdim)/Math.log(2.0))));
+        fireProgressStateChanged(0, srcImage.getImageName(), "Running forward FFTs ...");
+ 
+        final CountDownLatch doneSignalX = new CountDownLatch(MipavUtil.nthreads);
+        MipavUtil.swapSlices(rdata, idata, xdim, ydim, zdim, MipavConstants.SLICE_YZ);
         for(int i = 0; i < MipavUtil.nthreads; i++){
             int nslices = zdim / MipavUtil.nthreads;
             final int sliceLen = xdim * ydim;
@@ -2092,6 +2101,10 @@ public class AlgorithmFFT extends AlgorithmBase {
             MipavUtil.threadPool.execute(task);
         }
         doneSignalX.await();
+    	if(threadStopped){
+    		return;
+    	}
+
         final CountDownLatch doneSignalY = new CountDownLatch(MipavUtil.nthreads);
         MipavUtil.swapSlices(rdata, idata, xdim, ydim, zdim, MipavConstants.SLICE_ZX);
         for(int i = 0; i < MipavUtil.nthreads; i++){
@@ -2107,8 +2120,11 @@ public class AlgorithmFFT extends AlgorithmBase {
             MipavUtil.threadPool.execute(task);
         }
         doneSignalY.await();
-        
-        final CountDownLatch doneSignalZ = new CountDownLatch(MipavUtil.nthreads);
+    	if(threadStopped){
+    		return;
+    	}
+
+    	final CountDownLatch doneSignalZ = new CountDownLatch(MipavUtil.nthreads);
         MipavUtil.swapSlices(rdata, idata, xdim, ydim, zdim, MipavConstants.SLICE_XY);
         for(int i = 0; i < MipavUtil.nthreads; i++){
             int nslices = ydim/MipavUtil.nthreads;
@@ -2123,9 +2139,15 @@ public class AlgorithmFFT extends AlgorithmBase {
             MipavUtil.threadPool.execute(task);
         }
         doneSignalZ.await();
+        
+    	if(threadStopped){
+    		return;
+    	}
 
         // In the frequency domain so complex data is needed
         center(rdata, idata);
+
+        fireProgressStateChanged(100, srcImage.getImageName(), "Running forward FFTs ...");
 
         try {
             destImage.reallocate(ModelStorageBase.COMPLEX, newDimLengths);
@@ -2213,6 +2235,11 @@ public class AlgorithmFFT extends AlgorithmBase {
      * @param length        the length for each slice.
      */
     private void doFFT(float[] rdata, float[] idata, int start, int end, int startDist, int endDist, int length) {
+    	if(threadStopped){
+    		return;
+    	}
+
+    	count++;
     	long startTime = System.nanoTime();
     	int i1 = 0, i2 = 0, i3 = 0, i4 = 0;
         for (int l = startDist; l < endDist; l <<= 1) {
@@ -2227,7 +2254,10 @@ public class AlgorithmFFT extends AlgorithmBase {
                 for(int j = start; j < end; j++){
                 	i3++;
                     int step = l << 1;
-                    for (int p = j + i; p < length ; p += step) {
+                    for (int p = j + i; p < length; p += step) {
+                    	if(threadStopped){
+                    		return;
+                    	}
                     	i4++;
                         int k = p + l;
                         float tempReal = rdata[k];
@@ -2241,10 +2271,13 @@ public class AlgorithmFFT extends AlgorithmBase {
                     }
                 }
             }
+            makeProgress(getProgressStep());
+            fireProgressStateChanged(getProgress(), srcImage.getImageName(), "Running forward FFTs ...");
         }
         long endTime = System.nanoTime();
         System.out.println("Start Time: " + startTime + ", End Time: " + endTime + ", Consumed Time: " + (endTime - startTime));
         System.out.println(i1 + ", " + i2 + ", " + i3 + ", " + i4);
+        System.out.println("The number of doFFT being called: " + count);
     }
 
     /**
@@ -4189,9 +4222,9 @@ public class AlgorithmFFT extends AlgorithmBase {
     public AlgorithmFFT(){
         
     }
+    
     public static void main(String[] argv){
-         AlgorithmFFT fft = new AlgorithmFFT();
-         fft.generateFFTIndices(256);
+    	
     }
 }
 

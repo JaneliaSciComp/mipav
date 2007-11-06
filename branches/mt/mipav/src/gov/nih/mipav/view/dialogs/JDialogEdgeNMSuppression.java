@@ -88,6 +88,8 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if (command.equals("Help")) {
+        	MipavUtil.showHelp("Edge022");
         }
     }
 
@@ -349,6 +351,8 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
         buttonPanel.add(OKButton);
         buildCancelButton();
         buttonPanel.add(cancelButton);
+        buildHelpButton();
+        buttonPanel.add(helpButton);
 
         getContentPane().add(mainPanelManager.getPanel(), BorderLayout.CENTER);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);

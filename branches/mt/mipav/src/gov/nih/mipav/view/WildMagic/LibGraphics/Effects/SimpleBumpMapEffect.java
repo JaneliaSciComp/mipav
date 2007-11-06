@@ -93,7 +93,8 @@ public class SimpleBumpMapEffect extends ShaderEffect
         // world-space direction is unit-length, but the geometric primitive
         // might have non-unit scaling in its model-to-world transformation, in
         // which case the normalization is necessary.
-        Vector3f kModelLightDirection = m_kLightDirection.neg();
+        Vector3f kModelLightDirection = new Vector3f(m_kLightDirection);
+        kModelLightDirection.negEquals();
         kModelLightDirection = pkMesh.World.InvertVector(kModelLightDirection);
 
         // Set the light vectors to (0,0,0) as a flag that the quantity has not
@@ -105,10 +106,24 @@ public class SimpleBumpMapEffect extends ShaderEffect
         int i;
         for (i = 0; i < iVQuantity; i++)
         {
-            pkVB.Color3(0,i, ColorRGB.BLACK);
+            pkVB.SetColor3(0,i, ColorRGB.BLACK);
         }
 
         int iTQuantity = pkMesh.GetTriangleQuantity();
+        
+        Vector3f[] apkV = new Vector3f[3];
+        Vector3f[] apkN = new Vector3f[3];
+        ColorRGB[] apkC = new ColorRGB[3];
+        Vector2f[] apkST = new Vector2f[3];
+        for ( i = 0; i < 3; i++ )
+        {
+            apkV[i] = new Vector3f();
+            apkN[i] = new Vector3f();
+            apkC[i] = new ColorRGB();
+            apkST[i] = new Vector2f();
+        }
+        
+        Vector3f kBitangent = new Vector3f();
         for (int iT = 0; iT < iTQuantity; iT++)
         {
             // Get the triangle vertices and attributes.
@@ -121,33 +136,21 @@ public class SimpleBumpMapEffect extends ShaderEffect
             iV0 = aiVerts[0];
             iV1 = aiVerts[1];
             iV2 = aiVerts[2];
-            Vector3f[] apkV = new Vector3f[]
-                {
-                    pkVB.Position3(iV0),
-                    pkVB.Position3(iV1),
-                    pkVB.Position3(iV2)
-                };
+            pkVB.GetPosition3(iV0, apkV[0]);
+            pkVB.GetPosition3(iV1, apkV[1]);
+            pkVB.GetPosition3(iV2, apkV[2]);
 
-            Vector3f[] apkN = new Vector3f[]
-                {
-                    pkVB.Normal3(iV0),
-                    pkVB.Normal3(iV1),
-                    pkVB.Normal3(iV2)
-                };
+            pkVB.GetNormal3(iV0, apkN[0]);
+            pkVB.GetNormal3(iV1, apkN[1]);
+            pkVB.GetNormal3(iV2, apkN[2]);
 
-            ColorRGB[] apkC = new ColorRGB[]
-                {
-                    pkVB.Color3(0,iV0),
-                    pkVB.Color3(0,iV1),
-                    pkVB.Color3(0,iV2)
-                };
+            pkVB.GetColor3(0,iV0,apkC[0]);
+            pkVB.GetColor3(0,iV1,apkC[1]);
+            pkVB.GetColor3(0,iV2,apkC[2]);
 
-            Vector2f[] apkST = new Vector2f[]
-                {
-                    pkVB.TCoord2(0,iV0),
-                    pkVB.TCoord2(0,iV1),
-                    pkVB.TCoord2(0,iV2)
-                };
+            pkVB.GetTCoord2(0,iV0, apkST[0]);
+            pkVB.GetTCoord2(0,iV1, apkST[1]);
+            pkVB.GetTCoord2(0,iV2, apkST[2]);
 
             for (i = 0; i < 3; i++)
             {
@@ -175,26 +178,29 @@ public class SimpleBumpMapEffect extends ShaderEffect
 
                     if ( i == 0 )
                     {
-                        pkVB.Color3(0,iV0, rkColor);
+                        pkVB.SetColor3(0,iV0, rkColor);
                     }
                     else if ( i == 1 )
                     {
-                        pkVB.Color3(0,iV1, rkColor);
+                        pkVB.SetColor3(0,iV1, rkColor);
                     }
                     else
                     {
-                        pkVB.Color3(0,iV2, rkColor);
+                        pkVB.SetColor3(0,iV2, rkColor);
                     }
                     continue;
                 }
 
                 // Project T into the tangent plane by projecting out the surface
                 // normal N, and then make it unit length.
-                kTangent.subEquals( apkN[i].scale(apkN[i].Dot(kTangent)) );
+                Vector3f kScale = new Vector3f(apkN[i]);
+                kScale.scaleEquals(apkN[i].Dot(kTangent));
+                kTangent.subEquals( kScale );
+                kScale = null;
                 kTangent.Normalize();
 
                 // Compute the bitangent B, another tangent perpendicular to T.
-                Vector3f kBitangent = apkN[i].UnitCross(kTangent);
+                apkN[i].UnitCross(kTangent, kBitangent);
 
                 // The set {T,B,N} is a right-handed orthonormal set.  The
                 // negated light direction U = -D is represented in this
@@ -211,17 +217,25 @@ public class SimpleBumpMapEffect extends ShaderEffect
                 rkColor.B( 0.5f*(fDotUN + 1.0f) );
                 if ( i == 0 )
                 {
-                    pkVB.Color3(0,iV0, rkColor);
+                    pkVB.SetColor3(0,iV0, rkColor);
                 }
                 else if ( i == 1 )
                 {
-                    pkVB.Color3(0,iV1, rkColor);
+                    pkVB.SetColor3(0,iV1, rkColor);
                 }
                 else
                 {
-                    pkVB.Color3(0,iV2, rkColor);
+                    pkVB.SetColor3(0,iV2, rkColor);
                 }
             }
+        }
+        kBitangent = null;
+        for ( i = 0; i < 3; i++ )
+        {
+            apkV[i] = null;
+            apkN[i] = null;
+            apkC[i] = null;
+            apkST[i] = null;
         }
     }
 
@@ -243,12 +257,16 @@ public class SimpleBumpMapEffect extends ShaderEffect
                                       Vector3f rkTangent)
     {
         // Compute the change in positions at the vertex P0.
-        Vector3f kDP1 = rkPos1.sub( rkPos0 );
-        Vector3f kDP2 = rkPos2.sub( rkPos0 );
+        Vector3f kDP1 = new Vector3f();
+        rkPos1.sub( rkPos0, kDP1 );
+        Vector3f kDP2 = new Vector3f();
+        rkPos2.sub( rkPos0, kDP2 );
 
         if (Math.abs(kDP1.Length()) < Mathf.ZERO_TOLERANCE
             ||  Math.abs(kDP2.Length()) < Mathf.ZERO_TOLERANCE)
-        {
+        {        
+            kDP1 = null;
+            kDP2 = null;
             // The triangle is very small, call it degenerate.
             return false;
         }
@@ -262,7 +280,9 @@ public class SimpleBumpMapEffect extends ShaderEffect
             // The triangle effectively has no variation in the v texture
             // coordinate.
             if (Math.abs(fDU1) < Mathf.ZERO_TOLERANCE)
-            {
+            {        
+                kDP1 = null;
+                kDP2 = null;
                 // The triangle effectively has no variation in the u coordinate.
                 // Since the texture coordinates do not vary on this triangle,
                 // treat it as a degenerate parametric surface.
@@ -271,7 +291,10 @@ public class SimpleBumpMapEffect extends ShaderEffect
             
             // The variation is effectively all in u, so set the tangent vector
             // to be T = dP/du.
-            rkTangent = kDP1.div(fDU1);
+            rkTangent.SetData(kDP1);
+            rkTangent.divEquals(fDU1);        
+            kDP1 = null;
+            kDP2 = null;
             return true;
         }
 
@@ -281,7 +304,9 @@ public class SimpleBumpMapEffect extends ShaderEffect
         float fDV2 = rkTCoord2.Y() - rkTCoord0.Y();
         float fDet = fDV1*fDU2 - fDV2*fDU1;
         if (Math.abs(fDet) < Mathf.ZERO_TOLERANCE)
-        {
+        {        
+            kDP1 = null;
+            kDP2 = null;
             // The triangle vertices are collinear in parameter space, so treat
             // this as a degenerate parametric surface.
             return false;
@@ -289,7 +314,14 @@ public class SimpleBumpMapEffect extends ShaderEffect
         
         // The triangle vertices are not collinear in parameter space, so choose
         // the tangent to be dP/du = (dv1*dP2-dv2*dP1)/(dv1*du2-dv2*du1)
-        rkTangent = kDP2.scale(fDV1).sub(kDP1.scale(fDV2)).scale((float)(1.0/fDet));
+        Vector3f kTemp = new Vector3f(kDP2);
+        kTemp.scaleEquals(fDV1);
+        Vector3f kScale = new Vector3f(kDP1);
+        kScale.scaleEquals(fDV2);
+        kTemp.subEquals(kScale);
+        kTemp.scale((float)(1.0/fDet), rkTangent);
+        kScale = null;
+        kTemp = null;
         return true;
     }
 

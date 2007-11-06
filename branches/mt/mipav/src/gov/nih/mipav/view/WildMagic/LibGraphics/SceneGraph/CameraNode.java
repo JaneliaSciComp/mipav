@@ -104,11 +104,15 @@ public class CameraNode extends Node
 
         if (m_spkCamera != null)
         {
+            Vector3f kD = new Vector3f();
+            World.GetRotate().GetColumn(0, kD);
+            Vector3f kU = new Vector3f();
+            World.GetRotate().GetColumn(1, kU);
+            Vector3f kR = new Vector3f();
+            World.GetRotate().GetColumn(2, kR);
             m_spkCamera.SetFrame(
                                  World.GetTranslate(),
-                                 World.GetRotate().GetColumn(0),
-                                 World.GetRotate().GetColumn(1),
-                                 World.GetRotate().GetColumn(2));
+                                 kD,kU,kR);
         }
     }
 

@@ -17,7 +17,7 @@ import java.util.*;
  *           <p>$Logfile: /mipav/src/gov/nih/mipav/view/ViewVOIVector.java $ $Revision: 10 $ $Date: 3/31/03 3:57p $</p>
  */
 
-public class ViewVOIVector extends Vector {
+public class ViewVOIVector extends Vector <VOI> {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -55,25 +55,17 @@ public class ViewVOIVector extends Vector {
      * @exception  IllegalArgumentException  for any argument <code>o</code> which is not an instance of <code>
      *                                       gov.nih.mipav.model.structures.VOI</code>
      */
-    public void addElement(Object o) {
-        VOI voi = null;
-
-        // check that object is a VOI
-        if (!(o instanceof VOI)) {
-            throw new IllegalArgumentException();
-        }
-
-        voi = (VOI) o;
+    public void addElement(VOI newVOI) {
 
         // check the voi name, fix if necessary
-        while (contains(voi)) {
-            voi.setName(buildName(voi.getName()));
+        while (contains(newVOI)) {
+        	newVOI.setName(buildName(newVOI.getName()));
         }
 
         // add the voi to the vector
-        super.addElement(voi);
+        super.addElement(newVOI);
 
-        Preferences.debug("Add voi: name = " + voi.getName() + "\n");
+        Preferences.debug("Add voi: name = " + newVOI.getName() + "\n");
 
     }
 

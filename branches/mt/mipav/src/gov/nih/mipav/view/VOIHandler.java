@@ -282,9 +282,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                             if (i == (nVOI - 1)) {
                                 break;
                             } else if (i == (nVOI - 2)) { // already at top
-                                VOIs.add(VOIs.VOIAt(i).clone());
+                                VOIs.add((VOI)VOIs.VOIAt(i).clone());
                             } else {
-                                VOIs.insertElementAt(VOIs.VOIAt(i).clone(), i + 2);
+                                VOIs.insertElementAt((VOI)VOIs.VOIAt(i).clone(), i + 2);
                             }
 
                             VOIs.removeElementAt(i);
@@ -294,17 +294,17 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                             if (i == 0) {
                                 break;
                             } else {
-                                VOIs.insertElementAt(VOIs.VOIAt(i).clone(), i - 1);
+                                VOIs.insertElementAt((VOI)VOIs.VOIAt(i).clone(), i - 1);
                             }
 
                             VOIs.removeElementAt(i + 1);
 
                         } else if (direction == FRONT) {
-                            VOIs.add(VOIs.VOIAt(i).clone());
+                            VOIs.add((VOI)VOIs.VOIAt(i).clone());
                             VOIs.removeElementAt(i);
 
                         } else if (direction == BACK) {
-                            VOIs.add(0, VOIs.VOIAt(i).clone());
+                            VOIs.add(0, (VOI)VOIs.VOIAt(i).clone());
                             VOIs.removeElementAt(i + 1);
 
                         }
@@ -5366,7 +5366,70 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         undoVOI.setAllActive(false);
         compImage.getActiveImage().notifyImageDisplayListeners(null, true);
     }
+    
+    /**
+     * Function (moved out from vjframeimage, for use by several classes)
+     * that determines if a compatible (current) voi is present (otherwise need a new one)
+     * @param VOIs
+     * @param type
+     * @param lastVOI_UID
+     * @param controls
+     * @return
+     */
+    public boolean checkForVOICompatibility(VOIVector VOIs, int type, int lastVOI_UID,
+    		ViewControlsImage controls) {
 
+        // System.err.println("Type is: " + type);
+        int numVOI = VOIs.size();
+        int lastType = -1;
+
+        if (numVOI == 0) {
+            return true;
+        } else if (numVOI == 1) {
+            lastType = ((VOI) (VOIs.elementAt(0))).getCurveType();
+        } else {
+
+            for (int i = 0; i < numVOI; i++) {
+
+                if (((VOI) (VOIs.elementAt(i))).getUID() == lastVOI_UID) {
+                    lastType = ((VOI) (VOIs.elementAt(i))).getCurveType();
+
+                    break;
+                }
+            }
+        }
+
+        if (lastType == -1) {
+            return true;
+        }
+
+        switch (type) {
+
+            case VOI.CONTOUR:
+            case VOI.POLYLINE:
+                if ((lastType != VOI.CONTOUR) && (lastType != VOI.POLYLINE)) {
+                    int id = (((VOI) (VOIs.lastElement())).getID() + 1);
+
+                    controls.setVOIColor(id);
+
+                    return false;
+                }
+
+                break;
+
+            default:
+                if (type != lastType) {
+                    int id = (((VOI) (VOIs.lastElement())).getID() + 1);
+
+                    controls.setVOIColor(id);
+
+                    return false;
+                }
+        }
+
+        return true;
+    }
+    
     /**
      * Fires a VOI selection change event based on the VOI.
      *

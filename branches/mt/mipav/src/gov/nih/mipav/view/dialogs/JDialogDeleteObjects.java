@@ -117,6 +117,8 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if (command.equals("Help")) {
+        	MipavUtil.showHelp("Mor006Del");
         }
     }
 
@@ -611,6 +613,8 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
         buttonPanel.add(OKButton);
         buildCancelButton();
         buttonPanel.add(cancelButton);
+        buildHelpButton();
+        buttonPanel.add(helpButton);
 
         getContentPane().add(mainPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);

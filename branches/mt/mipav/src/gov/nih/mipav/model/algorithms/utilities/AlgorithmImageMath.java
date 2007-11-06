@@ -344,7 +344,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
         			
         	}
         	
-        	AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, newType, min, max, bestMin, bestMax,
+        	AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, newType, min, max, min, max,
                     													false);
         	changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
         	changeTypeAlgo.run();
@@ -529,6 +529,10 @@ public class AlgorithmImageMath extends AlgorithmBase {
 
                                 case CONSTANT:
                                     buffer[i] = value;
+                                    break;
+                                    
+                                case ABSOLUTE_VALUE:
+                                    buffer[i] = Math.abs(buffer[i]);
                                     break;
 
                                 default:
@@ -897,6 +901,30 @@ public class AlgorithmImageMath extends AlgorithmBase {
 
         min = srcImage.getMin();
         max = srcImage.getMax();
+        
+        int mod = length / 20;
+
+        if (srcImage.getNDims() == 5) {
+            f = srcImage.getExtents()[4];
+        } else {
+            f = 1;
+        }
+
+        if (srcImage.getNDims() >= 4) {
+            t = srcImage.getExtents()[3];
+        } else {
+            t = 1;
+        }
+
+        if (srcImage.getNDims() >= 3) {
+            z = srcImage.getExtents()[2];
+        } else {
+            z = 1;
+        }
+
+        int volume = z * length;
+        int space4D = t * volume;
+        int totalLength = f * t * z * length;
 
         if (opType == LOG) {
 
@@ -983,6 +1011,26 @@ public class AlgorithmImageMath extends AlgorithmBase {
                         }
 
                         break;
+                        
+                    case SUM:
+                        if (min < 0) {
+                            bestMin = min * f * t * z;
+                        }
+                        else {
+                            bestMin = 0;
+                        }
+                        if (max > 0) {
+                            bestMax = max * f * t * z;
+                        }
+                        else {
+                            bestMax = 0;
+                        }
+                        
+                        if ((bestMin < clipMin) || (bestMax > clipMax)) {
+                            newType = findType(srcImage.getType());
+                        }
+
+                        break;
 
                     default:
                         break;
@@ -1001,32 +1049,6 @@ public class AlgorithmImageMath extends AlgorithmBase {
 
             return;
         }
-
-        
-
-        int mod = length / 20;
-
-        if (srcImage.getNDims() == 5) {
-            f = srcImage.getExtents()[4];
-        } else {
-            f = 1;
-        }
-
-        if (srcImage.getNDims() >= 4) {
-            t = srcImage.getExtents()[3];
-        } else {
-            t = 1;
-        }
-
-        if (srcImage.getNDims() >= 3) {
-            z = srcImage.getExtents()[2];
-        } else {
-            z = 1;
-        }
-
-        int volume = z * length;
-        int space4D = t * volume;
-        int totalLength = f * t * z * length;
 
         for (m = 0; (m < f) && !threadStopped; m++) {
 
@@ -1155,8 +1177,19 @@ public class AlgorithmImageMath extends AlgorithmBase {
             if (opType == AVERAGE) {
 
                 for (i = 0; i < sumAverageBuffer.length; i++) {
-                    sumAverageBuffer[i] /= z;
+                    sumAverageBuffer[i] /= (f * t * z);
                 }
+            }
+            
+            if ((opType == SUM) && (clipMode == CLIP)) {
+                for (i = 0; i < length; i++) {
+
+                    if (sumAverageBuffer[i] > clipMax) {
+                        sumAverageBuffer[i] = clipMax;
+                    } else if (sumAverageBuffer[i] < clipMin) {
+                        sumAverageBuffer[i] = clipMin;
+                    }
+                }   
             }
 
             try {
@@ -1474,6 +1507,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
         boolean loop = true;
         int endType;
         double bestMin, bestMax;
+        int z, t;
 
         endType = stType;
 
@@ -1574,6 +1608,47 @@ public class AlgorithmImageMath extends AlgorithmBase {
                 while (loop == true) {
 
                     if (testType(endType, value, value) == false) {
+                        endType = promoteType(endType);
+
+                        if (endType == ModelStorageBase.DOUBLE) {
+                            loop = false;
+                        }
+                    } else {
+                        loop = false;
+                    }
+                }
+
+                break;
+                
+            case SUM:
+                if (srcImage.getNDims() >= 3) {
+                    z = srcImage.getExtents()[2];
+                }
+                else {
+                    z = 1;
+                }
+                if (srcImage.getNDims() >= 4) {
+                    t = srcImage.getExtents()[3];
+                }
+                else {
+                    t = 1;
+                }
+                if (min < 0) {
+                    bestMin = min * t * z;
+                }
+                else {
+                    bestMin = 0;
+                }
+                if (max > 0) {
+                    bestMax = max * t * z;
+                }
+                else {
+                    bestMax = 0;
+                }
+                
+                while (loop == true) {
+
+                    if (testType(endType, bestMin, bestMax) == false) {
                         endType = promoteType(endType);
 
                         if (endType == ModelStorageBase.DOUBLE) {

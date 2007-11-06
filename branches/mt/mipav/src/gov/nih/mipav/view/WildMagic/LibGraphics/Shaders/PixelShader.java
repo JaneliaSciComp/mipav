@@ -28,6 +28,14 @@ public class PixelShader extends Shader
     {
         super(rkShaderName);
     }
+    
+    /** Create a vertex shader with the input shader name:
+     * @param rkShaderName, shader name.
+     */
+    public PixelShader (String rkShaderName, boolean bUnique)
+    {
+        super(rkShaderName, bUnique);
+    }
 
     /** Return the pixel program in this pixel shader.
      * @return the pixel program in this pixel shader.

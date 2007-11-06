@@ -451,8 +451,14 @@ public class JDialogVolViewResample extends JDialogBase {
             }
             else if ( m_kVolViewType.equals( "WMVolTriplanar" ) )
             {
-                sr = new ViewJFrameVolumeViewWM(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
+            	sr = new ViewJFrameVolumeViewWM(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
                                                 rightPanelRenderMode, this);
+                      
+            } 
+            else if ( m_kVolViewType.equals( "WMStandAlone" ) )
+            {   
+            	sr = new ViewJFrameVolumeViewWildMagic(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
+                        rightPanelRenderMode, this);          
             }
             sr.setImageOriginal(imageAOriginal);
             
@@ -519,7 +525,7 @@ public class JDialogVolViewResample extends JDialogBase {
      * Build the resample dialog.
      */
     public void init() {
-        if ( m_kVolViewType.equals( "WMVolTriplanar" ) )
+        if ( m_kVolViewType.equals( "WMVolTriplanar" ) || m_kVolViewType.equals( "WMStandAlone" ) )
         {
             initWM();
             return;
@@ -1118,7 +1124,7 @@ public class JDialogVolViewResample extends JDialogBase {
             }
         } else if (radioFlythruL.isSelected()) {
             leftPanelRenderMode = ViewJFrameVolumeView.ENDOSCOPY;
-            if ( !m_kVolViewType.equals( "WMVolTriplanar" ) )
+            if ( !m_kVolViewType.equals( "WMVolTriplanar" ) && !m_kVolViewType.equals( "WMStandAlone" ))
             {
                 radioShearwarpR.setSelected(false);
                 radioShearwarpR.setEnabled(false);
@@ -1133,7 +1139,7 @@ public class JDialogVolViewResample extends JDialogBase {
             }
         } else if (radioSurfaceView.isSelected()) {
             leftPanelRenderMode = ViewJFrameVolumeView.SURFACEVIEW;
-            if ( !m_kVolViewType.equals( "WMVolTriplanar" ) )
+            if ( !m_kVolViewType.equals( "WMVolTriplanar" ) && !m_kVolViewType.equals( "WMStandAlone" ))
             {
                 radioShearwarpR.setSelected(false);
                 radioShearwarpR.setEnabled(false);
@@ -1148,7 +1154,7 @@ public class JDialogVolViewResample extends JDialogBase {
             }
         }
 
-        if ( !m_kVolViewType.equals( "WMVolTriplanar" ) )
+        if ( !m_kVolViewType.equals( "WMVolTriplanar" ) && !m_kVolViewType.equals( "WMStandAlone" ) )
         {
             if (radioSurfaceR.isSelected()) {
                 rightPanelRenderMode = ViewJFrameVolumeView.SURFACE;

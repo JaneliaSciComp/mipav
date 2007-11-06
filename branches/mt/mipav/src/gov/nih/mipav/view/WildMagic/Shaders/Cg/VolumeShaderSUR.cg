@@ -559,7 +559,7 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
 
     // For some profiles the number of loop iterations must be determined at
     // compile time:
-    for( int i = 0; i < steps[0]; i++ )
+    for( int i = 0; i < 450; i++ )
     {
         // axis-aligned clipping:
         if ( (DoClip != 0) && myClip( position, clipX, clipXInv, clipY, clipYInv, clipZ, clipZInv ) )
@@ -745,7 +745,7 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
             break3 = true;
         }
 
-        for( int i = 0; i < steps[0]; i++ )
+        for( int i = 0; i < 450; i++ )
         {
             // Light0:
             if ( !break1 )

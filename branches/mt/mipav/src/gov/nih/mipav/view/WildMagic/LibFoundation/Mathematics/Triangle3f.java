@@ -26,29 +26,6 @@ public class Triangle3f
     /** construction, uninitialized. */
     public Triangle3f () {}  
 
-    /** construction
-     * @param rkV0, triangle point0
-     * @param rkV1, triangle point1
-     * @param rkV2, triangle point2
-     */
-    public Triangle3f (final Vector3f rkV0, final Vector3f rkV1,
-                       final Vector3f rkV2)
-    {
-        V[0] = rkV0;
-        V[1] = rkV1;
-        V[2] = rkV2;
-    }
-
-    /** construction
-     * @param akV, triangle points [3]
-     */
-    public Triangle3f (final Vector3f[] akV)
-    {
-        for (int i = 0; i < 3; i++)
-        {
-            V[i] = akV[i];
-        }
-    }
 
     /**
      * delete memory
@@ -70,9 +47,12 @@ public class Triangle3f
      */
     public float DistanceTo (final Vector3f rkQ)
     {
-        Vector3f kDiff = V[0].sub( rkQ );
-        Vector3f kE0 = V[1].sub( V[0] );
-        Vector3f kE1 = V[2].sub( V[0] );
+        Vector3f kDiff = new Vector3f();
+        V[0].sub( rkQ, kDiff );
+        Vector3f kE0 = new Vector3f();
+        V[1].sub( V[0], kE0 );
+        Vector3f kE1 = new Vector3f();
+        V[2].sub( V[0], kE1 );
         float fA00 = kE0.SquaredLength();
         float fA01 = kE0.Dot(kE1);
         float fA11 = kE1.SquaredLength();
@@ -260,9 +240,11 @@ public class Triangle3f
                 }
             }
         }
-
+        kDiff = null;
+        kE0 = null;
+        kE1 = null;
         return (float)Math.sqrt(Math.abs(fSqrDist));
     }
     /** Three triangle points: */
-    public Vector3f[] V = new Vector3f[3];
+    public Vector3f[] V = new Vector3f[]{ new Vector3f(), new Vector3f(), new Vector3f()};
 }

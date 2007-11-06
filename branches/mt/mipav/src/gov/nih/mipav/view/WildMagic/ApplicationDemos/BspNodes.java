@@ -137,7 +137,8 @@ public class BspNodes extends JavaApplication3D
         Vector3f kCLoc = new Vector3f(0.0f,-1.0f,0.25f);
         Vector3f kCDir = new Vector3f(0.0f,1.0f,0.0f);
         Vector3f kCUp = new Vector3f(0.0f,0.0f,1.0f);
-        Vector3f kCRight = kCDir.Cross(kCUp);
+        Vector3f kCRight = new Vector3f();
+        kCDir.Cross(kCUp, kCRight);
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene();
@@ -204,7 +205,10 @@ public class BspNodes extends JavaApplication3D
         TriMesh pkGround = kSM.Rectangle(2,2,16.0f,16.0f);
         for (int i = 0; i < pkGround.VBuffer.GetVertexQuantity(); i++)
         {
-            pkGround.VBuffer.TCoord2(0,i, pkGround.VBuffer.TCoord2(0,i).scale(128.0f));
+            pkGround.VBuffer.SetTCoord2(0,i,
+                    pkGround.VBuffer.GetTCoord2fX(0,i) * 128.0f,
+                    pkGround.VBuffer.GetTCoord2fY(0,i) * 128.0f);
+
         }
 
         ShaderEffect pkEffect = new TextureEffect("Horizontal");
@@ -324,7 +328,7 @@ public class BspNodes extends JavaApplication3D
         Vector3f kTrn = new Vector3f(0.5f*(rkV0.X()+rkV1.X()),0.5f*(rkV0.Y()+rkV1.Y()),
                                      fYExtent+1e-03f);
         Matrix3f kRot = new Matrix3f(Vector3f.UNIT_Z, (float)Math.atan2(kDir.Y(),kDir.X()));
-        kRot = kRot.mult( new Matrix3f(Vector3f.UNIT_X,Mathf.HALF_PI) );
+        kRot.multEquals( new Matrix3f(Vector3f.UNIT_X,Mathf.HALF_PI) );
 
         BspNode pkBsp = new BspNode(new Plane3f(kNormal,fConstant));
 
@@ -337,7 +341,7 @@ public class BspNodes extends JavaApplication3D
         pkRect.Local.SetRotate(kRot);
         for (int i = 0; i < 4; i++)
         {
-            pkRect.VBuffer.Color3(0,i, rkColor);
+            pkRect.VBuffer.SetColor3(0,i, rkColor);
         }
 
         pkRect.AttachEffect(new VertexColor3Effect());

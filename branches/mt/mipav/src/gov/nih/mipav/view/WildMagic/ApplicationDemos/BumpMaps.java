@@ -147,7 +147,8 @@ public class BumpMaps extends JavaApplication3D
             kCLoc = new Vector3f(0.0f,0.0f,3.0f);
         }
         Vector3f kCUp = new Vector3f(0.0f,1.0f,0.0f);
-        Vector3f kCRight = kCDir.Cross(kCUp);
+        Vector3f kCRight = new Vector3f();
+        kCDir.Cross(kCUp, kCRight);
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene();
@@ -234,10 +235,14 @@ public class BumpMaps extends JavaApplication3D
         int iVQuantity = pkVB.GetVertexQuantity();
         for (int i = 0; i < iVQuantity; i++)
         {
-            pkVB.TCoord2(0,i, pkVB.TCoord2(0,i).scale(4.0f));
+            pkVB.SetTCoord2(0,i,
+                         pkVB.GetTCoord2fX(0,i) * 4.0f,
+                         pkVB.GetTCoord2fY(0,i) * 4.0f);
             if (m_bUseBumpMap)
             {
-                pkVB.TCoord2(1,i, pkVB.TCoord2(1,i).scale(4.0f));
+                pkVB.SetTCoord2(1,i,
+                             pkVB.GetTCoord2fX(1,i) * 4.0f,
+                             pkVB.GetTCoord2fY(1,i) * 4.0f);
             }
         }
 
@@ -292,34 +297,34 @@ public class BumpMaps extends JavaApplication3D
 
         VertexBuffer pkVBuffer = new VertexBuffer(kAttr,4);
 
-        pkVBuffer.Position3(0, new Vector3f(-1.0f,-1.0f,0.0f));
-        pkVBuffer.Position3(1, new Vector3f(+1.0f,-1.0f,0.0f));
-        pkVBuffer.Position3(2, new Vector3f(+1.0f,+1.0f,0.0f));
-        pkVBuffer.Position3(3, new Vector3f(-1.0f,+1.0f,0.0f));
+        pkVBuffer.SetPosition3(0,-1.0f,-1.0f,0.0f);
+        pkVBuffer.SetPosition3(1,+1.0f,-1.0f,0.0f);
+        pkVBuffer.SetPosition3(2,+1.0f,+1.0f,0.0f);
+        pkVBuffer.SetPosition3(3,-1.0f,+1.0f,0.0f);
 
         if (m_bUseBumpMap)
         {
-            pkVBuffer.Normal3(0, Vector3f.UNIT_Z);
-            pkVBuffer.Normal3(1, Vector3f.UNIT_Z);
-            pkVBuffer.Normal3(2, Vector3f.UNIT_Z);
-            pkVBuffer.Normal3(3, Vector3f.UNIT_Z);
+            pkVBuffer.SetNormal3(0, Vector3f.UNIT_Z);
+            pkVBuffer.SetNormal3(1, Vector3f.UNIT_Z);
+            pkVBuffer.SetNormal3(2, Vector3f.UNIT_Z);
+            pkVBuffer.SetNormal3(3, Vector3f.UNIT_Z);
 
-            pkVBuffer.TCoord2(0,0, new Vector2f(0.0f,0.0f));
-            pkVBuffer.TCoord2(0,1, new Vector2f(1.0f,0.0f));
-            pkVBuffer.TCoord2(0,2, new Vector2f(1.0f,1.0f));
-            pkVBuffer.TCoord2(0,3, new Vector2f(0.0f,1.0f));
+            pkVBuffer.SetTCoord2(0,0,0.0f,0.0f);
+            pkVBuffer.SetTCoord2(0,1,1.0f,0.0f);
+            pkVBuffer.SetTCoord2(0,2,1.0f,1.0f);
+            pkVBuffer.SetTCoord2(0,3,0.0f,1.0f);
 
-            pkVBuffer.TCoord2(1,0, new Vector2f(0.0f,0.0f));
-            pkVBuffer.TCoord2(1,1, new Vector2f(1.0f,0.0f));
-            pkVBuffer.TCoord2(1,2, new Vector2f(1.0f,1.0f));
-            pkVBuffer.TCoord2(1,3, new Vector2f(0.0f,1.0f));
+            pkVBuffer.SetTCoord2(1,0,0.0f,0.0f);
+            pkVBuffer.SetTCoord2(1,1,1.0f,0.0f);
+            pkVBuffer.SetTCoord2(1,2,1.0f,1.0f);
+            pkVBuffer.SetTCoord2(1,3,0.0f,1.0f);
         }
         else
         {
-            pkVBuffer.TCoord2(0,0, new Vector2f(0.0f,0.0f));
-            pkVBuffer.TCoord2(0,1, new Vector2f(1.0f,0.0f));
-            pkVBuffer.TCoord2(0,2, new Vector2f(1.0f,1.0f));
-            pkVBuffer.TCoord2(0,3, new Vector2f(0.0f,1.0f));
+            pkVBuffer.SetTCoord2(0,0,0.0f,0.0f);
+            pkVBuffer.SetTCoord2(0,1,1.0f,0.0f);
+            pkVBuffer.SetTCoord2(0,2,1.0f,1.0f);
+            pkVBuffer.SetTCoord2(0,3,0.0f,1.0f);
         }
 
         IndexBuffer pkIBuffer = new IndexBuffer(6);

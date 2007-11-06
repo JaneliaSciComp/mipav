@@ -32,6 +32,11 @@ public abstract class GraphicsObject
     {
         m_kName = null;
         //DetachAllControllers();
+        try {
+            super.finalize();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
     }
     // copying system
     // public:

@@ -77,7 +77,7 @@ public class VOIVector extends ViewVOIVector {
      * @exception  IllegalArgumentException  for any argument <code>o</code> which is not an instance of <code>
      *                                       gov.nih.mipav.model.structures.VOI</code>
      */
-    public boolean add(Object o) {
+    public boolean add(VOI o) {
         VOI voi = null;
 
         // check that object is a VOI
@@ -117,7 +117,7 @@ public class VOIVector extends ViewVOIVector {
      *
      * @param  o  index of the VOI
      */
-    public void addElement(Object o) {
+    public void addElement(VOI o) {
         add(o); // add the voi to the vector
     }
 
@@ -179,7 +179,7 @@ public class VOIVector extends ViewVOIVector {
      * @exception  IllegalArgumentException  for any argument <code>o</code> which is not an instance of <code>
      *                                       gov.nih.mipav.model.structures.VOI</code>
      */
-    public void insertElementAt(Object o, int index) {
+    public void insertElementAt(VOI o, int index) {
 
         // check that object is a VOI
         if (!(o instanceof VOI)) {
@@ -208,10 +208,10 @@ public class VOIVector extends ViewVOIVector {
      *
      * @return  DOCUMENT ME!
      */
-    public Object remove(int index) {
+    public VOI remove(int index) {
 
         try {
-            VOI voi = (VOI) super.remove(index);
+            VOI voi = super.remove(index);
             fireVOIremoved(voi);
 
             return voi;

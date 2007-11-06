@@ -68,11 +68,11 @@ public class VertexProgram extends Program
     }
 
     /** Delete memory. */
-    public void finalize ()
+    public void Remove ()
     {
         ms_Options--;
         VertexProgramCatalog.GetActive().Remove(this);
-        super.finalize();
+        super.Remove();
     }
 
     /** Create a VertexProgram, if the profile has not been set, or has been

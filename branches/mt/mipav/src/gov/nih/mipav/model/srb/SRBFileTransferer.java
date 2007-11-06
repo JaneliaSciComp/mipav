@@ -91,7 +91,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
     public SRBFileTransferer() {
         threadSeperated = true;
     }
-
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -114,6 +114,20 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         this.tempDir.deleteOnExit();
     }
 
+    public void initFileSystemNDARSend() {
+    	sourceFileSystem = new LocalFileSystem();
+    	
+    	if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
+            new JDialogLoginSRB("Connect to", false);
+
+            if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
+                return;
+            }
+        }
+    	
+    	targetFileSystem = JDialogLoginSRB.srbFileSystem;
+    }
+    
     /**
      * Saves the memory image to the local temporary files and returns the file name list.
      *
@@ -882,23 +896,22 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
      * @return  the target file consisted of the target directory and relative file name of the source file name related
      *          to the source base directory.
      */
-    private GeneralFile createTargetFile(String targetDirName, String baseSourceDirName, String sourceFileName) {
+    public GeneralFile createTargetFile(String targetDirName, String baseSourceDirName, String sourceFileName) {
 
         if ((targetDirName == null) || (baseSourceDirName == null) || (sourceFileName == null)) {
             return null;
         }
-
+        
         if ((sourceFileSystem == null) || (targetFileSystem == null)) {
             return null;
         }
-
+        
         String sourcePathSeparator = SRBUtility.getPathSeparator(sourceFileSystem);
         String targetPathSeparator = SRBUtility.getPathSeparator(targetFileSystem);
 
         if (sourceFileName.indexOf(baseSourceDirName) != 0) {
             return null;
         }
-
         String targetFileName = targetDirName + sourceFileName.substring(baseSourceDirName.length());
 
         if (!sourcePathSeparator.equals(targetPathSeparator)) {

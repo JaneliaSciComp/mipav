@@ -301,20 +301,21 @@ public class Quaternion
         // the comparison is robust.  In this case, the A = pi and any axis
         // perpendicular to V1 may be used as the rotation axis.
 
-        Vector3f kBisector = rkV1.add( rkV2 );
+        Vector3f kBisector = new Vector3f();
+        rkV1.add( rkV2, kBisector );
         kBisector.Normalize();
 
         float fCosHalfAngle = rkV1.Dot(kBisector);
-        Vector3f kCross = null;
-
         m_afTuple[0] = fCosHalfAngle;
 
         if (fCosHalfAngle != 0.0)
         {
-            kCross = rkV1.Cross(kBisector);
+            Vector3f kCross = new Vector3f();
+            rkV1.Cross(kBisector, kCross);
             m_afTuple[1] = kCross.X();
             m_afTuple[2] = kCross.Y();
             m_afTuple[3] = kCross.Z();
+            kCross = null;
         }
         else
         {
@@ -340,6 +341,7 @@ public class Quaternion
                 m_afTuple[3] = -rkV1.Y()*fInvLength;
             }
         }
+        kBisector = null;
     }
 
     /*

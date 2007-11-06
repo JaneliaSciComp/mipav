@@ -132,6 +132,8 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if (command.equals("Help")) {
+        	MipavUtil.showHelp("Mor009FH");
         }
     }
     
@@ -696,6 +698,8 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
         buttonPanel.add(OKButton);
         buildCancelButton();
         buttonPanel.add(cancelButton);
+        buildHelpButton();
+        buttonPanel.add(helpButton);
 
         JPanel controlPanel = new JPanel();
 

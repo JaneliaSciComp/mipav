@@ -99,9 +99,12 @@ public class IntrSphere3Sphere3f extends Intersector
      */
     public boolean Test ()
     {
-        Vector3f kDiff = m_rkSphere1.Center.sub( m_rkSphere0.Center );
+        Vector3f kDiff = new Vector3f();
+        m_rkSphere1.Center.sub( m_rkSphere0.Center, kDiff );
         float fRSum = m_rkSphere0.Radius + m_rkSphere1.Radius;
-        return (kDiff.SquaredLength() <= fRSum*fRSum);
+        boolean bResult = (kDiff.SquaredLength() <= fRSum*fRSum);
+        kDiff = null;
+        return bResult;
     }
 
     /**
@@ -111,7 +114,7 @@ public class IntrSphere3Sphere3f extends Intersector
     public boolean Find ()
     {
         // plane of intersection must have N as its normal
-        m_kNormal = m_rkSphere1.Center.sub( m_rkSphere0.Center );
+        m_rkSphere1.Center.sub( m_rkSphere0.Center, m_kNormal );
         float fNSqrLen = m_kNormal.SquaredLength();
         float fRSum = m_rkSphere0.Radius + m_rkSphere1.Radius;
         if (fNSqrLen > fRSum*fRSum)
@@ -136,9 +139,11 @@ public class IntrSphere3Sphere3f extends Intersector
         }
 
         // center and radius of circle of intersection
-        m_kCenter = m_rkSphere0.Center.add( m_kNormal.scale(fT) );
+        Vector3f kScale = new Vector3f();
+        m_kNormal.scale(fT, kScale);
+        m_rkSphere0.Center.add( kScale, m_kCenter );
         m_fRadius = (float)Math.sqrt(fRSqr);
-
+        kScale = null;
         // compute U and V for plane of circle
         //m_kNormal *= (float)Math.sqrt(fInvNSqrLen);
         m_kNormal.scaleEquals( (float)Math.sqrt(fInvNSqrLen) );
@@ -194,9 +199,11 @@ public class IntrSphere3Sphere3f extends Intersector
     public boolean Test (float fTMax,  Vector3f rkVelocity0,
                          Vector3f rkVelocity1)
     {
-        Vector3f kVDiff = rkVelocity1.sub( rkVelocity0 );
+        Vector3f kVDiff = new Vector3f();
+        rkVelocity1.sub( rkVelocity0, kVDiff );
         float fA = kVDiff.SquaredLength();
-        Vector3f kCDiff = m_rkSphere1.Center.sub( m_rkSphere0.Center );
+        Vector3f kCDiff = new Vector3f();
+        m_rkSphere1.Center.sub( m_rkSphere0.Center, kCDiff );
         float fC = kCDiff.SquaredLength();
         float fRSum = m_rkSphere0.Radius + m_rkSphere1.Radius;
         float fRSumSqr = fRSum*fRSum;
@@ -216,7 +223,8 @@ public class IntrSphere3Sphere3f extends Intersector
                 }
             }
         }
-
+        kVDiff = null;
+        kCDiff = null;
         return (fC <= fRSumSqr);
     }
 
@@ -227,9 +235,11 @@ public class IntrSphere3Sphere3f extends Intersector
     public boolean Find (float fTMax, Vector3f rkVelocity0,
                          Vector3f rkVelocity1)
     {
-        Vector3f kVDiff = rkVelocity1.sub( rkVelocity0 );
+        Vector3f kVDiff = new Vector3f();
+        rkVelocity1.sub( rkVelocity0, kVDiff );
         float fA = kVDiff.SquaredLength();
-        Vector3f kCDiff = m_rkSphere1.Center.sub( m_rkSphere0.Center );
+        Vector3f kCDiff = new Vector3f();
+        m_rkSphere1.Center.sub( m_rkSphere0.Center, kCDiff );
         float fC = kCDiff.SquaredLength();
         float fRSum = m_rkSphere0.Radius + m_rkSphere1.Radius;
         float fRSumSqr = fRSum*fRSum;
@@ -252,8 +262,8 @@ public class IntrSphere3Sphere3f extends Intersector
                             // point of contact by using the midpoint of the line
                             // segment connecting the sphere centers.
                             m_fContactTime = (float)0.0;
-                            m_kContactPoint = 
-                                (m_rkSphere0.Center.add( m_rkSphere1.Center) ).scale( ((float)0.5) );
+                            m_rkSphere0.Center.add( m_rkSphere1.Center, m_kContactPoint);
+                            m_kContactPoint.scaleEquals( 0.5f );
                         }
                         else
                         {
@@ -268,26 +278,38 @@ public class IntrSphere3Sphere3f extends Intersector
                                 m_fContactTime = fTMax;
                             }
 
-                            Vector3f kNewCDiff = kCDiff.add( kVDiff.scale(m_fContactTime) );
-
-                            m_kContactPoint = m_rkSphere0.Center.
-                                add( rkVelocity0.scale(m_fContactTime).
-                                     add( kNewCDiff.scale((m_rkSphere0.Radius/fRSum)) ) );
+                            Vector3f kNewCDiff = new Vector3f(kVDiff);
+                            kNewCDiff.scaleEquals(m_fContactTime);
+                            kNewCDiff.addEquals( kCDiff );
+                            kNewCDiff.scaleEquals(m_rkSphere0.Radius/fRSum);
+                            Vector3f kScale = new Vector3f();
+                            rkVelocity0.scale(m_fContactTime, kScale);
+                            kNewCDiff.addEquals(kScale);
+                            kScale = null;
+                            m_rkSphere0.Center.add( kNewCDiff, m_kContactPoint );
+                            kNewCDiff = null;
                         }
+                        kVDiff = null;
+                        kCDiff = null;
                         return true;
                     }
                 }
+                kVDiff = null;
+                kCDiff = null;
                 return false;
             }
         }
-
+        kVDiff = null;
+        kCDiff = null;
         if (fC <= fRSumSqr)
         {
             // The spheres are initially intersecting.  Estimate a point of
             // contact by using the midpoint of the line segment connecting the
             // sphere centers.
             m_fContactTime = (float)0.0;
-            m_kContactPoint = (m_rkSphere0.Center.add( m_rkSphere1.Center )).scale((float)0.5);
+            m_rkSphere0.Center.add( m_rkSphere1.Center, m_kContactPoint );
+            m_kContactPoint.scaleEquals(0.5f);
+            
             return true;
         }
 
@@ -313,9 +335,9 @@ public class IntrSphere3Sphere3f extends Intersector
      * The plane normal is a unit-length vector N.  The radius of the circle
      * in that plane is R.
      */
-    private Vector3f m_kCenter, m_kUAxis, m_kVAxis, m_kNormal;
+    private Vector3f m_kCenter = new Vector3f(), m_kUAxis = new Vector3f(), m_kVAxis = new Vector3f(), m_kNormal = new Vector3f();
     private float m_fRadius;
 
     /** Point of intersection for dynamic spheres. */
-    private Vector3f m_kContactPoint;
+    private Vector3f m_kContactPoint = new Vector3f();
 }

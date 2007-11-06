@@ -335,8 +335,6 @@ public abstract class Renderer
         // in the same path is small (that is a *lot* of effects to apply in
         // one frame).  If it needs to be larger for your applications, increase
         // the maximum size.
-        final int iMaxTuples = 64;    // maximum number of stack elements
-        int[][] aaiStack = new int[iMaxTuples][2];  // elements are (startIndex,finalIndex)
         int iTop = -1;                // stack is initially empty
 
         final int iVisibleQuantity = rkVisibleSet.GetQuantity();
@@ -1011,6 +1009,7 @@ public abstract class Renderer
         if (pkID == null)
         {
             pkID = OnLoadVProgram(pkVProgram);
+            //System.err.println("LoadVProgram");
             pkVProgram.OnLoad(this, new ReleaseFunctionVertex(this),pkID);
         }
     }
@@ -1047,6 +1046,7 @@ public abstract class Renderer
         if (pkID == null)
         {
             pkID = OnLoadPProgram(pkPProgram);
+            //System.err.println("LoadPProgram");
             pkPProgram.OnLoad(this,new ReleaseFunctionPixel(this),pkID);
         }
     }
@@ -1083,6 +1083,7 @@ public abstract class Renderer
         if (pkID == null)
         {
             pkID = OnLoadTexture(pkTexture);
+            //System.err.println("LoadTexture");
             pkTexture.OnLoad(this,new ReleaseFunctionTexture(this),pkID);
         }
         else if ( pkTexture.Reload() )
@@ -1170,6 +1171,7 @@ public abstract class Renderer
         }
 
         pkID = OnLoadVBuffer(rkIAttr,rkOAttr,pkVBuffer);
+        //System.err.println("LoadVBuffer");
         pkVBuffer.OnLoad(this,new ReleaseFunctionVBuffer(this),pkID);
     }
 
@@ -1210,6 +1212,7 @@ public abstract class Renderer
         {
             pkID = OnLoadIBuffer(pkIBuffer);
             //pkIBuffer->OnLoad(this,&Renderer::ReleaseIBuffer,pkID);
+            //System.err.println("LoadIBuffer");
             pkIBuffer.OnLoad(this,new ReleaseFunctionIBuffer(this),pkID);
         }
     }
@@ -1574,7 +1577,7 @@ public abstract class Renderer
         Vector3f rkUVector = m_pkCamera.GetUVector();
         Vector3f rkDVector = m_pkCamera.GetDVector();
 
-        m_kViewMatrix = new Matrix4f(
+        m_kViewMatrix.SetData(
                                      rkRVector.X(),
                                      rkUVector.X(),
                                      rkDVector.X(),
@@ -1615,7 +1618,7 @@ public abstract class Renderer
 
         if (m_pkCamera.Perspective)
         {
-            m_kProjectionMatrix = new Matrix4f(
+            m_kProjectionMatrix.SetData(
                                                2.0f*fDMin*fInvRDiff,
                                                0.0f,
                                                0.0f,
@@ -1635,7 +1638,7 @@ public abstract class Renderer
         }
         else
         {
-            m_kProjectionMatrix = new Matrix4f(
+            m_kProjectionMatrix.SetData(
                                                2.0f*fInvRDiff,
                                                0.0f,
                                                0.0f,
@@ -1837,8 +1840,10 @@ public abstract class Renderer
      */
     public void SetConstantWVMatrix (int iOperation, float[] afData)
     {
-        Matrix4f kWV = m_kWorldMatrix.mult(m_kViewMatrix);
-        GetTransform(kWV,iOperation,afData);
+        //Matrix4f kWV = m_kWorldMatrix.mult(m_kViewMatrix);
+        //GetTransform(kWV,iOperation,afData);
+        m_kWorldMatrix.mult(m_kViewMatrix, m_kConstantMatrix);
+        GetTransform(m_kConstantMatrix,iOperation,afData);
     }
 
     /** Set RendererConstant View*Projection matrix, store in float[] parameter.
@@ -1847,8 +1852,10 @@ public abstract class Renderer
      */
     public void SetConstantVPMatrix (int iOperation, float[] afData)
     {
-        Matrix4f kVP = m_kViewMatrix.mult(m_kProjectionMatrix);
-        GetTransform(kVP,iOperation,afData);
+//         Matrix4f kVP = m_kViewMatrix.mult(m_kProjectionMatrix);
+//         GetTransform(kVP,iOperation,afData);
+        m_kViewMatrix.mult(m_kProjectionMatrix, m_kConstantMatrix);
+        GetTransform(m_kConstantMatrix,iOperation,afData);
     }
 
     /** Set RendererConstant World*View*Projection matrix, store in float[]
@@ -1858,8 +1865,11 @@ public abstract class Renderer
      */
     public void SetConstantWVPMatrix (int iOperation, float[] afData)
     {
-        Matrix4f kWVP = m_kWorldMatrix.mult(m_kViewMatrix.mult(m_kProjectionMatrix));
-        GetTransform(kWVP,iOperation,afData);
+//         Matrix4f kWVP = m_kWorldMatrix.mult(m_kViewMatrix.mult(m_kProjectionMatrix));
+//         GetTransform(kWVP,iOperation,afData);
+        m_kViewMatrix.mult(m_kProjectionMatrix, m_kConstantMatrix);
+        m_kWorldMatrix.mult(m_kConstantMatrix, m_kConstantMatrix);
+        GetTransform(m_kConstantMatrix,iOperation,afData);
     }
 
     /** Set RendererConstant Material Emissive color, store in float[]
@@ -1908,6 +1918,7 @@ public abstract class Renderer
         afData[1] = pkMaterial.Diffuse.G();
         afData[2] = pkMaterial.Diffuse.B();
         afData[3] = pkMaterial.Alpha;
+        //System.err.println(afData[0] + " " + afData[1] + " " + afData[2] );
     }
 
     /** Set RendererConstant Material Specular color, store in float[]
@@ -1935,12 +1946,13 @@ public abstract class Renderer
      */
     public void SetConstantCameraModelPosition (int iPlaceHolder, float[] afData)
     {
-        Vector3f kMLocation = m_pkGeometry.World.ApplyInverse(m_pkCamera.GetLocation());
-
+        Vector3f kMLocation = new Vector3f();
+        m_pkGeometry.World.ApplyInverse(m_pkCamera.GetLocation(), kMLocation);
         afData[0] = kMLocation.X();
         afData[1] = kMLocation.Y();
         afData[2] = kMLocation.Z();
         afData[3] = 1.0f;
+        kMLocation = null;
     }
 
     /** Set RendererConstant Camera Model Direction, store in float[]
@@ -2234,6 +2246,8 @@ public abstract class Renderer
         float fRdE = rkRVector.Dot(rkEye);
         float fUdE = rkUVector.Dot(rkEye);
         float fDdE = rkDVector.Dot(rkEye);
+
+        //System.err.println("SetConstantProjectorMatrix");
         Matrix4f kProjVMatrix = new Matrix4f(
                                              rkRVector.X(), rkUVector.X(), rkDVector.X(), 0.0f,
                                              rkRVector.Y(), rkUVector.Y(), rkDVector.Y(), 0.0f,
@@ -2257,6 +2271,7 @@ public abstract class Renderer
         float fRTerm1 = -(fRMin+fRMax)*fInvRDiff;
         float fUTerm1 = -(fUMin+fUMax)*fInvUDiff;
         float fDTerm1 = fDMax*fInvDDiff;
+        //System.err.println("SetConstantProjectorMatrix");
         Matrix4f kProjPMatrix = new Matrix4f(
                                              2.0f*fRTerm0, 0.0f,         0.0f,           0.0f,
                                              0.0f,         2.0f*fUTerm0, 0.0f,           0.0f,
@@ -2264,6 +2279,7 @@ public abstract class Renderer
                                              0.0f,         0.0f,         -fDMax*fDTerm0, 0.0f);
         
         // Set up the bias and scale matrix for the projector.
+        //System.err.println("SetConstantProjectorMatrix");
         Matrix4f kProjBSMatrix = new Matrix4f(
                                               0.5f,0.0f,0.0f,0.0f,
                                               0.0f,0.5f,0.0f,0.0f,
@@ -2287,12 +2303,14 @@ public abstract class Renderer
         Light pkLight = GetLight(iLight);
         if (pkLight != null)
         {
-            Vector3f kMPosition = m_pkGeometry.World.ApplyInverse(pkLight.Position);
+            Vector3f kMPosition = new Vector3f(); 
+            m_pkGeometry.World.ApplyInverse(pkLight.Position,kMPosition);
 
             afData[0] = kMPosition.X();
             afData[1] = kMPosition.Y();
             afData[2] = kMPosition.Z();
             afData[3] = 1.0f;
+            kMPosition = null;
         }
         else
         {
@@ -2328,6 +2346,8 @@ public abstract class Renderer
             afData[2] = 0.0f;
             afData[3] = 0.0f;
         }
+
+        //System.err.println(afData[0] + " " + afData[1] + " " + afData[2] );
     }
 
     /** Set RendererConstant Light World Position, store in float[] parameter.
@@ -2654,4 +2674,10 @@ public abstract class Renderer
     protected float m_fLineWidth = 1;  // default = 1
     protected int m_iLineStippleRepeat = 0;  // default = 0 (disabled)
     protected short m_usLineStipplePattern = 0;  // default = 0 (disabled)
+
+
+    final int iMaxTuples = 64;    // maximum number of stack elements
+    int[][] aaiStack = new int[iMaxTuples][2];  // elements are (startIndex,finalIndex)
+
+    Matrix4f m_kConstantMatrix = new Matrix4f();
 }

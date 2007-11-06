@@ -87,9 +87,11 @@ public class IntrSegment3Sphere3f extends Intersector
      */
     public boolean Test ()
     {
-        Vector3f kDiff = m_rkSegment.Origin.sub( m_rkSphere.Center );
+        Vector3f kDiff = new Vector3f();
+        m_rkSegment.Origin.sub( m_rkSphere.Center, kDiff );
         float fA0 = kDiff.Dot(kDiff) - m_rkSphere.Radius*m_rkSphere.Radius;
         float fA1 = m_rkSegment.Direction.Dot(kDiff);
+        kDiff = null;
         float fDiscr = fA1*fA1 - fA0;
         if (fDiscr < (float)0.0)
         {
@@ -114,9 +116,11 @@ public class IntrSegment3Sphere3f extends Intersector
      */
     public boolean Find ()
     {
-        Vector3f kDiff = m_rkSegment.Origin.sub( m_rkSphere.Center );
+        Vector3f kDiff = new Vector3f();
+        m_rkSegment.Origin.sub( m_rkSphere.Center, kDiff );
         float fA0 = kDiff.Dot(kDiff) - m_rkSphere.Radius*m_rkSphere.Radius;
         float fA1 = m_rkSegment.Direction.Dot(kDiff);
+        kDiff = null;
         float fDiscr = fA1*fA1 - fA0;
         if (fDiscr < (float)0.0)
         {
@@ -133,9 +137,11 @@ public class IntrSegment3Sphere3f extends Intersector
         {
             fRoot = (float)Math.sqrt(fDiscr);
             m_afSegmentT[0] = (fQM > (float)0.0 ? -fA1 - fRoot : -fA1 + fRoot);
-            m_akPoint[0] = m_rkSegment.Origin.
-                add( m_rkSegment.Direction.scale(m_afSegmentT[0]) );
+            Vector3f kScale = new Vector3f(m_rkSegment.Direction);
+            kScale.scaleEquals(m_afSegmentT[0]);
+            m_rkSegment.Origin.add( kScale, m_akPoint[0] );
             m_iQuantity = 1;
+            kScale = null;
             return true;
         }
 
@@ -146,17 +152,23 @@ public class IntrSegment3Sphere3f extends Intersector
                 fRoot = (float)Math.sqrt(fDiscr);
                 m_afSegmentT[0] = -fA1 - fRoot;
                 m_afSegmentT[1] = -fA1 + fRoot;
-                m_akPoint[0] = m_rkSegment.Origin.
-                    add( m_rkSegment.Direction.scale( m_afSegmentT[0] ) );
-                m_akPoint[1] = m_rkSegment.Origin.
-                    add( m_rkSegment.Direction.scale(m_afSegmentT[1]) );
+                Vector3f kScale = new Vector3f(m_rkSegment.Direction);
+                kScale.scaleEquals(m_afSegmentT[0]);
+                m_rkSegment.Origin.add( kScale, m_akPoint[0] );
+                
+                kScale.SetData(m_rkSegment.Direction);
+                kScale.scaleEquals(m_afSegmentT[1]);
+                m_rkSegment.Origin.add( kScale, m_akPoint[1] );
                 m_iQuantity = 2;
+                kScale = null;
             }
             else
             {
                 m_afSegmentT[0] = -fA1;
-                m_akPoint[0] = m_rkSegment.Origin.
-                    add( m_rkSegment.Direction.scale(m_afSegmentT[0]) );
+                Vector3f kScale = new Vector3f(m_rkSegment.Direction);
+                kScale.scaleEquals(m_afSegmentT[0]);
+                m_rkSegment.Origin.add( kScale, m_akPoint[0] );
+                kScale = null;
                 m_iQuantity = 1;
             }
         }
@@ -210,7 +222,7 @@ public class IntrSegment3Sphere3f extends Intersector
     /** information about the intersection set: number of intersections */
     private int m_iQuantity;
     /** information about the intersection set: intersection points */
-    private Vector3f[] m_akPoint = new Vector3f[2];
+    private Vector3f[] m_akPoint = new Vector3f[] { new Vector3f(), new Vector3f() };
     /** information about the intersection set: line equation T-values of
      * intersections */
     private float[] m_afSegmentT = new float[2];

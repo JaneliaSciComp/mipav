@@ -1,20 +1,20 @@
-// Wild Magic Source Code
-// David Eberly
-// http://www.geometrictools.com
-// Copyright (c) 1998-2007
-//
-// This library is free software; you can redistribute it and/or modify it
-// under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation; either version 2.1 of the License, or (at
-// your option) any later version.  The license is available for reading at
-// either of the locations:
-//     http://www.gnu.org/copyleft/lgpl.html
-//     http://www.geometrictools.com/License/WildMagicLicense.pdf
-//
-// Version: 4.0.0 (2006/06/28)
-//
-// Ported to Java by Alexandra Bokinsky, PhD, Geometric Tools, Inc. (July 2007)
-//
+//Wild Magic Source Code
+//David Eberly
+//http://www.geometrictools.com
+//Copyright (c) 1998-2007
+
+//This library is free software; you can redistribute it and/or modify it
+//under the terms of the GNU Lesser General Public License as published by
+//the Free Software Foundation; either version 2.1 of the License, or (at
+//your option) any later version.  The license is available for reading at
+//either of the locations:
+//http://www.gnu.org/copyleft/lgpl.html
+//http://www.geometrictools.com/License/WildMagicLicense.pdf
+
+//Version: 4.0.0 (2006/06/28)
+
+//Ported to Java by Alexandra Bokinsky, PhD, Geometric Tools, Inc. (July 2007)
+
 
 package gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph;
 
@@ -23,7 +23,7 @@ import gov.nih.mipav.view.WildMagic.LibFoundation.Intersection.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 
 public class SphereBV extends BoundingVolume
-    implements StreamInterface
+implements StreamInterface
 {
 
     /** Default construction. Set sphere center (0,0,0), radius 0. */
@@ -130,27 +130,37 @@ public class SphereBV extends BoundingVolume
         {
             int iPQuantity = pkVBuffer.GetVertexQuantity();
 
-            m_kSphere.Center = new Vector3f(Vector3f.ZERO);
+            if ( m_kSphere.Center == null )
+            {
+                m_kSphere.Center = new Vector3f();
+            }
+            m_kSphere.Center.SetData(Vector3f.ZERO);
             m_kSphere.Radius = 0.0f;
             int i;
             for (i = 0; i < iPQuantity; i++)
             {
                 //m_kSphere.Center += pkVBuffer->Position3(i);
-                m_kSphere.Center.addEquals( pkVBuffer.Position3(i) );
+                m_kSphere.Center.addEquals( pkVBuffer.GetPosition3fX(i), 
+                        pkVBuffer.GetPosition3fY(i),
+                        pkVBuffer.GetPosition3fZ(i));
             }
             //m_kSphere.Center /= (float)iPQuantity;
             m_kSphere.Center.divEquals( (float)iPQuantity );
 
+            Vector3f kDiff = new Vector3f();
             for (i = 0; i < iPQuantity; i++)
             {
-                Vector3f kDiff = pkVBuffer.Position3(i).sub( m_kSphere.Center );
+                kDiff.SetData( pkVBuffer.GetPosition3fX(i), 
+                        pkVBuffer.GetPosition3fY(i),
+                        pkVBuffer.GetPosition3fZ(i) );
+                kDiff.subEquals( m_kSphere.Center );
                 float fRadiusSqr = kDiff.SquaredLength();
                 if (fRadiusSqr > m_kSphere.Radius)
                 {
                     m_kSphere.Radius = fRadiusSqr;
                 }
             }
-
+            kDiff = null;
             m_kSphere.Radius = (float)Math.sqrt(m_kSphere.Radius);
         }
     }
@@ -160,10 +170,10 @@ public class SphereBV extends BoundingVolume
      * @param pkResult, bounding volume result.
      */
     public void TransformBy ( Transformation rkTransform,
-                              BoundingVolume pkResult)
+            BoundingVolume pkResult)
     {
         Sphere3f rkTarget = ((SphereBV)pkResult).m_kSphere;
-        rkTarget.Center = rkTransform.ApplyForward(m_kSphere.Center);
+        rkTransform.ApplyForward(m_kSphere.Center,rkTarget.Center);
         rkTarget.Radius = rkTransform.GetNorm()*m_kSphere.Radius;
     }
 
@@ -206,7 +216,7 @@ public class SphereBV extends BoundingVolume
      * @return true if intersection, false otherwise.
      */
     public boolean TestIntersection ( Vector3f rkOrigin,
-                                      Vector3f rkDirection, float fTMin, float fTMax)
+            Vector3f rkDirection, float fTMin, float fTMax)
     {
         if (fTMin == Float.MIN_VALUE)
         {
@@ -226,7 +236,10 @@ public class SphereBV extends BoundingVolume
         assert(fTMax > fTMin);
         Segment3f kSegment = new Segment3f();
         kSegment.Extent = 0.5f*fTMax;
-        kSegment.Origin = rkOrigin.add( rkDirection.scale(kSegment.Extent) );
+        Vector3f kScale = new Vector3f(rkDirection);
+        kScale.scaleEquals(kSegment.Extent);
+        rkOrigin.add( kScale, kSegment.Origin );
+        kScale = null;
         kSegment.Direction = rkDirection;
         IntrSegment3Sphere3f kIntrSegS = new IntrSegment3Sphere3f(kSegment,m_kSphere);
         return kIntrSegS.Test();
@@ -255,7 +268,7 @@ public class SphereBV extends BoundingVolume
      * @param pkInput bounding volume to contain. */
     public void GrowToContain ( BoundingVolume pkInput)
     {
-        m_kSphere = Sphere3f.MergeSpheres(m_kSphere,((SphereBV)pkInput).m_kSphere);
+        m_kSphere.MergeSpheres(((SphereBV)pkInput).m_kSphere);
     }
 
     /** Test for containment of a point
@@ -333,8 +346,8 @@ public class SphereBV extends BoundingVolume
     public int GetDiskUsed (StreamVersion rkVersion)
     {
         return super.GetDiskUsed(rkVersion) +
-            3*Stream.SIZEOF_FLOAT + //sizeof(m_kSphere);
-            Stream.SIZEOF_FLOAT;
+        3*Stream.SIZEOF_FLOAT + //sizeof(m_kSphere);
+        Stream.SIZEOF_FLOAT;
     }
 
     /**

@@ -79,8 +79,9 @@ public class BillboardNode extends Node
         if (m_spkCamera != null)
         {
             // Inverse-transform the camera to the model space of the billboard.
-            Vector3f kCLoc = World.ApplyInverse(m_spkCamera.GetLocation());
-
+            Vector3f kCLoc = new Vector3f();
+            World.ApplyInverse(m_spkCamera.GetLocation(), kCLoc);
+            //kCLoc = World.ApplyInverse(m_spkCamera.GetLocation());
             // To align the billboard, the projection of the camera to the
             // xz-plane of the billboard's model space determines the angle of
             // rotation about the billboard's model y-axis.  If the projected
@@ -89,7 +90,8 @@ public class BillboardNode extends Node
             // case and handle it separately.
             float fAngle = (float)Math.atan2(kCLoc.X(),kCLoc.Z());
             Matrix3f kOrient = new Matrix3f(Vector3f.UNIT_Y,fAngle);
-            World.SetRotate(World.GetRotate().mult(kOrient));
+            World.GetRotate().multEquals(kOrient);
+            kCLoc = null;
         }
 
         // update the children now that the billboard orientation is known

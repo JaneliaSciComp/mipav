@@ -473,10 +473,10 @@ public class Matrix3f
      * @param iRow, row to get
      * @return row vector values
      */
-    public Vector3f GetRow (int iRow)
+    public void GetRow (int iRow, Vector3f kResult)
     {
         int i0 = 3*iRow, i1 = i0+1, i2 = i1+1;
-        return new Vector3f(m_afEntry[i0],m_afEntry[i1],m_afEntry[i2]);
+        kResult.SetData(m_afEntry[i0],m_afEntry[i1],m_afEntry[i2]);
     }
 
     /** Set member access
@@ -494,9 +494,9 @@ public class Matrix3f
      * @param iCol, column to get
      * @return column vector values
      */
-    public Vector3f GetColumn (int iCol)
+    public void GetColumn (int iCol, Vector3f kResult)
     {
-        return new Vector3f(m_afEntry[iCol],m_afEntry[iCol+3],m_afEntry[iCol+6]);
+        kResult.SetData(m_afEntry[iCol],m_afEntry[iCol+3],m_afEntry[iCol+6]);
     }
 
     /** Get member access. Copies matrix into input array.
@@ -537,7 +537,52 @@ public class Matrix3f
      */
     public Matrix3f mult ( Matrix3f rkM )
     {
+        System.err.println("Matrix3f: mult 1");
         return new Matrix3f(
+                            m_afEntry[0]*rkM.m_afEntry[0] +
+                            m_afEntry[1]*rkM.m_afEntry[3] +
+                            m_afEntry[2]*rkM.m_afEntry[6],
+                            
+                            m_afEntry[0]*rkM.m_afEntry[1] +
+                            m_afEntry[1]*rkM.m_afEntry[4] +
+                            m_afEntry[2]*rkM.m_afEntry[7],
+                            
+                            m_afEntry[0]*rkM.m_afEntry[2] +
+                            m_afEntry[1]*rkM.m_afEntry[5] +
+                            m_afEntry[2]*rkM.m_afEntry[8],
+                        
+                            m_afEntry[3]*rkM.m_afEntry[0] +
+                            m_afEntry[4]*rkM.m_afEntry[3] +
+                            m_afEntry[5]*rkM.m_afEntry[6],
+
+                            m_afEntry[3]*rkM.m_afEntry[1] +
+                            m_afEntry[4]*rkM.m_afEntry[4] +
+                            m_afEntry[5]*rkM.m_afEntry[7],
+
+                            m_afEntry[3]*rkM.m_afEntry[2] +
+                            m_afEntry[4]*rkM.m_afEntry[5] +
+                            m_afEntry[5]*rkM.m_afEntry[8],
+
+                            m_afEntry[6]*rkM.m_afEntry[0] +
+                            m_afEntry[7]*rkM.m_afEntry[3] +
+                            m_afEntry[8]*rkM.m_afEntry[6],
+
+                            m_afEntry[6]*rkM.m_afEntry[1] +
+                            m_afEntry[7]*rkM.m_afEntry[4] +
+                            m_afEntry[8]*rkM.m_afEntry[7],
+
+                            m_afEntry[6]*rkM.m_afEntry[2] +
+                            m_afEntry[7]*rkM.m_afEntry[5] +
+                            m_afEntry[8]*rkM.m_afEntry[8]);
+    }
+    
+    /** Multiply this matrix to the input matrix, return result, this is unchanged. 
+     * @param rkM, input matrix
+     * @return this*rkM
+     */
+    public void multEquals ( Matrix3f rkM )
+    {
+        SetData(
                             m_afEntry[0]*rkM.m_afEntry[0] +
                             m_afEntry[1]*rkM.m_afEntry[3] +
                             m_afEntry[2]*rkM.m_afEntry[6],
@@ -581,6 +626,7 @@ public class Matrix3f
      */
     public Matrix3f scale (float fScalar)
     {
+        System.err.println("Matrix3f: scale");
         return new Matrix3f(
                             fScalar*m_afEntry[0],
                             fScalar*m_afEntry[1],
@@ -599,12 +645,26 @@ public class Matrix3f
      * @param rkM, matrix
      * @return v^T * M 
      */
-    public static Vector3f mult(Vector3f rkV, Matrix3f rkM)
+    public static void mult(Vector3f rkV, Matrix3f rkM, Vector3f kResult)
     {
-        return new Vector3f(
-                            rkV.X()*rkM.m_afEntry[0] + rkV.Y()*rkM.m_afEntry[3] + rkV.Z()*rkM.m_afEntry[6],
-                            rkV.X()*rkM.m_afEntry[1] + rkV.Y()*rkM.m_afEntry[4] + rkV.Z()*rkM.m_afEntry[7],
-                            rkV.X()*rkM.m_afEntry[2] + rkV.Y()*rkM.m_afEntry[5] + rkV.Z()*rkM.m_afEntry[8]);
+        kResult.SetData(
+                        rkV.X()*rkM.m_afEntry[0] + rkV.Y()*rkM.m_afEntry[3] + rkV.Z()*rkM.m_afEntry[6],
+                        rkV.X()*rkM.m_afEntry[1] + rkV.Y()*rkM.m_afEntry[4] + rkV.Z()*rkM.m_afEntry[7],
+                        rkV.X()*rkM.m_afEntry[2] + rkV.Y()*rkM.m_afEntry[5] + rkV.Z()*rkM.m_afEntry[8]);
+    }
+    
+    /** matrix times vector
+     * v^T * M
+     * @param rkV, vector
+     * @param rkM, matrix
+     * @return v^T * M 
+     */
+    public static void multEquals(Vector3f rkV, Matrix3f rkM)
+    {
+        float fX = rkV.X()*rkM.m_afEntry[0] + rkV.Y()*rkM.m_afEntry[3] + rkV.Z()*rkM.m_afEntry[6];
+        float fY = rkV.X()*rkM.m_afEntry[1] + rkV.Y()*rkM.m_afEntry[4] + rkV.Z()*rkM.m_afEntry[7];
+        float fZ = rkV.X()*rkM.m_afEntry[2] + rkV.Y()*rkM.m_afEntry[5] + rkV.Z()*rkM.m_afEntry[8];
+        rkV.SetData(fX, fY, fZ);
     }
 
     /** matrix times vector
@@ -614,17 +674,32 @@ public class Matrix3f
      */
     public Vector3f mult (Vector3f rkV)  // M * v
     {
+        System.err.println("Matrix3f: mult 2");
         return new Vector3f(
                             m_afEntry[0]*rkV.X() + m_afEntry[1]*rkV.Y() + m_afEntry[2]*rkV.Z(),
                             m_afEntry[3]*rkV.X() + m_afEntry[4]*rkV.Y() + m_afEntry[5]*rkV.Z(),
                             m_afEntry[6]*rkV.X() + m_afEntry[7]*rkV.Y() + m_afEntry[8]*rkV.Z());
     }
 
+    /** matrix times vector
+     * M * v
+     * @param rkV, vector
+     * @return M * v
+     */
+    public void mult (Vector3f rkV, Vector3f kResult)  // M * v
+    {
+        float fX = m_afEntry[0]*rkV.X() + m_afEntry[1]*rkV.Y() + m_afEntry[2]*rkV.Z();
+        float fY = m_afEntry[3]*rkV.X() + m_afEntry[4]*rkV.Y() + m_afEntry[5]*rkV.Z();
+        float fZ = m_afEntry[6]*rkV.X() + m_afEntry[7]*rkV.Y() + m_afEntry[8]*rkV.Z();
+        kResult.SetData( fX, fY, fZ );
+    }
+    
     /** Transpose this matrix and return the result, this matrix is unchanged.
      * @return  M^T
      */
     public Matrix3f Transpose ()
     {
+        System.err.println("Matrix3f: transpose");
         return new Matrix3f(
                             m_afEntry[0],
                             m_afEntry[3],
@@ -645,6 +720,7 @@ public class Matrix3f
     public Matrix3f TransposeTimes (Matrix3f rkM)
     {
         // P = A^T*B
+        System.err.println("Matrix3f: transpose times");
         return new Matrix3f(
                             m_afEntry[0]*rkM.m_afEntry[0] +
                             m_afEntry[3]*rkM.m_afEntry[3] +
@@ -691,6 +767,7 @@ public class Matrix3f
     public Matrix3f TimesTranspose (Matrix3f rkM)
     {
         // P = A*B^T
+        System.err.println("Matrix3f: times transpose");
         return new Matrix3f(
                             m_afEntry[0]*rkM.m_afEntry[0] +
                             m_afEntry[1]*rkM.m_afEntry[1] +
@@ -736,6 +813,7 @@ public class Matrix3f
     public Matrix3f Inverse ()
     {
 
+        System.err.println("Matrix3f: inverse");
         Matrix3f kInverse = new Matrix3f();
 
         kInverse.m_afEntry[0] =
@@ -764,6 +842,7 @@ public class Matrix3f
 
         if (Math.abs(fDet) <= Mathf.ZERO_TOLERANCE)
         {
+            System.err.println("Matrix3f: inverse 2");
             return new Matrix3f(Matrix3f.ZERO);
         }
 
@@ -785,6 +864,7 @@ public class Matrix3f
      */
     public Matrix3f Adjoint ()
     {
+        System.err.println("Matrix3f: adjoint");
         return new Matrix3f(
                             m_afEntry[4]*m_afEntry[8] - m_afEntry[5]*m_afEntry[7],
                             m_afEntry[2]*m_afEntry[7] - m_afEntry[1]*m_afEntry[8],
@@ -828,7 +908,20 @@ public class Matrix3f
      */
     public Matrix3f TimesDiagonal (Vector3f rkDiag)  // M*D
     {
+        System.err.println("Matrix3f: times diagonal");
         return new Matrix3f(
+                            m_afEntry[0]*rkDiag.X(),m_afEntry[1]*rkDiag.Y(),m_afEntry[2]*rkDiag.Z(),
+                            m_afEntry[3]*rkDiag.X(),m_afEntry[4]*rkDiag.Y(),m_afEntry[5]*rkDiag.Z(),
+                            m_afEntry[6]*rkDiag.X(),m_afEntry[7]*rkDiag.Y(),m_afEntry[8]*rkDiag.Z());
+    }
+    
+    /** Return the this matrix times the diagonal vector, this is unchanged:
+     * @param rkDiag, diagonal vector
+     * @return M*D
+     */
+    public void TimesDiagonalEquals (Vector3f rkDiag)  // M*D
+    {
+        SetData(
                             m_afEntry[0]*rkDiag.X(),m_afEntry[1]*rkDiag.Y(),m_afEntry[2]*rkDiag.Z(),
                             m_afEntry[3]*rkDiag.X(),m_afEntry[4]*rkDiag.Y(),m_afEntry[5]*rkDiag.Z(),
                             m_afEntry[6]*rkDiag.X(),m_afEntry[7]*rkDiag.Y(),m_afEntry[8]*rkDiag.Z());
@@ -840,6 +933,7 @@ public class Matrix3f
      */
     public Matrix3f DiagonalTimes (Vector3f rkDiag)
     {
+        System.err.println("Matrix3f: diagonal times");
         return new Matrix3f(
                             rkDiag.X()*m_afEntry[0],rkDiag.X()*m_afEntry[1],rkDiag.X()*m_afEntry[2],
                             rkDiag.Y()*m_afEntry[3],rkDiag.Y()*m_afEntry[4],rkDiag.Y()*m_afEntry[5],
@@ -1019,6 +1113,7 @@ public class Matrix3f
     {
         // Factor M = R*D*R^T.  The columns of R are the eigenvectors.  The
         // diagonal entries of D are the corresponding eigenvalues.
+
         float[] afDiag = new float[3];
         float[] afSubd = new float[2];
 
@@ -1093,6 +1188,9 @@ public class Matrix3f
             rkRot.SetData(1,2, -rkRot.GetData(1,2));
             rkRot.SetData(2,2, -rkRot.GetData(2,2));
         }
+        
+        afDiag = null;
+        afSubd = null;
     }
 
     private static boolean Tridiagonalize (Matrix3f rkRot, float[] afDiag, float[] afSubd)

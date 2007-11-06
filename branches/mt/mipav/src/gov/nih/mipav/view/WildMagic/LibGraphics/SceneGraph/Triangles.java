@@ -51,11 +51,13 @@ public abstract class Triangles extends Geometry
         if (GetTriangle(i,aiTris))
         {
             iV0 = aiTris[0];            iV1 = aiTris[1];            iV2 = aiTris[2];
-            rkMTri.V[0] = VBuffer.Position3(iV0);
-            rkMTri.V[1] = VBuffer.Position3(iV1);
-            rkMTri.V[2] = VBuffer.Position3(iV2);
+            VBuffer.GetPosition3(iV0, rkMTri.V[0]);
+            VBuffer.GetPosition3(iV1, rkMTri.V[1]);
+            VBuffer.GetPosition3(iV2, rkMTri.V[2]);
+            aiTris = null;
             return true;
         }
+        aiTris = null;
         return false;
     }
 
@@ -72,9 +74,18 @@ public abstract class Triangles extends Geometry
         if (GetTriangle(i,aiTris))
         {
             iV0 = aiTris[0];            iV1 = aiTris[1];            iV2 = aiTris[2];
-            rkWTri.V[0] = World.ApplyForward(VBuffer.Position3(iV0));
-            rkWTri.V[1] = World.ApplyForward(VBuffer.Position3(iV1));
-            rkWTri.V[2] = World.ApplyForward(VBuffer.Position3(iV2));
+            Vector3f kPos = new Vector3f();
+            
+            VBuffer.GetPosition3(iV0, kPos);
+            World.ApplyForward(kPos, rkWTri.V[0]);
+            
+            VBuffer.GetPosition3(iV1, kPos);
+            World.ApplyForward(kPos, rkWTri.V[1]);
+            
+            VBuffer.GetPosition3(iV2, kPos);
+            World.ApplyForward(kPos, rkWTri.V[2]);
+            
+            kPos = null;
             return true;
         }
         return false;
@@ -143,10 +154,19 @@ public abstract class Triangles extends Geometry
         int i;
         for (i = 0; i < iVQuantity; i++)
         {
-            VBuffer.Normal3(i, new Vector3f(Vector3f.ZERO));
+            VBuffer.SetNormal3(i,Vector3f.ZERO);
         }
 
         int iTQuantity = GetTriangleQuantity();
+        Vector3f rkV0 = new Vector3f();
+        Vector3f rkV1 = new Vector3f();
+        Vector3f rkV2 = new Vector3f();
+
+        Vector3f rkN0 = new Vector3f();
+        Vector3f rkN1 = new Vector3f();
+        Vector3f rkN2 = new Vector3f();
+        
+        Vector3f kNormal = new Vector3f();
         for (i = 0; i < iTQuantity; i++)
         {
             // get vertex indices
@@ -159,26 +179,45 @@ public abstract class Triangles extends Geometry
 
             // get vertices
             iV0 = aiTris[0];            iV1 = aiTris[1];            iV2 = aiTris[2];
-            Vector3f rkV0 = VBuffer.Position3(iV0);
-            Vector3f rkV1 = VBuffer.Position3(iV1);
-            Vector3f rkV2 = VBuffer.Position3(iV2);
+            rkV0.SetData( VBuffer.GetPosition3fX(iV0), VBuffer.GetPosition3fY(iV0), VBuffer.GetPosition3fZ(iV0));
+            rkV1.SetData( VBuffer.GetPosition3fX(iV1), VBuffer.GetPosition3fY(iV1), VBuffer.GetPosition3fZ(iV1));
+            rkV2.SetData( VBuffer.GetPosition3fX(iV2), VBuffer.GetPosition3fY(iV2), VBuffer.GetPosition3fZ(iV2));
 
             // compute the normal (length provides the weighted sum)
-            Vector3f kEdge1 = rkV1.sub( rkV0 );
-            Vector3f kEdge2 = rkV2.sub( rkV0 );
-            Vector3f kNormal = kEdge1.Cross(kEdge2);
+            rkV1.subEquals( rkV0 );
+            rkV2.subEquals( rkV0 );
+            rkV1.CrossEquals(rkV2);
+            kNormal.SetData(rkV1);
+            
+            rkN0.SetData( VBuffer.GetNormal3fX(iV0), VBuffer.GetNormal3fY(iV0), VBuffer.GetNormal3fZ(iV0) );
+            rkN0.addEquals(kNormal);
+            VBuffer.SetNormal3(iV0, rkN0);
 
-            VBuffer.Normal3(iV0, VBuffer.Normal3(iV0).add(kNormal));
-            VBuffer.Normal3(iV1, VBuffer.Normal3(iV1).add(kNormal));
-            VBuffer.Normal3(iV2, VBuffer.Normal3(iV2).add(kNormal));
+            rkN1.SetData( VBuffer.GetNormal3fX(iV1), VBuffer.GetNormal3fY(iV1), VBuffer.GetNormal3fZ(iV1) );
+            rkN1.addEquals(kNormal);
+            VBuffer.SetNormal3(iV1, rkN1);
+            
+            rkN2.SetData( VBuffer.GetNormal3fX(iV2), VBuffer.GetNormal3fY(iV2), VBuffer.GetNormal3fZ(iV2) );
+            rkN2.addEquals(kNormal);
+            VBuffer.SetNormal3(iV2, rkN2);
         }
 
+        rkV0 = null;
+        rkV1 = null;
+        rkV2 = null;
+
+        rkN0 = null;
+        rkN1 = null;
+        rkN2 = null;
+
+        Vector3f kNormalized = new Vector3f();
         for (i = 0; i < iVQuantity; i++)
         {
-            Vector3f kNormalized = VBuffer.Normal3(i);
+            kNormalized.SetData( VBuffer.GetNormal3fX(i), VBuffer.GetNormal3fY(i), VBuffer.GetNormal3fZ(i));
             kNormalized.Normalize();
-            VBuffer.Normal3(i, kNormalized);
+            VBuffer.SetNormal3(i, kNormalized);
         }
+        kNormalized = null;
     }
 
     /**

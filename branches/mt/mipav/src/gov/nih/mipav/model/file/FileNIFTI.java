@@ -1981,8 +1981,10 @@ public class FileNIFTI extends FileBase {
             else {
                 matrixTwoDim.setMatrix((double)resolutions[1], 1, 1);
             }
-            matrixTwoDim.setMatrix((double)LPSOrigin[0], 0, 2);
-            matrixTwoDim.setMatrix((double)LPSOrigin[1], 1, 2);
+            if (LPSOrigin != null) {
+                matrixTwoDim.setMatrix((double)LPSOrigin[0], 0, 2);
+                matrixTwoDim.setMatrix((double)LPSOrigin[1], 1, 2);
+            }
         } // if (numDims == 2)
         
 

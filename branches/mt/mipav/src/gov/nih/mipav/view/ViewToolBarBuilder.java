@@ -338,8 +338,9 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         tBar.add(makeSeparator());
 
         JButton triPlanarButton = buildButton("Tri-planar", "Tri-Planar View", "3plane");
-        JButton quadPlanarButton = buildButton("VolTriplanar", "Volume Renderer", "4plane");
-        JButton wmPlanarButton = buildButton("WMVolTriplanar", "GPU-based Volume Renderer - Beta", "gpu");
+        JButton quadPlanarButton = buildButton("VolTriplanar", "Volume Renderer", "java3d");
+        JButton wmPlanarButton = buildButton("WMVolTriplanar", "GPU-based Volume Renderer - Beta", "wm");
+        JButton wmStandAloneButton = buildButton("WMStandAlone", "WildMagic Volume Renderer Standalone - Beta", "vr");
         JButton lightBoxButton = buildButton("Light box", "View Light Box", "lightbox");
         // JButton gpuButton = buildButton("GPU", "GPU rendering", "gpu");
         // JButton multiButton = buildButton("MultiHisto", "Multi-histo rendering", "multihisto");
@@ -349,6 +350,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
             triPlanarButton.setEnabled(false);
             quadPlanarButton.setEnabled(false);
             wmPlanarButton.setEnabled(false);
+            wmStandAloneButton.setEnabled(false);
             lightBoxButton.setEnabled(false);
             // gpuButton.setEnabled(false);
             // multiButton.setEnabled(false);
@@ -358,6 +360,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         tBar.add(triPlanarButton);
         tBar.add(quadPlanarButton);
         tBar.add(wmPlanarButton);
+        tBar.add(wmStandAloneButton);
         tBar.add(lightBoxButton);
 
         // TODO: removed until we decide on a visualization system..

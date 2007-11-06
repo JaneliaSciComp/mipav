@@ -37,8 +37,8 @@ public class Segment3f
      */
     public Segment3f (Vector3f rkOrigin, Vector3f rkDirection, float fExtent)
     {
-        Origin = new Vector3f(rkOrigin);
-        Direction = new Vector3f(rkDirection);
+        Origin.SetData(rkOrigin);
+        Direction.SetData(rkDirection);
         Extent = fExtent;
     }
 
@@ -48,8 +48,8 @@ public class Segment3f
      */
     public Segment3f (Segment3f rkSegment)
     {
-        Origin = new Vector3f(rkSegment.Origin);
-        Direction = new Vector3f(rkSegment.Direction);
+        Origin.SetData(rkSegment.Origin);
+        Direction.SetData(rkSegment.Direction);
         Extent = rkSegment.Extent;
     }
 
@@ -67,21 +67,27 @@ public class Segment3f
     /** Returns the positive end point: P+e*D
      * @return P+e*D
      */
-    public final Vector3f GetPosEnd ()
+    public final void GetPosEnd ( Vector3f kResult )
     {
-        return Origin.add( Direction.scale(Extent) );
+        Vector3f kDir = new Vector3f(Direction);
+        kDir.scaleEquals(Extent);
+        Origin.add( kDir, kResult );
+        kDir = null;
     }
 
     /** Returns the negative end point: P-e*D
      * @return P-e*D
      */
-    public final Vector3f GetNegEnd ()
+    public final void GetNegEnd ( Vector3f kResult )
     {
-        return Origin.sub( Direction.scale(Extent) );
+        Vector3f kDir = new Vector3f(Direction);
+        kDir.scaleEquals(Extent);
+        Origin.sub( kDir, kResult );
+        kDir = null;
     }
 
     /** Segment origin, and unit-length direction. */
-    public Vector3f Origin, Direction;
+    public Vector3f Origin = new Vector3f(), Direction = new Vector3f();
     /** Segment extent: */
     public float Extent;
 }

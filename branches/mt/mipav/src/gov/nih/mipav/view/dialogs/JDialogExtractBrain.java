@@ -664,7 +664,8 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
 
             try {
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
-
+                
+                
                 orientCheckbox.setSelected(MipavUtil.getInt(st) == FileInfoBase.AXIAL);
                 justInitEllipsoidCheckbox.setSelected(MipavUtil.getBoolean(st));
                 nIterationsTF.setText("" + MipavUtil.getInt(st));
@@ -675,7 +676,8 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
                 secondStageCheckBox.setSelected(MipavUtil.getBoolean(st));
                 erosionTF.setText("" + MipavUtil.getFloat(st));
                 useCenterOfMassCheckBox.setSelected(MipavUtil.getBoolean(st));
-
+                extractToPaintCheckBox.setSelected(MipavUtil.getBoolean(st));
+                
                 float val = MipavUtil.getFloat(st);
 
                 if (val >= image.getExtents()[0]) {
@@ -1057,9 +1059,18 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         erosionTF.setEnabled(false);
         erosionTF.setFont(serif12);
         paramPanel.add(erosionTF, gbc);
-
+        
         gbc.gridx = 0;
         gbc.gridy = 5;
+        String orientText = "<html>Image origin is in the upper left hand corner (first slice)." + "<P>" +
+        "Righthand coordinate system.</html>";
+        JLabel orientIconLabel = new JLabel(orientText, MipavUtil.getIcon("orient.gif"), JLabel.LEFT);
+        orientIconLabel.setFont(serif12);
+        orientIconLabel.setForeground(Color.black);
+        paramPanel.add(orientIconLabel, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 6;
         gbc.gridwidth = 2;
         useCenterOfMassCheckBox = new JCheckBox("Use the volume center of mass", useCenterOfMass);
         useCenterOfMassCheckBox.setFont(serif12);
@@ -1067,7 +1078,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         paramPanel.add(useCenterOfMassCheckBox, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         gbc.gridwidth = 1;
         initCenterXLabel = new JLabel("Initial mesh X position");
         initCenterXLabel.setEnabled(!useCenterOfMass);
@@ -1081,7 +1092,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         paramPanel.add(initCenterXTF, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         initCenterYLabel = new JLabel("Initial mesh Y position");
         initCenterYLabel.setEnabled(!useCenterOfMass);
         initCenterYLabel.setFont(serif12);
@@ -1094,7 +1105,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         paramPanel.add(initCenterYTF, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 9;
         initCenterZLabel = new JLabel("Initial mesh Z position");
         initCenterZLabel.setEnabled(!useCenterOfMass);
         initCenterZLabel.setFont(serif12);
@@ -1236,7 +1247,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
 
             if (testParameter(tmpStr, 0, image.getExtents()[2])) {
                 initCenterZ = Float.valueOf(tmpStr).floatValue();
-                System.out.println("\n initCenterZ py = " + initCenterZ);
+                //System.out.println("\n initCenterZ py = " + initCenterZ);
             } else {
                 initCenterZTF.requestFocus();
                 initCenterZTF.selectAll();

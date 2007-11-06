@@ -590,7 +590,11 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
     		dispose();
     	}
     	else if(command.equals("Help")) {
-
+    		if(!isColorImage) {
+    			MipavUtil.showHelp("StDev001");
+    		}else {
+    			MipavUtil.showHelp("StDev005");
+    		}
     	}else if(command.equals("paintDestination")) {
     		if(!isColorImage) {
 	    		valuesOutsideTextField.setDisabledTextColor(Color.lightGray);

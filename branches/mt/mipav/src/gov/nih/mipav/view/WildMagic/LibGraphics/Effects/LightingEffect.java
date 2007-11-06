@@ -106,7 +106,12 @@ public class LightingEffect extends ShaderEffect
     /** Removes all Lights from this Effect*/
     public void DetachAllLights ()
     {
+        //for ( int i = 0; i < m_kLights.size(); i++ )
+        //{
+        //   m_kLights.remove(i);
+        //}
         m_kLights.clear();
+        //m_kLights.setSize(0);
     }
 
 
@@ -188,6 +193,7 @@ public class LightingEffect extends ShaderEffect
             pkMS.Emissive = ColorRGB.BLACK;
         }
 
+        m_kLight0Save = pkRenderer.GetLight(0);
         pkRenderer.SetLight(0,m_kLights.get(iPass));
     }
 
@@ -202,7 +208,7 @@ public class LightingEffect extends ShaderEffect
     {
         super.RestoreGlobalState(iPass,pkRenderer,bPrimaryEffect);
 
-        pkRenderer.SetLight(0,null);
+        pkRenderer.SetLight(0,m_kLight0Save);
 
         if (iPass == m_iPassQuantity - 1)
         {
@@ -213,6 +219,7 @@ public class LightingEffect extends ShaderEffect
 
     /** The Emissive Material color for Emissive Lighting Effects. */
     protected ColorRGB m_kSaveEmissive;
+    protected Light m_kLight0Save;
 
     /** The list of Lights in this Effect: */
     protected Vector<Light> m_kLights = new Vector<Light>();

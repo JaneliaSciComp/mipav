@@ -264,6 +264,10 @@ public class DialogDTIColorDisplay extends ViewJFrameBase
     /** String indicating current color wheel type **/
     private String currentColorWheelType;
 
+    /** Sets the correct resolutions for the image that is created by captureImage. */
+    private float[] m_afScreenResolutions = null;
+    /** Sets the correct slice thickness */
+    private float m_fSliceThickness;
 
     /**
      * Constructor
@@ -2254,7 +2258,12 @@ public class DialogDTIColorDisplay extends ViewJFrameBase
         screenCaptureImage.setFileInfo(fileInfoBases);
         screenCaptureImage.calcMinMax();
         
-        
+        /* Sets the correct resolutions for the image. */
+        if ( m_afScreenResolutions != null )
+        {
+            screenCaptureImage.getFileInfo(0).setResolutions(m_afScreenResolutions);
+            screenCaptureImage.getFileInfo(0).setSliceThickness(m_fSliceThickness);
+        }
         new ViewJFrameImage(screenCaptureImage, null, new Dimension(610, 200));
         
         resultImageSlider.setValue(numSlices/2);
@@ -3122,4 +3131,17 @@ public class DialogDTIColorDisplay extends ViewJFrameBase
             System.out.println("Can not find web browser");	
         }
     }
+
+    /** Sets the correct resolutions for the image that is created by captureImage.
+     * @param afResolutions, correct image resolutions.
+     * @param fSlice, slice thickness
+     */
+    public void setScreenImageResolutions( float[] afResolutions, float fSlice )
+    {
+        m_afScreenResolutions = afResolutions;
+        m_fSliceThickness = fSlice;
+
+    }
+
+
 }

@@ -35,7 +35,7 @@ public class Plane3f
      */
     public Plane3f ( Plane3f rkPlane)
     {
-        Normal = new Vector3f( rkPlane.Normal );
+        Normal.SetData( rkPlane.Normal );
         Constant = rkPlane.Constant;
     }
 
@@ -45,7 +45,7 @@ public class Plane3f
      */
     public Plane3f (Vector3f rkNormal, float fConstant)
     {
-        Normal = new Vector3f( rkNormal );
+        Normal.SetData( rkNormal );
         Constant = fConstant;
     }
 
@@ -55,7 +55,7 @@ public class Plane3f
      */
     public Plane3f (Vector3f rkNormal, Vector3f rkP)
     {
-        Normal = new Vector3f( rkNormal );
+        Normal.SetData( rkNormal );
         Constant = rkNormal.Dot(rkP);
     }
 
@@ -68,10 +68,15 @@ public class Plane3f
     public Plane3f (Vector3f rkP0, Vector3f rkP1,
                     Vector3f rkP2)
     {
-        Vector3f kEdge1 = rkP1.sub( rkP0 );
-        Vector3f kEdge2 = rkP2.sub( rkP0 );
-        Normal = kEdge1.UnitCross(kEdge2);
+        Vector3f kEdge1 = new Vector3f();
+        rkP1.sub( rkP0, kEdge1 );
+        Vector3f kEdge2 = new Vector3f();
+        rkP2.sub( rkP0, kEdge2 );
+        Normal.SetData(kEdge1);
+        Normal.UnitCrossEquals(kEdge2);
         Constant = Normal.Dot(rkP0);
+        kEdge1 = null;
+        kEdge2 = null;
     }
 
     /**
@@ -125,7 +130,7 @@ public class Plane3f
     }
 
     /** Plane normal: */
-    public Vector3f Normal;
+    public Vector3f Normal = new Vector3f();
     /** Plane constant: */
     public float Constant;
 }

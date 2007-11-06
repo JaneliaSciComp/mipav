@@ -136,6 +136,7 @@ public class AlgorithmFlip extends AlgorithmBase {
         float[] sliceBufferTemp = null;
         int buffFactor;
         boolean logMagDisplay = false;
+        boolean evenNumberZSlices = true;
 
         try {
 
@@ -158,6 +159,12 @@ public class AlgorithmFlip extends AlgorithmBase {
             setCompleted(false);
 
             return;
+        }
+        
+        if (srcImage.getNDims() >= 3) {
+            if (srcImage.getExtents()[2]/2 * 2 != srcImage.getExtents()[2]) {
+               evenNumberZSlices = false;    
+            }
         }
 
         int mod = nImages / 10; // mod is 10 percent of length
@@ -328,6 +335,9 @@ public class AlgorithmFlip extends AlgorithmBase {
                     Object[] shapes = null;
                     ViewJComponentEditImage compImage = srcImage.getParentFrame().getComponentImage();
                     zDim *= 2;
+                    if (!evenNumberZSlices) {
+                        zDim += 1;
+                    }
 
                     while (vecIter.hasNext()) {
                         ShapeHolder shapeHolder = new ShapeHolder();
@@ -351,12 +361,22 @@ public class AlgorithmFlip extends AlgorithmBase {
                                 nextVoi.removeCurves(voiSlice);
                             }
                         }
-
                         for (int voiSlice = 0; voiSlice < zDim; voiSlice++) {
-                            int z = voiSlice, direction = (z > (zDim / 2)) ? -1 : 1;
-                            int distance = Math.abs(z - (zDim / 2)), scope = 2 * distance;
+                            int z = voiSlice, direction = (z >= (zDim / 2)) ? -1 : 1;
+                            int distance, scope;
+                            if (!evenNumberZSlices) {
+                                distance = Math.abs(z - (zDim / 2));
+                                scope = 2 * distance;
+                            }
+                            else if (evenNumberZSlices && z < zDim/2) {
+                                distance = (zDim/2 - 1 - z);
+                                scope = 2 * distance + 1;
+                            }
+                            else {
+                                distance = z - zDim/2;
+                                scope = 2 * distance + 1;
+                            }
                             Object[] shapesAtSlice = shapeHolder.getShapesAtSlice(voiSlice);
-
                             for (int k = 0; k < shapesAtSlice.length; k++) {
 
                                 if (shapesAtSlice[k] instanceof Polygon[]) {
@@ -375,8 +395,20 @@ public class AlgorithmFlip extends AlgorithmBase {
                         compImage.getVOIHandler().fireVOISelectionChange(nextVoi, null);
                     }
 
-                    int z = compImage.getSlice(), direction = (z > (zDim / 2)) ? -1 : 1;
-                    int distance = Math.abs(z - (zDim / 2)), scope = 2 * distance;
+                    int z = compImage.getSlice(), direction = (z >= (zDim / 2)) ? -1 : 1;
+                    int distance, scope;
+                    if (!evenNumberZSlices) {
+                        distance = Math.abs(z - (zDim / 2));
+                        scope = 2 * distance;
+                    }
+                    else if (evenNumberZSlices && z < zDim/2) {
+                        distance = (zDim/2 - 1 - z);
+                        scope = 2 * distance + 1;
+                    }
+                    else {
+                        distance = z - zDim/2;
+                        scope = 2 * distance + 1;
+                    }
                     compImage.show(compImage.getTimeSlice(), compImage.getSlice() + (scope * direction), null, null,
                                    true, compImage.getInterpMode());
                     compImage.getActiveImage().getParentFrame().setSlice(compImage.getSlice());
@@ -439,8 +471,20 @@ public class AlgorithmFlip extends AlgorithmBase {
             if ((flipAxis == Z_AXIS) && (srcImage.getNDims() > 2)) {
                 int voiSlice = -1;
                 ViewJComponentEditImage compImage = srcImage.getParentFrame().getComponentImage();
-                int z = compImage.getSlice(), direction = (z > (zDim / 2)) ? -1 : 1;
-                int distance = Math.abs(z - (zDim / 2)), scope = 2 * distance;
+                int z = compImage.getSlice(), direction = (z >= (zDim / 2)) ? -1 : 1;
+                int distance, scope;
+                if (!evenNumberZSlices) {
+                    distance = Math.abs(z - (zDim / 2));
+                    scope = 2 * distance;
+                }
+                else if (evenNumberZSlices && z < zDim/2) {
+                    distance = (zDim/2 - 1 - z);
+                    scope = 2 * distance + 1;
+                }
+                else {
+                    distance = z - zDim/2;
+                    scope = 2 * distance + 1;
+                }
 
                 while (vecIter.hasNext()) {
                     VOI nextVoi = (VOI) vecIter.next();
@@ -463,10 +507,9 @@ public class AlgorithmFlip extends AlgorithmBase {
 
                         Polygon gon = new Polygon(xpoints, ypoints, xpoints.length);
                         nextVoi.removeCurve(nextVoi.getActiveContourIndex(voiSlice), voiSlice);
-                        nextVoi.importPolygon(gon, voiSlice + (direction * scope) - 1);
-
-                        compImage.show(compImage.getTimeSlice(), voiSlice + (scope * direction) - 1, null, null, true,
-                                       compImage.getInterpMode());
+                        nextVoi.importPolygon(gon, voiSlice + (direction * scope));
+                        compImage.show(compImage.getTimeSlice(), voiSlice + (scope * direction), null, null, true,
+                                compImage.getInterpMode());
                         compImage.getVOIHandler().fireVOISelectionChange(nextVoi, null);
                         compImage.getActiveImage().getParentFrame().setSlice(compImage.getSlice());
                         compImage.getActiveImage().getParentFrame().updateImages(true);

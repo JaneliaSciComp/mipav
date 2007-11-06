@@ -3792,7 +3792,8 @@ public class FileAvi extends FileBase {
                 System.err.println("Handler String is: " + handlerString);
 
                 if ((handler == 0x20424944 /* DIB<sp> */) || (handler == 0x20424752 /* RGB<sp> */) ||
-                        (handler == 0x20574152 /* RAW<sp> */) || (handler == 0x00000000)) {
+                        (handler == 0x20574152 /* RAW<sp> */) || (handler == 0x00000000) ||
+                        (handlerString.startsWith("00dc"))) {
                     // uncompressed data
                 } else if (handlerString.startsWith("MRLE") || handlerString.startsWith("mrle") ||
                                handlerString.startsWith("RLE") || handlerString.startsWith("rle")) {

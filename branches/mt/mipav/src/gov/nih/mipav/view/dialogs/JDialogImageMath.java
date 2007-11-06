@@ -348,38 +348,35 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 opType = AlgorithmImageMath.DIVIDE;
             } else if (index == AlgorithmImageMath.SQUARE) {
                 textValue.setEnabled(false);
-                radioFloat.setEnabled(false);
                 opType = AlgorithmImageMath.SQUARE;
             } else if (index == AlgorithmImageMath.SQUARE_ROOT) {
                 textValue.setEnabled(false);
                 opType = AlgorithmImageMath.SQUARE_ROOT;
+                radioClip.setEnabled(false);
+                radioPromote.setEnabled(false);
+                radioFloat.setEnabled(false);
+                radioFloat.setSelected(true);
             } else if (index == AlgorithmImageMath.LOG) {
                 textValue.setEnabled(false);
-                radioFloat.setEnabled(false);
                 opType = AlgorithmImageMath.LOG;
+                radioClip.setEnabled(false);
+                radioPromote.setEnabled(false);
+                radioFloat.setEnabled(false);
+                radioFloat.setSelected(true);
             } else if (index == AlgorithmImageMath.CONSTANT) {
                 opType = AlgorithmImageMath.CONSTANT;
             } else if (index == AlgorithmImageMath.ABSOLUTE_VALUE) {
                 textValue.setEnabled(false);
-                radioClip.setSelected(true);
-                radioClip.setEnabled(false);
-                radioPromote.setEnabled(false);
                 opType = AlgorithmImageMath.ABSOLUTE_VALUE;
             } else if (index == AlgorithmImageMath.AVERAGE) {
                 textValue.setEnabled(false);
                 outputPanel.setOutputNewImage(true);
                 outputPanel.setOutputImageOptionsEnabled(false);
-                radioClip.setSelected(true);
-                radioClip.setEnabled(false);
-                radioPromote.setEnabled(false);
                 opType = AlgorithmImageMath.AVERAGE;
             } else if (index == AlgorithmImageMath.SUM) {
                 textValue.setEnabled(false);
                 outputPanel.setOutputNewImage(true);
                 outputPanel.setOutputImageOptionsEnabled(false);
-                radioClip.setSelected(true);
-                radioClip.setEnabled(false);
-                radioPromote.setEnabled(false);
                 opType = AlgorithmImageMath.SUM;
             }
         }
@@ -505,11 +502,8 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                         extents[0] = image.getExtents()[0];
                         extents[1] = image.getExtents()[1];
 
-                        if (opType == AlgorithmImageMath.AVERAGE) {
-                            resultImage = new ModelImage(image.getType(), extents, name);
-                        } else {
-                            resultImage = new ModelImage(ModelImage.FLOAT, extents, name);
-                        }
+                        resultImage = new ModelImage(image.getType(), extents, name);
+                       
                     }
 
                     // Make algorithm
@@ -791,10 +785,11 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         // set this for Absolute Value
         textValue.setEnabled(false);
         radioClip.setSelected(true);
-        radioClip.setEnabled(false);
-        radioPromote.setEnabled(false);
-        radioFloat.setEnabled(false);
-
+        if (image.getType() == ModelStorageBase.FLOAT || image.getType() == ModelStorageBase.DOUBLE) {
+            radioFloat.setEnabled(false);
+        } else {
+            radioFloat.setEnabled(true);
+        }
 
         pack();
         // setVisible(true);

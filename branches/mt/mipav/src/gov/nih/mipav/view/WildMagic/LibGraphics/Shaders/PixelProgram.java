@@ -64,11 +64,11 @@ public class PixelProgram extends Program
         return pkProgram;
     }
     /** Delete memory. */
-    public void finalize () 
+    public void Remove () 
     {
         ms_Options--;
         PixelProgramCatalog.GetActive().Remove(this);
-        super.finalize();
+        super.Remove();
     }
 
     /** Create a PixelProgram, if the profile has not been set, or has been

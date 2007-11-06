@@ -142,7 +142,8 @@ public class Iridescence extends JavaApplication3D
         Vector3f kCLoc = new Vector3f(0.0f,0.0f,-8.0f);
         Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
         Vector3f kCUp = new Vector3f(0.0f,1.0f,0.0f);
-        Vector3f kCRight = kCDir.Cross(kCUp);
+        Vector3f kCRight = new Vector3f();
+        kCDir.Cross(kCUp, kCRight);
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene();
@@ -197,8 +198,8 @@ public class Iridescence extends JavaApplication3D
         kAttr.SetNChannels(3);
         kAttr.SetTChannels(0,2);
         StandardMesh kSM = new StandardMesh(kAttr);
-        TriMesh pkMesh = kSM.Ellipsoid(50,50,1.5f,1.0f, 2.0f);
-//         TriMesh pkMesh = kSM.Torus(20,20,2.0f,1.0f);
+        //TriMesh pkMesh = kSM.Ellipsoid(50,50,1.5f,1.0f, 2.0f);
+        TriMesh pkMesh = kSM.Torus(20,20,2.0f,1.0f);
         
         pkMesh.Local.SetMatrix(new Matrix3f(new Vector3f(0f, 0f, 1f), new Vector3f(0.707f, 0.707f, 0f), 
                 new Vector3f(-0.707f, 0.707f, 0f),false));

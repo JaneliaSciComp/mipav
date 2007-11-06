@@ -3316,49 +3316,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     }
 
     /**
-     * Creates and initializes the LUT for an image.
-     *
-     * @param   img  the image to create a LUT for
-     *
-     * @return  a LUT for the image <code>img</code> (null if a color image)
-     *
-     * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
-     */
-    protected ModelLUT initLUT(ModelImage img) throws OutOfMemoryError {
-        ModelLUT newLUT = null;
-
-        // only make a lut for non color images
-        if (img.isColorImage() == false) {
-            int[] dimExtentsLUT = new int[2];
-
-            dimExtentsLUT[0] = 4;
-            dimExtentsLUT[1] = 256;
-
-            newLUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
-
-            float min, max;
-
-            if (img.getType() == ModelStorageBase.UBYTE) {
-                min = 0;
-                max = 255;
-            } else if (img.getType() == ModelStorageBase.BYTE) {
-                min = -128;
-                max = 127;
-            } else {
-                min = (float) img.getMin();
-                max = (float) img.getMax();
-            }
-
-            float imgMin = (float) img.getMin();
-            float imgMax = (float) img.getMax();
-
-            newLUT.resetTransferLine(min, imgMin, max, imgMax);
-        }
-
-        return newLUT;
-    }
-
-    /**
      * Add surface volume renderer control buttons.
      */
     private void addToolbar() {

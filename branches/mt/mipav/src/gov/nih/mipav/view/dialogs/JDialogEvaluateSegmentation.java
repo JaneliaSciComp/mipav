@@ -161,7 +161,7 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            // MipavUtil.showHelp("");
+            MipavUtil.showHelp("Mor008ES");
         }
     }
 

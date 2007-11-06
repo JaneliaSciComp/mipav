@@ -618,6 +618,12 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         float[] maskData = new float[imgSize];
         float[] imgData = new float[imgSize];
 
+        if ( resultImage == null )
+        {
+            setCompleted(false);
+            return;
+        }
+        
         try {
             resultImage.exportData(0, imgSize, maskData);
             resultImage.disposeLocal();

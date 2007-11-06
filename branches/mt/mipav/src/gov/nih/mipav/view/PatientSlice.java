@@ -357,6 +357,32 @@ public class PatientSlice {
         slice = (int) m_kPatientPoint.z;
         m_bUpdateImage = true;
     }
+    
+    
+    /*  Run when imageA extents are changed */
+    public void setImageExtents() {
+        localImageExtents = imageA.getExtents(orientation);
+
+        if (localImageExtents.length < 3) {
+            int[] temp = new int[3];
+
+            for (int i = 0; i < localImageExtents.length; i++) {
+                temp[i] = localImageExtents[i];
+            }
+
+            for (int i = localImageExtents.length; i < 3; i++) {
+                temp[i] = 0;
+            }
+
+            localImageExtents = new int[3];
+
+            for (int i = 0; i < 3; i++) {
+                localImageExtents[i] = temp[i];
+            }
+        }
+
+        center();
+    }
 
 
     /**

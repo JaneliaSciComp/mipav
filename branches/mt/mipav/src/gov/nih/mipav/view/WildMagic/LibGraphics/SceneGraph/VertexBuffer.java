@@ -99,90 +99,6 @@ public class VertexBuffer extends Bindable
         return m_iVertexQuantity;
     }
 
-    /** Access to positions.
-     * @param i, vertex index.
-     * @return position data at index i.
-     */
-    public float[] PositionTuple (int i)
-    {
-        if (m_kAttributes.HasPosition() && 0 <= i && i < m_iVertexQuantity)
-        {
-            int iVBChannels = m_kAttributes.GetPChannels();
-            float[] afPosition = new float[iVBChannels];
-
-            int iIndex = m_iVertexSize*i + m_kAttributes.GetPOffset();
-            for ( int j = 0; j < iVBChannels; j++ )
-            {
-                afPosition[j] = m_afChannel[iIndex + j];
-            }
-            return afPosition;
-        }
-        return null;
-    }
-
-    /** Access to normals.
-     * @param i, vertex index.
-     * @return normal data at index i.
-     */
-    public float[] NormalTuple (int i)
-    {
-        if (m_kAttributes.HasNormal() && 0 <= i && i < m_iVertexQuantity)
-        {
-            int iVBChannels = m_kAttributes.GetNChannels();
-            float[] afNormal = new float[iVBChannels];
-            int iIndex = m_iVertexSize*i + m_kAttributes.GetNOffset();
-            for ( int j = 0; j < iVBChannels; j++ )
-            {
-                afNormal[j] = m_afChannel[iIndex + j];
-            }
-            return afNormal;
-        }
-        return null;
-    }
-
-    /** Access to colors.
-     * @param iUnit, color unit (1-4).
-     * @param i, vertex index.
-     * @return color data at index i.
-     */
-    public float[] ColorTuple (int iUnit, int i)
-    {
-        if (m_kAttributes.HasColor(iUnit) && 0 <= i && i < m_iVertexQuantity)
-        {
-            int iVBChannels = m_kAttributes.GetCChannels(iUnit);
-            float[] afColor = new float[iVBChannels];
-            int iIndex = m_iVertexSize*i + m_kAttributes.GetCOffset(iUnit);
-            for ( int j = 0; j < iVBChannels; j++ )
-            {
-                afColor[j] = m_afChannel[iIndex + j];
-            }
-            return afColor;
-        }
-        return null;
-    }
-
-    /** Access to texture coordinates.
-     * @param iUnit, texture coordinate unit (1-4).
-     * @param i, vertex index.
-     * @return texture coordinate data at index i.
-     */
-     public float[] TCoordTuple (int iUnit, int i)
-    {
-        if (m_kAttributes.HasTCoord(iUnit) && 0 <= i && i < m_iVertexQuantity)
-        {
-            int iVBChannels = m_kAttributes.GetTChannels(iUnit);
-            float[] afTCoord = new float[iVBChannels];
-            int iIndex = m_iVertexSize*i + m_kAttributes.GetTOffset(iUnit);
-            for ( int j = 0; j < iVBChannels; j++ )
-            {
-                afTCoord[j] = m_afChannel[iIndex + j];
-            }
-            return afTCoord;
-        }
-        return null;
-    }
-
-
     /** Direct access to the vertex buffer data.  The quantity is the number of
      * float elements.  The number of bytes for the entire vertex buffer is
      * GetChannelQuantity()*sizeof(float).
@@ -193,34 +109,53 @@ public class VertexBuffer extends Bindable
         return m_iChannelQuantity;
     }
 
-    /** Direct access to the vertex buffer data.
-     * @return vertex buffer data.
-     */
-    public final float[] GetData ()
-    {
-        return m_afChannel;
-    }
-
     /** Get the position at the given index. Use these accessors for
      * convenience.  No range checking is performed, so you should be sure
      * that the attribute exists and that the number of channels is correct.
      * @param i, vertex index.
      * @return position.
      */
-    public Vector3f Position3 (int i)
+    public void GetPosition3 (int i, Vector3f kResult)
     {
         assert(m_kAttributes.GetPChannels() == 3);
         int iIndex = m_iVertexSize*i + m_kAttributes.GetPOffset();
-        return new Vector3f( m_afChannel[ iIndex + 0 ],
+        kResult.SetData( m_afChannel[ iIndex + 0 ],
                              m_afChannel[ iIndex + 1 ],
                              m_afChannel[ iIndex + 2 ] );
     }
-
+    
+    /** Get the position at the given index. Use these accessors for
+     * convenience.  No range checking is performed, so you should be sure
+     * that the attribute exists and that the number of channels is correct.
+     * @param i, vertex index.
+     * @return position.
+     */
+    public float GetPosition3fX (int i)
+    {
+        assert(m_kAttributes.GetPChannels() == 3);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetPOffset();
+        return m_afChannel[ iIndex + 0 ];
+    }
+    
+    public float GetPosition3fY (int i)
+    {
+        assert(m_kAttributes.GetPChannels() == 3);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetPOffset();
+        return m_afChannel[ iIndex + 1 ];
+    }
+    
+    public float GetPosition3fZ (int i)
+    {
+        assert(m_kAttributes.GetPChannels() == 3);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetPOffset();
+        return m_afChannel[ iIndex + 2 ];
+    }
+    
     /** Set the position at the given index.
      * @param i, vertex index.
      * @param kP, new position.
      */
-    public void Position3 (int i, Vector3f kP)
+    public void SetPosition3 (int i, Vector3f kP)
     {
         assert(m_kAttributes.GetPChannels() == 3);
         int iIndex = m_iVertexSize*i + m_kAttributes.GetPOffset();
@@ -229,32 +164,79 @@ public class VertexBuffer extends Bindable
         m_afChannel[ iIndex + 2 ] = kP.Z();
     }
 
+    /** Set the position at the given index.
+     * @param i, vertex index.
+     * @param kP, new position.
+     */
+    public void SetPosition3 (int i, float fX, float fY, float fZ)
+    {
+        assert(m_kAttributes.GetPChannels() == 3);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetPOffset();
+        m_afChannel[ iIndex + 0 ] = fX;
+        m_afChannel[ iIndex + 1 ] = fY;
+        m_afChannel[ iIndex + 2 ] = fZ;
+    }
+    
     /** Get the normal at the given index. Use these accessors for
      * convenience.  No range checking is performed, so you should be sure
      * that the attribute exists and that the number of channels is correct.
      * @param i, vertex index.
      * @return normal.
      */
-    public Vector3f Normal3 (int i)
+    public void GetNormal3 (int i, Vector3f kResult)
     {
         assert(m_kAttributes.GetNChannels() == 3);
         int iIndex = m_iVertexSize*i + m_kAttributes.GetNOffset();
-        return new Vector3f( m_afChannel[ iIndex + 0 ],
+        kResult.SetData( m_afChannel[ iIndex + 0 ],
                              m_afChannel[ iIndex + 1 ],
                              m_afChannel[ iIndex + 2 ] );
+    }
+    
+    public float GetNormal3fX (int i)
+    {
+        assert(m_kAttributes.GetNChannels() == 3);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetNOffset();
+        return m_afChannel[ iIndex + 0 ];
+    }
+    
+    public float GetNormal3fY (int i)
+    {
+        assert(m_kAttributes.GetNChannels() == 3);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetNOffset();
+        return m_afChannel[ iIndex + 1 ];
+    }
+    
+    public float GetNormal3fZ (int i)
+    {
+        assert(m_kAttributes.GetNChannels() == 3);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetNOffset();
+        return m_afChannel[ iIndex + 2 ];
     }
 
     /** Set the normal at the given index.
      * @param i, vertex index.
      * @param kN, new normal.
      */
-    public void Normal3 (int i, Vector3f kN)
+    public void SetNormal3 (int i, Vector3f kN)
     {
         assert(m_kAttributes.GetNChannels() == 3);
         int iIndex = m_iVertexSize*i + m_kAttributes.GetNOffset();
         m_afChannel[ iIndex + 0 ] = kN.X();
         m_afChannel[ iIndex + 1 ] = kN.Y();
         m_afChannel[ iIndex + 2 ] = kN.Z();
+    }
+    
+    /** Set the normal at the given index.
+     * @param i, vertex index.
+     * @param kN, new normal.
+     */
+    public void SetNormal3 (int i, float fX, float fY, float fZ)
+    {
+        assert(m_kAttributes.GetNChannels() == 3);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetNOffset();
+        m_afChannel[ iIndex + 0 ] = fX;
+        m_afChannel[ iIndex + 1 ] = fY;
+        m_afChannel[ iIndex + 2 ] = fZ;
     }
    
     /** Get the color at the given index. Use these accessors for convenience.
@@ -264,11 +246,11 @@ public class VertexBuffer extends Bindable
      * @param i, vertex index.
      * @return color.
      */
-    public ColorRGB Color3 (int iUnit, int i)
+    public void GetColor3 (int iUnit, int i, ColorRGB kResult)
     {
         assert(m_kAttributes.GetCChannels(iUnit) == 3);
         int iIndex = m_iVertexSize*i + m_kAttributes.GetCOffset(iUnit);
-        return new ColorRGB( m_afChannel[ iIndex + 0 ], 
+        kResult.SetData( m_afChannel[ iIndex + 0 ], 
                              m_afChannel[ iIndex + 1 ],
                              m_afChannel[ iIndex + 2 ] );
     }
@@ -278,13 +260,27 @@ public class VertexBuffer extends Bindable
      * @param i, vertex index.
      * @param kC, new color.
      */
-    public void Color3 (int iUnit, int i, ColorRGB kC)
+    public void SetColor3 (int iUnit, int i, ColorRGB kC)
     {
         assert(m_kAttributes.GetCChannels(iUnit) == 3);
         int iIndex = m_iVertexSize*i + m_kAttributes.GetCOffset(iUnit);
         m_afChannel[ iIndex + 0 ] = kC.R(); 
         m_afChannel[ iIndex + 1 ] = kC.G();
         m_afChannel[ iIndex + 2 ] = kC.B();
+    }
+    
+    /** Set the color at the given index.
+     * @param iUnit, color unit (1-4).
+     * @param i, vertex index.
+     * @param kC, new color.
+     */
+    public void SetColor3 (int iUnit, int i, float fR, float fG, float fB)
+    {
+        assert(m_kAttributes.GetCChannels(iUnit) == 3);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetCOffset(iUnit);
+        m_afChannel[ iIndex + 0 ] = fR; 
+        m_afChannel[ iIndex + 1 ] = fG;
+        m_afChannel[ iIndex + 2 ] = fB;
     }
 
     /** Get the texture coordinate (1D) at the given index. Use these
@@ -295,7 +291,7 @@ public class VertexBuffer extends Bindable
      * @param i, vertex index.
      * @return texture coordinate.
      */
-    public float TCoord1 (int iUnit, int i)
+    public float GetTCoord1 (int iUnit, int i)
     {
         assert(m_kAttributes.GetTChannels(iUnit) == 1);
         int iIndex = m_iVertexSize*i + m_kAttributes.GetTOffset(iUnit);
@@ -307,7 +303,7 @@ public class VertexBuffer extends Bindable
      * @param i, vertex index.
      * @param fValue, new texture coordinate.
      */
-    public void TCoord1 (int iUnit, int i, float fValue)
+    public void SetTCoord1 (int iUnit, int i, float fValue)
     {
         assert(m_kAttributes.GetTChannels(iUnit) == 1);
         int iIndex = m_iVertexSize*i + m_kAttributes.GetTOffset(iUnit);
@@ -322,20 +318,43 @@ public class VertexBuffer extends Bindable
      * @param i, vertex index.
      * @return texture coordinate.
      */
-    public Vector2f TCoord2 (int iUnit, int i)
+    public void GetTCoord2 (int iUnit, int i, Vector2f kResult)
     {
         assert(m_kAttributes.GetTChannels(iUnit) == 2);
         int iIndex = m_iVertexSize*i + m_kAttributes.GetTOffset(iUnit);
-        return new Vector2f( m_afChannel[ iIndex + 0 ],
+        kResult.SetData( m_afChannel[ iIndex + 0 ],
                              m_afChannel[ iIndex + 1 ] );
     }
+
+    /** Get the texture coordinate (2D) at the given index. Use these
+     * accessors for convenience.  No range checking is performed, so you
+     * should be sure that the attribute exists and that the number of
+     * channels is correct.
+     * @param iUnit, texture coordinate unit (1-4).
+     * @param i, vertex index.
+     * @return texture coordinate.
+     */
+    public float GetTCoord2fX (int iUnit, int i)
+    {
+        assert(m_kAttributes.GetTChannels(iUnit) == 2);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetTOffset(iUnit);
+        return m_afChannel[ iIndex + 0 ];
+    }
+
+    public float GetTCoord2fY (int iUnit, int i)
+    {
+        assert(m_kAttributes.GetTChannels(iUnit) == 2);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetTOffset(iUnit);
+        return m_afChannel[ iIndex + 1 ];
+    }
+
 
     /** Set the texture coordiante (2D) at the given index.
      * @param iUnit, texture coordinate unit (1-4).
      * @param i, vertex index.
      * @param kTC, new texture coordinate.
      */
-    public void TCoord2 (int iUnit, int i, Vector2f kTC)
+    public void SetTCoord2 (int iUnit, int i, Vector2f kTC)
     {
         assert(m_kAttributes.GetTChannels(iUnit) == 2);
         int iIndex = m_iVertexSize*i + m_kAttributes.GetTOffset(iUnit);
@@ -343,6 +362,19 @@ public class VertexBuffer extends Bindable
         m_afChannel[ iIndex + 1 ] = kTC.Y();
     }
  
+    /** Set the texture coordiante (2D) at the given index.
+     * @param iUnit, texture coordinate unit (1-4).
+     * @param i, vertex index.
+     * @param kTC, new texture coordinate.
+     */
+    public void SetTCoord2 (int iUnit, int i,float fX, float fY)
+    {
+        assert(m_kAttributes.GetTChannels(iUnit) == 2);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetTOffset(iUnit);
+        m_afChannel[ iIndex + 0 ] = fX;
+        m_afChannel[ iIndex + 1 ] = fY;
+    }
+    
     /** Get the texture coordinate (3D) at the given index. Use these
      * accessors for convenience.  No range checking is performed, so you
      * should be sure that the attribute exists and that the number of
@@ -350,11 +382,12 @@ public class VertexBuffer extends Bindable
      * @param i, vertex index.
      * @return texture coordinate.
      */
-    public Vector3f TCoord3 (int iUnit, int i)
+    public void GetTCoord3 (int iUnit, int i, Vector3f kResult)
     {
         assert(m_kAttributes.GetTChannels(iUnit) == 2);
         int iIndex = m_iVertexSize*i + m_kAttributes.GetTOffset(iUnit);
-        return new Vector3f( m_afChannel[ iIndex + 0 ],
+        System.err.println("public Vector3f TCoord3 (int iUnit, int i)");
+        kResult.SetData( m_afChannel[ iIndex + 0 ],
                              m_afChannel[ iIndex + 1 ],
                              m_afChannel[ iIndex + 2 ] );
     }
@@ -364,13 +397,27 @@ public class VertexBuffer extends Bindable
      * @param i, vertex index.
      * @param kTC, new texture coordinate.
      */
-    public void TCoord3 (int iUnit, int i, Vector3f kTC)
+    public void SetTCoord3 (int iUnit, int i, Vector3f kTC)
     {
         assert(m_kAttributes.GetTChannels(iUnit) == 3);
         int iIndex = m_iVertexSize*i + m_kAttributes.GetTOffset(iUnit);
         m_afChannel[ iIndex + 0 ] = kTC.X();
         m_afChannel[ iIndex + 1 ] = kTC.Y();
         m_afChannel[ iIndex + 2 ] = kTC.Z();
+    }
+    
+    /** Set the texture coordiante (3D) at the given index.
+     * @param iUnit, texture coordinate unit (1-4).
+     * @param i, vertex index.
+     * @param kTC, new texture coordinate.
+     */
+    public void SetTCoord3 (int iUnit, int i, float fX, float fY, float fZ)
+    {
+        assert(m_kAttributes.GetTChannels(iUnit) == 3);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetTOffset(iUnit);
+        m_afChannel[ iIndex + 0 ] = fX;
+        m_afChannel[ iIndex + 1 ] = fY;
+        m_afChannel[ iIndex + 2 ] = fZ;
     }
 
     /** Support for building an array from the vertex buffer data, but
@@ -393,23 +440,24 @@ public class VertexBuffer extends Bindable
         // memory pattern for an "unsigned int" might correspond to an invalid
         // "float".  The floating-point unit actually makes adjustments to these
         // values, changing what it is you started with.
+        //System.err.println("public float[] BuildCompatibleArray (Attributes rkIAttr)");
         Vector<Float> kCompatible = new Vector<Float>();    
         int iUnit, iIChannels, iVBChannels;
-        float[] afData;
-
+        int iIndex;
         for (int i = 0, j; i < m_iVertexQuantity; i++)
         {
             if (rkIAttr.HasPosition())
             {
                 iIChannels = rkIAttr.GetPChannels();
                 iVBChannels = m_kAttributes.GetPChannels();
-                afData = PositionTuple(i);
+
+                iIndex = m_iVertexSize*i + m_kAttributes.GetPOffset();
                 if (iVBChannels < iIChannels)
                 {
-                    for (j = 0; j < iVBChannels; j++)
+                    for ( j = 0; j < iVBChannels; j++ )
                     {
-                        kCompatible.add(afData[j]);
-                    }
+                        kCompatible.add(m_afChannel[iIndex + j]);
+                    }                    
                     for (j = iVBChannels; j < iIChannels; j++)
                     {
                         // Fill with 1 so that the w-component is compatible with
@@ -421,7 +469,7 @@ public class VertexBuffer extends Bindable
                 {
                     for (j = 0; j < iIChannels; j++)
                     {
-                        kCompatible.add(afData[j]);
+                        kCompatible.add(m_afChannel[iIndex + j]);
                     }
                 }
             }
@@ -430,12 +478,13 @@ public class VertexBuffer extends Bindable
             {
                 iIChannels = rkIAttr.GetNChannels();
                 iVBChannels = m_kAttributes.GetNChannels();
-                afData = NormalTuple(i);
+                
+                iIndex = m_iVertexSize*i + m_kAttributes.GetNOffset();
                 if (iVBChannels < iIChannels)
                 {
                     for (j = 0; j < iVBChannels; j++)
                     {
-                        kCompatible.add(afData[j]);
+                        kCompatible.add(m_afChannel[iIndex + j]);
                     }
                     for (j = iVBChannels; j < iIChannels; j++)
                     {
@@ -448,7 +497,7 @@ public class VertexBuffer extends Bindable
                 {
                     for (j = 0; j < iIChannels; j++)
                     {
-                        kCompatible.add(afData[j]);
+                        kCompatible.add(m_afChannel[iIndex + j]);
                     }
                 }
             }
@@ -459,12 +508,12 @@ public class VertexBuffer extends Bindable
                 {
                     iIChannels = rkIAttr.GetCChannels(iUnit);
                     iVBChannels = m_kAttributes.GetCChannels(iUnit);
-                    afData = ColorTuple(iUnit,i);
+                    iIndex = m_iVertexSize*i + m_kAttributes.GetCOffset(iUnit);                  
                     if (iVBChannels < iIChannels)
                     {
                         for (j = 0; j < iVBChannels; j++)
                         {
-                            kCompatible.add(afData[j]);
+                            kCompatible.add(m_afChannel[iIndex + j]);
                         }
                         for (j = iVBChannels; j < iIChannels; j++)
                         {
@@ -477,7 +526,7 @@ public class VertexBuffer extends Bindable
                     {
                         for (j = 0; j < iIChannels; j++)
                         {
-                            kCompatible.add(afData[j]);
+                            kCompatible.add(m_afChannel[iIndex + j]);
                         }
                     }
                 }
@@ -489,12 +538,12 @@ public class VertexBuffer extends Bindable
                 {
                     iIChannels = rkIAttr.GetTChannels(iUnit);
                     iVBChannels = m_kAttributes.GetTChannels(iUnit);
-                    afData = TCoordTuple(iUnit,i);
+                    iIndex = m_iVertexSize*i + m_kAttributes.GetTOffset(iUnit);                   
                     if (iVBChannels < iIChannels)
                     {
                         for (j = 0; j < iVBChannels; j++)
                         {
-                            kCompatible.add(afData[j]);
+                            kCompatible.add(m_afChannel[iIndex + j]);
                         }
                         for (j = iVBChannels; j < iIChannels; j++)
                         {
@@ -508,7 +557,7 @@ public class VertexBuffer extends Bindable
                     {
                         for (j = 0; j < iIChannels; j++)
                         {
-                            kCompatible.add(afData[j]);
+                            kCompatible.add(m_afChannel[iIndex + j]);
                         }
                     }
                 }
@@ -544,34 +593,35 @@ public class VertexBuffer extends Bindable
         // "float".  The floating-point unit actually makes adjustments to these
         // values, changing what it is you started with.
         int iUnit, iIChannels, iVBChannels;
-        float[] afData;
 
-        int iIndex = 0;
+        int ikVBIndex = 0;
+        int iIndex;
         for (int i = 0, j; i < m_iVertexQuantity; i++)
         {
             if (rkIAttr.HasPosition())
             {
                 iIChannels = rkIAttr.GetPChannels();
                 iVBChannels = m_kAttributes.GetPChannels();
-                afData = PositionTuple(i);
+
+                iIndex = m_iVertexSize*i + m_kAttributes.GetPOffset();
                 if (iVBChannels < iIChannels)
                 {
                     for (j = 0; j < iVBChannels; j++)
                     {
-                        kVB.m_afChannel[iIndex++] = afData[j];
+                        kVB.m_afChannel[ikVBIndex++] = m_afChannel[iIndex + j];
                     }
                     for (j = iVBChannels; j < iIChannels; j++)
                     {
                         // Fill with 1 so that the w-component is compatible with
                         // a homogeneous point.
-                        kVB.m_afChannel[iIndex++] = 1.0f;
+                        kVB.m_afChannel[ikVBIndex++] = 1.0f;
                     }
                 }
                 else
                 {
                     for (j = 0; j < iIChannels; j++)
                     {
-                        kVB.m_afChannel[iIndex++] = afData[j];
+                        kVB.m_afChannel[ikVBIndex++] = m_afChannel[iIndex + j];
                     }
                 }
             }
@@ -580,25 +630,25 @@ public class VertexBuffer extends Bindable
             {
                 iIChannels = rkIAttr.GetNChannels();
                 iVBChannels = m_kAttributes.GetNChannels();
-                afData = NormalTuple(i);
+                iIndex = m_iVertexSize*i + m_kAttributes.GetNOffset();
                 if (iVBChannels < iIChannels)
                 {
                     for (j = 0; j < iVBChannels; j++)
                     {
-                        kVB.m_afChannel[iIndex++] = afData[j];
+                        kVB.m_afChannel[ikVBIndex++] = m_afChannel[iIndex + j];
                     }
                     for (j = iVBChannels; j < iIChannels; j++)
                     {
                         // Fill with 0 so that the w-component is compatible with
                         // a homogeneous vector.
-                        kVB.m_afChannel[iIndex++] = 0.0f;
+                        kVB.m_afChannel[ikVBIndex++] = 0.0f;
                     }
                 }
                 else
                 {
                     for (j = 0; j < iIChannels; j++)
                     {
-                        kVB.m_afChannel[iIndex++] = afData[j];
+                        kVB.m_afChannel[ikVBIndex++] = m_afChannel[iIndex + j];
                     }
                 }
             }
@@ -609,25 +659,25 @@ public class VertexBuffer extends Bindable
                 {
                     iIChannels = rkIAttr.GetCChannels(iUnit);
                     iVBChannels = m_kAttributes.GetCChannels(iUnit);
-                    afData = ColorTuple(iUnit,i);
+                    iIndex = m_iVertexSize*i + m_kAttributes.GetCOffset(iUnit);                  
                     if (iVBChannels < iIChannels)
                     {
                         for (j = 0; j < iVBChannels; j++)
                         {
-                            kVB.m_afChannel[iIndex++] = afData[j];
+                            kVB.m_afChannel[ikVBIndex++] = m_afChannel[iIndex + j];
                         }
                         for (j = iVBChannels; j < iIChannels; j++)
                         {
                             // Fill with 1 so that the a-component is compatible
                             // with an opaque color.
-                            kVB.m_afChannel[iIndex++] = 1.0f;
+                            kVB.m_afChannel[ikVBIndex++] = 1.0f;
                         }
                     }
                     else
                     {
                         for (j = 0; j < iIChannels; j++)
                         {
-                            kVB.m_afChannel[iIndex++] = afData[j];
+                            kVB.m_afChannel[ikVBIndex++] = m_afChannel[iIndex + j];
                         }
                     }
                 }
@@ -639,26 +689,26 @@ public class VertexBuffer extends Bindable
                 {
                     iIChannels = rkIAttr.GetTChannels(iUnit);
                     iVBChannels = m_kAttributes.GetTChannels(iUnit);
-                    afData = TCoordTuple(iUnit,i);
+                    iIndex = m_iVertexSize*i + m_kAttributes.GetTOffset(iUnit);                   
                     if (iVBChannels < iIChannels)
                     {
                         for (j = 0; j < iVBChannels; j++)
                         {
-                            kVB.m_afChannel[iIndex++] = afData[j];
+                            kVB.m_afChannel[ikVBIndex++] = m_afChannel[iIndex + j];
                         }
                         for (j = iVBChannels; j < iIChannels; j++)
                         {
                             // Fill with 0 so that the components are compatible
                             // with a higher-dimensional image embedded in a
                             // lower-dimensional one.
-                            kVB.m_afChannel[iIndex++] = 0.0f;
+                            kVB.m_afChannel[ikVBIndex++] = 0.0f;
                         }
                     }
                     else
                     {
                         for (j = 0; j < iIChannels; j++)
                         {
-                            kVB.m_afChannel[iIndex++] = afData[j];
+                            kVB.m_afChannel[ikVBIndex++] = m_afChannel[iIndex + j];
                         }
                     }
                 }

@@ -305,7 +305,12 @@ public class JDialogConvertType extends JDialogScriptableBase
                     userInterface.registerFrame(parentFrame);
                 }
 
-                image.notifyImageDisplayListeners(null, true);
+                if (image.isColorImage()) {
+                    image.notifyImageDisplayListeners(true, 0, image.getParentFrame().getComponentImage().getRGBTA());    
+                }
+                else {
+                    image.notifyImageDisplayListeners(null, true);
+                }
             } else if (resultImage != null) {
 
                 // algorithm failed but result image still has garbage
@@ -930,7 +935,7 @@ public class JDialogConvertType extends JDialogScriptableBase
 
                 try {
 
-                    image.getFileInfo(1).setEndianess(endianess);
+                    image.getFileInfo(0).setEndianess(endianess);
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class

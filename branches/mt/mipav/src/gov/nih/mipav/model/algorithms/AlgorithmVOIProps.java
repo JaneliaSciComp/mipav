@@ -575,7 +575,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         selectedVOIset = new ViewVOIVector(list.getSize());
 
         for (int i = 0; i < list.getSize(); i++) {
-            selectedVOIset.addElement(list.getElementAt(i));
+            selectedVOIset.addElement((VOI)list.getElementAt(i));
         }
 
         if (selectedVOIset.size() != 0) {

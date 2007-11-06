@@ -80,17 +80,17 @@ public class Sphere3f
             kSphere.Center.addEquals(akPoint[i]);
         }
         kSphere.Center.divEquals( (float)iQuantity );
-
+        Vector3f kDiff = new Vector3f();
         for (i = 0; i < iQuantity; i++)
         {
-            Vector3f kDiff = akPoint[i].sub( kSphere.Center );
+            akPoint[i].sub( kSphere.Center, kDiff );
             float fRadiusSqr = kDiff.SquaredLength();
             if (fRadiusSqr > kSphere.Radius)
             {
                 kSphere.Radius = fRadiusSqr;
             }
         }
-
+        kDiff = null;
         kSphere.Radius = (float)Math.sqrt(kSphere.Radius);
         return kSphere;
     }
@@ -103,8 +103,11 @@ public class Sphere3f
      */
     public static boolean InSphere (final Vector3f rkPoint, final Sphere3f rkSphere)
     {
-        Vector3f kDiff = rkPoint.sub( rkSphere.Center );
-        return (kDiff.Length() <= rkSphere.Radius);
+        Vector3f kDiff = new Vector3f();
+        rkPoint.sub( rkSphere.Center, kDiff );
+        boolean bReturn = (kDiff.Length() <= rkSphere.Radius);
+        kDiff = null;
+        return bReturn;
     }
 
     /** Merge the two input spheres, return result.
@@ -115,7 +118,8 @@ public class Sphere3f
     public static Sphere3f MergeSpheres (final Sphere3f rkSphere0,
                                          final Sphere3f rkSphere1)
     {
-        Vector3f kCDiff = rkSphere1.Center.sub( rkSphere0.Center );
+        Vector3f kCDiff = new Vector3f();
+        rkSphere1.Center.sub( rkSphere0.Center, kCDiff );
         float fLSqr = kCDiff.SquaredLength();
         float fRDiff = rkSphere1.Radius - rkSphere0.Radius;
         float fRDiffSqr = fRDiff*fRDiff;
@@ -131,7 +135,8 @@ public class Sphere3f
         if (fLength > Mathf.ZERO_TOLERANCE)
         {
             float fCoeff = (fLength + fRDiff)/(((float)2.0)*fLength);
-            kSphere.Center = rkSphere0.Center.add( kCDiff.scale(fCoeff) );
+            kCDiff.scaleEquals(fCoeff);
+            rkSphere0.Center.add( kCDiff, kSphere.Center );
         }
         else
         {
@@ -140,8 +145,48 @@ public class Sphere3f
 
         kSphere.Radius = ((float)0.5)*(fLength + rkSphere0.Radius +
                                        rkSphere1.Radius);
-
+        kCDiff = null;
         return kSphere;
+    }
+
+    /** Merge the two input spheres, return result.
+     * @param rkSphere0, sphere0 to merge
+     * @param rkSphere1, sphere1 to merge
+     * @return sphere result of merge
+     */
+    public void MergeSpheres (final Sphere3f rkSphere)
+    {
+        float fX = Center.X() - rkSphere.Center.X();
+        float fY = Center.Y() - rkSphere.Center.Y();
+        float fZ = Center.Z() - rkSphere.Center.Z();
+        float fLSqr = fX*fX + fY*fY + fZ*fZ;
+        float fRDiff = rkSphere.Radius - Radius;
+        float fRDiffSqr = fRDiff*fRDiff;
+
+        if (fRDiffSqr >= fLSqr)
+        {
+            if( fRDiff >= (float)0.0 )
+            {
+                Center.SetData(rkSphere.Center);
+                Radius = rkSphere.Radius;
+            }
+            return;
+        }
+
+        float fLength = (float)Math.sqrt(fLSqr);
+        if (fLength > Mathf.ZERO_TOLERANCE)
+        {
+            float fCoeff = (fLength + fRDiff)/(((float)2.0)*fLength);
+            Center.SetData( fX * fCoeff, fY * fCoeff, fZ * fCoeff);
+            Center.addEquals( rkSphere.Center );
+        }
+        else
+        {
+            Center.SetData(rkSphere.Center);
+        }
+
+        Radius = ((float)0.5)*(fLength + rkSphere.Radius +
+                                       Radius);
     }
 
 

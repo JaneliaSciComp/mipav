@@ -119,6 +119,8 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if (command.equals("Help")) {
+        	MipavUtil.showHelp("Mor011IDO");
         }
     }
 
@@ -532,6 +534,8 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
         buttonPanel.add(OKButton);
         buildCancelButton();
         buttonPanel.add(cancelButton);
+        buildHelpButton();
+        buttonPanel.add(helpButton);
 
         JPanel maskPanel = new JPanel(new GridBagLayout());
         maskPanel.setForeground(Color.black);

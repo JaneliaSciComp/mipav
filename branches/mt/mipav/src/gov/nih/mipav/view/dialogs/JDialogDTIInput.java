@@ -2,36 +2,28 @@ package gov.nih.mipav.view.dialogs;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import gov.nih.mipav.view.dialogs.*;
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.event.*;
 import java.io.*;
+import java.util.HashMap;
 import java.util.Vector;
-
-import javax.media.opengl.*;
-import com.sun.opengl.util.*;
-import com.sun.opengl.util.Animator;
-import java.awt.event.*;
 
 import javax.media.j3d.*;
 import javax.vecmath.Color3f;
-import javax.vecmath.Point3d;
 
 import gov.nih.mipav.model.file.*;
+
+import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.*;
+import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.volumeview.GPUVolumeRender;
 import gov.nih.mipav.view.renderer.surfaceview.JPanelSurface;
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelLUT;
-import gov.nih.mipav.model.structures.ModelRGB;
-import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.view.renderer.surfaceview.SurfaceRender;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
-import gov.nih.mipav.view.WildMagic.LibFoundation.NumericalAnalysis.*;
 import java.io.FileInputStream;
-import gov.nih.mipav.model.structures.jama.*;
 
 /** Dialog for specifying Diffusion Tensor Images.
  *
@@ -67,9 +59,11 @@ import gov.nih.mipav.model.structures.jama.*;
  * pass through a VOI are loaded.
  */
 public class JDialogDTIInput extends JDialogBase
-    implements ViewImageUpdateInterface, ChangeListener
+    implements ListSelectionListener, AlgorithmInterface, ChangeListener
 {
 
+    private static final long serialVersionUID = 9207590841799033846L;
+    
     /** Types of dialogs: */
     /** Diffusion Weighted Images dialog: */
     public static final int DWI = 0;
@@ -91,6 +85,9 @@ public class JDialogDTIInput extends JDialogBase
     /** Diffusion Tensor image. */
     private ModelImage m_kDTIImage = null;
 
+    /** Mask image for calculating the DTI image. */
+    private ModelImage m_kDWIMaskImage = null;
+
     /** LUT of input image **/
     private ModelLUT m_kLUTa;
 
@@ -100,36 +97,12 @@ public class JDialogDTIInput extends JDialogBase
     private JTextField m_kAnisotropyPath;
     /** Diffusion Tensor file input path name text box. */
     private JTextField m_kDTIPath;
-    /** BMatrix file input path name text box. */
-    private JTextField m_kBMatrixPath;
-    /** Diffusion Weighted Images .path file input path name text box. */
+    /** Diffusion Weighted Images .list file input path name text box. */
     private JTextField m_kDWIPath;
+    /** Diffusion Weighted Images Mask file input path name text box. */
+    private JTextField m_kDWIMaskPath;
     /** Fiber bundle tract file input path name text box. */
     private JTextField m_kTractPath;
-
-    /** Diffusion Weighted Image image dimension 1, input text box. */
-    private JTextField m_kTextDim1;
-
-    /** Diffusion Weighted Image image dimension 2, input text box. */
-    private JTextField m_kTextDim2;
-
-    /** Diffusion Weighted Image image dimension 3, input text box. */
-    private JTextField m_kTextDim3;
-
-    /** Diffusion Weighted Image image dimension 4, input text box. */
-    private JTextField m_kTextDim4;
-
-    /** Diffusion Weighted Image image resolutions 1, input text box. */
-    private JTextField m_kTextRes1;
-
-    /** Diffusion Weighted Image image resolutions 2, input text box. */
-    private JTextField m_kTextRes2;
-
-    /** Diffusion Weighted Image image resolutions 3, input text box. */
-    private JTextField m_kTextRes3;
-
-    /** Diffusion Weighted Image image resolutions 4, input text box. */
-    private JTextField m_kTextRes4;
 
     /** General matrix storing BMatrix values. */
     private GMatrixf m_kBMatrix = null;
@@ -143,27 +116,25 @@ public class JDialogDTIInput extends JDialogBase
     private int m_iWeights = 0;
 
     /** X-dimensions for Diffusion Weighted Images. */
-    private int m_iXDim = 0;
+    private int m_iDimX = 0;
     /** Y-dimensions for Diffusion Weighted Images. */
-    private int m_iYDim = 0;
+    private int m_iDimY = 0;
 
     /** Dialog type. */
     private int m_iType;
 
     /** GPUVolumeRender object for loading fiber bundle tracts. */
     private GPUVolumeRender m_kVolumeDisplay = null;
-
+    /** JPanelSurface object for loading fiber bundle tracts. */
     private JPanelSurface m_kSurfaceDialog;
+    /** Image displayed in the GPUVolumeRender and SurfaceRender*/
     private ModelImage m_kImage;
-
 
     /** When outputing the fiber bundle tracts. */
     private boolean m_bFirstWrite = true;
 
     /** Checkbox for tract reconstruction. */
     private JCheckBox m_kReconstructTracts;
-    /** Fiber bundle tract output file text box. */
-    private JTextField m_kTractOutputPath;
 
     /** For TRACTS dialog: number of tracts to display. */
     private JTextField m_kTractsLimit;
@@ -178,13 +149,8 @@ public class JDialogDTIInput extends JDialogBase
 
     /** Number of different BMatrix rows: */
     private int m_iBOrig = 0;
-    /** */
-    private int[] repidx;
-
-    /** Mask of the image that shows only the brain: */
-    private ModelImage m_kBrainImage = null;
-    /** ViewJFrameImage for displaying the Mask of the image that shows only the brain: */
-    private ViewJFrameImage m_kBrainFrame = null;
+    /** keeps track of unique entries in the BMatrix */
+    private int[] m_aiMatrixEntries;
 
     /** The list box in the dialog for fiber bundle tracts. */
     private JList m_kTractList;
@@ -194,28 +160,44 @@ public class JDialogDTIInput extends JDialogBase
 
     /** Color button for changing the color of the fiber bundles. */
     private JButton m_kColorButton;
-
-    /** */
-    private JLabel m_kColorLabel;
-
+    /** Color button detault color: */
+    private Color m_kColorButtonDefault;
+    /** Checkbox for turning on/off volume color for the polylines. */
     private JCheckBox m_kUseVolumeColor;
+    /** Checkbox for switching between polylines and ellipsoids. */
     private JCheckBox m_kUseEllipsoids;
+    /** Checkbox for displaying all tensors as ellipsoids. */
     private JCheckBox m_kAllEllipsoids;
 
     /** Keeps track of the groups of polylines loaded. */
+    private Vector<Integer> m_kBundleList = new Vector<Integer>();
+    /** Number of currently loaded fiber bundle groups. */
     private int m_iBundleCount = 0;
 
     /** The TRACTS panel is displayed in the ViewJFrameVolumeViewWM window, instead of as a dialog. */
-    JPanel m_kMainPanel;
+    private JPanel m_kMainPanel;
 
-
-    private JScrollPane scroller;
-
+    /** DTI panel parent of load tract dialog */
     private JDialogDTIInput m_kParentDialog;
 
-    private boolean m_bDTIUpdated = false;
-
+    /** User-control over the number of ellipsoids displayed in GPUVolumeRender */
     private JSlider m_kDisplaySlider;
+
+    /** Index Line array map for display in Surface render */
+    private HashMap<Integer,BranchGroup> m_kLineArrayMap = null;
+
+    /** Which tensor nodes are already on the fiber bundle tract */
+    private boolean[] m_abVisited = null;
+
+    /** Slice thickness read from .list file */
+    private float m_fResZ = 0f;
+    /** Mean noise vale read from the .list file */
+    private float m_fMeanNoise = 0f;
+
+    /** raw image format read from the .list file: */
+    private String m_kRawFormat;
+
+    private String m_kParentDir = null;
 
     /** Create a new JDialogDTIInput of one of the four types:
      * @param iType, type of Diffusion Tensor Input dialog to create.
@@ -231,6 +213,8 @@ public class JDialogDTIInput extends JDialogBase
      * @param iType, type of Diffusion Tensor Input dialog to create.
      * @param kDisplay, reference to the GPUVolumeRender display for
      * loading fiber bundle tracts.
+     * @param kDialog, JPanelSurface display displaying fiber bundle line arrays.
+     * @param kImage, ModelImage displayed in GPUVolumeRender
      */
     public JDialogDTIInput( int iType,
                             GPUVolumeRender kDisplay,
@@ -248,6 +232,7 @@ public class JDialogDTIInput extends JDialogBase
     /** Create a new JDialogDTIInput of one of the four types:
      * @param iType, type of Diffusion Tensor Input dialog to create.
      * loading fiber bundle tracts.
+     * @param kParent, parent DTI panel
      */
     public JDialogDTIInput( int iType, JDialogDTIInput kParent ) 
     {
@@ -348,13 +333,13 @@ public class JDialogDTIInput extends JDialogBase
 	{
             loadDTIFile();
         }
-        else if ( kCommand.equalsIgnoreCase("DWIBrowse") )
+        else if ( kCommand.equalsIgnoreCase("DWIListBrowse") )
 	{
-            loadDWIFile();
+            loadDWIListFile();
         }
-        else if ( kCommand.equalsIgnoreCase("BMatrixBrowse") )
+        else if ( kCommand.equalsIgnoreCase("DWIMaskBrowse") )
 	{
-            loadBMatrixFile();
+            loadDWIMaskFile();
         }
         else if ( kCommand.equalsIgnoreCase("tractBrowse") )
 	{
@@ -447,206 +432,122 @@ public class JDialogDTIInput extends JDialogBase
         }
     }
 
+    /**
+     * @param  kEvent  The list selection event.
+     */
+    public void valueChanged(ListSelectionEvent kEvent) {
+
+        if ( m_kVolumeDisplay == null )
+        {
+            return;
+        }
+        if (((JList) kEvent.getSource()).getMinSelectionIndex() == -1)
+        {
+            return;
+        }
+        if ( ((JList) kEvent.getSource()) != m_kTractList )
+        {
+            return;
+        }
+        int[] aiSelected = m_kTractList.getSelectedIndices();
+        if ( aiSelected.length > 1 )
+        {
+            return;
+        }
+
+        DefaultListModel kList = (DefaultListModel)m_kTractList.getModel();
+        int iHeaderLength = (new String("FiberBundle")).length();
+        for (int i = 0; i < aiSelected.length; i++)
+        {
+            String kName = ((String)(kList.elementAt(aiSelected[i])));
+            int iLength = kName.length();
+            int iGroup = (new Integer(kName.substring( iHeaderLength, iLength ))).intValue();
+            ColorRGB kColor = m_kVolumeDisplay.getPolylineColor(iGroup);
+            if ( kColor != null )
+            {
+                m_kColorButton.setBackground(new Color( kColor.R(), kColor.G(), kColor.B() ) );
+                m_kUseVolumeColor.setSelected(false);
+            }
+            else
+            {
+                m_kColorButton.setBackground( m_kColorButtonDefault );
+                m_kUseVolumeColor.setSelected(true);
+            }
+
+        }
+
+    }
 
     /**
-     * Launches the JFileChooser for the user to select the BMatrix file. Loads the BMatrix file.
+     * Loads the BMatrix file.
+     * @param kFileName, name of BMatrix file.
      */
-    public void loadBMatrixFile() {
-        JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
-        chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.ALL));
-        chooser.setDialogTitle("Choose BMatrix file");
-        int returnValue = chooser.showOpenDialog(this);
-        if (returnValue == JFileChooser.APPROVE_OPTION) { 	
-            File kFile = new File(chooser.getSelectedFile().getAbsolutePath());
-            if ( !kFile.exists() || !kFile.canRead() )
-            {
-                return;
-            }
-            int iLength = (int)kFile.length();
-            if ( iLength <= 0 )
-            {
-                return;
-            }
-            m_kBMatrixPath.setText(chooser.getSelectedFile().getAbsolutePath());
-            Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
-
-            try {
-                BufferedReader in = new BufferedReader(new FileReader(kFile));
-                String str;
-
-                m_iWeights = Integer.valueOf(m_kTextDim4.getText()).intValue();
-                m_kBMatrix = new GMatrixf( m_iWeights, 6 + 1 );
-
-                String[] kBMatrixString = new String[m_iWeights];
-                int nb = 0;
-
-                repidx = new int[m_iWeights];
-                for ( int iRow = 0; iRow < m_iWeights; iRow++ )
-                {
-                    str = in.readLine();
-
-                    boolean gotit = false;
-                    for (int j=0; j < nb ; j++) { 
-                        if (str.equals(kBMatrixString[j]))
-                        {
-                            gotit=true;
-                            repidx[iRow]=j;
-                            break;
-                        }
-                    }
-                    if (!gotit)
-                    { 
-                        kBMatrixString[nb]=str;
-                        repidx[iRow]=nb;
-                        nb=nb+1;
-                    }	
-
-                   java.util.StringTokenizer st = new java.util.StringTokenizer(str);
-                    for ( int iCol = 0; iCol < 6; iCol++ )
-                    {
-                        float fValue = Float.valueOf(st.nextToken()).floatValue();
-                        m_kBMatrix.Set( iRow, iCol, fValue );
-                    }
-                    m_kBMatrix.Set( iRow, 6, 1f );
-                } 
-                System.out.println("number of different b: "+nb);
-                in.close();
-
-                m_iBOrig = nb;
-
-            } catch (IOException e) {}
+    private void loadBMatrixFile( String kFileName )
+    {
+        File kFile = new File(kFileName);
+        if ( !kFile.exists() || !kFile.canRead() )
+        {
+            return;
         }
-    }
-
-    
-    /** Creates the weighted mask image for the tensor calculation from the diffusion weighted images.
-     * @param kMaskImage, the image masking the diffusion weighted images so only the brain portions are used.
-     * @return float[][][] containing the weights used in the tensor calculation.
-     */
-    private float[][][] createTensorWeights(ModelImage kMaskImage) {
-        m_iSlices = Integer.valueOf(m_kTextDim3.getText()).intValue();
-        m_iXDim = Integer.valueOf(m_kTextDim1.getText()).intValue();
-        m_iYDim = Integer.valueOf(m_kTextDim2.getText()).intValue();
-
-        ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating tensor", "creating weights mask...", 0, m_iBOrig, true);
-
-        float[][][] norm = new float[m_iBOrig][m_iSlices][m_iXDim*m_iYDim];
-        float[][][] wmask = new float[m_iWeights][m_iSlices][m_iXDim*m_iYDim];
-
-        for (int i=0; i<m_iBOrig; i++)
+        int iLength = (int)kFile.length();
+        if ( iLength <= 0 )
         {
-            for (int j=0; j< m_iWeights; j++)
-            {
-                if ( repidx[j] == i )
-                {
-                    for (int slice = 0; slice < m_iSlices; slice++)
-                    { 
-                        File kFile = new File( m_aakDWIList[slice][j] );
-                        if ( !kFile.exists() || !kFile.canRead() )
-                        {
-                            MipavUtil.displayError("Error reading file: " + m_aakDWIList[slice][j] + ".");
-                            return null;
-                        }
-                        int iLength = (int)kFile.length();
-                        if ( iLength <= 0 )
-                        {
-                            MipavUtil.displayError("Error reading file: " + m_aakDWIList[slice][j] + ".");
-                            return null;
-                        }
-                        byte[] abSliceData = new byte[iLength];
-                        try {
-                            abSliceData = new byte[iLength];
-                            FileInputStream kFileReader = new FileInputStream(kFile);
-                            kFileReader.read( abSliceData,0,iLength);
-                            kFileReader.close();
-                        } catch (IOException e ) {}
-
-
-                        for ( int iY = 0; iY < m_iYDim; iY++ )
-                        {
-                            for ( int iX = 0; iX < m_iXDim; iX++ )
-                            {
-                                int iIndex = (iY * m_iXDim) + iX;
-                                if ( kMaskImage.getBoolean( slice*m_iYDim*m_iXDim + iIndex) )
-                                {
-                                    float fValue = readFloat( abSliceData, iIndex );
-                                    norm[i][slice][iIndex] += fValue;
-                                }
-                                else
-                                {
-                                    norm[i][slice][iIndex] = 0;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            kProgressBar.updateValue(i+1);
-        }		
-
-        kProgressBar.getProgressBar().setMaximum(m_iWeights);
-        for (int j=0; j< m_iWeights; j++)
-        {
-            for (int slice = 0; slice < m_iSlices; slice++)
-            { 
-                File kFile = new File( m_aakDWIList[slice][j] );
-                if ( !kFile.exists() || !kFile.canRead() )
-                {
-                    MipavUtil.displayError("Error reading file: " + m_aakDWIList[slice][j] + ".");
-                    return null;
-                }
-                int iLength = (int)kFile.length();
-                if ( iLength <= 0 )
-                {
-                    MipavUtil.displayError("Error reading file: " + m_aakDWIList[slice][j] + ".");
-                    return null;
-                }
-                byte[] abSliceData = new byte[iLength];
-                try {
-                    abSliceData = new byte[iLength];
-                    FileInputStream kFileReader = new FileInputStream(kFile);
-                    kFileReader.read( abSliceData,0,iLength);
-                    kFileReader.close();
-                } catch (IOException e ) {}
-
-
-                for ( int iY = 0; iY < m_iYDim; iY++ )
-                {
-                    for ( int iX = 0; iX < m_iXDim; iX++ )
-                    {
-                        int iIndex = (iY * m_iXDim) + iX;
-
-                        if ( norm[repidx[j]][slice][iIndex] == 0 )
-                        {
-                            wmask[j][slice][iIndex]= 0;
-                        }
-                        else
-                        {
-                            if ( kMaskImage.getBoolean( slice*m_iYDim*m_iXDim + iIndex) )
-                            {
-                                float fValue = readFloat( abSliceData, iIndex );
-                                wmask[j][slice][iIndex]= fValue/norm[repidx[j]][slice][iIndex];
-                            }
-                        }
-                    }
-                }
-            }
-            kProgressBar.updateValue(j+1);
+            return;
         }
 
-        kProgressBar.dispose();
-        return wmask;	
+        try {
+            BufferedReader in = new BufferedReader(new FileReader(kFile));
+            String str;
+            
+            m_kBMatrix = new GMatrixf( m_iWeights, 6 + 1 );
+            
+            String[] kBMatrixString = new String[m_iWeights];
+            int nb = 0;
+            
+            m_aiMatrixEntries = new int[m_iWeights];
+            for ( int iRow = 0; iRow < m_iWeights; iRow++ )
+            {
+                str = in.readLine();
+
+                boolean gotit = false;
+                for (int j=0; j < nb ; j++) { 
+                    if (str.equals(kBMatrixString[j]))
+                    {
+                        gotit=true;
+                        m_aiMatrixEntries[iRow]=j;
+                        break;
+                    }
+                }
+                if (!gotit)
+                { 
+                    kBMatrixString[nb]=str;
+                    m_aiMatrixEntries[iRow]=nb;
+                    nb=nb+1;
+                }	
+
+                java.util.StringTokenizer st = new java.util.StringTokenizer(str);
+                for ( int iCol = 0; iCol < 6; iCol++ )
+                {
+                    float fValue = Float.valueOf(st.nextToken()).floatValue();
+                    m_kBMatrix.Set( iRow, iCol, fValue );
+                }
+                m_kBMatrix.Set( iRow, 6, 1f );
+            } 
+            in.close();
+
+            m_iBOrig = nb;
+
+        } catch (IOException e) {}
     }
-
-
 
     /**
      * Launches the JFileChooser for the user to select the Diffusion Weighted Images .path file. Loads the .path file.
      */
-    public void loadDWIFile() {
+    public void loadDWIListFile() {
+    
         JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
         chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.ALL));
-        chooser.setDialogTitle("Choose Diffusion Tensor .path file");
+        chooser.setDialogTitle("Choose Diffusion Weighted Images  .list file");
         int returnValue = chooser.showOpenDialog(this);
         if (returnValue == JFileChooser.APPROVE_OPTION) { 	
             File kFile = new File(chooser.getSelectedFile().getAbsolutePath());
@@ -660,29 +561,119 @@ public class JDialogDTIInput extends JDialogBase
                 return;
             }
             m_kDWIPath.setText(chooser.getSelectedFile().getAbsolutePath());
-            m_kTractOutputPath.setText(chooser.getSelectedFile().getAbsolutePath() + "_tract" );
-
             Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
 
-            m_iSlices = Integer.valueOf(m_kTextDim3.getText()).intValue();
-            m_iWeights = Integer.valueOf(m_kTextDim4.getText()).intValue();
-            m_aakDWIList = new String[m_iSlices][m_iWeights];
+            m_kParentDir = chooser.getCurrentDirectory().toString();
+            File kListFile = new File(chooser.getSelectedFile().getAbsolutePath());
+            String pathFilename = null;
+            String pathFileAbsPath = null;
+
+            String bMatrixFilename = null;
+            String bMatrixFileAbsPath = null;
             try {
-                BufferedReader in = new BufferedReader(new FileReader(kFile));
-                String str;
-                int iSlices = 0;
-                int iWeight = 0;
-                for ( int i = 0; i < m_iSlices; i++ )
-                {
-                    for ( int j = 0; j < m_iWeights; j++ )
-                    {
-                        str = in.readLine();
-                        m_aakDWIList[i][j] = new String(chooser.getSelectedFile().getParentFile() + File.separator + str);
+                BufferedReader kReader = new BufferedReader(new FileReader(kListFile));
+                String lineString = null;
+                while((lineString = kReader.readLine()) != null) {
+                    if(lineString.startsWith("<original_columns>")) {
+            		String columnsStr = lineString.substring(lineString.indexOf("<original_columns>") + 18, lineString.indexOf("</original_columns>")).trim();
+            		m_iDimX = Integer.parseInt(columnsStr);
+                    }else if(lineString.startsWith("<original_rows>")) {
+            		String rowsStr = lineString.substring(lineString.indexOf("<original_rows>") + 15, lineString.indexOf("</original_rows>")).trim();
+            		m_iDimY = Integer.parseInt(rowsStr);
+                    }else if(lineString.startsWith("<slice>")) {
+            		String sliceStr = lineString.substring(lineString.indexOf("<slice>") + 7, lineString.indexOf("</slice>")).trim();
+            		m_iSlices = Integer.parseInt(sliceStr);
+                    }else if(lineString.startsWith("<nim>")) {
+            		String nimStr = lineString.substring(lineString.indexOf("<nim>") + 5, lineString.indexOf("</nim>")).trim();
+            		m_iWeights = Integer.parseInt(nimStr);
+                    }else if(lineString.startsWith("<rawimageformat>")) {
+            		m_kRawFormat = lineString.substring(lineString.indexOf("<rawimageformat>") + 16, lineString.indexOf("</rawimageformat>")).trim();
+                    }else if(lineString.startsWith("<raw_image_path_filename>")) {
+            		pathFilename = lineString.substring(lineString.indexOf("<raw_image_path_filename>") + 25, lineString.indexOf("</raw_image_path_filename>")).trim();
+            		pathFileAbsPath = m_kParentDir + File.separator + pathFilename;
+            		//studyName = pathFilename.substring(0, pathFilename.indexOf(".path"));
+                    }else if(lineString.startsWith("<bmatrixfile>")) {
+            		bMatrixFilename = lineString.substring(lineString.indexOf("<bmatrixfile>") + 13, lineString.indexOf("</bmatrixfile>")).trim();
+            		bMatrixFileAbsPath = m_kParentDir + File.separator + bMatrixFilename;
+            		//studyName = pathFilename.substring(0, pathFilename.indexOf(".path"));
+                    }else if(lineString.startsWith("<slice_thickness>")) {
+            		String zResStr = lineString.substring(lineString.indexOf("<slice_thickness>") + 17, lineString.indexOf("</slice_thickness>")).trim(); 
+            		m_fResZ = Float.parseFloat(zResStr);
+                    }else if(lineString.startsWith("<noise_mean_ori>")) {
+            		String noiseStr = lineString.substring(lineString.indexOf("<noise_mean_ori>") + 16, lineString.indexOf("</noise_mean_ori>")).trim(); 
+            		m_fMeanNoise = Float.parseFloat(noiseStr);
                     }
                 }
-                in.close();
-            } catch (IOException e) {}
+                kReader.close();
+                kReader = null;
+            }catch(Exception e) {
+                e.printStackTrace();
+            }
+            
+            if ( pathFilename != null )
+            {
+                loadPathFile( pathFileAbsPath, m_kParentDir );
+            }
+            if ( bMatrixFileAbsPath != null )
+            {
+                loadBMatrixFile( bMatrixFileAbsPath );
+            }
+            System.err.println( m_kParentDir );
         }
+    }
+
+    /**
+     * Launches the JFileChooser for the user to select the Diffusion Weighted Images .path file. Loads the .path file.
+     */
+    public void loadDWIMaskFile()
+    {
+        JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
+        chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+        chooser.setDialogTitle("Choose Mask Image");
+        int returnValue = chooser.showOpenDialog(this);
+        if (returnValue == JFileChooser.APPROVE_OPTION) { 	
+            FileIO fileIO = new FileIO();
+            if( m_kDWIMaskImage != null )
+            {
+                m_kDWIMaskImage.disposeLocal();
+                m_kDWIMaskImage = null;
+            }
+            m_kDWIMaskImage = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator);
+            m_kDWIMaskPath.setText(chooser.getSelectedFile().getAbsolutePath());
+        }
+    }
+
+    /**
+     * Loads the .path file.
+     * @param kFileName path file name.
+     * @param kPathName, parent directory.
+     */
+    public void loadPathFile( String kFileName, String kPathName )
+    {
+        File kFile = new File(kFileName);
+        if ( !kFile.exists() || !kFile.canRead() )
+        {
+            return;
+        }
+        int iLength = (int)kFile.length();
+        if ( iLength <= 0 )
+        {
+            return;
+        }
+        m_aakDWIList = new String[m_iSlices][m_iWeights];
+        try {
+            BufferedReader in = new BufferedReader(new FileReader(kFile));
+            String str;
+            for ( int i = 0; i < m_iSlices; i++ )
+            {
+                for ( int j = 0; j < m_iWeights; j++ )
+                {
+                    str = in.readLine();
+                    m_aakDWIList[i][j] = new String(kPathName + File.separator + str);
+                }
+            }
+            in.close();
+        } catch (IOException e) {}
     }
 
     /** Processes the Diffusion Tensor Image. Creates the eigen vector
@@ -695,18 +686,93 @@ public class JDialogDTIInput extends JDialogBase
             MipavUtil.displayError("DTI file must be set to create eigen vector data.");
             return;
         }
+        // set up parent directory before calling calcEigenVectorImage:
+        m_kParentDir = m_kParentDir.concat( File.separator + "DTIOutput" + File.separator);
+        File kDir = new File( m_kParentDir );
+        if ( !kDir.exists() )
+        {
+            try {
+                kDir.mkdir();
+            } catch (SecurityException e) {}
+        }
+
         setCursor(new Cursor(Cursor.WAIT_CURSOR));
-        calcEigenVector(m_kDTIImage);
+        calcEigenVectorImage();
         setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-	new DialogDTIColorDisplay(m_kEigenVectorImage, m_kAnisotropyImage, m_kLUTa, false);
+
+        m_kDTIImage.saveImage( m_kParentDir, "DTIImage.xml", FileUtility.XML, false );
+        m_kEigenVectorImage.saveImage( m_kParentDir, "EigenVectorImage.xml", FileUtility.XML, false );
+        m_kAnisotropyImage.saveImage( m_kParentDir, "AnisotropyImage.xml", FileUtility.XML, false );
+
+	DialogDTIColorDisplay kColorDisplay =
+            new DialogDTIColorDisplay(m_kEigenVectorImage, m_kAnisotropyImage, m_kLUTa, false);
+        kColorDisplay.setScreenImageResolutions( m_kDTIImage.getFileInfo(0).getResolutions(), m_fResZ );
 	dispose();
     }
 
-    /** First step in processing the diffusion weighted images. During
-     * this step one of the weighted series is used to create a new
-     * ModelImage, the ModelImage is processed with the
-     * JDialogBrainSurfaceExtractor to extract the brain portions of
-     * the image into a new image. */
+
+    /** Calls AlgorithmDTI2EGFA to create eigen vector and functional anisotropy images. */
+    private void calcEigenVectorImage()
+    {
+        int[] extents = m_kDTIImage.getExtents();
+        float[] res = m_kDTIImage.getFileInfo(0).getResolutions();
+        float[] newRes = new float[extents.length];
+        int[] volExtents = new int[extents.length];
+        boolean originalVolPowerOfTwo = true;
+        int volSize = 1;
+        for (int i = 0; i < extents.length; i++) {
+            volExtents[i] = JDialogDirectResample.dimPowerOfTwo(extents[i]);
+            volSize *= volExtents[i];
+
+            if (volExtents[i] != extents[i]) {
+                originalVolPowerOfTwo = false;
+            }
+            newRes[i] = (res[i] * (extents[i])) / (volExtents[i]);
+        }
+        
+        if ( !originalVolPowerOfTwo )
+        {
+            AlgorithmTransform transformFunct = new AlgorithmTransform(m_kDTIImage, new TransMatrix(4),
+                                                                       AlgorithmTransform.TRILINEAR,
+                                                                       newRes[0], newRes[1], newRes[2],
+                                                                       volExtents[0], volExtents[1], volExtents[2],
+                                                                       false, true, false);
+            transformFunct.setRunningInSeparateThread(false);
+            transformFunct.run();
+            
+            if (transformFunct.isCompleted() == false) {
+                transformFunct.finalize();
+                transformFunct = null;
+            }
+            
+            ModelImage kDTIImageScaled = transformFunct.getTransformedImage();
+            kDTIImageScaled.calcMinMax();
+            
+            if (transformFunct != null) {
+                transformFunct.disposeLocal();
+            }
+            transformFunct = null;
+
+            m_kDTIImage.disposeLocal();
+            m_kDTIImage = null;
+            m_kDTIImage = kDTIImageScaled;
+
+            res = m_kDTIImage.getFileInfo(0).getResolutions();
+        }
+
+        AlgorithmDTI2EGFA kAlgorithm = new AlgorithmDTI2EGFA(m_kDTIImage);
+        kAlgorithm.run();
+        m_kEigenVectorImage = kAlgorithm.getEigenImage();
+        m_kAnisotropyImage = kAlgorithm.getFAImage();
+
+        if ( (m_kReconstructTracts != null) && m_kReconstructTracts.isSelected() )
+        {
+ 	    reconstructTracts( m_kDTIImage, m_kEigenVectorImage );
+ 	}
+    }
+
+
+    /** Calls AlgorithmDWI2DTI to create the diffusion tensor image. */
     private void processDWI()
     {
         if ( m_kBMatrix == null )
@@ -722,231 +788,29 @@ public class JDialogDTIInput extends JDialogBase
         
         setCursor(new Cursor(Cursor.WAIT_CURSOR));
 
-        m_iSlices = Integer.valueOf(m_kTextDim3.getText()).intValue();
-        m_iXDim = Integer.valueOf(m_kTextDim1.getText()).intValue();
-        m_iYDim = Integer.valueOf(m_kTextDim2.getText()).intValue();
-
-        int[] imageExtents = new int[]{m_iXDim, m_iYDim, m_iSlices};
-        m_kBrainImage = new ModelImage( ModelStorageBase.FLOAT, imageExtents, new String( "BrainImage" ) );
-        for ( int iSlice = 0; iSlice < m_iSlices; iSlice++ )
-        {
-            int iWeight = 0;
-            File kFile = new File( m_aakDWIList[ iSlice ][iWeight] );
-            if ( !kFile.exists() || !kFile.canRead() )
-            {
-                MipavUtil.displayError("Error reading file: " + m_aakDWIList[iSlice][iWeight] + ".");
-                return;
-            }
-            int iLength = (int)kFile.length();
-            if ( iLength <= 0 )
-            {
-                MipavUtil.displayError("Error reading file: " + m_aakDWIList[iSlice][iWeight] + ".");
-                return;
-            }
-            byte[] abSliceData = new byte[iLength];
-            try {
-                FileInputStream kFileReader = new FileInputStream(kFile);
-                kFileReader.read(abSliceData,0,iLength);
-                kFileReader.close();
-            } catch (IOException e ) {}
-            
-            for ( int iY = 0; iY < m_iYDim; iY++ )
-            {
-                for ( int iX = 0; iX < m_iXDim; iX++ )
-                {
-                    int iIndex = (iY * m_iXDim) + iX;
-                    float p = readFloat( abSliceData, iIndex );
-                    
-                    m_kBrainImage.set(iSlice*(m_iXDim*m_iYDim) + iIndex, p );
-                }
-            }
-        }
-
-        m_kBrainImage.addImageDisplayListener(this);
-        m_kBrainFrame = new ViewJFrameImage(m_kBrainImage, null, new Dimension(610, 200), false);
-        JDialogBrainSurfaceExtractor kExtractBrain = new JDialogBrainSurfaceExtractor( m_kBrainFrame, m_kBrainImage );
-        kExtractBrain.setFilterGaussianStdDev(5);
-        kExtractBrain.setFillHoles(false);
-        kExtractBrain.setExtractPaint(true);
-        kExtractBrain.callAlgorithm();
+        AlgorithmDWI2DTI kAlgorithm = new AlgorithmDWI2DTI( m_kDWIMaskImage, m_iSlices, m_iDimX, m_iDimY, m_iBOrig, m_iWeights, m_fMeanNoise, m_aakDWIList, m_aiMatrixEntries, m_kBMatrix, m_kRawFormat);
+        kAlgorithm.addListener(this);
+        kAlgorithm.run();
+        
     }
-
-    /** Second step in processing the diffusion weighted images. This
-     * function is called once the brain extractor is complete.  The
-     * brain image is transformed into a mask image, which is passed
-     * to this function. The mask image limits where the tensor
-     * calculations are performed.  The tensor is calculated, then the
-     * eigen vectors and functional anisotropy images. The
-     * DialogDTIColorDisplay is then launched.
-     * @param kMaskImage, mask image representing the brain.
+    
+    /** Called when AlgorithmDWI2DTI is done creating the DTI image.
+     * @param kAlgorithm, algorithm that is finished.
      */
-    private void processDWI( ModelImage kMaskImage )
+    public void algorithmPerformed(AlgorithmBase kAlgorithm)
     {
-
-        float[][][] aaafWeights = createTensorWeights( kMaskImage );
-        
-        int iLen = m_iXDim * m_iYDim * m_iSlices;
-        float[] afTensorData = new float[iLen * 6];
-
-
-        int vol = m_iWeights;
-        int a0 = 1;
-        
-        double[][] bmatrix = new double[vol][6+a0];
-
-        Matrix B = new Matrix( m_kBMatrix.GetRows(), 6+1 );
-        for ( int iR = 0; iR < m_kBMatrix.GetRows(); iR++ )
+        if ( kAlgorithm instanceof AlgorithmDWI2DTI )
         {
-            for ( int iC = 0; iC < 6+1; iC++ )
+            if( kAlgorithm.isCompleted() ) 
             {
-                B.set(iR, iC, m_kBMatrix.Get(iR,iC));
+                m_kDTIImage = ((AlgorithmDWI2DTI)kAlgorithm).getDTIImage();
+                ((AlgorithmDWI2DTI)kAlgorithm).disposeLocal();
+                setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                processDTI();
             }
         }
-
-        double noiseMEAN = 4.96792e-08;
-        
-        ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating tensor", "calculating tensor...", 0, m_iSlices, true);
-
-        for ( int iSlice = 0; iSlice < m_iSlices; iSlice++ )
-        {
-            byte[][] aabSliceData = new byte[m_iWeights][ ];
-
-            for ( int iWeight = 0; iWeight < m_iWeights; iWeight++ )
-            {
-                File kFile = new File( m_aakDWIList[ iSlice ][iWeight] );
-                if ( !kFile.exists() || !kFile.canRead() )
-                {
-                    MipavUtil.displayError("Error reading file: " + m_aakDWIList[iSlice][iWeight] + ".");
-                    return;
-                }
-                int iLength = (int)kFile.length();
-                aabSliceData[iWeight] = new byte[iLength];
-                if ( iLength <= 0 )
-                {
-                    MipavUtil.displayError("Error reading file: " + m_aakDWIList[iSlice][iWeight] + ".");
-                    return;
-                }
-                try {
-                    FileInputStream kFileReader = new FileInputStream(kFile);
-                    kFileReader.read(aabSliceData[iWeight],0,iLength);
-                    kFileReader.close();
-                } catch (IOException e ) {}
-            }
-
-            for ( int iY = 0; iY < m_iYDim; iY++ )
-            {
-                for ( int iX = 0; iX < m_iXDim; iX++ )
-                {
-                    int iIndex = (iY * m_iXDim) + iX;
-                    int index = iSlice * (m_iYDim * m_iXDim) + (iY * m_iXDim) + iX;
-                    if ( kMaskImage.getBoolean( index ) )
-                    {
-                        Matrix SIGMA = Matrix.identity(vol, vol);
-                        double[][] x = new double[vol][1];
-                        Matrix X = new Matrix(x);
-                        int[] r = new int[vol];
-                        int[] c = new int[vol];
-                        int idx=0;
-
-                        for ( int iWeight = 0; iWeight < m_iWeights; iWeight++ )
-                        {
-                            double p = (double)readFloat( aabSliceData[iWeight], iIndex );
-
-                            //SIGMA is a diagonal matrix and its inverse would be diag(1/S(i,i))
-                            if ( p<noiseMEAN )
-                            {
-                                p=noiseMEAN;
-                            }
-                        
-                            double w = aaafWeights[iWeight][iSlice][iIndex];
-                            if (w>0.196)
-                            {
-                                r[idx]=iWeight;
-                                c[idx]=iWeight;
-                                idx++;
-                            }
-                            X.set(iWeight,0,Math.log(p));
-                            SIGMA.set(iWeight,iWeight,(p*p*w)); // SIGMA here becomes SIGMA.inverse
-
-                        }
-                        Matrix B2 = B.getMatrix(r, 0, 6+a0-1);
-                        Matrix SIGMA2 = SIGMA.getMatrix(r, c);
-                        Matrix X2 = X.getMatrix(r, 0, 0);
-                        //Matrix A = ((B.transpose()).times( SIGMA )).times(B);
-                        //Matrix Y = ((B.transpose()).times( SIGMA )).times(X);
-                        Matrix A = ((B2.transpose()).times( SIGMA2 )).times(B2);
-                        Matrix Y = ((B2.transpose()).times( SIGMA2 )).times(X2);
-                        
-                        Matrix D = new Matrix(7,1);
-                        SingularValueDecomposition SVD = new SingularValueDecomposition(A);
-                        Matrix S = SVD.getS();
-                        for (int i=0; i<S.getRowDimension(); i++)
-                            S.set(i,i,1/(S.get(i,i)));
-                        D = (((SVD.getV()).times(S)).times(SVD.getU().transpose())).times(Y);
-                    
-                        // D = [Dxx, Dxy, Dxz, Dyy, Dyz, Dzz, Amplitude] 
-                        float[] tensor = new float[10+vol];
-                        for (int i=0; i<6; i++) { 
-                            tensor[i] = (float)(-D.get(i,0)*1000000); // um^2/sec
-                            if (i==0 && tensor[0]<0) { tensor[0]=(float)0.01; }
-                            if (i==3 && tensor[3]<0) { tensor[3]=(float)0.01; }
-                            if (i==5 && tensor[5]<0) { tensor[5]=(float)0.01; }
-                        }
-                    
-
-                        float[] newTensor = new float[6];
-                        newTensor[0] = tensor[0];
-                        newTensor[1] = tensor[3];
-                        newTensor[2] = tensor[5];
-                        newTensor[3] = tensor[1];
-                        newTensor[4] = tensor[2];
-                        newTensor[5] = tensor[4];
-                        for ( int iT = 0; iT < 6; iT++ )
-                        {
-                            afTensorData[index + iT*iLen] = newTensor[iT];
-                        }
-                    }
-                    else
-                    {
-                        for ( int iT = 0; iT < 6; iT++ )
-                        {
-                            afTensorData[index + iT*iLen] = 0;
-                        }
-                    }
-                }
-            }
-            kProgressBar.updateValue(iSlice+1);
-            aabSliceData = null;
-
-        }
-        kProgressBar.dispose();
-        aaafWeights = null;
-
-        int[] extents = new int[]{m_iXDim, m_iYDim, m_iSlices, 6};
-        m_kDTIImage = new ModelImage( ModelStorageBase.FLOAT, extents, new String( "DiffusionTensorImage" ) );
-        try {
-            m_kDTIImage.importData(0, afTensorData, true );
-        } catch (IOException e) {}
-        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-
-        processDTI();
     }
 
-    /** Translates the byte[] into float values at the given indes iIndex.
-     * @param abData, byte[] containing float values.
-     * @param iIndex, index into the array to get the float from.
-     * @return float value representing 4 bytes starting at abData[iIndex*4].
-     */
-    private float readFloat( byte[] abData, int iIndex )
-    {
-        int b1 = abData[iIndex*4 + 0] & 0xff;
-        int b2 = abData[iIndex*4 + 1] & 0xff;
-        int b3 = abData[iIndex*4 + 2] & 0xff;
-        int b4 = abData[iIndex*4 + 3] & 0xff;
-        int tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-        float fValue = Float.intBitsToFloat(tmpInt);
-        return fValue;
-    }
 
 
     /**
@@ -960,6 +824,7 @@ public class JDialogDTIInput extends JDialogBase
         if (returnValue == JFileChooser.APPROVE_OPTION) { 	
             FileIO fileIO = new FileIO();
             m_kDTIImage = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator);
+            m_kParentDir = chooser.getCurrentDirectory().getParent();
             if(m_kDTIImage.getNDims() != 4) {
                 MipavUtil.displayError("Diffusion Tensor file does not have correct dimensions");
                 if(m_kDTIImage != null) {
@@ -979,8 +844,8 @@ public class JDialogDTIInput extends JDialogBase
                 return;
             }
             m_kDTIPath.setText(chooser.getSelectedFile().getAbsolutePath());
-            m_kTractOutputPath.setText(chooser.getSelectedFile().getAbsolutePath() + "_tract" );
             Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());            
+            System.err.println( m_kParentDir );
         }
     }
 
@@ -1067,114 +932,6 @@ public class JDialogDTIInput extends JDialogBase
     }
 
 
-    /** 
-     * Calculates the eigen vector data from the dtiImage.
-     * @param dtiImage, Diffusion Tensor image.
-     */
-    private void calcEigenVector( ModelImage dtiImage )
-    {
-        int iLen = dtiImage.getExtents()[0] * dtiImage.getExtents()[1] * dtiImage.getExtents()[2];
-        int iZDim = dtiImage.getExtents()[2];
-        int iSliceSize = dtiImage.getExtents()[0] * dtiImage.getExtents()[1];
-        float[] afData = new float[iLen];
-        float[] afDataCM = new float[iLen*9];
-
-        float[] afTensorData = new float[6];
-        Vector3f kV1 = new Vector3f( Vector3f.ZERO );
-        Vector3f kV2 = new Vector3f( Vector3f.ZERO );
-        Vector3f kV3 = new Vector3f( Vector3f.ZERO );
-
-        ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating Eigen Vectors ",
-                                                             "calculating eigen vectors...", 0, iZDim, true);
-
-        for ( int i = 0; i < iLen; i++ )
-        {
-            boolean bAllZero = true;
-            for ( int j = 0; j < 6; j++ )
-            {
-                afTensorData[j] = dtiImage.getFloat(i + j*iLen);
-                if ( afTensorData[j] != 0 )
-                {
-                    bAllZero = false;
-                }
-            }
-            if ( !bAllZero )
-            {
-                Matrix3f kMatrix = new Matrix3f( afTensorData[0], afTensorData[3], afTensorData[4],
-                                                 afTensorData[3], afTensorData[1], afTensorData[5], 
-                                                 afTensorData[4], afTensorData[5], afTensorData[2] );
-                Matrix3f kEigenValues = new Matrix3f();
-                Matrix3f.EigenDecomposition( kMatrix, kEigenValues );
-                float fLambda1 = kEigenValues.GetData(2,2);
-                float fLambda2 = kEigenValues.GetData(1,1);
-                float fLambda3 = kEigenValues.GetData(0,0);
-                kV1 = kMatrix.GetColumn(2);
-                kV2 = kMatrix.GetColumn(1);
-                kV3 = kMatrix.GetColumn(0);
-
-                afData[i] = (float)(Math.sqrt(1.0/2.0) *
-                                    ( ( Math.sqrt( (fLambda1 - fLambda2)*(fLambda1 - fLambda2) +
-                                                   (fLambda2 - fLambda3)*(fLambda2 - fLambda3) +
-                                                   (fLambda3 - fLambda1)*(fLambda3 - fLambda1)   ) ) /
-                                      ( Math.sqrt( fLambda1*fLambda1 + fLambda2*fLambda2 + fLambda3*fLambda3 ) ) ) );
-            }
-            else
-            {
-                afData[i] = 0;
-            }
-
-            afDataCM[i + 0*iLen] = kV1.X();
-            afDataCM[i + 1*iLen] = kV1.Y();
-            afDataCM[i + 2*iLen] = kV1.Z();
-
-            afDataCM[i + 3*iLen] = kV2.X();
-            afDataCM[i + 4*iLen] = kV2.Y();
-            afDataCM[i + 5*iLen] = kV2.Z();
-
-            afDataCM[i + 6*iLen] = kV3.X();
-            afDataCM[i + 7*iLen] = kV3.Y();
-            afDataCM[i + 8*iLen] = kV3.Z();
-
-            if ( (i%iSliceSize) == 0 )
-            {
-                kProgressBar.updateValue((i/iSliceSize)+1);
-            }
-        }
-        kProgressBar.dispose();
-    
-        int[] extentsEV = new int[]{dtiImage.getExtents()[0], dtiImage.getExtents()[1], dtiImage.getExtents()[2], 9};
-        int[] extentsA = new int[]{dtiImage.getExtents()[0], dtiImage.getExtents()[1], dtiImage.getExtents()[2]};
-
-
-        m_kAnisotropyImage = new ModelImage( ModelStorageBase.FLOAT, extentsA, new String( dtiImage.getFileInfo(0).getFileName() + "FA") );
-        try {
-            m_kAnisotropyImage.importData(0, afData, true);
-        } catch (IOException e) { }
-
-        m_kEigenVectorImage = new ModelImage( ModelStorageBase.ARGB_FLOAT, extentsEV, new String( dtiImage.getFileInfo(0).getFileName() + "EG") );
-        try {
-            m_kEigenVectorImage.importData(0, afDataCM, true);
-        } catch (IOException e) { }
-
-        //Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
-        int[] dimExtentsLUT;
-        dimExtentsLUT = new int[2];
-        dimExtentsLUT[0] = 4;
-        dimExtentsLUT[1] = 256;
-        m_kLUTa = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
-        m_kLUTa.resetTransferLine(0.0f, (int) Math.round(m_kEigenVectorImage.getMin()), 255.0f, (int) Math.round(m_kEigenVectorImage.getMax()));
-        int[] extents;
-        extents = new int[4];
-        extents[0] = Math.round(m_kEigenVectorImage.getExtents()[0]);
-        extents[1] = Math.round(m_kEigenVectorImage.getExtents()[1]);
-        extents[2] = Math.round(m_kEigenVectorImage.getExtents()[2]);
-        extents[3] = Math.round(m_kEigenVectorImage.getExtents()[3]);   
-
-        if ( (m_kReconstructTracts != null) && m_kReconstructTracts.isSelected() )
-        {
-	    reconstructTracts( dtiImage, m_kEigenVectorImage );
-	}
-    }
 
     /** Creates the user-interface for the Diffusion Tensor Image dialog.
      * @return JPanel containing the user-interface for the Diffusion Tensor Image dialog.
@@ -1209,12 +966,6 @@ public class JDialogDTIInput extends JDialogBase
         gbc.gridy++;
         kDTIFilesPanel.add(m_kReconstructTracts, gbc);
 
-	m_kTractOutputPath = new JTextField(35);
-        m_kTractOutputPath.setEditable(true);
-        m_kTractOutputPath.setBackground(Color.white);
-        gbc.gridx++;
-        kDTIFilesPanel.add(m_kTractOutputPath, gbc);
-
         gbc.insets = new Insets(0,0,0,0);
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -1222,6 +973,64 @@ public class JDialogDTIInput extends JDialogBase
         return kDTIPanel;
     }
     
+    /** Creates the user-interface for the Diffusion Tensor Image dialog.
+     * @return JPanel containing the user-interface for the Diffusion Tensor Image dialog.
+     */
+    private JPanel createDWIPanel()
+    {
+        GridBagLayout kGBL  = new GridBagLayout();
+        GridBagConstraints gbc = new GridBagConstraints();
+        JPanel kDWIPanel = new JPanel(kGBL);
+        JPanel kDWIFilesPanel = new JPanel(kGBL);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(0,0,5,5);
+        JLabel kDWILabel = new JLabel("  Diffusion Weighted Image (.list): ");
+        kDWIFilesPanel.add(kDWILabel, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        m_kDWIPath = new JTextField(35);
+        m_kDWIPath.setEditable(false);
+        m_kDWIPath.setBackground(Color.white);
+        kDWIFilesPanel.add(m_kDWIPath, gbc);
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        JButton kDWIBrowseButton = new JButton("Browse");
+        kDWIBrowseButton.addActionListener(this);
+        kDWIBrowseButton.setActionCommand("DWIListBrowse");
+        kDWIFilesPanel.add(kDWIBrowseButton, gbc);
+
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        JLabel kDWIMaskLabel = new JLabel("  Mask Image: ");
+        kDWIFilesPanel.add(kDWIMaskLabel, gbc);
+        gbc.gridx = 1;
+        m_kDWIMaskPath = new JTextField(35);
+        m_kDWIMaskPath.setEditable(false);
+        m_kDWIMaskPath.setBackground(Color.white);
+        kDWIFilesPanel.add(m_kDWIMaskPath, gbc);
+        gbc.gridx = 2;
+        JButton kDWIMaskBrowseButton = new JButton("Browse");
+        kDWIMaskBrowseButton.addActionListener(this);
+        kDWIMaskBrowseButton.setActionCommand("DWIMaskBrowse");
+        kDWIFilesPanel.add(kDWIMaskBrowseButton, gbc);
+
+
+	m_kReconstructTracts = new JCheckBox("Tract Reconstruction");
+	m_kReconstructTracts.setSelected(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        kDWIFilesPanel.add(m_kReconstructTracts, gbc);
+
+        gbc.insets = new Insets(0,0,0,0);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        kDWIPanel.add(kDWIFilesPanel, gbc);
+        return kDWIPanel;
+    }
+
+
     /** Creates the user-interface for the EigenVector FA dialog.
      * @return JPanel containing the user-interface for the EigenVector FA dialog.
      */
@@ -1272,8 +1081,8 @@ public class JDialogDTIInput extends JDialogBase
         return kEigenPanel;
     }
 
-    /** Creates the user-interface for the Fiber Bundle Tract dialog.
-     * @return JPanel containing the user-interface for the Fiber Bundle Tract dialog.
+    /** Creates the user-interface for the Fiber Bundle Tract panel.
+     * @return JPanel containing the user-interface for the Fiber Bundle Tract panel.
      */
     private JPanel createTractPanel()
     {
@@ -1281,7 +1090,7 @@ public class JDialogDTIInput extends JDialogBase
         JPanel mainScrollPanel = new JPanel();
         mainScrollPanel.setLayout(new BorderLayout());
 
-        scroller = new JScrollPane(mainScrollPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+        JScrollPane scroller = new JScrollPane(mainScrollPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         JPanel kTractPanel = new JPanel(new BorderLayout());
@@ -1308,7 +1117,7 @@ public class JDialogDTIInput extends JDialogBase
 
         // list panel for surface filenames
         m_kTractList = new JList( new DefaultListModel() );
-        //m_kTractList.addListSelectionListener(this);
+        m_kTractList.addListSelectionListener(this);
         m_kTractList.setPrototypeCellValue("aaaaaaaaaaaaaaaa.aaa    ");
 
         JScrollPane kScrollPane = new JScrollPane(m_kTractList);
@@ -1329,12 +1138,13 @@ public class JDialogDTIInput extends JDialogBase
 
         m_kColorButton = new JButton("   ");
         m_kColorButton.setToolTipText("Change fiber bundle color");
+        m_kColorButtonDefault = m_kColorButton.getBackground( );
         m_kColorButton.addActionListener(this);
         m_kColorButton.setActionCommand("ChangeColor");
 
-        m_kColorLabel = new JLabel("Fiber Bundle color");
-        m_kColorLabel.setFont(serif12B);
-        m_kColorLabel.setForeground(Color.black);
+        JLabel kColorLabel = new JLabel("Fiber Bundle color");
+        kColorLabel.setFont(serif12B);
+        kColorLabel.setForeground(Color.black);
 
         m_kUseVolumeColor = new JCheckBox("Use volume color" );
         m_kUseVolumeColor.addActionListener(this);
@@ -1351,7 +1161,7 @@ public class JDialogDTIInput extends JDialogBase
         m_kAllEllipsoids.setActionCommand("AllEllipsoids");
         m_kAllEllipsoids.setSelected(false);
 
-        m_kDisplaySlider = new JSlider(1, 100, 80);
+        m_kDisplaySlider = new JSlider(1, 500, 450);
         m_kDisplaySlider.setEnabled(true);
         m_kDisplaySlider.setMinorTickSpacing(10);
         m_kDisplaySlider.setPaintTicks(true);
@@ -1364,10 +1174,9 @@ public class JDialogDTIInput extends JDialogBase
 
 
         JPanel colorPanel = new JPanel();
-        //colorPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
         colorPanel.setLayout(new BorderLayout());
         colorPanel.add(m_kColorButton, BorderLayout.WEST);
-        colorPanel.add(m_kColorLabel, BorderLayout.CENTER);
+        colorPanel.add(kColorLabel, BorderLayout.CENTER);
         colorPanel.add(m_kUseVolumeColor, BorderLayout.EAST);
         colorPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         colorPanel.setAlignmentY(Component.TOP_ALIGNMENT);
@@ -1411,7 +1220,9 @@ public class JDialogDTIInput extends JDialogBase
         return kTractPanel;
     }
 
-
+    /** Creates the user-interface for the Fiber Bundle Tract dialog.
+     * @return JPanel containing the user-interface for the Fiber Bundle Tract dialog.
+     */
     private JPanel createTractDialog()
     {
         GridBagLayout kGBL  = new GridBagLayout();
@@ -1490,181 +1301,6 @@ public class JDialogDTIInput extends JDialogBase
         return kTractPanel;
     }
 
-    /** Creates the user-interface for the Diffusion Weighted Images dialog.
-     * @return JPanel containing the user-interface for the Diffusion Weighted Images dialog.
-     */
-    private JPanel createDWIPanel()
-    {
-        GridBagLayout kGBL  = new GridBagLayout();
-        JLabel dim1;
-        JLabel dim2;
-        JLabel dim3;
-        JLabel dim4;
-
-        JPanel kDWIPanel = new JPanel();
-        kDWIPanel.setLayout( new GridLayout(2,1) );
-        JPanel kDWIFilesPanel = new JPanel(kGBL);
-
-        GridBagConstraints gbcPanelDims = new GridBagConstraints();
-        JPanel panelDims = new JPanel(new GridBagLayout());
-        panelDims.setBorder(buildTitledBorder("Dimensions & resolutions"));
-
-        gbcPanelDims.insets = new Insets(5, 5, 5, 5);
-        gbcPanelDims.fill = GridBagConstraints.NONE;
-
-        dim1 = new JLabel("1st");
-        dim1.setFont(serif12);
-        dim1.setForeground(Color.black);
-        gbcPanelDims.gridx = 0;
-        gbcPanelDims.gridy = 0;
-        panelDims.add(dim1, gbcPanelDims);
-
-        m_kTextDim1 = new JTextField(5);
-        m_kTextDim1.setText("128");
-        m_kTextDim1.setFont(serif12);
-        m_kTextDim1.addFocusListener(this);
-        gbcPanelDims.gridx = 1;
-        gbcPanelDims.gridy = 0;
-        panelDims.add(m_kTextDim1, gbcPanelDims);
-
-        m_kTextRes1 = new JTextField(5);
-        m_kTextRes1.setText("1.0");
-        m_kTextRes1.setFont(serif12);
-        m_kTextRes1.addFocusListener(this);
-        gbcPanelDims.gridx = 2;
-        gbcPanelDims.gridy = 0;
-        panelDims.add(m_kTextRes1, gbcPanelDims);
-
-        dim2 = new JLabel("2nd");
-        dim2.setFont(serif12);
-        dim2.setForeground(Color.black);
-        gbcPanelDims.gridx = 0;
-        gbcPanelDims.gridy = 1;
-        panelDims.add(dim2, gbcPanelDims);
-
-        m_kTextDim2 = new JTextField(5);
-        m_kTextDim2.setText("157");
-        m_kTextDim2.setFont(serif12);
-        m_kTextDim2.addFocusListener(this);
-        gbcPanelDims.gridx = 1;
-        gbcPanelDims.gridy = 1;
-        panelDims.add(m_kTextDim2, gbcPanelDims);
-
-        m_kTextRes2 = new JTextField(5);
-        m_kTextRes2.setText("1.0");
-        m_kTextRes2.setFont(serif12);
-        m_kTextRes2.addFocusListener(this);
-        gbcPanelDims.gridx = 2;
-        gbcPanelDims.gridy = 1;
-        panelDims.add(m_kTextRes2, gbcPanelDims);
-
-        dim3 = new JLabel("3rd");
-        dim3.setFont(serif12);
-        dim3.setForeground(Color.black);
-        gbcPanelDims.gridx = 0;
-        gbcPanelDims.gridy = 2;
-        panelDims.add(dim3, gbcPanelDims);
-
-        m_kTextDim3 = new JTextField(5);
-        m_kTextDim3.setText("114");
-        m_kTextDim3.setFont(serif12);
-        m_kTextDim3.addFocusListener(this);
-        gbcPanelDims.gridx = 1;
-        gbcPanelDims.gridy = 2;
-        panelDims.add(m_kTextDim3, gbcPanelDims);
-
-        m_kTextRes3 = new JTextField(5);
-        m_kTextRes3.setText("1.0");
-        m_kTextRes3.setFont(serif12);
-        m_kTextRes3.addFocusListener(this);
-        gbcPanelDims.gridx = 2;
-        gbcPanelDims.gridy = 2;
-        panelDims.add(m_kTextRes3, gbcPanelDims);
-
-        dim4 = new JLabel("4th");
-        dim4.setFont(serif12);
-        dim4.setForeground(Color.black);
-        gbcPanelDims.gridx = 0;
-        gbcPanelDims.gridy = 3;
-        panelDims.add(dim4, gbcPanelDims);
-
-        m_kTextDim4 = new JTextField(5);
-        m_kTextDim4.setText("72");
-        m_kTextDim4.setFont(serif12);
-        m_kTextDim4.addFocusListener(this);
-        gbcPanelDims.gridx = 1;
-        gbcPanelDims.gridy = 3;
-        panelDims.add(m_kTextDim4, gbcPanelDims);
-
-        gbcPanelDims.gridx = 0;
-        gbcPanelDims.gridy = 5;
-        gbcPanelDims.gridwidth = 3;
-        gbcPanelDims.fill = GridBagConstraints.VERTICAL;
-        gbcPanelDims.weighty = 1;
-        panelDims.add(new JPanel(), gbcPanelDims);
-        
-        JPanel kDimsInstructions = new JPanel();
-        kDimsInstructions.setLayout(new GridLayout( 1, 1 ));
-        kDimsInstructions.setBorder(buildTitledBorder("1). Set the image dimensions and resoultions"));
-        kDimsInstructions.add(panelDims);
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.insets = new Insets(0,0,5,5);
-
-        JLabel kBMatrixLabel = new JLabel("  BMatrix file: ");
-        kDWIFilesPanel.add(kBMatrixLabel, gbc);
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        m_kBMatrixPath = new JTextField(35);
-        m_kBMatrixPath.setEditable(false);
-        m_kBMatrixPath.setBackground(Color.white);
-        kDWIFilesPanel.add(m_kBMatrixPath, gbc);
-        gbc.gridx = 2;
-        gbc.gridy = 0;
-        JButton kBMatrixBrowseButton = new JButton("Browse");
-        kBMatrixBrowseButton.addActionListener(this);
-        kBMatrixBrowseButton.setActionCommand("BMatrixBrowse");
-        kDWIFilesPanel.add(kBMatrixBrowseButton, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        JLabel kDWILabel = new JLabel("  Diffusion Wieghted Image (.path): ");
-        kDWIFilesPanel.add(kDWILabel, gbc);
-        gbc.gridx = 1;
-        m_kDWIPath = new JTextField(35);
-        m_kDWIPath.setEditable(false);
-        m_kDWIPath.setBackground(Color.white);
-        kDWIFilesPanel.add(m_kDWIPath, gbc);
-        gbc.gridx = 2;
-        JButton kDWIBrowseButton = new JButton("Browse");
-        kDWIBrowseButton.addActionListener(this);
-        kDWIBrowseButton.setActionCommand("DWIBrowse");
-        kDWIFilesPanel.add(kDWIBrowseButton, gbc);
-        
-	m_kReconstructTracts = new JCheckBox("Tract Reconstruction");
-	m_kReconstructTracts.setSelected(false);
-        gbc.gridx = 0;
-        gbc.gridy++;
-        kDWIFilesPanel.add(m_kReconstructTracts, gbc);
-
-	m_kTractOutputPath = new JTextField(35);
-        m_kTractOutputPath.setEditable(true);
-        m_kTractOutputPath.setBackground(Color.white);
-        gbc.gridx++;
-        kDWIFilesPanel.add(m_kTractOutputPath, gbc);
-
-        JPanel kFileInstructions = new JPanel();
-        kFileInstructions.setLayout(new GridLayout( 1, 1 ));
-        kFileInstructions.setBorder(buildTitledBorder("2). Select the BMatrix and .path files"));
-        kFileInstructions.add(kDWIFilesPanel);
-        
-        kDWIPanel.add(kDimsInstructions);
-        kDWIPanel.add(kFileInstructions);
-        return kDWIPanel;
-    }
-
     /** Constructs the Fiber Bundle Tracts from the dtiImage and the
      * eigenImage parameters. The fiber bundles are output to a file
      * sepecified by the user.
@@ -1676,7 +1312,7 @@ public class JDialogDTIInput extends JDialogBase
         m_kDTIImage = dtiImage;
         m_kEigenVectorImage = eigenImage;
         // save the file version to disk
-        File kFile = new File(m_kTractOutputPath.getText());
+        File kFile = new File( m_kParentDir + "DTIImage.xml_tract" );
         FileOutputStream kFileWriter = null;
         try {
             kFileWriter = new FileOutputStream(kFile);
@@ -1694,7 +1330,18 @@ public class JDialogDTIInput extends JDialogBase
         int iCount = 0;
         int iTractSize = 0;
 
-        ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating Fiber Bundle Tracts ", "calculating tracts...", 0, iDimZ, true);
+        ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating Fiber Bundle Tracts ", "calculating tracts...", 0, 100, true);
+
+        m_abVisited  = new boolean[iLen];
+        for ( int i = 0; i < iLen; i++ )
+        {
+            m_abVisited[i] = false;
+        }
+
+        Vector<Integer> kTract = new Vector<Integer>();
+        Vector3f kPos = new Vector3f();
+        Vector3f kV1 = new Vector3f();
+        Vector3f kV2 = new Vector3f();
 
         for ( int iZ = 0; iZ < iDimZ; iZ++ )
         {
@@ -1716,52 +1363,34 @@ public class JDialogDTIInput extends JDialogBase
                     }
                     if ( !bAllZero )
                     {
-                        Vector3f kPos = new Vector3f( iX, iY, iZ );
-                        Vector<Integer> kTract = new Vector<Integer>();
+                        kPos.SetData( iX, iY, iZ );
                         kTract.add(i);
 
-                        Vector4f kV1 = new Vector4f( afVectorData[0], afVectorData[1], afVectorData[2], 0 );
-                        Vector4f kV2 = kV1.neg();
+                        kV1.SetData( afVectorData[0], afVectorData[1], afVectorData[2] );
+                        kV2.SetData(kV1);
+                        kV2.negEquals();
 
                         kV1.Normalize();
                         kV2.Normalize();
-                       
-                        kV1.W(i);
-                        kV2.W(i);
-                        Vector<Vector4f> kVisited = new Vector<Vector4f>();
-                        kVisited.add( kV1 );
-                        kVisited.add( kV2 );
 
-                        
-                        traceTract( kTract, kPos, kV1, m_kDTIImage, true, kVisited );
-                        traceTract( kTract, kPos, kV2, m_kDTIImage, false, kVisited );
+                        traceTract( kTract, kPos, kV1, m_kDTIImage, true );
+                        m_abVisited[i] = true;
+                        traceTract( kTract, kPos, kV2, m_kDTIImage, false );
 
                         if ( kTract.size() > 1 )
                         {
                             iCount++;
                             iTractSize += kTract.size();
-                            System.err.println( iX + " " + iY + " " + iZ + " tract size " + kTract.size() );
-
                             outputTract( kTract, iDimX, iDimY, iDimZ, kFileWriter );
                         }
                         kTract.clear();
-                        kTract = null;
-
-                        int iVQuantity = kVisited.size();
-                        for (int iP = 0; iP < iVQuantity; iP++)
-                        {
-                            kVisited.get(iP).finalize();
-                        }
-                        kVisited.clear();
-                        kVisited = null;
-
                     }
                 }
             }
-            kProgressBar.updateValue(iZ+1);
+            int iValue = (int)(100 * (float)(iZ+1)/(float)iDimZ);
+            kProgressBar.updateValueImmed( iValue );
         }
         kProgressBar.dispose();
-        System.err.println( "Number of tracts: " + iCount + " tract size " + iTractSize );
 
         try {
             kFileWriter.close();
@@ -1778,9 +1407,8 @@ public class JDialogDTIInput extends JDialogBase
      * end of the tract (positive direction). When false the positions
      * are added to the beginning of the tract (negative direction).
      */
-    private void traceTract( Vector<Integer> kTract, Vector3f kStart, Vector4f kDir,
-                             ModelImage dtiImage, boolean bDir,
-                             Vector<Vector4f> kVisited )
+    private void traceTract( Vector<Integer> kTract, Vector3f kStart, Vector3f kDir,
+                             ModelImage dtiImage, boolean bDir )
     {
         int iDimX = dtiImage.getExtents()[0];
         int iDimY = dtiImage.getExtents()[1];
@@ -1788,12 +1416,11 @@ public class JDialogDTIInput extends JDialogBase
         int iLen = dtiImage.getExtents()[0] * dtiImage.getExtents()[1] * dtiImage.getExtents()[2];
 
         float[] afTensorData = new float[6];
-        float[] afVectorData = new float[3];
 
         boolean bDone = false;
         Matrix3f kMatrix = new Matrix3f();
-        Vector3f kOut;
-        Vector3f kNext;
+        Vector3f kOut = new Vector3f();
+        Vector3f kNext = new Vector3f();
         int iX;
         int iY;
         int iZ;
@@ -1802,7 +1429,7 @@ public class JDialogDTIInput extends JDialogBase
 
         while ( !bDone )
         {
-            kNext = kStart.add( new Vector3f(kDir.X(), kDir.Y(), kDir.Z()) );
+            kStart.add( kDir, kNext );
             iX = Math.round(kNext.X());
             iY = Math.round(kNext.Y());
             iZ = Math.round(kNext.Z());
@@ -1812,7 +1439,8 @@ public class JDialogDTIInput extends JDialogBase
                  (iY < 0) || (iY >= iDimY) ||
                  (iX < 0) || (iX >= iDimX)  )
             {
-                return;
+                bDone = true;
+                break;
             }
 
             bAllZero = true;
@@ -1830,15 +1458,15 @@ public class JDialogDTIInput extends JDialogBase
                                  afTensorData[3], afTensorData[1], afTensorData[5], 
                                  afTensorData[4], afTensorData[5], afTensorData[2] );
                 
-                kOut = kMatrix.mult( new Vector3f(kDir.X(), kDir.Y(), kDir.Z()) );
+                kMatrix.mult(kDir, kOut);
                 kOut.Normalize();
-                Vector4f kOut4 = new Vector4f( kOut.X(), kOut.Y(), kOut.Z(), i);
-
-                if ( contains(kVisited, kOut4) )
+                
+                if ( m_abVisited[i] )
                 {
-                    return;
+                    bDone = true;
+                    break;
                 }
-                kVisited.add( kOut4 );
+                m_abVisited[i] = true;
                 
                 if ( bDir )
                 {
@@ -1850,30 +1478,14 @@ public class JDialogDTIInput extends JDialogBase
                 }
 
                 kStart = kNext;
-                kDir = kOut4;
+                kDir = kOut;
             }
             else
             {
                 bDone = true;
             }
         }
-    }
-
-    /** Determines if the kVisited list of positions contains the input Vector4f kV.
-     * @param kVisited, vector of Vector4f positions.
-     * @param kV, input vector to test.
-     * @return true if kVisited contains a Vector4f with values equal to kV. False otherwise.
-     */
-    private boolean contains( Vector<Vector4f> kVisited, Vector4f kV )
-    {
-        for ( int i = 0; i < kVisited.size(); i++ )
-        {
-            if ( kVisited.get(i).isEqual(kV) )
-            {
-                return true;
-            }
-        }
-        return false;
+        kNext = null;
     }
 
     /** Determines if the input tract is contained within the ModelImage representing user-selected VOIs.
@@ -1935,6 +1547,8 @@ public class JDialogDTIInput extends JDialogBase
 
         for (int i = 0; i < iVQuantity; i++)
         {
+            m_abVisited[kTract.get(i).intValue()] = false;
+
             if ( kFileWriter != null )
             {
                 try {
@@ -2081,6 +1695,10 @@ public class JDialogDTIInput extends JDialogBase
         }
         
         try {
+            m_kParentDialog.updateTractCount();
+            
+            boolean bTractsAdded = false;
+            
             int iNumTractsLimit = (new Integer( m_kTractsLimit.getText() )).intValue() ;
             int iTractMinLength = (new Integer( m_kTractsMin.getText() )).intValue() ;
             int iTractMaxLength = (new Integer( m_kTractsMax.getText() )).intValue() ;
@@ -2132,29 +1750,46 @@ public class JDialogDTIInput extends JDialogBase
                         if ( iNumTracts < iNumTractsLimit )
                         {
                             iNumTracts++;
+                            bTractsAdded = true;
                             m_kParentDialog.addTract( kTract, iVQuantity, iDimX, iDimY, iDimZ );
                         }
                     }
                 }
+            } 
+            if ( bTractsAdded )
+            {
+                m_kParentDialog.addTract();
             }
-            m_kParentDialog.addTract(); 
-
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    /** Pass the DTI image to the GPUVolumeRender.
+     * @param kDTIImage, new DTI image.
+     */
     protected void setDTIImage( ModelImage kDTIImage )
     {
         m_kDTIImage = kDTIImage;
         m_kVolumeDisplay.setDTIImage( m_kDTIImage );
+        m_kVolumeDisplay.setEllipseMod( m_kDisplaySlider.getValue() );
     }
 
+    /** Returns the DTI image.
+     * @return the DTI image.
+     */
     protected ModelImage getDTIImage()
     {
         return m_kDTIImage;
     }
 
+    /** Adds a fiber bundle tract to the GPUVolumeRender and JPanelSurface.
+     * @param kTract, list of voxels in the fiber bundle.
+     * @param iVQuantity, number of voxels in the fiber bundle.
+     * @param iDimX, the x-dimensions of the DTI image used to create the tract.
+     * @param iDimY, the y-dimensions of the DTI image used to create the tract.
+     * @param iDimZ, the z-dimensions of the DTI image used to create the tract.
+     */
     protected void addTract( Vector<Integer> kTract, int iVQuantity, int iDimX, int iDimY, int iDimZ )
     {
         int iXBound = m_kImage.getExtents()[0];
@@ -2221,10 +1856,10 @@ public class JDialogDTIInput extends JDialogBase
             float fY = (float)(iY)/(float)(iDimY);
             float fZ = (float)(iZ)/(float)(iDimZ);
                                 
-            pkVBuffer.Position3(i,
-                                new Vector3f( (float)(fX-.5f), (float)(fY-.5f), (float)(fZ-.5f) ) );
-            pkVBuffer.Color3(0,i, new ColorRGB(fX, fY, fZ));
-            pkVBuffer.Color3(1,i, kColor1 );
+            pkVBuffer.SetPosition3(i,
+                                (float)(fX-.5f), (float)(fY-.5f), (float)(fZ-.5f) );
+            pkVBuffer.SetColor3(0,i, new ColorRGB(fX, fY, fZ));
+            pkVBuffer.SetColor3(1,i, kColor1 );
 
 
             fY = 1 - fY;
@@ -2254,54 +1889,80 @@ public class JDialogDTIInput extends JDialogBase
         addLineArray(kLine);
     }
 
-
+    /** Add a polyline to the GPUVolumeRender.
+     * @param kLine, the Polyline to add.
+     */
     protected void addPolyline( Polyline kLine )
     {
         m_kVolumeDisplay.addPolyline( kLine, m_iBundleCount );
     }
 
+    /** Add a LineArray to the JPanelSurface.
+     * @param kLine, the Polyline to add.
+     */
     protected void addLineArray( LineArray kLine )
     {
-        m_kSurfaceDialog.addLineArray( kLine );
+        if ( m_kLineArrayMap == null )
+        {
+            m_kLineArrayMap = new HashMap<Integer,BranchGroup>();
+            ((SurfaceRender)m_kSurfaceDialog.getSurfaceRender()).getSurfaceDialog().getLightDialog().refreshLighting();
+        }
+
+        BranchGroup kBranch = m_kSurfaceDialog.addLineArray( kLine, m_iBundleCount );
+        if ( kBranch != null )
+        {
+            m_kLineArrayMap.put( new Integer(m_iBundleCount), kBranch );
+        }
     }
 
+    /** Updates the number of fiber bundle tract groups. */
+    protected void updateTractCount()
+    {
+        m_iBundleCount = getMinUnused(m_kBundleList);
+    }
+
+    /** Updates the tract list user-interface. */
     protected void addTract()
     {
+        m_kBundleList.add( new Integer( m_iBundleCount ) );
+
         DefaultListModel kList = (DefaultListModel)m_kTractList.getModel();
         int iSize = kList.getSize();
         kList.add( iSize, new String( "FiberBundle" + m_iBundleCount ) );
-        m_iBundleCount++;
+        m_kTractList.setSelectedIndex(iSize);
     }
 
-
-    /** ViewImageUpdateInterface : stub */
-    public void setSlice(int slice) {}
-
-    /** ViewImageUpdateInterface : stub */
-    public void setTimeSlice(int tSlice) {}
-
-    /** ViewImageUpdateInterface : stub */
-    public boolean updateImageExtents() {
-        return false;
+    /** Gets a new fiber bundle index.
+     * @param kBundleList, list of fiber bundles.
+     */
+    private int getMinUnused( Vector<Integer> kBundleList )
+    {
+        int iMin = 0;
+        if ( kBundleList.size() == 0 )
+        {
+            return iMin;
+        }
+        boolean bFound = false;
+        for ( int i = 0; i < kBundleList.size(); i++ )
+        {
+            iMin = i;
+            bFound = false;
+            for ( int j = 0; j < kBundleList.size(); j++ )
+            {
+                if ( iMin == kBundleList.get(j).intValue() )
+                {
+                    bFound = true;
+                }
+            }
+            if ( !bFound )
+            {
+                return iMin;
+            }
+        }
+        iMin++;
+        return iMin;
     }
 
-    /** ViewImageUpdateInterface : called when the JDialogBrainSurfaceExtractor finishes. Calls processDWI. */
-    public boolean updateImages() {
-        ModelImage kMaskImage = ViewUserInterface.getReference().getRegisteredImageByName(m_kBrainFrame.getComponentImage().commitPaintToMask());
-        m_kBrainImage.removeImageDisplayListener(this);
-        processDWI(kMaskImage);
-        return false;
-    }
-
-    /** ViewImageUpdateInterface : stub */
-    public boolean updateImages(boolean flag) {
-        return false;
-    }
-
-    /** ViewImageUpdateInterface : stub */
-    public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean flag, int interpMode) {
-        return false;
-    }
 
     /**
      * Cancel the color dialog, change nothing.
@@ -2369,6 +2030,7 @@ public class JDialogDTIInput extends JDialogBase
         }
     }
     
+    /** Removes the fiber bundle from the GPUVolumeRender and JPanelSurface. */
     private void removePolyline()
     {
         int[] aiSelected = m_kTractList.getSelectedIndices();
@@ -2384,8 +2046,14 @@ public class JDialogDTIInput extends JDialogBase
                 int iLength = kName.length();
                 int iGroup = (new Integer(kName.substring( iHeaderLength, iLength ))).intValue();
                 m_kVolumeDisplay.removePolyline( iGroup );
-            }
-            
+
+                if ( m_kSurfaceDialog != null )
+                {
+                    BranchGroup kBranch = m_kLineArrayMap.get( new Integer(iGroup) );
+                    m_kSurfaceDialog.removeLineArray( kBranch );
+                }
+                m_kBundleList.remove( new Integer( iGroup ) );
+            }           
             kList.remove( aiSelected[i] );
         }
         if ( kList.size() == 0 )
@@ -2396,6 +2064,11 @@ public class JDialogDTIInput extends JDialogBase
             }
             m_kDTIImage = null;
         }
+        else
+        {
+            m_kTractList.setSelectedIndex(kList.size());
+        }
     }
+
 
 };

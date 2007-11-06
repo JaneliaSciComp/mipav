@@ -113,12 +113,13 @@ public class Culler
         float fDdE = kDVec.Dot(kLoc);
 
         // update the near plane
-        m_akPlane[Camera.ViewFrustum.VF_DMIN.Value()].Normal = kDVec;
+        m_akPlane[Camera.ViewFrustum.VF_DMIN.Value()].Normal.SetData(kDVec);
         m_akPlane[Camera.ViewFrustum.VF_DMIN.Value()].Constant =
             fDdE + m_afFrustum[Camera.ViewFrustum.VF_DMIN.Value()];
 
         // update the far plane
-        m_akPlane[Camera.ViewFrustum.VF_DMAX.Value()].Normal = kDVec.neg();
+        m_akPlane[Camera.ViewFrustum.VF_DMAX.Value()].Normal.SetData(kDVec);
+        m_akPlane[Camera.ViewFrustum.VF_DMAX.Value()].Normal.negEquals();
         m_akPlane[Camera.ViewFrustum.VF_DMAX.Value()].Constant =
             -(fDdE + m_afFrustum[Camera.ViewFrustum.VF_DMAX.Value()]);
 
@@ -126,7 +127,13 @@ public class Culler
         float fInvLength = (float)(1.0f/Math.sqrt(fDMin2 + fUMin2));
         float fC0 = -m_afFrustum[Camera.ViewFrustum.VF_UMIN.Value()]*fInvLength;  // D component
         float fC1 = +m_afFrustum[Camera.ViewFrustum.VF_DMIN.Value()]*fInvLength;  // U component
-        m_akPlane[Camera.ViewFrustum.VF_UMIN.Value()].Normal = kDVec.scale(fC0).add( kUVec.scale(fC1) );
+        //m_akPlane[Camera.ViewFrustum.VF_UMIN.Value()].Normal = kDVec.scale(fC0).add( kUVec.scale(fC1) );
+        Vector3f kTemp1 = new Vector3f( kUVec );
+        kTemp1.scaleEquals(fC1);
+        Vector3f kTemp2 = new Vector3f( kDVec );
+        kTemp2.scaleEquals(fC0);
+        kTemp1.addEquals(kTemp2);
+        m_akPlane[Camera.ViewFrustum.VF_UMIN.Value()].Normal.SetData( kTemp1 );
         m_akPlane[Camera.ViewFrustum.VF_UMIN.Value()].Constant =
             kLoc.Dot(m_akPlane[Camera.ViewFrustum.VF_UMIN.Value()].Normal);
 
@@ -134,7 +141,13 @@ public class Culler
         fInvLength = (float)(1.0f/Math.sqrt(fDMin2 + fUMax2));
         fC0 = +m_afFrustum[Camera.ViewFrustum.VF_UMAX.Value()]*fInvLength;  // D component
         fC1 = -m_afFrustum[Camera.ViewFrustum.VF_DMIN.Value()]*fInvLength;  // U component
-        m_akPlane[Camera.ViewFrustum.VF_UMAX.Value()].Normal = kDVec.scale(fC0).add( kUVec.scale(fC1) );
+        //m_akPlane[Camera.ViewFrustum.VF_UMAX.Value()].Normal = kDVec.scale(fC0).add( kUVec.scale(fC1) );
+        kTemp1.SetData( kUVec );
+        kTemp1.scaleEquals(fC1);
+        kTemp2.SetData( kDVec );
+        kTemp2.scaleEquals(fC0);
+        kTemp1.addEquals(kTemp2);
+        m_akPlane[Camera.ViewFrustum.VF_UMAX.Value()].Normal.SetData( kTemp1 );
         m_akPlane[Camera.ViewFrustum.VF_UMAX.Value()].Constant =
             kLoc.Dot(m_akPlane[Camera.ViewFrustum.VF_UMAX.Value()].Normal);
 
@@ -142,7 +155,13 @@ public class Culler
         fInvLength = (float)(1.0f/Math.sqrt(fDMin2 + fRMin2));
         fC0 = -m_afFrustum[Camera.ViewFrustum.VF_RMIN.Value()]*fInvLength;  // D component
         fC1 = +m_afFrustum[Camera.ViewFrustum.VF_DMIN.Value()]*fInvLength;  // R component
-        m_akPlane[Camera.ViewFrustum.VF_RMIN.Value()].Normal = kDVec.scale(fC0).add( kRVec.scale(fC1) );
+        //m_akPlane[Camera.ViewFrustum.VF_RMIN.Value()].Normal = kDVec.scale(fC0).add( kRVec.scale(fC1) );
+        kTemp1.SetData(kRVec);
+        kTemp1.scaleEquals(fC1);
+        kTemp2.SetData(kDVec);
+        kTemp2.scaleEquals(fC0);
+        kTemp1.addEquals(kTemp2);
+        m_akPlane[Camera.ViewFrustum.VF_RMIN.Value()].Normal.SetData(kTemp1);
         m_akPlane[Camera.ViewFrustum.VF_RMIN.Value()].Constant =
             kLoc.Dot(m_akPlane[Camera.ViewFrustum.VF_RMIN.Value()].Normal);
 
@@ -150,7 +169,8 @@ public class Culler
         fInvLength = (float)(1.0f/Math.sqrt(fDMin2 + fRMax2));
         fC0 = +m_afFrustum[Camera.ViewFrustum.VF_RMAX.Value()]*fInvLength;  // D component
         fC1 = -m_afFrustum[Camera.ViewFrustum.VF_DMIN.Value()]*fInvLength;  // R component
-        m_akPlane[Camera.ViewFrustum.VF_RMAX.Value()].Normal = kDVec.scale(fC0).add( kRVec.scale(fC1) );
+        //m_akPlane[Camera.ViewFrustum.VF_RMAX.Value()].Normal = kDVec.scale(fC0).add( kRVec.scale(fC1) );
+        m_akPlane[Camera.ViewFrustum.VF_RMAX.Value()].Normal.SetData(kTemp1);
         m_akPlane[Camera.ViewFrustum.VF_RMAX.Value()].Constant =
             kLoc.Dot(m_akPlane[Camera.ViewFrustum.VF_RMAX.Value()].Normal);
 

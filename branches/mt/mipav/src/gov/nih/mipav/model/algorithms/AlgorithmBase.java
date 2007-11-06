@@ -77,6 +77,12 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     /** Start time (in milliseconds) to be used to compute elapsed time. */
     private long startTime = 0;
 
+    /**
+     * Store the progress being made.
+     */
+    private float progress;
+    
+    private float progressStep;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -728,4 +734,25 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
             }
         }
     }
+
+
+	public synchronized float getProgress() {
+		return progress;
+	}
+
+
+	public synchronized void setProgress(int progress) {
+		this.progress = progress;
+	}
+	
+	public synchronized void makeProgress(float step){
+		this.progress += step;
+	}
+	
+	public float getProgressStep(){
+		return this.progressStep;
+	}
+	public void setProgressStep(float progressStep){
+		this.progressStep = progressStep;
+	}
 }
