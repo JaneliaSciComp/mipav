@@ -85,6 +85,9 @@ public class JDialogDTIInput extends JDialogBase
     /** Diffusion Tensor image. */
     private ModelImage m_kDTIImage = null;
 
+    /** Mask image for calculating the DTI image. */
+    private ModelImage m_kDWIMaskImage = null;
+
     /** LUT of input image **/
     private ModelLUT m_kLUTa;
 
@@ -94,8 +97,10 @@ public class JDialogDTIInput extends JDialogBase
     private JTextField m_kAnisotropyPath;
     /** Diffusion Tensor file input path name text box. */
     private JTextField m_kDTIPath;
-    /** Diffusion Weighted Images .path file input path name text box. */
+    /** Diffusion Weighted Images .list file input path name text box. */
     private JTextField m_kDWIPath;
+    /** Diffusion Weighted Images Mask file input path name text box. */
+    private JTextField m_kDWIMaskPath;
     /** Fiber bundle tract file input path name text box. */
     private JTextField m_kTractPath;
 
@@ -331,6 +336,10 @@ public class JDialogDTIInput extends JDialogBase
         else if ( kCommand.equalsIgnoreCase("DWIListBrowse") )
 	{
             loadDWIListFile();
+        }
+        else if ( kCommand.equalsIgnoreCase("DWIMaskBrowse") )
+	{
+            loadDWIMaskFile();
         }
         else if ( kCommand.equalsIgnoreCase("tractBrowse") )
 	{
@@ -614,6 +623,27 @@ public class JDialogDTIInput extends JDialogBase
     }
 
     /**
+     * Launches the JFileChooser for the user to select the Diffusion Weighted Images .path file. Loads the .path file.
+     */
+    public void loadDWIMaskFile()
+    {
+        JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
+        chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+        chooser.setDialogTitle("Choose Mask Image");
+        int returnValue = chooser.showOpenDialog(this);
+        if (returnValue == JFileChooser.APPROVE_OPTION) { 	
+            FileIO fileIO = new FileIO();
+            if( m_kDWIMaskImage != null )
+            {
+                m_kDWIMaskImage.disposeLocal();
+                m_kDWIMaskImage = null;
+            }
+            m_kDWIMaskImage = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator);
+            m_kDWIMaskPath.setText(chooser.getSelectedFile().getAbsolutePath());
+        }
+    }
+
+    /**
      * Loads the .path file.
      * @param kFileName path file name.
      * @param kPathName, parent directory.
@@ -758,7 +788,7 @@ public class JDialogDTIInput extends JDialogBase
         
         setCursor(new Cursor(Cursor.WAIT_CURSOR));
 
-        AlgorithmDWI2DTI kAlgorithm = new AlgorithmDWI2DTI( null, m_iSlices, m_iDimX, m_iDimY, m_iBOrig, m_iWeights, m_fMeanNoise, m_aakDWIList, m_aiMatrixEntries, m_kBMatrix, m_kRawFormat);
+        AlgorithmDWI2DTI kAlgorithm = new AlgorithmDWI2DTI( m_kDWIMaskImage, m_iSlices, m_iDimX, m_iDimY, m_iBOrig, m_iWeights, m_fMeanNoise, m_aakDWIList, m_aiMatrixEntries, m_kBMatrix, m_kRawFormat);
         kAlgorithm.addListener(this);
         kAlgorithm.run();
         
@@ -969,6 +999,23 @@ public class JDialogDTIInput extends JDialogBase
         kDWIBrowseButton.addActionListener(this);
         kDWIBrowseButton.setActionCommand("DWIListBrowse");
         kDWIFilesPanel.add(kDWIBrowseButton, gbc);
+
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        JLabel kDWIMaskLabel = new JLabel("  Mask Image: ");
+        kDWIFilesPanel.add(kDWIMaskLabel, gbc);
+        gbc.gridx = 1;
+        m_kDWIMaskPath = new JTextField(35);
+        m_kDWIMaskPath.setEditable(false);
+        m_kDWIMaskPath.setBackground(Color.white);
+        kDWIFilesPanel.add(m_kDWIMaskPath, gbc);
+        gbc.gridx = 2;
+        JButton kDWIMaskBrowseButton = new JButton("Browse");
+        kDWIMaskBrowseButton.addActionListener(this);
+        kDWIMaskBrowseButton.setActionCommand("DWIMaskBrowse");
+        kDWIFilesPanel.add(kDWIMaskBrowseButton, gbc);
+
 
 	m_kReconstructTracts = new JCheckBox("Tract Reconstruction");
 	m_kReconstructTracts.setSelected(false);

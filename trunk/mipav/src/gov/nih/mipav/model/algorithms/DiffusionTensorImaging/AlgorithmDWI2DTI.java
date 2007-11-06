@@ -68,7 +68,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     /** */
     public void runAlgorithm()
     {
-        if ( m_kBrainImage == null )
+        if ( m_kMaskImage == null )
         {
             createMaskImage();
         }
@@ -213,7 +213,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
         m_kBrainFrame = new ViewJFrameImage(m_kBrainImage, null, new Dimension(610, 200), false);
 
         JDialogBrainSurfaceExtractor kExtractBrain = new JDialogBrainSurfaceExtractor( m_kBrainFrame, m_kBrainImage );
-        kExtractBrain.setFilterGaussianStdDev(3);
+        kExtractBrain.setFilterGaussianStdDev(5);
         kExtractBrain.setFillHoles(false);
         kExtractBrain.setExtractPaint(true);
         kExtractBrain.callAlgorithm();
