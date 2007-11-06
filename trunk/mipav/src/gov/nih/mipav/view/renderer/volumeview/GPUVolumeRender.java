@@ -1942,10 +1942,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
         }
         m_akLights = akGLights;
 
-        if ( m_kSphere != null )
-        {
-            m_kSphere.DetachAllLights();
-        }
+//         if ( m_kSphere != null )
+//         {
+//             m_kSphere.DetachAllLights();
+//         }
 
         if ( m_bInit )
         {
@@ -1961,10 +1961,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
                         Light kLight = akGLights[i].createWMLight();
                         m_pkRenderer.SetLight( i, kLight );
 
-                        if ( m_kSphere != null )
-                        {
-                            m_kSphere.AttachLight( kLight );
-                        }
+//                         if ( m_kSphere != null )
+//                         {
+//                             m_kSphere.AttachLight( kLight );
+//                         }
 
                         if ( akGLights[i].isTypeAmbient() )
                         {
@@ -1984,6 +1984,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
                         }
 
                         m_kVolumeShaderEffect.SetLight(kLightType, afType);
+                        if ( m_kAllEllipsoidsShader != null )
+                        {
+                            m_kAllEllipsoidsShader.SetLight(kLightType, afType);
+                        }
                     }
                     else
                     {
@@ -1994,10 +1998,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
                 }
             }
         }
-        if ( m_kSphere != null )
-        {
-            m_kSphere.UpdateRS();
-        }
+//         if ( m_kSphere != null )
+//         {
+//             m_kSphere.UpdateRS();
+//         }
     }
 
     /**
@@ -2577,7 +2581,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         StandardMesh kSM = new StandardMesh(kAttr);
         m_kSphere = kSM.Sphere(64,64,1f);
 
-        m_kAllEllipsoidsShader = new MaterialEffect( );
+        m_kAllEllipsoidsShader = new MipavLightingEffect( );
         m_kEllipseMaterial = new MaterialState();
         m_kEllipseMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
         m_kEllipseMaterial.Ambient = new ColorRGB(0.24725f,0.2245f,0.0645f);
@@ -2587,10 +2591,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_kColorEllipse = new ColorRGB(ColorRGB.BLACK);
 
         m_kSphere.AttachGlobalState(m_kEllipseMaterial);
-
+        m_kSphere.AttachEffect(m_kAllEllipsoidsShader);
+        m_kSphere.UpdateRS();
         m_spkEllipseScene = new Node();
         m_spkEllipseScene.Local.SetScale( m_fX, m_fY, m_fZ );
-        //CreateLights ();
     }
 
     public void setDisplayEllipsoids( boolean bDisplay )
@@ -2617,12 +2621,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             return;
         }
-//         if ( m_bUpdateEffects )
-//         {
-//             UpdateEffectsOnIdle();
-//         }
 
-        
         m_spkAlpha.BlendEnabled = true;
         int iCount = 0;
         int iIndex;
@@ -2924,7 +2923,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
     private boolean m_bDisplayAllEllipsoids = false;
     private int m_iEllipsoidMod = 10;
 
-    private ShaderEffect m_kAllEllipsoidsShader = null;
+    private MipavLightingEffect m_kAllEllipsoidsShader = null;
 
     private HashMap<Integer,ColorRGB> m_kEllipseConstantColor;
 
