@@ -365,10 +365,12 @@ public class JDialogDTIInput extends JDialogBase
         } 
 	else if ( kCommand.equals("UseEllipsoids") )
 	{
+	    ((SurfaceRender)m_kSurfaceDialog.getSurfaceRender()).getSurfaceDialog().getLightDialog().refreshLighting();
 	    m_kVolumeDisplay.setDisplayEllipsoids( m_kUseEllipsoids.isSelected() );
 	}
 	else if ( kCommand.equals("AllEllipsoids") )
 	{
+        ((SurfaceRender)m_kSurfaceDialog.getSurfaceRender()).getSurfaceDialog().getLightDialog().refreshLighting();
  	    Color color = m_kColorButton.getBackground();
  	    m_kVolumeDisplay.setDisplayAllEllipsoids( m_kAllEllipsoids.isSelected(), 10,
  						      !m_kUseVolumeColor.isSelected(),
@@ -1905,7 +1907,6 @@ public class JDialogDTIInput extends JDialogBase
         if ( m_kLineArrayMap == null )
         {
             m_kLineArrayMap = new HashMap<Integer,BranchGroup>();
-            ((SurfaceRender)m_kSurfaceDialog.getSurfaceRender()).getSurfaceDialog().getLightDialog().refreshLighting();
         }
 
         BranchGroup kBranch = m_kSurfaceDialog.addLineArray( kLine, m_iBundleCount );
