@@ -137,7 +137,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             m_kFAImage.importData(0, afData, true);
         } catch (IOException e) { }
 
-        m_kEigenImage = new ModelImage( ModelStorageBase.ARGB_FLOAT, extentsEV, new String( m_kDTIImage.getFileInfo(0).getFileName() + "EG") );
+        m_kEigenImage = new ModelImage( ModelStorageBase.FLOAT, extentsEV, new String( m_kDTIImage.getFileInfo(0).getFileName() + "EG") );
         try {
             m_kEigenImage.importData(0, afDataCM, true);
         } catch (IOException e) { }

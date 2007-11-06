@@ -130,8 +130,6 @@ public class JDialogDTIInput extends JDialogBase
 
     /** Checkbox for tract reconstruction. */
     private JCheckBox m_kReconstructTracts;
-    /** Fiber bundle tract output file text box. */
-    private JTextField m_kTractOutputPath;
 
     /** For TRACTS dialog: number of tracts to display. */
     private JTextField m_kTractsLimit;
@@ -183,9 +181,6 @@ public class JDialogDTIInput extends JDialogBase
     /** Index Line array map for display in Surface render */
     private HashMap<Integer,BranchGroup> m_kLineArrayMap = null;
 
-    /** DTI Image name */
-    private String m_kDTIImageName = null;
-
     /** Which tensor nodes are already on the fiber bundle tract */
     private boolean[] m_abVisited = null;
 
@@ -196,6 +191,8 @@ public class JDialogDTIInput extends JDialogBase
 
     /** raw image format read from the .list file: */
     private String m_kRawFormat;
+
+    private String m_kParentDir = null;
 
     /** Create a new JDialogDTIInput of one of the four types:
      * @param iType, type of Diffusion Tensor Input dialog to create.
@@ -555,10 +552,9 @@ public class JDialogDTIInput extends JDialogBase
                 return;
             }
             m_kDWIPath.setText(chooser.getSelectedFile().getAbsolutePath());
-            m_kTractOutputPath.setText(chooser.getSelectedFile().getAbsolutePath() + "_tract" );
             Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
 
-            String parentDir = chooser.getCurrentDirectory().toString();
+            m_kParentDir = chooser.getCurrentDirectory().toString();
             File kListFile = new File(chooser.getSelectedFile().getAbsolutePath());
             String pathFilename = null;
             String pathFileAbsPath = null;
@@ -585,11 +581,11 @@ public class JDialogDTIInput extends JDialogBase
             		m_kRawFormat = lineString.substring(lineString.indexOf("<rawimageformat>") + 16, lineString.indexOf("</rawimageformat>")).trim();
                     }else if(lineString.startsWith("<raw_image_path_filename>")) {
             		pathFilename = lineString.substring(lineString.indexOf("<raw_image_path_filename>") + 25, lineString.indexOf("</raw_image_path_filename>")).trim();
-            		pathFileAbsPath = parentDir + File.separator + pathFilename;
+            		pathFileAbsPath = m_kParentDir + File.separator + pathFilename;
             		//studyName = pathFilename.substring(0, pathFilename.indexOf(".path"));
                     }else if(lineString.startsWith("<bmatrixfile>")) {
             		bMatrixFilename = lineString.substring(lineString.indexOf("<bmatrixfile>") + 13, lineString.indexOf("</bmatrixfile>")).trim();
-            		bMatrixFileAbsPath = parentDir + File.separator + bMatrixFilename;
+            		bMatrixFileAbsPath = m_kParentDir + File.separator + bMatrixFilename;
             		//studyName = pathFilename.substring(0, pathFilename.indexOf(".path"));
                     }else if(lineString.startsWith("<slice_thickness>")) {
             		String zResStr = lineString.substring(lineString.indexOf("<slice_thickness>") + 17, lineString.indexOf("</slice_thickness>")).trim(); 
@@ -607,12 +603,13 @@ public class JDialogDTIInput extends JDialogBase
             
             if ( pathFilename != null )
             {
-                loadPathFile( pathFileAbsPath, parentDir );
+                loadPathFile( pathFileAbsPath, m_kParentDir );
             }
             if ( bMatrixFileAbsPath != null )
             {
                 loadBMatrixFile( bMatrixFileAbsPath );
             }
+            System.err.println( m_kParentDir );
         }
     }
 
@@ -659,11 +656,26 @@ public class JDialogDTIInput extends JDialogBase
             MipavUtil.displayError("DTI file must be set to create eigen vector data.");
             return;
         }
+        // set up parent directory before calling calcEigenVectorImage:
+        m_kParentDir = m_kParentDir.concat( File.separator + "DTIOutput" + File.separator);
+        File kDir = new File( m_kParentDir );
+        if ( !kDir.exists() )
+        {
+            try {
+                kDir.mkdir();
+            } catch (SecurityException e) {}
+        }
+
         setCursor(new Cursor(Cursor.WAIT_CURSOR));
         calcEigenVectorImage();
         setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-	DialogDTIColorDisplay kColorDisplay = new DialogDTIColorDisplay(m_kEigenVectorImage, m_kAnisotropyImage, m_kLUTa, false);
 
+        m_kDTIImage.saveImage( m_kParentDir, "DTIImage.xml", FileUtility.XML, false );
+        m_kEigenVectorImage.saveImage( m_kParentDir, "EigenVectorImage.xml", FileUtility.XML, false );
+        m_kAnisotropyImage.saveImage( m_kParentDir, "AnisotropyImage.xml", FileUtility.XML, false );
+
+	DialogDTIColorDisplay kColorDisplay =
+            new DialogDTIColorDisplay(m_kEigenVectorImage, m_kAnisotropyImage, m_kLUTa, false);
         kColorDisplay.setScreenImageResolutions( m_kDTIImage.getFileInfo(0).getResolutions(), m_fResZ );
 	dispose();
     }
@@ -714,7 +726,6 @@ public class JDialogDTIInput extends JDialogBase
             m_kDTIImage.disposeLocal();
             m_kDTIImage = null;
             m_kDTIImage = kDTIImageScaled;
-            m_kDTIImage.setImageName(m_kDTIImageName);
 
             res = m_kDTIImage.getFileInfo(0).getResolutions();
         }
@@ -783,6 +794,7 @@ public class JDialogDTIInput extends JDialogBase
         if (returnValue == JFileChooser.APPROVE_OPTION) { 	
             FileIO fileIO = new FileIO();
             m_kDTIImage = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator);
+            m_kParentDir = chooser.getCurrentDirectory().getParent();
             if(m_kDTIImage.getNDims() != 4) {
                 MipavUtil.displayError("Diffusion Tensor file does not have correct dimensions");
                 if(m_kDTIImage != null) {
@@ -802,9 +814,8 @@ public class JDialogDTIInput extends JDialogBase
                 return;
             }
             m_kDTIPath.setText(chooser.getSelectedFile().getAbsolutePath());
-            m_kTractOutputPath.setText(chooser.getSelectedFile().getAbsolutePath() + "_tract" );
             Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());            
-            m_kDTIImageName = new String(chooser.getSelectedFile().getAbsolutePath() + "_tract" );
+            System.err.println( m_kParentDir );
         }
     }
 
@@ -925,12 +936,6 @@ public class JDialogDTIInput extends JDialogBase
         gbc.gridy++;
         kDTIFilesPanel.add(m_kReconstructTracts, gbc);
 
-	m_kTractOutputPath = new JTextField(35);
-        m_kTractOutputPath.setEditable(true);
-        m_kTractOutputPath.setBackground(Color.white);
-        gbc.gridx++;
-        kDTIFilesPanel.add(m_kTractOutputPath, gbc);
-
         gbc.insets = new Insets(0,0,0,0);
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -970,12 +975,6 @@ public class JDialogDTIInput extends JDialogBase
         gbc.gridx = 0;
         gbc.gridy++;
         kDWIFilesPanel.add(m_kReconstructTracts, gbc);
-
-	m_kTractOutputPath = new JTextField(35);
-        m_kTractOutputPath.setEditable(true);
-        m_kTractOutputPath.setBackground(Color.white);
-        gbc.gridx++;
-        kDWIFilesPanel.add(m_kTractOutputPath, gbc);
 
         gbc.insets = new Insets(0,0,0,0);
         gbc.gridx = 0;
@@ -1266,7 +1265,7 @@ public class JDialogDTIInput extends JDialogBase
         m_kDTIImage = dtiImage;
         m_kEigenVectorImage = eigenImage;
         // save the file version to disk
-        File kFile = new File(m_kTractOutputPath.getText());
+        File kFile = new File( m_kParentDir + "DTIImage.xml_tract" );
         FileOutputStream kFileWriter = null;
         try {
             kFileWriter = new FileOutputStream(kFile);
