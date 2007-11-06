@@ -293,8 +293,9 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
             int iValue = (int)(100 * (float)(j+1)/(float)m_iWeights);
             kProgressBar.updateValueImmed( iValue );
         }
-
+        norm = null;
         kProgressBar.dispose();
+        kProgressBar = null;
         return wmask;	
     }
 

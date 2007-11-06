@@ -1338,7 +1338,6 @@ public class JDialogDTIInput extends JDialogBase
                             outputTract( kTract, iDimX, iDimY, iDimZ, kFileWriter );
                         }
                         kTract.clear();
-                        kV2 = null;
                     }
                 }
             }
@@ -1374,7 +1373,7 @@ public class JDialogDTIInput extends JDialogBase
 
         boolean bDone = false;
         Matrix3f kMatrix = new Matrix3f();
-        Vector3f kOut;
+        Vector3f kOut = new Vector3f();
         Vector3f kNext = new Vector3f();
         int iX;
         int iY;
@@ -1413,7 +1412,7 @@ public class JDialogDTIInput extends JDialogBase
                                  afTensorData[3], afTensorData[1], afTensorData[5], 
                                  afTensorData[4], afTensorData[5], afTensorData[2] );
                 
-                kOut = kMatrix.mult(kDir);
+                kMatrix.mult(kDir, kOut);
                 kOut.Normalize();
                 
                 if ( m_abVisited[i] )
