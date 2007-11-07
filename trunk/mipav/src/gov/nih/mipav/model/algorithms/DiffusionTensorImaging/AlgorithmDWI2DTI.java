@@ -41,9 +41,10 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     private String m_kRawImageFormat = null;
     
     private ModelImage m_kDTIImage = null;
+    private boolean m_bDisplayB0 = false;
 
 
-    public AlgorithmDWI2DTI( ModelImage kMaskImage, int iSlices, int iDimX, int iDimY,
+    public AlgorithmDWI2DTI( ModelImage kMaskImage, boolean bDisplayB0, int iSlices, int iDimX, int iDimY,
                              int iBOrig, int iWeights, float fMeanNoise, String[][] aakDWIList, int[] repidx, GMatrixf kBMatrix,
                              String kRawFormat )
     {
@@ -58,6 +59,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
        m_repidx = repidx;
        m_kBMatrix = kBMatrix;
        m_kRawImageFormat = kRawFormat;
+       
+       m_bDisplayB0 = bDisplayB0;
     }
 
     public void disposeLocal()
@@ -196,21 +199,29 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
 
     private void createMaskImage()
     {
-        int iWeight = 0;
-        int[] imageExtents = new int[]{m_iDimX, m_iDimY, m_iSlices};
-        m_kBrainImage = new ModelImage(ModelStorageBase.FLOAT, imageExtents, new String( "BrainImage" ) );
-
-        int length = m_iDimX * m_iDimY;
-        for ( int iSlice = 0; iSlice < m_iSlices; iSlice++ )
+        if ( m_kBrainFrame == null )
         {
-            float[] buffer = readSliceWeight(iSlice, iWeight);
-            try {
-                m_kBrainImage.importData(length * iSlice, buffer, false);
-            } catch (IOException e) {}
-        }
+            int iWeight = 0;
+            int[] imageExtents = new int[]{m_iDimX, m_iDimY, m_iSlices};
+            m_kBrainImage = new ModelImage(ModelStorageBase.FLOAT, imageExtents, new String( "BrainImage" ) );
 
-        m_kBrainImage.addImageDisplayListener(this);
+            int length = m_iDimX * m_iDimY;
+            for ( int iSlice = 0; iSlice < m_iSlices; iSlice++ )
+            {
+                float[] buffer = readSliceWeight(iSlice, iWeight);
+                try {
+                    m_kBrainImage.importData(length * iSlice, buffer, false);
+                } catch (IOException e) {}
+            }
+
+            m_kBrainImage.addImageDisplayListener(this);
+        }
         m_kBrainFrame = new ViewJFrameImage(m_kBrainImage, null, new Dimension(610, 200), false);
+
+        if ( m_bDisplayB0 )
+        {
+            return;
+        }
 
         JDialogBrainSurfaceExtractor kExtractBrain = new JDialogBrainSurfaceExtractor( m_kBrainFrame, m_kBrainImage );
         kExtractBrain.setFillHoles(false);
@@ -481,11 +492,14 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
 
     /** ViewImageUpdateInterface : called when the JDialogBrainSurfaceExtractor finishes. Calls processDWI. */
     public boolean updateImages() {
-        m_kMaskImage = ViewUserInterface.getReference().getRegisteredImageByName(m_kBrainFrame.getComponentImage().commitPaintToMask());
-        m_kBrainImage.removeImageDisplayListener(this);
-        //m_kBrainImage.disposeLocal();
-        //m_kBrainImage = null;
-        run();
+        if ( !m_bDisplayB0 )
+        {
+            m_kMaskImage = ViewUserInterface.getReference().getRegisteredImageByName(m_kBrainFrame.getComponentImage().commitPaintToMask());
+            m_kBrainImage.removeImageDisplayListener(this);
+            //m_kBrainImage.disposeLocal();
+            //m_kBrainImage = null;
+            run();
+        }
         return false;
     }
 
