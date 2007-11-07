@@ -301,8 +301,7 @@ void computeColor( float3 kModelPosition, float3 kModelNormal, float3 CameraWorl
     }
     else
     {
-        float3 local_normal = kModelNormal.xyz - (0.5, 0.5, 0.5);
-        local_normal = normalize( local_normal );
+        float3 local_normal = normalize(kModelNormal);
 
         if ( LightType == 0 )
         {

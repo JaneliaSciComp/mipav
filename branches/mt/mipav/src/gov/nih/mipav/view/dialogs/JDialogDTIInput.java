@@ -135,7 +135,7 @@ public class JDialogDTIInput extends JDialogBase
 
     /** Checkbox for tract reconstruction. */
     private JCheckBox m_kReconstructTracts;
-
+    private JCheckBox m_kOpenB0 = null;
     /** For TRACTS dialog: number of tracts to display. */
     private JTextField m_kTractsLimit;
     /** For TRACTS dialog: minimum tract length to display. */
@@ -190,7 +190,7 @@ public class JDialogDTIInput extends JDialogBase
     private boolean[] m_abVisited = null;
 
     /** Slice thickness read from .list file */
-    private float m_fResZ = 0f;
+    private float m_fResX = 1f, m_fResY = 1f, m_fResZ = 1f;
     /** Mean noise vale read from the .list file */
     private float m_fMeanNoise = 0f;
 
@@ -365,10 +365,12 @@ public class JDialogDTIInput extends JDialogBase
         } 
 	else if ( kCommand.equals("UseEllipsoids") )
 	{
+	    ((SurfaceRender)m_kSurfaceDialog.getSurfaceRender()).getSurfaceDialog().getLightDialog().refreshLighting();
 	    m_kVolumeDisplay.setDisplayEllipsoids( m_kUseEllipsoids.isSelected() );
 	}
 	else if ( kCommand.equals("AllEllipsoids") )
 	{
+        ((SurfaceRender)m_kSurfaceDialog.getSurfaceRender()).getSurfaceDialog().getLightDialog().refreshLighting();
  	    Color color = m_kColorButton.getBackground();
  	    m_kVolumeDisplay.setDisplayAllEllipsoids( m_kAllEllipsoids.isSelected(), 10,
  						      !m_kUseVolumeColor.isSelected(),
@@ -596,6 +598,14 @@ public class JDialogDTIInput extends JDialogBase
             		bMatrixFilename = lineString.substring(lineString.indexOf("<bmatrixfile>") + 13, lineString.indexOf("</bmatrixfile>")).trim();
             		bMatrixFileAbsPath = m_kParentDir + File.separator + bMatrixFilename;
             		//studyName = pathFilename.substring(0, pathFilename.indexOf(".path"));
+                    }else if(lineString.startsWith("<x_field_of_view>")) {
+            		String xFOVStr = lineString.substring(lineString.indexOf("<x_field_of_view>") + 17, lineString.indexOf("</x_field_of_view>")).trim(); 
+            		float xFOV = Float.parseFloat(xFOVStr);
+            		m_fResX = xFOV;
+                    }else if(lineString.startsWith("<y_field_of_view>")) {
+            		String yFOVStr = lineString.substring(lineString.indexOf("<y_field_of_view>") + 17, lineString.indexOf("</y_field_of_view>")).trim(); 
+            		float yFOV = Float.parseFloat(yFOVStr);
+            		m_fResY = yFOV;
                     }else if(lineString.startsWith("<slice_thickness>")) {
             		String zResStr = lineString.substring(lineString.indexOf("<slice_thickness>") + 17, lineString.indexOf("</slice_thickness>")).trim(); 
             		m_fResZ = Float.parseFloat(zResStr);
@@ -619,6 +629,8 @@ public class JDialogDTIInput extends JDialogBase
                 loadBMatrixFile( bMatrixFileAbsPath );
             }
             System.err.println( m_kParentDir );
+            m_fResX /= (float)m_iDimX;
+            m_fResY /= (float)m_iDimY;
         }
     }
 
@@ -706,7 +718,16 @@ public class JDialogDTIInput extends JDialogBase
 
 	DialogDTIColorDisplay kColorDisplay =
             new DialogDTIColorDisplay(m_kEigenVectorImage, m_kAnisotropyImage, m_kLUTa, false);
-        kColorDisplay.setScreenImageResolutions( m_kDTIImage.getFileInfo(0).getResolutions(), m_fResZ );
+
+        if ( (m_fResX == 0) || (m_fResY == 0) || (m_fResZ == 0) )
+        {
+            kColorDisplay.setScreenImageResolutions( m_kDTIImage.getFileInfo(0).getResolutions(), m_fResZ );
+        }
+        else
+        {
+            float[] afRes = new float[]{ m_fResX, m_fResY, m_fResZ };
+            kColorDisplay.setScreenImageResolutions( afRes, m_fResZ );
+        }
 	dispose();
     }
 
@@ -788,7 +809,7 @@ public class JDialogDTIInput extends JDialogBase
         
         setCursor(new Cursor(Cursor.WAIT_CURSOR));
 
-        AlgorithmDWI2DTI kAlgorithm = new AlgorithmDWI2DTI( m_kDWIMaskImage, m_iSlices, m_iDimX, m_iDimY, m_iBOrig, m_iWeights, m_fMeanNoise, m_aakDWIList, m_aiMatrixEntries, m_kBMatrix, m_kRawFormat);
+        AlgorithmDWI2DTI kAlgorithm = new AlgorithmDWI2DTI( m_kDWIMaskImage, m_kOpenB0.isSelected(), m_iSlices, m_iDimX, m_iDimY, m_iBOrig, m_iWeights, m_fMeanNoise, m_aakDWIList, m_aiMatrixEntries, m_kBMatrix, m_kRawFormat);
         kAlgorithm.addListener(this);
         kAlgorithm.run();
         
@@ -807,6 +828,10 @@ public class JDialogDTIInput extends JDialogBase
                 ((AlgorithmDWI2DTI)kAlgorithm).disposeLocal();
                 setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
                 processDTI();
+            }
+            else if ( m_kOpenB0.isSelected() )
+            {
+                dispose();
             }
         }
     }
@@ -1017,8 +1042,14 @@ public class JDialogDTIInput extends JDialogBase
         kDWIFilesPanel.add(kDWIMaskBrowseButton, gbc);
 
 
-	m_kReconstructTracts = new JCheckBox("Tract Reconstruction");
-	m_kReconstructTracts.setSelected(false);
+        m_kOpenB0 = new JCheckBox("Open B0 image only");
+        m_kOpenB0.setSelected(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        kDWIFilesPanel.add(m_kOpenB0, gbc);
+        
+        m_kReconstructTracts = new JCheckBox("Tract Reconstruction");
+        m_kReconstructTracts.setSelected(false);
         gbc.gridx = 0;
         gbc.gridy++;
         kDWIFilesPanel.add(m_kReconstructTracts, gbc);
@@ -1905,7 +1936,6 @@ public class JDialogDTIInput extends JDialogBase
         if ( m_kLineArrayMap == null )
         {
             m_kLineArrayMap = new HashMap<Integer,BranchGroup>();
-            ((SurfaceRender)m_kSurfaceDialog.getSurfaceRender()).getSurfaceDialog().getLightDialog().refreshLighting();
         }
 
         BranchGroup kBranch = m_kSurfaceDialog.addLineArray( kLine, m_iBundleCount );
