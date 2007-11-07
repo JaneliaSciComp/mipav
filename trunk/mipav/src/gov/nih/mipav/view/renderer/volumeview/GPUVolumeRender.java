@@ -2398,50 +2398,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
      */
     public void setDTIImage( ModelImage kDTIImage )
     {
-        int[] extents = kDTIImage.getExtents();
-        float[] res = kDTIImage.getResolutions(0);
-        float[] newRes = new float[extents.length];
-        int[] volExtents = new int[extents.length];
-        boolean originalVolPowerOfTwo = true;
-        int volSize = 1;
-        for (int i = 0; i < extents.length; i++) {
-            volExtents[i] = JDialogDirectResample.dimPowerOfTwo(extents[i]);
-            volSize *= volExtents[i];
-
-            if (volExtents[i] != extents[i]) {
-                originalVolPowerOfTwo = false;
-            }
-            newRes[i] = (res[i] * (extents[i])) / (volExtents[i]);
-        }
-        
-        ModelImage kDTIImageScaled = kDTIImage;
-        if ( !originalVolPowerOfTwo )
-        {
-            //float[] newRes = m_kImageA.getResolutions(0);
-            //int[] volExtents = m_kImageA.getExtents();
-            AlgorithmTransform transformFunct = new AlgorithmTransform(kDTIImage, new TransMatrix(4),
-                                                                       AlgorithmTransform.NEAREST_NEIGHBOR,
-                                                                       newRes[0], newRes[1], newRes[2],
-                                                                       //res[0], res[1], res[2],
-                                                                       volExtents[0], volExtents[1], volExtents[2],
-                                                                       false, true, false);
-            transformFunct.setRunningInSeparateThread(false);
-            transformFunct.run();
-            
-            if (transformFunct.isCompleted() == false) {
-                transformFunct.finalize();
-                transformFunct = null;
-            }
-            
-            kDTIImageScaled = transformFunct.getTransformedImage();
-            kDTIImageScaled.calcMinMax();
-            
-            if (transformFunct != null) {
-                transformFunct.disposeLocal();
-            }
-            transformFunct = null;
-        }
-
         ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating ellipse transforms", "", 0, 100, true);
         
         m_kEigenVectors =
@@ -2459,11 +2415,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
         for ( int i = 0; i < m_iLen; i++ )
         {
             boolean bAllZero = true;
-
-
             for ( int j = 0; j < 6; j++ )
             {
-                afTensorData[j] = kDTIImageScaled.getFloat(i + j*m_iLen);
+                afTensorData[j] = kDTIImage.getFloat(i + j*m_iLen);
                 if ( afTensorData[j] != 0 )
                 {
                     bAllZero = false;
@@ -2566,13 +2520,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
 
             kTransform.Product( m_kTEllipse, m_kTScale );
-        }
-        
-        
-        if ( !originalVolPowerOfTwo )
-        {
-            kDTIImageScaled.disposeLocal();
-            kDTIImageScaled = null;
         }
 
         Attributes kAttr = new Attributes();
