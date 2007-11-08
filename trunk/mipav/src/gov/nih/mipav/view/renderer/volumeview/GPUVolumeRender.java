@@ -2429,42 +2429,33 @@ implements GLEventListener, KeyListener, MouseMotionListener
                         afTensorData[3], afTensorData[1], afTensorData[5], 
                         afTensorData[4], afTensorData[5], afTensorData[2] );
 
-                Matrix3f.EigenDecomposition( kMatrix, kEigenValues );
-                fLambda1 = kEigenValues.GetData(2,2);
-                fLambda2 = kEigenValues.GetData(1,1);
-                fLambda3 = kEigenValues.GetData(0,0);
-                kMatrix.GetColumn(2,kV1);
-                kMatrix.GetColumn(1,kV2);
-                kMatrix.GetColumn(0,kV3);
-
-                kV1.Normalize();
-                kV2.Normalize();
-                kV3.Normalize();
-
-                kMatrix.SetColumn(0,kV1);
-                kMatrix.SetColumn(1,kV2);
-                kMatrix.SetColumn(2,kV3);
-
-                if ( (fLambda1 == fLambda2) && (fLambda1 == fLambda3) )
-                {}
-                else
+                if ( Matrix3f.EigenDecomposition( kMatrix, kEigenValues ) )
                 {
-                    Transformation kTransform = new Transformation();
-                    kTransform.SetMatrix(new Matrix3f(kMatrix));
-                    kTransform.SetScale( new Vector3f( fLambda1, fLambda2, fLambda3 ) );
-                    m_kEigenVectors.put( new Integer(i), kTransform );
+                    fLambda1 = kEigenValues.GetData(2,2);
+                    fLambda2 = kEigenValues.GetData(1,1);
+                    fLambda3 = kEigenValues.GetData(0,0);
+                    kMatrix.GetColumn(2,kV1);
+                    kMatrix.GetColumn(1,kV2);
+                    kMatrix.GetColumn(0,kV3);
 
-                    if ( fLambda1 > m_fScaleMax )
+                    kV1.Normalize();
+                    kV2.Normalize();
+                    kV3.Normalize();
+
+                    kMatrix.SetColumn(0,kV1);
+                    kMatrix.SetColumn(1,kV2);
+                    kMatrix.SetColumn(2,kV3);
+
+                    if ( (fLambda1 == fLambda2) && (fLambda1 == fLambda3) )
+                    {}
+                    else if ( (fLambda1 > 0) && (fLambda2 > 0) && (fLambda3 > 0) )
                     {
-                        m_fScaleMax = fLambda1;
-                    }
-                    if ( fLambda2 > m_fScaleMax )
-                    {
-                        m_fScaleMax = fLambda2;
-                    }
-                    if ( fLambda3 > m_fScaleMax )
-                    {
-                        m_fScaleMax = fLambda3;
+                        Transformation kTransform = new Transformation();
+                        kTransform.SetMatrix(new Matrix3f(kMatrix));
+                        Vector3f kScale = new Vector3f( fLambda1, fLambda2, fLambda3 );
+                        kScale.Normalize();
+                        kTransform.SetScale( kScale );
+                        m_kEigenVectors.put( new Integer(i), kTransform );
                     }
                 }
             }
@@ -2475,7 +2466,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
             }
         }
         kProgressBar.dispose();
-        m_fScaleMax = 1.0f/m_fScaleMax;
 
         Integer kKey;
         int iIndex, iX, iY, iZ;
@@ -2511,7 +2501,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
             kTransform = m_kEigenVectors.get(kKey);
 
             kScale = m_kTScale.GetScale();
-            kScale.scaleEquals( m_fScaleMax * m_fScale * 2f);
+            kScale.scaleEquals( m_fScale );
             kScale.multEquals( kTransform.GetScale() );
             m_kTScale.SetScale(kScale);
 
@@ -2621,7 +2611,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         if ( m_bFirst )
         {
             m_bFirst = false;
-            System.err.println(iDisplayed * m_kSphere.GetTriangleQuantity ());
+            //System.err.println(iDisplayed * m_kSphere.GetTriangleQuantity ());
         }
     }
 
@@ -2857,9 +2847,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
     /** Hashmap for multiple fiber bundles: */
     private HashMap<Integer,Vector<int[]>> m_kEllipsoids = null;
 
-    private float  m_fScaleMax = -Float.MAX_VALUE;
-
-
     private boolean m_bDisplayEllipsoids = false;
     private boolean m_bDisplayAllEllipsoids = false;
     private int m_iEllipsoidMod = 10;
@@ -2996,7 +2983,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
     private void UpdateEffects ()
     {
-        System.err.println( "UpdateEffects" );
         m_bUpdateEffects = true;
     }
 

@@ -18,32 +18,59 @@ import gov.nih.mipav.model.structures.jama.*;
 import gov.nih.mipav.view.dialogs.JDialogBrainSurfaceExtractor;
 
 
+/**
+ * Algorithm calculates a Diffusion Tensor Image from a series of Diffusion Wieghted Images.
+ * 
+ * See: Introduction to Diffusion Tensor Imaging, by Susumu Mori
+ */
 public class AlgorithmDWI2DTI extends AlgorithmBase
     implements ViewImageUpdateInterface
 {
-
+    /** Mask Image for masking brain regions during tensor calculation: */
     private ModelImage m_kMaskImage = null;
-    /** Mask of the image that shows only the brain: */
-    private ModelImage m_kBrainImage = null;
-    /** ViewJFrameImage for displaying the Mask of the image that shows only the brain: */
-    private ViewJFrameImage m_kBrainFrame = null;
+    /** B0 weighted image: */
+    private ModelImage m_kB0Image = null;
+    /** ViewJFrameImage for displaying the B0 weighted image: */
+    private ViewJFrameImage m_kB0Frame = null;
+    /** Whether to just display the B0 weighted image and return, or to do a full calculation: */
+    private boolean m_bDisplayB0 = false;
+    /** Number of slices in the input images: */
     private int m_iSlices;
+    /** X Dimension of the input images: */
     private int m_iDimX;
+    /** Y Dimension of the input images: */
     private int m_iDimY;
+    /** Number of different entries in the BMatrix: */
     private int m_iBOrig;
+    /** Number of images in the weighted series: */
     private int m_iWeights;
+    /** The mean noise value: */
     private float m_fMeanNoise;
     /** General matrix storing BMatrix values. */
     private GMatrixf m_kBMatrix = null;
     /** List of file names for the Diffusion Weighted Images, from the .path file. */
     private String[][] m_aakDWIList = null;
     private int[] m_repidx;
+    /** Format of the raw data: (float, int, dicom, etc.) */
     private String m_kRawImageFormat = null;
-    
+    /** Output DTI Image:*/
     private ModelImage m_kDTIImage = null;
-    private boolean m_bDisplayB0 = false;
 
 
+    /** Create a new AlgorithmDWI2DTI 
+     * @param kMaskImage, mask image masking non-brain regions, if null it is calculated.
+     * @param bDisplayB0, when true open and display the B0 weighted image and return.
+     * @param iSlices, number of slices in the raw data.
+     * @param iDimX, x-dimensions of the raw data.
+     * @param iDimY, y-dimensions of the raw data.
+     * @param iBOrig, number of different entries in the BMatrix.
+     * @param iWeights, number of weighted series.
+     * @param fMeanNoise, mean noise value.
+     * @param aakDWIList, list of file names in the weighted series.
+     * @param repidx,
+     * @param kBMatrix, BMatrix values.
+     * @param kRawFormat, format string for the raw data.
+     */
     public AlgorithmDWI2DTI( ModelImage kMaskImage, boolean bDisplayB0, int iSlices, int iDimX, int iDimY,
                              int iBOrig, int iWeights, float fMeanNoise, String[][] aakDWIList, int[] repidx, GMatrixf kBMatrix,
                              String kRawFormat )
@@ -55,20 +82,26 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
         m_iBOrig = iBOrig;
         m_iWeights = iWeights;
         m_fMeanNoise = fMeanNoise;
-       m_aakDWIList = aakDWIList;
-       m_repidx = repidx;
-       m_kBMatrix = kBMatrix;
-       m_kRawImageFormat = kRawFormat;
-       
-       m_bDisplayB0 = bDisplayB0;
+        m_aakDWIList = aakDWIList;
+        m_repidx = repidx;
+        m_kBMatrix = kBMatrix;
+        m_kRawImageFormat = kRawFormat;
+        
+        m_bDisplayB0 = bDisplayB0;
     }
 
     public void disposeLocal()
     {
-        //m_kDTIImage = null;
+        m_kMaskImage = null;
+        m_kB0Image = null;
+        m_kBMatrix = null;
+        m_aakDWIList = null;
+        m_repidx = null;
+        m_kRawImageFormat = null;
+        m_kDTIImage = null;
     }
 
-    /** */
+    /** Calculate the DTI image. If the mask image is null, calculate the mask image first. */
     public void runAlgorithm()
     {
         if ( m_kMaskImage == null )
@@ -81,11 +114,19 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
         }
     }
 
+    /** Return the DTI Image. 
+     * @return the DTI Image. 
+     */
     public ModelImage getDTIImage()
     {
         return m_kDTIImage;
     }
 
+    /** Get the slice data for the image with the given slice and weight.
+     * @param iSlice, slice to read.
+     * @param iWeight, weight to read.
+     * @return float[] containing the data.
+     */
     private float[] readDicomWeight( int iSlice, int iWeight )
     {
         int length = m_iDimX * m_iDimY;
@@ -106,10 +147,19 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
             refFileInfo = (FileInfoDicom) fileDicom.getFileInfo();
             fileInfo = fileDicom.getFileInfo();
             fileDicom.readImage(buffer, ModelStorageBase.SHORT, 0);
-        } catch ( IOException e ) {}
+        } catch ( IOException e ) {
+            buffer = null;
+            fileDicom = null;
+        }
+        fileDicom = null;
         return buffer;
     }
 
+    /** Get the slice data for the image with the given slice and weight.
+     * @param iSlice, slice to read.
+     * @param iWeight, weight to read.
+     * @return float[] containing the data.
+     */
     private float[] readFloatWeight( int iSlice, int iWeight )
     {
         File kFile = new File( m_aakDWIList[ iSlice ][iWeight] );
@@ -144,6 +194,12 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
         return afResult;
     }
     
+
+    /** Get the slice data for the image with the given slice and weight.
+     * @param iSlice, slice to read.
+     * @param iWeight, weight to read.
+     * @return float[] containing the data.
+     */
     private float[] readIntegerWeight( int iSlice, int iWeight )
     {
         File kFile = new File( m_aakDWIList[ iSlice ][iWeight] );
@@ -179,6 +235,11 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     }
 
 
+    /** Get the slice data for the image with the given slice and weight.
+     * @param iSlice, slice to read.
+     * @param iWeight, weight to read.
+     * @return float[] containing the data.
+     */
     private float[] readSliceWeight( int iSlice, int iWeight )
     {
         float[] buffer = null;
@@ -197,33 +258,36 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
         return buffer;
     }
 
+    /** Create the mask image.  Create an image with the B0 weighted data, if
+     * one has not already been created. Next use the
+     * JDialogBrainSurfaceExtractor to extract only the brain regions. */
     private void createMaskImage()
     {
-        if ( m_kBrainFrame == null )
+        if ( m_kB0Frame == null )
         {
             int iWeight = 0;
             int[] imageExtents = new int[]{m_iDimX, m_iDimY, m_iSlices};
-            m_kBrainImage = new ModelImage(ModelStorageBase.FLOAT, imageExtents, new String( "BrainImage" ) );
+            m_kB0Image = new ModelImage(ModelStorageBase.FLOAT, imageExtents, new String( "BrainImage" ) );
 
             int length = m_iDimX * m_iDimY;
             for ( int iSlice = 0; iSlice < m_iSlices; iSlice++ )
             {
                 float[] buffer = readSliceWeight(iSlice, iWeight);
                 try {
-                    m_kBrainImage.importData(length * iSlice, buffer, false);
+                    m_kB0Image.importData(length * iSlice, buffer, false);
                 } catch (IOException e) {}
             }
 
-            m_kBrainImage.addImageDisplayListener(this);
+            m_kB0Image.addImageDisplayListener(this);
         }
-        m_kBrainFrame = new ViewJFrameImage(m_kBrainImage, null, new Dimension(610, 200), false);
+        m_kB0Frame = new ViewJFrameImage(m_kB0Image, null, new Dimension(610, 200), false);
 
         if ( m_bDisplayB0 )
         {
             return;
         }
 
-        JDialogBrainSurfaceExtractor kExtractBrain = new JDialogBrainSurfaceExtractor( m_kBrainFrame, m_kBrainImage );
+        JDialogBrainSurfaceExtractor kExtractBrain = new JDialogBrainSurfaceExtractor( m_kB0Frame, m_kB0Image );
         kExtractBrain.setFillHoles(false);
         kExtractBrain.setExtractPaint(true);
         kExtractBrain.callAlgorithm();
@@ -231,8 +295,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     }
 
 
-    /** Creates the weighted mask image for the tensor calculation from the diffusion weighted images.
-     * @param kMaskImage, the image masking the diffusion weighted images so only the brain portions are used.
+    /** Creates the weighted data for the tensor calculation from the diffusion weighted images.
      * @return float[][][] containing the weights used in the tensor calculation.
      */
     private float[][][] createTensorWeights() {
@@ -494,10 +557,9 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     public boolean updateImages() {
         if ( !m_bDisplayB0 )
         {
-            m_kMaskImage = ViewUserInterface.getReference().getRegisteredImageByName(m_kBrainFrame.getComponentImage().commitPaintToMask());
-            m_kBrainImage.removeImageDisplayListener(this);
-            //m_kBrainImage.disposeLocal();
-            //m_kBrainImage = null;
+            m_kMaskImage = ViewUserInterface.getReference().getRegisteredImageByName(m_kB0Frame.getComponentImage().commitPaintToMask());
+            m_kB0Image.removeImageDisplayListener(this);
+            m_kB0Image = null;
             run();
         }
         return false;
