@@ -1109,7 +1109,7 @@ public class Matrix3f
     }
 
 
-    public static void EigenDecomposition (Matrix3f rkRot, Matrix3f rkDiag)
+    public static boolean EigenDecomposition (Matrix3f rkRot, Matrix3f rkDiag)
     {
         // Factor M = R*D*R^T.  The columns of R are the eigenvectors.  The
         // diagonal entries of D are the corresponding eigenvalues.
@@ -1120,7 +1120,10 @@ public class Matrix3f
         //rkRot = *this;
         boolean bReflection = Matrix3f.Tridiagonalize(rkRot,afDiag,afSubd);
         boolean bConverged = Matrix3f.QLAlgorithm(rkRot,afDiag,afSubd);
-        assert(bConverged);
+        if ( !bConverged )
+        {
+            return false;
+        }
 
         // (insertion) sort eigenvalues in increasing order, d0 <= d1 <= d2
         int i;
@@ -1191,6 +1194,7 @@ public class Matrix3f
         
         afDiag = null;
         afSubd = null;
+        return true;
     }
 
     private static boolean Tridiagonalize (Matrix3f rkRot, float[] afDiag, float[] afSubd)

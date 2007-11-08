@@ -197,6 +197,7 @@ public class JDialogDTIInput extends JDialogBase
     /** raw image format read from the .list file: */
     private String m_kRawFormat;
 
+    /** parent directory for the DTI output images.*/
     private String m_kParentDir = null;
 
     /** Create a new JDialogDTIInput of one of the four types:
@@ -240,6 +241,38 @@ public class JDialogDTIInput extends JDialogBase
         init( iType );
         m_iType = iType;
         m_kParentDialog = kParent;
+    }
+
+    /** Clean up local memory. */
+    public void disposeLocal()
+    {
+        m_kEigenVectorImage = null;;
+        m_kAnisotropyImage = null;
+        m_kLUTa = null;
+
+        if ( m_kDTIImage != null )
+        {
+            m_kDTIImage.disposeLocal();
+            m_kDTIImage = null;
+        }
+        if ( m_kDWIMaskImage != null )
+        {
+            m_kDWIMaskImage.disposeLocal();
+            m_kDWIMaskImage = null;
+        }
+        m_kBMatrix = null;
+        m_aakDWIList = null;
+        m_kVolumeDisplay = null;
+        m_kSurfaceDialog = null;
+        m_kImage = null;
+        m_aiMatrixEntries = null;
+        m_kBundleList = null;
+        m_kParentDialog = null;
+        m_kLineArrayMap = null;
+        m_abVisited = null;
+        m_kRawFormat = null;
+        m_kParentDir = null;
+        dispose();
     }
 
 
@@ -318,7 +351,7 @@ public class JDialogDTIInput extends JDialogBase
 
         if ( kSource == cancelButton )
         {
-            dispose();
+            disposeLocal();
         }
 	
         if ( kCommand.equalsIgnoreCase("eigenvectorBrowse") )
@@ -413,12 +446,12 @@ public class JDialogDTIInput extends JDialogBase
                     return;
                 }
                 new DialogDTIColorDisplay(m_kEigenVectorImage, m_kAnisotropyImage, m_kLUTa, false);
-                dispose();
+                disposeLocal();
             }
             else if ( m_iType == TRACTS_DIALOG )
             {
                 processTractFile();
-                dispose();
+                disposeLocal();
             }
         }
     }
@@ -628,7 +661,6 @@ public class JDialogDTIInput extends JDialogBase
             {
                 loadBMatrixFile( bMatrixFileAbsPath );
             }
-            System.err.println( m_kParentDir );
             m_fResX /= (float)m_iDimX;
             m_fResY /= (float)m_iDimY;
         }
@@ -719,16 +751,9 @@ public class JDialogDTIInput extends JDialogBase
 	DialogDTIColorDisplay kColorDisplay =
             new DialogDTIColorDisplay(m_kEigenVectorImage, m_kAnisotropyImage, m_kLUTa, false);
 
-        if ( (m_fResX == 0) || (m_fResY == 0) || (m_fResZ == 0) )
-        {
-            kColorDisplay.setScreenImageResolutions( m_kDTIImage.getFileInfo(0).getResolutions(), m_fResZ );
-        }
-        else
-        {
-            float[] afRes = new float[]{ m_fResX, m_fResY, m_fResZ };
-            kColorDisplay.setScreenImageResolutions( afRes, m_fResZ );
-        }
-	dispose();
+        kColorDisplay.setScreenImageResolutions( m_kDTIImage.getFileInfo(0).getResolutions(), m_fResZ );
+
+	disposeLocal();
     }
 
 
@@ -737,6 +762,14 @@ public class JDialogDTIInput extends JDialogBase
     {
         int[] extents = m_kDTIImage.getExtents();
         float[] res = m_kDTIImage.getFileInfo(0).getResolutions();
+        if ( (m_fResX != 0) && (m_fResY != 0) && (m_fResZ != 0) )
+        {
+            res[0] = m_fResX;
+            res[1] = m_fResY;
+            res[2] = m_fResZ;
+            res[3] = 1f;
+        }
+        
         float[] newRes = new float[extents.length];
         int[] volExtents = new int[extents.length];
         boolean originalVolPowerOfTwo = true;
@@ -745,12 +778,12 @@ public class JDialogDTIInput extends JDialogBase
             volExtents[i] = JDialogDirectResample.dimPowerOfTwo(extents[i]);
             volSize *= volExtents[i];
 
-            if (volExtents[i] != extents[i]) {
+            if ((i < 3) && volExtents[i] != extents[i]) {
                 originalVolPowerOfTwo = false;
             }
             newRes[i] = (res[i] * (extents[i])) / (volExtents[i]);
         }
-        
+
         if ( !originalVolPowerOfTwo )
         {
             AlgorithmTransform transformFunct = new AlgorithmTransform(m_kDTIImage, new TransMatrix(4),
@@ -785,7 +818,9 @@ public class JDialogDTIInput extends JDialogBase
         kAlgorithm.run();
         m_kEigenVectorImage = kAlgorithm.getEigenImage();
         m_kAnisotropyImage = kAlgorithm.getFAImage();
-
+        kAlgorithm.disposeLocal();
+        kAlgorithm = null;
+        
         if ( (m_kReconstructTracts != null) && m_kReconstructTracts.isSelected() )
         {
  	    reconstructTracts( m_kDTIImage, m_kEigenVectorImage );
@@ -809,7 +844,11 @@ public class JDialogDTIInput extends JDialogBase
         
         setCursor(new Cursor(Cursor.WAIT_CURSOR));
 
-        AlgorithmDWI2DTI kAlgorithm = new AlgorithmDWI2DTI( m_kDWIMaskImage, m_kOpenB0.isSelected(), m_iSlices, m_iDimX, m_iDimY, m_iBOrig, m_iWeights, m_fMeanNoise, m_aakDWIList, m_aiMatrixEntries, m_kBMatrix, m_kRawFormat);
+        AlgorithmDWI2DTI kAlgorithm = new AlgorithmDWI2DTI( m_kDWIMaskImage, m_kOpenB0.isSelected(),
+                                                            m_iSlices, m_iDimX, m_iDimY,
+                                                            m_iBOrig, m_iWeights,
+                                                            m_fMeanNoise, m_aakDWIList,
+                                                            m_aiMatrixEntries, m_kBMatrix, m_kRawFormat);
         kAlgorithm.addListener(this);
         kAlgorithm.run();
         
@@ -831,7 +870,7 @@ public class JDialogDTIInput extends JDialogBase
             }
             else if ( m_kOpenB0.isSelected() )
             {
-                dispose();
+                disposeLocal();
             }
         }
     }
@@ -870,7 +909,6 @@ public class JDialogDTIInput extends JDialogBase
             }
             m_kDTIPath.setText(chooser.getSelectedFile().getAbsolutePath());
             Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());            
-            System.err.println( m_kParentDir );
         }
     }
 

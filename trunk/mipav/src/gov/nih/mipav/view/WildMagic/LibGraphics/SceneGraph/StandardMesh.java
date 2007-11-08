@@ -761,8 +761,6 @@ public class StandardMesh
             }
         }
 
-        System.err.println( "Sphere " + m_bInside);
-        
         // south pole triangles
         int iVQm2 = iVQuantity-2;
         for (i = 0; i < iRadialSamples; i++/*, aiLocalIndex += 3*/)
