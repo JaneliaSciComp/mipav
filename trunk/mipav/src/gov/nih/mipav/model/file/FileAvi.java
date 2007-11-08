@@ -3786,6 +3786,22 @@ public class FileAvi extends FileBase {
 
                 // read the LIST subCHUNK
                 CHUNKsignature = getInt(endianess);
+                
+                if (CHUNKsignature == 0x6E727473) {
+                    // read strn instead of CHUNK
+                    int strnLength = getInt(endianess);
+                    if ((strnLength % 2) == 1) {
+                        strnLength++;
+                    }
+                    byte[] text = new byte[strnLength];
+                    raFile.read(text);
+
+                    if (text[strnLength - 1] != 0) {
+                        raFile.close();
+                        throw new IOException("strn string ends with illegal temination at loop start = " + text[strnLength - 1]);
+                    }
+                    CHUNKsignature = getInt(endianess);
+                } // if (CHUNKSignature == 0x6E727473)
 
                 if (CHUNKsignature == 0x5453494C) {
                     // have read LIST for LIST subCHUNK with information on data decoding
@@ -4184,6 +4200,9 @@ public class FileAvi extends FileBase {
 
                 if (strnSignature == 0x6E727473) {
                     int strnLength = getInt(endianess);
+                    if ((strnLength % 2) == 1) {
+                        strnLength++;
+                    }
                     byte[] text = new byte[strnLength];
                     raFile.read(text);
 
