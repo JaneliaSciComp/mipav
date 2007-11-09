@@ -3872,11 +3872,11 @@ public class FileAvi extends FileBase {
                         (handlerString.startsWith("00dc"))) {
                     // uncompressed data
                     Preferences.debug("Uncompressed data\n");
-                } else if (handlerString.startsWith("MRLE") || handlerString.startsWith("mrle") ||
-                               handlerString.startsWith("RLE") || handlerString.startsWith("rle")) {
+                } else if (handlerString.toUpperCase().startsWith("MRLE") ||
+                               handlerString.toUpperCase().startsWith("RLE")) {
                     Preferences.debug("Microsoft run length encoding\n");
                     /* mrle microsoft run length encoding */
-                } else if (handlerString.startsWith("MSVC") || handlerString.startsWith("msvc")) {
+                } else if (handlerString.toUpperCase().startsWith("MSVC")) {
                     Preferences.debug("Microsoft video 1 compression\n");
                     // Microsoft video 1 compression
                     doMSVC = true;
