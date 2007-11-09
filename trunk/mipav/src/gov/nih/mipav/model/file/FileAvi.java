@@ -3880,21 +3880,21 @@ public class FileAvi extends FileBase {
                     Preferences.debug("Microsoft video 1 compression\n");
                     // Microsoft video 1 compression
                     doMSVC = true;
-                } else if (handlerString.startsWith("MP42") || handlerString.startsWith("mp42")) {
+                } else if (handlerString.toUpperCase().startsWith("MP42")) {
                     return AlgorithmTranscode.TRANSCODE_MP42;
-                } else if (handlerString.startsWith("MJPG") || handlerString.startsWith("mjpg")) {
+                } else if (handlerString.toUpperCase().startsWith("MJPG")) {
                     return AlgorithmTranscode.TRANSCODE_MJPG;
-                } else if (handlerString.startsWith("DIV") || handlerString.startsWith("div")) {
+                } else if (handlerString.toUpperCase().startsWith("DIV")) {
                     return AlgorithmTranscode.TRANSCODE_DIVX;
-                } else if (handlerString.startsWith("MPG4") || handlerString.startsWith("mpg4")) {
+                } else if (handlerString.toUpperCase().startsWith("MPG4")) {
                     return AlgorithmTranscode.TRANSCODE_MPG4;
-                } else if (handlerString.startsWith("IV32") || handlerString.startsWith("iv32")) {
+                } else if (handlerString.toUpperCase().startsWith("IV32")) {
                     return AlgorithmTranscode.TRANSCODE_IV32;
-                } else if (handlerString.startsWith("IV41") || handlerString.startsWith("iv41")) {
+                } else if (handlerString.toUpperCase().startsWith("IV41")) {
                     return AlgorithmTranscode.TRANSCODE_IV41;
-                } else if (handlerString.startsWith("IV50") || handlerString.startsWith("iv50")) {
+                } else if (handlerString.toUpperCase().startsWith("IV50")) {
                     return AlgorithmTranscode.TRANSCODE_IV50;
-                } else if (handlerString.startsWith("cvid") || handlerString.startsWith("CVID")) {
+                } else if (handlerString.toUpperCase().startsWith("CVID")) {
                     return AlgorithmTranscode.TRANSCODE_CVID;
                 } else {
                     raFile.close();
