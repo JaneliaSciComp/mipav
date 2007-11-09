@@ -271,10 +271,10 @@ public class AlgorithmTranscode extends AlgorithmBase implements ControllerListe
             encodeStr += "Motion JPEG";
             tcs[index].setFormat(new VideoFormat(VideoFormat.MJPG));
         } else if (compressionType == TRANSCODE_IV32) {
-            encodeStr += "IR32";
+            encodeStr += "IV32";
             tcs[index].setFormat(new VideoFormat("IV32"));
         } else if (compressionType == TRANSCODE_IV41) {
-            encodeStr += "IR41";
+            encodeStr += "IV41";
             tcs[index].setFormat(new VideoFormat("IV41"));
         } else if (compressionType == TRANSCODE_IV50) {
             encodeStr += "Indeo Video 5";
