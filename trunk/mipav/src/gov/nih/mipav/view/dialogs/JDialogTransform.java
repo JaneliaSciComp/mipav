@@ -1162,9 +1162,12 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     protected void callAlgorithm() {
         Point3Df center = null;
 
-        if ((invertCheckbox != null) && (invertCheckbox.isSelected())) {
-            xfrm.invert();
+        if (doInvMat) {
+        	xfrm.invert();
         }
+        //if ((invertCheckbox != null) && (invertCheckbox.isSelected())) {
+        //    xfrm.invert();
+        //}
 
       //  System.err.println("matrix: " + xfrm);
       //  System.err.println("matrix inverse: " + xfrm.inverse());
