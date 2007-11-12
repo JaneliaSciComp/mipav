@@ -1148,7 +1148,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         }
 
         if (surRender != null) {
-            surRender.close();
             surRender = null;
         }
 
