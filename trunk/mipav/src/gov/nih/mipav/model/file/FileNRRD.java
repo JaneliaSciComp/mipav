@@ -1139,17 +1139,19 @@ public class FileNRRD extends FileBase {
 
                         if ((fieldDescriptorString.equalsIgnoreCase("RIGHT-ANTERIOR-SUPERIOR")) ||
                                 (fieldDescriptorString.equalsIgnoreCase("RAS"))) {
-                            Preferences.debug("Space = right-anterior-superior\n");
-                            fileInfo.setSpace("right-anterior-superior");
-                            space = RAS;
+                            Preferences.debug("Original NRRD Space = right-anterior-superior\n");
+                            Preferences.debug("New MIPAV Space = left-posterior-superior\n");
+                            fileInfo.setSpace("left-posterior-superior");
+                            space = LPS;
                             rlInvert = true;
                             apInvert = true;
                         } // if ((fieldDescriptorString.equalsIgnoreCase("RIGHT-ANTERIOR-SUPERIOR")) ||
                         else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR")) ||
                                      (fieldDescriptorString.equalsIgnoreCase("LAS"))) {
-                            Preferences.debug("Space = left-anterior-superior\n");
-                            fileInfo.setSpace("left-anterior-superior");
-                            space = LAS;
+                            Preferences.debug("Original NRRD Space = left-anterior-superior\n");
+                            Preferences.debug("New MIPAV Space = left-posterior-superior\n");
+                            fileInfo.setSpace("left-posterior-superior");
+                            space = LPS;
                             apInvert = true;
                         } // else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR")) ||
                         else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-POSTERIOR-SUPERIOR")) ||
@@ -1160,17 +1162,19 @@ public class FileNRRD extends FileBase {
                         } // else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-POSTERIOR-SUPERIOR")) ||
                         else if ((fieldDescriptorString.equalsIgnoreCase("RIGHT-ANTERIOR-SUPERIOR-TIME")) ||
                                      (fieldDescriptorString.equalsIgnoreCase("RAST"))) {
-                            Preferences.debug("SPACE = right-anterior-superior-time\n");
-                            fileInfo.setSpace("right-anterior-superior-time");
-                            space = RAST;
+                            Preferences.debug("Original NRRD Space = right-anterior-superior-time\n");
+                            Preferences.debug("New MIPAV Space = left-posterior-superior-time\n");
+                            fileInfo.setSpace("left-posterior-superior-time");
+                            space = LPST;
                             rlInvert = true;
                             apInvert = true;
                         } // else if ((fieldDescriptorString.equalsIgnoreCase("RIGHT-ANTERIOR-SUPERIOR-TIME")) ||
                         else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR-TIME")) ||
                                      (fieldDescriptorString.equalsIgnoreCase("LAST"))) {
-                            Preferences.debug("Space = left-anterior-superior-time\n");
-                            fileInfo.setSpace("left-anterior-superior-time");
-                            space = LAST;
+                            Preferences.debug("Original NRRD Space = left-anterior-superior-time\n");
+                            Preferences.debug("New MIPAV Space = left-posterior-superior-time\n");
+                            fileInfo.setSpace("left-posterior-superior-time");
+                            space = LPST;
                             apInvert = true;
                         } // else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR-TIME")) ||
                         else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-POSTERIOR-SUPERIOR-TIME")) ||
