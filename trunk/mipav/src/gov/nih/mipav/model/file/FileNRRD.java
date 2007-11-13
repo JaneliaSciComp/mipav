@@ -3565,7 +3565,7 @@ public class FileNRRD extends FileBase {
     		sizesString = "3 " + sizesString;
     		spacingsString = "NaN " + spacingsString;
     		if(!thicknessString.equals("")) {
-    			thicknessString = "Nan " + thicknessString;
+    			thicknessString = "NaN " + thicknessString;
     		}
     	}
     	
