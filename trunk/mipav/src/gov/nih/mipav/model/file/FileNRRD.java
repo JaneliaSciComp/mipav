@@ -3567,6 +3567,9 @@ public class FileNRRD extends FileBase {
     		if(!thicknessString.equals("")) {
     			thicknessString = "NaN " + thicknessString;
     		}
+    		if(!spaceDirectionsString.equals("")) {
+    			spaceDirectionsString = "none " + spaceDirectionsString;
+    		}
     	}
     	
     	//multifile option
