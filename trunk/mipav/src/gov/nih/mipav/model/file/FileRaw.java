@@ -57,6 +57,9 @@ public class FileRaw extends FileBase {
     
     /** Allow reading from 4 color files with RGBA order */
     private boolean RGBAOrder = false;
+    
+    /** flag that indicates if raFile should first be set to length of 0 **/
+    private boolean zeroLengthFlag = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1484,7 +1487,9 @@ public class FileRaw extends FileBase {
             nTimePeriods = endTimePeriod - beginTimePeriod + 1;
 
             if (compressionType == FileInfoBase.COMPRESSION_NONE) {
-                raFile.setLength(0);
+            	if(zeroLengthFlag) {
+            		raFile.setLength(0);
+            	}
                 raFile.seek(startPosition);
             }
 
@@ -1608,7 +1613,9 @@ public class FileRaw extends FileBase {
             if (compressionType == FileInfoBase.COMPRESSION_NONE) {
                 file = new File(fileDir + fileString);
                 raFile = new RandomAccessFile(file, "rw");
-                raFile.setLength(0);
+                if(zeroLengthFlag) {
+            		raFile.setLength(0);
+            	}
                 raFile.seek(startPosition);
                 fileRW = new FileRawChunk(raFile, image.getFileInfo(0));
             } else {
@@ -1718,7 +1725,9 @@ public class FileRaw extends FileBase {
             if (compressionType == FileInfoBase.COMPRESSION_NONE) {
                 file = new File(fileDir + fileString);
                 raFile = new RandomAccessFile(file, "rw");
-                raFile.setLength(0);
+                if(zeroLengthFlag) {
+            		raFile.setLength(0);
+            	}
                 raFile.seek(startPosition);
                 fileRW = new FileRawChunk(raFile, image.getFileInfo(0));
             } else {
@@ -1743,4 +1752,15 @@ public class FileRaw extends FileBase {
         }
 
     }
+
+    
+    /**
+     * setZeroLengthFlag
+     * @param zeroLengthFlag
+     */
+	public void setZeroLengthFlag(boolean zeroLengthFlag) {
+		this.zeroLengthFlag = zeroLengthFlag;
+	}
+    
+    
 }
