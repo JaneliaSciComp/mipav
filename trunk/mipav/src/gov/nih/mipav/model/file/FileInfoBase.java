@@ -1774,6 +1774,11 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @return  int[] units (Inches or millimeters);
      */
     public final int[] getUnitsOfMeasure() {
+        for (int i = 0; i < unitsOfMeasure.length; i++) {
+            if (unitsOfMeasure[i] == 0) {
+                unitsOfMeasure[i] = FileInfoBase.UNKNOWN_MEASURE;
+            }
+        }
         return unitsOfMeasure;
     }
 
