@@ -3396,20 +3396,77 @@ public class FileNRRD extends FileBase {
     	
     	
     	//orientation info
-    	if(!FileInfoBase.getAxisOrientationStr(image.getFileInfo(0).getAxisOrientation()[0]).equalsIgnoreCase("unknown")) {
+    	if(image.getAxisOrientation()[0] != FileInfoBase.ORI_UNKNOWN_TYPE) {
+    		String x = "";
+    		String y = "";
+    		String z = "";
+    		//x axis
+    		if(image.getAxisOrientation()[0] == FileInfoBase.ORI_L2R_TYPE) {
+				x = "right";
+			}else if(image.getAxisOrientation()[0] == FileInfoBase.ORI_R2L_TYPE) {
+				x = "left";
+			}else if(image.getAxisOrientation()[0] == FileInfoBase.ORI_A2P_TYPE) {
+				x = "posterior";
+			}else if(image.getAxisOrientation()[0] == FileInfoBase.ORI_P2A_TYPE) {
+				x = "anterior";
+			}else if(image.getAxisOrientation()[0] == FileInfoBase.ORI_I2S_TYPE) {
+				x = "superior";
+			}else if(image.getAxisOrientation()[0] == FileInfoBase.ORI_S2I_TYPE) {
+				x = "inferior";
+			}else if(image.getAxisOrientation()[0] == FileInfoBase.ORI_UNKNOWN_TYPE) {
+				x = "unknown";
+			}
+    		
+    		//y axis
+    		if(image.getAxisOrientation()[1] == FileInfoBase.ORI_L2R_TYPE) {
+				y = "right";
+			}else if(image.getAxisOrientation()[1] == FileInfoBase.ORI_R2L_TYPE) {
+				y = "left";
+			}else if(image.getAxisOrientation()[1] == FileInfoBase.ORI_A2P_TYPE) {
+				y = "posterior";
+			}else if(image.getAxisOrientation()[1] == FileInfoBase.ORI_P2A_TYPE) {
+				y = "anterior";
+			}else if(image.getAxisOrientation()[1] == FileInfoBase.ORI_I2S_TYPE) {
+				y = "superior";
+			}else if(image.getAxisOrientation()[1] == FileInfoBase.ORI_S2I_TYPE) {
+				y = "inferior";
+			}else if(image.getAxisOrientation()[1] == FileInfoBase.ORI_UNKNOWN_TYPE) {
+				y = "unknown";
+			}
+    		
+    		
+    		if(image.getNDims() > 2) {
+    			//z axis
+        		if(image.getAxisOrientation()[2] == FileInfoBase.ORI_L2R_TYPE) {
+    				z = "right";
+    			}else if(image.getAxisOrientation()[2] == FileInfoBase.ORI_R2L_TYPE) {
+    				z = "left";
+    			}else if(image.getAxisOrientation()[2] == FileInfoBase.ORI_A2P_TYPE) {
+    				z = "posterior";
+    			}else if(image.getAxisOrientation()[2] == FileInfoBase.ORI_P2A_TYPE) {
+    				z = "anterior";
+    			}else if(image.getAxisOrientation()[2] == FileInfoBase.ORI_I2S_TYPE) {
+    				z = "superior";
+    			}else if(image.getAxisOrientation()[2] == FileInfoBase.ORI_S2I_TYPE) {
+    				z = "inferior";
+    			}else if(image.getAxisOrientation()[2] == FileInfoBase.ORI_UNKNOWN_TYPE) {
+    				z = "unknown";
+    			}
+    		}
+    		
     		if(image.getNDims() == 2) {
-        		spaceString = "left-posterior";
+        		spaceString = x + "-" + y;
         	} else if(image.getNDims() == 3) {
         		if(!options.isMultiFile()) {
-        			spaceString = "left-posterior-superior";
+        			spaceString = x + "-" + y + "-" + z;
         		}else {
-        			spaceString = "left-posterior";
+        			spaceString = x + "-" + y;
         		}
         	} else if(image.getNDims() == 4) {
         		if(!options.isMultiFile()) {
-        			spaceString = "left-posterior-superior-time";
+        			spaceString = x + "-" + y + "-" + z;
         		}else {
-        			spaceString = "left-posterior-superior";
+        			spaceString = x + "-" + y + "-" + z;
         		}
         	}
     		LinkedHashMap matrixMap = image.getMatrixHolder().getMatrixMap();
