@@ -1801,6 +1801,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         // could try catch array out of bounds ...
         if ((unitsOfMeasure != null) && (dim < unitsOfMeasure.length) && (dim >= 0)) {
+            if (unitsOfMeasure[dim] == 0) {
+                // = 1
+                unitsOfMeasure[dim] = FileInfoBase.UNKNOWN_MEASURE;
+            }
             return unitsOfMeasure[dim];
         } else {
             Preferences.debug("Units of measure array is null.\n");
