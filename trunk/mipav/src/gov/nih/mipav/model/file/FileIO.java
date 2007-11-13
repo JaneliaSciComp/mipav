@@ -2265,6 +2265,10 @@ public class FileIO {
             case FileUtility.PARREC:
                 success = writePARREC(image, options);
                 break;
+                
+            case FileUtility.NRRD:
+            	success = writeNRRD(image, options);
+            	break;
 
             default:
                 if (!quiet) {
@@ -8697,6 +8701,41 @@ public class FileIO {
         }
 
         return true;
+    }
+    
+    
+    
+    /**
+     * Writes a NRRD file to store the image.
+     *
+     * @param   image    The image to write.
+     * @param   options  The options to use to write the image.
+     *
+     * @return  Flag indicating that this was a successful write.
+     */ 
+    private boolean writeNRRD(ModelImage image, FileWriteOptions options) {
+    	try {
+    		FileNRRD fileNRRD = new FileNRRD(options.getFileName(), options.getFileDirectory());
+    		createProgressBar(fileNRRD, options.getFileName(), FileIO.FILE_WRITE);
+    		fileNRRD.writeImage(image, options);	
+    	} catch (IOException error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return false;
+        } catch (OutOfMemoryError error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return false;
+        }
+    	
+    	
+    	return true;
     }
 
     
