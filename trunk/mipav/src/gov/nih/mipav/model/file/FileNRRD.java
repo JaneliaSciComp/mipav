@@ -3514,7 +3514,7 @@ public class FileNRRD extends FileBase {
     		}
     	} else if(dimension == 4) {
     		if(!options.isMultiFile()) {
-    			thicknessString = "NaN NaN " + String.valueOf(image.getFileInfo(0).getSliceThickness()) + " Nan";
+    			thicknessString = "NaN NaN " + String.valueOf(image.getFileInfo(0).getSliceThickness()) + " NaN";
     			kindsString = "space space space time";
     			sizesString = extents[0] + " " + extents[1] + " " + extents[2] + " " + extents[3];
     			spacingsString = res[0] + " " + res[1] + " " + res[2] + " " + res[3];
