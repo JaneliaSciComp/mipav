@@ -880,10 +880,18 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < allUnits.length; i++) {
 
                 if (FileInfoBase.getUnitsOfMeasureStr(i).regionMatches(true, 0, s, 0,
-                                                                       FileInfoBase.getUnitsOfMeasureStr(i).length())) {
+                                                                      FileInfoBase.getUnitsOfMeasureStr(i).length())) {
+                    if (i == 0) {
+                        // i = 1
+                        return FileInfoBase.UNKNOWN_MEASURE;
+                    }
                     return i;
                 } else if (FileInfoBase.getUnitsOfMeasureAbbrevStr(i).regionMatches(true, 0, s, 0,
                                                                                     FileInfoBase.getUnitsOfMeasureAbbrevStr(i).length())) {
+                    if (i == 0) {
+                        // i = 1;
+                        return FileInfoBase.UNKNOWN_MEASURE;
+                    }
                     return i;
                 }
             }
