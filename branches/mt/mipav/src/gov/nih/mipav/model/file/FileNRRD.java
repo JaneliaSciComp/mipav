@@ -8,6 +8,8 @@ import gov.nih.mipav.view.*;
 
 import java.io.*;
 
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.zip.*;
 
 
@@ -364,6 +366,17 @@ public class FileNRRD extends FileBase {
 
     /** Version of the NRRD file format being used. */
     private float versionNumber;
+    
+    /** If true, header and data both stored in .nrrd file.
+     *  If false, header stored in filename.nhdr and data
+     *  stored in filename.raw. */
+    private boolean oneFile;
+    
+    /** version number of NRRD for writing **/
+    private static final int writeVersionNumber = 5;
+
+    
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1126,17 +1139,19 @@ public class FileNRRD extends FileBase {
 
                         if ((fieldDescriptorString.equalsIgnoreCase("RIGHT-ANTERIOR-SUPERIOR")) ||
                                 (fieldDescriptorString.equalsIgnoreCase("RAS"))) {
-                            Preferences.debug("Space = right-anterior-superior\n");
-                            fileInfo.setSpace("right-anterior-superior");
-                            space = RAS;
+                            Preferences.debug("Original NRRD Space = right-anterior-superior\n");
+                            Preferences.debug("New MIPAV Space = left-posterior-superior\n");
+                            fileInfo.setSpace("left-posterior-superior");
+                            space = LPS;
                             rlInvert = true;
                             apInvert = true;
                         } // if ((fieldDescriptorString.equalsIgnoreCase("RIGHT-ANTERIOR-SUPERIOR")) ||
                         else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR")) ||
                                      (fieldDescriptorString.equalsIgnoreCase("LAS"))) {
-                            Preferences.debug("Space = left-anterior-superior\n");
-                            fileInfo.setSpace("left-anterior-superior");
-                            space = LAS;
+                            Preferences.debug("Original NRRD Space = left-anterior-superior\n");
+                            Preferences.debug("New MIPAV Space = left-posterior-superior\n");
+                            fileInfo.setSpace("left-posterior-superior");
+                            space = LPS;
                             apInvert = true;
                         } // else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR")) ||
                         else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-POSTERIOR-SUPERIOR")) ||
@@ -1147,17 +1162,19 @@ public class FileNRRD extends FileBase {
                         } // else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-POSTERIOR-SUPERIOR")) ||
                         else if ((fieldDescriptorString.equalsIgnoreCase("RIGHT-ANTERIOR-SUPERIOR-TIME")) ||
                                      (fieldDescriptorString.equalsIgnoreCase("RAST"))) {
-                            Preferences.debug("SPACE = right-anterior-superior-time\n");
-                            fileInfo.setSpace("right-anterior-superior-time");
-                            space = RAST;
+                            Preferences.debug("Original NRRD Space = right-anterior-superior-time\n");
+                            Preferences.debug("New MIPAV Space = left-posterior-superior-time\n");
+                            fileInfo.setSpace("left-posterior-superior-time");
+                            space = LPST;
                             rlInvert = true;
                             apInvert = true;
                         } // else if ((fieldDescriptorString.equalsIgnoreCase("RIGHT-ANTERIOR-SUPERIOR-TIME")) ||
                         else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR-TIME")) ||
                                      (fieldDescriptorString.equalsIgnoreCase("LAST"))) {
-                            Preferences.debug("Space = left-anterior-superior-time\n");
-                            fileInfo.setSpace("left-anterior-superior-time");
-                            space = LAST;
+                            Preferences.debug("Original NRRD Space = left-anterior-superior-time\n");
+                            Preferences.debug("New MIPAV Space = left-posterior-superior-time\n");
+                            fileInfo.setSpace("left-posterior-superior-time");
+                            space = LPST;
                             apInvert = true;
                         } // else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR-TIME")) ||
                         else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-POSTERIOR-SUPERIOR-TIME")) ||
@@ -2161,9 +2178,7 @@ public class FileNRRD extends FileBase {
         if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
             throw (new IOException(" NRRD header file error"));
         }
-
         if (autoSequence || fileNameSequence) {
-
             try {
                 image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName());
             } catch (OutOfMemoryError error) {
@@ -2212,7 +2227,6 @@ public class FileNRRD extends FileBase {
 
             dataNumber = (int) dataSize;
             dataBuffer = new float[dataNumber];
-
             switch (nrrdDataType) {
 
                 case ModelStorageBase.BYTE:
@@ -3314,6 +3328,617 @@ public class FileNRRD extends FileBase {
         /*else if (image.getNDims() == 5) {
          * fileInfo = image.getFileInfo(); for (int i = 0;    i <    image.getExtents()[2] * image.getExtents()[3] *
          * image.getExtents()[4];    i++) { fileInfo[i].setorigins(startLocs); startLocs[4] += resolutions[4]; }  }*/
+    }
+    
+    
+    
+    /**
+     * write NRRD header
+     * @return
+     */
+    private boolean writeHeader(ModelImage image, String fhName, String fDir, FileWriteOptions options) throws IOException {
+    	String fileHeaderName = "";
+    	String lineString = "";
+    	FileInfoBase fInfo;
+    	int dimension;
+    	int[] extents;
+    	float[] res;
+    	String spaceString = "";
+    	String spaceDirectionsString = "";
+    	String spaceOriginString = "";
+    	String spacingsString = ""; 
+    	fInfo = image.getFileInfo()[0];
+    	int type;
+    	String typeString = "";
+    	boolean endianess;
+    	String endianessString = "";
+    	String kindsString = "";
+    	String encodingString = "raw";
+    	String sizesString = "";
+    	String thicknessString = "";
+    	int[] spaceUnitsOfMeas;
+    	String spaceUnitsOfMeasString = "";
+    	
+    	//header filename
+    	if (oneFile) {
+            fileHeaderName = fhName + ".nrrd";
+        } else {
+            fileHeaderName = fhName + ".nhdr";
+        }
+
+    	//type
+    	type = fInfo.getDataType();
+    	if(type == ModelStorageBase.BYTE) {
+    		typeString = "signed char";
+    	} else if(type == ModelStorageBase.UBYTE) {
+    		typeString = "uchar";
+    	} else if(type == ModelStorageBase.SHORT) {
+    		typeString = "short";
+    	} else if(type == ModelStorageBase.USHORT) {
+    		typeString = "ushort";
+    	} else if(type == ModelStorageBase.INTEGER) {
+    		typeString = "int";
+    	} else if(type == ModelStorageBase.UINTEGER) {
+    		typeString = "uint";
+    	} else if(type == ModelStorageBase.LONG) {
+    		typeString = "longlong";
+    	} else if(type == ModelStorageBase.FLOAT) {
+    		typeString = "float";
+    	} else if(type == ModelStorageBase.DOUBLE) {
+    		typeString = "double";
+    	} else if(type == ModelStorageBase.COMPLEX) {
+    		typeString = "float";
+    	} else if(type == ModelStorageBase.DCOMPLEX) {
+    		typeString = "double";
+    	} else if(type == ModelStorageBase.ARGB) {
+    		typeString = "uchar";
+    	} else if(type == ModelStorageBase.ARGB_USHORT) {
+    		typeString = "ushort";
+    	} else if(type == ModelStorageBase.ARGB_FLOAT) {
+    		typeString = "float";
+    	}
+    	
+    	
+    	//orientation info
+    	if(image.getAxisOrientation()[0] != FileInfoBase.ORI_UNKNOWN_TYPE) {
+    		String x = "";
+    		String y = "";
+    		String z = "";
+    		//x axis
+    		if(image.getAxisOrientation()[0] == FileInfoBase.ORI_L2R_TYPE) {
+				x = "right";
+			}else if(image.getAxisOrientation()[0] == FileInfoBase.ORI_R2L_TYPE) {
+				x = "left";
+			}else if(image.getAxisOrientation()[0] == FileInfoBase.ORI_A2P_TYPE) {
+				x = "posterior";
+			}else if(image.getAxisOrientation()[0] == FileInfoBase.ORI_P2A_TYPE) {
+				x = "anterior";
+			}else if(image.getAxisOrientation()[0] == FileInfoBase.ORI_I2S_TYPE) {
+				x = "superior";
+			}else if(image.getAxisOrientation()[0] == FileInfoBase.ORI_S2I_TYPE) {
+				x = "inferior";
+			}else if(image.getAxisOrientation()[0] == FileInfoBase.ORI_UNKNOWN_TYPE) {
+				x = "unknown";
+			}
+    		
+    		//y axis
+    		if(image.getAxisOrientation()[1] == FileInfoBase.ORI_L2R_TYPE) {
+				y = "right";
+			}else if(image.getAxisOrientation()[1] == FileInfoBase.ORI_R2L_TYPE) {
+				y = "left";
+			}else if(image.getAxisOrientation()[1] == FileInfoBase.ORI_A2P_TYPE) {
+				y = "posterior";
+			}else if(image.getAxisOrientation()[1] == FileInfoBase.ORI_P2A_TYPE) {
+				y = "anterior";
+			}else if(image.getAxisOrientation()[1] == FileInfoBase.ORI_I2S_TYPE) {
+				y = "superior";
+			}else if(image.getAxisOrientation()[1] == FileInfoBase.ORI_S2I_TYPE) {
+				y = "inferior";
+			}else if(image.getAxisOrientation()[1] == FileInfoBase.ORI_UNKNOWN_TYPE) {
+				y = "unknown";
+			}
+    		
+    		
+    		if(image.getNDims() > 2) {
+    			//z axis
+        		if(image.getAxisOrientation()[2] == FileInfoBase.ORI_L2R_TYPE) {
+    				z = "right";
+    			}else if(image.getAxisOrientation()[2] == FileInfoBase.ORI_R2L_TYPE) {
+    				z = "left";
+    			}else if(image.getAxisOrientation()[2] == FileInfoBase.ORI_A2P_TYPE) {
+    				z = "posterior";
+    			}else if(image.getAxisOrientation()[2] == FileInfoBase.ORI_P2A_TYPE) {
+    				z = "anterior";
+    			}else if(image.getAxisOrientation()[2] == FileInfoBase.ORI_I2S_TYPE) {
+    				z = "superior";
+    			}else if(image.getAxisOrientation()[2] == FileInfoBase.ORI_S2I_TYPE) {
+    				z = "inferior";
+    			}else if(image.getAxisOrientation()[2] == FileInfoBase.ORI_UNKNOWN_TYPE) {
+    				z = "unknown";
+    			}
+    		}
+    		
+    		if(image.getNDims() == 2) {
+        		spaceString = x + "-" + y;
+        	} else if(image.getNDims() == 3) {
+        		if(!options.isMultiFile()) {
+        			spaceString = x + "-" + y + "-" + z;
+        		}else {
+        			spaceString = x + "-" + y;
+        		}
+        	} else if(image.getNDims() == 4) {
+        		if(!options.isMultiFile()) {
+        			spaceString = x + "-" + y + "-" + z;
+        		}else {
+        			spaceString = x + "-" + y + "-" + z;
+        		}
+        	}
+    		LinkedHashMap matrixMap = image.getMatrixHolder().getMatrixMap();
+            Iterator iter = matrixMap.keySet().iterator();
+            String currentKey = null;
+            StringBuffer sb = new StringBuffer();
+            while (iter.hasNext()) {
+            	currentKey = (String)iter.next();
+                TransMatrix tMatrix =  (TransMatrix)matrixMap.get(currentKey);
+                if (tMatrix != null && tMatrix.getNCols() >= image.getNDims()) {
+                	//if the dimensions arent correct for image/matrix, switch it to correct dim and identity
+                	if (tMatrix.getNCols() != Math.min((image.getNDims() + 1),4)) {
+                    	tMatrix = new TransMatrix(Math.min(image.getNDims() + 1,4), TransMatrix.TRANSFORM_ANOTHER_DATASET);
+                    	tMatrix.identity();
+                    }
+                	//check to see if it is sagittal or coronal with an identity transform matrix (convert)
+                    if (tMatrix.isIdentity()) {
+                        if (image.getFileInfo(0).getImageOrientation() == FileInfoBase.SAGITTAL) {
+                            if (tMatrix.getNCols() == 3) {
+                            	tMatrix.setMatrix(new double[][] {
+                                                   { 0, 1, 0 },
+                                                   { 0, 0, -1 },
+                                                   { -1, 0, 0 }
+                                               });
+                            } else if (tMatrix.getNCols() == 4) {
+                            	tMatrix.setMatrix(new double[][] {
+                                                   { 0, 1, 0, 0 },
+                                                   { 0, 0, -1, 0 },
+                                                   { -1, 0, 0, 0 },
+                                                   { 0, 0, 0, 1 }
+                                               });
+                            }
+                        } else if (image.getFileInfo(0).getImageOrientation() == FileInfoBase.CORONAL) {
+                            if (tMatrix.getNCols() == 3) {
+                            	tMatrix.setMatrix(new double[][] {
+                                                   { 1, 0, 0 },
+                                                   { 0, 0, -1 },
+                                                   { 0, 1, 0 }
+                                               });
+                            } else if (tMatrix.getNCols() == 4) {
+                            	tMatrix.setMatrix(new double[][] {
+                                                   { 1, 0, 0, 0 },
+                                                   { 0, 0, -1, 0 },
+                                                   { 0, 1, 0, 0 },
+                                                   { 0, 0, 0, 1 }
+                                               });
+                            }
+                        }
+                    } 
+                   double[][] matrix = tMatrix.getMatrix();    
+                   for (int j = 0; j < tMatrix.getNCols() && (j < 3); j++) {
+    	               sb.append("(");
+    	               for (int i = 0; i < tMatrix.getNRows() && (i < 3); i++) {
+    	            	   if(i ==0 ) {
+    	            		   sb.append(new Double(matrix[i][j]).toString());
+    	            		}else {
+    	            			sb.append("," + new Double(matrix[i][j]).toString());
+    	            		}
+    	            	}
+    	               sb.append(") "); 
+                   }
+                   if(image.getNDims() == 4) {
+                	   if(!options.isMultiFile()) {
+                		   sb.append("none");
+                	   }
+                   }
+                }
+            } // end while
+            spaceDirectionsString = sb.toString();
+            float[] origin = image.getFileInfo(0).getOrigin();
+            sb = new StringBuffer();
+            sb.append("(");
+            for (int i = 0; (i < image.getNDims()) && (i < 3); i++) {
+            	if(i == 0) {
+            		sb.append(new Float(origin[i]).toString());
+            	}else {
+            		sb.append("," + new Float(origin[i]).toString());
+            	}
+            }
+            sb.append(")");
+    		spaceOriginString = sb.toString();
+    	}
+    	
+    	//per axis info
+    	dimension = image.getNDims();
+    	extents = image.getFileInfo(0).getExtents();
+    	res = image.getFileInfo(0).getResolutions();	
+    	if(dimension == 2) {
+    		kindsString = "space space";
+    		sizesString = extents[0] + " " + extents[1];
+    		spacingsString = res[0] + " " + res[1];
+    	} else if(dimension == 3) {
+    		if(!options.isMultiFile()) {
+    			thicknessString = "NaN NaN " + String.valueOf(image.getFileInfo(0).getSliceThickness());
+    			kindsString = "space space space";
+    			sizesString = extents[0] + " " + extents[1] + " " + extents[2];
+    			spacingsString = res[0] + " " + res[1] + " " + res[2];
+    		}else {
+    			kindsString = "space space";
+    			sizesString = extents[0] + " " + extents[1];
+    			spacingsString = res[0] + " " + res[1];
+    		}
+    	} else if(dimension == 4) {
+    		if(!options.isMultiFile()) {
+    			thicknessString = "NaN NaN " + String.valueOf(image.getFileInfo(0).getSliceThickness()) + " NaN";
+    			kindsString = "space space space time";
+    			sizesString = extents[0] + " " + extents[1] + " " + extents[2] + " " + extents[3];
+    			spacingsString = res[0] + " " + res[1] + " " + res[2] + " " + res[3];
+    		}else {
+    			thicknessString = "NaN NaN " + String.valueOf(image.getFileInfo(0).getSliceThickness());
+    			kindsString = "space space space";
+    			sizesString = extents[0] + " " + extents[1] + " " + extents[2];
+    			spacingsString = res[0] + " " + res[1] + " " + res[2];
+    		}
+    	}
+    	
+    	//space units of measure
+    	spaceUnitsOfMeas = image.getFileInfo(0).getUnitsOfMeasure();
+    	StringBuffer sb = new StringBuffer();
+    	String s = "";
+    	if(spaceUnitsOfMeas[0] != FileInfoBase.UNKNOWN_MEASURE) {
+	    	for(int i=0;i<spaceUnitsOfMeas.length && (i < 3);i++) {
+	    		if(spaceUnitsOfMeas[i] == FileInfoBase.MILLIMETERS) {
+	    			s = "\"mm\"";
+	    		} else if (spaceUnitsOfMeas[i] == FileInfoBase.INCHES) {
+	    			s = "\"in\"";
+	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.CENTIMETERS) {
+	    			s = "\"cm\"";
+	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.ANGSTROMS) {
+	    			s = "\"a\"";
+	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.NANOMETERS) {
+	    			s = "\"nm\"";
+	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.MICROMETERS) {
+	    			s = "\"um\"";
+	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.METERS) {
+	    			s = "\"m\"";
+	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.KILOMETERS) {
+	    			s = "\"km\"";
+	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.MILES) {
+	    			s = "\"mi\"";
+	    		}
+	    		sb.append(s);
+	    		sb.append(" ");
+	    	}
+	    	spaceUnitsOfMeasString = sb.toString();
+    	}
+    	
+    	
+    	//color image
+    	if(image.isColorImage()) {
+    		dimension = dimension + 1;
+    		kindsString = "3-color " + kindsString;
+    		sizesString = "3 " + sizesString;
+    		spacingsString = "NaN " + spacingsString;
+    		if(!thicknessString.equals("")) {
+    			thicknessString = "NaN " + thicknessString;
+    		}
+    		if(!spaceDirectionsString.equals("")) {
+    			spaceDirectionsString = "none " + spaceDirectionsString;
+    		}
+    	}
+    	
+    	//multifile option
+    	if(options.isMultiFile()) {
+    		dimension = dimension - 1;
+    	}
+
+    	//endianess
+    	endianess = fInfo.getEndianess();
+    	if(endianess == FileBase.BIG_ENDIAN) {
+    		endianessString = "big";
+    	} else {
+    		endianessString = "little";
+    	}
+
+    	//write out header
+    	file = new File(fileDir + fileHeaderName);
+        raFile = new RandomAccessFile(file, "rw");
+        raFile.setLength(0);
+
+        lineString = "NRRD000" + writeVersionNumber + "\n";
+        raFile.writeBytes(lineString);
+        
+        lineString = "type: " + typeString + "\n";
+        raFile.writeBytes(lineString);
+        
+        lineString = "dimension: " + dimension + "\n";
+        raFile.writeBytes(lineString);
+        
+        lineString = "sizes: " + sizesString + "\n";
+        raFile.writeBytes(lineString);
+        
+        lineString = "endian: " + endianessString + "\n";
+        raFile.writeBytes(lineString);
+        
+        lineString = "encoding: " + encodingString + "\n";
+        raFile.writeBytes(lineString);
+        
+        lineString = "spacings: " + spacingsString + "\n";
+        raFile.writeBytes(lineString);
+        
+        lineString = "kinds: " + kindsString + "\n";
+        raFile.writeBytes(lineString);
+
+        if(!spaceString.equals("")) {
+        	lineString = "space: " + spaceString + "\n";
+            raFile.writeBytes(lineString);
+        }
+        
+        if(!spaceOriginString.equals("")) {
+        	lineString = "space origin: " + spaceOriginString + "\n";
+            raFile.writeBytes(lineString);
+        }
+        
+        if(!spaceDirectionsString.equals("")) {
+        	lineString = "space directions: " + spaceDirectionsString + "\n";
+            raFile.writeBytes(lineString);
+        }
+        
+        if(!spaceUnitsOfMeasString.equals("")) {
+        	lineString = "space units: " +spaceUnitsOfMeasString + "\n";
+        	raFile.writeBytes(lineString);
+        }
+        
+        if(!thicknessString.equals("")) {
+        	lineString = "thicknesses: " + thicknessString + "\n";
+        	raFile.writeBytes(lineString);
+        }
+        
+        if(!oneFile) {
+        	lineString = "data file: " + fhName + ".raw" + "\n";
+            raFile.writeBytes(lineString);
+        }
+
+        lineString = "\n";
+        raFile.writeBytes(lineString);
+
+    	return true;
+	}
+    
+    
+    /**
+     * Writes a NRRD format type image.
+     *
+     * @param image  Image model of data to write.
+     * @param options FileWriteOptions
+     *
+     * @exception  IOException  if there is an error writing the file
+     *
+     */
+    public void writeImage(ModelImage image, FileWriteOptions options) throws IOException {
+    	String fhName;
+        int index;
+    	String suffix;
+        suffix = FileUtility.getExtension(fileName);
+    	
+        if (suffix.equalsIgnoreCase(".nrrd")) {
+            oneFile = true;
+        } else {
+        	oneFile = false;
+        }
+        
+        index = fileName.lastIndexOf(".");
+
+        if (index != -1) {
+            fhName = fileName.substring(0, index);
+        } else {
+            fhName = fileName.substring(0);
+        }
+        
+        //create new extents to match up with specified beginning/end slices/times
+        int[] newExtents = null;
+        int num = image.getExtents().length;
+        if (num == 4) {
+            newExtents = new int[4];
+            newExtents[3] = (options.getEndTime() - options.getBeginTime() + 1);
+            newExtents[2] = (options.getEndSlice() - options.getBeginSlice() + 1);
+            newExtents[1] = image.getExtents()[1];
+            newExtents[0] = image.getExtents()[0];
+        } else if (num == 3) {
+            newExtents = new int[3];
+            newExtents[2] = (options.getEndSlice() - options.getBeginSlice() + 1);
+            newExtents[1] = image.getExtents()[1];
+            newExtents[0] = image.getExtents()[0];
+        } else {
+            newExtents = new int[2];
+            newExtents[1] = image.getExtents()[1];
+            newExtents[0] = image.getExtents()[0];
+        }
+        // sets the extents to the fileinfo (which will be replaced after)
+        image.getFileInfo()[0].setExtents(newExtents);
+
+        if (options.isMultiFile()) {
+        	if (oneFile) {
+        		FileRaw rawFile;
+                rawFile = new FileRaw(image.getFileInfo(0));
+                linkProgress(rawFile);
+        		if (image.getNDims() == 3) {
+        			writeHeader3DTo2D(image, fhName, fileDir, options);
+        			long startLocation = raFile.getFilePointer();
+	                rawFile.setZeroLengthFlag(false);
+	                rawFile.setStartPosition(startLocation);
+                    rawFile.writeImage3DTo2D(image, options, ".nrrd");
+                    
+                } else if (image.getNDims() == 4) {
+                	writeHeader4DTo3D(image, fhName, fileDir, options);
+                	long startLocation = raFile.getFilePointer();
+	                rawFile.setZeroLengthFlag(false);
+	                rawFile.setStartPosition(startLocation);
+                    rawFile.writeImage4DTo3D(image, options, ".nrrd");
+                }
+        	}else {
+        		FileRaw rawFile;
+                rawFile = new FileRaw(fhName + ".raw", fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
+                linkProgress(rawFile);
+        		if (image.getNDims() == 3) {
+        			writeHeader3DTo2D(image, fhName, fileDir, options);
+                    rawFile.writeImage3DTo2D(image, options, ".raw");
+                    
+                } else if (image.getNDims() == 4) {
+                	writeHeader4DTo3D(image, fhName, fileDir, options);
+                    rawFile.writeImage4DTo3D(image, options, ".raw");
+                }
+        	}
+        } else {
+        	writeHeader(image,fhName,fileDir,options);
+        	if (oneFile) {
+        		FileRaw rawFile;
+                rawFile = new FileRaw(fileName, fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
+                linkProgress(rawFile);
+                long startLocation = raFile.getFilePointer();
+                rawFile.setZeroLengthFlag(false);
+                rawFile.setStartPosition(startLocation);
+                rawFile.writeImage(image, options);
+                rawFile.close();
+            	rawFile.finalize();
+        	}else {
+                FileRaw rawFile;
+                rawFile = new FileRaw(fhName + ".raw", fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
+                linkProgress(rawFile);
+                rawFile.writeImage(image, options);
+                rawFile.close();
+            	rawFile.finalize();
+        	}
+        }
+        if(raFile != null) {
+        	raFile.close();
+        }
+    }
+    
+    
+    
+    /**
+     * Method to save off the header from a 3D image into 2D header files sequentially named (similar to the method in
+     * FileRaw).
+     *
+     * @param   img         Image to be saved
+     * @param   headerName  Name of file
+     * @param   headerDir   Directory for file
+     * @param   options     File write options (contains # of digits and start #)
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    private void writeHeader3DTo2D(ModelImage img, String headerName, String headerDir, FileWriteOptions options)
+            throws IOException {
+        int k, seq;
+        int beginSlice = options.getBeginSlice();
+        int endSlice = options.getEndSlice();
+        String origName = new String(headerName);
+
+        for (k = beginSlice, seq = options.getStartNumber(); k <= endSlice; k++, seq++) {
+            headerName = origName;
+
+            if (options.getDigitNumber() == 1) {
+                headerName += Integer.toString(seq);
+            } else if (options.getDigitNumber() == 2) {
+
+                if (seq < 10) {
+                    headerName += "0" + Integer.toString(seq);
+                } else {
+                    headerName += Integer.toString(seq);
+                }
+            } else if (options.getDigitNumber() == 3) {
+
+                if (seq < 10) {
+                    headerName += "00" + Integer.toString(seq);
+                } else if (seq < 100) {
+                    headerName += "0" + Integer.toString(seq);
+                } else {
+                    headerName += Integer.toString(seq);
+                }
+            } else if (options.getDigitNumber() == 4) {
+
+                if (seq < 10) {
+                    headerName += "000" + Integer.toString(seq);
+                } else if (seq < 100) {
+                    headerName += "00" + Integer.toString(seq);
+                } else if (seq < 1000) {
+                    headerName += "0" + Integer.toString(seq);
+                } else {
+                    headerName += Integer.toString(seq);
+                }
+            }
+
+            writeHeader(img, headerName, headerDir, options);
+
+        } // end for loop
+    }
+    
+    
+    
+    /**
+     * This method is used when saving a 4D image in an array of 3D files. The file name has numbers appended to
+     * correctly order the images.
+     *
+     * @param   image     the image dataset to be saved
+     * @param   fileName  the file name
+     * @param   fileDir   the file directory
+     * @param   options   file options indicate how to save the image
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    private void writeHeader4DTo3D(ModelImage image, String fileName, String fileDir, FileWriteOptions options)
+            throws IOException {
+        int k, seq;
+        int beginTime = options.getBeginTime();
+        int endTime = options.getEndTime();
+        String origName = new String(fileName);
+
+        for (k = beginTime, seq = options.getStartNumber(); k <= endTime; k++, seq++) {
+            fileName = origName;
+
+            if (options.getDigitNumber() == 1) {
+                fileName += Integer.toString(seq);
+            } else if (options.getDigitNumber() == 2) {
+
+                if (seq < 10) {
+                    fileName += "0" + Integer.toString(seq);
+                } else {
+                    fileName += Integer.toString(seq);
+                }
+            } else if (options.getDigitNumber() == 3) {
+
+                if (seq < 10) {
+                    fileName += "00" + Integer.toString(seq);
+                } else if (seq < 100) {
+                    fileName += "0" + Integer.toString(seq);
+                } else {
+                    fileName += Integer.toString(seq);
+                }
+            } else if (options.getDigitNumber() == 4) {
+
+                if (seq < 10) {
+                    fileName += "000" + Integer.toString(seq);
+                } else if (seq < 100) {
+                    fileName += "00" + Integer.toString(seq);
+                } else if (seq < 1000) {
+                    fileName += "0" + Integer.toString(seq);
+                } else {
+                    fileName += Integer.toString(seq);
+                }
+            }
+            // write header with image, # of images per, and 1 time slice
+
+            writeHeader(image, fileName, fileDir, options);
+
+        } // end for loop
+
     }
 
 

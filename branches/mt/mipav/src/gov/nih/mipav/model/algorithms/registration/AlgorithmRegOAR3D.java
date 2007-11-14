@@ -703,30 +703,6 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
                     mZZ += voxVal * z * z;
                     tot += voxVal;
                     n++;
-
-                    if (n > nLim) { // Lets not over run the buffers during summation
-                        n = 0;
-                        total += tot;
-                        mat2.set(0, 0, mat2.get(0, 0) + mXX);
-                        mat2.set(0, 1, mat2.get(0, 1) + mXY);
-                        mat2.set(0, 2, mat2.get(0, 2) + mXZ);
-                        mat2.set(1, 1, mat2.get(1, 1) + mYY);
-                        mat2.set(1, 2, mat2.get(1, 2) + mYZ);
-                        mat2.set(2, 2, mat2.get(2, 2) + mZZ);
-                        mean.set(0, 0, mean.get(0, 0) + mX);
-                        mean.set(1, 0, mean.get(1, 0) + mY);
-                        mean.set(2, 0, mean.get(2, 0) + mZ);
-                        tot = 0;
-                        mX = 0;
-                        mY = 0;
-                        mZ = 0;
-                        mXX = 0;
-                        mXY = 0;
-                        mXZ = 0;
-                        mYY = 0;
-                        mYZ = 0;
-                        mZZ = 0;
-                    }
                 }
             }
         }

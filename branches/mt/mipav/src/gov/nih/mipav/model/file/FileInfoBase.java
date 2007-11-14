@@ -880,10 +880,18 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < allUnits.length; i++) {
 
                 if (FileInfoBase.getUnitsOfMeasureStr(i).regionMatches(true, 0, s, 0,
-                                                                       FileInfoBase.getUnitsOfMeasureStr(i).length())) {
+                                                                      FileInfoBase.getUnitsOfMeasureStr(i).length())) {
+                    if (i == 0) {
+                        // i = 1
+                        return FileInfoBase.UNKNOWN_MEASURE;
+                    }
                     return i;
                 } else if (FileInfoBase.getUnitsOfMeasureAbbrevStr(i).regionMatches(true, 0, s, 0,
                                                                                     FileInfoBase.getUnitsOfMeasureAbbrevStr(i).length())) {
+                    if (i == 0) {
+                        // i = 1;
+                        return FileInfoBase.UNKNOWN_MEASURE;
+                    }
                     return i;
                 }
             }
@@ -1774,6 +1782,11 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @return  int[] units (Inches or millimeters);
      */
     public final int[] getUnitsOfMeasure() {
+        for (int i = 0; i < unitsOfMeasure.length; i++) {
+            if (unitsOfMeasure[i] == 0) {
+                unitsOfMeasure[i] = FileInfoBase.UNKNOWN_MEASURE;
+            }
+        }
         return unitsOfMeasure;
     }
 
@@ -1788,6 +1801,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         // could try catch array out of bounds ...
         if ((unitsOfMeasure != null) && (dim < unitsOfMeasure.length) && (dim >= 0)) {
+            if (unitsOfMeasure[dim] == 0) {
+                // = 1
+                unitsOfMeasure[dim] = FileInfoBase.UNKNOWN_MEASURE;
+            }
             return unitsOfMeasure[dim];
         } else {
             Preferences.debug("Units of measure array is null.\n");

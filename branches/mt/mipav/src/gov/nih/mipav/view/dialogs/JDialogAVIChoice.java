@@ -98,9 +98,9 @@ public class JDialogAVIChoice extends JDialogBase {
             return AlgorithmTranscode.TRANSCODE_MJPG;
         } else if (compressionStr.equals("Quicktime movie")) {
             return AlgorithmTranscode.TRANSCODE_QT;
-        } else if (compressionStr.equals("IR32")) {
+        } else if (compressionStr.equals("IV32")) {
             return AlgorithmTranscode.TRANSCODE_IV32;
-        } else if (compressionStr.equals("IR41")) {
+        } else if (compressionStr.equals("IV41")) {
             return AlgorithmTranscode.TRANSCODE_IV41;
         } else if (compressionStr.equals("Indeo Video 5")) {
             return AlgorithmTranscode.TRANSCODE_IV50;
@@ -205,9 +205,9 @@ public class JDialogAVIChoice extends JDialogBase {
                 for (int i = 0; i < formats.length; i++) {
 
                     if (formats[i].getEncoding().equals("IV32")) {
-                        compressionBox.addItem("IR32");
+                        compressionBox.addItem("IV32");
                     } else if (formats[i].getEncoding().equals("IV41")) {
-                        compressionBox.addItem("IR41");
+                        compressionBox.addItem("IV41");
                     } else if (formats[i].getEncoding().equals("IV50")) {
                         compressionBox.addItem("Indeo Video 5");
                     } else if (formats[i].getEncoding().equals("MPG4")) {

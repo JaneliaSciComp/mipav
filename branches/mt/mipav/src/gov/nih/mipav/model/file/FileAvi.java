@@ -513,7 +513,7 @@ public class FileAvi extends FileBase {
             if ((bitCount == 16) || (bitCount == 24) || (bitCount == 32) || doMSVC) {
                 fileInfo.setDataType(ModelStorageBase.ARGB);
                 imageA = new ModelImage(ModelStorageBase.ARGB, moreExtents, fileName);
-            } else if (bitCount == 8) {
+            } else if ((bitCount == 4) || (bitCount == 8)) {
                 fileInfo.setDataType(ModelStorageBase.UBYTE);
                 imageA = new ModelImage(ModelStorageBase.UBYTE, moreExtents, fileName);
             }
@@ -775,6 +775,66 @@ public class FileAvi extends FileBase {
                                         } // else if ((x == imgExtents[0]) && (y == 0))
                                     } // for (j = 0; j < dataLength; j++)
                                 } // else if (bitCount == 8)
+                                else if (bitCount == 4) {
+
+                                    // Rows are stored in multiples of 4
+                                    // so extra bytes may appear at the end
+                                    int xPad = 0;
+                                    int rowBytes = imgExtents[0]/2 + imgExtents[0]%2;
+                                    int xMod = rowBytes % 4;
+
+                                    if (xMod != 0) {
+                                        xPad = 4 - xMod;
+                                    }
+
+                                    for (int j = 0; j < dataLength; j++) {
+                                        k = x + (imgExtents[0] * y);
+                                        imgBuffer[k] = (byte)(fileBuffer[j] & 0x0f);
+                                        x++;
+
+                                        if ((x == imgExtents[0]) && (y > 0)) {
+                                            j = j + xPad;
+                                            x = 0;
+                                            y--;
+                                        } else if ((x == imgExtents[0]) && (y == 0)) {
+                                            j = j + xPad;
+                                            x = 0;
+                                            y = imgExtents[1] - 1;
+
+                                            if (one) {
+                                                imageA.importData(0, imgBuffer, false);
+                                            } else {
+                                                imageA.importData(z * bufferSize, imgBuffer, false);
+                                            }
+
+                                            fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
+                                            z++;
+                                        } // else if ((x == imgExtents[0]) && (y == 0))
+                                        else {
+                                            imgBuffer[k+1] = (byte)((fileBuffer[j] >> 4) & 0x0f);
+                                            x++;
+    
+                                            if ((x == imgExtents[0]) && (y > 0)) {
+                                                j = j + xPad;
+                                                x = 0;
+                                                y--;
+                                            } else if ((x == imgExtents[0]) && (y == 0)) {
+                                                j = j + xPad;
+                                                x = 0;
+                                                y = imgExtents[1] - 1;
+    
+                                                if (one) {
+                                                    imageA.importData(0, imgBuffer, false);
+                                                } else {
+                                                    imageA.importData(z * bufferSize, imgBuffer, false);
+                                                }
+    
+                                                fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
+                                                z++;
+                                            } // else if ((x == imgExtents[0]) && (y == 0))
+                                        } // else
+                                    } // for (j = 0; j < dataLength; j++)
+                                } // else if (bitCount == 4)
                             } // else
                         } // if ((totalBytesRead + dataLength) <= totalDataArea)
                     } // else
@@ -3726,6 +3786,22 @@ public class FileAvi extends FileBase {
 
                 // read the LIST subCHUNK
                 CHUNKsignature = getInt(endianess);
+                
+                if (CHUNKsignature == 0x6E727473) {
+                    // read strn instead of CHUNK
+                    int strnLength = getInt(endianess);
+                    if ((strnLength % 2) == 1) {
+                        strnLength++;
+                    }
+                    byte[] text = new byte[strnLength];
+                    raFile.read(text);
+
+                    if (text[strnLength - 1] != 0) {
+                        raFile.close();
+                        throw new IOException("strn string ends with illegal temination at loop start = " + text[strnLength - 1]);
+                    }
+                    CHUNKsignature = getInt(endianess);
+                } // if (CHUNKSignature == 0x6E727473)
 
                 if (CHUNKsignature == 0x5453494C) {
                     // have read LIST for LIST subCHUNK with information on data decoding
@@ -3795,29 +3871,30 @@ public class FileAvi extends FileBase {
                         (handler == 0x20574152 /* RAW<sp> */) || (handler == 0x00000000) ||
                         (handlerString.startsWith("00dc"))) {
                     // uncompressed data
-                } else if (handlerString.startsWith("MRLE") || handlerString.startsWith("mrle") ||
-                               handlerString.startsWith("RLE") || handlerString.startsWith("rle")) {
-
+                    Preferences.debug("Uncompressed data\n");
+                } else if (handlerString.toUpperCase().startsWith("MRLE") ||
+                               handlerString.toUpperCase().startsWith("RLE")) {
+                    Preferences.debug("Microsoft run length encoding\n");
                     /* mrle microsoft run length encoding */
-                } else if (handlerString.startsWith("MSVC") || handlerString.startsWith("msvc")) {
-
+                } else if (handlerString.toUpperCase().startsWith("MSVC")) {
+                    Preferences.debug("Microsoft video 1 compression\n");
                     // Microsoft video 1 compression
                     doMSVC = true;
-                } else if (handlerString.startsWith("MP42") || handlerString.startsWith("mp42")) {
+                } else if (handlerString.toUpperCase().startsWith("MP42")) {
                     return AlgorithmTranscode.TRANSCODE_MP42;
-                } else if (handlerString.startsWith("MJPG") || handlerString.startsWith("mjpg")) {
+                } else if (handlerString.toUpperCase().startsWith("MJPG")) {
                     return AlgorithmTranscode.TRANSCODE_MJPG;
-                } else if (handlerString.startsWith("DIV") || handlerString.startsWith("div")) {
+                } else if (handlerString.toUpperCase().startsWith("DIV")) {
                     return AlgorithmTranscode.TRANSCODE_DIVX;
-                } else if (handlerString.startsWith("MPG4") || handlerString.startsWith("mpg4")) {
+                } else if (handlerString.toUpperCase().startsWith("MPG4")) {
                     return AlgorithmTranscode.TRANSCODE_MPG4;
-                } else if (handlerString.startsWith("IV32") || handlerString.startsWith("iv32")) {
+                } else if (handlerString.toUpperCase().startsWith("IV32")) {
                     return AlgorithmTranscode.TRANSCODE_IV32;
-                } else if (handlerString.startsWith("IV41") || handlerString.startsWith("iv41")) {
+                } else if (handlerString.toUpperCase().startsWith("IV41")) {
                     return AlgorithmTranscode.TRANSCODE_IV41;
-                } else if (handlerString.startsWith("IV50") || handlerString.startsWith("iv50")) {
+                } else if (handlerString.toUpperCase().startsWith("IV50")) {
                     return AlgorithmTranscode.TRANSCODE_IV50;
-                } else if (handlerString.startsWith("cvid") || handlerString.startsWith("CVID")) {
+                } else if (handlerString.toUpperCase().startsWith("CVID")) {
                     return AlgorithmTranscode.TRANSCODE_CVID;
                 } else {
                     raFile.close();
@@ -3983,7 +4060,7 @@ public class FileAvi extends FileBase {
                 Preferences.debug("compression = " + compression + "\n");
 
                 if (((compression == 0) &&
-                         ((bitCount == 8) || (bitCount == 16) || (bitCount == 24) || (bitCount == 32))) ||
+                         ((bitCount == 4) || (bitCount == 8) || (bitCount == 16) || (bitCount == 24) || (bitCount == 32))) ||
                         ((compression == 1) && (bitCount == 8)) || (doMSVC && (bitCount == 8)) ||
                         (doMSVC && (bitCount == 16))) {
                     // OK
@@ -4043,7 +4120,7 @@ public class FileAvi extends FileBase {
                     raFile.read(extra);
                 }
 
-                if (bitCount == 8) {
+                if (bitCount == 4) {
 
                     // read the color table into a LUT
                     int[] dimExtentsLUT = new int[2];
@@ -4071,12 +4148,41 @@ public class FileAvi extends FileBase {
                     } // for (i = colorsUsed; i < 256; i++)
 
                     LUTa.makeIndexedLUT(null);
-                } // if (bitCount == 8)
+                } // if (bitCount == 4)
+                else if (bitCount == 8) {
+
+                    // read the color table into a LUT
+                    int[] dimExtentsLUT = new int[2];
+                    dimExtentsLUT[0] = 4;
+                    dimExtentsLUT[1] = 256;
+
+                    // FileIO obtains via getModelLUT.
+                    // Then, ViewOpenFileUI obtains from FileIO via getModelLUT.
+                    LUTa = new ModelLUT(ModelLUT.GRAY, colorsUsed, dimExtentsLUT);
+                    lutBuffer = new byte[4 * colorsUsed];
+                    raFile.read(lutBuffer);
+
+                    for (int i = 0; i < colorsUsed; i++) {
+                        LUTa.set(0, i, 1.0f); // alpha
+                        LUTa.set(1, i, (lutBuffer[(4 * i) + 2] & 0x000000ff)); // red
+                        LUTa.set(2, i, (lutBuffer[(4 * i) + 1] & 0x000000ff)); // green
+                        LUTa.set(3, i, (lutBuffer[4 * i] & 0x000000ff)); // blue
+                    } // for (i = 0; i < colorsUsed; i++)
+
+                    for (int i = colorsUsed; i < 256; i++) {
+                        LUTa.set(0, i, 1.0f);
+                        LUTa.set(1, i, 0);
+                        LUTa.set(2, i, 0);
+                        LUTa.set(3, i, 0);
+                    } // for (i = colorsUsed; i < 256; i++)
+
+                    LUTa.makeIndexedLUT(null);
+                } // else if (bitCount == 8)
 
                 // Calculate the number of strf CHUNK bytes after the end of BITMAPINFO
                 int strfEndBytes = strfSize - BITMAPINFOsize;
 
-                if (bitCount == 8) {
+                if ((bitCount == 4) ||(bitCount == 8)) {
                     strfEndBytes = strfEndBytes - (4 * colorsUsed);
                 }
 
@@ -4094,6 +4200,9 @@ public class FileAvi extends FileBase {
 
                 if (strnSignature == 0x6E727473) {
                     int strnLength = getInt(endianess);
+                    if ((strnLength % 2) == 1) {
+                        strnLength++;
+                    }
                     byte[] text = new byte[strnLength];
                     raFile.read(text);
 
@@ -4115,6 +4224,16 @@ public class FileAvi extends FileBase {
                         throw new IOException("After JUNK CHUNK unexpected signature = " + CHUNKsignature);
                     }
                 } // else if (strnSignature == 0x4B4E554A)
+                else if (strnSignature == 0x54465349) {
+
+                    // have read ISFT
+                    int ISFTlength = getInt(endianess);
+                    if ((ISFTlength % 2) == 1) {
+                        ISFTlength++;
+                    }
+                    marker = raFile.getFilePointer();
+                    raFile.seek(marker + ISFTlength);
+                } // else if (strnSignature == 0x54465349)
                 else if (strnSignature == 0x74646576) {
 
                     // have read vedt
