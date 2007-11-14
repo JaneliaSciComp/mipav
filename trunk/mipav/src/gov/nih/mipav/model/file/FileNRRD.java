@@ -1544,6 +1544,11 @@ public class FileNRRD extends FileBase {
                             resols[i] = (float) Math.abs(spacings[i + 1]);
                         }
                     } // if (spacings != null)
+                    else if (spaceDirections != null) {
+                        if (i < 3) {
+                            resols[i] = (float)Math.abs(matrix.get(i,i));
+                        }
+                    }
                     else { // spacings == null
                         resols[i] = 1.0f;
                     } // else spacings == null
@@ -1633,6 +1638,11 @@ public class FileNRRD extends FileBase {
                             resols[i] = (float) Math.abs(spacings[i]);
                         }
                     } // if (spacings != null)
+                    else if (spaceDirections != null) {
+                        if (i < 3) {
+                            resols[i] = (float)Math.abs(matrix.get(i,i));
+                        }
+                    }
                     else { // spacings == null
                         resols[i] = 1.0f;
                     } // else spacings == null
@@ -1715,6 +1725,11 @@ public class FileNRRD extends FileBase {
                             resols[i] = (float) Math.abs(spacings[i + 1]);
                         }
                     } // if (spacings != null)
+                    else if (spaceDirections != null) {
+                        if (i < 3) {
+                            resols[i] = (float)Math.abs(matrix.get(i,i));
+                        }
+                    }
                     else { // spacings == null
                         resols[i] = 1.0f;
                     } // else spacings == null
@@ -1822,6 +1837,11 @@ public class FileNRRD extends FileBase {
                         resols[i] = (float) Math.abs(spacings[i + 1]);
                     }
                 } // if (spacings != null)
+                else if (spaceDirections != null) {
+                    if (i < 3) {
+                        resols[i] = (float)Math.abs(matrix.get(i,i));
+                    }
+                }
                 else { // spacings == null
                     resols[i] = 1.0f;
                 } // else spacings == null
@@ -1920,6 +1940,11 @@ public class FileNRRD extends FileBase {
                         resols[i] = (float) Math.abs(spacings[i]);
                     }
                 } // if (spacings != null)
+                else if (spaceDirections != null) {
+                    if (i < 3) {
+                        resols[i] = (float)Math.abs(matrix.get(i,i));
+                    }
+                }
                 else { // spacings == null
                     resols[i] = 1.0f;
                 } // else spacings == null
