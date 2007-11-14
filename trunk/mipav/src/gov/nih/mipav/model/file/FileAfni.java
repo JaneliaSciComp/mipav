@@ -5289,7 +5289,7 @@ public class FileAfni extends FileBase {
 
                             tDim = intVar[0];
 
-                            if (tDim < 2) {
+                            if (tDim < 1) {
                                 raFile.close();
                                 throw new IOException("AFNI Read Header Error:TAXIS_NUMS[0] illegally = " + tDim);
                             }
