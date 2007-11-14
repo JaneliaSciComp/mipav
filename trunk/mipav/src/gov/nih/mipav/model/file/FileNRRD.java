@@ -3358,6 +3358,7 @@ public class FileNRRD extends FileBase {
     	String thicknessString = "";
     	int[] spaceUnitsOfMeas;
     	String spaceUnitsOfMeasString = "";
+    	boolean isTime = false;
     	
     	//header filename
     	if (oneFile) {
@@ -3401,78 +3402,22 @@ public class FileNRRD extends FileBase {
     	
     	//orientation info
     	if(image.getAxisOrientation()[0] != FileInfoBase.ORI_UNKNOWN_TYPE) {
-    		String x = "";
-    		String y = "";
-    		String z = "";
-    		//x axis
-    		if(image.getAxisOrientation()[0] == FileInfoBase.ORI_L2R_TYPE) {
-				x = "right";
-			}else if(image.getAxisOrientation()[0] == FileInfoBase.ORI_R2L_TYPE) {
-				x = "left";
-			}else if(image.getAxisOrientation()[0] == FileInfoBase.ORI_A2P_TYPE) {
-				x = "posterior";
-			}else if(image.getAxisOrientation()[0] == FileInfoBase.ORI_P2A_TYPE) {
-				x = "anterior";
-			}else if(image.getAxisOrientation()[0] == FileInfoBase.ORI_I2S_TYPE) {
-				x = "superior";
-			}else if(image.getAxisOrientation()[0] == FileInfoBase.ORI_S2I_TYPE) {
-				x = "inferior";
-			}else if(image.getAxisOrientation()[0] == FileInfoBase.ORI_UNKNOWN_TYPE) {
-				x = "unknown";
-			}
-    		
-    		//y axis
-    		if(image.getAxisOrientation()[1] == FileInfoBase.ORI_L2R_TYPE) {
-				y = "right";
-			}else if(image.getAxisOrientation()[1] == FileInfoBase.ORI_R2L_TYPE) {
-				y = "left";
-			}else if(image.getAxisOrientation()[1] == FileInfoBase.ORI_A2P_TYPE) {
-				y = "posterior";
-			}else if(image.getAxisOrientation()[1] == FileInfoBase.ORI_P2A_TYPE) {
-				y = "anterior";
-			}else if(image.getAxisOrientation()[1] == FileInfoBase.ORI_I2S_TYPE) {
-				y = "superior";
-			}else if(image.getAxisOrientation()[1] == FileInfoBase.ORI_S2I_TYPE) {
-				y = "inferior";
-			}else if(image.getAxisOrientation()[1] == FileInfoBase.ORI_UNKNOWN_TYPE) {
-				y = "unknown";
-			}
-    		
-    		
-    		if(image.getNDims() > 2) {
-    			//z axis
-        		if(image.getAxisOrientation()[2] == FileInfoBase.ORI_L2R_TYPE) {
-    				z = "right";
-    			}else if(image.getAxisOrientation()[2] == FileInfoBase.ORI_R2L_TYPE) {
-    				z = "left";
-    			}else if(image.getAxisOrientation()[2] == FileInfoBase.ORI_A2P_TYPE) {
-    				z = "posterior";
-    			}else if(image.getAxisOrientation()[2] == FileInfoBase.ORI_P2A_TYPE) {
-    				z = "anterior";
-    			}else if(image.getAxisOrientation()[2] == FileInfoBase.ORI_I2S_TYPE) {
-    				z = "superior";
-    			}else if(image.getAxisOrientation()[2] == FileInfoBase.ORI_S2I_TYPE) {
-    				z = "inferior";
-    			}else if(image.getAxisOrientation()[2] == FileInfoBase.ORI_UNKNOWN_TYPE) {
-    				z = "unknown";
+    		spaceString = "left-posterior-superior";
+    		if(image.getNDims() == 4) {
+    			int[] orients = image.getAxisOrientation();
+    			if(orients.length == 4) {
+	    			if(image.getAxisOrientation()[3] == FileInfoBase.HOURS || 
+	    					image.getAxisOrientation()[3] == FileInfoBase.HZ ||
+	    					image.getAxisOrientation()[3] == FileInfoBase.MICROSEC ||
+	    					image.getAxisOrientation()[3] == FileInfoBase.MILLISEC ||
+	    					image.getAxisOrientation()[3] == FileInfoBase.MINUTES ||
+	    					image.getAxisOrientation()[3] == FileInfoBase.NANOSEC||
+	    					image.getAxisOrientation()[3] == FileInfoBase.SECONDS) {
+	    				spaceString = spaceString + "-time";
+	    				isTime = true;	
+	    			}
     			}
     		}
-    		
-    		if(image.getNDims() == 2) {
-        		spaceString = x + "-" + y;
-        	} else if(image.getNDims() == 3) {
-        		if(!options.isMultiFile()) {
-        			spaceString = x + "-" + y + "-" + z;
-        		}else {
-        			spaceString = x + "-" + y;
-        		}
-        	} else if(image.getNDims() == 4) {
-        		if(!options.isMultiFile()) {
-        			spaceString = x + "-" + y + "-" + z;
-        		}else {
-        			spaceString = x + "-" + y + "-" + z;
-        		}
-        	}
     		LinkedHashMap matrixMap = image.getMatrixHolder().getMatrixMap();
             Iterator iter = matrixMap.keySet().iterator();
             String currentKey = null;
@@ -3576,7 +3521,11 @@ public class FileNRRD extends FileBase {
     	} else if(dimension == 4) {
     		if(!options.isMultiFile()) {
     			thicknessString = "NaN NaN " + String.valueOf(image.getFileInfo(0).getSliceThickness()) + " NaN";
-    			kindsString = "space space space time";
+    			if(isTime) {
+    				kindsString = "space space space time";
+    			}else {
+    				kindsString = "space space space domain";
+    			}
     			sizesString = extents[0] + " " + extents[1] + " " + extents[2] + " " + extents[3];
     			spacingsString = res[0] + " " + res[1] + " " + res[2] + " " + res[3];
     		}else {
