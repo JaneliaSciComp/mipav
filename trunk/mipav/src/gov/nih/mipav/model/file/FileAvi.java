@@ -3836,7 +3836,10 @@ public class FileAvi extends FileBase {
                 int strhLength = getInt(endianess); // length of strh subCHUNK not including first 8
 
                 // signature and length bytes
-                if (strhLength < 56) {
+                // AVI standard documentation mentioned a minimum length of 56,
+                // but the Windows Media player was observed to play 5 mjpeg
+                // files with strhLength = 48.
+                if (strhLength < 48) {
                     raFile.close();
                     throw new IOException("AVI read header error with strhLength = " + strhLength);
                 }
