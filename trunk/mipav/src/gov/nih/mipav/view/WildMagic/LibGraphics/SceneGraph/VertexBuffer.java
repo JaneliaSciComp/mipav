@@ -61,15 +61,15 @@ public class VertexBuffer extends Bindable
     }
 
     /** Delete memory. */
-    public void finalize()
+    public void dispose()
     {
         if ( m_kAttributes != null )
         {
-            m_kAttributes.finalize();
+            m_kAttributes.dispose();
             m_kAttributes = null;
         }
         m_afChannel = null;
-        super.finalize();
+        super.dispose();
     }
 
     /** The format of a single vertex in the buffer.

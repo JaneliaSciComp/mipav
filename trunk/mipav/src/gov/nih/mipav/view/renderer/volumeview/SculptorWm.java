@@ -152,7 +152,7 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
         initVolumeSculptor();
     }
 
-    public void disposeLocal(boolean flag)
+    public void disposeLocal()
     {
         m_kCanvas.removeMouseMotionListener(this);
         m_kCanvas.removeMouseListener(this);
@@ -1035,18 +1035,6 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
             iColumn++;
         }
     }
-
-
-    /**
-     * Calls disposeLocal.
-     *
-     * @throws  Throwable  DOCUMENT ME!
-     */
-    public void finalize() throws Throwable {
-        this.disposeLocal(false);
-        super.finalize();
-    }
-
 
     /**
      * This function draws a 2D line on the canvas image -- ontop of the currently rendered image. To implement the line

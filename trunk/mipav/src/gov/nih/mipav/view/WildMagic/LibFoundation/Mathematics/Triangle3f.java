@@ -30,11 +30,11 @@ public class Triangle3f
     /**
      * delete memory
      */
-    public void finalize()
+    public void dispose()
     {
         for ( int i = 0; i < 3; i++ )
         {
-            V[i].finalize();
+            V[i].dispose();
             V[i] = null;
         }
         V = null;

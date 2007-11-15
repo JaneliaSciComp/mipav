@@ -28,15 +28,10 @@ public abstract class GraphicsObject
     {
         m_uiID = ms_uiNextID++;
     }
-    public void finalize ()
+    public void dispose ()
     {
         m_kName = null;
         //DetachAllControllers();
-        try {
-            super.finalize();
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
     }
     // copying system
     // public:

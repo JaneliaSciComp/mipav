@@ -46,11 +46,11 @@ public class BillboardNode extends Node
     /**
      * delete memory
      */
-    public void finalize()
+    public void dispose()
     {
         if ( m_spkCamera != null )
         {
-            m_spkCamera.finalize();
+            m_spkCamera.dispose();
             m_spkCamera = null;
         }
     }

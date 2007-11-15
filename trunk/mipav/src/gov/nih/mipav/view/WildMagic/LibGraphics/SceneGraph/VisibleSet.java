@@ -34,22 +34,17 @@ public class VisibleSet
     }
 
     /** Delete memory. */
-    public void finalize ()
+    public void dispose ()
     {
         for ( int i = 0; i < m_iQuantity; i++ )
         {
             if ( m_akVisible[i] != null )
             {
-                m_akVisible[i].finalize();
+                m_akVisible[i].dispose();
                 m_akVisible[i] = null;
             }
         }
         m_akVisible = null;
-        try {
-            super.finalize();
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
     }
 
     /** Get the size of the set.

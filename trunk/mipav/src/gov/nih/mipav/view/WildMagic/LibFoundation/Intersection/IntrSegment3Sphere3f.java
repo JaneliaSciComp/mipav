@@ -38,23 +38,23 @@ public class IntrSegment3Sphere3f extends Intersector
     /**
      * delete memory
      */
-    public void finalize()
+    public void dispose()
     {
         if ( m_rkSegment != null )
         {
-            m_rkSegment.finalize();
+            m_rkSegment.dispose();
             m_rkSegment = null;
         }
         if ( m_rkSphere != null )
         {
-            m_rkSphere.finalize();
+            m_rkSphere.dispose();
             m_rkSphere = null;
         }
         for ( int i = 0; i < 2; i++ )
         {
             if ( m_akPoint[i] != null )
             {
-                m_akPoint[i].finalize();
+                m_akPoint[i].dispose();
                 m_akPoint[i] = null;
             }
         }

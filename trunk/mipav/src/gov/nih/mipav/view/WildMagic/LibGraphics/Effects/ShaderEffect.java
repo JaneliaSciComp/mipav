@@ -44,7 +44,7 @@ public class ShaderEffect extends Effect
     }
 
     /** Delete data members: */
-    public void finalize ()
+    public void dispose ()
     {
         m_kVShader.clear();
         m_kVShader = null;
@@ -52,7 +52,7 @@ public class ShaderEffect extends Effect
         m_kPShader = null;
         m_kAlphaState.clear();
         m_kAlphaState = null;
-        super.finalize();
+        super.dispose();
     }
 
     /** The number of vertex/pixel shader pairs.  The Set* call reallocates the

@@ -52,7 +52,7 @@ public class IndexBuffer extends Bindable
     }
 
     /** Delete memory. */
-    public void finalize ()
+    public void dispose ()
     {
         // Inform all renderers using this index buffer that it is being
         // destroyed.  This allows the renderer to free up any associated
@@ -60,7 +60,7 @@ public class IndexBuffer extends Bindable
         Release();
 
         m_aiIndex = null;
-        super.finalize();
+        super.dispose();
     }
 
     /** Direct access to the index buffer data.  The quantity is the number of

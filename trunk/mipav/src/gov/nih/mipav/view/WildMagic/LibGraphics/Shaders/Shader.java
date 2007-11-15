@@ -136,12 +136,12 @@ public abstract class Shader extends GraphicsObject
     public Shader () {}
 
     /** Delete memory. */
-    public void finalize()
+    public void dispose()
     {
         m_kShaderName = null;
         if ( m_spkProgram != null )
         {
-            m_spkProgram.finalize();
+            m_spkProgram.dispose();
             m_spkProgram = null;
         }
         m_kUserData.clear();
@@ -261,7 +261,7 @@ public abstract class Shader extends GraphicsObject
         // by the shader destructor.  If the shader has the last reference to
         // an image, that image will be deleted from the image catalog
         // automatically.
-        m_spkProgram.finalize();
+        m_spkProgram.dispose();
         m_spkProgram = null;
     }
 

@@ -167,25 +167,25 @@ public class Texture extends Bindable
     }
 
     /** Release memory. */
-    public void finalize ()
+    public void dispose ()
     {
         if (m_bSIOwner)
         {
-            m_pkSamplerInformation.finalize();
+            m_pkSamplerInformation.dispose();
             m_pkSamplerInformation = null;
         }
 
         m_aeWType = null;
         if ( m_kBorderColor != null )
         {
-            m_kBorderColor.finalize();
+            m_kBorderColor.dispose();
             m_kBorderColor = null;
         }
         
         // Inform all renderers using this texture that it is being destroyed.
         // This allows the renderer to free up any associated resources.
         Release();
-        super.finalize();
+        super.dispose();
     }
 
 

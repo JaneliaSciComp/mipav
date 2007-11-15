@@ -49,15 +49,15 @@ public class PlanarShadowEffect extends Effect
     }
 
     /** Delete data members: */
-    public void finalize ()
+    public void dispose ()
     {
         for ( int i = 0; i < m_iQuantity; i++ )
         {
-            m_aspkPlane[i].finalize();
+            m_aspkPlane[i].dispose();
             m_aspkPlane[i] = null;
-            m_aspkProjector[i].finalize();
+            m_aspkProjector[i].dispose();
             m_aspkProjector[i] = null;
-            m_akShadowColor[i].finalize();
+            m_akShadowColor[i].dispose();
             m_akShadowColor[i] = null;
         }
         m_aspkPlane = null;
@@ -65,30 +65,30 @@ public class PlanarShadowEffect extends Effect
 
         if ( m_spkAState != null )
         {
-            m_spkAState.finalize();
+            m_spkAState.dispose();
             m_spkAState = null;
         }
         if ( m_spkSState != null )
         {
-            m_spkSState.finalize();
+            m_spkSState.dispose();
             m_spkSState = null;
         }
         if ( m_spkZState != null )
         {
-            m_spkZState.finalize();
+            m_spkZState.dispose();
             m_spkZState = null;
         }
         if ( m_spkMState != null )
         {
-            m_spkMState.finalize();
+            m_spkMState.dispose();
             m_spkMState = null;
         }
         if ( m_spkMEffect != null )
         {
-            m_spkMEffect.finalize();
+            m_spkMEffect.dispose();
             m_spkMEffect = null;
         }
-        super.finalize();
+        super.dispose();
     }
 
     /**

@@ -263,13 +263,13 @@ public class GraphicsImage extends GraphicsObject
     }
     
     /** delete memory */
-    public void finalize ()
+    public void dispose ()
     {
         m_aiBound = null;
         m_aucData = null;
         m_afData = null;
         ImageCatalog.GetActive().Remove(this);
-        super.finalize();
+        super.dispose();
     }
 
     /** Return image format.

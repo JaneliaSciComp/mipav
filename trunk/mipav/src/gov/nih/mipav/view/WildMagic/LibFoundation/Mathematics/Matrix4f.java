@@ -241,7 +241,7 @@ public class Matrix4f
     /**
      * delete memory
      */
-    public void finalize()
+    public void dispose()
     {
         if ( (this == Matrix4f.ZERO) || (this == Matrix4f.IDENTITY) )
         {

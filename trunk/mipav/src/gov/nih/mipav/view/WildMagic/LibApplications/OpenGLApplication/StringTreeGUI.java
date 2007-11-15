@@ -74,7 +74,7 @@ public class StringTreeGUI extends JFrame
     /**
      * Delete memory.
      */
-    public void finalize()
+    public void dispose()
     {
         m_kTree = null;
     }

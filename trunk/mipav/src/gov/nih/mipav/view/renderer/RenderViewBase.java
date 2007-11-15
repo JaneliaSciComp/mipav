@@ -906,12 +906,12 @@ public abstract class RenderViewBase extends VolumeCanvas3D
      * Calls finalize.
      *
      * @throws  Throwable  if a problem is encountered
-     */
+
     protected void finalize() throws Throwable {
         this.disposeLocal();
         super.finalize();
     }
-
+     */
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**

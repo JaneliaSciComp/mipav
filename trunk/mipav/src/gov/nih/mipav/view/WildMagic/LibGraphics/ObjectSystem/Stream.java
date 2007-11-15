@@ -56,7 +56,7 @@ public class Stream
         m_acBuffer = null;
     }
     /** destruction */
-    public void finalize()
+    public void dispose()
     {
         m_kMap.clear();
         m_kOrdered.clear();

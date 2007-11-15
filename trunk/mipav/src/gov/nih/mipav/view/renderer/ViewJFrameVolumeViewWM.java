@@ -1148,11 +1148,12 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         }
 
         if (surRender != null) {
+            surRender.close();
             surRender = null;
         }
 
         if (raycastRenderWM != null) {
-            raycastRenderWM.finalize();
+            raycastRenderWM.dispose();
             raycastRenderWM = null;
         }
 
@@ -2831,12 +2832,12 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      * Cleans up memory from gc.
      *
      * @throws  Throwable  DOCUMENT ME!
-     */
+
     protected void finalize() throws Throwable {
         disposeLocal(false);
         super.finalize();
     }
-
+     */
     /**
      * Creates and initializes the LUT for an image.
      *

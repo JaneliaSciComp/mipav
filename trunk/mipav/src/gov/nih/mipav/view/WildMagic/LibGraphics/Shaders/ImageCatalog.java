@@ -43,7 +43,7 @@ public class ImageCatalog
                                       ms_kDefaultString);
     }
     /** Delete memory. */
-    public void finalize()
+    public void dispose()
     {
         m_kName = null;
         m_kDefaultDir = null;
@@ -51,7 +51,7 @@ public class ImageCatalog
         m_kEntry = null;
         if ( m_spkDefaultImage != null )
         {
-            m_spkDefaultImage.finalize();
+            m_spkDefaultImage.dispose();
             m_spkDefaultImage = null;
         }
     }

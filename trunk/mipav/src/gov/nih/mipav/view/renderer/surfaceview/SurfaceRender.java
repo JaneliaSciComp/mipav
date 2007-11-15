@@ -2834,11 +2834,12 @@ public class SurfaceRender extends RenderViewBase {
      *
      * @throws  Throwable  DOCUMENT ME!
      */
+    /*
     protected void finalize() throws Throwable {
         this.disposeLocal(false);
         super.finalize();
     }
-
+*/
     /**
      * Create the rotation control cubic box.
      *

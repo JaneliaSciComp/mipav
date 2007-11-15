@@ -28,41 +28,41 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 public abstract class Renderer
 {
     /** Release memory. */
-    public void finalize()
+    public void dispose()
     {
         if ( m_kBackgroundColor != null )
         {
-            m_kBackgroundColor.finalize();
+            m_kBackgroundColor.dispose();
             m_kBackgroundColor = null;
         }
         if ( m_kWorldMatrix != null )
         {
-            m_kWorldMatrix.finalize();
+            m_kWorldMatrix.dispose();
             m_kWorldMatrix = null;
         }
         if ( m_kSaveWorldMatrix != null )
         {
-            m_kSaveWorldMatrix.finalize();
+            m_kSaveWorldMatrix.dispose();
             m_kSaveWorldMatrix = null;
         }
         if ( m_kViewMatrix != null )
         {
-            m_kViewMatrix.finalize();
+            m_kViewMatrix.dispose();
             m_kViewMatrix = null;
         }
         if ( m_kSaveViewMatrix != null )
         {
-            m_kSaveViewMatrix.finalize();
+            m_kSaveViewMatrix.dispose();
             m_kSaveViewMatrix = null;
         }
         if ( m_kProjectionMatrix != null )
         {
-            m_kProjectionMatrix.finalize();
+            m_kProjectionMatrix.dispose();
             m_kProjectionMatrix = null;
         }
         if ( m_kSaveProjectionMatrix != null )
         {
-            m_kSaveProjectionMatrix.finalize();
+            m_kSaveProjectionMatrix.dispose();
             m_kSaveProjectionMatrix = null;
         }
         
@@ -73,7 +73,7 @@ public abstract class Renderer
             {
                 if ( m_aspkState[i] != null )
                 {
-                    m_aspkState[i].finalize();
+                    m_aspkState[i].dispose();
                     m_aspkState[i] = null;
                 }
             }
