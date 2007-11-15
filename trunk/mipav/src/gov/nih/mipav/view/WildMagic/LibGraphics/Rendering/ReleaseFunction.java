@@ -29,7 +29,7 @@ public abstract class ReleaseFunction
         m_kRenderer = kRenderer;
     }
     /** Free memory. */
-    public void finalize()
+    public void dispose()
     {
         m_kRenderer = null;
     }

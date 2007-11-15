@@ -33,9 +33,9 @@ public class MipavLightingEffect extends ShaderEffect
     }
 
     /** Delete memory */
-    public void finalize()
+    public void dispose()
     {
-        super.finalize();
+        super.dispose();
     }
 }
 

@@ -98,7 +98,7 @@ public class Iridescence extends JavaApplication3D
      * drawn, and the back-buffer displayed with Renderer.DisplayBackBuffer().
      */
     public void display(GLAutoDrawable arg0) {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 
         MeasureTime();
         if (MoveCamera())
@@ -119,7 +119,16 @@ public class Iridescence extends JavaApplication3D
         }
         m_pkRenderer.DisplayBackBuffer();
         UpdateFrameCount();
-        ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+
+        if ( m_kShaderParamsWindow == null )
+        {
+            m_kShaderParamsWindow = new ApplicationGUI();
+            m_kShaderParamsWindow.setParent(this);
+            m_kShaderParamsWindow.AddUserVariables(m_spkEffect.GetVProgram(0));
+            m_kShaderParamsWindow.Display();
+            m_kShaderParamsWindow.setParent(this);
+        }
     }
 
     public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {}
@@ -159,11 +168,11 @@ public class Iridescence extends JavaApplication3D
         InitializeCameraMotion(0.01f,0.001f);
         InitializeObjectMotion(m_spkScene);
 
-        ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         if (iWidth > 0 && iHeight > 0)
         {
             if (m_pkRenderer != null)
@@ -174,7 +183,7 @@ public class Iridescence extends JavaApplication3D
             m_iWidth = iWidth;
             m_iHeight = iHeight;
         }
-        ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+       // ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
     public GLCanvas GetCanvas()
@@ -270,4 +279,6 @@ public class Iridescence extends JavaApplication3D
     private IridescenceEffect m_spkEffect;
     private Culler m_kCuller = new Culler(0,0,null);
 
+    /** Window with the shader paramter interface: */
+    private ApplicationGUI m_kShaderParamsWindow = null;
 }

@@ -71,7 +71,7 @@ public class Vector3f
     /**
      * delete memory
      */
-    public void finalize()
+    public void dispose()
     {
         if ( (this == Vector3f.ZERO) || (this ==  Vector3f.UNIT_X)
                 || (this ==  Vector3f.UNIT_Y)

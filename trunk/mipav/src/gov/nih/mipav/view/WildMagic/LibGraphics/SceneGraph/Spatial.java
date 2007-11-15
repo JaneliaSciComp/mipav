@@ -32,7 +32,7 @@ public abstract class Spatial extends GraphicsObject
     private static HashMap<Integer,CullingMode> ms_pkCullingModeMap = new HashMap<Integer,CullingMode>();
 
     /** Delete memory. */
-    public void finalize ()
+    public void dispose ()
     {
         DetachAllGlobalStates();
         DetachAllLights();
@@ -40,15 +40,15 @@ public abstract class Spatial extends GraphicsObject
         m_pkParent = null;
         if ( Local != null )
         {
-            Local.finalize();
+            Local.dispose();
             Local = null;
         }
         if ( World != null )
         {
-            World.finalize();
+            World.dispose();
             World = null;
         }
-        super.finalize();
+        super.dispose();
     }
 
     /** Local transforms. */

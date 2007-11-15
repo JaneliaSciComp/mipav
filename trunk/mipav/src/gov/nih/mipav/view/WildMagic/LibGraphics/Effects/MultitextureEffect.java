@@ -39,14 +39,14 @@ public class MultitextureEffect extends ShaderEffect
     }
 
     /** Delete memory */
-    public void finalize()
+    public void dispose()
     {
         for ( int i = 0; i < m_iTextureQuantity; i++ )
         {
             m_akImageName[i] = null;
         }
         m_akImageName = null;
-        super.finalize();
+        super.dispose();
     }
 
     /** Selection of the textures to be used by the effect.  The first call

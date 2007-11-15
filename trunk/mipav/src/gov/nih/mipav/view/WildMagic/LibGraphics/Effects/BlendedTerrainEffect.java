@@ -71,11 +71,11 @@ public class BlendedTerrainEffect extends ShaderEffect
     }
 
     /** Delete memory */
-    public void finalize()
+    public void dispose()
     {
         m_afFlowDirection = null;
         m_afPowerFactor = null;
-        super.finalize();
+        super.dispose();
     }
 
     /** Parameters for the vertex program

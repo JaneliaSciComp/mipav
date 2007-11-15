@@ -75,7 +75,7 @@ public class ColorRGBA
     /**
      * delete memory
      */
-    public void finalize()
+    public void dispose()
     {
         if ( (this == ColorRGBA.BLACK) || (this == ColorRGBA.WHITE) )
         {

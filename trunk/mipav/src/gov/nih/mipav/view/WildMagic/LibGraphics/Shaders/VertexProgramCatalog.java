@@ -18,7 +18,7 @@
 package gov.nih.mipav.view.WildMagic.LibGraphics.Shaders;
 
 import java.util.HashMap;
-import java.util.HashSet;
+//import java.util.HashSet;
 import java.util.Iterator;
 import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 
@@ -38,7 +38,7 @@ public class VertexProgramCatalog
     }
 
     /** Delete memory. */
-    public void finalize()
+    public void dispose()
     {
         m_kName = null;
         m_kDefaultDir = null;
@@ -47,7 +47,7 @@ public class VertexProgramCatalog
         m_kEntry = null;
         if ( m_spkDefaultVProgram != null )
         {
-            m_spkDefaultVProgram.finalize();
+            m_spkDefaultVProgram.dispose();
             m_spkDefaultVProgram = null;
         }
     }

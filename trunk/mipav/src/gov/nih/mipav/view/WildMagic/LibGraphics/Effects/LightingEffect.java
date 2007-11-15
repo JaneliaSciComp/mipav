@@ -38,16 +38,16 @@ public class LightingEffect extends ShaderEffect
     }
 
     /** Delete memory */
-    public void finalize()
+    public void dispose()
     {
         if ( m_kSaveEmissive != null )
         {
-            m_kSaveEmissive.finalize();
+            m_kSaveEmissive.dispose();
             m_kSaveEmissive = null;
         }
         m_kLights.clear();
         m_kLights = null;
-        super.finalize();
+        super.dispose();
     }
 
     /** Returns the number of lights in this Effect 

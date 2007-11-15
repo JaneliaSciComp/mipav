@@ -75,16 +75,16 @@ public class StandardMesh
     }
 
     /** Delete memory. */
-    public void finalize()
+    public void dispose()
     {
         if ( m_kAttr != null )
         {
-            m_kAttr.finalize();
+            m_kAttr.dispose();
             m_kAttr = null;
         }
         if ( m_kXFrm != null )
         {
-            m_kXFrm.finalize();
+            m_kXFrm.dispose();
             m_kXFrm = null;
         }
     }
@@ -209,7 +209,7 @@ public class StandardMesh
 
         // generate geometry
         int iR, iS, i, iUnit;
-        Vector2f kTCoord;
+        //Vector2f kTCoord;
 
         // center of disk
         pkVB.SetPosition3(0, Vector3f.ZERO);
@@ -396,7 +396,7 @@ public class StandardMesh
             float fInvASm1 = 1.0f/(float)(iAxisSamples-1);
             float fHalfHeight = 0.5f*fHeight;
             int iR, iA, iAStart, i, iUnit;
-            Vector2f kTCoord;
+            //Vector2f kTCoord;
 
             // Generate points on the unit circle to be used in computing the
             // mesh points on a cylinder slice.
@@ -584,7 +584,7 @@ public class StandardMesh
         float fInvRS = 1.0f/(float)iRadialSamples;
         float fZFactor = 2.0f/(float)iZSm1;
         int iR, iZ, iZStart, i, iUnit;
-        Vector2f kTCoord = new Vector2f();
+        //Vector2f kTCoord = new Vector2f();
         
         // Generate points on the unit circle to be used in computing the mesh
         // points on a cylinder slice.
@@ -851,7 +851,7 @@ public class StandardMesh
         float fInvCS = 1.0f/(float)iCircleSamples;
         float fInvRS = 1.0f/(float)iRadialSamples;
         int iC, iR, i, iUnit;
-        Vector2f kTCoord;
+        //Vector2f kTCoord;
         
         Vector3f kRadial = new Vector3f();
         Vector3f kTorusMiddle = new Vector3f();
@@ -1369,7 +1369,7 @@ public class StandardMesh
                 
                 kNormal.Normalize();
                 pkVB.SetNormal3(i, kNormal);
-                kNormal.finalize();
+                kNormal.dispose();
                 kNormal = null;
             }
             m_kXFrm.SetTranslate(kSave);

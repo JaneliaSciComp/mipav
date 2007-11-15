@@ -43,7 +43,7 @@ public class ApplicationGUI implements ActionListener
     /**
      * Delete memory.
      */
-    public void finalize()
+    public void dispose()
     {
         close();
         m_kShaderMap = null;

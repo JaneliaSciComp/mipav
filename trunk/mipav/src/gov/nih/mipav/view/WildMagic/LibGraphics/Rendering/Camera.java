@@ -39,7 +39,7 @@ public class Camera extends GraphicsObject
     }
 
     /** Delete memory */
-    public void finalize()
+    public void dispose()
     {
         m_kLocation = null;
         m_kDVector = null;
@@ -48,7 +48,7 @@ public class Camera extends GraphicsObject
         m_afFrustum = null;
         m_pkRenderer = null;
 
-        super.finalize();
+        super.dispose();
     }
 
     /** The camera frame is always in world coordinates.

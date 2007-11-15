@@ -5,26 +5,21 @@ import com.sun.opengl.util.*;
 import java.awt.event.*;
 import java.util.Iterator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Vector;
 
 import gov.nih.mipav.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.view.ViewJProgressBar;
-import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.CullState.FrontMode;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 import gov.nih.mipav.view.WildMagic.LibRenderers.OpenGLRenderer.*;
 
 import gov.nih.mipav.view.renderer.GeneralLight;
-import gov.nih.mipav.view.renderer.volumeview.*;
 
 /**
  * 
@@ -109,37 +104,37 @@ implements GLEventListener, KeyListener, MouseMotionListener
     /**
      * memory cleanup.
      */
-    public void finalize()
+    public void dispose()
     {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( GetCanvas() );
+        //((OpenGLRenderer)m_pkRenderer).SetDrawable( GetCanvas() );
 
         if ( m_spkScene != null )
         {
-            m_spkScene.finalize();
+            m_spkScene.dispose();
             m_spkScene = null;
         }
         if ( m_spkWireframe != null )
         {
-            m_spkWireframe.finalize();
+            m_spkWireframe.dispose();
             m_spkWireframe = null;
         }
         if ( m_spkCull != null )
         {
-            m_spkCull.finalize();
+            m_spkCull.dispose();
             m_spkCull = null;
         }
         if ( m_kCuller != null )
         {
-            m_kCuller.finalize();
+            m_kCuller.dispose();
             m_kCuller = null;
         }
         for ( int i = 0; i < 6; i++ )
         {
-            m_akBoundingBox[i].finalize();
+            m_akBoundingBox[i].dispose();
             m_akBoundingBox[i] = null;
-            m_akOrientationCube[i].finalize();
+            m_akOrientationCube[i].dispose();
             m_akOrientationCube[i] = null;
-            m_akPolyline[i].finalize();
+            m_akPolyline[i].dispose();
             m_akPolyline[i] = null;
         }
         m_akBoundingBox = null;
@@ -149,30 +144,32 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_aakAxisFiles = null;
         if ( m_kCubeTranslate != null )
         {
-            m_kCubeTranslate.finalize();
+            m_kCubeTranslate.dispose();
             m_kCubeTranslate = null;
         }
         if ( m_kClipArb != null )
         {
-            m_kClipArb.finalize();
+            m_kClipArb.dispose();
             m_kClipArb = null;
         }
         if ( m_kClipEye != null )
         {
-            m_kClipEye.finalize();
+            m_kClipEye.dispose();
             m_kClipEye = null;
         }
         if ( m_kClipEyeInv != null )
         {
-            m_kClipEyeInv.finalize();
+            m_kClipEyeInv.dispose();
             m_kClipEyeInv = null;
         }
         m_abDisplayPolyline = null;
+
         if ( m_kVolumeShaderEffect != null )
         {
-            m_kVolumeShaderEffect.finalize();
+            m_kVolumeShaderEffect.dispose();
             m_kVolumeShaderEffect = null;
         }
+
         m_kImageA = null;
         m_kLUTa = null;
         m_kRGBTa = null;
@@ -182,70 +179,88 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
         if ( m_spkScreenCamera != null )
         {
-            m_spkScreenCamera.finalize();
+            m_spkScreenCamera.dispose();
             m_spkScreenCamera = null;
         }
         if ( m_spkEyeCamera != null )
         {
-            m_spkEyeCamera.finalize();
+            m_spkEyeCamera.dispose();
             m_spkEyeCamera = null;
         }
         if ( m_spkScenePolygon != null )
         {
-            m_spkScenePolygon.finalize();
+            m_spkScenePolygon.dispose();
             m_spkScenePolygon = null;
         }
         if ( m_spkSceneImage != null )
         {
-            m_spkSceneImage.finalize();
+            m_spkSceneImage.dispose();
             m_spkSceneImage = null;
         }
         if ( m_pkSceneTarget != null )
         {
-            m_pkSceneTarget.finalize();
+            m_pkSceneTarget.dispose();
             m_pkSceneTarget = null;
         }
         if ( m_pkPBuffer != null )
         {
-            m_pkPBuffer.finalize();
+            m_pkPBuffer.dispose();
             m_pkPBuffer = null;
         }
 
         if ( m_spkVertexColor3Shader != null )
         {
-            m_spkVertexColor3Shader.finalize();
+            m_spkVertexColor3Shader.dispose();
             m_spkVertexColor3Shader = null;
         }
 
         if ( m_kTranslate != null )
         {
-            m_kTranslate.finalize();
+            m_kTranslate.dispose();
             m_kTranslate = null;
         }
         if ( m_kArbitraryClip != null )
         {
-            m_kArbitraryClip.finalize();
+            m_kArbitraryClip.dispose();
             m_kArbitraryClip = null;
         }
         if ( m_kMaterial != null )
         {
-            m_kMaterial.finalize();
+            m_kMaterial.dispose();
             m_kMaterial = null;
         }
         if ( m_kMesh != null )
         {
-            m_kMesh.finalize();
+            m_kMesh.dispose();
             m_kMesh = null;
         }
         m_akLights = null;
+        if ( m_kTracts != null )
+        {
+            for ( int i = 0; i < m_iMaxGroups; i++ )
+            {
+                removePolyline(i);
+            }
+        }
+
+        m_kTracts = null;
+        m_kShaders = null;
+        m_kEllipsoids = null;
+        m_kAllEllipsoidsShader = null;
+        m_kEllipseConstantColor = null;
+        m_kEllipseMaterial = null;
+        m_kEigenVectors = null;
+        if ( m_kSphere != null )
+        {
+            m_kSphere = null;
+        }
+        m_spkEllipseScene = null;
+        m_kColorEllipse = null;
+        m_kRotate = null;
 
         if ( m_kSculptor != null )
         { 
-            try {
-                m_kSculptor.finalize();
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
+            m_kSculptor.disposeLocal();
             m_kSculptor = null;
         }
         m_kLUTa = null;
@@ -257,14 +272,15 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             m_kShaderParamsWindow.close();
         }
-        super.finalize();
+
+        super.dispose();
 
         m_kAnimator.stop();
-        m_kAnimator = null;
-
-        System.gc();
     }
 
+    /** Returns model image A
+     * @return model image A
+     */
     public ModelImage getImage()
     {
         return m_kImageA;
@@ -281,7 +297,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
             return;
         }
 
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         MeasureTime();
 
         if (MoveCamera())
@@ -544,7 +560,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         InitializeCameraMotion(.05f,0.001f);
         InitializeObjectMotion(m_spkScene);
 
-        ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
 
         m_kAnimator = new Animator( GetCanvas() );
         m_kAnimator.setRunAsFastAsPossible(true); 
@@ -575,9 +591,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
             if (m_pkRenderer != null)
             {
-                ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+                //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
                 m_pkRenderer.Resize(iWidth,iHeight);
-                ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+                //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
             }
         }
     }
@@ -678,11 +694,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_kTranslate.negEquals();
         m_spkScene.GetChild(0).Local.SetTranslate( m_kTranslate );
 
-        int iNumImages = 1;
-        if ( m_kImageB != null )
-        {
-            iNumImages = 2;
-        }
         m_kVolumeShaderEffect = new VolumeShaderEffect(m_kImageA, m_kLUTa, m_kRGBTa, 
                 m_kImageB, m_kLUTb, m_kRGBTb, 
                 m_pkSceneTarget);
@@ -931,70 +942,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
         super.keyPressed(e);
         switch (ucKey)
         {
-        case 'A':  // remove an ambient light
-            if (m_iAQuantity > 0)
-            {
-                m_iAQuantity--;
-                m_iLightQuantity--;
-                UpdateEffects();
-            }
-            return;
-        case 'a':  // add an ambient light
-            if (m_iLightQuantity < 8)
-            {
-                m_iAQuantity++;
-                m_iLightQuantity++;
-                UpdateEffects();
-            }
-            return;
-        case 'D':  // remove a directional light
-            if (m_iDQuantity > 0)
-            {
-                m_iDQuantity--;
-                m_iLightQuantity--;
-                UpdateEffects();
-            }
-            return;
-        case 'd':  // add a directional light
-            if (m_iLightQuantity < 8)
-            {
-                m_iDQuantity++;
-                m_iLightQuantity++;
-                UpdateEffects();
-            }
-            return;
-        case 'P':  // remove a point light
-            if (m_iPQuantity > 0)
-            {
-                m_iPQuantity--;
-                m_iLightQuantity--;
-                UpdateEffects();
-            }
-            return;
-        case 'p':  // add a point light
-            if (m_iLightQuantity < 8)
-            {
-                m_iPQuantity++;
-                m_iLightQuantity++;
-                UpdateEffects();
-            }
-            return;
-        case 'S':  // remove a spot light
-            if (m_iSQuantity > 0)
-            {
-                m_iSQuantity--;
-                m_iLightQuantity--;
-                UpdateEffects();
-            }
-            return;
-        case 's':  // add a spot light
-            if (m_iLightQuantity < 8)
-            {
-                m_iSQuantity++;
-                m_iLightQuantity++;
-                UpdateEffects();
-            }
-            return;
         case 'f':
             m_bTestFrameRate = !m_bTestFrameRate;
             if ( m_bTestFrameRate )
@@ -2197,6 +2144,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
     /** Add a polyline to the display. Used to display fiber tract bundles.
      * @param kLine, new polyline to display.
+     * @param iGroup, the group the polyline belongs to.
      */
     public void addPolyline( Polyline kLine, int iGroup )
     {
@@ -2212,7 +2160,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
             m_kEllipseConstantColor = new HashMap<Integer,ColorRGB>();
             m_bDisplayTract = true;
         }
-
+        if ( m_iMaxGroups < iGroup )
+        {
+            m_iMaxGroups = iGroup;
+        }
 
         int[] aiEllipsoids = new int[kLine.VBuffer.GetVertexQuantity()];
 
@@ -2269,10 +2220,16 @@ implements GLEventListener, KeyListener, MouseMotionListener
     }
 
     /** 
+     * Removes the specified polyline tract group.
+     * @param iGroup, the group of polylines to remove.
      */
     public void removePolyline( int iGroup )
     {
         Integer kGroup = new Integer(iGroup);
+        if ( !m_kTracts.containsKey(iGroup) )
+        {
+            return;
+        }
         Node kTractNode = m_kTracts.remove(kGroup);
         if ( kTractNode == null )
         {
@@ -2284,12 +2241,12 @@ implements GLEventListener, KeyListener, MouseMotionListener
             if ( kTract != null )
             {
                 kTract.DetachAllEffects();
-                kTract.finalize();
+                kTract.dispose();
             }
         }
         kTractNode.UpdateGS();
         kTractNode.UpdateRS();
-        kTractNode.finalize();
+        kTractNode.dispose();
         kTractNode = null;
         if ( m_kTracts.size() == 0 )
         {
@@ -2306,11 +2263,13 @@ implements GLEventListener, KeyListener, MouseMotionListener
         ShaderEffect kShader = m_kShaders.remove(kGroup);
         if ( kShader != null )
         {
-            kShader.finalize();
+            kShader.dispose();
         }
     }
 
-    /** 
+    /** Sets the polyline color for the specified fiber bundle tract group. 
+     * @param iGroup, the fiber bundle group to set.
+     * @param kColor the new polyline color for the specified fiber bundle tract group. 
      */
     public void setPolylineColor( int iGroup, ColorRGB kColor )
     {
@@ -2351,6 +2310,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
         }
     }
 
+    /** Returns the polyline color for the specified fiber bundle tract group. 
+     * @param iGroup, the fiber bundle group to query.
+     * @return the polyline color for the specified fiber bundle tract group. 
+     */
     public ColorRGB getPolylineColor( int iGroup )
     {
         if ( m_kEllipseConstantColor != null )
@@ -2358,38 +2321,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
             return m_kEllipseConstantColor.get( new Integer(iGroup) );
         }
         return null;
-    }
-
-
-    public void setEllipseColor( ShaderEffect kShader, ColorRGB kColor )
-    {
-        if ( kShader == null )
-        {
-            return;
-        }
-        Program pkProgram = kShader.GetVProgram(0);
-        if ( pkProgram == null )
-        {
-            return;
-        }
-        if ( kColor == null )
-        {
-            if ( pkProgram.GetUC("UseConstantColor") != null )
-            {
-                pkProgram.GetUC("UseConstantColor").SetDataSource(new float[] {0,0,0,0});
-            }
-        }
-        else
-        {
-            if ( pkProgram.GetUC("ConstantColor") != null )
-            {
-                pkProgram.GetUC("ConstantColor").SetDataSource(new float[] { kColor.R(), kColor.G(), kColor.B(), 1f } );
-            }
-            if ( pkProgram.GetUC("UseConstantColor") != null )
-            {
-                pkProgram.GetUC("UseConstantColor").SetDataSource(new float[] {1,0,0,0});
-            }
-        }
     }
 
 
@@ -2472,6 +2403,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
         float fX, fY, fZ;
         Vector3f kScale;
         Transformation kTransform;
+        Transformation kTScale = new Transformation();
+        Transformation kTEllipse = new Transformation();
+
         Iterator kIterator = m_kEigenVectors.keySet().iterator();
         while ( kIterator.hasNext() )
         {
@@ -2495,22 +2429,24 @@ implements GLEventListener, KeyListener, MouseMotionListener
             fZ = (float)(iZ)/(float)(m_iDimZ);
 
 
-            m_kTScale.MakeIdentity();
-            m_kTEllipse.MakeIdentity();
+            kTScale.MakeIdentity();
+            kTEllipse.MakeIdentity();
 
             kTransform = m_kEigenVectors.get(kKey);
 
-            kScale = m_kTScale.GetScale();
+            kScale = kTScale.GetScale();
             kScale.scaleEquals( m_fScale );
             kScale.multEquals( kTransform.GetScale() );
-            m_kTScale.SetScale(kScale);
+            kTScale.SetScale(kScale);
 
-            m_kTEllipse.SetTranslate( fX - .5f, fY - .5f, fZ - .5f );
-            m_kTEllipse.SetMatrixCopy( kTransform.GetMatrix() );
+            kTEllipse.SetTranslate( fX - .5f, fY - .5f, fZ - .5f );
+            kTEllipse.SetMatrixCopy( kTransform.GetMatrix() );
 
 
-            kTransform.Product( m_kTEllipse, m_kTScale );
+            kTransform.Product( kTEllipse, kTScale );
         }
+        kTEllipse = null;
+        kTScale = null;
 
         Attributes kAttr = new Attributes();
         kAttr.SetPChannels(3);
@@ -2534,27 +2470,35 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_kSphere.UpdateRS();
         m_spkEllipseScene = new Node();
         m_spkEllipseScene.Local.SetScale( m_fX, m_fY, m_fZ );
-        //CreateLights();
     }
 
+    /** Turns on/off displaying the fiber bundle tracts with ellipsoids.
+     * @param bDisplay, when true display the tracts with ellipsods.
+     */
     public void setDisplayEllipsoids( boolean bDisplay )
     {
         m_bDisplayEllipsoids = bDisplay;
     }
 
-
-    public void setDisplayAllEllipsoids( boolean bDisplay, int iMod, boolean bUseConstantColor, ColorRGB kColor )
+    /** Turns on/off displaying all the ellipsoids.
+     * @param bDisplay, when true display all the ellipsods in the volume.
+     */
+    public void setDisplayAllEllipsoids( boolean bDisplay )
     {
         m_bDisplayAllEllipsoids = bDisplay;
     }
 
+    /** Set the m_iEllipsoidMod value. 
+     * @param iMod, new m_iEllipsoidMod value.
+     */
     public void setEllipseMod( int iMod )
     {
         m_iEllipsoidMod = iMod;
-        m_bFirst = true;
     }
 
-
+    /** Display the DTI volume with ellipsoids at each voxel. The m_iEllipsMod
+     * value is used to limit the number of ellipsoids displayed.
+     */    
     private void DisplayAllEllipsoids()
     {
         if ( m_kEigenVectors == null )
@@ -2608,14 +2552,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
             }
             iCount++;
         }
-        if ( m_bFirst )
-        {
-            m_bFirst = false;
-            //System.err.println(iDisplayed * m_kSphere.GetTriangleQuantity ());
-        }
     }
 
-
+    /** Display a fiber bundle tract with ellipsoids at each voxel.
+     */    
     private void DisplayEllipsoids( )
     {
         if ( m_kEllipsoids == null )
@@ -2632,13 +2572,8 @@ implements GLEventListener, KeyListener, MouseMotionListener
         int[] aiEllipsoids;
         int iIndex;
         ColorRGB kColor;
-        int iX,iY,iZ;
-        float fX,fY,fZ;
         float fR,fG,fB;
-        Vector3f kScale;
-        TriMesh kEllipse;
-        Transformation kTransform;
-        
+        TriMesh kEllipse;        
         Iterator kIterator = m_kEllipsoids.keySet().iterator();
         while ( kIterator.hasNext() )
         {
@@ -2695,8 +2630,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
         }
     }
     
-
-    
+    /** Displays a polyline fiber bundle tract with the given shader attached.
+     * @param kInputStader, shader to apply to the polyline.
+     */    
     private void DisplayTract( ShaderEffect kInputShader )
     {
         Iterator kIterator = m_kTracts.keySet().iterator();
@@ -2835,8 +2771,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
     /** Set to true when polyline fiber bundles are displayed. */
     private boolean m_bDisplayTract = false;
-    /** For modifying the alpha-blending mode during runtime. */
-    private int m_iActive = 0;
 
     /** Hashmap for multiple fiber bundles: */
     private HashMap<Integer,Node>  m_kTracts = null;
@@ -2847,197 +2781,40 @@ implements GLEventListener, KeyListener, MouseMotionListener
     /** Hashmap for multiple fiber bundles: */
     private HashMap<Integer,Vector<int[]>> m_kEllipsoids = null;
 
+    /** When true display the fiber tracts with ellipsoids instead of lines: */
     private boolean m_bDisplayEllipsoids = false;
+    /** When true display the DTI volume with ellipsoids: */
     private boolean m_bDisplayAllEllipsoids = false;
+    /** In the display all ellipsoids mode the ellipsoids are displayed every
+     * m_iEllipsoidMod steps. */
     private int m_iEllipsoidMod = 10;
 
+    /** Shader for displaying the ellipsoids with the Mipav lights. */
     private MipavLightingEffect m_kAllEllipsoidsShader = null;
-
+    /** Keeps track of the color assigned the polylines. */
     private HashMap<Integer,ColorRGB> m_kEllipseConstantColor;
-
+    /** Material properties of the ellipsoids. */
     private MaterialState m_kEllipseMaterial;
-
+    /** EigenVector values for displaying ellipsoids. */
     private HashMap<Integer,Transformation>  m_kEigenVectors = null;
-
+    /** Ellipsoids is a sphere with a non-uniform scale based on the eigen
+     * vectors and values. */
     private TriMesh m_kSphere;
-    private Transformation m_kTScale = new Transformation();
-    private Transformation m_kTEllipse = new Transformation();
-    private Transformation m_kTRotate = new Transformation();
-    
-    private int m_iDimX;
-    private int m_iDimY;
-    private int m_iDimZ;
-    private float m_fScale;
-    private int m_iLen;
-    private ColorRGB m_kColorEllipse;
-
-
-
-    private void CreateLights ()
-    {
-        int i;
-        for (i = 0; i < 8; i++)
-        {
-            m_aspkALight[i] = new Light(Light.LightType.LT_AMBIENT);
-            m_aspkDLight[i] = new Light(Light.LightType.LT_DIRECTIONAL);
-            m_aspkPLight[i] = new Light(Light.LightType.LT_POINT);
-            m_aspkSLight[i] = new Light(Light.LightType.LT_SPOT);
-        }
-
-        // ambient lights
-        float fValue = 0.75f;
-        m_aspkALight[0].Ambient = new ColorRGB(fValue,fValue,fValue);
-        m_aspkALight[1].Ambient = new ColorRGB(fValue,0.0f,  0.0f);
-        m_aspkALight[2].Ambient = new ColorRGB(0.0f,  fValue,0.0f);
-        m_aspkALight[3].Ambient = new ColorRGB(0.0f,  0.0f,  fValue);
-        m_aspkALight[4].Ambient = new ColorRGB(0.0f,  fValue,fValue);
-        m_aspkALight[5].Ambient = new ColorRGB(fValue,0.0f,  fValue);
-        m_aspkALight[6].Ambient = new ColorRGB(fValue,fValue,0.0f);
-        m_aspkALight[7].Ambient = new ColorRGB(fValue,fValue,fValue);
-
-        // directional lights
-        fValue = (float)-Math.sqrt(1.0f/3.0f);
-        m_aspkDLight[0].Ambient = new ColorRGB(fValue,fValue,fValue);
-        m_aspkDLight[1].Ambient = new ColorRGB(fValue,0.0f,  0.0f);
-        m_aspkDLight[2].Ambient = new ColorRGB(0.0f,  fValue,0.0f);
-        m_aspkDLight[3].Ambient = new ColorRGB(0.0f,  0.0f,  fValue);
-        m_aspkDLight[4].Ambient = new ColorRGB(0.0f,  fValue,fValue);
-        m_aspkDLight[5].Ambient = new ColorRGB(fValue,0.0f,  fValue);
-        m_aspkDLight[6].Ambient = new ColorRGB(fValue,fValue,0.0f);
-        m_aspkDLight[7].Ambient = new ColorRGB(fValue,fValue,fValue);
-        m_aspkDLight[0].DVector = new Vector3f(+fValue,+fValue,+fValue);
-        m_aspkDLight[1].DVector = new Vector3f(+fValue,+fValue,-fValue);
-        m_aspkDLight[2].DVector = new Vector3f(+fValue,-fValue,+fValue);
-        m_aspkDLight[3].DVector = new Vector3f(+fValue,-fValue,-fValue);
-        m_aspkDLight[4].DVector = new Vector3f(-fValue,+fValue,+fValue);
-        m_aspkDLight[5].DVector = new Vector3f(-fValue,+fValue,-fValue);
-        m_aspkDLight[6].DVector = new Vector3f(-fValue,-fValue,+fValue);
-        m_aspkDLight[7].DVector = new Vector3f(-fValue,-fValue,-fValue);
-        for (i = 0; i < 8; i++)
-        {
-            m_aspkDLight[i].Diffuse = new ColorRGB(ColorRGB.WHITE);
-            m_aspkDLight[i].Specular = new ColorRGB(ColorRGB.WHITE);
-        }
-
-        // point lights
-        fValue = 0.1f;
-        m_aspkPLight[0].Ambient = new ColorRGB(fValue,fValue,fValue);
-        m_aspkPLight[1].Ambient = new ColorRGB(fValue,0.0f,  0.0f);
-        m_aspkPLight[2].Ambient = new ColorRGB(0.0f,  fValue,0.0f);
-        m_aspkPLight[3].Ambient = new ColorRGB(0.0f,  0.0f,  fValue);
-        m_aspkPLight[4].Ambient = new ColorRGB(0.0f,  fValue,fValue);
-        m_aspkPLight[5].Ambient = new ColorRGB(fValue,0.0f,  fValue);
-        m_aspkPLight[6].Ambient = new ColorRGB(fValue,fValue,0.0f);
-        m_aspkPLight[7].Ambient = new ColorRGB(fValue,fValue,fValue);
-        fValue = 4.0f;
-        m_aspkPLight[0].Position = new Vector3f(+fValue,+fValue,+fValue);
-        m_aspkPLight[1].Position = new Vector3f(+fValue,+fValue,-fValue);
-        m_aspkPLight[2].Position = new Vector3f(+fValue,-fValue,+fValue);
-        m_aspkPLight[3].Position = new Vector3f(+fValue,-fValue,-fValue);
-        m_aspkPLight[4].Position = new Vector3f(-fValue,+fValue,+fValue);
-        m_aspkPLight[5].Position = new Vector3f(-fValue,+fValue,-fValue);
-        m_aspkPLight[6].Position = new Vector3f(-fValue,-fValue,+fValue);
-        m_aspkPLight[7].Position = new Vector3f(-fValue,-fValue,-fValue);
-        for (i = 0; i < 8; i++)
-        {
-            m_aspkPLight[i].Diffuse = new ColorRGB(ColorRGB.WHITE);
-            m_aspkPLight[i].Specular = new ColorRGB(ColorRGB.WHITE);
-        }
-
-        // spot lights
-        fValue = 0.1f;
-        m_aspkSLight[0].Ambient = new ColorRGB(fValue,fValue,fValue);
-        m_aspkSLight[1].Ambient = new ColorRGB(fValue,0.0f,  0.0f);
-        m_aspkSLight[2].Ambient = new ColorRGB(0.0f,  fValue,0.0f);
-        m_aspkSLight[3].Ambient = new ColorRGB(0.0f,  0.0f,  fValue);
-        m_aspkSLight[4].Ambient = new ColorRGB(0.0f,  fValue,fValue);
-        m_aspkSLight[5].Ambient = new ColorRGB(fValue,0.0f,  fValue);
-        m_aspkSLight[6].Ambient = new ColorRGB(fValue,fValue,0.0f);
-        m_aspkSLight[7].Ambient = new ColorRGB(fValue,fValue,fValue);
-        fValue = 4.0f;
-        m_aspkSLight[0].Position = new Vector3f(+fValue,+fValue,+fValue);
-        m_aspkSLight[1].Position = new Vector3f(+fValue,+fValue,-fValue);
-        m_aspkSLight[2].Position = new Vector3f(+fValue,-fValue,+fValue);
-        m_aspkSLight[3].Position = new Vector3f(+fValue,-fValue,-fValue);
-        m_aspkSLight[4].Position = new Vector3f(-fValue,+fValue,+fValue);
-        m_aspkSLight[5].Position = new Vector3f(-fValue,+fValue,-fValue);
-        m_aspkSLight[6].Position = new Vector3f(-fValue,-fValue,+fValue);
-        m_aspkSLight[7].Position = new Vector3f(-fValue,-fValue,-fValue);
-        fValue = (float)-Math.sqrt(1.0f/3.0f);
-        m_aspkSLight[0].DVector = new Vector3f(+fValue,+fValue,+fValue);
-        m_aspkSLight[1].DVector = new Vector3f(+fValue,+fValue,-fValue);
-        m_aspkSLight[2].DVector = new Vector3f(+fValue,-fValue,+fValue);
-        m_aspkSLight[3].DVector = new Vector3f(+fValue,-fValue,-fValue);
-        m_aspkSLight[4].DVector = new Vector3f(-fValue,+fValue,+fValue);
-        m_aspkSLight[5].DVector = new Vector3f(-fValue,+fValue,-fValue);
-        m_aspkSLight[6].DVector = new Vector3f(-fValue,-fValue,+fValue);
-        m_aspkSLight[7].DVector = new Vector3f(-fValue,-fValue,-fValue);
-        for (i = 0; i < 8; i++)
-        {
-            m_aspkSLight[i].Diffuse = new ColorRGB(ColorRGB.WHITE);
-            m_aspkSLight[i].Specular = new ColorRGB(ColorRGB.WHITE);
-            m_aspkSLight[i].Exponent = 1.0f;
-            m_aspkSLight[i].SetAngle((float)(0.125f*Math.PI));
-        }
-    }
-
-    private void UpdateEffects ()
-    {
-        m_bUpdateEffects = true;
-    }
-
-    private void UpdateEffectsOnIdle ()
-    {
-        m_bUpdateEffects = false;
-        int i;
-
-        if (m_iLightQuantity > 0)
-        {
-            //m_spkEllipseScene.DetachAllLights();
-            m_kSphere.DetachAllLights();
-            for (i = 0; i < m_iAQuantity; i++)
-            {
-                //System.err.println("Ambient");
-                //m_spkEllipseScene.AttachLight(m_aspkALight[i]);
-                m_kSphere.AttachLight(m_aspkALight[i]);
-            }
-            for (i = 0; i < m_iDQuantity; i++)
-            {
-                //System.err.println("Directional");
-                //m_spkEllipseScene.AttachLight(m_aspkDLight[i]);
-                m_kSphere.AttachLight(m_aspkDLight[i]);
-            }
-            for (i = 0; i < m_iPQuantity; i++)
-            {
-                //System.err.println("Point");
-                //m_spkEllipseScene.AttachLight(m_aspkPLight[i]);
-                m_kSphere.AttachLight(m_aspkPLight[i]);
-            }
-            for (i = 0; i < m_iSQuantity; i++)
-            {
-                //System.err.println("Spot");
-                //m_spkEllipseScene.AttachLight(m_aspkSLight[i]);
-                m_kSphere.AttachLight(m_aspkSLight[i]);
-            }
-        }
-
-        //m_spkEllipseScene.UpdateRS();
-        m_kSphere.UpdateRS();
-    }
-
-
-    private int m_iAQuantity = 0, m_iDQuantity = 0, m_iPQuantity = 0, m_iSQuantity = 0;
-    private Light[] m_aspkALight = new Light[8];
-    private Light[] m_aspkDLight = new Light[8];
-    private Light[] m_aspkPLight = new Light[8];
-    private Light[] m_aspkSLight = new Light[8];
-
-    private int m_iLightQuantity = 0;
-
+    /** Parent node of the ellipsoids, for computing rotation transformations: */
     private Node m_spkEllipseScene = null;
-    private boolean m_bUpdateEffects = true;
-
+    /** The DTI volume extents: */
+    private int m_iDimX, m_iDimY, m_iDimZ;
+    /** Ellispods scale factor, based on the DTI volume: */
+    private float m_fScale;
+    /** DTI volume data size: */
+    private int m_iLen;
+    /** Volume-based color for the ellipsoids: */
+    private ColorRGB m_kColorEllipse;
+    /** maximum number of fiber tracts currently displayed. */
+    private int m_iMaxGroups = 0;
+    
+    /** For testing the frame rate: */
     private boolean m_bTestFrameRate = false;
+    /** Rotation during frame rate tests: */
     private Matrix3f m_kRotate = new Matrix3f();
-    private boolean m_bFirst = true;
 }

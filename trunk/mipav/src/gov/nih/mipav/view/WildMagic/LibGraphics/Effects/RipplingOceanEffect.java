@@ -58,7 +58,7 @@ public class RipplingOceanEffect extends ShaderEffect
     }
 
     /** Delete data members: */
-    public void finalize ()
+    public void dispose ()
     {
         m_afLightDir = null;
         m_afWaveDirX = null;
@@ -68,7 +68,7 @@ public class RipplingOceanEffect extends ShaderEffect
         m_afWaveHeight = null;
         m_afBumpSpeed = null;
         m_afConstants = null;
-        super.finalize();
+        super.dispose();
     }
 
     /** Sets the Light direction

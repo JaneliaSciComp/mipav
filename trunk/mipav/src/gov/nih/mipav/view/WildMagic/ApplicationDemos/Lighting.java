@@ -83,7 +83,7 @@ public class Lighting extends JavaApplication3D
     }
 
     public void display(GLAutoDrawable arg0) {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 
         //lMemory = ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1048576);
         //System.err.println(lMemory + " " + m_iFrameCount);
@@ -96,8 +96,8 @@ public class Lighting extends JavaApplication3D
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
         {
-            //m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-
+            m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+/*
             for ( int i = 0; i < 1000; i++ )
             {
                 m_spkSphere.Local.SetTranslate( m_afRandX[i],
@@ -109,16 +109,16 @@ public class Lighting extends JavaApplication3D
                 m_spkSphere.UpdateGS();
                 m_pkRenderer.Draw(m_spkSphere);
             }
+            */
             m_pkRenderer.Draw(8,16,ColorRGBA.BLACK,m_acCaption);
-            //m_pkRenderer.Draw(8,32,ColorRGBA.WHITE,lMemory.toString().toCharArray());
             DrawFrameRate(8,GetHeight()-8,ColorRGBA.BLACK);
             m_pkRenderer.EndScene();
         }
         m_pkRenderer.DisplayBackBuffer();
         
-        ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
         
-        
+        /*
         m_kDiffuseColor.R( m_kDiffuseColor.R() + .1f );
         if ( m_kDiffuseColor.R() > 1.0f )
         {
@@ -136,6 +136,7 @@ public class Lighting extends JavaApplication3D
                 }
             }
         }
+        */
          UpdateFrameCount();
     }
 
@@ -173,11 +174,11 @@ public class Lighting extends JavaApplication3D
         m_kCuller.SetCamera(m_spkCamera);
         m_kCuller.ComputeVisibleSet(m_spkScene);
 
-        ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+       // ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         if (iWidth > 0 && iHeight > 0)
         {
             if (m_pkRenderer != null)
@@ -188,7 +189,7 @@ public class Lighting extends JavaApplication3D
             m_iWidth = iWidth;
             m_iHeight = iHeight;
         }
-        ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
     /*
@@ -351,7 +352,7 @@ public class Lighting extends JavaApplication3D
         kAttr.SetPChannels(3);
         kAttr.SetNChannels(3);
         StandardMesh kSM = new StandardMesh(kAttr);
-        m_spkSphere = kSM.Sphere(64,64,.10f);
+        m_spkSphere = kSM.Sphere(64,64,1.0f);
         m_spkSphere.Local.SetTranslate( new Vector3f(0.0f,0.0f,1.0f));
 
         m_kDiffuseColor = new ColorRGB(0.34615f,0.3143f,0.0903f);
@@ -366,7 +367,7 @@ public class Lighting extends JavaApplication3D
         m_spkSphere.AttachGlobalState(m_pkMaterial);
 
         m_spkScene.AttachChild(m_spkSphere);
-
+/*
         m_afRandX = new float[1000];
         m_afRandY = new float[1000];
         m_afRandZ = new float[1000];
@@ -387,6 +388,7 @@ public class Lighting extends JavaApplication3D
         }
 
         System.err.println( m_spkSphere.GetTriangleQuantity() * 1000 );
+        */
     }
 
     private void UpdateEffects ()
@@ -461,7 +463,7 @@ public class Lighting extends JavaApplication3D
         }
 
         m_spkScene.UpdateRS();
-        m_iActiveLight = -1;
+        //m_iActiveLight = -1;
     }
 
     private Node m_spkScene;
@@ -485,7 +487,7 @@ public class Lighting extends JavaApplication3D
     private Light[] m_aspkSLight = new Light[8];
 
     private DefaultShaderEffect m_spkDefaultEffect;
-    private int m_iActiveLight;
+    //private int m_iActiveLight;
     private int m_iLightQuantity;
     private char[] m_acCaption =
         new char[]{'.','.','.','.','.','.','.','.','.'};

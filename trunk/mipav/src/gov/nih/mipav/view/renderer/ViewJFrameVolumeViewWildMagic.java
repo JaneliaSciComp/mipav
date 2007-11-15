@@ -1055,7 +1055,7 @@ public class ViewJFrameVolumeViewWildMagic extends ViewJFrameVolumeViewWM implem
         */
         
         if (raycastRenderWM != null) {
-            raycastRenderWM.finalize();
+            raycastRenderWM.dispose();
             raycastRenderWM = null;
         }
 

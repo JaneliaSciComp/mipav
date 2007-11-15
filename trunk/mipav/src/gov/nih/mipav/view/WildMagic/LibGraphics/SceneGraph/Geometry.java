@@ -94,16 +94,16 @@ public abstract class Geometry extends Spatial
     }
 
     /** Delete memory. */
-    public void finalize()
+    public void dispose()
     {
         if ( ModelBound != null )
         {
-            ModelBound.finalize();
+            ModelBound.dispose();
             ModelBound = null;
         }
         if ( m_spkLEffect != null )
         {
-            m_spkLEffect.finalize();
+            m_spkLEffect.dispose();
             m_spkLEffect = null;
         }
 
@@ -113,7 +113,7 @@ public abstract class Geometry extends Spatial
             {
                 if ( States[i] != null )
                 {
-                    States[i].finalize();
+                    States[i].dispose();
                     States[i] = null;
                 }
             }
@@ -121,22 +121,22 @@ public abstract class Geometry extends Spatial
         }
         if ( HWorld != null )
         {
-            HWorld.finalize();
+            HWorld.dispose();
             HWorld = null;
         }
 
         if ( VBuffer != null )
         {
-            VBuffer.finalize();
+            VBuffer.dispose();
             VBuffer = null;
         }
         if ( IBuffer != null )
         {
-            IBuffer.finalize();
+            IBuffer.dispose();
             IBuffer = null;
         }
 
-        super.finalize();
+        super.dispose();
     }
     
     public BoundingVolume GetModelBound()

@@ -79,7 +79,7 @@ public class GVectorf
     }
 
     /** Delete the vector data. */
-    public void finalize ()
+    public void dispose ()
     {
         m_afTuple = null;
     }

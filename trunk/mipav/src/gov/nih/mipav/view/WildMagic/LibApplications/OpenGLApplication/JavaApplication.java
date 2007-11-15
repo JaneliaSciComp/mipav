@@ -51,13 +51,13 @@ public abstract class JavaApplication extends Application
     /**
      * Delete memory.
      */
-    public void finalize()
+    public void dispose()
     {
         m_acWindowTitle = null;
         m_kBackgroundColor = null;
         if ( m_pkRenderer != null )
         {
-            m_pkRenderer.finalize();
+            m_pkRenderer.dispose();
             m_pkRenderer = null;
         }
     }

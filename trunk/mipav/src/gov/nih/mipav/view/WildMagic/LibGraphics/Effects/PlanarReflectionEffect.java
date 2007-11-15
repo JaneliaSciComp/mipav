@@ -45,32 +45,32 @@ public class PlanarReflectionEffect extends Effect
     }
 
     /** Delete data members: */
-    public void finalize ()
+    public void dispose ()
     {
         for ( int i = 0; i < m_iQuantity; i++ )
         {
-            m_aspkPlane[i].finalize();
+            m_aspkPlane[i].dispose();
             m_aspkPlane[i] = null;
         }
         m_aspkPlane = null;
 
         if ( m_spkAState != null )
         {
-            m_spkAState.finalize();
+            m_spkAState.dispose();
             m_spkAState = null;
         }
         if ( m_spkSState != null )
         {
-            m_spkSState.finalize();
+            m_spkSState.dispose();
             m_spkSState = null;
         }
         if ( m_spkZState != null )
         {
-            m_spkZState.finalize();
+            m_spkZState.dispose();
             m_spkZState = null;
         }
         m_afReflectance = null;
-        super.finalize();
+        super.dispose();
     }
 
     /**

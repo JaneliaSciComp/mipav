@@ -41,14 +41,14 @@ implements StreamInterface
     }
 
     /** Delete memory. */
-    public void finalize()
+    public void dispose()
     {
         if ( m_kSphere != null )
         {
-            m_kSphere.finalize();
+            m_kSphere.dispose();
             m_kSphere = null;
         }
-        super.finalize();
+        super.dispose();
     }
 
     /** Get bounding volume type.

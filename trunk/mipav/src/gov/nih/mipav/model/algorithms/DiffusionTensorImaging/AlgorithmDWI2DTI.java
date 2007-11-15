@@ -50,7 +50,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     private GMatrixf m_kBMatrix = null;
     /** List of file names for the Diffusion Weighted Images, from the .path file. */
     private String[][] m_aakDWIList = null;
-    private int[] m_repidx;
+    /** keeps track of unique entries in the BMatrix */
+    private int[] m_aiMatrixEntries;
     /** Format of the raw data: (float, int, dicom, etc.) */
     private String m_kRawImageFormat = null;
     /** Output DTI Image:*/
@@ -72,7 +73,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
      * @param kRawFormat, format string for the raw data.
      */
     public AlgorithmDWI2DTI( ModelImage kMaskImage, boolean bDisplayB0, int iSlices, int iDimX, int iDimY,
-                             int iBOrig, int iWeights, float fMeanNoise, String[][] aakDWIList, int[] repidx, GMatrixf kBMatrix,
+                             int iBOrig, int iWeights, float fMeanNoise, String[][] aakDWIList, int[] aiMatrixEntries, GMatrixf kBMatrix,
                              String kRawFormat )
     {
         m_kMaskImage = kMaskImage;
@@ -83,7 +84,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
         m_iWeights = iWeights;
         m_fMeanNoise = fMeanNoise;
         m_aakDWIList = aakDWIList;
-        m_repidx = repidx;
+        m_aiMatrixEntries = aiMatrixEntries;
         m_kBMatrix = kBMatrix;
         m_kRawImageFormat = kRawFormat;
         
@@ -96,7 +97,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
         m_kB0Image = null;
         m_kBMatrix = null;
         m_aakDWIList = null;
-        m_repidx = null;
+        m_aiMatrixEntries = null;
         m_kRawImageFormat = null;
         m_kDTIImage = null;
     }
@@ -179,6 +180,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
             FileInputStream kFileReader = new FileInputStream(kFile);
             kFileReader.read(abSliceData,0,iLength);
             kFileReader.close();
+            kFile = null;
         } catch (IOException e ) {}
 
         int length = m_iDimX * m_iDimY;
@@ -191,6 +193,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
                 afResult[iIndex] = readFloat( abSliceData, iIndex );
             }
         }
+        abSliceData = null;
         return afResult;
     }
     
@@ -309,8 +312,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
         {
             for (int j=0; j< m_iWeights; j++)
             {
-                if ( m_repidx[j] == i )
-                {
+                if ( m_aiMatrixEntries[j] == i )
+                {                  
                     for (int slice = 0; slice < m_iSlices; slice++)
                     { 
                         float[] buffer = readSliceWeight(slice, j);
@@ -337,39 +340,9 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
             kProgressBar.updateValueImmed( iValue );
         }		
 
-        kProgressBar.getProgressBar().setMaximum(m_iWeights);
-        for (int j=0; j< m_iWeights; j++)
-        {
-            for (int slice = 0; slice < m_iSlices; slice++)
-            { 
-                float[] buffer = readSliceWeight(slice, j);
-                for ( int iY = 0; iY < m_iDimY; iY++ )
-                {
-                    for ( int iX = 0; iX < m_iDimX; iX++ )
-                    {
-                        int iIndex = (iY * m_iDimX) + iX;
-                        if ( norm[m_repidx[j]][slice][iIndex] == 0 )
-                        {
-                            wmask[j][slice][iIndex]= 0;
-                        }
-                        else
-                        {
-                            if ( m_kMaskImage.getBoolean( slice*m_iDimY*m_iDimX + iIndex) )
-                            {
-                                float fValue = buffer[iIndex];
-                                wmask[j][slice][iIndex]= fValue/norm[m_repidx[j]][slice][iIndex];
-                            }
-                        }
-                    }
-                }
-            }
-            int iValue = (int)(100 * (float)(j+1)/(float)m_iWeights);
-            kProgressBar.updateValueImmed( iValue );
-        }
-        norm = null;
         kProgressBar.dispose();
         kProgressBar = null;
-        return wmask;	
+        return norm;
     }
 
     /** Second step in processing the diffusion weighted images. This
@@ -430,29 +403,30 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
                         for ( int iWeight = 0; iWeight < m_iWeights; iWeight++ )
                         {
                             double p = buffer[iWeight][iIndex];
-
-                            //SIGMA is a diagonal matrix and its inverse would be diag(1/S(i,i))
-                            if ( p<m_fMeanNoise )
+                            double w = 0; //aaafWeights[iWeight][iSlice][iIndex];
+                            if ( aaafWeights[m_aiMatrixEntries[iWeight]][iSlice][iIndex]  != 0 )
                             {
-                                p=m_fMeanNoise;
+                                w = p/aaafWeights[m_aiMatrixEntries[iWeight]][iSlice][iIndex];
                             }
-                        
-                            double w = aaafWeights[iWeight][iSlice][iIndex];
                             if (w>0.196)
                             {
                                 r[idx]=iWeight;
                                 c[idx]=iWeight;
                                 idx++;
                             }
+                            
+                            //SIGMA is a diagonal matrix and its inverse would be diag(1/S(i,i))
+                            if ( p<m_fMeanNoise )
+                            {
+                                p=m_fMeanNoise;
+                            }
+
                             X.set(iWeight,0,Math.log(p));
                             SIGMA.set(iWeight,iWeight,(p*p*w)); // SIGMA here becomes SIGMA.inverse
-
                         }
                         Matrix B2 = B.getMatrix(r, 0, 6+a0-1);
                         Matrix SIGMA2 = SIGMA.getMatrix(r, c);
                         Matrix X2 = X.getMatrix(r, 0, 0);
-                        //Matrix A = ((B.transpose()).times( SIGMA )).times(B);
-                        //Matrix Y = ((B.transpose()).times( SIGMA )).times(X);
                         Matrix A = ((B2.transpose()).times( SIGMA2 )).times(B2);
                         Matrix Y = ((B2.transpose()).times( SIGMA2 )).times(X2);
                         
@@ -462,7 +436,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
                         for (int i=0; i<S.getRowDimension(); i++)
                             S.set(i,i,1/(S.get(i,i)));
                         D = (((SVD.getV()).times(S)).times(SVD.getU().transpose())).times(Y);
-                    
+                        
                         // D = [Dxx, Dxy, Dxz, Dyy, Dyz, Dzz, Amplitude] 
                         float[] tensor = new float[10+vol];
                         for (int i=0; i<6; i++) { 

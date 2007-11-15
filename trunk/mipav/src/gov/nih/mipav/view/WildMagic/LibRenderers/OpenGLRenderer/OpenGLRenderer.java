@@ -54,7 +54,7 @@ public class OpenGLRenderer extends Renderer
     }
 
     /** Delete memory: */
-    public void finalize()
+    public void dispose()
     {
         if ( m_aspkLight != null )
         {
@@ -65,7 +65,7 @@ public class OpenGLRenderer extends Renderer
         }
         m_kCanvas = null;
         m_kDrawable = null;
-        super.finalize();
+        super.dispose();
     }
 
     /** Initialize canvas with hardware accelerated capabilites. */
@@ -83,17 +83,19 @@ public class OpenGLRenderer extends Renderer
      */
     public void SetDrawable( GLAutoDrawable drawable )
     {
-        m_kDrawable = drawable;
+        if ( m_kDrawable != drawable )
+        {
+            m_kDrawable = drawable;
+        }
     }
 
     /**
      * Clears the GLAutoDrawable object.
-     */
     public void ClearDrawable()
     {
         m_kDrawable = null;
     }
-
+     */
     /** Renderer-specific information for loading shader programs. */
     public final String GetExtension () { return "ogl"; }
 
@@ -1217,7 +1219,7 @@ public class OpenGLRenderer extends Renderer
         assert(pkImage != null);
 
         Buffer aucData = pkImage.GetDataBuffer();
-        int iComponent = ms_aeImageComponents[pkImage.GetFormat().Value()];
+        //int iComponent = ms_aeImageComponents[pkImage.GetFormat().Value()];
         int eFormat = ms_aeImageFormats[pkImage.GetFormat().Value()];
         int eIType = ms_aeImageTypes[pkImage.GetFormat().Value()];
 
@@ -1424,7 +1426,8 @@ public class OpenGLRenderer extends Renderer
      */
     public void OnReleaseIBuffer (ResourceIdentifier pkID)
     {
-        if ( m_kDrawable == null ) { System.err.println( "OnReleaseIBuffer GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { 
+            System.err.println( "OnReleaseIBuffer GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         boolean bIsActive = IsActive();
@@ -1504,7 +1507,7 @@ public class OpenGLRenderer extends Renderer
     }
 
     /**
-     * Enable the VertexProgram spefified by the ResourceIdentifer parameter pkID.
+     * Enable the VertexProgram specified by the ResourceIdentifer parameter pkID.
      * @param pkID the ResourceIdentifier describing the VertexProgram to enable.
      */
     public void OnEnableVProgram (ResourceIdentifier pkID)

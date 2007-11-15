@@ -32,7 +32,7 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 import gov.nih.mipav.view.WildMagic.LibRenderers.OpenGLRenderer.*;
 
-import gov.nih.mipav.view.renderer.volumeview.*;
+//import gov.nih.mipav.view.renderer.volumeview.*;
 
 
 public class Multieffects extends JavaApplication3D
@@ -95,7 +95,7 @@ public class Multieffects extends JavaApplication3D
     }
 
     public void display(GLAutoDrawable arg0) {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 
         MeasureTime();
         
@@ -120,7 +120,7 @@ public class Multieffects extends JavaApplication3D
         m_pkRenderer.DisplayBackBuffer();
         UpdateFrameCount();
 
-        ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
     public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {
@@ -157,11 +157,11 @@ public class Multieffects extends JavaApplication3D
         InitializeCameraMotion(0.001f,0.001f);
         InitializeObjectMotion(m_spkScene);
 
-        ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         if (iWidth > 0 && iHeight > 0)
         {
             if (m_pkRenderer != null)
@@ -172,7 +172,7 @@ public class Multieffects extends JavaApplication3D
             m_iWidth = iWidth;
             m_iHeight = iHeight;
         }
-        ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+       // ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
     /*
@@ -223,7 +223,7 @@ public class Multieffects extends JavaApplication3D
     private TextureEffect m_spkEffect;
     private int m_iActive;
     
-    private Plane3f m_kPlane = new Plane3f( new Vector3f( .5f, -1, -1 ), new Vector3f( .5f, 1, 1), new Vector3f( .5f, -1, 1) );
+    //private Plane3f m_kPlane = new Plane3f( new Vector3f( .5f, -1, -1 ), new Vector3f( .5f, 1, 1), new Vector3f( .5f, -1, 1) );
 
     public void keyPressed(KeyEvent e) {
         char ucKey = e.getKeyChar();

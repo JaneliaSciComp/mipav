@@ -39,7 +39,7 @@ public class BitmapFontChar
     }
 
     /** Delete memory */
-    public void finalize()
+    public void dispose()
     {
         Bitmap = null;
     }

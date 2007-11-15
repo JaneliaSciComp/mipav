@@ -47,12 +47,12 @@ public abstract class Program extends Bindable
         m_kProgramText = null;
         if ( m_kInputAttributes != null )
         {
-            m_kInputAttributes.finalize();
+            m_kInputAttributes.dispose();
             m_kInputAttributes = null;
         }
         if ( m_kOutputAttributes != null )
         {
-            m_kOutputAttributes.finalize();
+            m_kOutputAttributes.dispose();
             m_kOutputAttributes = null;
         }
         m_kRendererConstants.clear();

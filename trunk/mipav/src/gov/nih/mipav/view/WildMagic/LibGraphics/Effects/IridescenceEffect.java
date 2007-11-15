@@ -58,10 +58,10 @@ public class IridescenceEffect extends ShaderEffect
     }
 
     /** Delete memory */
-    public void finalize()
+    public void dispose()
     {
         m_afInterpolate = null;
-        super.finalize();
+        super.dispose();
     }
 
     /**

@@ -49,11 +49,11 @@ public class Line3f
     /**
      * delete memory
      */
-    public void finalize()
+    public void dispose()
     {
-        Origin.finalize();
+        Origin.dispose();
         Origin = null;
-        Direction.finalize();
+        Direction.dispose();
         Direction = null;
     }
 

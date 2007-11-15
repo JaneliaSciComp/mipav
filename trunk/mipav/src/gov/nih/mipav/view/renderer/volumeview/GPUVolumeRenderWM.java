@@ -214,37 +214,37 @@ implements GLEventListener, KeyListener, MouseMotionListener
     /**
      * memory cleanup.
      */
-    public void finalize()
+    public void dispose()
     {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( GetCanvas() );
+        //((OpenGLRenderer)m_pkRenderer).SetDrawable( GetCanvas() );
 
         if ( m_spkScene != null )
         {
-            m_spkScene.finalize();
+            m_spkScene.dispose();
             m_spkScene = null;
         }
         if ( m_spkWireframe != null )
         {
-            m_spkWireframe.finalize();
+            m_spkWireframe.dispose();
             m_spkWireframe = null;
         }
         if ( m_spkCull != null )
         {
-            m_spkCull.finalize();
+            m_spkCull.dispose();
             m_spkCull = null;
         }
         if ( m_kCuller != null )
         {
-            m_kCuller.finalize();
+            m_kCuller.dispose();
             m_kCuller = null;
         }
         for ( int i = 0; i < 6; i++ )
         {
-            m_akBoundingBox[i].finalize();
+            m_akBoundingBox[i].dispose();
             m_akBoundingBox[i] = null;
-            m_akOrientationCube[i].finalize();
+            m_akOrientationCube[i].dispose();
             m_akOrientationCube[i] = null;
-            m_akPolyline[i].finalize();
+            m_akPolyline[i].dispose();
             m_akPolyline[i] = null;
         }
         m_akBoundingBox = null;
@@ -254,28 +254,28 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_aakAxisFiles = null;
         if ( m_kCubeTranslate != null )
         {
-            m_kCubeTranslate.finalize();
+            m_kCubeTranslate.dispose();
             m_kCubeTranslate = null;
         }
         if ( m_kClipArb != null )
         {
-            m_kClipArb.finalize();
+            m_kClipArb.dispose();
             m_kClipArb = null;
         }
         if ( m_kClipEye != null )
         {
-            m_kClipEye.finalize();
+            m_kClipEye.dispose();
             m_kClipEye = null;
         }
         if ( m_kClipEyeInv != null )
         {
-            m_kClipEyeInv.finalize();
+            m_kClipEyeInv.dispose();
             m_kClipEyeInv = null;
         }
         m_abDisplayPolyline = null;
         if ( m_kVolumeShaderEffect != null )
         {
-            m_kVolumeShaderEffect.finalize();
+            m_kVolumeShaderEffect.dispose();
             m_kVolumeShaderEffect = null;
         }
         m_kImageA = null;
@@ -287,70 +287,66 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
         if ( m_spkScreenCamera != null )
         {
-            m_spkScreenCamera.finalize();
+            m_spkScreenCamera.dispose();
             m_spkScreenCamera = null;
         }
         if ( m_spkEyeCamera != null )
         {
-            m_spkEyeCamera.finalize();
+            m_spkEyeCamera.dispose();
             m_spkEyeCamera = null;
         }
         if ( m_spkScenePolygon != null )
         {
-            m_spkScenePolygon.finalize();
+            m_spkScenePolygon.dispose();
             m_spkScenePolygon = null;
         }
         if ( m_spkSceneImage != null )
         {
-            m_spkSceneImage.finalize();
+            m_spkSceneImage.dispose();
             m_spkSceneImage = null;
         }
         if ( m_pkSceneTarget != null )
         {
-            m_pkSceneTarget.finalize();
+            m_pkSceneTarget.dispose();
             m_pkSceneTarget = null;
         }
         if ( m_pkPBuffer != null )
         {
-            m_pkPBuffer.finalize();
+            m_pkPBuffer.dispose();
             m_pkPBuffer = null;
         }
 
         if ( m_spkVertexColor3Shader != null )
         {
-            m_spkVertexColor3Shader.finalize();
+            m_spkVertexColor3Shader.dispose();
             m_spkVertexColor3Shader = null;
         }
 
         if ( m_kTranslate != null )
         {
-            m_kTranslate.finalize();
+            m_kTranslate.dispose();
             m_kTranslate = null;
         }
         if ( m_kArbitraryClip != null )
         {
-            m_kArbitraryClip.finalize();
+            m_kArbitraryClip.dispose();
             m_kArbitraryClip = null;
         }
         if ( m_kMaterial != null )
         {
-            m_kMaterial.finalize();
+            m_kMaterial.dispose();
             m_kMaterial = null;
         }
         if ( m_kMesh != null )
         {
-            m_kMesh.finalize();
+            m_kMesh.dispose();
             m_kMesh = null;
         }
         m_akLights = null;
 
         if ( m_kSculptor != null )
         { 
-            try {
-                m_kSculptor.finalize();
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
+            m_kSculptor.disposeLocal();
             m_kSculptor = null;
         }
         m_kLUTa = null;
@@ -362,7 +358,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             m_kShaderParamsWindow.close();
         }
-        super.finalize();
+        super.dispose();
 
         m_kAnimator.stop();
         m_kAnimator = null;
@@ -391,7 +387,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
             return;
         }
 
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         MeasureTime();
 
         if (MoveCamera())
@@ -625,7 +621,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         InitializeCameraMotion(.05f,0.001f);
         InitializeObjectMotion(m_spkScene);
 
-        ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
 
         m_kAnimator = new Animator( GetCanvas() );
         m_kAnimator.setRunAsFastAsPossible(true); 
@@ -656,9 +652,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
             if (m_pkRenderer != null)
             {
-                ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+                //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
                 m_pkRenderer.Resize(iWidth,iHeight);
-                ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+                //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
             }
         }
     }
@@ -2270,12 +2266,12 @@ implements GLEventListener, KeyListener, MouseMotionListener
                 if ( kTract != null )
                 {
                     kTract.DetachAllEffects();
-                    kTract.finalize();
+                    kTract.dispose();
                 }
             }
             kTractNode.UpdateGS();
             kTractNode.UpdateRS();
-            kTractNode.finalize();
+            kTractNode.dispose();
             kTractNode = null;
         }
         m_kTracts.clear();
@@ -2286,7 +2282,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             Integer iKey = (Integer)kIterator.next();
             ShaderEffect kShader = m_kShaders.get(iKey);
-            kShader.finalize();
+            kShader.dispose();
             kShader = null;
         }
         m_kShaders.clear();
@@ -2321,12 +2317,12 @@ implements GLEventListener, KeyListener, MouseMotionListener
             if ( kTract != null )
             {
                 kTract.DetachAllEffects();
-                kTract.finalize();
+                kTract.dispose();
             }
         }
         kTractNode.UpdateGS();
         kTractNode.UpdateRS();
-        kTractNode.finalize();
+        kTractNode.dispose();
         kTractNode = null;
 
         Vector<int[]> kEllipseVector = m_kEllipsoids.remove(kGroup);
@@ -2338,7 +2334,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         ShaderEffect kShader = m_kShaders.remove(kGroup);
         if ( kShader != null )
         {
-            kShader.finalize();
+            kShader.dispose();
         }
     }
 

@@ -76,7 +76,7 @@ public class ColorRGB
     /**
      * delete memory
      */
-    public void finalize()
+    public void dispose()
     {
         if ( (this == ColorRGB.BLACK) || (this == ColorRGB.WHITE) )
         {

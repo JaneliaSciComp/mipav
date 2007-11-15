@@ -52,10 +52,10 @@ public class OpenGLFrameBuffer extends FrameBuffer
     }
 
     /** Delete memory */
-    public void finalize()
+    public void dispose()
     {
         m_kDrawable = null;
-        super.finalize();
+        super.dispose();
     }
 
     /**

@@ -30,18 +30,18 @@ public class Node extends Spatial
     public Node () {}
 
     /** Delete memory. */
-    public void finalize ()
+    public void dispose ()
     {
         for (int i = 0; i < (int)m_kChild.size(); i++)
         {
             Spatial spkChild = DetachChildAt(i);
             if ( spkChild != null )
             {
-                spkChild.finalize();
+                spkChild.dispose();
                 spkChild = null;
             }
         }
-        super.finalize();
+        super.dispose();
     }
 
     /** children

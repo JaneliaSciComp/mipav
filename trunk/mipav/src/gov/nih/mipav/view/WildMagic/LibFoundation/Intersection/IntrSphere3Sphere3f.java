@@ -35,41 +35,41 @@ public class IntrSphere3Sphere3f extends Intersector
     /**
      * delete memory
      */
-    public void finalize()
+    public void dispose()
     {
         if ( m_rkSphere0 != null )
         {
-            m_rkSphere0.finalize();
+            m_rkSphere0.dispose();
             m_rkSphere0 = null;
         }
         if ( m_rkSphere1 != null )
         {
-            m_rkSphere1.finalize();
+            m_rkSphere1.dispose();
             m_rkSphere1 = null;
         }
         if ( m_kCenter != null )
         {
-            m_kCenter.finalize();
+            m_kCenter.dispose();
             m_kCenter = null;
         }
         if ( m_kUAxis != null )
         {
-            m_kUAxis.finalize();
+            m_kUAxis.dispose();
             m_kUAxis = null;
         }
         if ( m_kVAxis != null )
         {
-            m_kVAxis.finalize();
+            m_kVAxis.dispose();
             m_kVAxis = null;
         }
         if ( m_kNormal != null )
         {
-            m_kNormal.finalize();
+            m_kNormal.dispose();
             m_kNormal = null;
         }
         if ( m_kContactPoint != null )
         {
-            m_kContactPoint.finalize();
+            m_kContactPoint.dispose();
             m_kContactPoint = null;
         }
     }

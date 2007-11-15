@@ -47,11 +47,11 @@ public abstract class JavaApplication3D extends JavaApplication
     /**
      * Delete memory.
      */
-    public void finalize()
+    public void dispose()
     {
         m_kSaveRotate = null;
         m_spkCamera = null;
-        super.finalize();
+        super.dispose();
     }
     
     /** 
@@ -481,7 +481,7 @@ public abstract class JavaApplication3D extends JavaApplication
         Vector3f kUVector = kIncr.mult(m_spkCamera.GetUVector());
         Vector3f kRVector = kIncr.mult(m_spkCamera.GetRVector());
         m_spkCamera.SetAxes(kDVector,kUVector,kRVector);
-        kIncr.finalize();
+        kIncr.dispose();
         kIncr = null;
     }
 
@@ -498,7 +498,7 @@ public abstract class JavaApplication3D extends JavaApplication
         Vector3f kUVector = kIncr.mult(m_spkCamera.GetUVector());
         Vector3f kRVector = kIncr.mult(m_spkCamera.GetRVector());
         m_spkCamera.SetAxes(kDVector,kUVector,kRVector);
-        kIncr.finalize();
+        kIncr.dispose();
         kIncr = null;
     }
 
@@ -513,7 +513,7 @@ public abstract class JavaApplication3D extends JavaApplication
         Vector3f kUVector = kIncr.mult(m_spkCamera.GetUVector());
         Vector3f kRVector = kIncr.mult(m_spkCamera.GetRVector());
         m_spkCamera.SetAxes(kDVector,kUVector,kRVector);
-        kIncr.finalize();
+        kIncr.dispose();
         kIncr = null;
     }
 
@@ -528,7 +528,7 @@ public abstract class JavaApplication3D extends JavaApplication
         Vector3f kUVector = kIncr.mult(m_spkCamera.GetUVector());
         Vector3f kRVector = kIncr.mult(m_spkCamera.GetRVector());
         m_spkCamera.SetAxes(kDVector,kUVector,kRVector);
-        kIncr.finalize();
+        kIncr.dispose();
         kIncr = null;
     }
 
@@ -626,7 +626,7 @@ public abstract class JavaApplication3D extends JavaApplication
             kRot = kIncr.mult(kRot);
             kRot.Orthonormalize();
             m_spkMotionObject.Local.SetRotate(kRot);
-            kIncr.finalize();
+            kIncr.dispose();
             kIncr = null;
             kAxis = null;
             return true;
@@ -646,7 +646,7 @@ public abstract class JavaApplication3D extends JavaApplication
             kRot = kIncr.mult(kRot);
             kRot.Orthonormalize();
             m_spkMotionObject.Local.SetRotate(kRot);
-            kIncr.finalize();
+            kIncr.dispose();
             kIncr = null;
             kAxis = null;
             return true;
@@ -666,12 +666,12 @@ public abstract class JavaApplication3D extends JavaApplication
             kRot = kIncr.mult(kRot);
             kRot.Orthonormalize();
             m_spkMotionObject.Local.SetRotate(kRot);
-            kIncr.finalize();
+            kIncr.dispose();
             kIncr = null;
             kAxis = null;
             return true;
         }
-        kIncr.finalize();
+        kIncr.dispose();
         kIncr = null;
         kAxis = null;
         return false;
