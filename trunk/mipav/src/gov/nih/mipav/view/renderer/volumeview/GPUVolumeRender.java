@@ -1856,6 +1856,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         kIn = null;
         kRotate = null;
         m_spkScene.UpdateGS();
+        m_spkEllipseScene.Local.SetRotateCopy(m_spkScene.Local.GetRotate());
     }
 
     /**
@@ -2468,7 +2469,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_kSphere.AttachGlobalState(m_kEllipseMaterial);
         m_kSphere.AttachEffect(m_kAllEllipsoidsShader);
         m_kSphere.UpdateRS();
-        m_spkEllipseScene = new Node();
         m_spkEllipseScene.Local.SetScale( m_fX, m_fY, m_fZ );
     }
 
@@ -2801,7 +2801,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
      * vectors and values. */
     private TriMesh m_kSphere;
     /** Parent node of the ellipsoids, for computing rotation transformations: */
-    private Node m_spkEllipseScene = null;
+    private Node m_spkEllipseScene = new Node();
     /** The DTI volume extents: */
     private int m_iDimX, m_iDimY, m_iDimZ;
     /** Ellispods scale factor, based on the DTI volume: */
