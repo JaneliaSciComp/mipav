@@ -712,23 +712,23 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
             String targetDir = null;
             boolean isPublic = publicButton.isSelected();
             if (isPublic) {
-            	targetDir = Preferences.getProperty(Preferences.PREF_NDAR_GENOMICS_DIR_PUBLIC);
+            //	targetDir = Preferences.getProperty(Preferences.PREF_NDAR_GENOMICS_DIR_PUBLIC);
             	if (targetDir == null) {
             		targetDir = "/home/Public/Link/Public/";
-            		Preferences.setProperty(Preferences.PREF_NDAR_GENOMICS_DIR_PUBLIC, targetDir);
+            //		Preferences.setProperty(Preferences.PREF_NDAR_GENOMICS_DIR_PUBLIC, targetDir);
             	}
             	
             } else {
-            	targetDir = Preferences.getProperty(Preferences.PREF_NDAR_GENOMICS_DIR_PRIVATE);
+            //	targetDir = Preferences.getProperty(Preferences.PREF_NDAR_GENOMICS_DIR_PRIVATE);
             	if (targetDir == null) {
             		targetDir = "/home/Public/Link/Private/";
-            		Preferences.setProperty(Preferences.PREF_NDAR_GENOMICS_DIR_PRIVATE, targetDir);
+            //		Preferences.setProperty(Preferences.PREF_NDAR_GENOMICS_DIR_PRIVATE, targetDir);
             	}
             }
             
             //transfer the zipped meta and raw data to the destination dump folder (private or public)
             System.err.println("targetDir: " + targetDir + ", tempdir: " + USER_MIPAV_TEMP_DIR + ", outfilename: " + outFilename);
-            GeneralFile targetFile = transferer.createTargetFile(targetDir, USER_MIPAV_TEMP_DIR, outFilename);
+            GeneralFile targetFile = transferer.createTargetFile(targetDir + File.separator, USER_MIPAV_TEMP_DIR, outFilename);
                         
             System.err.println("created target file: " + targetFile);
             logOutputArea.getTextArea().append(new Date() + " Transferring " + outFilename + " to " + targetDir + "\n");
