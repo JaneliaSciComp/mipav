@@ -299,14 +299,25 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	}
     }
     
-    private void browseSRB() {
+    private boolean connectToSRB() {
     	if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
-            new JDialogLoginSRB("Connect to", false);
+            new JDialogLoginSRB("Connect to", true);
 
             if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
-                return;
+                return false;
+            } else {
+            	return true;
             }
+        } else {
+        	return true;
         }
+    	
+    }
+    
+    private void browseSRB() {
+    	if (!connectToSRB()) {
+    		return;
+    	}
 
 
         /**
@@ -318,12 +329,12 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
             chooser = new JargonFileChooser(JDialogLoginSRB.srbFileSystem);
         } catch (OutOfMemoryError e) {
             e.printStackTrace(System.err);
-            MipavUtil.displayError("Out of memory!");
+            //MipavUtil.displayError("Out of memory!");
 
             return;
         } catch (IOException e) {
             e.printStackTrace(System.err);
-            MipavUtil.displayError(e.getMessage());
+            //MipavUtil.displayError(e.getMessage());
 
             return;
         }
@@ -342,7 +353,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
             privateField.setText(SRBUtility.convertToString(files));
         }
     }
-
+    
     private void loadAbstract(File abstractFile) {
     	RandomAccessFile raFile;
     	try {
@@ -806,6 +817,14 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
      *
      */
     private void transfer() {
+    	
+    	if (!connectToSRB()) {
+    		return;
+    	}
+    	
+    	String userName = Preferences.getProperty(Preferences.PREF_USERNAME_SRB);
+    	long timestamp = System.currentTimeMillis();
+    	
     	//Create the FileIO
     	FileIO fileIO = new FileIO();
     	fileIO.setQuiet(true);
@@ -823,7 +842,50 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	
     	String fName;
     	File currentImageFile;
-    	LocalFile localFile;
+    	LocalFile sourceFile;
+    	GeneralFile targetFile;
+    	
+    	boolean isPublic = publicButton.isSelected();
+    	String targetDirMeta = null;
+    	String targetDirImaging = null;
+    	
+    	if (isPublic) {
+    		targetDirMeta = Preferences.getProperty(Preferences.PREF_NDAR_IMAGING_META_DIR_PUBLIC);
+    	
+    		if (targetDirMeta == null) {
+    			targetDirMeta = "/home/ndar_data_drop.nih-cit-dev/Metadata_Public/Imaging/";
+    			Preferences.setProperty(Preferences.PREF_NDAR_IMAGING_META_DIR_PUBLIC, targetDirMeta);
+    		}
+    	} else {
+    		targetDirMeta = Preferences.getProperty(Preferences.PREF_NDAR_IMAGING_META_DIR_PRIVATE);
+    	
+    		if (targetDirMeta == null) {
+    			targetDirMeta = "/home/ndar_data_drop.nih-cit-dev/Metadata_Private/Imaging/";
+    			Preferences.setProperty(Preferences.PREF_NDAR_IMAGING_META_DIR_PRIVATE, targetDirMeta);
+    		}
+    	}
+    	
+    	if (isPublic) {
+    		targetDirImaging = Preferences.getProperty(Preferences.PREF_NDAR_IMAGING_DIR_PUBLIC);
+    	
+    		if (targetDirImaging == null) {
+    			targetDirImaging = "/home/ndar_data_drop.nih-cit-dev/Data_Public/Imaging/";
+    			Preferences.setProperty(Preferences.PREF_NDAR_IMAGING_DIR_PUBLIC, targetDirImaging);
+    		}
+    	} else {
+    		targetDirImaging = privateField.getText();
+    		if (!targetDirImaging.endsWith("/")) {
+    			targetDirImaging+="/";
+    		}
+    	}
+    	
+    	String subfolderName = userName + "_" + timestamp + "/";
+    	
+    	//add the username and timestamp to the target metafile directory
+    	targetDirMeta += subfolderName;
+    	targetDirImaging += subfolderName;
+    	
+    	ViewJFrameImage invisFrame = null;
     	
     	for (int i = 0; i < numImages; i++) {
     		currentImageFile = (File)sourceModel.elementAt(i);
@@ -832,8 +894,9 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     				multiFileTable.get(currentImageFile).booleanValue() + "\n");
     		tempImage = fileIO.readImage(currentImageFile.getAbsolutePath());
     		//Save the image's XML to disk
+    		invisFrame = new ViewJFrameImage(tempImage);
+    		invisFrame.setVisible(false);    		
     		
-    		    		
     		//set the valid GUID into the NDAR data object, and set up the filewriteoptions for this image
     		ndarData.validGUID = guidFields[i].getText();
     		options.setMultiFile(multiFileTable.get(currentImageFile).booleanValue());
@@ -867,18 +930,21 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     		fileIO.writeImage(tempImage, options);
     		
     		
-    		//localFile = new LocalFile(options.getFileDirectory() + File.separator + options.getFileName());
+    		sourceFile = new LocalFile(options.getFileDirectory() + File.separator + options.getFileName());
     		
-    		//use the directory and filename to send the .xml file
+    		targetFile = transferer.createTargetFile(targetDirMeta, sourceFile.getParent(), sourceFile.getPath());
     		
-    		
-    		//transferer.transfer(sourceFile, targetFile)
+    		//send the XML file
+    		transferer.transfer(sourceFile, targetFile);
     		
     		//now send the model image
-    		
-    		//transferer.saveToSRB(tempImage);
-    	
-    		
+    		transferer.saveToSRB(tempImage, targetDirImaging);
+    		System.err.println("TRANSFERED");
+    		try {
+    			invisFrame.close();
+    		} catch (Throwable t) {
+    			
+    		}
     	}
     	
     }

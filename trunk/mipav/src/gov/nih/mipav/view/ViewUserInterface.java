@@ -463,8 +463,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             transferSRBFiles();
         } else if (command.equals("TransferNDAR")) {
             transferNDAR();
-        } else if (command.equals("TransferNDARGenomics")) {
-            transferNDARGenomics();
         } else if (command.equals("AutoUploadToSRB")) {
 
             if (menuBuilder.isMenuItemSelected("Enable auto SRB upload")) {
@@ -2756,14 +2754,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public void transferNDAR() {
     	JDialogNDAR ndar = new JDialogNDAR(this.getMainFrame());
-    }
-    
-    /**
-     * Starts up an SRB NDAR genomics transfer dialog
-     *
-     */
-    public void transferNDARGenomics() {    	
-    	JDialogNDARGenomics gen = new JDialogNDARGenomics(this.getMainFrame());
     }
     
     /**
