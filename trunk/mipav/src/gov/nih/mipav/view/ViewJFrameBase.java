@@ -3066,8 +3066,8 @@ public abstract class ViewJFrameBase extends JFrame
             // fileInfo[i].setFileFormat (fileType);
         }
 
-    }
-
+    }   
+    
     /**
      * This method saves a selected VOI - should this be in VOI structure ??!!!
      *

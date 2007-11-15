@@ -894,8 +894,8 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     				multiFileTable.get(currentImageFile).booleanValue() + "\n");
     		tempImage = fileIO.readImage(currentImageFile.getAbsolutePath());
     		//Save the image's XML to disk
-    		invisFrame = new ViewJFrameImage(tempImage);
-    		invisFrame.setVisible(false);    		
+    		//invisFrame = new ViewJFrameImage(tempImage);
+    		//invisFrame.setVisible(false);    		
     		
     		//set the valid GUID into the NDAR data object, and set up the filewriteoptions for this image
     		ndarData.validGUID = guidFields[i].getText();
@@ -935,16 +935,19 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     		targetFile = transferer.createTargetFile(targetDirMeta, sourceFile.getParent(), sourceFile.getPath());
     		
     		//send the XML file
-    		transferer.transfer(sourceFile, targetFile);
+    		
+    		System.err.println("SRBList from file name: " + SRBUtility.getFileNameList(tempImage));
+    		
+    		transferer.transferFiles(SRBUtility.getFileNameList(tempImage), targetDirImaging);
+    		
+    	//	Vector fileList = SRBUtility.getFileNameList(tempImage);
+    		
+    		//transferer.transfer(sourceFile, targetFile);
     		
     		//now send the model image
-    		transferer.saveToSRB(tempImage, targetDirImaging);
-    		System.err.println("TRANSFERED");
-    		try {
-    			invisFrame.close();
-    		} catch (Throwable t) {
-    			
-    		}
+    	//	transferer.saveToSRB(tempImage, targetDirImaging);
+    		//System.err.println("TRANSFERED");
+    		
     	}
     	
     }
