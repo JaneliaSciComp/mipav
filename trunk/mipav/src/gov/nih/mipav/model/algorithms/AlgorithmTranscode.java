@@ -200,6 +200,9 @@ public class AlgorithmTranscode extends AlgorithmBase implements ControllerListe
 
         // System.err.println("output file after creation: " + outputFile.getPath());
         try {
+            // Note that the oml is created with each space in the file path name replaced by %20.
+            // If the oml is created with a string instead of with a URL in an attempt to get
+            // around this problem, then the data sink creation will fail.
             oml = new MediaLocator(outputFile.toURI().toURL());
         } catch (MalformedURLException ex) { //
         }
