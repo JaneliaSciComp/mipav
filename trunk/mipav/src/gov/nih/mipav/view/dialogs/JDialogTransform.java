@@ -3590,12 +3590,14 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
         Preferences.debug(xfrm + "\n");
 
-        if (!userDefinedMatrix.isSelected()) {
-            doRotateCenter = false;
-        }
-        else {
+        //if (!userDefinedMatrix.isSelected()) { 
+         //   doRotateCenter = false;
+        //}
+        //else {
+        // doRotateCenter is checked if it is selected everytime,
+        //does not depend on userDefinedMatrix is selected or not. Changed 11/16 by Mayur  
             doRotateCenter = rotCenter.isSelected();
-        }
+        //}
         if (doRotateCenter) {
         	useSACenter = useSACenterBox.isSelected();
         }
