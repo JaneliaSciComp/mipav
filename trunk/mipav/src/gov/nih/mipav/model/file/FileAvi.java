@@ -14,6 +14,7 @@ import java.io.*;
 
 import java.util.*;
 
+import javax.media.MediaLocator;
 import javax.swing.*;
 
 
@@ -326,6 +327,15 @@ public class FileAvi extends FileBase {
 
                 // set the filename to the new file name and read header again
                 this.fileName = newFileName;
+                // The line 
+                // oml = new MediaLocator(outputFile.toURI().toURL()); 
+                // in AlgorithmTranscode.runAlgorithm() replaces every space in the file path name
+                // with %20.
+                for (int i = 0; i < fileDir.length(); i++) {
+                    if (fileDir.charAt(i) == 0x20) {
+                        fileDir = fileDir.substring(0,i) + "%20" + fileDir.substring(i+1);
+                    }
+                }
 
                 if (readHeader() != 0) {
                     System.err.println("Something messed up!!!");
