@@ -686,9 +686,14 @@ public class FileTiff extends FileBase {
     
     // Convert CIELAB to XYZ and convert XYZ to RGB
     // R position has CIE_L*, G position has CIE-a*, B position has CIE-b*
+    // For 8 bits:
     // The L* range goes from 0 to 100 as the 8 bit values go from 0 to 255
-    // The a* and b* ranges are signed 8 bit values having the range -127 to 127.
-    // so in an ARGB read in -1 goes to 255, -2 goes to 254,..., -127 goes to 129
+    // The a* and b* ranges are signed 8 bit values having the range -128 to 127.
+    // so in an ARGB read in -1 goes to 255, -2 goes to 254,..., -128 goes to 128
+    // For 16 bits:
+    //  The L* range goes from 0 to 100 as the 8 bit values go from 0 to 65535
+    // The a* and b* ranges are signed 8 bit values having the range -32768 to 32767.
+    // so in an ARGB read in -1 goes to 65535, -2 goes to 65534,..., -32768 goes to 32768
     // CIELAB to XYZ comes from Lab Color space in Wilkepedia
     // XYZ to RGB comes from EasyRGB http://www.easyrgb.com
     private void CIELABtoRGB(float buffer[]) {
@@ -738,89 +743,179 @@ public class FileTiff extends FileBase {
         double varB;
         int sliceLength = buffer.length/4;
         int i;
-        for (i = 0; i < sliceLength; i++) {
-            buffer[4*i + 1] = buffer[4*i + 1]*100.0f/255.0f;
-            varY = (buffer[4*i + 1] + 16.0)/116.0;
-            if (buffer[4*i + 2] > 127) {
-                buffer[4*i + 2] = buffer[4*i + 2] - 256;   
+        if (fileInfo.getDataType() == ModelStorageBase.ARGB) {
+            for (i = 0; i < sliceLength; i++) {
+                buffer[4*i + 1] = buffer[4*i + 1]*100.0f/255.0f;
+                varY = (buffer[4*i + 1] + 16.0)/116.0;
+                if (buffer[4*i + 2] > 127) {
+                    buffer[4*i + 2] = buffer[4*i + 2] - 256;   
+                }
+                varX = buffer[4*i + 2]/500.0 + varY;
+                if (buffer[4*i + 3] > 127) {
+                    buffer[4*i + 3] = buffer[4*i + 3] - 256;
+                }
+                varZ = varY - buffer[4*i + 3]/200.0;
+                
+                if (varY > delta) {
+                    Y = refY * varY * varY * varY;
+                }
+                else {
+                    Y = (varY - offset) * yMul;
+                }
+                
+                if (varX > delta) {
+                    X = refX * varX * varX * varX;;
+                }
+                else {
+                    X = (varX - offset) * xMul;
+                }
+                
+                if (varZ > delta) {
+                    Z = refZ * varZ * varZ * varZ;
+                }
+                else {
+                    Z = (varZ - offset) * zMul;
+                }
+                
+                varX = X / 100.0;
+                varY = Y / 100.0;
+                varZ = Z / 100.0;
+                
+                varR = 3.2406 * varX - 1.5372 * varY - 0.4986 * varZ;
+                varG = -0.9689 * varX + 1.8758 * varY + 0.0415 * varZ;
+                varB = 0.0557 * varX - 0.2040 * varY + 1.0570 * varZ;
+                
+                if (varR > 0.0031308) {
+                    varR = 1.055 * Math.pow(varR, (1.0/2.4)) - 0.055;
+                }
+                else {
+                    varR = 12.92 * varR;
+                }
+                if (varR < 0.0) {
+                    varR = 0.0;
+                }
+                if (varR > 1.0) {
+                    varR = 1.0;
+                }
+                
+                if (varG > 0.0031308) {
+                    varG = 1.055 * Math.pow(varG, (1.0/2.4)) - 0.055;
+                }
+                else {
+                    varG = 12.92 * varG;
+                }
+                if (varG < 0.0) {
+                    varG = 0.0;
+                }
+                if (varG > 1.0) {
+                    varG = 1.0;
+                }
+                
+                if (varB > 0.0031308) {
+                    varB = 1.055 * Math.pow(varB, (1.0/2.4)) - 0.055;
+                }
+                else {
+                    varB = 12.92 * varB;
+                }
+                if (varB < 0.0) {
+                    varB = 0.0;
+                }
+                if (varB > 1.0) {
+                    varB = 1.0;
+                }
+                
+                buffer[4*i + 1] = (float)(varR * 255.0);
+                buffer[4*i + 2] = (float)(varG * 255.0);
+                buffer[4*i + 3] = (float)(varB * 255.0);
             }
-            varX = buffer[4*i + 2]/500.0 + varY;
-            if (buffer[4*i + 3] > 127) {
-                buffer[4*i + 3] = buffer[4*i + 3] - 256;
-            }
-            varZ = varY - buffer[4*i + 3]/200.0;
-            
-            if (varY > delta) {
-                Y = refY * varY * varY * varY;
-            }
-            else {
-                Y = (varY - offset) * yMul;
-            }
-            
-            if (varX > delta) {
-                X = refX * varX * varX * varX;;
-            }
-            else {
-                X = (varX - offset) * xMul;
-            }
-            
-            if (varZ > delta) {
-                Z = refZ * varZ * varZ * varZ;
-            }
-            else {
-                Z = (varZ - offset) * zMul;
-            }
-            
-            varX = X / 100.0;
-            varY = Y / 100.0;
-            varZ = Z / 100.0;
-            
-            varR = 3.2406 * varX - 1.5372 * varY - 0.4986 * varZ;
-            varG = -0.9689 * varX + 1.8758 * varY + 0.0415 * varZ;
-            varB = 0.0557 * varX - 0.2040 * varY + 1.0570 * varZ;
-            
-            if (varR > 0.0031308) {
-                varR = 1.055 * Math.pow(varR, (1.0/2.4)) - 0.055;
-            }
-            else {
-                varR = 12.92 * varR;
-            }
-            if (varR < 0.0) {
-                varR = 0.0;
-            }
-            if (varR > 1.0) {
-                varR = 1.0;
-            }
-            
-            if (varG > 0.0031308) {
-                varG = 1.055 * Math.pow(varG, (1.0/2.4)) - 0.055;
-            }
-            else {
-                varG = 12.92 * varG;
-            }
-            if (varG < 0.0) {
-                varG = 0.0;
-            }
-            if (varG > 1.0) {
-                varG = 1.0;
-            }
-            
-            if (varB > 0.0031308) {
-                varB = 1.055 * Math.pow(varB, (1.0/2.4)) - 0.055;
-            }
-            else {
-                varB = 12.92 * varB;
-            }
-            if (varB < 0.0) {
-                varB = 0.0;
-            }
-            if (varB > 1.0) {
-                varB = 1.0;
-            }
-            
-            buffer[4*i + 1] = (float)(varR * 255.0);
-            buffer[4*i + 2] = (float)(varG * 255.0);
-            buffer[4*i + 3] = (float)(varB * 255.0);
+        }
+        else if (fileInfo.getDataType() == ModelStorageBase.ARGB_USHORT) {
+            for (i = 0; i < sliceLength; i++) {
+                buffer[4*i + 1] = buffer[4*i + 1]*100.0f/65535.0f;
+                varY = (buffer[4*i + 1] + 16.0)/116.0;
+                if (buffer[4*i + 2] > 32767) {
+                    buffer[4*i + 2] = buffer[4*i + 2] - 65536;   
+                }
+                buffer[4*i + 2] = buffer[4*i + 2]/256;
+                varX = buffer[4*i + 2]/500.0 + varY;
+                if (buffer[4*i + 3] > 32767) {
+                    buffer[4*i + 3] = buffer[4*i + 3] - 65536;
+                }
+                buffer[4*i + 3] = buffer[4*i + 3]/256;
+                varZ = varY - buffer[4*i + 3]/200.0;
+                
+                if (varY > delta) {
+                    Y = refY * varY * varY * varY;
+                }
+                else {
+                    Y = (varY - offset) * yMul;
+                }
+                
+                if (varX > delta) {
+                    X = refX * varX * varX * varX;;
+                }
+                else {
+                    X = (varX - offset) * xMul;
+                }
+                
+                if (varZ > delta) {
+                    Z = refZ * varZ * varZ * varZ;
+                }
+                else {
+                    Z = (varZ - offset) * zMul;
+                }
+                
+                varX = X / 100.0;
+                varY = Y / 100.0;
+                varZ = Z / 100.0;
+                
+                varR = 3.2406 * varX - 1.5372 * varY - 0.4986 * varZ;
+                varG = -0.9689 * varX + 1.8758 * varY + 0.0415 * varZ;
+                varB = 0.0557 * varX - 0.2040 * varY + 1.0570 * varZ;
+                
+                if (varR > 0.0031308) {
+                    varR = 1.055 * Math.pow(varR, (1.0/2.4)) - 0.055;
+                }
+                else {
+                    varR = 12.92 * varR;
+                }
+                if (varR < 0.0) {
+                    varR = 0.0;
+                }
+                if (varR > 1.0) {
+                    varR = 1.0;
+                }
+                
+                if (varG > 0.0031308) {
+                    varG = 1.055 * Math.pow(varG, (1.0/2.4)) - 0.055;
+                }
+                else {
+                    varG = 12.92 * varG;
+                }
+                if (varG < 0.0) {
+                    varG = 0.0;
+                }
+                if (varG > 1.0) {
+                    varG = 1.0;
+                }
+                
+                if (varB > 0.0031308) {
+                    varB = 1.055 * Math.pow(varB, (1.0/2.4)) - 0.055;
+                }
+                else {
+                    varB = 12.92 * varB;
+                }
+                if (varB < 0.0) {
+                    varB = 0.0;
+                }
+                if (varB > 1.0) {
+                    varB = 1.0;
+                }
+                
+                buffer[4*i + 1] = (float)(varR * 4095.0);
+                buffer[4*i + 2] = (float)(varG * 4095.0);
+                buffer[4*i + 3] = (float)(varB * 4095.0);
+            }    
         }
         
     }
