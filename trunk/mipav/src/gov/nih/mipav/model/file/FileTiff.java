@@ -312,6 +312,8 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     private double zRes = 1.0;
+    
+    private boolean isCIELAB = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -647,6 +649,10 @@ public class FileTiff extends FileBase {
                                 i = 0;
                             }
                         }
+                        
+                        if (isCIELAB) {
+                            CIELABtoRGB(sliceBufferFloat);
+                        }
                     } catch (IOException error) {
                         throw new IOException("FileTiff: read: " + error);
                     }
@@ -676,6 +682,147 @@ public class FileTiff extends FileBase {
         }
 
         return image;
+    }
+    
+    // Convert CIELAB to XYZ and convert XYZ to RGB
+    // R position has CIE_L*, G position has CIE-a*, B position has CIE-b*
+    // The L* range goes from 0 to 100 as the 8 bit values go from 0 to 255
+    // The a* and b* ranges are signed 8 bit values having the range -127 to 127.
+    // so in an ARGB read in -1 goes to 255, -2 goes to 254,..., -127 goes to 129
+    // CIELAB to XYZ comes from Lab Color space in Wilkepedia
+    // XYZ to RGB comes from EasyRGB http://www.easyrgb.com
+    private void CIELABtoRGB(float buffer[]) {
+        double varX; 
+        double varY;
+        double varZ;
+        double delta = 6.0/29.0;
+        double offset = 16.0/116.0;
+        double threeDeltaSquared = 3.0 * delta * delta;
+        // refX, refY, and refZ are the trisimulus values of an appropriate reference white
+        // From web comment by Matri Maria:
+        // The TIFF 6 spec is more than a little vague about what white point should
+        // be used for L*a*b images, and there's no specified tag to put that data
+        // into the file.
+        //
+        // There is a tag to store White point, the tag is:
+        //     Tag = 318 (13Eh)
+        //     Type = Rational
+        //     N = 2
+        // The chromaticity of the white point of the image.  This is the chromaticity when
+        // each of the primaries has its ReferenceWhite value.
+        // The value is described using the 1931 CIE xy chromaticity diagram and only the
+        // chromaticity is specified.
+        //
+        // TIFF 6.0 specification has a "Section23: CIE L*a*b images" where it says
+        // that "White point : does not apply, but I have seen several TIFF with
+        // photometric = CIELAB and white point specified as D50 in this tag.
+        
+        // Adobe Photoshop TIFF Technical Notes states:
+        // WhitePoint: default is CIE D50, may be omitted if default value applies
+        
+        // www.easyrgb.com uses D65
+        //double refX = 95.047;  // Observer = 2 degrees, Illuminant = D65
+        //double refY = 100.000; // Observer = 2 degrees, Illuminant = D65
+        //double refZ = 108.883; // Observer = 2 degrees, Illuminant = D65
+        double refX = 96.420;  // Observer = 2 degrees, Illuminant = D50
+        double refY = 100.000; // Observer = 2 degrees, Illuminant = D50
+        double refZ = 82.490;  // Observer = 2 degrees, Illuminant = D50
+        double xMul = threeDeltaSquared * refX;
+        double yMul = threeDeltaSquared * refY;
+        double zMul = threeDeltaSquared * refZ;
+        double X;
+        double Y;
+        double Z;
+        double varR;
+        double varG;
+        double varB;
+        int sliceLength = buffer.length/4;
+        int i;
+        for (i = 0; i < sliceLength; i++) {
+            buffer[4*i + 1] = buffer[4*i + 1]*100.0f/255.0f;
+            varY = (buffer[4*i + 1] + 16.0)/116.0;
+            if (buffer[4*i + 2] > 127) {
+                buffer[4*i + 2] = buffer[4*i + 2] - 256;   
+            }
+            varX = buffer[4*i + 2]/500.0 + varY;
+            if (buffer[4*i + 3] > 127) {
+                buffer[4*i + 3] = buffer[4*i + 3] - 256;
+            }
+            varZ = varY - buffer[4*i + 3]/200.0;
+            
+            if (varY > delta) {
+                Y = refY * varY * varY * varY;
+            }
+            else {
+                Y = (varY - offset) * yMul;
+            }
+            
+            if (varX > delta) {
+                X = refX * varX * varX * varX;;
+            }
+            else {
+                X = (varX - offset) * xMul;
+            }
+            
+            if (varZ > delta) {
+                Z = refZ * varZ * varZ * varZ;
+            }
+            else {
+                Z = (varZ - offset) * zMul;
+            }
+            
+            varX = X / 100.0;
+            varY = Y / 100.0;
+            varZ = Z / 100.0;
+            
+            varR = 3.2406 * varX - 1.5372 * varY - 0.4986 * varZ;
+            varG = -0.9689 * varX + 1.8758 * varY + 0.0415 * varZ;
+            varB = 0.0557 * varX - 0.2040 * varY + 1.0570 * varZ;
+            
+            if (varR > 0.0031308) {
+                varR = 1.055 * Math.pow(varR, (1.0/2.4)) - 0.055;
+            }
+            else {
+                varR = 12.92 * varR;
+            }
+            if (varR < 0.0) {
+                varR = 0.0;
+            }
+            if (varR > 1.0) {
+                varR = 1.0;
+            }
+            
+            if (varG > 0.0031308) {
+                varG = 1.055 * Math.pow(varG, (1.0/2.4)) - 0.055;
+            }
+            else {
+                varG = 12.92 * varG;
+            }
+            if (varG < 0.0) {
+                varG = 0.0;
+            }
+            if (varG > 1.0) {
+                varG = 1.0;
+            }
+            
+            if (varB > 0.0031308) {
+                varB = 1.055 * Math.pow(varB, (1.0/2.4)) - 0.055;
+            }
+            else {
+                varB = 12.92 * varB;
+            }
+            if (varB < 0.0) {
+                varB = 0.0;
+            }
+            if (varB > 1.0) {
+                varB = 1.0;
+            }
+            
+            buffer[4*i + 1] = (float)(varR * 255.0);
+            buffer[4*i + 2] = (float)(varG * 255.0);
+            buffer[4*i + 3] = (float)(varB * 255.0);
+        }
+        
     }
 
     /**
@@ -1717,7 +1864,7 @@ public class FileTiff extends FileBase {
                         throw new IOException("PHOTO_INTERP has illegal count = " + count + "\n");
                     }
 
-                    if (valueArray[0] > 4) {
+                    if (valueArray[0] > 8) {
                         throw new IOException("PHOTO_INTERP has illegal value = " + valueArray[0] + "\n");
                     }
 
@@ -1757,6 +1904,14 @@ public class FileTiff extends FileBase {
 
                         if (debuggingFileIO) {
                             Preferences.debug("FileTiff.openIFD: PhotoInterp = Transparency Mask\n",
+                                              Preferences.DEBUG_FILEIO);
+                        }
+                    } else if (valueArray[0] == 8) { // CIELAB
+                        isCIELAB = true;
+                        fileInfo.setPhotometric((short) 8);
+                        
+                        if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: PhotoInterp = CIELAB\n",
                                               Preferences.DEBUG_FILEIO);
                         }
                     }
