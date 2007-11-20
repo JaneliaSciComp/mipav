@@ -148,6 +148,14 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     public static final int SAMPLE_FORMAT = 339;
+    
+    public static final int YCBCR_COEFFICIENTS = 529;
+    
+    public static final int YCBCR_SUBSAMPLING = 530;
+    
+    public static final int YCBCR_POSITIONING = 531;
+    
+    public static final int REFERENCE_BLACK_WHITE = 532;
 
     /** EchoTech Tiff TAGS. */
     public static final int ZRESOLUTION = 65000;
@@ -314,6 +322,21 @@ public class FileTiff extends FileBase {
     private double zRes = 1.0;
     
     private boolean isCIELAB = false;
+    
+    private boolean isYCbCr = false;
+    
+    // YCbCr Coefficients
+    // Defaults are from CCIR Recommendation 601-1
+    private float LumaRed = 0.299f;
+    private float LumaGreen = 0.587f;
+    private float LumaBlue = 0.114f;
+    
+    // 1 = chroma dimension length same as dimension length of associated luma image
+    // 2 = chroma dimension length half the dimension length of the associated luma image
+    // 4 = chroma dimension length 1/4 the dimension length of the assoicated luma image
+    // Default is 2, 2
+    private int chromaImageWidth = 2;
+    private int chromaImageHeight = 2;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -653,6 +676,9 @@ public class FileTiff extends FileBase {
                         if (isCIELAB) {
                             CIELABtoRGB(sliceBufferFloat);
                         }
+                        else if (isYCbCr) {
+                            YCbCrtoRGB(sliceBufferFloat);
+                        }
                     } catch (IOException error) {
                         throw new IOException("FileTiff: read: " + error);
                     }
@@ -918,6 +944,15 @@ public class FileTiff extends FileBase {
             }    
         }
         
+    }
+    
+    private void YCbCrtoRGB(float buffer[]) {
+        int sliceLength = buffer.length/4;
+        int i;
+        if (fileInfo.getDataType() == ModelStorageBase.ARGB) {
+            for (i = 0; i < sliceLength; i++) {
+            }
+        }
     }
 
     /**
@@ -2002,7 +2037,7 @@ public class FileTiff extends FileBase {
                                               Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == 6) { // YCbCr
-                        isCIELAB = true;
+                        isYCbCr = true;
                         fileInfo.setPhotometric((short) 6);
                         
                         if (debuggingFileIO) {
@@ -2184,6 +2219,59 @@ public class FileTiff extends FileBase {
                         LUT.makeIndexedLUT(null);
                     }
 
+                    break;
+                    
+                case YCBCR_COEFFICIENTS:
+                    if (type != RATIONAL) {
+                        throw new IOException("YCBCR_CEOFFICIENTS has illegal type = " + type + "\n");
+                    }
+
+                    if (count != 3) {
+                        throw new IOException("XRESOLUTION has illegal count = " + count + "\n");
+                    }
+
+                    numerator = valueArray[0];
+                    denominator = valueArray[1];
+                    LumaRed = (float) numerator / denominator;
+                    
+                    numerator = valueArray[2];
+                    denominator = valueArray[3];
+                    LumaGreen = (float) numerator / denominator;
+                    
+                    numerator = valueArray[4];
+                    denominator = valueArray[5];
+                    LumaBlue = (float) numerator / denominator;
+                    
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: YCbCr coefficients\n",
+                                          Preferences.DEBUG_FILEIO);
+                        Preferences.debug("FileTiff.openIFD: LumaRed = " + LumaRed +  
+                                          "  LumaGreen = " + LumaGreen +
+                                          "  LumaBlue = " + LumaBlue +
+                                          "\n",
+                                          Preferences.DEBUG_FILEIO);
+                    }
+
+                    break;
+                    
+                case YCBCR_SUBSAMPLING:
+                    if (type != SHORT) {
+                        throw new IOException("YCBCR_SUBSAMPLING has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 2) {
+                        throw new IOException("YCBCR_SUBSAMPLING has illegal count = " + count + "\n");
+                    }
+                    
+                    chromaImageWidth = (int)valueArray[0];
+                    chromaImageHeight = (int)valueArray[1];
+                    
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: chromaImageWidth = " + chromaImageWidth +
+                                          "  chromaImageHeight = " + chromaImageHeight + "\n",
+                                          Preferences.DEBUG_FILEIO);
+                    }
+                    
                     break;
 
                 case RESOLUTION_UNIT:
