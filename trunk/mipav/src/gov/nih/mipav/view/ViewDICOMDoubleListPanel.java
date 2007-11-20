@@ -94,7 +94,7 @@ public class ViewDICOMDoubleListPanel extends ViewSelectableDoubleListPanel {
         } else if (command.equals("remove")) {
             int[] selectedRows = rightTable.getSelectedRows();
 
-            // todo: explain wtf is happening here: why reverse counter loop?
+            // todo: explain what happening here: why reverse counter loop?
             for (int i = selectedRows.length - 1; i >= 0; i--) {
                 Vector row = rightTableModel.getRow(rightTableSorter.modelIndex(selectedRows[i]));
 
