@@ -912,9 +912,9 @@ public class FileTiff extends FileBase {
                     varB = 1.0;
                 }
                 
-                buffer[4*i + 1] = (float)(varR * 4095.0);
-                buffer[4*i + 2] = (float)(varG * 4095.0);
-                buffer[4*i + 3] = (float)(varB * 4095.0);
+                buffer[4*i + 1] = (float)(varR * 65535.0);
+                buffer[4*i + 2] = (float)(varG * 65535.0);
+                buffer[4*i + 3] = (float)(varB * 65535.0);
             }    
         }
         
