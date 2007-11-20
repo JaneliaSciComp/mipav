@@ -200,6 +200,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         this(_imageA, LUTa, loc, _imageA.getLogMagDisplay());
     }
 
+    public ViewJFrameImage(ModelImage _imageA, ModelLUT LUTa, Dimension loc, boolean logMagDisplay, boolean initialize) {
+    	super(_imageA, null);
+    }
 
     /**
      * Makes a frame and puts an image component into it.

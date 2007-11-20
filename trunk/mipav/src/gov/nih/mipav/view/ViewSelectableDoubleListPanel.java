@@ -77,8 +77,7 @@ public class ViewSelectableDoubleListPanel extends JPanel implements ActionListe
          * TableSorter rightTableSorter = (TableSorter) rightTable.getModel(); SortingTableModel rightTableModel =
          * (SortingTableModel) rightTableSorter.getTableModel();
          *
-         * // todo: explain wtf is happening here for (int i = selectedRows.length - 1; i >= 0; i--) {
-         * rightTableModel.removeRow(rightTableSorter.modelIndex(selectedRows[i])); }}*/
+         */
     }
 
     /**
