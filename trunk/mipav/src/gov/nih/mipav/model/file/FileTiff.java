@@ -2001,6 +2001,14 @@ public class FileTiff extends FileBase {
                             Preferences.debug("FileTiff.openIFD: PhotoInterp = Transparency Mask\n",
                                               Preferences.DEBUG_FILEIO);
                         }
+                    } else if (valueArray[0] == 6) { // YCbCr
+                        isCIELAB = true;
+                        fileInfo.setPhotometric((short) 6);
+                        
+                        if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: PhotoInterp = YCbCr\n",
+                                              Preferences.DEBUG_FILEIO);
+                        }
                     } else if (valueArray[0] == 8) { // CIELAB
                         isCIELAB = true;
                         fileInfo.setPhotometric((short) 8);
@@ -3719,7 +3727,7 @@ public class FileTiff extends FileBase {
     private void readTileBuffer(int slice, float[] buffer) throws IOException {
         int a, i, j;
         int iCount, iNext;
-        int b1, b2, b3, b4;
+        int b1, b2, b3, b4, b5, b6, b7, b8;
         long progress, progressLength, mod;
         int nBytes;
         int nLength;
@@ -4603,6 +4611,168 @@ public class FileTiff extends FileBase {
                                         y++;
                                     }
                                 } // for (j = 0; j < nBytes; j+= 3)
+                            }
+
+                            xTile++;
+
+                            if (xTile == tilesAcross) {
+                                xTile = 0;
+                                yTile++;
+                            }
+
+                            x = xTile * tileWidth;
+                            y = yTile * tileLength;
+                        } // if (chunky == true)
+
+                        break;
+                        
+                    case ModelStorageBase.ARGB_USHORT:
+                        if (chunky == true) {
+
+                            if (byteBuffer == null) {
+
+                                if (lzwCompression) {
+                                    byteBuffer = new byte[tileMaxByteCount];
+                                } else {
+                                    byteBuffer = new byte[nBytes];
+                                }
+                            }
+
+                            // System.err.println("About to read " + nBytes + " bytes");
+                            raFile.read(byteBuffer, 0, nBytes);
+
+                            // System.err.println("________");
+                            progress = slice * xDim * yDim;
+                            progressLength = imageSlice * xDim * yDim;
+                            mod = progressLength / 100;
+
+
+                            if (lzwCompression) {
+
+                                // System.err.println("Read " + nBytes + " from raFile");
+                                if (decomp == null) {
+                                    decomp = new byte[tileWidth * tileLength * samplesPerPixel * 3];
+                                }
+
+                                lzwDecoder.decode(byteBuffer, decomp, tileLength);
+
+                                // System.err.println("Decoded byte length: " + decomp.length);
+                                if (samplesPerPixel == 3) {
+
+                                    for (j = 0; j < decomp.length; j += 6) {
+
+                                        if ((x < xDim) && (y < yDim)) {
+
+                                            if (((i + progress) % mod) == 0) {
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                        progressLength * 100));
+                                            }
+                                            buffer[4 * (x + (y * xDim))] = 65535;
+                                            b1 = getUnsignedByte(decomp, j);
+                                            b2 = getUnsignedByte(decomp, j+1);
+                                            b3 = getUnsignedByte(decomp, j+2);
+                                            b4 = getUnsignedByte(decomp, j+3);
+                                            b5 = getUnsignedByte(decomp, j+4);
+                                            b6 = getUnsignedByte(decomp, j+5);
+                                            if (endianess) {
+                                                buffer[(4 * (x + (y * xDim))) + 1] = ((b1 << 8) + b2);
+                                                buffer[(4 * (x + (y * xDim))) + 2] = ((b3 << 8) + b4);
+                                                buffer[(4 * (x + (y * xDim))) + 3] = ((b5 << 8) + b6);
+                                            }
+                                            else {
+                                                buffer[(4 * (x + (y * xDim))) + 1] = ((b2 << 8) + b1);
+                                                buffer[(4 * (x + (y * xDim))) + 2] = ((b4 << 8) + b3);
+                                                buffer[(4 * (x + (y * xDim))) + 3] = ((b6 << 8) + b5);    
+                                            }
+                                            i++;
+                                        }
+
+                                        x++;
+
+                                        if (x == ((xTile + 1) * tileWidth)) {
+                                            x = xTile * tileWidth;
+                                            y++;
+                                        }
+                                    }
+                                } // if (samplesPerPixel == 3)
+                                else if (samplesPerPixel == 4) {
+
+                                    for (j = 0; j < decomp.length; j += 8) {
+
+                                        if ((x < xDim) && (y < yDim)) {
+
+                                            if (((i + progress) % mod) == 0) {
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                        progressLength * 100));
+                                            }
+                                            b1 = getUnsignedByte(decomp, j);
+                                            b2 = getUnsignedByte(decomp, j+1);
+                                            b3 = getUnsignedByte(decomp, j+2);
+                                            b4 = getUnsignedByte(decomp, j+3);
+                                            b5 = getUnsignedByte(decomp, j+4);
+                                            b6 = getUnsignedByte(decomp, j+5);
+                                            b7 = getUnsignedByte(decomp, j+6);
+                                            b8 = getUnsignedByte(decomp, j+7);
+                                            if (endianess) {
+                                                buffer[(4 * (x + (y * xDim)))] = ((b7 << 8) + b8);
+                                                buffer[(4 * (x + (y * xDim))) + 1] = ((b1 << 8) + b2);
+                                                buffer[(4 * (x + (y * xDim))) + 2] = ((b3 << 8) + b4);
+                                                buffer[(4 * (x + (y * xDim))) + 3] = ((b5 << 8) + b6);
+                                            }
+                                            else {
+                                                buffer[(4 * (x + (y * xDim)))] = ((b8 << 8) + b7);
+                                                buffer[(4 * (x + (y * xDim))) + 1] = ((b2 << 8) + b1);
+                                                buffer[(4 * (x + (y * xDim))) + 2] = ((b4 << 8) + b3);
+                                                buffer[(4 * (x + (y * xDim))) + 3] = ((b6 << 8) + b5);    
+                                            }
+                                            i++;
+                                        }
+
+                                        x++;
+
+                                        if (x == ((xTile + 1) * tileWidth)) {
+                                            x = xTile * tileWidth;
+                                            y++;
+                                        }
+                                    }
+                                }
+                            } else {
+
+                                for (j = 0; j < nBytes; j += 6) {
+
+                                    if ((x < xDim) && (y < yDim)) {
+
+                                        if (((i + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
+                                        }
+                                        buffer[4 * (x + (y * xDim))] = 65535;
+                                        b1 = getUnsignedByte(decomp, j);
+                                        b2 = getUnsignedByte(decomp, j+1);
+                                        b3 = getUnsignedByte(decomp, j+2);
+                                        b4 = getUnsignedByte(decomp, j+3);
+                                        b5 = getUnsignedByte(decomp, j+4);
+                                        b6 = getUnsignedByte(decomp, j+5);
+                                        if (endianess) {
+                                            buffer[(4 * (x + (y * xDim))) + 1] = ((b1 << 8) + b2);
+                                            buffer[(4 * (x + (y * xDim))) + 2] = ((b3 << 8) + b4);
+                                            buffer[(4 * (x + (y * xDim))) + 3] = ((b5 << 8) + b6);
+                                        }
+                                        else {
+                                            buffer[(4 * (x + (y * xDim))) + 1] = ((b2 << 8) + b1);
+                                            buffer[(4 * (x + (y * xDim))) + 2] = ((b4 << 8) + b3);
+                                            buffer[(4 * (x + (y * xDim))) + 3] = ((b6 << 8) + b5);    
+                                        }
+                                        i++;
+                                    } // if ((x < xDim) && (y < yDim))
+
+                                    x++;
+
+                                    if (x == ((xTile + 1) * tileWidth)) {
+                                        x = xTile * tileWidth;
+                                        y++;
+                                    }
+                                } // for (j = 0; j < nBytes; j+= 6)
                             }
 
                             xTile++;
