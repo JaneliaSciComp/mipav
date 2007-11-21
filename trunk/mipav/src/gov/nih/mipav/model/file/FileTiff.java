@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -39,7 +40,7 @@ public class FileTiff extends FileBase {
     public static final int LONG = 4; // 32 bit unsigned ****** 4 bytes !!!!
 
     /** DOCUMENT ME! */
-    public static final int RATIONAL = 5; // 2 longs 1st numorator
+    public static final int RATIONAL = 5; // 2 longs 1st numerator
 
     /** 2nd denom. */
     public static final int SBYTE = 6; // 8 bit signed
@@ -335,8 +336,20 @@ public class FileTiff extends FileBase {
     // 2 = chroma dimension length half the dimension length of the associated luma image
     // 4 = chroma dimension length 1/4 the dimension length of the assoicated luma image
     // Default is 2, 2
-    private int chromaImageWidth = 2;
-    private int chromaImageHeight = 2;
+    private int YCbCrSubsampleHoriz = 2;
+    private int YCbCrSubsampleVert = 2;
+    
+    // 1 = centered for xOffset[0, 0] = YCbCrSubsampleHoriz/2 - 0.5, yOffset[0, 0] = YCbCrSubsampleVert/2 - 0.5
+    // 2 = cosited for xOffset[0, 0] = 0, yOffset[0,0] = 0
+    // Default = 1
+    private int YCbCrPositioning = 1;
+    
+    private int YReferenceBlack = 0;
+    private int YReferenceWhite = 255;
+    private int CbReferenceBlack = 128;
+    private int CbReferenceWhite = 255;
+    private int CrReferenceBlack = 128;
+    private int CrReferenceWhite = 255;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -676,9 +689,7 @@ public class FileTiff extends FileBase {
                         if (isCIELAB) {
                             CIELABtoRGB(sliceBufferFloat);
                         }
-                        else if (isYCbCr) {
-                            YCbCrtoRGB(sliceBufferFloat);
-                        }
+                        
                     } catch (IOException error) {
                         throw new IOException("FileTiff: read: " + error);
                     }
@@ -946,15 +957,166 @@ public class FileTiff extends FileBase {
         
     }
     
-    private void YCbCrtoRGB(float buffer[]) {
-        int sliceLength = buffer.length/4;
+    private void YCbCrtoRGB(byte buffer[], int width, int height) {
         int i;
-        if (fileInfo.getDataType() == ModelStorageBase.ARGB) {
-            for (i = 0; i < sliceLength; i++) {
+        int YBuffer[] = new int[buffer.length];
+        int CbInBuffer[] = new int[buffer.length/(3*YCbCrSubsampleHoriz*YCbCrSubsampleVert)];
+        int CbOutBuffer[] = new int[buffer.length/3];
+        int CrInBuffer[] = new int[buffer.length/(3*YCbCrSubsampleHoriz*YCbCrSubsampleVert)];
+        int CrOutBuffer[] = new int[buffer.length/3];
+        int sliceSize = width * height;
+        int halfWidth = width/2;
+        int Y00;
+        int Y01;
+        int Y10;
+        int  Y11;
+        int Cb00;
+        int Cr00;
+        int h;
+        int w;
+        float floatR;
+        float floatG;
+        float floatB;
+        int R;
+        int G;
+        int B;
+        int originalExtents[] = new int[2];
+        int newXDim;
+        int newYDim;
+        ModelImage originalImage;
+        ModelImage newImage;
+        TransMatrix xfrm;
+        float originalResolutions[] = new float[2];
+        AlgorithmTransform transform;
+        float newXResolution;
+        float newYResolution;
+        boolean transformVOI = false;
+        boolean clip = true;
+        boolean pad = false;
+        float Sx;
+        float Sy;
+        
+        originalExtents[0] = width/YCbCrSubsampleHoriz + width % YCbCrSubsampleHoriz;
+        originalExtents[1] = height/YCbCrSubsampleVert + height % YCbCrSubsampleVert;
+        newXDim = width;
+        newYDim = height;
+        originalResolutions[0] = 1.0f;
+        originalResolutions[1] = 1.0f;
+        newXResolution = originalResolutions[0] * (originalExtents[0]-1)/(float)(newXDim-1);
+        newYResolution = originalResolutions[1] * (originalExtents[1]-1)/(float)(newYDim-1);
+        Sx = (newXResolution * newXDim)/(originalResolutions[0] * originalExtents[0]);
+        Sy = (newYResolution * newYDim)/(originalResolutions[1] * originalExtents[1]);
+        xfrm = new TransMatrix(3);
+        xfrm.identity();
+        xfrm.setZoom(Sx, Sy);
+        
+        if (YCbCrPositioning == 1) { // center
+            if ((YCbCrSubsampleHoriz == 2) && (YCbCrSubsampleVert == 2)) {
+                for (i = 0, h = 0; h < height; h += 2) {
+                    for (w = 0; w < width; w += 2, i += 6) {
+                        Y00 = getUnsignedByte(buffer, i);
+                        Y01 = getUnsignedByte(buffer, i+1);
+                        Y10 = getUnsignedByte(buffer, i+2);
+                        Y11 = getUnsignedByte(buffer, i+3);
+                        Cb00 = getUnsignedByte(buffer, i+4);
+                        Cr00 = getUnsignedByte(buffer, i+5);
+                        YBuffer[h*width + w] = Y00;
+                        CbInBuffer[h*halfWidth/2 + w/2] = Cb00;
+                        CrInBuffer[h*halfWidth/2 + w/2] = Cr00;
+                        YBuffer[h*width + w + 1] = Y01;
+                        YBuffer[(h+1)*width + w] = Y10;
+                        YBuffer[(h+1)*width + w + 1] = Y11;
+                    }
+                }
             }
         }
-    }
+        originalImage = new ModelImage(ModelStorageBase.INTEGER, originalExtents, "originalImage");
+        originalImage.getFileInfo()[0].setResolutions(originalResolutions);
+        try {
+             originalImage.importData(0, CbInBuffer, true);   
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException on originalImage.importData(0, CbInBuffer, true");
+            return;
+        }
+        
+        transform = new AlgorithmTransform(originalImage, xfrm, AlgorithmTransform.BILINEAR, newXResolution,
+                                           newYResolution, newXDim, newYDim,
+                                           transformVOI, clip, pad);
 
+        transform.run();
+        newImage = transform.getTransformedImage();
+        transform.finalize();
+        try {
+            newImage.exportData(0, sliceSize, CbOutBuffer);
+        }
+        catch(IOException e) {
+            MipavUtil.displayError("IOException on originalImage.exportData(0, sliceSize, CbOutBuffer");
+            return;    
+        }
+        newImage.disposeLocal();
+        newImage = null;
+        
+        try {
+            originalImage.importData(0, CrInBuffer, true);   
+       }
+       catch (IOException e) {
+           MipavUtil.displayError("IOException on originalImage.importData(0, CrInBuffer, true");
+           return;
+       }
+       
+       transform = new AlgorithmTransform(originalImage, xfrm, AlgorithmTransform.BILINEAR, newXResolution,
+                                          newYResolution, newXDim, newYDim,
+                                          transformVOI, clip, pad);
+
+       transform.run();
+       newImage = transform.getTransformedImage();
+       transform.finalize();
+       try {
+           newImage.exportData(0, sliceSize, CrOutBuffer);
+       }
+       catch(IOException e) {
+           MipavUtil.displayError("IOException on originalImage.exportData(0, sliceSize, CrOutBuffer");
+           return;    
+       }
+       newImage.disposeLocal();
+       newImage = null;
+        
+        for (i = 0; i < sliceSize; i++) {
+            YBuffer[i] = (YBuffer[i] - YReferenceBlack)*255/(YReferenceWhite - YReferenceBlack);
+            CbOutBuffer[i] = (CbOutBuffer[i] - CbReferenceBlack)*127/(CbReferenceWhite - CbReferenceBlack);
+            CrOutBuffer[i] = (CrOutBuffer[i] - CrReferenceBlack)*127/(CrReferenceWhite - CrReferenceBlack);
+            floatR = CrOutBuffer[i]*(2 - 2*LumaRed) + YBuffer[i];
+            floatB = CbOutBuffer[i]*(2 - 2*LumaBlue) + YBuffer[i];
+            floatG = (YBuffer[i] - LumaBlue * floatB - LumaRed * floatR)/LumaGreen;
+            R = (int)Math.round(floatR);
+            if (R < 0) {
+                R = 0;
+            }
+            if (R > 255) {
+                R = 255;
+            }
+            buffer[3*i] = (byte)R;
+            G = (int)Math.round(floatG);
+            if (G < 0) {
+                G = 0;
+            }
+            if (G > 255) {
+                G = 255;
+            }
+            buffer[3*i+1] = (byte)G;
+            B = (int)Math.round(floatB);
+            if (B < 0) {
+                B = 0;
+            }
+            if (B > 255) {
+                B = 255;
+            }
+            buffer[3*i+2] = (byte)B;
+        }
+    }
+    
+    
     /**
      * Passed in a LeicaSeries object, this function builds a 2d or 3d reconstruction using the Vector of filenames
      * within the series The vector has been presorted so that all files (whether red - green and then blue, or just
@@ -2263,13 +2425,113 @@ public class FileTiff extends FileBase {
                         throw new IOException("YCBCR_SUBSAMPLING has illegal count = " + count + "\n");
                     }
                     
-                    chromaImageWidth = (int)valueArray[0];
-                    chromaImageHeight = (int)valueArray[1];
+                    YCbCrSubsampleHoriz = (int)valueArray[0];
+                    YCbCrSubsampleVert = (int)valueArray[1];
                     
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: chromaImageWidth = " + chromaImageWidth +
-                                          "  chromaImageHeight = " + chromaImageHeight + "\n",
+                        Preferences.debug("FileTiff.openIFD: YCbCrSubsampleHoriz = " + YCbCrSubsampleHoriz +
+                                          "  YCbCrSubsampleVert = " + YCbCrSubsampleVert + "\n",
                                           Preferences.DEBUG_FILEIO);
+                        if (YCbCrSubsampleHoriz == 1) {
+                            Preferences.debug("FileTiff.openIFD: Image width of this chroma image is equal to the\n" +
+                                              "image width of the associated luma image\n",
+                                              Preferences.DEBUG_FILEIO);
+                        }
+                        else if (YCbCrSubsampleHoriz == 2) {
+                            Preferences.debug("FileTIff.openIFD: Image width of this chroma image is half the image\n" +
+                                              "width of the associated luma image\n",
+                                              Preferences.DEBUG_FILEIO);
+                        }
+                        else if (YCbCrSubsampleHoriz == 4) {
+                            Preferences.debug("FileTIff.openIFD: Image width of this chroma image is one-quarter the\n" +
+                                    "image width of the associated luma image\n",
+                                    Preferences.DEBUG_FILEIO);   
+                        }
+                        if (YCbCrSubsampleVert == 1) {
+                            Preferences.debug("FileTiff.openIFD: Image height of this chroma image is equal to the\n" +
+                                              "image height of the associated luma image\n",
+                                              Preferences.DEBUG_FILEIO);
+                        }
+                        else if (YCbCrSubsampleVert == 2) {
+                            Preferences.debug("FileTIff.openIFD: Image height of this chroma image is half the image\n" +
+                                              "height of the associated luma image\n",
+                                              Preferences.DEBUG_FILEIO);
+                        }
+                        else if (YCbCrSubsampleVert == 4) {
+                            Preferences.debug("FileTIff.openIFD: Image height of this chroma image is one-quarter the\n" +
+                                    "image height of the associated luma image\n",
+                                    Preferences.DEBUG_FILEIO);   
+                        }
+                    }
+                    
+                    break;
+                    
+                case YCBCR_POSITIONING:
+                    if (type != SHORT) {
+                        throw new IOException("YCBCR_POSITIONING has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("YCBCR_POSITIONING has illegal count = " + count + "\n");
+                    }
+                    
+                    YCbCrPositioning = (int)valueArray[0];
+                    if (debuggingFileIO) {
+                        if (YCbCrPositioning == 1) {
+                            Preferences.debug("FileTIff.openIFD: YCbCrPositioning = 1 for centered\n" +
+                                              "xOffset[0,0] = chromaSubsampleHoriz/2 - 0.5\n" +
+                                              "yOffset[0,0] = chromaSubsampleVert/2 - 0.5\n",
+                                              Preferences.DEBUG_FILEIO);
+                        }
+                        else if (YCbCrPositioning == 2) {
+                            Preferences.debug("FileTIff.openIFD: YCbCrPositioning = 2 for cosited\n" +
+                                    "xOffset[0,0] = 0, yOffset[0,0] = 0\n",
+                                    Preferences.DEBUG_FILEIO);   
+                        }
+                    }
+                    break;
+                    
+                case REFERENCE_BLACK_WHITE:
+                    if (type != RATIONAL) {
+                        throw new IOException("REFERENCE_BLACK_WHITE has illegal type = " + type + "\n");
+                    }
+
+                    if (count != 6) {
+                        throw new IOException("REFERENCE_BLACK_WHITE has illegal count = " + count + "\n");
+                    }
+
+                    numerator = valueArray[0];
+                    denominator = valueArray[1];
+                    YReferenceBlack = (int) (numerator / denominator);
+                    
+                    numerator = valueArray[2];
+                    denominator = valueArray[3];
+                    YReferenceWhite = (int) (numerator / denominator);
+                    
+                    numerator = valueArray[4];
+                    denominator = valueArray[5];
+                    CbReferenceBlack = (int) (numerator / denominator);
+                    
+                    numerator = valueArray[6];
+                    denominator = valueArray[7];
+                    CbReferenceWhite = (int) (numerator / denominator);
+                    
+                    numerator = valueArray[8];
+                    denominator = valueArray[9];
+                    CrReferenceBlack = (int) (numerator / denominator);
+                    
+                    numerator = valueArray[10];
+                    denominator = valueArray[11];
+                    CrReferenceWhite = (int) (numerator / denominator);
+                    
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: YReferenceBlack = " + YReferenceBlack + 
+                                                             " YReferenceWhite = " + YReferenceWhite + "\n" +
+                                                             "CbReferenceBlack = " + CbReferenceBlack +
+                                                             " CbReferenceWhite = " + CbReferenceWhite + "\n" +
+                                                             "CrReferenceBlack = " + CrReferenceBlack +
+                                                             " CrReferenceWhite = " + CrReferenceWhite + "\n",
+                                                             Preferences.DEBUG_FILEIO);
                     }
                     
                     break;
@@ -4614,14 +4876,18 @@ public class FileTiff extends FileBase {
 
                             if (lzwCompression) {
 
-                                // System.err.println("Read " + nBytes + " from raFile");
+                                //System.err.println("Read " + nBytes + " from raFile");
                                 if (decomp == null) {
                                     decomp = new byte[tileWidth * tileLength * samplesPerPixel];
                                 }
 
                                 lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                
+                                if (isYCbCr) {
+                                    YCbCrtoRGB(decomp, tileWidth, tileLength);
+                                }
 
-                                // System.err.println("Decoded byte length: " + decomp.length);
+                                //System.err.println("Decoded byte length: " + decomp.length);
                                 if (samplesPerPixel == 3) {
 
                                     for (j = 0; j < decomp.length; j += 3) {
