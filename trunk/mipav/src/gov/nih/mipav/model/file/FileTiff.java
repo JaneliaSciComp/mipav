@@ -184,9 +184,6 @@ public class FileTiff extends FileBase {
     /** DOCUMENT ME! */
     private byte[] dateTime;
 
-    /** doTile: true if tiles are used. */
-    private boolean doTile = false;
-
     /** DOCUMENT ME! */
     private double[] doubleBuffer;
 
@@ -313,6 +310,8 @@ public class FileTiff extends FileBase {
     private boolean haveTileWidth = false;
     
     private boolean haveTileLength = false;
+    
+    private boolean haveTileOffsets = false;
 
     /** DOCUMENT ME! */
     private double tRes = 1.0;
@@ -481,7 +480,7 @@ public class FileTiff extends FileBase {
 
             Preferences.debug("Just past init IFD read", Preferences.DEBUG_FILEIO);
 
-            if (doTile && (!lzwCompression)) {
+            if (haveTileWidth && (!lzwCompression) && haveTileOffsets) {
                 if (chunky) {
                    tilesPerSlice = tilesAcross * tilesDown;
                 }
@@ -490,8 +489,8 @@ public class FileTiff extends FileBase {
                 }
                 imageSlice = tilesPerImage / tilesPerSlice;
                 // System.err.println("DoTile: tilesPerSlice: " + tilesPerSlice + " imageSlice: " + imageSlice);
-            } // if (doTile)
-            else if (lzwCompression) {
+            } // if (doTile && (!lzwCompression))
+            else if (haveTileWidth || lzwCompression) {
 
                 // set the tile width to the xDim for use in LZW Decoder
                 if (!haveTileWidth) {
@@ -529,7 +528,7 @@ public class FileTiff extends FileBase {
             }
 
             // System.err.println("Tile width: " + tileWidth + " samples per pixel: " + samplesPerPixel);
-            // System.err.println("Image slice: " + imageSlice);
+            //System.err.println("Image slice: " + imageSlice);
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
             Preferences.debug("imageSlice = " + imageSlice, Preferences.DEBUG_FILEIO);
 
@@ -604,7 +603,7 @@ public class FileTiff extends FileBase {
                 }
             } // else foundTag43314
 
-            if (doTile && (!lzwCompression)) {
+            if (haveTileWidth && (!lzwCompression) && haveTileOffsets) {
                 imageSlice = tilesPerImage / tilesPerSlice;
             }
 
@@ -686,7 +685,7 @@ public class FileTiff extends FileBase {
 
                     try {
 
-                        if (doTile || lzwCompression) {
+                        if (haveTileWidth || lzwCompression) {
                             readTileBuffer(i, sliceBufferFloat);
                         } else {
 
@@ -2888,7 +2887,6 @@ public class FileTiff extends FileBase {
                         throw new IOException("TILE_WIDTH has illegal count = " + count + "\n");
                     }
 
-                    doTile = true;
                     haveTileWidth = true;
                     tileWidth = (int) valueArray[0];
                     if (debuggingFileIO) {
@@ -2934,6 +2932,7 @@ public class FileTiff extends FileBase {
                     }
 
                     tilesPerImage = count;
+                    haveTileOffsets = true;
 
                     if (debuggingFileIO) {
                         Preferences.debug("FileTiff.openIFD: tilesPerImage = " + tilesPerImage + "\n",
