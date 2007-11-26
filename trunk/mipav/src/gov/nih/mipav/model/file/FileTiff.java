@@ -309,6 +309,10 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     private int tileWidth;
+    
+    private boolean haveTileWidth = false;
+    
+    private boolean haveTileLength = false;
 
     /** DOCUMENT ME! */
     private double tRes = 1.0;
@@ -477,16 +481,25 @@ public class FileTiff extends FileBase {
 
             Preferences.debug("Just past init IFD read", Preferences.DEBUG_FILEIO);
 
-            if (doTile) {
-                tilesPerSlice = tilesAcross * tilesDown;
+            if (doTile && (!lzwCompression)) {
+                if (chunky) {
+                   tilesPerSlice = tilesAcross * tilesDown;
+                }
+                else {
+                    tilesPerSlice = samplesPerPixel * tilesAcross * tilesDown;
+                }
                 imageSlice = tilesPerImage / tilesPerSlice;
                 // System.err.println("DoTile: tilesPerSlice: " + tilesPerSlice + " imageSlice: " + imageSlice);
             } // if (doTile)
             else if (lzwCompression) {
 
                 // set the tile width to the xDim for use in LZW Decoder
-                tileWidth = xDim;
-                tileLength = rowsPerStrip;
+                if (!haveTileWidth) {
+                    tileWidth = xDim;
+                }
+                if (!haveTileLength) {
+                    tileLength = rowsPerStrip;
+                }
                 tileOffsets = new int[dataOffsets[0].size()];
                 tileByteCounts = new int[dataOffsets[0].size()];
                 tileMaxByteCount = 0;
@@ -505,8 +518,13 @@ public class FileTiff extends FileBase {
                 tilesDown = (yDim + tileLength - 1) / tileLength;
 
                 // tileSize = tileWidth * tileHeight * numBands;
-                tilesPerSlice = tilesAcross * tilesDown;
-                // System.err.println("Tiles Across: " + tilesAcross + " tiles down: " + tilesDown);
+                if (chunky) {
+                    tilesPerSlice = tilesAcross * tilesDown;
+                 }
+                 else {
+                     tilesPerSlice = samplesPerPixel * tilesAcross * tilesDown;
+                 }
+                //System.err.println("Tiles Across: " + tilesAcross + " tiles down: " + tilesDown);
                 // System.err.println("TileMaxByteCount: " + tileMaxByteCount);
             }
 
@@ -586,7 +604,7 @@ public class FileTiff extends FileBase {
                 }
             } // else foundTag43314
 
-            if (doTile) {
+            if (doTile && (!lzwCompression)) {
                 imageSlice = tilesPerImage / tilesPerSlice;
             }
 
@@ -2871,6 +2889,7 @@ public class FileTiff extends FileBase {
                     }
 
                     doTile = true;
+                    haveTileWidth = true;
                     tileWidth = (int) valueArray[0];
                     if (debuggingFileIO) {
                         Preferences.debug("FileTiff.openIFD: tileWidth = " + tileWidth + "\n", 2);
@@ -2894,6 +2913,7 @@ public class FileTiff extends FileBase {
                     }
 
                     tileLength = (int) valueArray[0];
+                    haveTileLength = true;
                     if (debuggingFileIO) {
                         Preferences.debug("FileTiff.openIFD: tileLength = " + tileLength + "\n",
                                           Preferences.DEBUG_FILEIO);
@@ -2913,11 +2933,7 @@ public class FileTiff extends FileBase {
                         throw new IOException("TILE_OFFSETS has illegal type = " + type + "\n");
                     }
 
-                    if (chunky) {
-                        tilesPerImage = count;
-                    } else {
-                        tilesPerImage = count / samplesPerPixel;
-                    }
+                    tilesPerImage = count;
 
                     if (debuggingFileIO) {
                         Preferences.debug("FileTiff.openIFD: tilesPerImage = " + tilesPerImage + "\n",
@@ -2961,16 +2977,8 @@ public class FileTiff extends FileBase {
                         throw new IOException("TILE_BYTE_COUNTS has illegal type = " + type + "\n");
                     }
 
-                    if (chunky) {
-
-                        if (tilesPerImage != count) {
-                            throw new IOException("Count fields do not agree in TILE_OFFSETS and TILE_BYTE_COUNTS");
-                        }
-                    } else {
-
-                        if ((tilesPerImage * samplesPerPixel) != count) {
-                            throw new IOException("Count fields do not agree in TILE_OFFSETS and TILE_BYTE_COUNTS");
-                        }
+                    if (tilesPerImage != count) {
+                        throw new IOException("Count fields do not agree in TILE_OFFSETS and TILE_BYTE_COUNTS");
                     }
 
                     if (debuggingFileIO) {
@@ -4332,6 +4340,11 @@ public class FileTiff extends FileBase {
         yTile = 0;
         x = 0;
         y = 0;
+        
+        int planarRGB = 0; // Use this for planar RGB where you must read a stripsPerImage
+                           // number of red strips, followed by a stripsPerImage number of
+                           // green strips, followed by a stripsPerImage number of blue strips.
+        int stripsPerImage = tilesPerSlice/3; // used for planar RGB
         // Buffers needed if photometric is YCbCr
         int YBuffer[] = null;
         int CbInBuffer[] = null;
@@ -5395,6 +5408,189 @@ public class FileTiff extends FileBase {
                                 x = xTile * tileWidth;
                                 y = yTile * tileLength;
                             } // if (chunky == true)
+                            else { // not chunky RRRRR, GGGGG, BBBBB
+                                if (byteBuffer == null) {
+                                    
+                                    if (lzwCompression) {
+                                        byteBuffer = new byte[tileMaxByteCount];
+                                    } else {
+                                        byteBuffer = new byte[nBytes];
+                                    }
+                                }
+    
+                                // System.err.println("About to read " + nBytes + " bytes");
+                                raFile.read(byteBuffer, 0, nBytes);
+    
+                                // System.err.println("________");
+                                progress = slice * xDim * yDim;
+                                progressLength = imageSlice * xDim * yDim;
+                                mod = progressLength / 100;
+    
+    
+                                if (lzwCompression) {
+    
+                                    //System.err.println("Read " + nBytes + " from raFile");
+                                    if (decomp == null) {
+                                        decomp = new byte[tileWidth * tileLength];
+                                    }
+    
+                                    lzwDecoder.decode(byteBuffer, decomp, tileLength);
+    
+                                    //System.err.println("Decoded byte length: " + decomp.length);
+                                    if (planarRGB < stripsPerImage) {
+    
+                                        for (j = 0; j < decomp.length; j++, i += 4) {
+    
+                                            if ((x < xDim) && (y < yDim)) {
+    
+                                                if (((i + progress) % mod) == 0) {
+                                                    fireProgressStateChanged(Math.round((float) (i/3 + progress) /
+                                                                                            progressLength * 100));
+                                                }
+    
+                                                buffer[4 * (x + (y * xDim))] = 255;
+                                                buffer[(4 * (x + (y * xDim))) + 1] = getUnsignedByte(decomp, j);
+                                            }
+    
+                                            x++;
+    
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        } // for (j = 0; j < decomp.length; j++, i += 4)
+                                    } // if (planarRGB < stripsPerImage)
+                                    else if (planarRGB < (2 * stripsPerImage)) {
+                                        for (j = 0; j < decomp.length; j++, i += 4) {
+                                            
+                                            if ((x < xDim) && (y < yDim)) {
+    
+                                                if (((i + progress) % mod) == 0) {
+                                                    fireProgressStateChanged(Math.round((float) (i/3 + buffer.length/3 + 
+                                                                             progress) / progressLength * 100));
+                                                }
+    
+                                                buffer[(4 * (x + (y * xDim))) + 2] = getUnsignedByte(decomp, j);
+                                            }
+    
+                                            x++;
+    
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        } // for (j = 0; j < decomp.length; j++, i += 4)    
+                                    } // else if (planarRGB < (2 * stripsPerImage))
+                                    else { // planarRGB >= (2 * stripsPerImage)
+                                        for (j = 0; j < decomp.length; j++, i += 4) {
+                                            
+                                            if ((x < xDim) && (y < yDim)) {
+    
+                                                if (((i + progress) % mod) == 0) {
+                                                    fireProgressStateChanged(Math.round((float) (i/3 + 
+                                                                             2*buffer.length/3 + progress) /
+                                                                             progressLength * 100));
+                                                }
+    
+                                                buffer[(4 * (x + (y * xDim))) + 3] = getUnsignedByte(decomp, j);
+                                            }
+    
+                                            x++;
+    
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        } // for (j = 0; j < decomp.length; j++, i += 4)    
+                                    } // else planarRGB >= (2 * stripsPerImage)
+                                } else { // not lzwCompression
+                                    if (planarRGB < stripsPerImage) {
+    
+                                        for (j = 0; j < nBytes; j++, i += 4) {
+        
+                                            if ((x < xDim) && (y < yDim)) {
+        
+                                                if (((i + progress) % mod) == 0) {
+                                                    fireProgressStateChanged(Math.round((float) (i/3 + progress) /
+                                                                                            progressLength * 100));
+                                                }
+        
+                                                buffer[4 * (x + (y * xDim))] = 255;
+                                                buffer[(4 * (x + (y * xDim))) + 1] = getUnsignedByte(byteBuffer, j);
+                                            } // if ((x < xDim) && (y < yDim))
+        
+                                            x++;
+        
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        } // for (j = 0; j < nBytes; j++, i += 4)
+                                    } // if (planarRGB < stripsPerImage)
+                                    else if (planarRGB < (2 * stripsPerImage)) {
+                                        for (j = 0; j < nBytes; j++, i += 4) {
+                                            
+                                            if ((x < xDim) && (y < yDim)) {
+        
+                                                if (((i + progress) % mod) == 0) {
+                                                    fireProgressStateChanged(Math.round((float) (i/3 + 
+                                                                             buffer.length/3 + progress) /
+                                                                                            progressLength * 100));
+                                                }
+        
+                                                buffer[(4 * (x + (y * xDim))) + 2] = getUnsignedByte(byteBuffer, j);
+                                            } // if ((x < xDim) && (y < yDim))
+        
+                                            x++;
+        
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        } // for (j = 0; j < nBytes; j++, i += 4)    
+                                    } // else if (planarRGB < (2 * stripsPerImage))
+                                    else { // planarRGB >= (2 * stripsPerImage)
+                                        for (j = 0; j < nBytes; j++, i += 4) {
+                                            
+                                            if ((x < xDim) && (y < yDim)) {
+        
+                                                if (((i + progress) % mod) == 0) {
+                                                    fireProgressStateChanged(Math.round((float) (i/3 + 
+                                                                             2*buffer.length/3 + progress) /
+                                                                                            progressLength * 100));
+                                                }
+        
+                                                buffer[(4 * (x + (y * xDim))) + 3] = getUnsignedByte(byteBuffer, j);
+                                            } // if ((x < xDim) && (y < yDim))
+        
+                                            x++;
+        
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        } // for (j = 0; j < nBytes; j++, i += 4)     
+                                    } // else planarRGB >= (2 * stripsPerImage)
+                                } // else not lzwCompression
+    
+                                xTile++;
+    
+                                if (xTile == tilesAcross) {
+                                    xTile = 0;
+                                    yTile++;
+                                }
+    
+                                x = xTile * tileWidth;
+                                y = yTile * tileLength;  
+                                planarRGB++;
+                                if ((planarRGB == stripsPerImage) || (planarRGB == 2*stripsPerImage)) {
+                                    i = 0;
+                                    x = 0;
+                                    y = 0;
+                                    xTile = 0;
+                                    yTile = 0;
+                                }
+                            } // not chunky
                         } // else not YCbCr
 
                         break;
@@ -5424,7 +5620,7 @@ public class FileTiff extends FileBase {
 
                                 // System.err.println("Read " + nBytes + " from raFile");
                                 if (decomp == null) {
-                                    decomp = new byte[tileWidth * tileLength * samplesPerPixel * 3];
+                                    decomp = new byte[tileWidth * tileLength * samplesPerPixel * 2];
                                 }
 
                                 lzwDecoder.decode(byteBuffer, decomp, tileLength);
