@@ -548,7 +548,7 @@ public class FileTiff extends FileBase {
 
             if (!foundTag43314) {
 
-                while (moreIFDs) {
+                while (moreIFDs){
                     fileInfo = new FileInfoTiff(fileName, fileDir, FileUtility.TIFF);
                     fileInfo.setExtents(imgExtents);
                     raFile.seek(IFDoffsets[imageSlice]);
@@ -957,6 +957,13 @@ public class FileTiff extends FileBase {
         
     }
     
+    /**
+     * 
+     * @param buffer
+     * @param YBuffer
+     * @param CbInBuffer
+     * @param CrInBuffer
+     */
     private void YCbCrtoRGB(float buffer[], int YBuffer[], int CbInBuffer[], int CrInBuffer[]) {
         int i;
         int sliceSize = xDim * yDim;
@@ -1131,33 +1138,57 @@ public class FileTiff extends FileBase {
            newImage.disposeLocal();
            newImage = null;
            
-           for (y = 0; y < (int)Math.floor(outy1); y++) {
-               for (x = 0; x < xDim; x++) {
-                   CbOutBuffer[x + y*xDim] = CbOutBuffer[x + ((int)Math.ceil(outy1))*xDim];
-                   CrOutBuffer[x + y*xDim] = CrOutBuffer[x + ((int)Math.ceil(outy1))*xDim];
-               }  
-           }
-         
-           for (y = (int)Math.ceil(outy2); y < yDim; y++) {
-               for (x = 0; x < xDim; x++){
-                   CbOutBuffer[x + y*xDim] = CbOutBuffer[x + ((int)Math.floor(outy2))*xDim];
-                   CrOutBuffer[x + y*xDim] = CrOutBuffer[x + ((int)Math.floor(outy2))*xDim];
-               }
-           }
-           
-           for (x = 0; x < (int)Math.floor(outx1); x++) {
-               for (y = 0; y < yDim; y++) {
-                   CbOutBuffer[x + y*xDim] = CbOutBuffer[((int)Math.ceil(outx1)) + y*xDim];
-                   CrOutBuffer[x + y*xDim] = CrOutBuffer[((int)Math.ceil(outx1)) + y*xDim];
-               }  
-           }
-           for (x = (int)Math.ceil(outx2); x < xDim; x++) {
-               for (y = 0; y < yDim; y++){
-                   CbOutBuffer[x + y*xDim] = CbOutBuffer[((int)Math.floor(outx2)) + y*xDim];
-                   CrOutBuffer[x + y*xDim] = CrOutBuffer[((int)Math.floor(outx2)) + y*xDim];
-               }
-           }
-        }
+           if (YCbCrPositioning == 1) {
+               if (YCbCrSubsampleVert != 1) {
+                   for (y = 0; y < (int)Math.floor(outy1); y++) {
+                       for (x = 0; x < xDim; x++) {
+                           CbOutBuffer[x + y*xDim] = CbOutBuffer[x + ((int)Math.ceil(outy1))*xDim];
+                           CrOutBuffer[x + y*xDim] = CrOutBuffer[x + ((int)Math.ceil(outy1))*xDim];
+                       }  
+                   }
+                 
+                   for (y = (int)Math.ceil(outy2); y < yDim; y++) {
+                       for (x = 0; x < xDim; x++){
+                           CbOutBuffer[x + y*xDim] = CbOutBuffer[x + ((int)Math.floor(outy2))*xDim];
+                           CrOutBuffer[x + y*xDim] = CrOutBuffer[x + ((int)Math.floor(outy2))*xDim];
+                       }
+                   }
+               } // if (YCbCrSubsampleVert != 1)
+               
+               if (YCbCrSubsampleHoriz != 1) {
+                   for (x = 0; x < (int)Math.floor(outx1); x++) {
+                       for (y = 0; y < yDim; y++) {
+                           CbOutBuffer[x + y*xDim] = CbOutBuffer[((int)Math.ceil(outx1)) + y*xDim];
+                           CrOutBuffer[x + y*xDim] = CrOutBuffer[((int)Math.ceil(outx1)) + y*xDim];
+                       }  
+                   }
+                   for (x = (int)Math.ceil(outx2); x < xDim; x++) {
+                       for (y = 0; y < yDim; y++){
+                           CbOutBuffer[x + y*xDim] = CbOutBuffer[((int)Math.floor(outx2)) + y*xDim];
+                           CrOutBuffer[x + y*xDim] = CrOutBuffer[((int)Math.floor(outx2)) + y*xDim];
+                       }
+                   }
+               } // if (YCbCrSubsampleHoriz != 1)
+           } // if (YCbCrPositioning == 1)
+           else { // YCbCrPositioning == 2
+               if (YCbCrSubsampleVert != 1) {
+                 for (y = yDim - YCbCrSubsampleVert + 1; y < yDim; y++) {
+                     for (x = 0; x < xDim; x++) {
+                         CbOutBuffer[x + y*xDim] = CbOutBuffer[x + (yDim - YCbCrSubsampleVert)*xDim];
+                         CrOutBuffer[x + y*xDim] = CrOutBuffer[x + (yDim - YCbCrSubsampleVert)*xDim];    
+                     }
+                 }
+               } // if (YCbCrSubsampleVert != 1)
+               if (YCbCrSubsampleHoriz != 1) {
+                 for (x = xDim - YCbCrSubsampleHoriz + 1; x < xDim; x++) {
+                     for (y = 0; y < yDim; y++) {
+                         CbOutBuffer[x + y*xDim] = CbOutBuffer[(xDim - YCbCrSubsampleHoriz) + y*xDim];
+                         CrOutBuffer[x + y*xDim] = CrOutBuffer[(xDim - YCbCrSubsampleHoriz) + y*xDim];    
+                     }
+                 }
+               } // if (YCbCrSubsampleHoriz != 1)
+           } // else YCbCrPositioning == 2
+        } // else !((YCbCrSubsampleHoriz == 1) && (YCbCrSubsampleVert == 1))
         
         for (i = 0; i < sliceSize; i++) {
             YBuffer[i] = (YBuffer[i] - YReferenceBlack)*255/(YReferenceWhite - YReferenceBlack);
@@ -3788,8 +3819,8 @@ public class FileTiff extends FileBase {
                                         Cr00 = getUnsignedByte(byteBuffer, j + currentIndex + 3);
                                         if ((x < xDim) && (y < yDim)) {
                                             YBuffer[y*xDim + x] = Y00;
-                                            CbInBuffer[y*halfXDim/2 + x/2] = Cb00;
-                                            CrInBuffer[y*halfXDim/2 + x/2] = Cr00;
+                                            CbInBuffer[y*halfXDim + x/2] = Cb00;
+                                            CrInBuffer[y*halfXDim + x/2] = Cr00;
                                         }
                                         if (((x+1) < xDim) && (y < yDim)) {
                                             YBuffer[y*xDim + x + 1] = Y01;
@@ -3810,8 +3841,8 @@ public class FileTiff extends FileBase {
                                         Cr00 = getUnsignedByte(byteBuffer, j + currentIndex + 3);
                                         if ((x < xDim) && (y < yDim)) {
                                             YBuffer[y*xDim + x] = Y00;
-                                            CbInBuffer[y*halfXDim/2 + x/2] = Cb00;
-                                            CrInBuffer[y*halfXDim/2 + x/2] = Cr00;
+                                            CbInBuffer[y*xDim/2 + x] = Cb00;
+                                            CrInBuffer[y*xDim/2 + x] = Cr00;
                                         }
                                         if ((x < xDim) && ((y+1) < yDim)) {
                                             YBuffer[(y+1)*xDim + x] = Y10;
@@ -5174,8 +5205,8 @@ public class FileTiff extends FileBase {
                                                 Cr00 = getUnsignedByte(decomp, j+3);
                                                 if ((x < xDim) && (y < yDim)) {
                                                     YBuffer[y*xDim + x] = Y00;
-                                                    CbInBuffer[y*halfXDim/2 + x/2] = Cb00;
-                                                    CrInBuffer[y*halfXDim/2 + x/2] = Cr00;
+                                                    CbInBuffer[y*halfXDim + x/2] = Cb00;
+                                                    CrInBuffer[y*halfXDim + x/2] = Cr00;
                                                 }
                                                 if (((x+1) < xDim) && (y < yDim)) {
                                                     YBuffer[y*xDim + x + 1] = Y01;
@@ -5198,8 +5229,8 @@ public class FileTiff extends FileBase {
                                                 Cr00 = getUnsignedByte(decomp, j+3);
                                                 if ((x < xDim) && (y < yDim)) {
                                                     YBuffer[y*xDim + x] = Y00;
-                                                    CbInBuffer[y*halfXDim/2 + x/2] = Cb00;
-                                                    CrInBuffer[y*halfXDim/2 + x/2] = Cr00;
+                                                    CbInBuffer[y*xDim/2 + x] = Cb00;
+                                                    CrInBuffer[y*xDim/2 + x] = Cr00;
                                                 }
                                                 if ((x < xDim) && ((y+1) < yDim)) {
                                                     YBuffer[(y+1)*xDim + x] = Y10;
