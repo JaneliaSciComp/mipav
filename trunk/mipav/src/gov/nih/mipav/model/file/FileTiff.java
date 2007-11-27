@@ -3430,8 +3430,8 @@ public class FileTiff extends FileBase {
 
         int currentIndex = 0;
 
-        // System.err.println("first index: " + firstIndex + ", last index: " + lastIndex + ", totalLength: " +
-        // totalLength);
+        //System.err.println("first index: " + firstIndex + ", last index: " + lastIndex + ", totalLength: " +
+        //totalLength);
         // System.err.println("packbit is: " + packBit);
         raFile.seek(firstIndex);
         raFile.read(byteBuffer, 0, totalLength);
@@ -3443,11 +3443,12 @@ public class FileTiff extends FileBase {
 
                 // System.err.println("Seeking to: " + ( (Index) (dataOffsets[slice].elementAt(idx))).index);
                 currentIndex = ((Index) (dataOffsets[slice].elementAt(idx))).index - firstIndex;
+                //System.out.println("CurrentIndex = " + currentIndex);
 
                 // raFile.seek( ( (Index) (dataOffsets[slice].elementAt(idx))).index);
                 nBytes = ((Index) (dataOffsets[slice].elementAt(idx))).byteCount;
 
-                // System.err.println("doing nBytes: " + nBytes);
+                //System.err.println("doing nBytes: " + nBytes);
                 if (nBytes == 0) {
                     nBytes = buffer.length;
                 }
@@ -3577,8 +3578,7 @@ public class FileTiff extends FileBase {
                         else if (packBit == true) {
 
                             // System.err.println("doing packbit UBYTE");
-                            byteBuffer = new byte[nBytes];
-
+                            // byteBuffer = new byte[nBytes];
                             // raFile.read(byteBuffer, 0, nBytes);
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
