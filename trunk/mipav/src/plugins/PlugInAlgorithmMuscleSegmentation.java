@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 
 /**
@@ -996,11 +998,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             VOIVector vector = srcImage.getVOIs();
             VOI removedVoi = null;
             for(int i=0; i < vector.size() ; i++) {
-                //Find same voi, and remove it from original image
-                if(((VOI)vector.get(i)).getName().equals(voiDialog.getObjectName())) {
-                    removedVoi = (VOI)getImageA().getVOIs().remove(i);
-                    break;
-                }
+                //TODO: debug
+            	//Find same voi, and remove it from original image
+                //if(((VOI)vector.get(i)).getName().equals(voiDialog.getObjectName())) {
+                //    removedVoi = (VOI)getImageA().getVOIs().remove(i);
+                //    break;
+                //}
             }
             VOIVector tempVOI = (VOIVector)getImageA().getVOIs().clone();
             VOIVector zeroVOI = getImageA().getVOIs();  //not cloned to maintain consistency of for loop
@@ -1771,7 +1774,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
     }
 
-	private class AnalysisPrompt extends JPanel implements ActionListener {
+	private class AnalysisPrompt extends JPanel implements ActionListener, ListSelectionListener {
 		
 		public static final String CLEAR = "Clear";
 		
@@ -1808,6 +1811,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		 * Text for muscles where mirror muscles are not considered. 
 		 */
 		private String[][] noMirrorArr;
+		
+		private JList[] list;
 
 		/**
 		 * Vector list of objects that listen to this dialog box. When the action for this pseudo-algorithm has
@@ -1845,7 +1850,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        
 	        JPanel instructionPanel = initInstructionPanel();
 	        
-	        JPanel mirrorPanel[] = new JPanel[mirrorArr.length];
+	        JScrollPane mirrorPanel[] = new JScrollPane[mirrorArr.length];
 	        
 	        //JPanel noMirrorPanel[] = new JPanel[noMirrorArr.length];
 	        
@@ -1853,6 +1858,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 	        
 	        mainPanel.add(instructionPanel);
+	        
+	        list = new JList[mirrorArr.length];
 	        
 	        for(int i=0; i<mirrorArr.length; i++) {
 	        	mirrorPanel[i] = initSymmetricalObjects(i);
@@ -1894,23 +1901,14 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        return instructionPanel;
 	    }
 	    
-	    private JPanel initSymmetricalObjects(int index) {
+	    private JScrollPane initSymmetricalObjects(int index) {
 	        
 	        VOIVector existingVois = ((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs();
 	         
-	        JCheckBox[] mirrorCheckArr = new JCheckBox[mirrorArr[index].length * 2];
-	        JButton[] mirrorButtonArr = new JButton[mirrorArr[index].length * 2];
+	        //JCheckBox[] mirrorCheckArr = new JCheckBox[mirrorArr[index].length * 2];
+	        String[] mirrorString = new String[mirrorArr[index].length * 2];
 	        ButtonGroup mirrorGroup = new ButtonGroup();
-	        JPanel mirrorPanel = new JPanel(new GridLayout(mirrorArr[index].length, 4));
-	        mirrorPanel.setForeground(Color.black);
-	        mirrorPanel.setBorder(MipavUtil.buildTitledBorder("Select an object"));
-	        
-	        GridBagConstraints gbc = new GridBagConstraints();
-	        gbc.anchor = GridBagConstraints.WEST;
-	        gbc.fill = GridBagConstraints.HORIZONTAL;
-	        gbc.gridx = 0;
-	        gbc.gridy = 0;
-	        gbc.ipadx = 0;
+	       
 	        
 	        for(int i=0; i<mirrorArr[index].length * 2; i++) {
 	            String symmetry1 = "", symmetry2 = "";
@@ -1921,33 +1919,44 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	                symmetry1 = "Top ";
 	                symmetry2 = "Bottom ";
 	            }
-	            mirrorCheckArr[i] = new JCheckBox();
-	            mirrorCheckArr[i].setEnabled(false);
-	            mirrorCheckArr[i].setHorizontalAlignment(SwingConstants.RIGHT);
+	            //mirrorCheckArr[i] = new JCheckBox();
+	            //mirrorCheckArr[i].setEnabled(false);
+	            //mirrorCheckArr[i].setHorizontalAlignment(SwingConstants.RIGHT);
 	            
 	            
-	            mirrorButtonArr[i] = (i % 2) == 0 ? new JButton(symmetry1+mirrorArr[index][i/2]) : 
-	                                                        new JButton(symmetry2+mirrorArr[index][i/2]);
-	            mirrorButtonArr[i].setFont(MipavUtil.font12B);
-	            mirrorButtonArr[i].setActionCommand(MuscleImageDisplayPrompt.CHECK_VOI);
-	            mirrorButtonArr[i].addActionListener(parentFrame);
-	            mirrorGroup.add(mirrorButtonArr[i]);
+	            mirrorString[i] = (i % 2) == 0 ? new String(symmetry1+mirrorArr[index][i/2]) : 
+	                                                        new String(symmetry2+mirrorArr[index][i/2]);
+	            //mirrorString[i].setFont(MipavUtil.font12B);
+	            //mirrorString[i].setActionCommand(MuscleImageDisplayPrompt.CHECK_VOI);
+	            //mirrorString[i].addActionListener(parentFrame);
+	            //mirrorGroup.add(mirrorString[i]);
 	            
-	            if(i != 0 && i % 4 == 0) {
-	                gbc.gridy++;
-	                gbc.gridx = 0;
-	            }
-	            gbc.weightx = 0;
-	            mirrorPanel.add(mirrorCheckArr[i], gbc);
-	            gbc.gridx++;
-	            gbc.weightx = 1;
-	            mirrorPanel.add(mirrorButtonArr[i], gbc);
-	            gbc.gridx++;
+	            //if(i != 0 && i % 4 == 0) {
+	            //    gbc.gridy++;
+	            //    gbc.gridx = 0;
+	            //}
+	            //gbc.weightx = 0;
+	            //mirrorPanel.add(mirrorCheckArr[i], gbc);
+	            //gbc.gridx++;
+	            //gbc.weightx = 1;
+	            //mirrorPanel.add(mirrorString[i], gbc);
+	            //gbc.gridx++;
 	            
 	            //System.out.println(mirrorButtonArr[i].getText()+" is "+mirrorZ[i/2]);
 	            //zeroStatus.put(mirrorButtonArr[i].getText(), mirrorZ[i/2]);
 	        
-	        }          
+	        }
+	        
+	        list[index] = new JList(mirrorString);
+	        list[index].setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+	        list[index].setLayoutOrientation(JList.HORIZONTAL_WRAP);
+	        list[index].setVisibleRowCount(mirrorArr[index].length); //was*2
+	        list[index].addListSelectionListener(this);
+	        
+	        JScrollPane mirrorPanel = new JScrollPane(list[index]);
+	        mirrorPanel.setForeground(Color.black);
+	        mirrorPanel.setBorder(MipavUtil.buildTitledBorder("Select an object"));
+	        
 	        return mirrorPanel;
 	                
 	    }
@@ -2060,6 +2069,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	            ((ActionListener) objectList.elementAt(i)).actionPerformed(new ActionEvent(this, 0, "Whole dialog completed"));
 	        }
 	
+	    }
+	    
+	    public void valueChanged(ListSelectionEvent e) {
+	    	System.out.println("You selected "+e.toString());
 	    }
 	    
 	    /**
