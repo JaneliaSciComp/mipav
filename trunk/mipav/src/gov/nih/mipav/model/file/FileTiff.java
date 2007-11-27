@@ -3458,16 +3458,12 @@ public class FileTiff extends FileBase {
                 switch (fileInfo.getDataType()) {
 
                     case ModelStorageBase.BOOLEAN:
-                        nLength = 8 * ((buffer.length + 63) >> 6); // new BitSet(size) = new long[(size+63)>>6];
-
-                        // byteBuffer = new byte[nLength];
-                        raFile.seek(((Index) (dataOffsets[slice].elementAt(idx))).index);
-                        raFile.read(byteBuffer, 0, nLength);
+                        
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
 
-                        for (j = 0; j < nBytes; j++, i++) {
+                        for (j = 0; j < 8* totalLength; j++, i++) {
 
                             if (((i + progress) % mod) == 0) {
                                 fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
