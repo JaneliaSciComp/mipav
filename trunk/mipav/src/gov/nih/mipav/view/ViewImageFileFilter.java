@@ -36,7 +36,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
     /** Look-Up-Table Files (*.lut). */
     public static final int LUT = 6;
 
-    /** Matrix Files (*.mtx; *.mat). */
+    /** Matrix Files (*.mtx; *.mat; *.xfm). */
     public static final int MATRIX = 7;
 
     /** Medical Formats(*.dcm; *.ima; *.img; *.mnc; *.sig; *.xml; *.head; *.nii, *.rec, *.frec, *.nrrd). */
@@ -97,7 +97,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         "General (*.gif; *.jpeg; *.jpg; *.pict; *.psd; *.tif; *.tiff)", // GEN
         "Graphs (*.plt)", // PLOT
         "Look-Up-Table Files (*.lut)", // LUT
-        "Matrix Files (*.mtx; *.mat)", // MATRIX
+        "Matrix Files (*.mtx; *.mat; *.xfm)", // MATRIX
         "Medical (*.dcm; *.xml, *ima; *.img; *.mnc; *.sig; *.head; *.nii; *.rec; *.frec; *.nrrd)", // TECH
         "Microscopy (*.avi; *.ics; *.lsm; *.pic; *.stk; *.tif; *.tiff; *.xml)", // MICROSCOPY
         "Misc.(*.avi; *.bmp; *.pcx; *.png; *.tga; *.xbm; *.xpm)", // MISC
@@ -358,7 +358,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
             return true;
         } else if ((filterType == PLOT) && (extension.equals("plt"))) {
             return true;
-        } else if ((filterType == MATRIX) && ((extension.equals("mtx")) || (extension.equals("mat")))) {
+        } else if ((filterType == MATRIX) && ((extension.equals("mtx")) || (extension.equals("mat")) || (extension.equals("xfm")))) {
             return true;
         } else if ((filterType == CLASS) && (extension.equals("class"))) {
             return true;

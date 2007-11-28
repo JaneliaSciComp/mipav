@@ -72,12 +72,12 @@ public class JDialogOrientMatrix extends JDialogBase {
         panelAxisMode.setBorder(buildTitledBorder("Options"));
         getContentPane().add(panelAxisMode);
 
-        worldCoordCheckbox = new JCheckBox("Change to world coordinate system.");
+        worldCoordCheckbox = new JCheckBox("Change from world coordinate system.");
         worldCoordCheckbox.setFont(serif12);
         worldCoordCheckbox.addItemListener(this);
         panelAxisMode.add(worldCoordCheckbox, BorderLayout.NORTH);
 
-        leftHandRuleCheckbox = new JCheckBox("Change to left-hand rule.");
+        leftHandRuleCheckbox = new JCheckBox("Change from left-hand rule.");
         leftHandRuleCheckbox.setFont(serif12);
         leftHandRuleCheckbox.addItemListener(this);
         panelAxisMode.add(leftHandRuleCheckbox, BorderLayout.SOUTH);
@@ -111,11 +111,11 @@ public class JDialogOrientMatrix extends JDialogBase {
                 pFrame.setWCSystem(true);
                 pFrame.setLeftHandSystem(true);
                 dispose();
-            } else if (worldCoordCheckbox.isSelected()) { // Change just to the world coordinate system
+            } else if (worldCoordCheckbox.isSelected()) { // Change just from the world coordinate system
                 pFrame.setWCSystem(true);
                 pFrame.setLeftHandSystem(false);
                 dispose();
-            } else if (leftHandRuleCheckbox.isSelected()) { // Change just to the "left-hand" system
+            } else if (leftHandRuleCheckbox.isSelected()) { // Change just from the "left-hand" system
                 pFrame.setWCSystem(false);
                 pFrame.setLeftHandSystem(true);
                 dispose();
