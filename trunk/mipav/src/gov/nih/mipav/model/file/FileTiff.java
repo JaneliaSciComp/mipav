@@ -321,6 +321,8 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     private int yDim = 0;
+    
+    private long fileLength;
 
     /** DOCUMENT ME! */
     private double zRes = 1.0;
@@ -431,10 +433,10 @@ public class FileTiff extends FileBase {
     public ModelImage readImage(boolean multiFile, boolean one) throws IOException {
         int[] imgExtents;
 
-
         try {
             file = new File(fileDir + fileName);
             raFile = new RandomAccessFile(file, "r");
+            fileLength = raFile.length();
 
             short byteOrder = raFile.readShort();
 
@@ -564,7 +566,6 @@ public class FileTiff extends FileBase {
             tileByteNumber = 0;
 
             if (!foundTag43314) {
-
                 while (moreIFDs){
                     fileInfo = new FileInfoTiff(fileName, fileDir, FileUtility.TIFF);
                     fileInfo.setExtents(imgExtents);
@@ -1798,6 +1799,7 @@ public class FileTiff extends FileBase {
         float valueFloat = 0.0f;
         double valueDouble = 0.0;
         int[] bitsPerSample = null;
+        long saveLocus;
         int sampleFormat = 1; // 1 is default for unsigned integers
         boolean debuggingFileIO = Preferences.debugLevel(Preferences.DEBUG_FILEIO);
         fileInfo.setEndianess(endianess);
@@ -1832,7 +1834,7 @@ public class FileTiff extends FileBase {
             } else if ((type == SHORT) && (count >= 3)) {
                 value_offset = getInt(endianess);
 
-                long saveLocus = raFile.getFilePointer();
+                saveLocus = raFile.getFilePointer();
                 raFile.seek(value_offset);
 
                 for (i1 = 0; ((i1 < count) && (i1 < MAX_IFD_LENGTH)); i1++) {
@@ -1845,7 +1847,7 @@ public class FileTiff extends FileBase {
             } else if ((type == LONG) && (count >= 2)) {
                 value_offset = getInt(endianess);
 
-                long saveLocus = raFile.getFilePointer();
+                saveLocus = raFile.getFilePointer();
                 raFile.seek(value_offset);
 
                 for (i1 = 0; ((i1 < count) && (i1 < MAX_IFD_LENGTH)); i1++) {
@@ -1858,7 +1860,7 @@ public class FileTiff extends FileBase {
             } else if ((type == SLONG) && (count >= 2)) {
                 value_offset = getInt(endianess);
 
-                long saveLocus = raFile.getFilePointer();
+                saveLocus = raFile.getFilePointer();
                 raFile.seek(value_offset);
 
                 for (i1 = 0; ((i1 < count) && (i1 < MAX_IFD_LENGTH)); i1++) {
@@ -1869,7 +1871,7 @@ public class FileTiff extends FileBase {
             } else if ((type == RATIONAL) || (type == SRATIONAL)) {
                 value_offset = getInt(endianess);
 
-                long saveLocus = raFile.getFilePointer();
+                saveLocus = raFile.getFilePointer();
                 raFile.seek(value_offset);
 
                 for (i1 = 0; ((i1 < (2 * count)) && (i1 < MAX_IFD_LENGTH)); i1 = i1 + 2) {
@@ -1881,7 +1883,7 @@ public class FileTiff extends FileBase {
             } else if ((type == DOUBLE) && (count == 1)) {
                 value_offset = getInt(endianess);
 
-                long saveLocus = raFile.getFilePointer();
+                saveLocus = raFile.getFilePointer();
                 raFile.seek(value_offset);
                 valueDouble = getDouble(endianess);
                 raFile.seek(saveLocus);
@@ -1921,7 +1923,7 @@ public class FileTiff extends FileBase {
             } else if (((type == BYTE) || (type == UNDEFINED) || (type == ASCII)) && (count > 4)) {
                 value_offset = getInt(endianess);
 
-                long saveLocus = raFile.getFilePointer();
+                saveLocus = raFile.getFilePointer();
                 raFile.seek(value_offset);
 
                 for (i1 = 0; ((i1 < count) && (i1 < MAX_IFD_LENGTH)); i1++) {
@@ -1955,7 +1957,7 @@ public class FileTiff extends FileBase {
             } else if ((type == SBYTE) && (count > 4)) {
                 value_offset = getInt(endianess);
 
-                long saveLocus = raFile.getFilePointer();
+                saveLocus = raFile.getFilePointer();
                 raFile.seek(value_offset);
 
                 for (i1 = 0; ((i1 < count) && (i1 < MAX_IFD_LENGTH)); i1++) {
@@ -1972,7 +1974,7 @@ public class FileTiff extends FileBase {
             } else if ((type == SSHORT) && (count >= 3)) {
                 value_offset = getInt(endianess);
 
-                long saveLocus = raFile.getFilePointer();
+                saveLocus = raFile.getFilePointer();
                 raFile.seek(value_offset);
 
                 for (i1 = 0; ((i1 < count) && (i1 < MAX_IFD_LENGTH)); i1++) {
@@ -3316,10 +3318,23 @@ public class FileTiff extends FileBase {
                               Preferences.DEBUG_FILEIO);
         }
 
-        if (IFDoffsets[imageSlice] == 0) {
+        if ((IFDoffsets[imageSlice] <= 0) || (IFDoffsets[imageSlice] >= fileLength)) {
             return false; // Done reading images
         }
+        
+        // Make sure the next IFD entry starts with a valid number of directory entries 
+        // before considering it as valid.
+        saveLocus = raFile.getFilePointer();
+        raFile.seek(IFDoffsets[imageSlice]);
+        
+        nDirEntries = getUnsignedShort(endianess);
 
+        if ((nDirEntries <= 0) || (nDirEntries >= 100)) {
+            raFile.seek(saveLocus);
+            return false;
+        }
+
+        raFile.seek(saveLocus);
         return true; // Read more IFDs (ie. images)
     }
 
