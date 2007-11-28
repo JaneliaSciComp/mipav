@@ -115,6 +115,10 @@ public interface VOIStatisticList {
      * @see  gov.nih.mipav.view.JPanelStatisticsList
      */
     String sumIntensities = "Sum Intensities";
+    
+    String skewnessDescription = "Coefficient of skewness";
+    
+    String kurtosisDescription = "Coefficient of kurtosis";
 
     /**
      * strings to test for when checking on statistics to calculate.
@@ -124,7 +128,7 @@ public interface VOIStatisticList {
     String[] statisticDescription = {
         quantityDescription, volumeDescription, areaDescription, perimeterDescription, minIntensity, maxIntensity,
         avgIntensity, deviationDescription, sumIntensities, centerDescription, axisDescription, eccentricityDescription,
-        majorAxisDescription, minorAxisDescription
+        majorAxisDescription, minorAxisDescription, skewnessDescription, kurtosisDescription
     };
 
     /** number of statistics in the list. */
