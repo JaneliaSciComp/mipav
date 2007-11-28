@@ -665,7 +665,35 @@ public class JDialogVOIStats extends JDialogBase
             		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
             		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
             		       	}
-            			}
+                        } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[14])) {
+                            name = statsList[j].getString();
+                            if (image.isColorImage()) {
+                                value = Float.toString(algoVOI.getSkewnessR()) + "R" + Float.toString(algoVOI.getSkewnessG()) +
+                                "G" + Float.toString(algoVOI.getSkewnessB()) +  "B";
+                            }
+                            else {
+                                value = Float.toString(algoVOI.getSkewness());
+                            }
+                                fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                        } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[15])) {
+                            name = statsList[j].getString();
+                            if (image.isColorImage()) {
+                                value = Float.toString(algoVOI.getKurtosisR()) + "R" + Float.toString(algoVOI.getKurtosisG()) +
+                                "G" + Float.toString(algoVOI.getKurtosisB()) +  "B";
+                            }
+                            else {
+                                value = Float.toString(algoVOI.getKurtosis());
+                            }
+                                fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                        }
             		}
                 }
             	FileInfoBase.copyCoreInfo(image.getFileInfo(), fInfoBase);
@@ -804,6 +832,22 @@ public class JDialogVOIStats extends JDialogBase
                                            unitsString + "\n");
                         } else {
                             UI.setDataText("  Minor axis length (only 2D)     \t= " + algoVOI.getMinorAxis() + "\n");
+                        }
+                    } else if (statsList[i].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[14])) {
+
+                        if (image.isColorImage()) {
+                            UI.setDataText("  Skewness of voxel intensity \t= " + algoVOI.getSkewnessR() + " R, " +
+                                           algoVOI.getSkewnessG() + " G, " + algoVOI.getSkewnessB() + " B, " + "\n");
+                        } else {
+                            UI.setDataText("  Skewness of voxel intensity \t= " + algoVOI.getSkewness() + "\n");
+                        }
+                    } else if (statsList[i].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[15])) {
+
+                        if (image.isColorImage()) {
+                            UI.setDataText("  Kurtosis of voxel intensity \t= " + algoVOI.getKurtosisR() + " R, " +
+                                           algoVOI.getKurtosisG() + " G, " + algoVOI.getKurtosisB() + " B, " + "\n");
+                        } else {
+                            UI.setDataText("  Kurtosis of voxel intensity \t= " + algoVOI.getKurtosis() + "\n");
                         }
                     }
                 }
