@@ -155,9 +155,9 @@ public class PlugInAlgorithmDTISaveRawVolumes extends AlgorithmBase {
 	 * @return success
 	 */
 	public boolean readListFile() {
-		System.out.println("Reading in list file");
+		System.out.println("Reading in list file..." + listFileAbsPath);
 		File listFile = new File(listFileAbsPath);
-		fireProgressStateChanged("Reading in list file");
+		fireProgressStateChanged("Reading in list file..." + listFileAbsPath);
 		fireProgressStateChanged(10);
 		try {
             bReader = new BufferedReader(new FileReader(listFile));
@@ -214,7 +214,7 @@ public class PlugInAlgorithmDTISaveRawVolumes extends AlgorithmBase {
 	 * @return success
 	 */
 	public boolean readPathFile() {
-		System.out.println("Reading in path file");
+		System.out.println("Reading in path file..." + pathFileAbsPath);
 		File pathFile = new File(pathFileAbsPath);
 		String[] paths = new String[zDim * tDim];
 		try {
@@ -292,15 +292,23 @@ public class PlugInAlgorithmDTISaveRawVolumes extends AlgorithmBase {
 				
 				//slice counter
 				int slice=0;
+				String currVolString = "";
 				int currVol = i + 1;
-				fireProgressStateChanged("Processing raw files...Vol " + currVol + "/" + tDim);
-				fireProgressStateChanged(15 + (i * 80 /zDim));
-				System.out.println("Processing Vol " + currVol + "/" + tDim);
+				if(currVol < 10) {
+					currVolString = "00" + currVol;
+				}else if(currVol >= 10 && currVol < 100) {
+					currVolString = "0" + currVol;
+				}else {
+					currVolString = String.valueOf(currVol);
+				}
+				fireProgressStateChanged("Processing raw files...Vol " + currVolString + "/" + tDim);
+				fireProgressStateChanged(15 + (i * 80 /tDim));
+				System.out.println("Processing Vol " + currVolString + "/" + tDim);
 				destImage = new ModelImage(ModelStorageBase.FLOAT, volExtents, studyName);
 				if(isNIFTI) {
-					saveFilename = studyName + "_vol" + currVol + ".nii";
+					saveFilename = studyName + "_vol" + currVolString + ".nii";
 				}else {
-					saveFilename = studyName + "_vol" + currVol + ".nrrd";
+					saveFilename = studyName + "_vol" + currVolString + ".nrrd";
 				}
 				for(int k=i;k<pathsAL.size();k=k+tDim) {
 					String path = (String)pathsAL.get(k);
@@ -435,14 +443,23 @@ public class PlugInAlgorithmDTISaveRawVolumes extends AlgorithmBase {
 				//vol counter
 				int volSlice=0;
 				int currSlice = i + 1;
-				fireProgressStateChanged("Processing raw files...Slice " + currSlice + "/" + zDim);
-				fireProgressStateChanged(15 + (i * 80 /tDim));
-				System.out.println("Processing Slice " + currSlice + "/" + zDim);
+				String currVolString = "";
+				int currVol = i + 1;
+				if(currVol < 10) {
+					currVolString = "00" + currVol;
+				}else if(currVol >= 10 && currVol < 100) {
+					currVolString = "0" + currVol;
+				}else {
+					currVolString = String.valueOf(currVol);
+				}
+				fireProgressStateChanged("Processing raw files...Slice " + currVolString + "/" + zDim);
+				fireProgressStateChanged(15 + (i * 80 /zDim));
+				System.out.println("Processing Slice " + currVolString + "/" + zDim);
 				destImage = new ModelImage(ModelStorageBase.FLOAT, volExtents, studyName);
 				if(isNIFTI) {
-					saveFilename = studyName + "_slice" + currSlice + ".nii";
+					saveFilename = studyName + "_slice" + currVolString + ".nii";
 				}else {
-					saveFilename = studyName + "_slice" + currSlice + ".nrrd";
+					saveFilename = studyName + "_slice" + currVolString + ".nrrd";
 				}
 				for(int k=i*tDim;k<((i*tDim)+tDim);k++) {
 					String path = (String)pathsAL.get(k);
