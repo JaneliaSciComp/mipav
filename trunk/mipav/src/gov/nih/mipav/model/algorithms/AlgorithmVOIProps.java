@@ -1657,9 +1657,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                         for (int i = 0; i < length; i += 4) {
 
-                            if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
-                                    !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
-                                    !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
+                            if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i + 1]) &&
+                                    !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i + 2]) &&
+                                    !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i + 3])) {
                                 sumR += imgBuffer[offset + i + 1];
                                 sumG += imgBuffer[offset + i + 2];
                                 sumB += imgBuffer[offset + i + 3];
