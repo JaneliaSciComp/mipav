@@ -845,35 +845,79 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public void readMatrix(RandomAccessFile raFile, boolean composite) {
         int i, r, c;
+        r=4;
+        c=4;
         String str;
+        boolean isXFM = false;
 
         if (raFile != null) {
 
             try {
                 str = raFile.readLine().trim();
+                if(str.equalsIgnoreCase("MNI Transform File")) {
+                	isXFM = true;
+                	//make sure that this is a linear transform type file
+                	boolean isLinearTransform = false;
+                	str = raFile.readLine().trim();
+                	while(str != null) {
+        	    		if(str.equalsIgnoreCase("Transform_Type = Linear;")) {
+        	    			isLinearTransform = true;
+        	    			//read next line in which should be "Linear_Transform =" to set the file pointer to the next line
+        	    			raFile.readLine();
+        	    			break;
+        	    		}
+        	    		str = raFile.readLine().trim();
+        	    	}
+                	if(!isLinearTransform) {
+                		MipavUtil.displayError("Matrix file must be a linear transform type");
+                        return;
+                	}
+                	r = 4;
+                	c = 4;
+                }else {
 
-                if (str.length() > 1) { // assume FSL matrix file and 4 x 4
-                    r = 4;
-                    c = 4;
-                    raFile.seek(0);
-                } else {
-                    raFile.seek(0);
-                    r = Integer.valueOf(raFile.readLine().trim()).intValue();
-                    c = Integer.valueOf(raFile.readLine().trim()).intValue();
+	                if (str.length() > 1) { // assume FSL matrix file and 4 x 4
+	                    r = 4;
+	                    c = 4;
+	                    raFile.seek(0);
+	                } else {
+	                    raFile.seek(0);
+	                    r = Integer.valueOf(raFile.readLine().trim()).intValue();
+	                    c = Integer.valueOf(raFile.readLine().trim()).intValue();
+	                }
                 }
 
                 if (composite == false) {
                     reConstruct(r, c); // reallocate matrix to row, col sizes
-
-                    for (i = 0; i < r; i++) {
-                        decodeLine(raFile, i, matrix);
+                    if(isXFM) {
+                    	for (i = 0; i < 3; i++) {
+	                        decodeLine(raFile, i, matrix);
+	                    }
+                    	matrix[3][0] = 0;
+                    	matrix[3][1] = 0;
+                    	matrix[3][2] = 0;
+                    	matrix[3][3] = 1.0;
+                    }else {
+	                    for (i = 0; i < r; i++) {
+	                        decodeLine(raFile, i, matrix);
+	                    }
                     }
                 } else {
                     double[][] mat = new double[4][4];
-
-                    for (i = 0; i < r; i++) {
-                        decodeLine(raFile, i, mat);
+                    if(isXFM) {
+                    	for (i = 0; i < 3; i++) {
+                            decodeLine(raFile, i, mat);
+                        }
+                    	mat[3][0] = 0;
+                    	mat[3][1] = 0;
+                    	mat[3][2] = 0;
+                    	mat[3][3] = 1.0;
+                    }else {
+                    	for (i = 0; i < r; i++) {
+                            decodeLine(raFile, i, mat);
+                        }	
                     }
+                    
 
                     // need to composite here.
                     Matrix tmpMatrix = Matrix.constructWithCopy(mat);
@@ -922,7 +966,6 @@ public class TransMatrix extends Matrix // implements TableModelListener
         int r, c;
 
         if (raFile != null) {
-
             try {
                 raFile.writeBytes(Integer.toString(mRow) + "\n"); // write number of rows
                 raFile.writeBytes(Integer.toString(nCol) + "\n"); // write number of columns
@@ -944,6 +987,46 @@ public class TransMatrix extends Matrix // implements TableModelListener
             }
         }
     }
+    
+    
+    /**
+     * Saves transformation matrix to McGill XFM format
+     *
+     * @param  raFile  random access file pointer
+     */
+    public void saveXFMMatrix(RandomAccessFile raFile) {
+        if (raFile != null) {
+            try {
+                raFile.writeBytes("MNI Transform File" + "\n" + "\n");
+                raFile.writeBytes("Transform_Type = Linear;" + "\n");
+                raFile.writeBytes("Linear_Transform =" + "\n");
+                
+
+                for (int r = 0; r < 3; r++) {
+
+                    for (int c = 0; c < 4; c++) {
+                        raFile.writeBytes(Double.toString(matrix[r][c]));
+                        if(r == 2 && c == 3) {
+                        	raFile.writeBytes(";");
+                        }else {
+                        	raFile.writeBytes(" ");
+                        }
+                    }
+                
+                    raFile.writeBytes("\n");
+                }
+
+                raFile.writeBytes("\n");
+            } catch (IOException error) {
+                MipavUtil.displayError("Matrix save error " + error);
+
+                return;
+            }
+        }
+    }
+    
+    
+    
 
     /**
      * Saves transformation matrix and a message to a text file MIPAV format 4 // number of rows in matrix 4 // number
@@ -2030,6 +2113,10 @@ public class TransMatrix extends Matrix // implements TableModelListener
 
         try {
             str = raFile.readLine().trim();
+            //xfm files have a ";" at end of matrix...so get rid of it
+            if(str.indexOf(";") != -1) {
+    			str = str.substring(0, str.indexOf(";"));
+    		}
             index = 0;
 
             for (c = 0; c < nCol; c++) {
