@@ -83,7 +83,7 @@ public abstract class FrameBuffer
     }
 
     /** Delete memory. */
-    public void finalize()
+    public void dispose()
     {
         m_pkRenderer = null;
         m_pkTarget = null;

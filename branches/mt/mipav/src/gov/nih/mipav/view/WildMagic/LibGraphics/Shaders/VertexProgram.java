@@ -58,7 +58,7 @@ public class VertexProgram extends Program
         if (!bLoaded)
         {
             System.err.println( CgGL.cgGetLastListing(pkProgram.m_kContext) );
-            pkProgram.finalize();
+            pkProgram.dispose();
             pkProgram  = null;
             return null;
         }

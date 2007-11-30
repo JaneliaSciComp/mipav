@@ -66,7 +66,7 @@ public class Attributes
         }
     }
     /** Delete memory. */
-    public void finalize()
+    public void dispose()
     {
         // colors
         m_kCOffset.clear();

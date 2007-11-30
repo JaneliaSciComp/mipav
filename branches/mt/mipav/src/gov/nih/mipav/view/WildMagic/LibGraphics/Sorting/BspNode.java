@@ -62,19 +62,19 @@ public class BspNode extends Node
     }
 
     /** Delete memory */
-    public void finalize()
+    public void dispose()
     {
         if ( m_kModelPlane != null )
         {
-            m_kModelPlane.finalize();
+            m_kModelPlane.dispose();
             m_kModelPlane = null;
         }
         if ( m_kWorldPlane != null )
         {
-            m_kWorldPlane.finalize();
+            m_kWorldPlane.dispose();
             m_kWorldPlane = null;
         }
-        super.finalize();
+        super.dispose();
     }
 
     /** These methods should be used instead of the attach/detach methods in

@@ -2502,8 +2502,30 @@ public class ModelImage extends ModelStorageBase {
         try {
             File file = new File(UI.getDefaultDirectory() + fileName);
             RandomAccessFile raFile = new RandomAccessFile(file, "rw");
+            if(fileName.endsWith("xfm")) {
+            	//we need to convert matrix to left hand system when for saving as .xfm
+            	TransMatrix mat = new TransMatrix(4);
+                TransMatrix rh_lhMatrix = new TransMatrix(4);
+                double[][] dMat;
 
-            matrix.saveMatrix(raFile);
+                dMat = rh_lhMatrix.getArray(); // Identity
+                dMat[2][2] = -1; // right handed to left handed or left handed to right handed coordinate systems
+
+                // p.223 Foley, Van Dam ...
+                // Flipping only z axis
+                // 1  0  0  0
+                // 0  1  0  0
+                // 0  0 -1  0
+                // 0  0  0  1
+
+                mat.timesEquals(rh_lhMatrix);
+                mat.timesEquals(matrix);
+                mat.timesEquals(rh_lhMatrix);
+                
+            	mat.saveXFMMatrix(raFile);
+            }else {
+            	matrix.saveMatrix(raFile);
+            }
             raFile.close();
         } catch (IOException error) {
             MipavUtil.displayError("Matrix save error");

@@ -76,7 +76,7 @@ public class GMatrixf
     }
 
     /** Deallocate the matrix. */
-    public void finalize ()
+    public void dispose ()
     {
         Deallocate();
     }

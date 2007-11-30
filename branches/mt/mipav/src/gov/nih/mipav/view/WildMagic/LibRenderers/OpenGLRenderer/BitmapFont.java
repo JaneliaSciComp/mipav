@@ -35,14 +35,14 @@ public class BitmapFont
     }
 
     /** Delete memory */
-    public void finalize()
+    public void dispose()
     {
         Name = null;
         for ( int i = 0; i < Quantity; i++ )
         {
             if ( Chars[i] != null )
             {
-                Chars[i].finalize();
+                Chars[i].dispose();
                 Chars[i] = null;
             }
         }

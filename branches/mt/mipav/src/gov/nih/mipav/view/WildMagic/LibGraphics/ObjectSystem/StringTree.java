@@ -35,7 +35,7 @@ public class StringTree
     public StringTree () {}
 
     /** delete memory */
-    public void finalize ()
+    public void dispose ()
     {
         m_kStrings.clear();
         m_kStrings = null;

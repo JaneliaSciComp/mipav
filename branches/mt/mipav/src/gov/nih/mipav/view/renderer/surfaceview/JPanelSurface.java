@@ -950,6 +950,7 @@ public class JPanelSurface extends JPanelRendererBase
         staticLightZoom = null;
         surfaceOpacityEvents = null;
         surfaceDirectoryName = null;
+        m_kFiberTractGroup = null;
     }
 
     /**

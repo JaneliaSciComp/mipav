@@ -3035,7 +3035,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
             if ((wcSystem == true) && (leftHandSystem == true)) {
 
-                // change to both the "left-hand" and world coordinate system.
+                // change from both the "left-hand" and world coordinate system.
                 mat.setTranslate(cPtRS.x, cPtRS.y, cPtRS.z);
                 mat.timesEquals(rh_lhMatrix);
                 mat.timesEquals(wcMatrix);
@@ -3050,7 +3050,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
                 // mat.print();
                 return mat;
-            } else if (wcSystem == true) { // Change just to the world coordinate system
+            } else if (wcSystem == true) { // Change just from the world coordinate system
 
                 mat.setTranslate(cPtRS.x, cPtRS.y, cPtRS.z);
                 mat.timesEquals(wcMatrix);
@@ -3063,7 +3063,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 mat.setTranslate(-cPt.x, -cPt.y, -cPt.z);
 
                 return mat;
-            } else if (leftHandSystem == true) { // Change just to the "left-hand" system
+            } else if (leftHandSystem == true) { // Change just from the "left-hand" system
 
                 mat.setTranslate(cPtRS.x, cPtRS.y, cPtRS.z);
                 mat.timesEquals(rh_lhMatrix);
@@ -3590,12 +3590,14 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
         Preferences.debug(xfrm + "\n");
 
-        if (!userDefinedMatrix.isSelected()) {
-            doRotateCenter = false;
-        }
-        else {
+        //if (!userDefinedMatrix.isSelected()) { 
+         //   doRotateCenter = false;
+        //}
+        //else {
+        // doRotateCenter is checked if it is selected everytime,
+        //does not depend on userDefinedMatrix is selected or not. Changed 11/16 by Mayur  
             doRotateCenter = rotCenter.isSelected();
-        }
+        //}
         if (doRotateCenter) {
         	useSACenter = useSACenterBox.isSelected();
         }

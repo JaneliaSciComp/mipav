@@ -3651,7 +3651,6 @@ System.err.println("curves size: " );
     public boolean nearPoint(int x, int y, int slice, float zoom, float resolutionX, float resolutionY) {
 
         if (isEmpty()) {
-        	System.err.println("IS EMPTY... wtf?");
             return false;
         }
 

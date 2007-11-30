@@ -46,14 +46,14 @@ public class SimpleBumpMapEffect extends ShaderEffect
     }
 
     /** Delete data members: */
-    public void finalize ()
+    public void dispose ()
     {
         if ( m_kLightDirection != null )
         {
-            m_kLightDirection.finalize();
+            m_kLightDirection.dispose();
             m_kLightDirection = null;
         }
-        super.finalize();
+        super.dispose();
     }
 
     /** Sets the light direction

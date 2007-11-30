@@ -85,7 +85,7 @@ public class SamplerInformation
     }
 
     /** Delete memory */
-    public void finalize ()
+    public void dispose ()
     {
         m_kName = null;
     }

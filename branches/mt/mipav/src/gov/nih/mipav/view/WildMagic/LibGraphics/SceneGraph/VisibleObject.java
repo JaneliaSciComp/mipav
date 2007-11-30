@@ -36,7 +36,7 @@ public class VisibleObject
     }
 
     /** Delete memory. */
-    public void finalize()
+    public void dispose()
     {
         Object = null;
         GlobalEffect = null;

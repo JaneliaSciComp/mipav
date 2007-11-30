@@ -48,9 +48,9 @@ public class Sphere3f
     /**
      * delete memory
      */
-    public void finalize()
+    public void dispose()
     {
-        Center.finalize();
+        Center.dispose();
         Center = null;
     }
 

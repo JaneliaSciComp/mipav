@@ -63,7 +63,7 @@ public class Vector2f
     /**
      * delete memory
      */
-    public void finalize()
+    public void dispose()
     {
         if ( (this == Vector2f.ZERO) || (this ==  Vector2f.UNIT_X)
                 || (this ==  Vector2f.UNIT_Y)

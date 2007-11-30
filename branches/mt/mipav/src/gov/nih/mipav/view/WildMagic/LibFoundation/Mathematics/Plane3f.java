@@ -82,11 +82,11 @@ public class Plane3f
     /**
      * delete memory
      */
-    public void finalize()
+    public void dispose()
     {
         if ( Normal != null )
         {
-            Normal.finalize();
+            Normal.dispose();
             Normal = null;
         }
     }

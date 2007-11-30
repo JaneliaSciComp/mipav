@@ -94,7 +94,7 @@ public class Multitextures extends JavaApplication3D
     }
 
     public void display(GLAutoDrawable arg0) {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 
         MeasureTime();
         
@@ -125,7 +125,7 @@ public class Multitextures extends JavaApplication3D
         m_pkRenderer.DisplayBackBuffer();
         UpdateFrameCount();
 
-        ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
     public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {
@@ -162,11 +162,11 @@ public class Multitextures extends JavaApplication3D
         InitializeCameraMotion(0.001f,0.001f);
         InitializeObjectMotion(m_spkScene);
 
-        ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+       // ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         if (iWidth > 0 && iHeight > 0)
         {
             if (m_pkRenderer != null)
@@ -177,7 +177,7 @@ public class Multitextures extends JavaApplication3D
             m_iWidth = iWidth;
             m_iHeight = iHeight;
         }
-        ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+       // ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
     /*

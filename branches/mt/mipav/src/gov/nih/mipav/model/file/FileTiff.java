@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -39,7 +40,7 @@ public class FileTiff extends FileBase {
     public static final int LONG = 4; // 32 bit unsigned ****** 4 bytes !!!!
 
     /** DOCUMENT ME! */
-    public static final int RATIONAL = 5; // 2 longs 1st numorator
+    public static final int RATIONAL = 5; // 2 longs 1st numerator
 
     /** 2nd denom. */
     public static final int SBYTE = 6; // 8 bit signed
@@ -148,6 +149,14 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     public static final int SAMPLE_FORMAT = 339;
+    
+    public static final int YCBCR_COEFFICIENTS = 529;
+    
+    public static final int YCBCR_SUBSAMPLING = 530;
+    
+    public static final int YCBCR_POSITIONING = 531;
+    
+    public static final int REFERENCE_BLACK_WHITE = 532;
 
     /** EchoTech Tiff TAGS. */
     public static final int ZRESOLUTION = 65000;
@@ -174,9 +183,6 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     private byte[] dateTime;
-
-    /** doTile: true if tiles are used. */
-    private boolean doTile = false;
 
     /** DOCUMENT ME! */
     private double[] doubleBuffer;
@@ -300,6 +306,12 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     private int tileWidth;
+    
+    private boolean haveTileWidth = false;
+    
+    private boolean haveTileLength = false;
+    
+    private boolean haveTileOffsets = false;
 
     /** DOCUMENT ME! */
     private double tRes = 1.0;
@@ -309,9 +321,40 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     private int yDim = 0;
+    
+    private long fileLength;
 
     /** DOCUMENT ME! */
     private double zRes = 1.0;
+    
+    private boolean isCIELAB = false;
+    
+    private boolean isYCbCr = false;
+    
+    // YCbCr Coefficients
+    // Defaults are from CCIR Recommendation 601-1
+    private float LumaRed = 0.299f;
+    private float LumaGreen = 0.587f;
+    private float LumaBlue = 0.114f;
+    
+    // 1 = chroma dimension length same as dimension length of associated luma image
+    // 2 = chroma dimension length half the dimension length of the associated luma image
+    // 4 = chroma dimension length 1/4 the dimension length of the assoicated luma image
+    // Default is 2, 2
+    private int YCbCrSubsampleHoriz = 2;
+    private int YCbCrSubsampleVert = 2;
+    
+    // 1 = centered for xOffset[0, 0] = YCbCrSubsampleHoriz/2 - 0.5, yOffset[0, 0] = YCbCrSubsampleVert/2 - 0.5
+    // 2 = cosited for xOffset[0, 0] = 0, yOffset[0,0] = 0
+    // Default = 1
+    private int YCbCrPositioning = 1;
+    
+    private int YReferenceBlack = 0;
+    private int YReferenceWhite = 255;
+    private int CbReferenceBlack = 128;
+    private int CbReferenceWhite = 255;
+    private int CrReferenceBlack = 128;
+    private int CrReferenceWhite = 255;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -390,10 +433,10 @@ public class FileTiff extends FileBase {
     public ModelImage readImage(boolean multiFile, boolean one) throws IOException {
         int[] imgExtents;
 
-
         try {
             file = new File(fileDir + fileName);
             raFile = new RandomAccessFile(file, "r");
+            fileLength = raFile.length();
 
             short byteOrder = raFile.readShort();
 
@@ -439,16 +482,25 @@ public class FileTiff extends FileBase {
 
             Preferences.debug("Just past init IFD read", Preferences.DEBUG_FILEIO);
 
-            if (doTile) {
-                tilesPerSlice = tilesAcross * tilesDown;
+            if (haveTileWidth && (!lzwCompression) && haveTileOffsets) {
+                if (chunky) {
+                   tilesPerSlice = tilesAcross * tilesDown;
+                }
+                else {
+                    tilesPerSlice = samplesPerPixel * tilesAcross * tilesDown;
+                }
                 imageSlice = tilesPerImage / tilesPerSlice;
                 // System.err.println("DoTile: tilesPerSlice: " + tilesPerSlice + " imageSlice: " + imageSlice);
-            } // if (doTile)
-            else if (lzwCompression) {
+            } // if (doTile && (!lzwCompression))
+            else if (haveTileWidth || lzwCompression) {
 
                 // set the tile width to the xDim for use in LZW Decoder
-                tileWidth = xDim;
-                tileLength = rowsPerStrip;
+                if (!haveTileWidth) {
+                    tileWidth = xDim;
+                }
+                if (!haveTileLength) {
+                    tileLength = rowsPerStrip;
+                }
                 tileOffsets = new int[dataOffsets[0].size()];
                 tileByteCounts = new int[dataOffsets[0].size()];
                 tileMaxByteCount = 0;
@@ -467,13 +519,18 @@ public class FileTiff extends FileBase {
                 tilesDown = (yDim + tileLength - 1) / tileLength;
 
                 // tileSize = tileWidth * tileHeight * numBands;
-                tilesPerSlice = tilesAcross * tilesDown;
-                // System.err.println("Tiles Across: " + tilesAcross + " tiles down: " + tilesDown);
+                if (chunky) {
+                    tilesPerSlice = tilesAcross * tilesDown;
+                 }
+                 else {
+                     tilesPerSlice = samplesPerPixel * tilesAcross * tilesDown;
+                 }
+                //System.err.println("Tiles Across: " + tilesAcross + " tiles down: " + tilesDown);
                 // System.err.println("TileMaxByteCount: " + tileMaxByteCount);
             }
 
             // System.err.println("Tile width: " + tileWidth + " samples per pixel: " + samplesPerPixel);
-            // System.err.println("Image slice: " + imageSlice);
+            //System.err.println("Image slice: " + imageSlice);
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
             Preferences.debug("imageSlice = " + imageSlice, Preferences.DEBUG_FILEIO);
 
@@ -509,8 +566,7 @@ public class FileTiff extends FileBase {
             tileByteNumber = 0;
 
             if (!foundTag43314) {
-
-                while (moreIFDs) {
+                while (moreIFDs){
                     fileInfo = new FileInfoTiff(fileName, fileDir, FileUtility.TIFF);
                     fileInfo.setExtents(imgExtents);
                     raFile.seek(IFDoffsets[imageSlice]);
@@ -548,7 +604,7 @@ public class FileTiff extends FileBase {
                 }
             } // else foundTag43314
 
-            if (doTile) {
+            if (haveTileWidth && (!lzwCompression) && haveTileOffsets) {
                 imageSlice = tilesPerImage / tilesPerSlice;
             }
 
@@ -630,7 +686,7 @@ public class FileTiff extends FileBase {
 
                     try {
 
-                        if (doTile || lzwCompression) {
+                        if (haveTileWidth || lzwCompression) {
                             readTileBuffer(i, sliceBufferFloat);
                         } else {
 
@@ -647,6 +703,11 @@ public class FileTiff extends FileBase {
                                 i = 0;
                             }
                         }
+                        
+                        if (isCIELAB) {
+                            CIELABtoRGB(sliceBufferFloat);
+                        }
+                        
                     } catch (IOException error) {
                         throw new IOException("FileTiff: read: " + error);
                     }
@@ -677,7 +738,512 @@ public class FileTiff extends FileBase {
 
         return image;
     }
-
+    
+    // Convert CIELAB to XYZ and convert XYZ to RGB
+    // R position has CIE_L*, G position has CIE-a*, B position has CIE-b*
+    // For 8 bits:
+    // The L* range goes from 0 to 100 as the 8 bit values go from 0 to 255
+    // The a* and b* ranges are signed 8 bit values having the range -128 to 127.
+    // so in an ARGB read in -1 goes to 255, -2 goes to 254,..., -128 goes to 128
+    // For 16 bits:
+    //  The L* range goes from 0 to 100 as the 8 bit values go from 0 to 65535
+    // The a* and b* ranges are signed 8 bit values having the range -32768 to 32767.
+    // so in an ARGB read in -1 goes to 65535, -2 goes to 65534,..., -32768 goes to 32768
+    // CIELAB to XYZ comes from Lab Color space in Wilkepedia
+    // XYZ to RGB comes from EasyRGB http://www.easyrgb.com
+    private void CIELABtoRGB(float buffer[]) {
+        double varX; 
+        double varY;
+        double varZ;
+        double delta = 6.0/29.0;
+        double offset = 16.0/116.0;
+        double threeDeltaSquared = 3.0 * delta * delta;
+        // refX, refY, and refZ are the trisimulus values of an appropriate reference white
+        // From web comment by Matri Maria:
+        // The TIFF 6 spec is more than a little vague about what white point should
+        // be used for L*a*b images, and there's no specified tag to put that data
+        // into the file.
+        //
+        // There is a tag to store White point, the tag is:
+        //     Tag = 318 (13Eh)
+        //     Type = Rational
+        //     N = 2
+        // The chromaticity of the white point of the image.  This is the chromaticity when
+        // each of the primaries has its ReferenceWhite value.
+        // The value is described using the 1931 CIE xy chromaticity diagram and only the
+        // chromaticity is specified.
+        //
+        // TIFF 6.0 specification has a "Section23: CIE L*a*b images" where it says
+        // that "White point : does not apply, but I have seen several TIFF with
+        // photometric = CIELAB and white point specified as D50 in this tag.
+        
+        // Adobe Photoshop TIFF Technical Notes states:
+        // WhitePoint: default is CIE D50, may be omitted if default value applies
+        
+        // www.easyrgb.com uses D65
+        //double refX = 95.047;  // Observer = 2 degrees, Illuminant = D65
+        //double refY = 100.000; // Observer = 2 degrees, Illuminant = D65
+        //double refZ = 108.883; // Observer = 2 degrees, Illuminant = D65
+        double refX = 96.420;  // Observer = 2 degrees, Illuminant = D50
+        double refY = 100.000; // Observer = 2 degrees, Illuminant = D50
+        double refZ = 82.490;  // Observer = 2 degrees, Illuminant = D50
+        double xMul = threeDeltaSquared * refX;
+        double yMul = threeDeltaSquared * refY;
+        double zMul = threeDeltaSquared * refZ;
+        double X;
+        double Y;
+        double Z;
+        double varR;
+        double varG;
+        double varB;
+        int sliceLength = buffer.length/4;
+        int i;
+        if (fileInfo.getDataType() == ModelStorageBase.ARGB) {
+            for (i = 0; i < sliceLength; i++) {
+                buffer[4*i + 1] = buffer[4*i + 1]*100.0f/255.0f;
+                varY = (buffer[4*i + 1] + 16.0)/116.0;
+                if (buffer[4*i + 2] > 127) {
+                    buffer[4*i + 2] = buffer[4*i + 2] - 256;   
+                }
+                varX = buffer[4*i + 2]/500.0 + varY;
+                if (buffer[4*i + 3] > 127) {
+                    buffer[4*i + 3] = buffer[4*i + 3] - 256;
+                }
+                varZ = varY - buffer[4*i + 3]/200.0;
+                
+                if (varY > delta) {
+                    Y = refY * varY * varY * varY;
+                }
+                else {
+                    Y = (varY - offset) * yMul;
+                }
+                
+                if (varX > delta) {
+                    X = refX * varX * varX * varX;;
+                }
+                else {
+                    X = (varX - offset) * xMul;
+                }
+                
+                if (varZ > delta) {
+                    Z = refZ * varZ * varZ * varZ;
+                }
+                else {
+                    Z = (varZ - offset) * zMul;
+                }
+                
+                varX = X / 100.0;
+                varY = Y / 100.0;
+                varZ = Z / 100.0;
+                
+                varR = 3.2406 * varX - 1.5372 * varY - 0.4986 * varZ;
+                varG = -0.9689 * varX + 1.8758 * varY + 0.0415 * varZ;
+                varB = 0.0557 * varX - 0.2040 * varY + 1.0570 * varZ;
+                
+                if (varR > 0.0031308) {
+                    varR = 1.055 * Math.pow(varR, (1.0/2.4)) - 0.055;
+                }
+                else {
+                    varR = 12.92 * varR;
+                }
+                if (varR < 0.0) {
+                    varR = 0.0;
+                }
+                if (varR > 1.0) {
+                    varR = 1.0;
+                }
+                
+                if (varG > 0.0031308) {
+                    varG = 1.055 * Math.pow(varG, (1.0/2.4)) - 0.055;
+                }
+                else {
+                    varG = 12.92 * varG;
+                }
+                if (varG < 0.0) {
+                    varG = 0.0;
+                }
+                if (varG > 1.0) {
+                    varG = 1.0;
+                }
+                
+                if (varB > 0.0031308) {
+                    varB = 1.055 * Math.pow(varB, (1.0/2.4)) - 0.055;
+                }
+                else {
+                    varB = 12.92 * varB;
+                }
+                if (varB < 0.0) {
+                    varB = 0.0;
+                }
+                if (varB > 1.0) {
+                    varB = 1.0;
+                }
+                
+                buffer[4*i + 1] = (float)(varR * 255.0);
+                buffer[4*i + 2] = (float)(varG * 255.0);
+                buffer[4*i + 3] = (float)(varB * 255.0);
+            }
+        }
+        else if (fileInfo.getDataType() == ModelStorageBase.ARGB_USHORT) {
+            for (i = 0; i < sliceLength; i++) {
+                buffer[4*i + 1] = buffer[4*i + 1]*100.0f/65535.0f;
+                varY = (buffer[4*i + 1] + 16.0)/116.0;
+                if (buffer[4*i + 2] > 32767) {
+                    buffer[4*i + 2] = buffer[4*i + 2] - 65536;   
+                }
+                buffer[4*i + 2] = buffer[4*i + 2]/256;
+                varX = buffer[4*i + 2]/500.0 + varY;
+                if (buffer[4*i + 3] > 32767) {
+                    buffer[4*i + 3] = buffer[4*i + 3] - 65536;
+                }
+                buffer[4*i + 3] = buffer[4*i + 3]/256;
+                varZ = varY - buffer[4*i + 3]/200.0;
+                
+                if (varY > delta) {
+                    Y = refY * varY * varY * varY;
+                }
+                else {
+                    Y = (varY - offset) * yMul;
+                }
+                
+                if (varX > delta) {
+                    X = refX * varX * varX * varX;;
+                }
+                else {
+                    X = (varX - offset) * xMul;
+                }
+                
+                if (varZ > delta) {
+                    Z = refZ * varZ * varZ * varZ;
+                }
+                else {
+                    Z = (varZ - offset) * zMul;
+                }
+                
+                varX = X / 100.0;
+                varY = Y / 100.0;
+                varZ = Z / 100.0;
+                
+                varR = 3.2406 * varX - 1.5372 * varY - 0.4986 * varZ;
+                varG = -0.9689 * varX + 1.8758 * varY + 0.0415 * varZ;
+                varB = 0.0557 * varX - 0.2040 * varY + 1.0570 * varZ;
+                
+                if (varR > 0.0031308) {
+                    varR = 1.055 * Math.pow(varR, (1.0/2.4)) - 0.055;
+                }
+                else {
+                    varR = 12.92 * varR;
+                }
+                if (varR < 0.0) {
+                    varR = 0.0;
+                }
+                if (varR > 1.0) {
+                    varR = 1.0;
+                }
+                
+                if (varG > 0.0031308) {
+                    varG = 1.055 * Math.pow(varG, (1.0/2.4)) - 0.055;
+                }
+                else {
+                    varG = 12.92 * varG;
+                }
+                if (varG < 0.0) {
+                    varG = 0.0;
+                }
+                if (varG > 1.0) {
+                    varG = 1.0;
+                }
+                
+                if (varB > 0.0031308) {
+                    varB = 1.055 * Math.pow(varB, (1.0/2.4)) - 0.055;
+                }
+                else {
+                    varB = 12.92 * varB;
+                }
+                if (varB < 0.0) {
+                    varB = 0.0;
+                }
+                if (varB > 1.0) {
+                    varB = 1.0;
+                }
+                
+                buffer[4*i + 1] = (float)(varR * 65535.0);
+                buffer[4*i + 2] = (float)(varG * 65535.0);
+                buffer[4*i + 3] = (float)(varB * 65535.0);
+            }    
+        }
+        
+    }
+    
+    /**
+     * 
+     * @param buffer
+     * @param YBuffer
+     * @param CbInBuffer
+     * @param CrInBuffer
+     */
+    private void YCbCrtoRGB(float buffer[], int YBuffer[], int CbInBuffer[], int CrInBuffer[]) {
+        int i;
+        int sliceSize = xDim * yDim;
+        int CbOutBuffer[];
+        int CrOutBuffer[];
+        float floatR;
+        float floatG;
+        float floatB;
+        int R;
+        int G;
+        int B;
+        int originalExtents[] = new int[2];
+        ModelImage originalImage;
+        ModelImage newImage;
+        TransMatrix xfrm;
+        float originalResolutions[] = new float[2];
+        AlgorithmTransform transform;
+        float newXResolution;
+        float newYResolution;
+        boolean transformVOI = false;
+        boolean clip = true;
+        boolean pad = false;
+        float Sx;
+        float Sy;
+        float inx1;
+        float inx2;
+        float iny1;
+        float iny2;
+        float outx1;
+        float outx2;
+        float outy1;
+        float outy2;
+        float T02;
+        float T12;
+        int x;
+        int y;
+        
+        if ((YCbCrSubsampleHoriz == 1) && (YCbCrSubsampleVert == 1)) {
+            CbOutBuffer = CbInBuffer;
+            CrOutBuffer = CrInBuffer;
+        }
+        else {
+            CbOutBuffer = new int[sliceSize];
+            CrOutBuffer = new int[sliceSize];
+            originalExtents[0] = xDim/YCbCrSubsampleHoriz;
+            if ((xDim % YCbCrSubsampleHoriz) != 0) {
+                originalExtents[0]++;
+            }
+            originalExtents[1] = yDim/YCbCrSubsampleVert;
+            if ((yDim % YCbCrSubsampleVert) != 0) {
+                originalExtents[1]++;
+            }
+            originalResolutions[0] = 1.0f;
+            originalResolutions[1] = 1.0f;
+            // output is the unshrunk image and input is the shrunk image
+            // xfrm is the inverse output to input transformation matrix
+            // input X = (output X * oXres* xfrm[0,0] + xfrm[0,2])/iXres
+            // For YCbCrPositioning = 1 for centered:
+            // output X = YCbCrSubsampleHoriz/2 - 0.5 yields input X = 0
+            // output X = xDim - 1 - (YCbCrSubsampleHoriz/2 - 0.5) yields input originalExtents[0] - 1.
+            // xfrm[0,0] = Sx = (xDim - 1)/(xDim - YCbCrSubsampleHoriz).
+            // For YCbCrpositioning = 2 for cosited:
+            // output x = 0 yields input X = 0
+            // ouput x = xDim - YCbCrSubsampleHoriz yields input originalExtents[0] - 1.
+            // xfrm[0,0] = Sx = (xDim - 1)/(xDim - YCbCrSubsampleHoriz).
+            // inx1 = outx1 * newXResolution * Sx + T02
+            // inx2 = outx2 * newXResolution * Sx + T02
+            // inx2 - inx1 = (outx2 - outx1) * newXResolution * Sx
+            // newXResolution = (inx2 - inx1)/((outx2 - outx1) * Sx)
+            Sx = ((float)(xDim - 1))/((float)(xDim - YCbCrSubsampleHoriz));
+            Sy = ((float)(yDim - 1))/((float)(yDim - YCbCrSubsampleVert));
+            inx1 = 0.0f;
+            inx2 = originalExtents[0] - 1.0f;
+            iny1 = 0.0f;
+            iny2 = originalExtents[1] - 1.0f;
+            if (YCbCrPositioning == 1) {
+                if (YCbCrSubsampleHoriz == 1) {
+                    outx1 = 0;
+                    outx2 = xDim - 1;
+                }
+                else {
+                    outx1 = YCbCrSubsampleHoriz/2 - 0.5f;
+                    outx2 = xDim - 1 - (YCbCrSubsampleHoriz/2 - 0.5f);
+                }
+                if (YCbCrSubsampleVert == 1) {
+                    outy1 = 0;
+                    outy2 = yDim - 1;
+                }
+                else {
+                    outy1 = YCbCrSubsampleVert/2 - 0.5f;
+                    outy2 = yDim - 1 - (YCbCrSubsampleVert/2 - 0.5f);
+                }
+            }
+            else {
+                outx1 = 0.0f;
+                outx2 = xDim - YCbCrSubsampleHoriz;
+                outy1 = 0.0f;
+                outy2 = yDim - YCbCrSubsampleVert;
+            }
+            if (YCbCrSubsampleHoriz == 1) {
+                newXResolution = 1.0f;
+            }
+            else {
+                newXResolution = (inx2 - inx1)/((outx2 - outx1) * Sx);    
+            }
+            if (YCbCrSubsampleVert == 1) {
+                newYResolution = 1.0f;
+            }
+            else {
+                newYResolution = (iny2 - iny1)/((outy2 - outy1) * Sy);
+            }
+            T02 = inx1 - outx1 * newXResolution * Sx;
+            T12 = iny1 - outy1 * newYResolution * Sy;
+            xfrm = new TransMatrix(3);
+            xfrm.identity();
+            xfrm.setZoom(Sx, Sy);
+            xfrm.setTranslate(T02, T12);
+            if (!xfrm.isIdentity()) {
+                double inverseMat[][] = (xfrm.inverse()).getArray();
+                xfrm.setMatrix(inverseMat);
+            }
+            
+            originalImage = new ModelImage(ModelStorageBase.INTEGER, originalExtents, "originalImage");
+            originalImage.getFileInfo()[0].setResolutions(originalResolutions);
+            try {
+                 originalImage.importData(0, CbInBuffer, true);   
+            }
+            catch (IOException e) {
+                MipavUtil.displayError("IOException on originalImage.importData(0, CbInBuffer, true");
+                return;
+            }
+            
+            transform = new AlgorithmTransform(originalImage, xfrm, AlgorithmTransform.BILINEAR, newXResolution,
+                                               newYResolution, xDim, yDim,
+                                               transformVOI, clip, pad);
+    
+            transform.run();
+            newImage = transform.getTransformedImage();
+            transform.finalize();
+            try {
+                newImage.exportData(0, sliceSize, CbOutBuffer);
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOException on originalImage.exportData(0, sliceSize, CbOutBuffer");
+                return;    
+            }
+            newImage.disposeLocal();
+            newImage = null;
+            
+            try {
+                originalImage.importData(0, CrInBuffer, true);   
+           }
+           catch (IOException e) {
+               MipavUtil.displayError("IOException on originalImage.importData(0, CrInBuffer, true");
+               return;
+           }
+           
+           transform = new AlgorithmTransform(originalImage, xfrm, AlgorithmTransform.BILINEAR, newXResolution,
+                                              newYResolution, xDim, yDim,
+                                              transformVOI, clip, pad);
+    
+           transform.run();
+           newImage = transform.getTransformedImage();
+           transform.finalize();
+           try {
+               newImage.exportData(0, sliceSize, CrOutBuffer);
+           }
+           catch(IOException e) {
+               MipavUtil.displayError("IOException on originalImage.exportData(0, sliceSize, CrOutBuffer");
+               return;    
+           }
+           newImage.disposeLocal();
+           newImage = null;
+           
+           if (YCbCrPositioning == 1) {
+               if (YCbCrSubsampleVert != 1) {
+                   for (y = 0; y < (int)Math.floor(outy1); y++) {
+                       for (x = 0; x < xDim; x++) {
+                           CbOutBuffer[x + y*xDim] = CbOutBuffer[x + ((int)Math.ceil(outy1))*xDim];
+                           CrOutBuffer[x + y*xDim] = CrOutBuffer[x + ((int)Math.ceil(outy1))*xDim];
+                       }  
+                   }
+                 
+                   for (y = (int)Math.ceil(outy2); y < yDim; y++) {
+                       for (x = 0; x < xDim; x++){
+                           CbOutBuffer[x + y*xDim] = CbOutBuffer[x + ((int)Math.floor(outy2))*xDim];
+                           CrOutBuffer[x + y*xDim] = CrOutBuffer[x + ((int)Math.floor(outy2))*xDim];
+                       }
+                   }
+               } // if (YCbCrSubsampleVert != 1)
+               
+               if (YCbCrSubsampleHoriz != 1) {
+                   for (x = 0; x < (int)Math.floor(outx1); x++) {
+                       for (y = 0; y < yDim; y++) {
+                           CbOutBuffer[x + y*xDim] = CbOutBuffer[((int)Math.ceil(outx1)) + y*xDim];
+                           CrOutBuffer[x + y*xDim] = CrOutBuffer[((int)Math.ceil(outx1)) + y*xDim];
+                       }  
+                   }
+                   for (x = (int)Math.ceil(outx2); x < xDim; x++) {
+                       for (y = 0; y < yDim; y++){
+                           CbOutBuffer[x + y*xDim] = CbOutBuffer[((int)Math.floor(outx2)) + y*xDim];
+                           CrOutBuffer[x + y*xDim] = CrOutBuffer[((int)Math.floor(outx2)) + y*xDim];
+                       }
+                   }
+               } // if (YCbCrSubsampleHoriz != 1)
+           } // if (YCbCrPositioning == 1)
+           else { // YCbCrPositioning == 2
+               if (YCbCrSubsampleVert != 1) {
+                 for (y = yDim - YCbCrSubsampleVert + 1; y < yDim; y++) {
+                     for (x = 0; x < xDim; x++) {
+                         CbOutBuffer[x + y*xDim] = CbOutBuffer[x + (yDim - YCbCrSubsampleVert)*xDim];
+                         CrOutBuffer[x + y*xDim] = CrOutBuffer[x + (yDim - YCbCrSubsampleVert)*xDim];    
+                     }
+                 }
+               } // if (YCbCrSubsampleVert != 1)
+               if (YCbCrSubsampleHoriz != 1) {
+                 for (x = xDim - YCbCrSubsampleHoriz + 1; x < xDim; x++) {
+                     for (y = 0; y < yDim; y++) {
+                         CbOutBuffer[x + y*xDim] = CbOutBuffer[(xDim - YCbCrSubsampleHoriz) + y*xDim];
+                         CrOutBuffer[x + y*xDim] = CrOutBuffer[(xDim - YCbCrSubsampleHoriz) + y*xDim];    
+                     }
+                 }
+               } // if (YCbCrSubsampleHoriz != 1)
+           } // else YCbCrPositioning == 2
+        } // else !((YCbCrSubsampleHoriz == 1) && (YCbCrSubsampleVert == 1))
+        
+        for (i = 0; i < sliceSize; i++) {
+            YBuffer[i] = (YBuffer[i] - YReferenceBlack)*255/(YReferenceWhite - YReferenceBlack);
+            CbOutBuffer[i] = (CbOutBuffer[i] - CbReferenceBlack)*127/(CbReferenceWhite - CbReferenceBlack);
+            CrOutBuffer[i] = (CrOutBuffer[i] - CrReferenceBlack)*127/(CrReferenceWhite - CrReferenceBlack);
+            floatR = CrOutBuffer[i]*(2 - 2*LumaRed) + YBuffer[i];
+            floatB = CbOutBuffer[i]*(2 - 2*LumaBlue) + YBuffer[i];
+            floatG = (YBuffer[i] - LumaBlue * floatB - LumaRed * floatR)/LumaGreen;
+            R = (int)Math.round(floatR);
+            if (R < 0) {
+                R = 0;
+            }
+            if (R > 255) {
+                R = 255;
+            }
+            buffer[4*i] = (byte)255;
+            buffer[4*i+1] = (byte)R;
+            G = (int)Math.round(floatG);
+            if (G < 0) {
+                G = 0;
+            }
+            if (G > 255) {
+                G = 255;
+            }
+            buffer[4*i+2] = (byte)G;
+            B = (int)Math.round(floatB);
+            if (B < 0) {
+                B = 0;
+            }
+            if (B > 255) {
+                B = 255;
+            }
+            buffer[4*i+3] = (byte)B;
+        }
+    }
+    
+    
     /**
      * Passed in a LeicaSeries object, this function builds a 2d or 3d reconstruction using the Vector of filenames
      * within the series The vector has been presorted so that all files (whether red - green and then blue, or just
@@ -1233,6 +1799,7 @@ public class FileTiff extends FileBase {
         float valueFloat = 0.0f;
         double valueDouble = 0.0;
         int[] bitsPerSample = null;
+        long saveLocus;
         int sampleFormat = 1; // 1 is default for unsigned integers
         boolean debuggingFileIO = Preferences.debugLevel(Preferences.DEBUG_FILEIO);
         fileInfo.setEndianess(endianess);
@@ -1267,7 +1834,7 @@ public class FileTiff extends FileBase {
             } else if ((type == SHORT) && (count >= 3)) {
                 value_offset = getInt(endianess);
 
-                long saveLocus = raFile.getFilePointer();
+                saveLocus = raFile.getFilePointer();
                 raFile.seek(value_offset);
 
                 for (i1 = 0; ((i1 < count) && (i1 < MAX_IFD_LENGTH)); i1++) {
@@ -1280,7 +1847,7 @@ public class FileTiff extends FileBase {
             } else if ((type == LONG) && (count >= 2)) {
                 value_offset = getInt(endianess);
 
-                long saveLocus = raFile.getFilePointer();
+                saveLocus = raFile.getFilePointer();
                 raFile.seek(value_offset);
 
                 for (i1 = 0; ((i1 < count) && (i1 < MAX_IFD_LENGTH)); i1++) {
@@ -1293,7 +1860,7 @@ public class FileTiff extends FileBase {
             } else if ((type == SLONG) && (count >= 2)) {
                 value_offset = getInt(endianess);
 
-                long saveLocus = raFile.getFilePointer();
+                saveLocus = raFile.getFilePointer();
                 raFile.seek(value_offset);
 
                 for (i1 = 0; ((i1 < count) && (i1 < MAX_IFD_LENGTH)); i1++) {
@@ -1304,7 +1871,7 @@ public class FileTiff extends FileBase {
             } else if ((type == RATIONAL) || (type == SRATIONAL)) {
                 value_offset = getInt(endianess);
 
-                long saveLocus = raFile.getFilePointer();
+                saveLocus = raFile.getFilePointer();
                 raFile.seek(value_offset);
 
                 for (i1 = 0; ((i1 < (2 * count)) && (i1 < MAX_IFD_LENGTH)); i1 = i1 + 2) {
@@ -1316,7 +1883,7 @@ public class FileTiff extends FileBase {
             } else if ((type == DOUBLE) && (count == 1)) {
                 value_offset = getInt(endianess);
 
-                long saveLocus = raFile.getFilePointer();
+                saveLocus = raFile.getFilePointer();
                 raFile.seek(value_offset);
                 valueDouble = getDouble(endianess);
                 raFile.seek(saveLocus);
@@ -1356,7 +1923,7 @@ public class FileTiff extends FileBase {
             } else if (((type == BYTE) || (type == UNDEFINED) || (type == ASCII)) && (count > 4)) {
                 value_offset = getInt(endianess);
 
-                long saveLocus = raFile.getFilePointer();
+                saveLocus = raFile.getFilePointer();
                 raFile.seek(value_offset);
 
                 for (i1 = 0; ((i1 < count) && (i1 < MAX_IFD_LENGTH)); i1++) {
@@ -1390,7 +1957,7 @@ public class FileTiff extends FileBase {
             } else if ((type == SBYTE) && (count > 4)) {
                 value_offset = getInt(endianess);
 
-                long saveLocus = raFile.getFilePointer();
+                saveLocus = raFile.getFilePointer();
                 raFile.seek(value_offset);
 
                 for (i1 = 0; ((i1 < count) && (i1 < MAX_IFD_LENGTH)); i1++) {
@@ -1407,7 +1974,7 @@ public class FileTiff extends FileBase {
             } else if ((type == SSHORT) && (count >= 3)) {
                 value_offset = getInt(endianess);
 
-                long saveLocus = raFile.getFilePointer();
+                saveLocus = raFile.getFilePointer();
                 raFile.seek(value_offset);
 
                 for (i1 = 0; ((i1 < count) && (i1 < MAX_IFD_LENGTH)); i1++) {
@@ -1717,7 +2284,7 @@ public class FileTiff extends FileBase {
                         throw new IOException("PHOTO_INTERP has illegal count = " + count + "\n");
                     }
 
-                    if (valueArray[0] > 4) {
+                    if (valueArray[0] > 8) {
                         throw new IOException("PHOTO_INTERP has illegal value = " + valueArray[0] + "\n");
                     }
 
@@ -1757,6 +2324,22 @@ public class FileTiff extends FileBase {
 
                         if (debuggingFileIO) {
                             Preferences.debug("FileTiff.openIFD: PhotoInterp = Transparency Mask\n",
+                                              Preferences.DEBUG_FILEIO);
+                        }
+                    } else if (valueArray[0] == 6) { // YCbCr
+                        isYCbCr = true;
+                        fileInfo.setPhotometric((short) 6);
+                        
+                        if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: PhotoInterp = YCbCr\n",
+                                              Preferences.DEBUG_FILEIO);
+                        }
+                    } else if (valueArray[0] == 8) { // CIELAB
+                        isCIELAB = true;
+                        fileInfo.setPhotometric((short) 8);
+                        
+                        if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: PhotoInterp = CIELAB\n",
                                               Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -1926,6 +2509,159 @@ public class FileTiff extends FileBase {
                         LUT.makeIndexedLUT(null);
                     }
 
+                    break;
+                    
+                case YCBCR_COEFFICIENTS:
+                    if (type != RATIONAL) {
+                        throw new IOException("YCBCR_CEOFFICIENTS has illegal type = " + type + "\n");
+                    }
+
+                    if (count != 3) {
+                        throw new IOException("XRESOLUTION has illegal count = " + count + "\n");
+                    }
+
+                    numerator = valueArray[0];
+                    denominator = valueArray[1];
+                    LumaRed = (float) numerator / denominator;
+                    
+                    numerator = valueArray[2];
+                    denominator = valueArray[3];
+                    LumaGreen = (float) numerator / denominator;
+                    
+                    numerator = valueArray[4];
+                    denominator = valueArray[5];
+                    LumaBlue = (float) numerator / denominator;
+                    
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: YCbCr coefficients\n",
+                                          Preferences.DEBUG_FILEIO);
+                        Preferences.debug("FileTiff.openIFD: LumaRed = " + LumaRed +  
+                                          "  LumaGreen = " + LumaGreen +
+                                          "  LumaBlue = " + LumaBlue +
+                                          "\n",
+                                          Preferences.DEBUG_FILEIO);
+                    }
+
+                    break;
+                    
+                case YCBCR_SUBSAMPLING:
+                    if (type != SHORT) {
+                        throw new IOException("YCBCR_SUBSAMPLING has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 2) {
+                        throw new IOException("YCBCR_SUBSAMPLING has illegal count = " + count + "\n");
+                    }
+                    
+                    YCbCrSubsampleHoriz = (int)valueArray[0];
+                    YCbCrSubsampleVert = (int)valueArray[1];
+                    
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: YCbCrSubsampleHoriz = " + YCbCrSubsampleHoriz +
+                                          "  YCbCrSubsampleVert = " + YCbCrSubsampleVert + "\n",
+                                          Preferences.DEBUG_FILEIO);
+                        if (YCbCrSubsampleHoriz == 1) {
+                            Preferences.debug("FileTiff.openIFD: Image width of this chroma image is equal to the\n" +
+                                              "image width of the associated luma image\n",
+                                              Preferences.DEBUG_FILEIO);
+                        }
+                        else if (YCbCrSubsampleHoriz == 2) {
+                            Preferences.debug("FileTIff.openIFD: Image width of this chroma image is half the image\n" +
+                                              "width of the associated luma image\n",
+                                              Preferences.DEBUG_FILEIO);
+                        }
+                        else if (YCbCrSubsampleHoriz == 4) {
+                            Preferences.debug("FileTIff.openIFD: Image width of this chroma image is one-quarter the\n" +
+                                    "image width of the associated luma image\n",
+                                    Preferences.DEBUG_FILEIO);   
+                        }
+                        if (YCbCrSubsampleVert == 1) {
+                            Preferences.debug("FileTiff.openIFD: Image height of this chroma image is equal to the\n" +
+                                              "image height of the associated luma image\n",
+                                              Preferences.DEBUG_FILEIO);
+                        }
+                        else if (YCbCrSubsampleVert == 2) {
+                            Preferences.debug("FileTIff.openIFD: Image height of this chroma image is half the image\n" +
+                                              "height of the associated luma image\n",
+                                              Preferences.DEBUG_FILEIO);
+                        }
+                        else if (YCbCrSubsampleVert == 4) {
+                            Preferences.debug("FileTIff.openIFD: Image height of this chroma image is one-quarter the\n" +
+                                    "image height of the associated luma image\n",
+                                    Preferences.DEBUG_FILEIO);   
+                        }
+                    }
+                    
+                    break;
+                    
+                case YCBCR_POSITIONING:
+                    if (type != SHORT) {
+                        throw new IOException("YCBCR_POSITIONING has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("YCBCR_POSITIONING has illegal count = " + count + "\n");
+                    }
+                    
+                    YCbCrPositioning = (int)valueArray[0];
+                    if (debuggingFileIO) {
+                        if (YCbCrPositioning == 1) {
+                            Preferences.debug("FileTIff.openIFD: YCbCrPositioning = 1 for centered\n" +
+                                              "xOffset[0,0] = chromaSubsampleHoriz/2 - 0.5\n" +
+                                              "yOffset[0,0] = chromaSubsampleVert/2 - 0.5\n",
+                                              Preferences.DEBUG_FILEIO);
+                        }
+                        else if (YCbCrPositioning == 2) {
+                            Preferences.debug("FileTIff.openIFD: YCbCrPositioning = 2 for cosited\n" +
+                                    "xOffset[0,0] = 0, yOffset[0,0] = 0\n",
+                                    Preferences.DEBUG_FILEIO);   
+                        }
+                    }
+                    break;
+                    
+                case REFERENCE_BLACK_WHITE:
+                    if (type != RATIONAL) {
+                        throw new IOException("REFERENCE_BLACK_WHITE has illegal type = " + type + "\n");
+                    }
+
+                    if (count != 6) {
+                        throw new IOException("REFERENCE_BLACK_WHITE has illegal count = " + count + "\n");
+                    }
+
+                    numerator = valueArray[0];
+                    denominator = valueArray[1];
+                    YReferenceBlack = (int) (numerator / denominator);
+                    
+                    numerator = valueArray[2];
+                    denominator = valueArray[3];
+                    YReferenceWhite = (int) (numerator / denominator);
+                    
+                    numerator = valueArray[4];
+                    denominator = valueArray[5];
+                    CbReferenceBlack = (int) (numerator / denominator);
+                    
+                    numerator = valueArray[6];
+                    denominator = valueArray[7];
+                    CbReferenceWhite = (int) (numerator / denominator);
+                    
+                    numerator = valueArray[8];
+                    denominator = valueArray[9];
+                    CrReferenceBlack = (int) (numerator / denominator);
+                    
+                    numerator = valueArray[10];
+                    denominator = valueArray[11];
+                    CrReferenceWhite = (int) (numerator / denominator);
+                    
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: YReferenceBlack = " + YReferenceBlack + 
+                                                             " YReferenceWhite = " + YReferenceWhite + "\n" +
+                                                             "CbReferenceBlack = " + CbReferenceBlack +
+                                                             " CbReferenceWhite = " + CbReferenceWhite + "\n" +
+                                                             "CrReferenceBlack = " + CrReferenceBlack +
+                                                             " CrReferenceWhite = " + CrReferenceWhite + "\n",
+                                                             Preferences.DEBUG_FILEIO);
+                    }
+                    
                     break;
 
                 case RESOLUTION_UNIT:
@@ -2153,7 +2889,7 @@ public class FileTiff extends FileBase {
                         throw new IOException("TILE_WIDTH has illegal count = " + count + "\n");
                     }
 
-                    doTile = true;
+                    haveTileWidth = true;
                     tileWidth = (int) valueArray[0];
                     if (debuggingFileIO) {
                         Preferences.debug("FileTiff.openIFD: tileWidth = " + tileWidth + "\n", 2);
@@ -2177,6 +2913,7 @@ public class FileTiff extends FileBase {
                     }
 
                     tileLength = (int) valueArray[0];
+                    haveTileLength = true;
                     if (debuggingFileIO) {
                         Preferences.debug("FileTiff.openIFD: tileLength = " + tileLength + "\n",
                                           Preferences.DEBUG_FILEIO);
@@ -2196,11 +2933,8 @@ public class FileTiff extends FileBase {
                         throw new IOException("TILE_OFFSETS has illegal type = " + type + "\n");
                     }
 
-                    if (chunky) {
-                        tilesPerImage = count;
-                    } else {
-                        tilesPerImage = count / samplesPerPixel;
-                    }
+                    tilesPerImage = count;
+                    haveTileOffsets = true;
 
                     if (debuggingFileIO) {
                         Preferences.debug("FileTiff.openIFD: tilesPerImage = " + tilesPerImage + "\n",
@@ -2244,16 +2978,8 @@ public class FileTiff extends FileBase {
                         throw new IOException("TILE_BYTE_COUNTS has illegal type = " + type + "\n");
                     }
 
-                    if (chunky) {
-
-                        if (tilesPerImage != count) {
-                            throw new IOException("Count fields do not agree in TILE_OFFSETS and TILE_BYTE_COUNTS");
-                        }
-                    } else {
-
-                        if ((tilesPerImage * samplesPerPixel) != count) {
-                            throw new IOException("Count fields do not agree in TILE_OFFSETS and TILE_BYTE_COUNTS");
-                        }
+                    if (tilesPerImage != count) {
+                        throw new IOException("Count fields do not agree in TILE_OFFSETS and TILE_BYTE_COUNTS");
                     }
 
                     if (debuggingFileIO) {
@@ -2592,10 +3318,23 @@ public class FileTiff extends FileBase {
                               Preferences.DEBUG_FILEIO);
         }
 
-        if (IFDoffsets[imageSlice] == 0) {
+        if ((IFDoffsets[imageSlice] <= 0) || (IFDoffsets[imageSlice] >= fileLength)) {
             return false; // Done reading images
         }
+        
+        // Make sure the next IFD entry starts with a valid number of directory entries 
+        // before considering it as valid.
+        saveLocus = raFile.getFilePointer();
+        raFile.seek(IFDoffsets[imageSlice]);
+        
+        nDirEntries = getUnsignedShort(endianess);
 
+        if ((nDirEntries <= 0) || (nDirEntries >= 100)) {
+            raFile.seek(saveLocus);
+            return false;
+        }
+
+        raFile.seek(saveLocus);
         return true; // Read more IFDs (ie. images)
     }
 
@@ -2633,6 +3372,38 @@ public class FileTiff extends FileBase {
         // ben mod: try calculating total length you'd need to read in ALL at one time
         int firstIndex = ((Index) (dataOffsets[slice].elementAt(0))).index;
         int lastIndex = ((Index) (dataOffsets[slice].elementAt(nIndex - 1))).index;
+        
+        // Buffers needed if photometric is YCbCr
+        int YBuffer[] = null;
+        int CbInBuffer[] = null;
+        int CrInBuffer[] = null;
+        int CbCrXSize;
+        int CbCrYSize;
+        int CbCrInSize;
+        int Y00;
+        int Y01;
+        int Y10;
+        int Y11;
+        int Cb00;
+        int Cr00;
+        int halfXDim = xDim/2;
+        int x = 0;
+        int y = 0;
+        
+        if (isYCbCr) {
+            YBuffer = new int[buffer.length/4];
+            CbCrXSize = xDim/YCbCrSubsampleHoriz;
+            if ((xDim % YCbCrSubsampleHoriz) != 0) {
+                CbCrXSize++;
+            }
+            CbCrYSize = yDim/YCbCrSubsampleVert;
+            if ((yDim % YCbCrSubsampleVert) != 0) {
+                CbCrYSize++;
+            }
+            CbCrInSize = CbCrXSize * CbCrYSize;
+            CbInBuffer = new int[CbCrInSize];
+            CrInBuffer = new int[CbCrInSize];
+        }
 
         if (((Index) (dataOffsets[slice].elementAt(nIndex - 1))).byteCount == 0) {
 
@@ -2674,8 +3445,8 @@ public class FileTiff extends FileBase {
 
         int currentIndex = 0;
 
-        // System.err.println("first index: " + firstIndex + ", last index: " + lastIndex + ", totalLength: " +
-        // totalLength);
+        //System.err.println("first index: " + firstIndex + ", last index: " + lastIndex + ", totalLength: " +
+        //totalLength);
         // System.err.println("packbit is: " + packBit);
         raFile.seek(firstIndex);
         raFile.read(byteBuffer, 0, totalLength);
@@ -2687,11 +3458,12 @@ public class FileTiff extends FileBase {
 
                 // System.err.println("Seeking to: " + ( (Index) (dataOffsets[slice].elementAt(idx))).index);
                 currentIndex = ((Index) (dataOffsets[slice].elementAt(idx))).index - firstIndex;
+                //System.out.println("CurrentIndex = " + currentIndex);
 
                 // raFile.seek( ( (Index) (dataOffsets[slice].elementAt(idx))).index);
                 nBytes = ((Index) (dataOffsets[slice].elementAt(idx))).byteCount;
 
-                // System.err.println("doing nBytes: " + nBytes);
+                //System.err.println("doing nBytes: " + nBytes);
                 if (nBytes == 0) {
                     nBytes = buffer.length;
                 }
@@ -2701,16 +3473,12 @@ public class FileTiff extends FileBase {
                 switch (fileInfo.getDataType()) {
 
                     case ModelStorageBase.BOOLEAN:
-                        nLength = 8 * ((buffer.length + 63) >> 6); // new BitSet(size) = new long[(size+63)>>6];
-
-                        // byteBuffer = new byte[nLength];
-                        raFile.seek(((Index) (dataOffsets[slice].elementAt(idx))).index);
-                        raFile.read(byteBuffer, 0, nLength);
+                        
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
 
-                        for (j = 0; j < nBytes; j++, i++) {
+                        for (j = 0; j < 8* totalLength; j++, i++) {
 
                             if (((i + progress) % mod) == 0) {
                                 fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
@@ -2821,8 +3589,7 @@ public class FileTiff extends FileBase {
                         else if (packBit == true) {
 
                             // System.err.println("doing packbit UBYTE");
-                            byteBuffer = new byte[nBytes];
-
+                            // byteBuffer = new byte[nBytes];
                             // raFile.read(byteBuffer, 0, nBytes);
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
@@ -3028,7 +3795,106 @@ public class FileTiff extends FileBase {
                         break;
 
                     case ModelStorageBase.ARGB:
-                        if ((chunky == true) && (packBit == false)) {
+                        if (isYCbCr) {
+                            if (chunky == true) {
+                                
+                                if ((YCbCrSubsampleHoriz == 2) && (YCbCrSubsampleVert == 2)) {
+                                    // This is the default subsampling
+                                    for (j = 0; j < nBytes; j += 6) {
+                                        Y00 = getUnsignedByte(byteBuffer, j + currentIndex);
+                                        Y01 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+                                        Y10 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
+                                        Y11 = getUnsignedByte(byteBuffer, j + currentIndex + 3);
+                                        Cb00 = getUnsignedByte(byteBuffer, j + currentIndex + 4);
+                                        Cr00 = getUnsignedByte(byteBuffer, j + currentIndex + 5);
+                                        if ((x < xDim) && (y < yDim)) {
+                                            YBuffer[y*xDim + x] = Y00;
+                                            CbInBuffer[y*halfXDim/2 + x/2] = Cb00;
+                                            CrInBuffer[y*halfXDim/2 + x/2] = Cr00;
+                                        }
+                                        if (((x+1) < xDim) && (y < yDim)) {
+                                            YBuffer[y*xDim + x + 1] = Y01;
+                                        }
+                                        if ((x < xDim) && ((y+1) < yDim)) {
+                                            YBuffer[(y+1)*xDim + x] = Y10;
+                                        }
+                                        if (((x+1) < xDim) && ((y+1) < yDim)) {
+                                            YBuffer[(y+1)*xDim + x + 1] = Y11;
+                                        }
+                                            
+                                        x += 2;
+                                        if (x >= xDim) {
+                                            x = 0;
+                                            y += 2;
+                                        }
+                                    }
+                                } // if ((YCbCrSubsampleHoriz == 2) && (YCbCrSubsampleVert == 2))
+                                else if ((YCbCrSubsampleHoriz == 2) && (YCbCrSubsampleVert == 1)) {
+                                    for (j = 0; j < nBytes; j += 4) {
+                                        Y00 = getUnsignedByte(byteBuffer, j + currentIndex);
+                                        Y01 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+                                        Cb00 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
+                                        Cr00 = getUnsignedByte(byteBuffer, j + currentIndex + 3);
+                                        if ((x < xDim) && (y < yDim)) {
+                                            YBuffer[y*xDim + x] = Y00;
+                                            CbInBuffer[y*halfXDim + x/2] = Cb00;
+                                            CrInBuffer[y*halfXDim + x/2] = Cr00;
+                                        }
+                                        if (((x+1) < xDim) && (y < yDim)) {
+                                            YBuffer[y*xDim + x + 1] = Y01;
+                                        }
+                                            
+                                        x += 2;
+                                        if (x >= xDim) {
+                                            x = 0;
+                                            y++;
+                                        }
+                                    }    
+                                } // else if ((YCbCrSubsampleHoriz == 2) && (YCbCrSubsampleVert == 1))
+                                else if ((YCbCrSubsampleHoriz == 1) && (YCbCrSubsampleVert == 2)) {
+                                    for (j = 0; j < nBytes; j += 4) {
+                                        Y00 = getUnsignedByte(byteBuffer, j + currentIndex);
+                                        Y10 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+                                        Cb00 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
+                                        Cr00 = getUnsignedByte(byteBuffer, j + currentIndex + 3);
+                                        if ((x < xDim) && (y < yDim)) {
+                                            YBuffer[y*xDim + x] = Y00;
+                                            CbInBuffer[y*xDim/2 + x] = Cb00;
+                                            CrInBuffer[y*xDim/2 + x] = Cr00;
+                                        }
+                                        if ((x < xDim) && ((y+1) < yDim)) {
+                                            YBuffer[(y+1)*xDim + x] = Y10;
+                                        }
+                                            
+                                        x++;
+                                        if (x == xDim) {
+                                            x = 0;
+                                            y += 2;
+                                        }
+                                    }    
+                                } // else if ((YCbCrSubsampleHoriz == 1) && (YCbCrSubsampleVert == 2))
+                                else if ((YCbCrSubsampleHoriz == 1) && (YCbCrSubsampleVert == 1)) {
+                                    for (j = 0; j < nBytes; j += 3) {
+                                        Y00 = getUnsignedByte(byteBuffer, j + currentIndex);
+                                        Cb00 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+                                        Cr00 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
+                                        if ((x < xDim) && (y < yDim)) {
+                                            YBuffer[y*xDim + x] = Y00;
+                                            CbInBuffer[y*halfXDim/2 + x/2] = Cb00;
+                                            CrInBuffer[y*halfXDim/2 + x/2] = Cr00;
+                                        }
+                                            
+                                        x++;
+                                        if (x == xDim) {
+                                            x = 0;
+                                            y++;
+                                        }
+                                    }        
+                                } // else if ((YCbCrSubsampleHoriz == 1) && (YCbCrSubsampleVert == 1))
+                                
+                            } // if (chunky == true)    
+                        } // if (isYCbCr)
+                        else if ((chunky == true) && (packBit == false)) {
 
                             // if (byteBuffer == null)
                             // byteBuffer = new byte[buffer.length];
@@ -3358,6 +4224,9 @@ public class FileTiff extends FileBase {
                 throw error;
             }
         }
+        if (isYCbCr) {
+            YCbCrtoRGB(buffer, YBuffer, CbInBuffer, CrInBuffer);
+        }
     }
 
     /**
@@ -3469,7 +4338,7 @@ public class FileTiff extends FileBase {
     private void readTileBuffer(int slice, float[] buffer) throws IOException {
         int a, i, j;
         int iCount, iNext;
-        int b1, b2, b3, b4;
+        int b1, b2, b3, b4, b5, b6, b7, b8;
         long progress, progressLength, mod;
         int nBytes;
         int nLength;
@@ -3481,6 +4350,42 @@ public class FileTiff extends FileBase {
         yTile = 0;
         x = 0;
         y = 0;
+        
+        int planarRGB = 0; // Use this for planar RGB where you must read a stripsPerImage
+                           // number of red strips, followed by a stripsPerImage number of
+                           // green strips, followed by a stripsPerImage number of blue strips.
+        int stripsPerImage = tilesPerSlice/3; // used for planar RGB
+        // Buffers needed if photometric is YCbCr
+        int YBuffer[] = null;
+        int CbInBuffer[] = null;
+        int CrInBuffer[] = null;
+        int CbCrXSize;
+        int CbCrYSize;
+        int CbCrInSize;
+        int Y00;
+        int Y01;
+        int Y10;
+        int Y11;
+        int Cb00;
+        int Cr00;
+        int h;
+        int w;
+        int halfXDim = xDim/2;
+        
+        if (isYCbCr) {
+            YBuffer = new int[buffer.length/4];
+            CbCrXSize = xDim/YCbCrSubsampleHoriz;
+            if ((xDim % YCbCrSubsampleHoriz) != 0) {
+                CbCrXSize++;
+            }
+            CbCrYSize = yDim/YCbCrSubsampleVert;
+            if ((yDim % YCbCrSubsampleVert) != 0) {
+                CbCrYSize++;
+            }
+            CbCrInSize = CbCrXSize * CbCrYSize;
+            CbInBuffer = new int[CbCrInSize];
+            CrInBuffer = new int[CbCrInSize];
+        }
 
         for (a = 0; a < tilesPerSlice; a++) {
 
@@ -4246,6 +5151,461 @@ public class FileTiff extends FileBase {
                         break;
 
                     case ModelStorageBase.ARGB:
+                        if (isYCbCr) {
+                            if (chunky == true) {
+                                
+                                if (byteBuffer == null) {
+    
+                                    if (lzwCompression) {
+                                        byteBuffer = new byte[tileMaxByteCount];
+                                    } else {
+                                        byteBuffer = new byte[nBytes];
+                                    }
+                                }
+    
+                                // System.err.println("About to read " + nBytes + " bytes");
+                                raFile.read(byteBuffer, 0, nBytes);
+    
+                                // System.err.println("________");
+                                progress = slice * xDim * yDim;
+                                progressLength = imageSlice * xDim * yDim;
+                                mod = progressLength / 100;
+    
+    
+                                if (lzwCompression) {
+    
+                                    //System.err.println("Read " + nBytes + " from raFile");
+                                    if (decomp == null) {
+                                        decomp = new byte[tileWidth * tileLength * samplesPerPixel];
+                                    }
+    
+                                    lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                }
+                                else {
+                                    decomp = byteBuffer;
+                                }
+                                    
+                                //System.err.println("Decoded byte length: " + decomp.length);
+                                if ((YCbCrSubsampleHoriz == 2) && (YCbCrSubsampleVert == 2)) {
+                                    // This is the default subsampling
+                                    for (j = 0, h = 0; h < tileLength; h += 2) {
+                                        for (w = 0; w < tileWidth; w += 2, j += 6) {
+                                                Y00 = getUnsignedByte(decomp, j);
+                                                Y01 = getUnsignedByte(decomp, j+1);
+                                                Y10 = getUnsignedByte(decomp, j+2);
+                                                Y11 = getUnsignedByte(decomp, j+3);
+                                                Cb00 = getUnsignedByte(decomp, j+4);
+                                                Cr00 = getUnsignedByte(decomp, j+5);
+                                                if ((x < xDim) && (y < yDim)) {
+                                                    YBuffer[y*xDim + x] = Y00;
+                                                    CbInBuffer[y*halfXDim/2 + x/2] = Cb00;
+                                                    CrInBuffer[y*halfXDim/2 + x/2] = Cr00;
+                                                }
+                                                if (((x+1) < xDim) && (y < yDim)) {
+                                                    YBuffer[y*xDim + x + 1] = Y01;
+                                                }
+                                                if ((x < xDim) && ((y+1) < yDim)) {
+                                                    YBuffer[(y+1)*xDim + x] = Y10;
+                                                }
+                                                if (((x+1) < xDim) && ((y+1) < yDim)) {
+                                                    YBuffer[(y+1)*xDim + x + 1] = Y11;
+                                                }
+                                            
+                                            x += 2;
+                                            if (x >= ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y += 2;
+                                            }
+                                        }
+                                    }
+                                } // if ((YCbCrSubsampleHoriz == 2) && (YCbCrSubsampleVert == 2))
+                                else if ((YCbCrSubsampleHoriz == 2) && (YCbCrSubsampleVert == 1)) {
+                                    for (j = 0, h = 0; h < tileLength; h ++) {
+                                        for (w = 0; w < tileWidth; w += 2, j += 4) {
+                                                Y00 = getUnsignedByte(decomp, j);
+                                                Y01 = getUnsignedByte(decomp, j+1);
+                                                Cb00 = getUnsignedByte(decomp, j+2);
+                                                Cr00 = getUnsignedByte(decomp, j+3);
+                                                if ((x < xDim) && (y < yDim)) {
+                                                    YBuffer[y*xDim + x] = Y00;
+                                                    CbInBuffer[y*halfXDim + x/2] = Cb00;
+                                                    CrInBuffer[y*halfXDim + x/2] = Cr00;
+                                                }
+                                                if (((x+1) < xDim) && (y < yDim)) {
+                                                    YBuffer[y*xDim + x + 1] = Y01;
+                                                }
+                                            
+                                            x += 2;
+                                            if (x >= ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        }
+                                    }    
+                                } // else if ((YCbCrSubsampleHoriz == 2) && (YCbCrSubsampleVert == 1))
+                                else if ((YCbCrSubsampleHoriz == 1) && (YCbCrSubsampleVert == 2)) {
+                                    for (j = 0, h = 0; h < tileLength; h += 2) {
+                                        for (w = 0; w < tileWidth; w++, j += 4) {
+                                                Y00 = getUnsignedByte(decomp, j);
+                                                Y10 = getUnsignedByte(decomp, j+1);
+                                                Cb00 = getUnsignedByte(decomp, j+2);
+                                                Cr00 = getUnsignedByte(decomp, j+3);
+                                                if ((x < xDim) && (y < yDim)) {
+                                                    YBuffer[y*xDim + x] = Y00;
+                                                    CbInBuffer[y*xDim/2 + x] = Cb00;
+                                                    CrInBuffer[y*xDim/2 + x] = Cr00;
+                                                }
+                                                if ((x < xDim) && ((y+1) < yDim)) {
+                                                    YBuffer[(y+1)*xDim + x] = Y10;
+                                                }
+                                            
+                                            x++;
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y += 2;
+                                            }
+                                        }
+                                    }    
+                                } // else if ((YCbCrSubsampleHoriz == 1) && (YCbCrSubsampleVert == 2))
+                                else if ((YCbCrSubsampleHoriz == 1) && (YCbCrSubsampleVert == 1)) {
+                                    for (j = 0, h = 0; h < tileLength; h ++) {
+                                        for (w = 0; w < tileWidth; w ++, j += 3) {
+                                            if ((x < xDim) && (y < yDim)) {
+                                                Y00 = getUnsignedByte(decomp, j);
+                                                Cb00 = getUnsignedByte(decomp, j+1);
+                                                Cr00 = getUnsignedByte(decomp, j+2);
+                                                YBuffer[y*xDim + x] = Y00;
+                                                CbInBuffer[y*xDim + x] = Cb00;
+                                                CrInBuffer[y*xDim + x] = Cr00;
+                                            }
+                                            
+                                            x++;
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        }
+                                    }        
+                                } // else if ((YCbCrSubsampleHoriz == 1) && (YCbCrSubsampleVert == 1))
+                                xTile++;
+                                
+                                if (xTile == tilesAcross) {
+                                    xTile = 0;
+                                    yTile++;
+                                }
+    
+                                x = xTile * tileWidth;
+                                y = yTile * tileLength;
+                            } // if (chunky == true)    
+                        } // if (isYCbCr)
+                        else { //  notYCbCr
+                            if (chunky == true) {
+    
+                                if (byteBuffer == null) {
+    
+                                    if (lzwCompression) {
+                                        byteBuffer = new byte[tileMaxByteCount];
+                                    } else {
+                                        byteBuffer = new byte[nBytes];
+                                    }
+                                }
+    
+                                // System.err.println("About to read " + nBytes + " bytes");
+                                raFile.read(byteBuffer, 0, nBytes);
+    
+                                // System.err.println("________");
+                                progress = slice * xDim * yDim;
+                                progressLength = imageSlice * xDim * yDim;
+                                mod = progressLength / 100;
+    
+    
+                                if (lzwCompression) {
+    
+                                    //System.err.println("Read " + nBytes + " from raFile");
+                                    if (decomp == null) {
+                                        decomp = new byte[tileWidth * tileLength * samplesPerPixel];
+                                    }
+    
+                                    lzwDecoder.decode(byteBuffer, decomp, tileLength);
+    
+                                    //System.err.println("Decoded byte length: " + decomp.length);
+                                    if (samplesPerPixel == 3) {
+    
+                                        for (j = 0; j < decomp.length; j += 3) {
+    
+                                            if ((x < xDim) && (y < yDim)) {
+    
+                                                if (((i + progress) % mod) == 0) {
+                                                    fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                            progressLength * 100));
+                                                }
+    
+                                                buffer[4 * (x + (y * xDim))] = 255;
+                                                buffer[(4 * (x + (y * xDim))) + 1] = getUnsignedByte(decomp, j);
+                                                buffer[(4 * (x + (y * xDim))) + 2] = getUnsignedByte(decomp, j + 1);
+                                                buffer[(4 * (x + (y * xDim))) + 3] = getUnsignedByte(decomp, j + 2);
+                                                i++;
+                                            }
+    
+                                            x++;
+    
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        }
+                                    } // if (samplesPerPixel == 3)
+                                    else if (samplesPerPixel == 4) {
+    
+                                        for (j = 0; j < decomp.length; j += 4) {
+    
+                                            if ((x < xDim) && (y < yDim)) {
+    
+                                                if (((i + progress) % mod) == 0) {
+                                                    fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                            progressLength * 100));
+                                                }
+    
+                                                buffer[4 * (x + (y * xDim))] = getUnsignedByte(decomp, j + 3);
+                                                buffer[(4 * (x + (y * xDim))) + 1] = getUnsignedByte(decomp, j);
+                                                buffer[(4 * (x + (y * xDim))) + 2] = getUnsignedByte(decomp, j + 1);
+                                                buffer[(4 * (x + (y * xDim))) + 3] = getUnsignedByte(decomp, j + 2);
+                                                i++;
+                                            }
+    
+                                            x++;
+    
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        }
+                                    }
+                                } else {
+    
+                                    for (j = 0; j < nBytes; j += 3) {
+    
+                                        if ((x < xDim) && (y < yDim)) {
+    
+                                            if (((i + progress) % mod) == 0) {
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                        progressLength * 100));
+                                            }
+    
+                                            buffer[4 * (x + (y * xDim))] = 255;
+                                            buffer[(4 * (x + (y * xDim))) + 1] = getUnsignedByte(byteBuffer, j);
+                                            buffer[(4 * (x + (y * xDim))) + 2] = getUnsignedByte(byteBuffer, j + 1);
+                                            buffer[(4 * (x + (y * xDim))) + 3] = getUnsignedByte(byteBuffer, j + 2);
+                                            i++;
+                                        } // if ((x < xDim) && (y < yDim))
+    
+                                        x++;
+    
+                                        if (x == ((xTile + 1) * tileWidth)) {
+                                            x = xTile * tileWidth;
+                                            y++;
+                                        }
+                                    } // for (j = 0; j < nBytes; j+= 3)
+                                }
+    
+                                xTile++;
+    
+                                if (xTile == tilesAcross) {
+                                    xTile = 0;
+                                    yTile++;
+                                }
+    
+                                x = xTile * tileWidth;
+                                y = yTile * tileLength;
+                            } // if (chunky == true)
+                            else { // not chunky RRRRR, GGGGG, BBBBB
+                                if (byteBuffer == null) {
+                                    
+                                    if (lzwCompression) {
+                                        byteBuffer = new byte[tileMaxByteCount];
+                                    } else {
+                                        byteBuffer = new byte[nBytes];
+                                    }
+                                }
+    
+                                // System.err.println("About to read " + nBytes + " bytes");
+                                raFile.read(byteBuffer, 0, nBytes);
+    
+                                // System.err.println("________");
+                                progress = slice * xDim * yDim;
+                                progressLength = imageSlice * xDim * yDim;
+                                mod = progressLength / 100;
+    
+    
+                                if (lzwCompression) {
+    
+                                    //System.err.println("Read " + nBytes + " from raFile");
+                                    if (decomp == null) {
+                                        decomp = new byte[tileWidth * tileLength];
+                                    }
+    
+                                    lzwDecoder.decode(byteBuffer, decomp, tileLength);
+    
+                                    //System.err.println("Decoded byte length: " + decomp.length);
+                                    if (planarRGB < stripsPerImage) {
+    
+                                        for (j = 0; j < decomp.length; j++, i += 4) {
+    
+                                            if ((x < xDim) && (y < yDim)) {
+    
+                                                if (((i + progress) % mod) == 0) {
+                                                    fireProgressStateChanged(Math.round((float) (i/3 + progress) /
+                                                                                            progressLength * 100));
+                                                }
+    
+                                                buffer[4 * (x + (y * xDim))] = 255;
+                                                buffer[(4 * (x + (y * xDim))) + 1] = getUnsignedByte(decomp, j);
+                                            }
+    
+                                            x++;
+    
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        } // for (j = 0; j < decomp.length; j++, i += 4)
+                                    } // if (planarRGB < stripsPerImage)
+                                    else if (planarRGB < (2 * stripsPerImage)) {
+                                        for (j = 0; j < decomp.length; j++, i += 4) {
+                                            
+                                            if ((x < xDim) && (y < yDim)) {
+    
+                                                if (((i + progress) % mod) == 0) {
+                                                    fireProgressStateChanged(Math.round((float) (i/3 + buffer.length/3 + 
+                                                                             progress) / progressLength * 100));
+                                                }
+    
+                                                buffer[(4 * (x + (y * xDim))) + 2] = getUnsignedByte(decomp, j);
+                                            }
+    
+                                            x++;
+    
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        } // for (j = 0; j < decomp.length; j++, i += 4)    
+                                    } // else if (planarRGB < (2 * stripsPerImage))
+                                    else { // planarRGB >= (2 * stripsPerImage)
+                                        for (j = 0; j < decomp.length; j++, i += 4) {
+                                            
+                                            if ((x < xDim) && (y < yDim)) {
+    
+                                                if (((i + progress) % mod) == 0) {
+                                                    fireProgressStateChanged(Math.round((float) (i/3 + 
+                                                                             2*buffer.length/3 + progress) /
+                                                                             progressLength * 100));
+                                                }
+    
+                                                buffer[(4 * (x + (y * xDim))) + 3] = getUnsignedByte(decomp, j);
+                                            }
+    
+                                            x++;
+    
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        } // for (j = 0; j < decomp.length; j++, i += 4)    
+                                    } // else planarRGB >= (2 * stripsPerImage)
+                                } else { // not lzwCompression
+                                    if (planarRGB < stripsPerImage) {
+    
+                                        for (j = 0; j < nBytes; j++, i += 4) {
+        
+                                            if ((x < xDim) && (y < yDim)) {
+        
+                                                if (((i + progress) % mod) == 0) {
+                                                    fireProgressStateChanged(Math.round((float) (i/3 + progress) /
+                                                                                            progressLength * 100));
+                                                }
+        
+                                                buffer[4 * (x + (y * xDim))] = 255;
+                                                buffer[(4 * (x + (y * xDim))) + 1] = getUnsignedByte(byteBuffer, j);
+                                            } // if ((x < xDim) && (y < yDim))
+        
+                                            x++;
+        
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        } // for (j = 0; j < nBytes; j++, i += 4)
+                                    } // if (planarRGB < stripsPerImage)
+                                    else if (planarRGB < (2 * stripsPerImage)) {
+                                        for (j = 0; j < nBytes; j++, i += 4) {
+                                            
+                                            if ((x < xDim) && (y < yDim)) {
+        
+                                                if (((i + progress) % mod) == 0) {
+                                                    fireProgressStateChanged(Math.round((float) (i/3 + 
+                                                                             buffer.length/3 + progress) /
+                                                                                            progressLength * 100));
+                                                }
+        
+                                                buffer[(4 * (x + (y * xDim))) + 2] = getUnsignedByte(byteBuffer, j);
+                                            } // if ((x < xDim) && (y < yDim))
+        
+                                            x++;
+        
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        } // for (j = 0; j < nBytes; j++, i += 4)    
+                                    } // else if (planarRGB < (2 * stripsPerImage))
+                                    else { // planarRGB >= (2 * stripsPerImage)
+                                        for (j = 0; j < nBytes; j++, i += 4) {
+                                            
+                                            if ((x < xDim) && (y < yDim)) {
+        
+                                                if (((i + progress) % mod) == 0) {
+                                                    fireProgressStateChanged(Math.round((float) (i/3 + 
+                                                                             2*buffer.length/3 + progress) /
+                                                                                            progressLength * 100));
+                                                }
+        
+                                                buffer[(4 * (x + (y * xDim))) + 3] = getUnsignedByte(byteBuffer, j);
+                                            } // if ((x < xDim) && (y < yDim))
+        
+                                            x++;
+        
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        } // for (j = 0; j < nBytes; j++, i += 4)     
+                                    } // else planarRGB >= (2 * stripsPerImage)
+                                } // else not lzwCompression
+    
+                                xTile++;
+    
+                                if (xTile == tilesAcross) {
+                                    xTile = 0;
+                                    yTile++;
+                                }
+    
+                                x = xTile * tileWidth;
+                                y = yTile * tileLength;  
+                                planarRGB++;
+                                if ((planarRGB == stripsPerImage) || (planarRGB == 2*stripsPerImage)) {
+                                    i = 0;
+                                    x = 0;
+                                    y = 0;
+                                    xTile = 0;
+                                    yTile = 0;
+                                }
+                            } // not chunky
+                        } // else not YCbCr
+
+                        break;
+                        
+                    case ModelStorageBase.ARGB_USHORT:
                         if (chunky == true) {
 
                             if (byteBuffer == null) {
@@ -4270,7 +5630,7 @@ public class FileTiff extends FileBase {
 
                                 // System.err.println("Read " + nBytes + " from raFile");
                                 if (decomp == null) {
-                                    decomp = new byte[tileWidth * tileLength * samplesPerPixel];
+                                    decomp = new byte[tileWidth * tileLength * samplesPerPixel * 2];
                                 }
 
                                 lzwDecoder.decode(byteBuffer, decomp, tileLength);
@@ -4278,7 +5638,7 @@ public class FileTiff extends FileBase {
                                 // System.err.println("Decoded byte length: " + decomp.length);
                                 if (samplesPerPixel == 3) {
 
-                                    for (j = 0; j < decomp.length; j += 3) {
+                                    for (j = 0; j < decomp.length; j += 6) {
 
                                         if ((x < xDim) && (y < yDim)) {
 
@@ -4286,11 +5646,23 @@ public class FileTiff extends FileBase {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                         progressLength * 100));
                                             }
-
-                                            buffer[4 * (x + (y * xDim))] = 255;
-                                            buffer[(4 * (x + (y * xDim))) + 1] = getUnsignedByte(decomp, j);
-                                            buffer[(4 * (x + (y * xDim))) + 2] = getUnsignedByte(decomp, j + 1);
-                                            buffer[(4 * (x + (y * xDim))) + 3] = getUnsignedByte(decomp, j + 2);
+                                            buffer[4 * (x + (y * xDim))] = 65535;
+                                            b1 = getUnsignedByte(decomp, j);
+                                            b2 = getUnsignedByte(decomp, j+1);
+                                            b3 = getUnsignedByte(decomp, j+2);
+                                            b4 = getUnsignedByte(decomp, j+3);
+                                            b5 = getUnsignedByte(decomp, j+4);
+                                            b6 = getUnsignedByte(decomp, j+5);
+                                            if (endianess) {
+                                                buffer[(4 * (x + (y * xDim))) + 1] = ((b1 << 8) + b2);
+                                                buffer[(4 * (x + (y * xDim))) + 2] = ((b3 << 8) + b4);
+                                                buffer[(4 * (x + (y * xDim))) + 3] = ((b5 << 8) + b6);
+                                            }
+                                            else {
+                                                buffer[(4 * (x + (y * xDim))) + 1] = ((b2 << 8) + b1);
+                                                buffer[(4 * (x + (y * xDim))) + 2] = ((b4 << 8) + b3);
+                                                buffer[(4 * (x + (y * xDim))) + 3] = ((b6 << 8) + b5);    
+                                            }
                                             i++;
                                         }
 
@@ -4304,7 +5676,7 @@ public class FileTiff extends FileBase {
                                 } // if (samplesPerPixel == 3)
                                 else if (samplesPerPixel == 4) {
 
-                                    for (j = 0; j < decomp.length; j += 4) {
+                                    for (j = 0; j < decomp.length; j += 8) {
 
                                         if ((x < xDim) && (y < yDim)) {
 
@@ -4312,11 +5684,26 @@ public class FileTiff extends FileBase {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                         progressLength * 100));
                                             }
-
-                                            buffer[4 * (x + (y * xDim))] = getUnsignedByte(decomp, j + 3);
-                                            buffer[(4 * (x + (y * xDim))) + 1] = getUnsignedByte(decomp, j);
-                                            buffer[(4 * (x + (y * xDim))) + 2] = getUnsignedByte(decomp, j + 1);
-                                            buffer[(4 * (x + (y * xDim))) + 3] = getUnsignedByte(decomp, j + 2);
+                                            b1 = getUnsignedByte(decomp, j);
+                                            b2 = getUnsignedByte(decomp, j+1);
+                                            b3 = getUnsignedByte(decomp, j+2);
+                                            b4 = getUnsignedByte(decomp, j+3);
+                                            b5 = getUnsignedByte(decomp, j+4);
+                                            b6 = getUnsignedByte(decomp, j+5);
+                                            b7 = getUnsignedByte(decomp, j+6);
+                                            b8 = getUnsignedByte(decomp, j+7);
+                                            if (endianess) {
+                                                buffer[(4 * (x + (y * xDim)))] = ((b7 << 8) + b8);
+                                                buffer[(4 * (x + (y * xDim))) + 1] = ((b1 << 8) + b2);
+                                                buffer[(4 * (x + (y * xDim))) + 2] = ((b3 << 8) + b4);
+                                                buffer[(4 * (x + (y * xDim))) + 3] = ((b5 << 8) + b6);
+                                            }
+                                            else {
+                                                buffer[(4 * (x + (y * xDim)))] = ((b8 << 8) + b7);
+                                                buffer[(4 * (x + (y * xDim))) + 1] = ((b2 << 8) + b1);
+                                                buffer[(4 * (x + (y * xDim))) + 2] = ((b4 << 8) + b3);
+                                                buffer[(4 * (x + (y * xDim))) + 3] = ((b6 << 8) + b5);    
+                                            }
                                             i++;
                                         }
 
@@ -4330,7 +5717,7 @@ public class FileTiff extends FileBase {
                                 }
                             } else {
 
-                                for (j = 0; j < nBytes; j += 3) {
+                                for (j = 0; j < nBytes; j += 6) {
 
                                     if ((x < xDim) && (y < yDim)) {
 
@@ -4338,11 +5725,23 @@ public class FileTiff extends FileBase {
                                             fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                     progressLength * 100));
                                         }
-
-                                        buffer[4 * (x + (y * xDim))] = 255;
-                                        buffer[(4 * (x + (y * xDim))) + 1] = getUnsignedByte(byteBuffer, j);
-                                        buffer[(4 * (x + (y * xDim))) + 2] = getUnsignedByte(byteBuffer, j + 1);
-                                        buffer[(4 * (x + (y * xDim))) + 3] = getUnsignedByte(byteBuffer, j + 2);
+                                        buffer[4 * (x + (y * xDim))] = 65535;
+                                        b1 = getUnsignedByte(decomp, j);
+                                        b2 = getUnsignedByte(decomp, j+1);
+                                        b3 = getUnsignedByte(decomp, j+2);
+                                        b4 = getUnsignedByte(decomp, j+3);
+                                        b5 = getUnsignedByte(decomp, j+4);
+                                        b6 = getUnsignedByte(decomp, j+5);
+                                        if (endianess) {
+                                            buffer[(4 * (x + (y * xDim))) + 1] = ((b1 << 8) + b2);
+                                            buffer[(4 * (x + (y * xDim))) + 2] = ((b3 << 8) + b4);
+                                            buffer[(4 * (x + (y * xDim))) + 3] = ((b5 << 8) + b6);
+                                        }
+                                        else {
+                                            buffer[(4 * (x + (y * xDim))) + 1] = ((b2 << 8) + b1);
+                                            buffer[(4 * (x + (y * xDim))) + 2] = ((b4 << 8) + b3);
+                                            buffer[(4 * (x + (y * xDim))) + 3] = ((b6 << 8) + b5);    
+                                        }
                                         i++;
                                     } // if ((x < xDim) && (y < yDim))
 
@@ -4352,7 +5751,7 @@ public class FileTiff extends FileBase {
                                         x = xTile * tileWidth;
                                         y++;
                                     }
-                                } // for (j = 0; j < nBytes; j+= 3)
+                                } // for (j = 0; j < nBytes; j+= 6)
                             }
 
                             xTile++;
@@ -4374,6 +5773,10 @@ public class FileTiff extends FileBase {
                 throw error;
             }
         } // for (i = 0; i < tilesPerSlice; i++)
+        
+        if (isYCbCr) {
+            YCbCrtoRGB(buffer, YBuffer, CbInBuffer, CrInBuffer);
+        }
 
         decomp = null;
     }

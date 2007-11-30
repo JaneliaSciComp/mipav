@@ -82,7 +82,7 @@ public class VolumeShaderEffect extends ShaderEffect
     /**
      * memory cleanup.
      */
-    public void finalize()
+    public void dispose()
     {
         m_kImageA = null;
         m_kLUTA = null;
@@ -100,22 +100,22 @@ public class VolumeShaderEffect extends ShaderEffect
         }
         if ( m_kOpacityMapA_GM != null )
         {
-            m_kOpacityMapA_GM.finalize();
+            m_kOpacityMapA_GM.dispose();
             m_kOpacityMapA_GM = null;
         }
         if ( m_kOpacityMapTargetA_GM != null )
         {
-            m_kOpacityMapTargetA_GM.finalize();
+            m_kOpacityMapTargetA_GM.dispose();
             m_kOpacityMapTargetA_GM = null;
         }
         if ( m_kVolumeA_GM != null )
         {
-            m_kVolumeA_GM.finalize();
+            m_kVolumeA_GM.dispose();
             m_kVolumeA_GM = null;
         }
         if ( m_kVolumeTargetA_GM != null )
         {
-            m_kVolumeTargetA_GM.finalize();
+            m_kVolumeTargetA_GM.dispose();
             m_kVolumeTargetA_GM = null;
         }
         if ( m_kImageB_GM != null )
@@ -125,122 +125,122 @@ public class VolumeShaderEffect extends ShaderEffect
         }
         if ( m_kOpacityMapB_GM != null )
         {
-            m_kOpacityMapB_GM.finalize();
+            m_kOpacityMapB_GM.dispose();
             m_kOpacityMapB_GM = null;
         }
         if ( m_kOpacityMapTargetB_GM != null )
         {
-            m_kOpacityMapTargetB_GM.finalize();
+            m_kOpacityMapTargetB_GM.dispose();
             m_kOpacityMapTargetB_GM = null;
         }
         if ( m_kVolumeB_GM != null )
         {
-            m_kVolumeB_GM.finalize();
+            m_kVolumeB_GM.dispose();
             m_kVolumeB_GM = null;
         }
         if ( m_kVolumeTargetB_GM != null )
         {
-            m_kVolumeTargetB_GM.finalize();
+            m_kVolumeTargetB_GM.dispose();
             m_kVolumeTargetB_GM = null;
         }
         if ( m_kVolumeA != null )
         {
-            m_kVolumeA.finalize();
+            m_kVolumeA.dispose();
             m_kVolumeA = null;
         }
         if ( m_kNormalA != null )
         {
-            m_kNormalA.finalize();
+            m_kNormalA.dispose();
             m_kNormalA = null;
         }
         if ( m_kColorMapA != null )
         {
-            m_kColorMapA.finalize();
+            m_kColorMapA.dispose();
             m_kColorMapA = null;
         }
         if ( m_kOpacityMapA != null )
         {
-            m_kOpacityMapA.finalize();
+            m_kOpacityMapA.dispose();
             m_kOpacityMapA = null;
         }
         if ( m_kVolumeTargetA != null )
         {
-            m_kVolumeTargetA.finalize();
+            m_kVolumeTargetA.dispose();
             m_kVolumeTargetA = null;
         }
         if ( m_kColorMapTargetA != null )
         {
-            m_kColorMapTargetA.finalize();
+            m_kColorMapTargetA.dispose();
             m_kColorMapTargetA = null;
         }
         if ( m_kOpacityMapTargetA != null )
         {
-            m_kOpacityMapTargetA.finalize();
+            m_kOpacityMapTargetA.dispose();
             m_kOpacityMapTargetA = null;
         }
         if ( m_kNormalMapTargetA != null )
         {
-            m_kNormalMapTargetA.finalize();
+            m_kNormalMapTargetA.dispose();
             m_kNormalMapTargetA = null;
         }
         if ( m_kVolumeB != null )
         {
-            m_kVolumeB.finalize();
+            m_kVolumeB.dispose();
             m_kVolumeB = null;
         }
         if ( m_kNormalB != null )
         {
-            m_kNormalB.finalize();
+            m_kNormalB.dispose();
             m_kNormalB = null;
         }
         if ( m_kColorMapB != null )
         {
-            m_kColorMapB.finalize();
+            m_kColorMapB.dispose();
             m_kColorMapB = null;
         }
         if ( m_kOpacityMapB != null )
         {
-            m_kOpacityMapB.finalize();
+            m_kOpacityMapB.dispose();
             m_kOpacityMapB = null;
         }
         if ( m_kVolumeTargetB != null )
         {
-            m_kVolumeTargetB.finalize();
+            m_kVolumeTargetB.dispose();
             m_kVolumeTargetB = null;
         }
         if ( m_kColorMapTargetB != null )
         {
-            m_kColorMapTargetB.finalize();
+            m_kColorMapTargetB.dispose();
             m_kColorMapTargetB = null;
         }
         if ( m_kOpacityMapTargetB != null )
         {
-            m_kOpacityMapTargetB.finalize();
+            m_kOpacityMapTargetB.dispose();
             m_kOpacityMapTargetB = null;
         }
         if ( m_kNormalMapTargetB != null )
         {
-            m_kNormalMapTargetB.finalize();
+            m_kNormalMapTargetB.dispose();
             m_kNormalMapTargetB = null;
         }
         if ( m_kPShaderMIP != null )
         {
-            m_kPShaderMIP.finalize();
+            m_kPShaderMIP.dispose();
             m_kPShaderMIP = null;
         }
         if ( m_kPShaderDDR != null )
         {
-            m_kPShaderDDR.finalize();
+            m_kPShaderDDR.dispose();
             m_kPShaderDDR = null;
         }
         if ( m_kPShaderCMP != null )
         {
-            m_kPShaderCMP.finalize();
+            m_kPShaderCMP.dispose();
             m_kPShaderCMP = null;
         }
         if ( m_kPShaderSUR != null )
         {
-            m_kPShaderSUR.finalize();;
+            m_kPShaderSUR.dispose();
             m_kPShaderSUR = null;
         }
 
@@ -255,7 +255,7 @@ public class VolumeShaderEffect extends ShaderEffect
         m_afSelfShadow = null;
         m_afGradientMagnitude = null;
 
-        super.finalize();
+        super.dispose();
     }
 
     /**
@@ -376,10 +376,12 @@ public class VolumeShaderEffect extends ShaderEffect
         
         //byte[] aucData = calcImageNormals( m_kImageA );
         
-        byte[] aucData = calcImageNormals();
+       // byte[] aucData = calcImageNormals();
+        /*
         m_kNormalA = new GraphicsImage(GraphicsImage.FormatMode.IT_RGB888,
                                        iXBound,iYBound,iZBound,aucData,
                                        "NormalMapA");
+       */
         m_kPShaderSUR.SetImageName(4, "NormalMapA" );
         m_kPShaderSUR.GetTexture(4).SetFilterType(Texture.FilterType.LINEAR);
         m_kPShaderSUR.GetTexture(4).SetWrapType(0,Texture.WrapType.CLAMP_BORDER);

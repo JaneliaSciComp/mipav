@@ -36,25 +36,25 @@ public class IntrRay3Sphere3f extends Intersector
     /**
      * delete memory
      */
-    public void finalize()
+    public void dispose()
     {
         if ( m_rkRay != null )
         {
-            m_rkRay.finalize();
+            m_rkRay.dispose();
             m_rkRay = null;
         }
         m_rkRay = null;
-        m_rkSphere.finalize();
+        m_rkSphere.dispose();
         if ( m_rkRay != null )
         {
-            m_rkSphere.finalize();
+            m_rkSphere.dispose();
             m_rkSphere = null;
         }
         for ( int i = 0; i < 2; i++ )
         {
             if ( m_akPoint[i] != null )
             {
-                m_akPoint[i].finalize();
+                m_akPoint[i].dispose();
                 m_akPoint[i] = null;
             }
         }

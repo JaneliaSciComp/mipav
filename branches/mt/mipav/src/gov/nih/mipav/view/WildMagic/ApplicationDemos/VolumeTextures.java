@@ -87,7 +87,7 @@ public class VolumeTextures extends JavaApplication3D
     }
 
     public void display(GLAutoDrawable arg0) {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 
         MeasureTime();
         
@@ -112,7 +112,7 @@ public class VolumeTextures extends JavaApplication3D
         m_pkRenderer.DisplayBackBuffer();
         UpdateFrameCount();
 
-        ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
 
         //ApplicationGUI.TheApplicationGUI.Display();
     }
@@ -154,11 +154,11 @@ public class VolumeTextures extends JavaApplication3D
         InitializeCameraMotion(0.005f,0.002f);
         InitializeObjectMotion(m_spkScene);
 
-        ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         if (iWidth > 0 && iHeight > 0)
         {
             if (m_pkRenderer != null)
@@ -169,7 +169,7 @@ public class VolumeTextures extends JavaApplication3D
             m_iWidth = iWidth;
             m_iHeight = iHeight;
         }
-        ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
     /*

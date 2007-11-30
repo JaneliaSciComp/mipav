@@ -18,7 +18,8 @@ import javax.swing.*;
 
 /**
  * This class calculates a properties of an image defined by a VOI. Attributes include: volume, area, number of pixels,
- * center of mass, average pixel intensity, standard deviation of intensity, eccentricity, and principalAxis.
+ * center of mass, average pixel intensity, standard deviation of intensity, eccentricity, ,principalAxis,
+ * coefficient of skewness, and coefficient of kurtosis.
  *
  * @version  0.1 Feb 11, 1998
  * @author   Matthew J. McAuliffe, Ph.D.
@@ -445,6 +446,70 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     public float getVolume() {
         return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.volumeDescription)).floatValue();
     } // {return volume;}
+    
+    /**
+     * Gets the coefficient of skewness of the pixel values in the VOI
+     * @return
+     */
+    public float getSkewness() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.skewnessDescription)).floatValue();
+    }
+    
+    /**
+     * Gets the coefficient of skewness of the red pixel values in the VOI
+     * @return
+     */
+    public float getSkewnessR() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.skewnessDescription + "Red")).floatValue();
+    }
+    
+    /**
+     * Gets the coefficient of skewness of the green pixel values in the VOI
+     * @return
+     */
+    public float getSkewnessG() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.skewnessDescription + "Green")).floatValue();
+    }
+    
+    /**
+     * Gets the coefficient of skewness of the blue pixel values in the VOI
+     * @return
+     */
+    public float getSkewnessB() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.skewnessDescription + "Blue")).floatValue();
+    }
+    
+    /**
+     * Gets the coefficient of kurtosis of the pixel values in the VOI
+     * @return
+     */
+    public float getKurtosis() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.kurtosisDescription)).floatValue();
+    }
+    
+    /**
+     * Gets the coefficient of kurtosis of the red pixel values in the VOI
+     * @return
+     */
+    public float getKurtosisR() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.kurtosisDescription + "Red")).floatValue();
+    }
+    
+    /**
+     * Gets the coefficient of kurtosis of the green pixel values in the VOI
+     * @return
+     */
+    public float getKurtosisG() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.kurtosisDescription + "Green")).floatValue();
+    }
+    
+    /**
+     * Gets the coefficient of kurtosis of the blue pixel values in the VOI
+     * @return
+     */
+    public float getKurtosisB() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.kurtosisDescription + "Blue")).floatValue();
+    }
 
     /**
      * Accessor that indicates if the source image is a color image.
@@ -616,9 +681,21 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         float avgIntenG = 0;
         float avgIntenB = 0;
         float stdDev = 0, stdDevR = 0, stdDevG = 0, stdDevB = 0;
-        float totalStdDev = 0, totalStdDevR = 0, totalStdDevG = 0, totalStdDevB = 0;
-        float sum = 0, sumR = 0, sumG = 0, sumB = 0, area = 0;
+        float skewness = 0, skewnessR = 0, skewnessG = 0, skewnessB = 0;
+        float kurtosis = 0, kurtosisR = 0, kurtosisG = 0, kurtosisB = 0;
+        float R2, R3, R4, G2, G3, G4, B2, B3, B4, s2, s3, s4;
+        float diff, diffR, diffG, diffB;
+        float sum = 0, sumR = 0, sumG = 0, sumB = 0;
+        float sum2 = 0, sumR2 = 0, sumG2 = 0, sumB2 = 0, area = 0;
+        float sum3 = 0, sumR3 = 0, sumG3 = 0, sumB3 = 0;
+        float sum4 = 0, sumR4 = 0, sumG4 = 0, sumB4 = 0;
+        float moment2, moment2R, moment2G, moment2B;
+        float moment3, moment3R, moment3G, moment3B;
+        float moment4, moment4R, moment4G, moment4B;
         float totalSum = 0, totalSumR = 0, totalSumG = 0, totalSumB = 0, totalArea = 0;
+        float totalSum2 = 0, totalSumR2 = 0, totalSumG2 = 0, totalSumB2 = 0;
+        float totalSum3 = 0, totalSumR3 = 0, totalSumG3 = 0, totalSumB3 = 0;
+        float totalSum4 = 0, totalSumR4 = 0, totalSumG4 = 0, totalSumB4 = 0;
         float totalAxis = 0, totalEcc = 0;
         float totalMajorAxis = 0;
         float totalMinorAxis = 0;
@@ -882,8 +959,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                     totalArea += area;
 
-                    // calculate standard deviation
-                    sum = sumR = sumG = sumB = 0;
+                    // calculate standard deviation, coefficient of skewness, and coefficient of kurtosis
+                    sum2 = sumR2 = sumG2 = sumB2 = sum3 = sumR3 = sumG3 = sumB3 = sum4 = sumR4 = sumG4 = sumB4 = 0;
 
                     int cnt = 0;
 
@@ -894,39 +971,106 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
                                     !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
                                     !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
-                                sumR += ((imgBuffer[i + 1] - avgIntenR) * (imgBuffer[i + 1] - avgIntenR));
-                                sumG += ((imgBuffer[i + 2] - avgIntenG) * (imgBuffer[i + 2] - avgIntenG));
-                                sumB += ((imgBuffer[i + 3] - avgIntenB) * (imgBuffer[i + 3] - avgIntenB));
+                                diffR = imgBuffer[i + 1] - avgIntenR;
+                                R2 = diffR * diffR;
+                                sumR2 += R2;
+                                R3 = R2 * diffR;
+                                sumR3 += R3;
+                                R4 = R3 * diffR;
+                                sumR4 += R4;
+                                diffG = imgBuffer[i + 2] - avgIntenG;
+                                G2 = diffG * diffG;
+                                sumG2 += G2;
+                                G3 = G2 * diffG;
+                                sumG3 += G3;
+                                G4 = G3 * diffG;
+                                sumG4 += G4;
+                                diffB = imgBuffer[i + 3] - avgIntenB;
+                                B2 = diffB * diffB;
+                                sumB2 += B2;
+                                B3 = B2 * diffB;
+                                sumB3 += B3;
+                                B4 = B3 * diffB;
+                                sumB4 += B4;
                                 cnt++;
                             }
                         }
 
-                        stdDevR = (float) Math.sqrt(sumR / cnt);
-                        stdDevG = (float) Math.sqrt(sumG / cnt);
-                        stdDevB = (float) Math.sqrt(sumB / cnt);
+                        stdDevR = (float) Math.sqrt(sumR2 / (cnt-1));
+                        stdDevG = (float) Math.sqrt(sumG2 / (cnt-1));
+                        stdDevB = (float) Math.sqrt(sumB2 / (cnt-1));
                         statProperty.setProperty(VOIStatisticList.deviationDescription + "Red" + "0;" + r,
                                                  nf.format(stdDevR));
                         statProperty.setProperty(VOIStatisticList.deviationDescription + "Green" + "0;" + r,
                                                  nf.format(stdDevG));
                         statProperty.setProperty(VOIStatisticList.deviationDescription + "Blue" + "0;" + r,
                                                  nf.format(stdDevB));
+                        // moments around the mean
+                        moment2R = sumR2/cnt;
+                        moment2G = sumG2/cnt;
+                        moment2B = sumB2/cnt;
+                        moment3R = sumR3/cnt;
+                        moment3G = sumG3/cnt;
+                        moment3B = sumB3/cnt;
+                        moment4R = sumR4/cnt;
+                        moment4G = sumG4/cnt;
+                        moment4B = sumB4/cnt;
+                        skewnessR = (float)(moment3R/Math.pow(moment2R, 1.5));
+                        skewnessG = (float)(moment3G/Math.pow(moment2G, 1.5));
+                        skewnessB = (float)(moment3B/Math.pow(moment2B, 1.5));
+                        statProperty.setProperty(VOIStatisticList.skewnessDescription + "Red" + "0;" + r,
+                                                 nf.format(skewnessR));
+                        statProperty.setProperty(VOIStatisticList.skewnessDescription + "Green" + "0;" + r,
+                                                 nf.format(skewnessG));
+                        statProperty.setProperty(VOIStatisticList.skewnessDescription + "Blue" + "0;" + r,
+                                                 nf.format(skewnessB));
+                        kurtosisR = moment4R/(moment2R * moment2R);
+                        kurtosisG = moment4G/(moment2G * moment2G);
+                        kurtosisB = moment4B/(moment2B * moment2B);
+                        statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Red" + "0;" + r,
+                                                 nf.format(kurtosisR));
+                        statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Green" + "0;" + r,
+                                                 nf.format(kurtosisG));
+                        statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Blue" + "0;" + r,
+                                                 nf.format(kurtosisB));
 
-                        totalStdDevR += sumR;
-                        totalStdDevG += sumG;
-                        totalStdDevB += sumB;
+                        totalSumR2 += sumR2;
+                        totalSumG2 += sumG2;
+                        totalSumB2 += sumB2;
+                        totalSumR3 += sumR3;
+                        totalSumG3 += sumG3;
+                        totalSumB3 += sumB3;
+                        totalSumR4 += sumR4;
+                        totalSumG4 += sumG4;
+                        totalSumB4 += sumB4;
                     } else {
 
                         for (int i = 0; i < length; i++) {
 
                             if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[i])) {
-                                sum += ((imgBuffer[i] - avgInten) * (imgBuffer[i] - avgInten));
+                                diff = imgBuffer[i] - avgInten;
+                                s2 = diff * diff;
+                                sum2 += s2;
+                                s3 = s2 * diff;
+                                sum3 += s3;
+                                s4 = s3 * diff;
+                                sum4 += s4;
                                 cnt++;
                             }
                         }
 
-                        stdDev = (float) Math.sqrt(sum / cnt);
+                        stdDev = (float) Math.sqrt(sum2 / (cnt-1));
                         statProperty.setProperty(VOIStatisticList.deviationDescription + "0;" + r, nf.format(stdDev));
-                        totalStdDev += sum;
+                        moment2 = sum2/cnt;
+                        moment3 = sum3/cnt;
+                        moment4 = sum4/cnt;
+                        skewness = (float)(moment3/Math.pow(moment2, 1.5));
+                        statProperty.setProperty(VOIStatisticList.skewnessDescription + "0;" + r, nf.format(skewness));
+                        kurtosis = moment4/(moment2 * moment2);
+                        statProperty.setProperty(VOIStatisticList.kurtosisDescription + "0;" + r, nf.format(kurtosis));
+                        totalSum2 += sum2;
+                        totalSum3 += sum3;
+                        totalSum4 += sum4;
                     }
                 }
 
@@ -951,11 +1095,32 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                 if (srcImage.isColorImage()) {
                     statProperty.setProperty(VOIStatisticList.deviationDescription + "Red" + "Total",
-                                             nf.format((float) Math.sqrt(totalStdDevR / totalNVox)));
+                                             nf.format((float) Math.sqrt(totalSumR2 / (totalNVox-1))));
                     statProperty.setProperty(VOIStatisticList.deviationDescription + "Green" + "Total",
-                                             nf.format((float) Math.sqrt(totalStdDevG / totalNVox)));
+                                             nf.format((float) Math.sqrt(totalSumG2 / (totalNVox-1))));
                     statProperty.setProperty(VOIStatisticList.deviationDescription + "Blue" + "Total",
-                                             nf.format((float) Math.sqrt(totalStdDevB / totalNVox)));
+                                             nf.format((float) Math.sqrt(totalSumB2 / (totalNVox-1))));
+                    moment2R = totalSumR2/totalNVox;
+                    moment2G = totalSumG2/totalNVox;
+                    moment2B = totalSumB2/totalNVox;
+                    moment3R = totalSumR3/totalNVox;
+                    moment3G = totalSumG3/totalNVox;
+                    moment3B = totalSumB3/totalNVox;
+                    moment4R = totalSumR4/totalNVox;
+                    moment4G = totalSumG4/totalNVox;
+                    moment4B = totalSumB4/totalNVox;
+                    statProperty.setProperty(VOIStatisticList.skewnessDescription + "Red" + "Total",
+                                             nf.format((float) (moment3R/Math.pow(moment2R, 1.5))));
+                    statProperty.setProperty(VOIStatisticList.skewnessDescription + "Green" + "Total",
+                                             nf.format((float) (moment3G/Math.pow(moment2G, 1.5))));
+                    statProperty.setProperty(VOIStatisticList.skewnessDescription + "Blue" + "Total",
+                                             nf.format((float) (moment3B/Math.pow(moment2B, 1.5))));
+                    statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Red" + "Total",
+                                             nf.format(moment4R/(moment2R * moment2R)));
+                    statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Green" + "Total",
+                                             nf.format(moment4G/(moment2G * moment2G)));
+                    statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Blue" + "Total",
+                                             nf.format(moment4B/(moment2B * moment2B)));
                     statProperty.setProperty(VOIStatisticList.minIntensity + "Red" + "Total",
                                              nf.format(totalMinIntenRed));
                     statProperty.setProperty(VOIStatisticList.maxIntensity + "Red" + "Total",
@@ -982,7 +1147,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     statProperty.setProperty(VOIStatisticList.maxIntensity + "Total", nf.format(totalMaxIntensity));
                     statProperty.setProperty(VOIStatisticList.avgIntensity + "Total", nf.format(totalSum / totalNVox));
                     statProperty.setProperty(VOIStatisticList.deviationDescription + "Total",
-                                             nf.format((float) Math.sqrt(totalStdDev / totalNVox)));
+                                             nf.format((float) Math.sqrt(totalSum2/ (totalNVox-1))));
+                    moment2 = totalSum2/totalNVox;
+                    moment3 = totalSum3/totalNVox;
+                    moment4 = totalSum4/totalNVox;
+                    statProperty.setProperty(VOIStatisticList.skewnessDescription + "Total",
+                                             nf.format((float) (moment3/Math.pow(moment2, 1.5))));
+                    statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Total",
+                                             nf.format(moment4/(moment2 * moment2)));
                     statProperty.setProperty(VOIStatisticList.sumIntensities + "Total", nf.format(totalSum));
                 }
             }
@@ -1147,8 +1319,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             statProperty.setProperty(VOIStatisticList.areaDescription, nf.format(area));
             statProperty.setProperty(VOIStatisticList.volumeDescription, nf.format(area));
 
-            // calculate standard deviation
-            sum = sumR = sumG = sumB = 0;
+            // calculate standard deviation, coefficient of skewness, and coefficient of kurtosis
+            sum2 = sumR2 = sumG2 = sumB2 = sum3 = sumR3 = sumG3 = sumB3 = sum4 = sumR4 = sumG4 = sumB4 = 0;
 
             int cnt = 0;
 
@@ -1159,16 +1331,34 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
                             !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
                             !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
-                        sumR += ((imgBuffer[i + 1] - avgIntenR) * (imgBuffer[i + 1] - avgIntenR));
-                        sumG += ((imgBuffer[i + 2] - avgIntenG) * (imgBuffer[i + 2] - avgIntenG));
-                        sumB += ((imgBuffer[i + 3] - avgIntenB) * (imgBuffer[i + 3] - avgIntenB));
+                        diffR = imgBuffer[i + 1] - avgIntenR;
+                        R2 = diffR * diffR;
+                        sumR2 += R2;
+                        R3 = R2 * diffR;
+                        sumR3 += R3;
+                        R4 = R3 * diffR;
+                        sumR4 += R4;
+                        diffG = imgBuffer[i + 2] - avgIntenG;
+                        G2 = diffG * diffG;
+                        sumG2 += G2;
+                        G3 = G2 * diffG;
+                        sumG3 += G3;
+                        G4 = G3 * diffG;
+                        sumG4 += G4;
+                        diffB = imgBuffer[i + 3] - avgIntenB;
+                        B2 = diffB * diffB;
+                        sumB2 += B2;
+                        B3 = B2 * diffB;
+                        sumB3 += B3;
+                        B4 = B3 * diffB;
+                        sumB4 += B4;
                         cnt++;
                     }
                 }
 
-                stdDevR = (float) Math.sqrt(sumR / cnt);
-                stdDevG = (float) Math.sqrt(sumG / cnt);
-                stdDevB = (float) Math.sqrt(sumB / cnt);
+                stdDevR = (float) Math.sqrt(sumR2 / (cnt-1));
+                stdDevG = (float) Math.sqrt(sumG2 / (cnt-1));
+                stdDevB = (float) Math.sqrt(sumB2 / (cnt-1));
                 statProperty.setProperty(VOIStatisticList.deviationDescription + "Red" + "0;", nf.format(stdDevR));
                 statProperty.setProperty(VOIStatisticList.deviationDescription + "Green" + "0;", nf.format(stdDevG));
                 statProperty.setProperty(VOIStatisticList.deviationDescription + "Blue" + "0;", nf.format(stdDevB));
@@ -1176,19 +1366,62 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.deviationDescription + "Red", nf.format(stdDevR));
                 statProperty.setProperty(VOIStatisticList.deviationDescription + "Green", nf.format(stdDevG));
                 statProperty.setProperty(VOIStatisticList.deviationDescription + "Blue", nf.format(stdDevB));
+                // moments around the mean
+                moment2R = sumR2/cnt;
+                moment2G = sumG2/cnt;
+                moment2B = sumB2/cnt;
+                moment3R = sumR3/cnt;
+                moment3G = sumG3/cnt;
+                moment3B = sumB3/cnt;
+                moment4R = sumR4/cnt;
+                moment4G = sumG4/cnt;
+                moment4B = sumB4/cnt;
+                skewnessR = (float)(moment3R/Math.pow(moment2R, 1.5));
+                skewnessG = (float)(moment3G/Math.pow(moment2G, 1.5));
+                skewnessB = (float)(moment3B/Math.pow(moment2B, 1.5));
+                statProperty.setProperty(VOIStatisticList.skewnessDescription + "Red" + "0;", nf.format(skewnessR));
+                statProperty.setProperty(VOIStatisticList.skewnessDescription + "Green" + "0;", nf.format(skewnessG));
+                statProperty.setProperty(VOIStatisticList.skewnessDescription + "Blue" + "0;", nf.format(skewnessB));
+                statProperty.setProperty(VOIStatisticList.skewnessDescription + "Red", nf.format(skewnessR));
+                statProperty.setProperty(VOIStatisticList.skewnessDescription + "Green", nf.format(skewnessG));
+                statProperty.setProperty(VOIStatisticList.skewnessDescription + "Blue", nf.format(skewnessB));
+                kurtosisR = moment4R/(moment2R * moment2R);
+                kurtosisG = moment4G/(moment2G * moment2G);
+                kurtosisB = moment4B/(moment2B * moment2B);
+                statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Red" + "0;", nf.format(kurtosisR));
+                statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Green" + "0;", nf.format(kurtosisG));
+                statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Blue" + "0;", nf.format(kurtosisB));
+                statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Red", nf.format(kurtosisR));
+                statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Green", nf.format(kurtosisG));
+                statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Blue", nf.format(kurtosisB));
             } else {
 
                 for (int i = 0; i < length; i++) {
 
                     if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[i])) {
-                        sum += ((imgBuffer[i] - avgInten) * (imgBuffer[i] - avgInten));
+                        diff = imgBuffer[i] - avgInten;
+                        s2 = diff * diff;
+                        sum2 += s2;
+                        s3 = s2 * diff;
+                        sum3 += s3;
+                        s4 = s3 * diff;
+                        sum4 += s4;
                         cnt++;
                     }
                 }
 
-                stdDev = (float) Math.sqrt(sum / cnt);
+                stdDev = (float) Math.sqrt(sum2 / (cnt-1));
                 statProperty.setProperty(VOIStatisticList.deviationDescription + "0;", nf.format(stdDev));
                 statProperty.setProperty(VOIStatisticList.deviationDescription, nf.format(stdDev));
+                moment2 = sum2/cnt;
+                moment3 = sum3/cnt;
+                moment4 = sum4/cnt;
+                skewness = (float)(moment3/Math.pow(moment2, 1.5));
+                statProperty.setProperty(VOIStatisticList.skewnessDescription + "0;", nf.format(skewness));
+                statProperty.setProperty(VOIStatisticList.skewnessDescription , nf.format(skewness));
+                kurtosis = moment4/(moment2 * moment2);
+                statProperty.setProperty(VOIStatisticList.kurtosisDescription + "0;", nf.format(kurtosis));
+                statProperty.setProperty(VOIStatisticList.kurtosisDescription, nf.format(kurtosis));
             }
 
 
@@ -1215,11 +1448,24 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         float avgIntenR = 0;
         float avgIntenG = 0;
         float avgIntenB = 0;
+        float skewness = 0, skewnessR = 0, skewnessG = 0, skewnessB = 0;
+        float kurtosis = 0, kurtosisR = 0, kurtosisG = 0, kurtosisB = 0;
+        float R2, R3, R4, G2, G3, G4, B2, B3, B4, s2, s3, s4;
+        float diff, diffR, diffG, diffB;
         float stdDev = 0, stdDevR = 0, stdDevG = 0, stdDevB = 0;
         float totalStdDev = 0, totalStdDevR = 0, totalStdDevG = 0, totalStdDevB = 0;
         float volume = 0, totalVolume = 0;
         float sum = 0, sumR = 0, sumG = 0, sumB = 0, area = 0;
+        float sum2 = 0, sumR2 = 0, sumG2 = 0, sumB2 = 0;
+        float sum3 = 0, sumR3 = 0, sumG3 = 0, sumB3 = 0;
+        float sum4 = 0, sumR4 = 0, sumG4 = 0, sumB4 = 0;
+        float moment2, moment2R, moment2G, moment2B;
+        float moment3, moment3R, moment3G, moment3B;
+        float moment4, moment4R, moment4G, moment4B;
         float totalSum = 0, totalSumR = 0, totalSumG = 0, totalSumB = 0, totalArea = 0;
+        float totalSum2 = 0, totalSumR2 = 0, totalSumG2 = 0, totalSumB2 = 0;
+        float totalSum3 = 0, totalSumR3 = 0, totalSumG3 = 0, totalSumB3 = 0;
+        float totalSum4 = 0, totalSumR4 = 0, totalSumG4 = 0, totalSumB4 = 0;
         float totalAxis = 0, totalEcc = 0;
         float totalMajorAxis = 0;
         float totalMinorAxis = 0;
@@ -1411,9 +1657,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                         for (int i = 0; i < length; i += 4) {
 
-                            if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
-                                    !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
-                                    !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
+                            if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i + 1]) &&
+                                    !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i + 2]) &&
+                                    !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i + 3])) {
                                 sumR += imgBuffer[offset + i + 1];
                                 sumG += imgBuffer[offset + i + 2];
                                 sumB += imgBuffer[offset + i + 3];
@@ -1546,8 +1792,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     // add perimeter
                     statProperty.setProperty(VOIStatisticList.perimeterDescription + end, nf.format(perimeter));
 
-                    // calculate standard deviation
-                    sum = sumR = sumG = sumB = 0;
+                    // calculate standard deviation, coefficient of skewness, and coefficient of kurtosis
+                    sum2 = sumR2 = sumG2 = sumB2 = sum3 = sumR3 = sumG3 = sumB3 = sum4 = sumR4 = sumG4 = sumB4 = 0;
 
                     int cnt = 0;
 
@@ -1556,22 +1802,37 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                         for (int i = 0; i < length; i += 4) {
 
-                            if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
-                                    !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
-                                    !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
-                                sumR += ((imgBuffer[offset + i + 1] - avgIntenR) *
-                                             (imgBuffer[offset + i + 1] - avgIntenR));
-                                sumG += ((imgBuffer[offset + i + 2] - avgIntenG) *
-                                             (imgBuffer[offset + i + 2] - avgIntenG));
-                                sumB += ((imgBuffer[offset + i + 3] - avgIntenB) *
-                                             (imgBuffer[offset + i + 3] - avgIntenB));
+                            if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i + 1]) &&
+                                    !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i + 2]) &&
+                                    !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i + 3])) {
+                                diffR = imgBuffer[offset + i + 1] - avgIntenR;
+                                R2 = diffR * diffR;
+                                sumR2 += R2;
+                                R3 = R2 * diffR;
+                                sumR3 += R3;
+                                R4 = R3 * diffR;
+                                sumR4 += R4;
+                                diffG = imgBuffer[offset + i + 2] - avgIntenG;
+                                G2 = diffG * diffG;
+                                sumG2 += G2;
+                                G3 = G2 * diffG;
+                                sumG3 += G3;
+                                G4 = G3 * diffG;
+                                sumG4 += G4;
+                                diffB = imgBuffer[offset + i + 3] - avgIntenB;
+                                B2 = diffB * diffB;
+                                sumB2 += B2;
+                                B3 = B2 * diffB;
+                                sumB3 += B3;
+                                B4 = B3 * diffB;
+                                sumB4 += B4;
                                 cnt++;
                             }
                         }
 
-                        stdDevR = (float) Math.sqrt(sumR / cnt);
-                        stdDevG = (float) Math.sqrt(sumG / cnt);
-                        stdDevB = (float) Math.sqrt(sumB / cnt);
+                        stdDevR = (float) Math.sqrt(sumR2 / (cnt-1));
+                        stdDevG = (float) Math.sqrt(sumG2 / (cnt-1));
+                        stdDevB = (float) Math.sqrt(sumB2/ (cnt-1));
                         statProperty.setProperty(VOIStatisticList.deviationDescription + "Red" + end,
                                                  nf.format(stdDevR));
                         statProperty.setProperty(VOIStatisticList.deviationDescription + "Green" + end,
@@ -1579,23 +1840,73 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         statProperty.setProperty(VOIStatisticList.deviationDescription + "Blue" + end,
                                                  nf.format(stdDevB));
 
-                        totalStdDevR += sumR;
-                        totalStdDevG += sumG;
-                        totalStdDevB += sumB;
+                        // moments around the mean
+                        moment2R = sumR2/cnt;
+                        moment2G = sumG2/cnt;
+                        moment2B = sumB2/cnt;
+                        moment3R = sumR3/cnt;
+                        moment3G = sumG3/cnt;
+                        moment3B = sumB3/cnt;
+                        moment4R = sumR4/cnt;
+                        moment4G = sumG4/cnt;
+                        moment4B = sumB4/cnt;
+                        skewnessR = (float)(moment3R/Math.pow(moment2R, 1.5));
+                        skewnessG = (float)(moment3G/Math.pow(moment2G, 1.5));
+                        skewnessB = (float)(moment3B/Math.pow(moment2B, 1.5));
+                        statProperty.setProperty(VOIStatisticList.skewnessDescription + "Red" + end,
+                                                 nf.format(skewnessR));
+                        statProperty.setProperty(VOIStatisticList.skewnessDescription + "Green" + end,
+                                                 nf.format(skewnessG));
+                        statProperty.setProperty(VOIStatisticList.skewnessDescription + "Blue" + end,
+                                                 nf.format(skewnessB));
+                        kurtosisR = moment4R/(moment2R * moment2R);
+                        kurtosisG = moment4G/(moment2G * moment2G);
+                        kurtosisB = moment4B/(moment2B * moment2B);
+                        statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Red" + end,
+                                                 nf.format(kurtosisR));
+                        statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Green" + end,
+                                                 nf.format(kurtosisG));
+                        statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Blue" + end,
+                                                 nf.format(kurtosisB));
+
+                        totalSumR2 += sumR2;
+                        totalSumG2 += sumG2;
+                        totalSumB2 += sumB2;
+                        totalSumR3 += sumR3;
+                        totalSumG3 += sumG3;
+                        totalSumB3 += sumB3;
+                        totalSumR4 += sumR4;
+                        totalSumG4 += sumG4;
+                        totalSumB4 += sumB4;
                     } else {
                         int offset = length * q;
 
                         for (int i = 0; i < length; i++) {
 
                             if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i])) {
-                                sum += ((imgBuffer[offset + i] - avgInten) * (imgBuffer[offset + i] - avgInten));
+                                diff = imgBuffer[offset + i] - avgInten;
+                                s2 = diff * diff;
+                                sum2 += s2;
+                                s3 = s2 * diff;
+                                sum3 += s3;
+                                s4 = s3 * diff;
+                                sum4 += s4;
                                 cnt++;
                             }
                         }
 
-                        stdDev = (float) Math.sqrt(sum / cnt);
+                        stdDev = (float) Math.sqrt(sum2 / (cnt-1));
                         statProperty.setProperty(VOIStatisticList.deviationDescription + end, nf.format(stdDev));
-                        totalStdDev += sum;
+                        moment2 = sum2/cnt;
+                        moment3 = sum3/cnt;
+                        moment4 = sum4/cnt;
+                        skewness = (float)(moment3/Math.pow(moment2, 1.5));
+                        statProperty.setProperty(VOIStatisticList.skewnessDescription + end, nf.format(skewness));
+                        kurtosis = moment4/(moment2 * moment2);
+                        statProperty.setProperty(VOIStatisticList.kurtosisDescription + end, nf.format(kurtosis));
+                        totalSum2 += sum2;
+                        totalSum3 += sum3;
+                        totalSum4 += sum4;
                     }
                 }
             }
@@ -1623,11 +1934,32 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                 if (srcImage.isColorImage()) {
                     statProperty.setProperty(VOIStatisticList.deviationDescription + "Red" + "Total",
-                                             nf.format((float) Math.sqrt(totalStdDevR / totalNVox)));
+                                             nf.format((float) Math.sqrt(totalSumR2 / (totalNVox-1))));
                     statProperty.setProperty(VOIStatisticList.deviationDescription + "Green" + "Total",
-                                             nf.format((float) Math.sqrt(totalStdDevG / totalNVox)));
+                                             nf.format((float) Math.sqrt(totalSumG2 / (totalNVox-1))));
                     statProperty.setProperty(VOIStatisticList.deviationDescription + "Blue" + "Total",
-                                             nf.format((float) Math.sqrt(totalStdDevB / totalNVox)));
+                                             nf.format((float) Math.sqrt(totalSumB2 / (totalNVox-1))));
+                    moment2R = totalSumR2/totalNVox;
+                    moment2G = totalSumG2/totalNVox;
+                    moment2B = totalSumB2/totalNVox;
+                    moment3R = totalSumR3/totalNVox;
+                    moment3G = totalSumG3/totalNVox;
+                    moment3B = totalSumB3/totalNVox;
+                    moment4R = totalSumR4/totalNVox;
+                    moment4G = totalSumG4/totalNVox;
+                    moment4B = totalSumB4/totalNVox;
+                    statProperty.setProperty(VOIStatisticList.skewnessDescription + "Red" + "Total",
+                                             nf.format((float) (moment3R/Math.pow(moment2R, 1.5))));
+                    statProperty.setProperty(VOIStatisticList.skewnessDescription + "Green" + "Total",
+                                             nf.format((float) (moment3G/Math.pow(moment2G, 1.5))));
+                    statProperty.setProperty(VOIStatisticList.skewnessDescription + "Blue" + "Total",
+                                             nf.format((float) (moment3B/Math.pow(moment2B, 1.5))));
+                    statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Red" + "Total",
+                                             nf.format(moment4R/(moment2R * moment2R)));
+                    statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Green" + "Total",
+                                             nf.format(moment4G/(moment2G * moment2G)));
+                    statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Blue" + "Total",
+                                             nf.format(moment4B/(moment2B * moment2B)));
                     statProperty.setProperty(VOIStatisticList.minIntensity + "Red" + "Total",
                                              nf.format(totalMinIntenRed));
                     statProperty.setProperty(VOIStatisticList.maxIntensity + "Red" + "Total",
@@ -1657,7 +1989,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     statProperty.setProperty(VOIStatisticList.maxIntensity + "Total", nf.format(totalMaxIntensity));
                     statProperty.setProperty(VOIStatisticList.avgIntensity + "Total", nf.format(totalSum / totalNVox));
                     statProperty.setProperty(VOIStatisticList.deviationDescription + "Total",
-                                             nf.format((float) Math.sqrt(totalStdDev / totalNVox)));
+                                             nf.format((float) Math.sqrt(totalSum2 / (totalNVox-1))));
+                    moment2 = totalSum2/totalNVox;
+                    moment3 = totalSum3/totalNVox;
+                    moment4 = totalSum4/totalNVox;
+                    statProperty.setProperty(VOIStatisticList.skewnessDescription + "Total",
+                                             nf.format((float) (moment3/Math.pow(moment2, 1.5))));
+                    statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Total",
+                                             nf.format(moment4/(moment2 * moment2)));
                     statProperty.setProperty(VOIStatisticList.sumIntensities + "Total", nf.format(totalSum));
                 }
             }
@@ -1812,8 +2151,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             statProperty.setProperty(VOIStatisticList.areaDescription, nf.format(area));
             statProperty.setProperty(VOIStatisticList.volumeDescription, nf.format(volume));
 
-            // calculate standard deviation
-            sum = sumR = sumG = sumB = 0;
+            // calculate standard deviation, coefficient of skewness, and coefficient of kurtosis
+            sum2 = sumR2 = sumG2 = sumB2 = sum3 = sumR3 = sumG3 = sumB3 = sum4 = sumR4 = sumG4 = sumB4 = 0;
 
             int cnt = 0;
 
@@ -1824,31 +2163,85 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
                             !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
                             !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
-                        sumR += ((imgBuffer[i + 1] - avgIntenR) * (imgBuffer[i + 1] - avgIntenR));
-                        sumG += ((imgBuffer[i + 2] - avgIntenG) * (imgBuffer[i + 2] - avgIntenG));
-                        sumB += ((imgBuffer[i + 3] - avgIntenB) * (imgBuffer[i + 3] - avgIntenB));
+                        diffR = imgBuffer[i + 1] - avgIntenR;
+                        R2 = diffR * diffR;
+                        sumR2 += R2;
+                        R3 = R2 * diffR;
+                        sumR3 += R3;
+                        R4 = R3 * diffR;
+                        sumR4 += R4;
+                        diffG = imgBuffer[i + 2] - avgIntenG;
+                        G2 = diffG * diffG;
+                        sumG2 += G2;
+                        G3 = G2 * diffG;
+                        sumG3 += G3;
+                        G4 = G3 * diffG;
+                        sumG4 += G4;
+                        diffB = imgBuffer[i + 3] - avgIntenB;
+                        B2 = diffB * diffB;
+                        sumB2 += B2;
+                        B3 = B2 * diffB;
+                        sumB3 += B3;
+                        B4 = B3 * diffB;
+                        sumB4 += B4;
                         cnt++;
                     }
                 }
 
-                stdDevR = (float) Math.sqrt(sumR / cnt);
-                stdDevG = (float) Math.sqrt(sumG / cnt);
-                stdDevB = (float) Math.sqrt(sumB / cnt);
+                stdDevR = (float) Math.sqrt(sumR2 / (cnt-1));
+                stdDevG = (float) Math.sqrt(sumG2 / (cnt-1));
+                stdDevB = (float) Math.sqrt(sumB2 / (cnt-1));
                 statProperty.setProperty(VOIStatisticList.deviationDescription + "Red", nf.format(stdDevR));
                 statProperty.setProperty(VOIStatisticList.deviationDescription + "Green", nf.format(stdDevG));
                 statProperty.setProperty(VOIStatisticList.deviationDescription + "Blue", nf.format(stdDevB));
+//              moments around the mean
+                moment2R = sumR2/cnt;
+                moment2G = sumG2/cnt;
+                moment2B = sumB2/cnt;
+                moment3R = sumR3/cnt;
+                moment3G = sumG3/cnt;
+                moment3B = sumB3/cnt;
+                moment4R = sumR4/cnt;
+                moment4G = sumG4/cnt;
+                moment4B = sumB4/cnt;
+                skewnessR = (float)(moment3R/Math.pow(moment2R, 1.5));
+                skewnessG = (float)(moment3G/Math.pow(moment2G, 1.5));
+                skewnessB = (float)(moment3B/Math.pow(moment2B, 1.5));
+                statProperty.setProperty(VOIStatisticList.skewnessDescription + "Red", nf.format(skewnessR));
+                statProperty.setProperty(VOIStatisticList.skewnessDescription + "Green", nf.format(skewnessG));
+                statProperty.setProperty(VOIStatisticList.skewnessDescription + "Blue", nf.format(skewnessB));
+                kurtosisR = moment4R/(moment2R * moment2R);
+                kurtosisG = moment4G/(moment2G * moment2G);
+                kurtosisB = moment4B/(moment2B * moment2B);
+                statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Red", nf.format(kurtosisR));
+                statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Green", nf.format(kurtosisG));
+                statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Blue", nf.format(kurtosisB));
+
             } else {
 
                 for (int i = 0; i < imgBuffer.length; i++) {
 
                     if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[i])) {
-                        sum += ((imgBuffer[i] - avgInten) * (imgBuffer[i] - avgInten));
+                        diff = imgBuffer[i] - avgInten;
+                        s2 = diff * diff;
+                        sum2 += s2;
+                        s3 = s2 * diff;
+                        sum3 += s3;
+                        s4 = s3 * diff;
+                        sum4 += s4;
                         cnt++;
                     }
                 }
 
-                stdDev = (float) Math.sqrt(sum / cnt);
+                stdDev = (float) Math.sqrt(sum2 / (cnt-1));
                 statProperty.setProperty(VOIStatisticList.deviationDescription, nf.format(stdDev));
+                moment2 = sum2/cnt;
+                moment3 = sum3/cnt;
+                moment4 = sum4/cnt;
+                skewness = (float)(moment3/Math.pow(moment2, 1.5));
+                statProperty.setProperty(VOIStatisticList.skewnessDescription, nf.format(skewness));
+                kurtosis = moment4/(moment2 * moment2);
+                statProperty.setProperty(VOIStatisticList.kurtosisDescription, nf.format(kurtosis));
             }
         }
 

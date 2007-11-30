@@ -497,8 +497,8 @@ public class SRBUtility {
 
                 String imgFileName = fileInfo.getFileName();
                 String hdrFileName = imgFileName.replaceFirst(".img", ".hdr");
-                fileNameList.add(hdrFileName);
-                fileNameList.add(imgFileName);
+                fileNameList.add(fileInfo.getFileDirectory() + File.separator + hdrFileName);
+                fileNameList.add(fileInfo.getFileDirectory() + File.separator + imgFileName);
 
                 return fileNameList;
 
@@ -507,7 +507,7 @@ public class SRBUtility {
             case FileUtility.DICOM:
                 fileNameList = new Vector();
                 for (int i = 0; i < fileInfoList.length; i++) {
-                    fileNameList.add(fileInfoList[i].getFileName());
+                    fileNameList.add(fileInfo.getFileDirectory() + File.separator + fileInfoList[i].getFileName());
                 }
 
                 return fileNameList;
@@ -532,7 +532,7 @@ public class SRBUtility {
              * of the NetCDF file format. NetCDF stands for `Network Common Data Form'.  */
             case FileUtility.MINC:
                 fileNameList = new Vector();
-                fileNameList.add(fileInfo.getFileName());
+                fileNameList.add(fileInfo.getFileDirectory() + File.separator + fileInfo.getFileName());
 
                 return fileNameList;
 
@@ -562,8 +562,8 @@ public class SRBUtility {
 
                 String headFileName = fileInfo.getFileName();
                 String brikFileName = headFileName.replaceFirst(".HEAD", ".BRIK");
-                fileNameList.add(headFileName);
-                fileNameList.add(brikFileName);
+                fileNameList.add(fileInfo.getFileDirectory() + File.separator + headFileName);
+                fileNameList.add(fileInfo.getFileDirectory() + File.separator + brikFileName);
 
                 return fileNameList;
 
@@ -625,8 +625,8 @@ public class SRBUtility {
 
                 String xmlFileName = fileInfo.getFileName();
                 String rawFileName = ((FileInfoXML) fileInfo).getImageDataFileName();
-                fileNameList.add(xmlFileName);
-                fileNameList.add(rawFileName);
+                fileNameList.add(fileInfo.getFileDirectory() + File.separator + xmlFileName);
+                fileNameList.add(fileInfo.getFileDirectory() + File.separator + rawFileName);
 
                 return fileNameList;
 

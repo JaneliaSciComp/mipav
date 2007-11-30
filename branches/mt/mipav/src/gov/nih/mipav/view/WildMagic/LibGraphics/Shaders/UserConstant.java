@@ -46,7 +46,7 @@ public class UserConstant
     }
 
     /** Delete memory. */
-    public void finalize()
+    public void dispose()
     {
         m_kName = null;
         m_afData = null;

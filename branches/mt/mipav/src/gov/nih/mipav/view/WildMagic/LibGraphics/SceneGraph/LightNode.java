@@ -72,14 +72,14 @@ public class LightNode extends Node
         }
     }
     /** Delete memory. */
-    public void finalize()
+    public void dispose()
     {
         if ( m_spkLight != null )
         {
-            m_spkLight.finalize();
+            m_spkLight.dispose();
             m_spkLight = null;
         }
-        super.finalize();
+        super.dispose();
     }
 
     /** When you set the light, the node's local transformation is set to the

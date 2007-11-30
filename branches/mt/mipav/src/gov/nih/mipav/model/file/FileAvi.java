@@ -14,6 +14,7 @@ import java.io.*;
 
 import java.util.*;
 
+import javax.media.MediaLocator;
 import javax.swing.*;
 
 
@@ -326,6 +327,15 @@ public class FileAvi extends FileBase {
 
                 // set the filename to the new file name and read header again
                 this.fileName = newFileName;
+                // The line 
+                // oml = new MediaLocator(outputFile.toURI().toURL()); 
+                // in AlgorithmTranscode.runAlgorithm() replaces every space in the file path name
+                // with %20.
+                for (int i = 0; i < fileDir.length(); i++) {
+                    if (fileDir.charAt(i) == 0x20) {
+                        fileDir = fileDir.substring(0,i) + "%20" + fileDir.substring(i+1);
+                    }
+                }
 
                 if (readHeader() != 0) {
                     System.err.println("Something messed up!!!");
@@ -3836,7 +3846,10 @@ public class FileAvi extends FileBase {
                 int strhLength = getInt(endianess); // length of strh subCHUNK not including first 8
 
                 // signature and length bytes
-                if (strhLength < 56) {
+                // AVI standard documentation mentioned a minimum length of 56,
+                // but the Windows Media player was observed to play 5 mjpeg
+                // files with strhLength = 48.
+                if (strhLength < 48) {
                     raFile.close();
                     throw new IOException("AVI read header error with strhLength = " + strhLength);
                 }

@@ -4,7 +4,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class MipavUtil {
-    public static final int nthreads = 8;
+    public static final int nthreads = 16;
     public static final Executor threadPool = Executors.newFixedThreadPool(nthreads);
     
     /**

@@ -56,11 +56,11 @@ public class Segment3f
     /**
      * delete memory
      */
-    public void finalize()
+    public void dispose()
     {
-        Origin.finalize();
+        Origin.dispose();
         Origin = null;
-        Direction.finalize();
+        Direction.dispose();
         Direction = null;
     }
 

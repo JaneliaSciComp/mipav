@@ -130,9 +130,6 @@ public class JDialogDTIInput extends JDialogBase
     /** Image displayed in the GPUVolumeRender and SurfaceRender*/
     private ModelImage m_kImage;
 
-    /** When outputing the fiber bundle tracts. */
-    private boolean m_bFirstWrite = true;
-
     /** Checkbox for tract reconstruction. */
     private JCheckBox m_kReconstructTracts;
     private JCheckBox m_kOpenB0 = null;
@@ -185,9 +182,6 @@ public class JDialogDTIInput extends JDialogBase
 
     /** Index Line array map for display in Surface render */
     private HashMap<Integer,BranchGroup> m_kLineArrayMap = null;
-
-    /** Which tensor nodes are already on the fiber bundle tract */
-    private boolean[] m_abVisited = null;
 
     /** Slice thickness read from .list file */
     private float m_fResX = 1f, m_fResY = 1f, m_fResZ = 1f;
@@ -269,7 +263,6 @@ public class JDialogDTIInput extends JDialogBase
         m_kBundleList = null;
         m_kParentDialog = null;
         m_kLineArrayMap = null;
-        m_abVisited = null;
         m_kRawFormat = null;
         m_kParentDir = null;
         dispose();
@@ -405,12 +398,7 @@ public class JDialogDTIInput extends JDialogBase
 	{
         ((SurfaceRender)m_kSurfaceDialog.getSurfaceRender()).getSurfaceDialog().getLightDialog().refreshLighting();
  	    Color color = m_kColorButton.getBackground();
- 	    m_kVolumeDisplay.setDisplayAllEllipsoids( m_kAllEllipsoids.isSelected(), 10,
- 						      !m_kUseVolumeColor.isSelected(),
- 						      new ColorRGB( color.getRed()/255.0f,
-                                       color.getGreen()/255.0f,
-                                       color.getBlue()/255.0f  )
- 						       );
+ 	    m_kVolumeDisplay.setDisplayAllEllipsoids( m_kAllEllipsoids.isSelected() );
 	}
 	else if ( kCommand.equals("Add") )
         {
@@ -823,7 +811,11 @@ public class JDialogDTIInput extends JDialogBase
         
         if ( (m_kReconstructTracts != null) && m_kReconstructTracts.isSelected() )
         {
- 	    reconstructTracts( m_kDTIImage, m_kEigenVectorImage );
+            AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(m_kDTIImage, m_kEigenVectorImage,
+                                                          m_kParentDir + "DTIImage.xml_tract" );
+            kTractAlgorithm.run();
+            kTractAlgorithm.disposeLocal();
+            kTractAlgorithm = null;
  	}
     }
 
@@ -1370,282 +1362,6 @@ public class JDialogDTIInput extends JDialogBase
         return kTractPanel;
     }
 
-    /** Constructs the Fiber Bundle Tracts from the dtiImage and the
-     * eigenImage parameters. The fiber bundles are output to a file
-     * sepecified by the user.
-     * @param dtiImage, Diffusion Tensor Image.
-     * @param eigenImage, EigenVector Image.
-     */
-    private void reconstructTracts( ModelImage dtiImage, ModelImage eigenImage )
-    {
-        m_kDTIImage = dtiImage;
-        m_kEigenVectorImage = eigenImage;
-        // save the file version to disk
-        File kFile = new File( m_kParentDir + "DTIImage.xml_tract" );
-        FileOutputStream kFileWriter = null;
-        try {
-            kFileWriter = new FileOutputStream(kFile);
-        } catch ( FileNotFoundException e1 ) {
-            kFileWriter = null;
-        }
-
-        int iDimX = m_kDTIImage.getExtents()[0];
-        int iDimY = m_kDTIImage.getExtents()[1];
-        int iDimZ = m_kDTIImage.getExtents()[2];
-        int iLen = m_kDTIImage.getExtents()[0] * m_kDTIImage.getExtents()[1] * m_kDTIImage.getExtents()[2];
-
-        float[] afVectorData = new float[3];
-
-        int iCount = 0;
-        int iTractSize = 0;
-
-        ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating Fiber Bundle Tracts ", "calculating tracts...", 0, 100, true);
-
-        m_abVisited  = new boolean[iLen];
-        for ( int i = 0; i < iLen; i++ )
-        {
-            m_abVisited[i] = false;
-        }
-
-        Vector<Integer> kTract = new Vector<Integer>();
-        Vector3f kPos = new Vector3f();
-        Vector3f kV1 = new Vector3f();
-        Vector3f kV2 = new Vector3f();
-
-        for ( int iZ = 0; iZ < iDimZ; iZ++ )
-        {
-            for ( int iY = 0; iY < iDimY; iY++ )
-            {
-                for ( int iX = 0; iX < iDimX; iX++ )
-                {
-                    int i = iZ * (iDimY*iDimX) + iY * iDimX + iX;
-
-                    boolean bAllZero = true;
-                    for ( int j = 0; j < 3; j++ )
-                    {
-                        afVectorData[j] = m_kEigenVectorImage.getFloat(i + j*iLen);
-                        if ( afVectorData[j] != 0 )
-                        {
-                            bAllZero = false;
-                        }
-
-                    }
-                    if ( !bAllZero )
-                    {
-                        kPos.SetData( iX, iY, iZ );
-                        kTract.add(i);
-
-                        kV1.SetData( afVectorData[0], afVectorData[1], afVectorData[2] );
-                        kV2.SetData(kV1);
-                        kV2.negEquals();
-
-                        kV1.Normalize();
-                        kV2.Normalize();
-
-                        traceTract( kTract, kPos, kV1, m_kDTIImage, true );
-                        m_abVisited[i] = true;
-                        traceTract( kTract, kPos, kV2, m_kDTIImage, false );
-
-                        if ( kTract.size() > 1 )
-                        {
-                            iCount++;
-                            iTractSize += kTract.size();
-                            outputTract( kTract, iDimX, iDimY, iDimZ, kFileWriter );
-                        }
-                        kTract.clear();
-                    }
-                }
-            }
-            int iValue = (int)(100 * (float)(iZ+1)/(float)iDimZ);
-            kProgressBar.updateValueImmed( iValue );
-        }
-        kProgressBar.dispose();
-
-        try {
-            kFileWriter.close();
-        } catch ( IOException e2 ) {}
-    }
-
-    /** Traces a single fiber bundle tract starting at the input
-     * position and following the input direction.
-     * @param kTract, fiber bundle tract, new positions are stored in this tract as the fiber is traced.
-     * @param kStart, starting positon of the tract.
-     * @param kDir, direction from the position.
-     * @param dtiImage, Diffusion Tensor image used to calculate next direction of tract.
-     * @param bDir, boolean when true the positions are added to the
-     * end of the tract (positive direction). When false the positions
-     * are added to the beginning of the tract (negative direction).
-     */
-    private void traceTract( Vector<Integer> kTract, Vector3f kStart, Vector3f kDir,
-                             ModelImage dtiImage, boolean bDir )
-    {
-        int iDimX = dtiImage.getExtents()[0];
-        int iDimY = dtiImage.getExtents()[1];
-        int iDimZ = dtiImage.getExtents()[2];
-        int iLen = dtiImage.getExtents()[0] * dtiImage.getExtents()[1] * dtiImage.getExtents()[2];
-
-        float[] afTensorData = new float[6];
-
-        boolean bDone = false;
-        Matrix3f kMatrix = new Matrix3f();
-        Vector3f kOut = new Vector3f();
-        Vector3f kNext = new Vector3f();
-        int iX;
-        int iY;
-        int iZ;
-        int i;
-        boolean bAllZero = true;
-
-        while ( !bDone )
-        {
-            kStart.add( kDir, kNext );
-            iX = Math.round(kNext.X());
-            iY = Math.round(kNext.Y());
-            iZ = Math.round(kNext.Z());
-            i = iZ * (iDimY*iDimX) + iY * iDimX + iX;
-            
-            if ( (iZ < 0) || (iZ >= iDimZ) ||
-                 (iY < 0) || (iY >= iDimY) ||
-                 (iX < 0) || (iX >= iDimX)  )
-            {
-                bDone = true;
-                break;
-            }
-
-            bAllZero = true;
-            for ( int j = 0; j < 6; j++ )
-            {
-                afTensorData[j] = dtiImage.getFloat(i + j*iLen);
-                if ( afTensorData[j] != 0 )
-                {
-                    bAllZero = false;
-                }
-            }
-            if ( !bAllZero )
-            {
-                kMatrix.SetData( afTensorData[0], afTensorData[3], afTensorData[4],
-                                 afTensorData[3], afTensorData[1], afTensorData[5], 
-                                 afTensorData[4], afTensorData[5], afTensorData[2] );
-                
-                kMatrix.mult(kDir, kOut);
-                kOut.Normalize();
-                
-                if ( m_abVisited[i] )
-                {
-                    bDone = true;
-                    break;
-                }
-                m_abVisited[i] = true;
-                
-                if ( bDir )
-                {
-                    kTract.add( i );
-                }
-                else
-                {
-                    kTract.add( 0, i );
-                }
-
-                kStart = kNext;
-                kDir = kOut;
-            }
-            else
-            {
-                bDone = true;
-            }
-        }
-        kNext = null;
-    }
-
-    /** Determines if the input tract is contained within the ModelImage representing user-selected VOIs.
-     * @param kVOIImage user-selected VOI image.
-     * @param kTract, list of voxels in the current fiber bundle tract.
-     * @return true if the tract passes through the VOI or if the VOIImage is null, false otherwise.
-     */
-    private boolean contains( ModelImage kVOIImage, Vector<Integer> kTract )
-    {
-        if ( kVOIImage == null )
-        {
-            return true;
-        }
-        for ( int i = 0; i < kTract.size(); i++ )
-        {
-            int iIndex = kTract.get(i);
-            if ( kVOIImage.getBoolean(iIndex) )
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** Writes the fiber bundle tract to disk.
-     * @param kTract, the fiber bundle tract.
-     * @param iDimX, x-dimension of the diffusion tensor image.
-     * @param iDimY, y-dimension of the diffusion tensor image.
-     * @param iDimZ, z-dimension of the diffusion tensor image.
-     * @param kFileWrite, FileOutputStream.
-     */
-    private void outputTract( Vector<Integer> kTract, int iDimX, int iDimY, int iDimZ,
-			      FileOutputStream kFileWriter )
-    {
-        int iVQuantity = kTract.size();
-
-        int iBufferSize = iVQuantity*4 + 4;
-        if ( m_bFirstWrite )
-        {
-            iBufferSize += 3*4;
-        }
-        ByteArrayOutputStream acBufferOut = new ByteArrayOutputStream( iBufferSize );
-        DataOutputStream acDataOut = new DataOutputStream( acBufferOut );
-        if ( kFileWriter != null )
-        {
-            try {
-		if ( m_bFirstWrite )
-		{
-		    acDataOut.writeInt(iDimX);
-		    acDataOut.writeInt(iDimY);
-		    acDataOut.writeInt(iDimZ);
-		    m_bFirstWrite = false;
-		}
-                acDataOut.writeInt(iVQuantity);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        for (int i = 0; i < iVQuantity; i++)
-        {
-            m_abVisited[kTract.get(i).intValue()] = false;
-
-            if ( kFileWriter != null )
-            {
-                try {
-                    acDataOut.writeInt(kTract.get(i));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        if ( kFileWriter != null )
-        {
-            byte[] acBuffer = acBufferOut.toByteArray();
-            try {
-                kFileWriter.write(acBuffer,0,iBufferSize);
-            } catch ( IOException e2 ) {
-                acBuffer = null;
-            }
-            acBuffer = null;
-        }
-        try {
-            acBufferOut.close();
-            acDataOut.close();
-        } catch (IOException e) {}
-        acBufferOut = null;
-        acDataOut = null;
-    }
-
     /** Reads a single fiber bundle tract from disk.
      * @param kFileReader, FileInputStream.
      * @return Vector<Integer> fiber bundle tract -- list of voxel
@@ -1833,6 +1549,29 @@ public class JDialogDTIInput extends JDialogBase
             e.printStackTrace();
         }
     }
+
+    /** Determines if the input tract is contained within the ModelImage representing user-selected VOIs.
+     * @param kVOIImage user-selected VOI image.
+     * @param kTract, list of voxels in the current fiber bundle tract.
+     * @return true if the tract passes through the VOI or if the VOIImage is null, false otherwise.
+     */
+    private boolean contains( ModelImage kVOIImage, Vector<Integer> kTract )
+    {
+        if ( kVOIImage == null )
+        {
+            return true;
+        }
+        for ( int i = 0; i < kTract.size(); i++ )
+        {
+            int iIndex = kTract.get(i);
+            if ( kVOIImage.getBoolean(iIndex) )
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     /** Pass the DTI image to the GPUVolumeRender.
      * @param kDTIImage, new DTI image.

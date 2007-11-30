@@ -39,7 +39,7 @@ public class PixelProgramCatalog
     }
 
     /** Delete memory. */
-    public void finalize()
+    public void dispose()
     {
         m_kName = null;
         m_kDefaultDir = null;
@@ -48,7 +48,7 @@ public class PixelProgramCatalog
         m_kEntry = null;
         if ( m_spkDefaultPProgram != null )
         {
-            m_spkDefaultPProgram.finalize();
+            m_spkDefaultPProgram.dispose();
             m_spkDefaultPProgram = null;
         }
     }

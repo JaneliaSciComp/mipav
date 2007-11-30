@@ -38,29 +38,29 @@ public class MaterialState extends GlobalState
     public MaterialState() {}
 
     /** delete memory */
-    public void finalize ()
+    public void dispose ()
     {
         if ( Emissive != null )
         {
-            Emissive.finalize();
+            Emissive.dispose();
             Emissive = null;
         }
         if ( Ambient != null )
         {
-            Ambient.finalize();
+            Ambient.dispose();
             Ambient = null;
         }
         if ( Diffuse != null )
         {
-            Diffuse.finalize();
+            Diffuse.dispose();
             Diffuse = null;
         }
         if ( Specular != null )
         {
-            Specular.finalize();
+            Specular.dispose();
             Specular = null;
         }
-        super.finalize();
+        super.dispose();
     }
 
     /** Return type.

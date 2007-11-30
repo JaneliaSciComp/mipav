@@ -74,7 +74,7 @@ public class Vector4f
     /**
      * delete memory
      */
-    public void finalize()
+    public void dispose()
     {
         if ( (this == Vector4f.ZERO) || (this ==  Vector4f.UNIT_X)
                 || (this ==  Vector4f.UNIT_Y)

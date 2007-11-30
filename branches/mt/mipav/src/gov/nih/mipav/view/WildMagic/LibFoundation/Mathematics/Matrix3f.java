@@ -270,7 +270,7 @@ public class Matrix3f
     /**
      * delete memory
      */
-    public void finalize()
+    public void dispose()
     {
         if ( (this == Matrix3f.ZERO) || (this == Matrix3f.IDENTITY) )
         {
