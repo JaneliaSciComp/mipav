@@ -164,12 +164,12 @@ public abstract class JavaApplication extends Application
         // Notify the catalogs that the renderer has been created.
         assert(VertexProgramCatalog.GetActive() != null);
         VertexProgramCatalog.GetActive().
-            SetInformation(m_pkRenderer.GetExtension(),
+            SetInformation(m_pkRenderer, m_pkRenderer.GetExtension(),
                            m_pkRenderer.GetCommentCharacter());
 
         assert(PixelProgramCatalog.GetActive() != null);
         PixelProgramCatalog.GetActive().
-            SetInformation(m_pkRenderer.GetExtension(),
+            SetInformation(m_pkRenderer, m_pkRenderer.GetExtension(),
                            m_pkRenderer.GetCommentCharacter());
         return true;
     }
@@ -182,10 +182,10 @@ public abstract class JavaApplication extends Application
         // Notify the catalogs that the renderer is going away, so it is okay to
         // delete the default programs.
         assert(VertexProgramCatalog.GetActive() != null);
-        VertexProgramCatalog.GetActive().SetInformation("",(char)0);
+        VertexProgramCatalog.GetActive().SetInformation(m_pkRenderer, "",(char)0);
 
         assert(PixelProgramCatalog.GetActive() != null);
-        PixelProgramCatalog.GetActive().SetInformation("",(char)0);
+        PixelProgramCatalog.GetActive().SetInformation(m_pkRenderer, "",(char)0);
 
         m_pkRenderer = null;
     }

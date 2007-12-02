@@ -41,9 +41,9 @@ public class VertexShader extends Shader
     /** Return the vertex program in this vertex shader.
      * @return the vertex program in this vertex shader.
      */
-    public final VertexProgram GetProgram ()
+    public final Program GetProgram ()
     {
-        return (VertexProgram)(m_spkProgram);
+        return (Program)(m_spkProgram);
     }
 
     /** Default constructor. */

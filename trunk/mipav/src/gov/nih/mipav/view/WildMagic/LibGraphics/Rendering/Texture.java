@@ -153,19 +153,19 @@ public class Texture extends Bindable
     /** Construct a texture with the depth image and depth compare type.
      * @param pkDepthImage, depth image for this texture.
      * @param eCompare, depth comparison type.
-     */
+
     public Texture (GraphicsImage pkDepthImage, DepthCompare eCompare)
     {
         m_spkImage = pkDepthImage;
         m_eCompare = eCompare;
 
         m_pkSamplerInformation =
-            new SamplerInformation( pkDepthImage.GetName(), SamplerInformation.Type.SAMPLER_2D, 0 );
+            new SamplerInformation( pkDepthImage.GetName(), SamplerInformation.Type.SAMPLER_2D, 0, 0 );
         
         m_bOffscreenTexture = false;
         m_bSIOwner = true;
     }
-
+     */
     /** Release memory. */
     public void dispose ()
     {

@@ -167,7 +167,7 @@ public class ShaderEffect extends Effect
      * @param iPass the ith rendering pass
      * @return the ith VertexProgram
      */
-    public VertexProgram GetVProgram (int iPass)
+    public Program GetVProgram (int iPass)
     {
         assert(0 <= iPass && iPass < m_iPassQuantity);
         return m_kVShader.get(iPass).GetProgram();
@@ -302,7 +302,7 @@ public class ShaderEffect extends Effect
      * @param iPass the ith rendering pass
      * @return the ith PixelProgram
      */
-    public PixelProgram GetPProgram (int iPass)
+    public Program GetPProgram (int iPass)
     {
         assert(0 <= iPass && iPass < m_iPassQuantity);
         return m_kPShader.get(iPass).GetProgram();
@@ -425,12 +425,12 @@ public class ShaderEffect extends Effect
         for (int iPass = 0; iPass < m_iPassQuantity; iPass++)
         {
             // Load the programs to the shader objects.
-            LoadPrograms(iPass,pkRenderer.GetMaxColors(),
+            LoadPrograms(pkRenderer, iPass,pkRenderer.GetMaxColors(),
                          pkRenderer.GetMaxTCoords(),pkRenderer.GetMaxVShaderImages(),
                          pkRenderer.GetMaxPShaderImages());
-
+            
             // Load the programs into video memory.
-            VertexProgram pkVProgram = m_kVShader.get(iPass).GetProgram();
+            Program pkVProgram = m_kVShader.get(iPass).GetProgram();
             pkRenderer.LoadVProgram(pkVProgram);
             pkRenderer.LoadPProgram(m_kPShader.get(iPass).GetProgram());
 
@@ -496,7 +496,7 @@ public class ShaderEffect extends Effect
             m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ZERO;
         }
     }
-
+    
     /** The number of passes */
     protected int m_iPassQuantity;
     /** The VertexShaders */
@@ -520,24 +520,49 @@ public class ShaderEffect extends Effect
      * (5) The shader program requires more texture coordinate sets than
      *     supported by the renderer.
      *
+     * @param kRenderer, the Renderer object
      * @param iPass the ith rendering pass
      * @param iMaxColors the maximum colors supported by the renderer
      * @param iMaxTCoords the maximum texture coordinaets sets supported by the renderer
      * @param iMaxVShaderImages the maximum vertex-shader texture images sets supported by the renderer
      * @param iMaxPShaderImages the maximum pixel-shader texture images sets supported by the renderer
      */
-    public void LoadPrograms (int iPass, int iMaxColors, int iMaxTCoords,
+    public void LoadPrograms (Renderer kRenderer, int iPass, int iMaxColors, int iMaxTCoords,
                               int iMaxVShaderImages, int iMaxPShaderImages)
     {
         assert(0 <= iPass && iPass < m_iPassQuantity);
         assert((m_kVShader.get(iPass) != null) &&
                (m_kPShader.get(iPass) != null));
 
-        VertexProgram pkVProgram = m_kVShader.get(iPass).GetProgram();
-        PixelProgram pkPProgram = m_kPShader.get(iPass).GetProgram();
+        Program pkVProgram = m_kVShader.get(iPass).GetProgram();
+        Program pkPProgram = m_kPShader.get(iPass).GetProgram();
+
+        Program kCompiledProgram = null;
 
         if ((pkVProgram != null) && (pkPProgram != null))
         {
+            if ( pkVProgram.GetProgramID() != pkPProgram.GetProgramID() )
+            {
+                kCompiledProgram = CompiledProgramCatalog.GetActive().Find( pkVProgram.GetShaderID(),
+                                                                            pkPProgram.GetShaderID() );
+                if ( kCompiledProgram == null )
+                {
+                    kCompiledProgram = kRenderer.CompilePrograms(pkVProgram, pkPProgram);
+                    CompiledProgramCatalog.GetActive().Insert( kCompiledProgram,
+                                                               pkVProgram.GetShaderID(),
+                                                               pkPProgram.GetShaderID() );
+                    
+
+                    m_kVShader.get(iPass).OnLoadProgram(pkVProgram);
+                    m_kPShader.get(iPass).OnLoadProgram(pkPProgram);
+                    OnLoadPrograms(iPass,pkVProgram,pkPProgram);
+                }
+                else
+                {
+                    pkVProgram.SetProgramID( kCompiledProgram.GetProgramID() );
+                    pkPProgram.SetProgramID( kCompiledProgram.GetProgramID() );
+                }
+            }
             // The programs have already been loaded.
             return;
         }
@@ -546,16 +571,16 @@ public class ShaderEffect extends Effect
         boolean bLoadedPProgram = false;
         if ( pkPProgram == null )
         {
-            if ( m_kPShader.get(iPass).GetUnique() )
+            if ( m_kPShader.get(iPass).GetUnique() || kRenderer.GetUnique() )
             {
-                pkPProgram = PixelProgram.Load(m_kPShader.get(iPass).GetShaderName(),
-                        PixelProgramCatalog.GetActive().GetDefaultDir());
+                pkPProgram = kRenderer.ReadProgram(m_kPShader.get(iPass).GetShaderName(),
+                        PixelProgramCatalog.GetActive().GetDefaultDir(), Program.PIXEL);
             }
             else
             {
                 pkPProgram =
                     PixelProgramCatalog.GetActive().
-                    Find( m_kPShader.get(iPass).GetShaderName(),
+                    Find( kRenderer, m_kPShader.get(iPass).GetShaderName(),
                             PixelProgramCatalog.GetActive().GetDefaultDir());
             }
             bLoadedPProgram = true;
@@ -563,21 +588,29 @@ public class ShaderEffect extends Effect
 
         if ( pkVProgram == null )
         {
-            if ( m_kVShader.get(iPass).GetUnique() )
+            if ( m_kVShader.get(iPass).GetUnique() || kRenderer.GetUnique() )
             {
-                pkVProgram = VertexProgram.Load(m_kVShader.get(iPass).GetShaderName(),
-                        VertexProgramCatalog.GetActive().GetDefaultDir());
+                pkVProgram = kRenderer.ReadProgram(m_kVShader.get(iPass).GetShaderName(),
+                        VertexProgramCatalog.GetActive().GetDefaultDir(), Program.VERTEX);
             }
             else
             {
                 pkVProgram =
                     VertexProgramCatalog.GetActive().
-                    Find( m_kVShader.get(iPass).GetShaderName(),
+                    Find( kRenderer, m_kVShader.get(iPass).GetShaderName(),
                             VertexProgramCatalog.GetActive().GetDefaultDir());
             }
             bLoadedVProgram = true;
         }
-
+        
+        if ( !pkVProgram.IsCompiled() || !pkPProgram.IsCompiled() )
+        {
+            kCompiledProgram = kRenderer.CompilePrograms(pkVProgram, pkPProgram);
+            CompiledProgramCatalog.GetActive().Insert( kCompiledProgram,
+                                                       pkVProgram.GetShaderID(),
+                                                       pkPProgram.GetShaderID() );
+        }
+        
         // Ensure that the output of the vertex program and the input of the
         // pixel program are compatible.  Each vertex program always has a clip
         // position output.  This is not relevant to the compatibility check.
@@ -592,7 +625,7 @@ public class ShaderEffect extends Effect
             if (!pkVProgram.GetName().equals(kDefault))
             {
                 m_kVShader.set(iPass, new VertexShader(kDefault));
-                pkVProgram = VertexProgramCatalog.GetActive().Find(kDefault,
+                pkVProgram = VertexProgramCatalog.GetActive().Find(kRenderer, kDefault,
                         VertexProgramCatalog.GetActive().GetDefaultDir());
                 assert(pkVProgram != null);
             }
@@ -600,7 +633,7 @@ public class ShaderEffect extends Effect
             if (!pkPProgram.GetName().equals(kDefault))
             {
                 m_kPShader.set(iPass, new PixelShader(kDefault));
-                pkPProgram = PixelProgramCatalog.GetActive().Find(kDefault,
+                pkPProgram = PixelProgramCatalog.GetActive().Find(kRenderer, kDefault,
                         PixelProgramCatalog.GetActive().GetDefaultDir());
                 assert(pkPProgram != null);
             }
@@ -622,7 +655,7 @@ public class ShaderEffect extends Effect
             if (pkVProgram.GetName().equals(kDefault))
             {
                 m_kVShader.set(iPass, new VertexShader(kDefault));
-                pkVProgram = VertexProgramCatalog.GetActive().Find(kDefault,
+                pkVProgram = VertexProgramCatalog.GetActive().Find(kRenderer, kDefault,
                         VertexProgramCatalog.GetActive().GetDefaultDir());
                 assert(pkVProgram != null);
             }
@@ -630,7 +663,7 @@ public class ShaderEffect extends Effect
             if (!pkPProgram.GetName().equals(kDefault))
             {
                 m_kPShader.set(iPass, new PixelShader(kDefault));
-                pkPProgram = PixelProgramCatalog.GetActive().Find(kDefault,
+                pkPProgram = PixelProgramCatalog.GetActive().Find(kRenderer, kDefault,
                         PixelProgramCatalog.GetActive().GetDefaultDir());
                 assert(pkPProgram != null);
             }
@@ -644,6 +677,7 @@ public class ShaderEffect extends Effect
         {
             m_kPShader.get(iPass).OnLoadProgram(pkPProgram);
         }
+
         OnLoadPrograms(iPass,pkVProgram,pkPProgram);
     }
 

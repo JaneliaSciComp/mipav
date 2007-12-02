@@ -188,8 +188,9 @@ public class RendererConstant
      * @param eType, type of RendererConstant
      * @param iBaseRegister, base register (nonnegative)
      * @param iRegisterQuantity (values between 1-4)
+     * @param iNumFloats, the numbr of floats in the renderer constant.
      */
-    public RendererConstant (Type eType, int iBaseRegister, int iRegisterQuantity)
+    public RendererConstant (Type eType, int iBaseRegister, int iRegisterQuantity, int iNumFloats)
     {
         assert(iBaseRegister >= 0);
         assert(1 <= iRegisterQuantity && iRegisterQuantity <= 4);
@@ -197,6 +198,7 @@ public class RendererConstant
         m_eType = eType;
         m_iBaseRegister = iBaseRegister;
         m_iRegisterQuantity = iRegisterQuantity;
+        m_iNumFloats = iNumFloats;
     }
 
     /** Delete memory. */
@@ -230,6 +232,14 @@ public class RendererConstant
     public final int GetRegisterQuantity ()
     {
         return m_iRegisterQuantity;
+    }
+    
+    /**
+     *  Returns the number of floats in this renderer constant
+     *  @return the number of floats in this renderer constant. */    
+    public final int GetNumFloats ()
+    {
+        return m_iNumFloats;
     }
 
     /** Member access.  The renderer will use these to set the registers with
@@ -270,6 +280,8 @@ public class RendererConstant
     private int m_iBaseRegister;
     /** Register quantity (maximum of 4) */
     private int m_iRegisterQuantity; 
+    /** Number of floats in the renderer constant. */
+    private int m_iNumFloats;
     /** Data (maximum storage, avoid dynamic allocation) */
     private float[] m_afData = new float[16];
 }

@@ -467,20 +467,20 @@ public abstract class Renderer
             // The programs must be loaded first because (1) the vertex buffer is
             // enabled based on the program inputs and (2) the global state
             // setting can access the samplers related to the program.
-            pkEffect.LoadPrograms(iPass,m_iMaxColors,m_iMaxTCoords,
+            pkEffect.LoadPrograms(this, iPass,m_iMaxColors,m_iMaxTCoords,
                                   m_iMaxVShaderImages,m_iMaxPShaderImages);
+
 
             // The global state must be set before enabling programs because the
             // programs set sampler state for samplers about to be enabled.
             pkEffect.SetGlobalState(iPass,this,rbPrimaryEffect);
 
             // Enable the vertex program.
-            VertexProgram pkVProgram = pkEffect.GetVProgram(iPass);
-            EnableVProgram(pkVProgram);
-
+            Program pkVProgram = pkEffect.GetVProgram(iPass);
             // Enable the pixel program.
-            PixelProgram pkPProgram = pkEffect.GetPProgram(iPass);
-            EnablePProgram(pkPProgram);
+            Program pkPProgram = pkEffect.GetPProgram(iPass);
+
+            EnablePrograms(pkVProgram, pkPProgram);
 
             // Enable the textures used by the pixel program.
             final int iPTQuantity = pkEffect.GetPTextureQuantity(iPass);
@@ -508,10 +508,7 @@ public abstract class Renderer
             }
 
             // Disable the pixel program.
-            DisablePProgram(pkPProgram);
-
-            // Disable the vertex program.
-            DisableVProgram(pkVProgram);
+            DisablePrograms(pkVProgram, pkPProgram);
 
             // Restore the global state that was active before this pass.
             pkEffect.RestoreGlobalState(iPass,this,rbPrimaryEffect);
@@ -998,7 +995,7 @@ public abstract class Renderer
     /** Resource loading and releasing.
      * @param pkVProgram, load all resources for the Vertex Program.
      */
-    public void LoadVProgram (VertexProgram pkVProgram)
+    public void LoadVProgram (Program pkVProgram)
     {
         if (pkVProgram == null)
         {
@@ -1035,7 +1032,7 @@ public abstract class Renderer
     /** Resource loading and releasing.
      * @param pkPProgram, load all resources for the Pixel Program.
      */
-    public void LoadPProgram (PixelProgram pkPProgram)
+    public void LoadPProgram (Program pkPProgram)
     {
         if (pkPProgram == null)
         {
@@ -1072,7 +1069,7 @@ public abstract class Renderer
     /** Resource loading and releasing.
      * @param pkTexture, load all resources for the Texture.
      */
-    public void LoadTexture (Texture pkTexture)
+    public void LoadTexture (Texture pkTexture )
     {
         if (pkTexture == null)
         {
@@ -1113,7 +1110,7 @@ public abstract class Renderer
 
     /** Resource loading and releasing.
      * @param pkTexture, reload all resources for the Texture.
-     */
+
     public void ReloadTexture (Bindable pkTexture)
     {
         if (pkTexture == null)
@@ -1127,7 +1124,7 @@ public abstract class Renderer
             OnReloadTexture(pkID);
         }
     }
-
+     */
     /** Resource loading and releasing.
      * @param rkIAttr, vertex program input attributes.
      * @param rkOAttr, vertex program output attributes.
@@ -1246,26 +1243,80 @@ public abstract class Renderer
     /** Resource enabling and disabling.
      * Sets the values for the Vertex Program constant parameters.
      * @param eCTYpe, the ConstantType parameter (RENDERER, NUMERICAL, USER)
+     * @param paramType, the RendererConstant.Type parameter
      * @param iBaseRegister, the register to load the parameter values into
      * @param iRegisterQuantity, the number of registers
+     * @param iNumFloats, the number of floats in the program constant
      * @param afData, the parameter values.
      */
-    public abstract void SetVProgramConstant ( Renderer.ConstantType eCType, int iBaseRegister,
-                                               int iRegisterQuantity, float[] afData);
+    public abstract void SetVProgramConstant ( Renderer.ConstantType eCType,
+            RendererConstant.Type paramType,
+            int iBaseRegister,
+            int iRegisterQuantity,
+            int iNumFloats, 
+            float[] afData);
+    
     /** Resource enabling and disabling.
      * Sets the values for the Pixel Program constant parameters.
      * @param eCTYpe, the ConstantType parameter (RENDERER, NUMERICAL, USER)
+     * @param paramType, the RendererConstant.Type parameter
      * @param iBaseRegister, the register to load the parameter values into
      * @param iRegisterQuantity, the number of registers
+     * @param iNumFloats, the number of floats in the program constant
      * @param afData, the parameter values.
      */
-    public abstract void SetPProgramConstant ( Renderer.ConstantType eCType, int iBaseRegister,
-                                               int iRegisterQuantity, float[] afData);
+    public abstract void SetPProgramConstant ( Renderer.ConstantType eCType,
+            RendererConstant.Type paramType,
+            int iBaseRegister,
+            int iRegisterQuantity,
+            int iNumFloats,
+            float[] afData);
+
+    /** Enable the vertex and pixel program parameters.
+     * @param pkVProgram, vertex program to enable.
+     * @param pkPProgram, pixel program to enable.
+     */
+    public void EnablePrograms (Program pkVProgram, Program pkPProgram)
+    {
+        Program kCompiledProgram =
+            CompiledProgramCatalog.GetActive().Find( pkVProgram.GetShaderID(),
+                                                     pkPProgram.GetShaderID() );
+        if ( kCompiledProgram == null )
+        {
+            EnableVProgram(pkVProgram);
+            EnablePProgram(pkPProgram);
+        }
+        else
+        {
+            EnableVProgram(kCompiledProgram);
+        }
+
+    }
+
+    /** Disable the vertex and pixel program parameters.
+     * @param pkVProgram, vertex program to enable.
+     * @param pkPProgram, pixel program to enable.
+     */
+    public void DisablePrograms (Program pkVProgram, Program pkPProgram)
+    {
+        Program kCompiledProgram =
+            CompiledProgramCatalog.GetActive().Find( pkVProgram.GetShaderID(),
+                                                     pkPProgram.GetShaderID() );
+        if ( kCompiledProgram == null )
+        {
+            DisableVProgram(pkVProgram);
+            DisablePProgram(pkVProgram);
+        }
+        else
+        {
+            DisableVProgram(kCompiledProgram);
+        }
+    }
 
     /** Enable the vertex program parameter.
      * @param pkVProgram, vertex program to enable.
      */
-    public void EnableVProgram (VertexProgram pkVProgram)
+    public void EnableVProgram (Program pkVProgram)
     {
         assert(pkVProgram != null);
         LoadVProgram(pkVProgram);
@@ -1281,24 +1332,27 @@ public abstract class Renderer
             RendererConstant pkRC = pkVProgram.GetRC(i);
             assert(pkRC != null);
             SetRendererConstant(pkRC.GetType(),pkRC.GetData());
-            SetVProgramConstant(ConstantType.CT_RENDERER,pkRC.GetBaseRegister(),
-                                pkRC.GetRegisterQuantity(),pkRC.GetData());
+            SetVProgramConstant(ConstantType.CT_RENDERER,
+                                pkRC.GetType(),
+                                pkRC.GetBaseRegister(),
+                                pkRC.GetRegisterQuantity(),pkRC.GetNumFloats(),pkRC.GetData());
         }
-
         // Process the user-defined constants.
         for (i = 0; i < pkVProgram.GetUCQuantity(); i++)
         {
             UserConstant pkUC = pkVProgram.GetUC(i);
             assert(pkUC != null);
-            SetVProgramConstant(ConstantType.CT_USER,pkUC.GetBaseRegister(),
-                                pkUC.GetRegisterQuantity(),pkUC.GetData());
+            SetVProgramConstant(ConstantType.CT_USER,
+                                RendererConstant.Type.MAX_TYPES,
+                                pkUC.GetBaseRegister(),
+                                pkUC.GetRegisterQuantity(),pkUC.GetDataSize(),pkUC.GetData());
         }
     }
 
     /** Disable the vertex program parameter.
      * @param pkVProgram, vertex program to disable.
      */
-    public void DisableVProgram (VertexProgram pkVProgram)
+    public void DisableVProgram (Program pkVProgram)
     {
         assert(pkVProgram != null);
         ResourceIdentifier pkID = pkVProgram.GetIdentifier(this);
@@ -1309,7 +1363,7 @@ public abstract class Renderer
     /** Enable the pixel program parameter.
      * @param pkPProgram, pixel program to enable.
      */
-    public void EnablePProgram (PixelProgram pkPProgram)
+    public void EnablePProgram (Program pkPProgram)
     {
         assert(pkPProgram != null);
         LoadPProgram(pkPProgram);
@@ -1325,24 +1379,31 @@ public abstract class Renderer
             RendererConstant pkRC = pkPProgram.GetRC(i);
             assert(pkRC != null);
             SetRendererConstant(pkRC.GetType(),pkRC.GetData());
-            SetPProgramConstant(ConstantType.CT_RENDERER,pkRC.GetBaseRegister(),
-                                pkRC.GetRegisterQuantity(),pkRC.GetData());
+            SetPProgramConstant(ConstantType.CT_RENDERER,
+                                pkRC.GetType(),
+                                pkRC.GetBaseRegister(),
+                                pkRC.GetRegisterQuantity(),
+                                pkRC.GetNumFloats(),
+                                pkRC.GetData());
         }
-
         // Process the user-defined constants.
         for (i = 0; i < pkPProgram.GetUCQuantity(); i++)
         {
             UserConstant pkUC = pkPProgram.GetUC(i);
             assert(pkUC != null);
-            SetPProgramConstant(ConstantType.CT_USER,pkUC.GetBaseRegister(),
-                                pkUC.GetRegisterQuantity(),pkUC.GetData());
+            SetPProgramConstant(ConstantType.CT_USER,
+                                RendererConstant.Type.MAX_TYPES,
+                                pkUC.GetBaseRegister(),
+                                pkUC.GetRegisterQuantity(),
+                                pkUC.GetDataSize(),
+                                pkUC.GetData());
         }
     }
 
     /** Disable the pixel program parameter.
      * @param pkPProgram, pixel program to disable.
      */
-    public void DisablePProgram (PixelProgram pkPProgram)
+    public void DisablePProgram (Program pkPProgram)
     {
         assert(pkPProgram != null);
         ResourceIdentifier pkID = pkPProgram.GetIdentifier(this);
@@ -1663,11 +1724,32 @@ public abstract class Renderer
     /** Called when the depth range changes. Updates the camera. */
     public abstract void OnDepthRangeChange ();
 
+    /** Read a Shader Program from fila.
+     * @param rkProgramName, the name of the program to load.
+     * @param rkDirectory, the directory where the program is located.
+     * @param iType, the type of program to read VERTEX, PIXEL.
+     * @return a new Program, or null if it cannot be loaded.
+     */
+    public abstract Program ReadProgram(String rkProgramName, String rkDirectory, int iType);
+    
+    /** Compiles two shaders into a program.
+     * @param pkVProgram the vertex program to compile
+     * @param pkPProgram the pixel program to compile
+     * @return compiled Program containing combined information.
+     * */
+    public abstract Program CompilePrograms( Program pkVProgram, Program pkPProgram );
+    
+    /** Returns if the program being loaded must be unique. This is true only
+     * when the CgRuntime is not used and the shaders are glsl shaders.
+     * @return true if shader has to be unique.
+     */
+    public abstract boolean GetUnique();
+    
     /** Resource loading and releasing (to/from video memory).
      * @param pkVProgram the vertex program to generate/bind
      * @return the new ResourceIdentifier for the VertexProgram
      */
-    public abstract ResourceIdentifier OnLoadVProgram (VertexProgram pkVProgram);
+    public abstract ResourceIdentifier OnLoadVProgram (Program pkVProgram);
     /**
      * Release the VertexProgram described in the ResourceIdentifier parameter.
      * @param pkID, the ResourceIdentifier with the VertexProgram to release.
@@ -1677,7 +1759,7 @@ public abstract class Renderer
      * @param pkPProgram the pixel program to generate/bind
      * @return the new ResourceIdentifier for the PixelProgram
      */
-    public abstract ResourceIdentifier OnLoadPProgram (PixelProgram pkPProgram);
+    public abstract ResourceIdentifier OnLoadPProgram (Program pkPProgram);
     /**
      * Release the PixelProgram described in the ResourceIdentifier parameter.
      * @param pkID, the ResourceIdentifier with the PixelProgram to release.

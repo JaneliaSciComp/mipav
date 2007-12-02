@@ -635,7 +635,7 @@ public class Matrix4f
      */
     public Matrix4f Transpose ()  // M^T
     {
-        System.err.println( "Matrix4f: Transpose" );
+        //System.err.println( "Matrix4f: Transpose" );
         return new Matrix4f(
                             m_afEntry[ 0],
                             m_afEntry[ 4],
@@ -863,7 +863,7 @@ public class Matrix4f
             return new Matrix4f(Matrix4f.ZERO);
         }
 
-        System.err.println( "Matrix4f: inverse" );
+        //System.err.println( "Matrix4f: inverse" );
         Matrix4f kInv = new Matrix4f();
         kInv.m_afEntry[ 0] =
             + m_afEntry[ 5]*fB5 - m_afEntry[ 6]*fB4 + m_afEntry[ 7]*fB3;

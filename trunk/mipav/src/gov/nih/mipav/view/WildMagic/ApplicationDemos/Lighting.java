@@ -49,7 +49,7 @@ public class Lighting extends JavaApplication3D
         ImageCatalog.SetActive( new ImageCatalog("Main", System.getProperties().getProperty("user.dir")) );      
         VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", System.getProperties().getProperty("user.dir")));       
         PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", System.getProperties().getProperty("user.dir")));
-
+        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
     }
 
 

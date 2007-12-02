@@ -58,6 +58,7 @@ public class Iridescence extends JavaApplication3D
         ImageCatalog.SetActive( new ImageCatalog("Main", System.getProperties().getProperty("user.dir")) );      
         VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", System.getProperties().getProperty("user.dir")));       
         PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", System.getProperties().getProperty("user.dir")));
+        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
     }
 
     /**
@@ -208,7 +209,7 @@ public class Iridescence extends JavaApplication3D
         kAttr.SetTChannels(0,2);
         StandardMesh kSM = new StandardMesh(kAttr);
         //TriMesh pkMesh = kSM.Ellipsoid(50,50,1.5f,1.0f, 2.0f);
-        TriMesh pkMesh = kSM.Torus(20,20,2.0f,1.0f);
+        TriMesh pkMesh = kSM.Torus(200,200,2.0f,1.0f);
         
         pkMesh.Local.SetMatrix(new Matrix3f(new Vector3f(0f, 0f, 1f), new Vector3f(0.707f, 0.707f, 0f), 
                 new Vector3f(-0.707f, 0.707f, 0f),false));
@@ -219,7 +220,7 @@ public class Iridescence extends JavaApplication3D
         final int iPassQuantity = m_spkEffect.GetPassQuantity();
         for (int iPass = 0; iPass < iPassQuantity; iPass++)
         {
-            m_spkEffect.LoadPrograms(iPass,m_pkRenderer.GetMaxColors(),m_pkRenderer.GetMaxTCoords(),
+            m_spkEffect.LoadPrograms(m_pkRenderer, iPass,m_pkRenderer.GetMaxColors(),m_pkRenderer.GetMaxTCoords(),
                     m_pkRenderer.GetMaxVShaderImages(),m_pkRenderer.GetMaxPShaderImages());
         }
 
