@@ -21,6 +21,7 @@ import java.util.HashMap;
 //import java.util.HashSet;
 import java.util.Iterator;
 import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 
 public class VertexProgramCatalog
 {
@@ -55,10 +56,11 @@ public class VertexProgramCatalog
     /** For deferred setting of the renderer type and comment character.  This
      * cannot be called until the application layer has created a renderer.
      * The layer does so in WindowApplication::SetRenderer.
+     * @param kRenderer, the current Renderer for reading and parsing new programs.
      * @param rkRendererType, renderer type.
      * @param cCommentChar, comment character.
      */
-    public void SetInformation (String rkRendererType,
+    public void SetInformation (Renderer kRenderer, String rkRendererType,
                                 char cCommentChar)
     {
         m_kRendererType = rkRendererType;
@@ -69,7 +71,7 @@ public class VertexProgramCatalog
             // Create the default shader, which sets every vertex to magenta.  This
             // is used when your shader cannot be found.  The color should catch
             // your attention.
-            m_spkDefaultVProgram = VertexProgram.Load(ms_kDefaultString,m_kDefaultDir);
+            m_spkDefaultVProgram = kRenderer.ReadProgram(ms_kDefaultString,m_kDefaultDir,Program.VERTEX);
             assert(m_spkDefaultVProgram != null);
         }
         else
@@ -100,7 +102,7 @@ public class VertexProgramCatalog
      * @param pkProgram, vertex program to add.
      * @return true if the program is added, false otherwise.
      */
-    public boolean Insert (VertexProgram pkProgram)
+    public boolean Insert (Program pkProgram)
     {
         if (pkProgram == null)
         {
@@ -117,7 +119,7 @@ public class VertexProgramCatalog
         }
 
         // Attempt to find the program in the catalog.
-        VertexProgram kLocalProgram = m_kEntry.get(kProgramName);
+        Program kLocalProgram = m_kEntry.get(kProgramName);
         if (kLocalProgram != null)
         {
             // The program already exists in the catalog.
@@ -133,7 +135,7 @@ public class VertexProgramCatalog
      * @param pkProgram, program to remove.
      * @return true if the program is removed, false otherwise.
      */
-    public boolean Remove (VertexProgram pkProgram)
+    public boolean Remove (Program pkProgram)
     {
         if (pkProgram == null)
         {
@@ -157,7 +159,7 @@ public class VertexProgramCatalog
             kKey = (String)kIterator.next();
             if ( kKey.equals(kProgramName) )
             {
-                VertexProgram kLocalProgram = m_kEntry.get(kKey);
+                Program kLocalProgram = m_kEntry.get(kKey);
                 if ( kLocalProgram == pkProgram )
                 {
                     kIterator.remove();
@@ -183,20 +185,21 @@ public class VertexProgramCatalog
 
     /** Find a vertex program in the catalog based on the program's name. If
      * not in the catalog, try to load from disk.
+     * @param kRenderer, the current Renderer for reading and parsing new programs.
      * @param rkProgramName, name of the program to fine.
      * @param rkDirectory, name of the directory.
      * @return the desired vertex program, or the default program.
      */
-    public VertexProgram Find (String rkProgramName, String rkDirectory)
+    public Program Find (Renderer kRenderer, String rkProgramName, String rkDirectory)
     {
         if (rkProgramName == ms_kNullString
             ||  rkProgramName == ms_kDefaultString)
         {
-            return (VertexProgram)(m_spkDefaultVProgram);
+            return (Program)(m_spkDefaultVProgram);
         }
 
         // Attempt to find the program in the catalog.
-        VertexProgram kLocalProgram = m_kEntry.get(rkProgramName);
+        Program kLocalProgram = m_kEntry.get(rkProgramName);
         if (kLocalProgram != null)
         {
             // The program exists in the catalog, so return it.
@@ -207,7 +210,7 @@ public class VertexProgramCatalog
         // (name,program) pair was automatically inserted into m_kEntry, so
         // there is no need to insert it again explicitly.
         assert(m_cCommentChar != 0);
-        VertexProgram pkProgram = VertexProgram.Load(rkProgramName,rkDirectory);
+        Program pkProgram = kRenderer.ReadProgram(rkProgramName,rkDirectory,Program.VERTEX);
         if (pkProgram != null)
         {
             // The program exists on disk and is already in the catalog.  The
@@ -218,7 +221,7 @@ public class VertexProgramCatalog
         }
 
         // The program does not exist.  Use the default program.
-        return (VertexProgram)(m_spkDefaultVProgram);
+        return (Program)(m_spkDefaultVProgram);
     }
 
     /** Set the active vertex program catalog.
@@ -241,8 +244,8 @@ public class VertexProgramCatalog
     private String m_kName;
     /** Default directory where programs are stored. */
     private String m_kDefaultDir;
-    /** Map <String,VertexProgram> for mapping an program to its name. */
-    private HashMap<String,VertexProgram> m_kEntry = new HashMap<String,VertexProgram>();
+    /** Map <String,Program> for mapping an program to its name. */
+    private HashMap<String,Program> m_kEntry = new HashMap<String,Program>();
     /** Default program when no program can be found. */
     private GraphicsObject m_spkDefaultVProgram;
     /** Renderer type. */

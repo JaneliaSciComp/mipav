@@ -54,7 +54,8 @@ public class RipplingOcean extends JavaApplication3D
         ImageCatalog.SetActive( new ImageCatalog("Main", System.getProperties().getProperty("user.dir")) );      
         VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", System.getProperties().getProperty("user.dir")));       
         PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", System.getProperties().getProperty("user.dir")));
-
+        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
+        
         // Arbitrary constants to make particular looking waves.
         m_afWaveSpeed[0] = 0.2f;
         m_afWaveSpeed[1] = 0.15f;

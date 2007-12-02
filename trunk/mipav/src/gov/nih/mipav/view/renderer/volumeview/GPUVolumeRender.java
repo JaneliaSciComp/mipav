@@ -83,6 +83,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         ImageCatalog.SetActive( new ImageCatalog("Main", System.getProperties().getProperty("user.dir")) );      
         VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", System.getProperties().getProperty("user.dir")));       
         PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", System.getProperties().getProperty("user.dir")));
+        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
 
         m_kImageA = kImageA;
         m_kLUTa = kLUTa;
@@ -949,7 +950,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
                 ResetTime();
             }
             return;
-/*
+
         case 's':
         case 'S':
             TestStreaming(m_spkScene,"VolumeTextures.wmof");
@@ -957,6 +958,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         case 'b':
             m_bDisplaySecond = !m_bDisplaySecond;
             return;
+            /*
         case 'v':
             m_bDisplayEllipsoids = !m_bDisplayEllipsoids;
             return;

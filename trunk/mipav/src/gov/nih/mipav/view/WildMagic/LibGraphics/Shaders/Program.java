@@ -18,32 +18,30 @@
 
 package gov.nih.mipav.view.WildMagic.LibGraphics.Shaders;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.Vector;
-import java.io.FileNotFoundException;
-
-import com.sun.opengl.cg.*;
 
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
-public abstract class Program extends Bindable
+
+public class Program extends Bindable
     implements StreamInterface
 {
+    public static int VERTEX = 0;
+    public static int PIXEL = 1;
     
     /** Create a Program and GcGL context. */
     public Program ()
     {
-        m_kContext = CgGL.cgCreateContext();
+        //m_kContext = CgGL.cgCreateContext();
      }
+
     /** Delete memory. Destroy the CgGL context. */
     public void Remove ()
     {
-        CgGL.cgDestroyContext( m_kContext );
-        m_kContext = null;
-        m_kCGProgram = null;
+        //CgGL.cgDestroyContext( m_kContext );
+        //m_kContext = null;
+        //m_kCGProgram = null;
         m_kProgramText = null;
         if ( m_kInputAttributes != null )
         {
@@ -64,6 +62,16 @@ public abstract class Program extends Bindable
 
         super.Remove();
     }
+
+    public void Reset ()
+    {
+        m_kInputAttributes = new Attributes();
+        m_kInputAttributes = new Attributes();
+
+        m_kRendererConstants.clear();
+        m_kUserConstants.clear();
+        m_kSamplerInformation.clear();
+    }
     
     /** Return the program text. 
      * @return the program text. 
@@ -71,6 +79,71 @@ public abstract class Program extends Bindable
     public final String GetProgramText ()
     {
         return m_kProgramText;
+    }
+    
+    /** Set the program text. 
+     * param the program text. 
+     */
+    public final void SetProgramText ( String kText )
+    {
+        m_kProgramText = null;
+        m_kProgramText = new String(kText);
+    }
+    
+    /** Return the program type string, its extension. 
+     * @return the program type. 
+     */
+    public final String GetProgramType ()
+    {
+        return m_kProgramType;
+    }    
+    /** Return the program type string, its extension. 
+     * @return the program type. 
+     */
+    public final void SetProgramType ( String kType )
+    {
+        m_kProgramType = null;
+        m_kProgramType = new String(kType);
+    }
+
+    public boolean IsParsed()
+    {
+        return m_bParsed;
+    }
+    
+    public void SetParsed()
+    {
+        m_bParsed = true;
+    }
+    
+    public boolean IsCompiled()
+    {
+        return m_bCompiled;
+    }
+    
+    public void SetCompiled( boolean bFlag )
+    {
+        m_bCompiled = bFlag;
+    }
+    
+    public int GetShaderID()
+    {
+        return m_iShaderID;
+    }
+    
+    public void SetShaderID( int iID )
+    {
+        m_iShaderID = iID;
+    }
+    
+    public int GetProgramID()
+    {
+        return m_iProgramID;
+    }
+    
+    public void SetProgramID( int iID )
+    {
+        m_iProgramID = iID;
     }
     
     /** Return the program input attributes. 
@@ -87,6 +160,22 @@ public abstract class Program extends Bindable
     public final Attributes GetOutputAttributes ()
     {
         return m_kOutputAttributes;
+    }
+    
+    /** Set the program output attributes. 
+     * param the program output attribtues. 
+     */
+    public final void SetOutputAttributes (Attributes kAttributes)
+    {
+        m_kOutputAttributes = kAttributes;
+    }    
+    
+    /** Set the program input attributes. 
+     * param the program input attribtues. 
+     */
+    public final void SetInputAttributes (Attributes kAttributes)
+    {
+        m_kInputAttributes = kAttributes;
     }
     
     /** Access to renderer constants.
@@ -130,6 +219,13 @@ public abstract class Program extends Bindable
         return null;
     }
 
+    /** Access to renderer constants.
+     * @param kRC
+     */
+    public void AddRendererConstant(RendererConstant kRC)
+    {
+        m_kRendererConstants.add(kRC);
+    }
 
     /** Access to user constants.
      * @return number of use constants.
@@ -172,6 +268,13 @@ public abstract class Program extends Bindable
         return null;
     }
 
+    /** Access to user constants.
+     * @param kUC
+     */
+    public void AddUserConstant(UserConstant kUC)
+    {
+        m_kUserConstants.add(kUC);
+    }
 
     /** Access to samplers.
      * @return number of samplers.
@@ -214,203 +317,43 @@ public abstract class Program extends Bindable
         return null;
     }
 
-    /**
-     * Checks and prints Cg error messages:
+    /** Access to Sampler Information.
+     * @param kSI
      */
-    protected void CheckCgError()
+    public void AddSamplerInformation(SamplerInformation kSI)
     {
-        int err = CgGL.cgGetError();
-        
-        if (err != CgGL.CG_NO_ERROR) {
-            System.err.println("CG error: " + CgGL.cgGetErrorString(err));
-            System.err.println( CgGL.cgGetLastListing(m_kContext) );
-            System.exit(1);
-        }
+        m_kSamplerInformation.add(kSI);
     }
-
-    /** Recurses on the CGparameter. if it is a struct or array the function
-     * recurses. If the parameter is a native type, the function parses the
-     * type, determines if it is a RendererConstant or UserConstant and sets
-     * up the appropriate data structures to contain the parameter.
-     * @param param, CGparameter to parse.
-     */
-    private void RecurseParams( CGparameter param )
-    {
-        if (param == null)
-            return;
-        do
-        {
-            switch( CgGL.cgGetParameterType(param) )
-            {
-            case CgGL.CG_STRUCT :
-                RecurseParams( CgGL.cgGetFirstStructParameter(param) );
-                break;
-                
-            case CgGL.CG_ARRAY :
-                {
-                    int ArraySize = CgGL.cgGetArraySize(param, 0);
-                    int i;
-                    
-                    for(i=0; i < ArraySize; ++i)
-                        RecurseParams( CgGL.cgGetArrayParameter(param, i));
-                }
-                break;
-                
-            default :
-                String kParamSemantic = CgGL.cgGetParameterSemantic(param);
-                String kParamName = CgGL.cgGetParameterName(param);
-                int iBaseRegister = (int)CgGL.cgGetParameterResourceIndex(param);
-                String kParamType = CgGL.cgGetTypeString( CgGL.cgGetParameterType(param) );
-                String kParamResource = CgGL.cgGetResourceString( CgGL.cgGetParameterResource(param) );
-                                        
-//                 System.err.println( CgGL.cgGetEnumString( CgGL.cgGetParameterDirection(param) ) + " " + 
-//                                     CgGL.cgGetEnumString( CgGL.cgGetParameterVariability(param) ) + " " + 
-//                                     kParamType + " " +
-//                                     kParamName + " " + 
-//                                     kParamSemantic + " " + 
-//                                     kParamResource + " " +
-//                                     iBaseRegister + " " +
-//                                     CgGL.cgGetResourceString(CgGL.cgGetParameterBaseResource(param) ) );
-
-                Attributes kInOutAttributes;
-                int iNumFloats = 1;
-
-                switch ( CgGL.cgGetParameterType(param) )
-                {
-                case CgGL.CG_FLOAT2: iNumFloats = 2; break;
-                case CgGL.CG_FLOAT3: iNumFloats = 3; break;
-                case CgGL.CG_FLOAT4: iNumFloats = 4; break;
-                case CgGL.CG_FLOAT4x4: iNumFloats = 16; break;
-                default: break;
-                }
-                int iRegisterQuantity = iNumFloats/4;
-                if (iRegisterQuantity == 0)
-                {
-                    iRegisterQuantity = 1;
-                }
-
-                boolean bIn = true;
-                if ( CgGL.cgGetParameterDirection(param) == CgGL.CG_IN )
-                {
-                    kInOutAttributes = m_kInputAttributes;
-                }
-                else
-                {
-                    bIn = false;
-                    kInOutAttributes = m_kOutputAttributes;
-                }
-                if ( kParamSemantic.equals( ms_kPositionStr ) )
-                {
-                    if (bIn)
-                        kInOutAttributes.SetPChannels(3);
-                    else
-                        kInOutAttributes.SetPChannels(iNumFloats);
-                }
-                else if ( kParamSemantic.equals( ms_kNormalStr ) )
-                {
-                    if (bIn)
-                        kInOutAttributes.SetNChannels(3);
-                    else
-                        kInOutAttributes.SetNChannels(iNumFloats);
-                }
-                else if ( kParamSemantic.equals( ms_kColorStr ) ||
-                          kParamSemantic.equals( ms_kColor0Str )   )
-                {
-                    kInOutAttributes.SetCChannels(0,iNumFloats);
-                }
-                else if ( kParamSemantic.equals( ms_kColor1Str ) )
-                {
-                    kInOutAttributes.SetCChannels(1,iNumFloats);
-                }
-                else if ( kParamSemantic.startsWith( ms_kTexCoordStr ) )
-                {
-                    int iUnit = 0;
-                    if ( !kParamSemantic.equals( ms_kTexCoordStr ) )
-                    {
-                        iUnit = (int)kParamSemantic.charAt(8) - '0';
-                        
-                    }
-                    kInOutAttributes.SetTChannels(iUnit,iNumFloats);
-                }
-                else if ( kParamResource.startsWith( ms_kTexUnitString ) )
-                {
-                    SamplerInformation.Type eSType = SamplerInformation.Type.MAX_SAMPLER_TYPES;
-                    if (kParamType.equals( ms_kSampler1DStr ))
-                    {
-                        eSType = SamplerInformation.Type.SAMPLER_1D;
-                    }
-                    else if (kParamType.equals( ms_kSampler2DStr ))
-                    {
-                        eSType = SamplerInformation.Type.SAMPLER_2D;
-                    }
-                    else if (kParamType.equals( ms_kSampler3DStr ))
-                    {
-                        eSType = SamplerInformation.Type.SAMPLER_3D;
-                    }
-                    else if (kParamType.equals( ms_kSamplerCubeStr ))
-                    {
-                        eSType = SamplerInformation.Type.SAMPLER_CUBE;
-                    }
-                    else if (kParamType.equals( ms_kSamplerProjStr ))
-                    {
-                        eSType = SamplerInformation.Type.SAMPLER_PROJ;
-                    }
-
-                    int iUnit = iBaseRegister;
-                    SamplerInformation kSU = new SamplerInformation(kParamName,eSType,iUnit);
-                    m_kSamplerInformation.add(kSU);
-                }
-                else if ( kParamResource.equals( ms_kUserString ) )
-                {
-                    // The variable is either a render state or user-defined.
-                    RendererConstant.Type eRCType = RendererConstant.GetType(kParamName);
-                    if (eRCType != RendererConstant.Type.MAX_TYPES)
-                    {
-                        // renderer constant
-                        RendererConstant kRC = new RendererConstant(eRCType,iBaseRegister,
-                                                                    iRegisterQuantity);
-                        m_kRendererConstants.add(kRC);
-                    }
-                    else
-                    {
-                        // user-defined constant
-                        UserConstant kUC = new UserConstant(GetName(), kParamName,iBaseRegister,
-                                                            iRegisterQuantity,iNumFloats);
-                        m_kUserConstants.add(kUC);
-                    }
-                }
-
-            }
-        } while((param = CgGL.cgGetNextParameter(param)) != null);
-    }
-
-    /** Recursively pase the program, setup the RendererConstants,
-     * UserConstants, and Samplers. */
-    protected void RecurseParamsInProgram( )
-    {
-        RecurseParams( CgGL.cgGetFirstParameter( m_kCGProgram, CgGL.CG_PROGRAM ) );
-    }
-
-    /** Current CGprogram. */
-    protected CGprogram m_kCGProgram = null;
+    
+    /** The type of program, from file extension. */
+    private String m_kProgramType = new String();
 
     /** The program as a text string. */
-    protected String m_kProgramText = new String();
+    private String m_kProgramText = new String();
+    
+    /** Flag indicating if the program is compiled or not. */
+    private boolean m_bCompiled = false;
+    private boolean m_bParsed = false;
+    
+    /** The shader ID for compiling programs. */
+    private int m_iShaderID;
+    /** The shader ID for compiling programs. */
+    private int m_iProgramID = -1;
 
     /** The format of the input and output parameters to the shader program. */
-    protected Attributes m_kInputAttributes = new Attributes();
+    private Attributes m_kInputAttributes = new Attributes();
     /** The format of the input and output parameters to the shader program. */
-    protected Attributes m_kOutputAttributes = new Attributes();
+    private Attributes m_kOutputAttributes = new Attributes();
 
     /** The renderer constants required by the shader program. */
-    protected Vector<RendererConstant> m_kRendererConstants = new Vector<RendererConstant>();
+    private Vector<RendererConstant> m_kRendererConstants = new Vector<RendererConstant>();
 
     /** The user constants required by the shader program.  These are set by
      * the applications as needed. */
-    protected Vector<UserConstant> m_kUserConstants = new Vector<UserConstant>();
+    private Vector<UserConstant> m_kUserConstants = new Vector<UserConstant>();
 
     /** Information about the sampler units required by a shader program. */
-    protected Vector<SamplerInformation> m_kSamplerInformation = new Vector<SamplerInformation>();
+    private Vector<SamplerInformation> m_kSamplerInformation = new Vector<SamplerInformation>();
 
     /** For use by the constructor for loading and parsing a shader
      * program. */
@@ -430,8 +373,6 @@ public abstract class Program extends Bindable
     protected static final String ms_kTexUnitString = new String("texunit");
     protected static final String ms_kUserString = new String("c");
 
-    /** Cg Context */
-    protected CGcontext m_kContext = null;
     
     /**
      * Loads this object from the input parameter rkStream, using the input
