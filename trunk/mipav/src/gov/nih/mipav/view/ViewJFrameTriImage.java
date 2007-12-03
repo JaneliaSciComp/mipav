@@ -712,7 +712,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     }
                 }
             }
-        } else if (command.equals("Line")) {
+        } else if (command.equals(CustomUIBuilder.PARAM_VOI_LINE.getActionCommand())) {
 
             if (triImage[AXIAL_A].isIntensityLineVisible()) {
                 btnInvisible[2].setSelected(true);
@@ -2985,43 +2985,30 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         imageToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
         imageToolBar.setFloatable(false);
 
-        traverseButton = toolbarBuilder.buildToggleButton("traverse", "Traverse image", "translate", VOIGroup);
+        traverseButton = toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_TRIIMAGE_TRAVERSE, VOIGroup);
         traverseButton.setSelected(true);
         imageToolBar.add(traverseButton);
 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
 
-        magButton = toolbarBuilder.buildButton("MagImage",
-                                               "<html>" + "Magnify all frames 2.0x" + "<br>" +
-                                               "Hold SHIFT for multiple zooming" + "<br>" +
-                                               "[right-click for options]" + "</html>", "zoomin");
+        magButton = toolbarBuilder.buildButton(CustomUIBuilder.PARAM_IMAGE_MAG);
         magButton.addMouseListener(this);
         imageToolBar.add(magButton);
-        minButton = toolbarBuilder.buildButton("UnMagImage",
-                                               "<html>" + "Magnify all frames 0.5x" + "<br>" +
-                                               "Hold SHIFT for multiple zooming" + "<br>" +
-                                               "[right-click for options]" + "</html>", "zoomout");
+        minButton = toolbarBuilder.buildButton(CustomUIBuilder.PARAM_IMAGE_UNMAG);
         minButton.addMouseListener(this);
         imageToolBar.add(minButton);
-        imageToolBar.add(toolbarBuilder.buildButton("ZoomOne", "Magnify all frames 1.0x", "zoom1"));
+        imageToolBar.add(toolbarBuilder.buildButton(CustomUIBuilder.PARAM_IMAGE_MAG_ONE_TO_ONE));
 
 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         // ButtonGroup indivMagGroup = new ButtonGroup();
-        indivMagButton = toolbarBuilder.buildToggleButton("IndivMagImage",
-                                                          "<html>" + "Magnify individual frame 2.0x" + "<br>" +
-                                                          "Hold SHIFT for multiple zooming" + "<br>" +
-                                                          "[right-click for options]" + "</html>", "trizoomin",
-                                                          VOIGroup);
+        indivMagButton = toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_TRIIMAGE_MAG, VOIGroup);
         indivMagButton.addMouseListener(this);
         imageToolBar.add(indivMagButton);
 
-        indivMinButton = toolbarBuilder.buildToggleButton("IndivMinImage",
-                                                          "<html>" + "Magnify individual frame 0.5x" + "<br>" +
-                                                          "Hold SHIFT for multiple zooming" + "<br>" +
-                                                          "[right-click for options]" + "</html>", "trizoomout",
+        indivMinButton = toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_TRIIMAGE_UNMAG,
                                                           VOIGroup);
         indivMinButton.addMouseListener(this);
         imageToolBar.add(indivMinButton);
@@ -3042,17 +3029,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         ButtonGroup intensityLineGroup = new ButtonGroup();
-        imageToolBar.add(toolbarBuilder.buildToggleButton("Line", "Draw line VOI", "linear", VOIGroup));
+        imageToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_VOI_LINE, VOIGroup));
         intensityLineGroup.add(btnInvisible[0]);
 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         ButtonGroup centerGroup = new ButtonGroup();
-        imageToolBar.add(toolbarBuilder.buildToggleButton("Center", "Identify center of volume", "centerpt", VOIGroup));
+        imageToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_TRIIMAGE_CENTER, VOIGroup));
 
         centerGroup.add(btnInvisible[3]);
 
-        imageToolBar.add(toolbarBuilder.buildToggleButton("Protractor", "Alignment tool", "protractor", VOIGroup));
+        imageToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_VOI_PROTRACTOR, VOIGroup));
 
         intensityLineGroup.add(btnInvisible[2]);
 
@@ -3060,12 +3047,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                                                         "createTransformation"));
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
-        addPointToggleButton = toolbarBuilder.buildToggleButton("addPoint", "Add point", "pointROI", VOIGroup);
+        addPointToggleButton = toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_VOI_POINT_ADD, VOIGroup);
         addPointToggleButton.addItemListener(this);
         imageToolBar.add(addPointToggleButton);
 
         // imageToolBar.add(toolbarBuilder.buildToggleButton("NewVOI", "Initiate new VOI", "newvoi", VOIGroup));
-        imageToolBar.add(toolbarBuilder.buildButton("deleteVOI", "Delete point VOI", "delete"));
+        imageToolBar.add(toolbarBuilder.buildButton(CustomUIBuilder.PARAM_VOI_POINT_DELETE));
 
         leastSquaresButton = new JButton(MipavUtil.getIcon("reglsq.gif"));
         leastSquaresButton.addActionListener(this);
@@ -3099,8 +3086,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         ButtonGroup oneButtonToggleGroup = new ButtonGroup();
         oneButtonToggleGroup.add(btnInvisible[1]);
-        imageToolBar.add(toolbarBuilder.buildToggleButton("boundingBox", "Show/hide crop volume", "boundingcube",
-                                                          oneButtonToggleGroup));
+        imageToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_TRIIMAGE_BOUNDING_BOX, oneButtonToggleGroup));
 
         imageToolBar.add(toolbarBuilder.buildTextButton("Crop", "Crops image delineated by the bounding cube",
                                                         "cropVolume"));
@@ -3132,19 +3118,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         paintToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
         paintToolBar.setFloatable(false);
 
-        paintToolBar.add(toolbarBuilder.buildToggleButton("PaintBrush", "Draw using a brush", "brush", VOIGroup));
-        dropperPaintToggleButton = toolbarBuilder.buildToggleButton("Dropper", "Picks up a color from the image",
-                                                                    "dropper", VOIGroup);
+        paintToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_PAINT_BRUSH, VOIGroup));
+        dropperPaintToggleButton = toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_PAINT_DROPPER, VOIGroup);
         dropperPaintToggleButton.addItemListener(this);
         paintToolBar.add(dropperPaintToggleButton);
 
-        paintCanToggleButton = toolbarBuilder.buildToggleButton("PaintCan", "Fills an area with desired color",
-                                                                "paintcan", VOIGroup);
+        paintCanToggleButton = toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_PAINT_FILL, VOIGroup);
         paintCanToggleButton.addItemListener(this);
         paintToolBar.add(paintCanToggleButton);
 
-        paintToolBar.add(toolbarBuilder.buildToggleButton("Eraser", "Erases paint", "eraser", VOIGroup));
-        paintToolBar.add(toolbarBuilder.buildButton("EraseAll", "Erase all paint", "clear"));
+        paintToolBar.add(toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_PAINT_ERASER, VOIGroup));
+        paintToolBar.add(toolbarBuilder.buildButton(CustomUIBuilder.PARAM_PAINT_ERASE_ALL));
         paintToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         // create the list of brushes
