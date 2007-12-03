@@ -186,8 +186,8 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
         
         JToolBar tBar = WidgetFactory.initToolbar();
         ViewToolBarBuilder toolbarBuilder = new ViewToolBarBuilder(this);
-        tBar.add(toolbarBuilder.buildButton("Open", "Open mipav data-provenance file", "open"));
-        tBar.add(toolbarBuilder.buildButton("Save", "Save mipav data-provenance file", "save"));
+        tBar.add(toolbarBuilder.buildButton(CustomUIBuilder.PARAM_DATA_PROVENANCE_OPEN));
+        tBar.add(toolbarBuilder.buildButton(CustomUIBuilder.PARAM_DATA_PROVENANCE_SAVE));
         
         
         buttonPanel = new JPanel();

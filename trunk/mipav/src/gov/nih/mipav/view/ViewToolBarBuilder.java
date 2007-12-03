@@ -5,7 +5,7 @@ import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.view.CustomToolBarBuilder.*;
+import gov.nih.mipav.view.CustomUIBuilder.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -190,10 +190,10 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
     public JToolBar buildBasicLUTToolBar() {
         JToolBar bar = initToolBar();
 
-        bar.add(buildButton("DisplayLUT", "Displays Lookup Table (LUT)", "histolut"));
-        bar.add(buildButton("ctPresetsLUT", "CT preset function", "ctwindow"));
-        bar.add(buildToggleButton("quickLUT", KeyEvent.VK_Q, "Quick LUT", "quicklut", VOIGroup));
-        bar.add(buildButton("resetLUTs", "Reset LUT", "resetlut"));
+        bar.add(buildButton(CustomUIBuilder.PARAM_LUT));
+        bar.add(buildButton(CustomUIBuilder.PARAM_LUT_CT));
+        bar.add(buildToggleButton(CustomUIBuilder.PARAM_LUT_QUICK, VOIGroup));
+        bar.add(buildButton(CustomUIBuilder.PARAM_LUT_RESET));
 
         return bar;
     }
@@ -238,12 +238,12 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
     }
 
     /**
-     * Creates a JButton using a ButtonParams parameters
-     * @param params
+     * Creates a JButton using a UIParams parameters
+     * @param params UIParams (static final variable from CustomUIBuilder)
      * @return
      */
-    public final JButton buildButton(ButtonParams params) {
-    	return this.buildButton(params.cmd, params.tooltip, params.iconbase);
+    public final JButton buildButton(UIParams params) {
+    	return this.buildButton(params.getActionCommand(), params.getToolTip(), params.getIconBase());
     }
     
     /**
@@ -260,23 +260,23 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
         JToolBar tBar = initToolBar();
 
-        tBar.add(buildButton(CustomToolBarBuilder.PARAM_IMAGE_OPEN));
-        tBar.add(buildButton(CustomToolBarBuilder.PARAM_IMAGE_SAVE));
-        tBar.add(buildButton(CustomToolBarBuilder.PARAM_IMAGE_PRINT));
-        tBar.add(buildButton(CustomToolBarBuilder.PARAM_IMAGE_CAPTURE));
+        tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGE_OPEN));
+        tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGE_SAVE));
+        tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGE_PRINT));
+        tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGE_CAPTURE));
 
         tBar.add(makeSeparator());
 
-        tBar.add(buildButton(CustomToolBarBuilder.PARAM_IMAGE_HEADER));
-        tBar.add(buildButton(CustomToolBarBuilder.PARAM_IMAGE_ATTRIBUTES));
+        tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGE_HEADER));
+        tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGE_ATTRIBUTES));
 
 
         tBar.add(makeSeparator());
 
-        JButton winLevelButton = buildButton(CustomToolBarBuilder.PARAM_WINDOW_LEVEL);
-        JButton invertButton = buildButton(CustomToolBarBuilder.PARAM_LUT_INVERT);
-        JButton grayButton = buildButton(CustomToolBarBuilder.PARAM_LUT_GRAY);
-        JButton hotmetalButton = buildButton(CustomToolBarBuilder.PARAM_LUT_HOTMETAL);
+        JButton winLevelButton = buildButton(CustomUIBuilder.PARAM_WINDOW_LEVEL);
+        JButton invertButton = buildButton(CustomUIBuilder.PARAM_LUT_INVERT);
+        JButton grayButton = buildButton(CustomUIBuilder.PARAM_LUT_GRAY);
+        JButton hotmetalButton = buildButton(CustomUIBuilder.PARAM_LUT_HOTMETAL);
 
         if (isColorImage) {
             winLevelButton.setEnabled(false);
@@ -285,22 +285,22 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
             hotmetalButton.setEnabled(false);
         }
 
-        tBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT));
-        ctButton = buildButton(CustomToolBarBuilder.PARAM_CT);
+        tBar.add(buildButton(CustomUIBuilder.PARAM_LUT));
+        ctButton = buildButton(CustomUIBuilder.PARAM_LUT_CT);
         setCTButtonEnabled(false);
         tBar.add(ctButton);
         tBar.add(winLevelButton);
-        tBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_LUT_QUICK, VOIGroup));
-        tBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_RESET));
+        tBar.add(buildToggleButton(CustomUIBuilder.PARAM_LUT_QUICK, VOIGroup));
+        tBar.add(buildButton(CustomUIBuilder.PARAM_LUT_RESET));
         tBar.add(invertButton);
         tBar.add(grayButton);
         tBar.add(hotmetalButton);
-        tBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_OPEN));
-        tBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_SAVE));
+        tBar.add(buildButton(CustomUIBuilder.PARAM_LUT_OPEN));
+        tBar.add(buildButton(CustomUIBuilder.PARAM_LUT_SAVE));
         tBar.add(makeSeparator());
 
-        JButton leftArrowButton = buildButton(CustomToolBarBuilder.PARAM_IMAGE_SLICE_PREVIOUS);
-        JButton rightArrowButton = buildButton(CustomToolBarBuilder.PARAM_IMAGE_SLICE_NEXT);
+        JButton leftArrowButton = buildButton(CustomUIBuilder.PARAM_IMAGE_SLICE_PREVIOUS);
+        JButton rightArrowButton = buildButton(CustomUIBuilder.PARAM_IMAGE_SLICE_NEXT);
         leftArrowButton.addMouseListener((MouseListener) UI);
         rightArrowButton.addMouseListener((MouseListener) UI);
 
@@ -314,36 +314,36 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
         tBar.add(makeSeparator());
         
-        JCheckBox scrollButton = new JCheckBox(MipavUtil.getIcon(CustomToolBarBuilder.PARAM_IMAGE_LINK.iconbase));
+        JCheckBox scrollButton = new JCheckBox(MipavUtil.getIcon(CustomUIBuilder.PARAM_IMAGE_LINK.getIconBase()));
         scrollButton.setPreferredSize(new Dimension(35,24));
         scrollButton.setMinimumSize(new Dimension(24,24));
         scrollButton.setSelectedIcon(MipavUtil.getIcon("link.gif"));
         scrollButton.addActionListener((ActionListener) UI);
-        scrollButton.setActionCommand(CustomToolBarBuilder.PARAM_IMAGE_LINK.cmd);
-        scrollButton.setToolTipText(CustomToolBarBuilder.PARAM_IMAGE_LINK.tooltip);
+        scrollButton.setActionCommand(CustomUIBuilder.PARAM_IMAGE_LINK.getActionCommand());
+        scrollButton.setToolTipText(CustomUIBuilder.PARAM_IMAGE_LINK.getToolTip());
         //scrollButton.se
         
         tBar.add(scrollButton);
         
         tBar.add(makeSeparator());
 
-        tBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_IMAGE_MAG, VOIGroup));
-        tBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_IMAGE_UNMAG, VOIGroup));
-        tBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_IMAGE_MAG_REGION, VOIGroup));
-        regButton = buildToggleButton(CustomToolBarBuilder.PARAM_IMAGE_MAG_WINDOW, VOIGroup);
+        tBar.add(buildToggleButton(CustomUIBuilder.PARAM_IMAGE_MAG, VOIGroup));
+        tBar.add(buildToggleButton(CustomUIBuilder.PARAM_IMAGE_UNMAG, VOIGroup));
+        tBar.add(buildToggleButton(CustomUIBuilder.PARAM_IMAGE_MAG_REGION, VOIGroup));
+        regButton = buildToggleButton(CustomUIBuilder.PARAM_IMAGE_MAG_WINDOW, VOIGroup);
         regButton.setEnabled(false);
         tBar.add(regButton);
-        checkerBoardButton = buildButton(CustomToolBarBuilder.PARAM_IMAGE_MAG_CHECKER);
+        checkerBoardButton = buildButton(CustomUIBuilder.PARAM_IMAGE_MAG_CHECKER);
         tBar.add(checkerBoardButton);
-        tBar.add(buildButton(CustomToolBarBuilder.PARAM_IMAGE_MAG_ONE_TO_ONE));
+        tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGE_MAG_ONE_TO_ONE));
 
         tBar.add(makeSeparator());
 
-        JButton triPlanarButton = buildButton(CustomToolBarBuilder.PARAM_IMAGE_TRIPLANAR);
-        JButton quadPlanarButton = buildButton(CustomToolBarBuilder.PARAM_IMAGE_VOLUME_RENDERER);
-        JButton wmPlanarButton = buildButton(CustomToolBarBuilder.PARAM_IMAGE_VOLUME_RENDERER_GPU);
-        JButton wmStandAloneButton = buildButton(CustomToolBarBuilder.PARAM_IMAGE_VOLUME_RENDERER_WILDMAGIC);
-        JButton lightBoxButton = buildButton(CustomToolBarBuilder.PARAM_IMAGE_LIGHTBOX);
+        JButton triPlanarButton = buildButton(CustomUIBuilder.PARAM_IMAGE_TRIPLANAR);
+        JButton quadPlanarButton = buildButton(CustomUIBuilder.PARAM_IMAGE_VOLUME_RENDERER);
+        JButton wmPlanarButton = buildButton(CustomUIBuilder.PARAM_IMAGE_VOLUME_RENDERER_GPU);
+        JButton wmStandAloneButton = buildButton(CustomUIBuilder.PARAM_IMAGE_VOLUME_RENDERER_WILDMAGIC);
+        JButton lightBoxButton = buildButton(CustomUIBuilder.PARAM_IMAGE_LIGHTBOX);
         // JButton gpuButton = buildButton("GPU", "GPU rendering", "gpu");
         // JButton multiButton = buildButton("MultiHisto", "Multi-histo rendering", "multihisto");
         // JButton vtkButton = buildButton("VTK", "VTK rendering", "vtk");
@@ -372,8 +372,8 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
         tBar.add(makeSeparator());
 
-        tBar.add(buildButton(CustomToolBarBuilder.PARAM_IMAGE_FLIP_HORIZONTAL));
-        tBar.add(buildButton(CustomToolBarBuilder.PARAM_IMAGE_FLIP_VERTICAL));
+        tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGE_FLIP_HORIZONTAL));
+        tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGE_FLIP_VERTICAL));
 
         return tBar;
     }
@@ -386,22 +386,21 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
     public JToolBar buildLUTThresholdToolBar() {
         JToolBar LUTToolBar = initToolBar();
 
-        JButton entropyButton = buildButton("maxEntThreshold", "Maximum entropy threshold", "maxent");
+        JButton entropyButton = buildButton(CustomUIBuilder.PARAM_LUT_THRESHOLD_MAX_ENT);
         entropyButton.setEnabled(false);
         LUTToolBar.add(entropyButton);
 
-        JButton otsuButton = buildButton("otsuThreshold", "Otsu threshold", "otsu");
+        JButton otsuButton = buildButton(CustomUIBuilder.PARAM_LUT_THRESHOLD_OTSU);
         otsuButton.setEnabled(false);
         LUTToolBar.add(otsuButton);
 
         LUTToolBar.add(makeSeparator());
 
-        JButton thresholdButton = buildButton("runThreshold", "Run threshold algorithm", "thresholdalgorithm");
+        JButton thresholdButton = buildButton(CustomUIBuilder.PARAM_LUT_THRESHOLD_RUN);
         thresholdButton.setEnabled(false);
         LUTToolBar.add(thresholdButton);
 
-        JButton inverseThresholdButton = buildButton("runInverseThreshold", "Run inverse threshold algorithm",
-                                                     "thresholdalgorithminverse");
+        JButton inverseThresholdButton = buildButton(CustomUIBuilder.PARAM_LUT_THRESHOLD_INVERSE_RUN);
         inverseThresholdButton.setEnabled(false);
         LUTToolBar.add(inverseThresholdButton);
 
@@ -420,24 +419,24 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
         ButtonGroup groupLUT = new ButtonGroup();
 
-        LUTToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_LUT_TRANSFER, groupLUT));
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_TRANSFER_RESET));
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_TRANSFER_EVEN_DIST));
-        LUTToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_LUT_THRESHOLD, groupLUT));
-        LUTToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_LUT_THRESHOLD_INVERSE, groupLUT));
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_CT_PRESETS));
+        LUTToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_LUT_TRANSFER, groupLUT));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_TRANSFER_RESET));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_TRANSFER_EVEN_DIST));
+        LUTToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_LUT_THRESHOLD, groupLUT));
+        LUTToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_LUT_THRESHOLD_INVERSE, groupLUT));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_CT_PRESETS));
 
         LUTToolBar.add(makeSeparator());
 
-        LUTToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_LUT_EDIT_ALPHA, groupLUT));
-        LUTToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_LUT_EDIT_RED, groupLUT));
-        LUTToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_LUT_EDIT_GREEN, groupLUT));
-        LUTToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_LUT_EDIT_BLUE, groupLUT));
+        LUTToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_LUT_EDIT_ALPHA, groupLUT));
+        LUTToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_LUT_EDIT_RED, groupLUT));
+        LUTToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_LUT_EDIT_GREEN, groupLUT));
+        LUTToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_LUT_EDIT_BLUE, groupLUT));
 
         LUTToolBar.add(makeSeparator());
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_OPEN));
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_SAVE));
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_GENERATE));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_OPEN));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_SAVE));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_GENERATE));
 
         return LUTToolBar;
     }
@@ -450,19 +449,19 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
     public JToolBar buildLUTToolBarTop() {
         JToolBar LUTToolBar = initToolBar();
 
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_GRAY));
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_RED));
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_GREEN));
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_BLUE));
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_GRAY_BLUE_RED));
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_HOTMETAL));
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_SPECTRUM));
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_COOL_HOT));
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_SKIN));
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_BONE));
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_MUSCLE_BONE));
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_STRIPED));
-        LUTToolBar.add(buildButton(CustomToolBarBuilder.PARAM_LUT_INVERT));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_GRAY));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_RED));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_GREEN));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_BLUE));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_GRAY_BLUE_RED));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_HOTMETAL));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_SPECTRUM));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_COOL_HOT));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_SKIN));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_BONE));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_MUSCLE_BONE));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_STRIPED));
+        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_INVERT));
 
         return LUTToolBar;
     }
@@ -484,32 +483,32 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
         // ButtonGroup paintThicknessGroup = new ButtonGroup();
 
-        paintToolBar.add(buildButton(CustomToolBarBuilder.PARAM_PAINT_ADD_MASK));
-        paintToolBar.add(buildButton(CustomToolBarBuilder.PARAM_PAINT_OPEN_MASK));
-        paintToolBar.add(buildButton(CustomToolBarBuilder.PARAM_PAINT_SAVE_MASK));
-        paintToolBar.add(buildButton(CustomToolBarBuilder.PARAM_PAINT_AND_OP_MASK));
+        paintToolBar.add(buildButton(CustomUIBuilder.PARAM_PAINT_ADD_MASK));
+        paintToolBar.add(buildButton(CustomUIBuilder.PARAM_PAINT_OPEN_MASK));
+        paintToolBar.add(buildButton(CustomUIBuilder.PARAM_PAINT_SAVE_MASK));
+        paintToolBar.add(buildButton(CustomUIBuilder.PARAM_PAINT_AND_OP_MASK));
 
         paintToolBar.add(makeSeparator());
 
-        paintBrushButton = buildToggleButton(CustomToolBarBuilder.PARAM_PAINT_BRUSH, VOIGroup);
+        paintBrushButton = buildToggleButton(CustomUIBuilder.PARAM_PAINT_BRUSH, VOIGroup);
         paintToolBar.add(paintBrushButton);
-        paintToolBar.add(buildButton(CustomToolBarBuilder.PARAM_PAINT_ADVANCED));
-        paintToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_PAINT_DROPPER, VOIGroup));
-        paintToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_PAINT_FILL, VOIGroup));
-        paintToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_PAINT_ERASER, VOIGroup));
+        paintToolBar.add(buildButton(CustomUIBuilder.PARAM_PAINT_ADVANCED));
+        paintToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_PAINT_DROPPER, VOIGroup));
+        paintToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_PAINT_FILL, VOIGroup));
+        paintToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_PAINT_ERASER, VOIGroup));
         // using a diff icon until an icon is ready for me to use
 
         if (nDim > 2) {
-            paintToolBar.add(buildButton(CustomToolBarBuilder.PARAM_PAINT_ERASE_SLICE));
+            paintToolBar.add(buildButton(CustomUIBuilder.PARAM_PAINT_ERASE_SLICE));
         }
 
-        paintToolBar.add(buildButton(CustomToolBarBuilder.PARAM_PAINT_ERASE_ALL));
+        paintToolBar.add(buildButton(CustomUIBuilder.PARAM_PAINT_ERASE_ALL));
 
         paintToolBar.add(makeSeparator());
 
-        paintToolBar.add(buildButton(CustomToolBarBuilder.PARAM_PAINT_PROPAGATE_DOWN));
-        paintToolBar.add(buildButton(CustomToolBarBuilder.PARAM_PAINT_PROPAGATE_ALL));
-        paintToolBar.add(buildButton(CustomToolBarBuilder.PARAM_PAINT_PROPAGATE_UP));
+        paintToolBar.add(buildButton(CustomUIBuilder.PARAM_PAINT_PROPAGATE_DOWN));
+        paintToolBar.add(buildButton(CustomUIBuilder.PARAM_PAINT_PROPAGATE_ALL));
+        paintToolBar.add(buildButton(CustomUIBuilder.PARAM_PAINT_PROPAGATE_UP));
         
 
         paintToolBar.add(makeSeparator());
@@ -561,7 +560,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
         paintToolBar.add(paintBox);
 
-        paintToolBar.add(buildButton(CustomToolBarBuilder.PARAM_PAINT_BRUSH_EDITOR));
+        paintToolBar.add(buildButton(CustomUIBuilder.PARAM_PAINT_BRUSH_EDITOR));
 
         paintToolBar.add(makeSeparator());
 
@@ -582,43 +581,43 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
         paintToolBar.add(makeSeparator());
 
-        colorPaintButton = buildButton(CustomToolBarBuilder.PARAM_PAINT_COLOR);
+        colorPaintButton = buildButton(CustomUIBuilder.PARAM_PAINT_COLOR);
         colorPaintButton.setBackground(paintColor);
         paintToolBar.add(colorPaintButton);
 
-        JButton rgbCompButton = buildButton(CustomToolBarBuilder.PARAM_PAINT_RGB_CHOOSER);
+        JButton rgbCompButton = buildButton(CustomUIBuilder.PARAM_PAINT_RGB_CHOOSER);
         paintToolBar.add(rgbCompButton);
         if (!isColorImage) {
         	rgbCompButton.setEnabled(false);
         }
         
         
-        JButton opacityPaintButton = buildButton(CustomToolBarBuilder.PARAM_PAINT_OPACITY);
+        JButton opacityPaintButton = buildButton(CustomUIBuilder.PARAM_PAINT_OPACITY);
         paintToolBar.add(opacityPaintButton);
 
-        borderPaintButton = buildButton(CustomToolBarBuilder.PARAM_PAINT_BORDER);
+        borderPaintButton = buildButton(CustomUIBuilder.PARAM_PAINT_BORDER);
         borderPaintButton.setName(Preferences.PREF_SHOW_PAINT_BORDER);
         paintToolBar.add(borderPaintButton);
 
         paintToolBar.add(makeSeparator());
 
-        JButton commitPaintButton = buildButton(CustomToolBarBuilder.PARAM_PAINT_MASK_INSIDE);
+        JButton commitPaintButton = buildButton(CustomUIBuilder.PARAM_PAINT_MASK_INSIDE);
         paintToolBar.add(commitPaintButton);
 
-        JButton commitPaintButtonExt = buildButton(CustomToolBarBuilder.PARAM_PAINT_MASK_OUTSIDE);
+        JButton commitPaintButtonExt = buildButton(CustomUIBuilder.PARAM_PAINT_MASK_OUTSIDE);
         paintToolBar.add(commitPaintButtonExt);
 
         paintToolBar.add(makeSeparator());
 
-        paintToolBar.add(buildButton(CustomToolBarBuilder.PARAM_PAINT_UNDO));
+        paintToolBar.add(buildButton(CustomUIBuilder.PARAM_PAINT_UNDO));
 
         paintToolBar.add(makeSeparator());
 
-        paintToolBar.add(buildButton(CustomToolBarBuilder.PARAM_PAINT_VOLUME_CALCULATOR));
+        paintToolBar.add(buildButton(CustomUIBuilder.PARAM_PAINT_VOLUME_CALCULATOR));
 
         paintToolBar.add(makeSeparator());
 
-        JButton ppButton = buildButton(CustomToolBarBuilder.PARAM_PAINT_POWERPAINT);
+        JButton ppButton = buildButton(CustomUIBuilder.PARAM_PAINT_POWERPAINT);
         ppButton.setEnabled(nDim > 2);
         paintToolBar.add(ppButton);
 
@@ -636,153 +635,23 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
         JToolBar RGBToolBar = initToolBar();
 
-        JToggleButton redRGBButton = new JToggleButton(MipavUtil.getIcon("red.gif"));
-        redRGBButton.addActionListener((ActionListener) UI);
-        redRGBButton.setMargin(new Insets(0, 0, 0, 0));
-        redRGBButton.setToolTipText("Edit red function");
-        redRGBButton.setActionCommand("red");
-        redRGBButton.setBorderPainted(false);
-        redRGBButton.setRolloverEnabled(true);
-        redRGBButton.setRolloverIcon(MipavUtil.getIcon("redroll.gif"));
-        redRGBButton.setBorder(pressedBorder);
-        redRGBButton.addItemListener(this);
-        redRGBButton.setFocusPainted(false);
-        RGBGroup.add(redRGBButton);
-        RGBToolBar.add(redRGBButton);
-
-        JToggleButton greenRGBButton = new JToggleButton(MipavUtil.getIcon("green.gif"));
-        greenRGBButton.addActionListener((ActionListener) UI);
-        greenRGBButton.setMargin(new Insets(0, 0, 0, 0));
-        greenRGBButton.setToolTipText("Edit green function");
-        greenRGBButton.setActionCommand("green");
-        greenRGBButton.setBorderPainted(false);
-        greenRGBButton.setRolloverEnabled(true);
-        greenRGBButton.setRolloverIcon(MipavUtil.getIcon("greenroll.gif"));
-        greenRGBButton.setBorder(pressedBorder);
-        greenRGBButton.addItemListener(this);
-        greenRGBButton.setFocusPainted(false);
-        RGBGroup.add(greenRGBButton);
-        RGBToolBar.add(greenRGBButton);
-
-        JToggleButton blueRGBButton = new JToggleButton(MipavUtil.getIcon("blue.gif"));
-        blueRGBButton.addActionListener((ActionListener) UI);
-        blueRGBButton.setMargin(new Insets(0, 0, 0, 0));
-        blueRGBButton.setToolTipText("Edit blue function");
-        blueRGBButton.setActionCommand("blue");
-        blueRGBButton.setBorderPainted(false);
-        blueRGBButton.setRolloverEnabled(true);
-        blueRGBButton.setRolloverIcon(MipavUtil.getIcon("blueroll.gif"));
-        blueRGBButton.setBorder(pressedBorder);
-        blueRGBButton.addItemListener(this);
-        blueRGBButton.setFocusPainted(false);
-        RGBGroup.add(blueRGBButton);
-        RGBToolBar.add(blueRGBButton);
-
-        JToggleButton allRGBButton = new JToggleButton(MipavUtil.getIcon("rgb.gif"));
-        allRGBButton.addActionListener((ActionListener) UI);
-        allRGBButton.setMargin(new Insets(0, 0, 0, 0));
-        allRGBButton.setToolTipText("Lock RGB functions together");
-        allRGBButton.setActionCommand("all");
-        allRGBButton.setBorderPainted(true);
-        allRGBButton.setRolloverEnabled(true);
-        allRGBButton.setRolloverIcon(MipavUtil.getIcon("rgbroll.gif"));
-        allRGBButton.setBorder(pressedBorder);
-        allRGBButton.addItemListener(this);
-        allRGBButton.setFocusPainted(false);
-        allRGBButton.setSelected(true);
-        RGBGroup.add(allRGBButton);
-        RGBToolBar.add(allRGBButton);
+        
+        RGBToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_LUT_EDIT_RED, RGBGroup));
+        RGBToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_LUT_EDIT_GREEN, RGBGroup));
+        RGBToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_LUT_EDIT_BLUE, RGBGroup));
+        RGBToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_LUT_EDIT_RGB, RGBGroup));
+       
 
         RGBToolBar.add(ViewToolBarBuilder.makeSeparator());
 
-        /*
-         * JButton resetButton = new JButton(MipavUtil.getIcon("resetlut.gif")); resetButton.addActionListener(al);
-         * resetButton.setMargin(new Insets(0, 0, 0, 0)); resetButton.setToolTipText("Reset to linear transfer
-         * function"); resetButton.setActionCommand("Linear"); resetButton.setBorderPainted(false);
-         * resetButton.setRolloverEnabled(true); resetButton.setRolloverIcon(MipavUtil.getIcon("resetlutroll.gif"));
-         * resetButton.setBorder(pressedBorder); resetButton.setFocusPainted(false); RGBToolBar.add(resetButton);
-         * lutGroup.add(resetButton); RGBToolBar.add(ViewToolBarBuilder.makeSeparator());
-         */
-
-        JToggleButton transferButton = new JToggleButton(MipavUtil.getIcon("transfer.gif"));
-        transferButton.addActionListener((ActionListener) UI);
-        transferButton.setMargin(new Insets(0, 0, 0, 0)); //
-        transferButton.setRolloverEnabled(true); //
-        transferButton.setRolloverIcon(MipavUtil.getIcon("transferroll.gif"));
-        transferButton.setBorder(pressedBorder); //
-        transferButton.setBorderPainted(false);
-        transferButton.setToolTipText("Transfer function");
-        transferButton.setActionCommand("linearLUT");
-        transferButton.addItemListener(this); //
-        transferButton.setFocusPainted(false);
-
-        // transferButton.setSelected( true );
-        RGBToolBar.add(transferButton);
-        lutGroup.add(transferButton);
-
-        JButton linearButton = new JButton(MipavUtil.getIcon("linear.gif"));
-        linearButton.addActionListener((ActionListener) UI);
-        linearButton.setRolloverIcon(MipavUtil.getIcon("linearroll.gif"));
-        linearButton.setBorderPainted(false);
-        linearButton.setToolTipText("Reset transfer function");
-        linearButton.setActionCommand("resetLinearLUT");
-        RGBToolBar.add(linearButton);
-
-        JButton evendistriButton = new JButton(MipavUtil.getIcon("evendistri.gif"));
-        evendistriButton.addActionListener((ActionListener) UI);
-        evendistriButton.setRolloverIcon(MipavUtil.getIcon("evendistriroll.gif"));
-        evendistriButton.setBorderPainted(false);
-        evendistriButton.setToolTipText("Event distribution function");
-        evendistriButton.setActionCommand("evendistriLUT");
-        RGBToolBar.add(evendistriButton);
-
-        JToggleButton thresholdButton = new JToggleButton(MipavUtil.getIcon("threshold.gif"));
-        thresholdButton.addActionListener((ActionListener) UI);
-        thresholdButton.setMargin(new Insets(0, 0, 0, 0)); //
-        thresholdButton.setRolloverEnabled(true); //
-        thresholdButton.setRolloverIcon(MipavUtil.getIcon("thresholdroll.gif"));
-        thresholdButton.setBorder(pressedBorder); //
-        thresholdButton.setBorderPainted(false);
-        thresholdButton.setToolTipText("Dual threshold function");
-        thresholdButton.setActionCommand("thresholdLUT");
-        thresholdButton.addItemListener(this); //
-        thresholdButton.setFocusPainted(false);
-        RGBToolBar.add(thresholdButton);
-        lutGroup.add(thresholdButton);
-
-        JToggleButton inverseThresholdButton = new JToggleButton(MipavUtil.getIcon("thresholdinverse.gif"));
-        inverseThresholdButton.addActionListener((ActionListener) UI);
-        inverseThresholdButton.setMargin(new Insets(0, 0, 0, 0)); //
-        inverseThresholdButton.setRolloverEnabled(true); //
-        inverseThresholdButton.setRolloverIcon(MipavUtil.getIcon("thresholdinverseroll.gif"));
-        inverseThresholdButton.setBorder(pressedBorder); //
-        inverseThresholdButton.setBorderPainted(false);
-        inverseThresholdButton.setToolTipText("Dual inverse threshold function");
-        inverseThresholdButton.setActionCommand("inverseThresholdLUT");
-        inverseThresholdButton.addItemListener(this); //
-        inverseThresholdButton.setFocusPainted(false);
-        RGBToolBar.add(inverseThresholdButton);
-        lutGroup.add(inverseThresholdButton);
-        RGBToolBar.add(ViewToolBarBuilder.makeSeparator());
-
-        JButton threshAlgoButton = new JButton(MipavUtil.getIcon("thresholdalgorithm.gif"));
-        threshAlgoButton.addActionListener((ActionListener) UI);
-        threshAlgoButton.setRolloverIcon(MipavUtil.getIcon("thresholdalgorithmroll.gif"));
-        threshAlgoButton.setBorderPainted(false);
-        threshAlgoButton.setToolTipText("Run threshold algorithm");
-        threshAlgoButton.setActionCommand("runThreshold");
-        threshAlgoButton.setEnabled(false);
-        RGBToolBar.add(threshAlgoButton);
-
-        JButton threshInverseAlgoButton = new JButton(MipavUtil.getIcon("thresholdalgorithminverse.gif"));
-        threshInverseAlgoButton.addActionListener((ActionListener) UI);
-        threshInverseAlgoButton.setRolloverIcon(MipavUtil.getIcon("thresholdalgorithminverseroll.gif"));
-        threshInverseAlgoButton.setBorderPainted(false);
-        threshInverseAlgoButton.setToolTipText("Run inverse threshold algorithm");
-        threshInverseAlgoButton.setActionCommand("runInverseThreshold");
-        threshInverseAlgoButton.setEnabled(false);
-        RGBToolBar.add(threshInverseAlgoButton);
-
+        RGBToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_LUT_TRANSFER, lutGroup));
+        RGBToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_LUT_TRANSFER_RESET, lutGroup));
+        RGBToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_TRANSFER_EVEN_DIST));
+        RGBToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_LUT_THRESHOLD, lutGroup));
+        RGBToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_LUT_THRESHOLD_INVERSE, lutGroup));
+        RGBToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_THRESHOLD_RUN));
+        RGBToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_THRESHOLD_INVERSE_RUN));
+        
         return RGBToolBar;
     }
 
@@ -846,8 +715,8 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         currentScriptPanel.add(currentScriptComboBox);
         scriptToolBar.add(currentScriptPanel);
 
-        scriptToolBar.add(buildButton("ToolbarScriptRefresh", "Refresh script listing.", "refresh"));
-        scriptToolBar.add(buildButton("ToolbarScriptRun", "Run the selected script.", "play"));
+        scriptToolBar.add(buildButton(CustomUIBuilder.PARAM_SCRIPT_REFRESH));
+        scriptToolBar.add(buildButton(CustomUIBuilder.PARAM_SCRIPT_RUN));
 
         Icon recordIcon = null;
 
@@ -952,8 +821,9 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
      *
      * @return  a new togglable button
      */
-    public final JToggleButton buildToggleButton(ButtonParams params, ButtonGroup group) {
-    	return buildToggleButton(params.cmd, params.mnemonic, params.tooltip, params.iconbase,  group);
+    public final JToggleButton buildToggleButton(UIParams params, ButtonGroup group) {
+    	return buildToggleButton(params.getActionCommand(), params.getMnemonic(), params.getToolTip(), 
+    			params.getIconBase(),  group);
     }
     
     /**
@@ -971,7 +841,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
     public final JToggleButton buildToggleButton(String cmd, int mnemonic, String tooltip, String iconBase,
                                                  ButtonGroup group) {
         JToggleButton button = buildToggleButton(cmd, tooltip, iconBase, group);
-        if (mnemonic != ButtonParams.INVALID_MNEMONIC) {
+        if (mnemonic != UIParams.INVALID_MNEMONIC) {
         	button.setMnemonic(mnemonic);
         }
 
@@ -994,33 +864,33 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         VOIToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
         VOIToolBar.setFloatable(false);
 
-        pointerVOIButton = buildToggleButton(CustomToolBarBuilder.PARAM_VOI_DEFAULT_POINTER, VOIGroup);
+        pointerVOIButton = buildToggleButton(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER, VOIGroup);
         VOIToolBar.add(pointerVOIButton);
 
         VOIToolBar.add(makeSeparator());
-        VOIToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_VOI_TEXT, VOIGroup));
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_TEXT, VOIGroup));
         VOIToolBar.add(makeSeparator());
 
-        VOIToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_VOI_POINT, VOIGroup));
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_POINT, VOIGroup));
 
-        JToggleButton polysliceButton = buildToggleButton(CustomToolBarBuilder.PARAM_VOI_POLY_SLICE, VOIGroup);
+        JToggleButton polysliceButton = buildToggleButton(CustomUIBuilder.PARAM_VOI_POLY_SLICE, VOIGroup);
 
         // polysliceButton.setEnabled(false);
         polysliceButton.setEnabled(numberOfDimensions > 2);
         VOIToolBar.add(polysliceButton);
 
 
-        VOIToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_VOI_LINE, VOIGroup));
-        VOIToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_VOI_PROTRACTOR, VOIGroup));
-        VOIToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_VOI_RECTANGLE, VOIGroup));
-        VOIToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_VOI_ELLIPSE, VOIGroup));
-        VOIToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_VOI_POLYGON, VOIGroup));
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_LINE, VOIGroup));
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_PROTRACTOR, VOIGroup));
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_RECTANGLE, VOIGroup));
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_ELLIPSE, VOIGroup));
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_POLYGON, VOIGroup));
 
 
-        VOIToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_VOI_LEVELSET, VOIGroup));
-        VOIToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_VOI_LIVEWIRE, VOIGroup));
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_LEVELSET, VOIGroup));
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_LIVEWIRE, VOIGroup));
 
-        JToggleButton cubeVOIButton = buildToggleButton(CustomToolBarBuilder.PARAM_VOI_3D_RECTANGLE, VOIGroup);
+        JToggleButton cubeVOIButton = buildToggleButton(CustomUIBuilder.PARAM_VOI_3D_RECTANGLE, VOIGroup);
         VOIToolBar.add(cubeVOIButton);
 
         if (numberOfDimensions == 2) {
@@ -1029,7 +899,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
         
 
-        VOIToolBar.add(buildToggleButton(CustomToolBarBuilder.PARAM_VOI_SPLITTER, null));
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_SPLITTER, null));
         
         JButton temp = VOIToolBar.getVOIColorButton();
         temp.addActionListener((ActionListener) UI);
@@ -1042,23 +912,23 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         temp.setInputMap(0, new InputMap());
         temp.setBorder(BorderFactory.createEtchedBorder(Color.white, Color.black));
         VOIToolBar.add(makeSeparator());
-        VOIToolBar.add(buildToggleButton("NewVOI", "Initiate new VOI", "newvoi", VOIGroup));
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_NEW, VOIGroup));
         VOIToolBar.add(temp);
 
         VOIToolBar.add(makeSeparator());
 
-        VOIToolBar.add(buildButton("undoVOI", "Undo last VOI change (Ctrl-Z)", "undopaint"));
+        VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_UNDO));
 
         // VOIToolBar.add( buildButton( "deleteVOI", "Delete selected contour", "delete" ) );
-        VOIToolBar.add(buildButton("cutVOI", "Cut selected contour (Ctrl-X)", "cutpaint"));
-        VOIToolBar.add(buildButton("copyVOI", "Copy selected contour (Ctrl-C)", "copypaint"));
-        VOIToolBar.add(buildButton("pasteVOI", "Paste contour (Ctrl-V)", "pastepaint"));
+        VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_CUT));
+        VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_COPY));
+        VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_PASTE));
 
         VOIToolBar.add(makeSeparator());
 
-        JButton propDownVOIButton = buildButton("PropVOIDown", "Propagate VOI down", "voipropd");
-        JButton propAllVOIButton = buildButton("PropVOIAll", "Propagate VOI to all slices", "voipropall");
-        JButton propUpVOIButton = buildButton("PropVOIUp", "Propagate VOI up", "voipropu");
+        JButton propDownVOIButton = buildButton(CustomUIBuilder.PARAM_VOI_PROPAGATE_DOWN);
+        JButton propAllVOIButton = buildButton(CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL);
+        JButton propUpVOIButton = buildButton(CustomUIBuilder.PARAM_VOI_PROPAGATE_UP);
 
         if (numberOfDimensions == 2) {
             propUpVOIButton.setEnabled(false);
@@ -1071,10 +941,8 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         VOIToolBar.add(propUpVOIButton);
 
         VOIToolBar.add(makeSeparator());
-        VOIToolBar.add(buildButton("QuickMask", "<html>" + "Quick AND VOI mask operation." +
-                "<br>" + "[right-click for options]" + "</html>", "quickvoimask"));
-        VOIToolBar.add(buildButton("QuickMaskReverse", "<html>" + "Quick NOT VOI mask operation." +
-                "<br>" + "[right-click for options]" + "</html>", "quickvoimaskreverse"));
+        VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_QUICK_AND_OP));
+        VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_QUICK_NOT_OP));
 
         return VOIToolBar;
     }

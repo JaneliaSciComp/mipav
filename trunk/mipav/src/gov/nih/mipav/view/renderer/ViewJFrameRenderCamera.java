@@ -396,7 +396,7 @@ public class ViewJFrameRenderCamera extends ViewJFrameBase implements MouseListe
             for (int i = 0; i < numTotalSlices; i++) {
                 (((ViewJComponentEditImage) componentImageVector.elementAt(i))).setCursorMode(ViewJComponentEditImage.MAG_REGION);
             }
-        } else if (event.getActionCommand().equals("Pointer")) {
+        } else if (event.getActionCommand().equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER)) {
 
             for (int i = 0; i < numTotalSlices; i++) {
                 (((ViewJComponentEditImage) componentImageVector.elementAt(i))).setCursorMode(ViewJComponentEditImage.DEFAULT);
@@ -1444,7 +1444,7 @@ public class ViewJFrameRenderCamera extends ViewJFrameBase implements MouseListe
         pointerVOIButton.addActionListener(this);
         pointerVOIButton.setMargin(new Insets(0, 0, 0, 0));
         pointerVOIButton.setToolTipText("Default Mode");
-        pointerVOIButton.setActionCommand("Pointer");
+        pointerVOIButton.setActionCommand(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand());
         pointerVOIButton.setBorderPainted(false);
         pointerVOIButton.setRolloverEnabled(true);
         pointerVOIButton.setRolloverIcon(MipavUtil.getIcon("pointerroll.gif"));
