@@ -1,11 +1,8 @@
 //----------------------------------------------------------------------------
 void p_PassThrough3 ()
 {
-    vec4 kPixelColor;
-
-    kPixelColor.xyz = gl_Color.xyz;
-    kPixelColor.w = 1.0;
-    gl_FragColor = kPixelColor;
+    gl_FragColor.xyz = gl_Color.xyz;
+    gl_FragColor.w = 1.0;
 }
 
 //----------------------------------------------------------------------------
