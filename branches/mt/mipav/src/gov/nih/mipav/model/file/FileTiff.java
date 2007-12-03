@@ -80,6 +80,8 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     public static final int PHOTO_INTERP = 262;
+    
+    public static final int DOCUMENT_NAME = 269;
 
     /** DOCUMENT ME! */
     public static final int IMAGE_DESCRIPTION = 270;
@@ -146,6 +148,10 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     public static final int TILE_BYTE_COUNTS = 325;
+    
+    public static final int INK_SET = 332;
+    
+    public static final int INK_NAMES = 333;
 
     /** DOCUMENT ME! */
     public static final int SAMPLE_FORMAT = 339;
@@ -267,6 +273,10 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     private byte[] software;
+    
+    private byte[] documentName;
+    
+    private byte[] inkNames;
 
     /** DOCUMENT ME! */
     private String str;
@@ -331,6 +341,9 @@ public class FileTiff extends FileBase {
     
     private boolean isYCbCr = false;
     
+    // True when photometric == 5 for separated and inskSet = 1 for CMYK
+    private boolean isCMYK = false;
+    
     // YCbCr Coefficients
     // Defaults are from CCIR Recommendation 601-1
     private float LumaRed = 0.299f;
@@ -355,6 +368,11 @@ public class FileTiff extends FileBase {
     private int CbReferenceWhite = 255;
     private int CrReferenceBlack = 128;
     private int CrReferenceWhite = 255;
+    
+    // Used with a separated (photometric = 5) image
+    // 1 = CMYK.  The order of components is cyan, magenta, yellow, black
+    // 2 = not CMYK.  See the INK_NAMES field for a description of the inks
+    private int inkSet = 1;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -2326,6 +2344,13 @@ public class FileTiff extends FileBase {
                             Preferences.debug("FileTiff.openIFD: PhotoInterp = Transparency Mask\n",
                                               Preferences.DEBUG_FILEIO);
                         }
+                    } else if (valueArray[0] == 5) { // Separated
+                        fileInfo.setPhotometric((short) 5);
+                         
+                        if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: PhotoInterp = Separated\n",
+                                              Preferences.DEBUG_FILEIO);
+                        }
                     } else if (valueArray[0] == 6) { // YCbCr
                         isYCbCr = true;
                         fileInfo.setPhotometric((short) 6);
@@ -3077,7 +3102,41 @@ public class FileTiff extends FileBase {
 
                     str = new String(software);
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: software = " + str + "\n", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("FileTiff.openIFD: software = " + str.trim() + "\n", Preferences.DEBUG_FILEIO);
+                    }
+
+                    break;
+                    
+                case DOCUMENT_NAME:
+                    if (type != ASCII) {
+                        throw new IOException("DOCUMENT_NAME has illegal type = " + type + "\n");
+                    }
+
+                    documentName = new byte[count];
+                    for (i1 = 0; i1 < count; i1++) {
+                        documentName[i1] = (byte) valueArray[i1];
+                    }
+
+                    str = new String(documentName);
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: Document name = " + str.trim() + "\n", Preferences.DEBUG_FILEIO);
+                    }
+
+                    break;
+                    
+                case INK_NAMES:
+                    if (type != ASCII) {
+                        throw new IOException("INK_NAMES has illegal type = " + type + "\n");
+                    }
+
+                    inkNames = new byte[count];
+                    for (i1 = 0; i1 < count; i1++) {
+                        inkNames[i1] = (byte) valueArray[i1];
+                    }
+
+                    str = new String(inkNames);
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: Ink names = " + str.trim() + "\n", Preferences.DEBUG_FILEIO);
                     }
 
                     break;
@@ -3309,6 +3368,10 @@ public class FileTiff extends FileBase {
                 } // else if (sampleFormat == 3)
             } // else bitsPerSample.length > 1
         } // if (bitsPerSample != null)
+        
+        if ((fileInfo.getPhotometric() == 5) && (inkSet == 1)) {
+            isCMYK = true;
+        }
 
         imageSlice++;
         IFDoffsets[imageSlice] = getInt(endianess);
@@ -3894,6 +3957,110 @@ public class FileTiff extends FileBase {
                                 
                             } // if (chunky == true)    
                         } // if (isYCbCr)
+                        else if (isCMYK) {
+                            if (chunky) {
+                                // if (byteBuffer == null)
+                                // byteBuffer = new byte[buffer.length];
+                                // raFile.read(byteBuffer, 0, nBytes);
+                                progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
+    
+    
+                                // For the moment I compress RGB images to unsigned bytes.
+                                for (j = 0; j < nBytes; j += 4, i += 4) {
+    
+                                    if (((i + progress) % mod) == 0) {
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                                    }
+    
+                                    buffer[i] = 255;
+                                    // red = 255 - cyan
+                                    buffer[i + 1] = 255 - getUnsignedByte(byteBuffer, j + currentIndex);
+                                    // green = 255 - magenta
+                                    buffer[i + 2] = 255 - getUnsignedByte(byteBuffer, j + currentIndex + 1);
+                                    // blue = 255 - yellow
+                                    buffer[i + 3] = 255 - getUnsignedByte(byteBuffer, j + currentIndex + 2);
+                                    // don't use black
+                                }  
+                            } // if (chunky)
+                            else { // planar
+                                if (planarRGB < stripsPerImage) {
+
+                                    // if (byteBuffer == null)
+                                    // byteBuffer = new byte[buffer.length];
+                                    // raFile.read(byteBuffer, 0, nBytes);
+                                    progress = slice * buffer.length;
+                                    progressLength = buffer.length * imageSlice;
+                                    mod = progressLength / 10;
+
+
+                                    // For the moment I compress RGB images to unsigned bytes
+                                    for (j = 0; j < nBytes; j++, i += 4) {
+
+                                        if ((((i / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
+                                                                                    progressLength * 100));
+                                        }
+
+                                        buffer[i] = 255;
+                                        // red = 255 - cyan
+                                        buffer[i + 1] = 255 - getUnsignedByte(byteBuffer, j + currentIndex);
+                                    }
+
+                                    planarRGB++;
+
+                                    if (planarRGB == stripsPerImage) {
+                                        i = 0;
+                                    }
+                                } // end of if (planarRGB < stripsPerImage)
+                                else if (planarRGB < (2 * stripsPerImage)) {
+
+                                    // raFile.read(byteBuffer, 0, nBytes);
+                                    progress = slice * buffer.length;
+                                    progressLength = buffer.length * imageSlice;
+                                    mod = progressLength / 10;
+
+
+                                    for (j = 0; j < nBytes; j++, i += 4) {
+
+                                        if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
+                                                                                         progress) / progressLength * 100));
+                                        }
+                                        // green = 255 - magenta
+                                        buffer[i + 2] = 255 - getUnsignedByte(byteBuffer, j + currentIndex);
+                                    }
+
+                                    planarRGB++;
+
+                                    if (planarRGB == (2 * stripsPerImage)) {
+                                        i = 0;
+                                    }
+                                } // end of else if (planarRGB < 2*stripsPerImage)
+                                else if (planarRGB < 3*stripsPerImage){
+
+                                    // raFile.read(byteBuffer, 0, nBytes);
+                                    progress = slice * buffer.length;
+                                    progressLength = buffer.length * imageSlice;
+                                    mod = progressLength / 10;
+
+
+                                    for (j = 0; j < nBytes; j++, i += 4) {
+
+                                        if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) +
+                                                                                         (2 * buffer.length / 3) +
+                                                                                         progress) / progressLength * 100));
+                                        }
+                                        // blue = 255 - yellow
+                                        buffer[i + 3] = 255 - getUnsignedByte(byteBuffer, j + currentIndex);
+                                    }
+
+                                    planarRGB++;
+                                } // end of else if (planarRGB < 3*stripsPerImage)    
+                            } // else planar
+                        } // else if (isCMYK)
                         else if ((chunky == true) && (packBit == false)) {
 
                             // if (byteBuffer == null)
@@ -4073,7 +4240,157 @@ public class FileTiff extends FileBase {
                         break;
 
                     case ModelStorageBase.ARGB_USHORT:
-                        if (chunky == true) {
+                        if (isCMYK) {
+                            if (chunky) {
+                                // if (byteBuffer == null)
+                                // byteBuffer = new byte[2 * buffer.length];
+                                // raFile.read(byteBuffer, 0, nBytes);
+                                progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
+
+
+                                // For the moment I compress RGB images to unsigned bytes.
+                                for (j = 0; j < nBytes; j += 8, i += 4) {
+
+                                    if (((i + progress) % mod) == 0) {
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                                    }
+
+                                    buffer[i] = 65535;
+                                    b1 = getUnsignedByte(byteBuffer, j + currentIndex);
+                                    b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+
+                                    // red = 65535 - cyan
+                                    if (endianess) {
+                                        buffer[i + 1] = 65535 - ((b1 << 8) + b2);
+                                    } else {
+                                        buffer[i + 1] = 65535 - ((b2 << 8) + b1);
+                                    }
+
+                                    b1 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
+                                    b2 = getUnsignedByte(byteBuffer, j + currentIndex + 3);
+
+                                    // green = 65535 - magenta
+                                    if (endianess) {
+                                        buffer[i + 2] = 65535 - ((b1 << 8) + b2);
+                                    } else {
+                                        buffer[i + 2] = 65535 - ((b2 << 8) + b1);
+                                    }
+
+                                    b1 = getUnsignedByte(byteBuffer, j + currentIndex + 4);
+                                    b2 = getUnsignedByte(byteBuffer, j + currentIndex + 5);
+
+                                    // blue = 65535 - yellow
+                                    if (endianess) {
+                                        buffer[i + 3] = 65535 - ((b1 << 8) + b2);
+                                    } else {
+                                        buffer[i + 3] = 65535 - ((b2 << 8) + b1);
+                                    }
+                                    // don't use black
+                                }    
+                            } // if (chunky)
+                            else { // planar
+                                if (planarRGB < stripsPerImage) {
+
+                                    // if (byteBuffer == null)
+                                    // byteBuffer = new byte[2 * buffer.length];
+                                    // raFile.read(byteBuffer, 0, nBytes);
+                                    progress = slice * buffer.length;
+                                    progressLength = buffer.length * imageSlice;
+                                    mod = progressLength / 10;
+
+
+                                    // For the moment I compress RGB images to unsigned bytes
+                                    for (j = 0; j < nBytes; j += 2, i += 4) {
+
+                                        if ((((i / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
+                                                                                    progressLength * 100));
+                                        }
+
+                                        buffer[i] = 65535;
+                                        b1 = getUnsignedByte(byteBuffer, j + currentIndex);
+                                        b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+
+                                        // red = 65535 - cyan
+                                        if (endianess) {
+                                            buffer[i + 1] = 65535 - ((b1 << 8) + b2);
+                                        } else {
+                                            buffer[i + 1] = 65535 - ((b2 << 8) + b1);
+                                        }
+                                    }
+
+                                    planarRGB++;
+
+                                    if (planarRGB == stripsPerImage) {
+                                        i = 0;
+                                    }
+                                } // end of if (planarRGB < stripsPerImage)
+                                else if (planarRGB < (2 * stripsPerImage)) {
+
+                                    // raFile.read(byteBuffer, 0, nBytes);
+                                    progress = slice * buffer.length;
+                                    progressLength = buffer.length * imageSlice;
+                                    mod = progressLength / 10;
+
+
+                                    for (j = 0; j < nBytes; j += 2, i += 4) {
+
+                                        if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
+                                                                                         progress) / progressLength * 100));
+                                        }
+
+                                        b1 = getUnsignedByte(byteBuffer, j + currentIndex);
+                                        b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+
+                                        // green = 65535 - magenta
+                                        if (endianess) {
+                                            buffer[i + 2] = 65535 - ((b1 << 8) + b2);
+                                        } else {
+                                            buffer[i + 2] = 65535 - ((b2 << 8) + b1);
+                                        }
+                                    }
+
+                                    planarRGB++;
+
+                                    if (planarRGB == (2 * stripsPerImage)) {
+                                        i = 0;
+                                    }
+                                } // end of else if (planarRGB < 2*stripsPerImage)
+                                else if (planarRGB < (3 * stripsPerImage)) {
+
+                                    // raFile.read(byteBuffer, 0, nBytes);
+                                    progress = slice * buffer.length;
+                                    progressLength = buffer.length * imageSlice;
+                                    mod = progressLength / 10;
+
+
+                                    for (j = 0; j < nBytes; j += 2, i += 4) {
+
+                                        if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) +
+                                                                                         (2 * buffer.length / 3) +
+                                                                                         progress) / progressLength * 100));
+                                        }
+
+                                        b1 = getUnsignedByte(byteBuffer, j + currentIndex);
+                                        b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+
+                                        // blue = 65535 - yellow
+                                        if (endianess) {
+                                            buffer[i + 3] = 65535 - ((b1 << 8) + b2);
+                                        } else {
+                                            buffer[i + 3] = 65535 - ((b2 << 8) + b1);
+                                        }
+                                    }
+
+                                    planarRGB++;
+                                } // end of else if (planarRGB < (3 * stripsPerImage)    
+                            } // else planar
+                        } // if (isCMYK)
+                        else if (chunky == true) {
 
                             // if (byteBuffer == null)
                             // byteBuffer = new byte[2 * buffer.length];

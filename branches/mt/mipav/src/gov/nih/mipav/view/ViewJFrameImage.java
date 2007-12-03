@@ -787,16 +787,16 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             updateImages(true);
             getActiveImage().notifyImageDisplayListeners();
 
-        } else if (command.equals("Pointer")) {
+        } else if (command.equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER)) {
             componentImage.setCursorMode(ViewJComponentEditImage.DEFAULT);
-        } else if (command.equals("Point")) {
+        } else if (command.equals(CustomUIBuilder.PARAM_VOI_POINT.getActionCommand())) {
 
             if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.POINT, lastVOI_UID, getControls())) {
                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
             componentImage.setCursorMode(ViewJComponentEditImage.POINT_VOI);
-        } else if (command.equals("Line")) {
+        } else if (command.equals(CustomUIBuilder.PARAM_VOI_LINE.getActionCommand())) {
 
             if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.LINE, lastVOI_UID, getControls())) {
                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
@@ -805,7 +805,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.setCursorMode(ViewJComponentEditImage.LINE);
         } else if (command.equals("SplitVOI")) {
             componentImage.setCursorMode(ViewJComponentEditImage.SPLIT_VOI);
-        } else if (command.equals("Polyslice")) {
+        } else if (command.equals(CustomUIBuilder.PARAM_VOI_POLY_SLICE.getActionCommand())) {
 
         	 if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.POLYLINE_SLICE, lastVOI_UID, getControls())) {
                  componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
@@ -826,7 +826,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             componentImage.setCursorMode(ViewJComponentEditImage.POLYLINE);
-        } else if (command.equals("TextVOI")) {
+        } else if (command.equals(CustomUIBuilder.PARAM_VOI_TEXT.getActionCommand())) {
 
         	componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
            

@@ -2072,7 +2072,7 @@ public class AlgorithmFFT extends AlgorithmBase {
     } // end of exec()
 
     public void perform(final float[] rdata, final float[] idata, final int xdim, final int ydim, final int zdim) throws InterruptedException{
-//        int ncores = MipavUtil.getAvailableCores();
+        int nthreads = MipavUtil.getAvailableCores();
 //        int n = xdim % ncores;
 //        int length = 0;
     	if(threadStopped){
@@ -2081,13 +2081,13 @@ public class AlgorithmFFT extends AlgorithmBase {
     	/**
     	 * Initialize the progress step.
     	 */
-    	setProgressStep((float)(1.0/(MipavUtil.nthreads * Math.log(xdim * ydim * zdim)/Math.log(2.0))));
+    	setProgressStep((float)(1.0/(nthreads * Math.log(xdim * ydim * zdim)/Math.log(2.0))));
         fireProgressStateChanged(0, srcImage.getImageName(), "Running forward FFTs ...");
  
-        final CountDownLatch doneSignalX = new CountDownLatch(MipavUtil.nthreads);
+        final CountDownLatch doneSignalX = new CountDownLatch(nthreads);
         MipavUtil.swapSlices(rdata, idata, xdim, ydim, zdim, MipavConstants.SLICE_YZ);
-        for(int i = 0; i < MipavUtil.nthreads; i++){
-            int nslices = zdim / MipavUtil.nthreads;
+        for(int i = 0; i < nthreads; i++){
+            int nslices = zdim / nthreads;
             final int sliceLen = xdim * ydim;
             final int start = i * nslices * sliceLen;
             final int end = start + 1;
@@ -2105,10 +2105,10 @@ public class AlgorithmFFT extends AlgorithmBase {
     		return;
     	}
 
-        final CountDownLatch doneSignalY = new CountDownLatch(MipavUtil.nthreads);
+        final CountDownLatch doneSignalY = new CountDownLatch(nthreads);
         MipavUtil.swapSlices(rdata, idata, xdim, ydim, zdim, MipavConstants.SLICE_ZX);
-        for(int i = 0; i < MipavUtil.nthreads; i++){
-            int nslices = ydim/MipavUtil.nthreads;
+        for(int i = 0; i < nthreads; i++){
+            int nslices = ydim/nthreads;
             final int start = i * nslices;
             final int end  = (i + 1) * nslices;
             Runnable task = new Runnable(){
@@ -2124,10 +2124,10 @@ public class AlgorithmFFT extends AlgorithmBase {
     		return;
     	}
 
-    	final CountDownLatch doneSignalZ = new CountDownLatch(MipavUtil.nthreads);
+    	final CountDownLatch doneSignalZ = new CountDownLatch(nthreads);
         MipavUtil.swapSlices(rdata, idata, xdim, ydim, zdim, MipavConstants.SLICE_XY);
-        for(int i = 0; i < MipavUtil.nthreads; i++){
-            int nslices = ydim/MipavUtil.nthreads;
+        for(int i = 0; i < nthreads; i++){
+            int nslices = ydim/nthreads;
             final int start = i * nslices * xdim;
             final int end  = (i + 1) * nslices * xdim;
             Runnable task = new Runnable(){

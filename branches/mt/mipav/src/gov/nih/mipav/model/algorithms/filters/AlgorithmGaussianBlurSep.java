@@ -344,7 +344,6 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
         }
 
         fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
-        ;
 
         float stepProgressValuePerVolume = (float) 100 / nVolumes;
 

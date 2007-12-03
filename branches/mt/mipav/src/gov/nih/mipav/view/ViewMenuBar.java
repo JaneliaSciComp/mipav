@@ -990,20 +990,13 @@ public class ViewMenuBar {
                                         
                                         menuBuilder.makeMenu("New VOI", true,
                                                              new JMenuItem[] {
-                                                                 menuBuilder.buildMenuItem("Point", "Point", 0,
-                                                                                           "pointROI.gif", true),
-                                                                 menuBuilder.buildMenuItem("Line", "Line", 0,
-                                                                                           "linear.gif", true),
-                                                                 menuBuilder.buildMenuItem("Rectangle", "RectVOI", 0,
-                                                                                           "rect.gif", true),
-                                                                 menuBuilder.buildMenuItem("Ellipse", "EllipseVOI", 0,
-                                                                                           "circle.gif", true),
-                                                                 menuBuilder.buildMenuItem("Polygon", "PolygonVOI", 0,
-                                                                                           "polygon.gif", true),
-                                                                 menuBuilder.buildMenuItem("Level set", "LevelSetVOI",
-                                                                                           0, "contour.gif", true),
-                                                                 menuBuilder.buildMenuItem("3D rectangle", "Rect3DVOI",
-                                                                                           0, "cube.gif", true)
+                                                                 menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_POINT, true),
+                                                                 menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_LINE, true),
+                                                                 menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_RECTANGLE, true),
+                                                                 menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_ELLIPSE, true),
+                                                                 menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_POLYGON, true),
+                                                                 menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_LEVELSET, true),
+                                                                 menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_3D_RECTANGLE, true)
                                                              }), separator,
                                         menuBuilder.makeMenu("Open VOI", true,
                                                              new JMenuItem[] {

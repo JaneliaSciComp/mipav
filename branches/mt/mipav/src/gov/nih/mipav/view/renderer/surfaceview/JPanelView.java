@@ -185,7 +185,7 @@ public class JPanelView extends JPanelRendererBase implements ChangeListener, Mo
             mouseText.setText(flyText);
             setFlyEnabled(!flyBehavior.isIgnoreMouseMotion());
             mode = FLY_MODE;
-        } else if (command.equals("Pointer") && (mode != PTR_MODE)) {
+        } else if (command.equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER) && (mode != PTR_MODE)) {
             renderBase.getUniverse().getViewingPlatform().setViewPlatformBehavior(pointerBehavior);
 
             for (int i = 0; i < renderBase.getSceneRootTG().numChildren(); i++) {

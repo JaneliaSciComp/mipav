@@ -1,10 +1,13 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
+import gov.nih.mipav.model.structures.Point3Dd;
+import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.model.structures.jama.Matrix;
 
-import gov.nih.mipav.view.*;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.concurrent.CountDownLatch;
 
 
 /**
@@ -541,55 +544,61 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
             }
 
             keepGoing = false; // Only terminate loop when point changes for ALL directions are less
-
+           boundGuess = bracketBound;
+           initialGuess = 0;
             // than their respective tolerances.  Will only stay false if ALL are false.
-
-            for (int i = 0; (i < nDims) && !parent.isThreadStopped(); i++) {
-
-                    fireProgressStateChanged(((((nDims * count) + (i + 1)) * 100) / (nDims * maxIterations)));
-              
-                // Change by Z Cohen on 6/14/04
-                // Old code handled the first run through this loop differently than
-                // subsequent runs.
-                // The first time, initialGuess was set to zero and the boundGuess was
-                // set to the bracketBound.  On subsequent runs, initialGuess was set to
-                // functionAtBest and boundGuess to 1.
-                // Each parsing of this loop, though, is for a different degree of freedom and
-                // so the Powell parameters should be the same each the loop starts.
-                // Here's the old code:
-                //
-                // Initialize values for call to lineMinimization.
-                //
-                // if (count == 0) {
-                // // first time through use large bounds (obtained from JDialogRegistrationOAR3D)
-                // // lineMinimization will use boundGuess*tolerance to get bracket
-                // boundGuess = bracketBound;
-                // initialGuess = 0;
-                // } else {
-                // boundGuess = 1;
-                // initialGuess = functionAtBest;
-                // }
-                //
-                // End of old code.
-                //
-                // Here's the new code:
-                boundGuess = bracketBound;
-                initialGuess = 0;
-
-                // directions should hold "1" for i and "0" for all other dimensions.
-                for (int j = 0; j < nDims; j++) {
-                    directions[j] = 0;
-                }
-
-                directions[i] = 1;
-
-                // Preferences.debug("Calling lineMinimization for dimension "+i +".\n");
-                functionAtBest = lineMinimization(initialGuess, boundGuess, directions);
-
-                if (Math.abs(point[i] - pt[i]) > tolerance[i]) {
-                    keepGoing = true;
-                }
-            } // end of nDims loop
+            functionAtBest = findNextMinimum(initialGuess, boundGuess);
+            for(int i = 0; i < nDims; i++){
+            	if (Math.abs(point[i] - pt[i]) > tolerance[i]) {
+            		keepGoing = true;
+            	}
+            }
+//            for (int i = 0; (i < nDims) && !parent.isThreadStopped(); i++) {
+//
+//                    fireProgressStateChanged(((((nDims * count) + (i + 1)) * 100) / (nDims * maxIterations)));
+//              
+//                // Change by Z Cohen on 6/14/04
+//                // Old code handled the first run through this loop differently than
+//                // subsequent runs.
+//                // The first time, initialGuess was set to zero and the boundGuess was
+//                // set to the bracketBound.  On subsequent runs, initialGuess was set to
+//                // functionAtBest and boundGuess to 1.
+//                // Each parsing of this loop, though, is for a different degree of freedom and
+//                // so the Powell parameters should be the same each the loop starts.
+//                // Here's the old code:
+//                //
+//                // Initialize values for call to lineMinimization.
+//                //
+//                // if (count == 0) {
+//                // // first time through use large bounds (obtained from JDialogRegistrationOAR3D)
+//                // // lineMinimization will use boundGuess*tolerance to get bracket
+//                // boundGuess = bracketBound;
+//                // initialGuess = 0;
+//                // } else {
+//                // boundGuess = 1;
+//                // initialGuess = functionAtBest;
+//                // }
+//                //
+//                // End of old code.
+//                //
+//                // Here's the new code:
+//                boundGuess = bracketBound;
+//                initialGuess = 0;
+//
+//                // directions should hold "1" for i and "0" for all other dimensions.
+//                for (int j = 0; j < nDims; j++) {
+//                    directions[j] = 0;
+//                }
+//
+//                directions[i] = 1;
+//
+//                // Preferences.debug("Calling lineMinimization for dimension "+i +".\n");
+//                functionAtBest = lineMinimization(initialGuess, boundGuess, directions);
+//
+//                if (Math.abs(point[i] - pt[i]) > tolerance[i]) {
+//                    keepGoing = true;
+//                }
+//            } // end of nDims loop
 
             if (parent.isThreadStopped()) {
                 return;
@@ -603,6 +612,40 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
         return;
     }
 
+    public double findNextMinimum(final double initialGuess, final double boundGuess){
+        final CountDownLatch doneSignal = new CountDownLatch(nDims);
+        Hashtable<Integer, double[]> ht = new Hashtable<Integer, double[]>();
+    	for(int i = 0; i < nDims; i++){
+    		final int index = i;
+    		final double[] pt = new double[nDims];
+    		ht.put(new Integer(i), pt);
+     		System.arraycopy(point, 0, pt, 0, nDims);
+            Runnable task = new Runnable(){
+                public void run(){
+              	  lineMinimization2(pt, initialGuess, boundGuess, index);
+              	  doneSignal.countDown();
+                }
+            };
+            gov.nih.mipav.util.MipavUtil.threadPool.execute(task);
+    	}
+    	try{
+    		doneSignal.await();
+    	}catch(Exception e){
+    		
+    	}
+    	Enumeration<Integer> keys = ht.keys();
+    	for(int i = 0; i < nDims; i++){
+    		point[i] *= -1.0*nDims;
+    	}
+    	while(keys.hasMoreElements()){
+    		double[] pt = ht.get(keys.nextElement());
+        	for(int i = 0; i < nDims; i++){
+        		point[i] += pt[i];
+        	}
+    	}
+    	return costFunction.cost(convertToMatrix(point));
+    }
+    
     /**
      * Sets the initial point to the value passed in.
      *

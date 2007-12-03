@@ -376,12 +376,10 @@ public class VolumeShaderEffect extends ShaderEffect
         
         //byte[] aucData = calcImageNormals( m_kImageA );
         
-       // byte[] aucData = calcImageNormals();
-        /*
+        byte[] aucData = calcImageNormals();
         m_kNormalA = new GraphicsImage(GraphicsImage.FormatMode.IT_RGB888,
                                        iXBound,iYBound,iZBound,aucData,
                                        "NormalMapA");
-       */
         m_kPShaderSUR.SetImageName(4, "NormalMapA" );
         m_kPShaderSUR.GetTexture(4).SetFilterType(Texture.FilterType.LINEAR);
         m_kPShaderSUR.GetTexture(4).SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
@@ -578,12 +576,11 @@ public class VolumeShaderEffect extends ShaderEffect
                             gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
         SetPShader(0,kShader);
-        
-        LoadPrograms(0,kRenderer.GetMaxColors(),
+        LoadPrograms(kRenderer, 0,kRenderer.GetMaxColors(),
                      kRenderer.GetMaxTCoords(),
                      kRenderer.GetMaxVShaderImages(),
                      kRenderer.GetMaxPShaderImages());
-
+        
         ResetClip();
         SetBackgroundColor( m_kBackgroundColor );
         Blend(m_afBlend[0]);
@@ -1384,11 +1381,11 @@ public class VolumeShaderEffect extends ShaderEffect
      */
     public void Reload( gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
-        VertexProgram kVProgram = GetVProgram(0);
+        Program kVProgram = GetVProgram(0);
         kVProgram.Release();
         VertexProgramCatalog.GetActive().Remove(kVProgram);
 
-        PixelProgram kPProgram = GetPProgram(0);
+        Program kPProgram = GetPProgram(0);
         kPProgram.Release();
         PixelProgramCatalog.GetActive().Remove(kPProgram);
 
@@ -1397,7 +1394,7 @@ public class VolumeShaderEffect extends ShaderEffect
         PixelShader pkPShader = GetPShader(0);
         pkPShader.OnReleaseProgram();
 
-        LoadPrograms(0,kRenderer.GetMaxColors(),
+        LoadPrograms(kRenderer, 0,kRenderer.GetMaxColors(),
                      kRenderer.GetMaxTCoords(),
                      kRenderer.GetMaxVShaderImages(),
                      kRenderer.GetMaxPShaderImages());

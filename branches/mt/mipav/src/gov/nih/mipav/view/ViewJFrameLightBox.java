@@ -601,7 +601,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
             for (int i = 0; i < numVisibleSlices; i++) {
                 componentImage[i].setCursorMode(ViewJComponentEditImage.MAG_REGION);
             }
-        } else if (event.getActionCommand().equals("Pointer")) {
+        } else if (event.getActionCommand().equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER)) {
 
             for (int i = 0; i < numVisibleSlices; i++) {
                 componentImage[i].setCursorMode(ViewJComponentEditImage.DEFAULT);
@@ -2951,12 +2951,12 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         tBar.setBorder(etchedBorder);
         tBar.setBorderPainted(true);
         tBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
-
+        
         JToggleButton pointerVOIButton = new JToggleButton(MipavUtil.getIcon("pointer.gif"));
         pointerVOIButton.addActionListener(this);
         pointerVOIButton.setMargin(new Insets(0, 0, 0, 0));
         pointerVOIButton.setToolTipText("Default Mode");
-        pointerVOIButton.setActionCommand("Pointer");
+        pointerVOIButton.setActionCommand(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand());
         pointerVOIButton.setBorderPainted(false);
         pointerVOIButton.setRolloverEnabled(true);
         pointerVOIButton.setRolloverIcon(MipavUtil.getIcon("pointerroll.gif"));

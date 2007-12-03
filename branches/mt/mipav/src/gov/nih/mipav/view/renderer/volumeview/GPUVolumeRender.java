@@ -83,6 +83,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         ImageCatalog.SetActive( new ImageCatalog("Main", System.getProperties().getProperty("user.dir")) );      
         VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", System.getProperties().getProperty("user.dir")));       
         PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", System.getProperties().getProperty("user.dir")));
+        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
 
         m_kImageA = kImageA;
         m_kLUTa = kLUTa;
@@ -949,7 +950,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
                 ResetTime();
             }
             return;
-/*
+
         case 's':
         case 'S':
             TestStreaming(m_spkScene,"VolumeTextures.wmof");
@@ -957,6 +958,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         case 'b':
             m_bDisplaySecond = !m_bDisplaySecond;
             return;
+            /*
         case 'v':
             m_bDisplayEllipsoids = !m_bDisplayEllipsoids;
             return;
@@ -1398,7 +1400,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
             if ( iWhich < 2 )
             {
                 m_akPolyline[iWhich].VBuffer.SetPosition3(i, 
-                        fValue,
+                        fValue*m_fX,
                         m_akPolyline[iWhich].VBuffer.GetPosition3fY(i),     
                         m_akPolyline[iWhich].VBuffer.GetPosition3fZ(i));
             }
@@ -1406,7 +1408,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
             {
                 m_akPolyline[iWhich].VBuffer.SetPosition3(i, 
                         m_akPolyline[iWhich].VBuffer.GetPosition3fX(i),     
-                        fValue,
+                        fValue*m_fY,
                         m_akPolyline[iWhich].VBuffer.GetPosition3fZ(i));
             }
             else
@@ -1414,7 +1416,8 @@ implements GLEventListener, KeyListener, MouseMotionListener
                 m_akPolyline[iWhich].VBuffer.SetPosition3(i, 
                         m_akPolyline[iWhich].VBuffer.GetPosition3fX(i),     
                         m_akPolyline[iWhich].VBuffer.GetPosition3fY(i),
-                        fValue);
+                                                          fValue*m_fZ
+                                                          );
             }
         }
         m_akPolyline[iWhich].VBuffer.Release();
@@ -1531,14 +1534,17 @@ implements GLEventListener, KeyListener, MouseMotionListener
             if ( iWhich < 2 )
             {
                 fValue = m_akPolyline[iWhich].VBuffer.GetPosition3fX( 0 );
+                fValue /= m_fX;
             }
             else if ( iWhich < 4 )
             {
                 fValue = m_akPolyline[iWhich].VBuffer.GetPosition3fY( 0 );
+                fValue /= m_fY;
             }
             else
             {
                 fValue = m_akPolyline[iWhich].VBuffer.GetPosition3fZ( 0 );
+                fValue /= m_fZ;
             }
         }
         else

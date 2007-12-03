@@ -949,7 +949,7 @@ public class JDialogPaintVasculature extends JDialogBase
         zoomBar.add(toolbarBuilder.buildButton("MagImage", "Magnify image 2.0x", "zoomin"));
         zoomBar.add(toolbarBuilder.buildButton("UnMagImage", "Magnify image 0.5x", "zoomout"));
 
-        JToolBar paintBar = toolbarBuilder.initToolBar();
+        JToolBar paintBar = ViewToolBarBuilder.initToolBar();
         paintBar.add(toolbarBuilder.buildButton("EraseAll", "Erase all paint", "clear"));
 
         toolbarPanel = new JPanel();

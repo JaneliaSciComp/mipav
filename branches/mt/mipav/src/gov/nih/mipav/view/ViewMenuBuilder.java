@@ -1,6 +1,7 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.view.CustomUIBuilder.UIParams;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -338,6 +339,18 @@ public class ViewMenuBuilder {
     }
 
     /**
+     * Creates a Menu Item using pre-packaged UIParams
+     * @param params UI Params
+     * @param listener Action listener
+     * @param iconPadding whether to use icon padding
+     * @return the jmenuitem
+     */
+    public static JMenuItem buildMenuItem(UIParams params, ActionListener listener, boolean iconPadding) {
+    	return buildMenuItem(params.getText(), params.getActionCommand(), params.getMnemonic(), listener, 
+    			params.getIconBase(), iconPadding);
+    }
+    
+    /**
      * DOCUMENT ME!
      *
      * @param   text         DOCUMENT ME!
@@ -537,6 +550,17 @@ public class ViewMenuBuilder {
 
     }
 
+    /**
+     * Build a menu item using a pre-made UIParams
+     * @param params the UIParams (from CustomUIBuilder)
+     * @param useIconPadding use icon padding
+     * @return
+     */
+    public JMenuItem buildMenuItem(UIParams params, boolean useIconPadding) {
+    	return buildMenuItem(params.getText(), params.getActionCommand(), params.getMnemonic(),
+    			params.getIconBase() + ".gif", useIconPadding);
+    }
+    
 
     /**
      * DOCUMENT ME!

@@ -14,6 +14,7 @@
 // Version: 4.0.0 (2006/06/28)
 //
 // Ported to Java by Alexandra Bokinsky, PhD, Geometric Tools, Inc. (July 2007)
+// Adapted from Iridescene demo, (Nov 07)
 //
 
 package gov.nih.mipav.view.WildMagic.ApplicationDemos;
@@ -26,12 +27,13 @@ import java.awt.event.*;
 
 import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
+//import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 import gov.nih.mipav.view.WildMagic.LibRenderers.OpenGLRenderer.*;
 
-public class Iridescence extends JavaApplication3D
+public class Gooch extends JavaApplication3D
     implements GLEventListener, KeyListener
 {
     /**
@@ -45,8 +47,8 @@ public class Iridescence extends JavaApplication3D
      * graphics hardware memory as well as time for re-loading large textures.
      *
      */
-    public Iridescence() {
-        super("Iridescence",0,0,640,480, new ColorRGBA(0.5f,0.0f,1.0f,1.0f));
+    public Gooch() {
+        super("Gooch",0,0,640,480, new ColorRGBA(1.0f,1.0f,1.0f,1.0f));
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                                           m_eBuffering, m_eMultisampling,
                                            m_iWidth, m_iHeight );
@@ -62,12 +64,12 @@ public class Iridescence extends JavaApplication3D
     }
 
     /**
-     * Iridescence.main creates the Iridescence object and window frame to
+     * Gooch.main creates the Gooch object and window frame to
      * contain the GLCanvas. An Animator object is created with the GLCanvas
      * as an argument. The Animator provides the same function as the
      * glutMainLoop() function call commonly used in OpenGL applications. */
     public static void main(String[] args) {
-        Iridescence kWorld = new Iridescence();        
+        Gooch kWorld = new Gooch();        
         Frame frame = new Frame(m_acWindowTitle);
         frame.add( kWorld.GetCanvas() );
         frame.setSize(m_iWidth, m_iHeight);
@@ -91,7 +93,7 @@ public class Iridescence extends JavaApplication3D
     }
 
     /**
-     * Iridescence.display() displays the scene. The frame rate is
+     * Gooch.display() displays the scene. The frame rate is
      * measured. Any camera motion that has occurred since the last frame was
      * displayed is applied and the culling system updated. Any object motions
      * that has occurred is also applied and the culling system
@@ -114,7 +116,7 @@ public class Iridescence extends JavaApplication3D
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
         {
-            m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+            m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());            
             DrawFrameRate(8,GetHeight()-8,ColorRGBA.WHITE);
             m_pkRenderer.EndScene();
         }
@@ -122,11 +124,12 @@ public class Iridescence extends JavaApplication3D
         UpdateFrameCount();
         //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
 
-        if ( m_kShaderParamsWindow == null )
+        if ( m_kShaderParamsWindow == null && m_spkEffect != null)
         {
             m_kShaderParamsWindow = new ApplicationGUI();
             m_kShaderParamsWindow.setParent(this);
             m_kShaderParamsWindow.AddUserVariables(m_spkEffect.GetVProgram(0));
+            m_kShaderParamsWindow.AddUserVariables(m_spkEffect.GetPProgram(0));
             m_kShaderParamsWindow.Display();
             m_kShaderParamsWindow.setParent(this);
         }
@@ -135,7 +138,7 @@ public class Iridescence extends JavaApplication3D
     public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {}
 
     /**
-     * Iridescence.init is called only once when the GLCanvas is initialized. It
+     * Gooch.init is called only once when the GLCanvas is initialized. It
      * initializes the renderer object, sets up the camera model, creates the
      * scene, and initializes the culling object with the camera and scene
      * objects.
@@ -184,7 +187,7 @@ public class Iridescence extends JavaApplication3D
             m_iWidth = iWidth;
             m_iHeight = iHeight;
         }
-       // ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
     public GLCanvas GetCanvas()
@@ -193,12 +196,12 @@ public class Iridescence extends JavaApplication3D
     }
 
     /**
-     * Iridescence.CreateScene() creates the scene graph. The root node is
+     * Gooch.CreateScene() creates the scene graph. The root node is
      * m_spkScene. It contains a single TriMesh object, the torus. The TriMesh
      * object is created with a set of rendering Attributes with three
      * channels for point data (x,y,z); three channels for normal data
-     * (x,y,z); and two channels for texture-coordinate data (s,t).  An
-     * IridescenceEffect is created and attached to the torus.
+     * (x,y,z).  A GoochEffect is created and attached to the torus, and 
+     * a WireframeBehind effect is attached, which causes two-pass rendering.
      */
     private void CreateScene ()
     {
@@ -206,60 +209,43 @@ public class Iridescence extends JavaApplication3D
         Attributes kAttr = new Attributes();
         kAttr.SetPChannels(3);
         kAttr.SetNChannels(3);
-        kAttr.SetTChannels(0,2);
         StandardMesh kSM = new StandardMesh(kAttr);
-        //TriMesh pkMesh = kSM.Ellipsoid(50,50,1.5f,1.0f, 2.0f);
-        TriMesh pkMesh = kSM.Torus(200,200,2.0f,1.0f);
+        //m_pkMesh = kSM.Ellipsoid(50,50,1.5f,1.0f, 2.0f);
+        m_pkMesh = kSM.Torus(50,50,2.0f,1.0f);
         
-        pkMesh.Local.SetMatrix(new Matrix3f(new Vector3f(0f, 0f, 1f), new Vector3f(0.707f, 0.707f, 0f), 
-                new Vector3f(-0.707f, 0.707f, 0f),false));
-        m_spkScene.AttachChild(pkMesh);
+       // pkMesh.Local.SetMatrix(new Matrix3f(new Vector3f(0f, 0f, 1f), 
+        //        new Vector3f(0.707f, 0.707f, 0f), 
+        //        new Vector3f(-0.707f, 0.707f, 0f),false));
 
-        m_spkEffect = new IridescenceEffect("Leaf","Gradient");
-        m_spkEffect.SetInterpolateFactor(0.5f);
+
+        m_spkEffect = new GoochEffect();
+
         final int iPassQuantity = m_spkEffect.GetPassQuantity();
         for (int iPass = 0; iPass < iPassQuantity; iPass++)
         {
             m_spkEffect.LoadPrograms(m_pkRenderer, iPass,m_pkRenderer.GetMaxColors(),m_pkRenderer.GetMaxTCoords(),
                     m_pkRenderer.GetMaxVShaderImages(),m_pkRenderer.GetMaxPShaderImages());
         }
+        m_pkMesh.AttachEffect(m_spkEffect);
 
-        pkMesh.AttachEffect(m_spkEffect);
+        // Do a second effect, a wire-frame pass
+        Effect pkEffect = new WireframeBehindEffect();
+        m_pkMesh.AttachEffect(pkEffect);
+
+
+        m_spkScene.AttachChild(m_pkMesh);
     }
 
     /**
-     * Iridescence.keyPressed() processes key-input from the user. The
-     * iridescence factor shader parameter can be increased and decreased by
-     * pressing the + and – keys. A shader-editor GUI can be launched by
-     * pressing 'l'. The scene-graph is streamed to disk by pressing the 's'
-     * key.
+     * Gooch.keyPressed() processes key-input from the user. A shader-editor
+     * GUI can be launched by pressing 'l'. The scene-graph is streamed to
+     * disk by pressing the 's' key.
      */
     public void keyPressed(KeyEvent e) {
         char ucKey = e.getKeyChar();
         super.keyPressed(e);
-        float fInterpolateFactor;
         switch (ucKey)
         {
-        case '+':
-        case '=':
-            fInterpolateFactor = m_spkEffect.GetInterpolateFactor();
-            fInterpolateFactor += 0.1f;
-            if (fInterpolateFactor > 1.0f)
-            {
-                fInterpolateFactor = 1.0f;
-            }
-            m_spkEffect.SetInterpolateFactor(fInterpolateFactor);
-            return;
-        case '-':
-        case '_':
-            fInterpolateFactor = m_spkEffect.GetInterpolateFactor();
-            fInterpolateFactor -= 0.1f;
-            if (fInterpolateFactor < 0.0f)
-            {
-                fInterpolateFactor = 0.0f;
-            }
-            m_spkEffect.SetInterpolateFactor(fInterpolateFactor);
-            return;
         case 'l':
         case 'L':
             ApplicationGUI kShaderParamsWindow = new ApplicationGUI();
@@ -270,15 +256,16 @@ public class Iridescence extends JavaApplication3D
             return;
         case 's':
         case 'S':
-            TestStreaming(m_spkScene,"Iridescence.wmof");
+            TestStreaming(m_spkScene,"Gooch.wmof");
             return;
        }
         return;
     }
 
     private Node m_spkScene;
-    private IridescenceEffect m_spkEffect;
+    private GoochEffect m_spkEffect;
     private Culler m_kCuller = new Culler(0,0,null);
+    private TriMesh m_pkMesh;
 
     /** Window with the shader paramter interface: */
     private ApplicationGUI m_kShaderParamsWindow = null;

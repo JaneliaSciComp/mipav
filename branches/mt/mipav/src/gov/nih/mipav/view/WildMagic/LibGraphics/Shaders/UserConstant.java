@@ -17,7 +17,7 @@
 //
 package gov.nih.mipav.view.WildMagic.LibGraphics.Shaders;
 
-import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
+//import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
 
 public class UserConstant
 {
@@ -41,7 +41,9 @@ public class UserConstant
         m_iRegisterQuantity = iRegisterQuantity;
 
         // To be set later in the effect creation.
-        m_afData = null;
+
+        int iSize = 4*m_iRegisterQuantity;
+        m_afData = new float[iSize];
         m_iNumFloats = iNumFloats;
     }
 

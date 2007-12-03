@@ -1,0 +1,417 @@
+JAVA PROFILE 1.0.1, created Tue Nov 20 10:55:29 2007
+
+Header for -agentlib:hprof (or -Xrunhprof) ASCII Output (JDK 5.0 JVMTI based)
+
+@(#)jvm.hprof.txt	1.5 06/01/28
+
+ Copyright (c) 2006 Sun Microsystems, Inc. All  Rights Reserved.
+
+WARNING!  This file format is under development, and is subject to
+change without notice.
+
+This file contains the following types of records:
+
+THREAD START
+THREAD END      mark the lifetime of Java threads
+
+TRACE           represents a Java stack trace.  Each trace consists
+                of a series of stack frames.  Other records refer to
+                TRACEs to identify (1) where object allocations have
+                taken place, (2) the frames in which GC roots were
+                found, and (3) frequently executed methods.
+
+HEAP DUMP       is a complete snapshot of all live objects in the Java
+                heap.  Following distinctions are made:
+
+                ROOT    root set as determined by GC
+                CLS     classes 
+                OBJ     instances
+                ARR     arrays
+
+SITES           is a sorted list of allocation sites.  This identifies
+                the most heavily allocated object types, and the TRACE
+                at which those allocations occurred.
+
+CPU SAMPLES     is a statistical profile of program execution.  The VM
+                periodically samples all running threads, and assigns
+                a quantum to active TRACEs in those threads.  Entries
+                in this record are TRACEs ranked by the percentage of
+                total quanta they consumed; top-ranked TRACEs are
+                typically hot spots in the program.
+
+CPU TIME        is a profile of program execution obtained by measuring
+                the time spent in individual methods (excluding the time
+                spent in callees), as well as by counting the number of
+                times each method is called. Entries in this record are
+                TRACEs ranked by the percentage of total CPU time. The
+                "count" field indicates the number of times each TRACE 
+                is invoked.
+
+MONITOR TIME    is a profile of monitor contention obtained by measuring
+                the time spent by a thread waiting to enter a monitor.
+                Entries in this record are TRACEs ranked by the percentage
+                of total monitor contention time and a brief description
+                of the monitor.  The "count" field indicates the number of 
+                times the monitor was contended at that TRACE.
+
+MONITOR DUMP    is a complete snapshot of all the monitors and threads in 
+                the System.
+
+HEAP DUMP, SITES, CPU SAMPLES|TIME and MONITOR DUMP|TIME records are generated 
+at program exit.  They can also be obtained during program execution by typing 
+Ctrl-\ (on Solaris) or by typing Ctrl-Break (on Win32).
+
+--------
+
+THREAD START (obj=50000139, id = 200001, name="main", group="main")
+THREAD START (obj=50000139, id = 200004, name="Java2D Disposer", group="system")
+THREAD START (obj=50000139, id = 200005, name="AWT-Shutdown", group="main")
+THREAD START (obj=50000139, id = 200006, name="AWT-Windows", group="main")
+THREAD START (obj=50000139, id = 200007, name="Image Fetcher 0", group="main")
+THREAD START (obj=500005aa, id = 200008, name="AWT-EventQueue-0", group="main")
+THREAD END (id = 200007)
+THREAD START (obj=50000139, id = 200009, name="Image Fetcher 0", group="main")
+THREAD START (obj=500005aa, id = 200010, name="Thread-2", group="main")
+THREAD START (obj=500006ea, id = 200011, name="Thread-3", group="main")
+THREAD END (id = 200001)
+THREAD START (obj=50000139, id = 200012, name="DestroyJavaVM", group="main")
+THREAD START (obj=50000139, id = 200013, name="TimerQueue", group="system")
+THREAD END (id = 200009)
+THREAD START (obj=50000139, id = 200014, name="Image Fetcher 0", group="main")
+THREAD END (id = 200014)
+THREAD START (obj=50000139, id = 200015, name="Image Fetcher 0", group="main")
+THREAD START (obj=50000139, id = 200016, name="Thread-1", group="system")
+THREAD START (obj=50000a41, id = 200017, name="Thread-0", group="main")
+THREAD END (id = 200017)
+THREAD END (id = 200006)
+THREAD END (id = 200010)
+THREAD END (id = 200016)
+THREAD END (id = 200008)
+TRACE 300315:
+	sun.awt.windows.WToolkit.eventLoop(WToolkit.java:Unknown line)
+	sun.awt.windows.WToolkit.run(WToolkit.java:290)
+	java.lang.Thread.run(Thread.java:619)
+TRACE 300926:
+	java.net.PlainSocketImpl.socketAccept(PlainSocketImpl.java:Unknown line)
+	java.net.PlainSocketImpl.accept(PlainSocketImpl.java:384)
+	java.net.ServerSocket.implAccept(ServerSocket.java:453)
+	java.net.ServerSocket.accept(ServerSocket.java:421)
+TRACE 300012:
+	java.util.zip.ZipFile.open(ZipFile.java:Unknown line)
+	java.util.zip.ZipFile.<init>(ZipFile.java:114)
+	java.util.jar.JarFile.<init>(JarFile.java:133)
+	java.util.jar.JarFile.<init>(JarFile.java:70)
+TRACE 300024:
+	java.io.FileInputStream.open(FileInputStream.java:Unknown line)
+	java.io.FileInputStream.<init>(FileInputStream.java:106)
+	sun.misc.URLClassPath$FileLoader$1.getInputStream(URLClassPath.java:989)
+	sun.misc.Resource.cachedInputStream(Resource.java:59)
+TRACE 300041:
+	java.lang.ClassLoader.defineClass1(ClassLoader.java:Unknown line)
+	java.lang.ClassLoader.defineClass(ClassLoader.java:620)
+	java.security.SecureClassLoader.defineClass(SecureClassLoader.java:124)
+	java.net.URLClassLoader.defineClass(URLClassLoader.java:260)
+TRACE 301259:
+	sun.awt.windows.WToolkit.shutdown(WToolkit.java:Unknown line)
+	sun.awt.windows.WToolkit.access$200(WToolkit.java:70)
+	sun.awt.windows.WToolkit$3.run(WToolkit.java:279)
+	java.lang.Thread.run(Thread.java:619)
+TRACE 300126:
+	java.lang.ClassLoader$NativeLibrary.load(ClassLoader.java:Unknown line)
+	java.lang.ClassLoader.loadLibrary0(ClassLoader.java:1751)
+	java.lang.ClassLoader.loadLibrary(ClassLoader.java:1668)
+	java.lang.Runtime.loadLibrary0(Runtime.java:823)
+TRACE 300571:
+	java.io.FileInputStream.open(FileInputStream.java:Unknown line)
+	java.io.FileInputStream.<init>(FileInputStream.java:106)
+	java.io.FileInputStream.<init>(FileInputStream.java:66)
+	sun.net.www.protocol.file.FileURLConnection.connect(FileURLConnection.java:70)
+TRACE 300775:
+	sun.font.FileFont.getGlyphImage(FileFont.java:Unknown line)
+	sun.font.FileFontStrike.getGlyphImagePtr(FileFontStrike.java:275)
+	sun.font.FileFontStrike.getGlyphAdvance(FileFontStrike.java:490)
+	sun.font.CompositeStrike.getGlyphAdvance(CompositeStrike.java:129)
+TRACE 300043:
+	java.lang.ClassLoader.findBootstrapClass(ClassLoader.java:Unknown line)
+	java.lang.ClassLoader.findBootstrapClass0(ClassLoader.java:891)
+	java.lang.ClassLoader.loadClass(ClassLoader.java:301)
+	java.lang.ClassLoader.loadClass(ClassLoader.java:299)
+TRACE 300998:
+	org.apache.xerces.util.XMLChar.<clinit>(XMLChar.java:305)
+	org.apache.xerces.impl.XMLDocumentScannerImpl$XMLDeclDispatcher.dispatch(XMLDocumentScannerImpl.java:647)
+	org.apache.xerces.impl.XMLDocumentFragmentScannerImpl.scanDocument(XMLDocumentFragmentScannerImpl.java:348)
+	org.apache.xerces.parsers.DTDConfiguration.parse(DTDConfiguration.java:539)
+TRACE 301252:
+	sun.awt.windows.WGlobalCursorManager.setCursor(WGlobalCursorManager.java:Unknown line)
+	sun.awt.GlobalCursorManager._updateCursor(GlobalCursorManager.java:192)
+	sun.awt.GlobalCursorManager.updateCursorImmediately(GlobalCursorManager.java:82)
+	sun.awt.windows.WComponentPeer.updateCursorImmediately(WComponentPeer.java:538)
+TRACE 300744:
+	java.lang.Object.notifyAll(Object.java:Unknown line)
+	sun.awt.image.ToolkitImage.addInfo(ToolkitImage.java:230)
+	sun.awt.image.ToolkitImage.setProperties(ToolkitImage.java:244)
+	sun.awt.image.ImageRepresentation.setProperties(ImageRepresentation.java:182)
+TRACE 300765:
+	java.util.Arrays.copyOf(Arrays.java:2882)
+	java.lang.AbstractStringBuilder.expandCapacity(AbstractStringBuilder.java:100)
+	java.lang.AbstractStringBuilder.append(AbstractStringBuilder.java:390)
+	java.lang.StringBuilder.append(StringBuilder.java:119)
+TRACE 301080:
+	java.io.WinNTFileSystem.getBooleanAttributes(WinNTFileSystem.java:Unknown line)
+	java.io.File.isDirectory(File.java:754)
+	sun.net.www.protocol.file.FileURLConnection.connect(FileURLConnection.java:65)
+	sun.net.www.protocol.file.FileURLConnection.getInputStream(FileURLConnection.java:161)
+TRACE 300958:
+	java.io.WinNTFileSystem.getBooleanAttributes(WinNTFileSystem.java:Unknown line)
+	java.io.File.exists(File.java:733)
+	sun.misc.URLClassPath$FileLoader.getResource(URLClassPath.java:983)
+	sun.misc.URLClassPath.getResource(URLClassPath.java:168)
+TRACE 300984:
+	java.util.zip.Inflater.inflateBytes(Inflater.java:Unknown line)
+	java.util.zip.Inflater.inflate(Inflater.java:221)
+	java.util.zip.InflaterInputStream.read(InflaterInputStream.java:135)
+	sun.misc.Resource.getBytes(Resource.java:97)
+TRACE 300948:
+	sun.awt.windows.WGlobalCursorManager.setCursor(WGlobalCursorManager.java:Unknown line)
+	sun.awt.GlobalCursorManager._updateCursor(GlobalCursorManager.java:192)
+	sun.awt.GlobalCursorManager.access$000(GlobalCursorManager.java:20)
+	sun.awt.GlobalCursorManager$NativeUpdater.run(GlobalCursorManager.java:34)
+TRACE 300925:
+	sun.awt.windows.WComponentPeer.pShow(WComponentPeer.java:Unknown line)
+	sun.awt.windows.WComponentPeer.show(WComponentPeer.java:112)
+	sun.awt.windows.WWindowPeer.realShow(WWindowPeer.java:128)
+	sun.awt.windows.WWindowPeer.show(WWindowPeer.java:146)
+TRACE 300808:
+	sun.awt.windows.WWindowPeer.setIconImagesData(WWindowPeer.java:Unknown line)
+	sun.awt.windows.WWindowPeer.updateIconImages(WWindowPeer.java:228)
+	sun.awt.windows.WWindowPeer.initialize(WWindowPeer.java:118)
+	sun.awt.windows.WFramePeer.initialize(WFramePeer.java:108)
+TRACE 301002:
+	org.apache.xerces.impl.xs.opti.SchemaDOM.processElement(SchemaDOM.java:125)
+	org.apache.xerces.impl.xs.opti.SchemaDOM.emptyElement(SchemaDOM.java:111)
+	org.apache.xerces.impl.xs.opti.SchemaDOMParser.emptyElement(SchemaDOMParser.java:244)
+	org.apache.xerces.impl.XMLNamespaceBinder.handleStartElement(XMLNamespaceBinder.java:850)
+TRACE 301012:
+	java.lang.AbstractStringBuilder.<init>(AbstractStringBuilder.java:45)
+	java.lang.StringBuilder.<init>(StringBuilder.java:92)
+	gov.nih.mipav.model.file.FileImageXML.setLUT(FileImageXML.java:1943)
+	gov.nih.mipav.model.file.FileImageXML.access$7(FileImageXML.java:1927)
+TRACE 301232:
+	sun.awt.windows.WWindowPeer.reshapeFrame(WWindowPeer.java:Unknown line)
+	sun.awt.windows.WFramePeer.reshape(WFramePeer.java:60)
+	sun.awt.windows.WComponentPeer.setBounds(WComponentPeer.java:138)
+	sun.awt.windows.WWindowPeer.setBounds(WWindowPeer.java:514)
+TRACE 300536:
+	java.io.RandomAccessFile.open(RandomAccessFile.java:Unknown line)
+	java.io.RandomAccessFile.<init>(RandomAccessFile.java:212)
+	java.io.RandomAccessFile.<init>(RandomAccessFile.java:98)
+	sun.font.TrueTypeFont$1.run(TrueTypeFont.java:256)
+TRACE 301077:
+	java.io.WinNTFileSystem.getLength(WinNTFileSystem.java:Unknown line)
+	java.io.File.length(File.java:848)
+	sun.misc.URLClassPath$FileLoader$1.getContentLength(URLClassPath.java:991)
+	sun.misc.Resource.getBytes(Resource.java:82)
+TRACE 301229:
+	gov.nih.mipav.view.PatientSlice.showUsingOrientation(PatientSlice.java:707)
+	gov.nih.mipav.view.ViewJComponentEditImage.show(ViewJComponentEditImage.java:4358)
+	gov.nih.mipav.view.ViewJFrameImage.updateImages(ViewJFrameImage.java:4650)
+	gov.nih.mipav.view.ViewJFrameImage.init(ViewJFrameImage.java:5233)
+TRACE 301228:
+	gov.nih.mipav.model.structures.ModelStorageBase.export(ModelStorageBase.java:1005)
+	gov.nih.mipav.model.structures.ModelStorageBase.export(ModelStorageBase.java:867)
+	gov.nih.mipav.view.PatientSlice.fillImageBuffer(PatientSlice.java:942)
+	gov.nih.mipav.view.PatientSlice.showUsingOrientation(PatientSlice.java:700)
+TRACE 301245:
+	sun.awt.windows.WGlobalCursorManager.findHeavyweightUnderCursor(WGlobalCursorManager.java:Unknown line)
+	sun.awt.GlobalCursorManager._updateCursor(GlobalCursorManager.java:166)
+	sun.awt.GlobalCursorManager.updateCursorImmediately(GlobalCursorManager.java:82)
+	sun.awt.windows.WComponentPeer.updateCursorImmediately(WComponentPeer.java:538)
+TRACE 301144:
+	java.io.WinNTFileSystem.getBooleanAttributes(WinNTFileSystem.java:Unknown line)
+	java.io.File.isFile(File.java:778)
+	java.awt.color.ICC_Profile.privilegedOpenProfile(ICC_Profile.java:1786)
+	java.awt.color.ICC_Profile.access$000(ICC_Profile.java:73)
+TRACE 301183:
+	java.lang.System.identityHashCode(System.java:Unknown line)
+	sun.awt.SunHints$Value.hashCode(SunHints.java:144)
+	java.awt.font.FontRenderContext.hashCode(FontRenderContext.java:335)
+	sun.font.FontDesignMetrics$MetricsKey.init(FontDesignMetrics.java:199)
+TRACE 300999:
+	org.apache.xerces.util.XMLChar.<clinit>(XMLChar.java:326)
+	org.apache.xerces.impl.XMLDocumentScannerImpl$XMLDeclDispatcher.dispatch(XMLDocumentScannerImpl.java:647)
+	org.apache.xerces.impl.XMLDocumentFragmentScannerImpl.scanDocument(XMLDocumentFragmentScannerImpl.java:348)
+	org.apache.xerces.parsers.DTDConfiguration.parse(DTDConfiguration.java:539)
+CPU SAMPLES BEGIN (total = 13829) Tue Nov 20 10:56:09 2007
+rank   self  accum   count trace method
+   1 62.99% 62.99%    8711 300315 sun.awt.windows.WToolkit.eventLoop
+   2 20.00% 82.99%    2766 300926 java.net.PlainSocketImpl.socketAccept
+   3 14.74% 97.73%    2038 300012 java.util.zip.ZipFile.open
+   4  0.25% 97.98%      35 300024 java.io.FileInputStream.open
+   5  0.13% 98.11%      18 300041 java.lang.ClassLoader.defineClass1
+   6  0.07% 98.18%      10 301259 sun.awt.windows.WToolkit.shutdown
+   7  0.07% 98.26%      10 300126 java.lang.ClassLoader$NativeLibrary.load
+   8  0.07% 98.33%      10 300571 java.io.FileInputStream.open
+   9  0.04% 98.37%       6 300775 sun.font.FileFont.getGlyphImage
+  10  0.04% 98.42%       6 300043 java.lang.ClassLoader.findBootstrapClass
+  11  0.03% 98.45%       4 300998 org.apache.xerces.util.XMLChar.<clinit>
+  12  0.03% 98.47%       4 301252 sun.awt.windows.WGlobalCursorManager.setCursor
+  13  0.02% 98.50%       3 300744 java.lang.Object.notifyAll
+  14  0.02% 98.52%       3 300765 java.util.Arrays.copyOf
+  15  0.02% 98.54%       3 301080 java.io.WinNTFileSystem.getBooleanAttributes
+  16  0.01% 98.55%       2 300958 java.io.WinNTFileSystem.getBooleanAttributes
+  17  0.01% 98.57%       2 300984 java.util.zip.Inflater.inflateBytes
+  18  0.01% 98.58%       2 300948 sun.awt.windows.WGlobalCursorManager.setCursor
+  19  0.01% 98.60%       2 300925 sun.awt.windows.WComponentPeer.pShow
+  20  0.01% 98.61%       2 300808 sun.awt.windows.WWindowPeer.setIconImagesData
+  21  0.01% 98.63%       2 301002 org.apache.xerces.impl.xs.opti.SchemaDOM.processElement
+  22  0.01% 98.64%       2 301012 java.lang.AbstractStringBuilder.<init>
+  23  0.01% 98.66%       2 301232 sun.awt.windows.WWindowPeer.reshapeFrame
+  24  0.01% 98.67%       2 300536 java.io.RandomAccessFile.open
+  25  0.01% 98.68%       2 301077 java.io.WinNTFileSystem.getLength
+  26  0.01% 98.70%       2 301229 gov.nih.mipav.view.PatientSlice.showUsingOrientation
+  27  0.01% 98.71%       2 301228 gov.nih.mipav.model.structures.ModelStorageBase.export
+  28  0.01% 98.73%       2 301245 sun.awt.windows.WGlobalCursorManager.findHeavyweightUnderCursor
+  29  0.01% 98.74%       2 301144 java.io.WinNTFileSystem.getBooleanAttributes
+  30  0.01% 98.76%       2 301183 java.lang.System.identityHashCode
+  31  0.01% 98.77%       2 300999 org.apache.xerces.util.XMLChar.<clinit>
+CPU SAMPLES END
+n.java:100)
+	sun.net.www.protocol.file.FileURLConnection.getHeaderField(FileURLConnection.java:126)
+	sun.net.www.URLConnection.getContentType(URLConnection.java:131)
+	sun.awt.image.URLImageSource.getDecoder(URLImageSource.java:109)
+TRACE 300412:
+	java.io.WinNTFileSystem.getBooleanAttributes(WinNTFileSystem.java:Unknown line)
+	java.io.File.exists(File.java:733)
+	sun.misc.URLClassPath$FileLoader.getResource(URLClassPath.java:983)
+	sun.misc.URLClassPath$FileLoader.findResource(URLClassPath.java:961)
+TRACE 300396:
+	sun.reflect.ClassFileAssembler.append(ClassFileAssembler.java:64)
+	sun.reflect.ClassFileAssembler.append(ClassFileAssembler.java:60)
+	sun.reflect.AccessorGenerator.emitMethod(AccessorGenerator.java:458)
+	sun.reflect.MethodAccessorGenerator.emitInvoke(MethodAccessorGenerator.java:703)
+TRACE 300366:
+	java.io.WinNTFileSystem.canonicalizeWithPrefix0(WinNTFileSystem.java:Unknown line)
+	java.io.Win32FileSystem.canonicalizeWithPrefix(Win32FileSystem.java:419)
+	java.io.Win32FileSystem.canonicalize(Win32FileSystem.java:390)
+	java.io.File.getCanonicalPath(File.java:559)
+TRACE 300350:
+	javax.swing.plaf.metal.OceanTheme.addCustomEntriesToTable(OceanTheme.java:138)
+	javax.swing.plaf.metal.MetalLookAndFeel.getDefaults(MetalLookAndFeel.java:1592)
+	javax.swing.UIManager.setLookAndFeel(UIManager.java:537)
+	javax.swing.UIManager.setLookAndFeel(UIManager.java:577)
+TRACE 300311:
+	sun.awt.windows.WDesktopProperties.getWindowsParameters(WDesktopProperties.java:Unknown line)
+	sun.awt.windows.WDesktopProperties.<init>(WDesktopProperties.java:59)
+	sun.awt.windows.WToolkit.initializeDesktopProperties(WToolkit.java:934)
+	java.awt.Toolkit.getDesktopProperty(Toolkit.java:1734)
+TRACE 300286:
+	sun.awt.windows.WToolkit.init(WToolkit.java:Unknown line)
+	sun.awt.windows.WToolkit.run(WToolkit.java:259)
+	java.lang.Thread.run(Thread.java:619)
+TRACE 300268:
+	java.io.WinNTFileSystem.checkAccess(WinNTFileSystem.java:Unknown line)
+	java.io.File.canRead(File.java:691)
+	sun.awt.Win32GraphicsEnvironment.registerFontFile(Win32GraphicsEnvironment.java:242)
+	sun.java2d.SunGraphicsEnvironment.initCompositeFonts(SunGraphicsEnvironment.java:1023)
+TRACE 300251:
+	sun.font.FontManager.initIDs(FontManager.java:Unknown line)
+	sun.font.FontManager.access$000(FontManager.java:45)
+	sun.font.FontManager$1.run(FontManager.java:205)
+	java.security.AccessController.doPrivileged(AccessController.java:Unknown line)
+TRACE 300232:
+	sun.java2d.SurfaceData.<clinit>(SurfaceData.java:334)
+	sun.awt.windows.WToolkit.initIDs(WToolkit.java:Unknown line)
+	sun.awt.windows.WToolkit.<clinit>(WToolkit.java:105)
+	sun.awt.Win32GraphicsEnvironment.<clinit>(Win32GraphicsEnvironment.java:45)
+TRACE 300186:
+	java.lang.Class.getDeclaredMethods0(Class.java:Unknown line)
+	java.lang.Class.privateGetDeclaredMethods(Class.java:2427)
+	java.lang.Class.getDeclaredMethod(Class.java:1935)
+	sun.awt.windows.WToolkit$6.run(WToolkit.java:802)
+TRACE 300167:
+	sun.awt.AppContext.get(AppContext.java:577)
+	java.awt.Window.addToWindowList(Window.java:2501)
+	java.awt.Window.init(Window.java:348)
+	java.awt.Window.<init>(Window.java:407)
+TRACE 300132:
+	java.awt.Component.<clinit>(Component.java:166)
+	gov.nih.mipav.view.ViewUserInterface.<init>(ViewUserInterface.java:200)
+	gov.nih.mipav.view.ViewUserInterface.create(ViewUserInterface.java:221)
+	MipavMain.main(MipavMain.java:29)
+TRACE 300115:
+	java.util.Collections.unmodifiableList(Collections.java:1133)
+	java.util.ResourceBundle$Control.<clinit>(ResourceBundle.java:1967)
+	java.awt.Toolkit$3.run(Toolkit.java:1605)
+	java.security.AccessController.doPrivileged(AccessController.java:Unknown line)
+TRACE 300110:
+	java.io.WinNTFileSystem.getBooleanAttributes(WinNTFileSystem.java:Unknown line)
+	java.io.File.exists(File.java:733)
+	sun.misc.URLClassPath$FileLoader.getResource(URLClassPath.java:983)
+	sun.misc.URLClassPath.getResource(URLClassPath.java:168)
+TRACE 300062:
+	java.io.WinNTFileSystem.getBooleanAttributes(WinNTFileSystem.java:Unknown line)
+	java.io.File.exists(File.java:733)
+	java.security.Security.initialize(Security.java:66)
+	java.security.Security.access$000(Security.java:30)
+CPU SAMPLES BEGIN (total = 776) Tue Nov 20 10:55:33 2007
+rank   self  accum   count trace method
+   1 54.77% 54.77%     425 300312 sun.awt.windows.WToolkit.eventLoop
+   2 33.89% 88.66%     263 300917 java.net.PlainSocketImpl.socketAccept
+   3  1.55% 90.21%      12 300599 java.io.FileInputStream.open
+   4  1.29% 91.49%      10 300927 sun.awt.windows.WToolkit.shutdown
+   5  0.64% 92.14%       5 300040 java.lang.ClassLoader.defineClass1
+   6  0.52% 92.65%       4 300741 sun.font.FileFont.getGlyphImage
+   7  0.39% 93.04%       3 300930 java.lang.Shutdown.halt0
+   8  0.26% 93.30%       2 300897 java.lang.System.identityHashCode
+   9  0.26% 93.56%       2 300042 java.lang.ClassLoader.findBootstrapClass
+  10  0.13% 93.69%       1 300919 javax.swing.LayoutFocusTraversalPolicy.accept
+  11  0.13% 93.81%       1 300905 java.io.WinNTFileSystem.getLength
+  12  0.13% 93.94%       1 300904 javax.swing.DefaultBoundedRangeModel.fireStateChanged
+  13  0.13% 94.07%       1 300920 java.lang.Thread.currentThread
+  14  0.13% 94.20%       1 300921 java.awt.Container.insets
+  15  0.13% 94.33%       1 300896 java.lang.System.arraycopy
+  16  0.13% 94.46%       1 300888 sun.awt.AppContext.get
+  17  0.13% 94.59%       1 300887 java.util.GregorianCalendar.getWeekNumber
+  18  0.13% 94.72%       1 300870 sun.awt.im.InputContext.focusGained
+  19  0.13% 94.85%       1 300850 java.awt.Component.createBufferStrategy
+  20  0.13% 94.97%       1 300835 java.lang.String.intern
+  21  0.13% 95.10%       1 300020 java.util.zip.ZipFile.open
+  22  0.13% 95.23%       1 300823 sun.awt.windows.WWindowPeer._setResizable
+  23  0.13% 95.36%       1 300805 java.lang.ClassLoader$NativeLibrary.find
+  24  0.13% 95.49%       1 300787 sun.awt.windows.WToolkit.getScreenInsets
+  25  0.13% 95.62%       1 300772 java.nio.ByteBufferAsCharBufferB.ix
+  26  0.13% 95.75%       1 300763 java.io.WinNTFileSystem.getBooleanAttributes
+  27  0.13% 95.88%       1 300762 java.io.WinNTFileSystem.getBooleanAttributes
+  28  0.13% 96.01%       1 300746 java.lang.Object.hashCode
+  29  0.13% 96.13%       1 300725 java.lang.Thread.currentThread
+  30  0.13% 96.26%       1 300706 javax.swing.JTextArea.<init>
+  31  0.13% 96.39%       1 300675 java.lang.Object.hashCode
+  32  0.13% 96.52%       1 300647 javax.swing.plaf.basic.BasicTextUI.createHighlighter
+  33  0.13% 96.65%       1 300577 java.lang.Object.getClass
+  34  0.13% 96.78%       1 300566 java.io.FileInputStream.readBytes
+  35  0.13% 96.91%       1 300565 java.lang.AbstractStringBuilder.<init>
+  36  0.13% 97.04%       1 300563 sun.java2d.SunGraphics2D.drawImage
+  37  0.13% 97.16%       1 300542 java.io.WinNTFileSystem.getBooleanAttributes
+  38  0.13% 97.29%       1 300531 sun.nio.ch.FileChannelImpl.position0
+  39  0.13% 97.42%       1 300517 java.nio.ByteBuffer.allocateDirect
+  40  0.13% 97.55%       1 300494 gov.nih.mipav.view.ViewMenuBuilder.buildMenuItem
+  41  0.13% 97.68%       1 300470 sun.text.resources.FormatData.getContents
+  42  0.13% 97.81%       1 300924 sun.awt.windows.WGlobalCursorManager.setCursor
+  43  0.13% 97.94%       1 300925 sun.awt.windows.WDialogPeer.endModal
+  44  0.13% 98.07%       1 300434 sun.net.www.protocol.file.FileURLConnection.initializeHeaders
+  45  0.13% 98.20%       1 300412 java.io.WinNTFileSystem.getBooleanAttributes
+  46  0.13% 98.32%       1 300396 sun.reflect.ClassFileAssembler.append
+  47  0.13% 98.45%       1 300366 java.io.WinNTFileSystem.canonicalizeWithPrefix0
+  48  0.13% 98.58%       1 300350 javax.swing.plaf.metal.OceanTheme.addCustomEntriesToTable
+  49  0.13% 98.71%       1 300311 sun.awt.windows.WDesktopProperties.getWindowsParameters
+  50  0.13% 98.84%       1 300286 sun.awt.windows.WToolkit.init
+  51  0.13% 98.97%       1 300268 java.io.WinNTFileSystem.checkAccess
+  52  0.13% 99.10%       1 300251 sun.font.FontManager.initIDs
+  53  0.13% 99.23%       1 300232 sun.java2d.SurfaceData.<clinit>
+  54  0.13% 99.36%       1 300186 java.lang.Class.getDeclaredMethods0
+  55  0.13% 99.48%       1 300167 sun.awt.AppContext.get
+  56  0.13% 99.61%       1 300132 java.awt.Component.<clinit>
+  57  0.13% 99.74%       1 300115 java.util.Collections.unmodifiableList
+  58  0.13% 99.87%       1 300110 java.io.WinNTFileSystem.getBooleanAttributes
+  59  0.13% 100.00%       1 300062 java.io.WinNTFileSystem.getBooleanAttributes
+CPU SAMPLES END

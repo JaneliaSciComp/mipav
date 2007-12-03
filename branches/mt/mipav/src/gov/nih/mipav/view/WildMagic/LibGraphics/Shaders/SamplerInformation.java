@@ -51,15 +51,17 @@ public class SamplerInformation
      * @param rkName, Sampler name.
      * @param eType, Sampler type.
      * @param iTextureUnit, Sampler texture unit.
+     * @param iBaseRegister, the base register for the program.
      */
     public SamplerInformation ( String rkName, Type eType,
-                                int iTextureUnit)
+                                int iTextureUnit, int iBaseRegister)
     {
         m_kName = new String(rkName);
 
         m_eType = eType;
         m_iTextureUnit = iTextureUnit;
-
+        m_iBaseRegister = iBaseRegister;
+        
         switch (m_eType)
         {
         case SAMPLER_1D:
@@ -113,6 +115,15 @@ public class SamplerInformation
     {
         return m_iTextureUnit;
     }
+    
+    /**
+     * @return the base register for the program.
+     */
+    public final int GetBaseRegister ()
+    {
+        return m_iBaseRegister;
+    }
+
 
     /** Return sampler dimensions.
      * @return sampler dimensions.
@@ -121,12 +132,15 @@ public class SamplerInformation
     {
         return m_iDimension;
     }
+    
     /** Sampler name -- matches shader program sampler name. */
     private String m_kName;
     /** Sampler type. */
     private Type m_eType;
     /** Sampler texture unit -- matches shader program. */
     private int m_iTextureUnit;
+    /** The base register for the program. */
+    private int m_iBaseRegister;
     /** Sampler dimensions (1D, 2D, 3D) */
     private int m_iDimension;
 }

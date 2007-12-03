@@ -40,9 +40,9 @@ public class PixelShader extends Shader
     /** Return the pixel program in this pixel shader.
      * @return the pixel program in this pixel shader.
      */
-    public final PixelProgram GetProgram ()
+    public final Program GetProgram ()
     {
-        return (PixelProgram)(m_spkProgram);
+        return (Program)(m_spkProgram);
     }
 
     /** Default constructor. */

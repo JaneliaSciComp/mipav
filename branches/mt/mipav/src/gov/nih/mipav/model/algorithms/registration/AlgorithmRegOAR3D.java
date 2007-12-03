@@ -703,6 +703,30 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
                     mZZ += voxVal * z * z;
                     tot += voxVal;
                     n++;
+
+                    if (n > nLim) { // Lets not over run the buffers during summation
+                        n = 0;
+                        total += tot;
+                        mat2.set(0, 0, mat2.get(0, 0) + mXX);
+                        mat2.set(0, 1, mat2.get(0, 1) + mXY);
+                        mat2.set(0, 2, mat2.get(0, 2) + mXZ);
+                        mat2.set(1, 1, mat2.get(1, 1) + mYY);
+                        mat2.set(1, 2, mat2.get(1, 2) + mYZ);
+                        mat2.set(2, 2, mat2.get(2, 2) + mZZ);
+                        mean.set(0, 0, mean.get(0, 0) + mX);
+                        mean.set(1, 0, mean.get(1, 0) + mY);
+                        mean.set(2, 0, mean.get(2, 0) + mZ);
+                        tot = 0;
+                        mX = 0;
+                        mY = 0;
+                        mZ = 0;
+                        mXX = 0;
+                        mXY = 0;
+                        mXZ = 0;
+                        mYY = 0;
+                        mYZ = 0;
+                        mZZ = 0;
+                    }
                 }
             }
         }
@@ -945,7 +969,9 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
      */
     public void runAlgorithm() {
         int i;
-
+        long start = System.currentTimeMillis();
+        long previous = start;
+        
         if (refImage.getNDims() != 3) {
             MipavUtil.displayError("" + refImage.getNDims() + "D registration not supported.");
             disposeLocal();
@@ -1131,8 +1157,11 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             blurredInput = inputImage;
         }
 
+        long current = System.currentTimeMillis();
+        System.out.println("Time consumed by Blurring images: " + (current-previous));
+        previous = current;
+        
         // Resample blurred image of reference image into isotropic voxels
-
         if (resampleRef) {
             transform = new AlgorithmTransform(blurredRef, new TransMatrix(4), interp, resRefIso[0], resRefIso[1],
                                                resRefIso[2], extentsRefIso[0], extentsRefIso[1], extentsRefIso[2],
@@ -1342,6 +1371,10 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             transform2 = null;
         }
 
+        current = System.currentTimeMillis();
+        System.out.println("Time consumed by Sampling Images: " + (current-previous));
+        previous = current;
+        
         System.gc();
 
         int subMinFactor = 75000;
@@ -1658,18 +1691,26 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
                               "Input subsampled 2 = " + simpleInputSub2 + "Input subsampled 4 = " + simpleInputSub4 +
                               "Input subsampled 8 = " + simpleInputSub8);
 
+            current = System.currentTimeMillis();
+            System.out.println("Time consumed by Subsampling Images: " + (current-previous));
+            previous = current;
+            
             // STARTING LEVEL 8
             time = System.currentTimeMillis();
             Preferences.debug(" Starting level 8 ************************************************\n");
 
             Vector[] minimas = levelEight(simpleRefSub8, simpleInputSub8);
 
+            current = System.currentTimeMillis();
+            System.out.println("Time consumed by levelEight: " + (current-previous));
+            previous = current;
+            
             // "minimas" is an array of Vector, because it will have two Vectors - one with
             // the original minima and one with the optimized minima.
             time = System.currentTimeMillis() - time;
             Preferences.debug(" Level 8 minutes = " + ((float) time / 60000.0f) + "\n");
             time = System.currentTimeMillis();
-
+            
             if (threadStopped) {
                 finalize();
 
@@ -1684,6 +1725,10 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             Preferences.debug(" Level 4  minutes = " + ((float) time / 60000.0f) + "\n");
             time = System.currentTimeMillis();
 
+            current = System.currentTimeMillis();
+            System.out.println("Time consumed by levelFour: " + (current-previous));
+            previous = current;
+
             if (threadStopped) {
                 finalize();
 
@@ -1697,6 +1742,10 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             Preferences.debug(" Level 2 minutes = " + ((float) time / 60000.0f) + "\n");
             time = System.currentTimeMillis();
 
+            current = System.currentTimeMillis();
+            System.out.println("Time consumed by levelTwo: " + (current-previous));
+            previous = current;
+            
             if (threadStopped) {
                 finalize();
 
@@ -1739,6 +1788,10 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         time = System.currentTimeMillis() - time;
         Preferences.debug(" Level 1 minutes = " + ((float) time / 60000.0f) + "\n");
 
+        current = System.currentTimeMillis();
+        System.out.println("Time consumed by levelOne: " + (current-previous));
+        previous = current;
+        
         if (threadStopped) {
             finalize();
 
@@ -1750,6 +1803,10 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         disposeLocal();
         finalize();
         setCompleted(true);
+
+        current = System.currentTimeMillis();
+        System.out.println("Total time consumed by registration: " + (current-start));
+        
     }
 
     /**

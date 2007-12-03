@@ -14,6 +14,7 @@
 // Version: 4.0.0 (2006/06/28)
 //
 // Ported to Java by Alexandra Bokinsky, PhD, Geometric Tools, Inc. (July 2007)
+// Adapted from Iridescene demo, (Nov 07)
 //
 
 package gov.nih.mipav.view.WildMagic.ApplicationDemos;
@@ -26,12 +27,13 @@ import java.awt.event.*;
 
 import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 import gov.nih.mipav.view.WildMagic.LibRenderers.OpenGLRenderer.*;
 
-public class Iridescence extends JavaApplication3D
+public class Lattice extends JavaApplication3D
     implements GLEventListener, KeyListener
 {
     /**
@@ -45,8 +47,8 @@ public class Iridescence extends JavaApplication3D
      * graphics hardware memory as well as time for re-loading large textures.
      *
      */
-    public Iridescence() {
-        super("Iridescence",0,0,640,480, new ColorRGBA(0.5f,0.0f,1.0f,1.0f));
+    public Lattice() {
+        super("Lattice",0,0,640,480, new ColorRGBA(0.5f,0.0f,1.0f,1.0f));
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                                           m_eBuffering, m_eMultisampling,
                                            m_iWidth, m_iHeight );
@@ -62,12 +64,12 @@ public class Iridescence extends JavaApplication3D
     }
 
     /**
-     * Iridescence.main creates the Iridescence object and window frame to
+     * Lattice.main creates the Lattice object and window frame to
      * contain the GLCanvas. An Animator object is created with the GLCanvas
      * as an argument. The Animator provides the same function as the
      * glutMainLoop() function call commonly used in OpenGL applications. */
     public static void main(String[] args) {
-        Iridescence kWorld = new Iridescence();        
+        Lattice kWorld = new Lattice();        
         Frame frame = new Frame(m_acWindowTitle);
         frame.add( kWorld.GetCanvas() );
         frame.setSize(m_iWidth, m_iHeight);
@@ -91,7 +93,7 @@ public class Iridescence extends JavaApplication3D
     }
 
     /**
-     * Iridescence.display() displays the scene. The frame rate is
+     * Lattice.display() displays the scene. The frame rate is
      * measured. Any camera motion that has occurred since the last frame was
      * displayed is applied and the culling system updated. Any object motions
      * that has occurred is also applied and the culling system
@@ -114,7 +116,7 @@ public class Iridescence extends JavaApplication3D
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
         {
-            m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+            m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());            
             DrawFrameRate(8,GetHeight()-8,ColorRGBA.WHITE);
             m_pkRenderer.EndScene();
         }
@@ -126,7 +128,7 @@ public class Iridescence extends JavaApplication3D
         {
             m_kShaderParamsWindow = new ApplicationGUI();
             m_kShaderParamsWindow.setParent(this);
-            m_kShaderParamsWindow.AddUserVariables(m_spkEffect.GetVProgram(0));
+            m_kShaderParamsWindow.AddUserVariables(m_spkEffect.GetPProgram(0));
             m_kShaderParamsWindow.Display();
             m_kShaderParamsWindow.setParent(this);
         }
@@ -135,7 +137,7 @@ public class Iridescence extends JavaApplication3D
     public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {}
 
     /**
-     * Iridescence.init is called only once when the GLCanvas is initialized. It
+     * Lattice.init is called only once when the GLCanvas is initialized. It
      * initializes the renderer object, sets up the camera model, creates the
      * scene, and initializes the culling object with the camera and scene
      * objects.
@@ -173,7 +175,7 @@ public class Iridescence extends JavaApplication3D
     }
 
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+       // ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         if (iWidth > 0 && iHeight > 0)
         {
             if (m_pkRenderer != null)
@@ -184,7 +186,7 @@ public class Iridescence extends JavaApplication3D
             m_iWidth = iWidth;
             m_iHeight = iHeight;
         }
-       // ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
     public GLCanvas GetCanvas()
@@ -193,12 +195,12 @@ public class Iridescence extends JavaApplication3D
     }
 
     /**
-     * Iridescence.CreateScene() creates the scene graph. The root node is
+     * Lattice.CreateScene() creates the scene graph. The root node is
      * m_spkScene. It contains a single TriMesh object, the torus. The TriMesh
      * object is created with a set of rendering Attributes with three
      * channels for point data (x,y,z); three channels for normal data
      * (x,y,z); and two channels for texture-coordinate data (s,t).  An
-     * IridescenceEffect is created and attached to the torus.
+     * LatticeEffect is created and attached to the torus.
      */
     private void CreateScene ()
     {
@@ -209,26 +211,78 @@ public class Iridescence extends JavaApplication3D
         kAttr.SetTChannels(0,2);
         StandardMesh kSM = new StandardMesh(kAttr);
         //TriMesh pkMesh = kSM.Ellipsoid(50,50,1.5f,1.0f, 2.0f);
-        TriMesh pkMesh = kSM.Torus(200,200,2.0f,1.0f);
+        m_pkMesh = kSM.Torus(220,220,2.0f,1.0f);
         
-        pkMesh.Local.SetMatrix(new Matrix3f(new Vector3f(0f, 0f, 1f), new Vector3f(0.707f, 0.707f, 0f), 
-                new Vector3f(-0.707f, 0.707f, 0f),false));
-        m_spkScene.AttachChild(pkMesh);
+       // pkMesh.Local.SetMatrix(new Matrix3f(new Vector3f(0f, 0f, 1f), 
+        //        new Vector3f(0.707f, 0.707f, 0f), 
+        //        new Vector3f(-0.707f, 0.707f, 0f),false));
 
-        m_spkEffect = new IridescenceEffect("Leaf","Gradient");
-        m_spkEffect.SetInterpolateFactor(0.5f);
+        m_kDiffuseColor = new ColorRGB(0.34615f,0.3143f,0.0903f);
+        
+        // polished gold
+        m_pkMaterial = new MaterialState();
+        m_pkMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+        m_pkMaterial.Ambient = new ColorRGB(0.24725f,0.2245f,0.0645f);
+        m_pkMaterial.Diffuse = m_kDiffuseColor;
+        m_pkMaterial.Specular = new ColorRGB(0.797357f,0.723991f,0.208006f);
+        m_pkMaterial.Shininess = 83.2f;
+        m_pkMesh.AttachGlobalState(m_pkMaterial);
+
+
+        m_spkEffect = new LatticeEffect("Leaf","Gradient");
+        //m_spkEffect.SetInterpolateFactor(0.5f);
         final int iPassQuantity = m_spkEffect.GetPassQuantity();
         for (int iPass = 0; iPass < iPassQuantity; iPass++)
         {
             m_spkEffect.LoadPrograms(m_pkRenderer, iPass,m_pkRenderer.GetMaxColors(),m_pkRenderer.GetMaxTCoords(),
                     m_pkRenderer.GetMaxVShaderImages(),m_pkRenderer.GetMaxPShaderImages());
         }
+        m_pkMesh.AttachEffect(m_spkEffect);
 
-        pkMesh.AttachEffect(m_spkEffect);
+        
+        int i;
+        for (i = 0; i < 2; i++)
+        {
+            m_aspkDLight[i] = new Light(Light.LightType.LT_DIRECTIONAL);
+        }
+        float fValue = (float)-Math.sqrt(1.0f/3.0f);
+        m_aspkDLight[0].Ambient = new ColorRGB(fValue,fValue,fValue);
+        m_aspkDLight[1].Ambient = new ColorRGB(fValue,0.0f,  0.0f);
+        m_aspkDLight[0].DVector = new Vector3f(+fValue,+fValue,+fValue);
+        m_aspkDLight[1].DVector = new Vector3f(+fValue,+fValue,-fValue);
+        for (i = 0; i < 2; i++)
+        {
+            m_aspkDLight[i].Diffuse = new ColorRGB(ColorRGB.WHITE);
+            m_aspkDLight[i].Specular = new ColorRGB(ColorRGB.WHITE);
+        }
+
+        LightingEffect kL0 = new LightingEffect();
+        kL0.AttachLight(m_aspkDLight[0]);
+        kL0.Configure();
+        AlphaState pkAS;
+
+        pkAS = kL0.GetBlending(0);
+        pkAS.BlendEnabled = true;
+        pkAS.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE_MINUS_DST_COLOR;
+        pkAS.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
+
+        LightingEffect kL1 = new LightingEffect();
+        kL1.AttachLight(m_aspkDLight[1]);
+        kL1.Configure();
+        pkAS = kL1.GetBlending(0);
+        pkAS.BlendEnabled = true;
+        pkAS.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE_MINUS_DST_COLOR;
+        pkAS.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
+        
+        m_pkMesh.AttachEffect(kL0);
+        m_pkMesh.AttachEffect(kL1);
+        m_pkMesh.UpdateRS();
+        
+        m_spkScene.AttachChild(m_pkMesh);
     }
 
     /**
-     * Iridescence.keyPressed() processes key-input from the user. The
+     * Lattice.keyPressed() processes key-input from the user. The
      * iridescence factor shader parameter can be increased and decreased by
      * pressing the + and – keys. A shader-editor GUI can be launched by
      * pressing 'l'. The scene-graph is streamed to disk by pressing the 's'
@@ -237,28 +291,28 @@ public class Iridescence extends JavaApplication3D
     public void keyPressed(KeyEvent e) {
         char ucKey = e.getKeyChar();
         super.keyPressed(e);
-        float fInterpolateFactor;
+        float fInterpolateFactor = 0;
         switch (ucKey)
         {
         case '+':
         case '=':
-            fInterpolateFactor = m_spkEffect.GetInterpolateFactor();
+            //fInterpolateFactor = m_spkEffect.GetInterpolateFactor();
             fInterpolateFactor += 0.1f;
             if (fInterpolateFactor > 1.0f)
             {
                 fInterpolateFactor = 1.0f;
             }
-            m_spkEffect.SetInterpolateFactor(fInterpolateFactor);
+            //m_spkEffect.SetInterpolateFactor(fInterpolateFactor);
             return;
         case '-':
         case '_':
-            fInterpolateFactor = m_spkEffect.GetInterpolateFactor();
+            //fInterpolateFactor = m_spkEffect.GetInterpolateFactor();
             fInterpolateFactor -= 0.1f;
             if (fInterpolateFactor < 0.0f)
             {
                 fInterpolateFactor = 0.0f;
             }
-            m_spkEffect.SetInterpolateFactor(fInterpolateFactor);
+            //m_spkEffect.SetInterpolateFactor(fInterpolateFactor);
             return;
         case 'l':
         case 'L':
@@ -270,15 +324,20 @@ public class Iridescence extends JavaApplication3D
             return;
         case 's':
         case 'S':
-            TestStreaming(m_spkScene,"Iridescence.wmof");
+            TestStreaming(m_spkScene,"Lattice.wmof");
             return;
        }
         return;
     }
 
     private Node m_spkScene;
-    private IridescenceEffect m_spkEffect;
+    private LatticeEffect m_spkEffect;
     private Culler m_kCuller = new Culler(0,0,null);
+    private TriMesh m_pkMesh;
+
+    private Light[] m_aspkDLight = new Light[2];
+    private MaterialState m_pkMaterial;
+    private ColorRGB m_kDiffuseColor;
 
     /** Window with the shader paramter interface: */
     private ApplicationGUI m_kShaderParamsWindow = null;

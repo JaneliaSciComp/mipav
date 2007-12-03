@@ -1,9 +1,9 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.TransMatrix;
 
-import gov.nih.mipav.view.*;
+import java.awt.Point;
 
 
 /**
@@ -219,6 +219,116 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
         maxIterations = max;
     }
 
+    protected double lineMinimization2(final double[] pt, final double initial, final double boundguess, final int index) {
+
+        // Set up tolerances in direction of line minimization.
+        // "unit_directions" is a unit vector in the direction of "directions"
+        double tol = 0, sum = 0;
+        double[] unit_directions = new double[nDims];
+
+        unit_directions[index] = 1;
+        for (int i = 0; i < nDims; i++) {
+            if (tolerance[i] > TINY) {
+                tol += Math.abs(unit_directions[i] / tolerance[i]);
+            }
+        }
+
+        double unit_tolerance = Math.abs(1 / tol);
+
+        // Create new Bracket.  Set a and b and find functionAtA and functionAtB.
+        Bracket bracket = new Bracket();
+
+        bracket.a = boundguess * unit_tolerance;
+        bracket.functionAtA = oneDimension2(pt, bracket.a, unit_directions);
+
+        bracket.b = 0;
+
+        if (initial == 0) { // for first call to lineMinimization within PowellOpt3D
+            bracket.functionAtB = oneDimension2(pt, bracket.b, unit_directions);
+        } else {
+            bracket.functionAtB = initial;
+        }
+
+        // minimumBracket is called and will set bracket.c and functionAtC.
+        minimumBracket(bracket, unit_directions);
+        // if (initial == 0)  Preferences.debug("Initial bracket: \n" +bracket);
+
+        double minDist = 0.1 * unit_tolerance;
+        double xNew, yNew;
+        int count = 0;
+
+        while (((++count) < 100) && (Math.abs(bracket.c - bracket.a) > unit_tolerance) && !parent.isThreadStopped()) {
+
+            if (count > 0) {
+                xNew = nextPoint(bracket);
+            } else {
+                xNew = extrapolatePoint(bracket);
+            }
+
+            double directionN = 1.0;
+
+            if (bracket.c < bracket.a) {
+                directionN = -1.0;
+            }
+
+            if (Math.abs(xNew - bracket.a) < minDist) {
+                xNew = bracket.a + (directionN * minDist);
+            }
+
+            if (Math.abs(xNew - bracket.c) < minDist) {
+                xNew = bracket.c - (directionN * minDist);
+            }
+
+            if (Math.abs(xNew - bracket.b) < minDist) {
+                xNew = extrapolatePoint(bracket);
+            }
+
+            if (Math.abs(bracket.b - bracket.a) < (4 * minDist)) {
+                xNew = bracket.b + (directionN * 5 * minDist);
+            }
+
+            if (Math.abs(bracket.b - bracket.c) < (4 * minDist)) {
+                xNew = bracket.b - (directionN * 5 * minDist);
+            }
+
+            yNew = oneDimension(xNew, unit_directions);
+
+            if (((xNew - bracket.b) * (bracket.c - bracket.b)) > 0) { // is xnew between bracket.c and bracket.b ?
+
+                // swap bracket.a and bracket.c so that xnew is between bracket.a and bracket.b
+                double xtemp = bracket.a;
+
+                bracket.a = bracket.c;
+                bracket.c = xtemp;
+
+                double ytemp = bracket.functionAtA;
+
+                bracket.functionAtA = bracket.functionAtC;
+                bracket.functionAtC = ytemp;
+            }
+
+            if (yNew < bracket.functionAtB) {
+
+                // new interval is [bracket.b,bracket.a] with xNew as best point in the middle
+                bracket.c = bracket.b;
+                bracket.functionAtC = bracket.functionAtB;
+                bracket.b = xNew;
+                bracket.functionAtB = yNew;
+            } else {
+
+                // new interval is  [bracket.c,xnew] with bracket.b as best point still
+                bracket.a = xNew;
+                bracket.functionAtA = yNew;
+            }
+        }
+
+        for (int i = 0; i < nDims; i++) {
+            pt[i] = (bracket.b * unit_directions[i]) + pt[i];
+        }
+
+        return bracket.functionAtB;
+    }
+
     /**
      * Minimizes the point along the given vector direction. Given an initial point and a guess as to how far from that
      * point we should go to look for a minimum.
@@ -229,7 +339,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
      *
      * @return  Minimum of the point along the given vector.
      */
-    protected double lineMinimization(double initial, double boundguess, double[] directions) {
+    protected double lineMinimization(final double initial, final double boundguess, final double[] directions) {
 
         // Set up tolerances in direction of line minimization.
         // "unit_directions" is a unit vector in the direction of "directions"
@@ -532,6 +642,19 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
 
         for (int i = 0; i < nDims; i++) {
             xt[i] = point[i] + (x * unit_directions[i]);
+        }
+
+        f = costFunction.cost(convertToMatrix(xt));
+
+        return f;
+    }
+    
+    private double oneDimension2(final double[] pt, double x, double[] unit_directions) {
+        double f;
+        double[] xt = new double[nDims];
+
+        for (int i = 0; i < nDims; i++) {
+            xt[i] = pt[i] + (x * unit_directions[i]);
         }
 
         f = costFunction.cost(convertToMatrix(xt));

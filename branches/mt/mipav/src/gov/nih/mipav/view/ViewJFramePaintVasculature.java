@@ -226,7 +226,7 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
             } else {
                 componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTb(), true);
             }
-        } else if (command.equals("Pointer")) {
+        } else if (command.equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER)) {
             paintDialog.setPaintGrowMode(JDialogPaintVasculature.AUTO_POINT);
         } else if (command.equals("PointRegionGrow")) {
             paintDialog.setPaintGrowMode(JDialogPaintVasculature.AUTO_POINT);
