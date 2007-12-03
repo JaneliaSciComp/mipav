@@ -8,9 +8,13 @@ void v_ConstantColor()
     gl_Position = WVPMatrix*gl_Vertex;
     
     // Set the vertex color.
-    gl_FrontColor = gl_Color;
+    gl_FrontColor = gl_SecondaryColor;
     if ( UseConstantColor == 1.0 )
     {
         gl_FrontColor.rgb = ConstantColor;
+    }   
+    else if ( UseConstantColor == 2.0 )
+    {
+        gl_FrontColor.rgb = gl_Color;
     }   
 }

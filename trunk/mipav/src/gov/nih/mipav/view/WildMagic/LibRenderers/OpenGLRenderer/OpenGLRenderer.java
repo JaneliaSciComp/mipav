@@ -972,11 +972,11 @@ public class OpenGLRenderer extends Renderer
         // is "cg".
         String kExt = FileUtil.getFileSuffix(rkProgramName);
         if (kExt == null) {
-            //if (ms_bUseCg){
-            //    kExt = new String("cg");
-            //} else {
+            if (ms_bUseCg){
+                kExt = new String("cg");
+            } else {
                 kExt = new String("glsl");
-            //}
+            }
        } else {
             // strip ext to get program name.
             rkProgramName = rkProgramName.substring(0, rkProgramName.length() - kExt.length() - 1);
