@@ -81,6 +81,8 @@ public class FileTiff extends FileBase {
     /** DOCUMENT ME! */
     public static final int PHOTO_INTERP = 262;
     
+    public static final int FILL_ORDER = 266;
+    
     public static final int DOCUMENT_NAME = 269;
 
     /** DOCUMENT ME! */
@@ -337,6 +339,12 @@ public class FileTiff extends FileBase {
     /** DOCUMENT ME! */
     private double zRes = 1.0;
     
+    // 1 = Pixels are arranged within a byte such that pixels with lower column values are
+    //     stored in the higher-order bits of the byte.
+    // 2 = Pixels are arranged within a byte such that pixels with lower column values are
+    //     stored in the lower-order bits of the byte.
+    private int fillOrder = 1;
+    
     private boolean isCIELAB = false;
     
     private boolean isYCbCr = false;
@@ -378,6 +386,15 @@ public class FileTiff extends FileBase {
     private boolean isBW4 = false;
     private boolean isBW6 = false;
     private boolean isBW10 = false;
+    private boolean isBW12 = false;
+    private boolean isBW14 = false;
+    private boolean isBW24 = false;
+    
+    private boolean isRGB2 = false;
+    private boolean isRGB4 = false;
+    private boolean isRGB10 = false;
+    private boolean isRGB12 = false;
+    private boolean isRGB14 = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1824,6 +1841,7 @@ public class FileTiff extends FileBase {
         int[] bitsPerSample = null;
         long saveLocus;
         int sampleFormat = 1; // 1 is default for unsigned integers
+        int expectedCount;
         boolean debuggingFileIO = Preferences.debugLevel(Preferences.DEBUG_FILEIO);
         fileInfo.setEndianess(endianess);
         nDirEntries = getUnsignedShort(endianess);
@@ -2177,6 +2195,32 @@ public class FileTiff extends FileBase {
                     }
 
                     break;
+                    
+                case FILL_ORDER:
+                    if (type != SHORT) {
+                        throw new IOException ("FILL_ORDER has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("FILL_ORDER has illegal COUNT = " + count + "\n");
+                    }
+                    fillOrder =  (int) valueArray[0];
+                    if (debuggingFileIO) {
+                        if (fillOrder == 1) {
+                            Preferences.debug("FileTiff.openIFD: FILL_ORDER = 1 for pixels are arranged within a byte\n" +
+                                                 "such that lower column values are stored in the\n" +
+                                                 "higher-order bits of the byte\n");
+                        }
+                        else if (fillOrder == 2) {
+                            Preferences.debug("FileTiff.openIFD: FILL_ORDER = 1 for pixels are arranged within a byte\n" +
+                                    "such that lower column values are stored in the\n" +
+                                    "lower-order bits of the byte\n");
+                        }
+                        else {
+                            Preferences.debug("FileTiff.openIFD: FILL_ORDER has an illegal values = " + fillOrder + "\n");
+                        }
+                    }
+                    break;
 
                 case BITS_PER_SAMPLE:
                     if (type != SHORT) {
@@ -2500,7 +2544,11 @@ public class FileTiff extends FileBase {
 
                     // Already read LUT - only same LUT in every file of multiFile and only one
                     // LUT for a multiImage file for now.
-                    if ((count == 768) && (LUT == null)) {
+                    expectedCount = 768;
+                    if ((bitsPerSample != null) && ((bitsPerSample[0] == 2) || (bitsPerSample[0] == 4))) {
+                        expectedCount = (int)Math.round(3 * Math.pow(2, bitsPerSample[0])); // 12 or 48
+                    }
+                    if ((count == expectedCount) && (LUT == null)) {
 
                         if (debuggingFileIO) {
                             Preferences.debug("FileTiff creating color map\n");
@@ -2515,25 +2563,25 @@ public class FileTiff extends FileBase {
 
                         int maxValue = -Integer.MAX_VALUE;
 
-                        for (i1 = 0; i1 < 768; i1++) {
+                        for (i1 = 0; i1 < count; i1++) {
 
                             if (valueArray[i1] > maxValue) {
                                 maxValue = (int) valueArray[i1];
                             }
                         }
 
-                        if (maxValue > 256) {
+                        if (maxValue > 255) {
 
-                            for (i1 = 0; i1 < 768; i1++) {
+                            for (i1 = 0; i1 < count; i1++) {
                                 valueArray[i1] = valueArray[i1] * 255 / maxValue;
                             }
                         }
 
-                        for (i1 = 0; i1 < 256; i1++) {
+                        for (i1 = 0; i1 < count/3; i1++) {
                             LUT.set(0, i1, 1.0f);
                             LUT.set(1, i1, (float) valueArray[i1]);
-                            LUT.set(2, i1, (float) valueArray[i1 + 256]);
-                            LUT.set(3, i1, (float) valueArray[i1 + 512]);
+                            LUT.set(2, i1, (float) valueArray[i1 + count/3]);
+                            LUT.set(3, i1, (float) valueArray[i1 + 2*count/3]);
                         }
 
                         LUT.makeIndexedLUT(null);
@@ -3297,10 +3345,22 @@ public class FileTiff extends FileBase {
                             isBW10 = true;
                             fileInfo.setDataType(ModelStorageBase.USHORT);
                             break;
+                        case 12:
+                            isBW12 = true;
+                            fileInfo.setDataType(ModelStorageBase.USHORT);
+                            break;
+                        case 14:
+                            isBW14 = true;
+                            fileInfo.setDataType(ModelStorageBase.USHORT);
+                            break;
                         case 16:
                             fileInfo.setDataType(ModelStorageBase.USHORT);
                             break;
 
+                        case 24:
+                            isBW24 = true;
+                            fileInfo.setDataType(ModelStorageBase.UINTEGER);
+                            break;
                         case 32:
                             fileInfo.setDataType(ModelStorageBase.UINTEGER);
                             break;
@@ -3355,11 +3415,30 @@ public class FileTiff extends FileBase {
                 if (sampleFormat == 1) { // default for unsigned integers
 
                     switch (bitsPerSample[0]) {
-
+                        case 2:
+                            isRGB2 = true;
+                            fileInfo.setDataType(ModelStorageBase.ARGB);
+                            break;
+                        case 4:
+                            isRGB4 = true;
+                            fileInfo.setDataType(ModelStorageBase.ARGB);
+                            break;
                         case 8:
                             fileInfo.setDataType(ModelStorageBase.ARGB);
                             break;
 
+                        case 10:
+                            isRGB10 = true;
+                            fileInfo.setDataType(ModelStorageBase.ARGB_USHORT);
+                            break;
+                        case 12:
+                            isRGB12 = true;
+                            fileInfo.setDataType(ModelStorageBase.ARGB_USHORT);
+                            break;
+                        case 14:
+                            isRGB14 = true;
+                            fileInfo.setDataType(ModelStorageBase.ARGB_USHORT);
+                            break;
                         case 16:
                             fileInfo.setDataType(ModelStorageBase.ARGB_USHORT);
                             break;
@@ -3664,7 +3743,7 @@ public class FileTiff extends FileBase {
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
                             if (isBW2) {
-                                for (j = 0, y = 0; y < yDim; y++) {
+                                for (j = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i++) {
     
                                         if (((i + progress) % mod) == 0) {
@@ -3683,7 +3762,7 @@ public class FileTiff extends FileBase {
                                 }
                             } // if (isBW2)
                             else if (isBW4) {
-                                for (j = 0, y = 0; y < yDim; y++) {
+                                for (j = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i++) {
     
                                         if (((i + progress) % mod) == 0) {
@@ -3702,7 +3781,7 @@ public class FileTiff extends FileBase {
                                 }    
                             } // else if (isBW4)
                             else if (isBW6) {
-                                for (j = 0, m = 0, y = 0; y < yDim; y++) {
+                                for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i++) {
     
                                         if (((i + progress) % mod) == 0) {
@@ -3857,7 +3936,7 @@ public class FileTiff extends FileBase {
                         mod = progressLength / 10;
                         
                         if (isBW10 && endianess) {
-                            for (j = 0, m = 0, y = 0; y < yDim; y++) {
+                            for (j = 0, m = 0; y < yDim; y++) {
                                 for (x = 0; x < xDim; x++, i++) {
 
                                     if (((i + progress) % mod) == 0) {
@@ -3908,7 +3987,91 @@ public class FileTiff extends FileBase {
                                     }
                                 } 
                             }     
-                        } // if (isBW10)
+                        } // if (isBW10 && endianess)
+                        else if (isBW12 && endianess) {
+                            for (j = 0, m = 0; y < yDim; y++) {
+                                for (x = 0; x < xDim; x++, i++) {
+
+                                    if (((i + progress) % mod) == 0) {
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                                    }
+
+                                    if (m == 0) {
+                                        buffer[i] = ((byteBuffer[j + currentIndex] & 0xff) << 4) |
+                                                    ((byteBuffer[j + currentIndex + 1] & 0xf0) >>> 4);
+                                        if (x < xDim - 1) {
+                                            m = 1;
+                                            j++;
+                                        }
+                                        else {
+                                            m = 0;
+                                            j += 2;
+                                        }
+                                    }
+                                    else if (m == 1) {
+                                        buffer[i] = ((byteBuffer[j + currentIndex] & 0x0f) << 8) |
+                                                    (byteBuffer[j + 1 + currentIndex] & 0xff);
+                                        m = 0;
+                                        j += 2;
+                                    }
+                                } 
+                            }         
+                        } // else if (isBW12 && endianess)
+                        else if (isBW14 && endianess) {
+                            for (j = 0, m = 0; y < yDim; y++) {
+                                for (x = 0; x < xDim; x++, i++) {
+
+                                    if (((i + progress) % mod) == 0) {
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                                    }
+
+                                    if (m == 0) {
+                                        buffer[i] = ((byteBuffer[j + currentIndex] & 0xff) << 6) |
+                                                    ((byteBuffer[j + currentIndex + 1] & 0xfc) >>> 2);
+                                        if (x < xDim - 1) {
+                                            m = 1;
+                                            j++;
+                                        }
+                                        else {
+                                            m = 0;
+                                            j += 2;
+                                        }
+                                    }
+                                    else if (m == 1) {
+                                        buffer[i] = ((byteBuffer[j + currentIndex] & 0x03) << 12) |
+                                                    ((byteBuffer[j + 1 + currentIndex] & 0xff) << 4) |
+                                                    ((byteBuffer[j + 2 + currentIndex] & 0xf0) >>> 4);
+                                        if (x < xDim - 1) {
+                                            m = 2;
+                                            j += 2;
+                                        }
+                                        else {
+                                            m = 0;
+                                            j += 3;
+                                        }
+                                    }
+                                    else if (m == 2) {
+                                        buffer[i] = ((byteBuffer[j + currentIndex] & 0x0f) << 10) |
+                                                    ((byteBuffer[j + 1 + currentIndex] & 0xff)  << 2) |
+                                                    ((byteBuffer[j + 2 + currentIndex] & 0xc0) >>> 6);
+                                        if (x < xDim - 1) {
+                                            m = 3;
+                                            j += 2;
+                                        }
+                                        else {
+                                            m = 0;
+                                            j += 3;
+                                        }
+                                    }
+                                    else if (m == 3) {
+                                        buffer[i] = ((byteBuffer[j + currentIndex] & 0x3f) << 8) |
+                                                    (byteBuffer[j + 1 + currentIndex]& 0xff);
+                                        m = 0;
+                                        j += 2;
+                                    }
+                                } 
+                            }        
+                        } // else if (isBW14 && endianess)
                         else {
                             for (j = 0; j < nBytes; j += 2, i++) {
     
@@ -3968,26 +4131,49 @@ public class FileTiff extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
+                        
+                        if (isBW24) {
+                            for (j = 0; j < nBytes; j += 3, i++) {
+                                
+                                if (((i + progress) % mod) == 0) {
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                                }
+    
+                                b1 = getUnsignedByte(byteBuffer, j + currentIndex);
+                                b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+                                b3 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
+    
+                                if (endianess) {
+                                    buffer[i] = (((long) b1 << 16) | ((long) b2 << 8) | (long) b3); // Big
+                                                                                                    // Endian
+                                } else {
+                                    buffer[i] = (((long) b3 << 16) | ((long) b2 << 8) | (long) b1); // Little
+                                                                                                        // Endian
+                                }
+                            }    
+                        } // if (isBW24)
+                        else {
 
-                        for (j = 0; j < nBytes; j += 4, i++) {
-
-                            if (((i + progress) % mod) == 0) {
-                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                            for (j = 0; j < nBytes; j += 4, i++) {
+    
+                                if (((i + progress) % mod) == 0) {
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                                }
+    
+                                b1 = getUnsignedByte(byteBuffer, j + currentIndex);
+                                b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+                                b3 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
+                                b4 = getUnsignedByte(byteBuffer, j + currentIndex + 3);
+    
+                                if (endianess) {
+                                    buffer[i] = (((long) b1 << 24) | ((long) b2 << 16) | ((long) b3 << 8) | (long) b4); // Big
+                                                                                                                        // Endian
+                                } else {
+                                    buffer[i] = (((long) b4 << 24) | ((long) b3 << 16) | ((long) b2 << 8) | (long) b1); // Little
+                                                                                                                        // Endian
+                                }
                             }
-
-                            b1 = getUnsignedByte(byteBuffer, j + currentIndex);
-                            b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
-                            b3 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
-                            b4 = getUnsignedByte(byteBuffer, j + currentIndex + 3);
-
-                            if (endianess) {
-                                buffer[i] = (((long) b1 << 24) | ((long) b2 << 16) | ((long) b3 << 8) | (long) b4); // Big
-                                                                                                                    // Endian
-                            } else {
-                                buffer[i] = (((long) b4 << 24) | ((long) b3 << 16) | ((long) b2 << 8) | (long) b1); // Little
-                                                                                                                    // Endian
-                            }
-                        }
+                        } // else 
 
                         break;
 
@@ -4227,6 +4413,105 @@ public class FileTiff extends FileBase {
                                 } // end of else if (planarRGB < 3*stripsPerImage)    
                             } // else planar
                         } // else if (isCMYK)
+                        else if (chunky && isRGB2) {
+                            progress = slice * buffer.length;
+                            progressLength = buffer.length * imageSlice;
+                            mod = progressLength / 10;
+                            for (j = 0, m = 0; y < yDim; y++) {
+                                for (x = 0; x < xDim; x++, i += 4) {
+
+                                    if (((i + progress) % mod) == 0) {
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                                    }
+
+                                    if (m == 0) {
+                                        buffer[i] = 255;
+                                        buffer[i + 1] = (byteBuffer[j + currentIndex] & 0xC0) >>> 6;
+                                        buffer[i + 2] = (byteBuffer[j + currentIndex] & 0x30) >>> 4;
+                                        buffer[i + 3] = (byteBuffer[j + currentIndex] & 0x0C) >>> 2;
+                                        if (x < xDim - 1) {
+                                            m = 1;
+                                        }
+                                        else {
+                                            j++;
+                                            m = 0;
+                                        }
+                                    } // if (m == 0)
+                                    else if (m == 1) {
+                                        buffer[i] = 255;
+                                        buffer[i+1] = (byteBuffer[j + currentIndex] & 0x03);
+                                        buffer[i+2] = (byteBuffer[j + 1 + currentIndex] & 0xC0) >>> 6;
+                                        buffer[i+3] = (byteBuffer[j + 1 + currentIndex] & 0x30) >>> 4;
+                                        if (x < xDim - 1) {
+                                            m = 2;
+                                            j++;
+                                        }
+                                        else {
+                                            m = 0;
+                                            j += 2;
+                                        }
+                                    } // else if (m == 1)
+                                    else if (m == 2) {
+                                        buffer[i] = 255;
+                                        buffer[i+1] = (byteBuffer[j + currentIndex] & 0x0C) >>> 2;
+                                        buffer[i+2] = (byteBuffer[j + currentIndex] & 0x03);
+                                        buffer[i+3] = (byteBuffer[j + 1 + currentIndex] & 0xC0) >>> 6;
+                                        if (x < xDim - 1) {
+                                            m = 3;
+                                            j++;
+                                        }
+                                        else {
+                                            m = 0;
+                                            j += 2;
+                                        }
+                                    } // else if (m == 2)
+                                    else if (m == 3) {
+                                        buffer[i] = 255;
+                                        buffer[i + 1] = (byteBuffer[j + currentIndex] & 0x30) >>> 4;
+                                        buffer[i + 2] = (byteBuffer[j + currentIndex] & 0x0C) >>> 2; 
+                                        buffer[i + 3] = (byteBuffer[j + currentIndex] & 0x03);
+                                        m = 0;
+                                        j++;
+                                    } // else if (m == 3)
+                                } 
+                            }
+                        } // else if (chunky && isRGB2))
+                        else if (chunky && isRGB4) {
+                            progress = slice * buffer.length;
+                            progressLength = buffer.length * imageSlice;
+                            mod = progressLength / 10;
+                            for (j = 0, m = 0; y < yDim; y++) {
+                                for (x = 0; x < xDim; x++, i += 4) {
+
+                                    if (((i + progress) % mod) == 0) {
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                                    }
+
+                                    if (m == 0) {
+                                        buffer[i] = 255;
+                                        buffer[i + 1] = (byteBuffer[j + currentIndex] & 0xf0) >>> 4;
+                                        buffer[i + 2] = (byteBuffer[j + currentIndex] & 0x0f);
+                                        buffer[i + 3] = (byteBuffer[j + 1 + currentIndex] & 0xf0) >>> 4;
+                                        if (x < xDim - 1) {
+                                            m = 1;
+                                            j++;
+                                        }
+                                        else {
+                                            m = 0;
+                                            j += 2;
+                                        }
+                                    } // if (m == 0)
+                                    else if (m == 1) {
+                                        buffer[i] = 255;
+                                        buffer[i+1] = (byteBuffer[j + currentIndex] & 0x0f);
+                                        buffer[i+2] = (byteBuffer[j + 1 + currentIndex] & 0xf0) >>> 4;
+                                        buffer[i+3] = (byteBuffer[j + 1 + currentIndex] & 0x0f);
+                                        m = 0;
+                                        j += 2;
+                                    } // else if (m == 1)
+                                } 
+                            }    
+                        } // else if (chunky && isRGB4)
                         else if ((chunky == true) && (packBit == false)) {
 
                             // if (byteBuffer == null)
@@ -4556,6 +4841,206 @@ public class FileTiff extends FileBase {
                                 } // end of else if (planarRGB < (3 * stripsPerImage)    
                             } // else planar
                         } // if (isCMYK)
+                        else if (chunky && isRGB10 && endianess) {
+                            progress = slice * buffer.length;
+                            progressLength = buffer.length * imageSlice;
+                            mod = progressLength / 10;
+                            for (j = 0, m = 0; y < yDim; y++) {
+                                for (x = 0; x < xDim; x++, i += 4) {
+
+                                    if (((i + progress) % mod) == 0) {
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                                    }
+
+                                    if (m == 0) {
+                                        buffer[i] = 65535;
+                                        buffer[i + 1] = ((byteBuffer[j + currentIndex] & 0xff) << 2) |
+                                                        ((byteBuffer[j + currentIndex + 1] & 0xc0) >>> 6);
+                                        buffer[i + 2] = ((byteBuffer[j + currentIndex + 1] & 0x3f) << 4) |
+                                                        ((byteBuffer[j + currentIndex + 2] & 0xf0) >>> 4);
+                                        buffer[i + 3] = ((byteBuffer[j + currentIndex + 2] & 0x0f) << 6) |
+                                                        ((byteBuffer[j + currentIndex + 3] & 0xfc) >>> 2);
+                                        if (x < xDim - 1) {
+                                            m = 1;
+                                            j += 3;
+                                        }
+                                        else {
+                                            m = 0;
+                                            j += 4;
+                                        }
+                                    } // if (m == 0)
+                                    else if (m == 1) {
+                                        buffer[i] = 65535;
+                                        buffer[i+1] = ((byteBuffer[j + currentIndex] & 0x03) << 8) |
+                                                      (byteBuffer[j + currentIndex + 1] & 0xff);
+                                        buffer[i+2] = ((byteBuffer[j + currentIndex + 2] & 0xff) << 2) |
+                                                      ((byteBuffer[j + currentIndex + 3] & 0xc0) >>> 6);
+                                        buffer[i+3] = ((byteBuffer[j + currentIndex + 3] & 0x3f) << 4) |
+                                                      ((byteBuffer[j + currentIndex + 4] & 0xf0) >>> 4);
+                                        if (x < xDim - 1) {
+                                            m = 2;
+                                            j += 4;
+                                        }
+                                        else {
+                                            m = 0;
+                                            j += 5;
+                                        }
+                                    } // else if (m == 1)
+                                    else if (m == 2) {
+                                        buffer[i] = 65535;
+                                        buffer[i+1] = ((byteBuffer[j + currentIndex] & 0x0f) << 6) |
+                                                      ((byteBuffer[j + currentIndex + 1] & 0xfc) >>> 2);
+                                        buffer[i+2] = ((byteBuffer[j + currentIndex+ 1] & 0x03) << 8) |
+                                                      (byteBuffer[j + currentIndex + 2] & 0xff);
+                                        buffer[i+3] = ((byteBuffer[j + currentIndex + 3] & 0xff) << 2) |
+                                                      ((byteBuffer[j + currentIndex + 4] & 0xc0) >>> 6);
+                                        if (x < xDim - 1) {
+                                            m = 3;
+                                            j += 4;
+                                        }
+                                        else {
+                                            m = 0;
+                                            j += 5;
+                                        }
+                                    } // else if (m == 2)
+                                    else if (m == 3) {
+                                        buffer[i] = 65535;
+                                        buffer[i + 1] = ((byteBuffer[j + currentIndex] & 0x3f) << 4) |
+                                                        ((byteBuffer[j + currentIndex + 1] & 0xf0) >>> 4);
+                                        buffer[i + 2] = ((byteBuffer[j + currentIndex + 1] & 0x0f) << 6) |
+                                                        ((byteBuffer[j + currentIndex + 2] & 0xfc) >>> 2); 
+                                        buffer[i + 3] = ((byteBuffer[j + currentIndex + 2] & 0x03) << 8) |
+                                                        (byteBuffer[j + currentIndex + 3] & 0xff);
+                                        m = 0;
+                                        j += 4;
+                                    } // else if (m == 3)
+                                } 
+                            }
+                        } // else if (chunky && isRGB10 && endianess))
+                        else if (chunky && isRGB12 && endianess) {
+                            progress = slice * buffer.length;
+                            progressLength = buffer.length * imageSlice;
+                            mod = progressLength / 10;
+                            for (j = 0, m = 0; y < yDim; y++) {
+                                for (x = 0; x < xDim; x++, i += 4) {
+
+                                    if (((i + progress) % mod) == 0) {
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                                    }
+
+                                    if (m == 0) {
+                                        buffer[i] = 65535;
+                                        buffer[i + 1] = ((byteBuffer[j + currentIndex] & 0xff) << 4) |
+                                                        ((byteBuffer[j + currentIndex + 1] & 0xf0) >>> 4);
+                                        buffer[i + 2] = ((byteBuffer[j + currentIndex + 1] & 0x0f) << 8) |
+                                                        (byteBuffer[j + currentIndex + 2] & 0xff);
+                                        buffer[i + 3] = ((byteBuffer[j + currentIndex + 3] & 0xff) << 4) |
+                                                        ((byteBuffer[j + currentIndex + 4] & 0xf0) >>> 4);
+                                        if (x < xDim - 1) {
+                                            m = 1;
+                                            j += 4;
+                                        }
+                                        else {
+                                            m = 0;
+                                            j += 5;
+                                        }
+                                    } // if (m == 0)
+                                    else if (m == 1) {
+                                        buffer[i] = 65535;
+                                        buffer[i+1] = ((byteBuffer[j + currentIndex] & 0x0f) << 8) |
+                                                      (byteBuffer[j + currentIndex + 1] & 0xff);
+                                        buffer[i+2] = ((byteBuffer[j + currentIndex + 2] & 0xff) << 4) |
+                                                      ((byteBuffer[j + currentIndex + 3] & 0xf0) >>> 4);
+                                        buffer[i+3] = ((byteBuffer[j + currentIndex + 3] & 0x0f) << 8) |
+                                                      (byteBuffer[j + currentIndex + 4] & 0xff);
+                                        m = 0;
+                                        j += 5;
+                                    } // else if (m == 1)
+                                } 
+                            }
+                        } // else if (chunky && isRGB12 && endianess))
+                        else if (chunky && isRGB14 && endianess) {
+                            progress = slice * buffer.length;
+                            progressLength = buffer.length * imageSlice;
+                            mod = progressLength / 10;
+                            for (j = 0, m = 0; y < yDim; y++) {
+                                for (x = 0; x < xDim; x++, i += 4) {
+
+                                    if (((i + progress) % mod) == 0) {
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                                    }
+
+                                    if (m == 0) {
+                                        buffer[i] = 65535;
+                                        buffer[i + 1] = ((byteBuffer[j + currentIndex] & 0xff) << 6) |
+                                                        ((byteBuffer[j + currentIndex + 1] & 0xfc) >>> 2);
+                                        buffer[i + 2] = ((byteBuffer[j + currentIndex + 1] & 0x03) << 12) |
+                                                        ((byteBuffer[j + currentIndex + 2] & 0xff) << 4) |
+                                                        ((byteBuffer[j + currentIndex + 3] & 0xf0) >>> 4);
+                                        buffer[i + 3] = ((byteBuffer[j + currentIndex + 3] & 0x0f) << 10) |
+                                                        ((byteBuffer[j + currentIndex + 4] & 0xff) << 2) |
+                                                        ((byteBuffer[j + currentIndex + 5] & 0xc0) >>> 6);
+                                        if (x < xDim - 1) {
+                                            m = 1;
+                                            j += 5;
+                                        }
+                                        else {
+                                            m = 0;
+                                            j += 6;
+                                        }
+                                    } // if (m == 0)
+                                    else if (m == 1) {
+                                        buffer[i] = 65535;
+                                        buffer[i+1] = ((byteBuffer[j + currentIndex] & 0x3f) << 8) |
+                                                      (byteBuffer[j + currentIndex + 1] & 0xff);
+                                        buffer[i+2] = ((byteBuffer[j + currentIndex + 2] & 0xff) << 6) |
+                                                      ((byteBuffer[j + currentIndex + 3] & 0xfc) >>> 2);
+                                        buffer[i+3] = ((byteBuffer[j + currentIndex + 3] & 0x03) << 12) |
+                                                      ((byteBuffer[j + currentIndex + 4] & 0xff) <<  4) |
+                                                      ((byteBuffer[j + currentIndex + 5] & 0xf0) >>> 4);
+                                        if (x < xDim - 1) {
+                                            m = 2;
+                                            j += 5;
+                                        }
+                                        else {
+                                            m = 0;
+                                            j += 6;
+                                        }
+                                    } // else if (m == 1)
+                                    else if (m == 2) {
+                                        buffer[i] = 65535;
+                                        buffer[i+1] = ((byteBuffer[j + currentIndex] & 0x0f) << 10) |
+                                                      ((byteBuffer[j + currentIndex + 1] & 0xff) << 2) |
+                                                      ((byteBuffer[j + currentIndex + 2] & 0xc0) >>> 6);
+                                        buffer[i+2] = ((byteBuffer[j + currentIndex+ 2] & 0xcf) << 8) |
+                                                      (byteBuffer[j + currentIndex + 3] & 0xff);
+                                        buffer[i+3] = ((byteBuffer[j + currentIndex + 4] & 0xff) << 6) |
+                                                      ((byteBuffer[j + currentIndex + 5] & 0xfc) >>> 2);
+                                        if (x < xDim - 1) {
+                                            m = 3;
+                                            j += 5;
+                                        }
+                                        else {
+                                            m = 0;
+                                            j += 6;
+                                        }
+                                    } // else if (m == 2)
+                                    else if (m == 3) {
+                                        buffer[i] = 65535;
+                                        buffer[i + 1] = ((byteBuffer[j + currentIndex] & 0x03) << 12) |
+                                                        ((byteBuffer[j + currentIndex + 1] & 0xff) << 4) |
+                                                        ((byteBuffer[j + currentIndex + 2] & 0xf0) >>> 4);
+                                        buffer[i + 2] = ((byteBuffer[j + currentIndex + 2] & 0x0f) << 10) |
+                                                        ((byteBuffer[j + currentIndex + 3] & 0xff) << 2) |
+                                                        ((byteBuffer[j + currentIndex + 4] & 0xc0) >>> 6); 
+                                        buffer[i + 3] = ((byteBuffer[j + currentIndex + 4] & 0xcf) << 8) |
+                                                        (byteBuffer[j + currentIndex + 5] & 0xff);
+                                        m = 0;
+                                        j += 6;
+                                    } // else if (m == 3)
+                                } 
+                            }
+                        } // else if (chunky && isRGB14 && endianess))
                         else if (chunky == true) {
 
                             // if (byteBuffer == null)
