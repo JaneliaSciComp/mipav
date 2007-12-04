@@ -593,7 +593,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             super(image);
             //super(image, true);
             //if we don't have an image, then we're done
- System.err.println("MUSCLE IMAGE DISPLAY");           
             this.setImageA(image);
             tempImage2 = (ModelImage)image.clone();
             this.fillIn = fillIn;
@@ -1363,7 +1362,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
             
             private JPanel initInstructionPanel() {
-            	System.err.println("initInstructionPanel()");
                 GridBagConstraints gbc = new GridBagConstraints();
                 gbc.anchor = GridBagConstraints.WEST;
                 gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -1511,7 +1509,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
             private void init(String[] mirrorArr, String[] noMirrorArr) {
                 setForeground(Color.black);
-                System.err.println("calling init()");
                 zeroStatus = new TreeMap();
                 
                 JPanel instructionPanel = initInstructionPanel();
@@ -1990,7 +1987,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    
 	    private JPanel initNonSymmetricalObjects(int index) {
 	        //VOIVector existingVois = ((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs();
-	        System.err.println("INIT NON SYM\n\n\n\n\n\n\n");
 	        JCheckBox[] noMirrorCheckArr = new JCheckBox[noMirrorArr[index].length];
 	        JButton[] noMirrorButtonArr = new JButton[noMirrorArr[index].length];
 	        ButtonGroup noMirrorGroup = new ButtonGroup();
