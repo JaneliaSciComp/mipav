@@ -1405,10 +1405,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 gbc.anchor = GridBagConstraints.WEST;
                 gbc.fill = GridBagConstraints.HORIZONTAL;
                 gbc.weightx = 1;
-                gbc.weighty = 1;
+                gbc.weighty = 0;
                 gbc.gridx = 0;
                 gbc.gridy = 0;
-                gbc.ipadx = 0;
                 
                 for(int i=0; i<mirrorArr.length * 2; i++) {
                     String symmetry1 = "", symmetry2 = "";
@@ -1468,12 +1467,21 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 GridBagConstraints gbc = new GridBagConstraints();
                 gbc.anchor = GridBagConstraints.WEST;
                 gbc.fill = GridBagConstraints.HORIZONTAL;
-                gbc.weightx = 1;
+                gbc.weightx = .5;
                 gbc.weighty = 0;
+                
                 gbc.gridx = 0;
                 gbc.gridy = 0;
-                gbc.ipadx = 0;
+                gbc.gridwidth = 1;
+                gbc.gridheight = 1;
+                
+                JPanel tempPanel = null;
+                GridBagConstraints gbc2 = new GridBagConstraints();
+              
+                gbc2.fill = GridBagConstraints.HORIZONTAL;
+                
                 for(int i=0; i<noMirrorArr.length; i++) {
+                	tempPanel = new JPanel(new GridBagLayout());
                     noMirrorCheckArr[i] = new JCheckBox();
                     noMirrorCheckArr[i].setEnabled(false);
                     noMirrorCheckArr[i].setHorizontalAlignment(SwingConstants.RIGHT);
@@ -1483,14 +1491,26 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                     noMirrorButtonArr[i].setActionCommand(MuscleImageDisplayPrompt.CHECK_VOI);
                     noMirrorButtonArr[i].addActionListener(parentFrame);
                     noMirrorGroup.add(noMirrorButtonArr[i]);
+                  
+                    gbc2.gridx = 0;
+                    gbc2.weightx = 0;
+                    tempPanel.add(noMirrorCheckArr[i], gbc2);
+                    
+                    gbc2.weightx = 1;
+                    gbc2.gridx++;
+                    tempPanel.add(noMirrorButtonArr[i], gbc2);
+                    
                     gbc.gridx = 0;
-                    gbc.weightx = 0;
-                    
-                    
-                    noMirrorPanel.add(noMirrorCheckArr[i], gbc);
+                    noMirrorPanel.add(tempPanel, gbc);
+                  
+                    gbc.fill = GridBagConstraints.BOTH;
                     gbc.gridx++;
-                    gbc.weightx = 1;
-                    noMirrorPanel.add(noMirrorButtonArr[i], gbc);
+                    noMirrorPanel.add(Box.createGlue(), gbc);
+                    
+                  //  noMirrorPanel.add(noMirrorCheckArr[i], gbc);
+                  //  gbc.gridx++;
+                  //  gbc.weightx = 1;
+                 //   noMirrorPanel.add(noMirrorButtonArr[i], gbc);
                     
                     
                     gbc.gridy++;
@@ -1519,23 +1539,30 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 this.setLayout(new GridBagLayout());
                 GridBagConstraints gbc = new GridBagConstraints();
                 
-                gbc.fill = GridBagConstraints.BOTH;
-                gbc.anchor = GridBagConstraints.NORTH;
+                gbc.fill = GridBagConstraints.HORIZONTAL;
+                gbc.anchor = GridBagConstraints.NORTHWEST;
                 
                 gbc.weightx = 1;
-                gbc.weighty = 1;
+                gbc.weighty = 0;
                 gbc.gridx = 0;
                 gbc.gridy = 0;
                 
                 add(instructionPanel, gbc);
                 
-              //  gbc.fill = GridBagConstraints.BOTH;
+                gbc.fill = GridBagConstraints.BOTH;
+                gbc.weighty = 1;
                 gbc.gridy++;
                 add(mirrorPanel, gbc);
         
                 gbc.gridy++;
                 add(noMirrorPanel, gbc);
         
+                gbc.gridy++;
+                gbc.fill = GridBagConstraints.BOTH;
+                add(new JLabel(""), gbc);
+                
+                gbc.fill = GridBagConstraints.NONE;
+                gbc.anchor = GridBagConstraints.SOUTH;
                 gbc.gridy++;
                 add(buildButtons(), gbc);               
                 
