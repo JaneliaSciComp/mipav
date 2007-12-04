@@ -593,7 +593,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             super(image);
             //super(image, true);
             //if we don't have an image, then we're done
-            
+ System.err.println("MUSCLE IMAGE DISPLAY");           
             this.setImageA(image);
             tempImage2 = (ModelImage)image.clone();
             this.fillIn = fillIn;
@@ -1363,13 +1363,16 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
             
             private JPanel initInstructionPanel() {
+            	System.err.println("initInstructionPanel()");
                 GridBagConstraints gbc = new GridBagConstraints();
                 gbc.anchor = GridBagConstraints.WEST;
                 gbc.fill = GridBagConstraints.HORIZONTAL;
+                gbc.weightx = 1;
+                gbc.weighty = 1;
                 gbc.gridx = 0;
                 gbc.gridy = 0;
                 
-                JPanel instructionPanel = new JPanel(new GridLayout(4, 1));
+                JPanel instructionPanel = new JPanel(new GridBagLayout());
                 instructionPanel.setForeground(Color.black);
                 instructionPanel.setBorder(MipavUtil.buildTitledBorder("Instructions"));
                 instructionLabel = new JLabel[4];
@@ -1396,13 +1399,15 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 mirrorCheckArr = new JCheckBox[mirrorArr.length * 2];
                 mirrorButtonArr = new JButton[mirrorArr.length * 2];
                 ButtonGroup mirrorGroup = new ButtonGroup();
-                JPanel mirrorPanel = new JPanel(new GridLayout(mirrorArr.length, 4));
+                JPanel mirrorPanel = new JPanel(new GridBagLayout());
                 mirrorPanel.setForeground(Color.black);
                 mirrorPanel.setBorder(MipavUtil.buildTitledBorder("Select an object"));
                 
                 GridBagConstraints gbc = new GridBagConstraints();
                 gbc.anchor = GridBagConstraints.WEST;
                 gbc.fill = GridBagConstraints.HORIZONTAL;
+                gbc.weightx = 1;
+                gbc.weighty = 1;
                 gbc.gridx = 0;
                 gbc.gridy = 0;
                 gbc.ipadx = 0;
@@ -1434,7 +1439,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                         }
                     }
                     
-                    if(i != 0 && i % 4 == 0) {
+                    if(i != 0 && i % 2 == 0) {
                         gbc.gridy++;
                         gbc.gridx = 0;
                     }
@@ -1459,12 +1464,14 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 noMirrorCheckArr = new JCheckBox[noMirrorArr.length];
                 noMirrorButtonArr = new JButton[noMirrorArr.length];
                 ButtonGroup noMirrorGroup = new ButtonGroup();
-                JPanel noMirrorPanel = new JPanel(new GridLayout(noMirrorButtonArr.length/2 + 1, 2));
+                JPanel noMirrorPanel = new JPanel(new GridBagLayout());
                 noMirrorPanel.setForeground(Color.black);
                 noMirrorPanel.setBorder(MipavUtil.buildTitledBorder("Select an object"));
                 GridBagConstraints gbc = new GridBagConstraints();
                 gbc.anchor = GridBagConstraints.WEST;
                 gbc.fill = GridBagConstraints.HORIZONTAL;
+                gbc.weightx = 1;
+                gbc.weighty = 0;
                 gbc.gridx = 0;
                 gbc.gridy = 0;
                 gbc.ipadx = 0;
@@ -1478,9 +1485,17 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                     noMirrorButtonArr[i].setActionCommand(MuscleImageDisplayPrompt.CHECK_VOI);
                     noMirrorButtonArr[i].addActionListener(parentFrame);
                     noMirrorGroup.add(noMirrorButtonArr[i]);
-                    noMirrorPanel.add(noMirrorCheckArr[i]);
-                    noMirrorPanel.add(noMirrorButtonArr[i]);
+                    gbc.gridx = 0;
+                    gbc.weightx = 0;
                     
+                    
+                    noMirrorPanel.add(noMirrorCheckArr[i], gbc);
+                    gbc.gridx++;
+                    gbc.weightx = 1;
+                    noMirrorPanel.add(noMirrorButtonArr[i], gbc);
+                    
+                    
+                    gbc.gridy++;
                     for(int j=0; j<existingVois.size(); j++) {
                         if(((VOI)existingVois.get(j)).getName().equals(noMirrorButtonArr[i].getText())) {
                             noMirrorCheckArr[i].setSelected(true);
@@ -1496,6 +1511,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
             private void init(String[] mirrorArr, String[] noMirrorArr) {
                 setForeground(Color.black);
+                System.err.println("calling init()");
                 zeroStatus = new TreeMap();
                 
                 JPanel instructionPanel = initInstructionPanel();
@@ -1503,19 +1519,28 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 JPanel mirrorPanel = initSymmetricalObjects();
                 
                 JPanel noMirrorPanel = initNonSymmetricalObjects();
+                this.setLayout(new GridBagLayout());
+                GridBagConstraints gbc = new GridBagConstraints();
                 
-                JPanel mainPanel = new JPanel();
-                mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+                gbc.fill = GridBagConstraints.BOTH;
+                gbc.anchor = GridBagConstraints.NORTH;
                 
-                mainPanel.add(instructionPanel);
+                gbc.weightx = 1;
+                gbc.weighty = 1;
+                gbc.gridx = 0;
+                gbc.gridy = 0;
                 
-                mainPanel.add(mirrorPanel);
+                add(instructionPanel, gbc);
+                
+              //  gbc.fill = GridBagConstraints.BOTH;
+                gbc.gridy++;
+                add(mirrorPanel, gbc);
         
-                mainPanel.add(noMirrorPanel);
+                gbc.gridy++;
+                add(noMirrorPanel, gbc);
         
-                mainPanel.add(buildButtons());
-                
-                add(mainPanel, BorderLayout.CENTER);
+                gbc.gridy++;
+                add(buildButtons(), gbc);               
                 
             }
             
@@ -1879,10 +1904,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		
 		private JPanel initInstructionPanel() {
 	        GridBagConstraints gbc = new GridBagConstraints();
-	        gbc.anchor = GridBagConstraints.WEST;
+	        gbc.anchor = GridBagConstraints.NORTHWEST;
 	        gbc.fill = GridBagConstraints.HORIZONTAL;
 	        gbc.gridx = 0;
 	        gbc.gridy = 0;
+	        gbc.weightx = 1;
+	        gbc.weighty = 0;
 	        
 	        JPanel instructionPanel = new JPanel(new GridLayout(4, 1));
 	        instructionPanel.setForeground(Color.black);
@@ -1963,7 +1990,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    
 	    private JPanel initNonSymmetricalObjects(int index) {
 	        //VOIVector existingVois = ((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs();
-	        
+	        System.err.println("INIT NON SYM\n\n\n\n\n\n\n");
 	        JCheckBox[] noMirrorCheckArr = new JCheckBox[noMirrorArr[index].length];
 	        JButton[] noMirrorButtonArr = new JButton[noMirrorArr[index].length];
 	        ButtonGroup noMirrorGroup = new ButtonGroup();
@@ -1986,8 +2013,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	            noMirrorButtonArr[i].setActionCommand(MuscleImageDisplayPrompt.CHECK_VOI);
 	            noMirrorButtonArr[i].addActionListener(parentFrame);
 	            noMirrorGroup.add(noMirrorButtonArr[i]);
-	            noMirrorPanel.add(noMirrorCheckArr[i]);
-	            noMirrorPanel.add(noMirrorButtonArr[i]);
+	            noMirrorPanel.add(noMirrorCheckArr[i], gbc);
+	            noMirrorPanel.add(noMirrorButtonArr[i], gbc);
 	            
 	            //for(int j=0; j<existingVois.size(); j++) {
 	            //    if(((VOI)existingVois.get(j)).getName().equals(noMirrorButtonArr[i].getText())) {
