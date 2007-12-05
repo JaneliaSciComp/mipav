@@ -108,6 +108,7 @@ public class BufferUInt extends BufferBase {
      * @return  int value as a double
      */
     protected final double getDouble(int position) {
+        
         return (double) (dataArray[position] & 0xffffffffL);
     }
 
@@ -267,9 +268,16 @@ public class BufferUInt extends BufferBase {
      * @param  value     the new data value to be placed in the data array
      */
     protected final void setFloat(int position, float value) {
-
+        // For value > Integer.MAX_VALUE == 2,147,483,647, 
+        // dataArray[position] = (int) (value + 0.5f);
+        // puts 2,147,483,647 in dataArray[position]
+        // The maximum unsigned value = 4,294,967,295 is the same as the 2's complement represenation of -1
+        // 4,294,967,294 is the same as the 2's complement representation of -2
+        // so subtract 4,294,967,296 to go from unsigned to 2's complement.
         if (value < 0) {
             dataArray[position] = (int) (value - 0.5f);
+        } else if ((value > Integer.MAX_VALUE) && (value <= 4.294967295E9)) {
+            dataArray[position] = (int) (value - 4.2949672965E9);
         } else {
             dataArray[position] = (int) (value + 0.5f);
         }
