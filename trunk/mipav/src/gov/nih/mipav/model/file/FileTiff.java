@@ -3643,17 +3643,85 @@ public class FileTiff extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-
-                        for (j = 0; j < 8* totalLength; j++, i++) {
-
-                            if (((i + progress) % mod) == 0) {
-                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                        for (j = 0, m = 0; y < yDim; y++) {
+                            for (x = 0; x < xDim; x++, i++) {
+                              if (m == 0) {
+                                  buffer[i] = (byteBuffer[j + currentIndex] & 0x80) >>> 7;
+                                  if (x < xDim - 1) {
+                                      m = 1;
+                                  }
+                                  else {
+                                      m = 0;
+                                      j++;
+                                  }
+                              } // if (m == 0)
+                              else if (m == 1) {
+                                  buffer[i] = (byteBuffer[j + currentIndex] & 0x40) >>> 6;
+                                  if (x < xDim - 1) {
+                                      m = 2;
+                                  }
+                                  else {
+                                      m = 0;
+                                      j++;
+                                  }
+                              } // else if (m == 1)
+                              else if (m == 2) {
+                                  buffer[i] = (byteBuffer[j + currentIndex] & 0x20) >>> 5;
+                                  if (x < xDim - 1) {
+                                      m = 3;
+                                  }
+                                  else {
+                                      m = 0;
+                                      j++;
+                                  }
+                              } // else if (m == 2)
+                              else if (m == 3) {
+                                  buffer[i] = (byteBuffer[j + currentIndex] & 0x10) >>> 4;
+                                  if (x < xDim - 1) {
+                                      m = 4;
+                                  }
+                                  else {
+                                      m = 0;
+                                      j++;
+                                  }
+                              } // else if (m == 3)
+                              else if (m == 4) {
+                                  buffer[i] = (byteBuffer[j + currentIndex] & 0x08) >>> 3;
+                                  if (x < xDim - 1) {
+                                      m = 5;
+                                  }
+                                  else {
+                                      m = 0;
+                                      j++;
+                                  }
+                              } // else if (m == 4)
+                              else if (m == 5) {
+                                  buffer[i] = (byteBuffer[j + currentIndex] & 0x04) >>> 2;
+                                  if (x < xDim - 1) {
+                                      m = 6;
+                                  }
+                                  else {
+                                      m = 0;
+                                      j++;
+                                  }
+                              } // else if (m == 5)
+                              else if (m == 6) {
+                                  buffer[i] = (byteBuffer[j + currentIndex] & 0x02) >>> 1;
+                                  if (x < xDim - 1) {
+                                      m = 7;
+                                  }
+                                  else {
+                                      m = 0;
+                                      j++;
+                                  }
+                              } // else if (m == 6)
+                              else { // m == 7
+                                  buffer[i] = (byteBuffer[j + currentIndex] & 0x01);
+                                  m = 0;
+                                  j++;
+                              } // else m == 7
                             }
-
-                            shift = (j + currentIndex) % 8;
-                            buffer[i] = (byteBuffer[(j + currentIndex) >> 3] & (1 << shift)) >>> shift;
                         }
-
                         break;
 
                     case ModelStorageBase.BYTE:
@@ -3743,40 +3811,74 @@ public class FileTiff extends FileBase {
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
                             if (isBW2) {
-                                for (j = 0; y < yDim; y++) {
+                                for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i++) {
     
                                         if (((i + progress) % mod) == 0) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                         }
-    
-                                        shift = 6 - 2*((j + currentIndex) % 4);
-                                        buffer[i] = (byteBuffer[(j + currentIndex) >> 2] & (3 << shift)) >>> shift;
-                                        if ((x < (xDim - 1)) || ((xDim % 4) == 0)) {
+                                        
+                                        if (m == 0) {
+                                            buffer[i] = (byteBuffer[j + currentIndex] & 0xc0) >>> 6;
+                                            if (x < xDim - 1) {
+                                                m = 1;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j++;
+                                            }
+                                        } // if (m == 0)
+                                        else if (m == 1) {
+                                            buffer[i] = (byteBuffer[j + currentIndex] & 0x30) >>> 4;
+                                            if (x < xDim - 1) {
+                                                m = 2;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j++;
+                                            }
+                                        } // else if (m == 1)
+                                        else if (m == 2) {
+                                            buffer[i] = (byteBuffer[j + currentIndex] & 0x0c) >>> 2;
+                                            if (x < xDim - 1) {
+                                                m = 3;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j++;
+                                            }
+                                        } // else if (m == 2)
+                                        else { // m == 3
+                                            buffer[i] = (byteBuffer[j + currentIndex] & 0x03);
+                                            m = 0;
                                             j++;
-                                        }
-                                        else {
-                                            j += (5 - xDim % 4);
-                                        }
+                                        } // else m == 3
                                     } 
                                 }
                             } // if (isBW2)
                             else if (isBW4) {
-                                for (j = 0; y < yDim; y++) {
+                                for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i++) {
     
                                         if (((i + progress) % mod) == 0) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                         }
-    
-                                        shift = 4 - 4*((j + currentIndex) % 2);
-                                        buffer[i] = (byteBuffer[(j + currentIndex) >> 1] & (15 << shift)) >>> shift;
-                                        if ((x < (xDim - 1)) || ((xDim % 2) == 0)) {
+                                        
+                                        if (m == 0) {
+                                            buffer[i] = (byteBuffer[j + currentIndex] & 0xf0) >>> 4;
+                                            if (x < xDim - 1) {
+                                                m = 1;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j++;
+                                            }
+                                        } // if (m == 0)
+                                        else { // m == 1
+                                            buffer[i] = (byteBuffer[j + currentIndex] & 0x0f);
+                                            m = 0;
                                             j++;
-                                        }
-                                        else {
-                                            j += 2;
-                                        }
+                                        } // else m == 1
                                     } 
                                 }    
                             } // else if (isBW4)
@@ -5012,7 +5114,7 @@ public class FileTiff extends FileBase {
                                         buffer[i+1] = ((byteBuffer[j + currentIndex] & 0x0f) << 10) |
                                                       ((byteBuffer[j + currentIndex + 1] & 0xff) << 2) |
                                                       ((byteBuffer[j + currentIndex + 2] & 0xc0) >>> 6);
-                                        buffer[i+2] = ((byteBuffer[j + currentIndex+ 2] & 0xcf) << 8) |
+                                        buffer[i+2] = ((byteBuffer[j + currentIndex+ 2] & 0x3f) << 8) |
                                                       (byteBuffer[j + currentIndex + 3] & 0xff);
                                         buffer[i+3] = ((byteBuffer[j + currentIndex + 4] & 0xff) << 6) |
                                                       ((byteBuffer[j + currentIndex + 5] & 0xfc) >>> 2);
@@ -5033,7 +5135,7 @@ public class FileTiff extends FileBase {
                                         buffer[i + 2] = ((byteBuffer[j + currentIndex + 2] & 0x0f) << 10) |
                                                         ((byteBuffer[j + currentIndex + 3] & 0xff) << 2) |
                                                         ((byteBuffer[j + currentIndex + 4] & 0xc0) >>> 6); 
-                                        buffer[i + 3] = ((byteBuffer[j + currentIndex + 4] & 0xcf) << 8) |
+                                        buffer[i + 3] = ((byteBuffer[j + currentIndex + 4] & 0x3f) << 8) |
                                                         (byteBuffer[j + currentIndex + 5] & 0xff);
                                         m = 0;
                                         j += 6;
