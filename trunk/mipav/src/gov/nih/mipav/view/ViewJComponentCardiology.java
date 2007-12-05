@@ -733,7 +733,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                     imageActive.registerVOI(newPtVOI);
                     newPtVOI.setActive(true);
 
-                    updateVOIColor(newPtVOI.getColor(), newPtVOI.getUID());
+                    getVOIHandler().updateVOIColor(newPtVOI.getColor(), newPtVOI.getUID());
                     ((VOIPoint) (VOIs.VOIAt(voiHandler.getVOI_ID()).getCurves()[slice].elementAt(0))).setActive(true);
 
                     imageActive.notifyImageDisplayListeners();
@@ -1161,7 +1161,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                             // System.err.println("Got a shift down");
                             // if true set all points in VOI active - move all points
                             VOIs.VOIAt(i).setAllActive(true);
-                            updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
+                            getVOIHandler().updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                             voiHandler.setVOI_ID(VOIs.VOIAt(i).getID());
 
                             // and we are done with this VOI.
@@ -1170,7 +1170,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                         } else {
                             allActive = false;
                             VOIs.VOIAt(i).setActive(true);
-                            updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
+                            getVOIHandler().updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                             ((VOIPoint) (selectedCurve)).setActive(true);
                             voiHandler.setVOI_ID(VOIs.VOIAt(i).getID());
                         }
@@ -1183,7 +1183,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
                         allActive = false;
                         VOIs.VOIAt(i).setActive(true);
-                        updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
+                        getVOIHandler().updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                         ((VOIText) (selectedCurve)).setActive(true);
                         voiHandler.setVOI_ID(VOIs.VOIAt(i).getID());
 
@@ -1202,7 +1202,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                             // select all the curves in the (contour) grouping.
                             allActive = true;
                             VOIs.VOIAt(i).setAllActive(true);
-                            updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
+                            getVOIHandler().updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                             voiHandler.setVOI_ID(VOIs.VOIAt(i).getID());
 
                             // and we are done with this VOI. Skip the rest of the curves
@@ -1217,7 +1217,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                             }
 
                             VOIs.VOIAt(i).setActive(true); // set the current active // move single contour
-                            updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
+                            getVOIHandler().updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                             selectedCurve.setActive(true); // set its courve to active (for display)
                             voiHandler.setVOI_ID(VOIs.VOIAt(i).getID());
                         }
