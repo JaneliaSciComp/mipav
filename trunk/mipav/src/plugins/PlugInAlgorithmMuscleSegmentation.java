@@ -3,21 +3,22 @@ import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileVOI;
-
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
+
+import com.lowagie.text.*;
+import com.lowagie.text.Font;
+import com.lowagie.text.Image;
+import com.lowagie.text.pdf.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-
 
 /**
  * Creates an interface for working with Iceland CT images.
@@ -52,6 +53,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         super(resultImage, srcImg);
         this.imageType = imageType;
         this.parentFrame = parentFrame;
+        writeToPDF();
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -2176,5 +2178,172 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		
 	}
     
+	private void writeToPDF() {
+		JFileChooser chooser = new JFileChooser();
+		chooser.setDialogTitle("Save to PDF");
+		chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "pdf" }));
+		
+		File file = null;
+		int returnVal = chooser.showSaveDialog(null);
+
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+           file = chooser.getSelectedFile();
+        } else {
+        	return;
+        }
+		
+		try {
+			Document pdfDocument = new Document();
+			PdfWriter writer = PdfWriter.getInstance(pdfDocument, new FileOutputStream(file));
+			pdfDocument.addTitle("Thigh Tissue Analysis Report");
+			pdfDocument.addCreator("MIPAV: Muscle Segmentation");
+			pdfDocument.open();
+			
+			
+			Paragraph p = new Paragraph();
+			
+			//add the Title and subtitle
+			p.setAlignment(Element.ALIGN_CENTER);
+			p.add(new Chunk("MIPAV: Segmentation", new Font(Font.TIMES_ROMAN, 18)));
+			p.add(new Paragraph());
+			p.add(new Chunk("Thigh Tissue Analysis Report", new Font(Font.TIMES_ROMAN, 12)));
+			pdfDocument.add(new Paragraph(p));
+			pdfDocument.add(new Paragraph(new Chunk("")));
+          
+			
+			Font fontNormal = FontFactory.getFont("Helvetica", 10, Font.NORMAL, Color.DARK_GRAY);
+			Font fontBold = FontFactory.getFont("Helvetica", 10, Font.BOLD, Color.BLACK);
+
+			MultiColumnText mct = new MultiColumnText(20);
+			mct.setAlignment(Element.ALIGN_LEFT);
+			mct.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
+			mct.addElement(new Paragraph("Analyst:", fontBold));
+			mct.addElement(new Paragraph("akoyama", fontNormal));
+			mct.addElement(new Paragraph("Analysis Date:", fontBold));
+			mct.addElement(new Paragraph("05/06/2007", fontNormal));
+			pdfDocument.add(mct);
+			
+			MultiColumnText mct2 = new MultiColumnText(20);
+			mct2.setAlignment(Element.ALIGN_LEFT);
+			mct2.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
+			mct2.addElement(new Paragraph("Name:", fontBold));
+			mct2.addElement(new Paragraph("1000140811", fontNormal));
+			mct2.addElement(new Paragraph("Center:", fontBold));
+			mct2.addElement(new Paragraph("Hjartavernd", fontNormal));
+			pdfDocument.add(mct2);
+			
+			MultiColumnText mct3 = new MultiColumnText(20);
+			mct3.setAlignment(Element.ALIGN_LEFT);
+			mct3.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
+			mct3.addElement(new Paragraph("ID:", fontBold));
+			mct3.addElement(new Paragraph("1000140811", fontNormal));
+			mct3.addElement(new Paragraph("Scan Date:", fontBold));
+			mct3.addElement(new Paragraph("05/09/2003", fontNormal));
+			pdfDocument.add(mct3);
+			
+			//add the scanning parameters table
+			PdfPTable spTable = new PdfPTable(2);
+			PdfPCell cell = new PdfPCell(new Paragraph("Scanning Parameters"));
+			cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+			cell.setColspan(2);
+			spTable.addCell(cell);
+			spTable.addCell("kVp:");
+			spTable.addCell("120");
+			spTable.addCell("mA:");
+			spTable.addCell("213");
+			spTable.addCell("Pixel Size:");
+			spTable.addCell("0.976562");
+			spTable.addCell("Slice Thickness: (mm)");
+			spTable.addCell("10.00");
+			spTable.addCell("Table Height: (cm)");
+			spTable.addCell("143.00");
+			
+			Paragraph pTable = new Paragraph();
+			pTable.add(new Paragraph());
+			pTable.setAlignment(Element.ALIGN_CENTER);
+			pTable.add(spTable);
+			pdfDocument.add(new Paragraph(new Chunk("")));
+			pdfDocument.add(new Paragraph(pTable));
+			
+			pdfDocument.add(new Paragraph(new Chunk("")));
+			
+			PdfPTable aTable = new PdfPTable(7);
+			
+			// add Column Titles (in bold)
+			aTable.addCell(new PdfPCell(new Paragraph("Area (cm^2)", new Font(Font.TIMES_ROMAN, 13, Font.BOLD))));
+			aTable.addCell(new PdfPCell(new Paragraph("Total Area", new Font(Font.TIMES_ROMAN, 13, Font.BOLD))));
+			aTable.addCell(new PdfPCell(new Paragraph("Fat Area", new Font(Font.TIMES_ROMAN, 13, Font.BOLD))));
+			aTable.addCell(new PdfPCell(new Paragraph("Lean Area", new Font(Font.TIMES_ROMAN, 13, Font.BOLD))));
+			aTable.addCell(new PdfPCell(new Paragraph("Fat HU", new Font(Font.TIMES_ROMAN, 13, Font.BOLD))));
+			aTable.addCell(new PdfPCell(new Paragraph("Lean HU", new Font(Font.TIMES_ROMAN, 13, Font.BOLD))));
+			aTable.addCell(new PdfPCell(new Paragraph("Total HU", new Font(Font.TIMES_ROMAN, 13, Font.BOLD))));
+			
+			//start adding columns
+			int numRows = 5;
+			for (int i = 0; i < numRows; i++) {
+				//name of area
+				aTable.addCell("L. Thigh Total");
+				
+				//total area
+				aTable.addCell("104.78");
+				
+				//fat area
+				aTable.addCell("6.11");
+			
+				//lean area
+				aTable.addCell("98.58");
+				
+				//fat HU
+				aTable.addCell("-66.13");
+				
+				//lean HU
+				aTable.addCell("41.90");
+				
+				//total HU
+				aTable.addCell("35.53");
+			}
+			
+			Paragraph aPar = new Paragraph();
+			aPar.setAlignment(Element.ALIGN_CENTER);
+			aPar.add(new Paragraph());
+			aPar.add(aTable);
+			pdfDocument.add(new Paragraph());
+			pdfDocument.add(aPar);
+		
+			
+			PdfPTable imageTable = new PdfPTable(2);
+			imageTable.addCell("Edge Image");
+			imageTable.addCell("QA Image");
+			
+			chooser = new JFileChooser();
+			chooser.setDialogTitle("Open image 1");
+			returnVal = chooser.showOpenDialog(null);
+
+	        while (returnVal != JFileChooser.APPROVE_OPTION) {
+	        	returnVal = chooser.showOpenDialog(null);
+	        } 
+			
+			imageTable.addCell(Image.getInstance(chooser.getSelectedFile().getPath()));
+			
+			chooser.setDialogTitle("Open image 1");
+			returnVal = chooser.showOpenDialog(null);
+
+	        while (returnVal != JFileChooser.APPROVE_OPTION) {
+	        	returnVal = chooser.showOpenDialog(null);
+	        } 
+			
+	        imageTable.addCell(Image.getInstance(chooser.getSelectedFile().getPath()));
+	        
+	        Paragraph pImage = new Paragraph();
+	        pImage.add(new Paragraph());
+	        pImage.add(imageTable);
+	        
+			pdfDocument.add(pImage);
+			pdfDocument.close();
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
     
 }
