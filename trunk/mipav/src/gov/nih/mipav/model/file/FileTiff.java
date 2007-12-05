@@ -4578,6 +4578,187 @@ public class FileTiff extends FileBase {
                                 } 
                             }
                         } // else if (chunky && isRGB2))
+                        else if ((!chunky) && isRGB2) {
+                            if (planarRGB < stripsPerImage) {
+
+                                // if (byteBuffer == null)
+                                // byteBuffer = new byte[buffer.length];
+                                // raFile.read(byteBuffer, 0, nBytes);
+                                progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
+
+                                for (j = 0, m = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++, i += 4) {
+    
+                                        if ((((i / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
+                                                                                    progressLength * 100));
+                                        }
+                                        
+                                        buffer[i] = 255;
+                                        if (m == 0) {
+                                            buffer[i+1] = (byteBuffer[j + currentIndex] & 0xc0) >>> 6;
+                                            if (x < xDim - 1) {
+                                                m = 1;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j++;
+                                            }
+                                        } // if (m == 0)
+                                        else if (m == 1) {
+                                            buffer[i+1] = (byteBuffer[j + currentIndex] & 0x30) >>> 4;
+                                            if (x < xDim - 1) {
+                                                m = 2;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j++;
+                                            }
+                                        } // else if (m == 1)
+                                        else if (m == 2) {
+                                            buffer[i+1] = (byteBuffer[j + currentIndex] & 0x0c) >>> 2;
+                                            if (x < xDim - 1) {
+                                                m = 3;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j++;
+                                            }
+                                        } // else if (m == 2)
+                                        else { // m == 3
+                                            buffer[i+1] = (byteBuffer[j + currentIndex] & 0x03);
+                                            m = 0;
+                                            j++;
+                                        } // else m == 3
+                                    } 
+                                }
+
+                                planarRGB++;
+
+                                if (planarRGB == stripsPerImage) {
+                                    i = 0;
+                                    y = 0;
+                                }
+                            } // end of if (planarRGB < stripsPerImage)
+                            else if (planarRGB < (2 * stripsPerImage)) {
+
+                                // raFile.read(byteBuffer, 0, nBytes);
+                                progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
+
+                                for (j = 0, m = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++, i += 4) {
+    
+                                        if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
+                                                                                         progress) / progressLength * 100));
+                                        }
+                                        
+                                        if (m == 0) {
+                                            buffer[i+2] = (byteBuffer[j + currentIndex] & 0xc0) >>> 6;
+                                            if (x < xDim - 1) {
+                                                m = 1;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j++;
+                                            }
+                                        } // if (m == 0)
+                                        else if (m == 1) {
+                                            buffer[i+2] = (byteBuffer[j + currentIndex] & 0x30) >>> 4;
+                                            if (x < xDim - 1) {
+                                                m = 2;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j++;
+                                            }
+                                        } // else if (m == 1)
+                                        else if (m == 2) {
+                                            buffer[i+2] = (byteBuffer[j + currentIndex] & 0x0c) >>> 2;
+                                            if (x < xDim - 1) {
+                                                m = 3;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j++;
+                                            }
+                                        } // else if (m == 2)
+                                        else { // m == 3
+                                            buffer[i+2] = (byteBuffer[j + currentIndex] & 0x03);
+                                            m = 0;
+                                            j++;
+                                        } // else m == 3
+                                    } 
+                                }
+
+                                planarRGB++;
+
+                                if (planarRGB == (2 * stripsPerImage)) {
+                                    i = 0;
+                                    y = 0;
+                                }
+                            } // end of else if (planarRGB < 2*stripsPerImage)
+                            else { // planarRGB >= 2*stripsPerImage
+
+                                // raFile.read(byteBuffer, 0, nBytes);
+                                progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
+                                
+                                for (j = 0, m = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++, i += 4) {
+    
+                                        if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) +
+                                                                                         (2 * buffer.length / 3) +
+                                                                                         progress) / progressLength * 100));
+                                        }
+                                        
+                                        if (m == 0) {
+                                            buffer[i+3] = (byteBuffer[j + currentIndex] & 0xc0) >>> 6;
+                                            if (x < xDim - 1) {
+                                                m = 1;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j++;
+                                            }
+                                        } // if (m == 0)
+                                        else if (m == 1) {
+                                            buffer[i+3] = (byteBuffer[j + currentIndex] & 0x30) >>> 4;
+                                            if (x < xDim - 1) {
+                                                m = 2;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j++;
+                                            }
+                                        } // else if (m == 1)
+                                        else if (m == 2) {
+                                            buffer[i+3] = (byteBuffer[j + currentIndex] & 0x0c) >>> 2;
+                                            if (x < xDim - 1) {
+                                                m = 3;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j++;
+                                            }
+                                        } // else if (m == 2)
+                                        else { // m == 3
+                                            buffer[i+3] = (byteBuffer[j + currentIndex] & 0x03);
+                                            m = 0;
+                                            j++;
+                                        } // else m == 3
+                                    } 
+                                }
+
+                                planarRGB++;
+                            } // end of else for planarRGB >= 2*StripsPerImage    
+                        } // else if ((!chunky) && isRGB2)
                         else if (chunky && isRGB4) {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
@@ -4614,6 +4795,127 @@ public class FileTiff extends FileBase {
                                 } 
                             }    
                         } // else if (chunky && isRGB4)
+                        else if ((!chunky) && isRGB4) {
+                            if (planarRGB < stripsPerImage) {
+
+                                // if (byteBuffer == null)
+                                // byteBuffer = new byte[buffer.length];
+                                // raFile.read(byteBuffer, 0, nBytes);
+                                progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
+                                
+                                for (j = 0, m = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++, i += 4) {
+    
+                                        if ((((i / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
+                                                                                    progressLength * 100));
+                                        }
+                                        
+                                        buffer[i] = 255;
+                                        if (m == 0) {
+                                            buffer[i+1] = (byteBuffer[j + currentIndex] & 0xf0) >>> 4;
+                                            if (x < xDim - 1) {
+                                                m = 1;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j++;
+                                            }
+                                        } // if (m == 0)
+                                        else { // m == 1
+                                            buffer[i+1] = (byteBuffer[j + currentIndex] & 0x0f);
+                                            m = 0;
+                                            j++;
+                                        } // else m == 1
+                                    } 
+                                }    
+
+                                planarRGB++;
+
+                                if (planarRGB == stripsPerImage) {
+                                    i = 0;
+                                    y = 0;
+                                }
+                            } // end of if (planarRGB < stripsPerImage)
+                            else if (planarRGB < (2 * stripsPerImage)) {
+
+                                // raFile.read(byteBuffer, 0, nBytes);
+                                progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
+
+                                for (j = 0, m = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++, i += 4) {
+    
+                                        if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
+                                                                                         progress) / progressLength * 100));
+                                        }
+                                        
+                                        if (m == 0) {
+                                            buffer[i+2] = (byteBuffer[j + currentIndex] & 0xf0) >>> 4;
+                                            if (x < xDim - 1) {
+                                                m = 1;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j++;
+                                            }
+                                        } // if (m == 0)
+                                        else { // m == 1
+                                            buffer[i+2] = (byteBuffer[j + currentIndex] & 0x0f);
+                                            m = 0;
+                                            j++;
+                                        } // else m == 1
+                                    } 
+                                }    
+                                
+                                planarRGB++;
+
+                                if (planarRGB == (2 * stripsPerImage)) {
+                                    i = 0;
+                                    y = 0;
+                                }
+                            } // end of else if (planarRGB < 2*stripsPerImage)
+                            else { // planarRGB >= 2*stripsPerImage
+
+                                // raFile.read(byteBuffer, 0, nBytes);
+                                progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
+                                
+                                for (j = 0, m = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++, i += 4) {
+    
+                                        if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) +
+                                                                                         (2 * buffer.length / 3) +
+                                                                                         progress) / progressLength * 100));
+                                        }
+                                        
+                                        if (m == 0) {
+                                            buffer[i+3] = (byteBuffer[j + currentIndex] & 0xf0) >>> 4;
+                                            if (x < xDim - 1) {
+                                                m = 1;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j++;
+                                            }
+                                        } // if (m == 0)
+                                        else { // m == 1
+                                            buffer[i+3] = (byteBuffer[j + currentIndex] & 0x0f);
+                                            m = 0;
+                                            j++;
+                                        } // else m == 1
+                                    } 
+                                }    
+
+                                planarRGB++;
+                            } // end of else for planarRGB >= 2*StripsPerImage        
+                        } // else if ((!chunky) && isRGB4)
                         else if ((chunky == true) && (packBit == false)) {
 
                             // if (byteBuffer == null)
@@ -5019,6 +5321,208 @@ public class FileTiff extends FileBase {
                                 } 
                             }
                         } // else if (chunky && isRGB10 && endianess))
+                        else if ((!chunky) && isRGB10 && endianess) {
+                            if (planarRGB < stripsPerImage) {
+
+                                // if (byteBuffer == null)
+                                // byteBuffer = new byte[2 * buffer.length];
+                                // raFile.read(byteBuffer, 0, nBytes);
+                                progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
+                                
+                                for (j = 0, m = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++, i += 4) {
+
+                                        if ((((i / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
+                                                                                    progressLength * 100));
+                                        }
+
+                                        buffer[i] = 65535;
+                                        if (m == 0) {
+                                            buffer[i+1] = ((byteBuffer[j + currentIndex] & 0xff) << 2) |
+                                                        ((byteBuffer[j + currentIndex + 1] & 0xc0) >>> 6);
+                                            if (x < xDim - 1) {
+                                                m = 1;
+                                                j++;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 2;
+                                            }
+                                        }
+                                        else if (m == 1) {
+                                            buffer[i+1] = ((byteBuffer[j + currentIndex] & 0x3f) << 4) |
+                                                        ((byteBuffer[j + 1 + currentIndex] & 0xf0) >>> 4);
+                                            if (x < xDim - 1) {
+                                                m = 2;
+                                                j++;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 2;
+                                            }
+                                        }
+                                        else if (m == 2) {
+                                            buffer[i+1] = ((byteBuffer[j + currentIndex] & 0x0f) << 6) |
+                                                        ((byteBuffer[j + 1 + currentIndex] & 0xfc)  >>> 2);
+                                            if (x < xDim - 1) {
+                                                m = 3;
+                                                j++;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 2;
+                                            }
+                                        }
+                                        else if (m == 3) {
+                                            buffer[i+1] = ((byteBuffer[j + currentIndex] & 0x03) << 8) |
+                                                        (byteBuffer[j + 1 + currentIndex]& 0xff);
+                                            m = 0;
+                                            j += 2;
+                                        }
+                                    } 
+                                }     
+
+                                planarRGB++;
+
+                                if (planarRGB == stripsPerImage) {
+                                    i = 0;
+                                    y = 0;
+                                }
+                            } // end of if (planarRGB < stripsPerImage)
+                            else if (planarRGB < (2 * stripsPerImage)) {
+
+                                // raFile.read(byteBuffer, 0, nBytes);
+                                progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
+
+                                for (j = 0, m = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++, i += 4) {
+
+                                        if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
+                                                                                         progress) / progressLength * 100));
+                                        }
+
+                                        if (m == 0) {
+                                            buffer[i+2] = ((byteBuffer[j + currentIndex] & 0xff) << 2) |
+                                                        ((byteBuffer[j + currentIndex + 1] & 0xc0) >>> 6);
+                                            if (x < xDim - 1) {
+                                                m = 1;
+                                                j++;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 2;
+                                            }
+                                        }
+                                        else if (m == 1) {
+                                            buffer[i+2] = ((byteBuffer[j + currentIndex] & 0x3f) << 4) |
+                                                        ((byteBuffer[j + 1 + currentIndex] & 0xf0) >>> 4);
+                                            if (x < xDim - 1) {
+                                                m = 2;
+                                                j++;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 2;
+                                            }
+                                        }
+                                        else if (m == 2) {
+                                            buffer[i+2] = ((byteBuffer[j + currentIndex] & 0x0f) << 6) |
+                                                        ((byteBuffer[j + 1 + currentIndex] & 0xfc)  >>> 2);
+                                            if (x < xDim - 1) {
+                                                m = 3;
+                                                j++;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 2;
+                                            }
+                                        }
+                                        else if (m == 3) {
+                                            buffer[i+2] = ((byteBuffer[j + currentIndex] & 0x03) << 8) |
+                                                        (byteBuffer[j + 1 + currentIndex]& 0xff);
+                                            m = 0;
+                                            j += 2;
+                                        }
+                                    } 
+                                }     
+
+                                planarRGB++;
+
+                                if (planarRGB == (2 * stripsPerImage)) {
+                                    i = 0;
+                                    y = 0;
+                                }
+                            } // end of else if (planarRGB < 2*stripsPerImage)
+                            else { // planarRGB >= 2*stripsPerImage
+
+                                // raFile.read(byteBuffer, 0, nBytes);
+                                progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
+
+                                for (j = 0, m = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++, i += 4) {
+
+                                        if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) +
+                                                                                         (2 * buffer.length / 3) +
+                                                                                         progress) / progressLength * 100));
+                                        }
+
+                                        if (m == 0) {
+                                            buffer[i+3] = ((byteBuffer[j + currentIndex] & 0xff) << 2) |
+                                                        ((byteBuffer[j + currentIndex + 1] & 0xc0) >>> 6);
+                                            if (x < xDim - 1) {
+                                                m = 1;
+                                                j++;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 2;
+                                            }
+                                        }
+                                        else if (m == 1) {
+                                            buffer[i+3] = ((byteBuffer[j + currentIndex] & 0x3f) << 4) |
+                                                        ((byteBuffer[j + 1 + currentIndex] & 0xf0) >>> 4);
+                                            if (x < xDim - 1) {
+                                                m = 2;
+                                                j++;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 2;
+                                            }
+                                        }
+                                        else if (m == 2) {
+                                            buffer[i+3] = ((byteBuffer[j + currentIndex] & 0x0f) << 6) |
+                                                        ((byteBuffer[j + 1 + currentIndex] & 0xfc)  >>> 2);
+                                            if (x < xDim - 1) {
+                                                m = 3;
+                                                j++;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 2;
+                                            }
+                                        }
+                                        else if (m == 3) {
+                                            buffer[i+3] = ((byteBuffer[j + currentIndex] & 0x03) << 8) |
+                                                        (byteBuffer[j + 1 + currentIndex]& 0xff);
+                                            m = 0;
+                                            j += 2;
+                                        }
+                                    } 
+                                }     
+
+                                planarRGB++;
+                            } // end of else for planarRGB >= 2*StripsPerImage    
+                        } // else if ((!chunky) && isRGB10 && endianess)
                         else if (chunky && isRGB12 && endianess) {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
@@ -5061,6 +5565,136 @@ public class FileTiff extends FileBase {
                                 } 
                             }
                         } // else if (chunky && isRGB12 && endianess))
+                        else if ((!chunky) && isRGB12 && endianess) {
+                            if (planarRGB < stripsPerImage) {
+
+                                // if (byteBuffer == null)
+                                // byteBuffer = new byte[2 * buffer.length];
+                                // raFile.read(byteBuffer, 0, nBytes);
+                                progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
+                                
+                                for (j = 0, m = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++, i += 4) {
+
+                                        if ((((i / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
+                                                                                    progressLength * 100));
+                                        }
+
+                                        buffer[i] = 65535;
+                                        if (m == 0) {
+                                            buffer[i+1] = ((byteBuffer[j + currentIndex] & 0xff) << 4) |
+                                                        ((byteBuffer[j + currentIndex + 1] & 0xf0) >>> 4);
+                                            if (x < xDim - 1) {
+                                                m = 1;
+                                                j++;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 2;
+                                            }
+                                        }
+                                        else if (m == 1) {
+                                            buffer[i+1] = ((byteBuffer[j + currentIndex] & 0x0f) << 8) |
+                                                        (byteBuffer[j + 1 + currentIndex] & 0xff);
+                                            m = 0;
+                                            j += 2;
+                                        }
+                                    } 
+                                }     
+
+                                planarRGB++;
+
+                                if (planarRGB == stripsPerImage) {
+                                    i = 0;
+                                    y = 0;
+                                }
+                            } // end of if (planarRGB < stripsPerImage)
+                            else if (planarRGB < (2 * stripsPerImage)) {
+
+                                // raFile.read(byteBuffer, 0, nBytes);
+                                progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
+
+                                for (j = 0, m = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++, i += 4) {
+
+                                        if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
+                                                                                         progress) / progressLength * 100));
+                                        }
+
+                                        if (m == 0) {
+                                            buffer[i+2] = ((byteBuffer[j + currentIndex] & 0xff) << 4) |
+                                                        ((byteBuffer[j + currentIndex + 1] & 0xf0) >>> 4);
+                                            if (x < xDim - 1) {
+                                                m = 1;
+                                                j++;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 2;
+                                            }
+                                        }
+                                        else if (m == 1) {
+                                            buffer[i+2] = ((byteBuffer[j + currentIndex] & 0x0f) << 8) |
+                                                        (byteBuffer[j + 1 + currentIndex] & 0xff);
+                                            m = 0;
+                                            j += 2;
+                                        }
+                                    } 
+                                }     
+
+                                planarRGB++;
+
+                                if (planarRGB == (2 * stripsPerImage)) {
+                                    i = 0;
+                                    y = 0;
+                                }
+                            } // end of else if (planarRGB < 2*stripsPerImage)
+                            else { // planarRGB >= 2*stripsPerImage
+
+                                // raFile.read(byteBuffer, 0, nBytes);
+                                progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
+
+                                for (j = 0, m = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++, i += 4) {
+
+                                        if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) +
+                                                                                         (2 * buffer.length / 3) +
+                                                                                         progress) / progressLength * 100));
+                                        }
+
+                                        if (m == 0) {
+                                            buffer[i+3] = ((byteBuffer[j + currentIndex] & 0xff) << 4) |
+                                                        ((byteBuffer[j + currentIndex + 1] & 0xf0) >>> 4);
+                                            if (x < xDim - 1) {
+                                                m = 1;
+                                                j++;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 2;
+                                            }
+                                        }
+                                        else if (m == 1) {
+                                            buffer[i+3] = ((byteBuffer[j + currentIndex] & 0x0f) << 8) |
+                                                        (byteBuffer[j + 1 + currentIndex] & 0xff);
+                                            m = 0;
+                                            j += 2;
+                                        }
+                                    } 
+                                }     
+
+                                planarRGB++;
+                            } // end of else for planarRGB >= 2*StripsPerImage      
+                        } // else if ((!chunky) && isRGB12 && endianess)
                         else if (chunky && isRGB14 && endianess) {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
@@ -5143,6 +5777,214 @@ public class FileTiff extends FileBase {
                                 } 
                             }
                         } // else if (chunky && isRGB14 && endianess))
+                        else if ((!chunky) && isRGB14 && endianess) {
+                            if (planarRGB < stripsPerImage) {
+
+                                // if (byteBuffer == null)
+                                // byteBuffer = new byte[2 * buffer.length];
+                                // raFile.read(byteBuffer, 0, nBytes);
+                                progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
+                                
+                                for (j = 0, m = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++, i += 4) {
+
+                                        if ((((i / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
+                                                                                    progressLength * 100));
+                                        }
+
+                                        buffer[i] = 65535;
+                                        if (m == 0) {
+                                            buffer[i+1] = ((byteBuffer[j + currentIndex] & 0xff) << 6) |
+                                                        ((byteBuffer[j + currentIndex + 1] & 0xfc) >>> 2);
+                                            if (x < xDim - 1) {
+                                                m = 1;
+                                                j++;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 2;
+                                            }
+                                        }
+                                        else if (m == 1) {
+                                            buffer[i+1] = ((byteBuffer[j + currentIndex] & 0x03) << 12) |
+                                                        ((byteBuffer[j + 1 + currentIndex] & 0xff) << 4) |
+                                                        ((byteBuffer[j + 2 + currentIndex] & 0xf0) >>> 4);
+                                            if (x < xDim - 1) {
+                                                m = 2;
+                                                j += 2;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 3;
+                                            }
+                                        }
+                                        else if (m == 2) {
+                                            buffer[i+1] = ((byteBuffer[j + currentIndex] & 0x0f) << 10) |
+                                                        ((byteBuffer[j + 1 + currentIndex] & 0xff)  << 2) |
+                                                        ((byteBuffer[j + 2 + currentIndex] & 0xc0) >>> 6);
+                                            if (x < xDim - 1) {
+                                                m = 3;
+                                                j += 2;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 3;
+                                            }
+                                        }
+                                        else if (m == 3) {
+                                            buffer[i+1] = ((byteBuffer[j + currentIndex] & 0x3f) << 8) |
+                                                        (byteBuffer[j + 1 + currentIndex]& 0xff);
+                                            m = 0;
+                                            j += 2;
+                                        }
+                                    } 
+                                }     
+
+                                planarRGB++;
+
+                                if (planarRGB == stripsPerImage) {
+                                    i = 0;
+                                    y = 0;
+                                }
+                            } // end of if (planarRGB < stripsPerImage)
+                            else if (planarRGB < (2 * stripsPerImage)) {
+
+                                // raFile.read(byteBuffer, 0, nBytes);
+                                progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
+
+                                for (j = 0, m = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++, i += 4) {
+
+                                        if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
+                                                                                         progress) / progressLength * 100));
+                                        }
+
+                                        if (m == 0) {
+                                            buffer[i+2] = ((byteBuffer[j + currentIndex] & 0xff) << 6) |
+                                                        ((byteBuffer[j + currentIndex + 1] & 0xfc) >>> 2);
+                                            if (x < xDim - 1) {
+                                                m = 1;
+                                                j++;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 2;
+                                            }
+                                        }
+                                        else if (m == 1) {
+                                            buffer[i+2] = ((byteBuffer[j + currentIndex] & 0x03) << 12) |
+                                                        ((byteBuffer[j + 1 + currentIndex] & 0xff) << 4) |
+                                                        ((byteBuffer[j + 2 + currentIndex] & 0xf0) >>> 4);
+                                            if (x < xDim - 1) {
+                                                m = 2;
+                                                j += 2;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 3;
+                                            }
+                                        }
+                                        else if (m == 2) {
+                                            buffer[i+2] = ((byteBuffer[j + currentIndex] & 0x0f) << 10) |
+                                                        ((byteBuffer[j + 1 + currentIndex] & 0xff)  << 2) |
+                                                        ((byteBuffer[j + 2 + currentIndex] & 0xc0) >>> 6);
+                                            if (x < xDim - 1) {
+                                                m = 3;
+                                                j += 2;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 3;
+                                            }
+                                        }
+                                        else if (m == 3) {
+                                            buffer[i+2] = ((byteBuffer[j + currentIndex] & 0x3f) << 8) |
+                                                        (byteBuffer[j + 1 + currentIndex]& 0xff);
+                                            m = 0;
+                                            j += 2;
+                                        }
+                                    } 
+                                }     
+
+                                planarRGB++;
+
+                                if (planarRGB == (2 * stripsPerImage)) {
+                                    i = 0;
+                                    y = 0;
+                                }
+                            } // end of else if (planarRGB < 2*stripsPerImage)
+                            else { // planarRGB >= 2*stripsPerImage
+
+                                // raFile.read(byteBuffer, 0, nBytes);
+                                progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
+
+                                for (j = 0, m = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++, i += 4) {
+
+                                        if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 3) +
+                                                                                         (2 * buffer.length / 3) +
+                                                                                         progress) / progressLength * 100));
+                                        }
+
+                                        if (m == 0) {
+                                            buffer[i+3] = ((byteBuffer[j + currentIndex] & 0xff) << 6) |
+                                                        ((byteBuffer[j + currentIndex + 1] & 0xfc) >>> 2);
+                                            if (x < xDim - 1) {
+                                                m = 1;
+                                                j++;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 2;
+                                            }
+                                        }
+                                        else if (m == 1) {
+                                            buffer[i+3] = ((byteBuffer[j + currentIndex] & 0x03) << 12) |
+                                                        ((byteBuffer[j + 1 + currentIndex] & 0xff) << 4) |
+                                                        ((byteBuffer[j + 2 + currentIndex] & 0xf0) >>> 4);
+                                            if (x < xDim - 1) {
+                                                m = 2;
+                                                j += 2;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 3;
+                                            }
+                                        }
+                                        else if (m == 2) {
+                                            buffer[i+3] = ((byteBuffer[j + currentIndex] & 0x0f) << 10) |
+                                                        ((byteBuffer[j + 1 + currentIndex] & 0xff)  << 2) |
+                                                        ((byteBuffer[j + 2 + currentIndex] & 0xc0) >>> 6);
+                                            if (x < xDim - 1) {
+                                                m = 3;
+                                                j += 2;
+                                            }
+                                            else {
+                                                m = 0;
+                                                j += 3;
+                                            }
+                                        }
+                                        else if (m == 3) {
+                                            buffer[i+3] = ((byteBuffer[j + currentIndex] & 0x3f) << 8) |
+                                                        (byteBuffer[j + 1 + currentIndex]& 0xff);
+                                            m = 0;
+                                            j += 2;
+                                        }
+                                    } 
+                                }     
+
+                                planarRGB++;
+                            } // end of else for planarRGB >= 2*StripsPerImage      
+                        } // else if ((!chunky) && isRGB14 && endianess)
                         else if (chunky == true) {
 
                             // if (byteBuffer == null)
