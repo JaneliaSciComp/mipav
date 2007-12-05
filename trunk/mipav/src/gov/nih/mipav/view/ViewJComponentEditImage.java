@@ -4951,34 +4951,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     }
 
     /**
-     * Update the voi color.
-     *
-     * @param  voiColor  the new voi color
-     * @param  voiUID    the last voi id
-     */
-    protected void updateVOIColor(Color voiColor, int voiUID) {
-
-        if (frame instanceof ViewJFrameImage) {
-            ((ViewJFrameImage) frame).getControls().setVOIColor(voiColor);
-            ((ViewJFrameImage) frame).setLastVOI_UID(voiUID);
-        }
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  id      DOCUMENT ME!
-     * @param  voiUID  DOCUMENT ME!
-     */
-    protected void updateVOIColor(int id, int voiUID) {
-
-        if (frame instanceof ViewJFrameImage) {
-            ((ViewJFrameImage) frame).getControls().setVOIColor(id);
-            ((ViewJFrameImage) frame).setLastVOI_UID(voiUID);
-        }
-    }
-
-    /**
      * >>>>>>> .r533 The purpose of this method is to examine both LUTs to determine if they are zero-based, that is, if
      * they map values of zero to the color R=0, G=0, B=0. If the LUT does, in fact, do this, then this method ensures
      * that those pixels are completely transparent so that no blending takes place for those pixels.

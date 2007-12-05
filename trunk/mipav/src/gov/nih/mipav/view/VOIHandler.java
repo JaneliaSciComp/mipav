@@ -149,6 +149,8 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
     /** Whether the VOI was being dragged. */
     protected boolean wasDragging;
 
+    protected int lastVOI_UID = -1;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -5376,7 +5378,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
      * @param controls
      * @return
      */
-    public boolean checkForVOICompatibility(VOIVector VOIs, int type, int lastVOI_UID,
+    public boolean checkForVOICompatibility(VOIVector VOIs, int type,
     		ViewControlsImage controls) {
 
         // System.err.println("Type is: " + type);
@@ -5655,7 +5657,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
         if (compImage.getFrame() instanceof ViewJFrameImage) {
             ((ViewJFrameImage) compImage.getFrame()).getControls().setVOIColor(voiColor);
-            ((ViewJFrameImage) compImage.getFrame()).setLastVOI_UID(voiUID);
+            this.lastVOI_UID = voiUID;
         }
     }
 
@@ -5669,10 +5671,18 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
         if (compImage.getFrame() instanceof ViewJFrameImage) {
             ((ViewJFrameImage) compImage.getFrame()).getControls().setVOIColor(id);
-            ((ViewJFrameImage) compImage.getFrame()).setLastVOI_UID(voiUID);
+            this.lastVOI_UID = voiUID;
         }
     }
 
+    /**
+     * Sets the last VOI's ID (last VOI selected... -1 if no VOI selected)
+     * @param voiUID the ID of the last VOI selected
+     */
+    protected void setLastVOI_UID(int voiUID) {
+    	this.lastVOI_UID = voiUID;
+    }
+    
     /**
      * Builds the overlay Strings from the tag's value. Concatenates the output strings from the tags and ensures that
      * any properly read-in string has usable (if empty) values.
