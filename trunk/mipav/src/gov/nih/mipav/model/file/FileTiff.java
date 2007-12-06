@@ -117,6 +117,10 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     public static final int PLANAR_CONFIG = 284;
+    
+    public static final int XPOSITION = 286;
+    
+    public static final int YPOSITION = 287;
 
     /** DOCUMENT ME! */
     public static final int RESOLUTION_UNIT = 296;
@@ -239,6 +243,10 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     private float[] imgResols;
+    
+    private float xPosition;
+    
+    private float yPosition;
 
     /** DOCUMENT ME! */
     private ModelLUT LUT = null;
@@ -2956,6 +2964,46 @@ public class FileTiff extends FileBase {
 
                     // EchoTech uses msec for T resolution units
                     fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, 3);
+                    break;
+                    
+                case XPOSITION:
+                    if (type != RATIONAL) {
+                        throw new IOException("XPOSITION has illegal type = " + type + "\n");
+                    }
+
+                    if (count != 1) {
+                        throw new IOException("XPOSITION has illegal count = " + count + "\n");
+                    }
+
+                    numerator = valueArray[0];
+                    denominator = valueArray[1];
+                    xPosition = (float) numerator / denominator;
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: X Position = " + xPosition + 
+                                          " in resolution units from the left side of the page\n",
+                                          Preferences.DEBUG_FILEIO);
+                    }
+
+                    break;
+
+                case YPOSITION:
+                    if (type != RATIONAL) {
+                        throw new IOException("YPOSITION has illegal type = " + type + "\n");
+                    }
+
+                    if (count != 1) {
+                        throw new IOException("YPOSITION has illegal count = " + count + "\n");
+                    }
+
+                    numerator = valueArray[0];
+                    denominator = valueArray[1];
+                    yPosition = (float) numerator / denominator;
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: Y Position = " + yPosition + 
+                                          " in resolution units from the top of the page\n",
+                                          Preferences.DEBUG_FILEIO);
+                    }
+
                     break;
 
                 case TILE_WIDTH:
