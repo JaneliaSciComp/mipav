@@ -10,6 +10,7 @@ import gov.nih.mipav.view.dialogs.JDialogLoadLeica.*;
 import java.io.*;
 
 import java.util.*;
+import java.util.zip.*;
 
 
 /**
@@ -259,6 +260,10 @@ public class FileTiff extends FileBase {
 
     /** TIFF files. */
     private TIFFLZWDecoder lzwDecoder = null; // for decoding LZW compressed images
+    
+    private boolean zlibCompression = false; // true if the read data file has LZW compression
+    
+    private Inflater zlibDecompresser = null;
 
     /** DOCUMENT ME! */
     private short nDirEntries;
@@ -432,6 +437,10 @@ public class FileTiff extends FileBase {
         sliceBufferFloat = null;
 
         sliceBufferDouble = null;
+        
+        if (zlibDecompresser != null) {
+            zlibDecompresser.end();
+        }
 
         try {
             super.finalize();
@@ -530,7 +539,7 @@ public class FileTiff extends FileBase {
 
             Preferences.debug("Just past init IFD read", Preferences.DEBUG_FILEIO);
 
-            if (haveTileWidth && (!lzwCompression) && haveTileOffsets) {
+            if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && haveTileOffsets) {
                 if (chunky) {
                    tilesPerSlice = tilesAcross * tilesDown;
                 }
@@ -539,10 +548,10 @@ public class FileTiff extends FileBase {
                 }
                 imageSlice = tilesPerImage / tilesPerSlice;
                 // System.err.println("DoTile: tilesPerSlice: " + tilesPerSlice + " imageSlice: " + imageSlice);
-            } // if (doTile && (!lzwCompression))
-            else if (haveTileWidth || lzwCompression) {
+            } // if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && haveTileOffsets)
+            else if (haveTileWidth || lzwCompression || zlibCompression) {
 
-                // set the tile width to the xDim for use in LZW Decoder
+                // set the tile width to the xDim for use in LZW Decoder or zlib deflater
                 if (!haveTileWidth) {
                     tileWidth = xDim;
                 }
@@ -652,7 +661,7 @@ public class FileTiff extends FileBase {
                 }
             } // else foundTag43314
 
-            if (haveTileWidth && (!lzwCompression) && haveTileOffsets) {
+            if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && haveTileOffsets) {
                 imageSlice = tilesPerImage / tilesPerSlice;
             }
 
@@ -663,6 +672,9 @@ public class FileTiff extends FileBase {
             if (lzwCompression) {
                 lzwDecoder = new TIFFLZWDecoder(tileWidth, predictor, samplesPerPixel);
                 // System.err.println("Created LZW Decoder");
+            }
+            else if (zlibCompression) {
+                zlibDecompresser = new Inflater();
             }
 
             int bufferSize;
@@ -734,7 +746,7 @@ public class FileTiff extends FileBase {
 
                     try {
 
-                        if (haveTileWidth || lzwCompression) {
+                        if (haveTileWidth || lzwCompression || zlibCompression) {
                             readTileBuffer(i, sliceBufferFloat);
                         } else {
 
@@ -2484,11 +2496,6 @@ public class FileTiff extends FileBase {
                         throw new IOException("COMPRESSION has illegal count = " + count + "\n");
                     }
 
-                    if ((valueArray[0] != 1) && (valueArray[0] != 2) && (valueArray[0] != 32773) &&
-                            (valueArray[0] != 5)) {
-                        throw new IOException("COMPRESSION has illegal value = " + valueArray[0] + "\n");
-                    }
-
                     if (valueArray[0] == 2) {
                         throw new IOException("Modified Huffman run length encoding is not supported\n");
                     } else if (valueArray[0] == 1) {
@@ -2511,6 +2518,16 @@ public class FileTiff extends FileBase {
                         if (debuggingFileIO) {
                             Preferences.debug("FileTiff.openIFD: compression = LZW\n ", Preferences.DEBUG_FILEIO);
                         }
+                    } else if ((valueArray[0] == 8) || (valueArray[0] == 32946)) {
+                        packBit = false;
+                        zlibCompression = true;
+                        
+                        if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: compression = zlib\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    else {
+                            throw new IOException("COMPRESSION has illegal value = " + valueArray[0] + "\n");
                     }
 
                     break;
@@ -6305,6 +6322,7 @@ public class FileTiff extends FileBase {
         int xTile, yTile;
         int x, y;
         byte[] decomp = null;
+        int resultLength = 0;
         i = 0;
         xTile = 0;
         yTile = 0;
@@ -6365,21 +6383,36 @@ public class FileTiff extends FileBase {
                         mod = progressLength / 100;
 
                         nLength = 8 * ((nBytes + 63) >> 6); // new BitSet(size) = new long[(size+63)>>6];
-                        if (lzwCompression) {
+                        if (lzwCompression || zlibCompression) {
 
                             if (byteBuffer == null) {
                                 byteBuffer = new byte[tileMaxByteCount];
                             }
 
                             raFile.read(byteBuffer, 0, nLength);
+                            if (zlibCompression) {
+                                zlibDecompresser.setInput(byteBuffer, 0, nLength);
+                            }
 
                             if (decomp == null) {
                                 decomp = new byte[tileWidth * tileLength];
                             }
 
-                            lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                            if (lzwCompression) {
+                                lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                resultLength = decomp.length;
+                            }
+                            else { // zlibCompression
+                                try {
+                                    resultLength = zlibDecompresser.inflate(decomp);
+                                }
+                                catch (DataFormatException e){
+                                    MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
+                                }
+                                zlibDecompresser.reset();
+                            }
 
-                            for (j = 0; j < decomp.length; j++) {
+                            for (j = 0; j < resultLength; j++) {
 
                                 if ((x < xDim) && (y < yDim)) {
 
@@ -6440,7 +6473,7 @@ public class FileTiff extends FileBase {
 
                             if (byteBuffer == null) {
 
-                                if (lzwCompression) {
+                                if (lzwCompression || zlibCompression) {
                                     byteBuffer = new byte[tileMaxByteCount];
                                 } else {
                                     byteBuffer = new byte[nBytes];
@@ -6448,20 +6481,35 @@ public class FileTiff extends FileBase {
                             }
 
                             raFile.read(byteBuffer, 0, nBytes);
+                            if (zlibCompression) {
+                                zlibDecompresser.setInput(byteBuffer, 0, nBytes);
+                            }
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
 
 
-                            if (lzwCompression) {
+                            if (lzwCompression || zlibCompression) {
 
                                 if (decomp == null) {
                                     decomp = new byte[tileWidth * tileLength];
                                 }
 
-                                lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                if (lzwCompression) {
+                                    lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                    resultLength = decomp.length;
+                                }
+                                else { // zlibCompression
+                                    try {
+                                        resultLength = zlibDecompresser.inflate(decomp);
+                                    }
+                                    catch (DataFormatException e){
+                                        MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
+                                    }
+                                    zlibDecompresser.reset();
+                                }
 
-                                for (j = 0; j < decomp.length; j++) {
+                                for (j = 0; j < resultLength; j++) {
 
                                     if ((x < xDim) && (y < yDim)) {
 
@@ -6607,7 +6655,7 @@ public class FileTiff extends FileBase {
 
                             if (byteBuffer == null) {
 
-                                if (lzwCompression) {
+                                if (lzwCompression || zlibCompression) {
                                     byteBuffer = new byte[tileMaxByteCount];
                                 } else {
                                     byteBuffer = new byte[nBytes];
@@ -6615,20 +6663,35 @@ public class FileTiff extends FileBase {
                             }
 
                             raFile.read(byteBuffer, 0, nBytes);
+                            if (zlibCompression) {
+                                zlibDecompresser.setInput(byteBuffer, 0, nBytes);
+                            }
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
 
 
-                            if (lzwCompression) {
+                            if (lzwCompression || zlibCompression) {
 
                                 if (decomp == null) {
                                     decomp = new byte[tileWidth * tileLength];
                                 }
 
-                                lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                if (lzwCompression) {
+                                    lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                    resultLength = decomp.length;
+                                }
+                                else { // zlibCompression
+                                    try {
+                                        resultLength = zlibDecompresser.inflate(decomp);
+                                    }
+                                    catch (DataFormatException e){
+                                        MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
+                                    }
+                                    zlibDecompresser.reset();
+                                }
 
-                                for (j = 0; j < decomp.length; j++) {
+                                for (j = 0; j < resultLength; j++) {
 
                                     if ((x < xDim) && (y < yDim)) {
 
@@ -6771,41 +6834,99 @@ public class FileTiff extends FileBase {
 
                     case ModelStorageBase.SHORT:
                         if (byteBuffer == null) {
-                            byteBuffer = new byte[nBytes];
+
+                            if (lzwCompression || zlibCompression) {
+                                byteBuffer = new byte[tileMaxByteCount];
+                            } else {
+                                byteBuffer = new byte[nBytes];
+                            }
                         }
 
                         raFile.read(byteBuffer, 0, nBytes);
+                        if (zlibCompression) {
+                            zlibDecompresser.setInput(byteBuffer, 0, nBytes);
+                        }
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
 
-                        for (j = 0; j < nBytes; j += 2) {
+                        if (lzwCompression || zlibCompression) {
 
-                            if ((x < xDim) && (y < yDim)) {
-
-                                if (((i + progress) % mod) == 0) {
-                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
-                                }
-
-                                b1 = getUnsignedByte(byteBuffer, j);
-                                b2 = getUnsignedByte(byteBuffer, j + 1);
-
-                                if (endianess) {
-                                    buffer[x + (y * xDim)] = (short) ((b1 << 8) + b2);
-                                } else {
-                                    buffer[x + (y * xDim)] = (short) ((b2 << 8) + b1);
-                                }
-
-                                i++;
-                            } // if ((x < xDim) && (y < yDim))
-
-                            x++;
-
-                            if (x == ((xTile + 1) * tileWidth)) {
-                                x = xTile * tileWidth;
-                                y++;
+                            if (decomp == null) {
+                                decomp = new byte[tileWidth * tileLength * 3];
                             }
-                        } // for (j = 0; j < nBytes; j+= 2)
+
+                            if (lzwCompression) {
+                                lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                resultLength = decomp.length;
+                            }
+                            else { // zlibCompression
+                                try {
+                                    resultLength = zlibDecompresser.inflate(decomp);
+                                }
+                                catch (DataFormatException e){
+                                    MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
+                                }
+                                zlibDecompresser.reset();
+                            }
+
+                            for (j = 0; j < resultLength; j += 2) {
+
+                                if ((x < xDim) && (y < yDim)) {
+
+                                    if (((i + progress) % mod) == 0) {
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                100));
+                                    }
+
+                                    b1 = getUnsignedByte(decomp, j);
+                                    b2 = getUnsignedByte(decomp, j + 1);
+
+                                    if (endianess) {
+                                        buffer[x + (y * xDim)] = (short) ((b1 << 8) + b2);
+                                    } else {
+                                        buffer[x + (y * xDim)] = (short) ((b2 << 8) + b1);
+                                    }
+                                }
+
+                                x++;
+
+                                if (x == ((xTile + 1) * tileWidth)) {
+                                    x = xTile * tileWidth;
+                                    y++;
+                                }
+                            }
+                        } else {
+
+                            for (j = 0; j < nBytes; j += 2) {
+
+                                if ((x < xDim) && (y < yDim)) {
+
+                                    if (((i + progress) % mod) == 0) {
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                100));
+                                    }
+
+                                    b1 = getUnsignedByte(byteBuffer, j);
+                                    b2 = getUnsignedByte(byteBuffer, j + 1);
+
+                                    if (endianess) {
+                                        buffer[x + (y * xDim)] = (short) ((b1 << 8) + b2);
+                                    } else {
+                                        buffer[x + (y * xDim)] = (short) ((b2 << 8) + b1);
+                                    }
+
+                                    i++;
+                                } // if ((x < xDim) && (y < yDim))
+
+                                x++;
+
+                                if (x == ((xTile + 1) * tileWidth)) {
+                                    x = xTile * tileWidth;
+                                    y++;
+                                }
+                            } // for (j = 0; j < nBytes; j+= 2)
+                        }
 
                         xTile++;
                         if (xTile == tilesAcross) {
@@ -6815,12 +6936,13 @@ public class FileTiff extends FileBase {
 
                         x = xTile * tileWidth;
                         y = yTile * tileLength;
+                        
                         break;
 
                     case ModelStorageBase.USHORT:
                         if (byteBuffer == null) {
 
-                            if (lzwCompression) {
+                            if (lzwCompression || zlibCompression) {
                                 byteBuffer = new byte[tileMaxByteCount];
                             } else {
                                 byteBuffer = new byte[nBytes];
@@ -6828,19 +6950,34 @@ public class FileTiff extends FileBase {
                         }
 
                         raFile.read(byteBuffer, 0, nBytes);
+                        if (zlibCompression) {
+                            zlibDecompresser.setInput(byteBuffer, 0, nBytes);
+                        }
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
 
-                        if (lzwCompression) {
+                        if (lzwCompression || zlibCompression) {
 
                             if (decomp == null) {
                                 decomp = new byte[tileWidth * tileLength * 3];
                             }
 
-                            lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                            if (lzwCompression) {
+                                lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                resultLength = decomp.length;
+                            }
+                            else { // zlibCompression
+                                try {
+                                    resultLength = zlibDecompresser.inflate(decomp);
+                                }
+                                catch (DataFormatException e){
+                                    MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
+                                }
+                                zlibDecompresser.reset();
+                            }
 
-                            for (j = 0; j < decomp.length; j += 2) {
+                            for (j = 0; j < resultLength; j += 2) {
 
                                 if ((x < xDim) && (y < yDim)) {
 
@@ -6911,7 +7048,7 @@ public class FileTiff extends FileBase {
                     case ModelStorageBase.INTEGER:
                         if (byteBuffer == null) {
 
-                            if (lzwCompression) {
+                            if (lzwCompression || zlibCompression) {
                                 byteBuffer = new byte[tileMaxByteCount];
                             } else {
                                 byteBuffer = new byte[nBytes];
@@ -6919,19 +7056,34 @@ public class FileTiff extends FileBase {
                         }
 
                         raFile.read(byteBuffer, 0, nBytes);
+                        if (zlibCompression) {
+                            zlibDecompresser.setInput(byteBuffer, 0, nBytes);
+                        }
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
 
-                        if (lzwCompression) {
+                        if (lzwCompression || zlibCompression) {
 
                             if (decomp == null) {
                                 decomp = new byte[tileWidth * tileLength * 3];
                             }
 
-                            lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                            if (lzwCompression) {
+                                lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                resultLength = decomp.length;
+                            }
+                            else { // zlibCompression
+                                try {
+                                    resultLength = zlibDecompresser.inflate(decomp);
+                                }
+                                catch (DataFormatException e){
+                                    MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
+                                }
+                                zlibDecompresser.reset();
+                            }
 
-                            for (j = 0; j < decomp.length; j += 4) {
+                            for (j = 0; j < resultLength; j += 4) {
 
                                 if ((x < xDim) && (y < yDim)) {
 
@@ -7012,7 +7164,7 @@ public class FileTiff extends FileBase {
                     case ModelStorageBase.UINTEGER:
                         if (byteBuffer == null) {
 
-                            if (lzwCompression) {
+                            if (lzwCompression || zlibCompression) {
                                 byteBuffer = new byte[tileMaxByteCount];
                             } else {
                                 byteBuffer = new byte[nBytes];
@@ -7020,19 +7172,34 @@ public class FileTiff extends FileBase {
                         }
 
                         raFile.read(byteBuffer, 0, nBytes);
+                        if (zlibCompression) {
+                            zlibDecompresser.setInput(byteBuffer, 0, nBytes);
+                        }
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
 
-                        if (lzwCompression) {
+                        if (lzwCompression || zlibCompression) {
 
                             if (decomp == null) {
                                 decomp = new byte[tileWidth * tileLength * 3];
                             }
 
-                            lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                            if (lzwCompression) {
+                                lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                resultLength = decomp.length;
+                            }
+                            else { // zlibCompression
+                                try {
+                                    resultLength = zlibDecompresser.inflate(decomp);
+                                }
+                                catch (DataFormatException e){
+                                    MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
+                                }
+                                zlibDecompresser.reset();
+                            }
 
-                            for (j = 0; j < decomp.length; j += 4) {
+                            for (j = 0; j < resultLength; j += 4) {
 
                                 if ((x < xDim) && (y < yDim)) {
 
@@ -7116,7 +7283,7 @@ public class FileTiff extends FileBase {
                                 
                                 if (byteBuffer == null) {
     
-                                    if (lzwCompression) {
+                                    if (lzwCompression || zlibCompression) {
                                         byteBuffer = new byte[tileMaxByteCount];
                                     } else {
                                         byteBuffer = new byte[nBytes];
@@ -7125,6 +7292,9 @@ public class FileTiff extends FileBase {
     
                                 // System.err.println("About to read " + nBytes + " bytes");
                                 raFile.read(byteBuffer, 0, nBytes);
+                                if (zlibCompression) {
+                                    zlibDecompresser.setInput(byteBuffer, 0, nBytes);
+                                }
     
                                 // System.err.println("________");
                                 progress = slice * xDim * yDim;
@@ -7132,14 +7302,26 @@ public class FileTiff extends FileBase {
                                 mod = progressLength / 100;
     
     
-                                if (lzwCompression) {
+                                if (lzwCompression || zlibCompression) {
     
                                     //System.err.println("Read " + nBytes + " from raFile");
                                     if (decomp == null) {
                                         decomp = new byte[tileWidth * tileLength * samplesPerPixel];
                                     }
     
-                                    lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                    if (lzwCompression) {
+                                        lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                        resultLength = decomp.length;
+                                    }
+                                    else { // zlibCompression
+                                        try {
+                                            resultLength = zlibDecompresser.inflate(decomp);
+                                        }
+                                        catch (DataFormatException e){
+                                            MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
+                                        }
+                                        zlibDecompresser.reset();
+                                    }
                                 }
                                 else {
                                     decomp = byteBuffer;
@@ -7263,7 +7445,7 @@ public class FileTiff extends FileBase {
     
                                 if (byteBuffer == null) {
     
-                                    if (lzwCompression) {
+                                    if (lzwCompression || zlibCompression) {
                                         byteBuffer = new byte[tileMaxByteCount];
                                     } else {
                                         byteBuffer = new byte[nBytes];
@@ -7272,6 +7454,9 @@ public class FileTiff extends FileBase {
     
                                 // System.err.println("About to read " + nBytes + " bytes");
                                 raFile.read(byteBuffer, 0, nBytes);
+                                if (zlibCompression) {
+                                    zlibDecompresser.setInput(byteBuffer, 0, nBytes);
+                                }
     
                                 // System.err.println("________");
                                 progress = slice * xDim * yDim;
@@ -7279,19 +7464,31 @@ public class FileTiff extends FileBase {
                                 mod = progressLength / 100;
     
     
-                                if (lzwCompression) {
+                                if (lzwCompression || zlibCompression) {
     
                                     //System.err.println("Read " + nBytes + " from raFile");
                                     if (decomp == null) {
                                         decomp = new byte[tileWidth * tileLength * samplesPerPixel];
                                     }
     
-                                    lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                    if (lzwCompression) {
+                                        lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                        resultLength = decomp.length;
+                                    }
+                                    else { // zlibCompression
+                                        try {
+                                            resultLength = zlibDecompresser.inflate(decomp);
+                                        }
+                                        catch (DataFormatException e){
+                                            MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
+                                        }
+                                        zlibDecompresser.reset();
+                                    }
     
-                                    //System.err.println("Decoded byte length: " + decomp.length);
+                                    //System.err.println("Decoded byte length: " + resultLength);
                                     if (samplesPerPixel == 3) {
     
-                                        for (j = 0; j < decomp.length; j += 3) {
+                                        for (j = 0; j < resultLength; j += 3) {
     
                                             if ((x < xDim) && (y < yDim)) {
     
@@ -7317,7 +7514,7 @@ public class FileTiff extends FileBase {
                                     } // if (samplesPerPixel == 3)
                                     else if (samplesPerPixel == 4) {
     
-                                        for (j = 0; j < decomp.length; j += 4) {
+                                        for (j = 0; j < resultLength; j += 4) {
     
                                             if ((x < xDim) && (y < yDim)) {
     
@@ -7381,7 +7578,7 @@ public class FileTiff extends FileBase {
                             else { // not chunky RRRRR, GGGGG, BBBBB
                                 if (byteBuffer == null) {
                                     
-                                    if (lzwCompression) {
+                                    if (lzwCompression || zlibCompression) {
                                         byteBuffer = new byte[tileMaxByteCount];
                                     } else {
                                         byteBuffer = new byte[nBytes];
@@ -7390,6 +7587,9 @@ public class FileTiff extends FileBase {
     
                                 // System.err.println("About to read " + nBytes + " bytes");
                                 raFile.read(byteBuffer, 0, nBytes);
+                                if (zlibCompression) {
+                                    zlibDecompresser.setInput(byteBuffer, 0, nBytes);
+                                }
     
                                 // System.err.println("________");
                                 progress = slice * xDim * yDim;
@@ -7397,19 +7597,31 @@ public class FileTiff extends FileBase {
                                 mod = progressLength / 100;
     
     
-                                if (lzwCompression) {
+                                if (lzwCompression || zlibCompression) {
     
                                     //System.err.println("Read " + nBytes + " from raFile");
                                     if (decomp == null) {
                                         decomp = new byte[tileWidth * tileLength];
                                     }
     
-                                    lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                    if (lzwCompression) {
+                                        lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                        resultLength = decomp.length;
+                                    }
+                                    else { // zlibCompression
+                                        try {
+                                            resultLength = zlibDecompresser.inflate(decomp);
+                                        }
+                                        catch (DataFormatException e){
+                                            MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
+                                        }
+                                        zlibDecompresser.reset();
+                                    }
     
-                                    //System.err.println("Decoded byte length: " + decomp.length);
+                                    //System.err.println("Decoded byte length: " + resultLength);
                                     if (planarRGB < stripsPerImage) {
     
-                                        for (j = 0; j < decomp.length; j++, i += 4) {
+                                        for (j = 0; j < resultLength; j++, i += 4) {
     
                                             if ((x < xDim) && (y < yDim)) {
     
@@ -7431,7 +7643,7 @@ public class FileTiff extends FileBase {
                                         } // for (j = 0; j < decomp.length; j++, i += 4)
                                     } // if (planarRGB < stripsPerImage)
                                     else if (planarRGB < (2 * stripsPerImage)) {
-                                        for (j = 0; j < decomp.length; j++, i += 4) {
+                                        for (j = 0; j < resultLength; j++, i += 4) {
                                             
                                             if ((x < xDim) && (y < yDim)) {
     
@@ -7452,7 +7664,7 @@ public class FileTiff extends FileBase {
                                         } // for (j = 0; j < decomp.length; j++, i += 4)    
                                     } // else if (planarRGB < (2 * stripsPerImage))
                                     else { // planarRGB >= (2 * stripsPerImage)
-                                        for (j = 0; j < decomp.length; j++, i += 4) {
+                                        for (j = 0; j < resultLength; j++, i += 4) {
                                             
                                             if ((x < xDim) && (y < yDim)) {
     
@@ -7473,7 +7685,7 @@ public class FileTiff extends FileBase {
                                             }
                                         } // for (j = 0; j < decomp.length; j++, i += 4)    
                                     } // else planarRGB >= (2 * stripsPerImage)
-                                } else { // not lzwCompression
+                                } else { // not (lzwCompression ||| zlibCompression)
                                     if (planarRGB < stripsPerImage) {
     
                                         for (j = 0; j < nBytes; j++, i += 4) {
@@ -7570,7 +7782,7 @@ public class FileTiff extends FileBase {
 
                             if (byteBuffer == null) {
 
-                                if (lzwCompression) {
+                                if (lzwCompression || zlibCompression) {
                                     byteBuffer = new byte[tileMaxByteCount];
                                 } else {
                                     byteBuffer = new byte[nBytes];
@@ -7579,6 +7791,9 @@ public class FileTiff extends FileBase {
 
                             // System.err.println("About to read " + nBytes + " bytes");
                             raFile.read(byteBuffer, 0, nBytes);
+                            if (zlibCompression) {
+                                zlibDecompresser.setInput(byteBuffer, 0, nBytes);
+                            }
 
                             // System.err.println("________");
                             progress = slice * xDim * yDim;
@@ -7586,19 +7801,31 @@ public class FileTiff extends FileBase {
                             mod = progressLength / 100;
 
 
-                            if (lzwCompression) {
+                            if (lzwCompression || zlibCompression) {
 
                                 // System.err.println("Read " + nBytes + " from raFile");
                                 if (decomp == null) {
                                     decomp = new byte[tileWidth * tileLength * samplesPerPixel * 2];
                                 }
 
-                                lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                if (lzwCompression) {
+                                    lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                    resultLength = decomp.length;
+                                }
+                                else { // zlibCompression
+                                    try {
+                                        resultLength = zlibDecompresser.inflate(decomp);
+                                    }
+                                    catch (DataFormatException e){
+                                        MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
+                                    }
+                                    zlibDecompresser.reset();
+                                }
 
-                                // System.err.println("Decoded byte length: " + decomp.length);
+                                // System.err.println("Decoded byte length: " + resultLength);
                                 if (samplesPerPixel == 3) {
 
-                                    for (j = 0; j < decomp.length; j += 6) {
+                                    for (j = 0; j < resultLength; j += 6) {
 
                                         if ((x < xDim) && (y < yDim)) {
 
@@ -7636,7 +7863,7 @@ public class FileTiff extends FileBase {
                                 } // if (samplesPerPixel == 3)
                                 else if (samplesPerPixel == 4) {
 
-                                    for (j = 0; j < decomp.length; j += 8) {
+                                    for (j = 0; j < resultLength; j += 8) {
 
                                         if ((x < xDim) && (y < yDim)) {
 
