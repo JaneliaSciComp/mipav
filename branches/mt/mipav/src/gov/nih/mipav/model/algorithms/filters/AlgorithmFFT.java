@@ -675,7 +675,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         float c[] = null;
         int nDims = 2;
         int extents[] = null;
-        int nTests = 2;
+        int nTests = 45;
         int i, j;
         int arrayLength;
         int imageType = ModelStorageBase.FLOAT;
@@ -697,14 +697,18 @@ public class AlgorithmFFT extends AlgorithmBase {
         double error[];
         RandomNumberGen randomGen = new RandomNumberGen();
         ViewUserInterface UI = ViewUserInterface.getReference();
+        boolean foundError[] = new boolean[nTests];
+        int errorsFound = 0;
         
         for (i = 0; i < nTests; i++) {
+            UI.setDataText("Running test = " + i + "\n");
             if (i == 0) {
                 nDims = 2;
                 extents = new int[nDims];
                 extents[0] = 256;
                 extents[1] = 256;
-                imageType = ModelStorageBase.FLOAT;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
             } // if (i == 0)
             else if (i == 1) {
                 nDims = 3;
@@ -712,7 +716,432 @@ public class AlgorithmFFT extends AlgorithmBase {
                 extents[0] = 128;
                 extents[1] = 128;
                 extents[2] = 128;
-                imageType = ModelStorageBase.FLOAT;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                image25D = false;
+            }
+            else if (i == 2) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 256;
+                extents[1] = 256;
+                constructionMethod = GAUSSIAN;  
+            }
+            else if (i == 3) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = GAUSSIAN;
+                image25D = false;
+            }
+            else if (i == 4) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 256;
+                extents[1] = 256;
+                constructionMethod = BUTTERWORTH;
+                butterworthOrder = 1;
+            }
+            else if (i == 5) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                image25D = false;
+            }
+            else if (i == 6) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+            } // if (i == 6)
+            else if (i == 7) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = false;
+            }
+            else if (i == 8) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = GAUSSIAN; 
+                unequalDim = true;
+            }
+            else if (i == 9) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = GAUSSIAN;
+                unequalDim = true;
+                image25D = false;
+            }
+            else if (i == 10) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = BUTTERWORTH;
+                butterworthOrder = 1;
+                unequalDim = true;
+            }
+            else if (i == 11) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = true;
+                image25D = false;
+            }
+            else if (i == 12) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+            } // if (i == 12)
+            else if (i == 13) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = false;
+            }
+            else if (i == 14) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = GAUSSIAN; 
+                unequalDim = false;
+            }
+            else if (i == 15) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = GAUSSIAN;
+                unequalDim = false;
+                image25D = false;
+            }
+            else if (i == 16) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = BUTTERWORTH;
+                butterworthOrder = 1;
+                unequalDim = false;
+            }
+            else if (i == 17) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = false;
+                image25D = false;
+            }
+            else if (i == 18) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+            } // if (i == 18)
+            else if (i == 19) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = false;
+            }
+            else if (i == 20) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = GAUSSIAN; 
+                unequalDim = true;
+            }
+            else if (i == 21) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = GAUSSIAN;
+                unequalDim = true;
+                image25D = false;
+            }
+            else if (i == 22) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = BUTTERWORTH;
+                butterworthOrder = 1;
+                unequalDim = true;
+            }
+            else if (i == 23) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = true;
+                image25D = false;
+            }
+            else if (i == 24) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+            } // if (i == 24)
+            else if (i == 25) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = false;
+            }
+            else if (i == 26) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = GAUSSIAN; 
+                unequalDim = false;
+            }
+            else if (i == 27) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = GAUSSIAN;
+                unequalDim = false;
+                image25D = false;
+            }
+            else if (i == 28) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = BUTTERWORTH;
+                butterworthOrder = 1;
+                unequalDim = false;
+            }
+            else if (i == 29) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = false;
+                image25D = false;
+            }
+            else if (i == 30) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                image25D = true;
+            }
+            else if (i == 31) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = GAUSSIAN;
+                image25D = true;
+            }
+            else if (i == 32) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                image25D = true;
+            }
+            else if (i == 33) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = true;
+            }
+            else if (i == 34) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = GAUSSIAN;
+                unequalDim = true;
+                image25D = true;
+            }
+            else if (i == 35) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = true;
+                image25D = true;
+            }
+            else if (i == 36) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = true;
+            }
+            else if (i == 37) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = GAUSSIAN;
+                unequalDim = false;
+                image25D = true;
+            }
+            else if (i == 38) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = false;
+                image25D = true;
+            }
+            else if (i == 39) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = true;
+            }
+            else if (i == 40) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = GAUSSIAN;
+                unequalDim = true;
+                image25D = true;
+            }
+            else if (i == 41) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = true;
+                image25D = true;
+            }
+            else if (i == 42) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = true;
+            }
+            else if (i == 43) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = GAUSSIAN;
+                unequalDim = false;
+                image25D = true;
+            }
+            else if (i == 44) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = false;
+                image25D = true;
             }
             
             arrayLength = extents[0];
@@ -859,18 +1288,30 @@ public class AlgorithmFFT extends AlgorithmBase {
             
             
             error = rms(a, c, arrayLength);
-            UI.setDataText("Test = " + i + " rms error = " + error[0] + "\n");
+            if (error[0] >= 2.0E-7) {
+                foundError[i] = true;
+            }
+            
             for (j = 0; j < arrayLength; j++) {
                 a[j] = Math.abs(a[j] - c[j]);
             } // for (j = 0; j < n; j++)
 
             shellSort(a);
-            UI.setDataText("10 largest error differences\n");
-            for (j = 0; j < 10; j++) {
-                UI.setDataText("Diff[" + j + "] = " + a[arrayLength-1-j] + "\n");
+            if (a[arrayLength-1] >= 1.0E-6) {
+                foundError[i] = true;
+            }
+            
+            if (foundError[i]) {
+                errorsFound++;
+                UI.setDataText("Test = " + i + " rms error = " + error[0] + "\n");
+                UI.setDataText("Test = " + i + " the 10 largest error differences\n");
+                for (j = 0; j < 10; j++) {
+                    UI.setDataText("Diff[" + j + "] = " + a[arrayLength-1-j] + "\n");
+                }
             }
             
         } // for (i = 0; i < nTests; i++)
+        UI.setDataText("Errors were found in " + errorsFound + " of " + nTests + " tests\n");
         setCompleted(true);
         return;
     }
