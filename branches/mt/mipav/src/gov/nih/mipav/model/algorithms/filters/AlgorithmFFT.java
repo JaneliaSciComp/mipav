@@ -675,7 +675,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         float c[] = null;
         int nDims = 2;
         int extents[] = null;
-        int nTests = 45;
+        int nTests = 90;
         int i, j;
         int arrayLength;
         int imageType = ModelStorageBase.FLOAT;
@@ -700,9 +700,12 @@ public class AlgorithmFFT extends AlgorithmBase {
         boolean foundError[] = new boolean[nTests];
         int errorsFound = 0;
         
+        // The first 45 tests create a destImage
+        // The last 45 tests only use the srcImage
         for (i = 0; i < nTests; i++) {
             UI.setDataText("Running test = " + i + "\n");
             if (i == 0) {
+                createNewImage = true;
                 nDims = 2;
                 extents = new int[nDims];
                 extents[0] = 256;
@@ -1133,6 +1136,448 @@ public class AlgorithmFFT extends AlgorithmBase {
                 image25D = true;
             }
             else if (i == 44) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = false;
+                image25D = true;
+            }
+            if (i == 45) {
+                createNewImage = false;
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 256;
+                extents[1] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+            } // if (i == 45)
+            else if (i == 46) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                image25D = false;
+            }
+            else if (i == 47) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 256;
+                extents[1] = 256;
+                constructionMethod = GAUSSIAN;  
+            }
+            else if (i == 48) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = GAUSSIAN;
+                image25D = false;
+            }
+            else if (i == 49) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 256;
+                extents[1] = 256;
+                constructionMethod = BUTTERWORTH;
+                butterworthOrder = 1;
+            }
+            else if (i == 50) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                image25D = false;
+            }
+            else if (i == 51) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+            } // if (i == 51)
+            else if (i == 52) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = false;
+            }
+            else if (i == 53) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = GAUSSIAN; 
+                unequalDim = true;
+            }
+            else if (i == 54) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = GAUSSIAN;
+                unequalDim = true;
+                image25D = false;
+            }
+            else if (i == 55) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = BUTTERWORTH;
+                butterworthOrder = 1;
+                unequalDim = true;
+            }
+            else if (i == 56) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = true;
+                image25D = false;
+            }
+            else if (i == 57) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+            } // if (i == 57)
+            else if (i == 58) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = false;
+            }
+            else if (i == 59) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = GAUSSIAN; 
+                unequalDim = false;
+            }
+            else if (i == 60) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = GAUSSIAN;
+                unequalDim = false;
+                image25D = false;
+            }
+            else if (i == 61) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = BUTTERWORTH;
+                butterworthOrder = 1;
+                unequalDim = false;
+            }
+            else if (i == 62) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = false;
+                image25D = false;
+            }
+            else if (i == 63) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+            } // if (i == 63)
+            else if (i == 64) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = false;
+            }
+            else if (i == 65) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = GAUSSIAN; 
+                unequalDim = true;
+            }
+            else if (i == 66) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = GAUSSIAN;
+                unequalDim = true;
+                image25D = false;
+            }
+            else if (i == 67) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = BUTTERWORTH;
+                butterworthOrder = 1;
+                unequalDim = true;
+            }
+            else if (i == 68) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = true;
+                image25D = false;
+            }
+            else if (i == 69) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+            } // if (i == 69)
+            else if (i == 70) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = false;
+            }
+            else if (i == 71) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = GAUSSIAN; 
+                unequalDim = false;
+            }
+            else if (i == 72) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = GAUSSIAN;
+                unequalDim = false;
+                image25D = false;
+            }
+            else if (i == 73) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = BUTTERWORTH;
+                butterworthOrder = 1;
+                unequalDim = false;
+            }
+            else if (i == 74) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = false;
+                image25D = false;
+            }
+            else if (i == 75) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                image25D = true;
+            }
+            else if (i == 76) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = GAUSSIAN;
+                image25D = true;
+            }
+            else if (i == 77) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                image25D = true;
+            }
+            else if (i == 78) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = true;
+            }
+            else if (i == 79) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = GAUSSIAN;
+                unequalDim = true;
+                image25D = true;
+            }
+            else if (i == 80) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = true;
+                image25D = true;
+            }
+            else if (i == 81) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = true;
+            }
+            else if (i == 82) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = GAUSSIAN;
+                unequalDim = false;
+                image25D = true;
+            }
+            else if (i == 83) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = false;
+                image25D = true;
+            }
+            else if (i == 84) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = true;
+            }
+            else if (i == 85) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = GAUSSIAN;
+                unequalDim = true;
+                image25D = true;
+            }
+            else if (i == 86) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = true;
+                image25D = true;
+            }
+            else if (i == 87) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = true;
+            }
+            else if (i == 88) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = GAUSSIAN;
+                unequalDim = false;
+                image25D = true;
+            }
+            else if (i == 89) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 59;
