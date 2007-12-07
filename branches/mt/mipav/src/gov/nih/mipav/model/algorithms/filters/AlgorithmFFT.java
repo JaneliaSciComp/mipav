@@ -87,7 +87,6 @@ import java.util.concurrent.CountDownLatch;
  */
 
 public class AlgorithmFFT extends AlgorithmBase {
-	public static int count = 0;
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -2196,7 +2195,7 @@ public class AlgorithmFFT extends AlgorithmBase {
             if (!image25D) {
                 fireProgressStateChanged(-1, null, "Centering data after FFT algorithm ...");
             }
-            prepareDataForCenter(rData, iData, newDimLengths[0], newDimLengths[1], newDimLengths[2]);
+            prepareDataForCenter(rData, iData);
         }
 
         if (!image25D) {
@@ -2299,7 +2298,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 fireProgressStateChanged(-1, null, "Centering data before inverse FFT ...");
             }
 
-            prepareDataForCenter(rData, iData, newDimLengths[0], newDimLengths[3], newDimLengths[2]);
+            prepareDataForCenter(rData, iData);
         }
 
 
@@ -2393,12 +2392,13 @@ public class AlgorithmFFT extends AlgorithmBase {
         final int zdim = (newDimLengths.length == 3)?newDimLengths[2]:1;
 		if ((transformDir == FORWARD) || (transformDir == FILTER)) {
 			fireProgressStateChanged(-1, null, "Centering data before FFT algorithm ...");
-			prepareDataForCenter(rData, iData, xdim, ydim, zdim);
+			prepareDataForCenter(rData, iData);
 		}
 
 		fireProgressStateChanged(-1, null, "Running FFT algorithm ...");
 
-		int nthreads = MipavUtil.getAvailableCores();
+		int nthreads = determineNumberOfThreads();
+		System.out.println("Number of Threads: " + nthreads);
 		if (threadStopped) {
 			return;
 		}
@@ -2493,7 +2493,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         if (transformDir == INVERSE) {
         	fireProgressStateChanged(-1, null, "Centering data after inverse FFT ...");
 
-            prepareDataForCenter(rData, iData, xdim, ydim, zdim);
+            prepareDataForCenter(rData, iData);
         }
 
 		if (transformDir == INVERSE) {
@@ -2567,13 +2567,23 @@ public class AlgorithmFFT extends AlgorithmBase {
 
 	} // end of exec()
 
-    private void prepareDataForCenter(float[] rdata, float[] idata, int xdim, int ydim, int zdim){
+    private void prepareDataForCenter(float[] rdata, float[] idata){
+    	int xdim = newDimLengths[0];
+    	int ydim = newDimLengths[1];
+    	if(ndim == 2){
+			for (int y = 0; y < ydim; y++) {
+				for (int x = 0; x < xdim; x++) {
+					rdata[y*xdim+x] *= Math.pow(-1, x+y);
+				}
+			}
+			return;
+    	}
+    	int zdim = newDimLengths[2];
     	if(image25D){
     		for (int z = 0; z < zdim; z++) {
 				for (int y = 0; y < ydim; y++) {
 					for (int x = 0; x < xdim; x++) {
 						rdata[z*xdim*ydim+y*xdim+x] *= Math.pow(-1, x+y);
-						idata[z*xdim*ydim+y*xdim+x] *= Math.pow(-1, x+y);
 					}
 				}
 			}
@@ -2582,149 +2592,12 @@ public class AlgorithmFFT extends AlgorithmBase {
 				for (int y = 0; y < ydim; y++) {
 					for (int x = 0; x < xdim; x++) {
 						rdata[z*xdim*ydim+y*xdim+x] *= Math.pow(-1, x+y+z);
-						idata[z*xdim*ydim+y*xdim+x] *= Math.pow(-1, x+y+z);
 					}
 				}
 			}
     	}
     }
     
-    public void perform(final float[] rdata, final float[] idata, final int xdim, final int ydim, final int zdim) throws InterruptedException{
-        int nthreads = MipavUtil.getAvailableCores();
-        int direction;
-        if ((transformDir == FORWARD) || (transformDir == FILTER)) {
-            direction = 1;
-        } else {
-            direction = -1;
-        }
-
-    	if(threadStopped){
-    		return;
-    	}
-    	/**
-		 * Initialize the progress step.
-		 */
-    	setProgressStep((float)(1.0/(nthreads * Math.log(xdim * ydim * zdim)/Math.log(2.0))));
-        fireProgressStateChanged(0, srcImage.getImageName(), "Running forward FFTs ...");
- 
-        final CountDownLatch doneSignalX = new CountDownLatch(nthreads);
-        MipavUtil.swapSlices(rdata, idata, xdim, ydim, zdim, MipavConstants.SLICE_YZ);
-        for(int i = 0; i < nthreads; i++){
-            int nslices = zdim / nthreads;
-            final int sliceLen = xdim * ydim;
-            final int start = i * nslices * sliceLen;
-            final int end = start + 1;
-            final int length  = (i + 1)* nslices * sliceLen;
-            final int dir = direction;
-            Runnable task = new Runnable(){
-                public void run(){
-                    doFFT(rdata, idata, start, end, 1, xdim, length, dir);
-                    doneSignalX.countDown();
-                }
-            };
-            MipavUtil.threadPool.execute(task);
-        }
-        doneSignalX.await();
-    	if(threadStopped){
-    		return;
-    	}
-
-        final CountDownLatch doneSignalY = new CountDownLatch(nthreads);
-        MipavUtil.swapSlices(rdata, idata, xdim, ydim, zdim, MipavConstants.SLICE_ZX);
-        for(int i = 0; i < nthreads; i++){
-            int nslices = ydim/nthreads;
-            final int start = i * nslices;
-            final int end  = (i + 1) * nslices;
-            final int dir = direction;
-            Runnable task = new Runnable(){
-                public void run(){
-                    doFFT(rdata, idata, start, end, xdim, xdim*ydim, xdim*ydim*zdim, dir);
-                    doneSignalY.countDown();
-                }
-            };
-            MipavUtil.threadPool.execute(task);
-        }
-        doneSignalY.await();
-    	if(threadStopped){
-    		return;
-    	}
-
-    	final CountDownLatch doneSignalZ = new CountDownLatch(nthreads);
-        MipavUtil.swapSlices(rdata, idata, xdim, ydim, zdim, MipavConstants.SLICE_XY);
-        for(int i = 0; i < nthreads; i++){
-            int nslices = ydim/nthreads;
-            final int start = i * nslices * xdim;
-            final int end  = (i + 1) * nslices * xdim;
-            final int dir = direction;
-            Runnable task = new Runnable(){
-                public void run(){
-                    doFFT(rdata, idata, start, end, xdim*ydim, xdim*ydim*zdim, xdim*ydim*zdim, dir);
-                    doneSignalZ.countDown();
-                }
-            };
-            MipavUtil.threadPool.execute(task);
-        }
-        doneSignalZ.await();
-        
-    	if(threadStopped){
-    		return;
-    	}
-
-        // In the frequency domain so complex data is needed
-        center(rdata, idata);
-
-        fireProgressStateChanged(100, srcImage.getImageName(), "Running forward FFTs ...");
-
-        try {
-            destImage.reallocate(ModelStorageBase.COMPLEX, newDimLengths);
-        } catch (IOException error) {
-            displayError("AlgorithmFFT: IOException on destImage.reallocate");
-            setCompleted(false);
-
-            return;
-        } catch (OutOfMemoryError e) {
-            System.gc();
-            displayError("AlgorithmFFT: Out of memory on destImage.reallocate");
-
-            setCompleted(false);
-
-            return;
-        }
-
-        try {
-
-            // Calculate image minimum and maximum based on magnitude
-            // if logMagDisplay is false or the log10(1 + magnitude) if logMagDisplay
-            // is true
-            destImage.importComplexData(0, rdata, idata, true, logMagDisplay);
-        } catch (IOException error) {
-            displayError("AlgorithmFFT: IOException on destination image import complex data");
-
-
-            setCompleted(false);
-
-            return;
-        } catch (OutOfMemoryError e) {
-            System.gc();
-            displayError("AlgorithmFFT: Out of memory on destination image import complex data");
-
-            setCompleted(false);
-
-            return;
-        }
-        destImage.setOriginalExtents(dimLengths);
-        destImage.setOriginalMinimum(minimum);
-        destImage.setOriginalMaximum(maximum);
-        destImage.setOriginalDoCrop(doCrop);
-
-        if (doCrop) {
-            destImage.setOriginalStart(start);
-            destImage.setOriginalEnd(end);
-        }
-
-        destImage.setHaveWindowed(false);
-        setCompleted(true);
-    }
 
     /**
      * Perform one dimension fast fourier transformation from start slice
@@ -4734,12 +4607,21 @@ public class AlgorithmFFT extends AlgorithmBase {
         return indices;
     }
 
-    public AlgorithmFFT(){
-        
-    }
-    
-    public static void main(String[] argv){
+    private int determineNumberOfThreads(){
+    	int ncores = MipavUtil.getAvailableCores();
+    	if(ndim <= 2){
+    		return 1;
+    	}
+    	int nthreads = newDimLengths[0]*newDimLengths[1]*newDimLengths[2]/(256*256*4);
+    	if(newDimLengths[2] < nthreads){
+    		nthreads = newDimLengths[2];
+    	}
     	
+    	if(ncores < nthreads){
+    		nthreads = ncores;
+    	}
+    	
+    	return nthreads;
     }
 }
 
