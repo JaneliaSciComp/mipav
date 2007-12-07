@@ -6,6 +6,8 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.util.MipavConstants;
 import gov.nih.mipav.util.MipavUtil;
+import gov.nih.mipav.model.algorithms.RandomNumberGen;
+import gov.nih.mipav.view.*;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -250,6 +252,8 @@ public class AlgorithmFFT extends AlgorithmBase {
 
     /** True if zero padding actually performed. */
     private boolean zeroPad;
+    
+    private boolean doSelfTest = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -646,19 +650,290 @@ public class AlgorithmFFT extends AlgorithmBase {
      */
     public void runAlgorithm() {
         long startTime = System.nanoTime();
-
+    
         if (srcImage == null) {
             displayError("Source Image is null");
 
             return;
         } 
-        if (destImage != null) {
+
+        
+        if (doSelfTest) {
+            selfTest();
+        }
+        else if (destImage != null) {
             calcStoreInDestMT();
         } else {
             calcInPlaceMT();
         }
         long endTime = System.nanoTime();
         System.out.println("Start Time: " + startTime + ", End Time: " + endTime + ", Consumed Time: " + (endTime - startTime));
+    }
+    
+    private void selfTest() {
+        float a[] = null;
+        float c[] = null;
+        int nDims = 2;
+        int extents[] = null;
+        int nTests = 2;
+        int i, j;
+        int arrayLength;
+        int imageType = ModelStorageBase.FLOAT;
+        ModelImage forwardImage;
+        boolean createNewImage = true;
+        ModelImage resultImage = null;
+        ModelImage inverseImage = null;
+        int transformDir;
+        boolean logMagDisplay = true;
+        boolean unequalDim = true;;
+        boolean image25D = false;
+        boolean imageCrop = false;
+        int kernelDiameter = 15;
+        int constructionMethod = WINDOW;
+        int butterworthOrder = 1;
+        float freq1 = 0.4f;
+        float freq2 = 0.7f;
+        AlgorithmFFT FFTAlgo;
+        double error[];
+        RandomNumberGen randomGen = new RandomNumberGen();
+        ViewUserInterface UI = ViewUserInterface.getReference();
+        
+        for (i = 0; i < nTests; i++) {
+            if (i == 0) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 256;
+                extents[1] = 256;
+                imageType = ModelStorageBase.FLOAT;
+            } // if (i == 0)
+            else if (i == 1) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                imageType = ModelStorageBase.FLOAT;
+            }
+            
+            arrayLength = extents[0];
+            for (j = 1; j < nDims; j++) {
+                arrayLength *= extents[j];    
+            }
+            
+            a = new float[arrayLength];
+            c = new float[arrayLength];
+            
+            for (j = 0; j < arrayLength; j++) {
+                c[j] = randomGen.genUniformRandomNum(0.0f, 1.0f);
+                a[j] = c[j];
+            } // for (j = 0; j < arrayLength; j++)
+            
+            forwardImage = new ModelImage(imageType, extents, "forwardImage");
+            
+            try {
+                forwardImage.importData(0, a, true);
+            }
+            catch (IOException e) {
+                displayError("IOException on forwardImage.importData(0, a, true)");
+            }
+            
+            forwardImage.setOriginalCropCheckbox(imageCrop);
+
+            String name = forwardImage.getImageName() +  "_FFT";
+            transformDir = FORWARD;
+
+            if (createNewImage)  {
+
+                try {
+                    resultImage = (ModelImage) forwardImage.clone();
+                    resultImage.setImageName(name);
+                    resultImage.resetVOIs();
+
+                    // Make algorithm
+                    FFTAlgo = new AlgorithmFFT(resultImage, forwardImage, transformDir, logMagDisplay, unequalDim, image25D,
+                                               imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
+                                               butterworthOrder);
+                    FFTAlgo.calcStoreInDestMT();
+                    
+                } catch (OutOfMemoryError x) {
+                    displayError("AlgorithmFFT: unable to allocate enough memory");
+
+                    if (resultImage != null) {
+                        resultImage.disposeLocal(); // Clean up memory of result image
+                        resultImage = null;
+                    }
+
+                    return;
+                }
+            } else {
+
+                try {
+
+                    // No need to make new image space because the user has choosen to replace the source image
+                    // Make the algorithm class
+                    FFTAlgo = new AlgorithmFFT(forwardImage, transformDir, logMagDisplay, unequalDim, image25D, imageCrop,
+                                               kernelDiameter, filterType, freq1, freq2, constructionMethod,
+                                               butterworthOrder);
+
+                    FFTAlgo.calcInPlaceMT();
+                } catch (OutOfMemoryError x) {
+                    displayError("Dialog FFT: unable to allocate enough memory");
+
+                    return;
+                }
+            }
+            
+            FFTAlgo.finalize();
+            transformDir = INVERSE;
+            
+            if (createNewImage)  {
+
+                try {
+                    inverseImage = (ModelImage) resultImage.clone();
+                    inverseImage.setImageName(name);
+                    inverseImage.resetVOIs();
+
+                    // Make algorithm
+                    FFTAlgo = new AlgorithmFFT(inverseImage, resultImage, transformDir, logMagDisplay, unequalDim, image25D,
+                                               imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
+                                               butterworthOrder);
+                    FFTAlgo.calcStoreInDestMT();
+                    
+                } catch (OutOfMemoryError x) {
+                    displayError("AlgorithmFFT: unable to allocate enough memory");
+
+                    if (inverseImage != null) {
+                        inverseImage.disposeLocal(); // Clean up memory of result image
+                        inverseImage = null;
+                    }
+
+                    return;
+                }
+                
+                try {
+                    inverseImage.exportData(0, arrayLength, a);
+                }
+                catch(IOException e) {
+                    displayError("IOException error on inverseImage.exportData(0, arrayLength, a)");
+                    return;
+                }
+            } else {
+
+                try {
+
+                    // No need to make new image space because the user has choosen to replace the source image
+                    // Make the algorithm class
+                    FFTAlgo = new AlgorithmFFT(forwardImage, transformDir, logMagDisplay, unequalDim, image25D, imageCrop,
+                                               kernelDiameter, filterType, freq1, freq2, constructionMethod,
+                                               butterworthOrder);
+
+                    FFTAlgo.calcInPlaceMT();
+                } catch (OutOfMemoryError x) {
+                    displayError("Dialog FFT: unable to allocate enough memory");
+
+                    return;
+                }
+                
+                try {
+                    forwardImage.exportData(0, arrayLength, a);
+                }
+                catch(IOException e) {
+                    displayError("IOException error on forwardImage.exportData(0, arrayLength, a)");
+                    return;
+                }
+            }
+            
+            FFTAlgo.finalize();
+            if (forwardImage !=  null) {
+                forwardImage.disposeLocal();
+                forwardImage = null;
+            }
+            if (resultImage != null) {
+                resultImage.disposeLocal();
+                resultImage = null;
+            }
+            if (inverseImage != null) {
+                inverseImage.disposeLocal();
+                inverseImage = null;
+            }
+            
+            
+            error = rms(a, c, arrayLength);
+            UI.setDataText("Test = " + i + " rms error = " + error[0] + "\n");
+            for (j = 0; j < arrayLength; j++) {
+                a[j] = Math.abs(a[j] - c[j]);
+            } // for (j = 0; j < n; j++)
+
+            shellSort(a);
+            UI.setDataText("10 largest error differences\n");
+            for (j = 0; j < 10; j++) {
+                UI.setDataText("Diff[" + j + "] = " + a[arrayLength-1-j] + "\n");
+            }
+            
+        } // for (i = 0; i < nTests; i++)
+        setCompleted(true);
+        return;
+    }
+    
+    private double[] rms(float[] a, float[] c, int n) {
+        // Computes rms error for transform-inverse pair arrays a = transform, inverse results arrays c = original
+        // data n = dimension of arrays a, and c
+
+        // rms errors for a and b arrays
+        double[] error = new double[1];
+        double ssa = 0.0;
+        int j;
+        double amc;
+
+        for (j = 0; j < n; j++) {
+            amc = a[j] - c[j];
+            ssa = (amc * amc) + ssa;
+        }
+
+        error[0] = Math.sqrt(ssa / (double) n);
+
+        return error;
+    }
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  buffer  float [] input buffer to be sorted Sort an array into ascending numerical order by Shell's method
+     *                 Reference: Numerical Recipes in C The Art of Scientific Computing Second Edition by William H.
+     *                 Press, Saul A. Teukolsky, William T. Vetterling, Brian P. Flannery, pp. 331- 332.
+     */
+    private void shellSort(float[] buffer) {
+        int i, j, inc;
+        float v;
+        inc = 1;
+
+        int end = buffer.length;
+
+        do {
+            inc *= 3;
+            inc++;
+        } while (inc <= end);
+
+        do {
+            inc /= 3;
+
+            for (i = inc + 1; i <= end; i++) {
+                v = buffer[i - 1];
+                j = i;
+
+                while (buffer[j - inc - 1] > v) {
+                    buffer[j - 1] = buffer[j - inc - 1];
+                    j -= inc;
+
+                    if (j <= inc) {
+                        break;
+                    }
+                }
+
+                buffer[j - 1] = v;
+            }
+        } while (inc > 1);
+
     }
 
     /**
