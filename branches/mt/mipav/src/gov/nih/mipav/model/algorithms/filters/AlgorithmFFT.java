@@ -253,7 +253,7 @@ public class AlgorithmFFT extends AlgorithmBase {
     /** True if zero padding actually performed. */
     private boolean zeroPad;
     
-    private boolean doSelfTest = true;
+    private boolean doSelfTest = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
