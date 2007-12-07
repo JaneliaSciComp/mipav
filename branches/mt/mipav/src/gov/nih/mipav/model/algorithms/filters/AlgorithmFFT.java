@@ -653,25 +653,10 @@ public class AlgorithmFFT extends AlgorithmBase {
 
             return;
         } 
-
-        
-
         if (destImage != null) {
-//            calcStoreInDest();
-            try{
-                makeComplexData();
-                perform(realData, imagData, newDimLengths[0], newDimLengths[1], newDimLengths[2]);
-            }catch(InterruptedException e){
-                
-            }
+            calcStoreInDestMT();
         } else {
-            try{
-                makeComplexData();
-                perform(realData, imagData, newDimLengths[0], newDimLengths[1], newDimLengths[2]);
-            }catch(InterruptedException e){
-                
-            }
-//            calcInPlace();
+            calcInPlaceMT();
         }
         long endTime = System.nanoTime();
         System.out.println("Start Time: " + startTime + ", End Time: " + endTime + ", Consumed Time: " + (endTime - startTime));
@@ -750,50 +735,189 @@ public class AlgorithmFFT extends AlgorithmBase {
         } // end of if ((transformDir == FILTER) && (constructionMethod == WINDOW))
 
         if ((transformDir == FORWARD) || (transformDir == INVERSE)) {
+        	exec(realData, imagData, 0);
+        } // if ((transformDir == FORWARD) || (transformDir == INVERSE))
 
+        if ((transformDir == FILTER) && (constructionMethod == GAUSSIAN)) {
+            makeGaussianFilter(f1);
+        } // end of if ((transformDir == FILTER) && (constructionMethod == GAUSSIAN))
+
+        if ((transformDir == FILTER) && (constructionMethod == GABOR)) {
+            makeGaborFilter(freqU, freqV, sigmaU, sigmaV, theta);
+        }
+
+        if ((transformDir == FILTER) && (constructionMethod == BUTTERWORTH)) {
+            makeButterworthFilter(f1, f2);
+        } // end of if ((transformDir == FILTER)&& (constructionMethod == BUTTERWORTH))
+
+        if ((transformDir == FILTER) && (constructionMethod == WINDOW)) {
+
+            // The image FFT is multiplied by the filter FFT.
             if (image25D) {
-                realSubsetData = new float[newSliceSize];
-                imagSubsetData = new float[newSliceSize];
-
-                if (transformDir == FORWARD) {
-                    fireProgressStateChanged(0, srcImage.getImageName(), "Running forward FFTs ...");
-                } else {
-                    fireProgressStateChanged(0, srcImage.getImageName(), "Running inverse FFTs ...");
-                }
 
                 for (z = 0; z < newDimLengths[2]; z++) {
 
                     for (i = 0; i < newSliceSize; i++) {
-                        realSubsetData[i] = realData[(z * newSliceSize) + i];
-                        imagSubsetData[i] = imagData[(z * newSliceSize) + i];
+                        tempR = (realData[(z * newSliceSize) + i] * realKernelData[i]) -
+                                (imagData[(z * newSliceSize) + i] * imagKernelData[i]);
+                        imagData[(z * newSliceSize) + i] = (imagData[(z * newSliceSize) + i] * realKernelData[i]) +
+                                                           (realData[(z * newSliceSize) + i] * imagKernelData[i]);
+                        realData[(z * newSliceSize) + i] = tempR;
                     }
-
-                    exec(realSubsetData, imagSubsetData, z);
-
-                    fireProgressStateChanged((Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 80))), null, null);
-                   
-
-                    if (transformDir == FORWARD) {
-
-                        for (i = 0; i < newSliceSize; i++) {
-                            realData[(z * newSliceSize) + i] = realSubsetData[i];
-                            imagData[(z * newSliceSize) + i] = imagSubsetData[i];
-                        }
-                    } // if (tranformDir == FORWARD)
-                } // for (z = 0; z < newDimLengths[2]; z++)
-
-                realSubsetData = null;
-                imagSubsetData = null;
+                }
             } // if (image25D)
-            else { // not image25D
-                exec(realData, imagData, 0);
+            else { // not image25D)
+
+                for (i = 0; i < newArrayLength; i++) {
+                    tempR = (realData[i] * realKernelData[i]) - (imagData[i] * imagKernelData[i]);
+                    imagData[i] = (imagData[i] * realKernelData[i]) + (realData[i] * imagKernelData[i]);
+                    realData[i] = tempR;
+                }
+            } // else not image25D
+        } // end of if ((transformDir == FILTER) && (constructionMethod == WINDOW))
+
+        if ((transformDir == FILTER)) {
+            fireProgressStateChanged(-1, null, "Storing filtered FFT in source image ...");
+        }
+
+        if (transformDir == FORWARD) {
+            srcImage.setOriginalExtents(dimLengths);
+            srcImage.setOriginalMinimum(minimum);
+            srcImage.setOriginalMaximum(maximum);
+            srcImage.setOriginalDoCrop(doCrop);
+
+            if (doCrop) {
+                srcImage.setOriginalStart(start);
+                srcImage.setOriginalEnd(end);
             }
+
+            srcImage.setHaveWindowed(false);
+
+            fireProgressStateChanged(-1, null, "Storing FFT in source image ...");
+            
+        } // end of if (transformDir == FORWARD)
+
+        if (transformDir == FILTER) {
+
+            if (constructionMethod == WINDOW) {
+                srcImage.setHaveWindowed(true);
+            } else {
+                srcImage.setHaveWindowed(false);
+            }
+        } // end of if (transformDir == FILTER)
+
+        if ((transformDir == FORWARD) || (transformDir == FILTER)) {
+
+            // In the frequency domain so complex data is needed
+            try {
+                srcImage.reallocate(ModelStorageBase.COMPLEX, newDimLengths);
+            } catch (IOException error) {
+                displayError("AlgorithmFFT: IOException on srcImage.reallocate");
+
+                setCompleted(false);
+
+                return;
+            } catch (OutOfMemoryError e) {
+                System.gc();
+                displayError("AlgorithmFFT: Out of memory on srcImage.reallocate");
+
+                setCompleted(false);
+
+                return;
+            }
+
+            try {
+
+                // Calculate image minimum and maximum based on magnitude
+                // if logMagDisplay is false or the log10(1 + magnitude) if logMagDisplay
+                // is true
+                srcImage.importComplexData(0, realData, imagData, true, logMagDisplay);
+            } catch (IOException error) {
+                displayError("AlgorithmFFT: IOException on source image import complex data");
+
+                setCompleted(false);
+
+                return;
+            } catch (OutOfMemoryError e) {
+                System.gc();
+                displayError("AlgorithmFFT: Out of memory on source image import complex data");
+
+                setCompleted(false);
+
+                return;
+            }
+        } // end of if ((transformDir == FORWARD)|| (transformDir == FILTER))
+        else if (transformDir == INVERSE) {
+            fireProgressStateChanged(-1, null, "Storing inverse FFT in source image ...");
+            
+            // back in the spatial domain so only realData is now present
+            try {
+                srcImage.reallocate(ModelStorageBase.FLOAT, originalDimLengths);
+            } catch (IOException error) {
+                displayError("AlgorithmFFT: IOException on srcImage.reallocate");
+
+                setCompleted(false);
+
+                return;
+            } catch (OutOfMemoryError e) {
+                System.gc();
+                displayError("AlgorithmFFT: Out of memory on srcImage.reallocate");
+
+                setCompleted(false);
+
+                return;
+            }
+
+            try {
+                srcImage.importData(0, finalData, true);
+            } catch (IOException error) {
+                displayError("AlgorithmFFT: IOException on source image import data");
+
+                setCompleted(false);
+
+                return;
+            } catch (OutOfMemoryError e) {
+                System.gc();
+                displayError("AlgorithmFFT: Out of memory on source image import data");
+
+                setCompleted(false);
+
+                return;
+            }
+        } // end of else if (transformDir == INVERSE)
+
+
+        setCompleted(true);
+    }
+
+    private void calcInPlaceMT() {
+
+        int i;
+        float tempR;
+        float[] realSubsetData;
+        float[] imagSubsetData;
+        int z;
+
+        makeComplexData();
+
+        if ((transformDir == FILTER) && (constructionMethod == WINDOW)) {
+
+            // The filter kernel is constructed.
+            makeKernelData();
+
+            // The filter FFT is created
+            execMT(realKernelData, imagKernelData, 0);
 
             if (threadStopped) {
                 finalize();
 
                 return;
             }
+
+        } // end of if ((transformDir == FILTER) && (constructionMethod == WINDOW))
+
+        if ((transformDir == FORWARD) || (transformDir == INVERSE)) {
+        	execMT(realData, imagData, 0);
         } // if ((transformDir == FORWARD) || (transformDir == INVERSE))
 
         if ((transformDir == FILTER) && (constructionMethod == GAUSSIAN)) {
@@ -977,43 +1101,199 @@ public class AlgorithmFFT extends AlgorithmBase {
         } // end of if ((transformDir == FILTER) && (constructionMethod == WINDOW))
 
         if ((transformDir == FORWARD) || (transformDir == INVERSE)) {
+                exec(realData, imagData, 0);
+        } // if ((transformDir == FORWARD) || (transformDir == INVERSE))
 
+        if ((transformDir == FILTER) && (constructionMethod == GAUSSIAN)) {
+            makeGaussianFilter(f1);
+        } // end of if ((transformDir == FILTER) && (constructionMethod == GAUSSIAN))
+
+        if ((transformDir == FILTER) && (constructionMethod == GABOR)) {
+            makeGaborFilter(freqU, freqV, sigmaU, sigmaV, theta);
+        }
+
+        if ((transformDir == FILTER) && (constructionMethod == BUTTERWORTH)) {
+            makeButterworthFilter(f1, f2);
+        } // end of if ((transformDir == FILTER)&& (constructionMethod == BUTTERWORTH))
+
+        if ((transformDir == FILTER) && (constructionMethod == WINDOW)) {
+
+            // The image FFT is multiplied by the filter FFT.
             if (image25D) {
-                realSubsetData = new float[newSliceSize];
-                imagSubsetData = new float[newSliceSize];
-                
-                fireProgressStateChanged(0, srcImage.getImageName(), "Running forward FFTs ...");
 
                 for (z = 0; z < newDimLengths[2]; z++) {
 
                     for (i = 0; i < newSliceSize; i++) {
-                        realSubsetData[i] = realData[(z * newSliceSize) + i];
-                        imagSubsetData[i] = imagData[(z * newSliceSize) + i];
+                        tempR = (realData[(z * newSliceSize) + i] * realKernelData[i]) -
+                                (imagData[(z * newSliceSize) + i] * imagKernelData[i]);
+                        imagData[(z * newSliceSize) + i] = (imagData[(z * newSliceSize) + i] * realKernelData[i]) +
+                                                           (realData[(z * newSliceSize) + i] * imagKernelData[i]);
+                        realData[(z * newSliceSize) + i] = tempR;
                     }
-
-                    exec(realSubsetData, imagSubsetData, z);
-
-                    fireProgressStateChanged((Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 80))), srcImage.getImageName(), "Running forward FFTs ...");
-                 
-                    if (transformDir == FORWARD) {
-
-                        for (i = 0; i < newSliceSize; i++) {
-                            realData[(z * newSliceSize) + i] = realSubsetData[i];
-                            imagData[(z * newSliceSize) + i] = imagSubsetData[i];
-                        }
-                    } // if (tranformDir == FORWARD)
-                } // for (z = 0; z < newDimLengths[2]; z++)
-
-                realSubsetData = null;
-                imagSubsetData = null;
+                }
             } // if (image25D)
-            else { // not image25D
-                exec(realData, imagData, 0);
+            else { // not image25D)
+
+                for (i = 0; i < newArrayLength; i++) {
+                    tempR = (realData[i] * realKernelData[i]) - (imagData[i] * imagKernelData[i]);
+                    imagData[i] = (imagData[i] * realKernelData[i]) + (realData[i] * imagKernelData[i]);
+                    realData[i] = tempR;
+                }
             } // else not image25D
+        } // end of if ((transformDir == FILTER) && (constructionMethod == WINDOW))
+
+        if (transformDir == FILTER) {
+            fireProgressStateChanged(-1, null, "Storing filtered FFT in destination image ...");
+        }
+
+        if (transformDir == FORWARD) {
+            fireProgressStateChanged(-1, null, "Storing FFT in destination image ...");
+        }
+
+        if ((transformDir == FORWARD) || (transformDir == FILTER)) {
+
+            // In the frequency domain so complex data is needed
+            try {
+                destImage.reallocate(ModelStorageBase.COMPLEX, newDimLengths);
+            } catch (IOException error) {
+                displayError("AlgorithmFFT: IOException on destImage.reallocate");
+                setCompleted(false);
+
+                return;
+            } catch (OutOfMemoryError e) {
+                System.gc();
+                displayError("AlgorithmFFT: Out of memory on destImage.reallocate");
+
+                setCompleted(false);
+
+                return;
+            }
+
+            try {
+
+                // Calculate image minimum and maximum based on magnitude
+                // if logMagDisplay is false or the log10(1 + magnitude) if logMagDisplay
+                // is true
+                destImage.importComplexData(0, realData, imagData, true, logMagDisplay);
+            } catch (IOException error) {
+                displayError("AlgorithmFFT: IOException on destination image import complex data");
+
+
+                setCompleted(false);
+
+                return;
+            } catch (OutOfMemoryError e) {
+                System.gc();
+                displayError("AlgorithmFFT: Out of memory on destination image import complex data");
+
+                setCompleted(false);
+
+                return;
+            }
+
+            if (transformDir == FORWARD) {
+                destImage.setOriginalExtents(dimLengths);
+                destImage.setOriginalMinimum(minimum);
+                destImage.setOriginalMaximum(maximum);
+                destImage.setOriginalDoCrop(doCrop);
+
+                if (doCrop) {
+                    destImage.setOriginalStart(start);
+                    destImage.setOriginalEnd(end);
+                }
+
+                destImage.setHaveWindowed(false);
+            } else if (transformDir == FILTER) {
+                destImage.setOriginalExtents(srcImage.getOriginalExtents());
+                destImage.setOriginalMinimum(srcImage.getOriginalMinimum());
+                destImage.setOriginalMaximum(srcImage.getOriginalMaximum());
+                doCrop = srcImage.getOriginalDoCrop();
+                destImage.setOriginalDoCrop(doCrop);
+
+                if (doCrop) {
+                    destImage.setOriginalStart(srcImage.getOriginalStart());
+                    destImage.setOriginalEnd(srcImage.getOriginalEnd());
+                }
+
+                if (constructionMethod == WINDOW) {
+                    destImage.setHaveWindowed(true);
+                } else {
+                    destImage.setHaveWindowed(false);
+                }
+            }
+
+        } // end of if ((transformDir == FORWARD) || (transformDir == FILTER))
+        else if (transformDir == INVERSE) {
+            fireProgressStateChanged(-1, null, "Storing inverse FFT in destination image ...");
+          
+            // back in the spatial domain so only realData is now present
+            try {
+                destImage.reallocate(ModelStorageBase.FLOAT, originalDimLengths);
+            } catch (IOException error) {
+                displayError("AlgorithmFFT: IOException on destImage.reallocate");
+
+                setCompleted(false);
+
+                return;
+            } catch (OutOfMemoryError e) {
+                System.gc();
+                displayError("AlgorithmFFT: Out of memory on destImage.reallocate");
+
+                setCompleted(false);
+
+                return;
+            }
+
+            try {
+                destImage.importData(0, finalData, true);
+            } catch (IOException error) {
+                displayError("AlgorithmFFT: IOException on destination image import data");
+
+                setCompleted(false);
+
+                return;
+            } catch (OutOfMemoryError e) {
+                System.gc();
+                displayError("AlgorithmFFT: Out of memory on destination image import data");
+
+                setCompleted(false);
+
+                return;
+            }
+
+        } // end of else if (transformDir == INVERSE)
+
+        fireProgressStateChanged(100, null, null);
+        setCompleted(true);
+    }
+
+    private void calcStoreInDestMT() {
+        int i;
+        float tempR;
+        int z;
+
+        makeComplexData();
+
+        if ((transformDir == FILTER) && (constructionMethod == WINDOW)) {
+
+            // The filter kernel is constructed.
+            makeKernelData();
+
+            // The filter FFT is created
+            execMT(realKernelData, imagKernelData, 0);
 
             if (threadStopped) {
                 finalize();
 
+                return;
+            }
+        } // end of if ((transformDir == FILTER) && (constructionMethod == WINDOW))
+
+        if ((transformDir == FORWARD) || (transformDir == INVERSE)) {
+        	execMT(realData, imagData, 0);
+
+            if (threadStopped) {
+                finalize();
                 return;
             }
         } // if ((transformDir == FORWARD) || (transformDir == INVERSE))
@@ -1745,11 +2025,11 @@ public class AlgorithmFFT extends AlgorithmBase {
             originalArrayLength *= originalDimLengths[i];
         }
 
-        if (image25D) {
-            aLength = originalDimLengths[0] * originalDimLengths[1];
-        } else {
+//        if (image25D) {
+//            aLength = originalDimLengths[0] * originalDimLengths[1];
+//        } else {
             aLength = originalArrayLength;
-        }
+//        }
 
         try {
             tempData = new float[aLength];
@@ -1768,7 +2048,7 @@ public class AlgorithmFFT extends AlgorithmBase {
             for (i = 0; i < originalDimLengths[0]; i++) {
                 tempData[i] = rData[i];
             }
-        } else if ((ndim == 2) || (image25D)) {
+        } else if (ndim == 2) {
 
             for (j = 0; j < originalDimLengths[1]; j++) {
 
@@ -1898,19 +2178,25 @@ public class AlgorithmFFT extends AlgorithmBase {
 
         if (image25D) {
             dimNumber = 2;
-            newLength = newDimLengths[0] * newDimLengths[1];
         } else {
             dimNumber = ndim;
-            newLength = newArrayLength;
         }
+        newLength = newArrayLength;
 
-        if (transformDir == INVERSE) {
+//        if (transformDir == INVERSE) {
+//
+//            if (!image25D) {
+//                fireProgressStateChanged(-1, null, "Centering data before inverse FFT ...");
+//            }
+//
+//            center(rData, iData);
+//        }
+        if ((transformDir == FORWARD) || (transformDir == FILTER)) {
 
             if (!image25D) {
-                fireProgressStateChanged(-1, null, "Centering data before inverse FFT ...");
+                fireProgressStateChanged(-1, null, "Centering data after FFT algorithm ...");
             }
-
-            center(rData, iData);
+            prepareDataForCenter(rData, iData, newDimLengths[0], newDimLengths[1], newDimLengths[2]);
         }
 
         if (!image25D) {
@@ -2000,14 +2286,22 @@ public class AlgorithmFFT extends AlgorithmBase {
             return;
         }
 
-        if ((transformDir == FORWARD) || (transformDir == FILTER)) {
+//        if ((transformDir == FORWARD) || (transformDir == FILTER)) {
+//
+//            if (!image25D) {
+//                fireProgressStateChanged(-1, null, "Centering data after FFT algorithm ...");
+//            }
+//            center(rData, iData);
+//        }
+        if (transformDir == INVERSE) {
 
             if (!image25D) {
-                fireProgressStateChanged(-1, null, "Centering data after FFT algorithm ...");
+                fireProgressStateChanged(-1, null, "Centering data before inverse FFT ...");
             }
 
-            center(rData, iData);
+            prepareDataForCenter(rData, iData, newDimLengths[0], newDimLengths[3], newDimLengths[2]);
         }
+
 
         if (transformDir == INVERSE) {
             /* When the srcImage = fft(imageA) fft(imageB), then on inverse,
@@ -2071,16 +2365,245 @@ public class AlgorithmFFT extends AlgorithmBase {
 
     } // end of exec()
 
+    /**
+     * The multi-threading version of FFT algorithm.
+     * @param rData
+     * @param iData
+     * @param z
+     */
+    private void execMT(final float[] rData, final float[] iData, int z){
+        int direction;
+        boolean haveWindowed;
+        int dimNumber;
+        int newLength;
+        if ((transformDir == FORWARD) || (transformDir == FILTER)) {
+            direction = 1;
+        } else {
+            direction = -1;
+        }
+
+        if (image25D) {
+            dimNumber = 2;
+        } else {
+            dimNumber = ndim;
+        }
+        newLength = newArrayLength;
+        final int xdim = newDimLengths[0];
+        final int ydim = newDimLengths[1];
+        final int zdim = (newDimLengths.length == 3)?newDimLengths[2]:1;
+		if ((transformDir == FORWARD) || (transformDir == FILTER)) {
+			fireProgressStateChanged(-1, null, "Centering data before FFT algorithm ...");
+			prepareDataForCenter(rData, iData, xdim, ydim, zdim);
+		}
+
+		fireProgressStateChanged(-1, null, "Running FFT algorithm ...");
+
+		int nthreads = MipavUtil.getAvailableCores();
+		if (threadStopped) {
+			return;
+		}
+		/**
+		 * Initialize the progress step.
+		 */
+		if(image25D){
+			setProgressStep((float) (100.0 / (nthreads * Math.log(xdim * ydim) / Math.log(2.0))));
+		}else{
+			setProgressStep((float) (100.0 / (nthreads * Math.log(xdim * ydim * zdim) / Math.log(2.0))));
+		}
+
+		final CountDownLatch doneSignalX = new CountDownLatch(nthreads);
+		MipavUtil.swapSlices(rData, iData, xdim, ydim, zdim, MipavConstants.SLICE_YZ);
+		for (int i = 0; i < nthreads; i++) {
+			int nslices = zdim / nthreads;
+			final int sliceLen = xdim * ydim;
+			final int start = i * nslices * sliceLen;
+			final int end = start + 1;
+			final int length = (i + 1) * nslices * sliceLen;
+			final int dir = direction;
+			Runnable task = new Runnable() {
+				public void run() {
+					doFFT(rData, iData, start, end, 1, xdim, length, dir);
+					doneSignalX.countDown();
+				}
+			};
+			MipavUtil.threadPool.execute(task);
+		}
+		try {
+			doneSignalX.await();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		if (threadStopped) {
+			return;
+		}
+
+		final CountDownLatch doneSignalY = new CountDownLatch(nthreads);
+		MipavUtil.swapSlices(rData, iData, xdim, ydim, zdim,
+				MipavConstants.SLICE_ZX);
+		for (int i = 0; i < nthreads; i++) {
+			int nslices = ydim / nthreads;
+			final int start = i * nslices;
+			final int end = (i + 1) * nslices;
+			final int dir = direction;
+			Runnable task = new Runnable() {
+				public void run() {
+					doFFT(rData, iData, start, end, xdim, xdim * ydim, xdim
+							* ydim * zdim, dir);
+					doneSignalY.countDown();
+				}
+			};
+			MipavUtil.threadPool.execute(task);
+		}
+		try {
+			doneSignalY.await();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		if (threadStopped) {
+			return;
+		}
+		
+		if (dimNumber == 3) {
+			final CountDownLatch doneSignalZ = new CountDownLatch(nthreads);
+			MipavUtil.swapSlices(rData, iData, xdim, ydim, zdim, MipavConstants.SLICE_XY);
+			for (int i = 0; i < nthreads; i++) {
+				int nslices = ydim / nthreads;
+				final int start = i * nslices * xdim;
+				final int end = (i + 1) * nslices * xdim;
+				final int dir = direction;
+				Runnable task = new Runnable() {
+					public void run() {
+						doFFT(rData, iData, start, end, xdim * ydim, xdim
+								* ydim * zdim, xdim * ydim * zdim, dir);
+						doneSignalZ.countDown();
+					}
+				};
+				MipavUtil.threadPool.execute(task);
+			}
+			try{
+				doneSignalZ.await();
+			}catch(InterruptedException e){
+				e.printStackTrace();
+			}
+		}
+		if (threadStopped) {
+			return;
+		}
+
+        if (transformDir == INVERSE) {
+        	fireProgressStateChanged(-1, null, "Centering data after inverse FFT ...");
+
+            prepareDataForCenter(rData, iData, xdim, ydim, zdim);
+        }
+
+		if (transformDir == INVERSE) {
+			/*
+			 * When the srcImage = fft(imageA) fft(imageB), then on inverse,
+			 * recenter:
+			 */
+			if (srcImage.getConvolve() == true) {
+				center(rData, iData);
+			}
+			for (int i = 0; i < newLength; i++) {
+				if(image25D){
+					rData[i] = rData[i] / (xdim*ydim);
+					iData[i] = iData[i] / (xdim*ydim);
+				}else{
+					rData[i] = rData[i] / newLength;
+					iData[i] = iData[i] / newLength;
+				}
+			}
+
+			haveWindowed = srcImage.getHaveWindowed();
+
+			if (haveWindowed == true) {
+
+				// shift each dimension back to the start by (kDim - 1)/2
+				shiftBack(rData);
+			}
+
+			originalDimLengths = srcImage.getOriginalExtents();
+
+			// Do edge stripping to restore the original dimensions the source
+			// image had
+			// before the forward FFT
+			if (!image25D) {
+				fireProgressStateChanged(-1, null,
+						"Zero stripping data after inverse FFT ...");
+			}
+
+			edgeStrip(rData, z);
+
+			if ((!image25D) || (z == (dimLengths[2] - 1))) {
+				doCrop = srcImage.getOriginalDoCrop();
+
+				if (doCrop) {
+					zeroAround();
+					/*
+					 * When the srcImage = fft(imageA) fft(imageB), then on
+					 * inverse, recenter:
+					 */
+					if (srcImage.getConvolve() == true) {
+						zeroAround();
+					}
+				}
+
+				minimum = srcImage.getOriginalMinimum();
+				maximum = srcImage.getOriginalMaximum();
+
+				for (int i = 0; i < originalArrayLength; i++) {
+
+					if (finalData[i] > maximum) {
+						finalData[i] = maximum;
+					}
+
+					if (finalData[i] < minimum) {
+						finalData[i] = minimum;
+					}
+				}
+			} // if ((!image25D) || (z == dimLengths[2] - 1))
+
+		} // end of if (transformDir == INVERSE)
+
+	} // end of exec()
+
+    private void prepareDataForCenter(float[] rdata, float[] idata, int xdim, int ydim, int zdim){
+    	if(image25D){
+    		for (int z = 0; z < zdim; z++) {
+				for (int y = 0; y < ydim; y++) {
+					for (int x = 0; x < xdim; x++) {
+						rdata[z*xdim*ydim+y*xdim+x] *= Math.pow(-1, x+y);
+						idata[z*xdim*ydim+y*xdim+x] *= Math.pow(-1, x+y);
+					}
+				}
+			}
+    	}else{
+    		for (int z = 0; z < zdim; z++) {
+				for (int y = 0; y < ydim; y++) {
+					for (int x = 0; x < xdim; x++) {
+						rdata[z*xdim*ydim+y*xdim+x] *= Math.pow(-1, x+y+z);
+						idata[z*xdim*ydim+y*xdim+x] *= Math.pow(-1, x+y+z);
+					}
+				}
+			}
+    	}
+    }
+    
     public void perform(final float[] rdata, final float[] idata, final int xdim, final int ydim, final int zdim) throws InterruptedException{
         int nthreads = MipavUtil.getAvailableCores();
-//        int n = xdim % ncores;
-//        int length = 0;
+        int direction;
+        if ((transformDir == FORWARD) || (transformDir == FILTER)) {
+            direction = 1;
+        } else {
+            direction = -1;
+        }
+
     	if(threadStopped){
     		return;
     	}
     	/**
-    	 * Initialize the progress step.
-    	 */
+		 * Initialize the progress step.
+		 */
     	setProgressStep((float)(1.0/(nthreads * Math.log(xdim * ydim * zdim)/Math.log(2.0))));
         fireProgressStateChanged(0, srcImage.getImageName(), "Running forward FFTs ...");
  
@@ -2092,9 +2615,10 @@ public class AlgorithmFFT extends AlgorithmBase {
             final int start = i * nslices * sliceLen;
             final int end = start + 1;
             final int length  = (i + 1)* nslices * sliceLen;
+            final int dir = direction;
             Runnable task = new Runnable(){
                 public void run(){
-                    doFFT(rdata, idata, start, end, 1, xdim, length);
+                    doFFT(rdata, idata, start, end, 1, xdim, length, dir);
                     doneSignalX.countDown();
                 }
             };
@@ -2111,9 +2635,10 @@ public class AlgorithmFFT extends AlgorithmBase {
             int nslices = ydim/nthreads;
             final int start = i * nslices;
             final int end  = (i + 1) * nslices;
+            final int dir = direction;
             Runnable task = new Runnable(){
                 public void run(){
-                    doFFT(rdata, idata, start, end, xdim, xdim*ydim, xdim*ydim*zdim);
+                    doFFT(rdata, idata, start, end, xdim, xdim*ydim, xdim*ydim*zdim, dir);
                     doneSignalY.countDown();
                 }
             };
@@ -2130,9 +2655,10 @@ public class AlgorithmFFT extends AlgorithmBase {
             int nslices = ydim/nthreads;
             final int start = i * nslices * xdim;
             final int end  = (i + 1) * nslices * xdim;
+            final int dir = direction;
             Runnable task = new Runnable(){
                 public void run(){
-                    doFFT(rdata, idata, start, end, xdim*ydim, xdim*ydim*zdim, xdim*ydim*zdim);
+                    doFFT(rdata, idata, start, end, xdim*ydim, xdim*ydim*zdim, xdim*ydim*zdim, dir);
                     doneSignalZ.countDown();
                 }
             };
@@ -2234,36 +2760,29 @@ public class AlgorithmFFT extends AlgorithmBase {
      * @param endDist       the end distance between two adjacent pixels from the FFT algorithm
      * @param length        the length for each slice.
      */
-    private void doFFT(float[] rdata, float[] idata, int start, int end, int startDist, int endDist, int length) {
+    private void doFFT(float[] rdata, float[] idata, int start, int end, int startDist, int endDist, int length, int direction) {
     	if(threadStopped){
     		return;
     	}
-
-    	count++;
-    	long startTime = System.nanoTime();
-    	int i1 = 0, i2 = 0, i3 = 0, i4 = 0;
+    	float progressStep = getProgressStep();
         for (int l = startDist; l < endDist; l <<= 1) {
-        	i1++;
-        	double delta = 2.0 * Math.PI / (l << 1) * startDist;
+        	double delta = 2.0 * Math.PI / (l << 1) * direction * startDist;
             double angle = 0;
             for (int i = 0; i < l; i += startDist) {
-            	i2++;
                 double wtImag = Math.sin(angle);
                 double wtReal = Math.cos(angle);
                 angle += delta;
                 for(int j = start; j < end; j++){
-                	i3++;
                     int step = l << 1;
                     for (int p = j + i; p < length; p += step) {
                     	if(threadStopped){
                     		return;
                     	}
-                    	i4++;
                         int k = p + l;
                         float tempReal = rdata[k];
                         float tempImag = idata[k];
-                        float imag = (float) ((tempImag * wtReal) + (tempReal * wtImag));
-                        float real = (float) ((tempReal * wtReal) - (tempImag * wtImag));
+                        float imag = (float) ((tempImag * wtReal) - (tempReal * wtImag));
+                        float real = (float) ((tempReal * wtReal) + (tempImag * wtImag));
                         rdata[k] = rdata[p] - real;
                         idata[k] = idata[p] - imag;
                         rdata[p] = rdata[p] + real;
@@ -2271,13 +2790,9 @@ public class AlgorithmFFT extends AlgorithmBase {
                     }
                 }
             }
-            makeProgress(getProgressStep());
-            fireProgressStateChanged(getProgress(), srcImage.getImageName(), "Running forward FFTs ...");
+            makeProgress(progressStep);
+            fireProgressStateChanged((int)getProgress(), null, null);
         }
-        long endTime = System.nanoTime();
-        System.out.println("Start Time: " + startTime + ", End Time: " + endTime + ", Consumed Time: " + (endTime - startTime));
-        System.out.println(i1 + ", " + i2 + ", " + i3 + ", " + i4);
-        System.out.println("The number of doFFT being called: " + count);
     }
 
     /**
