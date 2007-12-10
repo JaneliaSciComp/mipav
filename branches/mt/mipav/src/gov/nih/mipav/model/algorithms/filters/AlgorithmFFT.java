@@ -253,7 +253,7 @@ public class AlgorithmFFT extends AlgorithmBase {
     /** True if zero padding actually performed. */
     private boolean zeroPad;
     
-    private boolean doSelfTest = false;
+    private boolean doSelfTest = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -673,9 +673,14 @@ public class AlgorithmFFT extends AlgorithmBase {
     private void selfTest() {
         float a[] = null;
         float c[] = null;
+        float newA[] = null;
+        float newC[] = null;
+        int x, y, z;
         int nDims = 2;
         int extents[] = null;
-        int nTests = 90;
+        int sliceSize;
+        int newExtents[] = null;
+        int nTests = 120;
         int i, j;
         int arrayLength;
         int imageType = ModelStorageBase.FLOAT;
@@ -695,16 +700,26 @@ public class AlgorithmFFT extends AlgorithmBase {
         float freq2 = 0.7f;
         AlgorithmFFT FFTAlgo;
         double error[];
+        boolean  doCrop = false;
+        int dimTest;
+        int newLength;
+        int start[] = null;
+        int end[] = null;
+        int newArrayLength;
         RandomNumberGen randomGen = new RandomNumberGen();
         ViewUserInterface UI = ViewUserInterface.getReference();
         boolean foundError[] = new boolean[nTests];
         int errorsFound = 0;
         
-        // The first 45 tests create a destImage
-        // The last 45 tests only use the srcImage
+        // The first 60 tests create a destImage
+        // The last 60 tests only use the srcImage
+        createNewImage = true;
         for (i = 0; i < nTests; i++) {
+            if (i == 60) {
+                createNewImage = false;
+            }
             UI.setDataText("Running test = " + i + "\n");
-            if (i == 0) {
+            if ((i == 0) || (i == 60)) {
                 createNewImage = true;
                 nDims = 2;
                 extents = new int[nDims];
@@ -712,8 +727,19 @@ public class AlgorithmFFT extends AlgorithmBase {
                 extents[1] = 256;
                 constructionMethod = WINDOW;
                 kernelDiameter = 15;
-            } // if (i == 0)
-            else if (i == 1) {
+                imageCrop = true;
+            } // if ((i == 0) || ( i == 60))
+            else if ((i == 1) || (i == 61)) {
+                createNewImage = true;
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 256;
+                extents[1] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                imageCrop = false;    
+            }
+            else if ((i == 2) || (i == 62)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 128;
@@ -722,15 +748,27 @@ public class AlgorithmFFT extends AlgorithmBase {
                 constructionMethod = WINDOW;
                 kernelDiameter = 15;
                 image25D = false;
+                imageCrop = true;
             }
-            else if (i == 2) {
+            else if ((i == 3) || (i == 63)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                image25D = false; 
+                imageCrop = false;
+            }
+            else if ((i == 4) || (i == 64)) {
                 nDims = 2;
                 extents = new int[nDims];
                 extents[0] = 256;
                 extents[1] = 256;
                 constructionMethod = GAUSSIAN;  
             }
-            else if (i == 3) {
+            else if ((i == 5) || (i == 65)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 128;
@@ -739,7 +777,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 constructionMethod = GAUSSIAN;
                 image25D = false;
             }
-            else if (i == 4) {
+            else if ((i == 6) || (i == 66)) {
                 nDims = 2;
                 extents = new int[nDims];
                 extents[0] = 256;
@@ -747,7 +785,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 constructionMethod = BUTTERWORTH;
                 butterworthOrder = 1;
             }
-            else if (i == 5) {
+            else if ((i == 7) || (i == 67)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 128;
@@ -757,7 +795,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 butterworthOrder = 1;
                 image25D = false;
             }
-            else if (i == 6) {
+            else if ((i == 8) || (i == 68)) {
                 nDims = 2;
                 extents = new int[nDims];
                 extents[0] = 128;
@@ -765,8 +803,19 @@ public class AlgorithmFFT extends AlgorithmBase {
                 constructionMethod = WINDOW;
                 kernelDiameter = 15;
                 unequalDim = true;
-            } // if (i == 6)
-            else if (i == 7) {
+                imageCrop = true;
+            } // else if ((i == 8) || (i == 68))
+            else if ((i == 9) || (i == 69)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                imageCrop = false;    
+            }
+            else if ((i == 10) || (i == 70)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 64;
@@ -776,8 +825,21 @@ public class AlgorithmFFT extends AlgorithmBase {
                 kernelDiameter = 15;
                 unequalDim = true;
                 image25D = false;
+                imageCrop = true;
             }
-            else if (i == 8) {
+            else if ((i == 11) || (i == 71)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = false;
+                imageCrop = false;    
+            }
+            else if ((i == 12) || (i == 72)) {
                 nDims = 2;
                 extents = new int[nDims];
                 extents[0] = 128;
@@ -785,7 +847,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 constructionMethod = GAUSSIAN; 
                 unequalDim = true;
             }
-            else if (i == 9) {
+            else if ((i == 13) || (i == 73)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 64;
@@ -795,7 +857,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 unequalDim = true;
                 image25D = false;
             }
-            else if (i == 10) {
+            else if ((i == 14) || (i == 74)) {
                 nDims = 2;
                 extents = new int[nDims];
                 extents[0] = 128;
@@ -804,7 +866,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 butterworthOrder = 1;
                 unequalDim = true;
             }
-            else if (i == 11) {
+            else if ((i == 15) || (i == 75)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 64;
@@ -815,7 +877,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 unequalDim = true;
                 image25D = false;
             }
-            else if (i == 12) {
+            else if ((i == 16) || (i == 76)) {
                 nDims = 2;
                 extents = new int[nDims];
                 extents[0] = 128;
@@ -823,8 +885,19 @@ public class AlgorithmFFT extends AlgorithmBase {
                 constructionMethod = WINDOW;
                 kernelDiameter = 15;
                 unequalDim = false;
-            } // if (i == 12)
-            else if (i == 13) {
+                imageCrop = true;
+            } // if ((i == 16) || (i == 76))
+            else if ((i == 17) || (i == 77)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                imageCrop = false;    
+            }
+            else if ((i == 18) || (i == 78)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 64;
@@ -834,8 +907,21 @@ public class AlgorithmFFT extends AlgorithmBase {
                 kernelDiameter = 15;
                 unequalDim = false;
                 image25D = false;
+                imageCrop = true;
             }
-            else if (i == 14) {
+            else if ((i == 19) || (i == 79)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = false;
+                imageCrop = false;    
+            }
+            else if ((i == 20) || (i == 80)) {
                 nDims = 2;
                 extents = new int[nDims];
                 extents[0] = 128;
@@ -843,7 +929,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 constructionMethod = GAUSSIAN; 
                 unequalDim = false;
             }
-            else if (i == 15) {
+            else if ((i == 21) || (i == 81)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 64;
@@ -853,7 +939,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 unequalDim = false;
                 image25D = false;
             }
-            else if (i == 16) {
+            else if ((i == 22) || (i == 82)) {
                 nDims = 2;
                 extents = new int[nDims];
                 extents[0] = 128;
@@ -862,7 +948,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 butterworthOrder = 1;
                 unequalDim = false;
             }
-            else if (i == 17) {
+            else if ((i == 23) || (i == 83)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 64;
@@ -873,7 +959,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 unequalDim = false;
                 image25D = false;
             }
-            else if (i == 18) {
+            else if ((i == 24) || (i == 84)) {
                 nDims = 2;
                 extents = new int[nDims];
                 extents[0] = 111;
@@ -881,8 +967,19 @@ public class AlgorithmFFT extends AlgorithmBase {
                 constructionMethod = WINDOW;
                 kernelDiameter = 15;
                 unequalDim = true;
-            } // if (i == 18)
-            else if (i == 19) {
+                imageCrop = true;
+            } // else if ((i == 24) || (i == 84))
+            else if ((i == 25) || (i == 85)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                imageCrop = false;    
+            }
+            else if ((i == 26) || (i == 86)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 59;
@@ -892,8 +989,21 @@ public class AlgorithmFFT extends AlgorithmBase {
                 kernelDiameter = 15;
                 unequalDim = true;
                 image25D = false;
+                imageCrop = true;
             }
-            else if (i == 20) {
+            else if ((i == 27) || (i == 87)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = false;
+                imageCrop = false;    
+            }
+            else if ((i == 28) || (i == 88)) {
                 nDims = 2;
                 extents = new int[nDims];
                 extents[0] = 111;
@@ -901,7 +1011,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 constructionMethod = GAUSSIAN; 
                 unequalDim = true;
             }
-            else if (i == 21) {
+            else if ((i == 29) || (i == 89)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 59;
@@ -911,7 +1021,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 unequalDim = true;
                 image25D = false;
             }
-            else if (i == 22) {
+            else if ((i == 30) || (i == 90)) {
                 nDims = 2;
                 extents = new int[nDims];
                 extents[0] = 111;
@@ -920,7 +1030,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 butterworthOrder = 1;
                 unequalDim = true;
             }
-            else if (i == 23) {
+            else if ((i == 31) || (i == 91)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 59;
@@ -931,7 +1041,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 unequalDim = true;
                 image25D = false;
             }
-            else if (i == 24) {
+            else if ((i == 32) || (i == 92)) {
                 nDims = 2;
                 extents = new int[nDims];
                 extents[0] = 111;
@@ -939,8 +1049,19 @@ public class AlgorithmFFT extends AlgorithmBase {
                 constructionMethod = WINDOW;
                 kernelDiameter = 15;
                 unequalDim = false;
-            } // if (i == 24)
-            else if (i == 25) {
+                imageCrop = true;
+            } // else if ((i == 32) || (i == 92))
+            else if ((i == 33) || (i == 93)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                imageCrop = false;    
+            }
+            else if ((i == 34) || (i == 94)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 59;
@@ -950,8 +1071,21 @@ public class AlgorithmFFT extends AlgorithmBase {
                 kernelDiameter = 15;
                 unequalDim = false;
                 image25D = false;
+                imageCrop = true;
             }
-            else if (i == 26) {
+            else if ((i == 35) || (i == 95)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = false;
+                imageCrop = false;    
+            }
+            else if ((i == 36) || (i == 96)) {
                 nDims = 2;
                 extents = new int[nDims];
                 extents[0] = 111;
@@ -959,7 +1093,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 constructionMethod = GAUSSIAN; 
                 unequalDim = false;
             }
-            else if (i == 27) {
+            else if ((i == 37) || (i == 97)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 59;
@@ -969,7 +1103,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 unequalDim = false;
                 image25D = false;
             }
-            else if (i == 28) {
+            else if ((i == 38) || (i == 98)) {
                 nDims = 2;
                 extents = new int[nDims];
                 extents[0] = 111;
@@ -978,7 +1112,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 butterworthOrder = 1;
                 unequalDim = false;
             }
-            else if (i == 29) {
+            else if ((i == 39) || (i == 99)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 59;
@@ -989,7 +1123,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 unequalDim = false;
                 image25D = false;
             }
-            else if (i == 30) {
+            else if ((i == 40) || (i == 100)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 128;
@@ -998,440 +1132,9 @@ public class AlgorithmFFT extends AlgorithmBase {
                 constructionMethod = WINDOW;
                 kernelDiameter = 15;
                 image25D = true;
+                imageCrop = true;
             }
-            else if (i == 31) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 128;
-                extents[1] = 128;
-                extents[2] = 128;
-                constructionMethod = GAUSSIAN;
-                image25D = true;
-            }
-            else if (i == 32) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 128;
-                extents[1] = 128;
-                extents[2] = 128;
-                constructionMethod = BUTTERWORTH; 
-                butterworthOrder = 1;
-                image25D = true;
-            }
-            else if (i == 33) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 64;
-                extents[1] = 128;
-                extents[2] = 256;
-                constructionMethod = WINDOW;
-                kernelDiameter = 15;
-                unequalDim = true;
-                image25D = true;
-            }
-            else if (i == 34) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 64;
-                extents[1] = 128;
-                extents[2] = 256;
-                constructionMethod = GAUSSIAN;
-                unequalDim = true;
-                image25D = true;
-            }
-            else if (i == 35) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 64;
-                extents[1] = 128;
-                extents[2] = 256;
-                constructionMethod = BUTTERWORTH; 
-                butterworthOrder = 1;
-                unequalDim = true;
-                image25D = true;
-            }
-            else if (i == 36) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 64;
-                extents[1] = 128;
-                extents[2] = 256;
-                constructionMethod = WINDOW;
-                kernelDiameter = 15;
-                unequalDim = false;
-                image25D = true;
-            }
-            else if (i == 37) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 64;
-                extents[1] = 128;
-                extents[2] = 256;
-                constructionMethod = GAUSSIAN;
-                unequalDim = false;
-                image25D = true;
-            }
-            else if (i == 38) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 64;
-                extents[1] = 128;
-                extents[2] = 256;
-                constructionMethod = BUTTERWORTH; 
-                butterworthOrder = 1;
-                unequalDim = false;
-                image25D = true;
-            }
-            else if (i == 39) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 59;
-                extents[1] = 111;
-                extents[2] = 239;
-                constructionMethod = WINDOW;
-                kernelDiameter = 15;
-                unequalDim = true;
-                image25D = true;
-            }
-            else if (i == 40) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 59;
-                extents[1] = 111;
-                extents[2] = 239;
-                constructionMethod = GAUSSIAN;
-                unequalDim = true;
-                image25D = true;
-            }
-            else if (i == 41) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 59;
-                extents[1] = 111;
-                extents[2] = 239;
-                constructionMethod = BUTTERWORTH; 
-                butterworthOrder = 1;
-                unequalDim = true;
-                image25D = true;
-            }
-            else if (i == 42) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 59;
-                extents[1] = 111;
-                extents[2] = 239;
-                constructionMethod = WINDOW;
-                kernelDiameter = 15;
-                unequalDim = false;
-                image25D = true;
-            }
-            else if (i == 43) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 59;
-                extents[1] = 111;
-                extents[2] = 239;
-                constructionMethod = GAUSSIAN;
-                unequalDim = false;
-                image25D = true;
-            }
-            else if (i == 44) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 59;
-                extents[1] = 111;
-                extents[2] = 239;
-                constructionMethod = BUTTERWORTH; 
-                butterworthOrder = 1;
-                unequalDim = false;
-                image25D = true;
-            }
-            if (i == 45) {
-                createNewImage = false;
-                nDims = 2;
-                extents = new int[nDims];
-                extents[0] = 256;
-                extents[1] = 256;
-                constructionMethod = WINDOW;
-                kernelDiameter = 15;
-            } // if (i == 45)
-            else if (i == 46) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 128;
-                extents[1] = 128;
-                extents[2] = 128;
-                constructionMethod = WINDOW;
-                kernelDiameter = 15;
-                image25D = false;
-            }
-            else if (i == 47) {
-                nDims = 2;
-                extents = new int[nDims];
-                extents[0] = 256;
-                extents[1] = 256;
-                constructionMethod = GAUSSIAN;  
-            }
-            else if (i == 48) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 128;
-                extents[1] = 128;
-                extents[2] = 128;
-                constructionMethod = GAUSSIAN;
-                image25D = false;
-            }
-            else if (i == 49) {
-                nDims = 2;
-                extents = new int[nDims];
-                extents[0] = 256;
-                extents[1] = 256;
-                constructionMethod = BUTTERWORTH;
-                butterworthOrder = 1;
-            }
-            else if (i == 50) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 128;
-                extents[1] = 128;
-                extents[2] = 128;
-                constructionMethod = BUTTERWORTH; 
-                butterworthOrder = 1;
-                image25D = false;
-            }
-            else if (i == 51) {
-                nDims = 2;
-                extents = new int[nDims];
-                extents[0] = 128;
-                extents[1] = 256;
-                constructionMethod = WINDOW;
-                kernelDiameter = 15;
-                unequalDim = true;
-            } // if (i == 51)
-            else if (i == 52) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 64;
-                extents[1] = 128;
-                extents[2] = 256;
-                constructionMethod = WINDOW;
-                kernelDiameter = 15;
-                unequalDim = true;
-                image25D = false;
-            }
-            else if (i == 53) {
-                nDims = 2;
-                extents = new int[nDims];
-                extents[0] = 128;
-                extents[1] = 256;
-                constructionMethod = GAUSSIAN; 
-                unequalDim = true;
-            }
-            else if (i == 54) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 64;
-                extents[1] = 128;
-                extents[2] = 256;
-                constructionMethod = GAUSSIAN;
-                unequalDim = true;
-                image25D = false;
-            }
-            else if (i == 55) {
-                nDims = 2;
-                extents = new int[nDims];
-                extents[0] = 128;
-                extents[1] = 256;
-                constructionMethod = BUTTERWORTH;
-                butterworthOrder = 1;
-                unequalDim = true;
-            }
-            else if (i == 56) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 64;
-                extents[1] = 128;
-                extents[2] = 256;
-                constructionMethod = BUTTERWORTH; 
-                butterworthOrder = 1;
-                unequalDim = true;
-                image25D = false;
-            }
-            else if (i == 57) {
-                nDims = 2;
-                extents = new int[nDims];
-                extents[0] = 128;
-                extents[1] = 256;
-                constructionMethod = WINDOW;
-                kernelDiameter = 15;
-                unequalDim = false;
-            } // if (i == 57)
-            else if (i == 58) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 64;
-                extents[1] = 128;
-                extents[2] = 256;
-                constructionMethod = WINDOW;
-                kernelDiameter = 15;
-                unequalDim = false;
-                image25D = false;
-            }
-            else if (i == 59) {
-                nDims = 2;
-                extents = new int[nDims];
-                extents[0] = 128;
-                extents[1] = 256;
-                constructionMethod = GAUSSIAN; 
-                unequalDim = false;
-            }
-            else if (i == 60) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 64;
-                extents[1] = 128;
-                extents[2] = 256;
-                constructionMethod = GAUSSIAN;
-                unequalDim = false;
-                image25D = false;
-            }
-            else if (i == 61) {
-                nDims = 2;
-                extents = new int[nDims];
-                extents[0] = 128;
-                extents[1] = 256;
-                constructionMethod = BUTTERWORTH;
-                butterworthOrder = 1;
-                unequalDim = false;
-            }
-            else if (i == 62) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 64;
-                extents[1] = 128;
-                extents[2] = 256;
-                constructionMethod = BUTTERWORTH; 
-                butterworthOrder = 1;
-                unequalDim = false;
-                image25D = false;
-            }
-            else if (i == 63) {
-                nDims = 2;
-                extents = new int[nDims];
-                extents[0] = 111;
-                extents[1] = 239;
-                constructionMethod = WINDOW;
-                kernelDiameter = 15;
-                unequalDim = true;
-            } // if (i == 63)
-            else if (i == 64) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 59;
-                extents[1] = 111;
-                extents[2] = 239;
-                constructionMethod = WINDOW;
-                kernelDiameter = 15;
-                unequalDim = true;
-                image25D = false;
-            }
-            else if (i == 65) {
-                nDims = 2;
-                extents = new int[nDims];
-                extents[0] = 111;
-                extents[1] = 239;
-                constructionMethod = GAUSSIAN; 
-                unequalDim = true;
-            }
-            else if (i == 66) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 59;
-                extents[1] = 111;
-                extents[2] = 239;
-                constructionMethod = GAUSSIAN;
-                unequalDim = true;
-                image25D = false;
-            }
-            else if (i == 67) {
-                nDims = 2;
-                extents = new int[nDims];
-                extents[0] = 111;
-                extents[1] = 239;
-                constructionMethod = BUTTERWORTH;
-                butterworthOrder = 1;
-                unequalDim = true;
-            }
-            else if (i == 68) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 59;
-                extents[1] = 111;
-                extents[2] = 239;
-                constructionMethod = BUTTERWORTH; 
-                butterworthOrder = 1;
-                unequalDim = true;
-                image25D = false;
-            }
-            else if (i == 69) {
-                nDims = 2;
-                extents = new int[nDims];
-                extents[0] = 111;
-                extents[1] = 239;
-                constructionMethod = WINDOW;
-                kernelDiameter = 15;
-                unequalDim = false;
-            } // if (i == 69)
-            else if (i == 70) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 59;
-                extents[1] = 111;
-                extents[2] = 239;
-                constructionMethod = WINDOW;
-                kernelDiameter = 15;
-                unequalDim = false;
-                image25D = false;
-            }
-            else if (i == 71) {
-                nDims = 2;
-                extents = new int[nDims];
-                extents[0] = 111;
-                extents[1] = 239;
-                constructionMethod = GAUSSIAN; 
-                unequalDim = false;
-            }
-            else if (i == 72) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 59;
-                extents[1] = 111;
-                extents[2] = 239;
-                constructionMethod = GAUSSIAN;
-                unequalDim = false;
-                image25D = false;
-            }
-            else if (i == 73) {
-                nDims = 2;
-                extents = new int[nDims];
-                extents[0] = 111;
-                extents[1] = 239;
-                constructionMethod = BUTTERWORTH;
-                butterworthOrder = 1;
-                unequalDim = false;
-            }
-            else if (i == 74) {
-                nDims = 3;
-                extents = new int[nDims];
-                extents[0] = 59;
-                extents[1] = 111;
-                extents[2] = 239;
-                constructionMethod = BUTTERWORTH; 
-                butterworthOrder = 1;
-                unequalDim = false;
-                image25D = false;
-            }
-            else if (i == 75) {
+            else if ((i == 41) || (i == 101)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 128;
@@ -1440,8 +1143,9 @@ public class AlgorithmFFT extends AlgorithmBase {
                 constructionMethod = WINDOW;
                 kernelDiameter = 15;
                 image25D = true;
+                imageCrop = false;
             }
-            else if (i == 76) {
+            else if ((i == 42) || (i == 102)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 128;
@@ -1450,7 +1154,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 constructionMethod = GAUSSIAN;
                 image25D = true;
             }
-            else if (i == 77) {
+            else if ((i == 43) || (i == 103)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 128;
@@ -1460,7 +1164,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 butterworthOrder = 1;
                 image25D = true;
             }
-            else if (i == 78) {
+            else if ((i == 44) || (i == 104)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 64;
@@ -1470,8 +1174,21 @@ public class AlgorithmFFT extends AlgorithmBase {
                 kernelDiameter = 15;
                 unequalDim = true;
                 image25D = true;
+                imageCrop = true;
             }
-            else if (i == 79) {
+            else if ((i == 45) || (i == 105)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = true;
+                imageCrop = false;
+            }
+            else if ((i == 46) || (i == 106)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 64;
@@ -1481,7 +1198,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 unequalDim = true;
                 image25D = true;
             }
-            else if (i == 80) {
+            else if ((i == 47) || (i == 107)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 64;
@@ -1492,7 +1209,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 unequalDim = true;
                 image25D = true;
             }
-            else if (i == 81) {
+            else if ((i == 48) || (i == 108)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 64;
@@ -1502,8 +1219,21 @@ public class AlgorithmFFT extends AlgorithmBase {
                 kernelDiameter = 15;
                 unequalDim = false;
                 image25D = true;
+                imageCrop = true;
             }
-            else if (i == 82) {
+            else if ((i == 49) || (i == 109)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = true;
+                imageCrop = false;
+            }
+            else if ((i == 50) || (i == 110)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 64;
@@ -1513,7 +1243,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 unequalDim = false;
                 image25D = true;
             }
-            else if (i == 83) {
+            else if ((i == 51) || (i == 111)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 64;
@@ -1524,7 +1254,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 unequalDim = false;
                 image25D = true;
             }
-            else if (i == 84) {
+            else if ((i == 52) || (i == 112)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 59;
@@ -1534,8 +1264,21 @@ public class AlgorithmFFT extends AlgorithmBase {
                 kernelDiameter = 15;
                 unequalDim = true;
                 image25D = true;
+                imageCrop = true;
             }
-            else if (i == 85) {
+            else if ((i == 53) || (i == 113)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = true;
+                imageCrop = false;
+            }
+            else if ((i == 54) || (i == 114)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 59;
@@ -1545,7 +1288,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 unequalDim = true;
                 image25D = true;
             }
-            else if (i == 86) {
+            else if ((i == 55) || (i == 115)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 59;
@@ -1556,7 +1299,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 unequalDim = true;
                 image25D = true;
             }
-            else if (i == 87) {
+            else if ((i == 56) || (i == 116)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 59;
@@ -1566,8 +1309,21 @@ public class AlgorithmFFT extends AlgorithmBase {
                 kernelDiameter = 15;
                 unequalDim = false;
                 image25D = true;
+                imageCrop = true;
             }
-            else if (i == 88) {
+            else if ((i == 57) || (i == 117)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = true;
+                imageCrop = false;
+            }
+            else if ((i == 58) || (i == 118)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 59;
@@ -1577,7 +1333,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 unequalDim = false;
                 image25D = true;
             }
-            else if (i == 89) {
+            else if ((i == 59) || (i == 119)) {
                 nDims = 3;
                 extents = new int[nDims];
                 extents[0] = 59;
@@ -1588,6 +1344,150 @@ public class AlgorithmFFT extends AlgorithmBase {
                 unequalDim = false;
                 image25D = true;
             }
+            
+            
+            doCrop = false;
+            if (imageCrop && (constructionMethod == WINDOW)) {
+                newExtents = new int[nDims];
+    
+    
+                // If imageCrop is false:
+                // Find the lowest power of 2 number not less than kdim + (dimLengths[i]) - 1.
+                // If imageCrop is true:
+                // Find the lowest power of 2 number not less than (dimLengths[i])
+                // This must be done to prevent aliasing in using a frequency filter,
+                // and to have a power of 2 for the FFT.
+                // Make all dimensions equal to this the largest of the above dimensions if
+                // unequalDim is false
+    
+                arrayLength = 1;
+    
+                for (j = 0; j < nDims; j++) {
+                    arrayLength *= extents[j];
+                    newExtents[j] = extents[j];
+                }
+    
+                if ((nDims == 3)&& (image25D)) {
+    
+                    for (j = 0; j < 2; j++) {
+    
+                        for (dimTest = newExtents[j]; dimTest > 1; dimTest = dimTest / 2) {
+    
+                            if ((dimTest % 2) != 0) {
+                                dimTest = 1;
+    
+                                // log2x = logex/loge2
+                                newExtents[j] = 1 + (int) (Math.log((double) newExtents[j]) / Math.log(2.0));
+                                newExtents[j] = Math.round((float) (Math.pow(2.0, (double) newExtents[j])));
+                            }
+                        }
+                    } // for (j = 0; j < 2; j++)
+                } // if (nDIms == 3) && (image25D))
+                else { // not image25D
+    
+                    for (j = 0; j < nDims; j++) {
+    
+                        for (dimTest = newExtents[j]; dimTest > 1; dimTest = dimTest / 2) {
+    
+                            if ((dimTest % 2) != 0) {
+                                dimTest = 1;
+    
+                                // log2x = logex/loge2
+                                newExtents[j] = 1 + (int) (Math.log((double) newExtents[j]) / Math.log(2.0));
+                                newExtents[j] = Math.round((float) (Math.pow(2.0, (double) newExtents[j])));
+                            }
+                        }
+                    } // for (j = 0; j < nDims; j++)
+                } // else not image25D
+    
+                if (!unequalDim) { // if dimensions are to be made equal
+                    newLength = 0;
+    
+                    if (image25D) {
+    
+                        for (j = 0; j < 2; j++) {
+    
+                            if (newExtents[j] > newLength) {
+                                newLength = newExtents[j];
+                            }
+                        }
+    
+                        for (j = 0; j < 2; j++) {
+                            newExtents[j] = newLength;
+                        }
+                    } else { // not image25D
+    
+                        for (j = 0; j < nDims; j++) {
+    
+                            if (newExtents[j] > newLength) {
+                                newLength = newExtents[j];
+                            }
+                        }
+    
+                        for (j = 0; j < nDims; j++) {
+                            newExtents[j] = newLength;
+                        }
+                    } // else not image25D
+                } // end of if (!unequalDim)
+    
+    
+                if (image25D) {
+
+                    for (j = 0; j < 2; j++) {
+
+                        if ((extents[j] + kernelDiameter - 1) > newExtents[j]) {
+                            doCrop = true;
+                        }
+                    }
+                } // if (image25D)
+                else { // not image25D
+
+                    for (j = 0; j < nDims; j++) {
+
+                        if ((extents[j] + kernelDiameter - 1) > newExtents[j]) {
+                            doCrop = true;
+                        }
+                    }
+                } // else not image25D
+    
+                
+                if (doCrop) {
+                    start = new int[nDims];
+                    end = new int[nDims];
+    
+                    if ((nDims == 3) && (image25D)) {
+    
+                        for (j = 0; j < 2; j++) {
+    
+                            if ((extents[j] + kernelDiameter - 1) > newExtents[j]) {
+                                start[j] = ((extents[j] + kernelDiameter - 1 - newExtents[j]) / 2) +
+                                           ((extents[j] + kernelDiameter - 1 - newExtents[j]) % 2);
+                                end[j] = extents[j] - 1 - ((extents[j] + kernelDiameter - 1 - newExtents[j]) / 2);
+                            } else {
+                                start[j] = 0;
+                                end[j] = extents[j] - 1;
+                            }
+                        }
+    
+                        start[2] = 0;
+                        end[2] = extents[2] - 1;
+                    } // if ((nDims == 3) && (image25D))
+                    else { // not image25D
+    
+                        for (j = 0; j < nDims; j++) {
+    
+                            if ((extents[j] + kernelDiameter - 1) > newExtents[j]) {
+                                start[j] = ((extents[j] + kernelDiameter - 1 - newExtents[j]) / 2) +
+                                           ((extents[j] + kernelDiameter - 1 - newExtents[j]) % 2);
+                                end[j] = extents[j] - 1 - ((extents[j] + kernelDiameter - 1 - newExtents[j]) / 2);
+                            } else {
+                                start[j] = 0;
+                                end[j] = extents[j] - 1;
+                            }
+                        }
+                    } // else not image25D
+                } // if (doCrop)
+            } // if (imageCrop && (constructionMethod == WINDOW))
             
             arrayLength = extents[0];
             for (j = 1; j < nDims; j++) {
@@ -1629,7 +1529,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                                                butterworthOrder);
                     FFTAlgo.calcStoreInDestMT();
                     
-                } catch (OutOfMemoryError x) {
+                } catch (OutOfMemoryError e) {
                     displayError("AlgorithmFFT: unable to allocate enough memory");
 
                     if (resultImage != null) {
@@ -1650,7 +1550,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                                                butterworthOrder);
 
                     FFTAlgo.calcInPlaceMT();
-                } catch (OutOfMemoryError x) {
+                } catch (OutOfMemoryError e) {
                     displayError("Dialog FFT: unable to allocate enough memory");
 
                     return;
@@ -1673,7 +1573,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                                                butterworthOrder);
                     FFTAlgo.calcStoreInDestMT();
                     
-                } catch (OutOfMemoryError x) {
+                } catch (OutOfMemoryError e) {
                     displayError("AlgorithmFFT: unable to allocate enough memory");
 
                     if (inverseImage != null) {
@@ -1702,7 +1602,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                                                butterworthOrder);
 
                     FFTAlgo.calcInPlaceMT();
-                } catch (OutOfMemoryError x) {
+                } catch (OutOfMemoryError e) {
                     displayError("Dialog FFT: unable to allocate enough memory");
 
                     return;
@@ -1730,6 +1630,42 @@ public class AlgorithmFFT extends AlgorithmBase {
                 inverseImage.disposeLocal();
                 inverseImage = null;
             }
+            
+            if (doCrop) {
+              j = 0;
+              if (nDims == 2) {
+                  newArrayLength = (end[0] - start[0] + 1)* (end[1] - start[1] + 1);
+                  newA = new float[newArrayLength];
+                  newC = new float[newArrayLength];
+                  for (y = start[1]; y <= end[1]; y++) {
+                      for (x = start[0]; x <= end[0]; x++) {
+                          newA[j] = a[x + y*extents[0]];
+                          newC[j++] = c[x + y*extents[0]];
+                      }
+                  }
+              } // if (nDims == 2)
+              else {
+                  newArrayLength = (end[0] - start[0] + 1)* (end[1] - start[1] + 1) * (end[2] - start[2] + 1);
+                  newA = new float[newArrayLength];
+                  newC = new float[newArrayLength];
+                  sliceSize = extents[0] * extents[1];
+                  for (z = start[2]; z <= end[2]; z++) {
+                      for (y = start[1]; y <= end[1]; y++) {
+                          for (x = start[0]; x <= end[0]; x++) {
+                              newA[j] = a[x + y*extents[0] + z*sliceSize];
+                              newC[j++] = c[x + y*extents[0] + z*sliceSize];
+                          }
+                      }  
+                  }
+              }
+              a = new float[newArrayLength];
+              c = new float[newArrayLength];
+              for (j = 0; j < newArrayLength; j++) {
+                  a[j] = newA[j];
+                  c[j] = newC[j];
+              }
+              arrayLength = newArrayLength;
+            } // if (doCrop)
             
             
             error = rms(a, c, arrayLength);
