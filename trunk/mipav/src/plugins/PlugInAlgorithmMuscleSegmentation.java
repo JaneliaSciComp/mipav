@@ -1950,7 +1950,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        instructionPanel.setBorder(MipavUtil.buildTitledBorder("Instructions"));
 	        instructionLabel = new JLabel[2];
 	        instructionLabel[0] = new JLabel("1) Click on the muscle you would like to display.\n\r");
-	        instructionLabel[1] = new JLabel("2) Once that VOI is highlighted, you will see measurements on the pane below.");
+	        instructionLabel[1] = new JLabel("2) Highlight a VOI to view its measurements.");
 	        //extra no longer needed for resizing
 	        
 	        for(int i=0; i<instructionLabel.length; i++) {
@@ -2032,7 +2032,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        noMirrorPanel.setForeground(Color.black);
 	        noMirrorPanel.setBorder(MipavUtil.buildTitledBorder("Select an object"));
 	        GridBagConstraints gbc = new GridBagConstraints();
-	        gbc.anchor = GridBagConstraints.ABOVE_BASELINE_LEADING;
+	        gbc.anchor = GridBagConstraints.NORTHWEST;
 	        gbc.fill = GridBagConstraints.HORIZONTAL;
 	        
 	        gbc.gridx = 0;
