@@ -253,7 +253,7 @@ public class AlgorithmFFT extends AlgorithmBase {
     /** True if zero padding actually performed. */
     private boolean zeroPad;
     
-    private boolean doSelfTest = false;
+    private boolean doSelfTest = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -706,6 +706,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         int start[] = null;
         int end[] = null;
         int newArrayLength;
+        boolean spatialShiftTest = false;
         RandomNumberGen randomGen = new RandomNumberGen();
         ViewUserInterface UI = ViewUserInterface.getReference();
         boolean foundError[] = new boolean[nTests];
@@ -720,7 +721,6 @@ public class AlgorithmFFT extends AlgorithmBase {
             }
             UI.setDataText("Running test = " + i + "\n");
             if ((i == 0) || (i == 60)) {
-                createNewImage = true;
                 nDims = 2;
                 extents = new int[nDims];
                 extents[0] = 256;
@@ -1343,6 +1343,9 @@ public class AlgorithmFFT extends AlgorithmBase {
                 butterworthOrder = 1;
                 unequalDim = false;
                 image25D = true;
+            }
+            else if (i == 120) {
+                spatialShiftTest = true;
             }
             
             
