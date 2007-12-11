@@ -677,6 +677,9 @@ public class AlgorithmFFT extends AlgorithmBase {
         float d[] = null;
         float newA[] = null;
         float newC[] = null;
+        int FORWARD_INVERSE = 1;
+        int SPATIAL_SHIFT = 2;
+        int FREQUENCY_SHIFT = 3;
         int x, y, z;
         int newX;
         int newY;
@@ -685,7 +688,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         int extents[] = null;
         int sliceSize = 0;
         int newExtents[] = null;
-        int nTests = 124;
+        int nTests = 128;
         int i, j;
         int arrayLength;
         int imageType = ModelStorageBase.FLOAT;
@@ -714,7 +717,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         int u;
         int v;
         int w;
-        boolean spatialShiftTest = false;
+        int testType;
         RandomNumberGen randomGen = new RandomNumberGen();
         ViewUserInterface UI = ViewUserInterface.getReference();
         boolean foundError[] = new boolean[nTests];
@@ -724,9 +727,12 @@ public class AlgorithmFFT extends AlgorithmBase {
         // the same as the original data
         // The first 60 tests create a destImage
         // Tests 61 thru 120 only use the srcImage
-        // Tests 121 thru 124 verify the translation property
+        // Tests 121 thru 124 verify the spatial translation property
         // f(x - extents[0]/2, y - extents[1]/2) <=> F(u, v) * ((-1)**(u + v))
+        // Tests 125 thru 128 verify the frequency translation property
+        // f(x,y) * ((-1)**(x+y)) <=> F(u - extents[0]/2, v - extents[1]/2)
         createNewImage = true;
+        testType = FORWARD_INVERSE;
         for (i = 0; i < nTests; i++) {
             if (i == 60) {
                 createNewImage = false;
@@ -1357,7 +1363,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 image25D = true;
             }
             else if (i == 120) {
-                spatialShiftTest = true;
+                testType = SPATIAL_SHIFT;
                 createNewImage = true;
                 nDims = 2;
                 extents = new int[nDims];
@@ -1366,7 +1372,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 constructionMethod = GAUSSIAN;  
             }
             else if (i == 121) {
-                spatialShiftTest = true;
+                testType = SPATIAL_SHIFT;
                 createNewImage = false;
                 nDims = 2;
                 extents = new int[nDims];
@@ -1375,7 +1381,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 constructionMethod = GAUSSIAN;      
             }
             else if (i == 122) {
-                spatialShiftTest = true;
+                testType = SPATIAL_SHIFT;
                 createNewImage = true;
                 nDims = 3;
                 extents = new int[nDims];
@@ -1386,7 +1392,47 @@ public class AlgorithmFFT extends AlgorithmBase {
                 image25D = false;    
             }
             else if (i == 123) {
-                spatialShiftTest = true;
+                testType = SPATIAL_SHIFT;
+                createNewImage = false;
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = GAUSSIAN;
+                image25D = false;     
+            }
+            else if (i == 124) {
+                testType = FREQUENCY_SHIFT;
+                createNewImage = true;
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 256;
+                extents[1] = 256;
+                constructionMethod = GAUSSIAN;  
+            }
+            else if (i == 125) {
+                testType = FREQUENCY_SHIFT;
+                createNewImage = false;
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 256;
+                extents[1] = 256;
+                constructionMethod = GAUSSIAN;      
+            }
+            else if (i == 126) {
+                testType = FREQUENCY_SHIFT;
+                createNewImage = true;
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = GAUSSIAN;
+                image25D = false;    
+            }
+            else if (i == 127) {
+                testType = FREQUENCY_SHIFT;
                 createNewImage = false;
                 nDims = 3;
                 extents = new int[nDims];
@@ -1613,7 +1659,7 @@ public class AlgorithmFFT extends AlgorithmBase {
             }
             
             FFTAlgo.finalize();
-            if (spatialShiftTest) {
+            if (testType == SPATIAL_SHIFT) {
                 // Test f(x - extents[0]/2, y - extents[1]/2) <=> F(u,v) * ((-1)**(u + v))
                 b = new float[arrayLength];
                 d = new float[arrayLength];
@@ -1637,8 +1683,8 @@ public class AlgorithmFFT extends AlgorithmBase {
                     }    
                 } // else not createNewImage
                 // Remove centering from a and b to obtain F(u, v) uncentered
-                center(a, b);
-                // create c(x - extents[0]/2, y - extents[1])
+                testCenter(a, b, extents);
+                // create c(x - extents[0]/2, y - extents[1]/2)
                 if (nDims == 2) {
                     for (y = 0; y < extents[1]; y++) {
                         if ((y - extents[1]/2) >= 0) {
@@ -1756,12 +1802,14 @@ public class AlgorithmFFT extends AlgorithmBase {
                     resultImage = null;
                 }
                 // Remove centering from c and d to obtain F(u, v) uncentered
-                center(c, d);
+                testCenter(c, d, extents);
                 if (nDims == 2) {
                     for (v = 0; v < extents[1]; v++) {
                         for (u = 0; u < extents[0]; u++) {
-                            a[u + v*extents[0]] = a[u + v*extents[0]]*((float)Math.pow(-1.0,u+v));
-                            b[u + v*extents[0]] = b[u + v*extents[0]]*((float)Math.pow(-1.0,u+v));
+                            if (((u +v ) % 2) == 1) {
+                            a[u + v*extents[0]] = -a[u + v*extents[0]];
+                            b[u + v*extents[0]] = -b[u + v*extents[0]];
+                            }
                         }
                     }
                 } // if (nDims == 2)
@@ -1769,10 +1817,10 @@ public class AlgorithmFFT extends AlgorithmBase {
                     for (w = 0; w < extents[2]; w++) {
                         for (v = 0; v < extents[1]; v++) {
                             for (u = 0; u < extents[0]; u++) {
-                                a[u + v*extents[0] + w*sliceSize] = 
-                                a[u + v*extents[0] + w*sliceSize]*((float)Math.pow(-1.0,u+v+w));
-                                b[u + v*extents[0] + w*sliceSize] = 
-                                b[u + v*extents[0] + w*sliceSize]*((float)Math.pow(-1.0,u+v+w));
+                                if (((u + v + w) % 2) == 1) {
+                                a[u + v*extents[0] + w*sliceSize] = -a[u + v*extents[0] + w*sliceSize];
+                                b[u + v*extents[0] + w*sliceSize] = -b[u + v*extents[0] + w*sliceSize];
+                                }
                             }
                         }    
                     }
@@ -1786,8 +1834,173 @@ public class AlgorithmFFT extends AlgorithmBase {
                         UI.setDataText("a = " + a[j] + " b = " + b[j] + " c = " + c[j] + " d = " + d[j] + "\n");
                     }
                 }
-            } // if (spatialShiftTest)
-            else { // not spatialShiftTest
+            } // if (testType == SPATIAL_SHIFT)
+            else if (testType == FREQUENCY_SHIFT) {
+                // Test f(x,y) * ((-1)**(x+y)) <=> F(u - extents[0]/2, v - extents[1]/2)
+                b = new float[arrayLength];
+                if (createNewImage) {
+                    try {
+                        resultImage.exportComplexData(0, arrayLength, a, b);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on resultImage.exportComplexData(0, arrayLength, a, b)");
+                        return;
+                    }
+                } // if (createNewImage)
+                else { // not createNewImage
+                    try {
+                        forwardImage.exportComplexData(0, arrayLength, a, b);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on forwardImage.exportComplexData(0, arrayLength, a, b)");
+                        return;
+                    }    
+                } // else not createNewImage
+                // Remove centering from a and b to obtain F(u, v) uncentered
+                // Create a(x - extents[0]/2, y - extents[1]/2) and b(x - extents[0]/2, y - extents[1]/2)
+                // Center the shifted data
+                // This is 3 center operations, which is equivalent to 1 center operation
+                testCenter(a, b, extents);
+                if (createNewImage) {
+                    try {
+                        resultImage.importComplexData(0, a, b, true, true);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on resultImage.importComplexData(0, a, b, true, true)");
+                        return;
+                    }
+                } // if (createNewImage)
+                else { // not createNewImage
+                    try {
+                        forwardImage.importComplexData(0, a, b, true, true);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on forwardImage.importComplexData(0, a, b, true, true)");
+                        return;
+                    }    
+                } // else not createNewImage
+                transformDir = INVERSE;
+                
+                if (createNewImage)  {
+                    
+                    try {
+                        inverseImage = (ModelImage) resultImage.clone();
+                        inverseImage.setImageName(name);
+                        inverseImage.resetVOIs();
+    
+                        // Make algorithm
+                        FFTAlgo = new AlgorithmFFT(inverseImage, resultImage, transformDir, logMagDisplay, unequalDim, image25D,
+                                                   imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
+                                                   butterworthOrder);
+                        FFTAlgo.calcStoreInDestMT();
+                        
+                    } catch (OutOfMemoryError e) {
+                        displayError("AlgorithmFFT: unable to allocate enough memory");
+    
+                        if (inverseImage != null) {
+                            inverseImage.disposeLocal(); // Clean up memory of result image
+                            inverseImage = null;
+                        }
+    
+                        return;
+                    }
+                    
+                    try {
+                        inverseImage.exportData(0, arrayLength, a);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on inverseImage.exportData(0, arrayLength, a)");
+                        return;
+                    }
+                } else {
+    
+                    try {
+    
+                        // No need to make new image space because the user has choosen to replace the source image
+                        // Make the algorithm class
+                        FFTAlgo = new AlgorithmFFT(forwardImage, transformDir, logMagDisplay, unequalDim, image25D, imageCrop,
+                                                   kernelDiameter, filterType, freq1, freq2, constructionMethod,
+                                                   butterworthOrder);
+    
+                        FFTAlgo.calcInPlaceMT();
+                    } catch (OutOfMemoryError e) {
+                        displayError("Dialog FFT: unable to allocate enough memory");
+    
+                        return;
+                    }
+                    
+                    try {
+                        forwardImage.exportData(0, arrayLength, a);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on forwardImage.exportData(0, arrayLength, a)");
+                        return;
+                    }
+                }
+                
+                FFTAlgo.finalize();
+                if (forwardImage !=  null) {
+                    forwardImage.disposeLocal();
+                    forwardImage = null;
+                }
+                if (resultImage != null) {
+                    resultImage.disposeLocal();
+                    resultImage = null;
+                }
+                if (inverseImage != null) {
+                    inverseImage.disposeLocal();
+                    inverseImage = null;
+                }
+                
+                if (nDims == 2) {
+                    for (y = 0; y < extents[1]; y++) {
+                        for (x = 0; x < extents[0]; x++) {
+                            if (((x + y) % 2) == 1) {
+                                c[x + y*extents[0]] = -c[x + y*extents[0]];
+                            }
+                        }
+                    }
+                } // if (nDims == 2)
+                else { // nDims == 3 
+                    for (z = 0; z < extents[2]; z++) {
+                        for (y = 0; y < extents[1]; y++) {
+                            for (x = 0; x < extents[0]; x++) {
+                                if (((x + y + z) % 2) == 1) {
+                                    c[x + y*extents[0] + z*sliceSize] = -c[x + y*extents[0] + z*sliceSize];
+                                }
+                            }
+                        }    
+                    }
+                } // else nDims == 3
+                
+                error = rms(a, c, arrayLength);
+                if (error[0] >= 2.0E-7) {
+                    foundError[i] = true;
+                }
+                
+                for (j = 0; j < 10; j++) {
+                    UI.setDataText("a = " + a[j] + " c = " + c[j] + "\n");
+                }
+                
+                for (j = 0; j < arrayLength; j++) {
+                    a[j] = Math.abs(a[j] - c[j]);
+                } // for (j = 0; j < n; j++)
+    
+                shellSort(a);
+                if (a[arrayLength-1] >= 1.0E-6) {
+                    foundError[i] = true;
+                }
+                
+                if (foundError[i]) {
+                    errorsFound++;
+                    UI.setDataText("Test = " + i + " rms error = " + error[0] + "\n");
+                    UI.setDataText("Test = " + i + " the 10 largest error differences\n");
+                    for (j = 0; j < 10; j++) {
+                        UI.setDataText("Diff[" + j + "] = " + a[arrayLength-1-j] + "\n");
+                    }
+                }
+            } // else if (testType == FREQUENCY_SHIFT)
+            else { // testType == FORWARD_INVERSE
                 transformDir = INVERSE;
                 
                 if (createNewImage)  {
@@ -1919,12 +2132,75 @@ public class AlgorithmFFT extends AlgorithmBase {
                         UI.setDataText("Diff[" + j + "] = " + a[arrayLength-1-j] + "\n");
                     }
                 }
-            } // else not spatialShiftTest
+            } // else testType == FORWARD_INVERSE
             
         } // for (i = 0; i < nTests; i++)
         UI.setDataText("Errors were found in " + errorsFound + " of " + nTests + " tests\n");
         setCompleted(true);
         return;
+    }
+    
+    private void testCenter(float[] a, float [] b, int[] extents) {
+        int x, y, z;
+        int newX, newY, newZ;
+        float newA[] = new float[a.length];
+        float newB[] = new float[b.length];
+        int sliceSize;
+        int nDims = extents.length;
+       
+        if (nDims == 2) {
+            for (y = 0; y < extents[1]; y++) {
+                if ((y - extents[1]/2) >= 0) {
+                    newY = y - extents[1]/2;
+                }
+                else {
+                    newY = y + extents[1]/2;
+                }
+                for (x = 0; x < extents[0]; x++) {
+                    if ((x - extents[0]/2) >= 0) {
+                        newX = x - extents[0]/2;
+                    }
+                    else {
+                        newX = x + extents[0]/2;
+                    }
+                    newA[newX + extents[0]*newY] = a[x + extents[0]*y];
+                    newB[newX + extents[0]*newY] = b[x + extents[0]*y];
+                }
+            }
+        } // if (nDims == 2)
+        else { // nDims == 3
+            sliceSize = extents[0] * extents[1];
+            for (z = 0; z < extents[2]; z++) {
+                if ((z - extents[2]/2) >= 0) {
+                    newZ = z - extents[2]/2;
+                }
+                else {
+                    newZ = z + extents[2]/2;
+                }
+                for (y = 0; y < extents[1]; y++) {
+                    if ((y - extents[1]/2) >= 0) {
+                        newY = y - extents[1]/2;
+                    }
+                    else {
+                        newY = y + extents[1]/2;
+                    }
+                    for (x = 0; x < extents[0]; x++) {
+                        if ((x - extents[0]/2) >= 0) {
+                            newX = x - extents[0]/2;
+                        }
+                        else {
+                            newX = x + extents[0]/2;
+                        }
+                        newA[newX + extents[0]*newY + sliceSize*newZ] = a[x + extents[0]*y + sliceSize*z];
+                        newB[newX + extents[0]*newY + sliceSize*newZ] = b[x + extents[0]*y + sliceSize*z];
+                    }
+                }
+            }
+        } // else nDims == 3 
+        for (x = 0; x < a.length; x++) {
+            a[x] = newA[x];
+            b[x] = newB[x];
+        }
     }
     
     private double[] rms(float[] a, float[] c, int n) {
