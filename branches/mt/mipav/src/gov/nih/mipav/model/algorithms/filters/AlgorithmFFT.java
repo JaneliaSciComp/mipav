@@ -680,11 +680,12 @@ public class AlgorithmFFT extends AlgorithmBase {
         int x, y, z;
         int newX;
         int newY;
+        int newZ;
         int nDims = 2;
         int extents[] = null;
-        int sliceSize;
+        int sliceSize = 0;
         int newExtents[] = null;
-        int nTests = 122;
+        int nTests = 124;
         int i, j;
         int arrayLength;
         int imageType = ModelStorageBase.FLOAT;
@@ -712,6 +713,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         int newArrayLength;
         int u;
         int v;
+        int w;
         boolean spatialShiftTest = false;
         RandomNumberGen randomGen = new RandomNumberGen();
         ViewUserInterface UI = ViewUserInterface.getReference();
@@ -722,7 +724,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         // the same as the original data
         // The first 60 tests create a destImage
         // Tests 61 thru 120 only use the srcImage
-        // Tests 121 and 122 verify the translation property
+        // Tests 121 thru 124 verify the translation property
         // f(x - extents[0]/2, y - extents[1]/2) <=> F(u, v) * ((-1)**(u + v))
         createNewImage = true;
         for (i = 0; i < nTests; i++) {
@@ -1372,6 +1374,31 @@ public class AlgorithmFFT extends AlgorithmBase {
                 extents[1] = 256;
                 constructionMethod = GAUSSIAN;      
             }
+            else if (i == 122) {
+                spatialShiftTest = true;
+                createNewImage = true;
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = GAUSSIAN;
+                image25D = false;    
+            }
+            else if (i == 123) {
+                spatialShiftTest = true;
+                createNewImage = false;
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = GAUSSIAN;
+                image25D = false;     
+            }
+            if (nDims == 3) {
+                sliceSize = extents[0] * extents[1];
+            }
             
             
             doCrop = false;
@@ -1612,23 +1639,52 @@ public class AlgorithmFFT extends AlgorithmBase {
                 // Remove centering from a and b to obtain F(u, v) uncentered
                 center(a, b);
                 // create c(x - extents[0]/2, y - extents[1])
-                for (y = 0; y < extents[1]; y++) {
-                    if ((y - extents[1]/2) >= 0) {
-                        newY = y - extents[1]/2;
-                    }
-                    else {
-                        newY = y + extents[1]/2;
-                    }
-                    for (x = 0; x < extents[0]; x++) {
-                        if ((x - extents[0]/2) >= 0) {
-                            newX = x - extents[0]/2;
+                if (nDims == 2) {
+                    for (y = 0; y < extents[1]; y++) {
+                        if ((y - extents[1]/2) >= 0) {
+                            newY = y - extents[1]/2;
                         }
                         else {
-                            newX = x + extents[0]/2;
+                            newY = y + extents[1]/2;
                         }
-                        newC[newX + extents[0]*newY] = c[x + extents[0]*y];
+                        for (x = 0; x < extents[0]; x++) {
+                            if ((x - extents[0]/2) >= 0) {
+                                newX = x - extents[0]/2;
+                            }
+                            else {
+                                newX = x + extents[0]/2;
+                            }
+                            newC[newX + extents[0]*newY] = c[x + extents[0]*y];
+                        }
                     }
-                }
+                } // if (nDims == 2)
+                else { // nDims == 3
+                    for (z = 0; z < extents[2]; z++) {
+                        if ((z - extents[2]/2) >= 0) {
+                            newZ = z - extents[2]/2;
+                        }
+                        else {
+                            newZ = z + extents[2]/2;
+                        }
+                        for (y = 0; y < extents[1]; y++) {
+                            if ((y - extents[1]/2) >= 0) {
+                                newY = y - extents[1]/2;
+                            }
+                            else {
+                                newY = y + extents[1]/2;
+                            }
+                            for (x = 0; x < extents[0]; x++) {
+                                if ((x - extents[0]/2) >= 0) {
+                                    newX = x - extents[0]/2;
+                                }
+                                else {
+                                    newX = x + extents[0]/2;
+                                }
+                                newC[newX + extents[0]*newY + sliceSize*newZ] = c[x + extents[0]*y + sliceSize*z];
+                            }
+                        }
+                    }
+                } // else nDims == 3
                 try {
                     forwardImage.importData(0, newC, true);
                 }
@@ -1701,12 +1757,26 @@ public class AlgorithmFFT extends AlgorithmBase {
                 }
                 // Remove centering from c and d to obtain F(u, v) uncentered
                 center(c, d);
-                for (v = 0; v < extents[1]; v++) {
-                    for (u = 0; u < extents[0]; u++) {
-                        a[u + v*extents[0]] = a[u + v*extents[0]]*((float)Math.pow(-1.0,u+v));
-                        b[u + v*extents[0]] = b[u + v*extents[0]]*((float)Math.pow(-1.0,u+v));
+                if (nDims == 2) {
+                    for (v = 0; v < extents[1]; v++) {
+                        for (u = 0; u < extents[0]; u++) {
+                            a[u + v*extents[0]] = a[u + v*extents[0]]*((float)Math.pow(-1.0,u+v));
+                            b[u + v*extents[0]] = b[u + v*extents[0]]*((float)Math.pow(-1.0,u+v));
+                        }
                     }
-                }
+                } // if (nDims == 2)
+                else { // nDims == 3
+                    for (w = 0; w < extents[2]; w++) {
+                        for (v = 0; v < extents[1]; v++) {
+                            for (u = 0; u < extents[0]; u++) {
+                                a[u + v*extents[0] + w*sliceSize] = 
+                                a[u + v*extents[0] + w*sliceSize]*((float)Math.pow(-1.0,u+v+w));
+                                b[u + v*extents[0] + w*sliceSize] = 
+                                b[u + v*extents[0] + w*sliceSize]*((float)Math.pow(-1.0,u+v+w));
+                            }
+                        }    
+                    }
+                } // else nDims == 3
                 error = rms(a, b, c, d, arrayLength);
                 if ((error[0] >= 2.0E-7) || (error[1] >= 2.0E-7)) {
                     foundError[i] = true;
@@ -1808,7 +1878,6 @@ public class AlgorithmFFT extends AlgorithmBase {
                       newArrayLength = (end[0] - start[0] + 1)* (end[1] - start[1] + 1) * (end[2] - start[2] + 1);
                       newA = new float[newArrayLength];
                       newC = new float[newArrayLength];
-                      sliceSize = extents[0] * extents[1];
                       for (z = start[2]; z <= end[2]; z++) {
                           for (y = start[1]; y <= end[1]; y++) {
                               for (x = start[0]; x <= end[0]; x++) {
