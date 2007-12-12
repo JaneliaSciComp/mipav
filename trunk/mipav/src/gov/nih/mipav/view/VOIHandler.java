@@ -3071,23 +3071,23 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                             } else {
                                                 ViewUserInterface.getReference().setDataText("Line: " + tmpString2 +
                                                                                              ", Position(start): " +
-                                                                                             (int) (startPt.x + 1) +
+                                                                                             (int) (startPt.x) +
                                                                                              " " +
-                                                                                             (int) (startPt.y + 1) +
+                                                                                             (int) (startPt.y) +
                                                                                              ", Position(end): " +
-                                                                                             (int) (endPt.x + 1) + " " +
-                                                                                             (int) (endPt.y + 1) +
+                                                                                             (int) (endPt.x) + " " +
+                                                                                             (int) (endPt.y) +
                                                                                              "\n");
 
                                             }
                                         } else {
                                             ViewUserInterface.getReference().setDataText("Line: " + tmpString2 +
                                                                                          ", Position(start): " +
-                                                                                         (int) (startPt.x + 1) + " " +
-                                                                                         (int) (startPt.y + 1) +
+                                                                                         (int) (startPt.x) + " " +
+                                                                                         (int) (startPt.y) +
                                                                                          ", Position(end): " +
-                                                                                         (int) (endPt.x + 1) + " " +
-                                                                                         (int) (endPt.y + 1) + "\n");
+                                                                                         (int) (endPt.x) + " " +
+                                                                                         (int) (endPt.y) + "\n");
                                         }
 
                                         // do not pop up graph here, instead return

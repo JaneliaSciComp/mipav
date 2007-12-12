@@ -456,8 +456,8 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
         JPanel slicePanel = new JPanel(new GridBagLayout());
         slicePanel.setBorder(buildTitledBorder("Insert slice"));
 
-        JLabel sliceLabel = new JLabel("Insert before slice #(1-" + String.valueOf(nSlices) + ") or enter " +
-                                       String.valueOf(nSlices + 1) + " for new last slice");
+        JLabel sliceLabel = new JLabel("Insert before slice #(0-" + String.valueOf(nSlices-1) + ") or enter " +
+                                       String.valueOf(nSlices) + " for new last slice");
         sliceLabel.setFont(serif12);
         sliceLabel.setForeground(Color.black);
 
@@ -561,7 +561,7 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
 
         tmpStr = textSlice.getText();
 
-        if (testParameter(tmpStr, 1, (nSlices + 1))) {
+        if (testParameter(tmpStr, 0, (nSlices))) {
             insertSlice = Integer.parseInt(tmpStr);
         } else {
             textSlice.requestFocus();
@@ -589,15 +589,14 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
                 insertedImage = null;
             }
         }
-
-        if (insertSlice < 1) {
-            MipavUtil.displayError("Slice you insert before must be at least 1");
+        if (insertSlice < 0) {
+            MipavUtil.displayError("Slice you insert before must be at least 0");
             textSlice.requestFocus();
             textSlice.selectAll();
 
             return false;
-        } else if (insertSlice > (nSlices + 1)) {
-            MipavUtil.displayError("Slice number cannot exceed " + String.valueOf(nSlices + 1) +
+        } else if (insertSlice > (nSlices)) {
+            MipavUtil.displayError("Slice number cannot exceed " + String.valueOf(nSlices) +
                                    " for addition to end");
             textSlice.requestFocus();
             textSlice.selectAll();

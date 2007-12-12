@@ -80,7 +80,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
     public AlgorithmInsertSlice(ModelImage srcImage, ModelImage destImage, int insertSlice, int sliceType,
                                 ModelImage insertedImage) {
         super(destImage, srcImage);
-        this.insertSlice = insertSlice - 1;
+        this.insertSlice = insertSlice;
         this.sliceType = sliceType;
         this.insertedImage = insertedImage;
 

@@ -4937,11 +4937,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         if (displayMode == IMAGE_A) {
 
             if (imageA.getNDims() == 4) { // Setup the title for 4D image
-                str = imageA.getImageName() + "  " + String.valueOf(zSlice + 1) + "/" + String.valueOf(nImage) + "z  " +
-                      String.valueOf(tSlice + 1) + "/" + String.valueOf(nTImage) + "t M:" +
+                str = imageA.getImageName() + "  " + String.valueOf(zSlice) + "/" + String.valueOf(nImage-1) + "z  " +
+                      String.valueOf(tSlice) + "/" + String.valueOf(nTImage-1) + "t M:" +
                       makeString(componentImage.getZoomX(), 2);
             } else if (imageA.getNDims() == 3) { // Setup the title for 3D image
-                str = imageA.getImageName() + "  " + String.valueOf(zSlice + 1) + "/" + String.valueOf(nImage) + " M:" +
+                str = imageA.getImageName() + "  " + String.valueOf(zSlice) + "/" + String.valueOf(nImage-1) + " M:" +
                       makeString(componentImage.getZoomX(), 2);
             } else {
                 str = imageA.getImageName() + "  M:" + makeString(componentImage.getZoomX(), 2);
@@ -4949,11 +4949,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else {
 
             if (imageB.getNDims() == 4) { // Setup the title for 4D image of image B
-                str = imageB.getImageName() + "  " + String.valueOf(zSlice + 1) + "/" + String.valueOf(nImage) + "z  " +
-                      String.valueOf(tSlice + 1) + "/" + String.valueOf(nTImage) + "t M:" +
+                str = imageB.getImageName() + "  " + String.valueOf(zSlice) + "/" + String.valueOf(nImage-1) + "z  " +
+                      String.valueOf(tSlice) + "/" + String.valueOf(nTImage-1) + "t M:" +
                       makeString(componentImage.getZoomX(), 2);
             } else if (imageB.getNDims() == 3) { // Setup the title
-                str = imageB.getImageName() + "  " + String.valueOf(zSlice + 1) + "/" + String.valueOf(nImage) + " M:" +
+                str = imageB.getImageName() + "  " + String.valueOf(zSlice) + "/" + String.valueOf(nImage-1) + " M:" +
                       makeString(componentImage.getZoomX(), 2);
             } else {
                 str = imageB.getImageName() + "  M:" + makeString(componentImage.getZoomX(), 2);

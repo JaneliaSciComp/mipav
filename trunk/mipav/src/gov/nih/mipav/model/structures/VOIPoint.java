@@ -249,26 +249,26 @@ public class VOIPoint extends VOIBase {
 
         if ( orientation == NA || orientation == XY ) {
             // 1 -> imageDim instead of 0 -> imageDim - 1
-            x = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).x ) + 1;
-            y = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).y ) + 1;
+            x = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).x );
+            y = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).y );
             xS = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).x * zoomX * resolutionX );
             yS = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).y * zoomY * resolutionY );
         } else if ( orientation == ZY ) {
             // 1 -> imageDim instead of 0 -> imageDim - 1
-            x = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).z ) + 1;
-            y = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).y ) + 1;
+            x = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).z );
+            y = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).y );
             xS = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).z * zoomX * resolutionX );
             yS = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).y * zoomY * resolutionY );
         } else if ( orientation == XZ ) {
             // 1 -> imageDim instead of 0 -> imageDim - 1
-            x = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).x ) + 1;
-            y = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).z ) + 1;
+            x = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).x );
+            y = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).z );
             xS = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).x * zoomX * resolutionX );
             yS = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).z * zoomY * resolutionY );
         } else {
             // 1 -> imageDim instead of 0 -> imageDim - 1
-            x = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).x ) + 1;
-            y = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).y ) + 1;
+            x = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).x );
+            y = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).y );
             xS = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).x * zoomX * resolutionX );
             yS = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).y * zoomY * resolutionY );
         }
@@ -482,22 +482,21 @@ public class VOIPoint extends VOIBase {
 
         doName = (Preferences.is(Preferences.PREF_SHOW_VOI_NAME) && name != null);
 
-        // show the label as 1-based, not 0-based
         //Create the string that will be drawn for label and name
         if (doName) {
             str = new String(name + ": (" +
-                             positionLabel.x + 1 + "," +
-                             positionLabel.y + 1 + ")" );
+                             positionLabel.x + "," +
+                             positionLabel.y + ")" );
         }
         else if (label != null) {
             str = new String(label + ": (" +
-                             positionLabel.x + 1 + "," +
-                             positionLabel.y + 1 + ")" );
+                             positionLabel.x + "," +
+                             positionLabel.y + ")" );
         }
         else {
             str = new String("(" +
-                             positionLabel.x + 1 + "," +
-                             positionLabel.y + 1 + ")" );
+                             positionLabel.x + "," +
+                             positionLabel.y + ")" );
         }
 
         g.drawLine( x, y - 5, x, y + 5 );

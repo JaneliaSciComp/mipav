@@ -562,7 +562,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
          * cannot be less than 1"); textAnimationFrame.requestFocus(); textAnimationFrame.selectAll(); return; } else if
          * (zSlice > (nImage-1)) { MipavUtil.displayError("Animation Frame number cannot exceed " +
          * String.valueOf(nImage)); textAnimationFrame.requestFocus(); textAnimationFrame.selectAll(); return; } */
-        slider.setValue(zSlice + 1);
+        slider.setValue(zSlice);
         updateImages(true);
 
         pause = false;
@@ -1240,8 +1240,8 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
         if (source == slider) {
 
             // Change the currently displayed z slice
-            zSlice = slider.getValue() - 1;
-            textAnimationFrame.setText(String.valueOf(zSlice + 1));
+            zSlice = slider.getValue();
+            textAnimationFrame.setText(String.valueOf(zSlice));
             zShow = zSlice;
             updateImages(true);
         } else if (source == fpsSlider) {
@@ -1292,7 +1292,6 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
         if (componentImage == null) {
             return false;
         }
-
         componentImage.setSlice(sliceOldNumber[zShow]);
 
         componentImage.update();
@@ -1615,13 +1614,13 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
         controlPanel.setBorder(new EtchedBorder());
         controlPanel.setLayout(cpGBL);
 
-        labelAnimationFrame = new JLabel(" Frame number (1 - " + String.valueOf(nImage) + ")");
+        labelAnimationFrame = new JLabel(" Frame index (0 - " + String.valueOf(nImage-1) + ")");
         labelAnimationFrame.setForeground(Color.black);
         labelAnimationFrame.setFont(MipavUtil.font12);
         labelAnimationFrame.setEnabled(true);
         addControlPanel(labelAnimationFrame, cpGBC, 0, 0, 2, 1);
 
-        slider = new JSlider(1, nImage, zSlice + 1);
+        slider = new JSlider(0, nImage-1, zSlice);
         slider.setFont(MipavUtil.font12);
         slider.setEnabled(true);
         slider.setMinorTickSpacing(nImage / 10);
@@ -1629,14 +1628,14 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
         slider.addChangeListener(this);
         slider.setVisible(true);
         labelTable = new Hashtable();
-        labelTable.put(new Integer(1), createLabel("1"));
-        labelTable.put(new Integer(zSlice + 1), createLabel(String.valueOf(zSlice + 1)));
-        labelTable.put(new Integer(nImage), createLabel(String.valueOf(nImage)));
+        labelTable.put(new Integer(0), createLabel("0"));
+        labelTable.put(new Integer(zSlice), createLabel(String.valueOf(zSlice)));
+        labelTable.put(new Integer(nImage-1), createLabel(String.valueOf(nImage-1)));
         slider.setLabelTable(labelTable);
         slider.setPaintLabels(true);
         addControlPanel(slider, cpGBC, 3, 0, 8, 1);
 
-        textAnimationFrame = new JTextField(String.valueOf(zSlice + 1), 4);
+        textAnimationFrame = new JTextField(String.valueOf(zSlice), 4);
         textAnimationFrame.setFont(MipavUtil.font12);
         textAnimationFrame.setEnabled(false);
         cpGBC.fill = GridBagConstraints.NONE;

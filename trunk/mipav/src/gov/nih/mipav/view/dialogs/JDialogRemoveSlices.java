@@ -200,13 +200,13 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
         } else if (command.equals("CheckEven")) {
             pressedCheckEven = true;
 
-            for (i = 1; i < nSlices; i += 2) {
+            for (i = 0; i < nSlices; i += 2) {
                 (checkboxList[i]).setSelected(true);
             }
         } else if (command.equals("CheckOdd")) {
             pressedCheckOdd = true;
 
-            for (i = 0; i < nSlices; i += 2) {
+            for (i = 1; i < nSlices; i += 2) {
                 (checkboxList[i]).setSelected(true);
             }
         } else if (command.equals("Script")) {
@@ -253,7 +253,7 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
                         for (int i = 0; i < checkListRemove.length; i++) {
 
                             if (checkListRemove[i]) {
-                                Preferences.debug("\t" + (i + 1));
+                                Preferences.debug("\t" + (i));
 
                                 if (((currentNum % 5) == 4) || (currentNum == (numChecked - 1))) {
                                     Preferences.debug("\n");
@@ -332,7 +332,7 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
                     for (int i = 0; i < checkListRemove.length; i++) {
 
                         if (checkListRemove[i]) {
-                            Preferences.debug("\t" + (i + 1));
+                            Preferences.debug("\t" + (i));
 
                             if (((currentNum % 5) == 4) || (currentNum == (numChecked - 1))) {
                                 Preferences.debug("\n");
@@ -890,7 +890,7 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
                                                // remove.
 
         for (int i = 0; i < nSlices; i++) { // place nSlices of check options for user and give them a name
-            checkboxList[i] = new JCheckBox("Image slice " + (String.valueOf(i + 1)));
+            checkboxList[i] = new JCheckBox("Image slice index " + (String.valueOf(i)));
 
             // checkboxList[i].setFont(serif12B);
             checkboxList[i].setBackground(Color.white);
@@ -901,7 +901,7 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
         scrollPane = new JScrollPane(checkboxPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                      JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         mainPanel.add(scrollPane);
-        mainPanel.setBorder(buildTitledBorder("Check the slices to remove"));
+        mainPanel.setBorder(buildTitledBorder("Check the slice indices to remove"));
         mainPanel.setPreferredSize(new Dimension(210, 390));
 
         JPanel checkPanel = new JPanel(new GridBagLayout());
@@ -950,12 +950,12 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
 
         JPanel rangePanel = new JPanel();
         rangePanel.setLayout(new BoxLayout(rangePanel, BoxLayout.Y_AXIS));
-        rangePanel.setBorder(buildTitledBorder("Range of slices"));
-        useRange = new JCheckBox("Specify range of slices", false);
+        rangePanel.setBorder(buildTitledBorder("Range of slice indices"));
+        useRange = new JCheckBox("Specify range of slice indices", false);
         useRange.addItemListener(this);
         useRange.setFont(serif12B);
-        exampleLabel = new JLabel("Enter slice numbers and/or slice ranges.");
-        exampleLabel2 = new JLabel("For example, 1,3,5-12");
+        exampleLabel = new JLabel("Enter slice number indices and/or slice range indices.");
+        exampleLabel2 = new JLabel("For example, 0,3,5-12");
         exampleLabel.setFont(serif12);
         exampleLabel2.setFont(serif12);
         exampleLabel.setEnabled(false);
@@ -1100,7 +1100,7 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
 
                             return false;
                         } else {
-                            checkListRemove[start - 1] = true;
+                            checkListRemove[start] = true;
                         }
                     } else {
                         String endString = tokens2.nextToken();
@@ -1112,8 +1112,8 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
                             return false;
                         } else {
 
-                            for (i = start; i < (end + 1); i++) {
-                                checkListRemove[i - 1] = true;
+                            for (i = start; i <= (end); i++) {
+                                checkListRemove[i] = true;
                             }
                         }
                     }

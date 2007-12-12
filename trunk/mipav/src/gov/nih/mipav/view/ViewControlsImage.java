@@ -285,7 +285,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
             panelImageSlider = new JPanel();
             panelImageSlider.setLayout(new GridLayout(2, 1));
             panelImageSlider.setForeground(Color.black);
-            borderImageSlider = new TitledBorder(" Image slice");
+            borderImageSlider = new TitledBorder(" Image slice index ");
             borderImageSlider.setTitleColor(Color.black);
             borderImageSlider.setTitleFont(MipavUtil.font12B);
             borderImageSlider.setBorder(new EtchedBorder());
@@ -297,7 +297,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
                 tDim = frame.getImageB().getExtents()[3];
             }
 
-            buildTImageSliderLabels(1, tDim);
+            buildTImageSliderLabels(0, tDim);
             tImageSlider = new JSlider(JSlider.HORIZONTAL, 0, sliderResolutionInt, sliderResolutionInt / 2);
             tImageSlider.setMajorTickSpacing(majorSpacing);
             tImageSlider.setMinorTickSpacing(minorSpacing);
@@ -309,7 +309,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
             tImageSlider.addChangeListener(this);
 
             zDim = frame.getImageA().getExtents()[2];
-            buildZImageSliderLabels(1, zDim);
+            buildZImageSliderLabels(0, zDim);
             zImageSlider = new JSlider(JSlider.HORIZONTAL, 0, sliderResolutionInt, sliderResolutionInt / 2);
             zImageSlider.setMajorTickSpacing(majorSpacing);
             zImageSlider.setMinorTickSpacing(minorSpacing);
@@ -335,14 +335,14 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
 
             // panelImageSlider.setLayout(new BorderLayout());
             panelImageSlider.setForeground(Color.black);
-            borderImageSlider = new TitledBorder("Image slice");
+            borderImageSlider = new TitledBorder("Image slice index ");
             borderImageSlider.setTitleColor(Color.black);
             borderImageSlider.setTitleFont(MipavUtil.font12B);
             borderImageSlider.setBorder(new EtchedBorder());
             panelImageSlider.setBorder(borderImageSlider);
 
             zDim = frame.getImageA().getExtents()[2];
-            buildZImageSliderLabels(1, zDim);
+            buildZImageSliderLabels(0, zDim);
 
             // System.out.println("resol = " + sliderResolutionInt);
             zImageSlider = new JSlider(JSlider.HORIZONTAL, 0, sliderResolutionInt, sliderResolutionInt / 2);
@@ -783,21 +783,21 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
         Font font12 = MipavUtil.font12;
         float rangeF = (max) / 4.0f;
 
-        JLabel label1 = new JLabel("1");
+        JLabel label1 = new JLabel("0");
 
         label1.setForeground(Color.black);
         label1.setFont(font12);
         tImageSliderDictionary.put(new Integer(0), label1);
 
         if ((max - min) > 3) {
-            JLabel label2 = new JLabel(Integer.toString(Math.round(rangeF * 2)));
+            JLabel label2 = new JLabel(Integer.toString(Math.round(rangeF * 2)-1));
 
             label2.setForeground(Color.black);
             label2.setFont(font12);
             tImageSliderDictionary.put(new Integer(sliderResolutionInt / 2), label2);
         }
 
-        JLabel label5 = new JLabel(Integer.toString(max));
+        JLabel label5 = new JLabel(Integer.toString(max-1));
 
         label5.setForeground(Color.black);
         label5.setFont(font12);
@@ -817,21 +817,21 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
         Font font12 = MipavUtil.font12;
         float rangeF = (max) / 4.0f;
 
-        JLabel label1 = new JLabel("1");
+        JLabel label1 = new JLabel("0");
 
         label1.setForeground(Color.black);
         label1.setFont(font12);
         zImageSliderDictionary.put(new Integer(0), label1);
 
         if ((max - min) > 3) {
-            JLabel label2 = new JLabel(Integer.toString(Math.round(rangeF * 2)));
+            JLabel label2 = new JLabel(Integer.toString(Math.round(rangeF * 2)-1));
 
             label2.setForeground(Color.black);
             label2.setFont(font12);
             zImageSliderDictionary.put(new Integer(sliderResolutionInt / 2), label2);
         }
 
-        JLabel label5 = new JLabel(Integer.toString(max));
+        JLabel label5 = new JLabel(Integer.toString(max-1));
 
         label5.setForeground(Color.black);
         label5.setFont(font12);

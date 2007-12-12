@@ -1646,16 +1646,16 @@ public class JDialogVOIStats extends JDialogBase
 
                 if (positions != null) {
 	
-                	contourTextArea.append(" X: " + String.valueOf(currentX + 1) + " Y: " +
-                			String.valueOf(currentY + 1) + " Z: " + String.valueOf(currentZ + 1) +
+                	contourTextArea.append(" X: " + String.valueOf(currentX) + " Y: " +
+                			String.valueOf(currentY) + " Z: " + String.valueOf(currentZ) +
                 			"  Position: " + positions[0] + " " + positions[1] + " " + positions[2] +
                 	"\n");
 	                	
 	
                 } else {
 
-                	contourTextArea.append(" X: " + String.valueOf(currentX + 1) + " Y: " +
-                			String.valueOf(currentY + 1) + " Z: " + String.valueOf(currentZ + 1) +
+                	contourTextArea.append(" X: " + String.valueOf(currentX) + " Y: " +
+                			String.valueOf(currentY) + " Z: " + String.valueOf(currentZ) +
                 	"\n");
                     
                 }
@@ -1669,8 +1669,8 @@ public class JDialogVOIStats extends JDialogBase
                 currentY = (int) currentPt.y;
                 currentZ = (int) currentPt.z;
 
-                contourTextArea.append(" X: " + String.valueOf(currentX + 1) + " Y: " + String.valueOf(currentY + 1) +
-                                       " Z: " + String.valueOf(currentZ + 1) + "\n");
+                contourTextArea.append(" X: " + String.valueOf(currentX) + " Y: " + String.valueOf(currentY) +
+                                       " Z: " + String.valueOf(currentZ) + "\n");
             }
 
         }
