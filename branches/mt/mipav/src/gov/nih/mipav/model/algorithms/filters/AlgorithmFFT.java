@@ -748,7 +748,6 @@ public class AlgorithmFFT extends AlgorithmBase {
                 imageCrop = true;
             } // if ((i == 0) || ( i == 60))
             else if ((i == 1) || (i == 61)) {
-                createNewImage = true;
                 nDims = 2;
                 extents = new int[nDims];
                 extents[0] = 256;
@@ -930,9 +929,9 @@ public class AlgorithmFFT extends AlgorithmBase {
             else if ((i == 19) || (i == 79)) {
                 nDims = 3;
                 extents = new int[nDims];
-                extents[0] = 64;
-                extents[1] = 128;
-                extents[2] = 256;
+                extents[0] = 32;
+                extents[1] = 64;
+                extents[2] = 128;
                 constructionMethod = WINDOW;
                 kernelDiameter = 15;
                 unequalDim = false;
