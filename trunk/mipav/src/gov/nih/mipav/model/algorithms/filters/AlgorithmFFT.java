@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms.filters;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.ViewUserInterface;
 
 import java.io.*;
 
@@ -248,6 +249,8 @@ public class AlgorithmFFT extends AlgorithmBase {
 
     /** True if zero padding actually performed. */
     private boolean zeroPad;
+    
+    private boolean doSelfTest = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -651,12 +654,1688 @@ public class AlgorithmFFT extends AlgorithmBase {
         }
 
         
-
-        if (destImage != null) {
+        if (doSelfTest) {
+            selfTest();
+        }
+        else if (destImage != null) {
             calcStoreInDest();
         } else {
             calcInPlace();
         }
+    }
+    
+    private void selfTest() {
+        float a[] = null;
+        float b[] = null;
+        float c[] = null;
+        float d[] = null;
+        float newA[] = null;
+        float newC[] = null;
+        int FORWARD_INVERSE = 1;
+        int SPATIAL_SHIFT = 2;
+        int FREQUENCY_SHIFT = 3;
+        int x, y, z;
+        int newX;
+        int newY;
+        int newZ;
+        int nDims = 2;
+        int extents[] = null;
+        int sliceSize = 0;
+        int newExtents[] = null;
+        int nTests = 128;
+        int i, j;
+        int arrayLength;
+        int imageType = ModelStorageBase.FLOAT;
+        ModelImage forwardImage;
+        boolean createNewImage = true;
+        ModelImage resultImage = null;
+        ModelImage inverseImage = null;
+        int transformDir;
+        boolean logMagDisplay = true;
+        boolean unequalDim = true;;
+        boolean image25D = false;
+        boolean imageCrop = false;
+        int kernelDiameter = 15;
+        int constructionMethod = WINDOW;
+        int butterworthOrder = 1;
+        float freq1 = 0.4f;
+        float freq2 = 0.7f;
+        AlgorithmFFT FFTAlgo;
+        double error[];
+        boolean  doCrop = false;
+        int dimTest;
+        int newLength;
+        int start[] = null;
+        int end[] = null;
+        int newArrayLength;
+        int u;
+        int v;
+        int w;
+        int testType;
+        RandomNumberGen randomGen = new RandomNumberGen();
+        ViewUserInterface UI = ViewUserInterface.getReference();
+        boolean foundError[] = new boolean[nTests];
+        int errorsFound = 0;
+        
+        // The first 120 perform a forward transform, then the inverse, and verify that the result is
+        // the same as the original data
+        // The first 60 tests create a destImage
+        // Tests 61 thru 120 only use the srcImage
+        // Tests 121 thru 124 verify the spatial translation property
+        // f(x - extents[0]/2, y - extents[1]/2) <=> F(u, v) * ((-1)**(u + v))
+        // Tests 125 thru 128 verify the frequency translation property
+        // f(x,y) * ((-1)**(x+y)) <=> F(u - extents[0]/2, v - extents[1]/2)
+        createNewImage = true;
+        testType = FORWARD_INVERSE;
+        for (i = 0; i < nTests; i++) {
+            if (i == 60) {
+                createNewImage = false;
+            }
+            UI.setDataText("Running test = " + i + "\n");
+            if ((i == 0) || (i == 60)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 256;
+                extents[1] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                imageCrop = true;
+            } // if ((i == 0) || ( i == 60))
+            else if ((i == 1) || (i == 61)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 256;
+                extents[1] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                imageCrop = false;    
+            }
+            else if ((i == 2) || (i == 62)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                image25D = false;
+                imageCrop = true;
+            }
+            else if ((i == 3) || (i == 63)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                image25D = false; 
+                imageCrop = false;
+            }
+            else if ((i == 4) || (i == 64)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 256;
+                extents[1] = 256;
+                constructionMethod = GAUSSIAN;  
+            }
+            else if ((i == 5) || (i == 65)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = GAUSSIAN;
+                image25D = false;
+            }
+            else if ((i == 6) || (i == 66)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 256;
+                extents[1] = 256;
+                constructionMethod = BUTTERWORTH;
+                butterworthOrder = 1;
+            }
+            else if ((i == 7) || (i == 67)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                image25D = false;
+            }
+            else if ((i == 8) || (i == 68)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                imageCrop = true;
+            } // else if ((i == 8) || (i == 68))
+            else if ((i == 9) || (i == 69)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                imageCrop = false;    
+            }
+            else if ((i == 10) || (i == 70)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = false;
+                imageCrop = true;
+            }
+            else if ((i == 11) || (i == 71)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = false;
+                imageCrop = false;    
+            }
+            else if ((i == 12) || (i == 72)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = GAUSSIAN; 
+                unequalDim = true;
+            }
+            else if ((i == 13) || (i == 73)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = GAUSSIAN;
+                unequalDim = true;
+                image25D = false;
+            }
+            else if ((i == 14) || (i == 74)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = BUTTERWORTH;
+                butterworthOrder = 1;
+                unequalDim = true;
+            }
+            else if ((i == 15) || (i == 75)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = true;
+                image25D = false;
+            }
+            else if ((i == 16) || (i == 76)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                imageCrop = true;
+            } // if ((i == 16) || (i == 76))
+            else if ((i == 17) || (i == 77)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                imageCrop = false;    
+            }
+            else if ((i == 18) || (i == 78)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = false;
+                imageCrop = true;
+            }
+            else if ((i == 19) || (i == 79)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 32;
+                extents[1] = 64;
+                extents[2] = 128;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = false;
+                imageCrop = false;    
+            }
+            else if ((i == 20) || (i == 80)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = GAUSSIAN; 
+                unequalDim = false;
+            }
+            else if ((i == 21) || (i == 81)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = GAUSSIAN;
+                unequalDim = false;
+                image25D = false;
+            }
+            else if ((i == 22) || (i == 82)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 256;
+                constructionMethod = BUTTERWORTH;
+                butterworthOrder = 1;
+                unequalDim = false;
+            }
+            else if ((i == 23) || (i == 83)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = false;
+                image25D = false;
+            }
+            else if ((i == 24) || (i == 84)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                imageCrop = true;
+            } // else if ((i == 24) || (i == 84))
+            else if ((i == 25) || (i == 85)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                imageCrop = false;    
+            }
+            else if ((i == 26) || (i == 86)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = false;
+                imageCrop = true;
+            }
+            else if ((i == 27) || (i == 87)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = false;
+                imageCrop = false;    
+            }
+            else if ((i == 28) || (i == 88)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = GAUSSIAN; 
+                unequalDim = true;
+            }
+            else if ((i == 29) || (i == 89)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = GAUSSIAN;
+                unequalDim = true;
+                image25D = false;
+            }
+            else if ((i == 30) || (i == 90)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = BUTTERWORTH;
+                butterworthOrder = 1;
+                unequalDim = true;
+            }
+            else if ((i == 31) || (i == 91)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = true;
+                image25D = false;
+            }
+            else if ((i == 32) || (i == 92)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                imageCrop = true;
+            } // else if ((i == 32) || (i == 92))
+            else if ((i == 33) || (i == 93)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                imageCrop = false;    
+            }
+            else if ((i == 34) || (i == 94)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = false;
+                imageCrop = true;
+            }
+            else if ((i == 35) || (i == 95)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = false;
+                imageCrop = false;    
+            }
+            else if ((i == 36) || (i == 96)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = GAUSSIAN; 
+                unequalDim = false;
+            }
+            else if ((i == 37) || (i == 97)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = GAUSSIAN;
+                unequalDim = false;
+                image25D = false;
+            }
+            else if ((i == 38) || (i == 98)) {
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 111;
+                extents[1] = 239;
+                constructionMethod = BUTTERWORTH;
+                butterworthOrder = 1;
+                unequalDim = false;
+            }
+            else if ((i == 39) || (i == 99)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = false;
+                image25D = false;
+            }
+            else if ((i == 40) || (i == 100)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                image25D = true;
+                imageCrop = true;
+            }
+            else if ((i == 41) || (i == 101)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                image25D = true;
+                imageCrop = false;
+            }
+            else if ((i == 42) || (i == 102)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = GAUSSIAN;
+                image25D = true;
+            }
+            else if ((i == 43) || (i == 103)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                image25D = true;
+            }
+            else if ((i == 44) || (i == 104)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = true;
+                imageCrop = true;
+            }
+            else if ((i == 45) || (i == 105)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = true;
+                imageCrop = false;
+            }
+            else if ((i == 46) || (i == 106)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = GAUSSIAN;
+                unequalDim = true;
+                image25D = true;
+            }
+            else if ((i == 47) || (i == 107)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = true;
+                image25D = true;
+            }
+            else if ((i == 48) || (i == 108)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = true;
+                imageCrop = true;
+            }
+            else if ((i == 49) || (i == 109)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = true;
+                imageCrop = false;
+            }
+            else if ((i == 50) || (i == 110)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = GAUSSIAN;
+                unequalDim = false;
+                image25D = true;
+            }
+            else if ((i == 51) || (i == 111)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 64;
+                extents[1] = 128;
+                extents[2] = 256;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = false;
+                image25D = true;
+            }
+            else if ((i == 52) || (i == 112)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = true;
+                imageCrop = true;
+            }
+            else if ((i == 53) || (i == 113)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = true;
+                image25D = true;
+                imageCrop = false;
+            }
+            else if ((i == 54) || (i == 114)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = GAUSSIAN;
+                unequalDim = true;
+                image25D = true;
+            }
+            else if ((i == 55) || (i == 115)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = true;
+                image25D = true;
+            }
+            else if ((i == 56) || (i == 116)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = true;
+                imageCrop = true;
+            }
+            else if ((i == 57) || (i == 117)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = WINDOW;
+                kernelDiameter = 15;
+                unequalDim = false;
+                image25D = true;
+                imageCrop = false;
+            }
+            else if ((i == 58) || (i == 118)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = GAUSSIAN;
+                unequalDim = false;
+                image25D = true;
+            }
+            else if ((i == 59) || (i == 119)) {
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 59;
+                extents[1] = 111;
+                extents[2] = 239;
+                constructionMethod = BUTTERWORTH; 
+                butterworthOrder = 1;
+                unequalDim = false;
+                image25D = true;
+            }
+            else if (i == 120) {
+                testType = SPATIAL_SHIFT;
+                createNewImage = true;
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 256;
+                extents[1] = 256;
+                constructionMethod = GAUSSIAN;  
+            }
+            else if (i == 121) {
+                testType = SPATIAL_SHIFT;
+                createNewImage = false;
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 256;
+                extents[1] = 256;
+                constructionMethod = GAUSSIAN;      
+            }
+            else if (i == 122) {
+                testType = SPATIAL_SHIFT;
+                createNewImage = true;
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = GAUSSIAN;
+                image25D = false;    
+            }
+            else if (i == 123) {
+                testType = SPATIAL_SHIFT;
+                createNewImage = false;
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = GAUSSIAN;
+                image25D = false;     
+            }
+            else if (i == 124) {
+                testType = FREQUENCY_SHIFT;
+                createNewImage = true;
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 256;
+                extents[1] = 256;
+                constructionMethod = GAUSSIAN;  
+            }
+            else if (i == 125) {
+                testType = FREQUENCY_SHIFT;
+                createNewImage = false;
+                nDims = 2;
+                extents = new int[nDims];
+                extents[0] = 256;
+                extents[1] = 256;
+                constructionMethod = GAUSSIAN;      
+            }
+            else if (i == 126) {
+                testType = FREQUENCY_SHIFT;
+                createNewImage = true;
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = GAUSSIAN;
+                image25D = false;    
+            }
+            else if (i == 127) {
+                testType = FREQUENCY_SHIFT;
+                createNewImage = false;
+                nDims = 3;
+                extents = new int[nDims];
+                extents[0] = 128;
+                extents[1] = 128;
+                extents[2] = 128;
+                constructionMethod = GAUSSIAN;
+                image25D = false;     
+            }
+            if (nDims == 3) {
+                sliceSize = extents[0] * extents[1];
+            }
+            
+            
+            doCrop = false;
+            if (imageCrop && (constructionMethod == WINDOW)) {
+                newExtents = new int[nDims];
+    
+    
+                // If imageCrop is false:
+                // Find the lowest power of 2 number not less than kdim + (dimLengths[i]) - 1.
+                // If imageCrop is true:
+                // Find the lowest power of 2 number not less than (dimLengths[i])
+                // This must be done to prevent aliasing in using a frequency filter,
+                // and to have a power of 2 for the FFT.
+                // Make all dimensions equal to this the largest of the above dimensions if
+                // unequalDim is false
+    
+                arrayLength = 1;
+    
+                for (j = 0; j < nDims; j++) {
+                    arrayLength *= extents[j];
+                    newExtents[j] = extents[j];
+                }
+    
+                if ((nDims == 3)&& (image25D)) {
+    
+                    for (j = 0; j < 2; j++) {
+    
+                        for (dimTest = newExtents[j]; dimTest > 1; dimTest = dimTest / 2) {
+    
+                            if ((dimTest % 2) != 0) {
+                                dimTest = 1;
+    
+                                // log2x = logex/loge2
+                                newExtents[j] = 1 + (int) (Math.log((double) newExtents[j]) / Math.log(2.0));
+                                newExtents[j] = Math.round((float) (Math.pow(2.0, (double) newExtents[j])));
+                            }
+                        }
+                    } // for (j = 0; j < 2; j++)
+                } // if (nDIms == 3) && (image25D))
+                else { // not image25D
+    
+                    for (j = 0; j < nDims; j++) {
+    
+                        for (dimTest = newExtents[j]; dimTest > 1; dimTest = dimTest / 2) {
+    
+                            if ((dimTest % 2) != 0) {
+                                dimTest = 1;
+    
+                                // log2x = logex/loge2
+                                newExtents[j] = 1 + (int) (Math.log((double) newExtents[j]) / Math.log(2.0));
+                                newExtents[j] = Math.round((float) (Math.pow(2.0, (double) newExtents[j])));
+                            }
+                        }
+                    } // for (j = 0; j < nDims; j++)
+                } // else not image25D
+    
+                if (!unequalDim) { // if dimensions are to be made equal
+                    newLength = 0;
+    
+                    if (image25D) {
+    
+                        for (j = 0; j < 2; j++) {
+    
+                            if (newExtents[j] > newLength) {
+                                newLength = newExtents[j];
+                            }
+                        }
+    
+                        for (j = 0; j < 2; j++) {
+                            newExtents[j] = newLength;
+                        }
+                    } else { // not image25D
+    
+                        for (j = 0; j < nDims; j++) {
+    
+                            if (newExtents[j] > newLength) {
+                                newLength = newExtents[j];
+                            }
+                        }
+    
+                        for (j = 0; j < nDims; j++) {
+                            newExtents[j] = newLength;
+                        }
+                    } // else not image25D
+                } // end of if (!unequalDim)
+    
+    
+                if (image25D) {
+
+                    for (j = 0; j < 2; j++) {
+
+                        if ((extents[j] + kernelDiameter - 1) > newExtents[j]) {
+                            doCrop = true;
+                        }
+                    }
+                } // if (image25D)
+                else { // not image25D
+
+                    for (j = 0; j < nDims; j++) {
+
+                        if ((extents[j] + kernelDiameter - 1) > newExtents[j]) {
+                            doCrop = true;
+                        }
+                    }
+                } // else not image25D
+    
+                
+                if (doCrop) {
+                    start = new int[nDims];
+                    end = new int[nDims];
+    
+                    if ((nDims == 3) && (image25D)) {
+    
+                        for (j = 0; j < 2; j++) {
+    
+                            if ((extents[j] + kernelDiameter - 1) > newExtents[j]) {
+                                start[j] = ((extents[j] + kernelDiameter - 1 - newExtents[j]) / 2) +
+                                           ((extents[j] + kernelDiameter - 1 - newExtents[j]) % 2);
+                                end[j] = extents[j] - 1 - ((extents[j] + kernelDiameter - 1 - newExtents[j]) / 2);
+                            } else {
+                                start[j] = 0;
+                                end[j] = extents[j] - 1;
+                            }
+                        }
+    
+                        start[2] = 0;
+                        end[2] = extents[2] - 1;
+                    } // if ((nDims == 3) && (image25D))
+                    else { // not image25D
+    
+                        for (j = 0; j < nDims; j++) {
+    
+                            if ((extents[j] + kernelDiameter - 1) > newExtents[j]) {
+                                start[j] = ((extents[j] + kernelDiameter - 1 - newExtents[j]) / 2) +
+                                           ((extents[j] + kernelDiameter - 1 - newExtents[j]) % 2);
+                                end[j] = extents[j] - 1 - ((extents[j] + kernelDiameter - 1 - newExtents[j]) / 2);
+                            } else {
+                                start[j] = 0;
+                                end[j] = extents[j] - 1;
+                            }
+                        }
+                    } // else not image25D
+                } // if (doCrop)
+            } // if (imageCrop && (constructionMethod == WINDOW))
+            
+            arrayLength = extents[0];
+            for (j = 1; j < nDims; j++) {
+                arrayLength *= extents[j];    
+            }
+            
+            a = new float[arrayLength];
+            c = new float[arrayLength];
+            
+            for (j = 0; j < arrayLength; j++) {
+                c[j] = randomGen.genUniformRandomNum(0.0f, 1.0f);
+                a[j] = c[j];
+            } // for (j = 0; j < arrayLength; j++)
+            
+            forwardImage = new ModelImage(imageType, extents, "forwardImage");
+            
+            try {
+                forwardImage.importData(0, a, true);
+            }
+            catch (IOException e) {
+                displayError("IOException on forwardImage.importData(0, a, true)");
+            }
+            
+            forwardImage.setOriginalCropCheckbox(imageCrop);
+
+            String name = forwardImage.getImageName() +  "_FFT";
+            transformDir = FORWARD;
+
+            if (createNewImage)  {
+
+                try {
+                    resultImage = (ModelImage) forwardImage.clone();
+                    resultImage.setImageName(name);
+                    resultImage.resetVOIs();
+
+                    // Make algorithm
+                    FFTAlgo = new AlgorithmFFT(resultImage, forwardImage, transformDir, logMagDisplay, unequalDim, image25D,
+                                               imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
+                                               butterworthOrder);
+                    FFTAlgo.calcStoreInDest();
+                    
+                } catch (OutOfMemoryError e) {
+                    displayError("AlgorithmFFT: unable to allocate enough memory");
+
+                    if (resultImage != null) {
+                        resultImage.disposeLocal(); // Clean up memory of result image
+                        resultImage = null;
+                    }
+
+                    return;
+                }
+            } else {
+
+                try {
+
+                    // No need to make new image space because the user has choosen to replace the source image
+                    // Make the algorithm class
+                    FFTAlgo = new AlgorithmFFT(forwardImage, transformDir, logMagDisplay, unequalDim, image25D, imageCrop,
+                                               kernelDiameter, filterType, freq1, freq2, constructionMethod,
+                                               butterworthOrder);
+
+                    FFTAlgo.calcInPlace();
+                } catch (OutOfMemoryError e) {
+                    displayError("AlgorithmFFT: unable to allocate enough memory");
+
+                    return;
+                }
+            }
+            
+            FFTAlgo.finalize();
+            if (testType == SPATIAL_SHIFT) {
+                // Test f(x - extents[0]/2, y - extents[1]/2) <=> F(u,v) * ((-1)**(u + v))
+                b = new float[arrayLength];
+                d = new float[arrayLength];
+                newC = new float[arrayLength];
+                if (createNewImage) {
+                    try {
+                        resultImage.exportComplexData(0, arrayLength, a, b);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on resultImage.exportComplexData(0, arrayLength, a, b)");
+                        return;
+                    }
+                } // if (createNewImage)
+                else { // not createNewImage
+                    try {
+                        forwardImage.exportComplexData(0, arrayLength, a, b);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on forwardImage.exportComplexData(0, arrayLength, a, b)");
+                        return;
+                    }    
+                } // else not createNewImage
+                if (nDims == 2) {
+                    for (v = 0; v < extents[1]; v++) {
+                        for (u = 0; u < extents[0]; u++) {
+                            if (((u + v) % 2) == 1) {
+                                a[u + v*extents[0]] *= -1;
+                                b[u + v*extents[0]] *= -1;
+                            }
+                        }
+                    }
+                }
+                else {
+                    for (w = 0; w < extents[2]; w++) {
+                        for (v = 0; v < extents[1]; v++) {
+                            for (u = 0; u < extents[0]; u++) {
+                                if (((u + v + w) % 2) == 1) {
+                                    a[u + v*extents[0] + w*sliceSize] *= -1;
+                                    b[u + v*extents[0] + w*sliceSize] *= -1;
+                                }
+                            }
+                        }    
+                    }
+                }
+                
+                if (createNewImage) {
+                    try {
+                        resultImage.importComplexData(0, a, b, true, true);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on resultImage.importComplexData(0, a, b, true, true)");
+                        return;
+                    }
+                } // if (createNewImage)
+                else { // not createNewImage
+                    try {
+                        forwardImage.importComplexData(0, a, b, true, true);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on forwardImage.importComplexData(0, a, b, true, true)");
+                        return;
+                    }    
+                } // else not createNewImage
+                transformDir = INVERSE;
+                
+                if (createNewImage)  {
+                    
+                    try {
+                        inverseImage = (ModelImage) resultImage.clone();
+                        inverseImage.setImageName(name);
+                        inverseImage.resetVOIs();
+    
+                        // Make algorithm
+                        FFTAlgo = new AlgorithmFFT(inverseImage, resultImage, transformDir, logMagDisplay, unequalDim, image25D,
+                                                   imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
+                                                   butterworthOrder);
+                        FFTAlgo.calcStoreInDest();
+                        
+                    } catch (OutOfMemoryError e) {
+                        displayError("AlgorithmFFT: unable to allocate enough memory");
+    
+                        if (inverseImage != null) {
+                            inverseImage.disposeLocal(); // Clean up memory of result image
+                            inverseImage = null;
+                        }
+    
+                        return;
+                    }
+                    
+                    try {
+                        inverseImage.exportData(0, arrayLength, a);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on inverseImage.exportData(0, arrayLength, a)");
+                        return;
+                    }
+                } else {
+    
+                    try {
+    
+                        // No need to make new image space because the user has choosen to replace the source image
+                        // Make the algorithm class
+                        FFTAlgo = new AlgorithmFFT(forwardImage, transformDir, logMagDisplay, unequalDim, image25D, imageCrop,
+                                                   kernelDiameter, filterType, freq1, freq2, constructionMethod,
+                                                   butterworthOrder);
+    
+                        FFTAlgo.calcInPlace();
+                    } catch (OutOfMemoryError e) {
+                        displayError("AlgorithmFFT: unable to allocate enough memory");
+    
+                        return;
+                    }
+                    
+                    try {
+                        forwardImage.exportData(0, arrayLength, a);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on forwardImage.exportData(0, arrayLength, a)");
+                        return;
+                    }
+                }
+                
+                FFTAlgo.finalize();
+                if (forwardImage !=  null) {
+                    forwardImage.disposeLocal();
+                    forwardImage = null;
+                }
+                if (resultImage != null) {
+                    resultImage.disposeLocal();
+                    resultImage = null;
+                }
+                if (inverseImage != null) {
+                    inverseImage.disposeLocal();
+                    inverseImage = null;
+                }
+                
+                testCenter(a, extents);
+                
+                error = rms(a, c, arrayLength);
+                if (error[0] >= 2.0E-7) {
+                    foundError[i] = true;
+                }
+                
+                for (j = 0; j < arrayLength; j++) {
+                    a[j] = Math.abs(a[j] - c[j]);
+                } // for (j = 0; j < n; j++)
+    
+                shellSort(a);
+                if (a[arrayLength-1] >= 1.0E-6) {
+                    foundError[i] = true;
+                }
+                
+                if (foundError[i]) {
+                    errorsFound++;
+                    UI.setDataText("Test = " + i + " rms error = " + error[0] + "\n");
+                    UI.setDataText("Test = " + i + " the 10 largest error differences\n");
+                    for (j = 0; j < 10; j++) {
+                        UI.setDataText("Diff[" + j + "] = " + a[arrayLength-1-j] + "\n");
+                    }
+                }
+            } // if (testType == SPATIAL_SHIFT)
+            else if (testType == FREQUENCY_SHIFT) {
+                // Test f(x,y) * ((-1)**(x+y)) <=> F(u - extents[0]/2, v - extents[1]/2)
+                b = new float[arrayLength];
+                if (createNewImage) {
+                    try {
+                        resultImage.exportComplexData(0, arrayLength, a, b);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on resultImage.exportComplexData(0, arrayLength, a, b)");
+                        return;
+                    }
+                } // if (createNewImage)
+                else { // not createNewImage
+                    try {
+                        forwardImage.exportComplexData(0, arrayLength, a, b);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on forwardImage.exportComplexData(0, arrayLength, a, b)");
+                        return;
+                    }    
+                } // else not createNewImage
+                // Remove centering from a and b to obtain F(u, v) uncentered
+                // Create a(x - extents[0]/2, y - extents[1]/2) and b(x - extents[0]/2, y - extents[1]/2)
+                // Center the shifted data
+                // This is 3 center operations, which is equivalent to 1 center operation
+                testCenter(a, b, extents);
+                if (createNewImage) {
+                    try {
+                        resultImage.importComplexData(0, a, b, true, true);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on resultImage.importComplexData(0, a, b, true, true)");
+                        return;
+                    }
+                } // if (createNewImage)
+                else { // not createNewImage
+                    try {
+                        forwardImage.importComplexData(0, a, b, true, true);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on forwardImage.importComplexData(0, a, b, true, true)");
+                        return;
+                    }    
+                } // else not createNewImage
+                transformDir = INVERSE;
+                
+                if (createNewImage)  {
+                    
+                    try {
+                        inverseImage = (ModelImage) resultImage.clone();
+                        inverseImage.setImageName(name);
+                        inverseImage.resetVOIs();
+    
+                        // Make algorithm
+                        FFTAlgo = new AlgorithmFFT(inverseImage, resultImage, transformDir, logMagDisplay, unequalDim, image25D,
+                                                   imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
+                                                   butterworthOrder);
+                        FFTAlgo.calcStoreInDest();
+                        
+                    } catch (OutOfMemoryError e) {
+                        displayError("AlgorithmFFT: unable to allocate enough memory");
+    
+                        if (inverseImage != null) {
+                            inverseImage.disposeLocal(); // Clean up memory of result image
+                            inverseImage = null;
+                        }
+    
+                        return;
+                    }
+                    
+                    try {
+                        inverseImage.exportData(0, arrayLength, a);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on inverseImage.exportData(0, arrayLength, a)");
+                        return;
+                    }
+                } else {
+    
+                    try {
+    
+                        // No need to make new image space because the user has choosen to replace the source image
+                        // Make the algorithm class
+                        FFTAlgo = new AlgorithmFFT(forwardImage, transformDir, logMagDisplay, unequalDim, image25D, imageCrop,
+                                                   kernelDiameter, filterType, freq1, freq2, constructionMethod,
+                                                   butterworthOrder);
+    
+                        FFTAlgo.calcInPlace();
+                    } catch (OutOfMemoryError e) {
+                        displayError("Dialog FFT: unable to allocate enough memory");
+    
+                        return;
+                    }
+                    
+                    try {
+                        forwardImage.exportData(0, arrayLength, a);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on forwardImage.exportData(0, arrayLength, a)");
+                        return;
+                    }
+                }
+                
+                FFTAlgo.finalize();
+                if (forwardImage !=  null) {
+                    forwardImage.disposeLocal();
+                    forwardImage = null;
+                }
+                if (resultImage != null) {
+                    resultImage.disposeLocal();
+                    resultImage = null;
+                }
+                if (inverseImage != null) {
+                    inverseImage.disposeLocal();
+                    inverseImage = null;
+                }
+                
+                if (nDims == 2) {
+                    for (y = 0; y < extents[1]; y++) {
+                        for (x = 0; x < extents[0]; x++) {
+                            if (((x + y) % 2) == 1) {
+                                c[x + y*extents[0]] = -c[x + y*extents[0]];
+                            }
+                        }
+                    }
+                } // if (nDims == 2)
+                else { // nDims == 3 
+                    for (z = 0; z < extents[2]; z++) {
+                        for (y = 0; y < extents[1]; y++) {
+                            for (x = 0; x < extents[0]; x++) {
+                                if (((x + y + z) % 2) == 1) {
+                                    c[x + y*extents[0] + z*sliceSize] = -c[x + y*extents[0] + z*sliceSize];
+                                }
+                            }
+                        }    
+                    }
+                } // else nDims == 3
+                
+                error = rms(a, c, arrayLength);
+                if (error[0] >= 2.0E-7) {
+                    foundError[i] = true;
+                }
+                
+                for (j = 0; j < 10; j++) {
+                    UI.setDataText("a = " + a[j] + " c = " + c[j] + "\n");
+                }
+                
+                for (j = 0; j < arrayLength; j++) {
+                    a[j] = Math.abs(a[j] - c[j]);
+                } // for (j = 0; j < n; j++)
+    
+                shellSort(a);
+                if (a[arrayLength-1] >= 1.0E-6) {
+                    foundError[i] = true;
+                }
+                
+                if (foundError[i]) {
+                    errorsFound++;
+                    UI.setDataText("Test = " + i + " rms error = " + error[0] + "\n");
+                    UI.setDataText("Test = " + i + " the 10 largest error differences\n");
+                    for (j = 0; j < 10; j++) {
+                        UI.setDataText("Diff[" + j + "] = " + a[arrayLength-1-j] + "\n");
+                    }
+                }
+            } // else if (testType == FREQUENCY_SHIFT)
+            else { // testType == FORWARD_INVERSE
+                transformDir = INVERSE;
+                
+                if (createNewImage)  {
+    
+                    try {
+                        inverseImage = (ModelImage) resultImage.clone();
+                        inverseImage.setImageName(name);
+                        inverseImage.resetVOIs();
+    
+                        // Make algorithm
+                        FFTAlgo = new AlgorithmFFT(inverseImage, resultImage, transformDir, logMagDisplay, unequalDim, image25D,
+                                                   imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
+                                                   butterworthOrder);
+                        FFTAlgo.calcStoreInDest();
+                        
+                    } catch (OutOfMemoryError e) {
+                        displayError("AlgorithmFFT: unable to allocate enough memory");
+    
+                        if (inverseImage != null) {
+                            inverseImage.disposeLocal(); // Clean up memory of result image
+                            inverseImage = null;
+                        }
+    
+                        return;
+                    }
+                    
+                    try {
+                        inverseImage.exportData(0, arrayLength, a);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on inverseImage.exportData(0, arrayLength, a)");
+                        return;
+                    }
+                } else {
+    
+                    try {
+    
+                        // No need to make new image space because the user has choosen to replace the source image
+                        // Make the algorithm class
+                        FFTAlgo = new AlgorithmFFT(forwardImage, transformDir, logMagDisplay, unequalDim, image25D, imageCrop,
+                                                   kernelDiameter, filterType, freq1, freq2, constructionMethod,
+                                                   butterworthOrder);
+    
+                        FFTAlgo.calcInPlace();
+                    } catch (OutOfMemoryError e) {
+                        displayError("Dialog FFT: unable to allocate enough memory");
+    
+                        return;
+                    }
+                    
+                    try {
+                        forwardImage.exportData(0, arrayLength, a);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on forwardImage.exportData(0, arrayLength, a)");
+                        return;
+                    }
+                }
+                
+                FFTAlgo.finalize();
+                if (forwardImage !=  null) {
+                    forwardImage.disposeLocal();
+                    forwardImage = null;
+                }
+                if (resultImage != null) {
+                    resultImage.disposeLocal();
+                    resultImage = null;
+                }
+                if (inverseImage != null) {
+                    inverseImage.disposeLocal();
+                    inverseImage = null;
+                }
+                
+                if (doCrop) {
+                  j = 0;
+                  if (nDims == 2) {
+                      newArrayLength = (end[0] - start[0] + 1)* (end[1] - start[1] + 1);
+                      newA = new float[newArrayLength];
+                      newC = new float[newArrayLength];
+                      for (y = start[1]; y <= end[1]; y++) {
+                          for (x = start[0]; x <= end[0]; x++) {
+                              newA[j] = a[x + y*extents[0]];
+                              newC[j++] = c[x + y*extents[0]];
+                          }
+                      }
+                  } // if (nDims == 2)
+                  else {
+                      newArrayLength = (end[0] - start[0] + 1)* (end[1] - start[1] + 1) * (end[2] - start[2] + 1);
+                      newA = new float[newArrayLength];
+                      newC = new float[newArrayLength];
+                      for (z = start[2]; z <= end[2]; z++) {
+                          for (y = start[1]; y <= end[1]; y++) {
+                              for (x = start[0]; x <= end[0]; x++) {
+                                  newA[j] = a[x + y*extents[0] + z*sliceSize];
+                                  newC[j++] = c[x + y*extents[0] + z*sliceSize];
+                              }
+                          }  
+                      }
+                  }
+                  a = new float[newArrayLength];
+                  c = new float[newArrayLength];
+                  for (j = 0; j < newArrayLength; j++) {
+                      a[j] = newA[j];
+                      c[j] = newC[j];
+                  }
+                  arrayLength = newArrayLength;
+                } // if (doCrop)
+                
+                
+                error = rms(a, c, arrayLength);
+                if (error[0] >= 2.0E-7) {
+                    foundError[i] = true;
+                }
+                
+                for (j = 0; j < arrayLength; j++) {
+                    a[j] = Math.abs(a[j] - c[j]);
+                } // for (j = 0; j < n; j++)
+    
+                shellSort(a);
+                if (a[arrayLength-1] >= 1.0E-6) {
+                    foundError[i] = true;
+                }
+                
+                if (foundError[i]) {
+                    errorsFound++;
+                    UI.setDataText("Test = " + i + " rms error = " + error[0] + "\n");
+                    UI.setDataText("Test = " + i + " the 10 largest error differences\n");
+                    for (j = 0; j < 10; j++) {
+                        UI.setDataText("Diff[" + j + "] = " + a[arrayLength-1-j] + "\n");
+                    }
+                }
+            } // else testType == FORWARD_INVERSE
+            
+        } // for (i = 0; i < nTests; i++)
+        UI.setDataText("Errors were found in " + errorsFound + " of " + nTests + " tests\n");
+        setCompleted(true);
+        return;
+    }
+    
+    private void testCenter(float[] a, int[] extents) {
+        int x, y, z;
+        int newX, newY, newZ;
+        float newA[] = new float[a.length];
+        int sliceSize;
+        int nDims = extents.length;
+       
+        if (nDims == 2) {
+            for (y = 0; y < extents[1]; y++) {
+                if ((y - extents[1]/2) >= 0) {
+                    newY = y - extents[1]/2;
+                }
+                else {
+                    newY = y + extents[1]/2;
+                }
+                for (x = 0; x < extents[0]; x++) {
+                    if ((x - extents[0]/2) >= 0) {
+                        newX = x - extents[0]/2;
+                    }
+                    else {
+                        newX = x + extents[0]/2;
+                    }
+                    newA[newX + extents[0]*newY] = a[x + extents[0]*y];
+                }
+            }
+        } // if (nDims == 2)
+        else { // nDims == 3
+            sliceSize = extents[0] * extents[1];
+            for (z = 0; z < extents[2]; z++) {
+                if ((z - extents[2]/2) >= 0) {
+                    newZ = z - extents[2]/2;
+                }
+                else {
+                    newZ = z + extents[2]/2;
+                }
+                for (y = 0; y < extents[1]; y++) {
+                    if ((y - extents[1]/2) >= 0) {
+                        newY = y - extents[1]/2;
+                    }
+                    else {
+                        newY = y + extents[1]/2;
+                    }
+                    for (x = 0; x < extents[0]; x++) {
+                        if ((x - extents[0]/2) >= 0) {
+                            newX = x - extents[0]/2;
+                        }
+                        else {
+                            newX = x + extents[0]/2;
+                        }
+                        newA[newX + extents[0]*newY + sliceSize*newZ] = a[x + extents[0]*y + sliceSize*z];
+                    }
+                }
+            }
+        } // else nDims == 3 
+        for (x = 0; x < a.length; x++) {
+            a[x] = newA[x];
+        }
+    }
+    
+    private void testCenter(float[] a, float [] b, int[] extents) {
+        int x, y, z;
+        int newX, newY, newZ;
+        float newA[] = new float[a.length];
+        float newB[] = new float[b.length];
+        int sliceSize;
+        int nDims = extents.length;
+       
+        if (nDims == 2) {
+            for (y = 0; y < extents[1]; y++) {
+                if ((y - extents[1]/2) >= 0) {
+                    newY = y - extents[1]/2;
+                }
+                else {
+                    newY = y + extents[1]/2;
+                }
+                for (x = 0; x < extents[0]; x++) {
+                    if ((x - extents[0]/2) >= 0) {
+                        newX = x - extents[0]/2;
+                    }
+                    else {
+                        newX = x + extents[0]/2;
+                    }
+                    newA[newX + extents[0]*newY] = a[x + extents[0]*y];
+                    newB[newX + extents[0]*newY] = b[x + extents[0]*y];
+                }
+            }
+        } // if (nDims == 2)
+        else { // nDims == 3
+            sliceSize = extents[0] * extents[1];
+            for (z = 0; z < extents[2]; z++) {
+                if ((z - extents[2]/2) >= 0) {
+                    newZ = z - extents[2]/2;
+                }
+                else {
+                    newZ = z + extents[2]/2;
+                }
+                for (y = 0; y < extents[1]; y++) {
+                    if ((y - extents[1]/2) >= 0) {
+                        newY = y - extents[1]/2;
+                    }
+                    else {
+                        newY = y + extents[1]/2;
+                    }
+                    for (x = 0; x < extents[0]; x++) {
+                        if ((x - extents[0]/2) >= 0) {
+                            newX = x - extents[0]/2;
+                        }
+                        else {
+                            newX = x + extents[0]/2;
+                        }
+                        newA[newX + extents[0]*newY + sliceSize*newZ] = a[x + extents[0]*y + sliceSize*z];
+                        newB[newX + extents[0]*newY + sliceSize*newZ] = b[x + extents[0]*y + sliceSize*z];
+                    }
+                }
+            }
+        } // else nDims == 3 
+        for (x = 0; x < a.length; x++) {
+            a[x] = newA[x];
+            b[x] = newB[x];
+        }
+    }
+    
+    private double[] rms(float[] a, float[] c, int n) {
+        // Computes rms error for transform-inverse pair arrays a = transform, inverse results arrays c = original
+        // data n = dimension of arrays a, and c
+
+        // rms errors for a and b arrays
+        double[] error = new double[1];
+        double ssa = 0.0;
+        int j;
+        double amc;
+
+        for (j = 0; j < n; j++) {
+            amc = a[j] - c[j];
+            ssa = (amc * amc) + ssa;
+        }
+
+        error[0] = Math.sqrt(ssa / (double) n);
+
+        return error;
+    }
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   a  DOCUMENT ME!
+     * @param   b  DOCUMENT ME!
+     * @param   c  DOCUMENT ME!
+     * @param   d  DOCUMENT ME!
+     * @param   n  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    double[] rms(float[] a, float[] b, float[] c, float[] d, int n) {
+        // Computes rms error for transform-inverse pair arrays a,b = transform, inverse results arrays c,d = original
+        // data n = dimension of arrays a, b, c, and d
+
+        // rms errors for a and b arrays
+        double[] error = new double[2];
+        double ssa = 0.0;
+        double ssb = 0.0;
+        int j;
+        double amc;
+        double bmd;
+
+        for (j = 0; j < n; j++) {
+            amc = a[j] - c[j];
+            ssa = (amc * amc) + ssa;
+            bmd = b[j] - d[j];
+            ssb = (bmd * bmd) + ssb;
+        }
+
+        error[0] = Math.sqrt(ssa / (double) n);
+        error[1] = Math.sqrt(ssb / (double) n);
+
+        return error;
+    }
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  buffer  float [] input buffer to be sorted Sort an array into ascending numerical order by Shell's method
+     *                 Reference: Numerical Recipes in C The Art of Scientific Computing Second Edition by William H.
+     *                 Press, Saul A. Teukolsky, William T. Vetterling, Brian P. Flannery, pp. 331- 332.
+     */
+    private void shellSort(float[] buffer) {
+        int i, j, inc;
+        float v;
+        inc = 1;
+
+        int end = buffer.length;
+
+        do {
+            inc *= 3;
+            inc++;
+        } while (inc <= end);
+
+        do {
+            inc /= 3;
+
+            for (i = inc + 1; i <= end; i++) {
+                v = buffer[i - 1];
+                j = i;
+
+                while (buffer[j - inc - 1] > v) {
+                    buffer[j - 1] = buffer[j - inc - 1];
+                    j -= inc;
+
+                    if (j <= inc) {
+                        break;
+                    }
+                }
+
+                buffer[j - 1] = v;
+            }
+        } while (inc > 1);
+
     }
 
     /**
@@ -733,7 +2412,7 @@ public class AlgorithmFFT extends AlgorithmBase {
 
         if ((transformDir == FORWARD) || (transformDir == INVERSE)) {
 
-            if (image25D) {
+            if (image25D && (ndim >= 3)) {
                 realSubsetData = new float[newSliceSize];
                 imagSubsetData = new float[newSliceSize];
 
@@ -793,7 +2472,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         if ((transformDir == FILTER) && (constructionMethod == WINDOW)) {
 
             // The image FFT is multiplied by the filter FFT.
-            if (image25D) {
+            if (image25D && (ndim >= 3)) {
 
                 for (z = 0; z < newDimLengths[2]; z++) {
 
@@ -961,7 +2640,7 @@ public class AlgorithmFFT extends AlgorithmBase {
 
         if ((transformDir == FORWARD) || (transformDir == INVERSE)) {
 
-            if (image25D) {
+            if ((image25D && (ndim >= 3))) {
                 realSubsetData = new float[newSliceSize];
                 imagSubsetData = new float[newSliceSize];
                 
@@ -1016,7 +2695,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         if ((transformDir == FILTER) && (constructionMethod == WINDOW)) {
 
             // The image FFT is multiplied by the filter FFT.
-            if (image25D) {
+            if (image25D && (ndim >= 3)) {
 
                 for (z = 0; z < newDimLengths[2]; z++) {
 
@@ -1889,14 +3568,14 @@ public class AlgorithmFFT extends AlgorithmBase {
 
         if (transformDir == INVERSE) {
 
-            if (!image25D) {
+            if (!(image25D && (ndim >= 3))) {
                 fireProgressStateChanged(-1, null, "Centering data before inverse FFT ...");
             }
 
             center(rData, iData);
         }
 
-        if (!image25D) {
+        if (!(image25D && (ndim >= 3))) {
             fireProgressStateChanged(-1, null, "Running FFT algorithm ...");
         }
 
@@ -1966,7 +3645,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 return;
             }
 
-            if (!image25D) {
+            if (!(image25D && (ndim >= 3))) {
                 fireProgressStateChanged((Math.round(10 + ((float) (i + 1) / ndim * 80))), null, null);
             }
         }
@@ -1977,7 +3656,7 @@ public class AlgorithmFFT extends AlgorithmBase {
 
         if ((transformDir == FORWARD) || (transformDir == FILTER)) {
 
-            if (!image25D) {
+            if (!(image25D && (ndim >= 3))) {
                 fireProgressStateChanged(-1, null, "Centering data after FFT algorithm ...");
             }
 
@@ -2008,13 +3687,13 @@ public class AlgorithmFFT extends AlgorithmBase {
 
             // Do edge stripping to restore the original dimensions the source image had
             // before the forward FFT
-            if (!image25D) {
+            if (!(image25D && (ndim >= 3))) {
                 fireProgressStateChanged(-1, null, "Zero stripping data after inverse FFT ...");
             }
 
             edgeStrip(rData, z);
 
-            if ((!image25D) || (z == (dimLengths[2] - 1))) {
+            if ((!(image25D && (ndim >= 3))) || (z == (dimLengths[2] - 1))) {
                 doCrop = srcImage.getOriginalDoCrop();
 
                 if (doCrop) {
@@ -2801,7 +4480,7 @@ public class AlgorithmFFT extends AlgorithmBase {
 
         if ((transformDir == FORWARD) && (imageCrop == true) && (constructionMethod == WINDOW)) {
 
-            if (image25D) {
+            if (image25D && (ndim >= 3)) {
 
                 for (i = 0; i < 2; i++) {
 
@@ -2809,7 +4488,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                         doCrop = true;
                     }
                 }
-            } // if (image25D)
+            } // if ((image25D && (ndim >= 3)))
             else { // not image25D
 
                 for (i = 0; i < ndim; i++) {
@@ -2825,7 +4504,7 @@ public class AlgorithmFFT extends AlgorithmBase {
             start = new int[ndim];
             end = new int[ndim];
 
-            if (image25D) {
+            if (image25D && (ndim >= 3)) {
 
                 for (i = 0; i < 2; i++) {
 
