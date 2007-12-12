@@ -667,7 +667,7 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
             rowNumber = i / nColumn;
             xLabel[i] = 5 + (colNumber * (originalXDim + 9));
             yLabel[i] = originalYDim - 2 + (rowNumber * (originalYDim + 9));
-            zString[i] = String.valueOf(i + 1);
+            zString[i] = String.valueOf(i);
         } // end of for (i = 0; i < originalZDim; i++)
     }
 
@@ -676,7 +676,7 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
      */
     public void setLabelZ() {
         int i;
-        int k = 1;
+        int k = 0;
         zString = new String[zDim];
 
         for (i = 0; (i < zDim); i++) {

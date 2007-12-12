@@ -138,12 +138,12 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
             }
         } else if (command.equals("CheckEven")) {
 
-            for (i = 1; i < nSlices; i += 2) {
+            for (i = 0; i < nSlices; i += 2) {
                 (checkboxList[i]).setSelected(true);
             }
         } else if (command.equals("CheckOdd")) {
 
-            for (i = 0; i < nSlices; i += 2) {
+            for (i = 1; i < nSlices; i += 2) {
                 (checkboxList[i]).setSelected(true);
             }
         }
@@ -175,7 +175,7 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
                 for (int i = 0; i < checkListExtract.length; i++) {
 
                     if (checkListExtract[i]) {
-                        Preferences.debug("\t" + (i + 1));
+                        Preferences.debug("\t" + (i));
 
                         if (((i % 5) == 4) || (numExtracted == (numChecked - 1))) {
                             Preferences.debug("\n");
@@ -353,7 +353,7 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
      *
      * @param   extractList  The boolean array indicating slices to extract.
      *
-     * @return  A range string of comma-separated slice numbers (1-based) and/or slice ranges; ex. '1-4,5,7,10,25-32'.
+     * @return  A range string of comma-separated slice numbers (0-based) and/or slice ranges; ex. '0-4,5,7,10,25-31'.
      */
     private static String getSliceRangeString(boolean[] extractList) {
         String rangeStr = new String();
@@ -365,25 +365,25 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
                 int endSlice;
 
                 // keep going until we find a slice that we don't want extracted
-                for (endSlice = startSlice + 1; extractList[endSlice] && (endSlice < extractList.length); endSlice++) { }
+                for (endSlice = startSlice; extractList[endSlice] && (endSlice < extractList.length); endSlice++) { }
 
-                if (endSlice == (startSlice + 1)) {
+                if (endSlice == (startSlice)) {
 
                     // only one slice this time..
                     if (isFirst) {
-                        rangeStr += (startSlice + 1);
+                        rangeStr += (startSlice);
                         isFirst = false;
                     } else {
-                        rangeStr += "," + (startSlice + 1);
+                        rangeStr += "," + (startSlice);
                     }
                 } else {
 
                     // more than one slice..
                     if (isFirst) {
-                        rangeStr += (startSlice + 1) + "-" + endSlice;
+                        rangeStr += (startSlice) + "-" + (endSlice-1);
                         isFirst = false;
                     } else {
-                        rangeStr += "," + (startSlice + 1) + "-" + endSlice;
+                        rangeStr += "," + (startSlice) + "-" + (endSlice-1);
                     }
                 }
 
@@ -436,7 +436,7 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
 
                         return null;
                     } else {
-                        extractionList[start - 1] = true;
+                        extractionList[start] = true;
                     }
                 } else {
                     String endString = tokens2.nextToken();
@@ -448,8 +448,8 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
                         return null;
                     } else {
 
-                        for (int i = start; i < (end + 1); i++) {
-                            extractionList[i - 1] = true;
+                        for (int i = start; i <= (end); i++) {
+                            extractionList[i] = true;
                         }
                     }
                 }
@@ -496,7 +496,7 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
                                                // remove.
 
         for (int i = 0; i < nSlices; i++) { // place nSlices of check options for user and give them a name
-            checkboxList[i] = new JCheckBox("Image slice " + (String.valueOf(i + 1)));
+            checkboxList[i] = new JCheckBox("Image slice index " + (String.valueOf(i)));
 
             // checkboxList[i].setFont(serif12B);
             checkboxList[i].setBackground(Color.white);
@@ -507,7 +507,7 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
         scrollPane = new JScrollPane(checkboxPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                      JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         mainPanel.add(scrollPane);
-        mainPanel.setBorder(buildTitledBorder("Check the slices to extract"));
+        mainPanel.setBorder(buildTitledBorder("Check the slice indices to extract"));
         mainPanel.setPreferredSize(new Dimension(210, 390));
 
         JPanel checkPanel = new JPanel(new GridBagLayout());
@@ -558,12 +558,12 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
         JPanel rangePanel = new JPanel();
 
         rangePanel.setLayout(new BoxLayout(rangePanel, BoxLayout.Y_AXIS));
-        rangePanel.setBorder(buildTitledBorder("Range of slices"));
-        useRange = new JCheckBox("Specify range of slices", false);
+        rangePanel.setBorder(buildTitledBorder("Range of slice indices"));
+        useRange = new JCheckBox("Specify range of slice indices", false);
         useRange.addItemListener(this);
         useRange.setFont(serif12B);
-        exampleLabel = new JLabel("Enter slice numbers and/or slice ranges.");
-        exampleLabel2 = new JLabel("For example, 1,3,5-12");
+        exampleLabel = new JLabel("Enter slice number indices and/or slice range indices.");
+        exampleLabel2 = new JLabel("For example, 0,3,5-12");
         exampleLabel.setFont(serif12);
         exampleLabel2.setFont(serif12);
         exampleLabel.setEnabled(false);

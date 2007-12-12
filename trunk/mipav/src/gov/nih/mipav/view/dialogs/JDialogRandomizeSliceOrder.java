@@ -117,7 +117,7 @@ public class JDialogRandomizeSliceOrder extends JDialogScriptableBase implements
                 userInterface.setDataText(image.getImageName() + " is: \n");
 
                 for (i = 0; i < randomOrder.length; i++) {
-                    userInterface.setDataText("\t" + (randomOrder[i] + 1));
+                    userInterface.setDataText("\t" + (randomOrder[i]));
 
                     if (((i % 5) == 4) || (i == (randomOrder.length - 1))) {
                         userInterface.setDataText("\n");

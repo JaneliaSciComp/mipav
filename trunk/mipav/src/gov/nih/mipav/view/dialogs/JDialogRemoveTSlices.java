@@ -167,7 +167,7 @@ public class JDialogRemoveTSlices extends JDialogScriptableBase implements Algor
                     for (int i = 0; i < checkListRemove.length; i++) {
 
                         if (checkListRemove[i]) {
-                            Preferences.debug("\t" + (i + 1));
+                            Preferences.debug("\t" + (i));
 
                             if (((currentNum % 5) == 4) || (currentNum == (nChecked - 1))) {
                                 Preferences.debug("\n");
@@ -407,7 +407,7 @@ public class JDialogRemoveTSlices extends JDialogScriptableBase implements Algor
 
         for (int i = 0; i < nSlices; i++) // place nSlices of check options for user and give them a name
         {
-            checkboxList[i] = new JCheckBox("Time volume " + (String.valueOf(i + 1)));
+            checkboxList[i] = new JCheckBox("Time volume " + (String.valueOf(i)));
             checkboxList[i].setBackground(Color.white);
             checkboxPanel.add(checkboxList[i]);
         }
@@ -417,7 +417,7 @@ public class JDialogRemoveTSlices extends JDialogScriptableBase implements Algor
                                                  JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         mainPanel.add(scrollPane);
 
-        mainPanel.setBorder(buildTitledBorder("Check the time slices to remove"));
+        mainPanel.setBorder(buildTitledBorder("Check the time slice indices to remove"));
         mainPanel.setPreferredSize(new Dimension(210, 390));
 
         JPanel checkPanel = new JPanel(new GridBagLayout());
