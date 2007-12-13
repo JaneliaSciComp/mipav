@@ -2890,19 +2890,19 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         Font font12 = MipavUtil.font12;
         float rangeF = (max) / 4.0f;
 
-        JLabel label1 = new JLabel("1");
+        JLabel label1 = new JLabel("0");
         label1.setForeground(Color.black);
         label1.setFont(font12);
         tImageSliderDictionary.put(new Integer(0), label1);
 
         if ((max - min) > 3) {
-            JLabel label2 = new JLabel(Integer.toString(Math.round(rangeF * 2)));
+            JLabel label2 = new JLabel(Integer.toString(Math.round(rangeF * 2)-1));
             label2.setForeground(Color.black);
             label2.setFont(font12);
             tImageSliderDictionary.put(new Integer(50), label2);
         }
 
-        JLabel label5 = new JLabel(Integer.toString(max));
+        JLabel label5 = new JLabel(Integer.toString(max-1));
         label5.setForeground(Color.black);
         label5.setFont(font12);
         tImageSliderDictionary.put(new Integer(100), label5);
@@ -3278,7 +3278,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             panelImageSlider.setLayout(new GridLayout(1, 1));
             panelImageSlider.setForeground(Color.black);
 
-            TitledBorder borderImageSlider = new TitledBorder(" Time slice");
+            TitledBorder borderImageSlider = new TitledBorder(" Time slice index ");
             borderImageSlider.setTitleColor(Color.black);
             borderImageSlider.setBorder(new EtchedBorder());
             panelImageSlider.setBorder(borderImageSlider);
@@ -3289,7 +3289,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             tImageSlider.setSnapToTicks(true);
             tImageSlider.setPaintTicks(true);
             tImageSlider.setPaintLabels(true);
-            tImageSlider.setLabelTable(buildTImageSliderLabels(1, tDim));
+            tImageSlider.setLabelTable(buildTImageSliderLabels(0, tDim));
             tImageSlider.setValue(1);
             tImageSlider.setValue(0);
             tImageSlider.addChangeListener(this);

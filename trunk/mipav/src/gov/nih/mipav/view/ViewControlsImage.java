@@ -282,10 +282,11 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
         System.gc();
 
         if (numberOfDimensions == 4) {
+        	zDim = frame.getImageA().getExtents()[2];
             panelImageSlider = new JPanel();
             panelImageSlider.setLayout(new GridLayout(2, 1));
             panelImageSlider.setForeground(Color.black);
-            borderImageSlider = new TitledBorder(" Image slice index ");
+            borderImageSlider = new TitledBorder(" Image slice index  [total number slices=" + zDim + "] ");
             borderImageSlider.setTitleColor(Color.black);
             borderImageSlider.setTitleFont(MipavUtil.font12B);
             borderImageSlider.setBorder(new EtchedBorder());
@@ -308,7 +309,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
             tImageSlider.setVisible(true);
             tImageSlider.addChangeListener(this);
 
-            zDim = frame.getImageA().getExtents()[2];
+            
             buildZImageSliderLabels(0, zDim);
             zImageSlider = new JSlider(JSlider.HORIZONTAL, 0, sliderResolutionInt, sliderResolutionInt / 2);
             zImageSlider.setMajorTickSpacing(majorSpacing);
@@ -330,18 +331,19 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
             zImageSlider.setVisible(true);
             zImageSlider.addChangeListener(this);
         } else if (numberOfDimensions == 3) {
+        	zDim = frame.getImageA().getExtents()[2];
             panelImageSlider = new JPanel();
             panelImageSlider.setLayout(new GridLayout(1, 1));
 
             // panelImageSlider.setLayout(new BorderLayout());
             panelImageSlider.setForeground(Color.black);
-            borderImageSlider = new TitledBorder("Image slice index ");
+            borderImageSlider = new TitledBorder(" Image slice index  [total number slices=" + zDim + "] ");
             borderImageSlider.setTitleColor(Color.black);
             borderImageSlider.setTitleFont(MipavUtil.font12B);
             borderImageSlider.setBorder(new EtchedBorder());
             panelImageSlider.setBorder(borderImageSlider);
 
-            zDim = frame.getImageA().getExtents()[2];
+            
             buildZImageSliderLabels(0, zDim);
 
             // System.out.println("resol = " + sliderResolutionInt);
