@@ -681,9 +681,6 @@ public class AlgorithmFFT extends AlgorithmBase {
         int SPATIAL_SHIFT = 2;
         int FREQUENCY_SHIFT = 3;
         int x, y, z;
-        int newX;
-        int newY;
-        int newZ;
         int nDims = 2;
         int extents[] = null;
         int sliceSize = 0;
@@ -1823,6 +1820,7 @@ public class AlgorithmFFT extends AlgorithmBase {
             else if (testType == FREQUENCY_SHIFT) {
                 // Test f(x,y) * ((-1)**(x+y)) <=> F(u - extents[0]/2, v - extents[1]/2)
                 b = new float[arrayLength];
+                d = new float[arrayLength];
                 if (createNewImage) {
                     try {
                         resultImage.exportComplexData(0, arrayLength, a, b);
@@ -1839,136 +1837,115 @@ public class AlgorithmFFT extends AlgorithmBase {
                     catch(IOException e) {
                         displayError("IOException error on forwardImage.exportComplexData(0, arrayLength, a, b)");
                         return;
-                    }    
+                    } 
+                    forwardImage.reallocate(ModelStorageBase.FLOAT);
                 } // else not createNewImage
-                // Remove centering from a and b to obtain F(u, v) uncentered
-                // Create a(x - extents[0]/2, y - extents[1]/2) and b(x - extents[0]/2, y - extents[1]/2)
-                // Center the shifted data
-                // This is 3 center operations, which is equivalent to 1 center operation
                 testCenter(a, b, extents);
-                if (createNewImage) {
-                    try {
-                        resultImage.importComplexData(0, a, b, true, true);
+                if (nDims == 2) {
+                    for (y = 0; y < extents[1]; y++) {
+                        for (x = 0; x < extents[0]; x++) {
+                            if (((x + y) % 2) == 1) {
+                                c[x + y*extents[0]] *= -1;
+                            }
+                        }
                     }
-                    catch(IOException e) {
-                        displayError("IOException error on resultImage.importComplexData(0, a, b, true, true)");
-                        return;
+                }
+                else {
+                    for (z = 0; z < extents[2]; z++) {
+                        for (y = 0; y < extents[1]; y++) {
+                            for (x = 0; x < extents[0]; x++) {
+                                if (((x + y + z ) % 2) == 1) {
+                                    c[x + y*extents[0] + z*sliceSize] *= -1;
+                                }
+                            }
+                        }
                     }
-                } // if (createNewImage)
-                else { // not createNewImage
-                    try {
-                        forwardImage.importComplexData(0, a, b, true, true);
-                    }
-                    catch(IOException e) {
-                        displayError("IOException error on forwardImage.importComplexData(0, a, b, true, true)");
-                        return;
-                    }    
-                } // else not createNewImage
-                transformDir = INVERSE;
+                }
                 
+                try {
+                    forwardImage.importData(0, c, true);
+                }
+                catch (IOException e) {
+                    displayError("IOException on forwardImage.importData(0, c, true)");
+                }
+                
+                forwardImage.setOriginalCropCheckbox(imageCrop);
+
+                transformDir = FORWARD;
+
                 if (createNewImage)  {
-                    
+
                     try {
-                        inverseImage = (ModelImage) resultImage.clone();
-                        inverseImage.setImageName(name);
-                        inverseImage.resetVOIs();
-    
+
                         // Make algorithm
-                        FFTAlgo = new AlgorithmFFT(inverseImage, resultImage, transformDir, logMagDisplay, unequalDim, image25D,
+                        FFTAlgo = new AlgorithmFFT(resultImage, forwardImage, transformDir, logMagDisplay, unequalDim, image25D,
                                                    imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
                                                    butterworthOrder);
                         FFTAlgo.calcStoreInDestMT();
                         
                     } catch (OutOfMemoryError e) {
                         displayError("AlgorithmFFT: unable to allocate enough memory");
-    
-                        if (inverseImage != null) {
-                            inverseImage.disposeLocal(); // Clean up memory of result image
-                            inverseImage = null;
+
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up memory of result image
+                            resultImage = null;
                         }
-    
-                        return;
-                    }
-                    
-                    try {
-                        inverseImage.exportData(0, arrayLength, a);
-                    }
-                    catch(IOException e) {
-                        displayError("IOException error on inverseImage.exportData(0, arrayLength, a)");
+
                         return;
                     }
                 } else {
-    
+
                     try {
-    
+
                         // No need to make new image space because the user has choosen to replace the source image
                         // Make the algorithm class
                         FFTAlgo = new AlgorithmFFT(forwardImage, transformDir, logMagDisplay, unequalDim, image25D, imageCrop,
                                                    kernelDiameter, filterType, freq1, freq2, constructionMethod,
                                                    butterworthOrder);
-    
+
                         FFTAlgo.calcInPlaceMT();
                     } catch (OutOfMemoryError e) {
-                        displayError("Dialog FFT: unable to allocate enough memory");
-    
-                        return;
-                    }
-                    
-                    try {
-                        forwardImage.exportData(0, arrayLength, a);
-                    }
-                    catch(IOException e) {
-                        displayError("IOException error on forwardImage.exportData(0, arrayLength, a)");
+                        displayError("AlgorithmFFT: unable to allocate enough memory");
+
                         return;
                     }
                 }
                 
                 FFTAlgo.finalize();
-                if (forwardImage !=  null) {
+                
+                if (createNewImage) {
+                    try {
+                        resultImage.exportComplexData(0, arrayLength, c, d);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on resultImage.exportComplexData(0, arrayLength, c, d)");
+                        return;
+                    }
+                } // if (createNewImage)
+                else { // not createNewImage
+                    try {
+                        forwardImage.exportComplexData(0, arrayLength, c, d);
+                    }
+                    catch(IOException e) {
+                        displayError("IOException error on forwardImage.exportComplexData(0, arrayLength, c, d)");
+                        return;
+                    }    
+                } // else not createNewImage
+                
+                if (forwardImage != null) {
                     forwardImage.disposeLocal();
-                    forwardImage = null;
                 }
                 if (resultImage != null) {
                     resultImage.disposeLocal();
-                    resultImage = null;
-                }
-                if (inverseImage != null) {
-                    inverseImage.disposeLocal();
-                    inverseImage = null;
                 }
                 
-                if (nDims == 2) {
-                    for (y = 0; y < extents[1]; y++) {
-                        for (x = 0; x < extents[0]; x++) {
-                            if (((x + y) % 2) == 1) {
-                                c[x + y*extents[0]] = -c[x + y*extents[0]];
-                            }
-                        }
-                    }
-                } // if (nDims == 2)
-                else { // nDims == 3 
-                    for (z = 0; z < extents[2]; z++) {
-                        for (y = 0; y < extents[1]; y++) {
-                            for (x = 0; x < extents[0]; x++) {
-                                if (((x + y + z) % 2) == 1) {
-                                    c[x + y*extents[0] + z*sliceSize] = -c[x + y*extents[0] + z*sliceSize];
-                                }
-                            }
-                        }    
-                    }
-                } // else nDims == 3
-                
-                error = rms(a, c, arrayLength);
-                if (error[0] >= 2.0E-7) {
+                error = rms(a, b, c, d, arrayLength);
+                if ((error[0] >= 2.0E-7) || (error[1] > 2.0E-7)) {
                     foundError[i] = true;
                 }
                 
-                for (j = 0; j < 10; j++) {
-                    UI.setDataText("a = " + a[j] + " c = " + c[j] + "\n");
-                }
-                
                 for (j = 0; j < arrayLength; j++) {
-                    a[j] = Math.abs(a[j] - c[j]);
+                    a[j] = (float)Math.sqrt((a[j] - c[j])*(a[j] - c[j]) + (b[j] - d[j])*(b[j] - d[j]));
                 } // for (j = 0; j < n; j++)
     
                 shellSort(a);
@@ -1978,7 +1955,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 
                 if (foundError[i]) {
                     errorsFound++;
-                    UI.setDataText("Test = " + i + " rms error = " + error[0] + "\n");
+                    UI.setDataText("Test = " + i + " rms errors = " + error[0] + " , " + error[1] + "\n");
                     UI.setDataText("Test = " + i + " the 10 largest error differences\n");
                     for (j = 0; j < 10; j++) {
                         UI.setDataText("Diff[" + j + "] = " + a[arrayLength-1-j] + "\n");
