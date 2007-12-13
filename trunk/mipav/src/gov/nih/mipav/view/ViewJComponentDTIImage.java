@@ -217,7 +217,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 
             System.arraycopy(cleanImageBufferA, 0, pixBuffer, 0, cleanImageBufferA.length);
             slice = zSlice;
-            setSliceString(String.valueOf(slice + 1));
+            setSliceString(String.valueOf(slice));
             paintComponent(getGraphics());
 
             return true;
