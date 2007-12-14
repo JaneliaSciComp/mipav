@@ -406,7 +406,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
             }
 
             try {
-                srcImage.importData(t * length, resultBuffer, false);
+                srcImage.importData(t * length, buffer, false);
             } catch (IOException error) {
                 errorCleanUp("Algorithm Separable Gaussian Blur: Image(s) locked", false);
 
@@ -546,6 +546,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
         int t;
         int length;
         float[] buffer;
+        float[] resultBuffer;
         boolean color = false;
         int cFactor = 1;
 
@@ -558,8 +559,10 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
         try {
             length = cFactor * srcImage.getSliceSize() * srcImage.getExtents()[2];
             buffer = new float[length];
+            resultBuffer = new float[length];
         } catch (OutOfMemoryError e) {
             buffer = null;
+            resultBuffer = null;
             errorCleanUp(" Separable Algorithm Gaussian Blur: Out of memory", true);
 
             return;
@@ -587,13 +590,13 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
             AlgorithmSeparableConvolver convolver = null;
 
             if (stepProgressValuePerVolume < 2) {
-                convolver = new AlgorithmSeparableConvolver(buffer,
+                convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer,
                                                             new int[] {
                                                                 srcImage.getExtents()[0], srcImage.getExtents()[1],
                                                                 srcImage.getExtents()[2]
                                                             }, GxDataRound, GyDataRound, GzDataRound, color);
             } else {
-                convolver = new AlgorithmSeparableConvolver(buffer,
+                convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer,
                                                             new int[] {
                                                                 srcImage.getExtents()[0], srcImage.getExtents()[1],
                                                                 srcImage.getExtents()[2]
@@ -628,7 +631,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
             }
 
             try {
-                destImage.importData(t * length, buffer, false);
+                destImage.importData(t * length, resultBuffer, false);
             } catch (IOException error) {
                 errorCleanUp("Algorithm Separable Gaussian Blur: Import 3D Image(s) locked", false);
 
