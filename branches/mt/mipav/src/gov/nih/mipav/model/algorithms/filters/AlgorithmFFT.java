@@ -2394,7 +2394,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                    FFTAlgo = new AlgorithmFFT(resultImage, forwardImage, transformDir, logMagDisplay, unequalDim, image25D,
                                               imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
                                               butterworthOrder);
-                   FFTAlgo.calcStoreInDest();
+                   FFTAlgo.calcStoreInDestMT();
                    
                } catch (OutOfMemoryError e) {
                    displayError("AlgorithmFFT: unable to allocate enough memory");
@@ -2416,7 +2416,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                                               kernelDiameter, filterType, freq1, freq2, constructionMethod,
                                               butterworthOrder);
 
-                   FFTAlgo.calcInPlace();
+                   FFTAlgo.calcInPlaceMT();
                } catch (OutOfMemoryError e) {
                    displayError("AlgorithmFFT: unable to allocate enough memory");
 
@@ -2492,7 +2492,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                    FFTAlgo = new AlgorithmFFT(resultImage, forwardImage, transformDir, logMagDisplay, unequalDim, image25D,
                                               imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
                                               butterworthOrder);
-                   FFTAlgo.calcStoreInDest();
+                   FFTAlgo.calcStoreInDestMT();
                    
                } catch (OutOfMemoryError e) {
                    displayError("AlgorithmFFT: unable to allocate enough memory");
@@ -2514,7 +2514,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                                               kernelDiameter, filterType, freq1, freq2, constructionMethod,
                                               butterworthOrder);
    
-                   FFTAlgo.calcInPlace();
+                   FFTAlgo.calcInPlaceMT();
                } catch (OutOfMemoryError e) {
                    displayError("AlgorithmFFT: unable to allocate enough memory");
    
