@@ -2203,6 +2203,7 @@ public class FileNRRD extends FileBase {
         if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
             throw (new IOException(" NRRD header file error"));
         }
+      
         if (autoSequence || fileNameSequence) {
             try {
                 image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName());
@@ -2306,7 +2307,7 @@ public class FileNRRD extends FileBase {
             }
 
             for (i = sequenceStart; i <= sequenceFinish; i += sequenceStep) {
-                fireProgressStateChanged((i - sequenceStart) * 100 / sequenceStep);
+                fireProgressStateChanged((i - sequenceStart) * 100/ (sequenceFinish - sequenceStart));
 
                 if (autoSequence) {
 
@@ -2596,8 +2597,8 @@ public class FileNRRD extends FileBase {
                         offset = offset + getOffset(fileInfo);
                     }
                 }
-
-                fireProgressStateChanged("Reading in data ...");
+          
+                linkProgress(rawFile);
                 rawFile.readImage(image, offset);
                 rawFile.close();
 
