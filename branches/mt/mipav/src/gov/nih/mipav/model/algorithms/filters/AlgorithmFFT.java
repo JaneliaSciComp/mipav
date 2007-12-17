@@ -1794,6 +1794,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                         return;
                     }    
                 } // else not createNewImage
+                testCenter(a, b, extents);
                 if (nDims == 2) {
                     for (v = 0; v < extents[1]; v++) {
                         for (u = 0; u < extents[0]; u++) {
@@ -1822,6 +1823,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                         }    
                     }
                 }
+                testCenter(a, b, extents);
                 
                 if (createNewImage) {
                     try {
