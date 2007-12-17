@@ -311,6 +311,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if (command.equals("Help")) {
+        	MipavUtil.showHelp("OAR19076");
         } else if (command.equals("AdvancedSettings")) {
             bracketBound_def = bracketBound;
             maxIterations_def = maxIterations;
@@ -439,6 +441,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
             numMinima = numMinima_def;
             advancedDialog.setVisible(false);
             advancedDialog.dispose();
+        } else if (command.equals("AdvancedHelp")) {
+        	MipavUtil.showHelp("OAR19078");
         }
         /* If the image is not processed as a color image, there are more
          * registration cost functions available for the user to choose: */
@@ -1166,8 +1170,9 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         serif12 = MipavUtil.font12;
         serif12B = MipavUtil.font12B;
 
-        advancedDialog = new JDialog(this, "Advanced OAR settings", true);
+        advancedDialog = new JDialog(this, "Advanced OAR settings", false);
         // Parent is the JDialogRegistrationOAR3D, title, modal
+        // Dialog changed to non-modal after adding Help button 12/17/07
 
         // Setting panel
         JPanel settingsPanel = new JPanel();
@@ -1235,8 +1240,17 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         okayButton.addActionListener(this);
         okayButton.setPreferredSize(new Dimension(120, 30));
         okayButton.setFont(serif12B);
+        
+        // Help Button
+        JButton helpButton = new JButton("Help");
+        helpButton.setActionCommand("AdvancedHelp");
+        helpButton.addActionListener(this);
+        helpButton.setPreferredSize(new Dimension(120,30));
+        helpButton.setFont(serif12B);
+        
         okayCancelPanel.add(okayButton);
         okayCancelPanel.add(advCancelButton);
+        okayCancelPanel.add(helpButton);
 
         advancedDialog.getContentPane().add(okayCancelPanel, BorderLayout.SOUTH);
 
@@ -1755,6 +1769,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         buttonPanel.add(OKButton);
         buildCancelButton();
         buttonPanel.add(cancelButton);
+        buildHelpButton();
+        buttonPanel.add(helpButton);
 
         JButton advancedButton = new JButton("Advanced settings");
         advancedButton.setActionCommand("AdvancedSettings");
