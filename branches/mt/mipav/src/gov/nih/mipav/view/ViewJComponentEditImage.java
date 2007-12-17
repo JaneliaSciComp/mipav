@@ -2392,7 +2392,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             if (growDialog != null) {
 
                 if (imageActive.isColorImage()) {
-                    growDialog.setPositionText("  X: " + String.valueOf((xS + 1)) + " Y: " + String.valueOf((yS + 1)) +
+                    growDialog.setPositionText("  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) +
                                                "  R:  " +
                                                String.valueOf(imageBufferActive[(4 *
                                                                                      ((yS *
@@ -2407,7 +2407,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                                                                                            imageActive.getExtents()[0]) +
                                                                                           xS)) + 3]));
                 } else {
-                    growDialog.setPositionText("  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) +
+                    growDialog.setPositionText("  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) +
                                                "  Intensity:  " +
                                                String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]));
                 }
@@ -4120,7 +4120,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 if (values != null) {
 
                     if (imageActive.isColorImage()) {
-                        str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  " +
+                        str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  R:  " +
                               String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]) +
                               "  G:  " +
                               String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]) +
@@ -4128,7 +4128,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                               String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]) +
                               " Position: " + values[0] + " " + values[1] + " " + values[2];
                     } else {
-                        str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  " +
+                        str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  Intensity:  " +
                               String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]) +
                               " Position: " + values[0] + " " + values[1] + " " + values[2];
                     }
@@ -4137,14 +4137,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 } else {
 
                     if (imageActive.isColorImage()) {
-                        str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  " +
+                        str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  R:  " +
                               String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]) +
                               "  G:  " +
                               String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]) +
                               "  B:  " +
                               String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]);
                     } else {
-                        str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  " +
+                        str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  Intensity:  " +
                               String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]);
                     }
 
@@ -4153,7 +4153,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             } else {
 
                 if (imageActive.isColorImage() == true) {
-                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  " +
+                    str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  R:  " +
                           String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]) +
                           "  G:  " +
                           String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]) +
@@ -4161,13 +4161,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                           String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]);
                     frame.setMessageText(str);
                 } else {
-                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  " +
+                    str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  Intensity:  " +
                           String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]);
                     frame.setMessageText(str);
                 }
             }
         } catch (ArrayIndexOutOfBoundsException error) {
-            frame.setMessageText("  X: " + String.valueOf((xS + 1)) + " Y: " + String.valueOf((yS + 1)));
+            frame.setMessageText("  X: " + String.valueOf((xS)) + " Y: " + String.valueOf((yS)));
         }
     }
 
@@ -4362,7 +4362,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             cleanBuffer(IMAGE_B);
 
             slice = zSlice;
-            setSliceString(String.valueOf(slice + 1));
+            setSliceString(String.valueOf(slice));
             paintComponent(getGraphics());
 
             return true;
@@ -4941,40 +4941,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             setPixelInformationAtLocation(xS, yS);
         } catch (ArrayIndexOutOfBoundsException error) {
-            str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1);
+            str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS);
             frame.setMessageText(str);
 
             if ((mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
                 frame.getUserInterface().setDataText("\n" + str);
             }
-        }
-    }
-
-    /**
-     * Update the voi color.
-     *
-     * @param  voiColor  the new voi color
-     * @param  voiUID    the last voi id
-     */
-    protected void updateVOIColor(Color voiColor, int voiUID) {
-
-        if (frame instanceof ViewJFrameImage) {
-            ((ViewJFrameImage) frame).getControls().setVOIColor(voiColor);
-            ((ViewJFrameImage) frame).setLastVOI_UID(voiUID);
-        }
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  id      DOCUMENT ME!
-     * @param  voiUID  DOCUMENT ME!
-     */
-    protected void updateVOIColor(int id, int voiUID) {
-
-        if (frame instanceof ViewJFrameImage) {
-            ((ViewJFrameImage) frame).getControls().setVOIColor(id);
-            ((ViewJFrameImage) frame).setLastVOI_UID(voiUID);
         }
     }
 
@@ -5529,111 +5501,111 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             String blue = df.format(new Float(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]).doubleValue());
 
             if (((wC - xC) > 170) && ((hC - yC) > 40)) {
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x + 1, y);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x - 1, y);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x, y - 1);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x, y + 1);
 
                 graphics2d.setColor(textColor);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x, y);
             } else if (((wC - xC) <= 170) && ((hC - yC) > 40)) {
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x - 159, y);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x - 161, y);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x - 160, y - 1);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x - 160, y + 1);
 
                 graphics2d.setColor(textColor);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x - 160, y);
             } else if (((wC - xC) <= 170) && ((hC - yC) <= 40)) {
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x - 159, y - 40);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x - 161, y - 40);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x - 160, y - 41);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x - 160, y - 39);
 
                 graphics2d.setColor(textColor);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x - 160, y - 40);
             } else if (((wC - xC) > 170) && ((hC - yC) <= 40)) {
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x + 1, y - 40);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x - 1, y - 40);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x, y - 41);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x, y - 39);
 
                 graphics2d.setColor(textColor);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
                                       green + "," + blue, x, y - 40);
             }
         } else {
             String intensity = df.format(new Float(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]).doubleValue());
 
             if (((wC - xC) > 100) && ((hC - yC) > 50)) {
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x + 1,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x + 1,
                                       y);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 1,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 1,
                                       y);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x,
                                       y - 1);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x,
                                       y + 1);
 
                 graphics2d.setColor(textColor);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x, y);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x, y);
             } else if (((wC - xC) <= 100) && ((hC - yC) > 50)) {
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 79,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 79,
                                       y);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 81,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 81,
                                       y);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 80,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 80,
                                       y - 1);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 80,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 80,
                                       y + 1);
 
                 graphics2d.setColor(textColor);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 80,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 80,
                                       y);
             } else if (((wC - xC) <= 100) && ((hC - yC) <= 50)) {
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 79,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 79,
                                       y - 40);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 81,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 81,
                                       y - 40);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 80,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 80,
                                       y - 41);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 80,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 80,
                                       y - 39);
 
                 graphics2d.setColor(textColor);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 80,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 80,
                                       y - 40);
             } else if (((wC - xC) > 100) && ((hC - yC) <= 50)) {
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x,
                                       y - 40);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x,
                                       y - 40);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x,
                                       y - 41);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x,
                                       y - 39);
 
                 graphics2d.setColor(textColor);
-                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x,
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x,
                                       y - 40);
             }
         }

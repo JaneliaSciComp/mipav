@@ -1482,11 +1482,11 @@ public class ViewJFrameRegistration extends ViewJFrameBase
 
         // slider for the reference slice number
         if (source == slider) {
-            zSlice = slider.getValue() - 1;
+            zSlice = slider.getValue();
 
             if (zSlice != zLastSlice) {
                 zLastSlice = zSlice;
-                textReferenceSlice.setText(String.valueOf(zSlice + 1));
+                textReferenceSlice.setText(String.valueOf(zSlice));
 
                 try {
                     image.exportData(zSlice * bufferSize, bufferSize, imageBufferA);
@@ -1546,11 +1546,11 @@ public class ViewJFrameRegistration extends ViewJFrameBase
 
         // slider for the adjustable slice number
         else if (source == slider2) {
-            zSlice2 = slider2.getValue() - 1;
+            zSlice2 = slider2.getValue();
 
             if (zSlice2 != zLastSlice2) {
                 zLastSlice2 = zSlice2;
-                textAdjustedSlice.setText(String.valueOf(zSlice2 + 1));
+                textAdjustedSlice.setText(String.valueOf(zSlice2));
 
                 try {
                     image.exportData(zSlice2 * bufferSize, bufferSize, imageBufferB);
@@ -1853,13 +1853,13 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         controlPanel.setLayout(cpGBL);
 
         if (isOne) {
-            labelReferenceSlice = new JLabel("Reference slice (1 - " + String.valueOf(nImage) + ")");
+            labelReferenceSlice = new JLabel("Reference slice index (0 - " + String.valueOf(nImage-1) + ")");
             labelReferenceSlice.setForeground(Color.black);
             labelReferenceSlice.setFont(serif12);
             labelReferenceSlice.setEnabled(true);
             addControlPanel(labelReferenceSlice, cpGBC, 0, 0, 2, 1);
 
-            slider = new JSlider(1, nImage, zSlice + 1);
+            slider = new JSlider(0, nImage-1, zSlice);
             slider.setFont(serif12);
             slider.setEnabled(true);
 
@@ -1873,14 +1873,14 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             slider.addChangeListener(this);
             slider.setVisible(true);
             labelTable = new Hashtable();
-            labelTable.put(new Integer(1), createLabel("1"));
-            labelTable.put(new Integer(zSlice + 1), createLabel(String.valueOf(zSlice + 1)));
-            labelTable.put(new Integer(nImage), createLabel(String.valueOf(nImage)));
+            labelTable.put(new Integer(0), createLabel("0"));
+            labelTable.put(new Integer(zSlice), createLabel(String.valueOf(zSlice)));
+            labelTable.put(new Integer(nImage-1), createLabel(String.valueOf(nImage-1)));
             slider.setLabelTable(labelTable);
             slider.setPaintLabels(true);
             addControlPanel(slider, cpGBC, 2, 0, 8, 1);
 
-            textReferenceSlice = new JTextField(String.valueOf(zSlice + 1), 4);
+            textReferenceSlice = new JTextField(String.valueOf(zSlice), 4);
             textReferenceSlice.setFont(serif12);
             textReferenceSlice.setEnabled(false);
             textReferenceSlice.addFocusListener(this);
@@ -1890,13 +1890,13 @@ public class ViewJFrameRegistration extends ViewJFrameBase
 
             cpGBC.fill = GridBagConstraints.BOTH;
             cpGBC.anchor = GridBagConstraints.WEST;
-            labelAdjustedSlice = new JLabel("Adjusted slice (1 - " + String.valueOf(nImage) + ")");
+            labelAdjustedSlice = new JLabel("Adjusted slice index (0 - " + String.valueOf(nImage-1) + ")");
             labelAdjustedSlice.setForeground(Color.black);
             labelAdjustedSlice.setFont(serif12);
             labelAdjustedSlice.setEnabled(true);
             addControlPanel(labelAdjustedSlice, cpGBC, 0, 1, 2, 1);
 
-            slider2 = new JSlider(1, nImage, zSlice2 + 1);
+            slider2 = new JSlider(0, nImage-1, zSlice2);
             slider2.setFont(serif12);
             slider2.setEnabled(true);
 
@@ -1910,14 +1910,14 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             slider2.addChangeListener(this);
             slider2.setVisible(true);
             labelTable2 = new Hashtable();
-            labelTable2.put(new Integer(1), createLabel("1"));
-            labelTable2.put(new Integer(zSlice + 1), createLabel(String.valueOf(zSlice + 1)));
-            labelTable2.put(new Integer(nImage), createLabel(String.valueOf(nImage)));
+            labelTable2.put(new Integer(0), createLabel("0"));
+            labelTable2.put(new Integer(zSlice), createLabel(String.valueOf(zSlice)));
+            labelTable2.put(new Integer(nImage-1), createLabel(String.valueOf(nImage-1)));
             slider2.setLabelTable(labelTable2);
             slider2.setPaintLabels(true);
             addControlPanel(slider2, cpGBC, 2, 1, 8, 1);
 
-            textAdjustedSlice = new JTextField(String.valueOf(zSlice2 + 1), 4);
+            textAdjustedSlice = new JTextField(String.valueOf(zSlice2), 4);
             textAdjustedSlice.setFont(serif12);
             textAdjustedSlice.setEnabled(false);
             textAdjustedSlice.addFocusListener(this);

@@ -143,7 +143,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     private boolean isShiftDown = false;
 
     /** DOCUMENT ME! */
-    private int lastVOI_UID = -1;
+    //private int lastVOI_UID = -1;
 
     /**
      * used in conjuction with the above variable, stating that the paint brush has been changed but will change back to
@@ -791,14 +791,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.setCursorMode(ViewJComponentEditImage.DEFAULT);
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_POINT.getActionCommand())) {
 
-            if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.POINT, lastVOI_UID, getControls())) {
+            if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.POINT, getControls())) {
                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
             componentImage.setCursorMode(ViewJComponentEditImage.POINT_VOI);
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_LINE.getActionCommand())) {
 
-            if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.LINE, lastVOI_UID, getControls())) {
+            if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.LINE, getControls())) {
                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
@@ -807,21 +807,21 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.setCursorMode(ViewJComponentEditImage.SPLIT_VOI);
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_POLY_SLICE.getActionCommand())) {
 
-        	 if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.POLYLINE_SLICE, lastVOI_UID, getControls())) {
+        	 if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.POLYLINE_SLICE, getControls())) {
                  componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
              }
 
             componentImage.setCursorMode(ViewJComponentEditImage.POLYLINE_SLICE_VOI);
         } else if (command.equals("protractor")) {
 
-        	 if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.PROTRACTOR, lastVOI_UID, getControls())) {
+        	 if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.PROTRACTOR, getControls())) {
                  componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
              }
 
             componentImage.setCursorMode(ViewJComponentEditImage.PROTRACTOR);
         } else if (command.equals("Polyline")) {
 
-        	if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.POLYLINE, lastVOI_UID, getControls())) {
+        	if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.POLYLINE, getControls())) {
                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
@@ -834,25 +834,25 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.setCursorMode(ViewJComponentEditImage.ANNOTATION);
         } else if (command.equals("RectVOI")) {
 
-        	if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, lastVOI_UID, getControls())) {
+        	if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, getControls())) {
                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
             componentImage.setCursorMode(ViewJComponentEditImage.RECTANGLE);
         } else if (command.equals("EllipseVOI")) {
-        	if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, lastVOI_UID, getControls())) {
+        	if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, getControls())) {
                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
             componentImage.setCursorMode(ViewJComponentEditImage.ELLIPSE);
         } else if (command.equals("LevelSetVOI")) {
-        	componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, lastVOI_UID, getControls());
+        	componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, getControls());
             componentImage.setCursorMode(ViewJComponentEditImage.LEVELSET);
         } else if (command.equals("Rect3DVOI")) {
-        	componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, lastVOI_UID, getControls());
+        	componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, getControls());
             componentImage.setCursorMode(ViewJComponentEditImage.RECTANGLE3D);
         } else if (command.equals("LiveWireVOI")) {
-        	componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, lastVOI_UID, getControls());
+        	componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, getControls());
 
             if (componentImage.getVOIHandler().isLivewireNull()) {
                 JDialogLivewire dialog = new JDialogLivewire(this);
@@ -4219,16 +4219,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
     }
 
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  uid  DOCUMENT ME!
-     */
-    public void setLastVOI_UID(int uid) {
-        this.lastVOI_UID = uid;
-    }
-
     /**
      * Sets the LUT for image A.
      *
@@ -4947,11 +4937,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         if (displayMode == IMAGE_A) {
 
             if (imageA.getNDims() == 4) { // Setup the title for 4D image
-                str = imageA.getImageName() + "  " + String.valueOf(zSlice + 1) + "/" + String.valueOf(nImage) + "z  " +
-                      String.valueOf(tSlice + 1) + "/" + String.valueOf(nTImage) + "t M:" +
+                str = imageA.getImageName() + "  " + String.valueOf(zSlice) + "/" + String.valueOf(nImage-1) + "z  " +
+                      String.valueOf(tSlice) + "/" + String.valueOf(nTImage-1) + "t M:" +
                       makeString(componentImage.getZoomX(), 2);
             } else if (imageA.getNDims() == 3) { // Setup the title for 3D image
-                str = imageA.getImageName() + "  " + String.valueOf(zSlice + 1) + "/" + String.valueOf(nImage) + " M:" +
+                str = imageA.getImageName() + "  " + String.valueOf(zSlice) + "/" + String.valueOf(nImage-1) + " M:" +
                       makeString(componentImage.getZoomX(), 2);
             } else {
                 str = imageA.getImageName() + "  M:" + makeString(componentImage.getZoomX(), 2);
@@ -4959,11 +4949,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else {
 
             if (imageB.getNDims() == 4) { // Setup the title for 4D image of image B
-                str = imageB.getImageName() + "  " + String.valueOf(zSlice + 1) + "/" + String.valueOf(nImage) + "z  " +
-                      String.valueOf(tSlice + 1) + "/" + String.valueOf(nTImage) + "t M:" +
+                str = imageB.getImageName() + "  " + String.valueOf(zSlice) + "/" + String.valueOf(nImage-1) + "z  " +
+                      String.valueOf(tSlice) + "/" + String.valueOf(nTImage-1) + "t M:" +
                       makeString(componentImage.getZoomX(), 2);
             } else if (imageB.getNDims() == 3) { // Setup the title
-                str = imageB.getImageName() + "  " + String.valueOf(zSlice + 1) + "/" + String.valueOf(nImage) + " M:" +
+                str = imageB.getImageName() + "  " + String.valueOf(zSlice) + "/" + String.valueOf(nImage-1) + " M:" +
                       makeString(componentImage.getZoomX(), 2);
             } else {
                 str = imageB.getImageName() + "  M:" + makeString(componentImage.getZoomX(), 2);

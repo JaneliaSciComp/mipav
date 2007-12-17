@@ -250,6 +250,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
 
         pack();
+        OKButton.requestFocus();
         setVisible(true);
         setResizable(false);
         System.gc();

@@ -55,6 +55,8 @@ import javax.swing.event.ChangeListener;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoImageXML;
@@ -1157,7 +1159,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	        widthResFactor = factor[0];
 	        heightResFactor = factor[1];
 	        zSlice = (resultImage.getExtents()[2] - 1) / 2;
-	        zSlice = zSlice - 1;
+	        //zSlice = zSlice - 1;
 	        
 	        //get data from anisotropy file to send into ViewJComponentEditImage constructor
 	        float[] anisotropyBuffer;
@@ -1229,18 +1231,18 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			titledBorder = new TitledBorder(new EtchedBorder(), " Image slice ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
 			resultImageSliderPanel.setBorder(titledBorder);
 			resultImageSliderPanel.addMouseWheelListener(this);
-			resultImageSlider = new JSlider(JSlider.HORIZONTAL, 1, nImage, zSlice + 1);
+			resultImageSlider = new JSlider(JSlider.HORIZONTAL, 0, nImage-1, zSlice);
 			resultImageSlider.setMajorTickSpacing(10);
 			resultImageSlider.setPaintTicks(true);
 			resultImageSlider.addChangeListener(this);
 			resultImageSlider.addMouseWheelListener(this);
-			maxResultImageSlicesLabel = new JLabel(Integer.toString(nImage));
+			maxResultImageSlicesLabel = new JLabel(Integer.toString(nImage-1));
 			maxResultImageSlicesLabel.setForeground(Color.black);
 			maxResultImageSlicesLabel.setFont(MipavUtil.font12);
-			minResultImageSlicesLabel = new JLabel("1");
+			minResultImageSlicesLabel = new JLabel("0");
 			minResultImageSlicesLabel.setForeground(Color.black);
 			minResultImageSlicesLabel.setFont(MipavUtil.font12);
-			currentResultImageSlicesLabel = new JLabel((zSlice+1) + "/" + numSlices);
+			currentResultImageSlicesLabel = new JLabel((zSlice) + "/" + (numSlices-1));
 			gbc.gridx = 0;
 			gbc.gridy = 0;
 			gbc.gridwidth = 2;
@@ -1280,7 +1282,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			captureImageButton = toolbarBuilder.buildButton("CaptureImage", "Capture image slices to new frame", "camera");
 			captureImageButton.addMouseListener(this);
 			magLabel = new JLabel("M:"+zoom);
-			setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+			setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice) + "/" + (numSlices-1) + "    M:"+zoom);
 			
 			gbc.anchor = GridBagConstraints.CENTER;
 			gbc.insets = new Insets(0,5,0,5);
@@ -1331,10 +1333,181 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			alg = null;
 			
 			setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+			
+			
+			
+			//this is test code for creating an rgb image based on eigenvector and anisotropy image
+			//ModelImage testImage = createRGBImage();
+			//new ViewJFrameImage(testImage);
+			
 		}
 		
 		finalize();
 
+	}
+	
+	
+	/**
+	 * test code for creating rgb image based on eigvev and anisot
+	 */
+	public ModelImage createRGBImage() {
+		//gamma factor
+		float gamma = 1.8f;
+		
+		//create the dest extents of the dec image...the 4th dim will only have 3 as the value
+		int[] destExtents = new int[4];
+        destExtents[0] = eigvecSrcImage.getExtents()[0];
+        destExtents[1] = eigvecSrcImage.getExtents()[1];
+        destExtents[2] = eigvecSrcImage.getExtents()[2];
+        destExtents[3] = 3;
+		
+        ModelImage decImage = new ModelImage(ModelStorageBase.FLOAT, destExtents, eigvecSrcImage.getImageName() + "_DEC");
+        
+        //buffer
+        float[] buffer;
+        
+        //determine length of dec image
+        int length = eigvecSrcImage.getExtents()[0] * eigvecSrcImage.getExtents()[1] * eigvecSrcImage.getExtents()[2] * 3;
+        buffer = new float[length];
+        
+        //export eigvecSrcImage into buffer based on length
+        try {
+        	eigvecSrcImage.exportData(0, length, buffer);
+        }
+        catch (IOException error) {
+        	System.out.println("IO exception");
+            return null;
+        }
+        
+        //lets first do absolute value for each value in the buffer
+        for(int i=0;i<buffer.length;i++) {
+        	buffer[i] = Math.abs(buffer[i]);
+        }
+
+        //import resultBuffer into decImage
+        try {
+        	decImage.importData(0, buffer, true);
+        }
+        catch (IOException error) {
+        	System.out.println("IO exception");
+
+            return null;
+        }
+
+        //extract dec image into channel images
+        destExtents = new int[3];
+        destExtents[0] = decImage.getExtents()[0];
+        destExtents[1] = decImage.getExtents()[1];
+        destExtents[2] = decImage.getExtents()[2];
+        ModelImage[] channelImages = new ModelImage[decImage.getExtents()[3]];
+        for(int i=0;i<decImage.getExtents()[3];i++) {
+			int num = i + 1;
+			String resultString = decImage.getImageName() + "_Vol=" + num;
+			channelImages[i] = new ModelImage(decImage.getType(), destExtents, resultString);
+			AlgorithmSubset subsetAlgo = new AlgorithmSubset(decImage, channelImages[i], AlgorithmSubset.REMOVE_T, i);
+			subsetAlgo.setRunningInSeparateThread(false);
+			subsetAlgo.run();
+		}
+        
+        decImage.disposeLocal();
+        decImage = null;
+  
+        //set up result image
+        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, channelImages[0].getExtents(),eigvecSrcImage.getImageName() + "_ColorDisplay");
+        
+
+        //cocatenate channel images into an RGB image
+        AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(channelImages[0], channelImages[1], channelImages[2], resultImage, false, false);
+        mathAlgo.setRunningInSeparateThread(false);
+        mathAlgo.run();
+        
+        
+        channelImages[0].disposeLocal();
+        channelImages[0] = null;
+        channelImages[1].disposeLocal();
+        channelImages[1] = null;
+        channelImages[2].disposeLocal();
+        channelImages[2] = null;
+        
+        //copy core file info over
+        FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[resultImage.getExtents()[2]];
+        for (int i=0;i<fileInfoBases.length;i++) {
+       	 	fileInfoBases[i] = new FileInfoImageXML(resultImage.getImageName(), null, FileUtility.XML);	
+       	 	fileInfoBases[i].setEndianess(eigvecSrcImage.getFileInfo()[0].getEndianess());
+	       	fileInfoBases[i].setUnitsOfMeasure(eigvecSrcImage.getFileInfo()[0].getUnitsOfMeasure());
+	       	fileInfoBases[i].setResolutions(eigvecSrcImage.getFileInfo()[0].getResolutions());
+	       	fileInfoBases[i].setExtents(resultImage.getExtents());
+	       	fileInfoBases[i].setImageOrientation(eigvecSrcImage.getFileInfo()[0].getImageOrientation());
+	       	fileInfoBases[i].setAxisOrientation(eigvecSrcImage.getFileInfo()[0].getAxisOrientation());
+	       	fileInfoBases[i].setOrigin(eigvecSrcImage.getFileInfo()[0].getOrigin());
+	       	fileInfoBases[i].setPixelPadValue(eigvecSrcImage.getFileInfo()[0].getPixelPadValue());
+	       	fileInfoBases[i].setPhotometric(eigvecSrcImage.getFileInfo()[0].getPhotometric());
+	       	fileInfoBases[i].setDataType(ModelStorageBase.ARGB);
+	       	fileInfoBases[i].setFileDirectory(eigvecSrcImage.getFileInfo()[0].getFileDirectory());
+        }
+        
+        resultImage.setFileInfo(fileInfoBases);
+        
+        
+        //now we need to weight the result image by anisotopy
+        
+        float[] rgbBuffer;
+        //determine length of dec image
+        int rgbBuffLength = resultImage.getExtents()[0] * resultImage.getExtents()[1] * resultImage.getExtents()[2] * 4;
+        rgbBuffer = new float[rgbBuffLength];
+        
+        //export eigvecSrcImage into buffer based on length
+        try {
+        	resultImage.exportData(0, rgbBuffLength, rgbBuffer);
+        }
+        catch (IOException error) {
+        	System.out.println("IO exception");
+            return null;
+        }
+        
+
+        float[] anisotropyBuffer;
+        int anisLength = anisotropyImage.getExtents()[0] * anisotropyImage.getExtents()[1] * anisotropyImage.getExtents()[2];
+        anisotropyBuffer = new float[anisLength];
+        try {
+        	anisotropyImage.exportData(0, anisLength, anisotropyBuffer);
+        }
+        catch (IOException error) {
+        	System.out.println("IO exception");
+            return null;
+        }
+        
+        //take r,g,and b and weight by anisotropy and gamma...and rescale to 0-255
+        for(int i=0,j=0;i<rgbBuffer.length;i=i+4,j++) {
+        	rgbBuffer[i+1] = rgbBuffer[i+1] * anisotropyBuffer[j];
+        	rgbBuffer[i+1] = (float)Math.pow(rgbBuffer[i+1],(1/gamma));
+        	rgbBuffer[i+1] = rgbBuffer[i+1] * 255;
+        	
+        	rgbBuffer[i+2] = rgbBuffer[i+2] * anisotropyBuffer[j];
+        	rgbBuffer[i+2] = (float)Math.pow(rgbBuffer[i+2],(1/gamma));
+        	rgbBuffer[i+2] = rgbBuffer[i+2] * 255;
+        	
+        	rgbBuffer[i+3] = rgbBuffer[i+3] * anisotropyBuffer[j];
+        	rgbBuffer[i+3] = (float)Math.pow(rgbBuffer[i+3],(1/gamma));
+        	rgbBuffer[i+3] = rgbBuffer[i+3] * 255;
+
+        }
+        
+        
+        try {
+        	resultImage.importData(0, rgbBuffer, true);
+        }
+        catch (IOException error) {
+        	System.out.println("IO exception");
+
+            return null;
+        }
+        
+        
+        
+        
+        resultImage.calcMinMax();
+		return resultImage;
 	}
 	
 	
@@ -1429,11 +1602,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         	updateCurrentColorWheel();
         }
         else if(source == resultImageSlider) {
-        	zSlice = resultImageSlider.getValue() - 1;
+        	zSlice = resultImageSlider.getValue();
         	componentImage.setSlice(zSlice);
 			componentImage.show(tSlice, zSlice, true);
-			currentResultImageSlicesLabel.setText((zSlice+1) + "/" + numSlices);
-			setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+			currentResultImageSlicesLabel.setText((zSlice) + "/" + (numSlices-1));
+			setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice) + "/" + (numSlices-1) + "    M:"+zoom);
         }
 	}
 
@@ -1809,7 +1982,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
         
         magLabel.setText("M:"+zoom);
-		setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+		setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice) + "/" + (numSlices-1) + "    M:"+zoom);
         if(componentImage.getZoomX() >= 32) {
 			magButton.setEnabled(false);
 		}
@@ -1841,7 +2014,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         validate();
         componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
         magLabel.setText("M:"+zoom);
-		setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+		setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice) + "/" + (numSlices-1) + "    M:"+zoom);
         if(componentImage.getZoomX() <= 0.125) {
 			unMagButton.setEnabled(false);
 		}
@@ -1865,7 +2038,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		validate();
         componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
         magLabel.setText("M:"+zoom);
-		setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+		setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice) + "/" + (numSlices-1) + "    M:"+zoom);
 	}
 	
 	
@@ -2262,7 +2435,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
          * Scroll through each slice, grabbing the screen with the robot and exporting pixels into a buffer for ARGB
          */
         for (int slice = 0; slice < numSlices; slice++) {
-            resultImageSlider.setValue(slice+1);
+            resultImageSlider.setValue(slice);
 
             try {
                 imagePix = robot.createScreenCapture(currentRectangle);
@@ -2405,7 +2578,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         
         new ViewJFrameImage(screenCaptureImage, null, new Dimension(610, 200));
         
-        resultImageSlider.setValue(numSlices/2);
+        resultImageSlider.setValue((numSlices-1)/2);
 
         return true;
     }
@@ -2439,16 +2612,16 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			if (wheelRotation < 0) {
 				if(zSlice != numSlices-1) {
 					zSlice = zSlice + 1;
-					resultImageSlider.setValue(zSlice + 1);
-					currentResultImageSlicesLabel.setText((zSlice+1) + "/" + numSlices);
-					setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+					resultImageSlider.setValue(zSlice);
+					currentResultImageSlicesLabel.setText((zSlice) + "/" + (numSlices-1));
+					setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice) + "/" + (numSlices-1) + "    M:"+zoom);
 				}
 			}else {
 				if(zSlice != 0) {
 					zSlice = zSlice -1;
-					resultImageSlider.setValue(zSlice + 1);
-					currentResultImageSlicesLabel.setText((zSlice+1) + "/" + numSlices);
-					setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+					resultImageSlider.setValue(zSlice);
+					currentResultImageSlicesLabel.setText((zSlice) + "/" + (numSlices-1));
+					setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice) + "/" + (numSlices-1) + "    M:"+zoom);
 				}
 			}
 		}

@@ -264,7 +264,7 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
                         }
 
                         resultImage = new ModelImage(srcImage.getType(), newExtents,
-                                                     srcImage.getImageName() + "_slice" + (zSrc + 1));
+                                                     srcImage.getImageName() + "_slice" + (zSrc));
 
                         resultImage.importData(0, imageBuffer, false);
 
@@ -295,7 +295,7 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
                     fireProgressStateChanged((int) ((progress / numToExtract) * 100));
 
                     resultImage = new ModelImage(srcImage.getType(), newExtents,
-                                                 srcImage.getImageName() + "_slice" + (zSrc + 1));
+                                                 srcImage.getImageName() + "_slice" + (zSrc));
 
                     tDestOffset = 0;
 

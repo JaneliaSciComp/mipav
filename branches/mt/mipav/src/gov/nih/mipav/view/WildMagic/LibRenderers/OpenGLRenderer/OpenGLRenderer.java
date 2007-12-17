@@ -19,10 +19,19 @@
 package gov.nih.mipav.view.WildMagic.LibRenderers.OpenGLRenderer;
 
 import java.util.Vector;
+
 import javax.media.opengl.*;
 import javax.media.opengl.glu.*;
+import com.sun.opengl.cg.*;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.*;
 import com.sun.opengl.util.BufferUtil;
+import com.sun.opengl.util.FileUtil;
+
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
@@ -50,7 +59,7 @@ public class OpenGLRenderer extends Renderer
                     int iHeight)
     {
         super(eFormat,eDepth,eStencil,eBuffering,eMultisampling,iWidth,iHeight);
-        initCanvas();
+        InitCanvas();
     }
 
     /** Delete memory: */
@@ -69,7 +78,7 @@ public class OpenGLRenderer extends Renderer
     }
 
     /** Initialize canvas with hardware accelerated capabilites. */
-    public void initCanvas()
+    public void InitCanvas()
     {
         GLCapabilities kGlCapabilities = new GLCapabilities();
         kGlCapabilities.setHardwareAccelerated(true);
@@ -109,16 +118,21 @@ public class OpenGLRenderer extends Renderer
         if ( m_kDrawable == null ) { System.err.println( "InitializeState GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
+        // prints something for every GL call:
+        //m_kDrawable.setGL(new TraceGL(m_kDrawable.getGL(), System.err));
+        // throws an exception when gl error occurs:
+        //m_kDrawable.setGL(new DebugGL(m_kDrawable.getGL()));
+
+        // information about the context:
+        System.err.println("GL context synchronized: " + m_kDrawable.getContext().isSynchronized());
         // vertices always exist
         gl.glEnableClientState(GL.GL_VERTEX_ARRAY);
-
         // colors disabled, current color is WHITE
         gl.glDisableClientState(GL.GL_COLOR_ARRAY);
         gl.glColor4fv(ColorRGBA.WHITE.GetData(), 0);
 
         // normals disabled
         gl.glDisableClientState(GL.GL_NORMAL_ARRAY);
-
         // Query for capabilities.
 
         // Get the number of supported texture images for vertex program.
@@ -169,7 +183,18 @@ public class OpenGLRenderer extends Renderer
 
         // Disable drawing of lines as sequences of dashes.
         gl.glDisable(GL.GL_LINE_STIPPLE);
-
+        // See if we can use CG:
+        int iProfile = 0;
+        try {
+            iProfile = CgGL.cgGLGetLatestProfile(CgGL.CG_GL_VERTEX);
+            CgGL.cgGLSetOptimalOptions(iProfile);
+            m_kCgContext = CgGL.cgCreateContext();
+        } catch (UnsatisfiedLinkError kLinkError) {
+            // can't find the CG runtime, default to straight OpenGL.
+            System.err.println("Unable to locate CG runtime, reverting to OpenGL");
+            ms_bUseCg = false;
+        }
+        //ms_bUseCg = false;
         // Initialize global render state to default settings.
         new AlphaState();
         new CullState();
@@ -252,6 +277,7 @@ public class OpenGLRenderer extends Renderer
     public void DisplayBackBuffer ()
     {
         if ( m_kDrawable == null ) { System.err.println( "DisplayBackBuffer GLDrawable null" ); return; }
+        GL gl = m_kDrawable.getGL();
         /* Call swapBuffers to render on-screen: */
         m_kDrawable.swapBuffers();
     }
@@ -426,6 +452,7 @@ public class OpenGLRenderer extends Renderer
 
         // draw text string (use right-handed coordinates)
         gl.glRasterPos3i(iX,m_iHeight-1-iY,0);
+
 // #ifdef USE_TEXT_DISPLAY_LIST
 //         gl.glListBase(m_kDLInfo.get(m_iFontID).Base);
 //         ByteBuffer kText = ByteBuffer.allocate(acText.length);
@@ -516,8 +543,8 @@ public class OpenGLRenderer extends Renderer
         gl.glPopMatrix();
         gl.glMatrixMode(GL.GL_MODELVIEW);
         gl.glPopMatrix();
-
         gl.glPixelZoom(1.0f,-1.0f);
+
         ByteBuffer kBuffer = ByteBuffer.wrap(aucBuffer);
         kBuffer.rewind();
         
@@ -530,7 +557,6 @@ public class OpenGLRenderer extends Renderer
         }
         
         gl.glDrawPixels(m_iWidth,m_iHeight,GL.GL_RGBA,GL.GL_UNSIGNED_BYTE,kBuffer);
-        
         gl.glPixelZoom(1.0f,1.0f);
 
         if ( !bBlend )
@@ -751,7 +777,6 @@ public class OpenGLRenderer extends Renderer
         GL gl = m_kDrawable.getGL();
 
         super.SetCullState(pkState);
-
         if (pkState.Enabled)
         {
             gl.glEnable(GL.GL_CULL_FACE);
@@ -762,7 +787,6 @@ public class OpenGLRenderer extends Renderer
         }
 
         gl.glFrontFace(ms_aeFrontFace[pkState.FrontFace.Value()]);
-
         if (!m_bReverseCullFace)
         {
             gl.glCullFace(ms_aeCullFace[pkState.CullFace.Value()]);
@@ -789,7 +813,6 @@ public class OpenGLRenderer extends Renderer
         GL gl = m_kDrawable.getGL();
 
         super.SetPolygonOffsetState(pkState);
-
         if (pkState.FillEnabled)
         {
             gl.glEnable(GL.GL_POLYGON_OFFSET_FILL);
@@ -829,16 +852,12 @@ public class OpenGLRenderer extends Renderer
         GL gl = m_kDrawable.getGL();
 
         super.SetStencilState(pkState);
-
         if (pkState.Enabled)
         {
             gl.glEnable(GL.GL_STENCIL_TEST);
-
             gl.glStencilFunc(ms_aeStencilCompare[pkState.Compare.Value()],
                              (int)pkState.Reference,pkState.Mask);
-
             gl.glStencilMask(pkState.WriteMask);
-
             gl.glStencilOp(ms_aeStencilOperation[pkState.OnFail.Value()],
                         ms_aeStencilOperation[pkState.OnZFail.Value()],
                         ms_aeStencilOperation[pkState.OnZPass.Value()]);
@@ -858,7 +877,6 @@ public class OpenGLRenderer extends Renderer
         GL gl = m_kDrawable.getGL();
 
         super.SetWireframeState(pkState);
-
         if (pkState.Enabled)
         {
             gl.glPolygonMode(GL.GL_FRONT_AND_BACK,GL.GL_LINE);
@@ -878,7 +896,6 @@ public class OpenGLRenderer extends Renderer
         GL gl = m_kDrawable.getGL();
 
         super.SetZBufferState(pkState);
-
         if (pkState.Enabled)
         {
             gl.glEnable(GL.GL_DEPTH_TEST);
@@ -914,32 +931,265 @@ public class OpenGLRenderer extends Renderer
         gl.glDrawElements(eType,pkIBuffer.GetIndexQuantity(),GL.GL_UNSIGNED_INT,iOffset);
     }
 
+    /** Read a Shader Program from fila.
+     * @param rkProgramName, the name of the program to load.
+     * @param rkDirectory, the directory where the program is located.
+     * @param iType, the type of program to read VERTEX, PIXEL.
+     * @return a new Program, or null if it cannot be loaded.
+     */
+    public Program ReadProgram(String rkProgramName, String rkDirectory, int iType )
+    {
+        //int iProfile = CgGL.cgGLGetLatestProfile(CgGL.CG_GL_FRAGMENT);
+        Program pkProgram = new Program();
+
+        if (!ReadProgramFile(pkProgram, rkProgramName, rkDirectory)) {
+            pkProgram.dispose();
+            pkProgram  = null;
+            return null;
+        }
+        
+        ParseProgram(pkProgram, iType);
+        if ( iType == Program.VERTEX )
+        {
+           VertexProgramCatalog.GetActive().Insert(pkProgram);
+        }
+        else
+        {
+            PixelProgramCatalog.GetActive().Insert(pkProgram);
+        }
+        return pkProgram;
+    }
+
+    /** Read text file containing one or more shader programs from disk,
+    set program name, type, and program text string
+     * @param rkProgramName, the name of the program to load.
+     * @param rkDirectory, the directory where the program is located.
+     * @return true if file contents were read, false if it cannot be loaded.
+     */
+    protected boolean ReadProgramFile(Program pkProgram, String rkProgramName, String rkDirectory)
+    {
+        // find the file extension, to tell what type of shader it is. Default
+        // is "cg".
+        String kExt = FileUtil.getFileSuffix(rkProgramName);
+        if (kExt == null) {
+            if (ms_bUseCg){
+                kExt = new String("cg");
+            } else {
+                kExt = new String("glsl");
+            }
+       } else {
+            // strip ext to get program name.
+            rkProgramName = rkProgramName.substring(0, rkProgramName.length() - kExt.length() - 1);
+        }
+        pkProgram.SetName(rkProgramName);
+        pkProgram.SetProgramType(kExt);
+
+        // these shader dirs are the defaults for Mipav.
+        String kShaderDir = (kExt.equals("glsl") ? "GLSL" : "Cg"); 
+        String kFilename = new String( rkDirectory + File.separator + "Shaders" + 
+                File.separator + kShaderDir + File.separator + 
+                rkProgramName + "." + kExt);
+        //String kProgramName = new String( "v_" + rkProgramName );
+        //System.err.println(kProgramName);
+
+        File kFile = new File(kFilename);
+        //boolean bGlslShader = false;
+        if ( kFile.exists() && kFile.canRead() && kFile.length() > 0L)
+        {
+            try {
+                // read the entire file into a string
+                FileInputStream fis = new FileInputStream(kFile);
+
+                int len= fis.available();
+                byte buf[]= new byte[len];
+                fis.read(buf);
+                String content = new String(buf);
+                fis.close();
+                pkProgram.SetProgramText(content);
+                return true;
+            } catch (FileNotFoundException kFNF) {
+                System.err.println("Unable to find the shader file " + kFilename);
+            } catch (IOException kIO) {
+                System.err.println("Problem reading the shader file " + kFilename);
+            }
+        }
+        return false;
+    }
+
+    /** Parse the input program for the parameters.
+     * @param pkProgram, Program to parse.
+     * @param iType, the type of program to parse, Program.VERTEX or Program.PIXEL.
+     */
+    private void ParseProgram( Program pkProgram, int iType )
+    {
+        int temp = m_kDrawable.getContext().makeCurrent();
+        GL gl = m_kDrawable.getGL();
+
+        String kProgramName = (iType == Program.VERTEX) ?  
+            new String( "v_" + pkProgram.GetName() ) :
+            new String( "p_" + pkProgram.GetName() );
+
+        if (ms_bUseCg) {
+            String [] kGlslCompilerArgs = { "-oglsl", null };
+
+            int iProfile = (iType == Program.VERTEX) ? CgGL.cgGLGetLatestProfile(CgGL.CG_GL_VERTEX) :
+                    CgGL.cgGLGetLatestProfile(CgGL.CG_GL_FRAGMENT);
+
+            boolean bGlslShader = pkProgram.GetProgramType().equals("glsl");
+
+            CGprogram kCGProgram = CgGL.cgCreateProgram( m_kCgContext,
+                                                         CgGL.CG_SOURCE,
+                                                         pkProgram.GetProgramText(),
+                                                         iProfile,
+                                                         kProgramName, 
+                                               bGlslShader ? kGlslCompilerArgs : null);
+            if (kCGProgram == null) {
+                System.err.println( "OnLoadProgram can't create Cg program: " + kProgramName );
+                return;
+            }
+            RecurseParamsInShader(pkProgram, kCGProgram);
+            pkProgram.SetProgramText( CgGL.cgGetProgramString(kCGProgram,CgGL.CG_COMPILED_PROGRAM) );
+            pkProgram.SetCompiled(true);
+            
+            kCGProgram = null;
+        }
+        else
+        {
+            int iID;
+            if ( iType == Program.VERTEX )
+            {
+                iID = gl.glCreateShader( GL.GL_VERTEX_SHADER );
+            }
+            else
+            {
+                iID = gl.glCreateShader( GL.GL_FRAGMENT_SHADER );
+            }
+            String[] akProgramText = new String[1];
+            // find and replace program name with "main"
+            akProgramText[0] = pkProgram.GetProgramText().replace(kProgramName, "main");
+
+            int[] aiLength = new int[1];
+            aiLength[0] = akProgramText[0].length();
+            int iCount = 1;
+            gl.glShaderSource( iID, iCount, akProgramText, aiLength, 0);
+            gl.glCompileShader(iID);            
+            gl.glGetShaderiv( iID, GL.GL_COMPILE_STATUS, m_aiParams, 0);
+            if ( m_aiParams[0] != 1 )
+            {
+
+                System.err.println(kProgramName);
+                System.err.println("compile status: " + m_aiParams[0]);
+                gl.glGetShaderiv( iID, GL.GL_INFO_LOG_LENGTH, m_aiParams, 0);
+                System.err.println("log length: " + m_aiParams[0]);
+                byte[] abInfoLog = new byte[m_aiParams[0]];
+                gl.glGetShaderInfoLog(iID, m_aiParams[0], m_aiParams, 0, abInfoLog, 0);
+                System.err.println( new String(abInfoLog) );
+                System.exit(-1);
+            }
+            pkProgram.SetShaderID(iID);
+        }
+    }
+    
+    /** Returns if the program being loaded must be unique. This is true only
+     * when the CgRuntime is not used and the shaders are glsl shaders.
+     * @return true if shader has to be unique.
+     */
+    public boolean GetUnique()
+    {
+        return (!ms_bUseCg);
+    }
+    
+    /** Compiles two shaders into a program.
+     * @param pkVProgram the vertex program to compile
+     * @param pkPProgram the pixel program to compile
+     * @return compiled Program containing combined information.
+     * */
+    public Program CompilePrograms( Program pkVProgram, Program pkPProgram )
+    {
+        GL gl = m_kDrawable.getGL();
+        int iProgramID = gl.glCreateProgram();
+        pkVProgram.SetProgramID(iProgramID);
+        pkPProgram.SetProgramID(iProgramID);
+
+        gl.glAttachShader(iProgramID, pkVProgram.GetShaderID() );
+        gl.glAttachShader(iProgramID, pkPProgram.GetShaderID() );
+        gl.glLinkProgram(iProgramID);
+        gl.glGetProgramiv( iProgramID, GL.GL_LINK_STATUS, m_aiParams, 0);
+        if ( m_aiParams[0] != 1 )
+        {
+            System.err.println("link status: " + m_aiParams[0]);
+            gl.glGetProgramiv( iProgramID, GL.GL_INFO_LOG_LENGTH, m_aiParams, 0);
+            System.err.println("log length: " + m_aiParams[0]);
+
+            byte[] abInfoLog = new byte[m_aiParams[0]];
+            gl.glGetProgramInfoLog(iProgramID, m_aiParams[0], m_aiParams, 0, abInfoLog, 0);
+            System.err.println( new String(abInfoLog) );
+        }
+        //gl.glGetProgramiv( iProgramID, GL.GL_ACTIVE_UNIFORMS, m_aiParams, 0);
+        //System.err.println("active uniform: " + m_aiParams[0]);
+        pkVProgram.Reset();
+        pkPProgram.Reset();
+        
+        Program kCompiledProgram = new Program();
+        kCompiledProgram.SetProgramID(iProgramID);
+
+        RecurseParamsInProgram(kCompiledProgram);
+        pkVProgram.SetInputAttributes(kCompiledProgram.GetInputAttributes());
+        pkVProgram.SetOutputAttributes(kCompiledProgram.GetInputAttributes());
+        pkPProgram.SetInputAttributes(kCompiledProgram.GetInputAttributes());
+
+        for ( int i = 0; i < kCompiledProgram.GetSIQuantity(); i++ )
+        {
+            pkPProgram.AddSamplerInformation( kCompiledProgram.GetSI( i ) );
+        }
+        for ( int i = 0; i < kCompiledProgram.GetRCQuantity(); i++ )
+        {
+            pkVProgram.AddRendererConstant( kCompiledProgram.GetRC( i ) );
+            pkPProgram.AddRendererConstant( kCompiledProgram.GetRC( i ) );
+        }
+        for ( int i = 0; i < kCompiledProgram.GetUCQuantity(); i++ )
+        {
+            pkVProgram.AddUserConstant( kCompiledProgram.GetUC( i ) );
+            pkPProgram.AddUserConstant( kCompiledProgram.GetUC( i ) );
+        }
+
+//         pkVProgram.SetCompiled(true);
+//         pkPProgram.SetCompiled(true);
+
+        return kCompiledProgram;
+    }
 
     /** Resource loading and releasing (to/from video memory).
      * @param pkVProgram the vertex program to generate/bind
-     * @return the new ResourceIdentifier for the VertexProgram
+     * @return the new ResourceIdentifier for the Program
      */
-    public ResourceIdentifier OnLoadVProgram (VertexProgram pkVProgram)
+    public ResourceIdentifier OnLoadVProgram (Program pkVProgram)
     {
         if ( m_kDrawable == null ) { System.err.println( "OnLoadVProgram GLDrawable null" ); return null; }
         GL gl = m_kDrawable.getGL();
 
         // Generate binding information and compile the program.
-        //System.err.println("OnLoadVProgram");
         VProgramID pkResource = new VProgramID();
         ResourceIdentifier rpkID = pkResource;
-
         String acProgramText = pkVProgram.GetProgramText();
-        //System.err.println( acProgramText );
-        int iProgramLength = acProgramText.length();
-
-        gl.glEnable(GL.GL_VERTEX_PROGRAM_ARB);
-        gl.glGenProgramsARB(1,m_aiParams,0);
-        pkResource.ID = m_aiParams[0];
-        gl.glBindProgramARB(GL.GL_VERTEX_PROGRAM_ARB,pkResource.ID);
-        gl.glProgramStringARB(GL.GL_VERTEX_PROGRAM_ARB,GL.GL_PROGRAM_FORMAT_ASCII_ARB,
-                              iProgramLength,acProgramText);
-        gl.glDisable(GL.GL_VERTEX_PROGRAM_ARB);
+        if ( acProgramText == null )
+        {
+            return rpkID;
+        }
+        if (ms_bUseCg) {
+            int iProgramLength = acProgramText.length();
+            gl.glEnable(GL.GL_VERTEX_PROGRAM_ARB);
+            gl.glGenProgramsARB(1,m_aiParams,0);
+            pkResource.ID = m_aiParams[0];
+            gl.glBindProgramARB(GL.GL_VERTEX_PROGRAM_ARB,pkResource.ID);
+            gl.glProgramStringARB(GL.GL_VERTEX_PROGRAM_ARB,GL.GL_PROGRAM_FORMAT_ASCII_ARB,
+                    iProgramLength,acProgramText);
+            gl.glDisable(GL.GL_VERTEX_PROGRAM_ARB);
+        }
+        else
+        {
+            pkResource.ID = pkVProgram.GetProgramID();
+        }
         return rpkID;
     }
 
@@ -957,19 +1207,20 @@ public class OpenGLRenderer extends Renderer
         {
             Activate();
         }
-
-        VProgramID pkResource = (VProgramID)pkID;
-        m_aiParams[0] = pkResource.ID;
-        gl.glDeleteProgramsARB(1,m_aiParams,0);
-        pkResource.ID = m_aiParams[0];
-        pkResource = null;
+        if (ms_bUseCg) {
+            VProgramID pkResource = (VProgramID)pkID;
+            m_aiParams[0] = pkResource.ID;
+            gl.glDeleteProgramsARB(1,m_aiParams,0);
+            pkResource.ID = m_aiParams[0];
+            pkResource = null;
+        }
     }
 
     /** Resource loading and releasing (to/from video memory).
      * @param pkPProgram the pixel program to generate/bind
      * @return the new ResourceIdentifier for the PixelProgram
      */
-    public ResourceIdentifier OnLoadPProgram (PixelProgram pkPProgram)
+    public ResourceIdentifier OnLoadPProgram (Program pkPProgram)
     {
         if ( m_kDrawable == null ) { System.err.println( "OnLoadPProgram GLDrawable null" ); return null; }
         GL gl = m_kDrawable.getGL();
@@ -985,15 +1236,16 @@ public class OpenGLRenderer extends Renderer
         {
             return rpkID;
         }
-        int iProgramLength = acProgramText.length();
-
-        gl.glEnable(GL.GL_FRAGMENT_PROGRAM_ARB);
-        gl.glGenProgramsARB(1,m_aiParams,0);
-        pkResource.ID = m_aiParams[0];
-        gl.glBindProgramARB(GL.GL_FRAGMENT_PROGRAM_ARB,pkResource.ID);
-        gl.glProgramStringARB(GL.GL_FRAGMENT_PROGRAM_ARB,GL.GL_PROGRAM_FORMAT_ASCII_ARB,
-                           iProgramLength,acProgramText);
-        gl.glDisable(GL.GL_FRAGMENT_PROGRAM_ARB);
+        if (ms_bUseCg) {
+            int iProgramLength = acProgramText.length();
+            gl.glEnable(GL.GL_FRAGMENT_PROGRAM_ARB);
+            gl.glGenProgramsARB(1,m_aiParams,0);
+            pkResource.ID = m_aiParams[0];
+            gl.glBindProgramARB(GL.GL_FRAGMENT_PROGRAM_ARB,pkResource.ID);
+            gl.glProgramStringARB(GL.GL_FRAGMENT_PROGRAM_ARB,GL.GL_PROGRAM_FORMAT_ASCII_ARB,
+                    iProgramLength,acProgramText);
+            gl.glDisable(GL.GL_FRAGMENT_PROGRAM_ARB);
+        }
         return rpkID;
     }
 
@@ -1011,14 +1263,434 @@ public class OpenGLRenderer extends Renderer
         {
             Activate();
         }
-
-        PProgramID pkResource = (PProgramID)pkID;
-        m_aiParams[0] = pkResource.ID;
-        gl.glDeleteProgramsARB(1,m_aiParams,0);
-        pkResource.ID = m_aiParams[0];
-        pkResource = null;
+        if (ms_bUseCg) {
+            PProgramID pkResource = (PProgramID)pkID;
+            m_aiParams[0] = pkResource.ID;
+            gl.glDeleteProgramsARB(1,m_aiParams,0);
+            pkResource.ID = m_aiParams[0];
+            pkResource = null;
+        }
     }
 
+    /** Recursively pase the program, setup the RendererConstants,
+     * UserConstants, and Samplers.
+     * @param rkProgram the shader program to generate/bind
+     * @param kCGProgram the CG program object to query.
+     */
+    protected void RecurseParamsInShader(Program rkProgram, CGprogram kCGProgram)
+    {
+        if (ms_bUseCg){
+            // GLSL shaders use global parameters.
+            RecurseParams( rkProgram, CgGL.cgGetFirstParameter( kCGProgram, CgGL.CG_GLOBAL ) );
+            // CG shaders use program parameters 
+            RecurseParams( rkProgram, CgGL.cgGetFirstParameter( kCGProgram, CgGL.CG_PROGRAM ) );
+        } else {
+        }
+    }
+
+    /** Recurses on the CGparameter. if it is a struct or array the function
+     * recurses. If the parameter is a native type, the function parses the
+     * type, determines if it is a RendererConstant or UserConstant and sets
+     * up the appropriate data structures to contain the parameter in the program.
+     * @param rkProgram the shader program to add params to.
+     * @param param, CGparameter to parse.
+     */
+    private void RecurseParams(Program rkProgram, CGparameter param )
+    {
+        if (param == null || !ms_bUseCg)
+            return;
+        do
+        {
+            switch( CgGL.cgGetParameterType(param) )
+            {
+            case CgGL.CG_STRUCT :
+                RecurseParams(rkProgram, CgGL.cgGetFirstStructParameter(param) );
+                break;
+                
+            case CgGL.CG_ARRAY :
+                {
+                    int ArraySize = CgGL.cgGetArraySize(param, 0);
+                    int i;
+                    
+                    for(i=0; i < ArraySize; ++i)
+                        RecurseParams(rkProgram, CgGL.cgGetArrayParameter(param, i));
+                }
+                break;
+                
+            default :
+                String kParamSemantic = CgGL.cgGetParameterSemantic(param);
+                String kParamName = CgGL.cgGetParameterName(param);
+                int iBaseRegister = (int)CgGL.cgGetParameterResourceIndex(param);
+                String kParamType = CgGL.cgGetTypeString( CgGL.cgGetParameterType(param) );
+                String kParamResource = CgGL.cgGetResourceString( CgGL.cgGetParameterResource(param) );
+                /*         
+                System.err.println( CgGL.cgGetEnumString( CgGL.cgGetParameterDirection(param) ) + " " + 
+                                    CgGL.cgGetEnumString( CgGL.cgGetParameterVariability(param) ) + " " + 
+                                    kParamType + " " +
+                                    kParamName + " " + 
+                                    kParamSemantic + " " + 
+                                    kParamResource + " " +
+                                    iBaseRegister + " " +
+                                    CgGL.cgGetResourceString(CgGL.cgGetParameterBaseResource(param) ) );
+                */
+                Attributes kInOutAttributes;
+                int iNumFloats = 1;
+
+                switch ( CgGL.cgGetParameterType(param) )
+                {
+                case CgGL.CG_FLOAT2: iNumFloats = 2; break;
+                case CgGL.CG_FLOAT3: iNumFloats = 3; break;
+                case CgGL.CG_FLOAT4: iNumFloats = 4; break;
+                case CgGL.CG_FLOAT4x4: iNumFloats = 16; break;
+                default: break;
+                }
+                int iRegisterQuantity = iNumFloats/4;
+                if (iRegisterQuantity == 0)
+                {
+                    iRegisterQuantity = 1;
+                }
+
+                boolean bIn = true;
+                if ( CgGL.cgGetParameterDirection(param) == CgGL.CG_IN )
+                {
+                    kInOutAttributes = rkProgram.GetInputAttributes();
+                }
+                else
+                {
+                    bIn = false;
+                    kInOutAttributes = rkProgram.GetOutputAttributes();
+                }
+                if ( kParamSemantic.equals( ms_kPositionStr ) )
+                {
+                    if (bIn)
+                        kInOutAttributes.SetPChannels(3);
+                    else
+                        kInOutAttributes.SetPChannels(iNumFloats);
+                }
+                else if ( kParamSemantic.equals( ms_kNormalStr ) )
+                {
+                    if (bIn)
+                        kInOutAttributes.SetNChannels(3);
+                    else
+                        kInOutAttributes.SetNChannels(iNumFloats);
+                }
+                else if ( kParamSemantic.equals( ms_kColorStr ) ||
+                          kParamSemantic.equals( ms_kColor0Str )   )
+                {
+                    kInOutAttributes.SetCChannels(0,iNumFloats);
+                }
+                else if ( kParamSemantic.equals( ms_kColor1Str ) )
+                {
+                    kInOutAttributes.SetCChannels(1,iNumFloats);
+                }
+                else if ( kParamSemantic.startsWith( ms_kTexCoordStr ) )
+                {
+                    int iUnit = 0;
+                    if ( !kParamSemantic.equals( ms_kTexCoordStr ) )
+                    {
+                        iUnit = (int)kParamSemantic.charAt(8) - '0';
+                        
+                    }
+                    kInOutAttributes.SetTChannels(iUnit,iNumFloats);
+                }
+                else if ( kParamResource.startsWith( ms_kTexUnitString ) )
+                {
+                    SamplerInformation.Type eSType = SamplerInformation.Type.MAX_SAMPLER_TYPES;
+                    if (kParamType.equals( ms_kSampler1DStr ))
+                    {
+                        eSType = SamplerInformation.Type.SAMPLER_1D;
+                    }
+                    else if (kParamType.equals( ms_kSampler2DStr ))
+                    {
+                        eSType = SamplerInformation.Type.SAMPLER_2D;
+                    }
+                    else if (kParamType.equals( ms_kSampler3DStr ))
+                    {
+                        eSType = SamplerInformation.Type.SAMPLER_3D;
+                    }
+                    else if (kParamType.equals( ms_kSamplerCubeStr ))
+                    {
+                        eSType = SamplerInformation.Type.SAMPLER_CUBE;
+                    }
+                    else if (kParamType.equals( ms_kSamplerProjStr ))
+                    {
+                        eSType = SamplerInformation.Type.SAMPLER_PROJ;
+                    }
+
+                    int iUnit = iBaseRegister;
+                    SamplerInformation kSI = new SamplerInformation(kParamName,eSType,iUnit, iUnit);
+                    rkProgram.AddSamplerInformation(kSI);
+                }
+                else if ( kParamResource.equals( ms_kUserString ) )
+                {
+                    // The variable is either a render state or user-defined.
+                    RendererConstant.Type eRCType = RendererConstant.GetType(kParamName);
+                    if (eRCType != RendererConstant.Type.MAX_TYPES)
+                    {
+                        // renderer constant
+                        RendererConstant kRC = new RendererConstant(eRCType,iBaseRegister,
+                                                                    iRegisterQuantity,iNumFloats);
+                        rkProgram.AddRendererConstant(kRC);
+                    }
+                    else
+                    {
+                        // user-defined constant
+                        UserConstant kUC = new UserConstant(rkProgram.GetName(),
+                                                            kParamName,iBaseRegister,
+                                                            iRegisterQuantity,iNumFloats);
+                        rkProgram.AddUserConstant(kUC);
+                    }
+                }
+
+            }
+        } while((param = CgGL.cgGetNextParameter(param)) != null);
+    }
+
+    /** Query the linked program, setup the RendererConstants, UserConstants,
+     * and Samplers.
+     * @param rkProgram the shader program to query
+     */
+    protected void RecurseParamsInProgram(Program rkProgram)
+    {
+        if ( m_kDrawable == null ) { System.err.println( "RecurseParamsInProgram GLDrawable null" ); return; }
+        GL gl = m_kDrawable.getGL();
+        int iProgramID = rkProgram.GetProgramID();
+        
+        // Get the input attributes: 
+        gl.glGetProgramiv( iProgramID, GL.GL_ACTIVE_ATTRIBUTES, m_aiParams, 0);
+        int iNumAttributes = m_aiParams[0];
+        // set up name buffer. 
+        gl.glGetProgramiv( iProgramID, GL.GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, m_aiParams, 0);
+
+        int iNameLen = m_aiParams[0];
+        byte[] acParamName = new byte[iNameLen + 1];
+        int iLength, iSize, iType;
+
+        Attributes kInOutAttributes = null;
+        int iNumFloats = 1;
+
+        kInOutAttributes = rkProgram.GetInputAttributes();
+        for (int i = 0; i < iNumAttributes; i++) 
+        {
+            gl.glGetActiveAttrib(iProgramID, i, iNameLen, m_aiParams, 0,
+                    m_aiParams, 1,
+                    m_aiParams, 2,
+                    acParamName, 0);
+
+            iLength = m_aiParams[0];
+            iSize = m_aiParams[1];
+            iType = m_aiParams[2];
+            String sName = new String(acParamName, 0, iLength);
+            //System.err.println("N: " + sName + " Size: " + iSize + " type: " + iType);
+            switch (iType) 
+            {
+            case GL.GL_FLOAT:
+                //System.err.println("GL.GL_FLOAT");
+                iNumFloats = 1; break;
+            case GL.GL_FLOAT_VEC2:
+                //System.err.println("GL.GL_FLOAT_VEC2");
+                iNumFloats = 2; break;
+            case GL.GL_FLOAT_VEC3:
+                //System.err.println("GL.GL_FLOAT_VEC3");
+                iNumFloats = 3; break;
+            case GL.GL_FLOAT_VEC4:
+                //System.err.println("GL.GL_FLOAT_VEC4");
+                iNumFloats = 4; break;
+            case GL.GL_INT:
+                //System.err.println("GL.GL_INT");
+                break;
+            case GL.GL_INT_VEC2:
+                //System.err.println("GL.GL_INT_VEC2");
+                break;
+            case GL.GL_INT_VEC3:
+                //System.err.println("GL.GL_INT_VEC3");
+                break;
+            case GL.GL_INT_VEC4:
+                //System.err.println("GL.GL_INT_VEC4");
+                break;
+            case GL.GL_BOOL:
+                //System.err.println("GL.GL_BOOL");
+                break;
+            case GL.GL_BOOL_VEC2:
+                //System.err.println("GL.GL_BOOL_VEC2");
+                break;
+            case GL.GL_BOOL_VEC3:
+                //System.err.println("GL.GL_BOOL_VEC3");
+                break;
+            case GL.GL_BOOL_VEC4:
+                //System.err.println("GL.GL_BOOL_VEC4");
+                break;
+            case GL.GL_FLOAT_MAT2:
+                //System.err.println("GL.GL_FLOAT_MAT2");
+                break;
+            case GL.GL_FLOAT_MAT3:
+                //System.err.println("GL.GL_FLOAT_MAT3");
+                iNumFloats = 0; break;
+            case GL.GL_FLOAT_MAT4:
+                //System.err.println("GL.GL_FLOAT_MAT4");
+                iNumFloats = 16; break;
+            case GL.GL_SAMPLER_1D:
+                //System.err.println("GL.GL_SAMPLER_1D");
+                iNumFloats = 1; 
+                break;
+            case GL.GL_SAMPLER_2D:
+                //System.err.println("GL.GL_SAMPLER_2D");
+                iNumFloats = 2; 
+                break;
+            case GL.GL_SAMPLER_3D:
+                //System.err.println("GL.GL_SAMPLER_3D");
+                iNumFloats = 3; 
+                break;
+            case GL.GL_SAMPLER_CUBE:
+                //System.err.println("GL.GL_SAMPLER_CUBE");
+                break;
+            case GL.GL_SAMPLER_1D_SHADOW:
+                //System.err.println("GL.GL_SAMPLER_1D_SHADOW");
+                break;
+            case GL.GL_SAMPLER_2D_SHADOW:
+                //System.err.println("GL.GL_SAMPLER_2D_SHADOW");
+                iNumFloats = 1; break;
+            default:
+                //System.err.println("default");
+                break;
+            }
+
+            if ( sName.equals( "gl_Vertex" ) )
+            {
+                kInOutAttributes.SetPChannels(3);
+            }
+            else if ( sName.equals( "gl_Normal" ) )
+            {
+                kInOutAttributes.SetNChannels(3);
+            }
+            else if ( sName.equals( "gl_Color" ) )
+            {
+                kInOutAttributes.SetCChannels(0, iNumFloats);
+            }
+            else if ( sName.equals( "gl_SecondaryColor" ) )
+            {
+                kInOutAttributes.SetCChannels(1, iNumFloats);
+            }
+            int iUnit = sName.indexOf( "gl_MultiTexCoord" );
+            if ( iUnit != -1 )
+            {
+                iUnit = (new Integer(sName.substring(iUnit + 16))).intValue();
+                kInOutAttributes.SetTChannels(iUnit, iNumFloats);
+                //System.err.println( iUnit + " " + iNumFloats );
+            }
+        }
+     
+        // Get the uniform variables:
+        gl.glGetProgramiv( iProgramID, GL.GL_ACTIVE_UNIFORMS, m_aiParams, 0);
+        int iNumParams = m_aiParams[0];
+
+        // set up name buffer. 
+        gl.glGetProgramiv( iProgramID, GL.GL_ACTIVE_UNIFORM_MAX_LENGTH, m_aiParams, 0);
+        iNameLen = m_aiParams[0];
+        acParamName = new byte[iNameLen + 1];
+        
+        int iTexUnit = 0;
+        for (int i = 0; i < iNumParams; i++) 
+        {
+            gl.glGetActiveUniform(iProgramID, i, iNameLen, m_aiParams, 0,
+                    m_aiParams, 1,
+                    m_aiParams, 2,
+                    acParamName, 0);
+            iLength = m_aiParams[0];
+            iSize = m_aiParams[1];
+            iType = m_aiParams[2];
+            String sName = new String(acParamName, 0, iLength);
+            //System.err.println("N: " + sName + " Size: " + iSize + " type: " + iType);
+
+            SamplerInformation.Type eSType = SamplerInformation.Type.MAX_SAMPLER_TYPES;
+            switch (iType) 
+            {
+            case GL.GL_FLOAT:
+                iNumFloats = 1; break;
+            case GL.GL_FLOAT_VEC2:
+                iNumFloats = 2; break;
+            case GL.GL_FLOAT_VEC3:
+                iNumFloats = 3; break;
+            case GL.GL_FLOAT_VEC4:
+                iNumFloats = 4; break;
+            case GL.GL_INT:
+            case GL.GL_INT_VEC2:
+            case GL.GL_INT_VEC3:
+            case GL.GL_INT_VEC4:
+            case GL.GL_BOOL:
+            case GL.GL_BOOL_VEC2:
+            case GL.GL_BOOL_VEC3:
+            case GL.GL_BOOL_VEC4:
+            case GL.GL_FLOAT_MAT2:
+            case GL.GL_FLOAT_MAT3:
+                iNumFloats = 0; break;
+            case GL.GL_FLOAT_MAT4:
+                iNumFloats = 16; break;
+            case GL.GL_SAMPLER_1D:
+                //System.err.println("GL.GL_SAMPLER_1D");
+                eSType = SamplerInformation.Type.SAMPLER_1D;
+                iNumFloats = 1; 
+                break;
+            case GL.GL_SAMPLER_2D:
+                //System.err.println("GL.GL_SAMPLER_2D");
+                eSType = SamplerInformation.Type.SAMPLER_2D;
+                iNumFloats = 2; 
+                break;
+            case GL.GL_SAMPLER_3D:
+                //System.err.println("GL.GL_SAMPLER_3D");
+                eSType = SamplerInformation.Type.SAMPLER_3D;
+                iNumFloats = 3; 
+                break;
+            case GL.GL_SAMPLER_CUBE:
+                //System.err.println("GL.GL_SAMPLER_CUBE");
+                eSType = SamplerInformation.Type.SAMPLER_CUBE;
+                break;
+            case GL.GL_SAMPLER_1D_SHADOW:
+                break;
+            case GL.GL_SAMPLER_2D_SHADOW:
+                eSType = SamplerInformation.Type.SAMPLER_PROJ;
+                //System.err.println("GL.GL_SAMPLER_2D_SHADOW");
+                iNumFloats = 1;
+                break;
+            default:
+                break;
+            }
+            int iRegisterQuantity = iNumFloats/4;
+            if (iRegisterQuantity == 0)
+            {
+                iRegisterQuantity = 1;
+            }
+            int iBaseRegister = gl.glGetUniformLocation(iProgramID, sName);
+            // uniform sampler
+            if ( eSType != SamplerInformation.Type.MAX_SAMPLER_TYPES )
+            {
+                int iUnit = iTexUnit++;
+                SamplerInformation kSI = new SamplerInformation(sName,eSType,iUnit, iBaseRegister);
+                rkProgram.AddSamplerInformation(kSI);
+                //System.err.println( sName + " " + kSI.GetName() + " " + iUnit + " " + iBaseRegister);
+            }
+            else {
+                
+                // The variable is either a render state or user-defined.
+                RendererConstant.Type eRCType = RendererConstant.GetType(sName);
+                if (eRCType != RendererConstant.Type.MAX_TYPES)
+                {
+                    // renderer constant
+                    RendererConstant kRC = new RendererConstant(eRCType,iBaseRegister,
+                                                                iRegisterQuantity,iNumFloats);
+                    rkProgram.AddRendererConstant(kRC);
+                }
+                else
+                {
+                    // user-defined constant
+                    UserConstant kUC = new UserConstant(rkProgram.GetName(),
+                                                        sName,iBaseRegister,
+                                                        iRegisterQuantity,iNumFloats);
+                    rkProgram.AddUserConstant(kUC);
+                }
+            }
+       }
+    }
     /** Resource loading and releasing (to/from video memory).
      * @param pkTexture the Texture to generate/bind
      * @return the new ResourceIdentifier for the Texture
@@ -1052,6 +1724,8 @@ public class OpenGLRenderer extends Renderer
         pkResource.ID = m_aiParams[0];
         gl.glBindTexture(eTarget,pkResource.ID);
 
+        //System.err.println( "LoadTexture" + pkTexture.GetImage().GetName() + " " + pkResource.ID );
+
         // Set the filter mode.
         Texture.FilterType eFType = pkTexture.GetFilterType();
         if (eFType == Texture.FilterType.NEAREST)
@@ -1074,7 +1748,6 @@ public class OpenGLRenderer extends Renderer
         // Set the mipmap mode.
         gl.glTexParameteri(eTarget,GL.GL_TEXTURE_MIN_FILTER,
                         ms_aeTextureMipmap[eFType.Value()]);
-
         // Set the border color (for clamp to border).
         float[] afBorderColor = pkTexture.GetBorderColor().GetData();
         gl.glTexParameterfv( eTarget,GL.GL_TEXTURE_BORDER_COLOR,
@@ -1127,7 +1800,6 @@ public class OpenGLRenderer extends Renderer
             {
                 gl.glTexImage2D(eTarget,0,iComponent,pkImage.GetBound(0),
                                 pkImage.GetBound(1),0,eFormat,eIType,0);
-
                 // set up depth comparison
                 gl.glTexParameteri(eTarget,GL.GL_TEXTURE_COMPARE_MODE,
                                 GL.GL_COMPARE_R_TO_TEXTURE);
@@ -1151,7 +1823,6 @@ public class OpenGLRenderer extends Renderer
             gl.glTexImage3D(eTarget,0,iComponent,pkImage.GetBound(0),
                             pkImage.GetBound(1),pkImage.GetBound(2),0,eFormat,eIType,
                             aucData);
-
             gl.glTexParameteri(eTarget,GL.GL_TEXTURE_WRAP_S,
                             ms_aeWrapMode[pkTexture.GetWrapType(0).Value()]);
             gl.glTexParameteri(eTarget,GL.GL_TEXTURE_WRAP_T,
@@ -1447,30 +2118,65 @@ public class OpenGLRenderer extends Renderer
     /** Resource enabling and disabling.
      * Sets the values for the Vertex Program constant parameters.
      * @param eCTYpe, the ConstantType parameter (RENDERER, NUMERICAL, USER)
+     * @param paramType, the RendererConstant.Type parameter
      * @param iBaseRegister, the register to load the parameter values into
      * @param iRegisterQuantity, the number of registers
+     * @param iNumFloats, the number of floats in the program constant
      * @param afData, the parameter values.
      */
-    public void SetVProgramConstant (Renderer.ConstantType eCType,
-                                     int iBaseRegister,
-                                     int iRegisterQuantity,
-                                     float[] afData)
+    public void SetVProgramConstant ( Renderer.ConstantType eCType,
+                                      RendererConstant.Type paramType,
+                                      int iBaseRegister,
+                                      int iRegisterQuantity,
+                                      int iNumFloats, 
+                                      float[] afData)
     {
         if ( m_kDrawable == null ) { System.err.println( "SetVProgramConstant GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         if (eCType != Renderer.ConstantType.CT_NUMERICAL)
         {
-            for (int j = 0; j < iRegisterQuantity; j++)
+            if ( ms_bUseCg )
             {
-                m_afParam[0] = afData[ j * 4 + 0];
-                m_afParam[1] = afData[ j * 4 + 1];
-                m_afParam[2] = afData[ j * 4 + 2];
-                m_afParam[3] = afData[ j * 4 + 3];
-                gl.glProgramLocalParameter4fARB(GL.GL_VERTEX_PROGRAM_ARB,
-                                                 iBaseRegister,
-                                                 m_afParam[0], m_afParam[1], m_afParam[2], m_afParam[3] );
-                iBaseRegister++;
+                for (int j = 0; j < iRegisterQuantity; j++)
+                {
+                    m_afParam[0] = afData[ j * 4 + 0];
+                    m_afParam[1] = afData[ j * 4 + 1];
+                    m_afParam[2] = afData[ j * 4 + 2];
+                    m_afParam[3] = afData[ j * 4 + 3];
+
+                    gl.glProgramLocalParameter4fARB(GL.GL_VERTEX_PROGRAM_ARB,
+                            iBaseRegister,
+                            m_afParam[0], m_afParam[1], m_afParam[2], m_afParam[3] );
+                    iBaseRegister++;
+                }
+            }
+            else
+            {
+                if ( RendererConstant.GetName(paramType).indexOf("Matrix") != -1 )
+                {
+                    gl.glUniformMatrix4fv( iBaseRegister, 1, false, afData, 0 );
+                }
+                else if ( iNumFloats == 1 )
+                {
+                    gl.glUniform1f( iBaseRegister,
+                                    afData[0] );
+                }
+                else if ( iNumFloats == 2 )
+                {
+                    gl.glUniform2f( iBaseRegister,
+                                    afData[0], afData[1] );
+                }
+                else if ( iNumFloats == 3 )
+                {
+                    gl.glUniform3f( iBaseRegister,
+                                    afData[0], afData[1], afData[2] );
+                }
+                else if ( iNumFloats == 4 )
+                {
+                    gl.glUniform4f( iBaseRegister,
+                                    afData[0], afData[1], afData[2], afData[3] );
+                }
             }
         }
     }
@@ -1478,13 +2184,17 @@ public class OpenGLRenderer extends Renderer
     /** Resource enabling and disabling.
      * Sets the values for the Pixel Program constant parameters.
      * @param eCTYpe, the ConstantType parameter (RENDERER, NUMERICAL, USER)
+     * @param paramType, the RendererConstant.Type parameter
      * @param iBaseRegister, the register to load the parameter values into
      * @param iRegisterQuantity, the number of registers
+     * @param iNumFloats, the number of floats in the program constant
      * @param afData, the parameter values.
      */
     public void SetPProgramConstant ( Renderer.ConstantType eCType,
+                                      RendererConstant.Type paramType,
                                       int iBaseRegister,
                                       int iRegisterQuantity,
+                                      int iNumFloats,
                                       float[] afData)
     {
         if ( m_kDrawable == null ) { System.err.println( "SetPProgramConstant GLDrawable null" ); return; }
@@ -1492,16 +2202,46 @@ public class OpenGLRenderer extends Renderer
 
         if (eCType != Renderer.ConstantType.CT_NUMERICAL)
         {
-            for (int j = 0; j < iRegisterQuantity; j++)
+            if ( ms_bUseCg )
             {
-                m_afParam[0] = afData[ j * 4 + 0];
-                m_afParam[1] = afData[ j * 4 + 1];
-                m_afParam[2] = afData[ j * 4 + 2];
-                m_afParam[3] = afData[ j * 4 + 3];
-                gl.glProgramLocalParameter4fARB(GL.GL_FRAGMENT_PROGRAM_ARB,
-                                                 iBaseRegister,
-                                                 m_afParam[0], m_afParam[1], m_afParam[2], m_afParam[3] );
-                iBaseRegister++;
+                for (int j = 0; j < iRegisterQuantity; j++)
+                {
+                    m_afParam[0] = afData[ j * 4 + 0];
+                    m_afParam[1] = afData[ j * 4 + 1];
+                    m_afParam[2] = afData[ j * 4 + 2];
+                    m_afParam[3] = afData[ j * 4 + 3];
+                    gl.glProgramLocalParameter4fARB(GL.GL_FRAGMENT_PROGRAM_ARB,
+                            iBaseRegister,
+                            m_afParam[0], m_afParam[1], m_afParam[2], m_afParam[3] );
+                    iBaseRegister++;
+                }
+            }
+            else
+            {
+                if ( RendererConstant.GetName(paramType).indexOf("Matrix") != -1 )
+                {
+                    gl.glUniformMatrix4fv( iBaseRegister, 1, false, afData, 0 );
+                }
+                else if ( iNumFloats == 1 )
+                {
+                    gl.glUniform1f( iBaseRegister,
+                                    afData[0] );
+                }
+                else if ( iNumFloats == 2 )
+                {
+                    gl.glUniform2f( iBaseRegister,
+                                    afData[0], afData[1] );
+                }
+                else if ( iNumFloats == 3 )
+                {
+                    gl.glUniform3f( iBaseRegister,
+                                    afData[0], afData[1], afData[2] );
+                }
+                else if ( iNumFloats == 4 )
+                {
+                    gl.glUniform4f( iBaseRegister,
+                                    afData[0], afData[1], afData[2], afData[3] );
+                }
             }
         }
     }
@@ -1514,10 +2254,15 @@ public class OpenGLRenderer extends Renderer
     {
         if ( m_kDrawable == null ) { System.err.println( "OnEnableVProgram GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
-
         VProgramID pkResource = (VProgramID)pkID;
-        gl.glEnable(GL.GL_VERTEX_PROGRAM_ARB);
-        gl.glBindProgramARB(GL.GL_VERTEX_PROGRAM_ARB,pkResource.ID);
+        if (ms_bUseCg) {
+            gl.glEnable(GL.GL_VERTEX_PROGRAM_ARB);
+            gl.glBindProgramARB(GL.GL_VERTEX_PROGRAM_ARB,pkResource.ID);
+        }
+        else
+        {
+            gl.glUseProgram(pkResource.ID);
+        }
     }
 
     /**
@@ -1528,8 +2273,12 @@ public class OpenGLRenderer extends Renderer
     {
         if ( m_kDrawable == null ) { System.err.println( "OnDisableVProgram GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
+        if (ms_bUseCg) {
+            gl.glDisable(GL.GL_VERTEX_PROGRAM_ARB);
+        } else {
+            gl.glUseProgram(0);
+        }
 
-        gl.glDisable(GL.GL_VERTEX_PROGRAM_ARB);
     }
 
     /**
@@ -1540,10 +2289,11 @@ public class OpenGLRenderer extends Renderer
     {
         if ( m_kDrawable == null ) { System.err.println( "OnEnablePProgram GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
-
-        PProgramID pkResource = (PProgramID)pkID;
-        gl.glEnable(GL.GL_FRAGMENT_PROGRAM_ARB);
-        gl.glBindProgramARB(GL.GL_FRAGMENT_PROGRAM_ARB,pkResource.ID);
+        if (ms_bUseCg) {
+            PProgramID pkResource = (PProgramID)pkID;
+            gl.glEnable(GL.GL_FRAGMENT_PROGRAM_ARB);
+            gl.glBindProgramARB(GL.GL_FRAGMENT_PROGRAM_ARB,pkResource.ID);
+        }
     }
 
     /**
@@ -1554,8 +2304,11 @@ public class OpenGLRenderer extends Renderer
     {
         if ( m_kDrawable == null ) { System.err.println( "OnDisablePProgram GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
-
-        gl.glDisable(GL.GL_FRAGMENT_PROGRAM_ARB);
+        if (ms_bUseCg) {
+            gl.glDisable(GL.GL_FRAGMENT_PROGRAM_ARB);
+        } else {
+            gl.glUseProgram(0);
+        }
     }
 
     /**
@@ -1566,7 +2319,7 @@ public class OpenGLRenderer extends Renderer
     {
         if ( m_kDrawable == null ) { System.err.println( "OnEnableTexture GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
-
+        
         TextureID pkResource = (TextureID)pkID;
         Texture pkTexture = pkResource.TextureObject;
 
@@ -1577,11 +2330,17 @@ public class OpenGLRenderer extends Renderer
 
         gl.glClientActiveTexture(GL.GL_TEXTURE0 + iTextureUnit);
         gl.glActiveTexture(GL.GL_TEXTURE0 + iTextureUnit);
+        if ( !ms_bUseCg )
+        {
+            int iBaseRegister = pkSI.GetBaseRegister();
+            gl.glUniform1i( iBaseRegister, iTextureUnit);
+        }
+        
         gl.glBindTexture(eTarget,pkResource.ID);
     }
 
     /**
-     * Disable the Texture spefified by the ResourceIdentifer parameter pkID.
+     * Disable the Texture specified by the ResourceIdentifer parameter pkID.
      * @param pkID the ResourceIdentifier describing the Texture to disable.
      */
     public void OnDisableTexture (ResourceIdentifier pkID)
@@ -2001,10 +2760,33 @@ public class OpenGLRenderer extends Renderer
     /** JOGL GLAutoDrawable reference */
     private GLAutoDrawable m_kDrawable = null;
     
+    /** Flag indicating whether Nvidia Cg can be used. */
+    private static boolean ms_bUseCg = true;
+    /** Cg Context */
+    protected CGcontext m_kCgContext = null;
+
     /** */
     private byte[] m_aucBitmap = new byte[]{0};
-    private int[] m_aiParams = new int[1];
+    private int[] m_aiParams = new int[4];
     private float[] m_afParam = new float[4];
+
+    /** For loading and parsing a shader
+     * program. */
+    protected static final String ms_kSampler1DStr = new String("sampler1D");
+    protected static final String ms_kSampler2DStr = new String("sampler2D");
+    protected static final String ms_kSampler3DStr = new String("sampler3D");
+    protected static final String ms_kSamplerCubeStr = new String("samplerCUBE");
+    protected static final String ms_kSamplerProjStr = new String("sampler2DSHADOW");
+    protected static final String ms_kPositionStr = new String("POSITION");
+    protected static final String ms_kNormalStr = new String("NORMAL");
+    protected static final String ms_kColorStr = new String("COLOR");
+    protected static final String ms_kColor0Str = new String("COLOR0");
+    protected static final String ms_kColor1Str = new String("COLOR1");
+    protected static final String ms_kTexCoordStr = new String("TEXCOORD");
+    protected static final String ms_kInStr = new String("in");
+    protected static final String ms_kEOL = new String("\n");
+    protected static final String ms_kTexUnitString = new String("texunit");
+    protected static final String ms_kUserString = new String("c");
 
     /** Bitmap Fonts: */
     private static final byte[] gs_aucChar0 = new byte[] 

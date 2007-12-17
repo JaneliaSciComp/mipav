@@ -1095,7 +1095,7 @@ public class DialogDTIColorDisplay extends ViewJFrameBase
             widthResFactor = factor[0];
             heightResFactor = factor[1];
             zSlice = (resultImage.getExtents()[2] - 1) / 2;
-            zSlice = zSlice - 1;
+            //zSlice = zSlice - 1;
 	        
             //get data from anisotropy file to send into ViewJComponentEditImage constructor
             float[] anisotropyBuffer;
@@ -1167,18 +1167,18 @@ public class DialogDTIColorDisplay extends ViewJFrameBase
             titledBorder = new TitledBorder(new EtchedBorder(), " Image slice ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
             resultImageSliderPanel.setBorder(titledBorder);
             resultImageSliderPanel.addMouseWheelListener(this);
-            resultImageSlider = new JSlider(JSlider.HORIZONTAL, 1, nImage, zSlice + 1);
+            resultImageSlider = new JSlider(JSlider.HORIZONTAL, 0, nImage-1, zSlice);
             resultImageSlider.setMajorTickSpacing(10);
             resultImageSlider.setPaintTicks(true);
             resultImageSlider.addChangeListener(this);
             resultImageSlider.addMouseWheelListener(this);
-            maxResultImageSlicesLabel = new JLabel(Integer.toString(nImage));
+            maxResultImageSlicesLabel = new JLabel(Integer.toString(nImage-1));
             maxResultImageSlicesLabel.setForeground(Color.black);
             maxResultImageSlicesLabel.setFont(MipavUtil.font12);
-            minResultImageSlicesLabel = new JLabel("1");
+            minResultImageSlicesLabel = new JLabel("0");
             minResultImageSlicesLabel.setForeground(Color.black);
             minResultImageSlicesLabel.setFont(MipavUtil.font12);
-            currentResultImageSlicesLabel = new JLabel((zSlice+1) + "/" + numSlices);
+            currentResultImageSlicesLabel = new JLabel((zSlice) + "/" + (numSlices-1));
             gbc.gridx = 0;
             gbc.gridy = 0;
             gbc.gridwidth = 2;
@@ -1218,7 +1218,7 @@ public class DialogDTIColorDisplay extends ViewJFrameBase
             captureImageButton = toolbarBuilder.buildButton("CaptureImage", "Capture image slices to new frame", "camera");
             captureImageButton.addMouseListener(this);
             magLabel = new JLabel("M:"+zoom);
-            setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+            setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice) + "/" + (numSlices-1) + "    M:"+zoom);
 			
             gbc.anchor = GridBagConstraints.CENTER;
             gbc.insets = new Insets(0,5,0,5);
@@ -1367,11 +1367,11 @@ public class DialogDTIColorDisplay extends ViewJFrameBase
             updateCurrentColorWheel();
         }
         else if(source == resultImageSlider) {
-            zSlice = resultImageSlider.getValue() - 1;
+            zSlice = resultImageSlider.getValue();
             componentImage.setSlice(zSlice);
             componentImage.show(tSlice, zSlice, true);
-            currentResultImageSlicesLabel.setText((zSlice+1) + "/" + numSlices);
-            setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+            currentResultImageSlicesLabel.setText((zSlice) + "/" + (numSlices-1));
+            setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice) + "/" + (numSlices-1) + "    M:"+zoom);
         }
     }
 
@@ -1665,7 +1665,7 @@ public class DialogDTIColorDisplay extends ViewJFrameBase
         componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
         
         magLabel.setText("M:"+zoom);
-        setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+        setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice) + "/" + (numSlices-1) + "    M:"+zoom);
         if(componentImage.getZoomX() >= 32) {
             magButton.setEnabled(false);
         }
@@ -1697,7 +1697,7 @@ public class DialogDTIColorDisplay extends ViewJFrameBase
         validate();
         componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
         magLabel.setText("M:"+zoom);
-        setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+        setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice) + "/" + (numSlices-1) + "    M:"+zoom);
         if(componentImage.getZoomX() <= 0.125) {
             unMagButton.setEnabled(false);
         }
@@ -1721,7 +1721,7 @@ public class DialogDTIColorDisplay extends ViewJFrameBase
         validate();
         componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
         magLabel.setText("M:"+zoom);
-        setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+        setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice) + "/" + (numSlices-1) + "    M:"+zoom);
     }
 	
 	
@@ -2269,7 +2269,7 @@ public class DialogDTIColorDisplay extends ViewJFrameBase
         new ViewJFrameImage(screenCaptureImage, null, new Dimension(610, 200));
         //System.out.println( "screenCaptureImage = " + screenCaptureImage.toString() );
         
-        resultImageSlider.setValue(numSlices/2);
+        resultImageSlider.setValue((numSlices-1)/2);
 
         return true;
     }
@@ -2303,16 +2303,16 @@ public class DialogDTIColorDisplay extends ViewJFrameBase
             if (wheelRotation < 0) {
                 if(zSlice != numSlices-1) {
                     zSlice = zSlice + 1;
-                    resultImageSlider.setValue(zSlice + 1);
-                    currentResultImageSlicesLabel.setText((zSlice+1) + "/" + numSlices);
-                    setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+                    resultImageSlider.setValue(zSlice);
+                    currentResultImageSlicesLabel.setText((zSlice) + "/" + (numSlices-1));
+                    setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice) + "/" + (numSlices-1) + "    M:"+zoom);
                 }
             }else {
                 if(zSlice != 0) {
                     zSlice = zSlice -1;
-                    resultImageSlider.setValue(zSlice + 1);
-                    currentResultImageSlicesLabel.setText((zSlice+1) + "/" + numSlices);
-                    setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+                    resultImageSlider.setValue(zSlice);
+                    currentResultImageSlicesLabel.setText((zSlice) + "/" + (numSlices-1));
+                    setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice) + "/" + (numSlices-1) + "    M:"+zoom);
                 }
             }
         }

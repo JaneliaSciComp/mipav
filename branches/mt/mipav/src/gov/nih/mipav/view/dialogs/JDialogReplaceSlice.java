@@ -128,7 +128,7 @@ public class JDialogReplaceSlice extends JDialogBase implements AlgorithmInterfa
 
         sliceImage = userInterface.getRegisteredImageByName((String) sliceBox.getSelectedItem());
 
-        AlgorithmReplaceSlice algo = new AlgorithmReplaceSlice(image, sliceImage, sliceNum - 1);
+        AlgorithmReplaceSlice algo = new AlgorithmReplaceSlice(image, sliceImage, sliceNum);
 
         algo.addListener(this);
 
@@ -171,7 +171,7 @@ public class JDialogReplaceSlice extends JDialogBase implements AlgorithmInterfa
         }
 
         if (sliceItems.isEmpty()) {
-            MipavUtil.displayError("No valid images open for replace slice");
+            MipavUtil.displayError("Must have at least one 2D image open to use the Replace Slice Utility");
             dispose();
 
             return;
@@ -190,12 +190,14 @@ public class JDialogReplaceSlice extends JDialogBase implements AlgorithmInterfa
         JLabel imageLabel = new JLabel("Slice image: ");
         imageLabel.setFont(MipavUtil.font12);
 
-        JLabel sliceLabel = new JLabel("Slice to replace: ");
+        JLabel sliceLabel = new JLabel("Slice index to replace: ");
         sliceLabel.setFont(MipavUtil.font12);
+        
 
         gbc.gridwidth = 1;
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.insets = new Insets(5,5,5,5);
         mainPanel.add(imageLabel, gbc);
 
         gbc.gridwidth = 3;
@@ -236,8 +238,8 @@ public class JDialogReplaceSlice extends JDialogBase implements AlgorithmInterfa
             return false;
         }
 
-        if ((sliceNum > image.getExtents()[2]) || (sliceNum < 1)) {
-            MipavUtil.displayError("Slice number must be between 1 and " + (image.getExtents()[2]));
+        if ((sliceNum > (image.getExtents()[2] - 1)) || (sliceNum < 0)) {
+            MipavUtil.displayError("Slice number must be between 0 and " + ((image.getExtents()[2]) - 1));
 
             return false;
         }
