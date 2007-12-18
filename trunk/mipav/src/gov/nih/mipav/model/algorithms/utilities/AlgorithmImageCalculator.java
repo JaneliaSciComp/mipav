@@ -1099,13 +1099,23 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                                     }
 
                                     break;
-
+                               
                                 case DIFFERENCE:
-                                    bufferA[i] = Math.abs(bufferA[i] - bufferB[i]);
+                                    if (doComplex) {
+                                        bufferA[i] = Math.sqrt((bufferA[i] - bufferB[i])*(bufferA[i] - bufferB[i]) +
+                                                               (bufferAI[i] - bufferBI[i])*(bufferAI[i] - bufferBI[i]));
+                                        bufferAI[i] = 0;
+                                    }
+                                    else {
+                                        bufferA[i] = Math.abs(bufferA[i] - bufferB[i]);
+                                    }
                                     break;
 
                                 case AVERAGE:
                                     bufferA[i] = (bufferA[i] + bufferB[i]) / 2.0;
+                                    if (doComplex) {
+                                        bufferAI[i] = (bufferAI[i] + bufferBI[i])/2.0;
+                                    }
                                     break;
 
                                 case MAXIMUM:
@@ -1822,11 +1832,21 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                                     break;
 
                                 case DIFFERENCE:
-                                    bufferA[i] = Math.abs(bufferA[i] - bufferB[i]);
+                                    if (doComplex) {
+                                        bufferA[i] = Math.sqrt((bufferA[i] - bufferB[i])*(bufferA[i] - bufferB[i]) +
+                                                               (bufferAI[i] - bufferBI[i])*(bufferAI[i] - bufferBI[i]));
+                                        bufferAI[i] = 0;
+                                    }
+                                    else {
+                                        bufferA[i] = Math.abs(bufferA[i] - bufferB[i]);
+                                    }
                                     break;
 
                                 case AVERAGE:
                                     bufferA[i] = (bufferA[i] + bufferB[i]) / 2.0;
+                                    if (doComplex) {
+                                        bufferAI[i] = (bufferAI[i] + bufferBI[i])/2.0;
+                                    }
                                     break;
 
                                 case MAXIMUM:
