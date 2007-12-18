@@ -5753,7 +5753,7 @@ public class FileIO {
     private ModelImage readNIFTIMulti(String fileName, String fileDir) {
         ModelImage image = null;
         FileNIFTI imageFile;
-        FileInfoBase fileInfo;
+        FileInfoNIFTI fileInfo;
 
         int length = 0;
         float[] buffer;
@@ -5806,7 +5806,7 @@ public class FileIO {
         imageFile = new FileNIFTI(fileList[0], fileDir);
 
         try {
-
+        
             if (!imageFile.readHeader(fileList[0], fileDir)) {
                 throw (new IOException(" NIFTI header file error"));
             }
@@ -5937,6 +5937,7 @@ public class FileIO {
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
+                    error.printStackTrace();
                 }
 
                 if (image != null) {
@@ -5968,6 +5969,7 @@ public class FileIO {
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
+                    error.printStackTrace();
                 }
 
                 if (image != null) {
