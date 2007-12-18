@@ -720,8 +720,9 @@ public class FileNIFTI extends FileBase {
     public FileInfoNIFTI getFileInfo() {
         return fileInfo;
     }
+    
 
-    /**
+	/**
      * Reads the NIFTI header and stores the information in fileInfo.
      *
      * @param      imageFileName  File name of image.
@@ -791,13 +792,11 @@ public class FileNIFTI extends FileBase {
 
         }
 
-        // Tagged for removal - Matt 4/17/2003
-        // if (fileInfo == null) { // if the file info does not yet exist: make it
-        // fileInfo = new FileInfoNIFTI(imageFileName, fileDir, FileUtility.NIFTI);
-        // if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) { // Why 3/20/2001
-        // throw (new IOException(" NIFTI header file error"));
-        // }
-        // }
+        //for multi-file
+        if (fileInfo == null) { // if the file info does not yet exist: make it
+        	fileInfo = new FileInfoNIFTI(imageFileName, fileDir, FileUtility.NIFTI);
+        }
+
 
         raFile = new RandomAccessFile(fileHeader, "r");
         raFile.read(bufferByte);
@@ -2211,7 +2210,7 @@ public class FileNIFTI extends FileBase {
                 offset = 0;
             }
 
-            rawFile.readImage(buffer, offset, fileInfo.getSourceType());
+            rawFile.readImage(buffer, offset, fileInfo.getDataType());
 
             if (vox_offset < 0.0f) {
 
@@ -2231,7 +2230,9 @@ public class FileNIFTI extends FileBase {
             rawFile.raFile.close();
             fireProgressStateChanged(100);
         } catch (IOException error) {
+        	error.printStackTrace();
             throw new IOException("FileNIFTI: " + error);
+            
         } catch (OutOfMemoryError e) {
             throw (e);
         }
