@@ -2696,68 +2696,9 @@ public class AlgorithmFFT extends AlgorithmBase {
         }
     }
     
-    private void testCenter(float[] a, int[] extents) {
-        int x, y, z;
-        int newX, newY, newZ;
-        float newA[] = new float[a.length];
-        int sliceSize;
-        int nDims = extents.length;
-       
-        if (nDims == 2) {
-            for (y = 0; y < extents[1]; y++) {
-                if ((y - extents[1]/2) >= 0) {
-                    newY = y - extents[1]/2;
-                }
-                else {
-                    newY = y + extents[1]/2;
-                }
-                for (x = 0; x < extents[0]; x++) {
-                    if ((x - extents[0]/2) >= 0) {
-                        newX = x - extents[0]/2;
-                    }
-                    else {
-                        newX = x + extents[0]/2;
-                    }
-                    newA[newX + extents[0]*newY] = a[x + extents[0]*y];
-                }
-            }
-        } // if (nDims == 2)
-        else { // nDims == 3
-            sliceSize = extents[0] * extents[1];
-            for (z = 0; z < extents[2]; z++) {
-                if ((z - extents[2]/2) >= 0) {
-                    newZ = z - extents[2]/2;
-                }
-                else {
-                    newZ = z + extents[2]/2;
-                }
-                for (y = 0; y < extents[1]; y++) {
-                    if ((y - extents[1]/2) >= 0) {
-                        newY = y - extents[1]/2;
-                    }
-                    else {
-                        newY = y + extents[1]/2;
-                    }
-                    for (x = 0; x < extents[0]; x++) {
-                        if ((x - extents[0]/2) >= 0) {
-                            newX = x - extents[0]/2;
-                        }
-                        else {
-                            newX = x + extents[0]/2;
-                        }
-                        newA[newX + extents[0]*newY + sliceSize*newZ] = a[x + extents[0]*y + sliceSize*z];
-                    }
-                }
-            }
-        } // else nDims == 3 
-        for (x = 0; x < a.length; x++) {
-            a[x] = newA[x];
-        }
-    }
-    
     private void testCenter(float[] a, float [] b, int[] extents) {
         int x, y, z;
-        int newX, newY, newZ;
+        int oldX, oldY, oldZ;
         float newA[] = new float[a.length];
         float newB[] = new float[b.length];
         int sliceSize;
@@ -2766,20 +2707,20 @@ public class AlgorithmFFT extends AlgorithmBase {
         if (nDims == 2) {
             for (y = 0; y < extents[1]; y++) {
                 if ((y - extents[1]/2) >= 0) {
-                    newY = y - extents[1]/2;
+                    oldY = y - extents[1]/2;
                 }
                 else {
-                    newY = y + extents[1]/2;
+                    oldY = y + extents[1]/2;
                 }
                 for (x = 0; x < extents[0]; x++) {
                     if ((x - extents[0]/2) >= 0) {
-                        newX = x - extents[0]/2;
+                        oldX = x - extents[0]/2;
                     }
                     else {
-                        newX = x + extents[0]/2;
+                        oldX = x + extents[0]/2;
                     }
-                    newA[newX + extents[0]*newY] = a[x + extents[0]*y];
-                    newB[newX + extents[0]*newY] = b[x + extents[0]*y];
+                    newA[x + extents[0]*y] = a[oldX + extents[0]*oldY];
+                    newB[x + extents[0]*y] = b[oldX + extents[0]*oldY];
                 }
             }
         } // if (nDims == 2)
@@ -2787,27 +2728,27 @@ public class AlgorithmFFT extends AlgorithmBase {
             sliceSize = extents[0] * extents[1];
             for (z = 0; z < extents[2]; z++) {
                 if ((z - extents[2]/2) >= 0) {
-                    newZ = z - extents[2]/2;
+                    oldZ = z - extents[2]/2;
                 }
                 else {
-                    newZ = z + extents[2]/2;
+                    oldZ = z + extents[2]/2;
                 }
                 for (y = 0; y < extents[1]; y++) {
                     if ((y - extents[1]/2) >= 0) {
-                        newY = y - extents[1]/2;
+                        oldY = y - extents[1]/2;
                     }
                     else {
-                        newY = y + extents[1]/2;
+                        oldY = y + extents[1]/2;
                     }
                     for (x = 0; x < extents[0]; x++) {
                         if ((x - extents[0]/2) >= 0) {
-                            newX = x - extents[0]/2;
+                            oldX = x - extents[0]/2;
                         }
                         else {
-                            newX = x + extents[0]/2;
+                            oldX = x + extents[0]/2;
                         }
-                        newA[newX + extents[0]*newY + sliceSize*newZ] = a[x + extents[0]*y + sliceSize*z];
-                        newB[newX + extents[0]*newY + sliceSize*newZ] = b[x + extents[0]*y + sliceSize*z];
+                        newA[x + extents[0]*y + sliceSize*z] = a[oldX + extents[0]*oldY + sliceSize*oldZ];
+                        newB[x + extents[0]*y + sliceSize*z] = b[oldX + extents[0]*oldY + sliceSize*oldZ];
                     }
                 }
             }
