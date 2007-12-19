@@ -868,7 +868,7 @@ public class SurfacePlotter extends RenderViewBase implements MouseListener {
 
         } else if ((sliderFrame != null) && (source == sliderFrame) && !sliderFrame.getValueIsAdjusting()) {
 
-            int newSlice = sliderFrame.getValue() - 1;
+            int newSlice = sliderFrame.getValue();
             this.slice = newSlice;
             componentImageXY.setSlice(newSlice);
             updateImages(true);
@@ -1054,7 +1054,7 @@ public class SurfacePlotter extends RenderViewBase implements MouseListener {
         sliderZ.setVisible(true);
 
         if (imageA.getExtents().length > 2) {
-            sliderFrame = new JSlider(1, imageA.getExtents()[2], slice);
+            sliderFrame = new JSlider(0, imageA.getExtents()[2]-1, slice);
             sliderFrame.setFont(MipavUtil.font12);
             sliderFrame.setSnapToTicks(true);
             sliderFrame.setEnabled(true);
@@ -1092,15 +1092,15 @@ public class SurfacePlotter extends RenderViewBase implements MouseListener {
 
         if (sliderFrame != null) {
 
-            JLabel sliderLabel = new JLabel("Image slice");
+            JLabel sliderLabel = new JLabel("Image slice index");
             sliderLabel.setForeground(Color.black);
             sliderLabel.setFont(MipavUtil.font12);
             sliderLabel.setEnabled(true);
 
-            int middle = (int) imageA.getExtents()[2] / 2;
-            int last = imageA.getExtents()[2];
+            int middle = ((int) imageA.getExtents()[2] / 2) - 1;
+            int last = (imageA.getExtents()[2] - 1);
 
-            JLabel label_1 = new JLabel("1");
+            JLabel label_1 = new JLabel("0");
             label_1.setForeground(Color.black);
             label_1.setFont(MipavUtil.font12);
             label_1.setEnabled(true);
