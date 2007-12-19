@@ -90,7 +90,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
      * @param kRGBTb, RGB lookup table for ModelImage B
      */
     public GPUVolumeRenderWM( ModelImage kImageA, ModelLUT kLUTa, ModelRGB kRGBTa,
-            ModelImage kImageB, ModelLUT kLUTb, ModelRGB kRGBTb, ViewJFrameVolumeViewWM parentFrame  )
+            ModelImage kImageB, ModelLUT kLUTb, ModelRGB kRGBTb, ViewJFrameVolumeViewWildMagic parentFrame  )
     {
 
         super("GPUVolumeRender",0,0,512,512, new ColorRGBA(0.0f,0.0f,0.0f,0.0f), parentFrame);
@@ -469,6 +469,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
                     m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
                     // Undo culling:
                     m_spkCull.CullFace = CullState.CullMode.CT_BACK;
+                    
 
                     // Displays any geometry that is inside the volume. In
                     // this case the geometry is the fiber-bundle tracts

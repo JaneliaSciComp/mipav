@@ -418,9 +418,9 @@ public class SurfaceView extends SurfaceRender {
         if (!cubicBG.isLive()) {
             objRootBG.addChild(cubicBG);
         }
-        if ( parent instanceof ViewJFrameVolumeViewWM )
+        if ( parent instanceof ViewJFrameVolumeViewWildMagic )
         {
-            ((ViewJFrameVolumeViewWM)parent).setShowOrientationCube(true);
+            ((ViewJFrameVolumeViewWildMagic)parent).setShowOrientationCube(true);
         }  
     }
 
@@ -977,9 +977,9 @@ public class SurfaceView extends SurfaceRender {
      */
     public void hideBoxFrame() {
         objBoxFrameBG.detach();
-        if ( parent instanceof ViewJFrameVolumeViewWM )
+        if ( parent instanceof ViewJFrameVolumeViewWildMagic )
         {
-            ((ViewJFrameVolumeViewWM)parent).setShowBoxFrame(false);
+            ((ViewJFrameVolumeViewWildMagic)parent).setShowBoxFrame(false);
         }
     }
 
@@ -1042,9 +1042,9 @@ public class SurfaceView extends SurfaceRender {
         if (cubicBG.isLive()) {
             cubicBG.detach();
         }
-        if ( parent instanceof ViewJFrameVolumeViewWM )
+        if ( parent instanceof ViewJFrameVolumeViewWildMagic )
         {
-            ((ViewJFrameVolumeViewWM)parent).setShowOrientationCube(false);
+            ((ViewJFrameVolumeViewWildMagic)parent).setShowOrientationCube(false);
         }  
     }
 
@@ -1553,9 +1553,9 @@ public class SurfaceView extends SurfaceRender {
      */
     public void showBoxFrame() {
         sceneRootTG.addChild(objBoxFrameBG);
-        if ( parent instanceof ViewJFrameVolumeViewWM )
+        if ( parent instanceof ViewJFrameVolumeViewWildMagic )
         {
-            ((ViewJFrameVolumeViewWM)parent).setShowBoxFrame(true);
+            ((ViewJFrameVolumeViewWildMagic)parent).setShowBoxFrame(true);
         }  
     }
 
@@ -1955,7 +1955,7 @@ public class SurfaceView extends SurfaceRender {
     public boolean updateImages(boolean flag) {
 
         
-        if ( !(getParentFrame() instanceof ViewJFrameVolumeViewWM) )
+        if ( !(getParentFrame() instanceof ViewJFrameVolumeViewWildMagic) )
         {
             if (updateVolume(null, null, flag) == false) {
                 return false;

@@ -31,7 +31,7 @@ public abstract class JavaApplication3DWM extends JavaApplication
     implements KeyListener, MouseListener, MouseMotionListener
 {
 	
-	ViewJFrameVolumeViewWM parentFrame;
+	ViewJFrameVolumeViewWildMagic parentFrame;
 	
     /**
      * Creates a new JavaApplication3.
@@ -44,13 +44,13 @@ public abstract class JavaApplication3DWM extends JavaApplication
      */
     public JavaApplication3DWM ( final String acWindowTitle, int iXPosition,
                               int iYPosition, int iWidth, int iHeight,
-                              final ColorRGBA rkBackgroundColor, ViewJFrameVolumeViewWM parent )
+                              final ColorRGBA rkBackgroundColor, ViewJFrameVolumeViewWildMagic parent )
     {
         super(acWindowTitle,iXPosition,iYPosition,iWidth,iHeight, rkBackgroundColor);
         parentFrame = parent;
     }
 
-    public ViewJFrameVolumeViewWM getParentFrame() {
+    public ViewJFrameVolumeViewWildMagic getParentFrame() {
     	return parentFrame;
     }
     

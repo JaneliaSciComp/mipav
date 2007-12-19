@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.volumeview.*;
+import gov.nih.mipav.view.renderer.WildMagic.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -78,7 +79,8 @@ public abstract class JPanelRendererBase extends JPanel
     protected GPUVolumeRender rayBasedRenderWM;
 
     /** Render base. */
-    protected RenderViewBase renderBase;
+    protected RenderViewBase renderBase = null;
+    protected VolumeViewer m_kVolumeViewer = null;
 
     /** Flag indicating if the algorithm should run in a separate thread. Default is <code>true</code>. */
     protected boolean runInSeparateThread = true;
@@ -96,6 +98,19 @@ public abstract class JPanelRendererBase extends JPanel
      */
     public JPanelRendererBase(RenderViewBase parent) {
         renderBase = parent;
+        serif12 = MipavUtil.font12;
+        serif12B = MipavUtil.font12B;
+        addKeyListener(this);
+    }
+
+    /**
+     * Constructor that sets the parent frame of the dialog and whether or not the dialog is modal. Also adds this as a
+     * window listener and key listener to all dialogs.
+     *
+     * @param  parent  Parent frame.
+     */
+    public JPanelRendererBase(VolumeViewer parent) {
+        m_kVolumeViewer = parent;
         serif12 = MipavUtil.font12;
         serif12B = MipavUtil.font12B;
         addKeyListener(this);

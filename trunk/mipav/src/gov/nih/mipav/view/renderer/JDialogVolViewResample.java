@@ -12,6 +12,8 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.*;
 
+import gov.nih.mipav.view.renderer.WildMagic.*;
+
 
 /**
  * Dialog to ask user to resample the images to power of 2 before volume rendering.
@@ -444,67 +446,110 @@ public class JDialogVolViewResample extends JDialogBase {
     public void exec() {
 
         try {
-            if ( m_kVolViewType.equals( "VolTriplanar" ) )
+            if ( m_kVolViewType.equals( "VolTriplanar" ) || m_kVolViewType.equals( "WMStandAlone" ) )
             {
-                sr = new ViewJFrameVolumeView(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
-                                              rightPanelRenderMode, this);
+                if ( m_kVolViewType.equals( "VolTriplanar" ) )
+                {
+                    sr = new ViewJFrameVolumeView(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
+                                                  rightPanelRenderMode, this);
+            }
+                else if ( m_kVolViewType.equals( "WMStandAlone" ) )
+                {   
+                    sr = new ViewJFrameVolumeViewWildMagic(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
+                                                           rightPanelRenderMode, this);          
+                }
+                sr.setImageOriginal(imageAOriginal);
+                
+                if (forcePadding) {
+                    sr.doPadding(extents, volExtents);
+                }  else if (forceResample) {
+                    sr.doResample(volExtents, newRes, forceResample, nDim, m_iFilter);
+                }
+                
+                if (rightPanelRenderMode == ViewJFrameVolumeView.SHEARWARP) {
+                    sr.calcShearWarpImage(imageA, imageB);
+                }
+                
+                sr.constructRenderers();
+                
+                // can't do this before sr.initialize() since it uses the plane renderer list, which is setup there
+                sr.addAttachedSurfaces();
+                
+                if (sr.getProbeDialog() != null) {
+                    
+                    // need to update the rfa target labels in case there were attached surfaces that we should show info
+                    // about
+                    sr.getProbeDialog().updateTargetList();
+                }
+                
+                if (forceResample) {
+                    
+                    if (imageA != null) {
+                        imageA.disposeLocal();
+                        imageA = null;
+                    }
+                    
+                    if (imageB != null) {
+                        imageB.disposeLocal();
+                        imageB = null;
+                    }
+                }
+                
+                if (startupCommand != null) {
+                    sr.actionPerformed(new ActionEvent(this, 0, startupCommand));
+                }
+                
+                if (segmentationImage != null) {
+                    sr.setSegmentationImage(segmentationImage);
+                }
             }
             else if ( m_kVolViewType.equals( "WMVolTriplanar" ) )
             {
-            	sr = new ViewJFrameVolumeViewWM(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
-                                                rightPanelRenderMode, this);
-                      
+                VolumeViewer kWM = new VolumeViewer (imageA, LUTa, RGBTA,
+                                                     imageB, LUTb, RGBTB,
+                                                     leftPanelRenderMode,
+                                                     rightPanelRenderMode, this);
+                kWM.setImageOriginal(imageAOriginal);
+                
+                if (forcePadding) {
+                    kWM.doPadding(extents, volExtents);
+                }  else if (forceResample) {
+                    kWM.doResample(volExtents, newRes, forceResample, nDim, m_iFilter);
+                }                
+                kWM.constructRenderers();
+                
+                // can't do this before kWM.initialize() since it uses the plane renderer list, which is setup there
+                kWM.addAttachedSurfaces();
+                
+                if (kWM.getProbeDialog() != null) {
+                    
+                    // need to update the rfa target labels in case there were attached surfaces that we should show info
+                    // about
+                    kWM.getProbeDialog().updateTargetList();
+                }
+                
+                if (forceResample) {
+                    
+                    if (imageA != null) {
+                        imageA.disposeLocal();
+                        imageA = null;
+                    }
+                    
+                    if (imageB != null) {
+                        imageB.disposeLocal();
+                        imageB = null;
+                    }
+                }
+                
+                if (startupCommand != null) {
+                    kWM.actionPerformed(new ActionEvent(this, 0, startupCommand));
+                }
+                
+                if (segmentationImage != null) {
+                    kWM.setSegmentationImage(segmentationImage);
+                }
             } 
-            else if ( m_kVolViewType.equals( "WMStandAlone" ) )
-            {   
-            	sr = new ViewJFrameVolumeViewWildMagic(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
-                        rightPanelRenderMode, this);          
-            }
-            sr.setImageOriginal(imageAOriginal);
             
-            if (forcePadding) {
-                sr.doPadding(extents, volExtents);
-            }  else if (forceResample) {
-                sr.doResample(volExtents, newRes, forceResample, nDim, m_iFilter);
-            }
-
-            if (rightPanelRenderMode == ViewJFrameVolumeView.SHEARWARP) {
-                sr.calcShearWarpImage(imageA, imageB);
-            }
-
-            sr.constructRenderers();
-
-            // can't do this before sr.initialize() since it uses the plane renderer list, which is setup there
-            sr.addAttachedSurfaces();
-
-            if (sr.getProbeDialog() != null) {
-
-                // need to update the rfa target labels in case there were attached surfaces that we should show info
-                // about
-                sr.getProbeDialog().updateTargetList();
-            }
-
-            if (forceResample) {
-
-                if (imageA != null) {
-                    imageA.disposeLocal();
-                    imageA = null;
-                }
-
-                if (imageB != null) {
-                    imageB.disposeLocal();
-                    imageB = null;
-                }
-            }
-
-            if (startupCommand != null) {
-                sr.actionPerformed(new ActionEvent(this, 0, startupCommand));
-            }
-
-            if (segmentationImage != null) {
-                sr.setSegmentationImage(segmentationImage);
-            }
-
         } catch (NoClassDefFoundError notAvailableError) {
             Preferences.debug("ViewJFrameSurfaceRenderer cannot be called; encountered " +
                               "a NoClassDefFoundError.  \nIt is likely that java3D is " +

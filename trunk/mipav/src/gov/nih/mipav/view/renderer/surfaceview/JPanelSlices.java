@@ -7,14 +7,13 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.*;
+import gov.nih.mipav.view.renderer.WildMagic.*;
 
 import java.awt.*;
 import java.awt.event.*;
 
 import java.util.*;
 
-import javax.media.j3d.*;
-import javax.vecmath.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -103,9 +102,6 @@ public class JPanelSlices extends JPanelRendererBase
     /** Flag to indicate the first time slider name changes. */
     private boolean setSliderFlag;
 
-    /** Slider events used by the mouse recorder. */
-    private MouseEventVector sliderEvents;
-
     /** Text fields that display the slice number next to the sliders. */
     private JTextField textX, textY, textZ, textT;
 
@@ -157,6 +153,42 @@ public class JPanelSlices extends JPanelRendererBase
         init();
     }
 
+    /**
+     * Creates new dialog for turning slices bounding box frame on and off.
+     *
+     */
+    public JPanelSlices(VolumeViewer parent) {
+        super(parent);
+
+        int[] fileExtents = parent.getImageA().getExtents( );
+        Point3Df modelExtents = new Point3Df();
+        MipavCoordinateSystems.fileToModel( new Point3Df( fileExtents[0], fileExtents[1], fileExtents[2] ),
+                                            modelExtents, parent.getImageA() );
+
+        xDim = (int)modelExtents.x;
+        yDim = (int)modelExtents.y;
+        zDim = (int)modelExtents.z;
+
+        xSlice = (xDim - 1) / 2;
+        ySlice = (yDim - 1) / 2;
+        zSlice = (zDim - 1) / 2;
+
+        xProbe = xSlice;
+        yProbe = ySlice;
+        zProbe = zSlice;
+
+
+
+        if (parent.getImageA().getNDims() == 4) {
+            tDim = parent.getImageA().getExtents()[3];
+
+            // tSlice  = 0;
+            tSlice = (tDim - 1) / 2;
+        }
+
+        init();
+    }
+
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -179,12 +211,24 @@ public class JPanelSlices extends JPanelRendererBase
         {
             if (source == boundingCheck[i]) {
 
+                if ( m_kVolumeViewer != null )
+                {
+                    m_kVolumeViewer.setSliceFromSurface( getCenter() );
+                    m_kVolumeViewer.showBoundingBox( i, boundingCheck[i].isSelected() );
+                }
+
                 if (boundingCheck[i].isSelected()) {
-                    ((SurfaceRender) renderBase).updateBoxSlicePos( true );
-                    ((SurfaceRender) renderBase).showBoxSlice(i);
+                    if ( renderBase != null )
+                    {
+                        ((SurfaceRender) renderBase).updateBoxSlicePos( true );
+                        ((SurfaceRender) renderBase).showBoxSlice(i);
+                    }
                     colorButton[i].setEnabled(true);
                 } else {
-                    ((SurfaceRender) renderBase).removeBoxSlice(i);
+                    if ( renderBase != null )
+                    {
+                        ((SurfaceRender) renderBase).removeBoxSlice(i);
+                    }
                     colorButton[i].setEnabled(false);
                 }
                 break;
@@ -192,39 +236,72 @@ public class JPanelSlices extends JPanelRendererBase
         }
 
         if (command.equals("X")) {
+            if ( m_kVolumeViewer != null )
+            {
+                m_kVolumeViewer.setSliceFromSurface( getCenter() );
+                m_kVolumeViewer.showSlice( 0, boxX.isSelected() );
+            }
             if (!boxX.isSelected()) {
-                ((SurfaceRender) renderBase).getObjPlane_BG(0).detach();
+                if ( renderBase != null )
+                {
+                    ((SurfaceRender) renderBase).getObjPlane_BG(0).detach();
+                }
                 setXSliderEnabled(false);
                 setOpacitySliderXEnabled(false);
                 sliceVisible[1] = false;
             } else {
-                renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjPlane_BG(0));
+                if ( renderBase != null )
+                {
+                    renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjPlane_BG(0));
+                }
                 setXSliderEnabled(true);
                 setOpacitySliderXEnabled(true);
                 sliceVisible[1] = true;
             }
         } else if (command.equals("Y")) {
+            if ( m_kVolumeViewer != null )
+            {
+                m_kVolumeViewer.setSliceFromSurface( getCenter() );
+                m_kVolumeViewer.showSlice( 1, boxY.isSelected() );
+            }
 
             if (!boxY.isSelected()) {
-                ((SurfaceRender) renderBase).getObjPlane_BG(1).detach();
+                if ( renderBase != null )
+                {
+                    ((SurfaceRender) renderBase).getObjPlane_BG(1).detach();
+                }
                 setYSliderEnabled(false);
                 setOpacitySliderYEnabled(false);
                 sliceVisible[2] = false;
             } else {
-                renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjPlane_BG(1));
+                if ( renderBase != null )
+                {
+                    renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjPlane_BG(1));
+                }
                 setYSliderEnabled(true);
                 setOpacitySliderYEnabled(true);
                 sliceVisible[2] = true;
             }
         } else if (command.equals("Z")) {
+            if ( m_kVolumeViewer != null )
+            {
+                m_kVolumeViewer.setSliceFromSurface( getCenter() );
+                m_kVolumeViewer.showSlice( 2, boxZ.isSelected() );
+            }
 
             if (!boxZ.isSelected()) {
-                ((SurfaceRender) renderBase).getObjPlane_BG(2).detach();
+                if ( renderBase != null )
+                {
+                    ((SurfaceRender) renderBase).getObjPlane_BG(2).detach();
+                }
                 setZSliderEnabled(false);
                 setOpacitySliderZEnabled(false);
                 sliceVisible[0] = false;
             } else {
-                renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjPlane_BG(2));
+                if ( renderBase != null )
+                {
+                    renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjPlane_BG(2));
+                }
                 setZSliderEnabled(true);
                 setOpacitySliderZEnabled(true);
                 sliceVisible[0] = true;
@@ -260,7 +337,10 @@ public class JPanelSlices extends JPanelRendererBase
 
         boxX = new JCheckBox();
         boxX.setSelected(true);
-        boxX.addActionListener(((SurfaceRender) renderBase).getMouseDialog());
+        if ( renderBase != null )
+        {
+            boxX.addActionListener(((SurfaceRender) renderBase).getMouseDialog());
+        }
         boxX.addActionListener(this);
         boxX.setActionCommand("X");
         addControlPanel(boxX, cpGBC, 0, levelX, 1, 1);
@@ -275,7 +355,10 @@ public class JPanelSlices extends JPanelRendererBase
         sliderX.setEnabled(true);
         sliderX.setMinorTickSpacing(xDim / 10);
         sliderX.setPaintTicks(true);
-        sliderX.addChangeListener(((SurfaceRender) renderBase).getMouseDialog());
+        if ( renderBase != null )
+        {
+            sliderX.addChangeListener(((SurfaceRender) renderBase).getMouseDialog());
+        }
         sliderX.addChangeListener(this);
         sliderX.addMouseListener(this);
         sliderX.setVisible(true);
@@ -315,7 +398,10 @@ public class JPanelSlices extends JPanelRendererBase
 
         boxY = new JCheckBox();
         boxY.setSelected(true);
-        boxY.addActionListener(((SurfaceRender) renderBase).getMouseDialog());
+        if ( renderBase != null )
+        {
+            boxY.addActionListener(((SurfaceRender) renderBase).getMouseDialog());
+        }
         boxY.addActionListener(this);
         boxY.setActionCommand("Y");
         addControlPanel(boxY, cpGBC, 0, levelY, 1, 1);
@@ -330,7 +416,10 @@ public class JPanelSlices extends JPanelRendererBase
         sliderY.setEnabled(true);
         sliderY.setMinorTickSpacing(yDim / 10);
         sliderY.setPaintTicks(true);
-        sliderY.addChangeListener(((SurfaceRender) renderBase).getMouseDialog());
+        if ( renderBase != null )
+        {
+            sliderY.addChangeListener(((SurfaceRender) renderBase).getMouseDialog());
+        }
         sliderY.addChangeListener(this);
         sliderY.addMouseListener(this);
         sliderY.setVisible(true);
@@ -370,7 +459,10 @@ public class JPanelSlices extends JPanelRendererBase
 
         boxZ = new JCheckBox();
         boxZ.setSelected(true);
-        boxZ.addActionListener(((SurfaceRender) renderBase).getMouseDialog());
+        if ( renderBase != null )
+        {
+            boxZ.addActionListener(((SurfaceRender) renderBase).getMouseDialog());
+        }
         boxZ.addActionListener(this);
         boxZ.setActionCommand("Z");
         addControlPanel(boxZ, cpGBC, 0, levelZ, 1, 1);
@@ -385,7 +477,10 @@ public class JPanelSlices extends JPanelRendererBase
         sliderZ.setEnabled(true);
         sliderZ.setMinorTickSpacing(zDim / 10);
         sliderZ.setPaintTicks(true);
-        sliderZ.addChangeListener(((SurfaceRender) renderBase).getMouseDialog());
+        if ( renderBase != null )
+        {
+            sliderZ.addChangeListener(((SurfaceRender) renderBase).getMouseDialog());
+        }
         sliderZ.addChangeListener(this);
         sliderZ.addMouseListener(this);
         sliderZ.setVisible(true);
@@ -418,10 +513,20 @@ public class JPanelSlices extends JPanelRendererBase
         cpGBC.fill = GridBagConstraints.NONE;
 
         addControlPanel(textZ, cpGBC, 14, levelZ, 1, 1);
-
-        if (renderBase.getImageA().getNDims() == 4) {
-            buildTimeSlider();
+        
+        if ( renderBase != null )
+        {
+            if (renderBase.getImageA().getNDims() == 4) {
+                buildTimeSlider();
+            }
         }
+        else if ( m_kVolumeViewer != null )
+        {
+            if (m_kVolumeViewer.getImageA().getNDims() == 4) {
+                buildTimeSlider();
+            }
+        }
+
 
     }
 
@@ -467,7 +572,10 @@ public class JPanelSlices extends JPanelRendererBase
         opacitySliderX.setFont(serif12);
         opacitySliderX.setMinorTickSpacing(10);
         opacitySliderX.setPaintTicks(true);
-        opacitySliderX.addChangeListener(((SurfaceRender) renderBase).getMouseDialog());
+        if ( renderBase != null )
+        {
+            opacitySliderX.addChangeListener(((SurfaceRender) renderBase).getMouseDialog());
+        }
         opacitySliderX.addChangeListener(this);
         opacitySliderX.addMouseListener(this);
         opacitySliderX.setLabelTable(labelsX);
@@ -504,7 +612,10 @@ public class JPanelSlices extends JPanelRendererBase
         opacitySliderY.setFont(serif12);
         opacitySliderY.setMinorTickSpacing(10);
         opacitySliderY.setPaintTicks(true);
-        opacitySliderY.addChangeListener(((SurfaceRender) renderBase).getMouseDialog());
+        if ( renderBase != null )
+        {
+            opacitySliderY.addChangeListener(((SurfaceRender) renderBase).getMouseDialog());
+        }
         opacitySliderY.addChangeListener(this);
         opacitySliderY.addMouseListener(this);
         opacitySliderY.setLabelTable(labelsY);
@@ -541,7 +652,10 @@ public class JPanelSlices extends JPanelRendererBase
         opacitySliderZ.setFont(serif12);
         opacitySliderZ.setMinorTickSpacing(10);
         opacitySliderZ.setPaintTicks(true);
-        opacitySliderZ.addChangeListener(((SurfaceRender) renderBase).getMouseDialog());
+        if ( renderBase != null )
+        {
+            opacitySliderZ.addChangeListener(((SurfaceRender) renderBase).getMouseDialog());
+        }
         opacitySliderZ.addChangeListener(this);
         opacitySliderZ.addMouseListener(this);
         opacitySliderZ.setLabelTable(labelsZ);
@@ -563,6 +677,10 @@ public class JPanelSlices extends JPanelRendererBase
      * bounding frame boxes.
      */
     public void disableSlices() {
+        if ( renderBase == null )
+        {
+            return;
+        }
 
         for ( int i = 0; i < 3; i++ )
         {
@@ -618,13 +736,17 @@ public class JPanelSlices extends JPanelRendererBase
         opacityControlPanel = null;
         controlPanel = null;
         colorChooser = null;
-        sliderEvents = null;
+        //sliderEvents = null;
     }
 
     /**
      * Enable slider X, Y, Z and triplanar.
      */
     public void enableSlices() {
+        if ( renderBase == null )
+        {
+            return;
+        }
 
         if ( sliceVisible[2] && !((SurfaceRender) renderBase).getObjPlane_BG(2).isLive()) {
             renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjPlane_BG(2));
@@ -797,8 +919,17 @@ public class JPanelSlices extends JPanelRendererBase
     public void setCenter( int x, int y, int z )
     {
         Point3Df center = new Point3Df();
-        MipavCoordinateSystems.fileToModel( new Point3Df( x, y, z ), center,
-                                            renderBase.getImageA() );
+        if ( renderBase != null )
+        {
+            MipavCoordinateSystems.fileToModel( new Point3Df( x, y, z ), center,
+                                                renderBase.getImageA() );
+        }
+        else if ( m_kVolumeViewer != null )
+        {
+            MipavCoordinateSystems.fileToModel( new Point3Df( x, y, z ), center,
+                                                m_kVolumeViewer.getImageA() );
+        }
+
         setXSlicePos( (int)center.x );
         setYSlicePos( (int)center.y );
         setZSlicePos( (int)center.z );
@@ -814,8 +945,16 @@ public class JPanelSlices extends JPanelRendererBase
     public Point3Df getCenter( )
     {
         Point3Df center = new Point3Df();
-        MipavCoordinateSystems.modelToFile( new Point3Df( xSlice, ySlice, zSlice ), center,
-                                            renderBase.getImageA() );
+        if ( renderBase != null )
+        {
+            MipavCoordinateSystems.modelToFile( new Point3Df( xSlice, ySlice, zSlice ), center,
+                                                renderBase.getImageA() );
+        }
+        else if ( m_kVolumeViewer != null )
+        {
+            MipavCoordinateSystems.modelToFile( new Point3Df( xSlice, ySlice, zSlice ), center,
+                                                m_kVolumeViewer.getImageA() );
+        }        
         return center;
     }
 
@@ -946,21 +1085,18 @@ public class JPanelSlices extends JPanelRendererBase
      * @param  event  Original mouse event.
      */
     public void mousePressed(MouseEvent event) {
-        JPanelMouse myMouseDialog = ((SurfaceRender) renderBase).getMouseDialog();
-
-        if (myMouseDialog.isRecording()) {
-            Transform3D t3D = new Transform3D();
-
-            // get the view
-            renderBase.getSceneRootTG().getTransform(t3D);
-
-            // store name and view together
-            sliderEvents = new MouseEventVector("Slider" + myMouseDialog.sliderCount, t3D, myMouseDialog.first,
-                                                renderBase.getSceneState(),
+        JPanelMouse myMouseDialog = null;
+        if ( renderBase != null )
+        {
+            myMouseDialog = ((SurfaceRender) renderBase).getMouseDialog();
+        }
+        if ((myMouseDialog != null) && myMouseDialog.isRecording()) {
+            
+            renderBase.recordMouse( "Slider" + myMouseDialog.sliderCount, myMouseDialog,
                                                 ((SurfaceRender) renderBase).getMouseMode());
             setSliderFlag = true;
-            myMouseDialog.events.add(sliderEvents);
-            current = myMouseDialog.events.indexOf(sliderEvents);
+            myMouseDialog.events.add(renderBase.getSliderEvents());
+            current = myMouseDialog.events.indexOf(renderBase.getSliderEvents());
         }
 
     }
@@ -971,9 +1107,12 @@ public class JPanelSlices extends JPanelRendererBase
      * @param  event  Original mouse event.
      */
     public void mouseReleased(MouseEvent event) {
-        JPanelMouse myMouseDialog = ((SurfaceRender) renderBase).getMouseDialog();
-
-        if (myMouseDialog.isRecording()) {
+        JPanelMouse myMouseDialog = null;
+        if ( renderBase != null )
+        {
+            myMouseDialog = ((SurfaceRender) renderBase).getMouseDialog();
+        }
+        if ((myMouseDialog != null) && myMouseDialog.isRecording()) {
             myMouseDialog.sliderCount++;
         }
     }
@@ -1212,8 +1351,11 @@ public class JPanelSlices extends JPanelRendererBase
      */
     public void stateChanged(ChangeEvent e) {
         Object source = e.getSource();
-        JPanelMouse myMouseDialog = ((SurfaceRender) renderBase).getMouseDialog();
-
+        JPanelMouse myMouseDialog = null;
+        if ( renderBase != null )
+        {
+            myMouseDialog = ((SurfaceRender) renderBase).getMouseDialog();
+        }
         if (source == sliderX) {
             if ( xSlice == sliderX.getValue() )
             {
@@ -1222,12 +1364,18 @@ public class JPanelSlices extends JPanelRendererBase
             // Change the currently displayed x slice
             xSlice = sliderX.getValue();
             textX.setText(String.valueOf(xSlice + 1));
-            ((SurfaceRender) renderBase).updateBoxSlicePos( true );
-            ((SurfaceRender) renderBase).update3DTriplanar(null, null, false);
+            if ( renderBase != null )
+            {
+                ((SurfaceRender) renderBase).updateBoxSlicePos( true );
+                ((SurfaceRender) renderBase).update3DTriplanar(null, null, false);
+            }
+            else if ( m_kVolumeViewer != null )
+            {
+                m_kVolumeViewer.setSliceFromSurface( getCenter() );
+            }
+            if ( (myMouseDialog != null) && myMouseDialog.isRecording() && setSliderFlag) {
 
-            if (myMouseDialog.isRecording() && setSliderFlag) {
-
-                sliderEvents.setName("xSlider" + current);
+                renderBase.getSliderEvents().setName("xSlider" + current);
                 myMouseDialog.listModel.addElement("xSlider" + current);
 
                 setSliderFlag = false;
@@ -1240,12 +1388,18 @@ public class JPanelSlices extends JPanelRendererBase
             // Change the currently displayed y slice
             ySlice = sliderY.getValue();
             textY.setText(String.valueOf(ySlice + 1));
-            ((SurfaceRender) renderBase).updateBoxSlicePos( true );
-            ((SurfaceRender) renderBase).update3DTriplanar(null, null, false);
+            if ( renderBase != null )
+            {
+                ((SurfaceRender) renderBase).updateBoxSlicePos( true );
+                ((SurfaceRender) renderBase).update3DTriplanar(null, null, false);
+            }
+            else if ( m_kVolumeViewer != null )
+            {
+                m_kVolumeViewer.setSliceFromSurface( getCenter() );
+            }
+            if ((myMouseDialog != null) && myMouseDialog.isRecording() && setSliderFlag) {
 
-            if (myMouseDialog.isRecording() && setSliderFlag) {
-
-                sliderEvents.setName("ySlider" + current);
+                renderBase.getSliderEvents().setName("ySlider" + current);
                 myMouseDialog.listModel.addElement("ySlider" + current);
 
                 setSliderFlag = false;
@@ -1259,12 +1413,18 @@ public class JPanelSlices extends JPanelRendererBase
             // Change the currently displayed z slice
             zSlice = sliderZ.getValue();
             textZ.setText(String.valueOf(zSlice + 1));
-            ((SurfaceRender) renderBase).updateBoxSlicePos( true );
-            ((SurfaceRender) renderBase).update3DTriplanar(null, null, false);
+            if ( renderBase != null )
+            {
+                ((SurfaceRender) renderBase).updateBoxSlicePos( true );
+                ((SurfaceRender) renderBase).update3DTriplanar(null, null, false);
+            }
+            else if ( m_kVolumeViewer != null )
+            {
+                m_kVolumeViewer.setSliceFromSurface( getCenter() );
+            }
+            if ((myMouseDialog != null) && myMouseDialog.isRecording() && setSliderFlag) {
 
-            if (myMouseDialog.isRecording() && setSliderFlag) {
-
-                sliderEvents.setName("zSlider" + current);
+                renderBase.getSliderEvents().setName("zSlider" + current);
                 myMouseDialog.listModel.addElement("zSlider" + current);
 
                 setSliderFlag = false;
@@ -1274,16 +1434,25 @@ public class JPanelSlices extends JPanelRendererBase
             // Change the currently displayed t slice
             tSlice = sliderT.getValue() - 1;
             textT.setText(String.valueOf(tSlice + 1));
-            renderBase.updateImages(true);
+            if ( renderBase != null )
+            {
+                renderBase.updateImages(true);
+            }
         } else if (source == opacitySliderX) {
             xOpacitySlice = opacitySliderX.getValue();
             yOpacitySlice = opacitySliderY.getValue();
             zOpacitySlice = opacitySliderZ.getValue();
-            ((SurfaceRender) renderBase).updateOpacityOfOthrogPlanes(xOpacitySlice, -1, -1);
+            if ( renderBase != null )
+            {
+                ((SurfaceRender) renderBase).updateOpacityOfOthrogPlanes(xOpacitySlice, -1, -1);
+            }
+            else if ( m_kVolumeViewer != null )
+            {
+                m_kVolumeViewer.setSliceOpacity( 0, (float)xOpacitySlice/100.0f );
+            }
+            if ((myMouseDialog != null) && myMouseDialog.isRecording() && setSliderFlag) {
 
-            if (myMouseDialog.isRecording() && setSliderFlag) {
-
-                sliderEvents.setName("xSliderOpacity" + current);
+                renderBase.getSliderEvents().setName("xSliderOpacity" + current);
                 myMouseDialog.listModel.addElement("xSliderOpacity" + current);
 
                 setSliderFlag = false;
@@ -1292,11 +1461,17 @@ public class JPanelSlices extends JPanelRendererBase
             xOpacitySlice = opacitySliderX.getValue();
             yOpacitySlice = opacitySliderY.getValue();
             zOpacitySlice = opacitySliderZ.getValue();
-            ((SurfaceRender) renderBase).updateOpacityOfOthrogPlanes(-1, yOpacitySlice, -1);
+            if ( renderBase != null )
+            {
+                ((SurfaceRender) renderBase).updateOpacityOfOthrogPlanes(-1, yOpacitySlice, -1);
+            }
+            else if ( m_kVolumeViewer != null )
+            {
+                m_kVolumeViewer.setSliceOpacity( 1, (float)yOpacitySlice/100.0f );
+            }
+            if ((myMouseDialog != null) && myMouseDialog.isRecording() && setSliderFlag) {
 
-            if (myMouseDialog.isRecording() && setSliderFlag) {
-
-                sliderEvents.setName("ySliderOpacity" + current);
+                renderBase.getSliderEvents().setName("ySliderOpacity" + current);
                 myMouseDialog.listModel.addElement("ySliderOpacity" + current);
 
                 setSliderFlag = false;
@@ -1305,19 +1480,25 @@ public class JPanelSlices extends JPanelRendererBase
             xOpacitySlice = opacitySliderX.getValue();
             yOpacitySlice = opacitySliderY.getValue();
             zOpacitySlice = opacitySliderZ.getValue();
-            ((SurfaceRender) renderBase).updateOpacityOfOthrogPlanes(-1, -1, zOpacitySlice);
+            if ( renderBase != null )
+            {
+                ((SurfaceRender) renderBase).updateOpacityOfOthrogPlanes(-1, -1, zOpacitySlice);
+            }
+            else if ( m_kVolumeViewer != null )
+            {
+                m_kVolumeViewer.setSliceOpacity( 2, (float)zOpacitySlice/100.0f );
+            }
+            if ((myMouseDialog != null) && myMouseDialog.isRecording() && setSliderFlag) {
 
-            if (myMouseDialog.isRecording() && setSliderFlag) {
-
-                sliderEvents.setName("zSliderOpacity" + current);
+                renderBase.getSliderEvents().setName("zSliderOpacity" + current);
                 myMouseDialog.listModel.addElement("zSliderOpacity" + current);
 
                 setSliderFlag = false;
             }
         }
 
-        if (myMouseDialog.isRecording()) {
-            sliderEvents.add(e, renderBase.getSceneState());
+        if ((myMouseDialog != null) &&  myMouseDialog.isRecording()) {
+            renderBase.getSliderEvents().add(e, renderBase.getSceneState());
         }
     }
 
@@ -1328,13 +1509,30 @@ public class JPanelSlices extends JPanelRendererBase
      * @param  color   Color to set box frame to.
      */
     protected void setBoxColor(JButton button, Color color) {
+        if ( (renderBase == null) && (m_kVolumeViewer == null) )
+        {
+            return;
+        }
 
-        if (button == colorButton[0]) {
-            ((SurfaceRender) renderBase).setSliceColor(color, 0);
-        } else if (button == colorButton[1]) {
-            ((SurfaceRender) renderBase).setSliceColor(color, 1);
-        } else if (button == colorButton[2]) {
-            ((SurfaceRender) renderBase).setSliceColor(color, 2);
+        if ( renderBase != null )
+        {
+            if (button == colorButton[0]) {
+                ((SurfaceRender) renderBase).setSliceColor(color, 0);
+            } else if (button == colorButton[1]) {
+                ((SurfaceRender) renderBase).setSliceColor(color, 1);
+            } else if (button == colorButton[2]) {
+                ((SurfaceRender) renderBase).setSliceColor(color, 2);
+            }
+        }
+        else if ( m_kVolumeViewer != null )
+        {
+            if (button == colorButton[0]) {
+                m_kVolumeViewer.setSliceHairColor( 0, color );
+            } else if (button == colorButton[1]) {
+                m_kVolumeViewer.setSliceHairColor( 1, color );
+            } else if (button == colorButton[2]) {
+                m_kVolumeViewer.setSliceHairColor( 2, color );
+            }
         }
     }
 

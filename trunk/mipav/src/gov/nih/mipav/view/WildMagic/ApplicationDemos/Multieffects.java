@@ -62,18 +62,12 @@ public class Multieffects extends JavaApplication3D
      * @param args
      */
     public static void main(String[] args) {
-        Vector3f testVec = new Vector3f(2.0f, 3.0f, 4.0f);
-        System.out.println(testVec.X() + " " + testVec.Y() + " " +testVec.Z() + " done.");
-        //System.out.println("Hello world!");
-        
-        Frame frame = new Frame(m_acWindowTitle);
         Multieffects kWorld = new Multieffects();
+        Frame frame = new Frame(kWorld.GetWindowTitle());
         //GLCanvas canvas = new GLCanvas();
-  
-
-
+ 
         frame.add( kWorld.GetCanvas() );
-        frame.setSize(m_iWidth, m_iHeight);
+        frame.setSize(kWorld.GetWidth(), kWorld.GetHeight());
         /* Animator serves the purpose of the idle function, calls display: */
         final Animator animator = new Animator( kWorld.GetCanvas() );
         frame.addWindowListener(new WindowAdapter() {

@@ -263,17 +263,17 @@ public class JPanelDisplayWM extends JPanelRendererBaseWM implements KeyListener
         	// renderBase.setBoxColor(color);
             if (renderBase instanceof GPUVolumeRenderWM) {
                 ViewJFrameVolumeView kParent = ((GPUVolumeRenderWM) renderBase).getParentFrame();
-                if ( kParent instanceof ViewJFrameVolumeViewWM )
+                if ( kParent instanceof ViewJFrameVolumeViewWildMagic )
                 {
-                    ((ViewJFrameVolumeViewWM)kParent).setBoundingBoxColor(color);
+                    ((ViewJFrameVolumeViewWildMagic)kParent).setBoundingBoxColor(color);
                 }                    
             }        } else if (button == colorButtonBackground) {
             // renderBase.setBackgroundColor(color);
             if (renderBase instanceof GPUVolumeRenderWM) {
                 ViewJFrameVolumeView kParent = ((GPUVolumeRenderWM) renderBase).getParentFrame();
-                if ( kParent instanceof ViewJFrameVolumeViewWM )
+                if ( kParent instanceof ViewJFrameVolumeViewWildMagic )
                 {
-                    ((ViewJFrameVolumeViewWM)kParent).setBackgroundColor(color);
+                    ((ViewJFrameVolumeViewWildMagic)kParent).setBackgroundColor(color);
                 }                    
             }
         }
@@ -385,7 +385,7 @@ public class JPanelDisplayWM extends JPanelRendererBaseWM implements KeyListener
         contentBox.add(cubePanel);
         contentBox.add(projectionTypePanel);
         if ( (renderBase instanceof GPUVolumeRenderWM) &&
-             !( ((GPUVolumeRenderWM)renderBase).getParentFrame() instanceof ViewJFrameVolumeViewWM ))
+             !( ((GPUVolumeRenderWM)renderBase).getParentFrame() instanceof ViewJFrameVolumeViewWildMagic ))
         {
             contentBox.add(viewTexturePanel);
         }
@@ -502,9 +502,9 @@ public class JPanelDisplayWM extends JPanelRendererBaseWM implements KeyListener
         kMaterialState.Shininess = kMaterial.getShininess();
 
         if ( (renderBase instanceof GPUVolumeRenderWM) &&
-             ( ((GPUVolumeRenderWM)renderBase).getParentFrame() instanceof ViewJFrameVolumeViewWM ))
+             ( ((GPUVolumeRenderWM)renderBase).getParentFrame() instanceof ViewJFrameVolumeViewWildMagic ))
         {
-            ((ViewJFrameVolumeViewWM)((GPUVolumeRenderWM)renderBase).getParentFrame()).getRaycastRenderWM().SetMaterialState( kMaterialState );
+            ((ViewJFrameVolumeViewWildMagic)((GPUVolumeRenderWM)renderBase).getParentFrame()).getRaycastRenderWM().SetMaterialState( kMaterialState );
         }
     }
 

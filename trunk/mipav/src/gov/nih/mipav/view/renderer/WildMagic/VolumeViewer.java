@@ -1,28 +1,29 @@
-package gov.nih.mipav.view.renderer;
+package gov.nih.mipav.view.renderer.WildMagic;
 
 
 import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.*;
-
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.surfaceview.*;
 import gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.*;
-import gov.nih.mipav.view.renderer.surfaceview.flythruview.*;
 import gov.nih.mipav.view.renderer.surfaceview.rfaview.*;
 import gov.nih.mipav.view.renderer.volumeview.*;
 
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
-import javax.media.opengl.GLCanvas;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.ImageCatalog;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 
-import com.sun.j3d.utils.universe.*;
+import com.sun.opengl.util.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -31,48 +32,19 @@ import java.io.*;
 
 import java.util.*;
 
-import javax.media.j3d.*;
-
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
 
-import javax.vecmath.*;
-
-
-/**
- * The volume view frame of the visualization. The frame includes the surface renderer, the raycast renderer, the
- * shearwarp renderer and the flythru renderer.
- *
- * @author  Ruida Cheng
- */
-public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements MouseListener, ItemListener, ChangeListener {
+public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemListener, ChangeListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 1898957906984534260L;
 
-    /** Render mode values. */
-    public static final int NONE = -1;
-
-    /** DOCUMENT ME! */
-    public static final int RAYCAST = 1;
-
-    /** DOCUMENT ME! */
-    public static final int SURFACE = 3;
-
-    /** DOCUMENT ME! */
-    public static final int DUALPANEL = 4;
-
-    /** DOCUMENT ME! */
-    public static final int ENDOSCOPY = 5;
-
-    /** DOCUMENT ME! */
-    public static final int BRAINSURFACE_FLATTENER = 6;
-
     /** The small bar on the top right corner the volume view frame. */
-    //private static JProgressBar rendererProgressBar;
+    private static JProgressBar rendererProgressBar;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -83,22 +55,19 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     protected ViewMenuBuilder menuObj;
 
     /** Labels for the current position in 3D ModelView coordinates:. */
-    //protected JLabel modelViewLabel = null;
+    protected JLabel modelViewLabel = null;
 
     /** DOCUMENT ME! */
-    //protected JLabel[] modelViewLabelVals = new JLabel[3];
-
-    /** Orientations of the three axes. */
-    protected int[] orient = new int[3];
+    protected JLabel[] modelViewLabelVals = new JLabel[3];
 
     /** Panel that holds the toolbars. */
     protected JPanel panelToolbar = new JPanel();
 
     /** Labels for the current position in PatientSlice coordinates:. */
-    //protected JLabel patientSliceLabel = null;
+    protected JLabel patientSliceLabel = null;
 
     /** DOCUMENT ME! */
-    //protected JLabel[] patientSliceLabelVals = new JLabel[3];
+    protected JLabel[] patientSliceLabelVals = new JLabel[3];
 
     /** Lookup table of the color imageA, B. */
     protected ModelRGB RGBTA = null, RGBTB = null;
@@ -109,17 +78,15 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     /** Panel containing the position labels:. */
     JPanel panelLabels = new JPanel();
 
-    /** Indicates that image orientation is unknown type or not. */
-    private boolean axialOrientation = true;
-
-    /** Rendering the brainsurfaceFlattener objects. */
-    private MjCorticalAnalysis brainsurfaceFlattenerRender = null;
-
     /** DOCUMENT ME! */
     private JPanel cameraPanel;
 
     /** DOCUMENT ME! */
-    private JPanel clipBox;
+    private JPanelClip_WM clipBox;
+    private JPanelSlices sliceGUI;
+
+    private JCheckBox m_kDisplayVolumeCheck;
+    private JCheckBox m_kDisplaySlicesCheck;
 
     /** Button to invoke all the six clipping planes. */
     private JButton clipButton;
@@ -145,48 +112,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     /** DOCUMENT ME! */
     private JPanel displayPanel;
 
-    /** dual image pane that holds the left and right panel. */
-    private JSplitPane dualImagePane;
-
-    /** The image panel to hold two Canvas3D. */
-    private JPanel dualImagePanel;
-
-    /** Left panel of the dual panel view. */
-    private JPanel dualLeftPanel;
-
-    /** Right panel of the dual panel view. */
-    private JPanel dualRightPanel;
-
-    /** Keep track of whether we're switching to the volume renderer for the first time. */
-    private boolean firstTimeVolView = true;
-
-    /** Fly through setup control panel. */
-    private JPanelVirtualEndoscopySetup flythruControl;
-
-    /** Fly through movement control panel. */
-    private JPanelFlythruMove flythruMoveControl;
-
-    /** View panel contains the fly thru control panel. */
-    private JPanel flythruMovePanel;
-
-    /** Fly through options. */
-    private FlythruRender.SetupOptions flythruOptions = new FlythruRender.SetupOptions();
-
-    /** Fly through panel. */
-    private JPanel flythruPanel;
-
-    /** Reference to fly through renderer. */
-    private FlythruRender flythruRender;
-
-    /** Surface load button. */
-    private JButton flythruSurfaceButton;
-
-    /** DOCUMENT ME! */
-    private Vector flythruTabVector = new Vector();
-
-    /** Flythru toolbar. */
-    private JToolBar flyThruToolbar;
-
     /** Control panel for the surface renderer. */
     private JPanel histoLUTPanel;
 
@@ -204,29 +129,13 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     /** DOCUMENT ME! */
     private JDialogIntensityPaint intensityDialog;
 
-    /** Indicate if the brainsurface flattener render is enabled from the resample dialog or not. */
-    private boolean isBrainsurfaceFlattenerEnable = false;
-
-    /** Indicate if the fly through render is enabled from the resample dialog or not. */
-    private boolean isEndoscopyEnable = false;
-
-    /** Indicate if the raycast render is enabled from the resample dialog or not. */
-    private boolean isRayCastEnable = false;
-
-    /** Indicate if the surface render is enabled from the resample dialog or not. */
-    private boolean isSurfaceRenderEnable = false;
-
-    /** The left panel renderer mode. */
-    private int leftPanelRenderMode = -1;
-
     /** DOCUMENT ME! */
     private JPanel lightPanel;
 
-    /** The three slice views displayed as texture-mapped polygons:. */
-    private PlaneRender[] m_akPlaneRender;
+    private JPanelLights m_kLightsPanel;
 
-    /** Control panels for the Brainsurface Flattener:. */
-    private JPanel m_kBrainsurfaceFlattenerPanel = null;
+    /** The three slice views displayed as texture-mapped polygons:. */
+    private PlaneRender_WM[] m_akPlaneRender;
 
     /** Control panel for drawing geodesic curves. */
     private JPanel m_kGeodesicPanel;
@@ -264,9 +173,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     /** RGB control panel of the color image. */
     private JPanelHistoRGB panelHistoRGB;
 
-    /** Rendering parallel rotation button. */
-    private JToggleButton parallelButton;
-
     /** DOCUMENT ME! */
     private JPanel probePanel;
 
@@ -300,11 +206,13 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     /** DOCUMENT ME! */
     private JPanel raycastCameraPanel;
 
-    /** Control panels for the raycast render. */
-    private JPanel raycastOptionsPanel;
+    private VolumeImage m_kVolumeImageA;
+    private VolumeImage m_kVolumeImageB;
+
+    private Animator m_kAnimator;
 
     /** DOCUMENT ME! */
-    private GPUVolumeRender raycastRenderWM;
+    private GPUVolumeRender_WM raycastRenderWM;
 
     /** DOCUMENT ME! */
     private Vector raycastTabVector = new Vector();
@@ -320,9 +228,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 
     /** The view pane that contains the image view and tri-planar view panels. */
     private JSplitPane rightPane;
-
-    /** The right panel renderer mode. */
-    private int rightPanelRenderMode = -1;
 
     /** Screen width, screen height. */
     private int screenWidth, screenHeight;
@@ -342,9 +247,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     /** DOCUMENT ME! */
     private JPanel surfacePanel;
 
-    /** Three types of renderer. */
-    private SurfaceRender surRender;
-
     /** For each render, use the vector to store the currently active tabs. */
     private Vector surTabVector = new Vector();
 
@@ -353,9 +255,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 
     /** Tri image planar render panels. */
     private JPanel triImagePanel;
-
-    /** Rendering unparallel rotaion button. */
-    private JToggleButton unparallelButton;
 
     /** DOCUMENT ME! */
     private JPanel viewPanel;
@@ -367,6 +266,11 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     private JToolBar surfaceToolBar;
 
     private boolean m_bSurfaceVisible = true;
+
+
+    private JPanelVolOpacity m_kVolOpacityPanel;
+
+    private JSlider m_kVolumeBlendSlider;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -385,13 +289,11 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      * @param  _rightPanelRenderMode  volume rendering panel render mode ( Raycast, shearwarp, etc).
      * @param  _resampleDialog        resample dialog reference.
      */
-    public ViewJFrameVolumeViewWM(ModelImage _imageA, ModelLUT LUTa, ModelRGB _RGBTA, ModelImage _imageB, ModelLUT LUTb,
+    public VolumeViewer(ModelImage _imageA, ModelLUT LUTa, ModelRGB _RGBTA, ModelImage _imageB, ModelLUT LUTb,
                                 ModelRGB _RGBTB, int _leftPanelRenderMode, int _rightPanelRenderMode,
                                 JDialogVolViewResample _resampleDialog) {
-        super(_imageA,LUTa,_RGBTA,_imageB,LUTb,_RGBTB,_leftPanelRenderMode,_rightPanelRenderMode,_resampleDialog);
-        //super(_imageA, _imageB);
-        leftPanelRenderMode = _leftPanelRenderMode;
-        rightPanelRenderMode = _rightPanelRenderMode;
+        //super(_imageA,LUTa,_RGBTA,_imageB,LUTb,_RGBTB,_leftPanelRenderMode,_rightPanelRenderMode,_resampleDialog);
+        super(_imageA, _imageB);
         resampleDialog = _resampleDialog;
         RGBTA = _RGBTA;
         RGBTB = _RGBTB;
@@ -409,11 +311,17 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    public GPUVolumeRender_WM getVolumeGPU()
+    {
+        return raycastRenderWM; 
+    }
+
+
     /**
      * Retrieve the progress bar used in the volume renderer (the one in the upper right hand corner).
      *
      * @return  the volume renderer progress bar
-
+     */
     public static final JProgressBar getRendererProgressBar() {
 
         if (rendererProgressBar == null) {
@@ -422,7 +330,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 
         return rendererProgressBar;
     }
-     */
+
     /**
      * Calls various methods depending on the action.
      *
@@ -432,110 +340,94 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         String command = event.getActionCommand();
 
         if (command.equals("Extract")) {
-            surRender.updateImageFromRotation();
-        } else if (command.equals("parallelrotation")) {
-
-            if (surRender != null) {
-                surRender.setParallelRotation(true);
-            }
-//             if (raycastRender != null) {
-//                 raycastRender.setParallelRotation(true);
-//             }
-        } else if (command.equals("rotatearbitrary")) {
-
-            if (surRender != null) {
-                surRender.setParallelRotation(false);
-            }
-//             if (raycastRender != null) {
-//                 raycastRender.setParallelRotation(false);
-//             }
+            //surRender.updateImageFromRotation();
         } else if (command.equals("HistoLUT")) {
             insertTab("LUT", histoLUTPanel);
-            insertSurfaceTab("LUT", histoLUTPanel);
-            insertRaycastTab("LUT", histoLUTPanel);
-        } else if (command.equals("FlythruControl")) {
-            insertTab("FlythruControl", flythruMovePanel);
-            insertFlythruTab("FlythruControl", flythruMovePanel);
-
-        } else if (command.equals("SurRender")) {
-            enableSurfaceRender();
-            updateRayTracingSteps();
         } else if (command.equals("VolRender")) {
             enableVolumeRender();
             updateRayTracingSteps();
         } else if (command.equals("Geodesic")) {
             insertTab("Geodesic", m_kGeodesicPanel);
-            insertSurfaceTab("Geodesic", m_kGeodesicPanel);
-            insertFlythruTab("Geodesic", m_kGeodesicPanel);
         } else if (command.equals("Sculpt")) {
             insertTab("Sculpt", m_kSculptPanel);
-            insertSurfaceTab("Sculpt", m_kSculptPanel);
-            insertRaycastTab("Sculpt", m_kSculptPanel);
         } else if (command.equals("AutoCapture")) {
             insertTab("Camera", raycastCameraPanel);
-            insertRaycastTab("Camera", raycastCameraPanel);
         } else if (command.equals("Repaint")) {
             volumeRepaint();
         } else if (command.equals("Clipping")) {
-            clipBox.setVisible(true);
+            clipBox.getMainPanel().setVisible(true);
             insertTab("Clip", clipPanel);
-            insertSurfaceTab("Clip", clipPanel);
-            insertRaycastTab("Clip", clipPanel);
+
+            setSize(getSize().width, getSize().height - 1);
+            int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
+                         panelToolbar.getHeight();
+            ((JPanelClip_WM)clipBox).resizePanel(maxPanelWidth, height);
         } else if (command.equals("OpacityHistogram")) {
             insertTab("Opacity", opacityPanel);
-            insertSurfaceTab("Opacity", opacityPanel);
-            insertRaycastTab("Opacity", opacityPanel);
         } else if (command.equals("Opacity")) {
-            clipBox.setVisible(true);
+            clipBox.getMainPanel().setVisible(true);
             clipButton.setEnabled(true);
             clipPlaneButton.setEnabled(true);
             clipDisableButton.setEnabled(true);
             clipMaskButton.setEnabled(true);
             clipMaskUndoButton.setEnabled(true);
             clipSaveButton.setEnabled(true);
+
             insertTab("Opacity", opacityPanel);
-            insertSurfaceTab("Opacity", opacityPanel);
-            insertRaycastTab("Opacity", opacityPanel);
             enableVolumeRender();
             updateRayTracingSteps();
+            raycastRenderWM.DisplayVolumeRaycast( m_kDisplayVolumeCheck.isSelected() );
+        } else if ( command.equals( "VolumeRayCast") ) {
+            clipBox.getMainPanel().setVisible(true);
+            clipButton.setEnabled(true);
+            clipPlaneButton.setEnabled(true);
+            clipDisableButton.setEnabled(true);
+            clipMaskButton.setEnabled(true);
+            clipMaskUndoButton.setEnabled(true);
+            clipSaveButton.setEnabled(true);
+
+            insertTab("Opacity", opacityPanel);
+            enableVolumeRender();
+            updateRayTracingSteps();
+            raycastRenderWM.DisplayVolumeRaycast( m_kDisplayVolumeCheck.isSelected() );
         } else if (command.equals("Stereo")) {
 
             /* Launch the stereo viewer for the volumeTexture. Using the
              * current viewing transofrm from the SurfaceRender: */
-            Transform3D kTransform = new Transform3D();
-            surRender.getSceneRootTG().getTransform(kTransform);
-            new JStereoWindow(surRender.getVolumeTextureCopy(0), surRender.getVolumeTextureCopy(1), kTransform,
-                              surRender);
+//             Transform3D kTransform = new Transform3D();
+//             surRender.getSceneRootTG().getTransform(kTransform);
+//             new JStereoWindow(surRender.getVolumeTextureCopy(0), surRender.getVolumeTextureCopy(1), kTransform,
+//                               surRender);
         } else if (command.equals("ChangeLight")) {
             insertTab("Light", lightPanel);
-            insertSurfaceTab("Light", lightPanel);
-            insertRaycastTab("Light", lightPanel);
         } else if (command.equals("Box")) {
             insertTab("Display", displayPanel);
-            insertSurfaceTab("Display", displayPanel);
         } else if (command.equals("ViewControls")) {
             insertTab("View", viewPanel);
-            insertSurfaceTab("View", viewPanel);
         } else if (command.equals("InvokeClipping")) {
-            clipBox.setVisible(true);
-            surRender.invokeClipping();
+            clipBox.getMainPanel().setVisible(true);
+            ((JPanelClip_WM)clipBox).invokeClippingPlanes();
             insertTab("Clip", clipPanel);
-            insertSurfaceTab("Clip", clipPanel);
-            insertRaycastTab("Clip", clipPanel);
+
+            setSize(getSize().width, getSize().height - 1);
+            int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
+                         panelToolbar.getHeight();
+            ((JPanelClip_WM)clipBox).resizePanel(maxPanelWidth, height);
+
+            insertTab("Clip", clipPanel);
         } else if (command.equals("DisableClipping")) {
-            clipBox.setVisible(true);
-            surRender.disableClipping();
+            clipBox.getMainPanel().setVisible(true);
+            clipBox.disable6Planes();
             insertTab("Clip", clipPanel);
-            insertSurfaceTab("Clip", clipPanel);
-            insertRaycastTab("Clip", clipPanel);
         } else if (command.equals("CropClipVolume")) {
-            surRender.cropClipVolume();
+//             surRender.cropClipVolume();
         } else if (command.equals("UndoCropVolume")) {
-            surRender.undoCropVolume();
+//             surRender.undoCropVolume();
         } else if (command.equals("SaveCropVolume")) {
-            surRender.saveCropVolume();
+//             surRender.saveCropVolume();
         } else if (command.equals("Slices")) {
-            clipBox.setVisible(false);
+            sliceGUI.getMainPanel().setVisible(true);
+            //clipBox.setVisible(false);
             clipButton.setEnabled(false);
             clipPlaneButton.setEnabled(false);
             clipDisableButton.setEnabled(false);
@@ -543,52 +435,59 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             clipMaskUndoButton.setEnabled(false);
             clipSaveButton.setEnabled(false);
             insertTab("Slices", slicePanel);
-            insertSurfaceTab("Slices", slicePanel);
-            enableSurfaceRender();
+            raycastRenderWM.DisplayVolumeSlices( m_kDisplaySlicesCheck.isSelected() );
+            //enableSurfaceRender();
+        } else if (command.equals("VolumeSlices")) {
+            sliceGUI.getMainPanel().setVisible(true);
+            //clipBox.setVisible(false);
+            clipButton.setEnabled(false);
+            clipPlaneButton.setEnabled(false);
+            clipDisableButton.setEnabled(false);
+            clipMaskButton.setEnabled(false);
+            clipMaskUndoButton.setEnabled(false);
+            clipSaveButton.setEnabled(false);
+            insertTab("Slices", slicePanel);
+            raycastRenderWM.DisplayVolumeSlices( m_kDisplaySlicesCheck.isSelected() );
+            //enableSurfaceRender();
         } else if (command.equals("SurfaceDialog")) {
             insertTab("Surface", surfacePanel);
-            insertSurfaceTab("Surface", surfacePanel);
             setSize(getSize().width, getSize().height - 1);
 
             int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
                          panelToolbar.getHeight();
 
-            surRender.getSurfaceDialog().resizePanel(maxPanelWidth, height);
+//             surRender.getSurfaceDialog().resizePanel(maxPanelWidth, height);
         } else if (command.equals("SurfaceTexture")) {
-            insertTab("SurfaceTexture", surRender.getSurfaceTexturePanel());
-            insertSurfaceTab("SurfaceTexture", surRender.getSurfaceTexturePanel());
-            setSize(getSize().width, getSize().height - 1);
+//             insertTab("SurfaceTexture", surRender.getSurfaceTexturePanel());
+//             insertSurfaceTab("SurfaceTexture", surRender.getSurfaceTexturePanel());
+//             setSize(getSize().width, getSize().height - 1);
 
-            int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
-                         panelToolbar.getHeight();
+//             int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
+//                          panelToolbar.getHeight();
 
-            surRender.getSurfaceDialog().resizePanel(maxPanelWidth, height);
+//             surRender.getSurfaceDialog().resizePanel(maxPanelWidth, height);
         } else if (command.equals("RFA")) {
-            insertTab("RFA", probePanel);
-            insertSurfaceTab("RFA", probePanel);
+//             insertTab("RFA", probePanel);
+//             insertSurfaceTab("RFA", probePanel);
 
-            // hack to get the panel's scroll pane to show up correctly
-            // the MIPAV version of the RFAST needs this setSize() for some messed up reason...
-            setSize(getSize().width, getSize().height - 1);
+//             // hack to get the panel's scroll pane to show up correctly
+//             // the MIPAV version of the RFAST needs this setSize() for some messed up reason...
+//             setSize(getSize().width, getSize().height - 1);
 
-            int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
-                         panelToolbar.getHeight();
+//             int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
+//                          panelToolbar.getHeight();
 
-            surRender.getProbeDialog().resizePanel(maxPanelWidth, height);
+//             surRender.getProbeDialog().resizePanel(maxPanelWidth, height);
         } else if (command.equals("DTI")) {
-            JDialogDTIInput kDTIIn = new JDialogDTIInput( JDialogDTIInput.TRACTS_PANEL,
-                                                          raycastRenderWM,
-                                                          surRender.getSurfaceDialog(), imageA);
-            insertTab("DTI", kDTIIn.getMainPanel() );
-            insertSurfaceTab("DTI", kDTIIn.getMainPanel() );
-            insertRaycastTab("DTI", kDTIIn.getMainPanel() );
+             JDialogDTIInput kDTIIn = new JDialogDTIInput( JDialogDTIInput.TRACTS_PANEL,
+                                                           raycastRenderWM, imageA);
+             insertTab("DTI", kDTIIn.getMainPanel() );
         } else if (command.equals("Capture")) {
             insertTab("Camera", cameraPanel);
-            insertSurfaceTab("Camera", cameraPanel);
         } else if (command.equals("Mouse")) {
-            insertTab("Recorder", mousePanel);
-            insertSurfaceTab("Recorder", mousePanel);
-            surRender.cleanMouseRecorder();
+//             insertTab("Recorder", mousePanel);
+//             insertSurfaceTab("Recorder", mousePanel);
+//             surRender.cleanMouseRecorder();
         } else if (command.equals("ResetX")) {
             resetAxisY();
         } else if (command.equals("ResetY")) {
@@ -600,17 +499,17 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         } else if (command.equals("ShowAxes")) {
             boolean showAxes = menuObj.isMenuItemSelected("Show axes");
 
-            for (int iPlane = 0; iPlane < 3; iPlane++) {
-                m_akPlaneRender[iPlane].showAxes(showAxes);
-                m_akPlaneRender[iPlane].update();
-            }
+//             for (int iPlane = 0; iPlane < 3; iPlane++) {
+//                 m_akPlaneRender[iPlane].showAxes(showAxes);
+//                 m_akPlaneRender[iPlane].update();
+//             }
         } else if (command.equals("ShowXHairs")) {
             boolean showXHairs = menuObj.isMenuItemSelected("Show crosshairs");
 
-            for (int iPlane = 0; iPlane < 3; iPlane++) {
-                m_akPlaneRender[iPlane].showXHairs(showXHairs);
-                m_akPlaneRender[iPlane].update();
-            }
+//             for (int iPlane = 0; iPlane < 3; iPlane++) {
+//                 m_akPlaneRender[iPlane].showXHairs(showXHairs);
+//                 m_akPlaneRender[iPlane].update();
+//             }
         } else if (command.equals("RFAToolbar")) {
             boolean showRFA = menuObj.isMenuItemSelected("RFA toolbar");
 
@@ -620,25 +519,24 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         } else if (command.equals("traverse")) {
             disableTargetPointPicking();
         } else if (command.equals("RadiologicalView")) {
-            imageA.setRadiologicalView(true);
+//             imageA.setRadiologicalView(true);
 
-            if (imageB != null) {
-                imageB.setRadiologicalView(true);
-            }
-
-            surRender.setCenter(m_akPlaneRender[0].getCenter());
-            setPositionLabels(surRender.getSlicePanel().getCenter());
-            updateImages(true);
+//             if (imageB != null) {
+//                 imageB.setRadiologicalView(true);
+//             }
+//             surRender.setCenter(m_akPlaneRender[0].getCenter());
+//             setPositionLabels(surRender.getSlicePanel().getCenter());
+//             updateImages(true);
         } else if (command.equals("NeurologicalView")) {
-            imageA.setRadiologicalView(false);
+//             imageA.setRadiologicalView(false);
 
-            if (imageB != null) {
-                imageB.setRadiologicalView(false);
-            }
+//             if (imageB != null) {
+//                 imageB.setRadiologicalView(false);
+//             }
 
-            surRender.setCenter(m_akPlaneRender[0].getCenter());
-            setPositionLabels(surRender.getSlicePanel().getCenter());
-            updateImages(true);
+//             surRender.setCenter(m_akPlaneRender[0].getCenter());
+//             setPositionLabels(surRender.getSlicePanel().getCenter());
+//             updateImages(true);
         } else if (command.equals("ShaderParameters") ) {
             if ( raycastRenderWM != null )
             {
@@ -653,9 +551,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void addAttachedSurfaces() {
 
-        if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
-            surRender.getSurfaceDialog().addAttachedSurfaces();
-        }
+//         if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
+//             surRender.getSurfaceDialog().addAttachedSurfaces();
+//         }
     }
 
     /**
@@ -665,22 +563,12 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      * @param  kMesh    ModelTriangleMesh surface mesh
      * @param  kCenter  Point3f center of mass
      */
-    public void addBranch(BranchGroup kBranch, ModelTriangleMesh kMesh, Point3f kCenter) {
+//    public void addBranch(BranchGroup kBranch, ModelTriangleMesh kMesh, Point3f kCenter) {
 
-        if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
-            surRender.getSurfaceDialog().addBranch(kBranch, kMesh, kCenter);
-        }
-    }
-
-    /**
-     * Updates the surRender to display the flythru flight path from the flythruRender.
-     */
-    public void addFlightPath() {
-
-        /* Gets the flythru path geometry and the current path position  (scaled) */
-        surRender.getSurfaceDialog().addFlightPath(flythruRender.getBranchPathShape(),
-                                                   flythruRender.getPositionScaled());
-    }
+//         if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
+//             surRender.getSurfaceDialog().addBranch(kBranch, kMesh, kCenter);
+//         }
+//    }
 
     /**
      * Adding surface to the 3D texuture volume.
@@ -690,18 +578,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void addSurface(String dir, File file) {
 
-        if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
-            surRender.getSurfaceDialog().addSurfaces(dir, file);
-        }
-    }
-
-    /**
-     * Build the Brainsurface Flattener panel:
-     */
-    public void buildBrainsurfaceFlattener() {
-        m_kBrainsurfaceFlattenerPanel = new JPanel();
-        m_kBrainsurfaceFlattenerPanel.add(brainsurfaceFlattenerRender.getMainPanel());
-        maxPanelWidth = Math.max(m_kBrainsurfaceFlattenerPanel.getPreferredSize().width, maxPanelWidth);
+//         if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
+//             surRender.getSurfaceDialog().addSurfaces(dir, file);
+//         }
     }
 
     /**
@@ -709,7 +588,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void buildCameraPanel() {
         cameraPanel = new JPanel();
-        cameraPanel.add(surRender.getCameraControl().getMainPanel());
+//         cameraPanel.add(surRender.getCameraControl().getMainPanel());
         maxPanelWidth = Math.max(cameraPanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -718,8 +597,8 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void buildClipPanel() {
         clipPanel = new JPanel();
-        clipBox = surRender.getClipDialog().getMainPanel();
-        clipPanel.add(clipBox);
+        clipBox = new JPanelClip_WM(this, raycastRenderWM);
+        clipPanel.add(clipBox.getMainPanel());
         maxPanelWidth = Math.max(clipPanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -728,36 +607,17 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void buildDisplayPanel() {
         displayPanel = new JPanel();
-        displayPanel.add(((SurfaceRender) surRender).getDisplayDialog().getMainPanel());
+//         displayPanel.add(((SurfaceRender) surRender).getDisplayDialog().getMainPanel());
         maxPanelWidth = Math.max(displayPanel.getPreferredSize().width, maxPanelWidth);
     }
 
-    /**
-     * Build the flythru move control panel.
-     */
-    public void buildFlythruMovePanel() {
-        flythruMovePanel = new JPanel();
-        flythruMoveControl = new JPanelFlythruMove(flythruRender);
-        flythruMovePanel.add(flythruMoveControl.getMainPanel());
-        maxPanelWidth = Math.max(flythruMovePanel.getPreferredSize().width, maxPanelWidth);
-    }
-
-    /**
-     * Build the flythru control panel.
-     */
-    public void buildFlythruPanel() {
-        flythruPanel = new JPanel();
-        flythruControl = new JPanelVirtualEndoscopySetup(flythruRender, this);
-        flythruPanel.add(flythruControl.getMainPanel());
-        maxPanelWidth = Math.max(flythruPanel.getPreferredSize().width, maxPanelWidth);
-    }
 
     /**
      * Build the Geodesic control panel.
      */
     public void buildGeodesic() {
         m_kGeodesicPanel = new JPanel();
-        m_kGeodesicPanel.add(surRender.getGeodesicPanel().getMainPanel());
+//         m_kGeodesicPanel.add(surRender.getGeodesicPanel().getMainPanel());
         maxPanelWidth = Math.max(m_kGeodesicPanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -781,7 +641,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void buildLabelPanel() {
         super.buildLabelPanel();
-        /*
         patientSliceLabel = new JLabel("Patient Slice Position");
         patientSliceLabel.setForeground(Color.black);
         patientSliceLabel.setFont(MipavUtil.font14B);
@@ -873,7 +732,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         panelLabels.add(panelLabelsModel);
 
         tabbedPane.addTab("Positions", null, panelLabels);
-        */
     }
 
     /**
@@ -881,7 +739,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void buildLightPanel() {
         lightPanel = new JPanel();
-        lightPanel.add(surRender.getSurfaceDialog().getLightDialog().getMainPanel());
+        m_kLightsPanel = new JPanelLights(this);
+        m_kLightsPanel.setVisible(true);
+        lightPanel.add(m_kLightsPanel.getMainPanel());
         maxPanelWidth = Math.max(lightPanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -890,7 +750,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void buildMousePanel() {
         mousePanel = new JPanel();
-        mousePanel.add(surRender.getMouseDialog().getMainPanel());
+//         mousePanel.add(surRender.getMouseDialog().getMainPanel());
         maxPanelWidth = Math.max(mousePanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -908,8 +768,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         gbConstraints.weighty = 1;
         gbConstraints.fill = GridBagConstraints.BOTH;
         gbConstraints.anchor = GridBagConstraints.NORTH;
-        gbLayout.setConstraints(surRender.getVolOpacityPanel().getMainPanel(), gbConstraints);
-        opacityPanel.add(surRender.getVolOpacityPanel().getMainPanel());
+        
+        gbLayout.setConstraints(m_kVolOpacityPanel.getMainPanel(), gbConstraints);
+        opacityPanel.add(m_kVolOpacityPanel.getMainPanel());
         maxPanelWidth = Math.max(opacityPanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -918,7 +779,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void buildProbePanel() {
         probePanel = new JPanel();
-        probePanel.add(surRender.getProbeDialog().getMainPanel());
+//         probePanel.add(surRender.getProbeDialog().getMainPanel());
         maxPanelWidth = Math.max(probePanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -936,7 +797,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void buildSculpt() {
         m_kSculptPanel = new JPanel();
-        m_kSculptPanel.add(surRender.getSculptorPanel().getMainPanel());
+//         m_kSculptPanel.add(surRender.getSculptorPanel().getMainPanel());
         maxPanelWidth = Math.max(m_kSculptPanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -945,7 +806,8 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void buildSlicePanel() {
         slicePanel = new JPanel();
-        slicePanel.add(surRender.getSlicePanel().getMainPanel());
+        sliceGUI = new JPanelSlices(this);
+        slicePanel.add(sliceGUI.getMainPanel());
         maxPanelWidth = Math.max(slicePanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -954,7 +816,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void buildSurfacePanel() {
         surfacePanel = new JPanel();
-        surfacePanel.add(surRender.getSurfaceDialog().getMainPanel());
+//         surfacePanel.add(surRender.getSurfaceDialog().getMainPanel());
         maxPanelWidth = Math.max(surfacePanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -963,7 +825,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void buildViewPanel() {
         viewPanel = new JPanel();
-        viewPanel.add(surRender.getViewDialog().getMainPanel());
+//         viewPanel.add(surRender.getViewDialog().getMainPanel());
         maxPanelWidth = Math.max(viewPanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -994,69 +856,45 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 
         try {
 
-            if ((leftPanelRenderMode == SURFACE) || (rightPanelRenderMode == SURFACE)) {
-                isSurfaceRenderEnable = true;
-            }
-
-            if ((leftPanelRenderMode == RAYCAST) || (rightPanelRenderMode == RAYCAST)) {
-                isRayCastEnable = true;
-            }
-
-            if (rightPanelRenderMode == BRAINSURFACE_FLATTENER) {
-                isBrainsurfaceFlattenerEnable = true;
-            }
-
-            if (leftPanelRenderMode == ENDOSCOPY) {
-                leftPanelRenderMode = SURFACE;
-                rightPanelRenderMode = ENDOSCOPY;
-                isSurfaceRenderEnable = true;
-                isEndoscopyEnable = true;
-            }
-
             serif12 = MipavUtil.font12;
             serif12B = MipavUtil.font12B;
-            config = SimpleUniverse.getPreferredConfiguration();
             progressBar.updateValueImmed(5);
 
-            if (isSurfaceRenderEnable) {
-                progressBar.setMessage("Constructing surface renderer...");
+            m_kVolOpacityPanel = new JPanelVolOpacity( this, imageA, imageB );
+            
 
-                // TODO: Check 3D support from the card, and report to the user if the card support 3D or not.
-                surRender = new SurfaceRender(imageA, LUTa, imageB, LUTb, this, config, progressBar);
-                surRender.setVolView(true);
-
-                if (surRender != null) {
-                    surRender.configureVolumeFrame();
-                }
-
-                m_akPlaneRender = new PlaneRender[3];
-                m_akPlaneRender[0] = new PlaneRender(this, imageA, LUTa, imageB, LUTb, config, FileInfoBase.AXIAL,
-                                                     false);
-                m_akPlaneRender[1] = new PlaneRender(this, imageA, LUTa, imageB, LUTb, config, FileInfoBase.SAGITTAL,
-                                                     false);
-                m_akPlaneRender[2] = new PlaneRender(this, imageA, LUTa, imageB, LUTb, config, FileInfoBase.CORONAL,
-                                                     false);
-
-                progressBar.setMessage("Constructing gpu renderer...");
-                raycastRenderWM = new GPUVolumeRender(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB);
-                TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompA().getOpacityTransferFunction();
-                raycastRenderWM.updateImages(0, kTransfer);
-                if (surRender != null) {
-                    surRender.setRayBasedRender(raycastRenderWM);
-                }
+            ImageCatalog.SetActive( new ImageCatalog("Main", System.getProperties().getProperty("user.dir")) );      
+            VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", System.getProperties().getProperty("user.dir")));       
+            PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", System.getProperties().getProperty("user.dir")));
+            CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
+            m_kVolumeImageA = new VolumeImage(  imageA, LUTa, RGBTA );
+            if ( imageB != null )
+            {
+                m_kVolumeImageB = new VolumeImage( imageB, LUTb, RGBTB );
             }
 
-            if (isEndoscopyEnable) {
-                progressBar.setMessage("Constructing flythru renderer...");
-                flythruRender = new FlythruRender(imageA, config, this);
-                surRender.getGeodesicPanel().setFlythruRender(flythruRender);
-            }
+            m_kAnimator = new Animator();
+            m_akPlaneRender = new PlaneRender_WM[3];
+            m_akPlaneRender[0] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa,
+                                                    m_kVolumeImageB, imageB, LUTb, FileInfoBase.AXIAL,
+                                                    false);
+            m_akPlaneRender[1] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa,
+                                                    m_kVolumeImageB, imageB, LUTb, FileInfoBase.SAGITTAL,
+                                                    false);
+            m_akPlaneRender[2] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa,
+                                                    m_kVolumeImageB, imageB, LUTb, FileInfoBase.CORONAL,
+                                                    false);
+            
+            progressBar.setMessage("Constructing gpu renderer...");
 
-            if (isBrainsurfaceFlattenerEnable) {
-                progressBar.setMessage("Constructing brainsurface flattener renderer...");
-                brainsurfaceFlattenerRender = new MjCorticalAnalysis(imageA, imageB, config, this);
+            
 
-            }
+            raycastRenderWM = new GPUVolumeRender_WM(m_kAnimator, m_kVolumeImageA, imageA, LUTa, RGBTA,
+                                                     m_kVolumeImageB, imageB, LUTb, RGBTB);
+
+
+            TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
+            m_kVolumeImageA.UpdateImages(kTransfer, 0);
 
             progressBar.updateValueImmed(80);
             progressBar.setMessage("Constructing Lookup Table...");
@@ -1095,9 +933,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void disableTargetPointPicking() {
 
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].enableTargetPointPicking(false);
-        }
+//         for (int iPlane = 0; iPlane < 3; iPlane++) {
+//             m_akPlaneRender[iPlane].enableTargetPointPicking(false);
+//         }
     }
 
     /**
@@ -1109,7 +947,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         // System.out.println( "######ViewJFrameVolView disposeLocal" );
 
         /** Control panels for the raycast render */
-        raycastOptionsPanel = null;
         raycastCameraPanel = null;
 
         /* Geodesic panel */
@@ -1147,37 +984,14 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             opacityDialog = null;
         }
 
-        if (surRender != null) {
-            surRender.close();
-            surRender = null;
-        }
+//         if (surRender != null) {
+//             surRender.close();
+//             surRender = null;
+//         }
 
         if (raycastRenderWM != null) {
             raycastRenderWM.dispose();
             raycastRenderWM = null;
-        }
-
-        if (flythruRender != null) {
-            flythruRender.dispose();
-            flythruRender = null;
-        }
-
-        if (flythruControl != null) {
-            flythruControl.dispose(true);
-            flythruControl = null;
-        }
-
-        if (flythruMoveControl != null) {
-            flythruMoveControl.dispose(true);
-            flythruMoveControl = null;
-        }
-
-        if (brainsurfaceFlattenerRender != null) {
-            brainsurfaceFlattenerRender = null;
-
-            if (m_kBrainsurfaceFlattenerPanel != null) {
-                m_kBrainsurfaceFlattenerPanel = null;
-            }
         }
 
         if (panelHistoLUT != null) {
@@ -1195,13 +1009,13 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             resampleDialog = null;
         }
 
-        for (int i = 0; i < 3; i++) {
+//         for (int i = 0; i < 3; i++) {
 
-            if (m_akPlaneRender[i] != null) {
-                m_akPlaneRender[i].disposeLocal();
-                m_akPlaneRender[i] = null;
-            }
-        }
+//             if (m_akPlaneRender[i] != null) {
+//                 m_akPlaneRender[i].disposeLocal();
+//                 m_akPlaneRender[i] = null;
+//             }
+//         }
 
         if (imageA != null) {
             imageA.removeImageDisplayListener(this);
@@ -1389,40 +1203,29 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     }
 
     /**
-     * Draws the point selected on the Mesh for the brainsurfaceFlattener.
-     *
-     * @param  kStart   Ruida please add comment
-     * @param  aiIndex  Ruida please add comment
-     * @param  iWhich   Ruida please add comment
-     */
-    public void drawBrainSurfaceFlattenerPoint(Point3f kStart, int[] aiIndex, int iWhich) {
-        brainsurfaceFlattenerRender.drawPicked(kStart, aiIndex, iWhich);
-    }
-
-    /**
      * Called from the PlaneRender class when a new Probe Entry Point has been selected. The point is passed into each
      * PlaneRender class for display, and to the SurfaceRender class for display
      *
      * @param  kPoint  target point position
      */
-    public void drawRFAPoint(Point3f kPoint) {
+//    public void drawRFAPoint(Point3f kPoint) {
 
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].drawRFAPoint(kPoint);
-            m_akPlaneRender[iPlane].update();
-        }
+//        for (int iPlane = 0; iPlane < 3; iPlane++) {
+//            m_akPlaneRender[iPlane].drawRFAPoint(kPoint);
+//            m_akPlaneRender[iPlane].update();
+//        }
 
-        surRender.drawRFAPoint(kPoint);
-    }
+//         surRender.drawRFAPoint(kPoint);
+ //   }
 
     /**
      * Enable target point for the RFA probe from within the plane renderer.
      */
     public void enableTargetPointPicking() {
 
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].enableTargetPointPicking(true);
-        }
+//         for (int iPlane = 0; iPlane < 3; iPlane++) {
+//             m_akPlaneRender[iPlane].enableTargetPointPicking(true);
+//         }
     }
 
     /**
@@ -1431,8 +1234,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      * @return  blendValue blender slider value.
      */
     public int getBlendValue() {
-        JPanelVolOpacityBase opacityPanel = surRender.getVolOpacityPanel();
-
+        JPanelVolOpacityBase opacityPanel = m_kVolOpacityPanel;
         return opacityPanel.getAlphaBlendSliderValue();
     }
     
@@ -1442,8 +1244,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      * @return  raytrcing steps slider value.
      */
     public int getStepsValue() {
-        JPanelVolOpacityBase opacityPanel = surRender.getVolOpacityPanel();
-
+        JPanelVolOpacityBase opacityPanel = m_kVolOpacityPanel;
         return opacityPanel.getStepsSliderValue();
     }
 
@@ -1540,7 +1341,8 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      * @return  the rfa probe panel
      */
     public JPanelProbe getProbeDialog() {
-        return surRender.getProbeDialog();
+//         return surRender.getProbeDialog();
+        return null;
     }
 
     /**
@@ -1559,11 +1361,11 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public ModelImage getSegmentationImage() {
 
-        if (surRender != null) {
-            return surRender.getSegmentationImage();
-        } else {
+//         if (surRender != null) {
+//             return surRender.getSegmentationImage();
+//         } else {
             return null;
-        }
+//         }
     }
 
 
@@ -1574,65 +1376,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public JSplitPane getViewPanel() {
         return rightPane;
-    }
-
-    /**
-     * Insert tab into the flythru tab list ( flythru render ) for backup.
-     *
-     * @param  _name   flythru render control panel name
-     * @param  _panel  flythru render control panel
-     */
-    public void insertFlythruTab(String _name, JPanel _panel) {
-        int i;
-
-        for (i = 0; i < flythruTabVector.size(); i++) {
-
-            if ((flythruTabVector.elementAt(i) != null) &&
-                    ((TabbedItem) (flythruTabVector.elementAt(i))).name.equals(_name)) {
-                return;
-            }
-        }
-
-        flythruTabVector.add(new TabbedItem(_name, _panel));
-    }
-
-    /**
-     * Insert tab into the raycast tab list ( raycast render ) for backup.
-     *
-     * @param  _name   raycast render control panel name
-     * @param  _panel  raycast render control panel
-     */
-    public void insertRaycastTab(String _name, JPanel _panel) {
-        int i;
-
-        for (i = 0; i < raycastTabVector.size(); i++) {
-
-            if ((raycastTabVector.elementAt(i) != null) &&
-                    ((TabbedItem) (raycastTabVector.elementAt(i))).name.equals(_name)) {
-                return;
-            }
-        }
-
-        raycastTabVector.add(new TabbedItem(_name, _panel));
-    }
-
-    /**
-     * Insert tab into the surface tab list ( SurfaceRender ) for backup.
-     *
-     * @param  _name   surface render control panel name
-     * @param  _panel  surface render control panel
-     */
-    public void insertSurfaceTab(String _name, JPanel _panel) {
-        int i;
-
-        for (i = 0; i < surTabVector.size(); i++) {
-
-            if ((surTabVector.elementAt(i) != null) && ((TabbedItem) (surTabVector.elementAt(i))).name.equals(_name)) {
-                return;
-            }
-        }
-
-        surTabVector.add(new TabbedItem(_name, _panel));
     }
 
     /**
@@ -1658,26 +1401,13 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     }
 
     /**
-     * Returns the pick enabled state of the brainsurfaceFlattener.
-     *
-     * @return  flag brain surface pickable or not.
-     */
-    public boolean isBrainSurfaceFlattenerPickEnabled() {
-
-        if (brainsurfaceFlattenerRender != null) {
-            return brainsurfaceFlattenerRender.isPickEnabled();
-        }
-
-        return false;
-    }
-
-    /**
      * Check whether the Geodesic drawing is enabled or not.
      *
      * @return  boolean <code>true</code> Geodesic drawing enabled, <code>false</code> Geodesic disable.
      */
     public boolean isGeodesicEnable() {
-        return surRender.getGeodesicPanel().isGeodesicEnable();
+//         return surRender.getGeodesicPanel().isGeodesicEnable();
+        return false;
     }
 
     /**
@@ -1701,11 +1431,11 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             } else if (radioSURFACE.isSelected() && (source == radioSURFACE)) {
                 raycastRenderWM.SURMode();
                 updateRayTracingSteps();
-                surRender.getSurfaceDialog().getLightDialog().refreshLighting();
+                m_kLightsPanel.refreshLighting();
             } else if (radioSURFACEFAST.isSelected() && (source == radioSURFACEFAST)) {
                 raycastRenderWM.SURFASTMode();
                 updateRayTracingSteps();
-                surRender.getSurfaceDialog().getLightDialog().refreshLighting();
+                m_kLightsPanel.refreshLighting();
             } else if (radioSURFACEFAST.isSelected() && (source == kSelfShadow) )
                 raycastRenderWM.SelfShadow( kSelfShadow.isSelected() );
             	updateRayTracingSteps();
@@ -1722,129 +1452,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      * @param  e  MouseEvent
      */
     public void mouseClicked(MouseEvent e) {
-        Object source = e.getSource();
-
-        if (e.getClickCount() == 2) {
-
-            if ((surRender != null) && (source == surRender.getCanvas())) {
-                switchTabList("SurRender");
-
-                if (leftPanelRenderMode == SURFACE) {
-                    dualLeftPanel.setBorder(redBorder);
-                    dualRightPanel.setBorder(loweredbevel);
-                    dualLeftPanel.repaint();
-                    dualRightPanel.repaint();
-                } else if (rightPanelRenderMode == SURFACE) {
-                    dualLeftPanel.setBorder(loweredbevel);
-                    dualRightPanel.setBorder(redBorder);
-                    dualLeftPanel.repaint();
-                    dualRightPanel.repaint();
-                }
-
-//                 if (isRayCastEnable) {
-//                     panelToolbar.remove(rayCastToolBar);
-//                 }
-
-//                 if (isSurfaceRenderEnable) {
-//                     panelToolbar.remove(volToolBar);
-//                }
-
-                if (isEndoscopyEnable) {
-                    panelToolbar.remove(flyThruToolbar);
-                }
-
-                GridBagConstraints gbc = new GridBagConstraints();
-
-                gbc.gridx = 0;
-                gbc.gridy = 1;
-                gbc.gridwidth = 1;
-                gbc.gridheight = 1;
-                gbc.fill = GridBagConstraints.BOTH;
-                gbc.anchor = GridBagConstraints.WEST;
-                gbc.weightx = 1;
-                gbc.weighty = 1;
-//                 panelToolbar.add(volToolBar, gbc);
-                panelToolbar.validate();
-                panelToolbar.repaint();
-            } else if ((flythruRender != null) && (source == flythruRender.getCanvas())) {
-                switchTabList("FlythruRender");
-                dualLeftPanel.setBorder(loweredbevel);
-                dualRightPanel.setBorder(redBorder);
-                dualLeftPanel.repaint();
-                dualRightPanel.repaint();
-
-//                 if (isSurfaceRenderEnable) {
-//                     panelToolbar.remove(volToolBar);
-//                 }
-
-                if (isEndoscopyEnable) {
-                    panelToolbar.remove(flyThruToolbar);
-                }
-
-                GridBagConstraints gbc = new GridBagConstraints();
-
-                gbc.gridx = 0;
-                gbc.gridy = 1;
-                gbc.gridwidth = 1;
-                gbc.gridheight = 1;
-                gbc.fill = GridBagConstraints.BOTH;
-                gbc.anchor = GridBagConstraints.WEST;
-                gbc.weightx = 1;
-                gbc.weighty = 1;
-                panelToolbar.add(flyThruToolbar, gbc);
-                panelToolbar.validate();
-                panelToolbar.repaint();
-            } else if ((raycastRenderWM != null) && (source == raycastRenderWM.GetCanvas())) {
-                switchTabList("VolRender");
-
-                if (rightPanelRenderMode == RAYCAST) {
-                    dualLeftPanel.setBorder(loweredbevel);
-                    dualRightPanel.setBorder(redBorder);
-                    dualLeftPanel.repaint();
-                    dualRightPanel.repaint();
-                } else if (leftPanelRenderMode == RAYCAST) {
-                    dualLeftPanel.setBorder(redBorder);
-                    dualRightPanel.setBorder(loweredbevel);
-                    dualLeftPanel.repaint();
-                    dualRightPanel.repaint();
-                }
-
-//                 if (isRayCastEnable) {
-//                     panelToolbar.remove(rayCastToolBar);
-//                 }
-
-//                 if (isSurfaceRenderEnable) {
-//                     panelToolbar.remove(volToolBar);
-//                 }
-
-                GridBagConstraints gbc = new GridBagConstraints();
-
-                gbc.gridx = 0;
-                gbc.gridy = 1;
-                gbc.gridwidth = 1;
-                gbc.gridheight = 1;
-                gbc.fill = GridBagConstraints.BOTH;
-                gbc.anchor = GridBagConstraints.WEST;
-                gbc.weightx = 1;
-                gbc.weighty = 1;
-//                 panelToolbar.add(rayCastToolBar, gbc);
-                panelToolbar.validate();
-                panelToolbar.repaint();
-            } else if ((brainsurfaceFlattenerRender != null) && (source == brainsurfaceFlattenerRender.getCanvas())) {
-
-                if (rightPanelRenderMode == BRAINSURFACE_FLATTENER) {
-                    dualLeftPanel.setBorder(loweredbevel);
-                    dualRightPanel.setBorder(redBorder);
-                    dualLeftPanel.repaint();
-                    dualRightPanel.repaint();
-                }
-
-//                 if (isSurfaceRenderEnable) {
-//                     panelToolbar.remove(volToolBar);
-//                 }
-            }
-        }
-
+        //Object source = e.getSource();
     }
 
     /**
@@ -1881,12 +1489,12 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      * @param  kBranch      BranchGroup surface branch group reference.
      * @param  bRemoveMesh  boolean flag to remove the surface mesh or not
      */
-    public void removeBranch(BranchGroup kBranch, boolean bRemoveMesh) {
+//    public void removeBranch(BranchGroup kBranch, boolean bRemoveMesh) {
 
-        if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
-            surRender.getSurfaceDialog().removeBranch(kBranch, bRemoveMesh);
-        }
-    }
+//         if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
+//             surRender.getSurfaceDialog().removeBranch(kBranch, bRemoveMesh);
+//         }
+//    }
 
     /**
      * Required by the parent super class, do nothing.
@@ -1899,9 +1507,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void removeProbeLine() {
 
-        if (surRender != null) {
-            surRender.getProbeDialog().removeProbingPath();
-        }
+//         if (surRender != null) {
+//             surRender.getProbeDialog().removeProbingPath();
+//         }
     }
 
     /**
@@ -1909,13 +1517,13 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void resetAxisX() {
 
-        if (isSurfaceRenderEnable) {
-            surRender.resetAxisX();
-        }
+//         if (isSurfaceRenderEnable) {
+//             surRender.resetAxisX();
+//         }
 
-        if (isRayCastEnable) {
+        //if (isRayCastEnable) {
             //raycastRenderWM.resetAxisX();
-        }
+        //}
     }
 
     /**
@@ -1923,13 +1531,13 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void resetAxisY() {
 
-        if (isSurfaceRenderEnable) {
-            surRender.resetAxisY();
-        }
+//         if (isSurfaceRenderEnable) {
+//             surRender.resetAxisY();
+//         }
 
-        if (isRayCastEnable) {
+       // if (isRayCastEnable) {
             //raycastRenderWM.resetAxisY();
-        }
+        //}
     }
 
     /**
@@ -1937,13 +1545,13 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void resetImage() {
 
-        if (isSurfaceRenderEnable) {
-            surRender.resetImage();
-        }
-
-        if (isRayCastEnable) {
+//         if (isSurfaceRenderEnable) {
+//             surRender.resetImage();
+//         }
+//
+       // if (isRayCastEnable) {
             //raycastRenderWM.resetImage();
-        }
+       // }
     }
 
 
@@ -1974,17 +1582,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void setEnabled(boolean flag) { }
 
-    /**
-     * Set the flythru surface color.
-     *
-     * @param  _color  ModelLUT table
-     */
-    public void setFlythruColor(Color _color) {
-
-        if (flythruControl != null) {
-            flythruControl.setColor(_color);
-        }
-    }
 
     /**
      *
@@ -2053,9 +1650,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void setLUTa(ModelLUT LUT) {
 
-        if (surRender != null) {
-            surRender.setLUTa(LUT);
-        }
+//         if (surRender != null) {
+//             surRender.setLUTa(LUT);
+//         }
 
 //         if (raycastRenderWM != null) {
 //             raycastRenderWM.setLUTa(LUT);
@@ -2069,9 +1666,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void setLUTb(ModelLUT LUT) {
 
-        if (surRender != null) {
-            surRender.setLUTb(LUT);
-        }
+//         if (surRender != null) {
+//             surRender.setLUTb(LUT);
+//         }
 
 //         if (raycastRenderWM != null) {
 //             raycastRenderWM.setLUTb(LUT);
@@ -2089,9 +1686,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 //             raycastRenderWM.setMaterialShininess(value);
 //         }
 
-        if (surRender != null) {
-            surRender.setMaterialShininess(value);
-        }
+//         if (surRender != null) {
+//             surRender.setMaterialShininess(value);
+//         }
     }
 
     /**
@@ -2108,18 +1705,18 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      * @param  kPosition        Ruida please add comment
      * @param  kScaledPosition  Ruida please add comment
      */
-    public void setPathPosition(Point3f kPosition, Point3f kScaledPosition) {
-        Point3Df kCenter = new Point3Df(kPosition.x * imageA.getExtents()[0], kPosition.y * imageA.getExtents()[1],
-                                        kPosition.z * imageA.getExtents()[2]);
+//    public void setPathPosition(Point3f kPosition, Point3f kScaledPosition) {
+//        Point3Df kCenter = new Point3Df(kPosition.x * imageA.getExtents()[0], kPosition.y * imageA.getExtents()[1],
+//                                        kPosition.z * imageA.getExtents()[2]);
 
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].setCenter(kCenter);
-        }
+//         for (int iPlane = 0; iPlane < 3; iPlane++) {
+//             m_akPlaneRender[iPlane].setCenter(kCenter);
+//         }
 
-        surRender.setCenter(kCenter);
-        surRender.getSurfaceDialog().setPathPosition(kScaledPosition);
+//         surRender.setCenter(kCenter);
+//         surRender.getSurfaceDialog().setPathPosition(kScaledPosition);
 
-    }
+//    }
 
     /**
      * Sets the position labels.
@@ -2145,17 +1742,12 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      * @param  RGBT  RGB table
      */
     public void setRGBTA(ModelRGB RGBT) {
+//         if (surRender != null) {
+//             surRender.setRGBTA(RGBT);
+//         }
 
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].updateRGBTA(RGBT);
-        }
-
-        if (surRender != null) {
-            surRender.setRGBTA(RGBT);
-        }
-
-        if (raycastRenderWM != null) {
-            raycastRenderWM.setRGBT(RGBT, 0);
+        if (m_kVolumeImageA != null) {
+            m_kVolumeImageA.SetRGBT(RGBT, 0);
         }
     }
 
@@ -2165,34 +1757,13 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      * @param  RGBT  RGB table
      */
     public void setRGBTB(ModelRGB RGBT) {
+//         if (surRender != null) {
+//             surRender.setRGBTB(RGBT);
+//         }
 
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].updateRGBTB(RGBT);
+        if (m_kVolumeImageA != null) {
+            m_kVolumeImageA.SetRGBT(RGBT, 1);
         }
-
-        if (surRender != null) {
-            surRender.setRGBTB(RGBT);
-        }
-
-        if (raycastRenderWM != null) {
-            raycastRenderWM.setRGBT(RGBT, 1);
-        }
-    }
-
-    /**
-     * Update the right panel when finish loading Endoscopy images.
-     */
-    public void setRightPanelCanvas() {
-        flythruRender.setupRenderControl(flythruControl);
-        dualRightPanel.removeAll();
-        dualLeftPanel.removeAll();
-        dualRightPanel.add(flythruRender.getCanvas(), BorderLayout.CENTER);
-        flythruRender.getCanvas().addMouseListener(this);
-        dualLeftPanel.add(surRender.getCanvas(), BorderLayout.CENTER);
-        dualRightPanel.validate();
-        dualRightPanel.repaint();
-        dualLeftPanel.validate();
-        dualLeftPanel.repaint();
     }
 
     /**
@@ -2202,9 +1773,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void setSegmentationImage(ModelImage img) {
 
-        if (surRender != null) {
-            surRender.setSegmentationImage(img);
-        }
+//         if (surRender != null) {
+//             surRender.setSegmentationImage(img);
+//         }
     }
 
     /**
@@ -2215,19 +1786,25 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     public void setSlice(int slice) { }
 
 
+    public void setSliceOpacity( int i, float fAlpha )
+    {
+        raycastRenderWM.SetSliceOpacity( i, fAlpha );
+    }
+
+
     /**
      * Sets the position of the slices in the SurfaceRender and PlaneRender objects. Called from the PlaneRender class.
      *
      * @param  center  the new slice positions in FileCoordinates
      */
     public void setSliceFromPlane(Point3Df center) {
-        setPositionLabels(center);
+        //setPositionLabels(center);
 
-        for (int i = 0; i < 3; i++) {
-            m_akPlaneRender[i].setCenter(center);
-        }
+         for (int i = 0; i < 3; i++) {
+             m_akPlaneRender[i].setCenter(center);
+         }
 
-        surRender.setCenter(center);
+         raycastRenderWM.SetCenter( new Vector3f( center.x, center.y, center.z ) );
     }
 
     /**
@@ -2238,16 +1815,27 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     public void setSliceFromSurface(Point3Df center) {
         setPositionLabels(center);
 
-        if (m_akPlaneRender == null) {
-            return;
-        }
-
-        for (int i = 0; i < 3; i++) {
-
-            if (m_akPlaneRender[i] != null) {
-                m_akPlaneRender[i].setCenter(center);
+        if (m_akPlaneRender != null)
+        {
+            for (int i = 0; i < 3; i++) {
+                
+                if (m_akPlaneRender[i] != null) {
+                    m_akPlaneRender[i].setCenter(center);
+                }
             }
         }
+        raycastRenderWM.SetCenter( new Vector3f( center.x, center.y, center.z ) );
+    }
+
+
+    public void showSlice( int i, boolean bShow )
+    {
+        raycastRenderWM.ShowSlice( i, bShow );
+    }
+
+    public void showBoundingBox( int i, boolean bShow )
+    {
+        raycastRenderWM.ShowBoundingBox( i, bShow );
     }
 
     /**
@@ -2258,10 +1846,15 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void setSliceHairColor(int iView, Color color) {
 
+        ColorRGB kColor = new ColorRGB(color.getRed()/256.0f,
+                                       color.getGreen()/256.0f,
+                                       color.getBlue()/256.0f);
+
         for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].setSliceHairColor(iView, new Color3f(color));
-            m_akPlaneRender[iPlane].update();
+            m_akPlaneRender[iPlane].
+                setSliceHairColor(iView, kColor );
         }
+        raycastRenderWM.SetBoundingBoxColor( iView, kColor);
     }
 
     /**
@@ -2292,89 +1885,12 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      * @param  event  ChangeEvent
      */
     public void stateChanged(ChangeEvent event) {
-
-        if ((surRender != null) && (event.getSource() == tabbedPane)) {
-
-            if (tabbedPane.getSelectedComponent() == slicePanel) {
-                clipBox.setVisible(false);
-                surRender.switchToSliceView(false);
-            } else if (tabbedPane.getSelectedComponent() == opacityPanel) {
-                clipBox.setVisible(true);
-                //surRender.switchToVolView(firstTimeVolView);
-                //firstTimeVolView = false;
-            }
-        }
-    }
-
-    /**
-     * Update the tabbed pane when switch view buttons in the View toolbar.
-     *
-     * @param  command  command of the renderer's view toolbar button click.
-     */
-    public void switchTabList(String command) {
-        int i;
-        int index = storeTabbedPaneIndex;
-
-        storeTabbedPaneIndex = tabbedPane.getSelectedIndex();
-
-        // remember what tabs were in use when switching to dual panel renderer
-        Vector tempTabs = new Vector();
-
-        for (i = 1; i < tabbedPane.getTabCount(); i++) {
-            tempTabs.add(new TabbedItem(tabbedPane.getTitleAt(i), (JPanel) tabbedPane.getComponentAt(i)));
-        }
-
-        tabbedPane.removeAll();
-        //tabbedPane.addTab("Positions", null, panelLabels);
-
-        if (command.equals("VolRender")) {
-
-            for (i = 0; i < raycastTabVector.size(); i++) {
-                String name = ((TabbedItem) (raycastTabVector.elementAt(i))).name;
-                JPanel panel = ((TabbedItem) (raycastTabVector.elementAt(i))).panel;
-
-                insertTab(name, panel);
-            }
-
-            if (index < tabbedPane.getTabCount()) {
-                tabbedPane.setSelectedIndex(index);
-            }
-        } else if (command.equals("SurRender")) {
-
-            for (i = 0; i < surTabVector.size(); i++) {
-                String name = ((TabbedItem) (surTabVector.elementAt(i))).name;
-                JPanel panel = ((TabbedItem) (surTabVector.elementAt(i))).panel;
-
-                insertTab(name, panel);
-            }
-
-            if (index < tabbedPane.getTabCount()) {
-                tabbedPane.setSelectedIndex(index);
-            }
-        } else if (command.equals("FlythruRender")) {
-
-            for (i = 0; i < flythruTabVector.size(); i++) {
-                String name = ((TabbedItem) (flythruTabVector.elementAt(i))).name;
-                JPanel panel = ((TabbedItem) (flythruTabVector.elementAt(i))).panel;
-
-                insertTab(name, panel);
-            }
-
-            if (index < tabbedPane.getTabCount()) {
-                tabbedPane.setSelectedIndex(index);
-            }
-
-        } else if (command.equals("DualPanelRender")) {
-
-            for (i = 0; i < tempTabs.size(); i++) {
-                String name = ((TabbedItem) (tempTabs.elementAt(i))).name;
-                JPanel panel = ((TabbedItem) (tempTabs.elementAt(i))).panel;
-
-                insertTab(name, panel);
-            }
-
-            if (index < tabbedPane.getTabCount()) {
-                tabbedPane.setSelectedIndex(index);
+        Object source = event.getSource();
+        if ( source == m_kVolumeBlendSlider )
+        {
+            if (raycastRenderWM != null)
+            {
+                raycastRenderWM.setVolumeBlend( m_kVolumeBlendSlider.getValue()/100.0f );
             }
         }
     }
@@ -2395,16 +1911,16 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public boolean updateImages() {
 
-        for (int i = 0; i < 3; i++) {
+//         for (int i = 0; i < 3; i++) {
 
-            if (m_akPlaneRender[i] != null) {
-                m_akPlaneRender[i].updateData();
-            }
-        }
+//             if (m_akPlaneRender[i] != null) {
+//                 m_akPlaneRender[i].updateData();
+//             }
+//         }
 
-        if (surRender != null) {
-            surRender.updateImages();
-        }
+//         if (surRender != null) {
+//             surRender.updateImages();
+//         }
 
         return true;
     }
@@ -2438,43 +1954,45 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public boolean updateImages(boolean forceShow) {
 
-        for (int i = 0; i < 3; i++) {
+//         for (int i = 0; i < 3; i++) {
 
-            if (m_akPlaneRender[i] != null) {
-                m_akPlaneRender[i].updateData();
-            }
-        }
+//             if (m_akPlaneRender[i] != null) {
+//                 m_akPlaneRender[i].updateData();
+//             }
+//         }
 
-        if (surRender != null) {
-            surRender.updateImages(forceShow);
-        }
+//         if (surRender != null) {
+//             surRender.updateImages(forceShow);
+//         }
 
-        if (raycastRenderWM != null) {
-            ViewJComponentVolOpacityBase kSelectedComp = surRender.getVolOpacityPanel().getSelectedComponent();
+        if (m_kVolumeImageA != null) {
+            ViewJComponentVolOpacityBase kSelectedComp = m_kVolOpacityPanel.getSelectedComponent();
             if ( imageB != null )
             {
-                if ( kSelectedComp == surRender.getVolOpacityPanel().getCompA() )
+                if ( kSelectedComp == m_kVolOpacityPanel.getCompA() )
                 {
-                    TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompA().getOpacityTransferFunction();
-                    raycastRenderWM.updateImages(0, kTransfer);
+                    TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
+                    m_kVolumeImageA.UpdateImages(kTransfer, 0);
                 }
+                /*
                 else
                 {
-                    TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompB().getOpacityTransferFunction();
+                    TransferFunction kTransfer = m_kVolOpacityPanel.getCompB().getOpacityTransferFunction();
                     raycastRenderWM.updateImages(1, kTransfer);
                 }
+                */
             }
             else
             {
-                if ( kSelectedComp == surRender.getVolOpacityPanel().getCompA() )
+                if ( kSelectedComp == m_kVolOpacityPanel.getCompA() )
                 {
-                    TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompA().getOpacityTransferFunction();
-                    raycastRenderWM.updateImages(0, kTransfer);
+                    TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
+                    m_kVolumeImageA.UpdateImages(kTransfer, 0);
                 }
                 else
                 {
-                    TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompA_GM().getOpacityTransferFunction();
-                    raycastRenderWM.updateImages(2, kTransfer);
+                    TransferFunction kTransfer = m_kVolOpacityPanel.getCompA_GM().getOpacityTransferFunction();
+                    m_kVolumeImageA.UpdateImages(kTransfer, 2);
                 }
             }
         }
@@ -2494,17 +2012,12 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      * @return  boolean confirming successful update
      */
     public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean forceShow, int interpMode) {
+//         if (surRender != null) {
+//             surRender.updateImages(LUTa, LUTb, forceShow, interpMode);
+//         }
 
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].updateLut(LUTa, LUTb);
-        }
-
-        if (surRender != null) {
-            surRender.updateImages(LUTa, LUTb, forceShow, interpMode);
-        }
-
-        if (raycastRenderWM != null) {
-            raycastRenderWM.updateImages(LUTa, LUTb);
+        if (m_kVolumeImageA != null) {
+            m_kVolumeImageA.UpdateImages(LUTa, LUTb);
         }
         return true;
     }
@@ -2514,9 +2027,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void updateProbePos() {
 
-        if (surRender != null) {
-            surRender.updateProbePos();
-        }
+//         if (surRender != null) {
+//             surRender.updateProbePos();
+//         }
     }
 
     /**
@@ -2524,9 +2037,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void updateSliceData() {
 
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].updateData();
-        }
+//         for (int iPlane = 0; iPlane < 3; iPlane++) {
+//             m_akPlaneRender[iPlane].updateData();
+//         }
         if ( raycastRenderWM != null )
         {
             raycastRenderWM.updateData(imageA);
@@ -2540,9 +2053,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void updateSurRenderWinlevel(boolean flag) {
 
-        if (surRender != null) {
-            surRender.setDisplayMode3D(flag);
-        }
+//         if (surRender != null) {
+//             surRender.setDisplayMode3D(flag);
+//         }
     }
 
 
@@ -2550,7 +2063,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      * Repaint the volume.
      */
     public void volumeRepaint() {
-        surRender.updateVolume(LUTa, LUTb, false);
+//         surRender.updateVolume(LUTa, LUTb, false);
         updateImages(true);
     }
 
@@ -2619,11 +2132,12 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
         screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
 
+        /** Indicates that image orientation is unknown type or not. */
+        boolean axialOrientation = true;
         if (imageOrientation == FileInfoBase.UNKNOWN_ORIENT) {
             axialOrientation = false;
         } else {
             axialOrientation = true;
-            orient = imageA.getAxisOrientation();
         }
 
         imageA.setImageOrder(ModelImage.IMAGE_A);
@@ -2657,12 +2171,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         buildHistoLUTPanel();
         buildOpacityPanel();
 
-        if (isEndoscopyEnable) {
-            buildFlythruPanel();
-            buildFlythruMovePanel();
-        }
 
-        if (isSurfaceRenderEnable) {
             buildDisplayPanel();
             buildViewPanel();
             buildLightPanel();
@@ -2674,23 +2183,16 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             buildMousePanel();
             buildGeodesic();
             buildSculpt();
-        }
 
-        if (isBrainsurfaceFlattenerEnable) {
-            buildBrainsurfaceFlattener();
-        }
 
         JPanel panelAxial = new JPanel(new BorderLayout());
-
-        panelAxial.add(m_akPlaneRender[0].getCanvas(), BorderLayout.CENTER);
+        panelAxial.add(m_akPlaneRender[0].GetCanvas(), BorderLayout.CENTER);
 
         JPanel panelSagittal = new JPanel(new BorderLayout());
-
-        panelSagittal.add(m_akPlaneRender[1].getCanvas(), BorderLayout.CENTER);
+        panelSagittal.add(m_akPlaneRender[1].GetCanvas(), BorderLayout.CENTER);
 
         JPanel panelCoronal = new JPanel(new BorderLayout());
-
-        panelCoronal.add(m_akPlaneRender[2].getCanvas(), BorderLayout.CENTER);
+        panelCoronal.add(m_akPlaneRender[2].GetCanvas(), BorderLayout.CENTER);
 
         setTitle();
 
@@ -2706,41 +2208,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 
         triImagePanel.setPreferredSize(new Dimension(triImagePanelWidth, triImagePanelHeight));
         triImagePanel.setMinimumSize(new Dimension(150, 50));
-
-        float widthAxial = m_akPlaneRender[0].getWidth();
-        float heightAxial = m_akPlaneRender[0].getHeight();
-        float widthCoronal = m_akPlaneRender[2].getWidth();
-        float heightCoronal = m_akPlaneRender[2].getHeight();
-        float widthSagittal = m_akPlaneRender[1].getWidth();
-        float heightSagittal = m_akPlaneRender[1].getHeight();
-
-        float leftWidth = Math.max(widthAxial, widthCoronal);
-
-        float upperHeight = Math.max(heightAxial, heightSagittal);
-        float rightWidth = widthSagittal;
-        float lowerHeight = heightCoronal;
-        float availableWidth = Toolkit.getDefaultToolkit().getScreenSize().width - 200 - (2 * getInsets().left) - 6;
-        float availableHeight = Toolkit.getDefaultToolkit().getScreenSize().height - 200 - getInsets().top -
-                                getInsets().bottom - panelToolbar.getSize().height - menuBar.getSize().height - 6;
-
-        float zoom = (availableWidth - 1) / (leftWidth + rightWidth - 1);
-
-        zoom = Math.min(zoom, (availableHeight - 1) / (upperHeight + lowerHeight - 1));
-
-        for (int i = -10; i <= 10; i++) {
-
-            if ((zoom >= Math.pow(2.0, (double) i)) && (zoom < Math.pow(2.0, (double) (i + 1)))) {
-                zoom = (float) Math.pow(2.0, (double) i);
-            }
-        }
-
-        if (!axialOrientation) {
-            zoom = 1.0f;
-        }
-
-        if (((zoom * leftWidth) > (triImagePanelWidth / 3.0f)) || ((zoom * upperHeight) > triImagePanelHeight)) {
-            zoom *= 0.5f;
-        }
 
         GridBagConstraints gbc2 = new GridBagConstraints();
 
@@ -2762,15 +2229,15 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 
         setLocation(100, 100);
 
-        if (leftPanelRenderMode == SURFACE) {
-            surfaceRenderPanel.add(surRender.getCanvas(), BorderLayout.CENTER);
-            gpuPanel.add(raycastRenderWM.GetCanvas(), BorderLayout.CENTER);
-            imagePanel.add(surfaceRenderPanel, BorderLayout.EAST);
-            surfaceRenderPanel.setVisible(true);
-            imagePanel.add(gpuPanel, BorderLayout.WEST);
-            gpuPanel.setVisible(true);
-            raycastRenderWM.setVisible(false);
-        }
+//         if (leftPanelRenderMode == SURFACE) {
+//             surfaceRenderPanel.add(surRender.getCanvas(), BorderLayout.CENTER);
+        gpuPanel.add(raycastRenderWM.GetCanvas(), BorderLayout.CENTER);
+//             imagePanel.add(surfaceRenderPanel, BorderLayout.EAST);
+//             surfaceRenderPanel.setVisible(true);
+        imagePanel.add(gpuPanel, BorderLayout.WEST);
+        gpuPanel.setVisible(true);
+        raycastRenderWM.setVisible(false);
+//         }
 
         int imagePanelWidth = (int) (screenWidth * 0.51f);
         int imagePanelHeight = (int) (screenHeight * 0.43f);
@@ -2823,9 +2290,8 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         sculptWidth = imagePanelWidth - (2 * getInsets().left);
         sculptHeight = imagePanelHeight - getInsets().top - getInsets().bottom;
 
-        surRender.getSculptorPanel().setFrameSize(sculptWidth, sculptHeight);
-
-        enableSurfaceRender();
+//         surRender.getSculptorPanel().setFrameSize(sculptWidth, sculptHeight);
+        enableVolumeRender();
     }
 
     /**
@@ -2889,13 +2355,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         toolbarBuilder = new ViewToolBarBuilder(this);
         buildViewToolbar();
 
-        if (isEndoscopyEnable) {
-            buildFlyThruToolbar();
-        }
-
-        if (isSurfaceRenderEnable) {
+//        if (isSurfaceRenderEnable) {
             buildSurRenderToolbar();
-        }
+//        }
 
         GridBagConstraints gbc = new GridBagConstraints();
 
@@ -2908,26 +2370,10 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 //         gbc.weightx = 1;
 //         gbc.weighty = 1;
 
-        if (leftPanelRenderMode == SURFACE) {
-            panelToolbar.add(surfaceToolBar, gbc);
-        }
+ //       if (leftPanelRenderMode == SURFACE) {
+        panelToolbar.add(surfaceToolBar, gbc);
+ //       }
     }
-
-    /**
-     * Build the fly through toolbar.
-     */
-    private void buildFlyThruToolbar() {
-        flyThruToolbar = new JToolBar();
-        flyThruToolbar.setBorder(etchedBorder);
-        flyThruToolbar.setBorderPainted(true);
-        flyThruToolbar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
-        flyThruToolbar.setFloatable(false);
-        flyThruToolbar.add(toolbarBuilder.buildButton("OpenFile", "Open Endoscopy File", "open"));
-        flyThruToolbar.add(toolbarBuilder.buildButton("OpenSurface", "Open Endoscopy Surface File", "smooth1"));
-        flyThruToolbar.add(toolbarBuilder.buildButton("FlythruControl", "Move control panel", "control"));
-        flyThruToolbar.add(ViewToolBarBuilder.makeSeparator());
-    }
-
 
     /**
      * Build the surface render toolbar.
@@ -2999,6 +2445,13 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         kShaderButton.setFocusPainted(true);
         kShaderButton.setMargin(new Insets(0, 0, 0, 0));
         surfaceToolBar.add(kShaderButton);
+
+        surfaceToolBar.add(ViewToolBarBuilder.makeSeparator());
+        JLabel kBlendLabel = new JLabel("Volume Blend" );
+        surfaceToolBar.add(kBlendLabel);
+        m_kVolumeBlendSlider = new JSlider( 0, 100, 75 );
+        m_kVolumeBlendSlider.addChangeListener(this);
+        surfaceToolBar.add(m_kVolumeBlendSlider);
     }
 
 
@@ -3013,26 +2466,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         viewToolBar.setLayout(new GridBagLayout());
         viewToolBar.setFloatable(false);
 
-        if (isSurfaceRenderEnable && (isEndoscopyEnable || isRayCastEnable)) {
-            viewToolBar.add(toolbarBuilder.buildButton("SurRender", "Surface Renderer", "surfacerender"));
-        }
-
-        if (isEndoscopyEnable) {
-            viewToolBar.add(toolbarBuilder.buildButton("Flythru", "Fly Through Renderer", "flythrurender"));
-        }
-
-        if (isRayCastEnable) {
-            viewToolBar.add(toolbarBuilder.buildButton("VolRender", "Volume Renderer", "raycastrender"));
-        }
-
-        if (rightPanelRenderMode != NONE) {
-            viewToolBar.add(toolbarBuilder.buildButton("DualPanelRender", "Dual Panel Renderer", "2frametri"));
-        }
-
-        if (isSurfaceRenderEnable && (isEndoscopyEnable || isRayCastEnable)) {
-            viewToolBar.add(ViewToolBarBuilder.makeSeparator());
-        }
-
         viewToolBar.add(toolbarBuilder.buildButton("ResetX", "Reset X Axis", "xalign"));
         viewToolBar.add(toolbarBuilder.buildButton("ResetY", "Reset Y Axis", "yalign"));
         viewToolBar.add(toolbarBuilder.buildButton("ResetZ", "Reset Z Axis", "zalign"));
@@ -3042,18 +2475,31 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         viewToolBar.add(ViewToolBarBuilder.makeSeparator());
         viewToolBar.add(toolbarBuilder.buildButton("Slices", "Slice render", "triplanar"));
         viewToolBar.add(toolbarBuilder.buildButton("Opacity", "Surface volume renderer", "renderer"));
+
+        m_kDisplayVolumeCheck = new JCheckBox( "Display RayCast Volume" );
+        m_kDisplayVolumeCheck.setSelected(false);
+        m_kDisplayVolumeCheck.setActionCommand( "VolumeRayCast");
+        m_kDisplayVolumeCheck.addActionListener(this);
+        viewToolBar.add(m_kDisplayVolumeCheck);
+
+        m_kDisplaySlicesCheck = new JCheckBox( "Display Slices" );
+        m_kDisplaySlicesCheck.setSelected(true);
+        m_kDisplaySlicesCheck.setActionCommand( "VolumeSlices");
+        m_kDisplaySlicesCheck.addActionListener(this);
+        viewToolBar.add(m_kDisplaySlicesCheck);
+
         viewToolBar.add(toolbarBuilder.buildButton("Stereo", "Stereo volume renderer", "stereo"));
         viewToolBar.add(ViewToolBarBuilder.makeSeparator());
         viewToolBar.add(toolbarBuilder.buildButton("Sculpt", "Sculpt and Remove Volume Region", "sculpt"));
         viewToolBar.add(ViewToolBarBuilder.makeSeparator());
         clipPlaneButton = toolbarBuilder.buildButton("Clipping", "Clipping Plane", "clip");
-        clipPlaneButton.setEnabled(false);
+        clipPlaneButton.setEnabled(true);
         viewToolBar.add(clipPlaneButton);
         clipButton = toolbarBuilder.buildButton("InvokeClipping", "Enable all clipping planes", "clipall");
-        clipButton.setEnabled(false);
+        clipButton.setEnabled(true);
         viewToolBar.add(clipButton);
         clipDisableButton = toolbarBuilder.buildButton("DisableClipping", "Disable all clipping planes", "disableclip");
-        clipDisableButton.setEnabled(false);
+        clipDisableButton.setEnabled(true);
         viewToolBar.add(clipDisableButton);
         clipMaskButton = toolbarBuilder.buildButton("CropClipVolume", "Crop the clipping volume", "maskvolume");
         clipMaskButton.setEnabled(false);
@@ -3067,15 +2513,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         viewToolBar.add(ViewToolBarBuilder.makeSeparator());
         viewToolBar.add(toolbarBuilder.buildButton("ChangeLight", "Add light bulb to viewer", "lightsmall"));
         viewToolBar.add(ViewToolBarBuilder.makeSeparator());
-
-        if (isRayCastEnable) {
-            ButtonGroup cursorGroup = new ButtonGroup();
-            viewToolBar.add(toolbarBuilder.buildToggleButton("parallelrotation", "Parallel rotation", "rotateparallel",
-                                                             cursorGroup));
-            viewToolBar.add(toolbarBuilder.buildToggleButton("rotatearbitrary", "Arbitrary rotation",
-                                                             "rotateunparallel", cursorGroup));
-            viewToolBar.add(ViewToolBarBuilder.makeSeparator());
-        }
 
         rfaButton = toolbarBuilder.buildButton("RFA", "Add probe to viewer", "rfa");
         viewToolBar.add(rfaButton);
@@ -3176,58 +2613,56 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             panelHistoRGB.resizePanel(maxPanelWidth, height);
         }
 
-        if (isEndoscopyEnable) {
-            flythruControl.resizePanel(maxPanelWidth, height);
-        }
+//         if (isSurfaceRenderEnable) {
 
-        if (isSurfaceRenderEnable) {
+//             if (surRender.getSurfaceDialog() != null) {
+//                 surRender.getSurfaceDialog().resizePanel(maxPanelWidth, height);
+//             }
 
-            if (surRender.getSurfaceDialog() != null) {
-                surRender.getSurfaceDialog().resizePanel(maxPanelWidth, height);
-            }
+//             if (surRender.getViewDialog() != null) {
+//                 surRender.getViewDialog().resizePanel(maxPanelWidth, height);
+//             }
 
-            if (surRender.getViewDialog() != null) {
-                surRender.getViewDialog().resizePanel(maxPanelWidth, height);
-            }
+        sliceGUI.resizePanel(maxPanelWidth, height);
+//             if (surRender.getSlicePanel() != null) {
+//                 surRender.getSlicePanel().resizePanel(maxPanelWidth, height);
+//             }
 
-            if (surRender.getSlicePanel() != null) {
-                surRender.getSlicePanel().resizePanel(maxPanelWidth, height);
-            }
+//             if (((SurfaceRender) surRender).getDisplayDialog() != null) {
+//                 ((SurfaceRender) surRender).getDisplayDialog().resizePanel(maxPanelWidth, height);
+//             }
 
-            if (((SurfaceRender) surRender).getDisplayDialog() != null) {
-                ((SurfaceRender) surRender).getDisplayDialog().resizePanel(maxPanelWidth, height);
-            }
+        m_kLightsPanel.resizePanel(maxPanelWidth, height);
+//             if (surRender.getSurfaceDialog().getLightDialog() != null) {
+//                 surRender.getSurfaceDialog().getLightDialog().resizePanel(maxPanelWidth, height);
+//             }
 
-            if (surRender.getSurfaceDialog().getLightDialog() != null) {
-                surRender.getSurfaceDialog().getLightDialog().resizePanel(maxPanelWidth, height);
-            }
+//             if (surRender.getClipDialog() != null) {
+        ((JPanelClip_WM)clipBox).resizePanel(maxPanelWidth, height);
+//             }
 
-            if (surRender.getClipDialog() != null) {
-                surRender.getClipDialog().resizePanel(maxPanelWidth, height);
-            }
+//             if (surRender.getProbeDialog() != null) {
+//                 surRender.getProbeDialog().resizePanel(maxPanelWidth, height);
+//             }
 
-            if (surRender.getProbeDialog() != null) {
-                surRender.getProbeDialog().resizePanel(maxPanelWidth, height);
-            }
+//             if (surRender.getCameraControl() != null) {
+//                 surRender.getCameraControl().resizePanel(maxPanelWidth, height);
+//             }
 
-            if (surRender.getCameraControl() != null) {
-                surRender.getCameraControl().resizePanel(maxPanelWidth, height);
-            }
+//             if (m_kVolOpacityPanel != null) {
+//                 m_kVolOpacityPanel.resizePanel(maxPanelWidth, height);
+//             }
 
-            if (surRender.getVolOpacityPanel() != null) {
-                surRender.getVolOpacityPanel().resizePanel(maxPanelWidth, height);
-            }
+//             if (surRender.getGeodesicPanel() != null) {
+//                 surRender.getGeodesicPanel().resizePanel(maxPanelWidth, height);
+//             }
 
-            if (surRender.getGeodesicPanel() != null) {
-                surRender.getGeodesicPanel().resizePanel(maxPanelWidth, height);
-            }
+//             if (surRender.getSculptorPanel() != null) {
+//                 surRender.getSculptorPanel().resizePanel(maxPanelWidth, height);
+//             }
+//         }
 
-            if (surRender.getSculptorPanel() != null) {
-                surRender.getSculptorPanel().resizePanel(maxPanelWidth, height);
-            }
-        }
-
-        if (isRayCastEnable) {
+        //if (isRayCastEnable) {
 
 //             if (raycastRender.getVolOpacity() != null) {
 //                 raycastRender.getVolOpacity().resizePanel(maxPanelWidth, height);
@@ -3244,7 +2679,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 //             if (raycastRender.getLightControlPanel() != null) {
 //                 raycastRender.getLightControlPanel().resizePanel(maxPanelWidth, height);
 //             }
-        }
+        //}
     }
 
     /**
@@ -3253,12 +2688,12 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      * @param  position  DOCUMENT ME!
      */
     private void set3DModelPosition(Point3Df position) {
-        Point3Df screen = new Point3Df();
-        surRender.ModelToScreen(position, screen);
+//         Point3Df screen = new Point3Df();
+//         surRender.ModelToScreen(position, screen);
 
-        modelViewLabelVals[0].setText("X: " + screen.x);
-        modelViewLabelVals[1].setText("Y: " + screen.y);
-        modelViewLabelVals[2].setText("Z: " + screen.z);
+//         modelViewLabelVals[0].setText("X: " + screen.x);
+//         modelViewLabelVals[1].setText("Y: " + screen.y);
+//         modelViewLabelVals[2].setText("Z: " + screen.z);
     }
 
     /**
@@ -3330,18 +2765,13 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         }
     }
 
-    public GPUVolumeRender getRaycastRenderWM()
-    {
-        return raycastRenderWM;
-    }
-
     public void setGradientMagnitude( boolean bShow )
     {
         if ( raycastRenderWM != null )
         {
             raycastRenderWM.SetGradientMagnitude(bShow);
-            TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompA_GM().getOpacityTransferFunction();
-            raycastRenderWM.updateImages(2, kTransfer);
+            TransferFunction kTransfer = m_kVolOpacityPanel.getCompA_GM().getOpacityTransferFunction();
+            m_kVolumeImageA.UpdateImages(kTransfer, 2);
         }
     }
 

@@ -317,17 +317,17 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
             renderBase.setBoxColor(color);
             if (renderBase instanceof SurfaceRender) {
                 ViewJFrameVolumeView kParent = ((SurfaceRender) renderBase).getParentFrame();
-                if ( kParent instanceof ViewJFrameVolumeViewWM )
+                if ( kParent instanceof ViewJFrameVolumeViewWildMagic )
                 {
-                    ((ViewJFrameVolumeViewWM)kParent).setBoundingBoxColor(color);
+                    ((ViewJFrameVolumeViewWildMagic)kParent).setBoundingBoxColor(color);
                 }                    
             }        } else if (button == colorButtonBackground) {
             renderBase.setBackgroundColor(color);
             if (renderBase instanceof SurfaceRender) {
                 ViewJFrameVolumeView kParent = ((SurfaceRender) renderBase).getParentFrame();
-                if ( kParent instanceof ViewJFrameVolumeViewWM )
+                if ( kParent instanceof ViewJFrameVolumeViewWildMagic )
                 {
-                    ((ViewJFrameVolumeViewWM)kParent).setBackgroundColor(color);
+                    ((ViewJFrameVolumeViewWildMagic)kParent).setBackgroundColor(color);
                 }                    
             }
         }
@@ -485,7 +485,7 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
         contentBox.add(cubePanel);
         contentBox.add(projectionTypePanel);
         if ( (renderBase instanceof SurfaceRender) &&
-             !( ((SurfaceRender)renderBase).getParentFrame() instanceof ViewJFrameVolumeViewWM ))
+             !( ((SurfaceRender)renderBase).getParentFrame() instanceof ViewJFrameVolumeViewWildMagic ))
         {
             contentBox.add(viewTexturePanel);
         }
@@ -602,9 +602,9 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
         kMaterialState.Shininess = kMaterial.getShininess();
 
         if ( (renderBase instanceof SurfaceRender) &&
-             ( ((SurfaceRender)renderBase).getParentFrame() instanceof ViewJFrameVolumeViewWM ))
+             ( ((SurfaceRender)renderBase).getParentFrame() instanceof ViewJFrameVolumeViewWildMagic ))
         {
-            ((ViewJFrameVolumeViewWM)((SurfaceRender)renderBase).getParentFrame()).getRaycastRenderWM().SetMaterialState( kMaterialState );
+            ((ViewJFrameVolumeViewWildMagic)((SurfaceRender)renderBase).getParentFrame()).getRaycastRenderWM().SetMaterialState( kMaterialState );
         }
     }
 

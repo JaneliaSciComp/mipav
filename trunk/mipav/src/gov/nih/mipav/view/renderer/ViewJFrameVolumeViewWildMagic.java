@@ -46,7 +46,7 @@ import javax.vecmath.*;
  *
  * @author  Ruida Cheng
  */
-public class ViewJFrameVolumeViewWildMagic extends ViewJFrameVolumeViewWM implements MouseListener, ItemListener, ChangeListener {
+public class ViewJFrameVolumeViewWildMagic extends ViewJFrameVolumeView implements MouseListener, ItemListener, ChangeListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -387,6 +387,7 @@ public class ViewJFrameVolumeViewWildMagic extends ViewJFrameVolumeViewWM implem
      *
      * @return  the volume renderer progress bar
 
+
     public static final JProgressBar getRendererProgressBar() {
 
         if (rendererProgressBar == null) {
@@ -396,6 +397,11 @@ public class ViewJFrameVolumeViewWildMagic extends ViewJFrameVolumeViewWM implem
         return rendererProgressBar;
     }
      */
+    public GPUVolumeRenderWM getRaycastRenderWM()
+    {
+        return raycastRenderWM;
+    }
+
     /**
      * Calls various methods depending on the action.
      *
