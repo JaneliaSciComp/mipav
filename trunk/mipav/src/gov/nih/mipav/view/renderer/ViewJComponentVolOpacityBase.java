@@ -40,7 +40,7 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
     public static final int ALL = 11;
 
     /** DOCUMENT ME! */
-    protected static final int INACTIVE = -99;
+    public static final int INACTIVE = -99;
 
     /** The default background color of JPanels (look and feel dependent). */
     protected static final Color backgroundColor = new JPanel().getBackground();

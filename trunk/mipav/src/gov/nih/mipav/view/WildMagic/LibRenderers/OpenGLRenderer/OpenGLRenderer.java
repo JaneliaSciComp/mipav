@@ -24,6 +24,8 @@ import javax.media.opengl.*;
 import javax.media.opengl.glu.*;
 import com.sun.opengl.cg.*;
 
+import java.awt.GraphicsEnvironment;
+import java.awt.GraphicsDevice;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -50,7 +52,7 @@ public class OpenGLRenderer extends Renderer
      * @param iWidth, the window width
      * @param iHeight, the window height
      */
-    public OpenGLRenderer (
+    public OpenGLRenderer ( 
                     FrameBuffer.FormatType eFormat,
                     FrameBuffer.DepthType eDepth, FrameBuffer.StencilType eStencil,
                     FrameBuffer.BufferingType eBuffering,
@@ -78,11 +80,23 @@ public class OpenGLRenderer extends Renderer
     }
 
     /** Initialize canvas with hardware accelerated capabilites. */
-    public void InitCanvas()
+    public void InitCanvas( )
     {
         GLCapabilities kGlCapabilities = new GLCapabilities();
         kGlCapabilities.setHardwareAccelerated(true);
-        m_kCanvas = new GLCanvas(kGlCapabilities);
+        if ( ms_kContext == null )
+        {
+            m_kCanvas = new GLCanvas(kGlCapabilities);
+            ms_kContext = m_kCanvas.getContext();
+        }
+        else
+        {
+            m_kCanvas = new GLCanvas        
+            (kGlCapabilities, 
+                    new DefaultGLCapabilitiesChooser(),
+                    ms_kContext, GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice() );
+            //m_kCanvas.createContext(ms_kContext);
+        }
     }
 
 
@@ -124,7 +138,7 @@ public class OpenGLRenderer extends Renderer
         //m_kDrawable.setGL(new DebugGL(m_kDrawable.getGL()));
 
         // information about the context:
-        System.err.println("GL context synchronized: " + m_kDrawable.getContext().isSynchronized());
+        //System.err.println("GL context synchronized: " + m_kDrawable.getContext().isSynchronized());
         // vertices always exist
         gl.glEnableClientState(GL.GL_VERTEX_ARRAY);
         // colors disabled, current color is WHITE
@@ -1724,7 +1738,7 @@ public class OpenGLRenderer extends Renderer
         pkResource.ID = m_aiParams[0];
         gl.glBindTexture(eTarget,pkResource.ID);
 
-        //System.err.println( "LoadTexture" + pkTexture.GetImage().GetName() + " " + pkResource.ID );
+        System.err.println( "LoadTexture  " + pkTexture.GetImage().GetName() + " " + pkResource.ID );
 
         // Set the filter mode.
         Texture.FilterType eFType = pkTexture.GetFilterType();
@@ -1799,7 +1813,7 @@ public class OpenGLRenderer extends Renderer
             else
             {
                 gl.glTexImage2D(eTarget,0,iComponent,pkImage.GetBound(0),
-                                pkImage.GetBound(1),0,eFormat,eIType,0);
+                                pkImage.GetBound(1),0,eFormat,eIType,aucData);
                 // set up depth comparison
                 gl.glTexParameteri(eTarget,GL.GL_TEXTURE_COMPARE_MODE,
                                 GL.GL_COMPARE_R_TO_TEXTURE);
@@ -1904,6 +1918,8 @@ public class OpenGLRenderer extends Renderer
 
         boolean bDepth = pkTexture.IsDepthTexture();
 
+       // System.err.println( "RELoadTexture  " + pkTexture.GetImage().GetName() + " " + pkResource.ID );
+        
         if ( eSType == SamplerInformation.Type.SAMPLER_1D )
         {
             if (bNoMip)
@@ -2324,6 +2340,8 @@ public class OpenGLRenderer extends Renderer
         Texture pkTexture = pkResource.TextureObject;
 
         SamplerInformation pkSI = pkTexture.GetSamplerInformation();
+        //System.err.print( "    " + pkTexture.GetImage().GetName() + " " + pkSI.GetTextureUnit() + " " + pkResource.ID );
+
         SamplerInformation.Type eSType = pkSI.GetType();
         int iTextureUnit = pkSI.GetTextureUnit();
         int eTarget = ms_aeSamplerTypes[eSType.Value()];
@@ -2334,11 +2352,15 @@ public class OpenGLRenderer extends Renderer
         {
             int iBaseRegister = pkSI.GetBaseRegister();
             gl.glUniform1i( iBaseRegister, iTextureUnit);
+            //System.err.println( " "  + iBaseRegister );
+        }      
+        else
+        {
+            //System.err.println("");
         }
-        
         gl.glBindTexture(eTarget,pkResource.ID);
     }
-
+    
     /**
      * Disable the Texture specified by the ResourceIdentifer parameter pkID.
      * @param pkID the ResourceIdentifier describing the Texture to disable.
@@ -2757,6 +2779,8 @@ public class OpenGLRenderer extends Renderer
 
     /** GLCanvas for Java/JOGL */
     private GLCanvas m_kCanvas;
+    private static GLContext ms_kContext = null;
+    
     /** JOGL GLAutoDrawable reference */
     private GLAutoDrawable m_kDrawable = null;
     

@@ -63,14 +63,14 @@ public class BumpMaps extends JavaApplication3D
         System.out.println(testVec.X() + " " + testVec.Y() + " " +testVec.Z() + " done.");
         //System.out.println("Hello world!");
         BumpMaps kWorld = new BumpMaps();        
-        Frame frame = new Frame(m_acWindowTitle);
+        Frame frame = new Frame(kWorld.GetWindowTitle());
 
         //GLCanvas canvas = new GLCanvas();
   
 
 
         frame.add( kWorld.GetCanvas() );
-        frame.setSize(m_iWidth, m_iHeight);
+        frame.setSize(kWorld.GetWidth(), kWorld.GetHeight());
         /* Animator serves the purpose of the idle function, calls display: */
         final Animator animator = new Animator( kWorld.GetCanvas() );
         frame.addWindowListener(new WindowAdapter() {

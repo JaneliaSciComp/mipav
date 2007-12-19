@@ -5,6 +5,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.WildMagic.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -155,6 +156,15 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
     public JPanelVolOpacityBase(RenderViewBase theParentFrame) {
         super(theParentFrame);
     }
+
+    /**
+     * Base for the opacity objects.
+     *
+     */
+    public JPanelVolOpacityBase(VolumeViewer theParentFrame) {
+        super(theParentFrame);
+    }
+
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -311,6 +321,15 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
 
         // This instance is stored in the base class.
         return renderBase;
+    }
+    
+
+    /**
+     */
+    public VolumeViewer getParentVolumeViewer() {
+
+        // This instance is stored in the base class.
+        return m_kVolumeViewer;
     }
 
     /**
@@ -571,9 +590,9 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
             if ( renderBase instanceof gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
             {
                 if ( ((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).getParentFrame()
-                     instanceof ViewJFrameVolumeViewWM )
+                     instanceof ViewJFrameVolumeViewWildMagic )
                 {
-                    ((ViewJFrameVolumeViewWM)((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).getParentFrame()).
+                    ((ViewJFrameVolumeViewWildMagic)((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).getParentFrame()).
                         updateBlend();
                 }
             }
@@ -583,11 +602,15 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
             if ( renderBase instanceof gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
             {
                 if ( ((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).getParentFrame()
-                     instanceof ViewJFrameVolumeViewWM )
+                     instanceof ViewJFrameVolumeViewWildMagic )
                 {
-                    ((ViewJFrameVolumeViewWM)((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).getParentFrame()).
+                    ((ViewJFrameVolumeViewWildMagic)((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).getParentFrame()).
                     updateRayTracingSteps();
                 }
+            }
+            else if ( m_kVolumeViewer != null )
+            {
+                m_kVolumeViewer.updateRayTracingSteps();
             }
         }
     }
@@ -688,8 +711,15 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
         stepsSlider.setPaintLabels(true);
         stepsSlider.addMouseListener(this);
         stepsSlider.addChangeListener(this);
-        stepsSlider.setEnabled(((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).getParentFrame()
-                instanceof ViewJFrameVolumeViewWM);
+        if ( renderBase != null )
+        {
+            stepsSlider.setEnabled(((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).getParentFrame()
+                    instanceof ViewJFrameVolumeViewWildMagic);
+        }
+        else if ( m_kVolumeViewer != null )
+        {
+            stepsSlider.setEnabled(true);
+        }
 
         JPanel stepsPanel = new JPanel(new GridLayout(1, 1));
 
@@ -945,6 +975,10 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
         if ( renderBase instanceof gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
         {
             ((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).updateParent();
+        }
+        else if ( m_kVolumeViewer != null )
+        {
+            m_kVolumeViewer.updateImages(true);
         }
     }
 }

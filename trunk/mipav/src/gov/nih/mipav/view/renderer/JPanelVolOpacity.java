@@ -7,6 +7,7 @@ import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.WildMagic.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -62,6 +63,24 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
         initialize();
     }
 
+    /**
+     * Creates new dialog for converting type of image.
+     *
+     * @param  theParentFrame  Parent frame.
+     * @param  _imgA           Source imageA.
+     * @param  _imgB           Source imageB.
+     */
+    public JPanelVolOpacity(VolumeViewer theParentFrame, ModelImage _imgA, ModelImage _imgB) {
+        super(theParentFrame);
+        
+        rendererProgressBar = VolumeViewer.getRendererProgressBar();
+
+        
+        imageA = _imgA;
+        imageB = _imgB;
+        initialize();
+    }
+
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -94,9 +113,9 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
         {
             gov.nih.mipav.view.renderer.surfaceview.SurfaceRender kParent = (gov.nih.mipav.view.renderer.surfaceview.SurfaceRender) renderBase;
             ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
-            if ( kParentFrame instanceof ViewJFrameVolumeViewWM )
+            if ( kParentFrame instanceof ViewJFrameVolumeViewWildMagic )
             {
-                ((ViewJFrameVolumeViewWM)kParentFrame).updateImages(true);
+                ((ViewJFrameVolumeViewWildMagic)kParentFrame).updateImages(true);
             }
         }
     } // end actionPerformed()
@@ -136,9 +155,9 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
         {
             gov.nih.mipav.view.renderer.surfaceview.SurfaceRender kParent = (gov.nih.mipav.view.renderer.surfaceview.SurfaceRender) renderBase;
             ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
-            if ( kParentFrame instanceof ViewJFrameVolumeViewWM )
+            if ( kParentFrame instanceof ViewJFrameVolumeViewWildMagic )
             {
-                ((ViewJFrameVolumeViewWM)kParentFrame).setGradientMagnitude(true);
+                ((ViewJFrameVolumeViewWildMagic)kParentFrame).setGradientMagnitude(true);
             }
         }            
     }
@@ -255,9 +274,9 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
         {
             gov.nih.mipav.view.renderer.surfaceview.SurfaceRender kParent = (gov.nih.mipav.view.renderer.surfaceview.SurfaceRender) renderBase;
             ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
-            if ( kParentFrame instanceof ViewJFrameVolumeViewWM )
+            if ( kParentFrame instanceof ViewJFrameVolumeViewWildMagic )
             {
-                ((ViewJFrameVolumeViewWM)kParentFrame).setGradientMagnitude(false);
+                ((ViewJFrameVolumeViewWildMagic)kParentFrame).setGradientMagnitude(false);
             }
         }  
     }

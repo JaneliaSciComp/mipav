@@ -571,9 +571,9 @@ public class JPanelVolOpacityBaseWM extends JPanelRendererBaseWM implements Chan
             if ( renderBase instanceof JavaApplication3DWM )
             {
                 if ( ((JavaApplication3DWM)renderBase).getParentFrame()
-                     instanceof ViewJFrameVolumeViewWM )
+                     instanceof ViewJFrameVolumeViewWildMagic )
                 {
-                    ((ViewJFrameVolumeViewWM)((JavaApplication3DWM)renderBase).getParentFrame()).
+                    ((ViewJFrameVolumeViewWildMagic)((JavaApplication3DWM)renderBase).getParentFrame()).
                         updateBlend();
                 }
             }
@@ -583,9 +583,9 @@ public class JPanelVolOpacityBaseWM extends JPanelRendererBaseWM implements Chan
             if ( renderBase instanceof JavaApplication3DWM )
             {
                 if ( ((JavaApplication3DWM)renderBase).getParentFrame()
-                     instanceof ViewJFrameVolumeViewWM )
+                     instanceof ViewJFrameVolumeViewWildMagic )
                 {
-                    ((ViewJFrameVolumeViewWM)((JavaApplication3DWM)renderBase).getParentFrame()).
+                    ((ViewJFrameVolumeViewWildMagic)((JavaApplication3DWM)renderBase).getParentFrame()).
                     updateRayTracingSteps();
                 }
             }
@@ -689,7 +689,7 @@ public class JPanelVolOpacityBaseWM extends JPanelRendererBaseWM implements Chan
         stepsSlider.addMouseListener(this);
         stepsSlider.addChangeListener(this);
         stepsSlider.setEnabled(((JavaApplication3DWM)renderBase).getParentFrame()
-                instanceof ViewJFrameVolumeViewWM);
+                instanceof ViewJFrameVolumeViewWildMagic);
 
         JPanel stepsPanel = new JPanel(new GridLayout(1, 1));
 

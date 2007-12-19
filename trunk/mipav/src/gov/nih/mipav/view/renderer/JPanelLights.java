@@ -6,6 +6,7 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.surfaceview.*;
+import gov.nih.mipav.view.renderer.WildMagic.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -242,6 +243,9 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
     /** x, y, z box size. */
     private float xBox, yBox, zBox, maxBox;
 
+    private GPUVolumeRender_WM m_kGPUVolumeRender = null;
+
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -375,6 +379,137 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
         setSelectedIndex(0);
         updateSoftwareLights();
     }
+
+    /**
+     * Constructor.
+     *
+     */
+    public JPanelLights(VolumeViewer kViewer) {
+
+        super(kViewer);
+        m_kGPUVolumeRender = kViewer.getVolumeGPU();
+        m_kPanelSurface = null;
+        m_kRenderSurface = null;
+
+        ModelImage image = kViewer.getImageA();
+        int xDim = image.getExtents()[0];
+        int yDim = image.getExtents()[1];
+        int zDim = image.getExtents()[2];
+        float xScale = Math.abs(image.getResolutions(0)[0]);
+        float yScale = Math.abs(image.getResolutions(0)[1]);
+        float zScale = Math.abs(image.getResolutions(0)[2]);
+
+        if ((xScale == 0.0f) || (yScale == 0.0f) || (zScale == 0.0f)) {
+            xScale = 1.0f;
+            yScale = 1.0f;
+            zScale = 1.0f;
+        }
+
+        xBox = (xDim - 1) * xScale;
+        yBox = (yDim - 1) * yScale;
+        zBox = (zDim - 1) * zScale;
+        maxBox = xBox;
+
+        if (yBox > maxBox) {
+            maxBox = yBox;
+        }
+
+        if (zBox > maxBox) {
+            maxBox = zBox;
+        }
+
+        // Setup for the lights.
+        m_aiLightScale = new int[LIGHT_INDEX_MAX];
+        m_akLights = new GeneralLight[LIGHT_INDEX_MAX];
+
+        GeneralLight kLight;
+
+        // Ambient light for model.
+        kLight = new GeneralLight(GeneralLight.MASK_AMBIENT, xBox / 2.0f, yBox / 2.0f, zBox / 2.0f);
+        kLight.setDescription("Ambient Light");
+        kLight.setIntensity(0.6f);
+        kLight.setTarget(0.0f, 0.0f, 0.0f);
+        kLight.setTypeAmbient();
+        kLight.enable(true);
+        m_akLights[LIGHT_INDEX_AMBIENT] = kLight;
+        m_aiLightScale[LIGHT_INDEX_AMBIENT] = 1;
+
+        // Model lights at corners of the volume.
+        for (int i = 0; i < 8; i++) {
+            float fX = ((0 != (i & 1)) ? +1.0f : -1.0f);
+            float fY = ((0 != (i & 2)) ? +1.0f : -1.0f);
+            float fZ = ((0 != (i & 4)) ? +1.0f : -1.0f);
+            int iTypeMask = GeneralLight.MASK_ALL ^ GeneralLight.MASK_AMBIENT;
+            kLight = new GeneralLight(iTypeMask, xBox / 2.0f, yBox / 2.0f, zBox / 2.0f);
+            kLight.setDescription(new String("Object Light " + i));
+            kLight.setTypeDirectional();
+            kLight.setPosition(fX, fY, fZ);
+            kLight.setTarget(0.0f, 0.0f, 0.0f);
+            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i] = kLight;
+            m_aiLightScale[LIGHT_INDEX_MODEL_X0Y0Z0 + i] = 1;
+        }
+
+        // Directional light for world.
+        kLight = new GeneralLight(GeneralLight.MASK_ALL ^ GeneralLight.MASK_AMBIENT, maxBox / 2.0f, maxBox / 2.0f,
+                                  maxBox / 2.0f);
+        kLight.setDescription("Static Light");
+        kLight.setTypeDirectional();
+        kLight.enable(true);
+        kLight.setPosition(0.00f, 0.00f, 3.0f);
+        kLight.setTarget(0.0f, 0.0f, 0.0f);
+        m_akLights[LIGHT_INDEX_STATIC] = kLight;
+        m_aiLightScale[LIGHT_INDEX_STATIC] = 3;
+
+
+        // Create world/model lights.
+        m_akWorldLights = new GeneralLight[] { m_akLights[LIGHT_INDEX_STATIC], };
+        m_akModelLights = new GeneralLight[] {
+                              m_akLights[LIGHT_INDEX_AMBIENT], m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0],
+                              m_akLights[LIGHT_INDEX_MODEL_X1Y0Z0], m_akLights[LIGHT_INDEX_MODEL_X0Y1Z0],
+                              m_akLights[LIGHT_INDEX_MODEL_X1Y1Z0], m_akLights[LIGHT_INDEX_MODEL_X0Y0Z1],
+                              m_akLights[LIGHT_INDEX_MODEL_X1Y0Z1], m_akLights[LIGHT_INDEX_MODEL_X0Y1Z1],
+                              m_akLights[LIGHT_INDEX_MODEL_X1Y1Z1],
+                          };
+
+        // Scroll panel that hold the control panel layout in order to use JScrollPane
+        drawPanel = new JPanel(new BorderLayout());
+
+        // Put the drawing area in a scroll pane.
+        scroller = new JScrollPane(drawPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                   JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+        mainPanel = new JPanel();
+        mainPanel.setLayout(new BorderLayout());
+
+        // initialize GUI components
+        Box contentBox = new Box(BoxLayout.Y_AXIS);
+        Box centerBox = new Box(BoxLayout.Y_AXIS);
+        controlPanelBox = new Box(BoxLayout.Y_AXIS);
+
+        Box leftBox = new Box(BoxLayout.Y_AXIS);
+
+        // build list panel
+        buildListPanel();
+        leftBox.add(scrollPanel);
+        centerBox.add(leftBox);
+
+        // build control panel
+        buildControlPanel();
+        controlPanelBox.add(controlPanel);
+
+        // build shininess panel
+        buildShininessPanel();
+        controlPanelBox.add(shininessPanel);
+
+        centerBox.add(controlPanelBox);
+        contentBox.add(centerBox);
+        drawPanel.add(contentBox, BorderLayout.NORTH);
+        mainPanel.add(scroller, BorderLayout.CENTER);
+
+        setSelectedIndex(0);
+        updateSoftwareLights();
+    }
+
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -642,6 +777,9 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
         }
         if (rayBasedRenderWM != null) {
             rayBasedRenderWM.updateLighting(m_akLights);
+        }
+        if (m_kGPUVolumeRender != null) {
+            m_kGPUVolumeRender.updateLighting(m_akLights);
         }
     }
 

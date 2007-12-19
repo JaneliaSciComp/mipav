@@ -42,14 +42,15 @@ bool myClip(float3 vec,
 void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
                          in float4 inPos,
                          out float4 kColor	    : COLOR0,
-                         uniform sampler2D SceneImage, 
-                         uniform sampler3D VolumeImageA, 
-                         uniform sampler1D ColorMapA, 
-                         uniform sampler1D OpacityMapA, 
-                         uniform sampler3D VolumeImageA_GM, 
-                         uniform sampler1D OpacityMapA_GM, 
+                         uniform sampler2D SceneImage : TEXUNIT0, 
+                         uniform sampler3D VolumeImageA : TEXUNIT1, 
+                         uniform sampler1D ColorMapA : TEXUNIT2, 
+                         uniform sampler1D OpacityMapA : TEXUNIT3, 
+                         uniform sampler3D VolumeImageA_GM : TEXUNIT4, 
+                         uniform sampler1D OpacityMapA_GM : TEXUNIT5, 
+                         uniform float blend,
                          uniform float stepsize,
-						 uniform float4  steps,
+                         uniform float4  steps,
                          uniform float IsColor,
                          uniform float DoClip,
                          uniform float GradientMagnitude,
@@ -88,8 +89,14 @@ void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
     kColor = BackgroundColor;
     if ( (back_position.x == 0) && (back_position.y == 0) && (back_position.z == 0) )
     {
+        kColor.a = 0;
         return;
     }
+//     if ( (back_position.x == start.x) && (back_position.y == start.y) && (back_position.z == start.z) )
+//     {
+//         kColor.a = 0;
+//         return;
+//     }
 
     // limit the number of iterations to STEPS, make sure that the stepsize will
     // cover the entire ray:
@@ -210,5 +217,5 @@ void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
     }
     // Blend with the background color:
     kColor = fMax * kColor + (1 - fMax) * BackgroundColor;
-    kColor.a = 1;
+    kColor.a = blend;
 }

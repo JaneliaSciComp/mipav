@@ -185,9 +185,9 @@ public class JPanelVolOpacityRGBWM extends JPanelVolOpacityBaseWM {
         {
             JavaApplication3DWM kParent = (JavaApplication3DWM) renderBase;
             ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
-            if ( kParentFrame instanceof ViewJFrameVolumeViewWM )
+            if ( kParentFrame instanceof ViewJFrameVolumeViewWildMagic )
             {
-                ((ViewJFrameVolumeViewWM)kParentFrame).updateImages(true);
+                ((ViewJFrameVolumeViewWildMagic)kParentFrame).updateImages(true);
             }
         }
     }
@@ -226,9 +226,9 @@ public class JPanelVolOpacityRGBWM extends JPanelVolOpacityBaseWM {
         {
             JavaApplication3DWM kParent = (JavaApplication3DWM) renderBase;
             ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
-            if ( kParentFrame instanceof ViewJFrameVolumeViewWM )
+            if ( kParentFrame instanceof ViewJFrameVolumeViewWildMagic )
             {
-                ((ViewJFrameVolumeViewWM)kParentFrame).setGradientMagnitude(true);
+                ((ViewJFrameVolumeViewWildMagic)kParentFrame).setGradientMagnitude(true);
             }
         }            
     }
@@ -516,9 +516,9 @@ public class JPanelVolOpacityRGBWM extends JPanelVolOpacityBaseWM {
         {
             JavaApplication3DWM kParent = (JavaApplication3DWM) renderBase;
             ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
-            if ( kParentFrame instanceof ViewJFrameVolumeViewWM )
+            if ( kParentFrame instanceof ViewJFrameVolumeViewWildMagic )
             {
-                ((ViewJFrameVolumeViewWM)kParentFrame).setGradientMagnitude(false);
+                ((ViewJFrameVolumeViewWildMagic)kParentFrame).setGradientMagnitude(false);
             }
         }            
     }

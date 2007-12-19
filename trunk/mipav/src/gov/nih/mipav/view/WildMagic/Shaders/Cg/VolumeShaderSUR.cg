@@ -424,15 +424,16 @@ bool myClip ( float3 myVec,
 void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
                          in float4 inPos,
                          out float4 kColor	    : COLOR0,
-                         uniform sampler2D SceneImage, 
-                         uniform sampler3D VolumeImageA, 
-                         uniform sampler1D ColorMapA, 
-                         uniform sampler1D OpacityMapA, 
-                         uniform sampler3D NormalMapA, 
-                         uniform sampler3D VolumeImageA_GM, 
-                         uniform sampler1D OpacityMapA_GM, 
+                         uniform sampler2D SceneImage : TEXUNIT0, 
+                         uniform sampler3D VolumeImageA : TEXUNIT1, 
+                         uniform sampler1D ColorMapA : TEXUNIT2, 
+                         uniform sampler1D OpacityMapA : TEXUNIT3, 
+                         uniform sampler3D VolumeImageA_GM : TEXUNIT4, 
+                         uniform sampler1D OpacityMapA_GM : TEXUNIT5, 
+                         uniform sampler3D NormalMapA: TEXUNIT6, 
+                         uniform float blend,
                          uniform float stepsize,
-						 uniform float4 steps,
+                         uniform float4 steps,
                          uniform float IsColor,
                          uniform float DoClip,
                          uniform float SelfShadow,
@@ -856,5 +857,5 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
     }
 
     kColor.rgb = alpha_acc * color_acc.rgb + (1 - alpha_acc)*BackgroundColor.rgb;
-    kColor.a = 1;
+    kColor.a = blend;
 }

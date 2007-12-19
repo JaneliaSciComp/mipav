@@ -90,17 +90,29 @@ public class OpenGLFrameBuffer extends FrameBuffer
             // TO DO.  Cube map images not supported yet, but they should be.
             return false;
         }
-
+        // create the texture ID
         ResourceIdentifier pkID = m_pkTarget.GetIdentifier(m_pkRenderer);
         assert(pkID != null);
         TextureID pkResource = (TextureID)pkID;
         m_uiTargetID = pkResource.ID;
         gl.glBindTexture(GL.GL_TEXTURE_2D,m_uiTargetID);
 
+        // create a frame buffer
         int[] aiParams = new int[1];
         gl.glGenFramebuffersEXT(1,aiParams,0);
         m_uiFrameBufferID = aiParams[0];
         gl.glBindFramebufferEXT(GL.GL_FRAMEBUFFER_EXT,m_uiFrameBufferID);
+        
+        // Add depth to the frame buffer
+        gl.glGenRenderbuffersEXT(1, aiParams, 0);
+        int depthbuffer = aiParams[0];
+        gl.glBindRenderbufferEXT(GL.GL_RENDERBUFFER_EXT, depthbuffer);
+        gl.glRenderbufferStorageEXT(GL.GL_RENDERBUFFER_EXT, GL.GL_DEPTH_COMPONENT, pkImage.GetBound(0),pkImage.GetBound(1));
+
+        // bind the frame buffer and the render buffer
+        gl.glFramebufferRenderbufferEXT(GL.GL_FRAMEBUFFER_EXT, GL.GL_DEPTH_ATTACHMENT_EXT, GL.GL_RENDERBUFFER_EXT, depthbuffer);
+
+        // bind the framebuffer/renderbuffer to the texture for render-to-texture
         if (!m_pkTarget.IsDepthTexture())
         {
             gl.glFramebufferTexture2DEXT(GL.GL_FRAMEBUFFER_EXT,GL.GL_COLOR_ATTACHMENT0_EXT,

@@ -70,9 +70,9 @@ public class Lattice extends JavaApplication3D
      * glutMainLoop() function call commonly used in OpenGL applications. */
     public static void main(String[] args) {
         Lattice kWorld = new Lattice();        
-        Frame frame = new Frame(m_acWindowTitle);
+        Frame frame = new Frame(kWorld.GetWindowTitle());
         frame.add( kWorld.GetCanvas() );
-        frame.setSize(m_iWidth, m_iHeight);
+        frame.setSize(kWorld.GetWidth(), kWorld.GetHeight());
         /* Animator serves the purpose of the idle function, calls display: */
         final Animator animator = new Animator( kWorld.GetCanvas() );
         frame.addWindowListener(new WindowAdapter() {

@@ -7,6 +7,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.surfaceview.*;
+import gov.nih.mipav.view.renderer.WildMagic.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -54,6 +55,7 @@ public class ViewJComponentVolOpacity extends ViewJComponentVolOpacityBase {
 
     /** DOCUMENT ME! */
     private RenderViewBase myParent;
+    private VolumeViewer m_kVolumeViewer;
 
     /** Opacity slider event count. */
     private int opacityCount;
@@ -76,6 +78,7 @@ public class ViewJComponentVolOpacity extends ViewJComponentVolOpacityBase {
         setupMinMax();
 
         myParent = renderOpacityPanel.getParentFrame();
+        m_kVolumeViewer = renderOpacityPanel.getParentVolumeViewer();
 
         ModelLUT lut = new ModelLUT(ModelLUT.GRAY, 256, new int[] { 4, 256 });
 
@@ -85,6 +88,7 @@ public class ViewJComponentVolOpacity extends ViewJComponentVolOpacityBase {
 
         linearMode();
     }
+
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 

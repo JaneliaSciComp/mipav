@@ -237,9 +237,9 @@ public abstract class JavaApplication extends Application
     }
 
     /** constructor inputs */
-    protected static String m_acWindowTitle;
+    protected String m_acWindowTitle;
     protected int m_iXPosition, m_iYPosition;
-    protected static int m_iWidth, m_iHeight;
+    protected int m_iWidth, m_iHeight;
     protected ColorRGBA m_kBackgroundColor;
 
     /** An identifier for the window (representation is platform-specific). */

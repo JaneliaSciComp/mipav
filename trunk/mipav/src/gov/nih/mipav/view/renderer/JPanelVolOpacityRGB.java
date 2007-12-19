@@ -186,9 +186,9 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
         {
             gov.nih.mipav.view.renderer.surfaceview.SurfaceRender kParent = (gov.nih.mipav.view.renderer.surfaceview.SurfaceRender) renderBase;
             ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
-            if ( kParentFrame instanceof ViewJFrameVolumeViewWM )
+            if ( kParentFrame instanceof ViewJFrameVolumeViewWildMagic )
             {
-                ((ViewJFrameVolumeViewWM)kParentFrame).updateImages(true);
+                ((ViewJFrameVolumeViewWildMagic)kParentFrame).updateImages(true);
             }
         }
     }
@@ -228,9 +228,9 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
         {
             gov.nih.mipav.view.renderer.surfaceview.SurfaceRender kParent = (gov.nih.mipav.view.renderer.surfaceview.SurfaceRender) renderBase;
             ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
-            if ( kParentFrame instanceof ViewJFrameVolumeViewWM )
+            if ( kParentFrame instanceof ViewJFrameVolumeViewWildMagic )
             {
-                ((ViewJFrameVolumeViewWM)kParentFrame).setGradientMagnitude(true);
+                ((ViewJFrameVolumeViewWildMagic)kParentFrame).setGradientMagnitude(true);
             }
         }            
     }
@@ -519,9 +519,9 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
         {
             gov.nih.mipav.view.renderer.surfaceview.SurfaceRender kParent = (gov.nih.mipav.view.renderer.surfaceview.SurfaceRender) renderBase;
             ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
-            if ( kParentFrame instanceof ViewJFrameVolumeViewWM )
+            if ( kParentFrame instanceof ViewJFrameVolumeViewWildMagic )
             {
-                ((ViewJFrameVolumeViewWM)kParentFrame).setGradientMagnitude(false);
+                ((ViewJFrameVolumeViewWildMagic)kParentFrame).setGradientMagnitude(false);
             }
         }            
     }

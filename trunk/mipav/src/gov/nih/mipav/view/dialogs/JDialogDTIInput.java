@@ -19,6 +19,7 @@ import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.volumeview.GPUVolumeRender;
+import gov.nih.mipav.view.renderer.WildMagic.*;
 import gov.nih.mipav.view.renderer.surfaceview.JPanelSurface;
 import gov.nih.mipav.view.renderer.surfaceview.SurfaceRender;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
@@ -125,6 +126,10 @@ public class JDialogDTIInput extends JDialogBase
 
     /** GPUVolumeRender object for loading fiber bundle tracts. */
     private GPUVolumeRender m_kVolumeDisplay = null;
+
+    /** GPUVolumeRender object for loading fiber bundle tracts. */
+    private GPUVolumeRender_WM m_kVolumeDisplay_WM = null;
+
     /** JPanelSurface object for loading fiber bundle tracts. */
     private JPanelSurface m_kSurfaceDialog;
     /** Image displayed in the GPUVolumeRender and SurfaceRender*/
@@ -223,6 +228,25 @@ public class JDialogDTIInput extends JDialogBase
         m_kSurfaceDialog = kDialog;
         m_kImage = kImage;
     }
+    
+
+    /** Create a new JDialogDTIInput of one of the four types:
+     * @param iType, type of Diffusion Tensor Input dialog to create.
+     * @param kDisplay, reference to the GPUVolumeRender display for
+     * loading fiber bundle tracts.
+     * @param kDialog, JPanelSurface display displaying fiber bundle line arrays.
+     * @param kImage, ModelImage displayed in GPUVolumeRender
+     */
+    public JDialogDTIInput( int iType,
+                            GPUVolumeRender_WM kDisplay,
+                            ModelImage kImage ) 
+    {
+        super();
+        init( iType );
+        m_iType = iType;
+        m_kVolumeDisplay_WM = kDisplay;
+        m_kImage = kImage;
+    }
 
     /** Create a new JDialogDTIInput of one of the four types:
      * @param iType, type of Diffusion Tensor Input dialog to create.
@@ -257,6 +281,7 @@ public class JDialogDTIInput extends JDialogBase
         m_kBMatrix = null;
         m_aakDWIList = null;
         m_kVolumeDisplay = null;
+        m_kVolumeDisplay_WM = null;
         m_kSurfaceDialog = null;
         m_kImage = null;
         m_aiMatrixEntries = null;
@@ -391,14 +416,33 @@ public class JDialogDTIInput extends JDialogBase
         } 
 	else if ( kCommand.equals("UseEllipsoids") )
 	{
-	    ((SurfaceRender)m_kSurfaceDialog.getSurfaceRender()).getSurfaceDialog().getLightDialog().refreshLighting();
-	    m_kVolumeDisplay.setDisplayEllipsoids( m_kUseEllipsoids.isSelected() );
+            if ( m_kSurfaceDialog != null )
+            {
+                ((SurfaceRender)m_kSurfaceDialog.getSurfaceRender()).getSurfaceDialog().getLightDialog().refreshLighting();
+            }
+            else if ( m_kVolumeDisplay != null )
+            {
+                m_kVolumeDisplay.setDisplayEllipsoids( m_kUseEllipsoids.isSelected() );
+            }
+            else if ( m_kVolumeDisplay_WM != null )
+            {
+                m_kVolumeDisplay_WM.setDisplayEllipsoids( m_kUseEllipsoids.isSelected() );
+            }
 	}
 	else if ( kCommand.equals("AllEllipsoids") )
 	{
-        ((SurfaceRender)m_kSurfaceDialog.getSurfaceRender()).getSurfaceDialog().getLightDialog().refreshLighting();
- 	    Color color = m_kColorButton.getBackground();
- 	    m_kVolumeDisplay.setDisplayAllEllipsoids( m_kAllEllipsoids.isSelected() );
+            if ( m_kSurfaceDialog != null )
+            {
+                ((SurfaceRender)m_kSurfaceDialog.getSurfaceRender()).getSurfaceDialog().getLightDialog().refreshLighting();
+            }
+            else if ( m_kVolumeDisplay != null )
+            {
+                m_kVolumeDisplay.setDisplayAllEllipsoids( m_kAllEllipsoids.isSelected() );
+            }
+            else if ( m_kVolumeDisplay_WM != null )
+            {
+                m_kVolumeDisplay_WM.setDisplayAllEllipsoids( m_kAllEllipsoids.isSelected() );
+            }
 	}
 	else if ( kCommand.equals("Add") )
         {
@@ -451,7 +495,14 @@ public class JDialogDTIInput extends JDialogBase
         Object source = e.getSource();
 
         if (source == m_kDisplaySlider) {
-            m_kVolumeDisplay.setEllipseMod( m_kDisplaySlider.getValue() );
+            if ( m_kVolumeDisplay != null )
+            {
+                m_kVolumeDisplay.setEllipseMod( m_kDisplaySlider.getValue() );
+            }
+            else if ( m_kVolumeDisplay_WM != null )
+            {
+                m_kVolumeDisplay_WM.setEllipseMod( m_kDisplaySlider.getValue() );
+            }
         }
     }
 
@@ -460,7 +511,7 @@ public class JDialogDTIInput extends JDialogBase
      */
     public void valueChanged(ListSelectionEvent kEvent) {
 
-        if ( m_kVolumeDisplay == null )
+        if ( (m_kVolumeDisplay == null) && (m_kVolumeDisplay_WM == null) )
         {
             return;
         }
@@ -485,7 +536,15 @@ public class JDialogDTIInput extends JDialogBase
             String kName = ((String)(kList.elementAt(aiSelected[i])));
             int iLength = kName.length();
             int iGroup = (new Integer(kName.substring( iHeaderLength, iLength ))).intValue();
-            ColorRGB kColor = m_kVolumeDisplay.getPolylineColor(iGroup);
+            ColorRGB kColor = null;
+            if ( m_kVolumeDisplay != null )
+            {
+                kColor = m_kVolumeDisplay.getPolylineColor(iGroup);
+            }
+            else if ( m_kVolumeDisplay_WM != null )
+            {
+                kColor = m_kVolumeDisplay_WM.getPolylineColor(iGroup);
+            }
             if ( kColor != null )
             {
                 m_kColorButton.setBackground(new Color( kColor.R(), kColor.G(), kColor.B() ) );
@@ -812,7 +871,7 @@ public class JDialogDTIInput extends JDialogBase
         if ( (m_kReconstructTracts != null) && m_kReconstructTracts.isSelected() )
         {
             AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(m_kDTIImage, m_kEigenVectorImage,
-                                                          m_kParentDir + "DTIImage.xml_tract" );
+                                                                      m_kParentDir + "DTIImage.xml_tract" );
             kTractAlgorithm.run();
             kTractAlgorithm.disposeLocal();
             kTractAlgorithm = null;
@@ -1152,7 +1211,7 @@ public class JDialogDTIInput extends JDialogBase
         mainScrollPanel.setLayout(new BorderLayout());
 
         JScrollPane scroller = new JScrollPane(mainScrollPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                   JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                                               JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         JPanel kTractPanel = new JPanel(new BorderLayout());
 
@@ -1579,8 +1638,16 @@ public class JDialogDTIInput extends JDialogBase
     protected void setDTIImage( ModelImage kDTIImage )
     {
         m_kDTIImage = kDTIImage;
-        m_kVolumeDisplay.setDTIImage( m_kDTIImage );
-        m_kVolumeDisplay.setEllipseMod( m_kDisplaySlider.getValue() );
+        if ( m_kVolumeDisplay != null )
+        {
+            m_kVolumeDisplay.setDTIImage( m_kDTIImage );
+            m_kVolumeDisplay.setEllipseMod( m_kDisplaySlider.getValue() );
+        }
+        else if ( m_kVolumeDisplay_WM != null )
+        {
+            m_kVolumeDisplay_WM.setDTIImage( m_kDTIImage );
+            m_kVolumeDisplay_WM.setEllipseMod( m_kDisplaySlider.getValue() );
+        }
     }
 
     /** Returns the DTI image.
@@ -1665,7 +1732,7 @@ public class JDialogDTIInput extends JDialogBase
             float fZ = (float)(iZ)/(float)(iDimZ);
                                 
             pkVBuffer.SetPosition3(i,
-                                (float)(fX-.5f), (float)(fY-.5f), (float)(fZ-.5f) );
+                                   (float)(fX-.5f), (float)(fY-.5f), (float)(fZ-.5f) );
             pkVBuffer.SetColor3(0,i, new ColorRGB(fX, fY, fZ));
             pkVBuffer.SetColor3(1,i, kColor1 );
 
@@ -1702,7 +1769,14 @@ public class JDialogDTIInput extends JDialogBase
      */
     protected void addPolyline( Polyline kLine )
     {
-        m_kVolumeDisplay.addPolyline( kLine, m_iBundleCount );
+        if ( m_kVolumeDisplay != null )
+        {
+            m_kVolumeDisplay.addPolyline( kLine, m_iBundleCount );
+        }
+        else if ( m_kVolumeDisplay_WM != null )
+        {
+            m_kVolumeDisplay_WM.addPolyline( kLine, m_iBundleCount );
+        }
     }
 
     /** Add a LineArray to the JPanelSurface.
@@ -1710,6 +1784,10 @@ public class JDialogDTIInput extends JDialogBase
      */
     protected void addLineArray( LineArray kLine )
     {
+        if ( m_kSurfaceDialog == null )
+        {
+            return;
+        }
         if ( m_kLineArrayMap == null )
         {
             m_kLineArrayMap = new HashMap<Integer,BranchGroup>();
@@ -1834,6 +1912,24 @@ public class JDialogDTIInput extends JDialogBase
                                                                      color.getBlue()/255.0f  ));
                 }
             }
+            else if ( m_kVolumeDisplay_WM != null )
+            {
+                String kName = ((String)(kList.elementAt(aiSelected[i])));
+                int iLength = kName.length();
+                int iGroup = (new Integer(kName.substring( iHeaderLength, iLength ))).intValue();
+                if ( color == null )
+                {
+                    m_kVolumeDisplay_WM.setPolylineColor( iGroup,null);
+                }
+	    
+                else if ( !m_kUseVolumeColor.isSelected() )
+                {
+                    m_kVolumeDisplay_WM.setPolylineColor( iGroup,
+                                                       new ColorRGB( color.getRed()/255.0f,
+                                                                     color.getGreen()/255.0f,
+                                                                     color.getBlue()/255.0f  ));
+                }
+            }
         }
     }
     
@@ -1853,6 +1949,20 @@ public class JDialogDTIInput extends JDialogBase
                 int iLength = kName.length();
                 int iGroup = (new Integer(kName.substring( iHeaderLength, iLength ))).intValue();
                 m_kVolumeDisplay.removePolyline( iGroup );
+
+                if ( m_kSurfaceDialog != null )
+                {
+                    BranchGroup kBranch = m_kLineArrayMap.get( new Integer(iGroup) );
+                    m_kSurfaceDialog.removeLineArray( kBranch );
+                }
+                m_kBundleList.remove( new Integer( iGroup ) );
+            }           
+            else if ( m_kVolumeDisplay_WM != null )
+            {
+                String kName = ((String)(kList.elementAt(aiSelected[i])));
+                int iLength = kName.length();
+                int iGroup = (new Integer(kName.substring( iHeaderLength, iLength ))).intValue();
+                m_kVolumeDisplay_WM.removePolyline( iGroup );
 
                 if ( m_kSurfaceDialog != null )
                 {
