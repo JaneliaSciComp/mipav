@@ -217,6 +217,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         TOP_BOTTOM
     }
     
+
     private abstract class DialogPrompt extends JPanel implements ActionListener {
     	
     	//~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -224,12 +225,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     	public static final String DIALOG_COMPLETED = "Dialog Completed";
     	
     	public static final String OK = "Ok";
-    	
-    	public static final String CLEAR = "Clear";
-    	
     	public static final String CANCEL = "Cancel";
-    	
+    	public static final String CLEAR = "Clear";
+    	public static final String EXIT = "Exit";
     	public static final String HELP = "Help";
+    	public static final String CALCULATE = "Calculate";
     	
     	private String buttonStringGroup[] = {OK, CLEAR, HELP};
     	
@@ -241,14 +241,42 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     	
     	public DialogPrompt(MuscleImageDisplay theParentFrame) {
     		this.parentFrame = theParentFrame;
-    		
+    	}
+    	
+    	public DialogPrompt(MuscleImageDisplay theParentFrame, String[] buttonString) {
+    		this.parentFrame = theParentFrame;
+    		this.buttonStringGroup = buttonString;
     	}
     	
     	protected void setButtons(String[] buttonString) {
     		this.buttonStringGroup = buttonString;
     	}
     	
+    	public abstract void actionPerformed(ActionEvent e);
+    	
     	protected abstract void initDialog();
+    	
+    	/**
+         * Builds button panel consisting of OK, Cancel and Help buttons.
+         *
+         * @return  JPanel that has ok, cancel, and help buttons
+         */
+        protected JPanel buildButtons() {
+            JPanel buttonPanel = new JPanel();
+            buttonGroup = new JButton[buttonStringGroup.length];
+            
+            for(int i=0; i<buttonStringGroup.length; i++) {
+            	buttonGroup[i] = new JButton(buttonStringGroup[i]);
+            	buttonGroup[i].addActionListener(this);
+            	buttonGroup[i].setMinimumSize(MipavUtil.defaultButtonSize);
+            	buttonGroup[i].setPreferredSize(MipavUtil.defaultButtonSize);
+            	buttonGroup[i].setFont(MipavUtil.font12B);
+            	
+            	buttonPanel.add(buttonGroup[i]);
+            }
+
+            return buttonPanel;
+        }
     	
     	/**
          * Add a listener to this class so that when when the dialog has completed processing it can use notifyListener
@@ -261,49 +289,23 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         }
         
         /**
-         * Used to notify all listeners that the algorithm has completed.
+         * Used to notify all listeners that the pseudo-algorithm has completed.
          *
          * @param  dialog the sub-dialog that has completed the function
          */
-        public void notifyListeners(String command) {
+        public void notifyListeners(String cmd) {
+
             for (int i = 0; i < objectList.size(); i++) {
-                ((ActionListener) objectList.elementAt(i)).actionPerformed(new ActionEvent(this, 0, command));
+                ((ActionListener) objectList.elementAt(i)).actionPerformed(new ActionEvent(this, 0, cmd));
             }
-        }
-        
-        public void actionPerformed(ActionEvent e) {
-        	if(e.getActionCommand().equals(HELP)) {
-        		MipavUtil.showHelp(12345);
-        	}
-        }
-        
-        /**
-         * Builds button panel consisting of all buttons in buttonStringGroup.
-         *
-         * @return  JPanel that has ok, cancel, and help buttons
-         */
-        protected JPanel buildButtons() {
-            JPanel buttonPanel = new JPanel();
-        	buttonGroup = new JButton[buttonStringGroup.length];
-            
-        	for(int i=0; i<buttonStringGroup.length; i++) {
-            	buttonGroup[i] = new JButton(buttonStringGroup[i]);
-            	buttonGroup[i].addActionListener(this);
-            	buttonGroup[i].setToolTipText(buttonStringGroup[i]);
-            	buttonGroup[i].setMinimumSize(MipavUtil.defaultButtonSize);
-            	buttonGroup[i].setPreferredSize(MipavUtil.defaultButtonSize);
-            	buttonGroup[i].setFont(MipavUtil.font12B);
-            	buttonPanel.add(buttonGroup[i]);
-            }
-        		
-        	return buttonPanel;
+
         }
     }
-    
+
     private class VoiDialogPrompt extends DialogPrompt implements ActionListener {
-        
-        //~ Static fields/initializers -------------------------------------------------------------------------------------
-        
+
+        private final String[] buttonStringList = {OK, CLEAR, CANCEL};
+    	
         private String objectName;
         
         private boolean closedVoi;
@@ -316,59 +318,49 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         /**Whether this dialog produced a novel Voi. */
         private boolean novelVoiProduced;
 
-        
-
-        
-        private TreeMap zeroStatus;
-        
-        
         public VoiDialogPrompt(MuscleImageDisplay theParentFrame, String objectName, boolean closedVoi, int numVoi, TreeMap zeroStatus) {
-            
-        	super(theParentFrame);
-        	
-            this.parentFrame = theParentFrame;
+            super(theParentFrame);
+           
+            setButtons(buttonStringList);
             
             this.objectName = objectName;
             this.closedVoi = closedVoi;
             this.numVoi = numVoi;
-            this.zeroStatus = zeroStatus;
-            
-            this.zeroStatus = zeroStatus;
+
             
             novelVoiProduced = false;
             completed = false;
             
-            initDialog();
-            
         }
         
         public void actionPerformed(ActionEvent e) {
-        	super.actionPerformed(e);
-        	String command = e.getActionCommand();
+
+            String command = e.getActionCommand();
+
             if(command.equals(CLEAR)) {
                 //clear all VOIs drawn
-                parentFrame.getImageA().unregisterAllVOIs();
-                parentFrame.updateImages();
+                ((MuscleImageDisplay)parentFrame).getImageA().unregisterAllVOIs();
+                ((MuscleImageDisplay)parentFrame).updateImages();
             } else {
 
-                if (command.equals(OK)) {
+                if (command.equals("OK")) {
                     VOI goodVoi = checkVoi();
                     //check that VOI conforms to requirements, returns the VOI being modified/created
                     
                     if ( goodVoi != null ) { 
                         
                         //save modified/created VOI to file
-                        parentFrame.getImageA().unregisterAllVOIs();
-                        parentFrame.getImageA().registerVOI(goodVoi);
-                        String dir = parentFrame.getImageA().getImageDirectory()+MuscleImageDisplay.VOI_DIR;
-                        parentFrame.saveAllVOIsTo(dir);
+                        ((MuscleImageDisplay)parentFrame).getImageA().unregisterAllVOIs();
+                        ((MuscleImageDisplay)parentFrame).getImageA().registerVOI(goodVoi);
+                        String dir = ((MuscleImageDisplay)parentFrame).getImageA().getImageDirectory()+MuscleImageDisplay.VOI_DIR;
+                        ((MuscleImageDisplay)parentFrame).saveAllVOIsTo(dir);
                         
-                        String fileDir = parentFrame.getImageA().getFileInfo(0).getFileDirectory();
+                        String fileDir = ((MuscleImageDisplay)parentFrame).getImageA().getFileInfo(0).getFileDirectory();
 
                         MipavUtil.displayInfo(objectName+" VOI saved in folder\n " + fileDir + MuscleImageDisplay.VOI_DIR);
                         
-                        parentFrame.getImageA().unregisterAllVOIs();
-                        parentFrame.updateImages();
+                        ((MuscleImageDisplay)parentFrame).getImageA().unregisterAllVOIs();
+                        ((MuscleImageDisplay)parentFrame).updateImages();
                         
                         completed = true;
                         novelVoiProduced = true; //not necessarily
@@ -377,17 +369,18 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                     } else {
                         //individual error messages are already displayed
                     }
-                } else if (command.equals(CANCEL)) {
+                } else if (command.equals("Cancel")) {
                     setCompleted(savedVoiExists());
                     notifyListeners(CANCEL);
                     //dispose();
-                } 
+                } else if (command.equals("Help")) {
+                    MipavUtil.showHelp("19014");
+                }
             }
             
         }
         
 
-        
         public String getObjectName() {
             return objectName;
         }
@@ -401,7 +394,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         }
         
         private boolean savedVoiExists() {
-            String fileName = new String(parentFrame.getImageA().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR+objectName+".xml");
+            String fileName = new String(((MuscleImageDisplay)parentFrame).getImageA().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR+objectName+".xml");
             return new File(fileName).exists();
         }
         
@@ -414,11 +407,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
          *
          */
         
-        @Override
         protected void initDialog() {
             setForeground(Color.black);
             addNotify();
-            //setTitle("VOI selection");
                         
             setLayout(new BorderLayout());
             
@@ -434,7 +425,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             gbc.gridy = 0;
             gbc.ipadx = 0;
                 
-            
             String closedStr = closedVoi ? "closed " : "";
             String pluralVOI = numVoi > 1 ? "s" : "";
             
@@ -444,16 +434,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
             label.setFont(MipavUtil.font12);
             mainPanel.add(label, BorderLayout.NORTH);
-            //gbc.gridx++;
-            
             
             add(mainPanel, BorderLayout.NORTH);
             gbc.gridy++;
             add(buildButtons(), BorderLayout.CENTER);
-            //pack();
-            //setResizable(false);
-            //setVisible(true);
         }
+        
+        
 
         /**
          * Determines whether a sufficient VOI has been created.
@@ -463,7 +450,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private VOI checkVoi() {
             int qualifiedVoi = 0;
-            VOIVector srcVOI = parentFrame.getImageA().getVOIs();
+            VOIVector srcVOI = ((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs();
             int countQualifiedVOIs = 0; //equal to 1 when the right  amount of VOIs have been created
             VOI goodVOI = null;
             for(int i=0; i<srcVOI.size(); i++) {
@@ -476,13 +463,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             }
             
             
-            for(int i=0; i<srcVOI.size(); i++) {
-                String cmp = ((VOI)srcVOI.get(i)).getName();
-                if(zeroStatus.get(cmp) == null) {
-                    qualifiedVoi++;
-                    goodVOI = (VOI)srcVOI.get(i);
-                }
-            }
+            //for(int i=0; i<srcVOI.size(); i++) {
+            //    String cmp = ((VOI)srcVOI.get(i)).getName();
+            //    if(zeroStatus.get(cmp) == null) {
+            //        qualifiedVoi++;
+            //        goodVOI = (VOI)srcVOI.get(i);
+            //    }
+            //}
             
             if(qualifiedVoi != 1) {
                 String error = qualifiedVoi > 1 ? "You have created too many VOIs." : 
@@ -523,7 +510,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
      * TODO: Incorporate into MuscleIMageDisplay
      */
     
-    public class MuscleImageDisplay extends ViewJFrameImage implements ActionListener {
+    public class MuscleImageDisplay extends ViewJFrameImage {
+        
+    	private AnalysisPrompt analysisPrompt;
 
         public static final int REMOVED_INTENSITY = -2048;
         
@@ -567,7 +556,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private int activeTab;
         
-        private DialogPrompt[] tabs;
+        private MuscleDialogPrompt[] tabs;
         
         private TreeMap zeroStatus;
         
@@ -647,10 +636,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 
                 if (displayMode == IMAGE_A) {
                     currentImage = componentImage.getImageA();
-                    VOIs = (ViewVOIVector) currentImage.getVOIs();
+                    VOIs = currentImage.getVOIs();
                 } else if (displayMode == IMAGE_B) {
                     currentImage = componentImage.getImageB();
-                    VOIs = (ViewVOIVector) currentImage.getVOIs();
+                    VOIs =  currentImage.getVOIs();
                 } else {
                     MipavUtil.displayError(" Cannot save VOIs when viewing both images");
 
@@ -705,19 +694,32 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             String command = e.getActionCommand();
             //System.out.println("Caught2: "+command);
             if(command.equals(MuscleImageDisplay.CHECK_VOI)) {
+                //initVoiImage();
                 String voiString = ((JButton)(e.getSource())).getText();
-                //((VoiDialogPrompt)tabs[tabs.length-2]).setVoiString(((JButton)(e.getSource())).getText());
-                lockToPanel(tabs[tabs.length-2], "VOI");
+                voiPrompt = new VoiDialogPrompt(this, voiString, true, 1, zeroStatus);
+                // This is very important. Adding this object as a listener allows the subdialog to
+                // notify this object when it has completed or failed. 
+                // This is could be generalized by making a subDialog interface.
+                voiPrompt.addListener(this);
+                voiPrompt.addComponentListener(this);
+                lockToPanel(voiPrompt, "VOI");
                 //setVisible(false); // Hide dialog
-            } else if(e.getSource() instanceof VoiDialogPrompt) {
+            } else if(/*command.equals(VoiDialogPrompt.SUB_DIALOG_COMPLETED)*/true) {
                 unlockToPanel();
                 initMuscleImage(activeTab);
             } else if(command.equals("OK")) {
-            	lockToPanel(tabs[tabs.length-1], "Analysis");
+            	//display the result display prompt in same way
+            	System.out.println("OK Command, proceed with analysis.");
+            	analysisPrompt = new AnalysisPrompt(this, mirrorArr, noMirrorArr, symmetry);
+            	// This is could be generalized by making a subDialog interface.
+            	analysisPrompt.addListener(this);
+            	analysisPrompt.addComponentListener(this);
+            	lockToPanel(analysisPrompt, "Analysis");
+            	
             }
         }
         
-        private JPanel initDialogPane() {
+        private JPanel initDialog() {
 //          The component image will be displayed in a scrollpane.
             zeroStatus = new TreeMap();
             
@@ -726,32 +728,20 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 
             imagePane = new JTabbedPane();
             
-            tabs = new DialogPrompt[mirrorArr.length+2];
+            tabs = new MuscleDialogPrompt[mirrorArr.length];
 
             for(int i=0; i<tabs.length; i++) {
-            	if(i<mirrorArr.length) {
-            		tabs[i] = new MuscleDialogPrompt(this, mirrorArr[i], mirrorZ[i],
-            											noMirrorArr[i], noMirrorZ[i],
-            											imageType, symmetry);
-            		tabs[i].setName(titles[i]);
-                    imagePane.addTab((i+1)+": "+titles[i], tabs[i]);
-                    
-                    zeroStatus.putAll(((MuscleDialogPrompt)tabs[i]).getZeroStatus());
-                    fillStatus.put(titles[i], fillIn[i]);
-            	}
-            		
-            	if(i == mirrorArr.length) {
-            		tabs[i] = new VoiDialogPrompt(this, "dummy", true, 1, zeroStatus);
-            		tabs[i].setName("VOI");
-            	}
-            	if(i > mirrorArr.length) {
-            		tabs[i] = new AnalysisPrompt(this, mirrorArr, noMirrorArr, symmetry);
-            		tabs[i].setName("Analysis");
-            	}
-            	
+                tabs[i] = new MuscleDialogPrompt(this, mirrorArr[i], mirrorZ[i],
+                                                    noMirrorArr[i], noMirrorZ[i],
+                                                    imageType, symmetry);
+                
                 tabs[i].addComponentListener(this);
                 tabs[i].addListener(this);
+                tabs[i].setName(titles[i]);
+                imagePane.addTab((i+1)+": "+titles[i], tabs[i]);
                 
+                zeroStatus.putAll(tabs[i].getZeroStatus());
+                fillStatus.put(titles[i], fillIn[i]);
                 
                                                                             
             }
@@ -762,7 +752,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             scrollPane.setBackground(Color.black);
             panelA.add(splitPane);
             
-            /*for(int i=0; i<tabs.length; i++) {
+            for(int i=0; i<tabs.length; i++) {
                 JButton[] mirror = tabs[i].getMirrorButton();
                 JButton[] noMirror = tabs[i].getNoMirrorButton();
                 for(int j=0; j<mirror.length; j++) {
@@ -771,16 +761,16 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 for(int j=0; j<noMirror.length; j++) {
                     locationStatus.put(noMirror[j].getText(), i);
                 }
-            }*/
+            }
             
             return panelA;
             
         }
         
         private void initNext() {
-            //JPanel panelA = initDialog();
+            JPanel panelA = initDialog();
             
-            //getContentPane().add(panelA);
+            getContentPane().add(panelA);
             getContentPane().remove(0);
             Container c = getContentPane();
             
@@ -814,12 +804,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		@Override
 		public void componentShown(ComponentEvent event) {
 		    System.out.println("Active pane: "+activeTab);
-		    Component c = event.getComponent();
+		    //Component c = event.getComponent();
 		    //Object obj = event.getSource();
-		    if(c instanceof AnalysisPrompt) {
-		    	getActiveImage().unregisterAllVOIs();
-		    	updateImages(true);
-		    } else if(imagePane != null) {
+		    if(imagePane != null) {
 		        boolean found = false;
 		        for(int i=0; i<tabs.length; i++) {
 		            if(!found) {
@@ -1077,9 +1064,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             updateImages(true);
             //LOOK HERE
         }
-        
-        
-        private JButton helpButton;
 
 		private Color hasColor(VOI voiVec) {
             Color c = null;
@@ -1132,7 +1116,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 
                 initThighAxes();
             }
-            
 
             public void algorithmPerformed(AlgorithmBase algorithm) {
                 VOI resultVOI;
@@ -1258,6 +1241,380 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
         }
 
+        private class MuscleDialogPrompt extends DialogPrompt {
+            
+            //~ Static fields/initializers -------------------------------------------------------------------------------------
+        
+            public static final int REMOVED_INTENSITY = -2048;
+            
+            public static final String CHECK_BOX = "CHECK_BOX";
+            
+            private final String[] buttonStringList = {CALCULATE, HELP, EXIT};
+            
+            //~ Instance fields ------------------------------------------------------------------------------------------------
+            
+
+            
+            /** Denotes the anatomical part represented in the image. Implemented seperatly in case this class
+             *  is moved to its own class at a later time.
+             */
+            private ImageType imageType;
+            
+            /** Whether this image has mirror image muscles (eg VIEWS of thighs, abdomen. */
+            private Symmetry symmetry;
+            
+            /** Labels for instructions. */
+            private JLabel[] instructionLabel;
+            
+            /** Check boxes for mirror muscle buttons. */
+            private JCheckBox[] mirrorCheckArr;
+            
+            /** Check boxes for non-mirror object buttons. */
+            private JCheckBox[] noMirrorCheckArr;
+            
+            /** Buttons for muscles where a mirror muscle may exist. */
+            private JButton[] mirrorButtonArr;
+            
+            /** Buttons for muscles where mirror muscles are not considered. */
+            private JButton[] noMirrorButtonArr;
+            
+            /** Text for muscles where a mirror muscle may exist. */
+            private String[] mirrorArr;
+            
+            private boolean[] mirrorZ;
+            
+            /** Text for muscles where mirror muscles are not considered. */
+            private String[] noMirrorArr;
+            
+            private boolean[] noMirrorZ;
+            
+            private TreeMap zeroStatus;
+            
+          
+            
+            //private ModelImage srcImg;
+            
+            /**
+             * Creates new set of prompts for particular muscle.
+             *
+             * @param  theParentFrame  Parent frame.
+             */
+            public MuscleDialogPrompt(MuscleImageDisplay theParentFrame, String[] mirrorArr, boolean[] mirrorZ, 
+                    String[] noMirrorArr, boolean[] noMirrorZ,  
+                    ImageType imageType, Symmetry symmetry) {
+                //super(theParentFrame, false);
+                super(theParentFrame);
+                
+                setButtons(buttonStringList);
+                
+                this.mirrorArr = mirrorArr;
+                this.noMirrorArr = noMirrorArr;
+                
+                this.mirrorZ = mirrorZ;
+                this.noMirrorZ = noMirrorZ;
+                
+                this.imageType = imageType;
+                this.symmetry = symmetry;
+                
+                
+                initDialog();
+                
+            }
+            
+            public boolean hasButton(String buttonText) {
+                if(zeroStatus.get(buttonText) != null) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            
+            public void setButton(String buttonText) {
+                for(int i=0; i<mirrorButtonArr.length; i++) {
+                    if(mirrorButtonArr[i].getText().equals(buttonText)) {
+                        mirrorCheckArr[i].setSelected(true);
+                    }
+                }
+                for(int i=0; i<noMirrorButtonArr.length; i++) {
+                    if(noMirrorButtonArr[i].getText().equals(buttonText)) {
+                        noMirrorCheckArr[i].setSelected(true);
+                    }
+                }
+            }
+            
+            public void actionPerformed(ActionEvent e) {
+                
+                String command = e.getActionCommand();
+                //System.out.println("Caught1: "+command);
+                
+                
+            }
+            
+            
+
+            public TreeMap getZeroStatus() {
+                return zeroStatus;
+            }
+        
+            
+            private JPanel initInstructionPanel() {
+                GridBagConstraints gbc = new GridBagConstraints();
+                gbc.anchor = GridBagConstraints.WEST;
+                gbc.fill = GridBagConstraints.HORIZONTAL;
+                gbc.weightx = 1;
+                gbc.weighty = 1;
+                gbc.gridx = 0;
+                gbc.gridy = 0;
+                
+                JPanel instructionPanel = new JPanel(new GridBagLayout());
+                instructionPanel.setForeground(Color.black);
+                instructionPanel.setBorder(MipavUtil.buildTitledBorder("Instructions"));
+                instructionLabel = new JLabel[4];
+                instructionLabel[0] = new JLabel("1) Press an object button.\n\r");
+                instructionLabel[1] = new JLabel("2) A dialog box will prompt you to draw VOI(s) around that object.");
+                instructionLabel[2] = new JLabel("3) Once drawn the check box next to the button will be checked.");
+                instructionLabel[3] = new JLabel("4) Press that button again to review your VOI(s).");
+                //resizing bug fixed, extra not necessary
+                
+                for(int i=0; i<instructionLabel.length; i++) {
+                    instructionLabel[i].setFont(MipavUtil.font12);
+                    instructionPanel.add(instructionLabel[i], gbc);
+                    gbc.gridy++;
+                }
+                
+                return instructionPanel;
+            }
+            
+            private JPanel initSymmetricalObjects() {
+                
+                VOIVector existingVois = ((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs();
+                zeroStatus = new TreeMap();
+                 
+                mirrorCheckArr = new JCheckBox[mirrorArr.length * 2];
+                mirrorButtonArr = new JButton[mirrorArr.length * 2];
+                ButtonGroup mirrorGroup = new ButtonGroup();
+                JPanel mirrorPanel = new JPanel(new GridBagLayout());
+                mirrorPanel.setForeground(Color.black);
+                mirrorPanel.setBorder(MipavUtil.buildTitledBorder("Select an object"));
+                
+                GridBagConstraints gbc = new GridBagConstraints();
+                gbc.anchor = GridBagConstraints.WEST;
+                gbc.fill = GridBagConstraints.HORIZONTAL;
+                gbc.weightx = 1;
+                gbc.weighty = 0;
+                gbc.gridx = 0;
+                gbc.gridy = 0;
+                
+                for(int i=0; i<mirrorArr.length * 2; i++) {
+                    String symmetry1 = "", symmetry2 = "";
+                    if(symmetry.equals(Symmetry.LEFT_RIGHT)) {
+                        symmetry1 = "Left ";
+                        symmetry2 = "Right ";
+                    } else if(symmetry.equals(Symmetry.TOP_BOTTOM)) {
+                        symmetry1 = "Top ";
+                        symmetry2 = "Bottom ";
+                    }
+                    mirrorCheckArr[i] = new JCheckBox();
+                    mirrorCheckArr[i].setEnabled(false);
+                    mirrorCheckArr[i].setHorizontalAlignment(SwingConstants.RIGHT);
+                    
+                    
+                    mirrorButtonArr[i] = (i % 2) == 0 ? new JButton(symmetry1+mirrorArr[i/2]) : 
+                                                                new JButton(symmetry2+mirrorArr[i/2]);
+                    mirrorButtonArr[i].setFont(MipavUtil.font12B);
+                    mirrorButtonArr[i].setActionCommand(MuscleImageDisplay.CHECK_VOI);
+                    mirrorButtonArr[i].addActionListener(parentFrame);
+                    mirrorGroup.add(mirrorButtonArr[i]);
+                    
+                    for(int j=0; j<existingVois.size(); j++) {
+                        if(((VOI)existingVois.get(j)).getName().equals(mirrorButtonArr[i].getText())) {
+                            mirrorCheckArr[i].setSelected(true);
+                        }
+                    }
+                    
+                    if(i != 0 && i % 2 == 0) {
+                        gbc.gridy++;
+                        gbc.gridx = 0;
+                    }
+                    gbc.weightx = 0;
+                    mirrorPanel.add(mirrorCheckArr[i], gbc);
+                    gbc.gridx++;
+                    gbc.weightx = 1;
+                    mirrorPanel.add(mirrorButtonArr[i], gbc);
+                    gbc.gridx++;
+                    
+                    System.out.println(mirrorButtonArr[i].getText()+" is "+mirrorZ[i/2]);
+                    zeroStatus.put(mirrorButtonArr[i].getText(), mirrorZ[i/2]);
+                
+                }          
+                return mirrorPanel;
+                        
+            }
+            
+            private JPanel initNonSymmetricalObjects() {
+                VOIVector existingVois = ((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs();
+                
+                noMirrorCheckArr = new JCheckBox[noMirrorArr.length];
+                noMirrorButtonArr = new JButton[noMirrorArr.length];
+                ButtonGroup noMirrorGroup = new ButtonGroup();
+                JPanel noMirrorPanel = new JPanel(new GridBagLayout());
+                noMirrorPanel.setForeground(Color.black);
+                noMirrorPanel.setBorder(MipavUtil.buildTitledBorder("Select an object"));
+                GridBagConstraints gbc = new GridBagConstraints();
+                gbc.anchor = GridBagConstraints.WEST;
+                gbc.fill = GridBagConstraints.HORIZONTAL;
+                gbc.weightx = .5;
+                gbc.weighty = 0;
+                
+                gbc.gridx = 0;
+                gbc.gridy = 0;
+                gbc.gridwidth = 1;
+                gbc.gridheight = 1;
+                
+                JPanel tempPanel = null;
+                GridBagConstraints gbc2 = new GridBagConstraints();
+              
+                gbc2.fill = GridBagConstraints.HORIZONTAL;
+                
+                for(int i=0; i<noMirrorArr.length; i++) {
+                	tempPanel = new JPanel(new GridBagLayout());
+                    noMirrorCheckArr[i] = new JCheckBox();
+                    noMirrorCheckArr[i].setEnabled(false);
+                    noMirrorCheckArr[i].setHorizontalAlignment(SwingConstants.RIGHT);
+                    
+                    noMirrorButtonArr[i] = new JButton(noMirrorArr[i]);
+                    noMirrorButtonArr[i].setFont(MipavUtil.font12B);
+                    noMirrorButtonArr[i].setActionCommand(MuscleImageDisplay.CHECK_VOI);
+                    noMirrorButtonArr[i].addActionListener(parentFrame);
+                    noMirrorGroup.add(noMirrorButtonArr[i]);
+                  
+                    gbc2.gridx = 0;
+                    gbc2.weightx = 0;
+                    tempPanel.add(noMirrorCheckArr[i], gbc2);
+                    
+                    gbc2.weightx = 1;
+                    gbc2.gridx++;
+                    tempPanel.add(noMirrorButtonArr[i], gbc2);
+                    
+                    gbc.gridx = 0;
+                    noMirrorPanel.add(tempPanel, gbc);
+                  
+                    gbc.fill = GridBagConstraints.BOTH;
+                    gbc.gridx++;
+                    noMirrorPanel.add(Box.createGlue(), gbc);
+                    
+                  //  noMirrorPanel.add(noMirrorCheckArr[i], gbc);
+                  //  gbc.gridx++;
+                  //  gbc.weightx = 1;
+                 //   noMirrorPanel.add(noMirrorButtonArr[i], gbc);
+                    
+                    
+                    gbc.gridy++;
+                    for(int j=0; j<existingVois.size(); j++) {
+                        if(((VOI)existingVois.get(j)).getName().equals(noMirrorButtonArr[i].getText())) {
+                            noMirrorCheckArr[i].setSelected(true);
+                        }
+                    }
+                    
+                    System.out.println(noMirrorButtonArr[i].getText()+" is "+noMirrorZ[i]);
+                    zeroStatus.put(noMirrorButtonArr[i].getText(), noMirrorZ[i]);
+                }
+                
+                return noMirrorPanel;
+            }
+            
+            protected void initDialog() {
+                setForeground(Color.black);
+                zeroStatus = new TreeMap();
+                
+                JPanel instructionPanel = initInstructionPanel();
+                
+                JPanel mirrorPanel = initSymmetricalObjects();
+                
+                JPanel noMirrorPanel = initNonSymmetricalObjects();
+                this.setLayout(new GridBagLayout());
+                GridBagConstraints gbc = new GridBagConstraints();
+                
+                gbc.fill = GridBagConstraints.HORIZONTAL;
+                gbc.anchor = GridBagConstraints.NORTHWEST;
+                
+                gbc.weightx = 1;
+                gbc.weighty = 0;
+                gbc.gridx = 0;
+                gbc.gridy = 0;
+                
+                add(instructionPanel, gbc);
+                
+                gbc.fill = GridBagConstraints.BOTH;
+                gbc.weighty = 1;
+                gbc.gridy++;
+                add(mirrorPanel, gbc);
+        
+                gbc.gridy++;
+                add(noMirrorPanel, gbc);
+        
+                gbc.gridy++;
+                gbc.fill = GridBagConstraints.BOTH;
+                add(new JLabel(""), gbc);
+                
+                gbc.fill = GridBagConstraints.NONE;
+                gbc.anchor = GridBagConstraints.SOUTH;
+                gbc.gridy++;
+                add(buildButtons(), gbc);               
+                
+            }
+            
+            private boolean checkVariables() {
+                boolean done = true;
+                for(int i=0; i<mirrorCheckArr.length; i++) {
+                    if(!mirrorCheckArr[i].isSelected()) {
+                        done = false;
+                    }
+                }
+                for(int i=0; i<mirrorCheckArr.length; i++) {
+                    if(!mirrorCheckArr[i].isSelected()) {
+                        done = false;
+                    }
+                }
+                return done;
+            }
+            
+            public TreeMap getIdentifiers() {
+                return zeroStatus;
+            }
+            
+            public JButton[] getMirrorButton() {
+                return mirrorButtonArr;
+            }
+            
+            public JButton[] getNoMirrorButton() {
+                return noMirrorButtonArr;
+            }
+
+            
+            public String[] getMirrorButtonArr() {
+                String[] arr = new String[mirrorButtonArr.length];
+                for(int i=0; i<arr.length; i++) {
+                    arr[i] = mirrorButtonArr[i].getText();
+                }
+                return arr;
+            }
+        
+                    
+                    
+                    public String[] getNoMirrorButtonArr() {
+                        String[] arr = new String[noMirrorButtonArr.length];
+                        for(int i=0; i<arr.length; i++) {
+                            arr[i] = noMirrorButtonArr[i].getText();
+                        }
+                        return arr;
+                        
+                    }
+        
+ 
+        
+        }
+        
         /** Three arrays to save the coordinates of the LUT's transfer fucntion. z[] not used. */
         private float[] x = new float[4];
 
@@ -1397,9 +1754,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
     }
 
-	private class AnalysisPrompt extends DialogPrompt implements ListSelectionListener {
+	private class AnalysisPrompt extends DialogPrompt implements ActionListener, ListSelectionListener {
 		
 
+		
+		private final String[] buttonStringList = {HELP, EXIT};
 		
 		boolean novelVoiProduced;
 		
@@ -1435,17 +1794,19 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		public AnalysisPrompt(MuscleImageDisplay theParentFrame, String[][] mirrorArr, String[][] noMirrorArr, Symmetry symmetry) {
 	        super(theParentFrame);
 	        
+	        setButtons(buttonStringList);
+	        
 	        this.noMirrorArr = noMirrorArr;
 	        this.mirrorArr = mirrorArr;
 	        
 	        this.symmetry = symmetry;
 	        
+	        //this.zeroStatus = zeroStatus;
+	        
 	        novelVoiProduced = false;
 	        completed = false;
 	        
-	        parentFrame.getActiveImage().getVOIs().removeAllElements();
-	        parentFrame.updateImages(true);
-	        
+	        //initImage();
 	        initDialog();
 	        
 	    }
@@ -1457,6 +1818,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    
 		protected void initDialog() {
 	        setForeground(Color.black);
+	        //zeroStatus = new TreeMap();
 	        
 	        JPanel instructionPanel = initInstructionPanel();
 	        
@@ -1502,6 +1864,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        instructionLabel = new JLabel[2];
 	        instructionLabel[0] = new JLabel("1) Click on the muscle you would like to display.\n\r");
 	        instructionLabel[1] = new JLabel("2) Highlight a VOI to view its measurements.");
+	        //extra no longer needed for resizing
 	        
 	        for(int i=0; i<instructionLabel.length; i++) {
 	            instructionLabel[i].setFont(MipavUtil.font12);
@@ -1516,6 +1879,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        
 	        VOIVector existingVois = ((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs();
 	         
+	        //JCheckBox[] mirrorCheckArr = new JCheckBox[mirrorArr[index].length * 2];
 	        String[] mirrorString = new String[mirrorArr[index].length * 2];
 	        ButtonGroup mirrorGroup = new ButtonGroup();
 	       
@@ -1529,10 +1893,31 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	                symmetry1 = "Top ";
 	                symmetry2 = "Bottom ";
 	            }
+	            //mirrorCheckArr[i] = new JCheckBox();
+	            //mirrorCheckArr[i].setEnabled(false);
+	            //mirrorCheckArr[i].setHorizontalAlignment(SwingConstants.RIGHT);
 	            
 	            
 	            mirrorString[i] = (i % 2) == 0 ? new String(symmetry1+mirrorArr[index][i/2]) : 
 	                                                        new String(symmetry2+mirrorArr[index][i/2]);
+	            //mirrorString[i].setFont(MipavUtil.font12B);
+	            //mirrorString[i].setActionCommand(MuscleImageDisplay.CHECK_VOI);
+	            //mirrorString[i].addActionListener(parentFrame);
+	            //mirrorGroup.add(mirrorString[i]);
+	            
+	            //if(i != 0 && i % 4 == 0) {
+	            //    gbc.gridy++;
+	            //    gbc.gridx = 0;
+	            //}
+	            //gbc.weightx = 0;
+	            //mirrorPanel.add(mirrorCheckArr[i], gbc);
+	            //gbc.gridx++;
+	            //gbc.weightx = 1;
+	            //mirrorPanel.add(mirrorString[i], gbc);
+	            //gbc.gridx++;
+	            
+	            //System.out.println(mirrorButtonArr[i].getText()+" is "+mirrorZ[i/2]);
+	            //zeroStatus.put(mirrorButtonArr[i].getText(), mirrorZ[i/2]);
 	        
 	        }
 	        
@@ -1595,8 +1980,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        String command = e.getActionCommand();
 	        if(command.equals(CLEAR)) {
 	            //clear all VOIs drawn
-	            parentFrame.getImageA().unregisterAllVOIs();
-	            parentFrame.updateImages();
+	            ((MuscleImageDisplay)parentFrame).getImageA().unregisterAllVOIs();
+	            ((MuscleImageDisplay)parentFrame).updateImages();
 	        } else {
 	
 	            if (command.equals(OK)) {
@@ -1606,21 +1991,21 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	                if ( goodVoi != null ) { 
 	                    
 	                    //save modified/created VOI to file
-	                    parentFrame.getImageA().unregisterAllVOIs();
-	                    parentFrame.getImageA().registerVOI(goodVoi);
-	                    String dir = parentFrame.getImageA().getImageDirectory()+MuscleImageDisplay.VOI_DIR;
-	                    parentFrame.saveAllVOIsTo(dir);
+	                    ((MuscleImageDisplay)parentFrame).getImageA().unregisterAllVOIs();
+	                    ((MuscleImageDisplay)parentFrame).getImageA().registerVOI(goodVoi);
+	                    String dir = ((MuscleImageDisplay)parentFrame).getImageA().getImageDirectory()+MuscleImageDisplay.VOI_DIR;
+	                    ((MuscleImageDisplay)parentFrame).saveAllVOIsTo(dir);
 	                    
-	                    String fileDir = parentFrame.getImageA().getFileInfo(0).getFileDirectory();
+	                    String fileDir = ((MuscleImageDisplay)parentFrame).getImageA().getFileInfo(0).getFileDirectory();
 	
 	                    MipavUtil.displayInfo(/*objectName*/"test"+" VOI saved in folder\n " + fileDir + MuscleImageDisplay.VOI_DIR);
 	                    
-	                    parentFrame.getImageA().unregisterAllVOIs();
-	                    parentFrame.updateImages();
+	                    ((MuscleImageDisplay)parentFrame).getImageA().unregisterAllVOIs();
+	                    ((MuscleImageDisplay)parentFrame).updateImages();
 	                    
 	                    completed = true;
 	                    novelVoiProduced = true; //not necessarily
-	                    notifyListeners();
+	                    notifyListeners(OK);
 	                    //dispose();
 	                } else {
 	                    //individual error messages are already displayed
@@ -1628,7 +2013,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	            } else if (command.equals("Cancel")) {
 	         
 	                setCompleted(false);//savedVoiExists());
-	                notifyListeners();
+	                notifyListeners(CANCEL);
 	                //dispose();
 	            } else if (command.equals("Help")) {
 	                MipavUtil.showHelp("19014");
@@ -1637,30 +2022,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        
 	    }
 	    
-	    /**
-	     * Add a listener to this class so that when when the dialog has completed processing it can use notifyListener
-	     * to notify all listeners that the dialog has completed.
-	     *
-	     * @param  obj  AlgorithmInterface "object' to be added to the list
-	     */
-	    public void addListener(ActionListener obj) {
-	    	objectList.addElement(obj);
-	    }
-	    
-	    /**
-	     * Used to notify all listeners that the pseudo-algorithm has completed.
-	     *
-	     * @param  dialog the sub-dialog that has completed the function
-	     */
-	    public void notifyListeners() {
 	
-	        for (int i = 0; i < objectList.size(); i++) {
-	            ((ActionListener) objectList.elementAt(i)).actionPerformed(new ActionEvent(this, 0, "Whole dialog completed"));
-	        }
-	
-	    }
 	    
 	    public void valueChanged(ListSelectionEvent e) {
+	
 	    	//should be process in general, change and compute based on srcImage, do not need to load into component,
 	    	//though that's where VOIs should be registered.
 
@@ -1690,8 +2055,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		
 		try {
 			Document pdfDocument = new Document();
-			
-		
 			PdfWriter writer = PdfWriter.getInstance(pdfDocument, new FileOutputStream(file));
 			pdfDocument.addTitle("Thigh Tissue Analysis Report");
 			pdfDocument.addCreator("MIPAV: Muscle Segmentation");
@@ -1814,7 +2177,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			imageTable.addCell("QA Image");
 			
 			chooser = new JFileChooser();
-			chooser.setDialogTitle("Open first image.");
+			chooser.setDialogTitle("Open image 1");
 			returnVal = chooser.showOpenDialog(null);
 
 	        while (returnVal != JFileChooser.APPROVE_OPTION) {
@@ -1842,369 +2205,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	private class MuscleDialogPrompt extends DialogPrompt implements ActionListener {
-	    
-	    //~ Static fields/initializers -------------------------------------------------------------------------------------
-	
-	    public static final int REMOVED_INTENSITY = -2048;
-	    
-	    public static final String CHECK_BOX = "CHECK_BOX";
-	    
-	    //~ Instance fields ------------------------------------------------------------------------------------------------
-	    
-	
-	    
-	    /** Denotes the anatomical part represented in the image. Implemented seperatly in case this class
-	     *  is moved to its own class at a later time.
-	     */
-	    private ImageType imageType;
-	    
-	    /** Whether this image has mirror image muscles (eg VIEWS of thighs, abdomen. */
-	    private Symmetry symmetry;
-	    
-	    /** Labels for instructions. */
-	    private JLabel[] instructionLabel;
-	    
-	    /** Check boxes for mirror muscle buttons. */
-	    private JCheckBox[] mirrorCheckArr;
-	    
-	    /** Check boxes for non-mirror object buttons. */
-	    private JCheckBox[] noMirrorCheckArr;
-	    
-	    /** Buttons for muscles where a mirror muscle may exist. */
-	    private JButton[] mirrorButtonArr;
-	    
-	    /** Buttons for muscles where mirror muscles are not considered. */
-	    private JButton[] noMirrorButtonArr;
-	    
-	    /** Text for muscles where a mirror muscle may exist. */
-	    private String[] mirrorArr;
-	    
-	    private boolean[] mirrorZ;
-	    
-	    /** Text for muscles where mirror muscles are not considered. */
-	    private String[] noMirrorArr;
-	    
-	    private boolean[] noMirrorZ;
-	    
-	    private TreeMap zeroStatus;
-	    
-	
-	    
-	    /**
-	     * Creates new set of prompts for particular muscle.
-	     *
-	     * @param  theParentFrame  Parent frame.
-	     */
-	    public MuscleDialogPrompt(MuscleImageDisplay theParentFrame, String[] mirrorArr, boolean[] mirrorZ, 
-	            String[] noMirrorArr, boolean[] noMirrorZ,  
-	            ImageType imageType, Symmetry symmetry) {
-	
-	        super(theParentFrame);
-	        
-	        this.mirrorArr = mirrorArr;
-	        this.noMirrorArr = noMirrorArr;
-	        
-	        this.mirrorZ = mirrorZ;
-	        this.noMirrorZ = noMirrorZ;
-	        
-	        this.imageType = imageType;
-	        this.symmetry = symmetry;
-	        
-	    }
-	    
-	    public boolean hasButton(String buttonText) {
-	        if(zeroStatus.get(buttonText) != null) {
-	            return true;
-	        } else {
-	            return false;
-	        }
-	    }
-	    
-	    public void setButton(String buttonText) {
-	        for(int i=0; i<mirrorButtonArr.length; i++) {
-	            if(mirrorButtonArr[i].getText().equals(buttonText)) {
-	                mirrorCheckArr[i].setSelected(true);
-	            }
-	        }
-	        for(int i=0; i<noMirrorButtonArr.length; i++) {
-	            if(noMirrorButtonArr[i].getText().equals(buttonText)) {
-	                noMirrorCheckArr[i].setSelected(true);
-	            }
-	        }
-	    }
-	    
-	    public void actionPerformed(ActionEvent e) {
-	        
-	        String command = e.getActionCommand();
-	        //System.out.println("Caught1: "+command);
-	        
-	        
-	    }
-	    
-	    
-	
-	    public TreeMap getZeroStatus() {
-	        return zeroStatus;
-	    }
-	
-	    
-	    private JPanel initInstructionPanel() {
-	        GridBagConstraints gbc = new GridBagConstraints();
-	        gbc.anchor = GridBagConstraints.WEST;
-	        gbc.fill = GridBagConstraints.HORIZONTAL;
-	        gbc.weightx = 1;
-	        gbc.weighty = 1;
-	        gbc.gridx = 0;
-	        gbc.gridy = 0;
-	        
-	        JPanel instructionPanel = new JPanel(new GridBagLayout());
-	        instructionPanel.setForeground(Color.black);
-	        instructionPanel.setBorder(MipavUtil.buildTitledBorder("Instructions"));
-	        instructionLabel = new JLabel[4];
-	        instructionLabel[0] = new JLabel("1) Press an object button.\n\r");
-	        instructionLabel[1] = new JLabel("2) A dialog box will prompt you to draw VOI(s) around that object.");
-	        instructionLabel[2] = new JLabel("3) Once drawn the check box next to the button will be checked.");
-	        instructionLabel[3] = new JLabel("4) Press that button again to review your VOI(s).");
-	        //resizing bug fixed, extra not necessary
-	        
-	        for(int i=0; i<instructionLabel.length; i++) {
-	            instructionLabel[i].setFont(MipavUtil.font12);
-	            instructionPanel.add(instructionLabel[i], gbc);
-	            gbc.gridy++;
-	        }
-	        
-	        return instructionPanel;
-	    }
-	    
-	    private JPanel initSymmetricalObjects() {
-	        
-	        VOIVector existingVois = ((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs();
-	        zeroStatus = new TreeMap();
-	         
-	        mirrorCheckArr = new JCheckBox[mirrorArr.length * 2];
-	        mirrorButtonArr = new JButton[mirrorArr.length * 2];
-	        ButtonGroup mirrorGroup = new ButtonGroup();
-	        JPanel mirrorPanel = new JPanel(new GridBagLayout());
-	        mirrorPanel.setForeground(Color.black);
-	        mirrorPanel.setBorder(MipavUtil.buildTitledBorder("Select an object"));
-	        
-	        GridBagConstraints gbc = new GridBagConstraints();
-	        gbc.anchor = GridBagConstraints.WEST;
-	        gbc.fill = GridBagConstraints.HORIZONTAL;
-	        gbc.weightx = 1;
-	        gbc.weighty = 0;
-	        gbc.gridx = 0;
-	        gbc.gridy = 0;
-	        
-	        for(int i=0; i<mirrorArr.length * 2; i++) {
-	            String symmetry1 = "", symmetry2 = "";
-	            if(symmetry.equals(Symmetry.LEFT_RIGHT)) {
-	                symmetry1 = "Left ";
-	                symmetry2 = "Right ";
-	            } else if(symmetry.equals(Symmetry.TOP_BOTTOM)) {
-	                symmetry1 = "Top ";
-	                symmetry2 = "Bottom ";
-	            }
-	            mirrorCheckArr[i] = new JCheckBox();
-	            mirrorCheckArr[i].setEnabled(false);
-	            mirrorCheckArr[i].setHorizontalAlignment(SwingConstants.RIGHT);
-	            
-	            
-	            mirrorButtonArr[i] = (i % 2) == 0 ? new JButton(symmetry1+mirrorArr[i/2]) : 
-	                                                        new JButton(symmetry2+mirrorArr[i/2]);
-	            mirrorButtonArr[i].setFont(MipavUtil.font12B);
-	            mirrorButtonArr[i].setActionCommand(MuscleImageDisplay.CHECK_VOI);
-	            mirrorButtonArr[i].addActionListener(parentFrame);
-	            mirrorGroup.add(mirrorButtonArr[i]);
-	            
-	            for(int j=0; j<existingVois.size(); j++) {
-	                if(((VOI)existingVois.get(j)).getName().equals(mirrorButtonArr[i].getText())) {
-	                    mirrorCheckArr[i].setSelected(true);
-	                }
-	            }
-	            
-	            if(i != 0 && i % 2 == 0) {
-	                gbc.gridy++;
-	                gbc.gridx = 0;
-	            }
-	            gbc.weightx = 0;
-	            mirrorPanel.add(mirrorCheckArr[i], gbc);
-	            gbc.gridx++;
-	            gbc.weightx = 1;
-	            mirrorPanel.add(mirrorButtonArr[i], gbc);
-	            gbc.gridx++;
-	            
-	            System.out.println(mirrorButtonArr[i].getText()+" is "+mirrorZ[i/2]);
-	            zeroStatus.put(mirrorButtonArr[i].getText(), mirrorZ[i/2]);
-	        
-	        }          
-	        return mirrorPanel;
-	                
-	    }
-	    
-	    private JPanel initNonSymmetricalObjects() {
-	        VOIVector existingVois = ((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs();
-	        
-	        noMirrorCheckArr = new JCheckBox[noMirrorArr.length];
-	        noMirrorButtonArr = new JButton[noMirrorArr.length];
-	        ButtonGroup noMirrorGroup = new ButtonGroup();
-	        JPanel noMirrorPanel = new JPanel(new GridBagLayout());
-	        noMirrorPanel.setForeground(Color.black);
-	        noMirrorPanel.setBorder(MipavUtil.buildTitledBorder("Select an object"));
-	        GridBagConstraints gbc = new GridBagConstraints();
-	        gbc.anchor = GridBagConstraints.WEST;
-	        gbc.fill = GridBagConstraints.HORIZONTAL;
-	        gbc.weightx = .5;
-	        gbc.weighty = 0;
-	        
-	        gbc.gridx = 0;
-	        gbc.gridy = 0;
-	        gbc.gridwidth = 1;
-	        gbc.gridheight = 1;
-	        
-	        JPanel tempPanel = null;
-	        GridBagConstraints gbc2 = new GridBagConstraints();
-	      
-	        gbc2.fill = GridBagConstraints.HORIZONTAL;
-	        
-	        for(int i=0; i<noMirrorArr.length; i++) {
-	        	tempPanel = new JPanel(new GridBagLayout());
-	            noMirrorCheckArr[i] = new JCheckBox();
-	            noMirrorCheckArr[i].setEnabled(false);
-	            noMirrorCheckArr[i].setHorizontalAlignment(SwingConstants.RIGHT);
-	            
-	            noMirrorButtonArr[i] = new JButton(noMirrorArr[i]);
-	            noMirrorButtonArr[i].setFont(MipavUtil.font12B);
-	            noMirrorButtonArr[i].setActionCommand(MuscleImageDisplay.CHECK_VOI);
-	            noMirrorButtonArr[i].addActionListener(parentFrame);
-	            noMirrorGroup.add(noMirrorButtonArr[i]);
-	          
-	            gbc2.gridx = 0;
-	            gbc2.weightx = 0;
-	            tempPanel.add(noMirrorCheckArr[i], gbc2);
-	            
-	            gbc2.weightx = 1;
-	            gbc2.gridx++;
-	            tempPanel.add(noMirrorButtonArr[i], gbc2);
-	            
-	            gbc.gridx = 0;
-	            noMirrorPanel.add(tempPanel, gbc);
-	          
-	            gbc.fill = GridBagConstraints.BOTH;
-	            gbc.gridx++;
-	            noMirrorPanel.add(Box.createGlue(), gbc);
-	            
-	          //  noMirrorPanel.add(noMirrorCheckArr[i], gbc);
-	          //  gbc.gridx++;
-	          //  gbc.weightx = 1;
-	         //   noMirrorPanel.add(noMirrorButtonArr[i], gbc);
-	            
-	            
-	            gbc.gridy++;
-	            for(int j=0; j<existingVois.size(); j++) {
-	                if(((VOI)existingVois.get(j)).getName().equals(noMirrorButtonArr[i].getText())) {
-	                    noMirrorCheckArr[i].setSelected(true);
-	                }
-	            }
-	            
-	            System.out.println(noMirrorButtonArr[i].getText()+" is "+noMirrorZ[i]);
-	            zeroStatus.put(noMirrorButtonArr[i].getText(), noMirrorZ[i]);
-	        }
-	        
-	        return noMirrorPanel;
-	    }
-	    
-	    protected void initDialog() {
-	        JPanel dialog = new JPanel();
-	    	
-	    	dialog.setForeground(Color.black);
-	        
-	        JPanel instructionPanel = initInstructionPanel();
-	        
-	        JPanel mirrorPanel = initSymmetricalObjects();
-	        
-	        JPanel noMirrorPanel = initNonSymmetricalObjects();
-	        dialog.setLayout(new GridBagLayout());
-	        GridBagConstraints gbc = new GridBagConstraints();
-	        
-	        gbc.fill = GridBagConstraints.HORIZONTAL;
-	        gbc.anchor = GridBagConstraints.NORTHWEST;
-	        
-	        gbc.weightx = 1;
-	        gbc.weighty = 0;
-	        gbc.gridx = 0;
-	        gbc.gridy = 0;
-	        
-	        dialog.add(instructionPanel, gbc);
-	        
-	        gbc.fill = GridBagConstraints.BOTH;
-	        gbc.weighty = 1;
-	        gbc.gridy++;
-	        dialog.add(mirrorPanel, gbc);
-	
-	        gbc.gridy++;
-	        dialog.add(noMirrorPanel, gbc);
-	
-	        gbc.gridy++;
-	        gbc.fill = GridBagConstraints.BOTH;
-	        dialog.add(new JLabel(""), gbc);
-	        
-	        gbc.fill = GridBagConstraints.NONE;
-	        gbc.anchor = GridBagConstraints.SOUTH;
-	        gbc.gridy++;
-	        dialog.add(buildButtons(), gbc);               
-	        
-	    }
-	    
-	    private boolean checkVariables() {
-	        boolean done = true;
-	        for(int i=0; i<mirrorCheckArr.length; i++) {
-	            if(!mirrorCheckArr[i].isSelected()) {
-	                done = false;
-	            }
-	        }
-	        for(int i=0; i<mirrorCheckArr.length; i++) {
-	            if(!mirrorCheckArr[i].isSelected()) {
-	                done = false;
-	            }
-	        }
-	        return done;
-	    }
-	    
-	    public TreeMap getIdentifiers() {
-	        return zeroStatus;
-	    }
-	    
-	    public JButton[] getMirrorButton() {
-	        return mirrorButtonArr;
-	    }
-	    
-	    public JButton[] getNoMirrorButton() {
-	        return noMirrorButtonArr;
-	    }
-	    
-	    public String[] getMirrorButtonArr() {
-	        String[] arr = new String[mirrorButtonArr.length];
-	        for(int i=0; i<arr.length; i++) {
-	            arr[i] = mirrorButtonArr[i].getText();
-	        }
-	        return arr;
-	    }
-	
-	            
-	            
-	            public String[] getNoMirrorButtonArr() {
-	                String[] arr = new String[noMirrorButtonArr.length];
-	                for(int i=0; i<arr.length; i++) {
-	                    arr[i] = noMirrorButtonArr[i].getText();
-	                }
-	                return arr;
-	                
-	            }
-	    
 	}
     
 }
