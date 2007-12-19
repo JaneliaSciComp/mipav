@@ -5848,6 +5848,7 @@ public class FileIO {
         image = new ModelImage(fileInfo.getDataType(), imgExtents, fileInfo.getFileName());
 
         int imageCount = 0;
+        int fInfoCount = 0;
 
         // loop through image and store data in image model
         for (i = 0; i < nImages; i++) {
@@ -5929,9 +5930,18 @@ public class FileIO {
 
                 ((FileNIFTI) imageFile).readImage(buffer);
                 image.importData(imageCount * length, buffer, false);
-                image.setFileInfo(fileInfo, imageCount);
-                imageCount++; // image was okay, so count it.(can't do it before b/c of offset)
 
+                if (image.getExtents().length > 3) {
+
+                    for (int j = 0; j < image.getExtents()[2]; j++) {
+                        image.setFileInfo(fileInfo, fInfoCount);
+                        fInfoCount++;
+                    }
+                } else {
+                    image.setFileInfo(fileInfo, imageCount);
+                }
+
+                imageCount++;   
             } catch (IOException error) {
 
 
@@ -6022,7 +6032,6 @@ public class FileIO {
                 image.setFileInfo(fileInfoArr[i], i); // copying...
             }
         }
-
 
         return image;
 

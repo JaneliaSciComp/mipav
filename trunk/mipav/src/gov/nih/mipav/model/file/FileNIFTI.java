@@ -1516,6 +1516,7 @@ public class FileNIFTI extends FileBase {
         fileInfo.setOrigin(tOffset, 3);
         Preferences.debug("tOffset = " + tOffset + "\n");
 
+
         switch (sourceType) {
 
             case FileInfoNIFTI.DT_NONE:
@@ -1794,7 +1795,10 @@ public class FileNIFTI extends FileBase {
                 }
             }
 
-            fileInfo.setOrigin(LPSOrigin);
+            //fileInfo.setOrigin(LPSOrigin);
+            fileInfo.setOrigin(LPSOrigin[0], 0);
+            fileInfo.setOrigin(LPSOrigin[1], 1);
+            fileInfo.setOrigin(LPSOrigin[2], 2);
             matrix.setMatrix((double) LPSOrigin[0], 0, 3);
             matrix.setMatrix((double) LPSOrigin[1], 1, 3);
             matrix.setMatrix((double) LPSOrigin[2], 2, 3);
@@ -1872,7 +1876,10 @@ public class FileNIFTI extends FileBase {
                 }
             }
 
-            fileInfo.setOrigin(LPSOrigin);
+            //fileInfo.setOrigin(LPSOrigin);
+            fileInfo.setOrigin(LPSOrigin[0], 0);
+            fileInfo.setOrigin(LPSOrigin[1], 1);
+            fileInfo.setOrigin(LPSOrigin[2], 2);
             matrix.setMatrix((double) LPSOrigin[0], 0, 3);
             matrix.setMatrix((double) LPSOrigin[1], 1, 3);
             matrix.setMatrix((double) LPSOrigin[2], 2, 3);
@@ -1990,7 +1997,6 @@ public class FileNIFTI extends FileBase {
         intentName = (new String(bufferByte, 328, 16));
         Preferences.debug("Name or meaning of data = " + intentName + "\n");
         fileInfo.setIntentName(intentName.trim());
-
         return true; // If it got this far, it has successfully read in the header
     }
 
