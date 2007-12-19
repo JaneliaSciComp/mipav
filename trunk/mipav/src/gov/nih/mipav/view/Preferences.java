@@ -265,6 +265,9 @@ public class Preferences {
     /** Constant that indicates the initial directory in which to open the file chooser of the image browser. */
     public static final String PREF_DEFAULT_IMAGE_BROWSER_DIR = "DefaultImageBrowserDirectory";
 
+    /** Constant that indicated if the multi-theading is enabled */
+    public static final String PREF_MULTI_THREADING_ENABLED = "multiThreadingEnabled";
+    
     /**
      * Constant that indicates the last used paint brush so that it will be set as the default when new images are
      * opened or mipav is restarted.
@@ -495,7 +498,7 @@ public class Preferences {
     private static Hashtable userShortcutTable;
 
     /** Hashtable that holds the default shortcuts */
-    private static Hashtable defaultShortcutTable = buildDefaultShortcuts();
+    private static Hashtable<String, KeyStroke> defaultShortcutTable = buildDefaultShortcuts();
 
     /** The current shortcut */
     private static KeyStroke currentShortcut;
@@ -571,6 +574,9 @@ public class Preferences {
         defaultProps.setProperty(PREF_SERVER_PORT_SRB, "5544");
         defaultProps.setProperty(PREF_SERVER_AUTHENTICATION_SRB, "ENCRYPT1");
         defaultProps.setProperty(PREF_STORAGE_RESOURCE_SRB, "");
+        
+        // multi-threading property
+        defaultProps.setProperty(PREF_MULTI_THREADING_ENABLED, "false");
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -2988,7 +2994,7 @@ public class Preferences {
      */
     private static Hashtable buildDefaultShortcuts() {
 
-        defaultShortcutTable = new Hashtable();
+        defaultShortcutTable = new Hashtable<String, KeyStroke>();
         defaultShortcutTable.put("OpenNewImage", KeyStroke.getKeyStroke('F', Event.CTRL_MASK, false));
         defaultShortcutTable.put("SaveImage", KeyStroke.getKeyStroke('S', Event.CTRL_MASK, false));
         defaultShortcutTable.put("SaveImageAs", KeyStroke.getKeyStroke('S', Event.SHIFT_MASK + Event.CTRL_MASK, false));
@@ -3012,4 +3018,17 @@ public class Preferences {
         return defaultShortcutTable;
     }
 
+    public static boolean isMultiThreadingEnabled(){
+        if(mipavProps == null){
+            read();
+        }
+        String mtEnabled = mipavProps.getProperty(PREF_MULTI_THREADING_ENABLED);
+        if(mtEnabled == null){
+            mtEnabled = defaultProps.getProperty(PREF_MULTI_THREADING_ENABLED);
+        }
+        if("true".equals(mtEnabled)){
+            return true;
+        }
+        return false;
+    }
 }

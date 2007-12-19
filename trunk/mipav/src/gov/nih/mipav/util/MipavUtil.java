@@ -1,6 +1,23 @@
 package gov.nih.mipav.util;
 
+import gov.nih.mipav.view.Preferences;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 public class MipavUtil {
+    public static final int nthreads = 2 * getAvailableCores();
+    
+    public static Executor mipavThreadPool;
+    static{
+        if(Preferences.isMultiThreadingEnabled()){
+            mipavThreadPool = Executors.newFixedThreadPool(nthreads);
+        }
+    }
+    
+    /**
+     * Return the available processors in your machine.
+     */
     public static int getAvailableCores(){
         return Runtime.getRuntime().availableProcessors();
     }
@@ -9,6 +26,15 @@ public class MipavUtil {
         System.out.println(MipavUtil.getAvailableCores());
     }
     
+    /**
+     * Swap slices in order to apply FFT algorithm.
+     * @param rdata
+     * @param idata
+     * @param xdim
+     * @param ydim
+     * @param zdim
+     * @param plane
+     */
     public static void swapSlices(float[] rdata, float[] idata, int xdim, int ydim, int zdim, int plane){
         int[] indices = null;
         int sliceLength = xdim * ydim;
@@ -60,8 +86,8 @@ public class MipavUtil {
                     for(int k = 0; k < xdim; k++){
                         rtemp = rdata[k + indices[i]*ydim + sliceLength*j];
                         itemp = idata[k + indices[i]*ydim + sliceLength*j];
-                        rdata[k + indices[indices[i]]*ydim + sliceLength*j] = rdata[k + indices[indices[i]]*ydim + sliceLength*j];
-                        idata[k + indices[indices[i]]*ydim + sliceLength*j] = idata[k + indices[indices[i]]*ydim + sliceLength*j];
+                        rdata[k + indices[i]*ydim + sliceLength*j] = rdata[k + indices[indices[i]]*ydim + sliceLength*j];
+                        idata[k + indices[i]*ydim + sliceLength*j] = idata[k + indices[indices[i]]*ydim + sliceLength*j];
                         rdata[k + indices[indices[i]]*ydim + sliceLength*j] = rtemp;
                         idata[k + indices[indices[i]]*ydim + sliceLength*j] = itemp;
                     }
@@ -96,10 +122,17 @@ public class MipavUtil {
                 indices[max+j] += indices[j] + (int)Math.pow(2, n-i-1); 
             }
         }
-        
-        for(int i = 0; i < l; i++){
-            System.out.println(indices[i]);
-        }
         return indices;
+    }
+    /**
+     * Calculate the minimum power of two which is greater or equal to the number.
+     * @return the minimum power of two which is greater or equal to the value
+     */
+    public static int findMinimumPowerOfTwo(int num){
+        int ret = 1;
+        while(ret < num){
+            ret >>= 1;
+        }
+        return ret;
     }
 }

@@ -1,13 +1,13 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.util.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
-import gov.nih.mipav.view.*;
-
-import java.io.*;
-
-import java.util.*;
+import java.io.IOException;
+import java.util.BitSet;
+import java.util.concurrent.CountDownLatch;
 
 
 /**
@@ -40,16 +40,13 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
     
     int incIndex;
     /** Holds the result image data. */
-    private double[] destBuffer;
+    private float[] destBuffer;
 
     /** Whether to convolve the whole image or just pixels inside a mask. */
     private boolean entireImage = true;
 
-    /** Holds the result image data (in float form) only used with the buffer constructor. */
-    private float[] floatDestBuffer;
-
     /** Holds the original image data. */
-    private double[] imgBuffer;
+    private float[] imgBuffer;
 
     /** The dimensions of the both source and destination images. */
     private int[] imgExtents;
@@ -71,9 +68,6 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 
     /** Flags to indicate which color channels to process. */
     private boolean red = true, green = true, blue = true;
-
-    /** Holds the transformed image data between convolutions in different dimensions. */
-    private double[] tempImgBuffer;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -123,13 +117,12 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                                        int[] kExtents, boolean color) {
         super(null, null);
 
-        imgBuffer = new double[srcBuffer.length];
+        imgBuffer = new float[srcBuffer.length];
 
         for (int i = 0; i < srcBuffer.length; i++) {
-            imgBuffer[i] = (double) srcBuffer[i];
+            imgBuffer[i] = srcBuffer[i];
         }
 
-        floatDestBuffer = destBuffer;
         imgExtents = iExtents;
         kernelExtents = kExtents;
         colorImage = color;
@@ -138,9 +131,9 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
             cFactor = 4;
         }
 
-        this.destBuffer = new double[destBuffer.length];
+        this.destBuffer = new float[destBuffer.length];
 
-        tempImgBuffer = new double[imgBuffer.length];
+        //tempImgBuffer = new double[imgBuffer.length];
 
         if (imgExtents.length == 2) {
             int i;
@@ -196,33 +189,54 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
      * @param  minProgressValue the minimum progress value.
      * @param  maxProgressValue the maximum progress value.
      */
-    public AlgorithmSeparableConvolver(float[] destBuffer, float[] srcBuffer, int[] iExtents, float[] kernXBuffer,
-                                       float[] kernYBuffer, boolean color) {
-        super(null, null);
+    public AlgorithmSeparableConvolver(float[] destBuffer, float[] srcBuffer,
+			int[] iExtents, float[] kernXBuffer, float[] kernYBuffer,
+			boolean color) {
+		super(null, null);
 
-        imgBuffer = new double[srcBuffer.length];
+		imgBuffer = new float[srcBuffer.length];
 
-        for (int i = 0; i < srcBuffer.length; i++) {
-            imgBuffer[i] = (double) srcBuffer[i];
-        }
+		for (int i = 0; i < srcBuffer.length; i++) {
+			imgBuffer[i] = srcBuffer[i];
+		}
 
-        floatDestBuffer = destBuffer;
-        imgExtents = iExtents;
-        colorImage = color;
+		imgExtents = iExtents;
+		colorImage = color;
 
-        if (color) {
-            cFactor = 4;
-        }
+		if (color) {
+			cFactor = 4;
+		}
 
-        this.destBuffer = new double[destBuffer.length];
+		this.destBuffer = destBuffer;
 
-        tempImgBuffer = new double[imgBuffer.length];
+		// tempImgBuffer = new double[imgBuffer.length];
 
-        this.kernelXBuffer = kernXBuffer;
-        this.kernelYBuffer = kernYBuffer;
+		this.kernelXBuffer = kernXBuffer;
+		this.kernelYBuffer = kernYBuffer;
 
-        kernelExtents = new int[] { kernelXBuffer.length, kernelYBuffer.length };
-    }
+		kernelExtents = new int[] { kernelXBuffer.length, kernelYBuffer.length };
+	}
+
+	public AlgorithmSeparableConvolver(float[] srcBuffer, int[] iExtents,
+			float[] kernXBuffer, float[] kernYBuffer, boolean color) {
+		super(null, null);
+
+		imgBuffer = srcBuffer;
+
+		imgExtents = iExtents;
+		colorImage = color;
+
+		if (color) {
+			cFactor = 4;
+		}
+
+		// tempImgBuffer = new double[imgBuffer.length];
+
+		this.kernelXBuffer = kernXBuffer;
+		this.kernelYBuffer = kernYBuffer;
+
+		kernelExtents = new int[] { kernelXBuffer.length, kernelYBuffer.length };
+	}
 
     /**
      * Sets destination, source, and kernel buffers. Call run() to convolve image.
@@ -237,34 +251,51 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
      * @param  minProgressValue the minimum progress value.
      * @param  maxProgressValue the maximum progress value.
      */
-    public AlgorithmSeparableConvolver(float[] destBuffer, float[] srcBuffer, int[] iExtents, float[] kernXBuffer,
-                                       float[] kernYBuffer, float[] kernZBuffer, boolean color) {
-        super(null, null);
+    public AlgorithmSeparableConvolver(float[] destBuffer, float[] srcBuffer,
+			int[] iExtents, float[] kernXBuffer, float[] kernYBuffer,
+			float[] kernZBuffer, boolean color) {
+		super(null, null);
 
-        imgBuffer = new double[srcBuffer.length];
+		imgBuffer = srcBuffer;
 
-        for (int i = 0; i < srcBuffer.length; i++) {
-            imgBuffer[i] = (double) srcBuffer[i];
-        }
+		imgExtents = iExtents;
+		colorImage = color;
 
-        floatDestBuffer = destBuffer;
-        imgExtents = iExtents;
-        colorImage = color;
+		if (color) {
+			cFactor = 4;
+		}
 
-        if (color) {
-            cFactor = 4;
-        }
+		this.destBuffer = destBuffer;
 
-        this.destBuffer = new double[destBuffer.length];
+		this.kernelXBuffer = kernXBuffer;
+		this.kernelYBuffer = kernYBuffer;
+		this.kernelZBuffer = kernZBuffer;
 
-        tempImgBuffer = new double[imgBuffer.length];
+		kernelExtents = new int[] { kernelXBuffer.length, kernelYBuffer.length,
+				kernelZBuffer.length };
+	}
 
-        this.kernelXBuffer = kernXBuffer;
-        this.kernelYBuffer = kernYBuffer;
-        this.kernelZBuffer = kernZBuffer;
+	public AlgorithmSeparableConvolver(float[] srcBuffer, int[] iExtents,
+			float[] kernXBuffer, float[] kernYBuffer, float[] kernZBuffer,
+			boolean color) {
+		super(null, null);
 
-        kernelExtents = new int[] { kernelXBuffer.length, kernelYBuffer.length, kernelZBuffer.length };
-    }
+		imgBuffer = srcBuffer;
+
+		imgExtents = iExtents;
+		colorImage = color;
+
+		if (color) {
+			cFactor = 4;
+		}
+
+		this.kernelXBuffer = kernXBuffer;
+		this.kernelYBuffer = kernYBuffer;
+		this.kernelZBuffer = kernZBuffer;
+
+		kernelExtents = new int[] { kernelXBuffer.length, kernelYBuffer.length,
+				kernelZBuffer.length };
+	}
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -277,13 +308,11 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         srcImage = null;
         imgBuffer = null;
         imgExtents = null;
-        tempImgBuffer = null;
         kernelExtents = null;
         kernelXBuffer = null;
         kernelYBuffer = null;
         kernelZBuffer = null;
         destBuffer = null;
-        floatDestBuffer = null;
 
         super.finalize();
     }
@@ -292,174 +321,39 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
      * Begins the excution of the 2D convolver.
      */
     public void run2D() {
-        double sum = 0;
-        double norm = 0;
-
-        int offsetX, offsetY;
-        int startX, endX;
-        int startY, endY;
-
         int xDim = imgExtents[0];
         int yDim = imgExtents[1];
 
-        int xKDim;
-        int yKDim;
+        int xoffset = xDim * cFactor;
+        int yoffset = yDim * cFactor;
 
-        int halfxKDim;
-        int halfyKDim;
-        int imageLength = xDim * yDim * cFactor;
-        int stepY;
-
-        int offset = xDim * cFactor;
-
-        int offsetYTimesOffset;
-
-        boolean skipRed = false;
-        boolean skipGreen = false;
-        boolean skipBlue = false;
-
-        if (colorImage && !red) {
-            skipRed = true;
-        }
-
-        if (colorImage && !green) {
-            skipGreen = true;
-        }
-
-        if (colorImage && !blue) {
-            skipBlue = true;
-        }
-
-        // x kernel dimensions
-        xKDim = kernelXBuffer.length;
-        yKDim = 1;
-        halfxKDim = xKDim / 2;
-        halfyKDim = 0;
-
-        int halfXKDimTimesCFactor = halfxKDim * cFactor;
-
-        int stepProgressValue = (imgExtents[0] * imgExtents[1] * cFactor * 2) / 100;
+        int stepProgressValue = (imgExtents[0] + imgExtents[1]) / 100;
 
         int progress = 0;
-        int index = 0;
-        // convolve the image with the X dimension kernel
-        for (int pix = 0; (pix < imageLength) && !threadStopped; pix++, index++) {
+        float[] xrowBuffer = new float[xoffset];
+        float[] xresultBuffer = new float[xoffset];
+        // Convolve the image with the X dimension kernel
+        for (int row = 0; (row < yDim) && !threadStopped; row++) {
 
-            if (index % stepProgressValue == 0) {
+            if (row % stepProgressValue == 0) {
                 fireProgressStateChanged(progress++);
             }
-
-            if (skipRed && ((pix % 4) == 1)) {
-                tempImgBuffer[pix] = imgBuffer[pix];
-            } else if (skipGreen && ((pix % 4) == 2)) {
-                tempImgBuffer[pix] = imgBuffer[pix];
-            } else if (skipBlue && ((pix % 4) == 3)) {
-                tempImgBuffer[pix] = imgBuffer[pix];
-            } else if (entireImage || mask.get(pix / cFactor)) {
-                offsetX = (pix % offset) - halfXKDimTimesCFactor;
-
-                offsetY = (pix / offset);
-
-                offsetYTimesOffset = offset * offsetY;
-
-                sum = 0;
-                int count = 0;
-                norm = 0;
-                startX = offsetX;
-                endX = startX + ((xKDim - 1) * cFactor);
-
-                if (startX < 0) {
-                    count = count - ((offsetX - (cFactor - 1)) / cFactor);
-                    if (cFactor > 1) {
-                        startX = (pix % cFactor);
-                    }
-                    else {
-                        startX = 0;
-                    }
-                }
-
-                if (endX >= offset) {
-                    endX = offset - 1;
-                }
-
-                // Evan do we really need to recalc the norm all the time?
-                // Also can (offsetY * offset) be precalced.
-                // Other speedups ?
-                for (int i = startX; i <= endX; i += cFactor) {
-                    sum += kernelXBuffer[count] * imgBuffer[i + offsetYTimesOffset];
-
-                    if (kernelXBuffer[count] >= 0) {
-                        norm += kernelXBuffer[count];
-                    } else {
-                        norm -= kernelXBuffer[count];
-                    }
-                    
-                    count++;
-                    
-                }
-
-                tempImgBuffer[pix] = sum / norm;
-                
-            } else {
-                tempImgBuffer[pix] = imgBuffer[pix];
-            }
+            System.arraycopy(imgBuffer, row*xoffset, xrowBuffer, 0, xoffset);
+            convolve(xrowBuffer, kernelXBuffer, xresultBuffer);
+            System.arraycopy(xresultBuffer, 0, imgBuffer, row*xoffset, xoffset);
         }
 
-        // y kernel dimensions
-        xKDim = 1;
-        yKDim = kernelYBuffer.length;
-        halfxKDim = 0;
-        halfyKDim = yKDim / 2;
-        stepY = (yKDim - 1) * offset;
-
-        // convolve the result image from above with the Y dimension kernel
-        for (int pix = 0; (pix < imageLength) && !threadStopped; pix++, index++) {
-
-            if (index % stepProgressValue == 0) {
+        // Convolve the result image from above with the Y dimension kernel
+        
+        float[] yrowBuffer = new float[yoffset];
+        float[] yresultBuffer = new float[yoffset];
+        for (int col = 0; (col < xDim) && !threadStopped; col++) {
+            if (col % stepProgressValue == 0) {
                 fireProgressStateChanged( progress++);
             }
-
-            if (skipRed && ((pix % 4) == 1)) {
-                destBuffer[pix] = tempImgBuffer[pix];
-            } else if (skipGreen && ((pix % 4) == 2)) {
-                destBuffer[pix] = tempImgBuffer[pix];
-            } else if (skipBlue && ((pix % 4) == 3)) {
-                destBuffer[pix] = tempImgBuffer[pix];
-            } else if (entireImage || mask.get(pix / cFactor)) {
-                offsetX = (pix % offset);
-                offsetY = (pix / offset) - halfyKDim;
-
-                sum = 0;
-                int count = 0;
-                norm = 0;
-                startY = offsetY * offset;
-                endY = startY + stepY;
-
-                if (startY < 0) {
-                    count = count - offsetY;
-                    startY = 0;
-                }
-
-                if (endY > (offset * (yDim - 1))) {
-                    endY = offset * (yDim - 1);
-                }
-
-                for (int i = startY; i <= endY; i += offset) {
-                    sum += kernelYBuffer[count] * tempImgBuffer[offsetX + i];
-
-                    if (kernelYBuffer[count] >= 0) {
-                        norm += kernelYBuffer[count];
-                    } else {
-                        norm -= kernelYBuffer[count];
-                    }
-
-                    count++;
-                }
-
-                destBuffer[pix] = sum / norm;
-            } else {
-                destBuffer[pix] = tempImgBuffer[pix];
-            }
+            rowCopy(imgBuffer, col, yrowBuffer, 0, yoffset, xoffset, cFactor);
+            convolve(yrowBuffer, kernelYBuffer, yresultBuffer);
+            rowCopy(yresultBuffer, 0, imgBuffer, col, yoffset, cFactor, xoffset);
         }
         
         fireProgressStateChanged(100);
@@ -468,27 +362,29 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
     }
 
     /**
-     * Begins the excution of the 3D convolver.
+     * Copy a row in x, y or z direction to an array.
+     * 
+     * @param src		
+     * @param srcPos
+     * @param dest
+     * @param destPos
+     * @param length
+     * @param srcDist	the distance between two pixels of source data in x, y or z direction.
+     * @param destDist	the distance between two pixels of destination data in x, y or z direction.
      */
-    public void run3D() {
-        double sum = 0;
-        double norm = 0;
-        int offsetX, offsetY, offsetZ;
-        int start, end;
-
-        int xDim = imgExtents[0];
-        int yDim = imgExtents[1];
-        int zDim = imgExtents[2];
-
-        int kDim;
-        int halfKDim;
-
-        int size = imgBuffer.length;
-        int sliceSize = xDim * yDim * cFactor;
-        int step;
-
-        int offset = xDim * cFactor;
-
+    public static void rowCopy(float[] src, int srcPos, float[] dest, int destPos, int length, int srcDist, int destDist){
+    	for(int i = 0; i < length; i++){
+    		dest[destPos + i * destDist] = src[srcPos + i * srcDist];
+    	}
+    }
+    
+    /**
+     * Perform one-dimension convolution.
+     * @param imageBuffer
+     * @param kernelBuffer
+     * @param resultBuffer
+     */
+    private void convolve(float[] imageBuffer, float[] kernelBuffer, float[] resultBuffer){
         boolean skipRed = false;
         boolean skipGreen = false;
         boolean skipBlue = false;
@@ -504,95 +400,454 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         if (colorImage && !blue) {
             skipBlue = true;
         }
-
-        // x kernel dimensions
-        kDim = kernelXBuffer.length;
-        halfKDim = kDim / 2;
-
-        // used for reducing repetitive calculations
-        int combined = 0;
-
-        int halfKDimTimesCFactor = halfKDim * cFactor;
-
-        int stepProgressValue = (imgExtents[0] * imgExtents[1] * imgExtents[2] * cFactor * 3) /100;
+    	int kernelDim = kernelBuffer.length;
+    	int halfKernelDimTimesCFactor = kernelDim/2 * cFactor;
+    	for (int i = 0; i < imageBuffer.length; i++) {
+			if (skipRed && ((i % 4) == 1)) {
+				resultBuffer[i] = imageBuffer[i];
+			} else if (skipGreen && ((i % 4) == 2)) {
+				resultBuffer[i] = imageBuffer[i];
+			} else if (skipBlue && ((i % 4) == 3)) {
+				resultBuffer[i] = imageBuffer[i];
+			} else if (entireImage || mask.get(i / cFactor)) {
+				int count = 0;
+				double sum = 0;
+				double norm = 0;
+				int start = i - halfKernelDimTimesCFactor;
+				int end = start + (kernelDim - 1) * cFactor;
+				if (start < 0) {
+					count = count - ((start - (cFactor - 1)) / cFactor);
+					if (cFactor > 1) {
+						start = i % cFactor;
+					} else {
+						start = 0;
+					}
+				}
+				if (end >= imageBuffer.length) {
+					end = imageBuffer.length - cFactor;
+				}
+				for (int j = start; j <= end; j += cFactor) {
+					sum += kernelBuffer[count] * imageBuffer[j];
+					if (kernelBuffer[count] > 0) {
+						norm += kernelBuffer[count];
+					} else {
+						norm -= kernelBuffer[count];
+					}
+					count++;
+				}
+				resultBuffer[i] = (float)(sum / norm);
+			}else{
+				resultBuffer[i] = imageBuffer[i];
+			}
+    	}
+	}
+    
+    public void run3DMT2(){
+        int size = imgBuffer.length;
+//      setProgressStep((imgExtents[0] * imgExtents[1] * imgExtents[2] * cFactor * 3) /100);
+        setProgressStep(100.00f/(imgExtents[0] * imgExtents[1] * imgExtents[2] * cFactor * 3));
         // convolve the image with the X dimension kernel
-        int progress  = 0;
-        int index = 0;
-        for (int pix = 0; (pix < size) && !threadStopped; pix++, index++) {
-
-            if (index % stepProgressValue == 0) {
-                fireProgressStateChanged(progress++);
-            }
-
-            if (skipRed && ((pix % 4) == 1)) {
-                tempImgBuffer[pix] = imgBuffer[pix];
-            } else if (skipGreen && ((pix % 4) == 2)) {
-                tempImgBuffer[pix] = imgBuffer[pix];
-            } else if (skipBlue && ((pix % 4) == 3)) {
-                tempImgBuffer[pix] = imgBuffer[pix];
-            } else if (entireImage || mask.get(pix / cFactor)) {
-                offsetX = (pix % offset) - halfKDimTimesCFactor;
-                offsetY = (pix % sliceSize) / offset;
-                offsetZ = (pix / sliceSize);
-
-                combined = (offsetY * offset) + (offsetZ * sliceSize);
-
-                int count = 0;
-                sum = 0;
-                norm = 0;
-                start = offsetX;
-                end = start + ((kDim - 1) * cFactor);
-
-                if (start < 0) {
-                    count = count - ((offsetX - (cFactor - 1)) / cFactor);
-                    if (cFactor > 1) {
-                        start = (pix % cFactor);
-                    }
-                    else {
-                        start = 0;
-                    }
+        int nthreads = gov.nih.mipav.util.MipavUtil.getAvailableCores();
+        System.out.println(" Number of Threads: " + nthreads);
+        final CountDownLatch doneSignalx = new CountDownLatch(nthreads);
+        float step2 = size/nthreads;
+        for(int i = 0; i < nthreads; i++){
+            final int start2 = (int)(step2*i);
+            final int end2 = (int)(step2*(i+1));
+            Runnable task = new Runnable(){
+                public void run(){
+              	  convolveX2(start2, end2);
+              	  doneSignalx.countDown();
                 }
-
-                if (end >= offset) {
-                    end = offset - 1;
-                }
-
-                for (int i = start; i <= end; i += cFactor) {
-                    sum += kernelXBuffer[count] * imgBuffer[i + combined];
-
-                    if (kernelXBuffer[count] >= 0) {
-                        norm += kernelXBuffer[count];
-                    } else {
-                        norm -= kernelXBuffer[count];
-                    }
-
-                    count++;
-                }
-
-                tempImgBuffer[pix] = sum / norm;
-            } else {
-                tempImgBuffer[pix] = imgBuffer[pix];
-            }
+            };
+            gov.nih.mipav.util.MipavUtil.mipavThreadPool.execute(task);
+        }
+        try{
+      	  doneSignalx.await();
+        }catch(InterruptedException e){
+      	  
         }
 
         // y kernel dimensions
-        kDim = kernelYBuffer.length;
-        halfKDim = kDim / 2;
-        step = (kDim - 1) * offset;
+        final CountDownLatch doneSignaly = new CountDownLatch(nthreads);
+        for(int i = 0; i < nthreads; i++){
+            final int start2 = (int)(step2*i);
+            final int end2 = (int)(step2*(i+1));
+            Runnable task = new Runnable(){
+                public void run(){
+              	  convolveY2(start2, end2);
+              	  doneSignaly.countDown();
+                }
+            };
+            gov.nih.mipav.util.MipavUtil.mipavThreadPool.execute(task);
+        }
+        try{
+      	  doneSignaly.await();
+        }catch(InterruptedException e){
+      	  
+        }
 
-        // convolve the result image from above with the Y dimension kernel
-        for (int pix = 0; (pix < size) && !threadStopped; pix++, index++) {
+        // z kernel dimensions
+        final CountDownLatch doneSignalz = new CountDownLatch(nthreads);
+        for(int i = 0; i < nthreads; i++){
+            final int start2 = (int)(step2*i);
+            final int end2 = (int)(step2*(i+1));
+            Runnable task = new Runnable(){
+                public void run(){
+              	  convolveZ2(start2, end2);
+              	  doneSignalz.countDown();
+                }
+            };
+            gov.nih.mipav.util.MipavUtil.mipavThreadPool.execute(task);
+        }
+        try{
+      	  doneSignalz.await();
+        }catch(InterruptedException e){
+      	  
+        }
+        setCompleted(true);
+    }
+    
+    /**
+     * 
+     * @param imageBuffer
+     * @param kernelBuffer
+     * @param destBuffer
+     * @param from			the position of the starting row.
+     * @param to			the position of the ending row.
+     * @param rowDist		the distance between two rows.
+     * @param pixelDist		the distance between adjacent pixels.
+     * @param rowLength
+     * @param sliceSize
+     */
+    private void convolve(float[] imageBuffer, 
+			  float[] kernelBuffer, 
+			  float[] destBuffer, 
+			  int from,
+			  int to,
+			  int rowDist,
+			  int pixelDist,
+			  int rowLength,
+			  int sliceSize){
+    	if((rowDist == 1) && (pixelDist != sliceSize)){
+    		int numberOfRowsPerSlice = sliceSize/rowLength;
+    		int pos = from;
+    		while(pos < to){
+				convolve(imageBuffer, kernelBuffer, destBuffer, pos, pixelDist,	rowLength);
+				pos += rowDist;
+				if(pos % numberOfRowsPerSlice == 0){
+					pos += sliceSize - numberOfRowsPerSlice;
+				}
+			}
+    	} else {
+			for (int row = from; row < to; row += rowDist) {
+				convolve(imageBuffer, kernelBuffer, destBuffer, row, pixelDist,	rowLength);
+			}
+		}
+    }
+    /**
+     * Convolves a row with the kernel and stores the result into the destBuffer.
+     * @param imageBuffer
+     * @param kernelBuffer
+     * @param destBuffer
+     * @param from
+     * @param pixelDist
+     * @param length
+     */
+    private void convolve(float[] imageBuffer, 
+    					  float[] kernelBuffer, 
+    					  float[] destBuffer, 
+    					  int from, 
+    					  int pixelDist,
+    					  int rowLength){
+        boolean skipRed = false;
+        boolean skipGreen = false;
+        boolean skipBlue = false;
 
-            if (index % stepProgressValue == 0) {
+        if (colorImage && !red) {
+            skipRed = true;
+        }
+ 
+        if (colorImage && !green) {
+            skipGreen = true;
+        }
+
+        if (colorImage && !blue) {
+            skipBlue = true;
+        }
+    	int kernelDim = kernelBuffer.length;
+    	int halfKernelDimTimesCFactor = kernelDim/2 * cFactor;
+    	int to = from + rowLength * pixelDist;
+    	for (int i = 0; i < rowLength; i++) {
+    		int base = from + i * pixelDist;
+    		for (int k = 0; k < cFactor; k++) {
+				int pos = base + k;
+				if (skipRed && ((pos % 4) == 1)) {
+					destBuffer[pos] = imageBuffer[pos];
+				} else if (skipGreen && ((pos % 4) == 2)) {
+					destBuffer[pos] = imageBuffer[pos];
+				} else if (skipBlue && ((pos % 4) == 3)) {
+					destBuffer[pos] = imageBuffer[pos];
+				} else if (entireImage || mask.get(base)) {
+					int count = 0;
+					double sum = 0;
+					double norm = 0;
+					int start = pos - halfKernelDimTimesCFactor*pixelDist;
+					int end = start + (kernelDim - 1) * cFactor * pixelDist;
+					if (start < 0) {
+						count = count - ((start/pixelDist - (cFactor - 1)) / cFactor);
+						if (cFactor > 1) {
+							start = pos % cFactor;
+						} else {
+							start = 0;
+						}
+					}
+					if (end >= to) {
+						end = to - cFactor + k;
+					}
+					for (int j = start; j <= end; j += pixelDist *cFactor) {
+						try{
+						sum += kernelBuffer[count] * imageBuffer[j];
+						}catch(ArrayIndexOutOfBoundsException e){
+							e.printStackTrace();
+						}
+						if (kernelBuffer[count] > 0) {
+							norm += kernelBuffer[count];
+						} else {
+							norm -= kernelBuffer[count];
+						}
+						count++;
+					}
+					destBuffer[pos] = (float) (sum / norm);
+				} else {
+					destBuffer[pos] = imageBuffer[pos];
+				}
+			}
+		}
+	}
+    /**
+	 * Begins the excution of the 3D convolver.
+	 */
+    public void run3D() {
+    	int xDim = imgExtents[0];
+    	int yDim = imgExtents[1];
+    	int zDim = imgExtents[2];
+
+        int xoffset = xDim * cFactor;
+        int yoffset = yDim * cFactor;
+        int zoffset = zDim * cFactor;
+        int stepProgressValue = (yDim*zDim + xDim*zDim + xDim*yDim) / 100;
+
+        int progress = 0;
+        float[] xrowBuffer = new float[xoffset];
+        float[] xresultBuffer = new float[xoffset];
+        // Convolve the image with the X dimension kernel
+        for (int row = 0; (row < yDim*zDim) && !threadStopped; row++) {
+
+            if (row % stepProgressValue == 0) {
                 fireProgressStateChanged(progress++);
             }
+            System.arraycopy(imgBuffer, row*xoffset, xrowBuffer, 0, xoffset);
+            convolve(xrowBuffer, kernelXBuffer, xresultBuffer);
+            System.arraycopy(xresultBuffer, 0, imgBuffer, row*xoffset, xoffset);
+        }
 
-            if (skipRed && ((pix % 4) == 1)) {
-                imgBuffer[pix] = tempImgBuffer[pix];
-            } else if (skipGreen && ((pix % 4) == 2)) {
-                imgBuffer[pix] = tempImgBuffer[pix];
-            } else if (skipBlue && ((pix % 4) == 3)) {
-                imgBuffer[pix] = tempImgBuffer[pix];
+        // Convolve the result image from above with the Y dimension kernel
+        float[] yrowBuffer = new float[yoffset];
+        float[] yresultBuffer = new float[yoffset];
+        for (int z = 0; (z < zDim) && !threadStopped; z++) {
+        	for (int x = 0; (x < xDim) && !threadStopped; x++) {
+				if ((z*xDim +x) % stepProgressValue == 0) {
+					fireProgressStateChanged(progress++);
+				}
+				rowCopy(imgBuffer, x+z*xoffset*yoffset, yrowBuffer, 0, yoffset, xoffset, cFactor);
+				convolve(yrowBuffer, kernelYBuffer, yresultBuffer);
+				rowCopy(yresultBuffer, 0, imgBuffer, x+z*xoffset*yoffset, yoffset, cFactor, xoffset);
+			}
+        }
+
+        // Convolve the result image from above with the Z dimension kernel
+        float[] zrowBuffer = new float[zoffset];
+        float[] zresultBuffer = new float[zoffset];
+        for (int row = 0; (row < xDim*yDim) && !threadStopped; row++) {
+            if (row % stepProgressValue == 0) {
+                fireProgressStateChanged( progress++);
+            }
+            rowCopy(imgBuffer, row, zrowBuffer, 0, zoffset, xoffset*yoffset, cFactor);
+            convolve(zrowBuffer, kernelZBuffer, zresultBuffer);
+            rowCopy(zresultBuffer, 0, imgBuffer, row, zoffset, cFactor, xoffset*yoffset);
+        }
+        
+        System.arraycopy(imgBuffer, 0, destBuffer, 0, imgBuffer.length);
+        fireProgressStateChanged(100);
+      
+        setCompleted(true);
+
+    }
+
+    public void run3DMT() {
+        setProgressStep((imgExtents[0] * imgExtents[1] + imgExtents[1] * imgExtents[2] + imgExtents[2]*imgExtents[0]) /100);
+
+        // convolve the image with the X dimension kernel
+        int nthreads = determineNumberOfThreads();
+        final CountDownLatch doneSignalx = new CountDownLatch(nthreads);
+        int nrows = imgExtents[1] * imgExtents[2];
+        float step = ((float)nrows)/nthreads;
+        for(int i = 0; i < nthreads; i++){
+            final int start2 = (int)(step*i);
+            final int end2 = (int)(step*(i+1));
+            Runnable task = new Runnable(){
+                public void run(){
+              	  convolveX(start2, end2);
+              	  doneSignalx.countDown();
+                }
+            };
+            gov.nih.mipav.util.MipavUtil.mipavThreadPool.execute(task);
+        }
+        try{
+      	  doneSignalx.await();
+        }catch(InterruptedException e){
+      	  
+        }
+
+        // y kernel dimensions
+        final CountDownLatch doneSignaly = new CountDownLatch(nthreads);
+        nrows = imgExtents[2];
+        step = ((float)nrows)/nthreads;
+        for(int i = 0; i < nthreads; i++){
+            final int start2 = (int)(step*i);
+            final int end2 = (int)(step*(i+1));
+            Runnable task = new Runnable(){
+                public void run(){
+              	  convolveY(start2, end2);
+              	  doneSignaly.countDown();
+                }
+            };
+            gov.nih.mipav.util.MipavUtil.mipavThreadPool.execute(task);
+        }
+        try{
+      	  doneSignaly.await();
+        }catch(InterruptedException e){
+      	  
+        }
+
+        // z kernel dimensions
+        final CountDownLatch doneSignalz = new CountDownLatch(nthreads);
+        nrows = imgExtents[0]*imgExtents[1];
+        step = ((float)nrows)/nthreads;
+        for(int i = 0; i < nthreads; i++){
+            final int start2 = (int)(step*i);
+            final int end2 = (int)(step*(i+1));
+            Runnable task = new Runnable(){
+                public void run(){
+              	  convolveZ(start2, end2);
+              	  doneSignalz.countDown();
+                }
+            };
+            gov.nih.mipav.util.MipavUtil.mipavThreadPool.execute(task);
+        }
+        try{
+      	  doneSignalz.await();
+        }catch(InterruptedException e){
+      	  
+        }
+        setCompleted(true);
+    }
+
+    private void convolveX2(final int from, final int to){
+        int xDim = imgExtents[0];
+        int yDim = imgExtents[1];
+
+    	int offset = xDim;
+    	int sliceSize = xDim * yDim;
+    	int offsetX, offsetY, offsetZ;
+        int kDim = kernelXBuffer.length;
+        int halfKDim = kDim / 2;
+        int halfKDimTimesCFactor = halfKDim * cFactor;
+        int combined, start, end;
+		float sum, norm;
+		int index = 0;
+		float ps = getProgressStep();
+		int period = (int)(1.0/getProgressStep());
+		for (int pix = from; (pix < to) && !threadStopped; pix++) {
+            if (colorImage && !red && ((pix % 4) == 1)) {
+                destBuffer[pix] = imgBuffer[pix];
+            } else if (colorImage && !green && ((pix % 4) == 2)) {
+                destBuffer[pix] = imgBuffer[pix];
+            } else if (colorImage && !blue && ((pix % 4) == 3)) {
+                destBuffer[pix] = imgBuffer[pix];
+            } else if (entireImage || mask.get(pix / cFactor)) {
+				offsetX = (pix % offset) - halfKDimTimesCFactor;
+				offsetY = (pix % sliceSize) / offset;
+				offsetZ = (pix / sliceSize);
+
+				combined = (offsetY * offset) + (offsetZ * sliceSize);
+
+				int count = 0;
+				sum = 0;
+				norm = 0;
+				start = offsetX;
+				end = start + ((kDim - 1) * cFactor);
+
+				if (start < 0) {
+					count = count - ((offsetX - (cFactor - 1)) / cFactor);
+					if (cFactor > 1) {
+						start = (pix % cFactor);
+					} else {
+						start = 0;
+					}
+				}
+
+				if (end >= offset) {
+					end = offset - 1;
+				}
+
+				for (int i = start; i <= end; i += cFactor) {
+					sum += kernelXBuffer[count] * imgBuffer[i + combined];
+
+					if (kernelXBuffer[count] >= 0) {
+						norm += kernelXBuffer[count];
+					} else {
+						norm -= kernelXBuffer[count];
+					}
+
+					count++;
+				}
+
+				destBuffer[pix] = sum / norm;
+			}else{
+				destBuffer[pix] = imgBuffer[pix];
+			}
+            index++;
+            if(index % period == 0){
+            	makeProgress(ps*period);
+            	fireProgressStateChanged((int)getProgress());
+            }
+		}
+	}
+        
+    private void convolveY2(final int from, final int to){
+        int xDim = imgExtents[0];
+        int yDim = imgExtents[1];
+
+    	int offset = xDim;
+    	int sliceSize = xDim * yDim;
+    	int offsetX, offsetY, offsetZ;
+        int kDim = kernelYBuffer.length;
+        int halfKDim = kDim / 2;
+        int combined, start, end;
+        int step = (kDim - 1) * offset;
+		float sum, norm;
+		int index = 0;
+		float ps = getProgressStep();
+		int period = (int)(1.0/getProgressStep());
+        for (int pix = from; (pix < to) && !threadStopped; pix++) {
+            if (colorImage && !red && ((pix % 4) == 1)) {
+                destBuffer[pix] = imgBuffer[pix];
+            } else if (colorImage && !green && ((pix % 4) == 2)) {
+                destBuffer[pix] = imgBuffer[pix];
+            } else if (colorImage && !blue && ((pix % 4) == 3)) {
+                destBuffer[pix] = imgBuffer[pix];
             } else if (entireImage || mask.get(pix / cFactor)) {
                 offsetX = (pix % offset);
                 offsetY = ((pix % sliceSize) / offset) - halfKDim;
@@ -616,7 +871,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                 }
 
                 for (int i = start; i <= end; i += offset) {
-                    sum += kernelYBuffer[count] * tempImgBuffer[i + combined];
+                    sum += kernelYBuffer[count] * destBuffer[i + combined];
 
                     if (kernelYBuffer[count] >= 0) {
                         norm += kernelYBuffer[count];
@@ -629,27 +884,40 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 
                 // use imgBuffer as a temp buffer since we won't need to use it again
                 imgBuffer[pix] = sum / norm;
-            } else {
-                imgBuffer[pix] = tempImgBuffer[pix];
+            }else{
+            	imgBuffer[pix] = destBuffer[pix];
+            }
+            index++;
+            if(index % period == 0){
+            	makeProgress(ps*period);
+            	fireProgressStateChanged((int)getProgress());
             }
         }
+	}
+        
+    private void convolveZ2(final int from, final int to){
+        int xDim = imgExtents[0];
+        int yDim = imgExtents[1];
+        int zDim = imgExtents[2];
 
-        // z kernel dimensions
-        kDim = kernelZBuffer.length;
-        halfKDim = kDim / 2;
-        step = (kDim - 1) * sliceSize;
+    	int offset = xDim;
+    	int sliceSize = xDim * yDim;
+    	int offsetX, offsetY, offsetZ;
+        int kDim = kernelZBuffer.length;
+        int halfKDim = kDim / 2;
+        int combined, start, end;
+		float sum, norm;
+		int step = (kDim - 1) * sliceSize;
+		int index = 0;
+		float ps = getProgressStep();
+		int period = (int)(1.0/ps);
 
-        for (int pix = 0; (pix < size) && !threadStopped; pix++, index++) {
-
-            if (index % stepProgressValue == 0) {
-                fireProgressStateChanged(progress++);
-            }
-
-            if (skipRed && ((pix % 4) == 1)) {
+        for (int pix = from; (pix < to) && !threadStopped; pix++) {
+            if (colorImage && !red && ((pix % 4) == 1)) {
                 destBuffer[pix] = imgBuffer[pix];
-            } else if (skipGreen && ((pix % 4) == 2)) {
+            } else if (colorImage && !green && ((pix % 4) == 2)) {
                 destBuffer[pix] = imgBuffer[pix];
-            } else if (skipBlue && ((pix % 4) == 3)) {
+            } else if (colorImage && !blue && ((pix % 4) == 3)) {
                 destBuffer[pix] = imgBuffer[pix];
             } else if (entireImage || mask.get(pix / cFactor)) {
                 offsetX = (pix % offset);
@@ -688,26 +956,94 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                 }
 
                 destBuffer[pix] = sum / norm;
-            } else {
-
-                // imgBuffer now holds the result of convolving with X and Y kernels
-                destBuffer[pix] = imgBuffer[pix];
+            }else{
+            	destBuffer[pix] = imgBuffer[pix];
+            }
+            index++;
+            if(index % period == 0){
+            	makeProgress(ps*period);
+            	fireProgressStateChanged((int)getProgress());
             }
         }
+	}
+
+    private void convolveX(final int from, final int to){
+    	int xDim = imgExtents[0];
+        int xoffset = xDim * cFactor;
+        float[] xrowBuffer = new float[xoffset];
+        float[] xresultBuffer = new float[xoffset];
+        int stepProgressValue = (int)this.getProgressStep();
+        // Convolve the image with the X dimension kernel
+        for (int row = from; (row < to) && !threadStopped; row++) {
+
+            if (row % stepProgressValue == 0) {
+            	makeProgress(1);
+                fireProgressStateChanged((int)getProgress());
+            }
+            System.arraycopy(imgBuffer, row*xoffset, xrowBuffer, 0, xoffset);
+            convolve(xrowBuffer, kernelXBuffer, xresultBuffer);
+            System.arraycopy(xresultBuffer, 0, imgBuffer, row*xoffset, xoffset);
+        }
+
+	}
         
-      
-        setCompleted(true);
+    private void convolveY(final int from, final int to){
+    	int xDim = imgExtents[0];
+    	int yDim = imgExtents[1];
+    	int xoffset = xDim * cFactor;
+    	int yoffset = yDim * cFactor;
+        float[] yrowBuffer = new float[yoffset];
+        float[] yresultBuffer = new float[yoffset];
+        int stepProgressValue = (int)getProgressStep();
+        for (int z = from; (z < to) && !threadStopped; z++) {
+        	for (int x = 0; (x < xDim) && !threadStopped; x++) {
+				if ((z*xDim +x) % stepProgressValue == 0) {
+					makeProgress(1);
+					fireProgressStateChanged((int)getProgress());
+				}
+				rowCopy(imgBuffer, x+z*xoffset*yoffset, yrowBuffer, 0, yoffset, xoffset, cFactor);
+				convolve(yrowBuffer, kernelYBuffer, yresultBuffer);
+				rowCopy(yresultBuffer, 0, imgBuffer, x+z*xoffset*yoffset, yoffset, cFactor, xoffset);
+			}
+        }
+	}
+        
+    private void convolveZ(final int from, final int to){
+    	int xDim = imgExtents[0];
+    	int yDim = imgExtents[1];
+    	int zDim = imgExtents[2];
+    	
+    	int xoffset = xDim * cFactor;
+    	int yoffset = yDim * cFactor;
+    	int zoffset = zDim * cFactor;
+    	
+        float[] zrowBuffer = new float[zoffset];
+        float[] zresultBuffer = new float[zoffset];
+        int stepProgressValue = (int)getProgressStep();
+        for (int row = 0; (row < xDim*yDim) && !threadStopped; row++) {
+            if (row % stepProgressValue == 0) {
+            	makeProgress(1);
+                fireProgressStateChanged((int)getProgress());
+            }
+            rowCopy(imgBuffer, row, zrowBuffer, 0, zoffset, xoffset*yoffset, cFactor);
+            convolve(zrowBuffer, kernelZBuffer, zresultBuffer);
+            rowCopy(zresultBuffer, 0, imgBuffer, row, zoffset, cFactor, xoffset*yoffset);
+        }    	
     }
-
+        
     /**
-     * Starts the convolution of the source image with the provided kernel.
-     */
+	 * Starts the convolution of the source image with the provided kernel.
+	 */
     public void runAlgorithm() {
-
+    	long start = System.currentTimeMillis();
         if (imgExtents.length == 2) {
             run2D();
         } else if (imgExtents.length > 2) {
-            run3D();
+            if(Preferences.isMultiThreadingEnabled()){
+                run3DMT2();
+            }else{
+                run3D();
+            }
         }
 
         if (destImage != null) {
@@ -715,17 +1051,12 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
             try {
                 destImage.importData(0, destBuffer, true);
             } catch (IOException ioe) {
-                MipavUtil.displayError("Unable to import data to destination image.");
+            	gov.nih.mipav.view.MipavUtil.displayError("Unable to import data to destination image.");
             }
 
             destImage.notifyImageDisplayListeners(null, true);
-        } else {
-
-            // put results into destination buffer as floats
-            for (int i = 0; i < destBuffer.length; i++) {
-                floatDestBuffer[i] = (float) destBuffer[i];
-            }
         }
+        System.out.println("Time consumed: " + (System.currentTimeMillis()-start));
     }
 
     /**
@@ -797,12 +1128,10 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         try {
             int length = imgExtents[0] * imgExtents[1] * cFactor;
 
-            imgBuffer = new double[length];
+            imgBuffer = new float[length];
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
 
-            tempImgBuffer = new double[length];
-
-            destBuffer = new double[length];
+            destBuffer = new float[length];
 
             kernel.setLock();
 
@@ -881,12 +1210,10 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         try {
             int length = imgExtents[0] * imgExtents[1] * imgExtents[2] * cFactor;
 
-            imgBuffer = new double[length];
+            imgBuffer = new float[length];
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
 
-            tempImgBuffer = new double[length];
-
-            destBuffer = new double[length];
+            destBuffer = new float[length];
 
             kernel.setLock();
 
@@ -926,4 +1253,20 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
             return;
         }
     }
+
+    private int determineNumberOfThreads(){
+    	int ncores = MipavUtil.getAvailableCores();
+    	if(imgExtents.length <= 2){
+    		return 1;
+    	}
+    	int nthreads = imgExtents[0]*imgExtents[1]*imgExtents[2]/(256*256*16);
+    	if(nthreads < 1){
+    		nthreads = 1;
+    	}else if(ncores < nthreads){
+    		nthreads = ncores;
+    	}
+    	System.out.println("The number of threads: " + nthreads);
+    	return nthreads;
+    }
+
 }
