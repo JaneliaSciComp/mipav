@@ -369,6 +369,10 @@ public class VolumeShaderEffect extends ShaderEffect
         m_kPShaderSUR.SetTexture(2,m_kColorMapTargetA);
         m_kPShaderSUR.SetImageName(3, "OpacityMapA");
         m_kPShaderSUR.SetTexture(3,m_kOpacityMapTargetA);
+        m_kPShaderSUR.SetImageName(4,"VolumeImageA_GM");
+        m_kPShaderSUR.SetTexture(4,m_kVolumeTargetA_GM);
+        m_kPShaderSUR.SetImageName(5, "OpacityMapA_GM");
+        m_kPShaderSUR.SetTexture(5, m_kOpacityMapTargetA_GM);
 
         int iXBound = m_kImageA.getExtents()[0];
         int iYBound = m_kImageA.getExtents()[1];
@@ -379,17 +383,12 @@ public class VolumeShaderEffect extends ShaderEffect
         m_kNormalA = new GraphicsImage(GraphicsImage.FormatMode.IT_RGB888,
                                        iXBound,iYBound,iZBound,aucData,
                                        "NormalMapA");
-        m_kPShaderSUR.SetImageName(4, "NormalMapA" );
-        m_kPShaderSUR.GetTexture(4).SetFilterType(Texture.FilterType.LINEAR);
-        m_kPShaderSUR.GetTexture(4).SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
-        m_kPShaderSUR.GetTexture(4).SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
-        m_kPShaderSUR.GetTexture(4).SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
-        m_kNormalMapTargetA = m_kPShaderSUR.GetTexture(4);
-
-        m_kPShaderSUR.SetImageName(5,"VolumeImageA_GM");
-        m_kPShaderSUR.SetTexture(5,m_kVolumeTargetA_GM);
-        m_kPShaderSUR.SetImageName(6, "OpacityMapA_GM");
-        m_kPShaderSUR.SetTexture(7, m_kOpacityMapTargetA_GM);
+        m_kPShaderSUR.SetImageName(6, "NormalMapA" );
+        m_kPShaderSUR.GetTexture(6).SetFilterType(Texture.FilterType.LINEAR);
+        m_kPShaderSUR.GetTexture(6).SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
+        m_kPShaderSUR.GetTexture(6).SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
+        m_kPShaderSUR.GetTexture(6).SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
+        m_kNormalMapTargetA = m_kPShaderSUR.GetTexture(6);
          
         /* The vertex shader is set, it never changes. The first parameter is
          * the pass number used when applying different shaders during
