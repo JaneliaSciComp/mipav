@@ -258,6 +258,10 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
         return lastState;
     }
 
+    public JTabbedPane getTabbedPane() {
+    	return this.tabbedPane;
+    }
+    
     /**
      * Removes the Tab associated with the given title (will not allow the removal of DEBUG or DATA tabs.
      *

@@ -5,38 +5,44 @@ import java.awt.event.KeyEvent;
 public class CustomUIBuilder {
 
 	
-	public static final UIParams PARAM_VOI_DEFAULT_POINTER = new UIParams("Pointer", "Default Mode", "pointer");
+	public static final UIParams PARAM_VOI_DEFAULT_POINTER = new UIParams("Default Pointer", "Pointer", UIParams.INVALID_MNEMONIC, 
+			"Default Mode", "pointer", true);
 	
 	/** VOI Types*/
-	public static final UIParams PARAM_VOI_TEXT = new UIParams("TextVOI", "Annotation tool", "text");
-	public static final UIParams PARAM_VOI_POINT = new UIParams("Point",
+	public static final UIParams PARAM_VOI_TEXT = new UIParams("Draw Text VOI", "TextVOI", UIParams.INVALID_MNEMONIC, 
+			"Annotation tool", "text", true);
+	public static final UIParams PARAM_VOI_POINT = new UIParams("Draw Point VOI", "Point", UIParams.INVALID_MNEMONIC,
             "<html>" + "Draw point VOI" + "<br>" + "Hold SHIFT for multiple drawing" +
-            "</html>", "pointROI");
-	public static final UIParams PARAM_VOI_POLY_SLICE = new UIParams("Polyslice", "Draw inter-slice polyline", "polyframe");
-	public static final UIParams PARAM_VOI_LINE = new UIParams("Line", "Draw line VOI", "linear");
-	public static final UIParams PARAM_VOI_PROTRACTOR = new UIParams("protractor", "Protractor tool", "protractor");
-	public static final UIParams PARAM_VOI_RECTANGLE = new UIParams("RectVOI",
+            "</html>", "pointROI", true);
+	public static final UIParams PARAM_VOI_POLY_SLICE = new UIParams("Draw Poly-slice VOI","Polyslice", UIParams.INVALID_MNEMONIC, "Draw inter-slice polyline", "polyframe", true);
+	public static final UIParams PARAM_VOI_LINE = new UIParams("Draw Line VOI","Line", UIParams.INVALID_MNEMONIC, "Draw line VOI", "linear", true);
+	public static final UIParams PARAM_VOI_PROTRACTOR = new UIParams("Draw Protractor VOI","protractor", UIParams.INVALID_MNEMONIC, "Protractor tool", "protractor", true);
+	public static final UIParams PARAM_VOI_RECTANGLE = new UIParams("Draw Rectangle VOI","RectVOI", UIParams.INVALID_MNEMONIC,
             "<html>" + "Draw rectangle VOI" + "<br>" + "Hold SHIFT for multiple drawing" +
-            "</html>", "rect");
-	public static final UIParams PARAM_VOI_ELLIPSE = new UIParams("EllipseVOI",
+            "</html>", "rect", true);
+	public static final UIParams PARAM_VOI_ELLIPSE = new UIParams("Draw Ellipse VOI","EllipseVOI", UIParams.INVALID_MNEMONIC,
             "<html>" + "Draw ellipse VOI" + "<br>" + "Hold SHIFT for multiple drawing" +
-            "</html>", "circle");
-	public static final UIParams PARAM_VOI_POLYGON = new UIParams("Polyline", "Draw polygon/polyline VOI", "polygon");
-	public static final UIParams PARAM_VOI_POLYLINE = new UIParams("LevelSetVOI",
+            "</html>", "circle", true);
+	public static final UIParams PARAM_VOI_POLYGON = new UIParams("Draw Polygon VOI","Polyline", UIParams.INVALID_MNEMONIC, 
+			"Draw polygon/polyline VOI", "polygon", true);
+	public static final UIParams PARAM_VOI_POLYLINE = new UIParams("Draw Polyline VOI","Polyline", UIParams.INVALID_MNEMONIC,
             "<html>" + "Draw levelset VOI" + "<br>" + "Hold SHIFT for multiple drawing" +
-            "</html>", "contour");
-	public static final UIParams PARAM_VOI_LEVELSET = new UIParams("LevelSetVOI",
+            "</html>", "contour", true);
+	public static final UIParams PARAM_VOI_LEVELSET = new UIParams("Draw LevelSet VOI","LevelSetVOI", UIParams.INVALID_MNEMONIC,
             "<html>" + "Draw levelset VOI" + "<br>" + "Hold SHIFT for multiple drawing" +
-            "</html>", "contour");
-	public static final UIParams PARAM_VOI_LIVEWIRE = new UIParams("LiveWireVOI", KeyEvent.VK_L, "Live wire VOI", "livewire");
-	public static final UIParams PARAM_VOI_3D_RECTANGLE = new UIParams("Rect3DVOI", "3D rectangular VOI", "cube");
-	public static final UIParams PARAM_VOI_SPLITTER = new UIParams("SplitVOI", "Split VOI Contour", "split");
-	public static final UIParams PARAM_VOI_POINT_DELETE = new UIParams("deleteVOI", "Delete point VOI", "delete");
-	public static final UIParams PARAM_VOI_POINT_ADD = new UIParams("addPoint", "Add point", "pointROI");
+            "</html>", "contour", true);
+	public static final UIParams PARAM_VOI_LIVEWIRE = new UIParams("Draw LiveWire VOI","LiveWireVOI", KeyEvent.VK_L, 
+			"Live wire VOI", "livewire", true);
+	public static final UIParams PARAM_VOI_3D_RECTANGLE = new UIParams("Draw 3D Rectangle VOI", "Rect3DVOI", UIParams.INVALID_MNEMONIC, 
+			"3D rectangular VOI", "cube", true);
+	public static final UIParams PARAM_VOI_SPLITTER = new UIParams("Split VOI Contour","SplitVOI", UIParams.INVALID_MNEMONIC, 
+			"Split VOI Contour", "split", true);
+	public static final UIParams PARAM_VOI_POINT_DELETE = new UIParams("Delete point VOI", "deleteVOI", UIParams.INVALID_MNEMONIC, 
+			"Delete point VOI", "delete", false);
+	public static final UIParams PARAM_VOI_POINT_ADD = new UIParams("Add point", "addPoint", UIParams.INVALID_MNEMONIC, "Add point", "pointROI", false);
 	
 	/** VOI Actions/Properties */
 	public static final UIParams PARAM_VOI_NEW = new UIParams("NewVOI", "Initiate new VOI", "newvoi");
-	public static final UIParams PARAM_VOI_COLOR = new UIParams("Pointer", "Default Mode", "pointer");
 	public static final UIParams PARAM_VOI_UNDO = new UIParams("undoVOI", "Undo last VOI change (Ctrl-Z)", "undopaint");
 	public static final UIParams PARAM_VOI_CUT = new UIParams("cutVOI", "Cut selected contour (Ctrl-X)", "cutpaint");
 	public static final UIParams PARAM_VOI_COPY = new UIParams("copyVOI", "Copy selected contour (Ctrl-C)", "copypaint");
@@ -146,7 +152,7 @@ public class CustomUIBuilder {
 	
 	/** LUT Save/open buttons*/
 	public static final UIParams PARAM_LUT_OPEN = new UIParams("OpenUDLUT", "Open user defined LUT", "userlutopen");
-	public static final UIParams PARAM_LUT_SAVE = new UIParams("PowerPaint", "Load power paint tools", "powerpaint");
+	public static final UIParams PARAM_LUT_SAVE = new UIParams("SaveUDLUT", "Save user defined LUT", "userlutsave");
 	
 	/** Image slider/frame related buttons */	
 	public static final UIParams PARAM_IMAGE_SLICE_PREVIOUS = new UIParams("PreviousImage",
@@ -215,22 +221,28 @@ public class CustomUIBuilder {
 		public static int INVALID_MNEMONIC = -1;
 		private String cmd, tooltip, iconbase, text;
 		private int mnemonic = INVALID_MNEMONIC;
+		private boolean is_toggle = false;
+			
 		
-				
 		public UIParams(String cmd, String tooltip, String iconbase) {
 			this(new String(cmd), cmd, INVALID_MNEMONIC, tooltip, iconbase);
 		}
 		
 		public UIParams(String cmd, int mnemonic, String tooltip, String iconbase) {
-			this(new String(cmd), cmd, mnemonic, tooltip,iconbase);
+			this(new String(cmd), cmd, mnemonic, tooltip, iconbase, false);
 		}
 		
 		public UIParams(String text, String cmd, int mnemonic, String tooltip, String iconbase) {
+			this(text, cmd, mnemonic, tooltip, iconbase, false);
+		}
+		
+		public UIParams(String text, String cmd, int mnemonic, String tooltip, String iconbase, boolean isToggle) {
 			this.text = text;
 			this.cmd = cmd;
 			this.tooltip = tooltip;
 			this.iconbase = iconbase;
 			this.mnemonic = mnemonic;
+			this.is_toggle = isToggle;
 		}
 		
 		public String getText() {
@@ -251,6 +263,10 @@ public class CustomUIBuilder {
 		
 		public int getMnemonic() {
 			return mnemonic;
+		}
+		
+		public boolean isToggle() {
+			return this.is_toggle;
 		}
 	}
 }

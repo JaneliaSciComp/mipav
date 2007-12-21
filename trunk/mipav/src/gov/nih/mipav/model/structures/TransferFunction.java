@@ -352,7 +352,7 @@ public class TransferFunction extends ModelSerialCloneable {
      */
     private void recalculateSlopes() {
 
-        if (endPtr > 0) {
+        if (endPtr > 1) {
             float[] in = new float[endPtr];
             float[] out = new float[endPtr];
 
