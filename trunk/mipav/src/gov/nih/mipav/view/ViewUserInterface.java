@@ -2196,8 +2196,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                       "\n", Preferences.DEBUG_SCRIPTING);
                     VariableTable.getReference().storeVariable(varName, varValue);
                 } else if (arg.equalsIgnoreCase("-p")) {
-                   
-                    
                     Object thePlugIn = null;
 
 //                  grab the plugin name

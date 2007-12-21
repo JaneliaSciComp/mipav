@@ -4,7 +4,7 @@ package gov.nih.mipav.view;
 import gov.nih.mipav.model.structures.*;
 
 import java.awt.event.*;
-
+import java.util.Vector;
 import javax.swing.*;
 
 
@@ -529,6 +529,27 @@ public class ViewMenuBar {
         return captureMenu;
     }
 
+    /**
+     * Creates a custom menu with a given Vector of UIParams
+     * @param customMenuName the name of the menu
+     * @param paramVector a vector of UIParams objects (can be lifted from CustomUIBuilder
+     * @return the custom menu
+     */
+    public JMenu makeCustomMenu(String customMenuName, Vector<CustomUIBuilder.UIParams> paramVector) {
+    	boolean iconPadding = false;
+    	JComponent[] comps = new JComponent[paramVector.size()];
+    	for (int i = 0; i < comps.length; i++) {
+    		if (paramVector.elementAt(i).getIconBase() != null) {
+    			iconPadding = true;
+    		}
+    		comps[i] = menuBuilder.buildMenuItem(paramVector.elementAt(i), iconPadding);
+    	}
+    	
+    	JMenu customMenu = menuBuilder.makeMenu(customMenuName, false, comps);
+    	
+    	return customMenu;
+    }
+    
 
     /**
      * Create the Dicom File submenu.

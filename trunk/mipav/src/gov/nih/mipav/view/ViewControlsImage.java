@@ -401,6 +401,183 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
         // validate();
     }
 
+    
+    public void addCustomToolBar(Vector<CustomUIBuilder.UIParams> paramVector) {
+    	
+    	panelToolbars.add(toolBarObj.buildCustomToolBar(paramVector));
+    }
+    
+    
+    /**
+     * Creates the main toolbar without any of the pre-made additional bars (no VOI etc) for use with addCustomToolBar()
+     * to add custom-built bars to the main bar
+     *
+     */
+    public void buildSimpleToolBar() {
+    	 int zDim, tDim;
+         int numberOfDimensions;
+         Font font12 = MipavUtil.font12;
+
+         panelToolbars = new JPanel();
+         panelOptionToolbars = new JPanel();
+         generalPanel = new JPanel();
+         toolBarObj = new ViewToolBarBuilder(frame);
+
+         panelToolbars.setLayout(new BorderLayout());
+         panelOptionToolbars.setLayout(new BorderLayout());
+         generalPanel.setLayout(new BorderLayout());
+
+         numberOfDimensions = frame.getImageA().getNDims();
+
+         System.err.println("ndim is: " + numberOfDimensions);
+         
+         if (frame.getImageB() != null) {
+             numberOfDimensions = Math.max(numberOfDimensions, frame.getImageB().getNDims());
+         }
+         
+         
+        
+         
+         //panelToolbars.add(toolBar, "Center");
+        
+
+         //panelToolbars.add(panelOptionToolbars, "Center");
+
+         if (panelImageSlider != null) {
+             generalPanel.remove(panelImageSlider);
+             panelImageSlider = null;
+         }
+
+         if (zImageSlider != null) {
+             zImageSlider.removeChangeListener(this);
+             zImageSlider = null;
+         }
+
+         if (tImageSlider != null) {
+             tImageSlider.removeChangeListener(this);
+             tImageSlider = null;
+         }
+
+         System.gc();
+
+         if (numberOfDimensions == 4) {
+             panelImageSlider = new JPanel();
+             panelImageSlider.setLayout(new GridLayout(2, 1));
+             panelImageSlider.setForeground(Color.black);
+             borderImageSlider = new TitledBorder(" Image slice");
+             borderImageSlider.setTitleColor(Color.black);
+             borderImageSlider.setTitleFont(MipavUtil.font12B);
+             borderImageSlider.setBorder(new EtchedBorder());
+             panelImageSlider.setBorder(borderImageSlider);
+
+             if (frame.getImageA().getNDims() == 4) {
+                 tDim = frame.getImageA().getExtents()[3];
+             } else {
+                 tDim = frame.getImageB().getExtents()[3];
+             }
+
+             buildTImageSliderLabels(1, tDim);
+             tImageSlider = new JSlider(JSlider.HORIZONTAL, 0, sliderResolutionInt, sliderResolutionInt / 2);
+             tImageSlider.setMajorTickSpacing(majorSpacing);
+             tImageSlider.setMinorTickSpacing(minorSpacing);
+             tImageSlider.setPaintTicks(true);
+             tImageSlider.setPaintLabels(true);
+             tImageSlider.setLabelTable(tImageSliderDictionary);
+             tImageSlider.setValue(0);
+             tImageSlider.setVisible(true);
+             tImageSlider.addChangeListener(this);
+
+             zDim = frame.getImageA().getExtents()[2];
+             buildZImageSliderLabels(1, zDim);
+             zImageSlider = new JSlider(JSlider.HORIZONTAL, 0, sliderResolutionInt, sliderResolutionInt / 2);
+             zImageSlider.setMajorTickSpacing(majorSpacing);
+             zImageSlider.setMinorTickSpacing(minorSpacing);
+             zImageSlider.setPaintTicks(true);
+             zImageSlider.setPaintLabels(true);
+             zImageSlider.setLabelTable(zImageSliderDictionary);
+
+             // could have used local meth setZslider(extents/2),
+             // but there are too many other commands that could
+             // just as well be used here:
+             zImageSlider.setValue(sliderResolutionInt / 2); // set midpoint
+
+             panelImageSlider.add(zImageSlider);
+             panelImageSlider.add(tImageSlider);
+
+             generalPanel.add(panelToolbars, "North");
+             generalPanel.add(panelImageSlider, "South");
+             zImageSlider.setVisible(true);
+             zImageSlider.addChangeListener(this);
+         } else if (numberOfDimensions == 3) {
+             panelImageSlider = new JPanel();
+             panelImageSlider.setLayout(new GridLayout(1, 1));
+
+             // panelImageSlider.setLayout(new BorderLayout());
+             panelImageSlider.setForeground(Color.black);
+             borderImageSlider = new TitledBorder("Image slice");
+             borderImageSlider.setTitleColor(Color.black);
+             borderImageSlider.setTitleFont(MipavUtil.font12B);
+             borderImageSlider.setBorder(new EtchedBorder());
+             panelImageSlider.setBorder(borderImageSlider);
+
+             zDim = frame.getImageA().getExtents()[2];
+             buildZImageSliderLabels(1, zDim);
+
+             // System.out.println("resol = " + sliderResolutionInt);
+             zImageSlider = new JSlider(JSlider.HORIZONTAL, 0, sliderResolutionInt, sliderResolutionInt / 2);
+             zImageSlider.setMajorTickSpacing(majorSpacing);
+             zImageSlider.setMinorTickSpacing(minorSpacing);
+             zImageSlider.setPaintTicks(true);
+             zImageSlider.setPaintLabels(true);
+             zImageSlider.setLabelTable(zImageSliderDictionary);
+
+             // could have used local meth setZslider(extents/2),
+             // but there are too many other commands that could
+             // just as well be used here:
+             // zImageSlider.setValue(sliderResolutionInt/2);   // set midpoint
+             // updateZImageSlider(zDim/2);
+             zImageSlider.setVisible(true);
+             zImageSlider.addChangeListener(this);
+             panelImageSlider.add(zImageSlider);
+             generalPanel.add(panelToolbars, "North");
+             generalPanel.add(panelImageSlider, "South");
+         } else {
+             generalPanel.add(panelToolbars, "Center");
+         }
+
+         // generalPanel.validate();
+         add(generalPanel, "North");
+
+         panelActiveImage = new JPanel();
+         panelActiveImage.setLayout(new BorderLayout());
+         borderActiveImage = new TitledBorder("Active Image and Alpha Blending");
+         borderActiveImage.setTitleColor(Color.black);
+         borderActiveImage.setTitleFont(MipavUtil.font12B);
+         borderActiveImage.setBorder(new EtchedBorder());
+         panelActiveImage.setBorder(borderActiveImage);
+
+         // Only add controls if two images are in the frame
+         if (frame.getImageB() != null) {
+             add(panelActiveImage, "Center");
+         }
+
+         group1 = new ButtonGroup();
+         radioImageA = new JRadioButton("Image A      ", true);
+         radioImageA.setFont(font12);
+         group1.add(radioImageA);
+         radioImageA.addActionListener(this);
+         panelActiveImage.add(radioImageA, BorderLayout.WEST);
+
+         radioImageB = new JRadioButton("Image B       ", false);
+         radioImageB.setFont(font12);
+         group1.add(radioImageB);
+         radioImageB.addActionListener(this);
+         panelActiveImage.add(radioImageB, BorderLayout.EAST);
+         buildAlphaSlider();
+
+         // validate();
+    }
+    
     /**
      * Clean up memory.
      */

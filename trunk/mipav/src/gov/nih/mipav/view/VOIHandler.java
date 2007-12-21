@@ -4992,7 +4992,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
             case ViewJComponentEditImage.POINT_VOI:
                 if (isImageFrame) {
-                    compImage.getFrame().getControls().getTools().setVOIButtonSelected("point");
+                    compImage.getFrame().getControls().getTools().setToggleButtonSelected("point");
                 }
 
                 compImage.setCursor(compImage.crosshairCursor);
@@ -5000,7 +5000,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
             case ViewJComponentEditImage.RECTANGLE:
                 if (isImageFrame) {
-                    compImage.getFrame().getControls().getTools().setVOIButtonSelected("rectvoi");
+                    compImage.getFrame().getControls().getTools().setToggleButtonSelected("rectvoi");
                 }
 
                 rubberband = rbRect;
@@ -5010,7 +5010,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
             case ViewJComponentEditImage.ELLIPSE:
                 if (isImageFrame) {
-                    compImage.getFrame().getControls().getTools().setVOIButtonSelected("ellipsevoi");
+                    compImage.getFrame().getControls().getTools().setToggleButtonSelected("ellipsevoi");
                 }
 
                 rubberband = rbEllipse;
@@ -5020,7 +5020,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
             case ViewJComponentEditImage.RECTANGLE3D:
                 if (isImageFrame) {
-                    compImage.getFrame().getControls().getTools().setVOIButtonSelected("rect3dvoi");
+                    compImage.getFrame().getControls().getTools().setToggleButtonSelected("rect3dvoi");
                 }
 
                 rubberband = rbRect;
@@ -5050,7 +5050,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
             case ViewJComponentEditImage.POLYLINE:
                 if (isImageFrame) {
-                    compImage.getFrame().getControls().getTools().setVOIButtonSelected("polyline");
+                    compImage.getFrame().getControls().getTools().setToggleButtonSelected("polyline");
                 }
 
                 rubberband = rbPolyline;
@@ -5060,7 +5060,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
             case ViewJComponentEditImage.LIVEWIRE:
                 if (isImageFrame) {
-                    compImage.getFrame().getControls().getTools().setVOIButtonSelected("livewirevoi");
+                    compImage.getFrame().getControls().getTools().setToggleButtonSelected("livewirevoi");
                 }
 
                 rubberband = rbLivewire;
@@ -5070,7 +5070,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
             case ViewJComponentEditImage.LEVELSET:
                 if (isImageFrame) {
-                    compImage.getFrame().getControls().getTools().setVOIButtonSelected("levelsetvoi");
+                    compImage.getFrame().getControls().getTools().setToggleButtonSelected("levelsetvoi");
                 }
 
                 compImage.setCursor(compImage.crosshairCursor);
@@ -5078,7 +5078,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
             case ViewJComponentEditImage.LINE:
                 if (isImageFrame) {
-                    compImage.getFrame().getControls().getTools().setVOIButtonSelected("line");
+                    compImage.getFrame().getControls().getTools().setToggleButtonSelected("line");
                 }
                 ((RubberbandLine)rbLine).setSplit(false);
                 	
@@ -5094,7 +5094,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 break;
             case ViewJComponentEditImage.PROTRACTOR:
                 if (isImageFrame) {
-                    compImage.getFrame().getControls().getTools().setVOIButtonSelected("protractor");
+                    compImage.getFrame().getControls().getTools().setToggleButtonSelected("protractor");
                 }
 
                 rubberband = rbProtractor;
@@ -5116,7 +5116,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
             case ViewJComponentEditImage.POLYLINE_SLICE_VOI:
                 if (isImageFrame) {
-                    compImage.getFrame().getControls().getTools().setVOIButtonSelected("polyslice");
+                    compImage.getFrame().getControls().getTools().setToggleButtonSelected("polyslice");
                 }
 
                 compImage.setCursor(compImage.crosshairCursor);

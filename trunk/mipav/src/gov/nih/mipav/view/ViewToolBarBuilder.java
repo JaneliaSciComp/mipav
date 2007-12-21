@@ -102,6 +102,9 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
     /** A button group for all toggle buttons which change the effect of mouse usage in the image. */
     protected ButtonGroup VOIGroup = new ButtonGroup();
 
+    /** Vector to hold all toggle groups for VOI toggle (and custom toggle configurations)*/
+    protected Vector<ButtonGroup> bgVector = new Vector<ButtonGroup>();
+    
     /** The amount to change the value in the intensity spinner by when the user clicks it. */
     private double intensityStep = 1;
 
@@ -675,13 +678,6 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         scriptToolBar.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
         scriptToolBar.setFloatable(false);
 
-        // JButton dirScriptButton = new JButton( "Scripts Home..." );
-        // dirScriptButton.addActionListener( (ActionListener) UI );
-        // dirScriptButton.setToolTipText( "Set the Script Home Directory" );
-        // dirScriptButton.setActionCommand( "ToolbarScriptDir" );
-        // dirScriptButton.setBorder( beveledBorder );
-        // scriptToolBar.add( dirScriptButton );
-
         JButton dirScriptButton = new JButton("Scripts directory...");
         dirScriptButton.addActionListener((ActionListener) UI);
         dirScriptButton.setToolTipText("Set the Script Home Directory");
@@ -848,6 +844,30 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         return button;
     }
 
+    public JToolBar buildCustomToolBar(Vector<CustomUIBuilder.UIParams> paramVector) {
+    	JToolBar tBar = initToolBar();
+    	
+    	ButtonGroup bg = null;
+    	Component nextComponent = null;
+    	for (int i = 0; i < paramVector.size(); i++) {
+    		if (paramVector.elementAt(i).isToggle()) {
+    			if (bg == null) {
+    				bg = new ButtonGroup();
+    			}
+    			nextComponent = buildToggleButton(paramVector.elementAt(i), bg);
+    		} else {
+    			nextComponent = buildButton(paramVector.elementAt(i));
+    		}
+    		tBar.add(nextComponent);
+    	}
+    	
+    	if (bg != null) {
+    		bgVector.add(bg);
+    	}
+    	
+    	return tBar;
+    }
+    
     /**
      * Builds the VOI toolbar, with buttons for creating various types of VOIs (elliptical, square, etc.), and for cut
      * and paste operations.
@@ -1246,13 +1266,12 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
 
     /**
-     * Sets the correct VOI button to be selected (based on action command).
+     * Sets the correct Toggle button to be selected (based on action command).
      *
      * @param  command  String the action command of the VOI Button (easiest)
      */
-    public void setVOIButtonSelected(String command) {
-
-        if (VOIGroup != null) {
+    public void setToggleButtonSelected(String actionCommand) {
+    	if (VOIGroup != null) {
 
             Enumeration e = VOIGroup.getElements();
             JToggleButton tButton;
@@ -1260,13 +1279,33 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
             while (e.hasMoreElements()) {
                 tButton = (JToggleButton) e.nextElement();
 
-                if (tButton.getActionCommand().equalsIgnoreCase(command)) {
+                if (tButton.getActionCommand().equalsIgnoreCase(actionCommand)) {
                     tButton.setSelected(true);
 
                     break;
                 }
             }
-        }
+        } 
+    	
+    	if (bgVector != null) {
+    		ButtonGroup bg = null;
+    		for (int i = 0; i < bgVector.size(); i++) {
+    			bg = bgVector.elementAt(i);
+    			Enumeration e = bg.getElements();
+                JToggleButton tButton;
+
+                while (e.hasMoreElements()) {
+                    tButton = (JToggleButton) e.nextElement();
+
+                    if (tButton.getActionCommand().equalsIgnoreCase(actionCommand)) {
+                        tButton.setSelected(true);
+
+                        break;
+                    }
+                }
+    		}
+    	}
+    	
     }
 
     /**
