@@ -11,6 +11,7 @@ import java.io.*;
 
 import java.util.*;
 import java.util.zip.*;
+import java.awt.image.*;
 
 
 /**
@@ -337,6 +338,12 @@ public class FileTiff extends FileBase {
     private boolean haveTileLength = false;
     
     private boolean haveTileOffsets = false;
+    
+    private int[] bitsPerSample = null;
+    
+    private int rowBytes;
+    
+    private int rowPixels;
 
     /** DOCUMENT ME! */
     private double tRes = 1.0;
@@ -1303,6 +1310,206 @@ public class FileTiff extends FileBase {
         }
     }
     
+    private void fax3SetupState() {
+        if (bitsPerSample == null) {
+            MipavUtil.displayError("bitsPerSample is null");
+            return;
+        }
+        if (bitsPerSample[0] != 1) {
+            MipavUtil.displayError("Must have bits per sample == 1 for fax 3/4 decoding");
+            return;
+        }
+        if (haveTileWidth) {
+            rowPixels = tileWidth;
+            rowBytes = rowPixels >> 3;
+            if ((rowPixels & 0x07) != 0) {
+                rowBytes++;
+            }
+        } // if (haveTileWidth)
+    }
+    
+    
+    /**
+     * Decode the requested amount of G4-encode data
+     * @param buf
+     * @param occ number of decoded bytes
+     *        occ must be an integer multiple of the number of bytes in a scanline
+     * @param rowbytes bytes in a decode scanline
+     */
+    private void decodeFAX4(byte[] buf, int occ, int rowbytes) {
+        int a0; // reference element
+        int lastx; // sp->b.rowpixels  last element in row
+        int runLength; // length of current run
+        int pa; // place to stuff next run
+        int pb; // next run in reference line
+        int thisRun; // current row's run array
+        int refRuns; // runs for reference line
+        int curRuns; // runs for current line
+        
+        if ((occ % rowbytes) != 0) {
+            MipavUtil.displayError("Fractional scanlines cannot be read");
+            return;
+        }
+        while (occ > 0) {
+            a0 = 0;   
+            runLength = 0;
+        } // while (occ > 0)
+    }
+    
+    /**
+     * Bit-fill a row according to the white/black
+     * runs generated during G3/G4 decoding.
+     * @param buf is the place to set the bits
+     * @param runBuf is the array of black and white run lengths (white then black)
+     * @param runs initial index of the array
+     * @param erun is the last run in the array
+     * @param lastx is the width of the row in pixels
+     */
+    private void TIFFFax3fillruns(byte buf[], int runBuf[], int runs, int erun, int lastx) {
+        byte fillmasks[] =
+            { (byte)0x00, (byte)0x80, (byte)0xc0, (byte)0xe0, (byte)0xf0, (byte)0xf8, (byte)0xfc, (byte)0xfe, (byte)0xff };
+        int cp;
+        int x, bx, run;
+        int n, nw;
+        int lp;
+
+        if (((erun-runs)&1) != 0) {
+            runBuf[erun++] = 0;
+        }
+        x = 0;
+        for (; runs < erun; runs += 2) {
+            run = runBuf[runs];
+            if (x+run > lastx || run > lastx ) {
+                run = runBuf[runs] = (lastx - x);
+            }
+            if (run != 0) {
+                cp = (x>>3);
+                bx = x&7;
+                if (run > 8-bx) {
+                    if (bx != 0) {           // align to byte boundary
+                        buf[cp++] = (byte)(buf[cp] & (0xff << (8-bx)));
+                        run -= 8-bx;
+                    } // if (bx != 0)
+                    n = run >> 3;
+                    if (n != 0 ) { // multiple bytes to fill
+                        if ((n/4) > 1) {
+          
+                            //Align to longword boundary and fill.
+               
+                            for (; (n != 0) && ((cp % 4) != 0); n--) {
+                                buf[cp++] = 0x00;
+                            }
+                            lp = cp;
+                            nw = (n / 4);
+                            n -= nw * 4;
+                            do {
+                                buf[lp] = 0;
+                                buf[lp+1] = 0;
+                                buf[lp+2] = 0;
+                                buf[lp+3] = 0;
+                                lp += 4;
+                                nw--;
+                            } while (nw != 0);
+                            cp = lp;
+                        } // if ((n/4) > 1)
+                        switch(n) {
+                            case 7:
+                                buf[cp+6] = 0;
+                            case 6:
+                                buf[cp+5] = 0;
+                            case 5:
+                                buf[cp+4] = 0;
+                            case 4:
+                                buf[cp+3] = 0;
+                            case 3:
+                                buf[cp+2] = 0;
+                            case 2:
+                                buf[cp+1] = 0;
+                            case 1:
+                                buf[cp] = 0;
+                                cp += n;
+                            case 0:
+                                ;
+                        } // switch n
+                        run &= 7;
+                    } // if (n != 0)
+                    if (run != 0) {
+                        buf[cp] = (byte)(buf[cp] & 0xff >> run);
+                    } // if (run != 0)
+                } else  {  // if (run > 8 - bx)
+                    buf[cp] = (byte)(buf[cp] & (~(fillmasks[run]>>bx)));
+                }
+                x += runBuf[runs];
+            } // if (run != 0)
+            run = runBuf[runs+1];
+            if (x+run > lastx || run > lastx ) {
+                run = runBuf[runs+1] = lastx - x;
+            }
+            if (run != 0) {
+                cp = (x>>3);
+                bx = x&7;
+                if (run > 8-bx) {
+                    if (bx != 0) {           // align to byte boundary
+                        buf[cp++] = (byte)(buf[cp] | 0xff >> bx);
+                        run -= 8-bx;
+                    } // if (bx != 0)
+                    n = run >> 3;
+                    if (n != 0 ) {   //multiple bytes to fill
+                        if ((n/4) > 1) {
+                           
+                            // Align to longword boundary and fill.
+                           
+                            for (; (n != 0) && ((cp % 4) != 0); n--) {
+                                buf[cp++] = (byte)0xff;
+                            }
+                            lp = cp;
+                            nw = (n / 4);
+                            n -= nw * 4;
+                            do {
+                                buf[lp] = (byte)0xff;
+                                buf[lp+1] = (byte)0xff;
+                                buf[lp+2] = (byte)0xff;
+                                buf[lp+3] = (byte)0xff;
+                                lp += 4;
+                                nw--;
+                            } while (nw != 0);
+                            cp = lp;
+                        } // if ((n/4) > 1)
+                        switch(n) {
+                            case 7:
+                                buf[cp+6] = (byte)0xff;
+                            case 6:
+                                buf[cp+5] = (byte)0xff;
+                            case 5:
+                                buf[cp+4] = (byte)0xff;
+                            case 4:
+                                buf[cp+3] = (byte)0xff;
+                            case 3:
+                                buf[cp+2] = (byte)0xff;
+                            case 2:
+                                buf[cp+1] = (byte)0xff;
+                            case 1:
+                                buf[cp] = (byte)0xff;
+                                cp += n;
+                            case 0:
+                                ;
+                        } // switch(n)
+                    run &= 7;
+                    } // if (n != 0)
+                    if (run != 0) {
+                        buf[cp] = (byte)(buf[cp] | 0xff00 >> run);
+                    }
+                } else { // if (run > 8 - bx)
+                    buf[cp] = (byte)(buf[cp] | fillmasks[run]>>bx);
+                }
+                x += runBuf[runs+1];
+            } // if (run != 0)
+        } // for (; runs < erun; runs += 2)
+        assert(x == lastx);
+    }
+    
+
+    
     
     /**
      * Passed in a LeicaSeries object, this function builds a 2d or 3d reconstruction using the Vector of filenames
@@ -1858,7 +2065,6 @@ public class FileTiff extends FileBase {
         long numerator, denominator;
         float valueFloat = 0.0f;
         double valueDouble = 0.0;
-        int[] bitsPerSample = null;
         long saveLocus;
         int sampleFormat = 1; // 1 is default for unsigned integers
         int expectedCount;
