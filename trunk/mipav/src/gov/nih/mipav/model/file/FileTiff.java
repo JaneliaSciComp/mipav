@@ -17,6 +17,8 @@ import java.awt.image.*;
 /**
  * Tagged Image File Format (TIFF 6.0) reader/ writer. Only packed bit compression is supported at this time. Note that
  * although EchoTech has a tResolution field, there is no provision for 4D in TIFF.
+ * Almost all of the FAX decompression code was taken from the free software at the website 
+ * http://www.mms-computing.co.uk/uk/co/mmscomputing/imageio/tiff
  *
  * @version  1.0 Feb 29, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
@@ -1353,6 +1355,8 @@ public class FileTiff extends FileBase {
         }
     }
     
+    // Almost all of the FAX decompression code was taken from the website http://www.mms-computing.co.uk/uk/co/mmscomputing/imageio/tiff
+    
     private void fax34Init() {
         if (bitsPerSample == null) {
             MipavUtil.displayError("bitsPerSample is null");
@@ -1364,6 +1368,7 @@ public class FileTiff extends FileBase {
         return;
     }
     
+    // Modified from readImage routine TIFFClassFFactory.java in package uk.co.mmscomputing.imageio.tiff
     private int fax34Decompresser(byte dataOut[], byte dataIn[]) {
         ByteArrayInputStream bais;
         ModHuffmanInputStream mhis;
@@ -1399,6 +1404,7 @@ public class FileTiff extends FileBase {
         return resultLength;
     }
     
+    //  Modified from copyin routine in TIFFClassFFactory.java in package uk.co.mmscomputing.imageio.tiff
     private int copyin(byte[] imgdata, ModHuffmanInputStream is,int width,boolean invert)throws IOException{
         RLEBitInputStream rlis;
         rlis = new RLEBitInputStream(is);
@@ -1441,6 +1447,7 @@ public class FileTiff extends FileBase {
         }
       }
     
+    // A copy of RLEBitInputStream.java in package uk.co.mmscomputing.io
     public class RLEBitInputStream extends FilterInputStream{
 
         private int           rlen;                     // the run length
@@ -1494,7 +1501,7 @@ public class FileTiff extends FileBase {
       }
 
 
-
+    //  Modified from getDecoder routine in TIFFClassFFactory.java in package uk.co.mmscomputing.imageio.tiff
     private ModHuffmanInputStream getDecoder(InputStream is) throws IOException {
         if (fax3Compression){
 
@@ -1513,7 +1520,7 @@ public class FileTiff extends FileBase {
         }
       }
 
-    
+    //  A copy of BitInputStream.java in package uk.co.mmscomputing.io
     public class BitInputStream extends FilterInputStream{
         private     int     buf;
         private     int     bitsAvail;
@@ -1635,6 +1642,7 @@ public class FileTiff extends FileBase {
         }*/
       }
     
+    //  A copy of ModHuffmantable.java in package uk.co.mmscomputing.io
     public interface ModHuffmanTable{
 
         static final int WHITE   =0;
@@ -1869,9 +1877,7 @@ public class FileTiff extends FileBase {
           };
         }
 
-
-
-    
+    //  A copy of ModHuffmanInputStream.java in package uk.co.mmscomputing.io
     public class ModHuffmanInputStream extends BitInputStream implements ModHuffmanTable{
 
         protected int state;
@@ -1992,6 +1998,7 @@ public class FileTiff extends FileBase {
         }*/
       }
     
+    //  A copy of ModREADTable.java in package uk.co.mmscomputing.io
     public interface ModREADTable{
         static final int P    =0;
         static final int H    =1;
@@ -2021,7 +2028,7 @@ public class FileTiff extends FileBase {
         };
        }
 
-    
+    //  A copy of ModModREADInputStream.java in package uk.co.mmscomputing.io
     public class ModModREADInputStream extends ModHuffmanInputStream implements ModREADTable{
 
         // T.6 MMR Input Stream. How to use, see ..imageio.tiff.TIFFImageReader
@@ -2152,6 +2159,7 @@ public class FileTiff extends FileBase {
         }
       }
     
+    //  A copy of ModREADInputStream.java in package uk.co.mmscomputing.io
     public class ModREADInputStream extends ModModREADInputStream{
 
         // T.4 MR Input Stream. How to use, see ..imageio.tiff.TIFFImageReader
@@ -2179,6 +2187,7 @@ public class FileTiff extends FileBase {
         }
       }
 
+    //  A copy of BitSwapTable.java in package uk.co.mmscomputing.io
     public interface BitSwapTable{
 
         public byte[] bitSwapTable={ 
@@ -2232,6 +2241,7 @@ public class FileTiff extends FileBase {
       */
       }
 
+    //  A copy of BitSwapInputStream.java in package uk.co.mmscomputing.io
     public class BitSwapInputStream extends FilterInputStream implements BitSwapTable{
 
         public BitSwapInputStream(InputStream in)throws IOException{
