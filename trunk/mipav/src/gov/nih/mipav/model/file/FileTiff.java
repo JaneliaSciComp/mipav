@@ -123,9 +123,15 @@ public class FileTiff extends FileBase {
     public static final int XPOSITION = 286;
     
     public static final int YPOSITION = 287;
+    
+    public static final int T4OPTIONS = 292;
+    
+    public static final int T6OPTIONS = 293;
 
     /** DOCUMENT ME! */
     public static final int RESOLUTION_UNIT = 296;
+    
+    public static final int PAGE_NUMBER = 297;
 
     /** DOCUMENT ME! */
     public static final int SOFTWARE = 305;
@@ -277,6 +283,8 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     private int rowsPerStrip;
+    
+    private boolean haveRowsPerStrip = false;
 
     /** DOCUMENT ME! */
     private int samplesPerPixel = 1;
@@ -415,6 +423,23 @@ public class FileTiff extends FileBase {
     private boolean isRGB10 = false;
     private boolean isRGB12 = false;
     private boolean isRGB14 = false;
+    
+    // CCITT FAX3 or T4 encoding
+    private boolean fax3Compression = false;
+    // CCITT FAX4 or T6 encoding
+    private boolean fax4Compression = false;
+    
+    // Options with group 3, also known as T4, fax coding
+    // Default is for basic 1-dimensional coding
+    private boolean group3_2D_Coding = false;
+    private boolean group3Uncompressed = false;
+    private boolean group3Fillbits = false;
+    
+    // Options with group 4, also know as T6, fax coding
+    // Default is for uncompressed mode not allowed
+    private boolean group4Uncompressed = false;
+    
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -496,6 +521,7 @@ public class FileTiff extends FileBase {
      */
     public ModelImage readImage(boolean multiFile, boolean one) throws IOException {
         int[] imgExtents;
+        int totalSize;
 
         try {
             file = new File(fileDir + fileName);
@@ -546,7 +572,7 @@ public class FileTiff extends FileBase {
 
             Preferences.debug("Just past init IFD read", Preferences.DEBUG_FILEIO);
 
-            if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && haveTileOffsets) {
+            if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) && haveTileOffsets) {
                 if (chunky) {
                    tilesPerSlice = tilesAcross * tilesDown;
                 }
@@ -555,26 +581,40 @@ public class FileTiff extends FileBase {
                 }
                 imageSlice = tilesPerImage / tilesPerSlice;
                 // System.err.println("DoTile: tilesPerSlice: " + tilesPerSlice + " imageSlice: " + imageSlice);
-            } // if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && haveTileOffsets)
-            else if (haveTileWidth || lzwCompression || zlibCompression) {
+            } // if (haveTileWidth && (!lzwCompression) && (!zlibCompression)&& (!fax3Compression) && (!fax4Compression) && haveTileOffsets)
+            else if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression) {
 
-                // set the tile width to the xDim for use in LZW Decoder or zlib deflater
+                // set the tile width to the xDim for use in LZW Decoder or zlib deflater or fax decompression
                 if (!haveTileWidth) {
                     tileWidth = xDim;
                 }
-                if (!haveTileLength) {
+                // Code to put all the rows in 1 strip often uses rowsPerStrip = 2**32 -1
+                // which shows up as -1.
+                if (!haveTileLength && haveRowsPerStrip && (rowsPerStrip != -1)) {
                     tileLength = rowsPerStrip;
                 }
-                tileOffsets = new int[dataOffsets[0].size()];
-                tileByteCounts = new int[dataOffsets[0].size()];
+                else if (!haveTileLength) {
+                    tileLength = yDim;
+                }
+                
+                totalSize = 0;
+         
+                for (int i = 0; i < imageSlice; i++) {
+                    totalSize += dataOffsets[i].size();
+                }
+                tileOffsets = new int[totalSize];
+                tileByteCounts = new int[totalSize];
                 tileMaxByteCount = 0;
 
-                for (int i = 0; i < tileOffsets.length; i++) {
-                    tileOffsets[i] = (int) ((Index) (dataOffsets[0].elementAt(i))).index;
-                    tileByteCounts[i] = (int) ((Index) (dataOffsets[0].elementAt(i))).byteCount;
-
-                    if (tileByteCounts[i] > tileMaxByteCount) {
-                        tileMaxByteCount = tileByteCounts[i];
+                for (int i = 0, k = 0; i < imageSlice; i++) {
+                    for (int j = 0; j < dataOffsets[i].size(); j++) {
+                        tileOffsets[k] = (int) ((Index) (dataOffsets[i].elementAt(j))).index;
+                        tileByteCounts[k] = (int) ((Index) (dataOffsets[i].elementAt(j))).byteCount;
+    
+                        if (tileByteCounts[k] > tileMaxByteCount) {
+                            tileMaxByteCount = tileByteCounts[k];
+                        }
+                        k++;
                     }
                 }
 
@@ -668,7 +708,7 @@ public class FileTiff extends FileBase {
                 }
             } // else foundTag43314
 
-            if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && haveTileOffsets) {
+            if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) && haveTileOffsets) {
                 imageSlice = tilesPerImage / tilesPerSlice;
             }
 
@@ -682,6 +722,9 @@ public class FileTiff extends FileBase {
             }
             else if (zlibCompression) {
                 zlibDecompresser = new Inflater();
+            }
+            else if (fax3Compression || fax4Compression) {
+                fax34Init();   
             }
 
             int bufferSize;
@@ -753,7 +796,7 @@ public class FileTiff extends FileBase {
 
                     try {
 
-                        if (haveTileWidth || lzwCompression || zlibCompression) {
+                        if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression) {
                             readTileBuffer(i, sliceBufferFloat);
                         } else {
 
@@ -1310,206 +1353,914 @@ public class FileTiff extends FileBase {
         }
     }
     
-    private void fax3SetupState() {
+    private void fax34Init() {
         if (bitsPerSample == null) {
             MipavUtil.displayError("bitsPerSample is null");
             return;
         }
         if (bitsPerSample[0] != 1) {
-            MipavUtil.displayError("Must have bits per sample == 1 for fax 3/4 decoding");
-            return;
-        }
-        if (haveTileWidth) {
-            rowPixels = tileWidth;
-            rowBytes = rowPixels >> 3;
-            if ((rowPixels & 0x07) != 0) {
-                rowBytes++;
-            }
-        } // if (haveTileWidth)
+            MipavUtil.displayError("Must have bits per sample == 1 for fax3 and fax4 decoding");
+        }   
+        return;
     }
     
-    
-    /**
-     * Decode the requested amount of G4-encode data
-     * @param buf
-     * @param occ number of decoded bytes
-     *        occ must be an integer multiple of the number of bytes in a scanline
-     * @param rowbytes bytes in a decode scanline
-     */
-    private void decodeFAX4(byte[] buf, int occ, int rowbytes) {
-        int a0; // reference element
-        int lastx; // sp->b.rowpixels  last element in row
-        int runLength; // length of current run
-        int pa; // place to stuff next run
-        int pb; // next run in reference line
-        int thisRun; // current row's run array
-        int refRuns; // runs for reference line
-        int curRuns; // runs for current line
+    private int fax34Decompresser(byte dataOut[], byte dataIn[]) {
+        ByteArrayInputStream bais;
+        ModHuffmanInputStream mhis;
+        int resultLength;
         
-        if ((occ % rowbytes) != 0) {
-            MipavUtil.displayError("Fractional scanlines cannot be read");
-            return;
+        bais = new ByteArrayInputStream(dataIn);
+        if (fillOrder == 1) { // baseline tiff default
+            try {
+                mhis = getDecoder(new BitSwapInputStream(bais));  
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOException on getDecoder(new BitSwapInputStream(bais)");
+                return -1;
+            }
+        } // if (fillOrder == 1)
+        else { // fillOrder == 2 fax devices usually code low pixel col low bit positions
+            try {
+                mhis = getDecoder(bais);
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOException on getDecoder(bais)");
+                return -1;
+            }
         }
-        while (occ > 0) {
-            a0 = 0;   
-            runLength = 0;
-        } // while (occ > 0)
+        // photometric == 0 corresponds to WhiteIsZero
+        try {
+            resultLength = copyin(dataOut, mhis, xDim, fileInfo.getPhotometric() != 0);
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException error on copyin");
+            return -1;
+        }
+        return resultLength;
     }
     
-    /**
-     * Bit-fill a row according to the white/black
-     * runs generated during G3/G4 decoding.
-     * @param buf is the place to set the bits
-     * @param runBuf is the array of black and white run lengths (white then black)
-     * @param runs initial index of the array
-     * @param erun is the last run in the array
-     * @param lastx is the width of the row in pixels
-     */
-    private void TIFFFax3fillruns(byte buf[], int runBuf[], int runs, int erun, int lastx) {
-        byte fillmasks[] =
-            { (byte)0x00, (byte)0x80, (byte)0xc0, (byte)0xe0, (byte)0xf0, (byte)0xf8, (byte)0xfc, (byte)0xfe, (byte)0xff };
-        int cp;
-        int x, bx, run;
-        int n, nw;
-        int lp;
+    private int copyin(byte[] imgdata, ModHuffmanInputStream is,int width,boolean invert)throws IOException{
+        RLEBitInputStream rlis;
+        rlis = new RLEBitInputStream(is);
+        rlis.setInvert(invert);
 
-        if (((erun-runs)&1) != 0) {
-            runBuf[erun++] = 0;
+        if((width&0x0007)==0){
+          byte[] buf=new byte[width>>3];int off=0,len=0;
+          while(true){
+            rlis.resetToStartCodeWord();                    // start next line with white
+            is.readEOL();                                   // set settings for a new line
+            try{
+              len=rlis.read(buf);                           // read one image line
+              if(len==-1){break;}                           // end of page
+              System.arraycopy(buf,0,imgdata,off,len);      // copy line to image buffer
+            }catch(ModHuffmanInputStream.ModHuffmanCodingException mhce){
+              MipavUtil.displayError("copyin:\n\t"+mhce);
+            }
+            off+=len;
+          }
+          return off;
+        }else{
+          byte[] buf=new byte[(width+7)>>3];int off=0,len=0,ecw=8-(width&0x0007),bits;
+          while(true){
+            rlis.resetToStartCodeWord();                    // start next line with white
+            is.readEOL();                                   // set settings for a new line
+            try{
+              len=rlis.read(buf,0,buf.length-1);            // read one image line
+              if(len==-1){break;}                           // end of page
+              bits=rlis.readBits(7,ecw);
+              //buf[len]=(byte)bits;
+              //System.arraycopy(buf,0,imgdata,off,len+1);    // copy line to image buffer
+              System.arraycopy(buf, 0, imgdata, off, len);
+            }catch(ModHuffmanInputStream.ModHuffmanCodingException mhce){
+              MipavUtil.displayError("copyin:\n\t"+mhce);
+            }
+            //off+=len+1;
+            off += len;
+          }
+          return off;
         }
-        x = 0;
-        for (; runs < erun; runs += 2) {
-            run = runBuf[runs];
-            if (x+run > lastx || run > lastx ) {
-                run = runBuf[runs] = (lastx - x);
-            }
-            if (run != 0) {
-                cp = (x>>3);
-                bx = x&7;
-                if (run > 8-bx) {
-                    if (bx != 0) {           // align to byte boundary
-                        buf[cp++] = (byte)(buf[cp] & (0xff << (8-bx)));
-                        run -= 8-bx;
-                    } // if (bx != 0)
-                    n = run >> 3;
-                    if (n != 0 ) { // multiple bytes to fill
-                        if ((n/4) > 1) {
-          
-                            //Align to longword boundary and fill.
-               
-                            for (; (n != 0) && ((cp % 4) != 0); n--) {
-                                buf[cp++] = 0x00;
-                            }
-                            lp = cp;
-                            nw = (n / 4);
-                            n -= nw * 4;
-                            do {
-                                buf[lp] = 0;
-                                buf[lp+1] = 0;
-                                buf[lp+2] = 0;
-                                buf[lp+3] = 0;
-                                lp += 4;
-                                nw--;
-                            } while (nw != 0);
-                            cp = lp;
-                        } // if ((n/4) > 1)
-                        switch(n) {
-                            case 7:
-                                buf[cp+6] = 0;
-                            case 6:
-                                buf[cp+5] = 0;
-                            case 5:
-                                buf[cp+4] = 0;
-                            case 4:
-                                buf[cp+3] = 0;
-                            case 3:
-                                buf[cp+2] = 0;
-                            case 2:
-                                buf[cp+1] = 0;
-                            case 1:
-                                buf[cp] = 0;
-                                cp += n;
-                            case 0:
-                                ;
-                        } // switch n
-                        run &= 7;
-                    } // if (n != 0)
-                    if (run != 0) {
-                        buf[cp] = (byte)(buf[cp] & 0xff >> run);
-                    } // if (run != 0)
-                } else  {  // if (run > 8 - bx)
-                    buf[cp] = (byte)(buf[cp] & (~(fillmasks[run]>>bx)));
-                }
-                x += runBuf[runs];
-            } // if (run != 0)
-            run = runBuf[runs+1];
-            if (x+run > lastx || run > lastx ) {
-                run = runBuf[runs+1] = lastx - x;
-            }
-            if (run != 0) {
-                cp = (x>>3);
-                bx = x&7;
-                if (run > 8-bx) {
-                    if (bx != 0) {           // align to byte boundary
-                        buf[cp++] = (byte)(buf[cp] | 0xff >> bx);
-                        run -= 8-bx;
-                    } // if (bx != 0)
-                    n = run >> 3;
-                    if (n != 0 ) {   //multiple bytes to fill
-                        if ((n/4) > 1) {
-                           
-                            // Align to longword boundary and fill.
-                           
-                            for (; (n != 0) && ((cp % 4) != 0); n--) {
-                                buf[cp++] = (byte)0xff;
-                            }
-                            lp = cp;
-                            nw = (n / 4);
-                            n -= nw * 4;
-                            do {
-                                buf[lp] = (byte)0xff;
-                                buf[lp+1] = (byte)0xff;
-                                buf[lp+2] = (byte)0xff;
-                                buf[lp+3] = (byte)0xff;
-                                lp += 4;
-                                nw--;
-                            } while (nw != 0);
-                            cp = lp;
-                        } // if ((n/4) > 1)
-                        switch(n) {
-                            case 7:
-                                buf[cp+6] = (byte)0xff;
-                            case 6:
-                                buf[cp+5] = (byte)0xff;
-                            case 5:
-                                buf[cp+4] = (byte)0xff;
-                            case 4:
-                                buf[cp+3] = (byte)0xff;
-                            case 3:
-                                buf[cp+2] = (byte)0xff;
-                            case 2:
-                                buf[cp+1] = (byte)0xff;
-                            case 1:
-                                buf[cp] = (byte)0xff;
-                                cp += n;
-                            case 0:
-                                ;
-                        } // switch(n)
-                    run &= 7;
-                    } // if (n != 0)
-                    if (run != 0) {
-                        buf[cp] = (byte)(buf[cp] | 0xff00 >> run);
-                    }
-                } else { // if (run > 8 - bx)
-                    buf[cp] = (byte)(buf[cp] | fillmasks[run]>>bx);
-                }
-                x += runBuf[runs+1];
-            } // if (run != 0)
-        } // for (; runs < erun; runs += 2)
-        assert(x == lastx);
-    }
+      }
     
+    public class RLEBitInputStream extends FilterInputStream{
+
+        private int           rlen;                     // the run length
+        private int       ccw;                      // the current code word
+        private boolean   invert=false;
+
+        public RLEBitInputStream(InputStream in){
+          super(in);
+          resetToStartCodeWord();
+        }
+
+        public void resetToStartCodeWord(){ccw=1;rlen=0;}
+        public void setInvert(boolean invert){this.invert=invert;}
+
+        public int read(byte[] b,int off,int len)throws IOException{
+          for(int i=0;i<len;i++){
+            int v=read();
+            if(v==-1){return (i==0)?-1:i;}
+            b[off+i]=(byte)v;      
+          }
+          return len;
+        }
+
+        public int readBits(int end,int start)throws IOException{
+          int b=0;
+          for(int i=end;i>=start;i--){
+            while(rlen==0){
+              rlen=in.read();                         // can be 32 bit number
+              if(rlen==-1){return -1;}                // end of stream
+              ccw=(ccw+1)&0x01;                       // change current code word
+            }
+            rlen--;
+            if(ccw!=1){b|=(1<<i);}
+          }
+          return (invert)?((~b)&0x00FF):b;
+        }
+
+        public int read()throws IOException{
+          int b=0;
+          for(int i=7;i>=0;i--){
+            while(rlen==0){
+              rlen=in.read();                         // can be 32 bit number
+              if(rlen==-1){return -1;}                // end of stream
+              ccw=(ccw+1)&0x01;                       // change current code word
+            }
+            rlen--;
+            if(ccw!=1){b|=(1<<i);}
+          }
+          return (invert)?((~b)&0x00FF):b;
+        }
+      }
+
+
+
+    private ModHuffmanInputStream getDecoder(InputStream is) throws IOException {
+        if (fax3Compression){
+
+          if(!group3_2D_Coding){
+            return new ModHuffmanInputStream(is);
+          }else{
+            return new ModREADInputStream(is, xDim);
+          }
+        }
+        else if (fax4Compression) {
+          // Assume: T6Options == 0 => compressed MMR coding
+          return new ModModREADInputStream(is, xDim);
+        }
+        else {
+            throw new IOException("Not required fax3 or fax4 compression");
+        }
+      }
 
     
+    public class BitInputStream extends FilterInputStream{
+        private     int     buf;
+        private     int     bitsAvail;
+        private     boolean eof;
+        protected   int     count=0;
+        protected boolean nextByteMoreSignificant;
+
+        public BitInputStream(InputStream in,boolean nbms){
+          super(in);
+          bitsAvail=0;
+          buf=0;
+          eof=false;
+          count=0;
+          nextByteMoreSignificant=nbms;
+        }
+
+        public BitInputStream(InputStream in){
+          this(in,true);
+        }
+
+        public void setNextByteMoreSignificant(boolean nextByteMoreSignificant){
+          this.nextByteMoreSignificant=nextByteMoreSignificant;
+        }
+
+        public void reset()throws IOException{
+          super.reset();
+          bitsAvail=0;
+          buf=0;
+          eof=false;
+          count=0;
+        }
+
+        public int availableBits(){
+          if(eof && (bitsAvail<=0)){return -1;}
+          return bitsAvail;
+        }
+
+        public void skipPadding(int bits)throws IOException{
+          clrBits(bitsAvail%bits);
+        }
+
+        public int readBit()throws IOException{     // read one bit
+          if(eof && (bitsAvail<=0)){ return -1; }
+          needBits(1);          
+          int bit=getBits(1);
+          clrBits(1);
+          return bit;
+        }
+
+        public int readBits(int bitcount)throws IOException{    // read "count" bit
+          if(eof && (bitsAvail<=0)){ return -1; }
+          if(bitcount==0){ return 0; }
+          needBits(bitcount);           
+          int bits=getBits(bitcount);
+          clrBits(bitcount);
+          return bits;
+        }
+
+        protected int cbCount()throws IOException{      //  callback for subclasses
+          return in.read();
+        }
+
+        public void needBits(int bitcount)throws IOException{
+          // Assert(bitcount<32);
+          while((eof==false)&&(bitsAvail<bitcount)){
+            int b=cbCount();
+            if(b==-1){eof=true;break;}
+            b&=0x00FF;
+            count++;
+            buf|=(nextByteMoreSignificant)?(b<<bitsAvail):(b<<(24-bitsAvail));
+            bitsAvail += 8;
+          }
+        }
+
+        protected void clrBits(int bitcount){
+          bitsAvail -= bitcount;
+          if(nextByteMoreSignificant){buf>>>=bitcount;}else{buf<<=bitcount;}
+        }
+
+        protected int getBits(int bitcount){
+          bitcount=32-bitcount;
+          return (nextByteMoreSignificant)?((buf<<bitcount)>>>bitcount):(buf>>>bitcount);
+        }
+
+        /*public static void main(String[] argv){
+
+        // bytes 1001 1001 1000 1000 1001 1001
+
+        // nextByteMoreSignificant=true bitcount=9    // i.e. GIF LZW
+
+        // code1 = 0 1001 1001
+        // code2 = 0 1100 0100
+        // code3 = 0 0010 0110
+
+        // nextByteMoreSignificant=false bitcount=9   // i.e. TIFF LZW, JPEG
+
+        // code1 = 1 0011 0011
+        // code2 = 0 0010 0010
+        // code3 = 0 1100 1000
+
+          try{
+            byte[] buf=new byte[]{(byte)0x99,(byte)0x88,(byte)0x99};
+            ByteArrayInputStream  bais=new ByteArrayInputStream(buf);
+            BitInputStream is=new BitInputStream(bais,true);
+
+            System.out.println("\nnextByteMoreSignificant = true");
+            int code;
+            while((code=is.readBits(9))!=-1){System.out.println("code= "+Integer.toBinaryString(code));}
+
+
+            bais=new ByteArrayInputStream(buf);
+            is=new BitInputStream(bais,false);
+            
+            System.out.println("\nnextByteMoreSignificant = false");
+            while((code=is.readBits(9))!=-1){System.out.println("code= "+Integer.toBinaryString(code));}
+          }catch(Exception e){
+            e.printStackTrace();
+          }
+        }*/
+      }
+    
+    public interface ModHuffmanTable{
+
+        static final int WHITE   =0;
+        static final int BLACK   =1;
+        static final int EOL     =2;
+
+//        static final int INVALID =3;
+
+        static final int MAXCHUNK=2560;
+        static final int EOLCW=0x0800;
+
+        static final int makeUpWhite[][] = {    //  make-up white codes
+        { 0x001b,   64,  5 },
+        { 0x0009,  128,  5 },
+        { 0x003a,  192,  6 },
+        { 0x0076,  256,  7 },
+        { 0x006c,  320,  8 },
+        { 0x00ec,  384,  8 },
+        { 0x0026,  448,  8 },
+        { 0x00a6,  512,  8 },
+        { 0x0016,  576,  8 },
+        { 0x00e6,  640,  8 },
+        { 0x0066,  704,  9 },
+        { 0x0166,  768,  9 },
+        { 0x0096,  832,  9 },
+        { 0x0196,  896,  9 },
+        { 0x0056,  960,  9 },
+        { 0x0156, 1024,  9 },
+        { 0x00d6, 1088,  9 },
+        { 0x01d6, 1152,  9 },
+        { 0x0036, 1216,  9 },
+        { 0x0136, 1280,  9 },
+        { 0x00b6, 1344,  9 },
+        { 0x01b6, 1408,  9 },
+        { 0x0032, 1472,  9 },
+        { 0x0132, 1536,  9 },
+        { 0x00b2, 1600,  9 },
+        { 0x0006, 1664,  6 },
+        { 0x01b2, 1728,  9 },
+
+        { 0x0080, 1792,  11},
+        { 0x0180, 1856,  11},
+        { 0x0580, 1920,  11},
+        { 0x0480, 1984,  12},
+        { 0x0c80, 2048,  12},
+        { 0x0280, 2112,  12},
+        { 0x0a80, 2176,  12},
+        { 0x0680, 2240,  12},
+        { 0x0e80, 2304,  12},
+        { 0x0380, 2368,  12},
+        { 0x0b80, 2432,  12},
+        { 0x0780, 2496,  12},
+        { 0x0f80, 2560,  12},
+        { EOLCW,  0,     12},               // end of line code 
+         };
+        static final int termWhite[][] = {  // terminating white codes
+            { 0x00ac,    0,  8 },
+            { 0x0038,    1,  6 },
+            { 0x000e,    2,  4 },
+            { 0x0001,    3,  4 },
+            { 0x000d,    4,  4 },
+            { 0x0003,    5,  4 },
+            { 0x0007,    6,  4 },
+            { 0x000f,    7,  4 },
+            { 0x0019,    8,  5 },
+            { 0x0005,    9,  5 },
+            { 0x001c,   10,  5 },
+            { 0x0002,   11,  5 },
+            { 0x0004,   12,  6 },
+            { 0x0030,   13,  6 },
+            { 0x000b,   14,  6 },
+            { 0x002b,   15,  6 },
+            { 0x0015,   16,  6 },
+            { 0x0035,   17,  6 },
+            { 0x0072,   18,  7 },
+            { 0x0018,   19,  7 },
+            { 0x0008,   20,  7 },
+            { 0x0074,   21,  7 },
+            { 0x0060,   22,  7 },
+            { 0x0010,   23,  7 },
+            { 0x000a,   24,  7 },
+            { 0x006a,   25,  7 },
+            { 0x0064,   26,  7 },
+            { 0x0012,   27,  7 },
+            { 0x000c,   28,  7 },
+            { 0x0040,   29,  8 },
+            { 0x00c0,   30,  8 },
+            { 0x0058,   31,  8 },
+            { 0x00d8,   32,  8 },
+            { 0x0048,   33,  8 },
+            { 0x00c8,   34,  8 },
+            { 0x0028,   35,  8 },
+            { 0x00a8,   36,  8 },
+            { 0x0068,   37,  8 },
+            { 0x00e8,   38,  8 },
+            { 0x0014,   39,  8 },
+            { 0x0094,   40,  8 },
+            { 0x0054,   41,  8 },
+            { 0x00d4,   42,  8 },
+            { 0x0034,   43,  8 },
+            { 0x00b4,   44,  8 },
+            { 0x0020,   45,  8 },
+            { 0x00a0,   46,  8 },
+            { 0x0050,   47,  8 },
+            { 0x00d0,   48,  8 },
+            { 0x004a,   49,  8 },
+            { 0x00ca,   50,  8 },
+            { 0x002a,   51,  8 },
+            { 0x00aa,   52,  8 },
+            { 0x0024,   53,  8 },
+            { 0x00a4,   54,  8 },
+            { 0x001a,   55,  8 },
+            { 0x009a,   56,  8 },
+            { 0x005a,   57,  8 },
+            { 0x00da,   58,  8 },
+            { 0x0052,   59,  8 },
+            { 0x00d2,   60,  8 },
+            { 0x004c,   61,  8 },
+            { 0x00cc,   62,  8 },
+            { 0x002c,   63,  8 },
+          };
+
+        static final int makeUpBlack[][] = {    //  make-up black codes
+            { 0x03c0,   64, 10 },
+            { 0x0130,  128, 12 },
+            { 0x0930,  192, 12 },
+            { 0x0da0,  256, 12 },
+            { 0x0cc0,  320, 12 },
+            { 0x02c0,  384, 12 },
+            { 0x0ac0,  448, 12 },
+            { 0x06c0,  512, 13 },
+            { 0x16c0,  576, 13 },
+            { 0x0a40,  640, 13 },
+            { 0x1a40,  704, 13 },
+            { 0x0640,  768, 13 },
+            { 0x1640,  832, 13 },
+            { 0x09c0,  896, 13 },
+            { 0x19c0,  960, 13 },
+            { 0x05c0, 1024, 13 },
+            { 0x15c0, 1088, 13 },
+            { 0x0dc0, 1152, 13 },
+            { 0x1dc0, 1216, 13 },
+            { 0x0940, 1280, 13 },
+            { 0x1940, 1344, 13 },
+            { 0x0540, 1408, 13 },
+            { 0x1540, 1472, 13 },
+            { 0x0b40, 1536, 13 },
+            { 0x1b40, 1600, 13 },
+            { 0x04c0, 1664, 13 },
+            { 0x14c0, 1728, 13 },
+
+            { 0x0080, 1792,  11},
+            { 0x0180, 1856,  11},
+            { 0x0580, 1920,  11},
+            { 0x0480, 1984,  12},
+            { 0x0c80, 2048,  12},
+            { 0x0280, 2112,  12},
+            { 0x0a80, 2176,  12},
+            { 0x0680, 2240,  12},
+            { 0x0e80, 2304,  12},
+            { 0x0380, 2368,  12},
+            { 0x0b80, 2432,  12},
+            { 0x0780, 2496,  12},
+            { 0x0f80, 2560,  12},
+            { EOLCW,  0,     12},               // end of line code 
+          };
+          static final int termBlack[][] = {    //  terminating black codes
+            { 0x03b0,    0, 10 },
+            { 0x0002,    1,  3 },
+            { 0x0003,    2,  2 },
+            { 0x0001,    3,  2 },
+            { 0x0006,    4,  3 },
+            { 0x000c,    5,  4 },
+            { 0x0004,    6,  4 },
+            { 0x0018,    7,  5 },
+            { 0x0028,    8,  6 },
+            { 0x0008,    9,  6 },
+            { 0x0010,   10,  7 },
+            { 0x0050,   11,  7 },
+            { 0x0070,   12,  7 },
+            { 0x0020,   13,  8 },
+            { 0x00e0,   14,  8 },
+            { 0x0030,   15,  9 },
+            { 0x03a0,   16, 10 },
+            { 0x0060,   17, 10 },
+            { 0x0040,   18, 10 },
+            { 0x0730,   19, 11 },
+            { 0x00b0,   20, 11 },
+            { 0x01b0,   21, 11 },
+            { 0x0760,   22, 11 },
+            { 0x00a0,   23, 11 },
+            { 0x0740,   24, 11 },
+            { 0x00c0,   25, 11 },
+            { 0x0530,   26, 12 },
+            { 0x0d30,   27, 12 },
+            { 0x0330,   28, 12 },
+            { 0x0b30,   29, 12 },
+            { 0x0160,   30, 12 },
+            { 0x0960,   31, 12 },
+            { 0x0560,   32, 12 },
+            { 0x0d60,   33, 12 },
+            { 0x04b0,   34, 12 },
+            { 0x0cb0,   35, 12 },
+            { 0x02b0,   36, 12 },
+            { 0x0ab0,   37, 12 },
+            { 0x06b0,   38, 12 },
+            { 0x0eb0,   39, 12 },
+            { 0x0360,   40, 12 },
+            { 0x0b60,   41, 12 },
+            { 0x05b0,   42, 12 },
+            { 0x0db0,   43, 12 },
+            { 0x02a0,   44, 12 },
+            { 0x0aa0,   45, 12 },
+            { 0x06a0,   46, 12 },
+            { 0x0ea0,   47, 12 },
+            { 0x0260,   48, 12 },
+            { 0x0a60,   49, 12 },
+            { 0x04a0,   50, 12 },
+            { 0x0ca0,   51, 12 },
+            { 0x0240,   52, 12 },
+            { 0x0ec0,   53, 12 },
+            { 0x01c0,   54, 12 },
+            { 0x0e40,   55, 12 },
+            { 0x0140,   56, 12 },
+            { 0x01a0,   57, 12 },
+            { 0x09a0,   58, 12 },
+            { 0x0d40,   59, 12 },
+            { 0x0340,   60, 12 },
+            { 0x05a0,   61, 12 },
+            { 0x0660,   62, 12 },
+            { 0x0e60,   63, 12 },
+          };
+        }
+
+
+
+    
+    public class ModHuffmanInputStream extends BitInputStream implements ModHuffmanTable{
+
+        protected int state;
+
+        public ModHuffmanInputStream(InputStream in){
+          super(in);
+          state=WHITE;
+        }
+
+        public void skipPadding(int bits)throws IOException{  // TIFFImageReader (Class B MH)
+          super.skipPadding(bits);
+          state=WHITE;
+        }
+
+        public void syncWithEOL()throws IOException{          // SFFImageReader, TIFFImageReader (Class F T4 MH)
+          if(state!=EOL){
+            needBits(12);
+            while(availableBits()>=12){
+              if(getBits(12)==EOLCW){
+                clrBits(12);break;
+              }
+              clrBits(1);needBits(12);
+            }
+          }
+          state=WHITE;
+        }
+
+        public void readEOL()throws IOException{
+          syncWithEOL();
+        }
+
+        public int getState(){return state;}
+        public int getColour(int colwhite){return (state==BLACK)?~colwhite:colwhite;}
+
+        public int read()throws IOException{        
+          if(state == WHITE){  state=BLACK;    return read(makeUpWhite,12,termWhite,8);
+          }else{               state=WHITE;    return read(makeUpBlack,13,termBlack,12);
+          }
+        }
+
+        public int read(byte[] b)throws IOException{
+          throw new IOException(getClass().getName()+".read:\n\tInternal Error. Cannot read whole byte array with this stream !!!");
+        }
+
+        public int read(byte[] b,int off,int len)throws IOException{
+          throw new IOException(getClass().getName()+".read:\n\tInternal Error. Cannot read whole byte array with this stream !!!");
+        }
+
+        private int read(int[][] makeUp,int maxmakeUp,int[][] term,int maxterm)throws IOException{
+          needBits(maxterm);
+          int len=findToken(term);                     // read terminating code
+          if(len>=0){return len;}
+          int runlen=0;
+          needBits(maxmakeUp);                         // expect make-up code now
+          len=findToken(makeUp);                       // read make-up code
+          if(len==0){state=EOL;return 0;}
+          if(len>=0){                                  // found make-up code
+            while(len==MAXCHUNK){                      // read 2560 codes
+              runlen+=MAXCHUNK;
+              needBits(maxmakeUp);
+              len=findToken(makeUp);
+            }
+            if(len>=0){runlen+=len;}
+            needBits(maxterm);
+          }
+          len=findToken(term);                         // read terminating code
+          if(len>=0){return runlen+len;}
+          return checkEOL();
+        }
+
+        protected int findToken(int[][] table){
+          for(int i=0; i<table.length; i++) {
+            int[] entry=table[i];
+            int bits=getBits(entry[2]);
+            if(entry[0]==bits){
+              clrBits(entry[2]);
+              return entry[1];
+            }
+          }
+          return -1;
+        }
+
+        protected int checkEOL()throws IOException{
+          int bits;
+          needBits(12);
+          while(availableBits()>=12){
+            bits=getBits(12);
+            if(bits==EOLCW){state=EOL;clrBits(12);return 0;}
+            if(bits!=0){throw new ModHuffmanCodingException(getClass().getName()+".checkEOL:\n\tCoding error: End of line code is missing.");}
+            clrBits(1);needBits(12);
+          }
+          return -1;                                           // eof
+        }
+
+        public class ModHuffmanCodingException extends IOException{
+          public ModHuffmanCodingException(String msg){
+            super(msg);
+          }
+        }
+
+        /*public static void main(String[] argv){
+          try{
+//          byte[] buf=new byte[]{0x06,0x25,(byte)0xD0,0x01};  1728=1704+24
+
+//          1728 white standard G3 fax line => B2 59 01
+
+            byte[] buf=new byte[]{(byte)0xB2,0x59,0x01};
+            ByteArrayInputStream  bais=new ByteArrayInputStream(buf);
+            ModHuffmanInputStream mhis=new ModHuffmanInputStream(bais);
+
+            int runlen;
+            while((runlen=mhis.read())!=-1){
+              System.out.println("runlen= "+runlen);
+            }
+          }catch(Exception e){
+            e.printStackTrace();
+          }
+        }*/
+      }
+    
+    public interface ModREADTable{
+        static final int P    =0;
+        static final int H    =1;
+
+        static final int VL3  =2;
+        static final int VL2  =3;
+        static final int VL1  =4;
+        static final int V0   =5;
+        static final int VR1  =6;
+        static final int VR2  =7;
+        static final int VR3  =8;
+
+        static final int HX   =9;
+        static final int EOFB =10;
+
+        static final int codes[][] = {
+        { 0x0001,  V0,   1 },
+        { 0x0002, VL1,   3 },
+        { 0x0004,   H,   3 },
+        { 0x0006, VR1,   3 },
+        { 0x0008,   P,   4 },
+        { 0x0010, VL2,   6 },
+        { 0x0030, VR2,   6 },
+        { 0x0020, VL3,   7 },
+        { 0x0060, VR3,   7 },
+        { 0x00800800, EOFB, 24},  // two EOLs T.6
+        };
+       }
+
+    
+    public class ModModREADInputStream extends ModHuffmanInputStream implements ModREADTable{
+
+        // T.6 MMR Input Stream. How to use, see ..imageio.tiff.TIFFImageReader
+
+        private   int[]    refline=null;
+        private   int[]    codeline=null;
+
+        private   int      clindex=0;                     // index into code line
+
+        private   int      a0;                            // pixel position in scan line
+        private   int      b1;                            // index into reference line
+        private   int      maxb1;                         // maximum available run length values from reference line
+        private   int      code;                          // next READ code
+        private   int      width;                         // page width
+
+        public ModModREADInputStream(InputStream in,int width)throws IOException{
+          super(in);
+          this.width=width;
+          refline  =new int[width+3];
+          codeline =new int[width+3];
+          init(width);
+        }
+
+        protected void init(int width)throws IOException{
+          clindex     =1;
+          codeline[0] =width;                             // setup imaginary white line
+          getREADCode();                                  // read first READ code
+        }
+
+        protected void initNewLine()throws IOException{
+          if(code==HX){readHorizontalMode2();}            // HX is left over when H coded at end of line and second run is zero.
+
+          int[] swap=refline;refline=codeline;codeline=swap;
+
+          maxb1=clindex;                                  // set max possible code index from last line.
+          refline[maxb1]  =width;                         // set max possible line width
+          refline[maxb1+1]=width;
+          refline[maxb1+2]=width;
+
+          clindex=0;b1=0;a0=0;
+        }
+
+        public void readEOL()throws IOException{          // remark: T.6 does not use EOL codes
+          initNewLine();                                  //         but we need to set up our buffers
+        }
+
+        protected int getREADCode()throws IOException{
+          needBits(24);
+          code=findToken(codes);
+          return code;
+        }
+
+        private void setB1(){                             // find b1 so that a0 < b1 and ref line and code line runlength have opposite colour
+          if(a0==0){                                      
+            b1=0;
+          }else{
+            while((0<b1)&&(a0<refline[b1-1])){b1--;}
+            while((b1<maxb1)&&(refline[b1]<=a0)){b1++;}
+          }
+          if((b1&0x0001)!=(clindex&0x0001)){b1++;}        // want opposite colour
+        }
+
+        private int readPassMode()throws IOException{
+          int rl=0,len;
+          do{
+            setB1();                                      // find b1>a0 and opposite colour
+            len =refline[b1+1]-a0;                        // b2 - a0
+            a0 +=len;
+            rl +=len;
+          }while(getREADCode()==P);
+          rl+=read2D();                                   // colour in pass mode never changes, hence need to add another run
+          return rl;
+        }
+
+        private int readHorizontalMode1()throws IOException{
+          state=((clindex&0x01)==0)?WHITE:BLACK;          // set right 'colour' table in ModHuffmanInputStream
+          int rl=super.read();                            // read first mod huffman code
+          a0+=rl;
+          codeline[clindex++]=a0;
+          code=HX;                                        // signal to read second ModHuffman code during next read()
+          return rl;
+        }
+
+        private int readHorizontalMode2()throws IOException{
+          int rl=super.read();                            // read second mod huffman code
+          a0+=rl;
+          codeline[clindex++]=a0;
+          getREADCode();
+          return rl;
+        }
+
+        private int readVerticalMode()throws IOException{
+          setB1();                                        // find b1>a0 and opposite colour
+
+          int offset = code-V0;
+          int a1     = refline[b1]+offset;                // a1 = reference line position +- offset
+          int rl     = a1-a0;
+
+          a0=a1;
+          codeline[clindex++]=a0;
+          getREADCode();
+          return rl;
+        }   
+
+        protected int read2D()throws IOException{
+          switch(code){
+          case P:    return readPassMode();
+          case H:    return readHorizontalMode1();
+          case V0:
+          case VL1:case VL2:case VL3:
+          case VR1:case VR2:case VR3:
+                     return readVerticalMode();
+          case HX:   return readHorizontalMode2();
+          case EOFB:                                      // TIFF F : end of strip
+          default:   return -1;
+          }
+        }
+
+        protected int read1D()throws IOException{
+          int rl=super.read();
+          a0+=rl;
+          codeline[clindex++]=a0;
+          return rl;
+        }
+
+        public int read()throws IOException{
+          return read2D();                            // remark: T.6 does only use READ codes, no reference line
+        }
+      }
+    
+    public class ModREADInputStream extends ModModREADInputStream{
+
+        // T.4 MR Input Stream. How to use, see ..imageio.tiff.TIFFImageReader
+
+        private   boolean  isReferenceLine=false;
+
+        public ModREADInputStream(InputStream in,int width)throws IOException{
+          super(in,width);
+        }
+
+        protected void init(int width)throws IOException{
+        }
+
+        public void readEOL()throws IOException{          // TIFFImageReader (Class F T4 MR)
+          initNewLine();                                  // initialise for new line scan
+          syncWithEOL();                                  // read EOL code
+          isReferenceLine=(readBit()==1);                 // 1 = one-dimensional 0 = two-dimensional
+          if(!isReferenceLine){
+            getREADCode();
+          }
+        }
+
+        public int read()throws IOException{
+          return (isReferenceLine)?read1D():read2D();
+        }
+      }
+
+    public interface BitSwapTable{
+
+        public byte[] bitSwapTable={ 
+          0x0,0xffffff80,0x40,0xffffffc0,0x20,0xffffffa0,0x60,0xffffffe0,
+          0x10,0xffffff90,0x50,0xffffffd0,0x30,0xffffffb0,0x70,0xfffffff0,
+          0x8,0xffffff88,0x48,0xffffffc8,0x28,0xffffffa8,0x68,0xffffffe8,
+          0x18,0xffffff98,0x58,0xffffffd8,0x38,0xffffffb8,0x78,0xfffffff8,
+          0x4,0xffffff84,0x44,0xffffffc4,0x24,0xffffffa4,0x64,0xffffffe4,
+          0x14,0xffffff94,0x54,0xffffffd4,0x34,0xffffffb4,0x74,0xfffffff4,
+          0xc,0xffffff8c,0x4c,0xffffffcc,0x2c,0xffffffac,0x6c,0xffffffec,
+          0x1c,0xffffff9c,0x5c,0xffffffdc,0x3c,0xffffffbc,0x7c,0xfffffffc,
+          0x2,0xffffff82,0x42,0xffffffc2,0x22,0xffffffa2,0x62,0xffffffe2,
+          0x12,0xffffff92,0x52,0xffffffd2,0x32,0xffffffb2,0x72,0xfffffff2,
+          0xa,0xffffff8a,0x4a,0xffffffca,0x2a,0xffffffaa,0x6a,0xffffffea,
+          0x1a,0xffffff9a,0x5a,0xffffffda,0x3a,0xffffffba,0x7a,0xfffffffa,
+          0x6,0xffffff86,0x46,0xffffffc6,0x26,0xffffffa6,0x66,0xffffffe6,
+          0x16,0xffffff96,0x56,0xffffffd6,0x36,0xffffffb6,0x76,0xfffffff6,
+          0xe,0xffffff8e,0x4e,0xffffffce,0x2e,0xffffffae,0x6e,0xffffffee,
+          0x1e,0xffffff9e,0x5e,0xffffffde,0x3e,0xffffffbe,0x7e,0xfffffffe,
+          0x1,0xffffff81,0x41,0xffffffc1,0x21,0xffffffa1,0x61,0xffffffe1,
+          0x11,0xffffff91,0x51,0xffffffd1,0x31,0xffffffb1,0x71,0xfffffff1,
+          0x9,0xffffff89,0x49,0xffffffc9,0x29,0xffffffa9,0x69,0xffffffe9,
+          0x19,0xffffff99,0x59,0xffffffd9,0x39,0xffffffb9,0x79,0xfffffff9,
+          0x5,0xffffff85,0x45,0xffffffc5,0x25,0xffffffa5,0x65,0xffffffe5,
+          0x15,0xffffff95,0x55,0xffffffd5,0x35,0xffffffb5,0x75,0xfffffff5,
+          0xd,0xffffff8d,0x4d,0xffffffcd,0x2d,0xffffffad,0x6d,0xffffffed,
+          0x1d,0xffffff9d,0x5d,0xffffffdd,0x3d,0xffffffbd,0x7d,0xfffffffd,
+          0x3,0xffffff83,0x43,0xffffffc3,0x23,0xffffffa3,0x63,0xffffffe3,
+          0x13,0xffffff93,0x53,0xffffffd3,0x33,0xffffffb3,0x73,0xfffffff3,
+          0xb,0xffffff8b,0x4b,0xffffffcb,0x2b,0xffffffab,0x6b,0xffffffeb,
+          0x1b,0xffffff9b,0x5b,0xffffffdb,0x3b,0xffffffbb,0x7b,0xfffffffb,
+          0x7,0xffffff87,0x47,0xffffffc7,0x27,0xffffffa7,0x67,0xffffffe7,
+          0x17,0xffffff97,0x57,0xffffffd7,0x37,0xffffffb7,0x77,0xfffffff7,
+          0xf,0xffffff8f,0x4f,0xffffffcf,0x2f,0xffffffaf,0x6f,0xffffffef,
+          0x1f,0xffffff9f,0x5f,0xffffffdf,0x3f,0xffffffbf,0x7f,0xffffffff,
+        };
+
+      /*
+        static{
+          bitSwapTable=new byte[256];
+          int s=0;
+          for(int t=0;t<256;t++){
+            bitSwapTable[t]=(byte)s;
+            int u=256;
+            do{
+              u>>=1;
+              s^=u; 
+            }while((s^u)>s);
+          }
+        }
+      */
+      }
+
+    public class BitSwapInputStream extends FilterInputStream implements BitSwapTable{
+
+        public BitSwapInputStream(InputStream in)throws IOException{
+          super(in);
+        }
+
+        public int read()throws IOException{
+          int sample=in.read();
+          if(sample==-1){ return -1;}
+          sample=bitSwapTable[sample];
+          return sample&0x000000FF;
+        }
+
+        public int read(byte[] b)throws IOException{
+          int len=in.read(b);
+          for(int i=0;i<len;i++){
+            b[i]=bitSwapTable[b[i]&0x000000FF];
+          }
+          return len;
+        }
+
+        public int read(byte[] b, int off, int len)throws IOException{
+          len=in.read(b,off,len);
+          for(int i=0;i<len;i++){
+            b[off+i]=bitSwapTable[b[off+i]&0x000000FF];
+          }
+          return len;
+        }
+      }
     
     /**
      * Passed in a LeicaSeries object, this function builds a 2d or 3d reconstruction using the Vector of filenames
@@ -2438,7 +3189,7 @@ public class FileTiff extends FileBase {
                                                  "higher-order bits of the byte\n");
                         }
                         else if (fillOrder == 2) {
-                            Preferences.debug("FileTiff.openIFD: FILL_ORDER = 1 for pixels are arranged within a byte\n" +
+                            Preferences.debug("FileTiff.openIFD: FILL_ORDER = 2 for pixels are arranged within a byte\n" +
                                     "such that lower column values are stored in the\n" +
                                     "lower-order bits of the byte\n");
                         }
@@ -2496,7 +3247,9 @@ public class FileTiff extends FileBase {
                         throw new IOException("ROWS_PER_STRIP has illegal count = " + count + "\n");
                     }
 
+                    // Note that 2**32 -1 meaning to put all the rows in 1 strip shows up as -1
                     rowsPerStrip = (int) valueArray[0];
+                    haveRowsPerStrip = true;
                     if (debuggingFileIO) {
                         Preferences.debug("ROWS_PER_STRIP = " + valueArray[0] + "\n", Preferences.DEBUG_FILEIO);
                     }
@@ -2566,6 +3319,26 @@ public class FileTiff extends FileBase {
                         }
                     }
 
+                    break;
+                    
+                case PAGE_NUMBER:
+                    if (type != SHORT) {
+                        throw new IOException("PAGE_NUMBER has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 2) {
+                        throw new IOException("PAGE_NUMBER has illegal count = " + count + "\n");
+                    }
+                    
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: Page number = " + valueArray[0] + "\n",
+                                          Preferences.DEBUG_FILEIO);
+                        if (valueArray[1] > 0) {
+                            Preferences.debug("FileTiff.openIFD: Number of pages in the document = " +
+                                               valueArray[1] + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    
                     break;
 
                 case PHOTO_INTERP:
@@ -2711,6 +3484,22 @@ public class FileTiff extends FileBase {
                             Preferences.debug("FileTiff.openIFD: compression = no compression\n ",
                                               Preferences.DEBUG_FILEIO);
                         }
+                    } else if (valueArray[0] == 3) {
+                        packBit = false;
+                        fax3Compression = true;
+                        
+                        if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: compression = CCITT FAX3 or T4\n",
+                                              Preferences.DEBUG_FILEIO);
+                        }
+                    } else if (valueArray[0] == 4) {
+                        packBit = false;
+                        fax4Compression = true;
+                        
+                        if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: compression = CCITT FAX4 or T6\n",
+                                              Preferences.DEBUG_FILEIO);
+                        }
                     } else if (valueArray[0] == 32773) {
                         packBit = true;
 
@@ -2737,6 +3526,81 @@ public class FileTiff extends FileBase {
                     }
 
                     break;
+                    
+                case T4OPTIONS:
+                    if (type != LONG) {
+                        throw new IOException("T4OPTIONS has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("T4OPTIONS has illegal count = " + count + "\n");
+                    }
+                    
+                    if ((valueArray[0] & 0x01) != 0) {
+                        group3_2D_Coding = true;
+                        if (debuggingFileIO) {
+                            Preferences.debug("FAX 3 decompression uses 2-dimensional coding\n");
+                        }
+                    }
+                    else {
+                        group3_2D_Coding = false;
+                        if (debuggingFileIO) {
+                            Preferences.debug("FAX 3 decompression uses 1-dimensional coding\n");
+                        }
+                    }
+                    
+                    if ((valueArray[0] & 0x02) != 0) {
+                        group3Uncompressed = true;
+                        if (debuggingFileIO) {
+                            Preferences.debug("FAX 3 decompression uses uncompressed mode\n");
+                        }
+                    }
+                    else {
+                        group3Uncompressed = false;
+                        if (debuggingFileIO) {
+                            Preferences.debug("FAX 3 decompression does not use uncompressed mode\n");
+                        }
+                    }
+                    
+                    if ((valueArray[0] & 0x04) != 0) {
+                        group3Fillbits = true;
+                        if (debuggingFileIO) {
+                            Preferences.debug("In FAX3 decompression fill bits have been added\n");
+                        }
+                    }
+                    else {
+                        group3Fillbits = false;
+                        if (debuggingFileIO) {
+                            Preferences.debug("in FAX3 decompression no fill bits are used\n");
+                        }
+                    }
+                    
+                    break;
+                    
+                    
+                case T6OPTIONS:
+                    if (type != LONG) {
+                        throw new IOException("T6OPTIONS has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("T6OPTIONS has illegal count = " + count + "\n");
+                    }
+                    
+                    if ((valueArray[0] & 0x02) != 0) {
+                        group4Uncompressed = true;
+                        if (debuggingFileIO) {
+                            Preferences.debug("FAX 4 decompression allows uncompressed mode\n");
+                        }
+                    }
+                    else {
+                        group4Uncompressed = false;
+                        if (debuggingFileIO) {
+                            Preferences.debug("FAX 4 decompression does not allow uncompressed mode\n");
+                        }
+                    }
+                    
+                    break;
 
                 case ORIENTATION:
                     if (type != SHORT) {
@@ -2744,7 +3608,7 @@ public class FileTiff extends FileBase {
                     }
 
                     if (count != 1) {
-                        throw new IOException("ORIENTATION has illegal count + " + count + "\n");
+                        throw new IOException("ORIENTATION has illegal count = " + count + "\n");
                     }
 
                     if ((valueArray[0] < 1) || (valueArray[0] > 8)) {
@@ -6534,6 +7398,7 @@ public class FileTiff extends FileBase {
         yTile = 0;
         x = 0;
         y = 0;
+        byte[] data;
         
         int planarRGB = 0; // Use this for planar RGB where you must read a stripsPerImage
                            // number of red strips, followed by a stripsPerImage number of
@@ -6589,16 +7454,17 @@ public class FileTiff extends FileBase {
                         mod = progressLength / 100;
 
                         nLength = 8 * ((nBytes + 63) >> 6); // new BitSet(size) = new long[(size+63)>>6];
-                        if (lzwCompression || zlibCompression) {
+                        if (lzwCompression || zlibCompression || fax3Compression || fax4Compression) {
 
                             if (byteBuffer == null) {
                                 byteBuffer = new byte[tileMaxByteCount];
                             }
 
-                            raFile.read(byteBuffer, 0, nLength);
+                            raFile.read(byteBuffer, 0, nBytes);
                             if (zlibCompression) {
-                                zlibDecompresser.setInput(byteBuffer, 0, nLength);
+                                zlibDecompresser.setInput(byteBuffer, 0, nBytes);
                             }
+                            
 
                             if (decomp == null) {
                                 decomp = new byte[tileWidth * tileLength];
@@ -6607,6 +7473,15 @@ public class FileTiff extends FileBase {
                             if (lzwCompression) {
                                 lzwDecoder.decode(byteBuffer, decomp, tileLength);
                                 resultLength = decomp.length;
+                            }
+                            else if (fax3Compression || fax4Compression) {
+                                data = new byte[nBytes];
+                                for (j = 0; j < nBytes; j++) {
+                                    data[j] = byteBuffer[j];
+                                }
+                                // Note that resultLength is in bytes,
+                                // but we use each bit int the byte
+                                resultLength = fax34Decompresser(decomp, data);
                             }
                             else { // zlibCompression
                                 try {
@@ -6618,7 +7493,7 @@ public class FileTiff extends FileBase {
                                 zlibDecompresser.reset();
                             }
 
-                            for (j = 0; j < resultLength; j++) {
+                            for (j = 0; j < 8*resultLength; j++) {
 
                                 if ((x < xDim) && (y < yDim)) {
 
