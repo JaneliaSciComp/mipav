@@ -187,7 +187,7 @@ public class FileTiff extends FileBase {
     public static final int TRESOLUTION = 65001;
 
     /** DOCUMENT ME! */
-    public static final int MAX_IFD_LENGTH = 4096;
+    public static final int MAX_IFD_LENGTH = 10000;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
