@@ -1359,7 +1359,9 @@ public class FileTiff extends FileBase {
     
     private void fax34Init() {
         if (bitsPerSample == null) {
-            MipavUtil.displayError("bitsPerSample is null");
+            Preferences.debug("bitsPerSample not found for fax decoding - settting to 1\n");
+            bitsPerSample = new int[1];
+            bitsPerSample[0] = 1;
             return;
         }
         if (bitsPerSample[0] != 1) {
