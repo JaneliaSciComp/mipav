@@ -1434,14 +1434,12 @@ public class FileTiff extends FileBase {
               len=rlis.read(buf,0,buf.length-1);            // read one image line
               if(len==-1){break;}                           // end of page
               bits=rlis.readBits(7,ecw);
-              //buf[len]=(byte)bits;
-              //System.arraycopy(buf,0,imgdata,off,len+1);    // copy line to image buffer
-              System.arraycopy(buf, 0, imgdata, off, len);
+              buf[len]=(byte)bits;
+              System.arraycopy(buf,0,imgdata,off,len+1);    // copy line to image buffer
             }catch(ModHuffmanInputStream.ModHuffmanCodingException mhce){
               MipavUtil.displayError("copyin:\n\t"+mhce);
             }
-            //off+=len+1;
-            off += len;
+            off+=len+1;
           }
           return off;
         }
@@ -7512,7 +7510,7 @@ public class FileTiff extends FileBase {
                                                                                 100));
                                     }
 
-                                    buffer[x + (y * xDim)] = decomp[j >> 3] & (1 << (j % 8));
+                                    buffer[x + (y * xDim)] = decomp[j >> 3] & (1 << (7 - (j %8)));
                                     i++;
                                 }
 
@@ -7520,6 +7518,9 @@ public class FileTiff extends FileBase {
 
                                 if (x == ((xTile + 1) * tileWidth)) {
                                     x = xTile * tileWidth;
+                                    if ((j % 8) != 7) {
+                                        j = j + 7 - (j % 8);
+                                    }
                                     y++;
                                 }
                             }
