@@ -308,7 +308,7 @@ public class FileTiff extends FileBase {
     private String str;
 
     /** DOCUMENT ME! */
-    private int[] tileByteCounts;
+    private int[] tileByteCounts = null;
 
     /** DOCUMENT ME! */
     private int tileByteNumber;
@@ -323,7 +323,7 @@ public class FileTiff extends FileBase {
     private int tileOffsetNumber;
 
     /** DOCUMENT ME! */
-    private int[] tileOffsets;
+    private int[] tileOffsets = null;
 
     /** DOCUMENT ME! */
     private int tilesAcross;
@@ -601,24 +601,33 @@ public class FileTiff extends FileBase {
                     tileLength = yDim;
                 }
                 
-                totalSize = 0;
-         
-                for (int i = 0; i < imageSlice; i++) {
-                    totalSize += dataOffsets[i].size();
-                }
-                tileOffsets = new int[totalSize];
-                tileByteCounts = new int[totalSize];
-                tileMaxByteCount = 0;
-
-                for (int i = 0, k = 0; i < imageSlice; i++) {
-                    for (int j = 0; j < dataOffsets[i].size(); j++) {
-                        tileOffsets[k] = (int) ((Index) (dataOffsets[i].elementAt(j))).index;
-                        tileByteCounts[k] = (int) ((Index) (dataOffsets[i].elementAt(j))).byteCount;
+                if ((tileOffsets == null) || (tileByteCounts == null)) {
+                    totalSize = 0;
+                    for (int i = 0; i < imageSlice; i++) {
+                        totalSize += dataOffsets[i].size();
+                    }
+                    tileOffsets = new int[totalSize];
+                    tileByteCounts = new int[totalSize];
+                    tileMaxByteCount = 0;
     
+                    for (int i = 0, k = 0; i < imageSlice; i++) {
+                        for (int j = 0; j < dataOffsets[i].size(); j++) {
+                            tileOffsets[k] = (int) ((Index) (dataOffsets[i].elementAt(j))).index;
+                            tileByteCounts[k] = (int) ((Index) (dataOffsets[i].elementAt(j))).byteCount;
+        
+                            if (tileByteCounts[k] > tileMaxByteCount) {
+                                tileMaxByteCount = tileByteCounts[k];
+                            }
+                            k++;
+                        }
+                    }
+                }
+                else {
+                    tileMaxByteCount = 0;
+                    for (int k = 0; k < tileByteCounts.length; k++) {
                         if (tileByteCounts[k] > tileMaxByteCount) {
                             tileMaxByteCount = tileByteCounts[k];
                         }
-                        k++;
                     }
                 }
 
