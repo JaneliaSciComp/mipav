@@ -787,9 +787,7 @@ public class JPanelHistoLUT
 
                 updateFrames(false);
             }
-        } else if (command.equals("PowerPaint")) {
-            // new JDialogPowerPaint(this, getImageA());
-        } else {
+        } else if (event.getSource() instanceof JComboBox ) {
           JComboBox cb = (JComboBox)event.getSource();
           String lutName = (String)cb.getSelectedItem();
           if (tabbedPane.getSelectedComponent() == panelA) {
