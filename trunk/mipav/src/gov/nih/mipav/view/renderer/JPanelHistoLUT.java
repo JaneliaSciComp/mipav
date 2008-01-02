@@ -294,7 +294,7 @@ public class JPanelHistoLUT
             }
         }
 
-        if (event.getActionCommand().equals("grayLUT")) {
+        if (event.getActionCommand().equals("GrayLUT")) {
 
             if (tabbedPane.getSelectedComponent() == panelA) {
                 LUTa.makeGrayTransferFunctions();
@@ -787,6 +787,8 @@ public class JPanelHistoLUT
 
                 updateFrames(false);
             }
+        } else if (command.equals("PowerPaint")) {
+            // new JDialogPowerPaint(this, getImageA());
         } else {
           JComboBox cb = (JComboBox)event.getSource();
           String lutName = (String)cb.getSelectedItem();
