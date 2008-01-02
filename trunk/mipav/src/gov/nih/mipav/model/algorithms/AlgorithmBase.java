@@ -83,6 +83,15 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     private float progress;
     
     private float progressStep;
+    
+    /** Indicates if multi-threading will be used to optimize the algorithm. */
+    protected boolean multiThreadingEnabled;
+    
+    /**
+     * The number of threads will be used to execute the algorithm if multi-threading is enabled 
+     */
+    protected int nthreads;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -755,4 +764,24 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
 	public void setProgressStep(float progressStep){
 		this.progressStep = progressStep;
 	}
+
+
+    public boolean isMultiThreadingEnabled() {
+        return multiThreadingEnabled;
+    }
+
+
+    public void setMultiThreadingEnabled(boolean multiThreadingEnabled) {
+        this.multiThreadingEnabled = multiThreadingEnabled;
+    }
+
+
+    public int getNthreads() {
+        return nthreads;
+    }
+
+
+    public void setNthreads(int nthreads) {
+        this.nthreads = nthreads;
+    }
 }

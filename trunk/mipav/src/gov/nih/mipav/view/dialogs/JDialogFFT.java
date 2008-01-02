@@ -623,9 +623,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 resultImage.resetVOIs();
 
                 // Make algorithm
-                FFTAlgo = new AlgorithmFFT(resultImage, image, transformDir, logMagDisplay, unequalDim, image25D,
-                                           imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
-                                           butterworthOrder);
+                FFTAlgo = new AlgorithmFFT(resultImage, image, transformDir, logMagDisplay, unequalDim, image25D);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
@@ -657,9 +655,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
 
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
-                FFTAlgo = new AlgorithmFFT(image, transformDir, logMagDisplay, unequalDim, image25D, imageCrop,
-                                           kernelDiameter, filterType, freq1, freq2, constructionMethod,
-                                           butterworthOrder);
+                FFTAlgo = new AlgorithmFFT(image, transformDir, logMagDisplay, unequalDim, image25D);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.

@@ -711,9 +711,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         int butterworthOrder = 0;
 
         // take the FFT of the first input image:
-        AlgorithmFFT kFFT = new AlgorithmFFT(kImageFFT, kImage, iDir, logMagDisplay, unequalDim, image25D, imageCrop,
-                                             kernelDiameter, filterType, freq1, freq2, constructionMethod,
-                                             butterworthOrder);
+        AlgorithmFFT kFFT = new AlgorithmFFT(kImageFFT, kImage, iDir, logMagDisplay, unequalDim, image25D);
 
         /* Must not run in separate thread, since we need the results before
          * proceeding to the next step: */
