@@ -61,6 +61,8 @@ public class ModelLUT extends ModelStorageBase {
 
     /** Sets up the transfer function to be yellow-ish orange which is supposed to make bones look good. */
     public static final int MUSCLE_BONE = 11;
+    
+    
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -1381,6 +1383,78 @@ public class ModelLUT extends ModelStorageBase {
         // and blue follow;
         makeIndexedLUT(null);
     }
+    
+    /**
+     * makeVR with customized LUT
+     */
+    public void makeCustomizedLUT(String name) {
+        nColors = 256;
+        int height = getExtents()[1]; // number of entries in the LUT (i.e. 256)
+
+        
+        try {
+            indexedLUT = new int[height];
+            remappedLUT = new int[height];
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("Out of memory: ModelLUT: makeLUT");
+
+            return;
+        }
+
+        File kFile = new File(name + ".txt");
+        if ( !kFile.exists() || !kFile.canRead() )
+        {
+            return;
+        }
+        int iLength = (int)kFile.length();
+        if ( iLength <= 0 )
+        {
+            return;
+        }
+
+        try {
+            BufferedReader in = new BufferedReader(new FileReader(kFile));
+            String str;
+            int i = 0;
+
+            while ((str = in.readLine()) != null) {
+                //System.err.print(str + " ==> " );
+                set(0, i, 1);
+                java.util.StringTokenizer st = new java.util.StringTokenizer(str);
+                if (st.hasMoreTokens()) {
+                    int iValue = Integer.valueOf(st.nextToken()).intValue();
+                    //System.err.print(iValue + " " );
+                    set(1, i, iValue);
+                }
+                if (st.hasMoreTokens()) {
+                    int iValue = Integer.valueOf(st.nextToken()).intValue();
+                    //System.err.print(iValue + " " );
+                    set(2, i, iValue);
+                }
+                if (st.hasMoreTokens()) {
+                    int iValue = Integer.valueOf(st.nextToken()).intValue();
+                    //System.err.println(iValue + " " );
+                    set(3, i, iValue);
+                }
+                i++;
+            }
+            in.close();
+        } catch (IOException e) {}
+
+        /*
+        type = MUSCLE_BONE;
+        if ( name.equals("Cardiac")) {
+          type = CARDIAC;
+        } else if ( name.equals("GEcolor")) {
+          type = GECOLOR;
+        }
+        */
+        // make special Java LUT that is an int array where MSB is alpha, and then red, green
+        // and blue follow;
+        makeIndexedLUT(null);
+    }
+    
 
     /**
      * The purpose of this method is to adjust the zero index of the LUT from (1, 1, 1) to (0, 0, 0) The reason is so
