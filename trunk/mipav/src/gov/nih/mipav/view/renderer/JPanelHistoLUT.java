@@ -143,6 +143,9 @@ public class JPanelHistoLUT
 
     /** Top toolbar */
     private JToolBar toolBarTop;
+    
+    /** center toolbar */
+    private JToolBar toolBarCenter;
 
     /** Toolbar panel. */
     private JPanel topPanel;
@@ -164,6 +167,8 @@ public class JPanelHistoLUT
      */
     private JDialogCTHistoLUT ctDialogA, ctDialogB;
 	
+    /** A border used for each toolbar. */
+    protected static final Border etchedBorder = BorderFactory.createEtchedBorder();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -198,11 +203,13 @@ public class JPanelHistoLUT
         toolBarObj = new ViewToolBarBuilder(this);
 
         toolBarTop = toolBarObj.buildLUTToolBarTop();
+        toolBarCenter = buildSelectionList();
         toolBarBottom = toolBarObj.buildLUTToolBarBottom();
         toolBarBottom.getComponentAtIndex(4).setEnabled(false);
 
         topPanel = new JPanel(new BorderLayout());
         topPanel.add(toolBarTop, BorderLayout.NORTH);
+        topPanel.add(toolBarCenter, BorderLayout.CENTER);
         topPanel.add(toolBarBottom, BorderLayout.SOUTH);
 
         mainPanel.add(topPanel, BorderLayout.NORTH);
@@ -222,6 +229,37 @@ public class JPanelHistoLUT
         mainPanel.add(scroller, BorderLayout.CENTER);
     }
 
+    /**
+     * Build the center part of the LUT toolbar.
+     *
+     * @return  the top part of the LUT toolbar
+     */
+    public JToolBar buildSelectionList() {
+        
+        JToolBar LUTToolBar = new JToolBar();
+        LUTToolBar.setBorder(etchedBorder);
+        LUTToolBar.setBorderPainted(true);
+        LUTToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
+        LUTToolBar.setFloatable(false);
+        
+        
+        String[] lutStrings = { "BlackBody", "Cardiac", "Flow", "GEcolor", "GrayRainbow", "HotGreen",
+        						"HotIron", "HotMetal", "Hue1", "Hue2", "ired",
+        						"NIH", "Rainbow", "Rainbow2", "Rainbow3", "Ratio",
+        						"Spectrum", "Stern", "UCLA", "VR Bones", "VR Red Vessels"};
+
+     
+        JComboBox lutList = new JComboBox(lutStrings);
+        lutList.setBackground(Color.white);
+        lutList.setSelectedIndex(0);
+        lutList.addActionListener(this);
+        
+        LUTToolBar.add(lutList);
+        
+        return LUTToolBar;
+    }
+    
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     // ************************************************************************
@@ -241,6 +279,7 @@ public class JPanelHistoLUT
 
         command = event.getActionCommand();
 
+        
         if (tabbedPane.getSelectedComponent() == panelA) {
             text = nColorsATextF.getText();
 
@@ -330,7 +369,7 @@ public class JPanelHistoLUT
                 setLUTB(LUTb);
                 updateFrames(false);
             }
-        } else if (event.getActionCommand().equals("hotmetalLUT")) {
+        } else if (event.getActionCommand().equals("HotMetalLUT")) {
 
             if (tabbedPane.getSelectedComponent() == panelA) {
                 LUTa.makeHotMetalTransferFunctions();
@@ -426,7 +465,7 @@ public class JPanelHistoLUT
                 setLUTA(LUTa);
                 updateFrames(false);
             } else {
-                LUTb.makeMuscleBonesLUT();
+                LUTb.makeMuscleBonesLUT(); 
                 lutAdjustCheckboxB.setSelected(false);
                 setLUTB(LUTb);
                 updateFrames(false);
@@ -748,9 +787,20 @@ public class JPanelHistoLUT
 
                 updateFrames(false);
             }
+        } else {
+          JComboBox cb = (JComboBox)event.getSource();
+          String lutName = (String)cb.getSelectedItem();
+          if (tabbedPane.getSelectedComponent() == panelA) {
+              LUTa.makeCustomizedLUT(lutName);
+              setLUTA(LUTa);
+              updateFrames(false);
+          } else {
+        	  LUTa.makeCustomizedLUT(lutName); 
+              lutAdjustCheckboxB.setSelected(false);
+              setLUTB(LUTb);
+              updateFrames(false);
+          }
         }
-
-
         // Setup threshold buttons to be enabled or disabled.
         /*
          * if ( tabbedPane.getSelectedComponent() == panelA ) { if ( getHistoLUTComponentA() != null &&
