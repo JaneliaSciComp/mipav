@@ -4865,6 +4865,11 @@ public class FileTiff extends FileBase {
                                   m = 0;
                                   j++;
                               } // else m == 7
+                              if (fileInfo.getPhotometric() == 0) {
+                                  // White is zero in oroginal readin
+                                  // Convert to black is zero for usual display
+                                  buffer[i] = 1 - buffer[i];
+                              }
                             }
                         }
                         break;
@@ -5083,6 +5088,12 @@ public class FileTiff extends FileBase {
                                     }
     
                                     buffer[i] = byteBuffer[j + currentIndex] & 0xff;
+                                    if (fileInfo.getPhotometric() == 0) {
+                                        // White is zero in oroginal readin
+                                        // Convert to black is zero for usual display
+                                        buffer[i] = 255 - buffer[i];
+                                    }
+                                    
                                 }
                             } // else 
                         } // if (packBit == false)
