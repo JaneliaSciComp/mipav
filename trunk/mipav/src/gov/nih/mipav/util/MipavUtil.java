@@ -22,10 +22,6 @@ public class MipavUtil {
         return Runtime.getRuntime().availableProcessors();
     }
     
-    public static void main(String[] argv){
-        System.out.println(MipavUtil.getAvailableCores());
-    }
-    
     /**
      * Swap slices in order to apply FFT algorithm.
      * @param rdata
@@ -131,8 +127,108 @@ public class MipavUtil {
     public static int findMinimumPowerOfTwo(int num){
         int ret = 1;
         while(ret < num){
-            ret >>= 1;
+            ret <<= 1;
         }
         return ret;
     }
+    
+    public static float min(float[] data){
+        float min = Float.MAX_VALUE;
+        for(int i = 0; i < data.length; i++){
+            if(min > data[i]){
+                min = data[i];
+            }
+        }
+        return min;
+    }
+    
+    public static float max(float[] data){
+        float max = Float.MIN_VALUE;
+        for(int i = 0; i < data.length; i++){
+            if(max < data[i]){
+                max = data[i];
+            }
+        }
+        return max;
+    }
+    
+    public static void copy2D(float[] srcData, int srcFrom, int srcXDim,
+            int srcYDim, float[] destData, int destFrom, int destXDim,
+            int destYDim, boolean source) {
+        if (source) {
+            for (int i = 0; i < srcYDim; i++) {
+                System.arraycopy(srcData, srcFrom + i * srcXDim, destData,
+                        destFrom + i * destXDim, srcXDim);
+            }
+        } else {
+            for (int i = 0; i < srcYDim; i++) {
+                System.arraycopy(srcData, srcFrom + i * srcXDim, destData,
+                        destFrom + i * destXDim, destXDim);
+            }
+        }
+    }
+
+    public static void copy3D(float[] srcData, int srcFrom, int srcXDim,
+            int srcYDim, int srcZDim, float[] destData, int destFrom,
+            int destXDim, int destYDim, int destZDim, boolean source) {
+        int srcSliceSize = srcXDim * srcYDim;
+        int destSliceSize = destXDim * destYDim;
+        if (source) {
+            for (int i = 0; i < srcZDim; i++) {
+                copy2D(srcData, srcFrom + i * srcSliceSize, srcXDim, srcYDim,
+                        destData, destFrom + i * destSliceSize, destXDim,
+                        destYDim, source);
+            }
+        } else {
+            for (int i = 0; i < destZDim; i++) {
+                copy2D(srcData, srcFrom + i * srcSliceSize, srcXDim, srcYDim,
+                        destData, destFrom + i * destSliceSize, destXDim,
+                        destYDim, source);
+            }
+        }
+    }
+
+    public static void copy4D(float[] srcData, int srcXDim, int srcYDim,
+            int srcZDim, int srcTDim, float[] destData, int destXDim,
+            int destYDim, int destZDim, int destTDim, boolean source) {
+        int srcVolumeSize = srcXDim * srcYDim;
+        int destVolumeSize = destXDim * destYDim;
+        if (source) {
+            for (int i = 0; i < srcTDim; i++) {
+                copy3D(srcData, i * srcVolumeSize, srcXDim, srcYDim, srcZDim,
+                        destData, i * destVolumeSize, destXDim, destYDim,
+                        destZDim, source);
+            }
+        } else {
+            for (int i = 0; i < destTDim; i++) {
+                copy3D(srcData, i * srcVolumeSize, srcXDim, srcYDim, srcZDim,
+                        destData, i * destVolumeSize, destXDim, destYDim,
+                        destZDim, source);
+            }
+        }
+    }
+    
+    /** Calculates phase from real and imaginary parts. */
+    public static float phase(float rdata, float idata){
+        return (float) java.lang.Math.atan2(idata, rdata);
+    }
+
+
+    /**
+     * Copy a row in x, y or z direction to an array.
+     * 
+     * @param src       
+     * @param srcPos
+     * @param dest
+     * @param destPos
+     * @param length
+     * @param srcDist   the distance between two pixels of source data in x, y or z direction.
+     * @param destDist  the distance between two pixels of destination data in x, y or z direction.
+     */
+    public static void rowCopy(float[] src, int srcPos, float[] dest, int destPos, int length, int srcDist, int destDist){
+        for(int i = 0; i < length; i++){
+            dest[destPos + i * destDist] = src[srcPos + i * srcDist];
+        }
+    }
+
 }
