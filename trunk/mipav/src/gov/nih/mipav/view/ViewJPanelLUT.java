@@ -121,6 +121,9 @@ public class ViewJPanelLUT extends JPanel
 
     /** DOCUMENT ME! */
     private JToolBar toolBarBottom;
+    
+    /** center toolbar */
+    private JToolBar toolBarCenter;
 
     /** DOCUMENT ME! */
     private ViewToolBarBuilder toolBarObj;
@@ -355,7 +358,7 @@ public class ViewJPanelLUT extends JPanel
                 panelParent.setLUTB(panelParent.getLUTb());
             }
         } else if (command.equals("ctPresetsLUT")) {
-
+            System.err.println("ruida");
             if (isImageASelected()) {
 
                 if (getHistoLUTComponentA() != null) {
@@ -826,8 +829,20 @@ public class ViewJPanelLUT extends JPanel
             panelParent.actionPerformed(event);
         } else if (event.getActionCommand().equals("GenerateLUT")) {
             histoPanelA.showLUTRecorder();
+        } else  if (event.getSource() instanceof JComboBox ) {
+            JComboBox cb = (JComboBox)event.getSource();
+            String lutName = (String)cb.getSelectedItem();
+            if (isImageASelected() ) {
+            	panelParent.getLUTa().makeCustomizedLUT(lutName);
+            	panelParent.setLUTA(panelParent.getLUTa());
+                updateFrames(false);
+            } else {
+            	panelParent.getLUTb().makeCustomizedLUT(lutName); 
+            	panelParent.setLUTB(panelParent.getLUTb());
+                updateFrames(false);
+            }
         }
-
+       
         // Setup threshold buttons to be enabled or disabled.
         if (isImageASelected()) {
 
@@ -841,7 +856,9 @@ public class ViewJPanelLUT extends JPanel
                     (getHistoLUTComponentB().getMode() != ViewJComponentHistoLUT.DUAL_THRESHOLD)) {
                 panelParent.enableThresholdingItems(false);
             }
-        }
+        } 
+        
+       
     }
 
     /**
@@ -988,6 +1005,7 @@ public class ViewJPanelLUT extends JPanel
         toolBarObj = new ViewToolBarBuilder(this);
 
         toolBarTop = toolBarObj.buildLUTToolBarTop();
+        toolBarCenter = buildSelectionList();
         toolBarBottom = toolBarObj.buildLUTToolBarBottom();
         toolBarThreshold = toolBarObj.buildLUTThresholdToolBar();
 
@@ -1004,6 +1022,7 @@ public class ViewJPanelLUT extends JPanel
         JPanel topPanel = new JPanel(new BorderLayout());
 
         topPanel.add(toolBarTop, BorderLayout.NORTH);
+        topPanel.add(toolBarCenter, BorderLayout.CENTER);
         topPanel.add(toolBarBottom, BorderLayout.SOUTH);
 
         JPanel fullPanel = new JPanel(new BorderLayout());
@@ -1028,6 +1047,37 @@ public class ViewJPanelLUT extends JPanel
         validate();
     }
 
+    /**
+     * Build the center part of the LUT toolbar.
+     *
+     * @return  the top part of the LUT toolbar
+     */
+    public JToolBar buildSelectionList() {
+        
+        JToolBar LUTToolBar = new JToolBar();
+        // LUTToolBar.setBorder(etchedBorder);
+        LUTToolBar.setBorderPainted(true);
+        LUTToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
+        LUTToolBar.setFloatable(false);
+        
+        
+        String[] lutStrings = { "BlackBody", "Cardiac", "Flow", "GEcolor", "GrayRainbow", "HotGreen",
+        						"HotIron", "HotMetal", "Hue1", "Hue2", "ired",
+        						"NIH", "Rainbow", "Rainbow2", "Rainbow3", "Ratio",
+        						"Spectrum", "Stern", "UCLA", "VR Bones", "VR Red Vessels"};
+
+     
+        JComboBox lutList = new JComboBox(lutStrings);
+        lutList.setBackground(Color.white);
+        lutList.setSelectedIndex(0);
+        lutList.addActionListener(this);
+        
+        LUTToolBar.add(lutList);
+        
+        return LUTToolBar;
+    }
+    
+    
     /**
      * Returns whether the imageA LUT panel is the one being worked on.
      *
