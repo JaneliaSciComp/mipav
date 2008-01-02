@@ -1,13 +1,15 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmFFT;
+import gov.nih.mipav.model.algorithms.filters.FFTUtility;
+import gov.nih.mipav.model.structures.Complex;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJFrameImage;
 
-import gov.nih.mipav.view.*;
-
-import java.io.*;
+import java.io.IOException;
 
 
 /**
@@ -176,8 +178,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
 
         // take the FFT of the inImage
         AlgorithmFFT blurredFFT = new AlgorithmFFT(blurredImageSpectrum, inImage, forwardTransformDir, logMagDisplay,
-                                                   unequalDim, image25D, imageCrop, kernelDiameter, filterType, freq1,
-                                                   freq2, constructionMethod, butterworthOrder);
+                                                   unequalDim, image25D);
         blurredFFT.run();
 
         // fill the blurred arrays with values from the blurredImage
@@ -233,24 +234,18 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
 
         // take the FFT of the estimatedImage
         estimatedFFT = new AlgorithmFFT(estimatedImageSpectrum, estimatedImage, forwardTransformDir, logMagDisplay,
-                                        unequalDim, image25D, imageCrop, kernelDiameter, filterType, freq1, freq2,
-                                        constructionMethod, butterworthOrder);
+                                        unequalDim, image25D);
 
         estimatedIFFT = new AlgorithmFFT(estimatedImage, estimatedImageSpectrum, inverseTransformDir, logMagDisplay,
-                                         unequalDim, image25D, imageCrop, kernelDiameter, filterType, freq1, freq2,
-                                         constructionMethod, butterworthOrder);
+                                         unequalDim, image25D);
 
         psfImageSpectrum = new ModelImage(ModelStorageBase.COMPLEX, inImage.getExtents(), null);
         psfImageSpectrum.setOriginalExtents(inImage.getExtents());
 
 
-        psfIFFT = new AlgorithmFFT(psfImage, psfImageSpectrum, inverseTransformDir, logMagDisplay, unequalDim, image25D,
-                                   imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
-                                   butterworthOrder);
+        psfIFFT = new AlgorithmFFT(psfImage, psfImageSpectrum, inverseTransformDir, logMagDisplay, unequalDim, image25D);
 
-        psfFFT = new AlgorithmFFT(psfImageSpectrum, psfImage, forwardTransformDir, logMagDisplay, unequalDim, image25D,
-                                  imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
-                                  butterworthOrder);
+        psfFFT = new AlgorithmFFT(psfImageSpectrum, psfImage, forwardTransformDir, logMagDisplay, unequalDim, image25D);
         fireProgressStateChanged(.1f, null, null);
     }
 

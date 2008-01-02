@@ -1,17 +1,15 @@
 package gov.nih.mipav.model.algorithms.filters;
 
 
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.view.ViewJFrameImage;
 
-import gov.nih.mipav.view.*;
-
-import java.awt.*;
-
-import java.io.*;
-
-import java.util.*;
+import java.awt.Dimension;
+import java.io.IOException;
+import java.util.Arrays;
 
 
 /**
