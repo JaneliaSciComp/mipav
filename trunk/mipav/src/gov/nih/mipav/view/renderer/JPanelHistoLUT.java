@@ -797,7 +797,7 @@ public class JPanelHistoLUT
               setLUTA(LUTa);
               updateFrames(false);
           } else {
-        	  LUTa.makeCustomizedLUT(lutName); 
+        	  LUTb.makeCustomizedLUT(lutName); 
               lutAdjustCheckboxB.setSelected(false);
               setLUTB(LUTb);
               updateFrames(false);
