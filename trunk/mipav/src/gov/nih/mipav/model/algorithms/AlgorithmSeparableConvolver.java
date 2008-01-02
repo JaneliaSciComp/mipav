@@ -117,11 +117,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                                        int[] kExtents, boolean color) {
         super(null, null);
 
-        imgBuffer = new float[srcBuffer.length];
-
-        for (int i = 0; i < srcBuffer.length; i++) {
-            imgBuffer[i] = srcBuffer[i];
-        }
+        imgBuffer = srcBuffer;
 
         imgExtents = iExtents;
         kernelExtents = kExtents;
@@ -131,7 +127,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
             cFactor = 4;
         }
 
-        this.destBuffer = new float[destBuffer.length];
+        this.destBuffer = destBuffer;
 
         //tempImgBuffer = new double[imgBuffer.length];
 
@@ -277,7 +273,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 
 	public AlgorithmSeparableConvolver(float[] srcBuffer, int[] iExtents,
 			float[] kernXBuffer, float[] kernYBuffer, float[] kernZBuffer,
-			boolean color) {
+			boolean color, boolean multiThreadingEnabled) {
 		super(null, null);
 
 		imgBuffer = srcBuffer;
@@ -285,6 +281,10 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 		imgExtents = iExtents;
 		colorImage = color;
 
+        this.multiThreadingEnabled = multiThreadingEnabled;
+        if(multiThreadingEnabled){
+            destBuffer = new float[srcBuffer.length];
+        }
 		if (color) {
 			cFactor = 4;
 		}
@@ -351,9 +351,9 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
             if (col % stepProgressValue == 0) {
                 fireProgressStateChanged( progress++);
             }
-            rowCopy(imgBuffer, col, yrowBuffer, 0, yoffset, xoffset, cFactor);
+            MipavUtil.rowCopy(imgBuffer, col, yrowBuffer, 0, yoffset, xoffset, cFactor);
             convolve(yrowBuffer, kernelYBuffer, yresultBuffer);
-            rowCopy(yresultBuffer, 0, imgBuffer, col, yoffset, cFactor, xoffset);
+            MipavUtil.rowCopy(yresultBuffer, 0, imgBuffer, col, yoffset, cFactor, xoffset);
         }
         
         fireProgressStateChanged(100);
@@ -361,23 +361,6 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         setCompleted(true);
     }
 
-    /**
-     * Copy a row in x, y or z direction to an array.
-     * 
-     * @param src		
-     * @param srcPos
-     * @param dest
-     * @param destPos
-     * @param length
-     * @param srcDist	the distance between two pixels of source data in x, y or z direction.
-     * @param destDist	the distance between two pixels of destination data in x, y or z direction.
-     */
-    public static void rowCopy(float[] src, int srcPos, float[] dest, int destPos, int length, int srcDist, int destDist){
-    	for(int i = 0; i < length; i++){
-    		dest[destPos + i * destDist] = src[srcPos + i * srcDist];
-    	}
-    }
-    
     /**
      * Perform one-dimension convolution.
      * @param imageBuffer
@@ -660,9 +643,9 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 				if ((z*xDim +x) % stepProgressValue == 0) {
 					fireProgressStateChanged(progress++);
 				}
-				rowCopy(imgBuffer, x+z*xoffset*yoffset, yrowBuffer, 0, yoffset, xoffset, cFactor);
+				MipavUtil.rowCopy(imgBuffer, x+z*xoffset*yoffset, yrowBuffer, 0, yoffset, xoffset, cFactor);
 				convolve(yrowBuffer, kernelYBuffer, yresultBuffer);
-				rowCopy(yresultBuffer, 0, imgBuffer, x+z*xoffset*yoffset, yoffset, cFactor, xoffset);
+				MipavUtil.rowCopy(yresultBuffer, 0, imgBuffer, x+z*xoffset*yoffset, yoffset, cFactor, xoffset);
 			}
         }
 
@@ -673,12 +656,10 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
             if (row % stepProgressValue == 0) {
                 fireProgressStateChanged( progress++);
             }
-            rowCopy(imgBuffer, row, zrowBuffer, 0, zoffset, xoffset*yoffset, cFactor);
+            MipavUtil.rowCopy(imgBuffer, row, zrowBuffer, 0, zoffset, xoffset*yoffset, cFactor);
             convolve(zrowBuffer, kernelZBuffer, zresultBuffer);
-            rowCopy(zresultBuffer, 0, imgBuffer, row, zoffset, cFactor, xoffset*yoffset);
+            MipavUtil.rowCopy(zresultBuffer, 0, imgBuffer, row, zoffset, cFactor, xoffset*yoffset);
         }
-        
-        System.arraycopy(imgBuffer, 0, destBuffer, 0, imgBuffer.length);
         fireProgressStateChanged(100);
       
         setCompleted(true);
@@ -1001,9 +982,9 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 					makeProgress(1);
 					fireProgressStateChanged((int)getProgress());
 				}
-				rowCopy(imgBuffer, x+z*xoffset*yoffset, yrowBuffer, 0, yoffset, xoffset, cFactor);
+				MipavUtil.rowCopy(imgBuffer, x+z*xoffset*yoffset, yrowBuffer, 0, yoffset, xoffset, cFactor);
 				convolve(yrowBuffer, kernelYBuffer, yresultBuffer);
-				rowCopy(yresultBuffer, 0, imgBuffer, x+z*xoffset*yoffset, yoffset, cFactor, xoffset);
+				MipavUtil.rowCopy(yresultBuffer, 0, imgBuffer, x+z*xoffset*yoffset, yoffset, cFactor, xoffset);
 			}
         }
 	}
@@ -1025,9 +1006,9 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
             	makeProgress(1);
                 fireProgressStateChanged((int)getProgress());
             }
-            rowCopy(imgBuffer, row, zrowBuffer, 0, zoffset, xoffset*yoffset, cFactor);
+            MipavUtil.rowCopy(imgBuffer, row, zrowBuffer, 0, zoffset, xoffset*yoffset, cFactor);
             convolve(zrowBuffer, kernelZBuffer, zresultBuffer);
-            rowCopy(zresultBuffer, 0, imgBuffer, row, zoffset, cFactor, xoffset*yoffset);
+            MipavUtil.rowCopy(zresultBuffer, 0, imgBuffer, row, zoffset, cFactor, xoffset*yoffset);
         }    	
     }
         
@@ -1039,7 +1020,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         if (imgExtents.length == 2) {
             run2D();
         } else if (imgExtents.length > 2) {
-            if(Preferences.isMultiThreadingEnabled()){
+            if(multiThreadingEnabled){
                 run3DMT2();
             }else{
                 run3D();
@@ -1269,4 +1250,10 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
     	return nthreads;
     }
 
+    public float[] getResultBuffer(){
+        if(destBuffer != null){
+            return destBuffer;
+        }
+        return imgBuffer;
+    }
 }

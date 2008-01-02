@@ -546,7 +546,6 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
         int t;
         int length;
         float[] buffer;
-        float[] resultBuffer;
         boolean color = false;
         int cFactor = 1;
 
@@ -559,10 +558,8 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
         try {
             length = cFactor * srcImage.getSliceSize() * srcImage.getExtents()[2];
             buffer = new float[length];
-            resultBuffer = new float[length];
         } catch (OutOfMemoryError e) {
             buffer = null;
-            resultBuffer = null;
             errorCleanUp(" Separable Algorithm Gaussian Blur: Out of memory", true);
 
             return;
@@ -590,17 +587,17 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
             AlgorithmSeparableConvolver convolver = null;
 
             if (stepProgressValuePerVolume < 2) {
-                convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer,
+                convolver = new AlgorithmSeparableConvolver(buffer,
                                                             new int[] {
                                                                 srcImage.getExtents()[0], srcImage.getExtents()[1],
                                                                 srcImage.getExtents()[2]
-                                                            }, GxDataRound, GyDataRound, GzDataRound, color);
+                                                            }, GxDataRound, GyDataRound, GzDataRound, color, true);
             } else {
-                convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer,
+                convolver = new AlgorithmSeparableConvolver(buffer,
                                                             new int[] {
                                                                 srcImage.getExtents()[0], srcImage.getExtents()[1],
                                                                 srcImage.getExtents()[2]
-                                                            }, GxDataRound, GyDataRound, GzDataRound, color);
+                                                            }, GxDataRound, GyDataRound, GzDataRound, color, true);
 
                 convolver.setProgressValues(generateProgressValues(getMinProgressValue() +
                                                                    Math.round(stepProgressValuePerVolume * t),
@@ -618,8 +615,8 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
             if (color) {
                 convolver.setColorChannels(red, green, blue);
             }
-
             convolver.run();
+            float[] resultBuffer = convolver.getResultBuffer();
             convolver.finalize();
             convolver = null;
 
