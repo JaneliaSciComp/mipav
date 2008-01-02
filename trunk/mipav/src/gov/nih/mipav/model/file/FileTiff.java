@@ -354,6 +354,8 @@ public class FileTiff extends FileBase {
     private int rowBytes;
     
     private int rowPixels;
+    
+    private boolean haveChangedPhotometricTo1 = false;
 
     /** DOCUMENT ME! */
     private double tRes = 1.0;
@@ -832,6 +834,11 @@ public class FileTiff extends FileBase {
                     }
                 }
             } // else not ModelStorageBase.Double
+            
+            if (haveChangedPhotometricTo1) {
+                // Changed to black is zero
+                fileInfo.setPhotometric((short)1);
+            }
 
             fileInfo.setExtents(imgExtents);
             raFile.close();
@@ -4785,6 +4792,9 @@ public class FileTiff extends FileBase {
 
                     case ModelStorageBase.BOOLEAN:
                         
+                        if (fileInfo.getPhotometric() == 0) {
+                            haveChangedPhotometricTo1 = true;
+                        }
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
@@ -5081,6 +5091,9 @@ public class FileTiff extends FileBase {
                                 } 
                             } // else if (isBW6)
                             else { 
+                                if (fileInfo.getPhotometric() == 0) {
+                                    haveChangedPhotometricTo1 = true;
+                                }
                                 for (j = 0; j < nBytes; j++, i++) {
     
                                     if (((i + progress) % mod) == 0) {
