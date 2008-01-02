@@ -4667,6 +4667,9 @@ public class FileTiff extends FileBase {
         int iCount, iNext;
         int b1, b2, b3, b4;
         long progress, progressLength, mod;
+        byte intermedBuffer[] = null;
+        int interLength;
+        int in;
 
         // long pointer;
         int idx = 0;
@@ -4798,90 +4801,220 @@ public class FileTiff extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        for (j = 0, m = 0; y < yDim; y++) {
-                            for (x = 0; x < xDim; x++, i++) {
-                              if (m == 0) {
-                                  buffer[i] = (byteBuffer[j + currentIndex] & 0x80) >>> 7;
-                                  if (x < xDim - 1) {
-                                      m = 1;
-                                  }
-                                  else {
+                        if (packBit == false) {
+                            for (j = 0, m = 0; y < yDim; y++) {
+                                for (x = 0; x < xDim; x++, i++) {
+                                  if (m == 0) {
+                                      buffer[i] = (byteBuffer[j + currentIndex] & 0x80) >>> 7;
+                                      if (x < xDim - 1) {
+                                          m = 1;
+                                      }
+                                      else {
+                                          m = 0;
+                                          j++;
+                                      }
+                                  } // if (m == 0)
+                                  else if (m == 1) {
+                                      buffer[i] = (byteBuffer[j + currentIndex] & 0x40) >>> 6;
+                                      if (x < xDim - 1) {
+                                          m = 2;
+                                      }
+                                      else {
+                                          m = 0;
+                                          j++;
+                                      }
+                                  } // else if (m == 1)
+                                  else if (m == 2) {
+                                      buffer[i] = (byteBuffer[j + currentIndex] & 0x20) >>> 5;
+                                      if (x < xDim - 1) {
+                                          m = 3;
+                                      }
+                                      else {
+                                          m = 0;
+                                          j++;
+                                      }
+                                  } // else if (m == 2)
+                                  else if (m == 3) {
+                                      buffer[i] = (byteBuffer[j + currentIndex] & 0x10) >>> 4;
+                                      if (x < xDim - 1) {
+                                          m = 4;
+                                      }
+                                      else {
+                                          m = 0;
+                                          j++;
+                                      }
+                                  } // else if (m == 3)
+                                  else if (m == 4) {
+                                      buffer[i] = (byteBuffer[j + currentIndex] & 0x08) >>> 3;
+                                      if (x < xDim - 1) {
+                                          m = 5;
+                                      }
+                                      else {
+                                          m = 0;
+                                          j++;
+                                      }
+                                  } // else if (m == 4)
+                                  else if (m == 5) {
+                                      buffer[i] = (byteBuffer[j + currentIndex] & 0x04) >>> 2;
+                                      if (x < xDim - 1) {
+                                          m = 6;
+                                      }
+                                      else {
+                                          m = 0;
+                                          j++;
+                                      }
+                                  } // else if (m == 5)
+                                  else if (m == 6) {
+                                      buffer[i] = (byteBuffer[j + currentIndex] & 0x02) >>> 1;
+                                      if (x < xDim - 1) {
+                                          m = 7;
+                                      }
+                                      else {
+                                          m = 0;
+                                          j++;
+                                      }
+                                  } // else if (m == 6)
+                                  else { // m == 7
+                                      buffer[i] = (byteBuffer[j + currentIndex] & 0x01);
                                       m = 0;
                                       j++;
+                                  } // else m == 7
+                                  if (fileInfo.getPhotometric() == 0) {
+                                      // White is zero in oroginal readin
+                                      // Convert to black is zero for usual display
+                                      buffer[i] = 1 - buffer[i];
                                   }
-                              } // if (m == 0)
-                              else if (m == 1) {
-                                  buffer[i] = (byteBuffer[j + currentIndex] & 0x40) >>> 6;
-                                  if (x < xDim - 1) {
-                                      m = 2;
-                                  }
-                                  else {
-                                      m = 0;
-                                      j++;
-                                  }
-                              } // else if (m == 1)
-                              else if (m == 2) {
-                                  buffer[i] = (byteBuffer[j + currentIndex] & 0x20) >>> 5;
-                                  if (x < xDim - 1) {
-                                      m = 3;
-                                  }
-                                  else {
-                                      m = 0;
-                                      j++;
-                                  }
-                              } // else if (m == 2)
-                              else if (m == 3) {
-                                  buffer[i] = (byteBuffer[j + currentIndex] & 0x10) >>> 4;
-                                  if (x < xDim - 1) {
-                                      m = 4;
-                                  }
-                                  else {
-                                      m = 0;
-                                      j++;
-                                  }
-                              } // else if (m == 3)
-                              else if (m == 4) {
-                                  buffer[i] = (byteBuffer[j + currentIndex] & 0x08) >>> 3;
-                                  if (x < xDim - 1) {
-                                      m = 5;
-                                  }
-                                  else {
-                                      m = 0;
-                                      j++;
-                                  }
-                              } // else if (m == 4)
-                              else if (m == 5) {
-                                  buffer[i] = (byteBuffer[j + currentIndex] & 0x04) >>> 2;
-                                  if (x < xDim - 1) {
-                                      m = 6;
-                                  }
-                                  else {
-                                      m = 0;
-                                      j++;
-                                  }
-                              } // else if (m == 5)
-                              else if (m == 6) {
-                                  buffer[i] = (byteBuffer[j + currentIndex] & 0x02) >>> 1;
-                                  if (x < xDim - 1) {
-                                      m = 7;
-                                  }
-                                  else {
-                                      m = 0;
-                                      j++;
-                                  }
-                              } // else if (m == 6)
-                              else { // m == 7
-                                  buffer[i] = (byteBuffer[j + currentIndex] & 0x01);
-                                  m = 0;
-                                  j++;
-                              } // else m == 7
-                              if (fileInfo.getPhotometric() == 0) {
-                                  // White is zero in oroginal readin
-                                  // Convert to black is zero for usual display
-                                  buffer[i] = 1 - buffer[i];
-                              }
+                                }
                             }
-                        }
+                        } // if (packBit == false)
+                        else { // packBit == true
+                            interLength = xDim;
+                            if ((xDim % 8) != 0) {
+                                interLength += 8 - xDim%8;
+                            }
+                            interLength *= yDim;
+                            intermedBuffer = new byte[interLength];
+                            j = 0;
+                            in = 0;
+                            
+                            while (j < nBytes) {
+
+                                // uncompressed data bytes follow
+                                // Copy the next n+1 bytes literally
+                                if ((byteBuffer[j + currentIndex] & 0x80) == 0) {
+                                    iCount = byteBuffer[j + currentIndex] + 1;
+                                    j++;
+
+                                    for (iNext = 0; iNext < iCount; iNext++, j++, in++) {
+
+                                        intermedBuffer[in] = byteBuffer[j + currentIndex];
+                                    }
+                                } // end of if (byteBuffer[j] & 0x80 == 0)
+
+                                // Do nothing if the byte value is -128
+                                else if (byteBuffer[j + currentIndex] == -128) {
+                                    j++;
+                                }
+                                // compressed data bytes follow
+                                // (~byteBuffer[j]) + 1 is the 2's complement of n or -n
+                                // Hence (~byteBuffer[j]) + 2 equals -n + 1
+                                else {
+                                    iCount = (~byteBuffer[j + currentIndex]) + 2;
+                                    j++;
+
+                                    for (iNext = 0; iNext < iCount; iNext++, in++) {
+
+                                        intermedBuffer[in] = byteBuffer[j + currentIndex];
+                                    }
+
+                                    j++;
+                                } // end of else for compressed data bytes
+                            } // end of while (j < nBytes)
+                            for (j = 0, m = 0; y < yDim; y++) {
+                                for (x = 0; x < xDim; x++, i++) {
+                                  if (m == 0) {
+                                      buffer[i] = (intermedBuffer[j + currentIndex] & 0x80) >>> 7;
+                                      if (x < xDim - 1) {
+                                          m = 1;
+                                      }
+                                      else {
+                                          m = 0;
+                                          j++;
+                                      }
+                                  } // if (m == 0)
+                                  else if (m == 1) {
+                                      buffer[i] = (intermedBuffer[j + currentIndex] & 0x40) >>> 6;
+                                      if (x < xDim - 1) {
+                                          m = 2;
+                                      }
+                                      else {
+                                          m = 0;
+                                          j++;
+                                      }
+                                  } // else if (m == 1)
+                                  else if (m == 2) {
+                                      buffer[i] = (intermedBuffer[j + currentIndex] & 0x20) >>> 5;
+                                      if (x < xDim - 1) {
+                                          m = 3;
+                                      }
+                                      else {
+                                          m = 0;
+                                          j++;
+                                      }
+                                  } // else if (m == 2)
+                                  else if (m == 3) {
+                                      buffer[i] = (intermedBuffer[j + currentIndex] & 0x10) >>> 4;
+                                      if (x < xDim - 1) {
+                                          m = 4;
+                                      }
+                                      else {
+                                          m = 0;
+                                          j++;
+                                      }
+                                  } // else if (m == 3)
+                                  else if (m == 4) {
+                                      buffer[i] = (intermedBuffer[j + currentIndex] & 0x08) >>> 3;
+                                      if (x < xDim - 1) {
+                                          m = 5;
+                                      }
+                                      else {
+                                          m = 0;
+                                          j++;
+                                      }
+                                  } // else if (m == 4)
+                                  else if (m == 5) {
+                                      buffer[i] = (intermedBuffer[j + currentIndex] & 0x04) >>> 2;
+                                      if (x < xDim - 1) {
+                                          m = 6;
+                                      }
+                                      else {
+                                          m = 0;
+                                          j++;
+                                      }
+                                  } // else if (m == 5)
+                                  else if (m == 6) {
+                                      buffer[i] = (intermedBuffer[j + currentIndex] & 0x02) >>> 1;
+                                      if (x < xDim - 1) {
+                                          m = 7;
+                                      }
+                                      else {
+                                          m = 0;
+                                          j++;
+                                      }
+                                  } // else if (m == 6)
+                                  else { // m == 7
+                                      buffer[i] = (intermedBuffer[j + currentIndex] & 0x01);
+                                      m = 0;
+                                      j++;
+                                  } // else m == 7
+                                  if (fileInfo.getPhotometric() == 0) {
+                                      // White is zero in oroginal readin
+                                      // Convert to black is zero for usual display
+                                      buffer[i] = 1 - buffer[i];
+                                  }
+                                }
+                            }
+                        } // else packBit == true
                         break;
 
                     case ModelStorageBase.BYTE:
