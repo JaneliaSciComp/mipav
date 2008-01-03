@@ -125,7 +125,6 @@ public class CustomUIBuilder {
 	public static final UIParams PARAM_LUT_COOL_HOT = new UIParams("coolHotLUT", "Cool hot LUT", "coolhot");
 	public static final UIParams PARAM_LUT_SKIN = new UIParams("skinLUT", "Skin LUT", "skin");
 	public static final UIParams PARAM_LUT_BONE = new UIParams("boneLUT", "Bone LUT", "bone");
-	public static final UIParams PARAM_LUT_MUSCLE_BONE = new UIParams("muscle_boneLUT", "Muscle Bone LUT", "muscleBoneLUT");
 	public static final UIParams PARAM_LUT_STRIPED = new UIParams("stripedLUT", "Striped LUT", "stripedLUT");
 	
 	/** LUT transfer/thresholding */
