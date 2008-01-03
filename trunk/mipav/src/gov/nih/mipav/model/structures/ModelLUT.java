@@ -58,10 +58,6 @@ public class ModelLUT extends ModelStorageBase {
 
     /** Sets up the transfer function to be yellow-ish orange which is supposed to make bones look good. */
     public static final int BONE = 10;
-
-    /** Sets up the transfer function to be yellow-ish orange which is supposed to make bones look good. */
-    public static final int MUSCLE_BONE = 11;
-    
     
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -175,10 +171,6 @@ public class ModelLUT extends ModelStorageBase {
             case BONE:
                 makeBoneTransferFunctions();
                 makeLUT(nColors);
-                break;
-
-            case MUSCLE_BONE:
-                makeMuscleBonesLUT();
                 break;
 
             default:
@@ -1320,70 +1312,7 @@ public class ModelLUT extends ModelStorageBase {
         makeIndexedLUT(null);
     }
 
-    /**
-     * makeVR Muscle-Bones
-     */
-    public void makeMuscleBonesLUT() {
-        nColors = 256;
-        int height = getExtents()[1]; // number of entries in the LUT (i.e. 256)
-
-        try {
-            indexedLUT = new int[height];
-            remappedLUT = new int[height];
-        } catch (OutOfMemoryError error) {
-            System.gc();
-            MipavUtil.displayError("Out of memory: ModelLUT: makeLUT");
-
-            return;
-        }
-
-        File kFile = new File("VR Muscles-Bones.txt");
-        if ( !kFile.exists() || !kFile.canRead() )
-        {
-            return;
-        }
-        int iLength = (int)kFile.length();
-        if ( iLength <= 0 )
-        {
-            return;
-        }
-
-        try {
-            BufferedReader in = new BufferedReader(new FileReader(kFile));
-            String str;
-            int i = 0;
-
-            while ((str = in.readLine()) != null) {
-                //System.err.print(str + " ==> " );
-                set(0, i, 1);
-                java.util.StringTokenizer st = new java.util.StringTokenizer(str);
-                if (st.hasMoreTokens()) {
-                    int iValue = Integer.valueOf(st.nextToken()).intValue();
-                    //System.err.print(iValue + " " );
-                    set(1, i, iValue);
-                }
-                if (st.hasMoreTokens()) {
-                    int iValue = Integer.valueOf(st.nextToken()).intValue();
-                    //System.err.print(iValue + " " );
-                    set(2, i, iValue);
-                }
-                if (st.hasMoreTokens()) {
-                    int iValue = Integer.valueOf(st.nextToken()).intValue();
-                    //System.err.println(iValue + " " );
-                    set(3, i, iValue);
-                }
-                i++;
-            }
-            in.close();
-        } catch (IOException e) {}
-
-        type = MUSCLE_BONE;
-
-        // make special Java LUT that is an int array where MSB is alpha, and then red, green
-        // and blue follow;
-        makeIndexedLUT(null);
-    }
-    
+   
     /**
      * makeVR with customized LUT
      */
