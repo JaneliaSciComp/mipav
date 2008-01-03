@@ -443,6 +443,8 @@ public class FileTiff extends FileBase {
     // Default is for uncompressed mode not allowed
     private boolean group4Uncompressed = false;
     
+    private boolean haveMultiSpectraImage = false;
+    
     
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -651,7 +653,20 @@ public class FileTiff extends FileBase {
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
             Preferences.debug("imageSlice = " + imageSlice, Preferences.DEBUG_FILEIO);
 
-            if (imageSlice > 1) {
+            if (haveMultiSpectraImage && (imageSlice > 1)) {
+                imgExtents = new int[4];
+                imgExtents[0] = xDim;
+                imgExtents[1] = yDim;
+                imgExtents[2] = imageSlice;
+                imgExtents[3] = bitsPerSample.length;
+            } // if (haveMultiSpectraImage)
+            else if (haveMultiSpectraImage) {
+                imgExtents = new int[3];
+                imgExtents[0] = xDim;
+                imgExtents[1] = yDim;
+                imgExtents[2] = bitsPerSample.length;
+            }
+            else if (imageSlice > 1) {
                 imgExtents = new int[3];
                 imgExtents[0] = xDim;
                 imgExtents[1] = yDim;
@@ -752,6 +767,10 @@ public class FileTiff extends FileBase {
             if (ModelImage.isColorImage(fileInfo.getDataType())) {
                 bufferSize *= 4;
                 sliceSize *= 4;
+            }
+            
+            if (haveMultiSpectraImage) {
+                sliceSize *= bitsPerSample.length;
             }
 
             // long secondTime = System.currentTimeMillis();
@@ -4571,7 +4590,7 @@ public class FileTiff extends FileBase {
                     } // switch(bitsPerSample[0]
                 } // else if (sampleFormat == 3)
             } // if (bitsPerSample.length == 1)
-            else { // bitsPerSample.length > 1
+            else if (bitsPerSample.length <= 3) {
 
                 if (sampleFormat == 1) { // default for unsigned integers
 
@@ -4628,7 +4647,19 @@ public class FileTiff extends FileBase {
                             throw new IOException("TIFF Tag BitsPerSample has illegal value = " + bitsPerSample[0]);
                     } // switch(bitsPerSample[0])
                 } // else if (sampleFormat == 3)
-            } // else bitsPerSample.length > 1
+            } // else if bitsPerSample.length <= 3
+            else { // bitsPerSample.length > 3
+                // Portray colors along the last dimension
+                if (sampleFormat == 1) {
+                    switch(bitsPerSample[0]) {
+                        case 8:
+                            fileInfo.setDataType(ModelStorageBase.UBYTE);
+                            haveMultiSpectraImage = true;
+                            break;
+                    }
+                        
+                }
+            }
         } // if (bitsPerSample != null)
         
         if ((fileInfo.getPhotometric() == 5) && (inkSet == 1)) {
@@ -5112,7 +5143,17 @@ public class FileTiff extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
-                            if (isBW2) {
+                            if (haveMultiSpectraImage  && (!chunky)) {
+                                for (j = 0; y < yDim*bitsPerSample.length; y++) {
+                                    for (x = 0; x < xDim; x++, i++, j++) {
+                                        if (((i + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                                        }
+                                        buffer[i] = getUnsignedByte(byteBuffer, j + currentIndex);
+                                    }
+                                }
+                            } // if (haveMultiSpectraImage && (!chunky))
+                            else if (isBW2) {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i++) {
     
@@ -5157,7 +5198,7 @@ public class FileTiff extends FileBase {
                                         } // else m == 3
                                     } 
                                 }
-                            } // if (isBW2)
+                            } // else if (isBW2)
                             else if (isBW4) {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i++) {
