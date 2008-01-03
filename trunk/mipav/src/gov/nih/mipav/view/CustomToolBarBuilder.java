@@ -118,7 +118,6 @@ public class CustomToolBarBuilder extends ViewToolBarBuilder {
 	public static final ButtonParams PARAM_LUT_COOL_HOT = new ButtonParams("coolHotLUT", "Cool hot LUT", "coolhot");
 	public static final ButtonParams PARAM_LUT_SKIN = new ButtonParams("skinLUT", "Skin LUT", "skin");
 	public static final ButtonParams PARAM_LUT_BONE = new ButtonParams("boneLUT", "Bone LUT", "bone");
-	public static final ButtonParams PARAM_LUT_MUSCLE_BONE = new ButtonParams("muscle_boneLUT", "Muscle Bone LUT", "muscleBoneLUT");
 	public static final ButtonParams PARAM_LUT_STRIPED = new ButtonParams("stripedLUT", "Striped LUT", "stripedLUT");
 	
 	/** LUT transfer/thresholding */
