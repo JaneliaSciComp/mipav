@@ -32,8 +32,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     
     //~ Static fields --------------------------------------------------------------------------------------------------
     
-    public static final Color[] colorPick = {Color.BLUE, Color.RED, Color.GREEN, Color.ORANGE, Color.CYAN, 
-                                                Color.PINK, Color.YELLOW, Color.MAGENTA, Color.WHITE};
+    public static final Color[] colorPick = {Color.BLUE, Color.RED, Color.GREEN, Color.ORANGE, 
+                                                Color.YELLOW, Color.MAGENTA};
     
     //~ Instance fields ------------------------------------------------------------------------------------------------    
     
@@ -783,8 +783,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         @Override
 		public void componentHidden(ComponentEvent event) {
-		    System.out.println("Selected pane: "+imagePane.getSelectedIndex()+"\tVOI pane: "+voiIndex);
-		    System.out.println("Active pane: "+activeTab);
+		    //System.out.println("Selected pane: "+imagePane.getSelectedIndex()+"\tVOI pane: "+voiIndex);
+		    //System.out.println("Active pane: "+activeTab);
 		    Component c = event.getComponent();
 		    Object obj = event.getSource();
 		    if(imagePane != null) {
@@ -805,7 +805,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 
 		@Override
 		public void componentShown(ComponentEvent event) {
-		    System.out.println("Active pane: "+activeTab);
+		    //System.out.println("Active pane: "+activeTab);
 		    //Component c = event.getComponent();
 		    //Object obj = event.getSource();
 		    if(imagePane != null) {
@@ -865,7 +865,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             if(allVOIs.isDirectory()) {
                 String[] voiName = allVOIs.list();
                 for(int i=0; i<voiName.length; i++) {
-                    System.out.println(voiName[i]);
+                    //System.out.println(voiName[i]);
 
                     if(new File(fileDir+voiName[i]).exists()) {
                         String fileName = voiName[i];
@@ -934,7 +934,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             	}
             } else {
             	//working with results tab
-            	System.out.println("The results tab follows here.");
+            	//System.out.println("The results tab follows here.");
             }
             
             
@@ -956,7 +956,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             if(allVOIs.isDirectory()) {
                 String[] voiName = allVOIs.list();
                 for(int i=0; i<voiName.length; i++) {
-                    System.out.println(voiName);
+                    //System.out.println(voiName);
                     
                     if(new File(fileDir+voiName[i]).exists()) {
                         String fileName = voiName[i];
@@ -1052,7 +1052,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 }
                 //srcImage.registerVOI(v);
                 //need to register it to componentImage
-                System.out.println("About to register: "+v.getName());
+                //System.out.println("About to register: "+v.getName());
                 componentImage.getImageA().registerVOI(v);
                
             }
@@ -1490,7 +1490,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         public void actionPerformed(ActionEvent e) {
             
             String command = e.getActionCommand();
-            System.out.println("Caught1: "+command);
+            //System.out.println("Caught1: "+command);
             
             
         }
@@ -1588,7 +1588,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 mirrorPanel.add(mirrorButtonArr[i], gbc);
                 gbc.gridx++;
                 
-                System.out.println(mirrorButtonArr[i].getText()+" is "+mirrorZ[i/2]);
+                //System.out.println(mirrorButtonArr[i].getText()+" is "+mirrorZ[i/2]);
                 zeroStatus.put(mirrorButtonArr[i].getText(), mirrorZ[i/2]);
             
             }          
@@ -1661,7 +1661,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                     }
                 }
                 
-                System.out.println(noMirrorButtonArr[i].getText()+" is "+noMirrorZ[i]);
+                //System.out.println(noMirrorButtonArr[i].getText()+" is "+noMirrorZ[i]);
                 zeroStatus.put(noMirrorButtonArr[i].getText(), noMirrorZ[i]);
             }
             
@@ -1796,6 +1796,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		private Vector objectList = new Vector();
 		
 		private String name[] = {"thigh", "bone component", "muscle"};
+		
+		private int time = 0;
 		
 		public AnalysisPrompt(MuscleImageDisplay theParentFrame, String[][] mirrorArr, String[][] noMirrorArr, Symmetry symmetry) {
 	        super(theParentFrame);
@@ -2037,34 +2039,46 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    	//should be process in general, change and compute based on srcImage, do not need to load into component,
 	    	//though that's where VOIs should be registered.
 
-	    	//System.out.println("Number of VOIs at outset: "+parentFrame.getActiveImage().getVOIs().size());
-	    	//System.out.println("Number of VOIs at outset: "+parentFrame.getImageA().getVOIs().size());
+	    	if(time != 0) {
+		    	JList source = (JList)e.getSource();
+		    	Object[] selected = source.getSelectedValues();
+		    	String[] selectedString = new String[selected.length];
+		    	for(int i=0; i<selected.length; i++) {
+		    		selectedString[i] = (String)selected[i]+".xml";
+		    		//System.out.println("Selected "+i+": "+selectedString[i]);
+		    	}
+		    	for(int i=0; i<list.length; i++) {
+		    		if(!source.equals(list[i])) {
+		    			list[i].clearSelection();
+		    		}
+		    	}
+		    	//Load VOIs and calculations
+		    	loadVOIs(selectedString);
+		    	parentFrame.updateImages(true);
+		    	//Image now contains all valid VOIs, display calculations
+		    	VOIVector voi = parentFrame.getActiveImage().getVOIs();
+		    	for(int i=0; i<voi.size(); i++) {
+		    		VOI v = voi.get(i);
+		    		loadCalculations(v);
+		    	}
+		    	time = 0;
+	    	} else 
+	    		time++;
 	    	
-	    	//parentFrame.getActiveImage().unregisterAllVOIs();
-	    	//parentFrame.updateImages(true);
-	    	//System.out.println("Number of VOIs at outset: "+parentFrame.getActiveImage().getVOIs().size());
-	    	JList source = (JList)e.getSource();
-	    	Object[] selected = source.getSelectedValues();
-	    	String[] selectedString = new String[selected.length];
-	    	for(int i=0; i<selected.length; i++) {
-	    		selectedString[i] = (String)selected[i]+".xml";
-	    		System.out.println("Selected "+i+": "+selectedString[i]);
-	    		
-	    	}
-	    	//Load VOIs and calculations
-	    	loadVOIs(selectedString);
-	    	
+	    }
+	    
+	    private void loadCalculations(VOI v) {
 	    	
 	    }
 	    
 	    private void loadVOIs(String[] voiName) {
             parentFrame.getActiveImage().unregisterAllVOIs();
-            int colorChoice = 0;
+            int colorChoice = new Random().nextInt(colorPick.length);
             String fileDir = parentFrame.getActiveImage().getFileInfo(0).getFileDirectory()+parentFrame.VOI_DIR;
             File allVOIs = new File(fileDir);
             if(allVOIs.isDirectory()) {
                 for(int i=0; i<voiName.length; i++) {
-                    System.out.println(voiName[i]);
+                    //System.out.println(voiName[i]);
 
                     if(new File(fileDir+voiName[i]).exists()) {
                         String fileName = voiName[i];
@@ -2078,14 +2092,42 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                         }
                         if(voiVec.length > 1) {
                             MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+fileName);
-                        } else {      
+                        } else {
+                        	Color c = hasColor(voiVec[0]);
+                            if(c != null) {
+                                voiVec[0].setColor(c);
+                                
+                            } else {
+                                voiVec[0].setColor(colorPick[colorChoice % colorPick.length]);
+                                colorChoice++;
+                            }                      
+                            voiVec[0].setThickness(2);
                         	parentFrame.getActiveImage().registerVOI(voiVec[0]);
                         }
                     }
                 }
             }
-            parentFrame.updateImages(true);
 	    }
+	    
+	    private Color hasColor(VOI voiVec) {
+            Color c = null;
+            VOIVector tempVec = parentFrame.getActiveImage().getVOIs();
+            String side1 = "", side2 = ""; 
+            if(symmetry == Symmetry.LEFT_RIGHT) {
+            	side1 = "Left";
+            	side2 = "Right";
+            }
+            for(int i=0; i<tempVec.size(); i++) {
+                if(voiVec.getName().contains(side1) || voiVec.getName().contains(side2)) {
+                    if( !(((VOI)tempVec.get(i)).getName().contains(side1)  &&  voiVec.getName().contains(side1)) && 
+                            !(((VOI)tempVec.get(i)).getName().contains(side2)  &&  voiVec.getName().contains(side2)) && 
+                            ((VOI)tempVec.get(i)).getName().endsWith(voiVec.getName().substring(voiVec.getName().indexOf(" ")))) {
+                        c =  ((VOI)tempVec.get(i)).getColor();
+                    }
+                }
+            }
+            return c;
+        }
 	}
     
 	private void writeToPDF() {
