@@ -1371,14 +1371,7 @@ public class ModelLUT extends ModelStorageBase {
             in.close();
         } catch (IOException e) {}
 
-        /*
-        type = MUSCLE_BONE;
-        if ( name.equals("Cardiac")) {
-          type = CARDIAC;
-        } else if ( name.equals("GEcolor")) {
-          type = GECOLOR;
-        }
-        */
+       
         // make special Java LUT that is an int array where MSB is alpha, and then red, green
         // and blue follow;
         makeIndexedLUT(null);
