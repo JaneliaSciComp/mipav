@@ -4710,6 +4710,7 @@ public class FileTiff extends FileBase {
         byte intermedBuffer[] = null;
         int interLength;
         int in;
+        int jSkip;
 
         // long pointer;
         int idx = 0;
@@ -4748,7 +4749,7 @@ public class FileTiff extends FileBase {
         int halfXDim = xDim/2;
         int x = 0;
         int y = 0;
-        int shift;
+        int c = 0;
         int m;
         
         if (isYCbCr) {
@@ -4778,6 +4779,9 @@ public class FileTiff extends FileBase {
                 case ModelStorageBase.UBYTE:
                 case ModelStorageBase.ARGB:
                     nLength = buffer.length;
+                    if (haveMultiSpectraImage) {
+                        nLength *= bitsPerSample.length;
+                    }
                     break;
 
                 case ModelStorageBase.SHORT:
@@ -5143,14 +5147,22 @@ public class FileTiff extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
+                            jSkip = 0;
+                            if ((totalLength > xDim*yDim*bitsPerSample.length) && haveRowsPerStrip &&
+                                    ((yDim % rowsPerStrip) != 0)) {
+                                    jSkip = xDim * (rowsPerStrip - yDim%rowsPerStrip);
+                            }
                             if (haveMultiSpectraImage  && (!chunky)) {
-                                for (j = 0; y < yDim*bitsPerSample.length; y++) {
-                                    for (x = 0; x < xDim; x++, i++, j++) {
-                                        if (((i + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                                for (j = 0; c < bitsPerSample.length; c++) {
+                                    for (y = 0; y < yDim; y++) {
+                                        for (x = 0; x < xDim; x++, i++, j++) {
+                                            if (((i + progress) % mod) == 0) {
+                                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                                            }
+                                            buffer[i] = getUnsignedByte(byteBuffer, j + currentIndex);
                                         }
-                                        buffer[i] = getUnsignedByte(byteBuffer, j + currentIndex);
                                     }
+                                    j += jSkip;
                                 }
                             } // if (haveMultiSpectraImage && (!chunky))
                             else if (isBW2) {
