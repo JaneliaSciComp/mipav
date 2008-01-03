@@ -379,7 +379,19 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
                 lutPanel.clearVoxelLabel();
             }
 
-        }
+        } else {
+            JComboBox cb = (JComboBox)event.getSource();
+            String lutName = (String)cb.getSelectedItem();
+            if (getDisplayMode() == IMAGE_A) {
+                LUTa.makeCustomizedLUT(lutName);
+                setLUTA(LUTa);
+                updateFrames(false);
+            } else {
+          	  LUTa.makeCustomizedLUT(lutName); 
+                setLUTB(LUTb);
+                updateFrames(false);
+            }
+         }
     }
 
     /**
