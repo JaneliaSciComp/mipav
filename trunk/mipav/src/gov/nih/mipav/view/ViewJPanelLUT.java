@@ -207,7 +207,7 @@ public class ViewJPanelLUT extends JPanel
             }
         }
 
-        if (event.getActionCommand().equals("grayLUT")) {
+        if (event.getActionCommand().equals("GrayLUT")) {
 
             if (isImageASelected()) {
                 panelParent.getLUTa().makeGrayTransferFunctions();
@@ -272,7 +272,7 @@ public class ViewJPanelLUT extends JPanel
                 panelParent.setLUTB(panelParent.getLUTb());
                 oneBasedLUTCheckBoxImageB.setSelected(false);
             }
-        } else if (event.getActionCommand().equals("hotmetalLUT")) {
+        } else if (event.getActionCommand().equals("HotMetalLUT")) {
 
             if (isImageASelected()) {
                 panelParent.getLUTa().makeHotMetalTransferFunctions();
