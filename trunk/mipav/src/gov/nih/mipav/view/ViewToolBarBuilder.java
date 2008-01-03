@@ -462,7 +462,6 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_COOL_HOT));
         LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_SKIN));
         LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_BONE));
-        LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_MUSCLE_BONE));
         LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_STRIPED));
         LUTToolBar.add(buildButton(CustomUIBuilder.PARAM_LUT_INVERT));
 
