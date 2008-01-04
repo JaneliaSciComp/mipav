@@ -4671,7 +4671,7 @@ public class FileTiff extends FileBase {
                     } // switch(bitsPerSample[0]
                 } // else if (sampleFormat == 3)
             } // if (bitsPerSample.length == 1)
-            else if (bitsPerSample.length <= 3) {
+            else if (bitsPerSample.length <= 4) {
 
                 if (sampleFormat == 1) { // default for unsigned integers
 
@@ -4728,8 +4728,8 @@ public class FileTiff extends FileBase {
                             throw new IOException("TIFF Tag BitsPerSample has illegal value = " + bitsPerSample[0]);
                     } // switch(bitsPerSample[0])
                 } // else if (sampleFormat == 3)
-            } // else if bitsPerSample.length <= 3
-            else { // bitsPerSample.length > 3
+            } // else if bitsPerSample.length <= 4
+            else { // bitsPerSample.length > 4
                 // Portray colors along the last dimension
                 if (sampleFormat == 1) {
                     switch(bitsPerSample[0]) {
