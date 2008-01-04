@@ -157,9 +157,9 @@ public class GenerateGaussian {
             if (sigmas[i] != 0.0) { // If a sigma in any dimension is zero - return.
                 factor = (-pt[i] * pt[i]) / (2.0 * sigmas[i] * sigmas[i]);
 
-                if (denom == Double.MIN_VALUE) {
+                //if (denom == Double.MIN_VALUE) {
                     denom = Math.sqrt(2.0 * Math.PI * sigmas[i] * sigmas[i]);
-                }
+                //}
 
                 temp = Math.exp(factor) / denom;
                 hFactor = hermite(derivOrder[i], pt[i] / sigmas[i]);
