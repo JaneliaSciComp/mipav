@@ -472,7 +472,8 @@ public class Preferences {
     /** The schema for the data provenance xml files*/
     public static final String DATA_PROVENANCE_SCHEMA = "dataprovenance.xsd";
     
-    
+    /** Dicom tags to be saved */
+    public static final String SAVE_DICOM_TAGS = "SaveDicomTags";
     
     /** A list of MIPAV properties. */
     private static Properties mipavProps;

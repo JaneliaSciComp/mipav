@@ -637,17 +637,17 @@ public class ModelImage extends ModelStorageBase {
         } // Hmmmmmmm
 
         if (dicom) {
-            dialog.setTitle(dialog.getTitle() + ": " + (index + 1));
-            ((JDialogFileInfoDICOM) dialog).displayAboutInfo(this, (FileInfoDicom) fileInfo[index]);
+            dialog.setTitle(dialog.getTitle() + ": " + (index));
+            ((JDialogFileInfoDICOM) dialog).displayAboutInfo(this, (FileInfoDicom) fileInfo[index], index);
         } else if (xml) {
-            dialog.setTitle(dialog.getTitle() + ": " + (index + 1));
+            dialog.setTitle(dialog.getTitle() + ": " + (index));
             fileInfo[index].displayAboutInfo((JDialogFileInfoXML) dialog, getMatrix());
         } else {
 
             // System.out.println(" dialog = " + dialog);
             // System.out.println(" +++++++++++++++++++++++++++++  z  = " + i);
             // System.out.println(" fileInfo = " + fileInfo[i]);
-            dialog.setTitle(dialog.getTitle() + ": " + (index + 1));
+            dialog.setTitle(dialog.getTitle() + ": " + (index));
 
             fileInfo[index].displayAboutInfo(dialog, getMatrix());
         }
