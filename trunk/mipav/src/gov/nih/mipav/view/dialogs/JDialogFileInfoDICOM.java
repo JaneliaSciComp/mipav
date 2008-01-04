@@ -1,7 +1,10 @@
 package gov.nih.mipav.view.dialogs;
 
 
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -14,7 +17,11 @@ import java.io.*;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellEditor;
 
 
 /**
@@ -25,7 +32,7 @@ import javax.swing.event.*;
  * @version  0.2
  * @see      FileInfoDicom
  */
-public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener {
+public class JDialogFileInfoDICOM extends JDialogScriptableBase implements ActionListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -41,13 +48,7 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private JButton anonymize;
-
-    /** DOCUMENT ME! */
     private FileInfoDicom DicomInfo;
-
-    /** DOCUMENT ME! */
-    private JButton editDicom;
 
     /** DOCUMENT ME! */
     private JDialogDICOMTagEditor editorDialogDicom;
@@ -62,13 +63,7 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
     private ListSelectionModel listSelectorDicom;
 
     /** DOCUMENT ME! */
-    private JButton overlayTag;
-
-    /** DOCUMENT ME! */
     private JButton priv;
-
-    /** DOCUMENT ME! */
-    private JButton saveButton;
 
     /** DOCUMENT ME! */
     private JScrollPane scrollPaneDicom;
@@ -84,7 +79,32 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
 
     /** DOCUMENT ME! */
     private JTable tagsTable;
+    
+    /** DOCUMENT ME! */
+    private boolean isAppend = false;
+    
+    /** DOCUMENT ME! */
+    private JPanel toolbarPanel;
+    
+    /** DOCUMENT ME ! */
+    private ViewToolBarBuilder toolbarBuilder;
+    
+    /** buttons for toolbar **/
+    private JButton showPrivateButton, saveCheckedButton, saveCheckedAppendButton, checkAllButton, uncheckAllButton, editTagButton, overlayButton, anonymizeButton;
 
+    /** tool bar **/
+    private JToolBar toolBar;
+    
+    /** fileName of where dicom tags are save to **/
+    private String fileName;
+    
+    /** directory of where dicom tags are save to **/
+    private String directory;
+    
+    /** slice index for which fileInfo is saved **/
+    private int sliceIndex;
+    
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -97,6 +117,14 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
     public JDialogFileInfoDICOM(Frame parent, String title) {
         super(parent, false);
         setTitle(title);
+    }
+    
+    /**
+     * Default Constructor
+     *
+     */
+    public JDialogFileInfoDICOM() {
+    	
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -112,26 +140,41 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
         Enumeration e;
         String name;
         FileDicomKey key;
-        Object[] rowData = { "", "", "" };
+        Object[] rowData = { new Boolean(false), "", "", "" };
         Hashtable tagsList = DicomInfo.getTagTable().getTagList();
-
+        ArrayList checkBoxList = new ArrayList();
+        
         // go through the hashlist, and for each element you find, copy it
         // into the table, showing full info if it was coded
         int ii;
-
+        
         for (ii = 0, e = tagsList.keys(); e.hasMoreElements(); ii++) {
             key = (FileDicomKey) e.nextElement();
             name = key.getKey();
 
             if (((FileDicomTag) tagsList.get(key)).getValue(true) != null) {
-                rowData[0] = "(" + name + ")";
-                rowData[1] = ((FileDicomTag) tagsList.get(key)).getName();
-
+            	String tagName = "(" + name + ")";
+            	//to do...check preferences to see if any have been selected
+            	String prefTagsString = Preferences.getProperty(Preferences.SAVE_DICOM_TAGS);
+            	if(prefTagsString != null || (!prefTagsString.trim().equals(""))) {
+            		String[] tags = prefTagsString.split(";");
+            		for(int k=0;k<tags.length;k++) {
+            			if(tagName.equals(tags[k])) {
+            				rowData[0] = new Boolean(true);
+            				break;
+            			}else {
+            				rowData[0] = new Boolean(false);
+            			}
+            		}	
+            	}
+                rowData[1] = tagName;
+                rowData[2] = ((FileDicomTag) tagsList.get(key)).getName();
+                
                 String vr = ((FileDicomTag) tagsList.get(key)).getValueRepresentation();
                 int vm = ((FileDicomTag) tagsList.get(key)).getValueMultiplicity();
 
 
-                if (rowData[1].equals("Private Tag") || vr.equals("OB")) {
+                if (rowData[2].equals("Private Tag") || vr.equals("OB")) {
 
                     // System.out.println("OB/Priv: "+name + ".." +((FileDicomTag)tagsList.get(key)).getValue(true));
                     // if (rowData[1].equals("Private Tag") || vr.equals("OB") || vm > 1) {
@@ -151,11 +194,11 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
                             }
 
                             if (bytesV.length == 0) {
-                                rowData[2] = "";
+                                rowData[3] = "";
                             } else if ((bytesValue[0] > 32) && (bytesValue[0] < 127)) {
-                                rowData[2] = new String(bytesValue);
+                                rowData[3] = new String(bytesValue);
                             } else {
-                                rowData[2] = convertType(bytesValue, DicomInfo.getEndianess(), vm);
+                                rowData[3] = convertType(bytesValue, DicomInfo.getEndianess(), vm);
                             }
                         }
                     } else {
@@ -185,7 +228,7 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
                             }
                         }
 
-                        rowData[2] = dispString;
+                        rowData[3] = dispString;
                     }
                     // // vm = 2 for patient orientation
                     // if (!name.equals("0020,0020")) {
@@ -209,184 +252,184 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
                 else if (vr.equals("PN")) {
                     String s = (String) ((FileDicomTag) tagsList.get(key)).getValue(true);
 
-                    rowData[2] = s.replace('^', ',');
+                    rowData[3] = s.replace('^', ',');
                 } else if (name.equals("0008,0060")) {
 
                     switch (DicomInfo.getModality()) {
 
                         case 1:
-                            rowData[2] = "BIOMAGENETIC_IMAGING";
+                            rowData[3] = "BIOMAGENETIC_IMAGING";
                             break;
 
                         case 2:
-                            rowData[2] = "COLOR_FLOW_DOPPLER";
+                            rowData[3] = "COLOR_FLOW_DOPPLER";
                             break;
 
                         case 3:
-                            rowData[2] = "COMPUTED_RADIOGRAPHY";
+                            rowData[3] = "COMPUTED_RADIOGRAPHY";
                             break;
 
                         case 4:
-                            rowData[2] = "COMPUTED_TOMOGRAPHY";
+                            rowData[3] = "COMPUTED_TOMOGRAPHY";
                             break;
 
                         case 5:
-                            rowData[2] = "DUPLEX_DOPPLER";
+                            rowData[3] = "DUPLEX_DOPPLER";
                             break;
 
                         case 6:
-                            rowData[2] = "DIAPHANOGRAPHY";
+                            rowData[3] = "DIAPHANOGRAPHY";
                             break;
 
                         case 7:
-                            rowData[2] = "DIGITAL_RADIOGRAPHY";
+                            rowData[3] = "DIGITAL_RADIOGRAPHY";
                             break;
 
                         case 8:
-                            rowData[2] = "ENDOSCOPY";
+                            rowData[3] = "ENDOSCOPY";
                             break;
 
                         case 9:
-                            rowData[2] = "GENERAL_MICROSCOPY";
+                            rowData[3] = "GENERAL_MICROSCOPY";
                             break;
 
                         case 10:
-                            rowData[2] = "HARDCODY";
+                            rowData[3] = "HARDCODY";
                             break;
 
                         case 11:
-                            rowData[2] = "INTRAORAL_RADIOGRAPHY";
+                            rowData[3] = "INTRAORAL_RADIOGRAPHY";
                             break;
 
                         case 12:
-                            rowData[2] = "LASER_SURFACE_SCAN";
+                            rowData[3] = "LASER_SURFACE_SCAN";
                             break;
 
                         case 13:
-                            rowData[2] = "MAGNETIC_RESONANCE_ANGIOGRAPHY";
+                            rowData[3] = "MAGNETIC_RESONANCE_ANGIOGRAPHY";
                             break;
 
                         case 14:
-                            rowData[2] = "MAMMOGRAPHY";
+                            rowData[3] = "MAMMOGRAPHY";
                             break;
 
                         case 15:
-                            rowData[2] = "MAGNETIC_RESONANCE";
+                            rowData[3] = "MAGNETIC_RESONANCE";
                             break;
 
                         case 16:
-                            rowData[2] = "MAGNETIC_RESONANCE_SPECTROSCOPY";
+                            rowData[3] = "MAGNETIC_RESONANCE_SPECTROSCOPY";
                             break;
 
                         case 17:
-                            rowData[2] = "NUCLEAR_MEDICINE";
+                            rowData[3] = "NUCLEAR_MEDICINE";
                             break;
 
                         case 18:
-                            rowData[2] = "OTHER";
+                            rowData[3] = "OTHER";
                             break;
 
                         case 19:
-                            rowData[2] = "POSITRON_EMISSION_TOMOGRAPHY";
+                            rowData[3] = "POSITRON_EMISSION_TOMOGRAPHY";
                             break;
 
                         case 20:
-                            rowData[2] = "PANORAMIC_XRAY";
+                            rowData[3] = "PANORAMIC_XRAY";
                             break;
 
                         case 21:
-                            rowData[2] = "RADIO_FLUOROSCOPY";
+                            rowData[3] = "RADIO_FLUOROSCOPY";
                             break;
 
                         case 22:
-                            rowData[2] = "RADIOGRAPHIC_IMAGING";
+                            rowData[3] = "RADIOGRAPHIC_IMAGING";
                             break;
 
                         case 23:
-                            rowData[2] = "RADIOTHERAPY_DOSE";
+                            rowData[3] = "RADIOTHERAPY_DOSE";
                             break;
 
                         case 24:
-                            rowData[2] = "RADIOTHERAPY_IMAGE";
+                            rowData[3] = "RADIOTHERAPY_IMAGE";
                             break;
 
                         case 25:
-                            rowData[2] = "RADIOTHERAPY_PLAN";
+                            rowData[3] = "RADIOTHERAPY_PLAN";
                             break;
 
                         case 26:
-                            rowData[2] = "RADIOTHERAPY_RECORD";
+                            rowData[3] = "RADIOTHERAPY_RECORD";
                             break;
 
                         case 27:
-                            rowData[2] = "RADIOTHERAPY_STRUCTURE_SET";
+                            rowData[3] = "RADIOTHERAPY_STRUCTURE_SET";
                             break;
 
                         case 28:
-                            rowData[2] = "SLIDE_MICROSCOPY";
+                            rowData[3] = "SLIDE_MICROSCOPY";
                             break;
 
                         case 29:
-                            rowData[2] = "SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY";
+                            rowData[3] = "SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY";
                             break;
 
                         case 30:
-                            rowData[2] = "THERMOGRAPHY";
+                            rowData[3] = "THERMOGRAPHY";
                             break;
 
                         case 31:
-                            rowData[2] = "ULTRASOUND";
+                            rowData[3] = "ULTRASOUND";
                             break;
 
                         case 32:
-                            rowData[2] = "XRAY_ANGIOGRAPHY";
+                            rowData[3] = "XRAY_ANGIOGRAPHY";
                             break;
 
                         case 33:
-                            rowData[2] = "EXTERNAL_CAMERA_PHOTOGRAPHY";
+                            rowData[3] = "EXTERNAL_CAMERA_PHOTOGRAPHY";
                             break;
 
                         case 34:
-                            rowData[2] = "UNKNOWN";
+                            rowData[3] = "UNKNOWN";
                             break;
 
                         default:
-                            rowData[2] = "UNKNOWN";
+                            rowData[3] = "UNKNOWN";
                             break;
                     }
                 } else if (name.equals("0008,0064")) {
                     String s = ((String) ((FileDicomTag) tagsList.get(key)).getValue(true)).trim();
 
                     if (s.equals("DV")) {
-                        rowData[2] = "Digitized Video";
+                        rowData[3] = "Digitized Video";
                     } else if (s.equals("DI")) {
-                        rowData[2] = "Digital Interface";
+                        rowData[3] = "Digital Interface";
                     } else if (s.equals("DF")) {
-                        rowData[2] = "Digitized Film";
+                        rowData[3] = "Digitized Film";
                     } else if (s.equals("WSD")) {
-                        rowData[2] = "Workstation";
+                        rowData[3] = "Workstation";
                     }
                 } else if (name.equals("0018,5100")) {
                     String s = ((String) ((FileDicomTag) tagsList.get(key)).getValue(true)).trim();
 
                     if (s.equals("HFP")) {
-                        rowData[2] = "Head First-Prone";
+                        rowData[3] = "Head First-Prone";
                     } else if (s.equals("HFS")) {
-                        rowData[2] = "Head First-Supine";
+                        rowData[3] = "Head First-Supine";
                     } else if (s.equals("HFDR")) {
-                        rowData[2] = "Head First-Decubitus Right";
+                        rowData[3] = "Head First-Decubitus Right";
                     } else if (s.equals("HFDL")) {
-                        rowData[2] = "Head First-Decubitus Left";
+                        rowData[3] = "Head First-Decubitus Left";
                     } else if (s.equals("FFP")) {
-                        rowData[2] = "Feet First-Prone";
+                        rowData[3] = "Feet First-Prone";
                     } else if (s.equals("FFS")) {
-                        rowData[2] = "Feet First-Supine";
+                        rowData[3] = "Feet First-Supine";
                     } else if (s.equals("FFDR")) {
-                        rowData[2] = "Feet First-Decubitus Right";
+                        rowData[3] = "Feet First-Decubitus Right";
                     } else if (s.equals("FFDL")) {
-                        rowData[2] = "Feet First-Decubitus Left";
+                        rowData[3] = "Feet First-Decubitus Left";
                     } else {
-                        rowData[2] = s;
+                        rowData[3] = s;
                     }
                 } else if (vr.equals("SQ")) {
 
@@ -394,17 +437,17 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
                     FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(true);
                     Vector display = sq.getSequenceDisplay();
 
-                    rowData[2] = "";
+                    rowData[3] = "";
 
                     for (Enumeration f = display.elements(); f.hasMoreElements();) {
                         tagsModel.addRow(rowData);
 
                         StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
 
-                        rowData[1] = st.nextToken();
+                        rowData[2] = st.nextToken();
 
                         if (st.hasMoreTokens()) {
-                            rowData[2] = st.nextToken();
+                            rowData[3] = st.nextToken();
                         }
                     }
                 } // standard tag.  add tag.get(key).getValue(true) as-is to the table
@@ -432,10 +475,10 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
                         }
                     }
 
-                    rowData[2] = dispString;
+                    rowData[3] = dispString;
                 }
 
-                if (rowData[1].equals("Private Tag")) {
+                if (rowData[2].equals("Private Tag")) {
 
                     if (show) {
                         tagsModel.addRow(rowData);
@@ -446,7 +489,7 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
             }
         }
 
-        sort(tagsModel, 0, false, true);
+        sort(tagsModel, 1, false, true);
     }
 
     /**
@@ -460,9 +503,9 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
     public static void sort(ViewTableModel model, int col, boolean reverse, boolean isInfoDialog) {
         int begin = 1;
 
-        if ((col == 1) && isInfoDialog) {
+        if ((col == 2) && isInfoDialog) {
 
-            while (!model.getValueAt(begin, 1).equals("Other Image Information")) {
+            while (!model.getValueAt(begin, 2).equals("Other Image Information")) {
                 begin++;
             }
 
@@ -539,7 +582,7 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
 
             for (i = 0; i < tagsModel.getRowCount(); i++) {
 
-                if (tagsModel.getValueAt(i, 1).equals("Other Image Information")) {
+                if (tagsModel.getValueAt(i, 2).equals("Other Image Information")) {
                     break;
                 }
             }
@@ -569,7 +612,7 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
         } else if (e.getActionCommand().equals("OverlayTag")) {
             String tagKey;
 
-            tagKey = new String((String) tagsTable.getValueAt(selectedRowDicom, 0)); // find the key to the selected
+            tagKey = new String((String) tagsTable.getValueAt(selectedRowDicom, 1)); // find the key to the selected
                                                                                      // DICOM tag
 
             if (tagKey.equals("")) { // workaround prevent the portion of the image information from
@@ -585,7 +628,7 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
             String tagKey;
 
             // get the hash-code
-            tagKey = new String((String) tagsTable.getValueAt(selectedRowDicom, 0)); // find the key to the selected
+            tagKey = new String((String) tagsTable.getValueAt(selectedRowDicom, 1)); // find the key to the selected
                                                                                      // DICOM tag
 
             if (tagKey.equals("")) { // workaround prevent the portion of the image information from
@@ -687,7 +730,7 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
 
                                 for (i = 0; i < tagsModel.getRowCount(); i++) {
 
-                                    if (tagsModel.getValueAt(i, 1).equals("Other Image Information")) {
+                                    if (tagsModel.getValueAt(i, 2).equals("Other Image Information")) {
                                         break;
                                     }
                                 }
@@ -709,6 +752,10 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
             }
 
         } else if (e.getActionCommand().equals("SaveTags")) {
+        	isAppend = false;
+            saveTags();
+        } else if (e.getActionCommand().equals("SaveTagsAppend")) {
+        	isAppend = true;
             saveTags();
         } else if (e.getActionCommand().equals("TagEditorApplyToAllSlicesCheckBox")) { }
         else if (e.getActionCommand().equals("TagEditorOK")) { // not included anymore because the handling is done by
@@ -741,10 +788,21 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
             } catch (ArrayIndexOutOfBoundsException badArr) {
                 MipavUtil.displayError("JDialogFileInfoDICOM: Out of bounds array at specified tag in the tag editor list.  How???");
             }
-        } else {
+        } else if(e.getActionCommand().equals("CheckAll")) {
+        	for (int i = 0; i < tagsModel.getRowCount(); i++) {
+        		if(tagsModel.getValueAt(i, 0) != null) {
+        			tagsModel.setValueAt(new Boolean(true), i, 0);
+        		}
+            }
+        }else if(e.getActionCommand().equals("UncheckAll")) {
+        	for (int i = 0; i < tagsModel.getRowCount(); i++) {
+        		if(tagsModel.getValueAt(i, 0) != null) {
+        			tagsModel.setValueAt(new Boolean(false), i, 0);
+        		}
+            }
+        }else {
             Preferences.debug("eventsource was: " + e.getSource().toString());
         }
-
     }
 
     /**
@@ -755,16 +813,25 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
      * @param  _image  The image being displayed.
      * @param  _info   The fileInfo to be displayed, of type FileInfoDicom.
      */
-    public void displayAboutInfo(ModelImage _image, FileInfoDicom _info) {
+    public void displayAboutInfo(ModelImage _image, FileInfoDicom _info, int sIndex) {
         DicomInfo = _info; // set the input var
         imageA = _image; // set the input var
+        sliceIndex = sIndex;
 
-        Object[] rowData = { "", "", "" };
-        String[] columnNames = { "Tag", "Name", "Value" };
+        Object[] rowData = { new Boolean(false), "", "", "" };
+        String[] columnNames = { " ", "Tag", "Name", "Value" };
 
         try {
-            tagsModel = new ViewTableModel();
+            tagsModel = new ViewTableModel() {
+                public boolean isCellEditable(int row, int column) {
+                    if (column == 0) {
+                      return true;
+                    }
+                    return false;
+                  }
+                };
             tagsTable = new JTable(tagsModel);
+            
 
             editorDialogDicomList = new Vector(); // Vector to hold editing dialogs
         } catch (OutOfMemoryError error) {
@@ -780,12 +847,17 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
         int[] extents;
         int i;
 
-        for (i = 0; i < 3; i++) {
+        for (i = 0; i < 4; i++) {
             tagsModel.addColumn(columnNames[i]);
         }
 
         tagsTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-        tagsTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        //tagsTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        tagsTable.getColumn(" ").setMinWidth(50);
+        tagsTable.getColumn(" ").setMaxWidth(50);
+        tagsTable.getColumn(" ").setCellRenderer(new CheckBoxRenderer());
+        tagsTable.getColumn(" ").setCellEditor(new CheckBoxEditor());
+        
         tagsTable.getColumn("Tag").setMinWidth(90);
         tagsTable.getColumn("Tag").setMaxWidth(90);
         tagsTable.getColumn("Name").setMinWidth(160);
@@ -803,21 +875,22 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
                     ListSelectionModel lsm = (ListSelectionModel) e.getSource();
 
                     if (lsm.isSelectionEmpty()) {
-
-                        if (editDicom != null) {
-                            editDicom.setEnabled(false); // ...//no rows are selected
-                        }
+                    	editTagButton.setEnabled(false); // ...//no rows are selected
+                    	overlayButton.setEnabled(false);
                     } else {
                         int oldSelectedRow = selectedRowDicom;
 
                         selectedRowDicom = lsm.getMinSelectionIndex();
 
-                        if ((oldSelectedRow != selectedRowDicom) &&
-                                ((selectedRowDicom - lsm.getMaxSelectionIndex()) == 0)) {
-
-                            if (editDicom != null) {
-                                editDicom.setEnabled(true);
-                            }
+                        if ((oldSelectedRow != selectedRowDicom) && ((selectedRowDicom - lsm.getMaxSelectionIndex()) == 0)) {
+                        	String tagKey = new String((String) tagsTable.getValueAt(selectedRowDicom, 1));
+                        	if (!tagKey.equals("")) {
+                        		editTagButton.setEnabled(true); 
+                        		overlayButton.setEnabled(true);
+                        	}else {
+                        		editTagButton.setEnabled(false); 
+                        		overlayButton.setEnabled(false);
+                        	}
                         } // ...//selectedRow is selected
                         // else {
                         // lsm.clearSelection();
@@ -828,49 +901,56 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
 
         tagsModel.addRow(rowData);
         tagsModel.addRow(rowData);
-        tagsModel.setValueAt("Essential Image Information", 0, 1);
+        tagsModel.setValueAt("Essential Image Information", 0, 2);
+        tagsModel.setValueAt(null, 0, 0);
+        tagsModel.setValueAt(null, 1, 0);
         i = 2;
         extents = DicomInfo.getExtents();
 
         for (int j = 0; j < extents.length; j++) {
             tagsModel.addRow(rowData);
-            tagsModel.setValueAt("Dimension", i, 1);
-            tagsModel.setValueAt(new Integer(extents[j]), i, 2);
+            tagsModel.setValueAt("Dimension", i, 2);
+            tagsModel.setValueAt(new Integer(extents[j]), i, 3);
+            tagsModel.setValueAt(null, i, 0);
             i++;
         }
 
         int dataType = DicomInfo.getDataType();
 
         tagsModel.addRow(rowData);
-        tagsModel.setValueAt("Type", i, 1);
-        tagsModel.setValueAt(ModelStorageBase.getBufferTypeStr(dataType), i, 2);
+        tagsModel.setValueAt(null, i, 0);
+        tagsModel.setValueAt("Type", i, 2);
+        tagsModel.setValueAt(ModelStorageBase.getBufferTypeStr(dataType), i, 3);
 
         i++;
         tagsModel.addRow(rowData);
-        tagsModel.setValueAt("Min", i, 1);
-        tagsModel.setValueAt(new Double(DicomInfo.getMin()), i, 2);
+        tagsModel.setValueAt(null, i, 0);
+        tagsModel.setValueAt("Min", i, 2);
+        tagsModel.setValueAt(new Double(DicomInfo.getMin()), i, 3);
         tagsModel.addRow(rowData);
-        tagsModel.setValueAt("Max", ++i, 1);
-        tagsModel.setValueAt(new Double(DicomInfo.getMax()), i, 2);
+        tagsModel.setValueAt("Max", ++i, 2);
+        tagsModel.setValueAt(null, i, 0);
+        tagsModel.setValueAt(new Double(DicomInfo.getMax()), i, 3);
         tagsModel.addRow(rowData);
-        tagsModel.setValueAt("Orientation", ++i, 1);
+        tagsModel.setValueAt("Orientation", ++i, 2);
+        tagsModel.setValueAt(null, i, 0);
 
         switch (DicomInfo.getImageOrientation()) {
 
             case FileInfoBase.AXIAL:
-                tagsModel.setValueAt("Axial", i, 2);
+                tagsModel.setValueAt("Axial", i, 3);
                 break;
 
             case FileInfoBase.CORONAL:
-                tagsModel.setValueAt("Coronal", i, 2);
+                tagsModel.setValueAt("Coronal", i, 3);
                 break;
 
             case FileInfoBase.SAGITTAL:
-                tagsModel.setValueAt("Sagittal", i, 2);
+                tagsModel.setValueAt("Sagittal", i, 3);
                 break;
 
             default:
-                tagsModel.setValueAt("Unknown", i, 2);
+                tagsModel.setValueAt("Unknown", i, 3);
         }
 
         float[] resolutions;
@@ -880,35 +960,38 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
 
         for (int j = 0; j < extents.length; j++) {
             tagsModel.addRow(rowData);
-            tagsModel.setValueAt("Pixel resolution " + j, i, 1);
-            tagsModel.setValueAt(new Float(resolutions[j]), i, 2);
+            tagsModel.setValueAt("Pixel resolution " + j, i, 2);
+            tagsModel.setValueAt(new Float(resolutions[j]), i, 3);
+            tagsModel.setValueAt(null, i, 0);
             i++;
         }
 
         int measure = DicomInfo.getUnitsOfMeasure(0);
 
         tagsModel.addRow(rowData);
-        tagsModel.setValueAt("Unit of measure", i, 1);
+        tagsModel.setValueAt("Unit of measure", i, 2);
+        tagsModel.setValueAt(null, i, 0);
 
         if (measure == FileInfoBase.INCHES) {
-            tagsModel.setValueAt("Inches per pixel", i, 2);
+            tagsModel.setValueAt("Inches per pixel", i, 3);
         } else if (measure == FileInfoBase.MILLIMETERS) {
-            tagsModel.setValueAt("Millimeters per pixel", i, 2);
+            tagsModel.setValueAt("Millimeters per pixel", i, 3);
         } else if (measure == FileInfoBase.CENTIMETERS) {
-            tagsModel.setValueAt("Centimeters per pixel", i, 2);
+            tagsModel.setValueAt("Centimeters per pixel", i, 3);
         } else if (measure == FileInfoBase.METERS) {
-            tagsModel.setValueAt("Meters per pixel", i, 2);
+            tagsModel.setValueAt("Meters per pixel", i, 3);
         } else if (measure == FileInfoBase.KILOMETERS) {
-            tagsModel.setValueAt("Kilometers per pixel", i, 2);
+            tagsModel.setValueAt("Kilometers per pixel", i, 3);
         } else if (measure == FileInfoBase.MILES) {
-            tagsModel.setValueAt("Miles per pixel", i, 2);
+            tagsModel.setValueAt("Miles per pixel", i, 3);
         } else {
-            tagsModel.setValueAt("Unknown", i, 2);
+            tagsModel.setValueAt("Unknown", i, 3);
         }
 
         i++;
         tagsModel.addRow(rowData);
-        tagsModel.setValueAt("Transformation Matrix", i, 1);
+        tagsModel.setValueAt("Transformation Matrix", i, 2);
+        tagsModel.setValueAt(null, i, 0);
 
         String matrixString = imageA.getMatrix().matrixToString(8, 4);
         int nextIndex = 0, index = 0;
@@ -922,20 +1005,26 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
                 subStr = matrixString.substring(index, nextIndex);
                 index = nextIndex + 1;
                 tagsModel.addRow(rowData);
-                tagsModel.setValueAt(subStr, i, 2);
+                tagsModel.setValueAt(subStr, i, 3);
+                tagsModel.setValueAt(null, i, 0);
             } else {
                 subStr = matrixString.substring(index, matrixString.length());
                 tagsModel.addRow(rowData);
-                tagsModel.setValueAt(subStr, i, 2);
+                tagsModel.setValueAt(subStr, i, 3);
+                tagsModel.setValueAt(null, i, 0);
             }
         }
 
+        
+        tagsModel.addRow(rowData);
+        tagsModel.setValueAt(null, i+1, 0);
+        tagsModel.addRow(rowData);
+        tagsModel.setValueAt(null, i+2, 0);
         i += 2;
-        tagsModel.addRow(rowData);
-        tagsModel.addRow(rowData);
-        tagsModel.setValueAt("Other Image Information", i, 1);
+        tagsModel.setValueAt("Other Image Information", i, 2);
         i++;
         tagsModel.addRow(rowData);
+        tagsModel.setValueAt(null, i, 0);
         showTags(tagsModel, DicomInfo, false);
 
         try {
@@ -954,57 +1043,43 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
 
         scrollPaneDicom.setBackground(Color.black);
 
-        getContentPane().add(scrollPaneDicom);
+        //toolbar
+        toolbarPanel = new JPanel();
+        toolbarPanel.setLayout(new BorderLayout());
+        
+        toolbarBuilder = new ViewToolBarBuilder(this);
+        
+        showPrivateButton = toolbarBuilder.buildButton("Show", "Show Private Tags", "showprivate");
+        saveCheckedButton = toolbarBuilder.buildButton("SaveTags", "Save Checked Tags to new file", "savechecked");
+        saveCheckedAppendButton = toolbarBuilder.buildButton("SaveTagsAppend", "Save and Append Checked Tags to file", "savecheckedappend");
+        checkAllButton = toolbarBuilder.buildButton("CheckAll", "Check All Tags", "checkall");
+        uncheckAllButton = toolbarBuilder.buildButton("UncheckAll", "Uncheck All Tags", "uncheckall");
+        editTagButton = toolbarBuilder.buildButton("EditTag", "Edit Tag", "edittag");
+        editTagButton.setEnabled(false);
+        overlayButton = toolbarBuilder.buildButton("OverlayTag", "Overlay", "overlay");
+        overlayButton.setEnabled(false);
+        anonymizeButton = toolbarBuilder.buildButton("AnonymizeImage", "Anonymize", "anon");
 
-        JButton close = new JButton("Close");
-
-        close.setFont(serif12B);
-        close.setActionCommand("Close");
-        close.setPreferredSize(MipavUtil.defaultButtonSize);
-        close.addActionListener(this);
-
-        priv = new JButton(showPrivateText);
-        priv.setFont(serif12B);
-        priv.setActionCommand("Show");
-        priv.setPreferredSize(new Dimension(135, 30));
-        priv.addActionListener(this);
-
-        saveButton = new JButton("Save tags");
-        saveButton.setFont(serif12B);
-        saveButton.setActionCommand("SaveTags");
-        saveButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        saveButton.addActionListener(this);
-
-        editDicom = new JButton("Edit tag");
-        editDicom.setFont(serif12B);
-        editDicom.setEnabled(false);
-        editDicom.setActionCommand("EditTag");
-        editDicom.setPreferredSize(MipavUtil.defaultButtonSize);
-        editDicom.addActionListener(this);
-
-        overlayTag = new JButton("Overlay");
-        overlayTag.setFont(serif12B);
-        overlayTag.setActionCommand("OverlayTag");
-        overlayTag.setPreferredSize(MipavUtil.defaultButtonSize);
-        overlayTag.addActionListener(this);
+        toolBar = ViewToolBarBuilder.initToolBar();
+        toolBar.add(showPrivateButton);
+        toolBar.add(ViewToolBarBuilder.makeSeparator());
+        toolBar.add(checkAllButton);
+        toolBar.add(uncheckAllButton);
+        toolBar.add(ViewToolBarBuilder.makeSeparator());
+        toolBar.add(saveCheckedButton);
+        toolBar.add(saveCheckedAppendButton);
+        toolBar.add(ViewToolBarBuilder.makeSeparator());
+        toolBar.add(editTagButton);
+        toolBar.add(ViewToolBarBuilder.makeSeparator());
+        toolBar.add(overlayButton);
+        toolBar.add(ViewToolBarBuilder.makeSeparator());
+        toolBar.add(anonymizeButton);
+        
+        toolbarPanel.add(toolBar);
 
 
-        anonymize = new JButton("Anonymize");
-        anonymize.setFont(serif12B);
-        anonymize.setActionCommand("AnonymizeImage");
-        anonymize.setPreferredSize(new Dimension(100, 30));
-        anonymize.addActionListener(this);
-
-        JPanel buttonPanel = new JPanel();
-
-        buttonPanel.add(priv);
-        buttonPanel.add(close);
-        buttonPanel.add(saveButton);
-        buttonPanel.add(editDicom);
-        buttonPanel.add(overlayTag);
-        buttonPanel.add(anonymize);
-
-        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+        getContentPane().add(toolbarPanel, BorderLayout.NORTH);
+        getContentPane().add(scrollPaneDicom, BorderLayout.CENTER);
         getContentPane().setSize(new Dimension(700, 650));
         setSize(700, 650);
 
@@ -1152,13 +1227,22 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
         RandomAccessFile raFile;
         File file;
         int i;
-        String fileName;
-        String directory;
+        boolean isEmpty = true;
+        StringBuffer saveTagsSB = new StringBuffer();
 
-        if (listSelectorDicom.isSelectionEmpty() == true) {
+        for (int k=0; k < tagsModel.getRowCount(); k++) {
+        	if (tagsModel.getValueAt(k, 0) != null && ((Boolean)tagsModel.getValueAt(k, 0)).booleanValue() == true) {
+        		isEmpty = false;
+        		break;
+        	}
+        	
+        	
+        }
+
+        if (isEmpty) {
 
             // should show error message
-            MipavUtil.displayError("Please select tags to be saved.");
+            MipavUtil.displayError("Please check tags to be saved.");
 
             return;
         }
@@ -1197,31 +1281,39 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
         }
 
         try {
-
-            // file   = new File(DicomInfo.getFileDirectory() + DicomInfo.getFileName());
             file = new File(directory + fileName);
             raFile = new RandomAccessFile(file, "rw");
 
             for (i = 0; i < tagsModel.getRowCount(); i++) {
 
-                if (tagsModel.getValueAt(i, 1).equals("Other Image Information")) {
+                if (tagsModel.getValueAt(i, 2).equals("Other Image Information")) {
                     break;
                 }
             }
 
             i += 2;
 
-            ListSelectionModel listSelectorDicom = tagsTable.getSelectionModel();
+            if(isAppend) {
+            	raFile.skipBytes( (int)raFile.length() );
+            }else {
+            	raFile.setLength(0);
+            	raFile.seek(0);
+            }
 
             for (; i < tagsModel.getRowCount(); i++) {
 
-                if (listSelectorDicom.isSelectedIndex(i)) {
-                    raFile.writeBytes(tagsModel.getValueAt(i, 0) + "\t" + tagsModel.getValueAt(i, 1) + "\t\t" +
-                                      tagsModel.getValueAt(i, 2) + "\n");
+                if (tagsModel.getValueAt(i, 0) != null && ((Boolean)tagsModel.getValueAt(i, 0)).booleanValue() == true) {
+                	
+                    raFile.writeBytes(tagsModel.getValueAt(i, 1) + "\t" + tagsModel.getValueAt(i, 2) + "\t" +
+                                      tagsModel.getValueAt(i, 3) + "\n");
+                    saveTagsSB.append(tagsModel.getValueAt(i, 1));
+                    saveTagsSB.append(";");
                 }
             }
 
+            Preferences.setProperty(Preferences.SAVE_DICOM_TAGS, saveTagsSB.toString().substring(0, saveTagsSB.toString().lastIndexOf(";")));
             raFile.close();
+            insertScriptLine();
         } catch (IOException error) {
             MipavUtil.displayError("");
 
@@ -1252,8 +1344,11 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
             if (source.equals(tagsTable.getTableHeader())) {
                 col = tagsTable.columnAtPoint(p);
 
-                if (col == 2) {
+                if (col == 3) {
                     return;
+                }
+                if(col == 0) {
+                	return;
                 }
 
                 if (e.isShiftDown()) {
@@ -1299,5 +1394,206 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
          */
         public void mouseReleased(MouseEvent e) { }
     }
+    
+    
+    
+    
+    /**
+     * call algorithm
+     *
+     */
+	protected void callAlgorithm() {
+        ViewUserInterface UI = ViewUserInterface.getReference();
+        RandomAccessFile raFile;
+        File file;
+        int i;
+        boolean isEmpty = true;
+        StringBuffer saveTagsSB = new StringBuffer();
+
+        for (int k=0; k < tagsModel.getRowCount(); k++) {
+        	if (tagsModel.getValueAt(k, 0) != null && ((Boolean)tagsModel.getValueAt(k, 0)).booleanValue() == true) {
+        		isEmpty = false;
+        		break;
+        	}
+        	
+        	
+        }
+
+        if (isEmpty) {
+
+            // should show error message
+            MipavUtil.displayError("Please check tags to be saved.");
+
+            return;
+        }
+
+        try {
+
+            // file   = new File(DicomInfo.getFileDirectory() + DicomInfo.getFileName());
+            file = new File(directory + fileName);
+            raFile = new RandomAccessFile(file, "rw");
+            
+            
+            
+
+            for (i = 0; i < tagsModel.getRowCount(); i++) {
+
+                if (tagsModel.getValueAt(i, 2).equals("Other Image Information")) {
+                    break;
+                }
+            }
+
+            i += 2;
+
+            if(isAppend) {
+            	raFile.skipBytes( (int)raFile.length() );
+            }else {
+            	raFile.setLength(0);
+            	raFile.seek(0);
+            }
+
+            for (; i < tagsModel.getRowCount(); i++) {
+
+                if (tagsModel.getValueAt(i, 0) != null && ((Boolean)tagsModel.getValueAt(i, 0)).booleanValue() == true) {
+                	
+                    raFile.writeBytes(tagsModel.getValueAt(i, 1) + "\t" + tagsModel.getValueAt(i, 2) + "\t" +
+                                      tagsModel.getValueAt(i, 3) + "\n");
+                    saveTagsSB.append(tagsModel.getValueAt(i, 1));
+                    saveTagsSB.append(";");
+                }
+            }
+
+            Preferences.setProperty(Preferences.SAVE_DICOM_TAGS, saveTagsSB.toString().substring(0, saveTagsSB.toString().lastIndexOf(";")));
+            raFile.close();
+        } catch (IOException error) {
+            MipavUtil.displayError("");
+
+            // should show error message
+            return;
+        }
+	}
+
+
+
+	/**
+	 * set gui from parameters
+	 *
+	 */
+	protected void setGUIFromParams() {
+		imageA = scriptParameters.retrieveInputImage();
+		isAppend = scriptParameters.getParams().getBoolean("isAppend");
+		directory = scriptParameters.getParams().getString("directory");
+		fileName = scriptParameters.getParams().getString("fileName");
+		sliceIndex = scriptParameters.getParams().getInt("sliceIndex");
+		FileInfoDicom fileInfo;
+		if(imageA.getFileInfo().length > sliceIndex) {
+			fileInfo = (FileInfoDicom)imageA.getFileInfo()[sliceIndex];
+		}else {
+			fileInfo = (FileInfoDicom)imageA.getFileInfo()[0];
+		}
+		
+		displayAboutInfo(imageA,fileInfo,sliceIndex);
+		
+	}
+
+	/**
+	 * store parameters from gui
+	 * @throws ParserException
+	 */
+	protected void storeParamsFromGUI() throws ParserException {
+		scriptParameters.storeInputImage(imageA);
+		scriptParameters.getParams().put(ParameterFactory.newParameter("isAppend", isAppend));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("directory", directory));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("fileName", fileName));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("sliceIndex", sliceIndex));
+		
+	} 
+    
+    
+    
+    
+    
+//  --------------------INNER CLASSES -------------------------------------------------------------------------------  
+	class CheckBoxRenderer extends DefaultTableCellRenderer {
+  	  JCheckBox checkBox = new JCheckBox();
+  	  public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+  		  	if (value instanceof Boolean) { // Boolean
+  		  		checkBox.setSelected(((Boolean) value).booleanValue());
+  		  		checkBox.setHorizontalAlignment(JLabel.CENTER);
+  		  		return checkBox;
+  		  	}
+  		  	return null;
+  	  }
+    }
+
+    
+    class CheckBoxEditor implements TableCellEditor {
+  	  private final static int BOOLEAN = 1;
+  	  DefaultCellEditor cellEditor;
+  	  int flg;
+  	  
+  	  public CheckBoxEditor() {
+  	    JCheckBox checkBox = new JCheckBox();
+  	    cellEditor = new DefaultCellEditor(checkBox);
+  	    checkBox.setHorizontalAlignment(JLabel.CENTER);
+  	  }
+
+  	  public Component getTableCellEditorComponent(JTable table, Object value,
+  	      boolean isSelected, int row, int column) {
+  	    if (value instanceof Boolean) { // Boolean
+  	      flg = BOOLEAN;
+  	      return cellEditor.getTableCellEditorComponent(table,
+  	          value, isSelected, row, column);
+  	    }
+  	    return null;
+  	  }
+
+  	  public Object getCellEditorValue() {
+  	    switch (flg) {
+  	    case BOOLEAN:
+  	      return cellEditor.getCellEditorValue();
+  	    default:
+  	      return null;
+  	    }
+  	  }
+
+  	  public Component getComponent() {
+  	    return cellEditor.getComponent();
+  	  }
+
+  	  public boolean stopCellEditing() {
+  	    return cellEditor.stopCellEditing();
+  	  }
+
+  	  public void cancelCellEditing() {
+  	    cellEditor.cancelCellEditing();
+  	  }
+
+  	  public boolean isCellEditable(EventObject anEvent) {
+  	    return cellEditor.isCellEditable(anEvent);
+  	  }
+
+  	  public boolean shouldSelectCell(EventObject anEvent) {
+  	    return cellEditor.shouldSelectCell(anEvent);
+  	  }
+
+  	  public void addCellEditorListener(CellEditorListener l) {
+  	    cellEditor.addCellEditorListener(l);
+  	  }
+
+  	  public void removeCellEditorListener(CellEditorListener l) {
+  	    cellEditor.removeCellEditorListener(l);
+  	  }
+
+  	  public void setClickCountToStart(int n) {
+  	    cellEditor.setClickCountToStart(n);
+  	  }
+
+  	  public int getClickCountToStart() {
+  	    return cellEditor.getClickCountToStart();
+  	  }
+  	}
 
 }
+
+
