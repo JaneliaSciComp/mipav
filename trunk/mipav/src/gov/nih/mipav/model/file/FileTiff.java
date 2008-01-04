@@ -17,7 +17,8 @@ import java.awt.image.*;
 /**
  * Tagged Image File Format (TIFF 6.0) reader/ writer. Only packed bit compression is supported at this time. Note that
  * although EchoTech has a tResolution field, there is no provision for 4D in TIFF.
- * Almost all of the FAX decompression code was taken from the free software at the website 
+ * Almost all of the FAX decompression code and modified Huffman decompression code
+ * was taken from the free software at the website 
  * http://www.mms-computing.co.uk/uk/co/mmscomputing/imageio/tiff
  *
  * @version  1.0 Feb 29, 2000
@@ -433,6 +434,8 @@ public class FileTiff extends FileBase {
     // CCITT FAX4 or T6 encoding
     private boolean fax4Compression = false;
     
+    private boolean modHuffmanCompression = false;
+    
     // Options with group 3, also known as T4, fax coding
     // Default is for basic 1-dimensional coding
     private boolean group3_2D_Coding = false;
@@ -578,7 +581,8 @@ public class FileTiff extends FileBase {
 
             Preferences.debug("Just past init IFD read", Preferences.DEBUG_FILEIO);
 
-            if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) && haveTileOffsets) {
+            if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) &&
+                                 (!modHuffmanCompression) && haveTileOffsets) {
                 if (chunky) {
                    tilesPerSlice = tilesAcross * tilesDown;
                 }
@@ -587,8 +591,9 @@ public class FileTiff extends FileBase {
                 }
                 imageSlice = tilesPerImage / tilesPerSlice;
                 // System.err.println("DoTile: tilesPerSlice: " + tilesPerSlice + " imageSlice: " + imageSlice);
-            } // if (haveTileWidth && (!lzwCompression) && (!zlibCompression)&& (!fax3Compression) && (!fax4Compression) && haveTileOffsets)
-            else if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression) {
+            } // if (haveTileWidth && (!lzwCompression) && (!zlibCompression)&& (!fax3Compression) && (!fax4Compression) 
+            else if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression ||
+                     modHuffmanCompression) {
 
                 // set the tile width to the xDim for use in LZW Decoder or zlib deflater or fax decompression
                 if (!haveTileWidth) {
@@ -736,7 +741,8 @@ public class FileTiff extends FileBase {
                 }
             } // else foundTag43314
 
-            if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) && haveTileOffsets) {
+            if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) && 
+               (!modHuffmanCompression) && haveTileOffsets) {
                 imageSlice = tilesPerImage / tilesPerSlice;
             }
 
@@ -828,7 +834,8 @@ public class FileTiff extends FileBase {
 
                     try {
 
-                        if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression) {
+                        if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression ||
+                            modHuffmanCompression) {
                             readTileBuffer(i, sliceBufferFloat);
                         } else {
 
@@ -1390,7 +1397,8 @@ public class FileTiff extends FileBase {
         }
     }
     
-    // Almost all of the FAX decompression code was taken from the website http://www.mms-computing.co.uk/uk/co/mmscomputing/imageio/tiff
+    // Almost all of the FAX decompression code and modified Huffman decompression code 
+    // was taken from the website http://www.mms-computing.co.uk/uk/co/mmscomputing/imageio/tiff
     
     private void fax34Init() {
         if (bitsPerSample == null) {
@@ -1404,6 +1412,73 @@ public class FileTiff extends FileBase {
         }   
         return;
     }
+    
+    //  Modified from part of routine readBWImage in TiffBaselineFactory.java in package uk.co.mmscomputing.imageio.tiff
+    private int modHuffmanDecompresser(byte dataOut[], byte dataIn[]) {
+        InputStream is;
+        int offset = 0;
+        int resultLength;
+        
+        is = new ByteArrayInputStream(dataIn);
+        if (fillOrder == 1) { // baseline tiff default
+            try {
+                is = new  BitSwapInputStream(is);
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOEXception on is = new BitSwapInputStream(is)");
+                return -1;
+            }
+        } // if (fillOrder == 1)
+        try {
+            resultLength = readMH(dataOut, offset, is, xDim);
+        }
+        catch(IOException e) {
+            MipavUtil.displayError("IOException on resultLength = readMH(dataOut, offset, is, xDim");
+            return -1;
+        }
+        return resultLength;
+        
+    }
+    
+    // Copied almost unchanged from TiffBaselineFactory.java in package uk.co.mmscomputing.imageio.tiff
+    private int readMH(byte[] imgdata,int off,InputStream is,int width)throws IOException{
+        ModHuffmanInputStream mhis=new ModHuffmanInputStream(is);
+        RLEBitInputStream     rlis=new RLEBitInputStream(mhis);
+
+        if((width&0x0007)==0){
+          byte[] buf=new byte[width>>3];int len=0;
+          while(true){
+            rlis.resetToStartCodeWord();                    // start next line with white
+            try{
+              len=rlis.read(buf);                           // read one image line
+              if(len==-1){break;}                           // end of page
+              System.arraycopy(buf,0,imgdata,off,len);      // copy line to image buffer
+              mhis.skipPadding(8);                          // skip bits up until next byte boundary
+            }catch(ModHuffmanInputStream.ModHuffmanCodingException mhce){
+              MipavUtil.displayError("copyin:\n\t"+mhce);
+            }
+            off+=len;
+          }
+        }else{
+          byte[] buf=new byte[(width+7)>>3];int len=0,ecw=8-(width&0x0007),bits;
+          while(true){
+            rlis.resetToStartCodeWord();                    // start next line with white
+            try{
+              len=rlis.read(buf,0,buf.length-1);            // read one image line
+              if(len==-1){break;}                           // end of page
+              bits=rlis.readBits(7,ecw);
+              buf[len]=(byte)bits;
+              System.arraycopy(buf,0,imgdata,off,len+1);    // copy line to image buffer
+              mhis.skipPadding(8);                          // skip bits up until next byte boundary
+            }catch(ModHuffmanInputStream.ModHuffmanCodingException mhce){
+              MipavUtil.displayError("copyin:\n\t"+mhce);
+            }
+            off+=len+1;
+          }
+        }
+        return off;
+      }
+
     
     // Modified from readImage routine TIFFClassFFactory.java in package uk.co.mmscomputing.imageio.tiff
     private int fax34Decompresser(byte dataOut[], byte dataIn[]) {
@@ -3520,14 +3595,20 @@ public class FileTiff extends FileBase {
                         throw new IOException("COMPRESSION has illegal count = " + count + "\n");
                     }
 
-                    if (valueArray[0] == 2) {
-                        throw new IOException("Modified Huffman run length encoding is not supported\n");
-                    } else if (valueArray[0] == 1) {
+                    if (valueArray[0] == 1) {
                         packBit = false;
 
                         if (debuggingFileIO) {
                             Preferences.debug("FileTiff.openIFD: compression = no compression\n ",
                                               Preferences.DEBUG_FILEIO);
+                        }
+                    } else if (valueArray[0] == 2) {
+                        packBit = false;
+                        modHuffmanCompression = true;
+                        
+                        if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: compression = modified Huffman\n",
+                                               Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == 3) {
                         packBit = false;
@@ -7683,7 +7764,7 @@ public class FileTiff extends FileBase {
                         mod = progressLength / 100;
 
                         nLength = 8 * ((nBytes + 63) >> 6); // new BitSet(size) = new long[(size+63)>>6];
-                        if (lzwCompression || zlibCompression || fax3Compression || fax4Compression) {
+                        if (lzwCompression || zlibCompression || fax3Compression || fax4Compression || modHuffmanCompression) {
 
                             if (byteBuffer == null) {
                                 byteBuffer = new byte[tileMaxByteCount];
@@ -7711,6 +7792,15 @@ public class FileTiff extends FileBase {
                                 // Note that resultLength is in bytes,
                                 // but we use each bit int the byte
                                 resultLength = fax34Decompresser(decomp, data);
+                            }
+                            else if (modHuffmanCompression) {
+                                data = new byte[nBytes];
+                                for (j = 0; j < nBytes; j++) {
+                                    data[j] = byteBuffer[j];
+                                }
+                                // Note that resultLength is in bytes,
+                                // but we use each bit int the byte
+                                resultLength = modHuffmanDecompresser(decomp, data);
                             }
                             else { // zlibCompression
                                 try {
