@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.*;
 
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
@@ -63,13 +64,6 @@ public class VolumeImage
         m_kImageA_GM = CalcHistogramsGM( m_kImageA );
         m_kVolumeA_GM = UpdateData(m_kImageA_GM, null, m_kVolumeTargetA_GM, new String("A_GM") );
 
-        int iXBound = m_kImageA.getExtents()[0];
-        int iYBound = m_kImageA.getExtents()[1];
-        int iZBound = m_kImageA.getExtents()[2];
-        byte[] aucData = calcImageNormals( );
-        m_kNormalA = new GraphicsImage(GraphicsImage.FormatMode.IT_RGB888,
-                                       iXBound,iYBound,iZBound,aucData,
-                                       "NormalMapA");
 
         m_kVolumeTargetA = new Texture();
         m_kVolumeTargetA.SetShared(true);
@@ -84,7 +78,14 @@ public class VolumeImage
         m_kOpacityMapTargetA = new Texture();
         m_kOpacityMapTargetA.SetShared(true);
 
+        int iXBound = m_kImageA.getExtents()[0];
+        int iYBound = m_kImageA.getExtents()[1];
+        int iZBound = m_kImageA.getExtents()[2];
+        m_kNormalA = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888,
+                                       iXBound,iYBound,iZBound,(byte[])null,
+                                       "NormalMapA");
         m_kNormalMapTargetA = new Texture();
+        m_kNormalMapTargetA.SetImage(m_kNormalA);
         m_kNormalMapTargetA.SetShared(true);
         m_kNormalMapTargetA.SetFilterType(Texture.FilterType.LINEAR);
         m_kNormalMapTargetA.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
@@ -212,31 +213,49 @@ public class VolumeImage
         }
         else
         {
-            float[] afData = new float[iXBound*iYBound*iZBound];
+            byte[] abData = new byte[iXBound*iYBound*iZBound];
 
-            int i = 0;
-            for (int iZ = 0; iZ < iZBound; iZ++)
-            {
-                for (int iY = 0; iY < iYBound; iY++)
-                {
-                    for (int iX = 0; iX < iXBound; iX++)
-                    {
-                        float fValue = kImage.getFloat(iX,iY,iZ);
-                        afData[i++] = (fValue - fImageMin)/(fImageMax - fImageMin);
-                    }
-                }
-            }
-            if ( kVolumeImage == null )
-            {
-                kVolumeImage =
-                    new GraphicsImage( GraphicsImage.FormatMode.IT_L8,
-                                       iXBound,iYBound,iZBound,afData,
-                                       new String( "VolumeImage" + kPostFix));
-            }
+             int i = 0;
+             for (int iZ = 0; iZ < iZBound; iZ++)
+             {
+                 for (int iY = 0; iY < iYBound; iY++)
+                 {
+                     for (int iX = 0; iX < iXBound; iX++)
+                     {
+                         float fValue = kImage.getFloat(iX,iY,iZ);
+                         abData[i++] = (byte)(255 * (fValue - fImageMin)/(fImageMax - fImageMin));
+                     }
+                 }
+             }
+             kVolumeImage =
+                 new GraphicsImage( GraphicsImage.FormatMode.IT_L8, 
+                                    iXBound,iYBound,iZBound, abData,
+                                    new String( "VolumeImage" + kPostFix));
+
+
+//              float[] afData = new float[iXBound*iYBound*iZBound];
+
+//              int i = 0;
+//              for (int iZ = 0; iZ < iZBound; iZ++)
+//              {
+//                  for (int iY = 0; iY < iYBound; iY++)
+//                  {
+//                      for (int iX = 0; iX < iXBound; iX++)
+//                      {
+//                          float fValue = kImage.getFloat(iX,iY,iZ);
+//                          afData[i++] = (fValue - fImageMin)/(fImageMax - fImageMin);
+//                      }
+//                  }
+//              }
+//              kVolumeImage =
+//                  new GraphicsImage( GraphicsImage.FormatMode.IT_L8, 
+//                                     iXBound,iYBound,iZBound, afData,
+//                                     new String( "VolumeImage" + kPostFix));
 
             if ( kVolumeTexture != null )
             {
-                kVolumeTexture.GetImage().SetFloatData( afData, iXBound, iYBound, iZBound );
+                kVolumeTexture.GetImage().SetData( abData, iXBound, iYBound, iZBound );
+//                 kVolumeTexture.GetImage().SetFloatData( afData, iXBound, iYBound, iZBound );
                 kVolumeTexture.Release();
             }
         }
@@ -314,7 +333,7 @@ public class VolumeImage
         return null;
     }
 
-    public void disposeLocal()
+    public void dispose()
     {
         m_kImageA = null;
 
@@ -383,151 +402,6 @@ public class VolumeImage
             m_kNormalMapTargetA.dispose();
             m_kNormalMapTargetA = null;
         }
-    }
-
-    /**
-     * Create array of normal vectors corresponding to the voxels in the volume. The normal vector is computed based on
-     * the gradient of the volume intensity values.
-     *
-     * @return  DOCUMENT ME!
-     */
-    public byte[] calcImageNormals() {
-
-        ModelSimpleImage kValueImageA;
-        float[] afData;
-        int m_iSizeX = 0, m_iSizeY = 0, m_iSizeZ = 0;
-
-        // Extract image slice.
-        ModelSimpleImage kSimpleImageA = new ModelSimpleImage(m_kImageA, 0);
-
-        // Convert to intensity valued image.
-        if (m_kImageA.isColorImage()) {
-            kValueImageA = kSimpleImageA.createIntensityImage();
-            afData = kValueImageA.data;
-        } else {
-            afData = kSimpleImageA.data;
-
-        }
-
-        // Access intensity values as a linear array.
-        // Initially allocate all normal vectors as the zero vector.
-        Vector3f[] akNormalTmp = new Vector3f[afData.length];
-
-        for (int i = 0; i < akNormalTmp.length; i++) {
-            akNormalTmp[i] = new Vector3f(0, 0, 0);
-        }
-
-        if (m_kImageA.getNDims() == 3) {
-            m_iSizeX = m_kImageA.getExtents()[0];
-            m_iSizeY = m_kImageA.getExtents()[1];
-            m_iSizeZ = m_kImageA.getExtents()[2];
-        }
-        int iXBound = m_iSizeX;
-        int iYBound = m_iSizeY;
-        int iZBound = m_iSizeZ;
-        int iXYBound = iXBound * iYBound;
-
-        // normals from gradient which are computed using central finite
-        // differences everywhere except forward/backward finite differences
-        // are used at the edges
-
-        float fDX = 0;
-        float fDY = 0;
-        float fDZ = 0;
-
-        int iOffX = 1;
-        int iOffY = iXBound;
-        int iOffZ = iXBound * iYBound;
-        int iX, iY, iZ;
-
-        for (iZ = 1; iZ < (iZBound - 1); iZ++) {
-            boolean bMinZ = 0 == iZ;
-            boolean bMaxZ = (iZBound - 1) == iZ;
-
-            for (iY = 1; iY < (iYBound - 1); iY++) {
-                boolean bMinY = 0 == iY;
-                boolean bMaxY = (iYBound - 1) == iY;
-                int offset = iXBound * (iY + (iYBound * iZ));
-
-                for (iX = 0; iX < iXBound; iX++) {
-                    boolean bMinX = 0 == iX;
-                    boolean bMaxX = (iXBound - 1) == iX;
-
-                    int i = iX + offset;
-
-                    fDX = (((bMinX ? afData[i] : afData[i - iOffX - iXBound]) -
-                            (bMaxX ? afData[i] : afData[i + iOffX - iXBound])) * 0.71f) +
-
-                    (bMinX ? afData[i] : afData[i - iOffX]) - (bMaxX ? afData[i] : afData[i + iOffX]) +
-                          (
-
-                    ((bMinX ? afData[i] : afData[i - iOffX + iXBound]) -
-                     (bMaxX ? afData[i] : afData[i + iOffX + iXBound])) * 0.71f);
-
-                    fDY = (((bMinY ? afData[i] : afData[i - iOffY - 1]) - (bMaxY ? afData[i] : afData[i + iOffY - 1])) *
-                               0.71f) +
-
-                    (bMinY ? afData[i] : afData[i - iOffY]) - (bMaxY ? afData[i] : afData[i + iOffY]) +
-                          (
-
-                    ((bMinY ? afData[i] : afData[i - iOffY + 1]) - (bMaxY ? afData[i] : afData[i + iOffY + 1])) * 0.71f);
-
-                    fDZ = (((bMinZ ? afData[i] : afData[i - iOffZ - 1]) - (bMaxZ ? afData[i] : afData[i + iOffZ - 1])) *
-                               0.71f) +
-
-                    (bMinZ ? afData[i] : afData[i - iOffZ]) - (bMaxZ ? afData[i] : afData[i + iOffZ]) +
-                          (
-
-                    ((bMinZ ? afData[i] : afData[i - iOffZ + 1]) - (bMaxZ ? afData[i] : afData[i + iOffZ + 1])) * 0.71f);
-
-
-                    if ((fDX != 0.0f) || (fDY != 0.0f) || (fDZ != 0.0f)) {
-                        akNormalTmp[i] = new Vector3f(fDX, fDY, fDZ);
-                    }
-                }
-            }
-        }
-
-        byte[] acData = new byte[akNormalTmp.length*3];
-
-        // Catch any zero-vector normals and replace them by an average of
-        // neighboring normals.
-        Vector3f akNormal = new Vector3f(0,0,0);
-        for (iZ = 1; iZ < (iZBound - 1); iZ++) {
-
-            for (iY = 1; iY < (iYBound - 1); iY++) {
-                int offset = iXBound * (iY + (iYBound * iZ));
-
-                akNormal.SetData(0,0,0);
-
-                for (iX = 1; iX < (iXBound - 1); iX++) {
-                    int i = iX + offset;
-                    akNormal.addEquals(akNormalTmp[i]);
-                    akNormal.addEquals(akNormalTmp[i - 1]);
-                    akNormal.addEquals(akNormalTmp[i + 1]);
-                    akNormal.addEquals(akNormalTmp[i - iXBound]);
-                    akNormal.addEquals(akNormalTmp[i + iXBound]);
-                    akNormal.addEquals(akNormalTmp[i - iXYBound]);
-                    akNormal.addEquals(akNormalTmp[i + iXYBound]);
-                    akNormal.Normalize();
-
-                    int iIndex = iZ * iYBound * iXBound + iY * iXBound + iX;
-                    acData[iIndex*3+0] = (byte)(akNormal.X()*127 + 127);
-                    acData[iIndex*3+1] = (byte)(akNormal.Y()*127 + 127);
-                    acData[iIndex*3+2] = (byte)(akNormal.Z()*127 + 127);
-                }
-            }
-        }
-        akNormal = null;
-
-        for (int i = 0; i < akNormalTmp.length; i++) {
-            akNormalTmp[i] = null;
-        }
-        akNormalTmp = null;
-        kSimpleImageA = null;
-        System.gc();
-
-        return acData;
     }
 
     /**
@@ -652,6 +526,15 @@ public class VolumeImage
         return m_kVolumeTargetA;
     }
 
+    /**
+     * Return the Texture containing the imageA volume data.
+     * @return Texture containing the imageA volume data.
+     */
+    public Buffer GetVolumeTargetBuffer()
+    {
+        return m_kVolumeTargetA.GetImage().GetDataBuffer();
+    }
+
     public Texture GetColorMapTarget()
     {
         return m_kColorMapTargetA;
@@ -738,4 +621,5 @@ public class VolumeImage
     {
         return m_kImageA;
     }
+
 }

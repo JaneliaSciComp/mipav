@@ -268,7 +268,7 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
     private boolean m_bSurfaceVisible = true;
 
 
-    private JPanelVolOpacity m_kVolOpacityPanel;
+    private JPanelVolOpacityBase m_kVolOpacityPanel;
 
     private JSlider m_kVolumeBlendSlider;
 
@@ -860,7 +860,11 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
             serif12B = MipavUtil.font12B;
             progressBar.updateValueImmed(5);
 
-            m_kVolOpacityPanel = new JPanelVolOpacity( this, imageA, imageB );
+            if (imageA.isColorImage()) {
+                m_kVolOpacityPanel = new JPanelVolOpacityRGB(this, imageA, imageB);
+            } else {
+                m_kVolOpacityPanel = new JPanelVolOpacity(this, imageA, imageB);
+            }
             
 
             ImageCatalog.SetActive( new ImageCatalog("Main", System.getProperties().getProperty("user.dir")) );      
@@ -944,7 +948,7 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
      * @param  flag  call super dispose or not
      */
     public void disposeLocal(boolean flag) {
-        // System.out.println( "######ViewJFrameVolView disposeLocal" );
+        //System.out.println( "######VolumeViewer disposeLocal" );
 
         /** Control panels for the raycast render */
         raycastCameraPanel = null;
@@ -984,10 +988,10 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
             opacityDialog = null;
         }
 
-//         if (surRender != null) {
-//             surRender.close();
-//             surRender = null;
-//         }
+        if (m_kVolumeImageA != null) {
+            m_kVolumeImageA.dispose();
+            m_kVolumeImageA = null;
+        }
 
         if (raycastRenderWM != null) {
             raycastRenderWM.dispose();
@@ -1009,13 +1013,16 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
             resampleDialog = null;
         }
 
-//         for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++) {
 
-//             if (m_akPlaneRender[i] != null) {
-//                 m_akPlaneRender[i].disposeLocal();
-//                 m_akPlaneRender[i] = null;
-//             }
-//         }
+            if (m_akPlaneRender[i] != null) {
+                m_akPlaneRender[i].disposeLocal();
+                m_akPlaneRender[i] = null;
+            }
+        }
+
+        m_kAnimator.stop();
+        m_kAnimator = null;
 
         if (imageA != null) {
             imageA.removeImageDisplayListener(this);
@@ -1167,7 +1174,7 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
 
             transformFunct = null;
             
-            new ViewJFrameImage((ModelImage)(imageA), null, new Dimension(610, 200), false);
+            //new ViewJFrameImage((ModelImage)(imageA), null, new Dimension(610, 200), false);
             
         }
 
@@ -2404,7 +2411,7 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
         radioXRAY = new JRadioButton("DRR", false);
         radioXRAY.setFont(serif12);
         group1.add(radioXRAY);
-        radioCOMPOSITE = new JRadioButton("Composite", false);
+        radioCOMPOSITE = new JRadioButton("Composite", true);
         radioCOMPOSITE.setFont(serif12);
         group1.add(radioCOMPOSITE);
         radioSURFACEFAST = new JRadioButton("Surface", false);
@@ -2415,11 +2422,10 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
         group1.add(radioSURFACE);
 
         int rayCastMode = ViewJComponentRenderImage.ModeMIP; 
-        radioMIP.setSelected(true);
-
         radioMIP.addItemListener(this);
         radioXRAY.addItemListener(this);
         radioCOMPOSITE.addItemListener(this);
+        //radioCOMPOSITE.setSelected(true);
         radioSURFACE.addItemListener(this);
         radioSURFACEFAST.addItemListener(this);
         surfaceToolBar.add(radioMIP);

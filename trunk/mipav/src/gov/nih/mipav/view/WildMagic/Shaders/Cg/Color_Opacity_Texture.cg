@@ -19,6 +19,7 @@ void p_Color_Opacity_Texture
     in float3         kBaseTCoord : TEXCOORD0,
     out float4        kPixelColor : COLOR,
     uniform float     blend,
+    uniform float     IsColor,
     uniform sampler3D VolumeImageA : TEXUNIT1, 
     uniform sampler1D ColorMapA : TEXUNIT2 )
 //     uniform sampler1D ColorMapA : TEXUNIT2, 
@@ -33,8 +34,17 @@ void p_Color_Opacity_Texture
 //     }
 //     else
 //     {
+    if ( IsColor != 0 )
+    {
+        kPixelColor.r = tex1D(ColorMapA,color.r).r;
+        kPixelColor.g = tex1D(ColorMapA,color.g).g;
+        kPixelColor.b = tex1D(ColorMapA,color.b).b;
+    }
+    else
+    {
         kPixelColor.rgb = tex1D(ColorMapA,color.r).rgb;
-//     }
+    }
+    //}
     kPixelColor.a = blend;
 }
 //----------------------------------------------------------------------------

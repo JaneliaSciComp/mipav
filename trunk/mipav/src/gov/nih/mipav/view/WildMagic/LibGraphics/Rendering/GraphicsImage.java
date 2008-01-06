@@ -72,6 +72,9 @@ public class GraphicsImage extends GraphicsObject
     /** For a lookup of the renderer constant type from its string name. */
     private static HashMap<Integer,FormatMode> ms_pkFormatModeMap = new HashMap<Integer,FormatMode>();
 
+    /** For a lookup of the renderer constant type from its string name. */
+    private static HashMap<Integer,Type> ms_pkTypeMap = new HashMap<Integer,Type>();
+
     /** GraphicsImage format mode: */
     public enum FormatMode
     {
@@ -109,8 +112,46 @@ public class GraphicsImage extends GraphicsObject
 
     };
 
+    /** GraphicsImage format mode: */
+    public enum Type
+    {
+        IT_BYTE ( 1, "IT_BYTE" ),
+        IT_UBYTE ( 1, "IT_UBYTE" ),
+        IT_SHORT ( 2, "IT_SHORT" ),
+        IT_USHORT ( 2, "IT_USHORT" ),
+        IT_INT ( 4, "IT_INT" ),
+        IT_UINT ( 4, "IT_UINT" ),
+        IT_LONG ( 8, "IT_LONG" ),
+        IT_FLOAT ( 4, "IT_FLOAT" ),
+        IT_DOUBLE ( 8, "IT_DOUBLE" ),
+        IT_QUANTITY ( 0, "" );
+
+        private final int ms_aiBytesPerPixel;
+        private final String ms_kName;
+        Type( int iBytesPerPixel, String kFormatName )
+        {
+            this.ms_aiBytesPerPixel = iBytesPerPixel;
+            this.ms_kName = kFormatName;
+            m_iValue = Init();
+            ms_pkTypeMap.put( m_iValue, this );
+        }
+        public int BytesPerPixel() { return ms_aiBytesPerPixel; }
+        public String Name() { return ms_kName; }
+
+        private int Init ()
+        {
+            return m_iInitValue++;
+        }
+        public int Value() { return m_iValue; }
+        private static int m_iInitValue = 0;
+        private int m_iValue;
+
+    };
+
     /** Initializes format mode static enum: */
     private static FormatMode m_eFormatModeStatic = FormatMode.IT_QUANTITY;
+    /** Initializes format mode static enum: */
+    private static Type m_eTypeStatic = Type.IT_QUANTITY;
 
 
     /** Construct a 1D image (float)
@@ -249,6 +290,37 @@ public class GraphicsImage extends GraphicsObject
         SetName(acImageName);
         ImageCatalog.GetActive().Insert(this);
     }
+
+    /** Construct a 3D image (float)
+     * @param eFormat, image format
+     * @param iBound0, image dimension 1.
+     * @param iBound1, image dimension 2.
+     * @param iBound1, image dimension 2.
+     * @param afData, image data.
+     * @param acImageName, image name.
+     */
+    public GraphicsImage (FormatMode eFormat, int iBound0, int iBound1, int iBound2,
+                          Buffer kBuffer, String acImageName)
+    {
+        assert(BitHacks.IsPowerOfTwo(iBound0)
+               && BitHacks.IsPowerOfTwo(iBound1)
+               && BitHacks.IsPowerOfTwo(iBound2));
+        assert(acImageName != null);
+
+        m_eFormat = eFormat;
+        m_iDimension = 3;
+        m_aiBound[0] = iBound0;
+        m_aiBound[1] = iBound1;
+        m_aiBound[2] = iBound2;
+        m_iQuantity = iBound0*iBound1*iBound2;
+
+        m_kBuffer = kBuffer;
+
+        SetName(acImageName);
+        ImageCatalog.GetActive().Insert(this);
+    }
+
+
 
     /** Default constructor. */
     public GraphicsImage ()
@@ -470,16 +542,28 @@ public class GraphicsImage extends GraphicsObject
      */
     public Buffer GetDataBuffer ()
     {
-        Buffer imageBuf;
-        if ( m_afData == null )
+        if ( m_kBuffer != null )
         {
-            imageBuf = ByteBuffer.wrap( m_aucData );
+            return m_kBuffer;
         }
-        else
+
+        Buffer imageBuf = null;
+        if ( m_aucData != null )
         {
-            imageBuf = FloatBuffer.wrap( m_afData );            
-        }        
-        imageBuf.rewind();
+            imageBuf = ByteBuffer.wrap( m_aucData );        
+            imageBuf.rewind();
+        }
+        else if ( m_afData != null )
+        {
+            imageBuf = FloatBuffer.wrap( m_afData );          
+            imageBuf.rewind();          
+        }
+        if ( imageBuf == null )
+        {
+            //m_aucData = new byte[m_iQuantity * 4];
+            //imageBuf = ByteBuffer.wrap( m_aucData );        
+            //imageBuf.rewind();
+        }
         return imageBuf;                  
     }
 
@@ -680,6 +764,8 @@ public class GraphicsImage extends GraphicsObject
 
     /** Image format mode. */
     protected FormatMode m_eFormat;
+    /** Image format mode. */
+    protected Type m_eType = Type.IT_QUANTITY;
     /** Image number of dimensions. */
     protected int m_iDimension;
     /** Image extents. */
@@ -687,9 +773,12 @@ public class GraphicsImage extends GraphicsObject
     /** Image size. */
     protected int m_iQuantity;
     /** Image byte data. */
-    protected byte[] m_aucData;
+    protected byte[] m_aucData = null;
     /** Image float data. */
     protected float[] m_afData = null;
+
+    protected Buffer m_kBuffer = null;
+
     /** Converting from 0-255 range to 0-1 range. */
     private static final float fInv255 = 1.0f/255.0f;
 

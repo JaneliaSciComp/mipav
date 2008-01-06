@@ -296,13 +296,17 @@ void computeColor( float3 kModelPosition, float3 kModelNormal, float3 CameraWorl
 {
     if ( LightType == -1 )
     {
+//         color_sample.r = kModelNormal.x;
+//         color_sample.g = kModelNormal.y;
+//         color_sample.b = kModelNormal.z;
         color_sample.r = 0;
         color_sample.g = 0;
         color_sample.b = 0;
     }
     else
     {
-        float3 local_normal = kModelNormal.xyz - (0.5, 0.5, 0.5);
+        //float3 local_normal = kModelNormal.xyz - (0.5, 0.5, 0.5);
+        float3 local_normal = (2.0* kModelNormal.xyz) - (1.0, 1.0, 1.0);
         local_normal = normalize( local_normal );
 
         float3 LocalMaterialAmbient = MaterialAmbient;

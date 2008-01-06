@@ -18,8 +18,20 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 import gov.nih.mipav.view.WildMagic.LibRenderers.OpenGLRenderer.*;
 
+/** Displays the Orientation Cube in the VolumeViewer.
+ * @see VolumeObject.java
+ * @see GPUVolumeRender.java
+ */
 public class VolumeOrientationCube extends VolumeObject
 {
+    /** Creates a new VolumeOrientationCube object.
+     * @param kImageA, the VolumeImage containing shared data and textures for
+     * rendering.
+     * @param kTranslate, translation in the scene-graph for this object.
+     * @param fX, the size of the volume in the x-dimension (extent * resolutions)
+     * @param fY, the size of the volume in the y-dimension (extent * resolutions)
+     * @param fZ, the size of the volume in the z-dimension (extent * resolutions)
+     */
     public VolumeOrientationCube ( VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ )
     {
         super(kImageA,kTranslate,fX,fY,fZ);
@@ -29,10 +41,18 @@ public class VolumeOrientationCube extends VolumeObject
         m_kScene.UpdateRS();
     }
 
-    public void PreRender( Renderer kRenderer, Culler kCuller )
-    {
-    }
+    /**
+     * PreRender the object, for embedding in the ray-cast volume.
+     * @param kRenderer, the OpenGLRenderer object.
+     * @param kCuller, the Culler object.
+     */
+    public void PreRender( Renderer kRenderer, Culler kCuller ) {}
 
+    /**
+     * Render the object.
+     * @param kRenderer, the OpenGLRenderer object.
+     * @param kCuller, the Culler object.
+     */
     public void Render( Renderer kRenderer, Culler kCuller )
     {
         if ( !m_bDisplay )
@@ -48,6 +68,7 @@ public class VolumeOrientationCube extends VolumeObject
         }
     }
 
+    /** Delete local memory. */
     public void dispose()
     {
         m_akOrientationCube = null;
@@ -60,6 +81,7 @@ public class VolumeOrientationCube extends VolumeObject
         }
     }
     
+    /** Creates the orientation cube. */
     private void CreateCube()
     {
         m_kScene = new Node();
@@ -168,7 +190,6 @@ public class VolumeOrientationCube extends VolumeObject
             for ( int i = 0; i < 3; i++ )
             {
                 akAxisLabels[i] = FileInfoBase.getAxisOrientationStr( axisOrientation[i] ).toLowerCase();
-                // System.out.println(akAxisLabels[i]);
                 /* The file name correspond to the axis strings, read the file
                  * names from the axis strings: */
                 m_aakAxisFiles[i*2 +0] = new String( String.valueOf( akAxisLabels[i].charAt(0) ) );

@@ -170,6 +170,10 @@ public class OpenGLRenderer extends Renderer
         gl.glGetIntegerv(GL.GL_MAX_TEXTURE_COORDS,m_aiParams,0);
         m_iMaxTCoords = m_aiParams[0];
 
+        m_iMax3DTexSize = 0;
+        gl.glGetIntegerv(GL.GL_MAX_3D_TEXTURE_SIZE,m_aiParams,0);
+        m_iMax3DTexSize = m_aiParams[0];
+
         // OpenGL supports a primary and a secondary color
         m_iMaxColors = 2;
 
@@ -1732,6 +1736,19 @@ public class OpenGLRenderer extends Renderer
         int iComponent = ms_aeImageComponents[pkImage.GetFormat().Value()];
         int eFormat = ms_aeImageFormats[pkImage.GetFormat().Value()];
         int eIType = ms_aeImageTypes[pkImage.GetFormat().Value()];
+//         if ( aucData instanceof ShortBuffer )
+//         {
+//             eIType = GL.GL_UNSIGNED_SHORT;
+//         }
+//         else if ( aucData instanceof ByteBuffer )
+//         {
+//             eIType = GL.GL_BYTE;
+//         }
+        if ( aucData instanceof ByteBuffer )
+        {
+            eIType = GL.GL_UNSIGNED_BYTE;
+        }
+
 
         // Generate the name and binding information.
         gl.glGenTextures((int)1,m_aiParams,0);
@@ -1877,8 +1894,11 @@ public class OpenGLRenderer extends Renderer
         {
             assert(false);
         }
-        aucData.clear();
-        aucData = null;
+        if ( aucData != null )
+        {
+            aucData.clear();
+            aucData = null;
+        }
         return rpkID;
     }
 
@@ -2005,6 +2025,20 @@ public class OpenGLRenderer extends Renderer
         aucData.clear();
         aucData = null;
     }
+
+    public void LoadSubTexture (Texture kTarget, int iZ )
+    {
+        if ( m_kDrawable == null ) { System.err.println( "OnLoadSubTexture GLDrawable null" ); return; }
+        GL gl = m_kDrawable.getGL();
+
+        ResourceIdentifier pkID = kTarget.GetIdentifier(this);
+        OnEnableTexture(pkID);
+        
+        GraphicsImage pkImage = kTarget.GetImage();
+        gl.glCopyTexSubImage3D(GL.GL_TEXTURE_3D,0,0,0,iZ,0,0,pkImage.GetBound(0),
+                           pkImage.GetBound(1));
+    }
+
 
     /**
      * Release the Texture described in the ResourceIdentifier parameter.

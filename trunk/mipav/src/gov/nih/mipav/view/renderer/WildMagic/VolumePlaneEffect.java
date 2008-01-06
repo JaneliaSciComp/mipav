@@ -7,6 +7,13 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 
+/** The VolumePlaneEffect ShaderEffect creates shaders for mapping the volume
+ * data onto the planes for the 3-orthogonal planes displayed in the
+ * VolumeViewer and for the PlaneRender objects.
+ * @see GPUVolumeRender.java
+ * @see VolumeViewer.java
+ * @see PlaneRender.java
+ */
 public class VolumePlaneEffect extends ShaderEffect
     implements StreamInterface
 {
@@ -16,13 +23,9 @@ public class VolumePlaneEffect extends ShaderEffect
 
     /** 
      * Creates a new VolumeShaderEffect object.
-     * @param kImageA ModelImage A
-     * @param kLUTa, LUT for ModelImage A
-     * @param kRGBTa, RGB lookup table for ModelImage A
-     * @param kImageB ModelImage B
-     * @param kLUTb, LUT for ModelImage B
-     * @param kRGBTb, RGB lookup table for ModelImage B
-     * @param kSceneTarget, the SceneImage texture with the back-facing polygon texture coordinates.
+     * @param kVolumeImageA, the VolumeImage containing shared data and
+     * textures for rendering.
+     * @param bUnique, when true the shader program must be unique.
      */
     public VolumePlaneEffect ( VolumeImage kVolumeImageA, boolean bUnique )
     {
@@ -30,6 +33,11 @@ public class VolumePlaneEffect extends ShaderEffect
         Init( bUnique );
     }
     
+    /** 
+     * Creates a new VolumeShaderEffect object.
+     * @param kVolumeImageA, the VolumeImage containing shared data and
+     * textures for rendering.
+     */
     public VolumePlaneEffect ( VolumeImage kVolumeImageA )
     {
         m_kVolumeImageA = kVolumeImageA;
@@ -52,6 +60,7 @@ public class VolumePlaneEffect extends ShaderEffect
         super.dispose();
     }
 
+    /** Initializes the ShaderEffect vertex and pixel shader programs. */
     private void Init ( boolean bUnique )
     {
         /* Set single-pass rendering: */
@@ -77,6 +86,18 @@ public class VolumePlaneEffect extends ShaderEffect
                                 Program pkPProgram)
     {
         Blend(1);
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("IsColor") != null ) 
+        {
+            if ( m_kVolumeImageA.GetImage().isColorImage() )
+            {
+                pkProgram.GetUC("IsColor").SetDataSource(new float[]{1,0,0,0});
+            }
+            else
+            {
+                pkProgram.GetUC("IsColor").SetDataSource(new float[]{0,0,0,0});
+            }
+        }       
     }
     /**
      * Reload the current shader programs from disk, compile and parse and
@@ -107,6 +128,7 @@ public class VolumePlaneEffect extends ShaderEffect
 
     /**
      * Init the axis-aligned clip planes.
+     * @param afData, the axis-aligned clip plane default positions.
      */
     public void InitClip( float[] afData )
     {
@@ -389,6 +411,7 @@ public class VolumePlaneEffect extends ShaderEffect
         return pkTree;
     }
 
+    /** Shared volume data and textures. */
     private VolumeImage m_kVolumeImageA;
 
     /** stores the axis-aligned clip plane information: */

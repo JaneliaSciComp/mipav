@@ -18,13 +18,38 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 import gov.nih.mipav.view.WildMagic.LibRenderers.OpenGLRenderer.*;
 
+/**
+ * VolumeObect: abstract base class for all rendered objects in the Volume
+ * Tri-Planar view.  Stores the reference to the shared VolumeImage object
+ * which contains the volume data and the shared textures needed to render the
+ * data.
+ *
+ * @see VolumeRayCast.java
+ * @see VolumeBoundingBox.java
+ * @see VolumeClip.java
+ * @see VolumeDTI.java
+ * @see VolumeOrientationCube.java
+ * @see VolumeSlices.java
+ */
 public abstract class VolumeObject
 {
+    /** Create a new VolumeObject with the VolumeImage parameter.
+     * @param kImageA, the VolumeImage containing shared data and textures for
+     * rendering.
+     */
     public VolumeObject (VolumeImage kImageA)
     {
         m_kVolumeImageA = kImageA;
     }
     
+    /** Create a new VolumeObject with the VolumeImage parameter.
+     * @param kImageA, the VolumeImage containing shared data and textures for
+     * rendering.
+     * @param kTranslate, translation in the scene-graph for this object.
+     * @param fX, the size of the volume in the x-dimension (extent * resolutions)
+     * @param fY, the size of the volume in the y-dimension (extent * resolutions)
+     * @param fZ, the size of the volume in the z-dimension (extent * resolutions)
+     */
     public VolumeObject (VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ)
     {
         m_kVolumeImageA = kImageA;
@@ -35,35 +60,89 @@ public abstract class VolumeObject
         m_fZ = fZ;
     }
 
+    /** delete local memory. */
+    public void dispose()
+    {
+        m_kVolumeImageA = null;
+        m_kTranslate = null;
+        if ( m_kScene != null )
+        {
+            m_kScene.dispose();
+            m_kScene = null;
+        }
+        if ( m_kCull != null )
+        {
+            m_kCull = null;
+        }
+        if ( m_kAlpha != null )
+        {
+            m_kAlpha = null;
+        }
+    }
+
+    /**
+     * PreRender the object, for embedding in the ray-cast volume.
+     * @param kRenderer, the OpenGLRenderer object.
+     * @param kCuller, the Culler object.
+     */
     public abstract void PreRender( Renderer kRenderer, Culler kCuller );
 
+    /**
+     * Render the object.
+     * @param kRenderer, the OpenGLRenderer object.
+     * @param kCuller, the Culler object.
+     */
     public abstract void Render( Renderer kRenderer, Culler kCuller );
 
+    /** 
+     * Render the object after all other objects have been rendererd. Useful
+     * for screen-space objects such as the eye-clip plane.
+     * @param kRenderer, the OpenGLRenderer object.
+     * @param kCuller, the Culler object.
+     */
     public void PostRender( Renderer kRenderer, Culler kCuller ) {}
 
-    public void Display( boolean bDisplay )
+    /**
+     * Set the object display to on/off.
+     * @param bDisplay when true display this object, when false do not
+     * display the object.
+     */
+    public void SetDisplay( boolean bDisplay )
     {
         m_bDisplay = bDisplay;
     }
 
-    public boolean Display()
+    /**
+     * Get the object display either on/off.
+     * @return when true display this object, when false do not display the
+     * object.
+     */
+    public boolean GetDisplay()
     {
         return m_bDisplay;
     }
 
+    /**
+     * Get the object's parent node in the scene graph.
+     * @param m_kScene, the Node containing this object.
+     */
     public Node GetScene()
     {
         return m_kScene;
     }
-
+    /** boolean to turn rendering on/off for this object. */
     protected boolean m_bDisplay = false;
+    /** the scene-graph node containing the rendered object. */
     protected Node m_kScene = null;
+    /** a reference to the VolumeImage containing the shared data and textures for display. */
     protected VolumeImage m_kVolumeImageA;
+    /** local translation in the parent scene-graph. */
     protected Vector3f m_kTranslate;
+    /** Culling of this object (front-face, back-face, none) */
     protected CullState m_kCull;
+    /** Alpha blending for this object. */
     protected AlphaState m_kAlpha;
     
-    protected float m_fX;
-    protected float m_fY;
-    protected float m_fZ;
+    /** Volume coordinates of the data (extents * resolutions): */
+    protected float m_fX, m_fY, m_fZ;
 }

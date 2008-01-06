@@ -1775,6 +1775,9 @@ public abstract class Renderer
      * @return the new ResourceIdentifier for the Texture
      */
     public abstract void OnReloadTexture (ResourceIdentifier pkID);
+
+    public abstract void LoadSubTexture (Texture kTarget, int iZ );
+
     /**
      * Release the Texture described in the ResourceIdentifier parameter.
      * @param pkID, the ResourceIdentifier with the Texture to release.
@@ -2689,6 +2692,8 @@ public abstract class Renderer
     protected int m_iMaxColors;
     /** Maximum number of texture coordinates. */
     protected int m_iMaxTCoords;
+    /** Maximum 3D texture size. */
+    protected int m_iMax3DTexSize;
     /** Maximum number of vertex shader images. */
     protected int m_iMaxVShaderImages;
     /** Maximum number of pixel shader images. */

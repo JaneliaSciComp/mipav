@@ -7,21 +7,64 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibRenderers.OpenGLRenderer.*;
 
+/**
+ * 
+ * VolumeRayCast and VolumeShaderEffect implement ray-cast volume shading.
+ *
+ * VolumeRayCast applies a VolumeShaderEffect to the proxy geometry. The
+ * VolumeShaderEffect contains the shader programs, and shader UserConstant
+ * parameters needed for producing the ray-traced images. It extends the
+ * ShaderEffect class in Wild Magic.  Volume rendering with proxy geometry is
+ * presented in chapters 39 and 40 of GPU Gems: Programming Techniques, Tips,
+ * and Tricks for Real-Time Graphics by Randima Fernando. The volume shaders
+ * need to compute the start- and end-points of the ray to trace in the 3D
+ * volume texture. The proxy geometry provides a way of generating this
+ * information.
+ * 
+ * In the VolumeRayCast class, the proxy geometry is a cube with x,y,z
+ * dimensions based on the ModelImage data. During every rendering pass, cube
+ * proxy-geometry is rendered twice. The first rendering pass renders to an
+ * off-screen buffer, creating a texture image named SceneImage, which is used
+ * during the second rendering pass.
+ * 
+ * In the first rendering pass the cube is rendered with the vertex colors set
+ * equal to the texture coordinates, and with all front-facing polygons
+ * removed. The resulting texture image, SceneImage shows the back faces of
+ * the cube, where the color represents the texture coordinate of that
+ * pixel the cube face.
+ *
+ * The SceneImage texture is passed to the volume pixel-shader on the second
+ * rendering pass. The front-facing polygons of the cube are rendered, and the
+ * texture-coordinates for each pixel calculated in the vertex-shader. The
+ * pixel-shader thus has both the texture-coordinates of the front-facing
+ * polygons and the back-facing polygons and can calculate a ray through the
+ * volume in texture coordinates to trace.
+ */
 public class VolumeRayCast extends VolumeObject
 {
 
+    /**
+     * Creates a new VolumeRayCast object.
+     * @param kImageA the VolumeImage containing the data and textures for
+     * rendering.
+     */
     public VolumeRayCast( VolumeImage kImageA )
     {
         super(kImageA);
     }
 
+    /** 
+     * PreRender renders the proxy geometry into the PBuffer texture.
+     * @param kRenderer, the OpenGLRenderer object.
+     * @param kCuller, the Culler object.
+     */
     public void PreRender( Renderer kRenderer, Culler kCuller )
     {
         if ( !m_bDisplay )
         {
             return;
         }
-        m_spkScene.UpdateGS();
+        m_kScene.UpdateGS();
         if ( !m_bDisplaySecond )
         {
             // First rendering pass:
@@ -29,15 +72,15 @@ public class VolumeRayCast extends VolumeObject
             // back-facing texture-coordinates:
             m_kMesh.DetachAllEffects();
             m_kMesh.AttachEffect( m_spkVertexColor3Shader );
-            kCuller.ComputeVisibleSet(m_spkScene);
+            kCuller.ComputeVisibleSet(m_kScene);
             // Enable rendering to the PBuffer:
             kRenderer.SetBackgroundColor(ColorRGBA.BLACK);
             kRenderer.ClearBuffers();
             // Cull front-facing polygons:
-            m_spkCull.CullFace = CullState.CullMode.CT_FRONT;
+            m_kCull.CullFace = CullState.CullMode.CT_FRONT;
             kRenderer.DrawScene(kCuller.GetVisibleSet());
             // Undo culling:
-            m_spkCull.CullFace = CullState.CullMode.CT_BACK;
+            m_kCull.CullFace = CullState.CullMode.CT_BACK;
         }
         else
         {
@@ -46,53 +89,65 @@ public class VolumeRayCast extends VolumeObject
             // back-facing texture-coordinates:
             m_kMesh.DetachAllEffects();
             m_kMesh.AttachEffect( m_spkVertexColor3Shader );
-            kCuller.ComputeVisibleSet(m_spkScene);
+            kCuller.ComputeVisibleSet(m_kScene);
             // Enable rendering to the PBuffer:
             m_pkPBuffer.Enable();
             kRenderer.SetBackgroundColor(ColorRGBA.BLACK);
             kRenderer.ClearBuffers();
             
-            kCuller.ComputeVisibleSet(m_spkScene);
+            kCuller.ComputeVisibleSet(m_kScene);
             
             // Cull front-facing polygons:
-            m_spkCull.CullFace = CullState.CullMode.CT_FRONT;
+            m_kCull.CullFace = CullState.CullMode.CT_FRONT;
             kRenderer.DrawScene(kCuller.GetVisibleSet());
             // Undo culling:
-            m_spkCull.CullFace = CullState.CullMode.CT_BACK;
+            m_kCull.CullFace = CullState.CullMode.CT_BACK;
         }
         
     }
 
-    public void PostPreRender( Renderer kRenderer, Culler kCuller )
+    /** Turns off rendering to the PBuffer. Called after all objects displayed
+     * with the ray-cast volume have been pre-rendered. */
+    public void PostPreRender( )
     {
         // Disable the PBuffer
         m_pkPBuffer.Disable();
     }
 
+    /**
+     * Render the object.
+     * @param kRenderer, the OpenGLRenderer object.
+     * @param kCuller, the Culler object.
+     */
     public void Render( Renderer kRenderer, Culler kCuller )
     {
         if ( !m_bDisplay )
         {
             return;
         }
-        //System.err.println( "GPU" );        
         // Second rendering pass:
         // Draw the proxy grometry with the volume ray-tracing shader:
         m_kMesh.DetachAllEffects();
         m_kMesh.AttachEffect( m_kVolumeShaderEffect );
-        kCuller.ComputeVisibleSet(m_spkScene);
+        kCuller.ComputeVisibleSet(m_kScene);
         kRenderer.DrawScene(kCuller.GetVisibleSet());
 
 //         // Draw screne polygon:
 //         kRenderer.SetCamera(m_spkScreenCamera);
-//         kRenderer.Draw(m_spkScenePolygon);
+//         kRenderer.Draw(m_kScenePolygon);
     }
 
+    /** Sets displaying the second pass. For debugging. Rendering the first
+     * pass obly displays the proxy-geometry bounding box.
+     * @param bDisplay, when true display both passes (the default). When
+     * false display only the proxy-geometry.
+     */
     public void SetDisplaySecond( boolean bDisplay )
     {
         m_bDisplaySecond = bDisplay;
     }
 
+    /** delete local memory. */
     public void dispose()
     {
         if ( m_spkScenePolygon != null )
@@ -116,11 +171,6 @@ public class VolumeRayCast extends VolumeObject
             m_pkPBuffer.dispose();
             m_pkPBuffer = null;
         }
-        if ( m_spkWireframe != null )
-        {
-            m_spkWireframe.dispose();
-            m_spkWireframe = null;
-        }
         if ( m_kMaterial != null )
         {
             m_kMaterial.dispose();
@@ -136,16 +186,30 @@ public class VolumeRayCast extends VolumeObject
             m_kVolumeShaderEffect.dispose();
             m_kVolumeShaderEffect = null;
         }
-    }
-    
-    public Node GetScene()
-    {
-        return m_spkScene;
+        if ( m_spkScreenCamera != null )
+        {
+            m_spkScreenCamera.dispose();
+            m_spkScreenCamera = null;
+        }
+        if ( m_spkVertexColor3Shader != null )
+        {
+            m_spkVertexColor3Shader.dispose();
+            m_spkVertexColor3Shader = null;
+        }
+        super.dispose();
     }
     
     /**
      * Called by the init() function. Creates and initialized the scene-graph.
+     * @param eFormat, FrameBuffer.FormatType 
+     * @param eDepth, FrameBuffer.DepthType
+     * @param eStencil, FrameBuffer.StencilType
+     * @param eBuffering, FrameBuffer.BufferingType
+     * @param eMultisampling, FrameBuffer.MultisamplingType
+     * @param iWidth, canvas width
+     * @param iHeight, canvas height
      * @param arg0, the GLCanvas
+     * @param kRenderer, the OpenGLRenderer.
      */
     public void CreateScene ( FrameBuffer.FormatType eFormat,
             FrameBuffer.DepthType eDepth, FrameBuffer.StencilType eStencil,
@@ -163,19 +227,17 @@ public class VolumeRayCast extends VolumeObject
                 Vector3f.UNIT_Y,Vector3f.UNIT_X);
 
         // Create a scene graph with the face model as the leaf node.
-        m_spkScene = new Node();
+        m_kScene = new Node();
         CreateBox();
-        m_spkScene.AttachChild( m_kMesh );
-        m_spkWireframe = new WireframeState();
-        m_spkScene.AttachGlobalState(m_spkWireframe);
-        m_spkCull = new CullState();
-        m_spkScene.AttachGlobalState(m_spkCull);
+        m_kScene.AttachChild( m_kMesh );
+        m_kCull = new CullState();
+        m_kScene.AttachGlobalState(m_kCull);
 
-        m_spkAlpha = new AlphaState();
-        m_spkAlpha.BlendEnabled = true;
-        //m_spkAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE_MINUS_DST_COLOR;
-        //m_spkAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
-        m_spkScene.AttachGlobalState(m_spkAlpha);
+        m_kAlpha = new AlphaState();
+        m_kAlpha.BlendEnabled = true;
+        //m_kAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE_MINUS_DST_COLOR;
+        //m_kAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
+        m_kScene.AttachGlobalState(m_kAlpha);
 
         // Create a screen polygon to use as the RGBA render target.
         Attributes kAttr = new Attributes();
@@ -235,23 +297,26 @@ public class VolumeRayCast extends VolumeObject
                 eBuffering,eMultisampling,kRenderer,m_pkSceneTarget,arg0);
         assert(m_pkPBuffer != null);
 
-        m_spkScene.UpdateGS();
-        m_kTranslate = new Vector3f( m_spkScene.WorldBound.GetCenter() );
+        m_kScene.UpdateGS();
+        m_kTranslate = new Vector3f( m_kScene.WorldBound.GetCenter() );
         m_kTranslate.negEquals();
-        m_spkScene.GetChild(0).Local.SetTranslate( m_kTranslate );
+        m_kScene.GetChild(0).Local.SetTranslate( m_kTranslate );
 
         
         m_kVolumeShaderEffect = new VolumeShaderEffect_WM( m_kVolumeImageA,  
                 m_pkSceneTarget);
         kRenderer.LoadResources(m_kVolumeShaderEffect);
         m_kVolumeShaderEffect.SetPassQuantity(1);
-        m_kVolumeShaderEffect.CMPMode(kRenderer);
+        m_kVolumeShaderEffect.SURMode(kRenderer);
         m_kVolumeShaderEffect.Blend(0.75f);
 
-        m_spkScene.UpdateGS();
-        m_spkScene.UpdateRS();
+        m_kScene.UpdateGS();
+        m_kScene.UpdateRS();
     }
 
+    /** Returns the translation vector.
+     * @return the translation vector.
+     */
     public Vector3f GetTranslate()
     {
         return m_kTranslate;
@@ -434,39 +499,58 @@ public class VolumeRayCast extends VolumeObject
         return m_kMesh;
     }
 
+    /** Initializes axis-aligned clipping for the VolumeShaderEffect.
+     * @param afClip, the initial clipping parameters for axis-aligned clipping.
+     */
     public void InitClip( float[] afClip )
     {
         m_kVolumeShaderEffect.InitClip(afClip);
     }
 
+    /** Sets axis-aligned clipping for the VolumeShaderEffect.
+     * @param afClip, the clipping parameters for axis-aligned clipping.
+     */
     public void SetClip( int iWhich, float[] data)
     {
         m_kVolumeShaderEffect.SetClip(iWhich, data);
     }
 
-
+    /** Sets eye clipping for the VolumeShaderEffect.
+     * @param afEquation, the eye clipping equation.
+     */
     public void SetClipEye( float[] afEquation )
     {
         m_kVolumeShaderEffect.SetClipEye(afEquation);
     }
 
-
+    /** Sets inverse-eye clipping for the VolumeShaderEffect.
+     * @param afEquation, the inverse-eye clipping equation.
+     */
     public void SetClipEyeInv( float[] afEquation )
     {
         m_kVolumeShaderEffect.SetClipEyeInv(afEquation);
     }
 
+    /** Sets arbitrary clipping for the VolumeShaderEffect.
+     * @param afEquation, the arbitrary-clip plane equation.
+     */
     public void SetClipArb( float[] afEquation )
     {
         m_kVolumeShaderEffect.SetClipArb(afEquation);
     }
 
+    /** Reloads the VolumeShaderEffect current shader program.
+     * @param kRenderer, the OpenGLRenderer object.
+     */
     public void ReloadVolumeShader( Renderer kRenderer )
     {
         m_kVolumeShaderEffect.Reload( kRenderer );
     }
 
-
+    /** Sets lighting in the VolumeShaderEffect.
+     * @param kLightType, name of the light to set.
+     * @param afType, the type of light to set.
+     */
     public void SetLight( String kLightType, float[] afType )
     {
         m_kVolumeShaderEffect.SetLight(kLightType, afType);
@@ -474,6 +558,7 @@ public class VolumeRayCast extends VolumeObject
 
     /**
      * Display the volume in MIP mode.
+     * @param kRenderer, the OpenGLRenderer object.
      */
     public void MIPMode( Renderer kRenderer )
     {
@@ -482,6 +567,7 @@ public class VolumeRayCast extends VolumeObject
 
     /**
      * Display the volume in DDR mode.
+     * @param kRenderer, the OpenGLRenderer object.
      */
     public void DDRMode(Renderer kRenderer)
     {
@@ -490,6 +576,7 @@ public class VolumeRayCast extends VolumeObject
 
     /**
      * Display the volume in Composite mode.
+     * @param kRenderer, the OpenGLRenderer object.
      */
     public void CMPMode(Renderer kRenderer)
     {
@@ -498,6 +585,7 @@ public class VolumeRayCast extends VolumeObject
 
     /**
      * Display the volume in Composite Surface mode.
+     * @param kRenderer, the OpenGLRenderer object.
      */
     public void SURMode(Renderer kRenderer)
     {
@@ -506,6 +594,7 @@ public class VolumeRayCast extends VolumeObject
 
     /**
      * Display the volume in Surface mode.
+     * @param kRenderer, the OpenGLRenderer object.
      */
     public void SURFASTMode(Renderer kRenderer)
     {
@@ -557,12 +646,18 @@ public class VolumeRayCast extends VolumeObject
         m_kVolumeShaderEffect.SelfShadow(bShadow);
     }
 
+    /** Returns the VolumeShaderEffect.
+     * @return the VolumeShaderEffect.
+     */
     public VolumeShaderEffect_WM GetShaderEffect()
     {
         return m_kVolumeShaderEffect;
         
     }
 
+    /** Sets the blend factor for displaying the ray-cast volume with other objects in the scene.
+     * @param fBlend, the blend factor for the ray-cast volume.
+     */
     public void setVolumeBlend( float fBlend )
     {
         if ( m_kVolumeShaderEffect != null )
@@ -596,9 +691,6 @@ public class VolumeRayCast extends VolumeObject
         return m_kMaterial;
     }
 
-
-    //private VolumeImage m_kVolumeImageB;
-
     /** VolumeShaderEffect applied to proxy-geometry: */
     private VolumeShaderEffect_WM m_kVolumeShaderEffect = null;
 
@@ -606,15 +698,6 @@ public class VolumeRayCast extends VolumeObject
      * rendering of the proxy-geometry:*/
     private ShaderEffect m_spkVertexColor3Shader;
     
-    /** Scene-graph root node: */
-    private Node m_spkScene;
-    /** Turns wireframe on/off: */
-    private WireframeState m_spkWireframe;
-    /** Alpha blending state for blending between geometry and the volume. */
-    private AlphaState m_spkAlpha;
-    /** Culling: turns backface/frontface culling on/off: */
-    private CullState m_spkCull;
-
     /** Normalized volume extents: */
     private float m_fMax;
 
@@ -634,6 +717,6 @@ public class VolumeRayCast extends VolumeObject
     private Texture m_pkSceneTarget;
     /** Off-screen buffer the first-pass rendering is drawn into: */
     private OpenGLFrameBuffer m_pkPBuffer;
-    
+    /** For debugging, setting this to false causes only the proxy-geometry to be displayed. */
     private boolean m_bDisplaySecond = true;
 }

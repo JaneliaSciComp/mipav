@@ -6,8 +6,22 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 
+/**
+ * Displays the three orthogonal planes with the volume data.
+ * @see GPUVolumeRender.java
+ * @see VolumePlaneEffect.java
+ * @see VolumeObject.java
+ */
 public class VolumeSlices extends VolumeObject
 {
+    /** Create a new VolumeObject with the VolumeImage parameter.
+     * @param kImageA, the VolumeImage containing shared data and textures for
+     * rendering.
+     * @param kTranslate, translation in the scene-graph for this object.
+     * @param fX, the size of the volume in the x-dimension (extent * resolutions)
+     * @param fY, the size of the volume in the y-dimension (extent * resolutions)
+     * @param fZ, the size of the volume in the z-dimension (extent * resolutions)
+     */
     public VolumeSlices ( VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ )
     {
         super(kImageA,kTranslate,fX,fY,fZ);
@@ -30,6 +44,11 @@ public class VolumeSlices extends VolumeObject
         m_kScene.UpdateRS();
     }
 
+    /**
+     * PreRender the object, for embedding in the ray-cast volume.
+     * @param kRenderer, the OpenGLRenderer object.
+     * @param kCuller, the Culler object.
+     */
     public void PreRender( Renderer kRenderer, Culler kCuller )
     {
         if ( !m_bDisplay )
@@ -46,6 +65,11 @@ public class VolumeSlices extends VolumeObject
         kRenderer.DrawScene(kCuller.GetVisibleSet());
     }
 
+    /**
+     * Render the object.
+     * @param kRenderer, the OpenGLRenderer object.
+     * @param kCuller, the Culler object.
+     */
     public void Render( Renderer kRenderer, Culler kCuller )
     {
         if ( !m_bDisplay )
@@ -62,6 +86,7 @@ public class VolumeSlices extends VolumeObject
         kRenderer.DrawScene(kCuller.GetVisibleSet());
     }
 
+    /** Creates the scene graph. */
     private void CreatePlanes ( )
     {
         m_kScene = new Node();
@@ -89,6 +114,7 @@ public class VolumeSlices extends VolumeObject
         }
     }
 
+    /** Creates the bounding frames for the planes. */
     private void CreateBoundingBox ( )
     {
         Attributes kAttr = new Attributes();
@@ -134,12 +160,20 @@ public class VolumeSlices extends VolumeObject
         }
     }
 
+    /** Sets the opacity for the given plane.
+     * @param i, the plane index (0-3) in file coordinates.
+     * @param fAlpha, the opacity for the given plane.
+     */
     public void SetSliceOpacity( int i, float fAlpha )
     {
         int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
         m_akPlaneEffect[iIndex].Blend( fAlpha );
     }
 
+    /** Sets the bounding box color for the given plane.
+     * @param i, the plane index (0-3) in file coordinates.
+     * @param kColor, the new color.
+     */
     public void SetBoundingBoxColor( int i, ColorRGB kColor )
     {
         int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
@@ -150,6 +184,10 @@ public class VolumeSlices extends VolumeObject
         m_akBoundingBox[iIndex].VBuffer.Release();
     }
 
+    /** Turns on/off displaying the bounding box for the given plane.
+     * @param i, the plane index (0-3) in file coordinates.
+     * @param bShow, when true, the bounding box is displayed.
+     */
     public void ShowBoundingBox( int i, boolean bShow )
     {
         int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
@@ -168,6 +206,10 @@ public class VolumeSlices extends VolumeObject
         }
     }
 
+    /** Turns on/off displaying the given plane.
+     * @param i, the plane index (0-3) in file coordinates.
+     * @param bShow, when true, the plane is displayed.
+     */
     public void ShowSlice( int i, boolean bShow )
     {
         int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
@@ -186,7 +228,9 @@ public class VolumeSlices extends VolumeObject
         }
     }
 
-
+    /** Sets the positions of the three orthogonal planes. 
+     * @param kCenter, the positions in file coordinates.
+     */
     public void SetCenter( Vector3f kCenter )
     {
         float fX = m_fX * kCenter.X();
@@ -269,19 +313,71 @@ public class VolumeSlices extends VolumeObject
         }
     }
 
+    /** Delete local memory. */
+    public void dispose()
+    {
+        if ( m_kVertexColor3Shader != null )
+        {
+            m_kVertexColor3Shader.dispose();
+            m_kVertexColor3Shader = null;
+        }
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ( m_akPlaneEffect != null )
+            {
+                if ( m_akPlaneEffect[i] != null )
+                {
+                    m_akPlaneEffect[i].dispose();
+                    m_akPlaneEffect[i] = null;
+                }
+                m_akPlaneEffect = null;
+            }
+            if ( m_akPlanes != null )
+            {
+                if ( m_akPlanes[i] != null )
+                {
+                    m_akPlanes[i].dispose();
+                    m_akPlanes[i] = null;
+                }
+                m_akPlanes = null;
+            }
+            if ( m_akBoundingBox != null )
+            {
+                if ( m_akBoundingBox[i] != null )
+                {
+                    m_akBoundingBox[i].dispose();
+                    m_akBoundingBox[i] = null;
+                }
+                m_akBoundingBox = null;
+            }
+            if ( m_akColors != null )
+            {
+                if ( m_akColors[i] != null )
+                {
+                    m_akColors[i].dispose();
+                    m_akColors[i] = null;
+                }
+                m_akColors = null;
+            }
+        }
+        m_abShowPlanes = null;
+        m_abShowBoundingBox = null;
 
+    }
+
+    /** ShaderEffect for the plane bounding-boxes. */
     private VertexColor3Effect m_kVertexColor3Shader;
+    /** ShaderEffects for the planes. Each is unique so they can have different alpha values. */
     private VolumePlaneEffect[] m_akPlaneEffect;
+    /** The three orthogonal plane TriMeshes. */
     private TriMesh[] m_akPlanes;
+    /** Displaying each plane: */
     private boolean[] m_abShowPlanes = new boolean[]{true,true,true};
+    /** The three plane bounding-box Polylines. */
     private Polyline[] m_akBoundingBox;
+    /** Displaying each bounding-box: */
     private boolean[] m_abShowBoundingBox = new boolean[]{true,true,true};
-
-    private CullState m_kCull;
-    private AlphaState m_kAlpha;
 
     /** Set of colors used to draw the X and Y Bars and the Z box:. */
     private ColorRGB[] m_akColors = { new ColorRGB(1, 0, 0), new ColorRGB(0, 1, 0), new ColorRGB(1, 1, 0) };
-
-
 }
