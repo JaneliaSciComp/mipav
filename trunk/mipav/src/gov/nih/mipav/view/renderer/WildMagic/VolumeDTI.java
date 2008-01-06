@@ -13,9 +13,21 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 
+/** Displays the Diffusion Tensor tracts in the VolumeViewer.
+ * @see VolumeObject.java
+ * @see GPUVolumeRender.java
+ */
 public class VolumeDTI extends VolumeObject
 {
 
+    /** Creates a new VolumeDTI object.
+     * @param kImageA, the VolumeImage containing shared data and textures for
+     * rendering.
+     * @param kTranslate, translation in the scene-graph for this object.
+     * @param fX, the size of the volume in the x-dimension (extent * resolutions)
+     * @param fY, the size of the volume in the y-dimension (extent * resolutions)
+     * @param fZ, the size of the volume in the z-dimension (extent * resolutions)
+     */
     public VolumeDTI( VolumeImage kVolumeImage, Vector3f kTranslate, float fX, float fY, float fZ )
     {
         super(kVolumeImage,kTranslate,fX,fY,fZ);
@@ -26,6 +38,7 @@ public class VolumeDTI extends VolumeObject
         m_fScale = 1.0f/(float)(Math.max(m_iDimX,Math.max(m_iDimY,m_iDimZ)));
         m_iLen = m_iDimX*m_iDimY*m_iDimZ;
         
+        m_kScene = new Node();
         m_kVertexColor3Shader = new VertexColor3Effect();
         m_kAlpha = new AlphaState();
         m_kAlpha.BlendEnabled = true;
@@ -33,6 +46,11 @@ public class VolumeDTI extends VolumeObject
         m_kAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
     }
     
+    /**
+     * PreRender the object, for embedding in the ray-cast volume.
+     * @param kRenderer, the OpenGLRenderer object.
+     * @param kCuller, the Culler object.
+     */
     public void PreRender(Renderer kRenderer, Culler kCuller )
     {
         if ( !m_bDisplay )
@@ -49,6 +67,11 @@ public class VolumeDTI extends VolumeObject
         }
     }
 
+    /**
+     * Render the object.
+     * @param kRenderer, the OpenGLRenderer object.
+     * @param kCuller, the Culler object.
+     */
     public void Render( Renderer kRenderer, Culler kCuller )
     {
         if ( !m_bDisplay )
@@ -73,6 +96,11 @@ public class VolumeDTI extends VolumeObject
         kRenderer.SetAlphaState(aTemp);
     }
 
+    /**
+     * Sets the light for the EllipsoidsShader.
+     * @param kLightType, the name of the light to set (Light0, Light1, etc.)
+     * @param afType, the type of light (Ambient = 0, Directional = 1, Point = 2, Spot = 3).
+     */
     public void SetLight( String kLightType, float[] afType )
     {
         if ( m_kAllEllipsoidsShader != null )
@@ -205,6 +233,9 @@ public class VolumeDTI extends VolumeObject
         }
     }
     
+    /** Returns if there are tracts to display.
+     * @return true if there are tracts currently loaded, false otherwise.
+     */
     public boolean GetDisplayTract()
     {
         if ( m_kTracts == null )
@@ -414,7 +445,6 @@ public class VolumeDTI extends VolumeObject
         m_kSphere.AttachGlobalState(m_kEllipseMaterial);
         m_kSphere.AttachEffect(m_kAllEllipsoidsShader);
         m_kSphere.UpdateRS();
-        //m_spkEllipseScene.Local.SetScale( m_fX, m_fY, m_fZ );
     }
 
     /** Turns on/off displaying the fiber bundle tracts with ellipsoids.
@@ -498,14 +528,10 @@ public class VolumeDTI extends VolumeObject
                 m_kEllipseMaterial.Ambient = m_kColorEllipse;
                 m_kEllipseMaterial.Diffuse = m_kColorEllipse;
 
-                //m_spkEllipseScene.SetChild(0,kEllipse);
-                //m_spkEllipseScene.UpdateGS();
-                //m_spkEllipseScene.DetachChild(kEllipse);
-
                 kScaleNode.SetChild(0, kEllipse);
-                m_spkEllipseScene.SetChild(0,kScaleNode);
-                m_spkEllipseScene.UpdateGS();
-                m_spkEllipseScene.DetachChild(kScaleNode);
+                m_kScene.SetChild(0,kScaleNode);
+                m_kScene.UpdateGS();
+                m_kScene.DetachChild(kScaleNode);
                 kScaleNode.DetachChild(kEllipse);
                 
                 kRenderer.Draw(kEllipse);
@@ -578,9 +604,9 @@ public class VolumeDTI extends VolumeObject
                         m_kEllipseMaterial.Ambient = m_kColorEllipse;
                         m_kEllipseMaterial.Diffuse = m_kColorEllipse;
                         kScaleNode.SetChild(0, kEllipse);
-                        m_spkEllipseScene.SetChild(0,kScaleNode);
-                        m_spkEllipseScene.UpdateGS();
-                        m_spkEllipseScene.DetachChild(kScaleNode);
+                        m_kScene.SetChild(0,kScaleNode);
+                        m_kScene.UpdateGS();
+                        m_kScene.DetachChild(kScaleNode);
                         kScaleNode.DetachChild(kEllipse);
                         kRenderer.Draw(kEllipse);
                     }
@@ -616,21 +642,15 @@ public class VolumeDTI extends VolumeObject
                 kTract.DetachAllEffects();
                 kTract.AttachEffect( kShader );
                 
-                m_spkEllipseScene.SetChild(0,kTract);
-                m_spkEllipseScene.UpdateGS();
+                m_kScene.SetChild(0,kTract);
+                m_kScene.UpdateGS();
                 kRenderer.Draw(kTract);
-                m_spkEllipseScene.DetachChild(kTract);
+                m_kScene.DetachChild(kTract);
                 kTract.DetachEffect( kShader );
             }
         }
     }
 
-
-    public Node GetScene()
-    {
-        return m_spkEllipseScene;
-    }
-    
     /**
      * memory cleanup.
      */
@@ -647,16 +667,29 @@ public class VolumeDTI extends VolumeObject
         m_kTracts = null;
         m_kShaders = null;
         m_kEllipsoids = null;
-        m_kAllEllipsoidsShader = null;
-        m_kEllipseConstantColor = null;
-        m_kEllipseMaterial = null;
         m_kEigenVectors = null;
+        m_kEllipseConstantColor = null;
+
+        if ( m_kAllEllipsoidsShader != null )
+        {
+            m_kAllEllipsoidsShader.dispose();
+            m_kAllEllipsoidsShader = null;
+        }
+        if ( m_kEllipseMaterial != null )
+        {
+            m_kEllipseMaterial.dispose();
+            m_kEllipseMaterial = null;
+        }
         if ( m_kSphere != null )
         {
+            m_kSphere.dispose();
             m_kSphere = null;
         }
-        m_spkEllipseScene = null;
-        m_kColorEllipse = null;
+        if ( m_kColorEllipse != null )
+        {
+            m_kColorEllipse.dispose();
+            m_kColorEllipse = null;
+        }
     }
 
     /** Hashmap for multiple fiber bundles: */
@@ -687,9 +720,6 @@ public class VolumeDTI extends VolumeObject
     /** Ellipsoids is a sphere with a non-uniform scale based on the eigen
      * vectors and values. */
     private TriMesh m_kSphere;
-    /** Parent node of the ellipsoids, for computing rotation transformations: */
-    private Node m_spkEllipseScene = new Node();
-    private AlphaState m_kAlpha;
     /** The DTI volume extents: */
     private int m_iDimX, m_iDimY, m_iDimZ;
     /** Ellispods scale factor, based on the DTI volume: */
@@ -701,6 +731,6 @@ public class VolumeDTI extends VolumeObject
     /** maximum number of fiber tracts currently displayed. */
     private int m_iMaxGroups = 0;
     
+    /** Color Shader for rendering the tracts. */
     private ShaderEffect m_kVertexColor3Shader;
-
 }

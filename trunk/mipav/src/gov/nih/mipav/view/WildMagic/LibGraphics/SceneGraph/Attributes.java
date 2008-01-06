@@ -69,16 +69,28 @@ public class Attributes
     public void dispose()
     {
         // colors
-        m_kCOffset.clear();
-        m_kCOffset = null;
-        m_kCChannels.clear();
-        m_kCChannels = null;
+        if ( m_kCOffset != null )
+        {
+            m_kCOffset.clear();
+            m_kCOffset = null;
+        }
+        if ( m_kCChannels != null )
+        {
+            m_kCChannels.clear();
+            m_kCChannels = null;
+        }
 
         // texture coordinates
-        m_kTOffset.clear();
-        m_kTOffset = null;
-        m_kTChannels.clear();
-        m_kTChannels = null;
+        if ( m_kTOffset != null )
+        {
+            m_kTOffset.clear();
+            m_kTOffset = null;
+        }
+        if ( m_kTChannels != null )
+        {
+            m_kTChannels.clear();
+            m_kTChannels = null;
+        }
     }
 
     /** Set position attribute.

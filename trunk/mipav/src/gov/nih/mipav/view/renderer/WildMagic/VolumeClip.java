@@ -6,8 +6,20 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 
+/** Displays the Clipping frames in the VolumeViewer.
+ * @see VolumeObject.java
+ * @see GPUVolumeRender.java
+ */
 public class VolumeClip extends VolumeObject
 {
+    /** Creates a new VolumeClip object.
+     * @param kImageA, the VolumeImage containing shared data and textures for
+     * rendering.
+     * @param kTranslate, translation in the scene-graph for this object.
+     * @param fX, the size of the volume in the x-dimension (extent * resolutions)
+     * @param fY, the size of the volume in the y-dimension (extent * resolutions)
+     * @param fZ, the size of the volume in the z-dimension (extent * resolutions)
+     */
     public VolumeClip ( VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ )
     {
         super(kImageA,kTranslate,fX,fY,fZ);
@@ -18,6 +30,11 @@ public class VolumeClip extends VolumeObject
         m_kScene.UpdateRS();
     }
 
+    /**
+     * PreRender the object, for embedding in the ray-cast volume.
+     * @param kRenderer, the OpenGLRenderer object.
+     * @param kCuller, the Culler object.
+     */
     public void PreRender( Renderer kRenderer, Culler kCuller )
     {
         if ( !m_bDisplay )
@@ -29,6 +46,11 @@ public class VolumeClip extends VolumeObject
         kRenderer.DrawScene(kCuller.GetVisibleSet());
     }
 
+    /**
+     * Render the object.
+     * @param kRenderer, the OpenGLRenderer object.
+     * @param kCuller, the Culler object.
+     */
     public void Render( Renderer kRenderer, Culler kCuller )
     {
         if ( !m_bDisplay )
@@ -40,6 +62,12 @@ public class VolumeClip extends VolumeObject
         kRenderer.DrawScene(kCuller.GetVisibleSet());
     }
 
+    /** 
+     * Render the object after all other objects have been rendererd. Useful
+     * for screen-space objects such as the eye-clip plane.
+     * @param kRenderer, the OpenGLRenderer object.
+     * @param kCuller, the Culler object.
+     */
     public void PostRender( Renderer kRenderer, Culler kCuller )
     {
         if ( m_bDisplayClipEye || m_bDisplayClipEyeInv )
@@ -60,9 +88,36 @@ public class VolumeClip extends VolumeObject
         }
     }
 
-
+    /** Delete local memory. */
     public void dispose()
     {
+        if ( m_kVertexColor3Shader != null )
+        {
+            m_kVertexColor3Shader.dispose();
+            m_kVertexColor3Shader = null;
+        }
+        if ( m_kArbRotate != null )
+        {
+            m_kArbRotate.dispose();
+            m_kArbRotate = null;
+        }
+        m_abDisplayPolyline = null;
+
+        if ( m_kClipArb != null )
+        {
+            m_kClipArb.dispose();
+            m_kClipArb = null;
+        }
+        if ( m_kClipEye != null )
+        {
+            m_kClipEye.dispose();
+            m_kClipEye = null;
+        }
+        if ( m_kClipEyeInv != null )
+        {
+            m_kClipEyeInv.dispose();
+            m_kClipEyeInv = null;
+        }
         if ( m_kArbitraryClip != null )
         {
             m_kArbitraryClip.dispose();
@@ -144,7 +199,11 @@ public class VolumeClip extends VolumeObject
         m_kClipEyeInv.VBuffer.Release();
     }
 
-
+    /**
+     * Sets the axis-aligned clip plane clipping position.
+     * @param iWhich, one of the 6 clip planes
+     * @param fValue, the clipping position.
+     */
     public void setClipPlane( int iWhich, float fValue )
     {
         for ( int i = 0; i < 4; i++ )
@@ -214,17 +273,26 @@ public class VolumeClip extends VolumeObject
         m_kClipEyeInv.UpdateRS();
     }
 
+    /** Turns displaying the eye clip plane on/off.
+     * @param bDisplay, when true display the eye clip plane.
+     */
     public void DisplayEye(boolean bDisplay)
     {
         m_bDisplayClipEye = bDisplay;
     }
 
+    /** Turns displaying the inverse-eye clip plane on/off.
+     * @param bDisplay, when true display the inverse-eye clip plane.
+     */
     public void DisplayEyeInv(boolean bDisplay)
     {
         m_bDisplayClipEyeInv = bDisplay;
     }
 
-
+    /** Returns the value of the specified axis-aligend clip plane.
+     * @param iWhich, one of the 6 clip planes
+     * @return the value of the specified axis-aligend clip plane.
+     */
     public float GetValue(int iWhich)
     {
         float fValue = 0;
@@ -246,7 +314,7 @@ public class VolumeClip extends VolumeObject
         return fValue;
     }
 
-
+    /** Creates the clipping planes. */
     private void CreateClipPlanes()
     {
         m_kScene = new Node();
@@ -381,8 +449,8 @@ public class VolumeClip extends VolumeObject
         m_kClipEyeInv.UpdateRS();
     }
 
+    /** ShaderEffect for displaying the clip planes. */
     private VertexColor3Effect m_kVertexColor3Shader;
-
 
     /** axis-aligned clip plane polylines: */
     private Polyline[] m_akPolyline;

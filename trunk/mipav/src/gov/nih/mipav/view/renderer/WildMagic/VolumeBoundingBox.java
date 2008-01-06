@@ -6,8 +6,20 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 
+/** Displays the BoundingBox frame around the volume data in the VolumeViewer.
+ * @see VolumeObject.java
+ * @see GPUVolumeRender.java
+ */
 public class VolumeBoundingBox extends VolumeObject
 {
+    /** Creates a new bounding box object.
+     * @param kImageA, the VolumeImage containing shared data and textures for
+     * rendering.
+     * @param kTranslate, translation in the scene-graph for this object.
+     * @param fX, the size of the volume in the x-dimension (extent * resolutions)
+     * @param fY, the size of the volume in the y-dimension (extent * resolutions)
+     * @param fZ, the size of the volume in the z-dimension (extent * resolutions)
+     */
     public VolumeBoundingBox ( VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ )
     {
         super(kImageA,kTranslate,fX,fY,fZ);
@@ -19,8 +31,18 @@ public class VolumeBoundingBox extends VolumeObject
         m_kScene.UpdateRS();
     }
 
+    /**
+     * PreRender the object, for embedding in the ray-cast volume.
+     * @param kRenderer, the OpenGLRenderer object.
+     * @param kCuller, the Culler object.
+     */
     public void PreRender( Renderer kRenderer, Culler kCuller )  { }
 
+    /**
+     * Render the object.
+     * @param kRenderer, the OpenGLRenderer object.
+     * @param kCuller, the Culler object.
+     */
     public void Render( Renderer kRenderer, Culler kCuller )
     {
         if ( !m_bDisplay )
@@ -32,6 +54,7 @@ public class VolumeBoundingBox extends VolumeObject
         kRenderer.DrawScene(kCuller.GetVisibleSet());
     }
 
+    /** Delete local memory. */
     public void dispose()
     {
         for ( int i = 0; i < 6; i++ )
@@ -40,6 +63,11 @@ public class VolumeBoundingBox extends VolumeObject
             m_akBoundingBox[i] = null;
         }
         m_akBoundingBox = null;
+        if ( m_kVertexColor3Shader != null )
+        {
+            m_kVertexColor3Shader.dispose();
+            m_kVertexColor3Shader = null;
+        }
     }
     
     /**
@@ -58,6 +86,7 @@ public class VolumeBoundingBox extends VolumeObject
         }
     }
 
+    /** Creates the bounding box Polylines. */
     private void CreateBox()
     {
         m_kScene = new Node();
@@ -91,36 +120,36 @@ public class VolumeBoundingBox extends VolumeObject
             akOutlineSquare[i].SetTCoord2( 0, 2, 0, 0 ) ;
             akOutlineSquare[i].SetTCoord2( 0, 3, 1, 0 ) ;
         }
-        // neg x clipping:
+        // neg x polyline:
         akOutlineSquare[0].SetPosition3( 0, 0, 0, 0 ) ;
         akOutlineSquare[0].SetPosition3( 1, 0, 0, m_fZ ) ;
         akOutlineSquare[0].SetPosition3( 2, 0, m_fY, m_fZ ) ;
         akOutlineSquare[0].SetPosition3( 3, 0, m_fY, 0 ) ;
 
-        // pos x clipping:
+        // pos x polyline:
         akOutlineSquare[1].SetPosition3( 0, m_fX, 0, m_fZ ) ;
         akOutlineSquare[1].SetPosition3( 1, m_fX, 0, 0 ) ;
         akOutlineSquare[1].SetPosition3( 2, m_fX, m_fY, 0 ) ;
         akOutlineSquare[1].SetPosition3( 3, m_fX, m_fY, m_fZ ) ;
 
-        // neg y clipping:
+        // neg y polyline:
         akOutlineSquare[2].SetPosition3( 0, m_fX, 0, m_fZ ) ;
         akOutlineSquare[2].SetPosition3( 1, 0, 0, m_fZ ) ;
         akOutlineSquare[2].SetPosition3( 2, 0, 0, 0 ) ;
         akOutlineSquare[2].SetPosition3( 3, m_fX, 0, 0 ) ;
-        // pos y clipping:
+        // pos y polyline:
         akOutlineSquare[3].SetPosition3( 0, m_fX, m_fY, 0 ) ;
         akOutlineSquare[3].SetPosition3( 1, 0, m_fY, 0 ) ;
         akOutlineSquare[3].SetPosition3( 2, 0, m_fY, m_fZ ) ;
         akOutlineSquare[3].SetPosition3( 3, m_fX, m_fY, m_fZ ) ;
 
-        // neg z clipping:
+        // neg z polyline:
         akOutlineSquare[4].SetPosition3( 0, m_fX, 0, 0 ) ;
         akOutlineSquare[4].SetPosition3( 1, 0, 0, 0 ) ;
         akOutlineSquare[4].SetPosition3( 2, 0, m_fY, 0 ) ;
         akOutlineSquare[4].SetPosition3( 3, m_fX, m_fY, 0 ) ;
 
-        // pos z clipping:
+        // pos z polyline:
         akOutlineSquare[5].SetPosition3( 0, 0, 0, m_fZ ) ;
         akOutlineSquare[5].SetPosition3( 1, m_fX, 0, m_fZ ) ;
         akOutlineSquare[5].SetPosition3( 2, m_fX, m_fY, m_fZ ) ;
@@ -128,13 +157,14 @@ public class VolumeBoundingBox extends VolumeObject
 
         for ( int i = 0; i < 6; i++ )
         {
-            m_akBoundingBox[i] = new Polyline( new VertexBuffer(akOutlineSquare[i]), true, true );
+            m_akBoundingBox[i] = new Polyline( akOutlineSquare[i], true, true );
             m_akBoundingBox[i].AttachEffect( m_kVertexColor3Shader );
             m_akBoundingBox[i].Local.SetTranslate(m_kTranslate);
             m_kScene.AttachChild(m_akBoundingBox[i]);
         }
     }
+    /** The bounding box Polyline array. */
     private Polyline[] m_akBoundingBox;
+    /** The ShaderEffect for the bounding box. */
     private VertexColor3Effect m_kVertexColor3Shader;
-
 }

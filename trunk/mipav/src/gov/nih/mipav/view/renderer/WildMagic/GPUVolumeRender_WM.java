@@ -95,7 +95,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
      */
     public void dispose()
     {
-        //((OpenGLRenderer)m_pkRenderer).SetDrawable( GetCanvas() );
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            m_kDisplayList.get(i).dispose();
+        }
 
         if ( m_spkScene != null )
         {
@@ -201,6 +204,11 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             return;
         }
+        if ( m_bFirstRender )
+        {
+            m_kVolumeRayCast.SetDisplay(true);   
+            m_kSlices.SetDisplay(false);   
+        }
 
         //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         MeasureTime();
@@ -240,7 +248,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
             m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
             m_pkRenderer.ClearBuffers();
 
-            if ( m_kVolumeRayCast.Display() )
+            if ( m_kVolumeRayCast.GetDisplay() )
             {
                 if ( !m_bDisplaySecond )
                 {
@@ -255,7 +263,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
                     {
                         m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller );
                     }
-                    m_kVolumeRayCast.PostPreRender(m_pkRenderer, m_kCuller);
+                    m_kVolumeRayCast.PostPreRender();
 
                     m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
                     m_pkRenderer.ClearBuffers();
@@ -316,6 +324,15 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_pkRenderer.DisplayBackBuffer();
 
         UpdateFrameCount();
+        
+        if ( m_bFirstRender )
+        {
+            m_bFirstRender = false;
+            m_kVolumeRayCast.SetDisplay(false);   
+            m_kSlices.SetDisplay(true);   
+            VolumeImageViewer.main(m_kVolumeImageA);
+            CMPMode();
+        }
     }
 
     /**
@@ -445,8 +462,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_kVolumeRayCast.CreateScene( m_eFormat, m_eDepth, m_eStencil,
                 m_eBuffering, m_eMultisampling,
                 m_iWidth, m_iHeight, arg0, m_pkRenderer );
-        
-
 
         m_kTranslate = m_kVolumeRayCast.GetTranslate();
 
@@ -537,10 +552,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
             }
             return;
         case 'p':
-            DisplayBoundingBox( !m_kVolumeBox.Display() );
+            DisplayBoundingBox( !m_kVolumeBox.GetDisplay() );
             return;
         case 'o':
-            DisplayOrientationCube( !m_kVolumeCube.Display() );
+            DisplayOrientationCube( !m_kVolumeCube.GetDisplay() );
             return;
 
             /*
@@ -852,7 +867,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         if ( m_kVolumeClip != null )
         {
             m_kVolumeClip.displayClipPlane(iWhich, bDisplay);
-            m_kVolumeClip.Display(bDisplay);
+            m_kVolumeClip.SetDisplay(bDisplay);
         }
     }
 
@@ -864,7 +879,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
     {
         if ( m_kVolumeBox != null )
         {
-            m_kVolumeBox.Display(bDisplay);
+            m_kVolumeBox.SetDisplay(bDisplay);
         }
     }
 
@@ -876,7 +891,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
     {
         if ( m_kVolumeCube != null )
         {
-            m_kVolumeCube.Display(bDisplay);
+            m_kVolumeCube.SetDisplay(bDisplay);
         }
     }
 
@@ -1505,7 +1520,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
             m_kDisplayList.add(m_kDisplayList.size(), m_kDTIDisplay);
         }
         m_kDTIDisplay.addPolyline( kLine, iGroup );
-        m_kDTIDisplay.Display( true );
+        m_kDTIDisplay.SetDisplay( true );
     }
 
     /** 
@@ -1518,7 +1533,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             m_kDTIDisplay.removePolyline(iGroup);
         }
-        m_kDTIDisplay.Display( m_kDTIDisplay.GetDisplayTract() );
+        m_kDTIDisplay.SetDisplay( m_kDTIDisplay.GetDisplayTract() );
     }
 
     /** Sets the polyline color for the specified fiber bundle tract group. 
@@ -1641,7 +1656,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
     {
         if ( m_kVolumeRayCast != null )
         {
-            m_kVolumeRayCast.Display(bDisplay);
+            m_kVolumeRayCast.SetDisplay(bDisplay);
         }
     }
 
@@ -1649,7 +1664,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
     {
         if ( m_kSlices != null )
         {
-            m_kSlices.Display( bDisplay );
+            m_kSlices.SetDisplay( bDisplay );
         }
     }
 
@@ -1735,4 +1750,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
     private VolumeDTI m_kDTIDisplay = null;
     private VolumeBoundingBox m_kVolumeBox = null;
     private VolumeOrientationCube m_kVolumeCube = null;
+
+    private boolean m_bFirstRender = true;
+
 }

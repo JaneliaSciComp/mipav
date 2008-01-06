@@ -215,7 +215,7 @@ public class PlaneRender_WM extends JavaApplication3D
     }
 
     public void display(GLAutoDrawable arg0) {
-        MeasureTime();
+
         if (MoveCamera())
         {
             m_kCuller.ComputeVisibleSet(m_spkScene);
@@ -232,11 +232,9 @@ public class PlaneRender_WM extends JavaApplication3D
         {          
             //System.err.println( "PlaneRender " + m_iPlaneOrientation );
             m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-            //DrawFrameRate(8,GetHeight()-8,ColorRGBA.WHITE);
             m_pkRenderer.EndScene();
         }
         m_pkRenderer.DisplayBackBuffer();
-        UpdateFrameCount();
         
     }
 

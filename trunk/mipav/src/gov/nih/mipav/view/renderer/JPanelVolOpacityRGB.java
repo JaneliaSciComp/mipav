@@ -7,6 +7,7 @@ import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.WildMagic.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -156,6 +157,75 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
         mainPanel.add(scrollPaneA);
     }
 
+    /**
+     * Makes a frame of the histogram.
+     *
+     * @param  theParentFrame  Model RGB
+     * @param  _imageA         Model of imageA
+     * @param  _imageB         Model of imageB
+     */
+    public JPanelVolOpacityRGB(VolumeViewer theParentFrame, ModelImage _imageA, ModelImage _imageB) {
+        super(theParentFrame);
+
+        rendererProgressBar = ViewJFrameVolumeView.getRendererProgressBar();
+
+        int[] RGBExtents = new int[2];
+        RGBExtents[0] = 4;
+        RGBExtents[1] = 256;
+
+        imageA = _imageA;
+        imageB = _imageB;
+        RGBTA = new ModelRGB(RGBExtents);
+        RGBTB = new ModelRGB(RGBExtents);
+        RGBTA_GM = new ModelRGB(RGBExtents);
+        RGBTB_GM = new ModelRGB(RGBExtents);
+
+        tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(MipavUtil.font12B);
+
+        toolBar = buildRGBToolBar(this);
+
+        buildPanelA();
+
+        if (imageB != null) {
+            buildPanelB();
+        }
+
+        JPanel blendPanel = buildBlendPanel();
+        
+        JPanel stepsPanel = buildStepsPanel();
+
+        GridBagLayout gbLayout = new GridBagLayout();
+        GridBagConstraints gbConstraints = new GridBagConstraints();
+        JPanel subPanel = new JPanel(gbLayout);
+        subPanel.setLayout(gbLayout);
+
+        gbConstraints.weightx = 1;
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gbConstraints.anchor = GridBagConstraints.NORTH;
+        subPanel.add(toolBar, gbConstraints);
+
+        gbConstraints.gridy = 1;
+        gbConstraints.fill = GridBagConstraints.BOTH;
+        subPanel.add(tabbedPane, gbConstraints);
+
+        gbConstraints.gridy = 2;
+        gbConstraints.weighty = 1;
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        subPanel.add(blendPanel, gbConstraints);
+        
+        gbConstraints.gridy = 3;
+        gbConstraints.weighty = 1;
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        subPanel.add(stepsPanel, gbConstraints);
+
+        JScrollPane scrollPaneA = new JScrollPane(subPanel);
+        scrollPaneA.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+
+        mainPanel = new JPanel(new GridLayout(1, 1));
+        mainPanel.add(scrollPaneA);
+    }
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     // ************************************************************************
@@ -190,6 +260,10 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
             {
                 ((ViewJFrameVolumeViewWildMagic)kParentFrame).updateImages(true);
             }
+        }
+        if ( m_kVolumeViewer != null )
+        {
+            m_kVolumeViewer.updateImages(true);
         }
     }
 
@@ -233,6 +307,10 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
                 ((ViewJFrameVolumeViewWildMagic)kParentFrame).setGradientMagnitude(true);
             }
         }            
+        if ( m_kVolumeViewer != null )
+        {
+            m_kVolumeViewer.setGradientMagnitude(true);
+        }
     }
 
     /**
@@ -523,7 +601,11 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
             {
                 ((ViewJFrameVolumeViewWildMagic)kParentFrame).setGradientMagnitude(false);
             }
-        }            
+        }    
+        if ( m_kVolumeViewer != null )
+        {
+            m_kVolumeViewer.setGradientMagnitude(false);
+        }
     }
 
     /**
