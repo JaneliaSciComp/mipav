@@ -104,6 +104,8 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
     /** slice index for which fileInfo is saved **/
     private int sliceIndex;
     
+    private boolean launchFileChooser = true;
+    
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -140,9 +142,16 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         Enumeration e;
         String name;
         FileDicomKey key;
+        String[] tags = null;
         Object[] rowData = { new Boolean(false), "", "", "" };
         Hashtable tagsList = DicomInfo.getTagTable().getTagList();
         ArrayList checkBoxList = new ArrayList();
+        
+        //check preferences to see if any dicom tags were selected for saving
+        String prefTagsString = Preferences.getProperty(Preferences.SAVE_DICOM_TAGS);
+    	if(prefTagsString != null || (!prefTagsString.trim().equals(""))) {
+    		tags = prefTagsString.split(";");
+    	}
         
         // go through the hashlist, and for each element you find, copy it
         // into the table, showing full info if it was coded
@@ -154,10 +163,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
             if (((FileDicomTag) tagsList.get(key)).getValue(true) != null) {
             	String tagName = "(" + name + ")";
-            	//to do...check preferences to see if any have been selected
-            	String prefTagsString = Preferences.getProperty(Preferences.SAVE_DICOM_TAGS);
-            	if(prefTagsString != null || (!prefTagsString.trim().equals(""))) {
-            		String[] tags = prefTagsString.split(";");
+            	if(tags != null) {
             		for(int k=0;k<tags.length;k++) {
             			if(tagName.equals(tags[k])) {
             				rowData[0] = new Boolean(true);
@@ -165,7 +171,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             			}else {
             				rowData[0] = new Boolean(false);
             			}
-            		}	
+            		}
             	}
                 rowData[1] = tagName;
                 rowData[2] = ((FileDicomTag) tagsList.get(key)).getName();
@@ -1246,38 +1252,39 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
             return;
         }
-
-        try {
-
-            chooser = new JFileChooser();
-
-            if (UI.getDefaultDirectory() != null) {
-                file = new File(UI.getDefaultDirectory());
-
-                if (file != null) {
-                    chooser.setCurrentDirectory(file);
-                } else {
-                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-                }
-            } else {
-                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-            }
-
-            chooser.setDialogTitle("Save Tags");
-
-            int returnValue = chooser.showSaveDialog(UI.getMainFrame());
-
-            if (returnValue == JFileChooser.APPROVE_OPTION) {
-                fileName = chooser.getSelectedFile().getName();
-                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-                UI.setDefaultDirectory(directory);
-            } else {
-                return;
-            }
-        } catch (OutOfMemoryError e) {
-            MipavUtil.displayError("Out of memory!");
-
-            return;
+        if(launchFileChooser) {
+	        try {
+	
+	            chooser = new JFileChooser();
+	
+	            if (UI.getDefaultDirectory() != null) {
+	                file = new File(UI.getDefaultDirectory());
+	
+	                if (file != null) {
+	                    chooser.setCurrentDirectory(file);
+	                } else {
+	                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+	                }
+	            } else {
+	                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+	            }
+	
+	            chooser.setDialogTitle("Save Tags");
+	
+	            int returnValue = chooser.showSaveDialog(UI.getMainFrame());
+	
+	            if (returnValue == JFileChooser.APPROVE_OPTION) {
+	                fileName = chooser.getSelectedFile().getName();
+	                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+	                UI.setDefaultDirectory(directory);
+	            } else {
+	                return;
+	            }
+	        } catch (OutOfMemoryError e) {
+	            MipavUtil.displayError("Out of memory!");
+	
+	            return;
+	        }
         }
 
         try {
@@ -1403,74 +1410,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
      *
      */
 	protected void callAlgorithm() {
-        ViewUserInterface UI = ViewUserInterface.getReference();
-        RandomAccessFile raFile;
-        File file;
-        int i;
-        boolean isEmpty = true;
-        StringBuffer saveTagsSB = new StringBuffer();
-
-        for (int k=0; k < tagsModel.getRowCount(); k++) {
-        	if (tagsModel.getValueAt(k, 0) != null && ((Boolean)tagsModel.getValueAt(k, 0)).booleanValue() == true) {
-        		isEmpty = false;
-        		break;
-        	}
-        	
-        	
-        }
-
-        if (isEmpty) {
-
-            // should show error message
-            MipavUtil.displayError("Please check tags to be saved.");
-
-            return;
-        }
-
-        try {
-
-            // file   = new File(DicomInfo.getFileDirectory() + DicomInfo.getFileName());
-            file = new File(directory + fileName);
-            raFile = new RandomAccessFile(file, "rw");
-            
-            
-            
-
-            for (i = 0; i < tagsModel.getRowCount(); i++) {
-
-                if (tagsModel.getValueAt(i, 2).equals("Other Image Information")) {
-                    break;
-                }
-            }
-
-            i += 2;
-
-            if(isAppend) {
-            	raFile.skipBytes( (int)raFile.length() );
-            }else {
-            	raFile.setLength(0);
-            	raFile.seek(0);
-            }
-
-            for (; i < tagsModel.getRowCount(); i++) {
-
-                if (tagsModel.getValueAt(i, 0) != null && ((Boolean)tagsModel.getValueAt(i, 0)).booleanValue() == true) {
-                	
-                    raFile.writeBytes(tagsModel.getValueAt(i, 1) + "\t" + tagsModel.getValueAt(i, 2) + "\t" +
-                                      tagsModel.getValueAt(i, 3) + "\n");
-                    saveTagsSB.append(tagsModel.getValueAt(i, 1));
-                    saveTagsSB.append(";");
-                }
-            }
-
-            Preferences.setProperty(Preferences.SAVE_DICOM_TAGS, saveTagsSB.toString().substring(0, saveTagsSB.toString().lastIndexOf(";")));
-            raFile.close();
-        } catch (IOException error) {
-            MipavUtil.displayError("");
-
-            // should show error message
-            return;
-        }
+        saveTags();
 	}
 
 
@@ -1485,6 +1425,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 		directory = scriptParameters.getParams().getString("directory");
 		fileName = scriptParameters.getParams().getString("fileName");
 		sliceIndex = scriptParameters.getParams().getInt("sliceIndex");
+		launchFileChooser = false;
 		FileInfoDicom fileInfo;
 		if(imageA.getFileInfo().length > sliceIndex) {
 			fileInfo = (FileInfoDicom)imageA.getFileInfo()[sliceIndex];
