@@ -47,6 +47,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     /**The display*/
     private MuscleImageDisplay display;
     
+    private Document pdfDocument = null;
+	private PdfWriter writer = null;
+	private PdfPTable aTable = null;
+	
     /**
      * Constructor.
      *
@@ -57,7 +61,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         super(resultImage, srcImg);
         this.imageType = imageType;
         this.parentFrame = parentFrame;
-        writeToPDF();
+        //writeToPDF();
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -274,6 +278,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     	public static final String EXIT = "Exit";
     	public static final String HELP = "Help";
     	public static final String CALCULATE = "Calculate";
+    	public static final String SAVE = "Save";
+    	public static final String OUTPUT_ALL = "Output All";
+    	public static final String OUTPUT = "Output";
     	
     	private String buttonStringGroup[] = {OK, CLEAR, HELP};
     	
@@ -307,18 +314,52 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             JPanel buttonPanel = new JPanel();
             buttonGroup = new JButton[buttonStringGroup.length];
             
-            for(int i=0; i<buttonStringGroup.length; i++) {
-            	buttonGroup[i] = new JButton(buttonStringGroup[i]);
-            	buttonGroup[i].addActionListener(parentFrame);
-            	buttonGroup[i].addActionListener(this);
-            	buttonGroup[i].setActionCommand(buttonStringGroup[i]);
-            	buttonGroup[i].setMinimumSize(MipavUtil.defaultButtonSize);
-            	buttonGroup[i].setPreferredSize(MipavUtil.defaultButtonSize);
-            	buttonGroup[i].setFont(MipavUtil.font12B);
+            if (buttonGroup.length > 3) {
+            	JPanel topPanel = new JPanel();
+            	JPanel bottomPanel = new JPanel();
+            	for(int i=0; i<buttonStringGroup.length; i++) {
+            		buttonGroup[i] = new JButton(buttonStringGroup[i]);
+            		buttonGroup[i].addActionListener(parentFrame);
+            		buttonGroup[i].addActionListener(this);
+            		buttonGroup[i].setActionCommand(buttonStringGroup[i]);
+            		if (buttonStringGroup[i].length() < 10) { 
+            			buttonGroup[i].setMinimumSize(MipavUtil.defaultButtonSize);
+            			buttonGroup[i].setPreferredSize(MipavUtil.defaultButtonSize);
+            		} else {
+            			buttonGroup[i].setMinimumSize(MipavUtil.widenButtonSize);
+            			buttonGroup[i].setPreferredSize(MipavUtil.widenButtonSize);
+            		}
+            		buttonGroup[i].setFont(MipavUtil.font12B);
             	
-            	buttonPanel.add(buttonGroup[i]);
+            		if (i < 2) {
+            			topPanel.add(buttonGroup[i]);
+            		} else {
+            			bottomPanel.add(buttonGroup[i]);
+            		}
+            	}
+            	buttonPanel.setLayout(new BorderLayout());
+            	buttonPanel.add(topPanel, BorderLayout.NORTH);
+            	buttonPanel.add(bottomPanel, BorderLayout.SOUTH);
+            	
+            } else {
+            
+            	for(int i=0; i<buttonStringGroup.length; i++) {
+            		buttonGroup[i] = new JButton(buttonStringGroup[i]);
+            		buttonGroup[i].addActionListener(parentFrame);
+            		buttonGroup[i].addActionListener(this);
+            		buttonGroup[i].setActionCommand(buttonStringGroup[i]);
+            		if (buttonStringGroup[i].length() < 10) { 
+            			buttonGroup[i].setMinimumSize(MipavUtil.defaultButtonSize);
+            			buttonGroup[i].setPreferredSize(MipavUtil.defaultButtonSize);
+            		} else {
+            			buttonGroup[i].setMinimumSize(MipavUtil.widenButtonSize);
+            			buttonGroup[i].setPreferredSize(MipavUtil.widenButtonSize);
+            		}
+            		buttonGroup[i].setFont(MipavUtil.font12B);
+            	
+            		buttonPanel.add(buttonGroup[i]);
+            	}
             }
-
             return buttonPanel;
         }
     	
@@ -759,10 +800,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             	analysisPrompt.addComponentListener(this);
             	lockToPanel(analysisPrompt, "Analysis");
             	
-            } else {/*if(command.equals(VoiDialogPrompt.SUB_DIALOG_COMPLETED*/
+            } else if (!(command.equals(AnalysisPrompt.OUTPUT) ||
+            		command.equals(AnalysisPrompt.SAVE) ||
+            		command.equals(AnalysisPrompt.OUTPUT_ALL))) {
             	unlockToPanel();
                 initMuscleImage(activeTab);
-            }
+            } 
         }
         
         private JPanel initDialog() {
@@ -1808,7 +1851,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		
 
 		
-		private final String[] buttonStringList = {HELP, EXIT};
+		private final String[] buttonStringList = { OUTPUT, OUTPUT_ALL, SAVE, HELP, EXIT};
 		
 		boolean novelVoiProduced;
 		
@@ -1859,10 +1902,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        completed = false;
 	        
 	        //initImage();
-	        initDialog();
-	        
-	        
-	        
+	        initDialog();	        
 	    }
 		
 		/**
@@ -2069,7 +2109,14 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	                setCompleted(false);//savedVoiExists());
 	                notifyListeners(CANCEL);
 	                //dispose();
+	            } else if (command.equals("Output")) {
+	            	processCalculations(false, false);
+	            } else if (command.equals("Output All")) { 
+	            	processCalculations(true, false);
+	            } else if (command.equals("Save")) {
+	            	processCalculations(true, true);
 	            } else if (command.equals("Help")) {
+	           
 	                MipavUtil.showHelp("19014");
 	            }
 	        }
@@ -2079,10 +2126,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	
 	    
 	    public void valueChanged(ListSelectionEvent e) {
-	
 	    	//should be process in general, change and compute based on srcImage, do not need to load into component,
 	    	//though that's where VOIs should be registered.
 
+	    	
 	    	if(time != 0) {
 		    	JList source = (JList)e.getSource();
 		    	Object[] selected = source.getSelectedValues();
@@ -2099,81 +2146,80 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		    	//Load VOIs and calculations
 		    	loadVOIs(selectedString);
 		    	parentFrame.updateImages(true);
-		    	//Image now contains all valid VOIs, display calculations
-		    	VOIVector voi = parentFrame.getActiveImage().getVOIs();
-		    	for(int i=0; i<voi.size(); i++) {
-		    		VOI v = voi.get(i);
-		    		int totalAreaCalc = 0, totalAreaCount = 0, fatArea = 0, leanArea = 0, partialArea = 0;
-		    		double meanFatH = 0, meanLeanH = 0, meanTotalH = 0;
-		    		totalAreaCalc = getTotalAreaCalc(v);
-		    		totalAreaCount = getTotalAreaCount(v);
-		    		fatArea = getFatArea(v);
-		    		leanArea = getLeanArea(v);
-		    		partialArea = getPartialArea(v);
-		    		meanFatH = getMeanFatH(v);
-		    		meanLeanH = getMeanLeanH(v);
-		    		meanTotalH = getMeanTotalH(v);
-		    		DecimalFormat dec = new DecimalFormat("0.#");
-		    		//TODO: Better display of results
-		    		MipavUtil.displayInfo(v.getName()+" calculations:\n"+"Fat Area: "+fatArea+
-		    								"\t\tMean H: "+dec.format(meanFatH)+"\nLean Area: "+leanArea+
-		    								"\t\tMean H: "+dec.format(meanLeanH)+"\nTotal Area: "+totalAreaCount+
-		    								"\t\tMean H: "+dec.format(meanTotalH));
-		    		
-		    	}
 		    	time = 0;
 	    	} else 
 	    		time++;
 	    	
 	    }
 	    
-	    /*************************************************************************************************
-	     * Made public for use in the PDF.  Any VOI for this image can be given as v, loadCalculations
-	     * will then calculate the necessary parameters to be displayed/stored. 
-	     *  
-	     * @param v
-	     */
-	    
-	    private void loadCalculations(VOI v) {
-	    	double totalAreaCalc = 0, totalAreaCount = 0, fatArea = 0, leanArea = 0, partialArea = 0, outsideArea = 0, meanFatH = 0, meanLeanH = 0, meanTotalH = 0;
-	    	totalAreaCalc = v.area();
-	    	BitSet fullMask = new BitSet();
-	    	//Note difference between two areas, use for establishing partial voluming errors
-	    	System.out.println(totalAreaCalc);
-	    	int j=0;
-	    	v.createBinaryMask(fullMask, parentFrame.getActiveImage().getExtents()[0], parentFrame.getActiveImage().getExtents()[1]);
-	    	double mark = 0;
-	    	for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-                mark = parentFrame.getImageA().getDouble(i);
-	    		if(mark  >= -190 && mark <= -30) {
-	    			fatArea++;
-	    			meanFatH += mark;
-	    		} else if(mark >= 0 && mark <= 100) {
-	    			leanArea++;
-	    			meanLeanH += mark;
-	    		} else if(mark > -30 && mark < 0) {
-	    			partialArea++;
+	    	    
+	    private void processCalculations(boolean all, boolean doSave) {
+	    	boolean pdfCreated = false;
+	    	for (int listNum = 0; listNum < list.length; listNum++) {
+	    		ListModel model = list[listNum].getModel();		    	
+	    		String [] listStrings = null;
+	    		if (all) {
+	    			listStrings = new String[model.getSize()];
+	    			for (int i = 0; i < listStrings.length; i++) {
+		    			listStrings[i] = (String)model.getElementAt(i) + ".xml";
+		    		}
 	    		} else {
-	    			outsideArea++;
+	    			Object[] selected = list[listNum].getSelectedValues();
+	    			listStrings = new String[selected.length];
+	    			for(int i=0; i<selected.length; i++) {
+	    				listStrings[i] = (String)selected[i]+".xml";
+			    	}
 	    		}
-	    		meanTotalH += mark;
-	    		totalAreaCount++;
-            }
+	    		
+	    		if (listStrings.length > 0) {
+	    			
+	    			//if PDF hasnt been created and we're saving, create it now
+	    			if (doSave && !pdfCreated) {
+	    				if (!createPDF()) {
+	    					return;
+	    				}
+	    				pdfCreated = true;
+	    			}
+	    			
+	    			//Load VOIs and calculations
+	    			loadVOIs(listStrings);
+	    			//parentFrame.updateImages(true);
+	    			//Image now contains all valid VOIs, display calculations
+	    			VOIVector voi = parentFrame.getActiveImage().getVOIs();
+	    			for(int i=0; i<voi.size(); i++) {
+	    				VOI v = voi.get(i);
+	    				int totalAreaCalc = 0, totalAreaCount = 0, fatArea = 0, leanArea = 0, partialArea = 0;
+	    				double meanFatH = 0, meanLeanH = 0, meanTotalH = 0;
+	    				totalAreaCalc = getTotalAreaCalc(v);
+	    				totalAreaCount = getTotalAreaCount(v);
+	    				fatArea = getFatArea(v);
+	    				leanArea = getLeanArea(v);
+	    				partialArea = getPartialArea(v);
+	    				meanFatH = getMeanFatH(v);
+	    				meanLeanH = getMeanLeanH(v);
+	    				meanTotalH = getMeanTotalH(v);
+	    				
+	    				if (doSave) {
+	    					addToPDF(listStrings[i], fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH);
+	    				} else {
+	    					DecimalFormat dec = new DecimalFormat("0.#");
+		    				String appMessage = v.getName()+" calculations:\n"+"Fat Area: "+fatArea+
+		    				"\t\tMean H: "+dec.format(meanFatH)+"\nLean Area: "+leanArea+
+		    				"\t\tMean H: "+dec.format(meanLeanH)+"\nTotal Area: "+totalAreaCount+
+		    				"\t\tMean H: "+dec.format(meanTotalH) + "\n\n";
+		    			
+		    				ViewUserInterface.getReference().getMessageFrame().append(appMessage, ViewJFrameMessage.DATA);
+	    				}	
+	    			}
+	    		}
+	    	}
 	    	
-	    	meanFatH /= fatArea;
-	    	meanLeanH /= leanArea;
-	    	meanTotalH /= totalAreaCount;
-	    	
-	    	System.out.println(parentFrame.getImageA().get(139, 214));
-	    	
-	    	System.out.println("Done calculations.");
+	    	if (doSave) {
+	    		closePDF();
+	    	}
 	    	
 	    }
-	    
-	    
-	    
-	    
-	    
+	    	    	    
 	    private void loadVOIs(String[] voiName) {
             parentFrame.getActiveImage().unregisterAllVOIs();
             int colorChoice = new Random().nextInt(colorPick.length);
@@ -2337,8 +2383,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     	return meanTotalH;
     }
     
-	private void writeToPDF() {
-		JFileChooser chooser = new JFileChooser();
+    
+    private boolean createPDF() {
+    	JFileChooser chooser = new JFileChooser();
 		chooser.setDialogTitle("Save to PDF");
 		chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "pdf" }));
 		
@@ -2348,12 +2395,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         if (returnVal == JFileChooser.APPROVE_OPTION) {
            file = chooser.getSelectedFile();
         } else {
-        	return;
+        	return false;
         }
 		
 		try {
-			Document pdfDocument = new Document();
-			PdfWriter writer = PdfWriter.getInstance(pdfDocument, new FileOutputStream(file));
+			pdfDocument = new Document();
+			writer = PdfWriter.getInstance(pdfDocument, new FileOutputStream(file));
 			pdfDocument.addTitle("Thigh Tissue Analysis Report");
 			pdfDocument.addCreator("MIPAV: Muscle Segmentation");
 			pdfDocument.open();
@@ -2426,7 +2473,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			
 			pdfDocument.add(new Paragraph(new Chunk("")));
 			
-			PdfPTable aTable = new PdfPTable(7);
+			//create the Table where we will insert the data:
+			aTable = new PdfPTable(7);
 			
 			// add Column Titles (in bold)
 			aTable.addCell(new PdfPCell(new Paragraph("Area (cm^2)", new Font(Font.TIMES_ROMAN, 13, Font.BOLD))));
@@ -2437,72 +2485,103 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			aTable.addCell(new PdfPCell(new Paragraph("Lean HU", new Font(Font.TIMES_ROMAN, 13, Font.BOLD))));
 			aTable.addCell(new PdfPCell(new Paragraph("Total HU", new Font(Font.TIMES_ROMAN, 13, Font.BOLD))));
 			
-			//start adding columns
-			int numRows = 5;
-			for (int i = 0; i < numRows; i++) {
-				//name of area
-				aTable.addCell("L. Thigh Total");
-				
-				//total area
-				aTable.addCell("104.78");
-				
-				//fat area
-				aTable.addCell("6.11");
 			
-				//lean area
-				aTable.addCell("98.58");
-				
-				//fat HU
-				aTable.addCell("-66.13");
-				
-				//lean HU
-				aTable.addCell("41.90");
-				
-				//total HU
-				aTable.addCell("35.53");
-			}
-			
-			Paragraph aPar = new Paragraph();
-			aPar.setAlignment(Element.ALIGN_CENTER);
-			aPar.add(new Paragraph());
-			aPar.add(aTable);
-			pdfDocument.add(new Paragraph());
-			pdfDocument.add(aPar);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+    }
+    
+    /**
+     * Adds a row to the PDF Table
+     * @param name the name of the area
+     * @param fatArea the amount of fat area
+     * @param leanArea amount of lean area
+     * @param totalAreaCount total area
+     * @param meanFatH mean fat area HU
+     * @param meanLeanH mean lean area HU
+     * @param meanTotalH mean total area HU
+     */
+	private void addToPDF(String name, int fatArea, int leanArea, int totalAreaCount, 
+			double meanFatH, double meanLeanH, double meanTotalH) {
 		
+		try {
+			if (name.endsWith(".xml")) {
+				name = name.substring(0, name.length() - 4);
+			}
+			DecimalFormat dec = new DecimalFormat("0.#");
 			
-			PdfPTable imageTable = new PdfPTable(2);
-			imageTable.addCell("Edge Image");
-			imageTable.addCell("QA Image");
+			//name of area
+			aTable.addCell(name);
+				
+			//total area
+			aTable.addCell(Integer.toString(totalAreaCount));
+				
+			//fat area
+			aTable.addCell(Integer.toString(fatArea));
 			
-			chooser = new JFileChooser();
-			chooser.setDialogTitle("Open image 1");
-			returnVal = chooser.showOpenDialog(null);
-
-	        while (returnVal != JFileChooser.APPROVE_OPTION) {
-	        	returnVal = chooser.showOpenDialog(null);
-	        } 
-			
-			imageTable.addCell(Image.getInstance(chooser.getSelectedFile().getPath()));
-			
-			chooser.setDialogTitle("Open image 1");
-			returnVal = chooser.showOpenDialog(null);
-
-	        while (returnVal != JFileChooser.APPROVE_OPTION) {
-	        	returnVal = chooser.showOpenDialog(null);
-	        } 
-			
-	        imageTable.addCell(Image.getInstance(chooser.getSelectedFile().getPath()));
-	        
-	        Paragraph pImage = new Paragraph();
-	        pImage.add(new Paragraph());
-	        pImage.add(imageTable);
-	        
-			pdfDocument.add(pImage);
-			pdfDocument.close();
-			
+			//lean area
+			aTable.addCell(Integer.toString(leanArea));
+				
+			//fat HU
+			aTable.addCell(dec.format(meanFatH));
+				
+			//lean HU
+			aTable.addCell(dec.format(meanLeanH));
+				
+			//total HU
+			aTable.addCell(dec.format(meanTotalH));
+					
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private void closePDF() {
+		try {
+		Paragraph aPar = new Paragraph();
+		aPar.setAlignment(Element.ALIGN_CENTER);
+		aPar.add(new Paragraph());
+		aPar.add(aTable);
+		pdfDocument.add(new Paragraph());
+		pdfDocument.add(aPar);
+	
+		
+		pdfDocument.close();
+		
+	//	PdfPTable imageTable = new PdfPTable(2);
+	//	imageTable.addCell("Edge Image");
+	//	imageTable.addCell("QA Image");
+		
+	//	chooser = new JFileChooser();
+	//	chooser.setDialogTitle("Open image 1");
+	//	returnVal = chooser.showOpenDialog(null);
+
+   //     while (returnVal != JFileChooser.APPROVE_OPTION) {
+   //     	returnVal = chooser.showOpenDialog(null);
+   //     } 
+		
+	//	imageTable.addCell(Image.getInstance(chooser.getSelectedFile().getPath()));
+		
+	//	chooser.setDialogTitle("Open image 1");
+	//	returnVal = chooser.showOpenDialog(null);
+
+   //     while (returnVal != JFileChooser.APPROVE_OPTION) {
+   //     	returnVal = chooser.showOpenDialog(null);
+   //     } 
+		
+   //     imageTable.addCell(Image.getInstance(chooser.getSelectedFile().getPath()));
+        
+   //     Paragraph pImage = new Paragraph();
+   //     pImage.add(new Paragraph());
+   //     pImage.add(imageTable);
+        
+	//	pdfDocument.add(pImage);
+		
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
 	}
     
 }
