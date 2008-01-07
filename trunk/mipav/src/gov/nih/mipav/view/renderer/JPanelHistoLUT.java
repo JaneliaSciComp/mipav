@@ -71,10 +71,10 @@ public class JPanelHistoLUT
     /** Color LUT A, B textfield. */
     private JTextField indexColorATextF, indexColorBTextF;
 
-    /** Historgram dialog slider labels of the imageA, B and GM imageA, B. */
-    private Hashtable labelsTable, labelsTableB;
+    /** Histogram dialog slider labels of the imageA, B and GM imageA, B. */
+    private Hashtable<Integer, JLabel> labelsTable, labelsTableB;
 
-    /** The historgram log view Check box. */
+    /** The histogram log view Check box. */
     private JCheckBox logCheckBoxA, logCheckBoxB;
 
     /** Model LUT A. */
@@ -114,7 +114,7 @@ public class JPanelHistoLUT
     /** Tabbed panel B. */
     private JPanel panelB = null;
 
-    /** X range text field in the imageA, B historgram dialog. */
+    /** X range text field in the imageA, B histogram dialog. */
     private JTextField rangeText, rangeTextB;
 
     /** X range value of the imageA, B and GM imageA, B. */
@@ -129,7 +129,7 @@ public class JPanelHistoLUT
     /** Scroll panel that holding the all the control components. */
     private DrawingPanel scrollPanel;
 
-    /** The main tabbeb control panel. */
+    /** The main tabbed control panel. */
     private JTabbedPane tabbedPane;
 
     /** threshold related. */
@@ -151,24 +151,21 @@ public class JPanelHistoLUT
     private JPanel topPanel;
 
     /**
-     * X range text field in the imageA, B and GM image A, B historgram dialog. Following text fields are used by the
+     * X range text field in the imageA, B and GM image A, B histogram dialog. Following text fields are used by the
      * tri-planar volume view.
      */
     private JTextField xRangeTextA, xRangeTextB;
 
     /**
-     * Y range text field in the imageA, B and GM image A, B historgram dialog. Following text fields are used by the
+     * Y range text field in the imageA, B and GM image A, B histogram dialog. Following text fields are used by the
      * tri-planar volume view.
      */
     private JTextField yRangeTextA, yRangeTextB;
     
     /**
-     * Referenct to CT dialog.   The CT dialog only works with the componentHistogram. 
+     * Reference to CT dialog.   The CT dialog only works with the componentHistogram. 
      */
     private JDialogCTHistoLUT ctDialogA, ctDialogB;
-	
-    /** A border used for each toolbar. */
-    protected static final Border etchedBorder = BorderFactory.createEtchedBorder();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -203,7 +200,7 @@ public class JPanelHistoLUT
         toolBarObj = new ViewToolBarBuilder(this);
 
         toolBarTop = toolBarObj.buildLUTToolBarTop();
-        toolBarCenter = buildSelectionList();
+        toolBarCenter = ViewJPanelLUT.buildLUTSelectionList(this);
         toolBarBottom = toolBarObj.buildLUTToolBarBottom();
         toolBarBottom.getComponentAtIndex(4).setEnabled(false);
 
@@ -228,39 +225,6 @@ public class JPanelHistoLUT
 
         mainPanel.add(scroller, BorderLayout.CENTER);
     }
-
-    /**
-     * Build the center part of the LUT toolbar.
-     *
-     * @return  the top part of the LUT toolbar
-     */
-    public JToolBar buildSelectionList() {
-        
-        JToolBar LUTToolBar = new JToolBar();
-        LUTToolBar.setBorder(etchedBorder);
-        LUTToolBar.setBorderPainted(true);
-        LUTToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
-        LUTToolBar.setFloatable(false);
-        
-        
-        String[] lutStrings = { "BlackBody", "Cardiac", "Flow", "GEcolor", "GrayRainbow", "HotGreen",
-        						"HotIron", "HotMetal", "Hue1", "Hue2", "ired",
-        						"NIH", "Rainbow", "Rainbow2", "Rainbow3", "Ratio",
-        						"Spectrum", "Stern", "UCLA", "VR Bones", "VR Red Vessels"};
-
-     
-        JComboBox lutList = new JComboBox(lutStrings);
-        lutList.setBackground(Color.white);
-        lutList.setSelectedIndex(0);
-        lutList.addActionListener(this);
-        
-        LUTToolBar.add(lutList);
-        
-        return LUTToolBar;
-    }
-    
-    
-    //~ Methods --------------------------------------------------------------------------------------------------------
 
     // ************************************************************************
     // **************************** Action Events *****************************
@@ -1667,10 +1631,10 @@ public class JPanelHistoLUT
                 mouseSliderLabels[0] = ViewJFrameHistoLUT.createSliderLabel(start);
                 mouseSliderLabels[1] = ViewJFrameHistoLUT.createSliderLabel(mid);
                 mouseSliderLabels[2] = ViewJFrameHistoLUT.createSliderLabel(end);
-                labelsTable = new Hashtable();
-                labelsTable.put(new Integer(0 + (start.length() / 2)), mouseSliderLabels[0]);
-                labelsTable.put(new Integer(50 + (mid.length() / 2)), mouseSliderLabels[1]);
-                labelsTable.put(new Integer(100 - (mid.length() / 2)), mouseSliderLabels[2]);
+                labelsTable = new Hashtable<Integer, JLabel>();
+                labelsTable.put(0 + (start.length() / 2), mouseSliderLabels[0]);
+                labelsTable.put(50 + (mid.length() / 2), mouseSliderLabels[1]);
+                labelsTable.put(100 - (mid.length() / 2), mouseSliderLabels[2]);
                 mouseSlider.setLabelTable(labelsTable);
                 mouseSlider.repaint();
                 mouseSlider.setValue(50);
@@ -1705,10 +1669,10 @@ public class JPanelHistoLUT
                 mouseSliderLabelsB[0] = ViewJFrameHistoLUT.createSliderLabel(start);
                 mouseSliderLabelsB[1] = ViewJFrameHistoLUT.createSliderLabel(mid);
                 mouseSliderLabelsB[2] = ViewJFrameHistoLUT.createSliderLabel(end);
-                labelsTableB = new Hashtable();
-                labelsTableB.put(new Integer(0 + (start.length() / 2)), mouseSliderLabelsB[0]);
-                labelsTableB.put(new Integer(50 + (mid.length() / 2)), mouseSliderLabelsB[1]);
-                labelsTableB.put(new Integer(100 - (mid.length() / 2)), mouseSliderLabelsB[2]);
+                labelsTableB = new Hashtable<Integer, JLabel>();
+                labelsTableB.put(0 + (start.length() / 2), mouseSliderLabelsB[0]);
+                labelsTableB.put(50 + (mid.length() / 2), mouseSliderLabelsB[1]);
+                labelsTableB.put(100 - (mid.length() / 2), mouseSliderLabelsB[2]);
                 mouseSliderB.setLabelTable(labelsTableB);
                 mouseSliderB.repaint();
                 mouseSliderB.setValue(50);
@@ -2158,11 +2122,11 @@ public class JPanelHistoLUT
         mouseSliderLabels[1] = ViewJFrameHistoLUT.createSliderLabel(String.valueOf(scaleRangeA));
         mouseSliderLabels[2] = ViewJFrameHistoLUT.createSliderLabel(String.valueOf(scaleRangeA * 2));
 
-        labelsTable = new Hashtable();
+        labelsTable = new Hashtable<Integer, JLabel>();
 
-        labelsTable.put(new Integer(3), mouseSliderLabels[0]);
-        labelsTable.put(new Integer(50), mouseSliderLabels[1]);
-        labelsTable.put(new Integer(100), mouseSliderLabels[2]);
+        labelsTable.put(3, mouseSliderLabels[0]);
+        labelsTable.put(50, mouseSliderLabels[1]);
+        labelsTable.put(100, mouseSliderLabels[2]);
 
         mouseSlider = new JSlider(0, 100, 50);
         mouseSlider.setFont(MipavUtil.font12);
@@ -2351,11 +2315,11 @@ public class JPanelHistoLUT
         mouseSliderLabelsB[1] = ViewJFrameHistoLUT.createSliderLabel(String.valueOf(scaleRangeB));
         mouseSliderLabelsB[2] = ViewJFrameHistoLUT.createSliderLabel(String.valueOf(scaleRangeB * 2));
 
-        labelsTableB = new Hashtable();
+        labelsTableB = new Hashtable<Integer, JLabel>();
 
-        labelsTableB.put(new Integer(0), mouseSliderLabelsB[0]);
-        labelsTableB.put(new Integer(50), mouseSliderLabelsB[1]);
-        labelsTableB.put(new Integer(100), mouseSliderLabelsB[2]);
+        labelsTableB.put(0, mouseSliderLabelsB[0]);
+        labelsTableB.put(50, mouseSliderLabelsB[1]);
+        labelsTableB.put(100, mouseSliderLabelsB[2]);
 
         mouseSliderB = new JSlider(0, 100, 50);
         mouseSliderB.setFont(MipavUtil.font12);

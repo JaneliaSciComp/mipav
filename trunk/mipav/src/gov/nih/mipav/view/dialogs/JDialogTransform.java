@@ -8,8 +8,6 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
-import gov.nih.mipav.MipavMath;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;

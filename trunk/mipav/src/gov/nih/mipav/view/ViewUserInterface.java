@@ -16,7 +16,6 @@ import gov.nih.mipav.plugins.*;
 
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.xcede.*;
-import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.dialogs.JDialogDTIInput;
 
 import edu.sdsc.grid.io.*;
@@ -66,12 +65,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /**
-     * A list of image file names and multifile tags, set by the command line, to be opened (and processed by a script,
-     * if one is used).
-     */
-    protected Vector imageFileNames = new Vector();
-
     /** The main menu bar that runs MIPAV. */
     protected JFrame mainFrame;
 
@@ -96,7 +89,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     private TransMatrix clippedMatrix = null;
 
     /** DOCUMENT ME! */
-    private Vector clippedScannerVectors = new Vector();
+    private Vector<Vector<Point3Df>> clippedScannerVectors = new Vector<Vector<Point3Df>>();
 
     /** Vector to hold clipped VOIs (multiple). */
     private ViewVOIVector clippedVOIs = new ViewVOIVector();
@@ -118,7 +111,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     private Dimension frameLocation = new Dimension(50, 300);
 
     /** Stores array of images frames the first of which is the active image frame. */
-    private Vector imageFrameVector;
+    private Vector<Frame> imageFrameVector;
 
     /** A list of image models currently open in MIPAV. */
     private CustomHashtable imageHashtable;
@@ -166,10 +159,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     private JDialogMipavOptions optionsDialog = null;
 
-
-    /** An array of BitSet to hold all paintbr. */
-    private BitSet[] paintBrushes = null;
-
     /** DOCUMENT ME! */
     private NDARPipeline pipeline = null;
 
@@ -198,7 +187,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     protected ViewUserInterface() {
         mainFrame = new JFrame();
-        imageFrameVector = new Vector();
+        imageFrameVector = new Vector<Frame>();
         imageHashtable = new CustomHashtable();
         initialize();
 
@@ -741,7 +730,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @param  slice       slice number
      * @param  scannerPts  a vector of all the VOI's points pre-converted to scanner coordinates
      */
-    public void addClippedScannerVOI(VOI voi, int slice, Vector scannerPts) {
+    public void addClippedScannerVOI(VOI voi, int slice, Vector<Point3Df> scannerPts) {
 
         if (isClippedVOI2D == true) {
             clearClippedVOIs();
@@ -1149,7 +1138,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
 
         for (int i = 0; i < imageFrameVector.size(); i++) {
-            Frame frame = (Frame) imageFrameVector.elementAt(i);
+            Frame frame = imageFrameVector.elementAt(i);
 
             if (frame instanceof ViewJFrameImage) {
                 return (ViewJFrameImage) frame;
@@ -1183,7 +1172,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      *
      * @return  DOCUMENT ME!
      */
-    public Vector getClippedScannerVectors() {
+    public Vector<Vector<Point3Df>> getClippedScannerVectors() {
         return this.clippedScannerVectors;
     }
 
@@ -1285,7 +1274,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
 
         for (int i = 0; i < imageFrameVector.size(); i++) {
-            Frame frame = (Frame) imageFrameVector.elementAt(i);
+            Frame frame = imageFrameVector.elementAt(i);
 
             if ((frame instanceof ViewJFrameImage) && (((ViewJFrameImage) (frame)).getImageA() == image)) {
                 return (ViewJFrameImage) frame;
@@ -1301,8 +1290,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      *
      * @return  The vector that has a list of frames visible in the GUI.
      */
-    public Vector getImageFrameVector() {
-        return (imageFrameVector);
+    public Vector<Frame> getImageFrameVector() {
+        return imageFrameVector;
     }
 
     /**
@@ -1527,7 +1516,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
 
         for (i = imageFrameVector.size() - 1; i >= 0; i--) {
-            frame = (Frame) (imageFrameVector.elementAt(i));
+            frame = imageFrameVector.elementAt(i);
             frame.setVisible(true);
         }
 
