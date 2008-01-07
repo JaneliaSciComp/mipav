@@ -983,7 +983,7 @@ public class ModelLUT extends ModelStorageBase {
         int i, j;
         int height;
         float step;
-        float[] x, y;
+        float[] x;
         float[] a, r, g, b;
 
         if ((_nColors > 0) && (_nColors <= 256)) {
@@ -1010,7 +1010,6 @@ public class ModelLUT extends ModelStorageBase {
 
             nPts = alphaLine.size();
             x = new float[nPts];
-            y = new float[nPts];
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ModelLUT: makeLUT");
@@ -1331,7 +1330,7 @@ public class ModelLUT extends ModelStorageBase {
             return;
         }
 
-        File kFile = new File(name + ".txt");
+        File kFile = new File(ViewJPanelLUT.customLUTsLocation + File.separator + name + ".txt");
         if ( !kFile.exists() || !kFile.canRead() )
         {
             return;

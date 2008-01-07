@@ -61,8 +61,8 @@ public class ViewJPanelLUT extends JPanel
     /** DOCUMENT ME! */
     private JCheckBox interpCheckBoxA, interpCheckBoxB;
 
-    /** Historgram dialog slider labels of the imageA, B and GM imageA, B. */
-    private Hashtable labelsTable, labelsTableB;
+    /** Histogram dialog slider labels of the imageA, B and GM imageA, B. */
+    private Hashtable<Integer, JLabel> labelsTable, labelsTableB;
 
     /** DOCUMENT ME! */
     private JCheckBox logCheckBoxA, logCheckBoxB;
@@ -101,7 +101,7 @@ public class ViewJPanelLUT extends JPanel
     /** DOCUMENT ME! */
     private ViewJFrameHistoLUT panelParent;
 
-    /** X range text field in the imageA, B historgram dialog. */
+    /** X range text field in the imageA, B histogram dialog. */
     private JTextField rangeText, rangeTextB;
 
     /** X range value of the imageA, B and GM imageA, B. */
@@ -141,16 +141,22 @@ public class ViewJPanelLUT extends JPanel
     private JLabel voxelVolumeLabel;
 
     /**
-     * X range text field in the imageA, B and GM image A, B historgram dialog. Following text fields are used by the
+     * X range text field in the imageA, B and GM image A, B histogram dialog. Following text fields are used by the
      * tri-planar volume view.
      */
     private JTextField xRangeTextA, xRangeTextB;
 
     /**
-     * Y range text field in the imageA, B and GM image A, B historgram dialog. Following text fields are used by the
+     * Y range text field in the imageA, B and GM image A, B histogram dialog. Following text fields are used by the
      * tri-planar volume view.
      */
     private JTextField yRangeTextA, yRangeTextB;
+    
+    /**
+     * The location of custom LUT definitions, mostly used for volume rendering purposes.  The original set were taken from the Osirix imaging application.
+     */ 
+    //public static final String customLUTsLocation = "gov" + File.separator + "nih" + File.separator + "mipav" + File.separator + "view" + File.separator + "WildMagic" + File.separator + "Shaders" + File.separator + "LUTs";
+    public static final String customLUTsLocation = "Shaders" + File.separator + "LUTs";
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1005,7 +1011,7 @@ public class ViewJPanelLUT extends JPanel
         toolBarObj = new ViewToolBarBuilder(this);
 
         toolBarTop = toolBarObj.buildLUTToolBarTop();
-        toolBarCenter = buildSelectionList();
+        toolBarCenter = buildLUTSelectionList(this);
         toolBarBottom = toolBarObj.buildLUTToolBarBottom();
         toolBarThreshold = toolBarObj.buildLUTThresholdToolBar();
 
@@ -1049,28 +1055,33 @@ public class ViewJPanelLUT extends JPanel
 
     /**
      * Build the center part of the LUT toolbar.
+     * 
+     * @param  listener  The listener to attach to the created LUT selection combo box.
      *
      * @return  the top part of the LUT toolbar
      */
-    public JToolBar buildSelectionList() {
+    public static final JToolBar buildLUTSelectionList(ActionListener listener) {
         
         JToolBar LUTToolBar = new JToolBar();
-        // LUTToolBar.setBorder(etchedBorder);
         LUTToolBar.setBorderPainted(true);
         LUTToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
         LUTToolBar.setFloatable(false);
         
+        File lutDir = new File(ViewJPanelLUT.customLUTsLocation);
+        String[] lutStrings = lutDir.list();
         
-        String[] lutStrings = { "BlackBody", "Cardiac", "Flow", "GEcolor", "GrayRainbow", "HotGreen",
-        						"HotIron", "HotMetal", "Hue1", "Hue2", "ired",
-        						"NIH", "Rainbow", "Rainbow2", "Rainbow3", "Ratio",
-        						"Spectrum", "Stern", "UCLA", "VR Bones", "VR Red Vessels"};
-
+        if (lutStrings != null) {
+            for (int i = 0; i < lutStrings.length; i++) {
+                lutStrings[i] = lutStrings[i].replaceAll(".txt$", "");
+            }
+        } else {
+            lutStrings = new String[] {""};
+        }
      
         JComboBox lutList = new JComboBox(lutStrings);
         lutList.setBackground(Color.white);
         lutList.setSelectedIndex(0);
-        lutList.addActionListener(this);
+        lutList.addActionListener(listener);
         
         LUTToolBar.add(lutList);
         
@@ -1508,10 +1519,10 @@ public class ViewJPanelLUT extends JPanel
                 mouseSliderLabels[0] = ViewJFrameHistoLUT.createSliderLabel(start);
                 mouseSliderLabels[1] = ViewJFrameHistoLUT.createSliderLabel(mid);
                 mouseSliderLabels[2] = ViewJFrameHistoLUT.createSliderLabel(end);
-                labelsTable = new Hashtable();
-                labelsTable.put(new Integer(0 + (start.length() / 2)), mouseSliderLabels[0]);
-                labelsTable.put(new Integer(50 + (mid.length() / 2)), mouseSliderLabels[1]);
-                labelsTable.put(new Integer(100 - (mid.length() / 2)), mouseSliderLabels[2]);
+                labelsTable = new Hashtable<Integer, JLabel>();
+                labelsTable.put(0 + (start.length() / 2), mouseSliderLabels[0]);
+                labelsTable.put(50 + (mid.length() / 2), mouseSliderLabels[1]);
+                labelsTable.put(100 - (mid.length() / 2), mouseSliderLabels[2]);
                 mouseSlider.setLabelTable(labelsTable);
                 mouseSlider.repaint();
                 mouseSlider.setValue(50);
@@ -1546,10 +1557,10 @@ public class ViewJPanelLUT extends JPanel
                 mouseSliderLabelsB[0] = ViewJFrameHistoLUT.createSliderLabel(start);
                 mouseSliderLabelsB[1] = ViewJFrameHistoLUT.createSliderLabel(mid);
                 mouseSliderLabelsB[2] = ViewJFrameHistoLUT.createSliderLabel(end);
-                labelsTableB = new Hashtable();
-                labelsTableB.put(new Integer(0 + (start.length() / 2)), mouseSliderLabelsB[0]);
-                labelsTableB.put(new Integer(50 + (mid.length() / 2)), mouseSliderLabelsB[1]);
-                labelsTableB.put(new Integer(100 - (mid.length() / 2)), mouseSliderLabelsB[2]);
+                labelsTableB = new Hashtable<Integer, JLabel>();
+                labelsTableB.put(0 + (start.length() / 2), mouseSliderLabelsB[0]);
+                labelsTableB.put(50 + (mid.length() / 2), mouseSliderLabelsB[1]);
+                labelsTableB.put(100 - (mid.length() / 2), mouseSliderLabelsB[2]);
                 mouseSliderB.setLabelTable(labelsTableB);
                 mouseSliderB.repaint();
                 mouseSliderB.setValue(50);
@@ -1968,11 +1979,11 @@ public class ViewJPanelLUT extends JPanel
         mouseSliderLabels[1] = ViewJFrameHistoLUT.createSliderLabel(String.valueOf(scaleRangeA));
         mouseSliderLabels[2] = ViewJFrameHistoLUT.createSliderLabel(String.valueOf(scaleRangeA * 2));
 
-        labelsTable = new Hashtable();
+        labelsTable = new Hashtable<Integer, JLabel>();
 
-        labelsTable.put(new Integer(3), mouseSliderLabels[0]);
-        labelsTable.put(new Integer(50), mouseSliderLabels[1]);
-        labelsTable.put(new Integer(100), mouseSliderLabels[2]);
+        labelsTable.put(3, mouseSliderLabels[0]);
+        labelsTable.put(50, mouseSliderLabels[1]);
+        labelsTable.put(100, mouseSliderLabels[2]);
 
         mouseSlider = new JSlider(0, 100, 50);
         mouseSlider.setFont(MipavUtil.font12);
@@ -2245,11 +2256,11 @@ public class ViewJPanelLUT extends JPanel
         mouseSliderLabelsB[1] = ViewJFrameHistoLUT.createSliderLabel(String.valueOf(scaleRangeB));
         mouseSliderLabelsB[2] = ViewJFrameHistoLUT.createSliderLabel(String.valueOf(scaleRangeB * 2));
 
-        labelsTableB = new Hashtable();
+        labelsTableB = new Hashtable<Integer, JLabel>();
 
-        labelsTableB.put(new Integer(0), mouseSliderLabelsB[0]);
-        labelsTableB.put(new Integer(50), mouseSliderLabelsB[1]);
-        labelsTableB.put(new Integer(100), mouseSliderLabelsB[2]);
+        labelsTableB.put(0, mouseSliderLabelsB[0]);
+        labelsTableB.put(50, mouseSliderLabelsB[1]);
+        labelsTableB.put(100, mouseSliderLabelsB[2]);
 
         mouseSliderB = new JSlider(0, 100, 50);
         mouseSliderB.setFont(MipavUtil.font12);

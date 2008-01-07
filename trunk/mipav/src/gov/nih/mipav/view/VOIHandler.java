@@ -532,7 +532,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     }
 
                     // convert this VOI over to scanner coords and pass on to UI
-                    Vector scannerVector = new Vector();
+                    Vector<Point3Df> scannerVector = new Vector<Point3Df>();
                     VOIBase tempBase = null;
                     int numPoints = 0;
                     Point3Df inPoint = new Point3Df();
