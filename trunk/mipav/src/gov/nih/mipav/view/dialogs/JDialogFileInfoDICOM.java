@@ -39,12 +39,6 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 7337962386655472087L;
 
-    /** DOCUMENT ME! */
-    private static String showPrivateText = "Show Private Tags";
-
-    /** DOCUMENT ME! */
-    private static String hidePrivateText = "Hide Private Tags";
-
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -61,9 +55,6 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
     /** DOCUMENT ME! */
     private ListSelectionModel listSelectorDicom;
-
-    /** DOCUMENT ME! */
-    private JButton priv;
 
     /** DOCUMENT ME! */
     private JScrollPane scrollPaneDicom;
@@ -145,7 +136,6 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         String[] tags = null;
         Object[] rowData = { new Boolean(false), "", "", "" };
         Hashtable tagsList = DicomInfo.getTagTable().getTagList();
-        ArrayList checkBoxList = new ArrayList();
         
         //check preferences to see if any dicom tags were selected for saving
         String prefTagsString = Preferences.getProperty(Preferences.SAVE_DICOM_TAGS);
@@ -577,10 +567,8 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         } else if (e.getActionCommand().equals("Show")) { // show
 
             if (showPrivate) { // if currently showing private
-                priv.setText(showPrivateText); // let the user show private
                 showPrivate = false; // but, toggle current status OFF
             } else {
-                priv.setText(hidePrivateText); // let user hide the private tags
                 showPrivate = true; // toggle current status to ON
             }
 
