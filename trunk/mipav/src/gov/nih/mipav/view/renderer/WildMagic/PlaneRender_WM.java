@@ -216,6 +216,11 @@ public class PlaneRender_WM extends JavaApplication3D
 
     public void display(GLAutoDrawable arg0) {
 
+        if ( !m_bModified )
+        {
+            return;
+        }
+        m_bModified = false;
         if (MoveCamera())
         {
             m_kCuller.ComputeVisibleSet(m_spkScene);
@@ -226,21 +231,21 @@ public class PlaneRender_WM extends JavaApplication3D
             m_spkScene.UpdateGS();
             m_kCuller.ComputeVisibleSet(m_spkScene);
         }
-
+        
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
-        {          
-            //System.err.println( "PlaneRender " + m_iPlaneOrientation );
+        {
             m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
             m_pkRenderer.EndScene();
         }
         m_pkRenderer.DisplayBackBuffer();
-        
+
     }
 
     public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {
         // TODO Auto-generated method stub
-        
+        m_bModified = true;
+
     }
 
     public void init(GLAutoDrawable arg0) {
@@ -288,7 +293,10 @@ public class PlaneRender_WM extends JavaApplication3D
             
             m_iWidth = iWidth;
             m_iHeight = iHeight;
+            m_bModified = true;
+
         }
+        
     }
 
     public GLCanvas GetCanvas()
@@ -348,7 +356,7 @@ public class PlaneRender_WM extends JavaApplication3D
     private Culler m_kCuller = new Culler(0,0,null);
     private VolumePlaneEffect m_spkEffect;
     private TriMesh m_pkPlane = null;
-
+    private boolean m_bModified = true;
 
     /**
      * Closes the frame.
@@ -608,6 +616,7 @@ public class PlaneRender_WM extends JavaApplication3D
         int iX = 0;
         int iY = 1;
         int iZ = 2;
+        m_bModified = true;
 
         m_aakColors[m_iPlaneOrientation][m_aaiColorSwap[m_iPlaneOrientation][iView]] = kColor;
         ColorRGB kXSliceHairColor = m_aakColors[m_iPlaneOrientation][iX];
@@ -1060,6 +1069,7 @@ public class PlaneRender_WM extends JavaApplication3D
      */
     public void setCenter( Point3Df center )
     {
+        m_bModified = true;
         float[][] tc = MipavCoordinateSystems.
             getPatientTextureCoordinates( center,
                                           m_kImageA, m_iPlaneOrientation, true);
@@ -1082,7 +1092,7 @@ public class PlaneRender_WM extends JavaApplication3D
         UpdateBarPosition();
     }
 
-    public void setSlice(float fSlice) {
+    private void setSlice(float fSlice) {
         int iSlice = (int)fSlice;
 
         /* Check bounds: */
