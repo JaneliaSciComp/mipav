@@ -139,7 +139,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         
         //check preferences to see if any dicom tags were selected for saving
         String prefTagsString = Preferences.getProperty(Preferences.SAVE_DICOM_TAGS);
-    	if(prefTagsString != null || (!prefTagsString.trim().equals(""))) {
+    	if(prefTagsString != null && (!prefTagsString.trim().equals(""))) {
     		tags = prefTagsString.split(";");
     	}
         
