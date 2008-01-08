@@ -213,20 +213,6 @@ public class VolumeImageViewer extends JavaApplication3D
         StandardMesh kSM = new StandardMesh(kAttributes);
         m_pkPlane = kSM.Rectangle(2,2,1.0f,1.0f);
         
-//         float fXBox = (float) (m_kVolumeImage.GetImage().getExtents()[0] - 1) * m_kVolumeImage.GetImage().getResolutions(0)[0];
-//         float fYBox = (float) (m_kVolumeImage.GetImage().getExtents()[1] - 1) * m_kVolumeImage.GetImage().getResolutions(0)[1];
-
-//         float fMaxBox = fXBox;
-
-//         if (fYBox > fMaxBox) {
-//             fMaxBox = fYBox;
-//         }
-
-//         float fX0 = -fXBox / fMaxBox;
-//         float fX1 = fXBox / fMaxBox;
-//         float fY0 = -fYBox / fMaxBox;
-//         float fY1 = fYBox / fMaxBox;
-        
         float fX0 = -1f;
         float fX1 =  1f;
         float fY0 = -1f;
@@ -250,7 +236,7 @@ public class VolumeImageViewer extends JavaApplication3D
         m_spkEffect.SetStepSize(m_kVolumeImage);
         m_pkPlane.DetachAllEffects();
 
-        GraphicsImage kImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888,m_iWidth,m_iHeight,
+        GraphicsImage kImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGB888,m_iWidth,m_iHeight,
                                                  m_kVolumeImage.GetImage().getExtents()[2],(byte[])null,
                                             "VolumeNormals");
         m_pkVolumeNormalTarget = new Texture();

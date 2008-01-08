@@ -51,6 +51,8 @@ public class VolumeImage
     /** Texture object for imageA normal map: */
     private Texture m_kNormalMapTargetA;
 
+    private boolean m_bByte = true;
+
     public VolumeImage( ModelImage kImage, ModelLUT kLUTA, ModelRGB kRGBTA )
     {
         m_kImageA = kImage;
@@ -81,7 +83,7 @@ public class VolumeImage
         int iXBound = m_kImageA.getExtents()[0];
         int iYBound = m_kImageA.getExtents()[1];
         int iZBound = m_kImageA.getExtents()[2];
-        m_kNormalA = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888,
+        m_kNormalA = new GraphicsImage(GraphicsImage.FormatMode.IT_RGB888,
                                        iXBound,iYBound,iZBound,(byte[])null,
                                        "NormalMapA");
         m_kNormalMapTargetA = new Texture();
@@ -213,49 +215,62 @@ public class VolumeImage
         }
         else
         {
-            byte[] abData = new byte[iXBound*iYBound*iZBound];
+            byte[] abData = null;
+            float[] afData = null;
 
-             int i = 0;
-             for (int iZ = 0; iZ < iZBound; iZ++)
-             {
-                 for (int iY = 0; iY < iYBound; iY++)
-                 {
-                     for (int iX = 0; iX < iXBound; iX++)
-                     {
-                         float fValue = kImage.getFloat(iX,iY,iZ);
-                         abData[i++] = (byte)(255 * (fValue - fImageMin)/(fImageMax - fImageMin));
-                     }
-                 }
-             }
-             kVolumeImage =
-                 new GraphicsImage( GraphicsImage.FormatMode.IT_L8, 
-                                    iXBound,iYBound,iZBound, abData,
-                                    new String( "VolumeImage" + kPostFix));
+            if ( m_bByte )
+            {
+                abData = new byte[iXBound*iYBound*iZBound];
+                
+                int i = 0;
+                for (int iZ = 0; iZ < iZBound; iZ++)
+                {
+                    for (int iY = 0; iY < iYBound; iY++)
+                    {
+                        for (int iX = 0; iX < iXBound; iX++)
+                        {
+                            float fValue = kImage.getFloat(iX,iY,iZ);
+                            abData[i++] = (byte)(255 * (fValue - fImageMin)/(fImageMax - fImageMin));
+                        }
+                    }
+                }
+                kVolumeImage =
+                    new GraphicsImage( GraphicsImage.FormatMode.IT_L8, 
+                                       iXBound,iYBound,iZBound, abData,
+                                       new String( "VolumeImage" + kPostFix));
+            }
+            else
+            {
+                afData = new float[iXBound*iYBound*iZBound];
 
-
-//              float[] afData = new float[iXBound*iYBound*iZBound];
-
-//              int i = 0;
-//              for (int iZ = 0; iZ < iZBound; iZ++)
-//              {
-//                  for (int iY = 0; iY < iYBound; iY++)
-//                  {
-//                      for (int iX = 0; iX < iXBound; iX++)
-//                      {
-//                          float fValue = kImage.getFloat(iX,iY,iZ);
-//                          afData[i++] = (fValue - fImageMin)/(fImageMax - fImageMin);
-//                      }
-//                  }
-//              }
-//              kVolumeImage =
-//                  new GraphicsImage( GraphicsImage.FormatMode.IT_L8, 
-//                                     iXBound,iYBound,iZBound, afData,
-//                                     new String( "VolumeImage" + kPostFix));
+                int i = 0;
+                for (int iZ = 0; iZ < iZBound; iZ++)
+                {
+                    for (int iY = 0; iY < iYBound; iY++)
+                    {
+                        for (int iX = 0; iX < iXBound; iX++)
+                        {
+                            float fValue = kImage.getFloat(iX,iY,iZ);
+                            afData[i++] = (fValue - fImageMin)/(fImageMax - fImageMin);
+                        }
+                    }
+                }
+                kVolumeImage =
+                    new GraphicsImage( GraphicsImage.FormatMode.IT_L8, 
+                                       iXBound,iYBound,iZBound, afData,
+                                       new String( "VolumeImage" + kPostFix));
+            }
 
             if ( kVolumeTexture != null )
             {
-                kVolumeTexture.GetImage().SetData( abData, iXBound, iYBound, iZBound );
-//                 kVolumeTexture.GetImage().SetFloatData( afData, iXBound, iYBound, iZBound );
+                if ( m_bByte )
+                {
+                    kVolumeTexture.GetImage().SetData( abData, iXBound, iYBound, iZBound );
+                }
+                else
+                {
+                    kVolumeTexture.GetImage().SetFloatData( afData, iXBound, iYBound, iZBound );
+                }
                 kVolumeTexture.Release();
             }
         }
