@@ -281,10 +281,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
                     //Draw frame rate:
                     m_pkRenderer.SetCamera(m_spkCamera);
-                    if ( m_bTestFrameRate )
-                    {
-                        DrawFrameRate(8,16,ColorRGBA.WHITE);
-                    }
+                    //if ( m_bTestFrameRate )
+                    //{
+                     //   DrawFrameRate(8,16,ColorRGBA.WHITE);
+                    //}
 
 
                     if ( (m_kSculptor != null) && m_kSculptor.IsSculptDrawn() )
@@ -309,10 +309,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
                 //Draw frame rate:
                 m_pkRenderer.SetCamera(m_spkCamera);
-                if ( m_bTestFrameRate )
-                {
-                    DrawFrameRate(8,16,ColorRGBA.WHITE);
-                }
+                //if ( m_bTestFrameRate )
+                //{
+                 //   DrawFrameRate(8,16,ColorRGBA.WHITE);
+                //}
 
                 if ( (m_kSculptor != null) && m_kSculptor.IsSculptDrawn() )
                 {
@@ -324,7 +324,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_pkRenderer.DisplayBackBuffer();
 
         UpdateFrameCount();
-        
+        if ( m_bTestFrameRate )
+        {
+            System.err.println( "FPS: " + m_dFrameRate );
+        }
         if ( m_bFirstRender )
         {
             m_bFirstRender = false;

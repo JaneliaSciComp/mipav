@@ -49,7 +49,7 @@ import gov.nih.mipav.view.WildMagic.ApplicationDemos.*;
  * @see  JDialogView
  * @see  JDialogMouseRecorder
  */
-public class SurfaceRender extends RenderViewBase {
+public class SurfaceRender extends RenderViewBase implements KeyListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -244,6 +244,7 @@ public class SurfaceRender extends RenderViewBase {
 
     /** Tri planar view and the 3D texture volume view switch group. */
     private Switch switchGroup;
+    private Alpha rotationAlpha;
 
     /** ViewJComponentTriSliceImages -> Texture2D transparency values: */
     private TransparencyAttributes[] sliceTransparency = new TransparencyAttributes[3];
@@ -3060,7 +3061,8 @@ public class SurfaceRender extends RenderViewBase {
         Preferences.debug("Preferred graphics configuration: " + config + "\n");
         canvas = new VolumeCanvas3D(config);
         Preferences.debug("Canvas: " + canvas.queryProperties() + "\n");
-
+        canvas.addKeyListener( this );  
+        
         boxSliceVertices = new Point3Df[3][];
         boxSliceVertices[0] = null;
         boxSliceVertices[1] = null;
@@ -3240,7 +3242,6 @@ public class SurfaceRender extends RenderViewBase {
         switchGroup.setCapability(Switch.ALLOW_CHILDREN_WRITE);
         switchGroup.setCapability(Switch.ALLOW_CHILDREN_READ);
         switchGroup.setCapability(Switch.ALLOW_CHILDREN_EXTEND);
-        
 
         triPlanarViewBG = new BranchGroup();
         triPlanarViewBG.setCapability(Group.ALLOW_CHILDREN_EXTEND);
@@ -3251,9 +3252,23 @@ public class SurfaceRender extends RenderViewBase {
         switchGroup.addChild(triPlanarViewBG);
         // switchGroup.addChild(volBG);
         switchGroup.setWhichChild(0);
+        
+        //sceneRootTG.addChild(switchGroup);
+        
 
-        sceneRootTG.addChild(switchGroup);
-
+        TransformGroup rotationXform = new TransformGroup();
+        rotationXform.setCapability(
+                TransformGroup.ALLOW_TRANSFORM_WRITE);
+        rotationAlpha = new Alpha(0,2000);
+        rotationAlpha.pause();
+        RotationInterpolator rotator = 
+            new RotationInterpolator(
+                    rotationAlpha,rotationXform);
+        rotator.setSchedulingBounds(bounds);
+        rotationXform.addChild(rotator);
+        rotationXform.addChild(switchGroup);
+        sceneRootTG.addChild(rotationXform);
+        
         buildCubicBranch();
 
         xBox = (xDim - 1) * resols[0];
@@ -3400,7 +3415,6 @@ public class SurfaceRender extends RenderViewBase {
         mouseTranslateBehavior.setSchedulingBounds(bounds);
         mouseTranslateBehavior.setFactor(0.005);
         sceneRootTG.addChild(objBehaviorBG);
-
     }
 
     /**
@@ -3607,6 +3621,34 @@ public class SurfaceRender extends RenderViewBase {
     public GPUVolumeRender getGPURenderer()
     {
         return rayBasedRenderWM;
+    }
+
+    public void keyPressed(KeyEvent arg0) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void keyReleased(KeyEvent arg0) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void keyTyped(KeyEvent arg0) {
+        char ucKey = arg0.getKeyChar();
+        switch (ucKey)
+        {
+        case 'f':
+            canvas.SetTestFrameRate(!canvas.GetTestFrameRate());
+            rotationAlpha.setLoopCount(-1);
+            if ( canvas.GetTestFrameRate() )
+            {
+                rotationAlpha.resume();
+            }
+            else
+            {
+                rotationAlpha.pause();
+            }
+        }
     }
 
 }
