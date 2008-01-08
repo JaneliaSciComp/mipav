@@ -2279,6 +2279,29 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         }
 	}
     
+    public VOI getSingleVOI(String name) {
+        String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+display.VOI_DIR;
+        File allVOIs = new File(fileDir);
+        
+        if(new File(fileDir+name+".xml").exists()) {
+            FileVOI v;
+            VOI[] voiVec = null;
+            try {
+                v = new FileVOI(name, fileDir, display.getActiveImage());
+                voiVec = v.readVOI(false);
+            } catch(IOException e) {
+                MipavUtil.displayError("Unable to load old VOI from location:\n"+fileDir+"\nWith name: "+name);
+            }
+            if(voiVec.length > 1) {
+                MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+name);
+            } else {
+            	return voiVec[0];
+            }
+        }
+        //Error produced, incorrect VOI name given
+        return null;
+    }
+        
     public int getFatArea(VOI v) {
     	int fatArea = 0;
     	BitSet fullMask = new BitSet();
