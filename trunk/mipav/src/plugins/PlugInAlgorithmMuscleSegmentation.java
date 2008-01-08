@@ -2188,25 +2188,26 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    			VOIVector voi = parentFrame.getActiveImage().getVOIs();
 	    			for(int i=0; i<voi.size(); i++) {
 	    				VOI v = voi.get(i);
-	    				int totalAreaCalc = 0, totalAreaCount = 0, fatArea = 0, leanArea = 0, partialArea = 0;
+	    				double totalAreaCalc = 0, totalAreaCount = 0, fatArea = 0, leanArea = 0, partialArea = 0;
 	    				double meanFatH = 0, meanLeanH = 0, meanTotalH = 0;
-	    				totalAreaCalc = getTotalAreaCalc(v);
-	    				totalAreaCount = getTotalAreaCount(v);
-	    				fatArea = getFatArea(v);
-	    				leanArea = getLeanArea(v);
-	    				partialArea = getPartialArea(v);
-	    				meanFatH = getMeanFatH(v);
-	    				meanLeanH = getMeanLeanH(v);
-	    				meanTotalH = getMeanTotalH(v);
+	    				//pixels -> cm^2
+	    				totalAreaCalc = getTotalAreaCalc(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
+	    				totalAreaCount = getTotalAreaCount(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
+	    				fatArea = getFatArea(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
+	    				leanArea = getLeanArea(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
+	    				partialArea = getPartialArea(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
+	    				meanFatH = getMeanFatH(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
+	    				meanLeanH = getMeanLeanH(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
+	    				meanTotalH = getMeanTotalH(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
 	    				
 	    				if (doSave) {
 	    					addToPDF(listStrings[i], fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH);
 	    				} else {
 	    					DecimalFormat dec = new DecimalFormat("0.#");
-		    				String appMessage = v.getName()+" calculations:\n"+"Fat Area: "+fatArea+
-		    				"\t\tMean H: "+dec.format(meanFatH)+"\nLean Area: "+leanArea+
-		    				"\t\tMean H: "+dec.format(meanLeanH)+"\nTotal Area: "+totalAreaCount+
-		    				"\t\tMean H: "+dec.format(meanTotalH) + "\n\n";
+		    				String appMessage = v.getName()+" calculations:\n"+"Fat Area: "+dec.format(fatArea)+
+		    				"\t\t\tMean H: "+dec.format(meanFatH)+"\nLean Area: "+dec.format(leanArea)+
+		    				"\t\t\tMean H: "+dec.format(meanLeanH)+"\nTotal Area: "+dec.format(totalAreaCount)+
+		    				"\t\t\tMean H: "+dec.format(meanTotalH) + "\n\n";
 		    			
 		    				ViewUserInterface.getReference().getMessageFrame().append(appMessage, ViewJFrameMessage.DATA);
 	    				}	
@@ -2481,7 +2482,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			spTable.addCell("mA:");
 			spTable.addCell("213");
 			spTable.addCell("Pixel Size:");
-			spTable.addCell("0.976562");
+			spTable.addCell(Double.toString(display.getActiveImage().getResolutions(0)[0]*.1));
 			spTable.addCell("Slice Thickness: (mm)");
 			spTable.addCell("10.00");
 			spTable.addCell("Table Height: (cm)");
@@ -2525,7 +2526,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
      * @param meanLeanH mean lean area HU
      * @param meanTotalH mean total area HU
      */
-	private void addToPDF(String name, int fatArea, int leanArea, int totalAreaCount, 
+	private void addToPDF(String name, double fatArea, double leanArea, double totalAreaCount, 
 			double meanFatH, double meanLeanH, double meanTotalH) {
 		
 		try {
@@ -2538,13 +2539,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			aTable.addCell(name);
 				
 			//total area
-			aTable.addCell(Integer.toString(totalAreaCount));
+			aTable.addCell(dec.format(totalAreaCount));
 				
 			//fat area
-			aTable.addCell(Integer.toString(fatArea));
+			aTable.addCell(dec.format(fatArea));
 			
 			//lean area
-			aTable.addCell(Integer.toString(leanArea));
+			aTable.addCell(dec.format(leanArea));
 				
 			//fat HU
 			aTable.addCell(dec.format(meanFatH));
