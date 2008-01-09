@@ -2,6 +2,7 @@ package gov.nih.mipav.view.components;
 
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.ViewUserInterface;
 
 import javax.swing.*;
 
@@ -117,6 +118,10 @@ public class JPanelAlgorithmOutputOptions extends JPanel {
         // Only if the image is unlocked can it be replaced.
         if (srcImage.getLockStatus() == ModelStorageBase.UNLOCKED) {
             replaceImageRadio.setEnabled(true);
+            if (ViewUserInterface.getReference().doForceInPlace()) {
+            	replaceImageRadio.setSelected(true);
+            	newImageRadio.setEnabled(false);
+            }
         } else {
             replaceImageRadio.setEnabled(false);
         }

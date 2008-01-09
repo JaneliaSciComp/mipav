@@ -217,7 +217,7 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
                 try {
 
                     // resultImage.setImageName("Dilated image");
-                    new ViewJFrameImage(resultImage);
+                    openNewFrame(resultImage);
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -259,7 +259,7 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
                 try {
 
                     // resultImage.setImageName("Dilated image");
-                    new ViewJFrameImage(resultImage);
+                    openNewFrame(resultImage);
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -301,7 +301,7 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
                 try {
 
                     // resultImage.setImageName("Dilated image");
-                    new ViewJFrameImage(resultImage);
+                    openNewFrame(resultImage);
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }

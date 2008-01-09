@@ -161,7 +161,7 @@ public class JDialogDistanceMap extends JDialogScriptableBase implements Algorit
                 try {
 
                     // resultImage.setImageName("Distance map image");
-                    new ViewJFrameImage(resultImage);
+                    openNewFrame(resultImage);
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -203,7 +203,7 @@ public class JDialogDistanceMap extends JDialogScriptableBase implements Algorit
                 try {
 
                     // resultImage.setImageName("Distance map");
-                    new ViewJFrameImage(resultImage);
+                    openNewFrame(resultImage);
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }

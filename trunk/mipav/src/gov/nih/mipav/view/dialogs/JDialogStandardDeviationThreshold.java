@@ -779,7 +779,7 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
 		if(algorithm.isCompleted() && !scriptFail) {
 			if(newImageDestination) {
 				resultImage = alg.getResultImage();
-				new ViewJFrameImage(resultImage);
+				openNewFrame(resultImage);
 				resultImage.getParentFrame().getComponentImage().getPaintBitmap().clear();
 			} else {
 				srcImage.notifyImageDisplayListeners();

@@ -35,7 +35,8 @@ import javax.swing.event.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      ViewJComponentEditImage
  */
-public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, MouseListener, MouseMotionListener {
+public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, MouseListener, MouseMotionListener, 
+	ViewOpenFrameInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -3927,7 +3928,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     public void mouseReleased(MouseEvent event) { }
 
-
+    
+    /**
+     * ViewOpenFrameInterface function to create a new frame from a result image (jdialog produced)
+     */
+    public ViewJFrameImage openFrame(ModelImage image) {
+    	return new ViewJFrameImage(image);
+    }
+    
+    
     /**
      * Method to send an image to the printer.
      */
