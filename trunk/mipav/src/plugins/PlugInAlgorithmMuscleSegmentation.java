@@ -398,6 +398,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private int numVoi;
         
+        boolean voiExists;
+        
         /**Whether this dialog completed. */
         private boolean completed;
         
@@ -413,10 +415,25 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             this.closedVoi = closedVoi;
             this.numVoi = numVoi;
 
+            voiExists = voiExists(objectName);
             
             novelVoiProduced = false;
             completed = false;
             
+            //initImage();
+	        initDialog();	
+            
+        }
+        
+        private boolean voiExists(String objectName) {
+        	String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+display.VOI_DIR;
+            File allVOIs = new File(fileDir);
+            
+            if(new File(fileDir+objectName+".xml").exists()) {
+                return true;
+            } else {
+            	return false;
+            }
         }
         
         public void actionPerformed(ActionEvent e) {
@@ -511,10 +528,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             gbc.gridy = 0;
             gbc.ipadx = 0;
                 
+            
+            
             String closedStr = closedVoi ? "closed " : "";
             String pluralVOI = numVoi > 1 ? "s" : "";
+            String existStr = voiExists ? "Modify the" : "Create";
             
-            String voiStr = new String("Select "+numVoi+" "+closedStr+"VOI curve"+pluralVOI+" around the "+
+            String voiStr = new String(existStr+" "+numVoi+" "+closedStr+"VOI curve"+pluralVOI+" around the "+
                                         objectName.toLowerCase()+".");
             JLabel label = new JLabel(voiStr);
             
@@ -879,13 +899,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		            getImageA().unregisterAllVOIs();
 		            updateImages(true);
 		        }
-		        if(c instanceof MuscleDialogPrompt) {
-		            if(imagePane.getSelectedIndex() == voiIndex) {
-		                getImageA().unregisterAllVOIs();
-		                initVoiImage(voiPrompt, activeTab);
-		                updateImages(true);
-		            }
-		        }
 		    }
 		    super.componentHidden(event);
 		}
@@ -893,8 +906,14 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		@Override
 		public void componentShown(ComponentEvent event) {
 		    //System.out.println("Active pane: "+activeTab);
-		    //Component c = event.getComponent();
-		    //Object obj = event.getSource();
+		    Component c = event.getComponent();
+		    Object obj = event.getSource();
+		    if(c instanceof VoiDialogPrompt) {
+                getActiveImage().unregisterAllVOIs();
+                initVoiImage(voiPrompt, activeTab);
+                updateImages(true);
+		    }
+		    
 		    if(imagePane != null) {
 		        boolean found = false;
 		        for(int i=0; i<tabs.length; i++) {
@@ -978,7 +997,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private void initVOIColor() {
             int colorChoice = 0;
-            VOIVector voiFullVec = getImageA().getVOIs();
+            VOIVector voiFullVec = getActiveImage().getVOIs();
             for(int i=0; i<voiFullVec.size(); i++) {
                 Color c = hasColor((VOI)voiFullVec.get(i));
                 if(c != null) {
@@ -1038,13 +1057,16 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             //getImageA().unregisterAllVOIs();
             componentRock = true;
             int colorChoice = 0;
-            String fileDir = getImageA().getFileInfo(0).getFileDirectory()+VOI_DIR;
+            String fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+VOI_DIR;
             File allVOIs = new File(fileDir);
             if(allVOIs.isDirectory()) {
                 String[] voiName = allVOIs.list();
                 for(int i=0; i<voiName.length; i++) {
                     //System.out.println(voiName);
-                    
+                	//if exists replace, color already set
+                    VOI voi = getSingleVOI(voiName[i]);
+                	
+                	
                     if(new File(fileDir+voiName[i]).exists()) {
                         String fileName = voiName[i];
                         FileVOI v;
@@ -1068,9 +1090,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                                 colorChoice++;
                             }                      
                             if((Integer)locationStatus.get(voiName[i].substring(0, voiName[i].indexOf(".xml"))) == pane) {
-                                getImageA().registerVOI(voiVec[0]);
+                                getActiveImage().registerVOI(voiVec[0]);
                             }
-                            
                         }
                     }
                 }
@@ -1078,81 +1099,85 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
             componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             
-            setImageA(tempImage2);
-            srcImage = (ModelImage)getImageA().clone();
-            
-            VOIVector vector = srcImage.getVOIs();
-            VOI removedVoi = null;
-            
-            for(int i=0; i < vector.size() ; i++) {
-            	//TODO: debug
-            	//Find same voi, and remove it from original image
-                //if(((VOI)vector.get(i)).getName().equals(voiDialog.getObjectName())) {
-                //    removedVoi = (VOI)getImageA().getVOIs().remove(i);
-                //    break;
-                //}
-            }
-            VOIVector tempVOI = (VOIVector)getImageA().getVOIs().clone();
-            VOIVector zeroVOI = getImageA().getVOIs();  //not cloned to maintain consistency of for loop
-            
-            //System.out.println("Size: "+getImageA().getVOIs().size());
-            int k = zeroVOI.size();
-            int j=0;
-            int count = 0;
-            
-            
-            srcImage.getVOIs().removeAllElements();
-            if(removedVoi != null) {
-                srcImage.registerVOI(removedVoi);
-            }
-            
-            while(count<k*j) {
-                if(!(Boolean)zeroStatus.get(((VOI)zeroVOI.get(j)).getName())) {
-                    ((ModelImage)getImageA()).getVOIs().remove(j);
-                } else {
-                    j++;
-                }
-                count++;
-                //System.out.println("Size: "+getImageA().getVOIs().size());
-            }
-            
-            BitSet fullMask = getImageA().generateVOIMask();
-
-            for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-                getImageA().set(i, REMOVED_INTENSITY);
-                //componentImage.getImageA().set(i, REMOVED_INTENSITY);
-                //srcImage.set(i, REMOVED_INTENSITY);
-            }
-            
-            srcImage.setMask(fullMask);
-            
-            //Display VOI of current objects.
-            
-            getImageA().getVOIs().removeAllElements();
-            
-            for(int i=0; i<tempVOI.size(); i++) {
-                VOI v = (VOI)tempVOI.get(i);
-                if((Boolean)zeroStatus.get(v.getName())) {
+            for(int i=0; i<getActiveImage().getVOIs().size(); i++) {
+                VOI v = (VOI)getActiveImage().getVOIs().get(i);
+                if((Boolean)zeroStatus.get(v.getName()) && !voiDialog.getObjectName().equals(v.getName())) {
                     v.setDisplayMode(VOI.SOLID);
                 } else {
                     v.setDisplayMode(VOI.CONTOUR);
                 }
-                //srcImage.registerVOI(v);
-                //need to register it to componentImage
-                //System.out.println("About to register: "+v.getName());
-                componentImage.getImageA().registerVOI(v);
+                
                
             }
-            componentImage.getImageA().clearMask();
             
-            getImageA().clearMask();
-            
-            //should be process in general, change and compute based on srcImage, do not need to load!
-            //simply resets the image, otherwise would have those removed intensities
-            componentImage.setImageA(srcImage);
             updateImages(true);
-            //LOOK HERE
         }
+        
+        /*************************************************************************
+         * Removed code from initVoiImage, functionality includes zeroing out
+         * areas not needed, mask coverage, and creating seperate images for different tasks.
+         * @param voiVec
+         * @return
+         */
+      //VOIVector vector = srcImage.getVOIs();
+        //VOI removedVoi = null;
+        
+        //for(int i=0; i < vector.size() ; i++) {
+        	//TODO: debug
+        	//Find same voi, and remove it from original image
+            //if(((VOI)vector.get(i)).getName().equals(voiDialog.getObjectName())) {
+            //    removedVoi = (VOI)getImageA().getVOIs().remove(i);
+            //    break;
+            //}
+        //}
+        //VOIVector tempVOI = (VOIVector)getImageA().getVOIs().clone();
+        //VOIVector zeroVOI = getImageA().getVOIs();  //not cloned to maintain consistency of for loop
+        
+        //System.out.println("Size: "+getImageA().getVOIs().size());
+        //int k = zeroVOI.size();
+        //int j=0;
+        //int count = 0;
+        
+        
+        //srcImage.getVOIs().removeAllElements();
+        //if(removedVoi != null) {
+        //    srcImage.registerVOI(removedVoi);
+        //}
+        
+        //while(count<k*j) {
+        //    if(!(Boolean)zeroStatus.get(((VOI)zeroVOI.get(j)).getName())) {
+        //        ((ModelImage)getImageA()).getVOIs().remove(j);
+        //    } else {
+        //        j++;
+        //    }
+        //    count++;
+            //System.out.println("Size: "+getImageA().getVOIs().size());
+        //}
+        
+        //BitSet fullMask = getImageA().generateVOIMask();
+
+        //for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
+        //    getImageA().set(i, REMOVED_INTENSITY);
+            //componentImage.getImageA().set(i, REMOVED_INTENSITY);
+            //srcImage.set(i, REMOVED_INTENSITY);
+        //}
+        
+        //srcImage.setMask(fullMask);
+        
+        //Display VOI of current objects.
+        
+        //getImageA().getVOIs().removeAllElements();
+      //srcImage.registerVOI(v);
+        //need to register it to componentImage
+        //System.out.println("About to register: "+v.getName());
+        //componentImage.getImageA().registerVOI(v);
+      //componentImage.getImageA().clearMask();
+        
+        //getImageA().clearMask();
+        
+        //should be process in general, change and compute based on srcImage, do not need to load!
+        //simply resets the image, otherwise would have those removed intensities
+        //componentImage.setImageA(srcImage);
 
 		private Color hasColor(VOI voiVec) {
             Color c = null;
@@ -1220,7 +1245,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                         axesCompleted = true;
                     }
                 }
-                
             }
 
             public boolean getAxesCompleted() {
@@ -1517,6 +1541,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         private String[] noMirrorArr;
         
         private boolean[] noMirrorZ;
+        
         
         private TreeMap zeroStatus;
         
@@ -1851,11 +1876,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		
 
 		
-		private final String[] buttonStringList = { OUTPUT, OUTPUT_ALL, SAVE, HELP, EXIT};
+		private final String[] buttonStringList = { OUTPUT, OUTPUT_ALL, SAVE, HELP, CANCEL};
 		
-		boolean novelVoiProduced;
+		private boolean novelVoiProduced;
 		
-		boolean completed;
+		private boolean completed;
 	
 		private Symmetry symmetry;
 	
@@ -1885,6 +1910,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		private String name[] = {"thigh", "bone component", "muscle"};
 		
 		private int time = 0;
+		
+		private TreeMap calculatedStatus;
 		
 		public AnalysisPrompt(MuscleImageDisplay theParentFrame, String[][] mirrorArr, String[][] noMirrorArr, Symmetry symmetry) {
 	        super(theParentFrame);
@@ -2180,7 +2207,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    				}
 	    				pdfCreated = true;
 	    			}
-	    			
+	    			ModelLUT lut;
 	    			//Load VOIs and calculations
 	    			loadVOIs(listStrings);
 	    			//parentFrame.updateImages(true);
@@ -2196,9 +2223,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    				fatArea = getFatArea(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
 	    				leanArea = getLeanArea(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
 	    				partialArea = getPartialArea(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
-	    				meanFatH = getMeanFatH(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
-	    				meanLeanH = getMeanLeanH(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
-	    				meanTotalH = getMeanTotalH(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
+	    				meanFatH = getMeanFatH(v);
+	    				meanLeanH = getMeanLeanH(v);
+	    				meanTotalH = getMeanTotalH(v);
 	    				
 	    				if (doSave) {
 	    					addToPDF(listStrings[i], fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH);
@@ -2283,6 +2310,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     public VOI getSingleVOI(String name) {
         String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+display.VOI_DIR;
         File allVOIs = new File(fileDir);
+        //Remove xml extension
+        name = name.contains(".xml") ? name.substring(0, name.indexOf(".xml")) : name;
         
         if(new File(fileDir+name+".xml").exists()) {
             FileVOI v;
