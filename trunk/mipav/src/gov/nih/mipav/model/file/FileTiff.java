@@ -11,13 +11,12 @@ import java.io.*;
 
 import java.util.*;
 import java.util.zip.*;
-import java.awt.image.*;
 
 
 /**
  * Tagged Image File Format (TIFF 6.0) reader/ writer. Only packed bit compression is supported at this time. Note that
  * although EchoTech has a tResolution field, there is no provision for 4D in TIFF.
- * Almost all of the FAX decompression code and modified Huffman decompression code
+ * Almost all of the FAX decompression code, modified Huffman decompression code, and JPEG decompression code
  * was taken from the free software at the website 
  * http://www.mms-computing.co.uk/uk/co/mmscomputing/imageio/tiff
  *
@@ -172,6 +171,12 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     public static final int SAMPLE_FORMAT = 339;
+    
+    // This field is the only auxiliary TIFF field added for the new-style 
+    // JPEG compression(Compression = 7).  It is optional.
+    // The purpose of the JPEG_TABLES is to predefine JPEG quantization
+    // and/or Huffman tables for subsequent use by JPEG image segments.
+    public static final int JPEG_TABLES = 347;
     
     public static final int YCBCR_COEFFICIENTS = 529;
     
@@ -352,10 +357,6 @@ public class FileTiff extends FileBase {
     
     private int[] bitsPerSample = null;
     
-    private int rowBytes;
-    
-    private int rowPixels;
-    
     private boolean haveChangedPhotometricTo1 = false;
 
     /** DOCUMENT ME! */
@@ -448,7 +449,11 @@ public class FileTiff extends FileBase {
     
     private boolean haveMultiSpectraImage = false;
     
+    private boolean jpegCompression = false;
     
+    private byte jpegTables[] = null;
+    
+    private JPEGInputStream tableStream = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -582,7 +587,7 @@ public class FileTiff extends FileBase {
             Preferences.debug("Just past init IFD read", Preferences.DEBUG_FILEIO);
 
             if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) &&
-                                 (!modHuffmanCompression) && haveTileOffsets) {
+                                 (!modHuffmanCompression) && (!jpegCompression) && haveTileOffsets) {
                 if (chunky) {
                    tilesPerSlice = tilesAcross * tilesDown;
                 }
@@ -593,7 +598,7 @@ public class FileTiff extends FileBase {
                 // System.err.println("DoTile: tilesPerSlice: " + tilesPerSlice + " imageSlice: " + imageSlice);
             } // if (haveTileWidth && (!lzwCompression) && (!zlibCompression)&& (!fax3Compression) && (!fax4Compression) 
             else if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression ||
-                     modHuffmanCompression) {
+                     modHuffmanCompression || jpegCompression) {
 
                 // set the tile width to the xDim for use in LZW Decoder or zlib deflater or fax decompression
                 if (!haveTileWidth) {
@@ -742,7 +747,7 @@ public class FileTiff extends FileBase {
             } // else foundTag43314
 
             if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) && 
-               (!modHuffmanCompression) && haveTileOffsets) {
+               (!modHuffmanCompression) && (!jpegCompression) && haveTileOffsets) {
                 imageSlice = tilesPerImage / tilesPerSlice;
             }
 
@@ -835,7 +840,7 @@ public class FileTiff extends FileBase {
                     try {
 
                         if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression ||
-                            modHuffmanCompression) {
+                            modHuffmanCompression || jpegCompression) {
                             readTileBuffer(i, sliceBufferFloat);
                         } else {
 
@@ -1478,6 +1483,90 @@ public class FileTiff extends FileBase {
         }
         return off;
       }
+    
+    // Modified from routines readRGBImage and readYCbCrImage in TiffBaselineFactory.java in 
+    // package uk.co.mmscomputing.imageio.tiff
+    private int jpegDecompresser(byte dataOut[], byte dataIn[]) {
+        InputStream is;
+        IntFilterInputStream intis;
+        TIFFYCbCrInputStream ycbcris;
+        int resultLength;
+        int mbps = xDim * rowsPerStrip;
+        int max = xDim * yDim;
+        int dataOutInt[] = new int[dataOut.length/samplesPerPixel];
+        int i;
+        
+        if (max < mbps) {
+            mbps = max;
+        }
+        
+        is = new ByteArrayInputStream(dataIn);
+        if (fillOrder != 1) {
+            try {
+                is = new BitSwapInputStream(is);
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOExeption on is = new BitSwapInputStream(is)");
+                return -1;
+            } 
+        } // if (fillOrder != 1)
+        
+        if (tableStream != null) {
+            try {
+                intis = new JPEGInputStream(is,tableStream.getQTs(), tableStream.getDCIns(), tableStream.getACIns());
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOException on JPEGInputStream(is, tableStream.getQTs(), " +
+                        "tableStream.getDCIns(), tableStream.getACIns())");
+                return - 1;
+            }
+        } // if (tableStream != null)
+        else {
+            try {
+                intis = new JPEGInputStream(is);
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOException on initis = new JPEGInputStream(is)");
+                return -1;
+            }
+        } // else
+        if (isYCbCr) {
+            try {
+                ycbcris = new TIFFYCbCrInputStream(intis);
+                
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOException on ycbcris = new TIFFYCbCrInputStream(intis)");
+                return -1;
+            }
+            ycbcris.setColourCoefficients((double)LumaRed,(double)LumaGreen,(double)LumaBlue);
+            ycbcris.setRfBWY(YReferenceBlack, YReferenceWhite);
+            ycbcris.setRfBWCb(CbReferenceBlack, CbReferenceWhite);
+            ycbcris.setRfBWCr(CrReferenceBlack, CrReferenceWhite);
+            try {
+                resultLength = ycbcris.read(dataOutInt, 0, mbps);
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOException on ycbcris.read(dataOut, 0, mbps)");
+                return -1;
+            }
+        } // if (isYCbCr)
+        else {
+            try {
+                resultLength = intis.read(dataOutInt, 0, mbps);
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOException on resultLength = initis.read(dataOut, 0, mbps)");
+                return -1;
+            }
+        } // else
+        for (i = 0; i < resultLength; i++) {
+            dataOut[3*i] = (byte)(0xff & (dataOutInt[i] >> 16));
+            dataOut[3*i + 1] = (byte)(0xff & (dataOutInt[i] >> 8));
+            dataOut[3*i + 2] = (byte)(0xff & dataOutInt[i]);
+        }
+        return 3*resultLength;
+    }
 
     
     // Modified from readImage routine TIFFClassFFactory.java in package uk.co.mmscomputing.imageio.tiff
@@ -2381,6 +2470,1322 @@ public class FileTiff extends FileBase {
           return len;
         }
       }
+    
+    // A copy of JPEGConstants.java from package uk.co.mmscomputing.imageio.jpeg
+    public interface JPEGConstants{
+
+        // [1] p.32
+
+        // 'byte stuffing'  = 0x0000;
+
+        static final int TEM    = 0x0001;          // Temporary private use in arithmetic coding
+
+        // Reserved 0x0002 - 0x00BF
+
+        static final int SOF0   = 0x00C0;          // Start of Frame BaseLine sequential DCT, non differential, Huffman coding
+        static final int SOF1   = 0x00C1;          // Start of Frame Extended sequential DCT, non differential, Huffman coding
+        static final int SOF2   = 0x00C2;          // Start of Frame Progressive DCT, non differential, Huffman coding
+        static final int SOF3   = 0x00C3;          // Start of Frame Lossless sequential, non differential, Huffman coding
+        static final int DHT    = 0x00C4;          // Define Huffman Tables
+        static final int SOF5   = 0x00C5;          // Start of Frame Sequential DCT, differential, Huffman coding
+        static final int SOF6   = 0x00C6;          // Start of Frame Progressive DCT, differential, Huffman coding
+        static final int SOF7   = 0x00C7;          // Start of Frame Lossless sequential, differential, Huffman coding
+
+        static final int JPG    = 0x00C8;          // JPEG Extensions
+        static final int SOF9   = 0x00C9;          // Start of Frame Extended sequential DCT, non differential, arithmetic coding
+        static final int SOF10  = 0x00CA;          // Start of Frame Progressive DCT, non differential, arithmetic coding
+        static final int SOF11  = 0x00CB;          // Start of Frame Lossless sequential, non differential, arithmetic coding
+        static final int DAC    = 0x00CC;          // Define Arithmetic Conditioning
+        static final int SOF13  = 0x00CD;          // Start of Frame Extended sequential DCT, differential, arithmetic coding
+        static final int SOF14  = 0x00CE;          // Start of Frame Progressive DCT, differential, arithmetic coding
+        static final int SOF15  = 0x00CF;          // Start of Frame Lossless sequential, differential, arithmetic coding
+
+
+        static final int RST0   = 0x00D0;          // Restart Interval Termination
+        static final int RST1   = 0x00D1;          // Restart Interval Termination
+        static final int RST2   = 0x00D2;          // Restart Interval Termination
+        static final int RST3   = 0x00D3;          // Restart Interval Termination
+        static final int RST4   = 0x00D4;          // Restart Interval Termination
+        static final int RST5   = 0x00D5;          // Restart Interval Termination
+        static final int RST6   = 0x00D6;          // Restart Interval Termination
+        static final int RST7   = 0x00D7;          // Restart Interval Termination
+
+        static final int SOI    = 0x00D8;          // Start Of Image
+        static final int EOI    = 0x00D9;          // End Of Image
+        static final int SOS    = 0x00DA;          // Start of Scan
+        static final int DQT    = 0x00DB;          // Define Quantization Tables
+        static final int DNL    = 0x00DC;          // Define Number of Lines
+        static final int DRI    = 0x00DD;          // Define Restart Interval
+        static final int DHP    = 0x00DE;          // Define hierarchical progression
+        static final int EXP    = 0x00DF;          // Expand reference component(s)
+
+
+        static final int APP0   = 0x00E0;          // Application JFIF, EXIF ?
+        static final int APP1   = 0x00E1;          // Application 
+        static final int APP2   = 0x00E2;          // Application 
+        static final int APP3   = 0x00E3;          // Application 
+        static final int APP4   = 0x00E4;          // Application 
+        static final int APP5   = 0x00E5;          // Application 
+        static final int APP6   = 0x00E6;          // Application 
+        static final int APP7   = 0x00E7;          // Application 
+
+        static final int APP8   = 0x00E8;          // Application 
+        static final int APP9   = 0x00E9;          // Application 
+        static final int APP10  = 0x00EA;          // Application 
+        static final int APP11  = 0x00EB;          // Application 
+        static final int APP12  = 0x00EC;          // Application 
+        static final int APP13  = 0x00ED;          // Application 
+        static final int APP14  = 0x00EE;          // Application Adobe ?
+        static final int APP15  = 0x00EF;          // Application 
+
+        static final int JPG0   = 0x00F0;          // JPEG Extensions
+        static final int JPG1   = 0x00F1;          // JPEG Extensions
+        static final int JPG2   = 0x00F2;          // JPEG Extensions
+        static final int JPG3   = 0x00F3;          // JPEG Extensions
+        static final int JPG4   = 0x00F4;          // JPEG Extensions
+        static final int JPG5   = 0x00F5;          // JPEG Extensions
+        static final int JPG6   = 0x00F6;          // JPEG Extensions
+        static final int JPG7   = 0x00F7;          // JPEG Extensions
+        static final int JPG8   = 0x00F8;          // JPEG Extensions
+        static final int JPG9   = 0x00F9;          // JPEG Extensions
+        static final int JPG10  = 0x00FA;          // JPEG Extensions
+        static final int JPG11  = 0x00FB;          // JPEG Extensions
+        static final int JPG12  = 0x00FC;          // JPEG Extensions
+        static final int JPG13  = 0x00FD;          // JPEG Extensions
+        static final int COM    = 0x00FE;          // Comment
+
+        static final int MARK   = 0x00FF;
+
+        static final int DCTSize      =  8;
+        static final int DCTBlockSize = 64;
+
+        static final int[] ZigZagTable={           // [1] p.30
+           0, 1, 5, 6,14,15,27,28,
+           2, 4, 7,13,16,26,29,42,
+           3, 8,12,17,25,30,41,43,
+           9,11,18,24,31,40,44,53,
+          10,19,23,32,39,45,52,54,
+          20,22,33,38,46,51,55,60,
+          21,34,37,47,50,56,59,61,
+          35,36,48,49,57,58,62,63
+        };
+
+        static final int[] IZigZagTable={
+           0, 1, 8,16, 9, 2, 3,10,
+          17,24,32,25,18,11, 4, 5,
+          12,19,26,33,40,48,41,34,
+          27,20,13, 6, 7,14,21,28,
+          35,42,49,56,57,50,43,36,
+          29,22,15,23,30,37,44,51,
+          58,59,52,45,38,31,39,46,
+          53,60,61,54,47,55,62,63
+        };
+
+        public static final byte[] HLDCTable={      // Huffman Luminance DC Coefficients [1] p.158
+          0,1,5,1,1,1,1,1,1,0,0,0,0,0,0,0,          // BITS
+          0,1,2,3,4,5,6,7,8,9,10,11                 // HUFFVAL
+        };
+
+        public static final byte[] HCDCTable={      // Huffman chrominance DC Coefficients [1] p.158
+          0,3,1,1,1,1,1,1,1,1,1,0,0,0,0,0,          // BITS
+          0,1,2,3,4,5,6,7,8,9,10,11                 // HUFFVAL
+        };
+
+        public static final byte[] HLACTable={      // Huffman Luminance AC Coefficients [1] p.158
+          0,2,1,3,3,2,4,3,5,5,4,4,0,0,1,125,        // BITS
+          1,2,3,0,4,17,5,18,33,49,65,6,19,81,97,7,  // HUFFVAL
+          34,113,20,50,-127,-111,-95,8,35,66,-79,-63,21,82,-47,-16,
+          36,51,98,114,-126,9,10,22,23,24,25,26,37,38,39,40,
+          41,42,52,53,54,55,56,57,58,67,68,69,70,71,72,73,
+          74,83,84,85,86,87,88,89,90,99,100,101,102,103,104,105,
+          106,115,116,117,118,119,120,121,122,-125,-124,-123,-122,-121,-120,-119,
+          -118,-110,-109,-108,-107,-106,-105,-104,-103,-102,-94,-93,-92,-91,-90,-89,
+          -88,-87,-86,-78,-77,-76,-75,-74,-73,-72,-71,-70,-62,-61,-60,-59,
+          -58,-57,-56,-55,-54,-46,-45,-44,-43,-42,-41,-40,-39,-38,-31,-30,
+          -29,-28,-27,-26,-25,-24,-23,-22,-15,-14,-13,-12,-11,-10,-9,-8,
+          -7,-6
+        };
+
+        public static final byte[] HCACTable={      // Huffman chrominance AC Coefficients [1] p.159
+          0,2,1,2,4,4,3,4,7,5,4,4,0,1,2,119,        // BITS
+          0,1,2,3,17,4,5,33,49,6,18,65,81,7,97,113, // HUFFVAL
+          19,34,50,-127,8,20,66,-111,-95,-79,-63,9,35,51,82,-16,
+          21,98,114,-47,10,22,36,52,-31,37,-15,23,24,25,26,38,
+          39,40,41,42,53,54,55,56,57,58,67,68,69,70,71,72,
+          73,74,83,84,85,86,87,88,89,90,99,100,101,102,103,104,
+          105,106,115,116,117,118,119,120,121,122,-126,-125,-124,-123,-122,-121,
+          -120,-119,-118,-110,-109,-108,-107,-106,-105,-104,-103,-102,-94,-93,-92,-91,
+          -90,-89,-88,-87,-86,-78,-77,-76,-75,-74,-73,-72,-71,-70,-62,-61,
+          -60,-59,-58,-57,-56,-55,-54,-46,-45,-44,-43,-42,-41,-40,-39,-38,
+          -30,-29,-28,-27,-26,-25,-24,-23,-22,-14,-13,-12,-11,-10,-9,-8,
+          -7,-6
+        };
+
+        public static final int[] LQT={             // [1]p.143 in zigzag order
+           16, 11, 12, 14, 12, 10, 16, 14,
+           13, 14, 18, 17, 16, 19, 24, 40,
+           26, 24, 22, 22, 24, 49, 35, 37,
+           29, 40, 58, 51, 61, 60, 57, 51,
+           56, 55, 64, 72, 92, 78, 64, 68,
+           87, 69, 55, 56, 80,109, 81, 87,
+           95, 98,103,104,103, 62, 77,113,
+          121,112,100,120, 92,101,103, 99
+        };
+
+        public static final int[] CQT={
+          17,18,18,24,21,24,47,26,
+          26,47,99,66,56,66,99,99,
+          99,99,99,99,99,99,99,99,
+          99,99,99,99,99,99,99,99,
+          99,99,99,99,99,99,99,99,
+          99,99,99,99,99,99,99,99,
+          99,99,99,99,99,99,99,99,
+          99,99,99,99,99,99,99,99
+        };
+
+        public static final int[] LQT2={            
+           8, 6, 6, 7, 6, 5, 8, 7,
+           7, 7, 9, 9, 8,10,12,20,
+          13,12,11,11,12,25,18,19,
+          15,20,29,26,31,30,29,26,
+          28,28,32,36,46,39,32,34,
+          44,35,28,28,40,55,41,44,
+          48,49,52,52,52,31,39,57,
+          61,56,50,60,46,51,52,50
+        };
+
+        public static final int[] CQT2={
+           9, 9, 9,12,11,12,24,13,
+          13,24,50,33,28,33,50,50,
+          50,50,50,50,50,50,50,50,
+          50,50,50,50,50,50,50,50,
+          50,50,50,50,50,50,50,50,
+          50,50,50,50,50,50,50,50,
+          50,50,50,50,50,50,50,50,
+          50,50,50,50,50,50,50,50
+        };
+      }
+
+    // A copy of TIFFYCbCrInputStream from package uk.co.mmscomputing.imageio.tiff.
+    public class TIFFYCbCrInputStream extends IntFilterInputStream{
+
+      protected double LumaRed,LumaGreen,LumaBlue;
+      protected double RfBY,RfBCb,RfBCr,RfWY,RfWCb,RfWCr;
+
+      private   double RCr,BCb,GY,GB,GR;
+
+      public TIFFYCbCrInputStream(IntFilterInputStream in)throws IOException{
+        super(in);
+      }
+
+      public void setColourCoefficients(double LumaRed,double LumaGreen,double LumaBlue){
+        this.LumaRed=LumaRed;this.LumaGreen=LumaGreen;this.LumaBlue=LumaBlue;
+
+        RCr=2.0-2.0*LumaRed;              // R = Cr * ( 2 - 2 * LumaRed ) + Y
+        BCb=2.0-2.0*LumaBlue;             // B = Cb * ( 2 - 2 * LumaBlue ) + Y
+        GY =1.0/LumaGreen;                // G = ( Y - LumaBlue * B - LumaRed * R ) / LumaGreen
+        GB =-LumaBlue/LumaGreen;
+        GR =-LumaRed /LumaGreen;
+      }
+
+      public double getLumaRed(){return LumaRed;}
+      public double getLumaGreen(){return LumaGreen;}
+      public double getLumaBlue(){return LumaBlue;}
+
+      public void setRfBWY(double black,double white){RfBY=black;RfWY=white;}
+      public void setRfBWCb(double black,double white){RfBCb=black;RfWCb=white;}
+      public void setRfBWCr(double black,double white){RfBCr=black;RfWCr=white;}
+
+      public int read()throws IOException{
+        throw new IOException(getClass().getName()+".read:\t\nInternal Error: Please use read(int[] buf,int off,int len).");
+      }
+
+      protected int convert(int YCbCr)throws IOException{
+        double Y,Cb,Cr;
+
+        Y =((YCbCr>>16)&0x000000FF);
+        Cb=((YCbCr>> 8)&0x000000FF);
+        Cr=((YCbCr    )&0x000000FF);
+
+        // FullRangeValue = (code - ReferenceBlack) * CodingRange / (ReferenceWhite - ReferenceBlack);
+
+        Y =(Y -RfBY )*255.0/(RfWY -RfBY );
+        Cb=(Cb-RfBCb)*127.0/(RfWCb-RfBCb);
+        Cr=(Cr-RfBCr)*127.0/(RfWCr-RfBCr);
+
+        // R = Cr * ( 2 - 2 * LumaRed  ) + Y
+        // B = Cb * ( 2 - 2 * LumaBlue ) + Y
+        // G = ( Y - LumaBlue * B - LumaRed * R ) / LumaGreen
+
+        int R =(int)Math.round(Y + RCr * Cr);             if(R<0){R=0;}else if(R>255){R=255;}
+        int B =(int)Math.round(Y + BCb * Cb);             if(B<0){B=0;}else if(B>255){B=255;}
+        int G =(int)Math.round(Y * GY + GB * B + GR * R); if(G<0){G=0;}else if(G>255){G=255;}
+
+        return (R<<16)|(G<<8)|B;
+      }
+
+      public int read(int[] buf, int off, int len)throws IOException{
+        len=((IntFilterInputStream)in).read(buf,off,len);
+        for(int i=0;i<len;i++){
+          buf[off+i]=convert(buf[off+i]);
+        }
+        return len;
+      }
+    }
+
+
+    
+    // A copy of JPEGHuffmanInputStream.java from package uk.co.mmscomputing.imageio.jpeg
+    public class JPEGHuffmanInputStream extends InputStream{
+
+        protected int[] BITS=new int[16];             // 16-byte list containing number of Huffman codes of each length
+        protected int[] HUFFVAL;
+        protected int[] HUFFSIZE;
+        protected int[] HUFFCODE;
+
+        protected int[] VALPTR  = new int[16];
+        protected int[] MINCODE = new int[16];
+        protected int[] MAXCODE = new int[16];
+
+        protected JPEGBitInputStream in;
+
+        public JPEGHuffmanInputStream(JPEGBitInputStream in,InputStream tables)throws IOException{
+          this.in=in;
+          initialize(tables);
+        }
+
+        public JPEGHuffmanInputStream(InputStream tables)throws IOException{
+          this.in=null;
+          initialize(tables);
+        }
+
+        public void setInputStream(JPEGBitInputStream in)throws IOException{
+          this.in=in;
+        }
+
+        private void initialize(InputStream tables)throws IOException{
+          int LASTK=readTableData(tables);
+          generateSizeTable(LASTK);
+          generateCodeTable(LASTK);
+          generateDecoderTable();
+        }
+
+        private int readTableData(InputStream tables)throws IOException{ // [1] p.40, p.50
+          int m=0;
+          for(int i=0;i<16;i++){                      // 16-byte list containing number of Huffman codes of each length
+            BITS[i]=tables.read();                    // System.out.println(Integer.toString((BITS[i]<128)?BITS[i]:BITS[i]-256))+",");
+            m+=BITS[i];
+          }
+          HUFFVAL=new int[m];
+          for(int i=0;i<m;i++){
+            HUFFVAL[i]=tables.read();                 // System.out.println(Integer.toString((HUFFVAL[i]<128)?HUFFVAL[i]:HUFFVAL[i]-256)+",");
+          }
+          return m;
+        }
+
+        private void generateSizeTable(int LASTK){     // [1] p.51
+          HUFFSIZE=new int[LASTK+1];
+          int k=0;
+          for(int i=0;i<16;i++){
+            for(int j=0;j<BITS[i];j++){
+              HUFFSIZE[k++]=i+1;
+            }
+          }
+          HUFFSIZE[k]=0;
+        }
+
+        private void generateCodeTable(int LASTK){    // [1] p.52
+          HUFFCODE=new int[LASTK];
+          int k=0,code=0;
+          int si=HUFFSIZE[0];
+          while(true){
+            do{
+              HUFFCODE[k]=code;
+              code++;k++;
+            }while(HUFFSIZE[k]==si);
+            if(HUFFSIZE[k]==0){break;}
+            do{
+              code<<=1;si++;
+            }while(HUFFSIZE[k]!=si);
+          }
+        }
+
+        private void generateDecoderTable(){          // [1] p.108
+          int j=0;
+          for(int i=0;i<16;i++){
+            if(BITS[i]==0){
+              MAXCODE[i]=-1;
+            }else{
+              VALPTR[i]=j;
+              MINCODE[i]=HUFFCODE[j];
+              j+=BITS[i]-1;
+              MAXCODE[i]=HUFFCODE[j];
+              j++;
+            }
+          }
+        }
+
+        public String toString(){
+          String s="\n"+getClass().getName()+"\n";
+
+          s+="byte[] BITS={";
+          for(int i=0;i<BITS.length;i++){             // 16-byte list containing number of Huffman codes of each length
+            s+=Integer.toString((BITS[i]<128)?BITS[i]:BITS[i]-256)+",";
+//            s+=Integer.toHexString(BITS[i])+",";
+          }
+          s+="};\n";
+          s+="byte[] HUFFVAL={";
+          for(int i=0;i<HUFFVAL.length;i++){
+            s+=Integer.toString((HUFFVAL[i]<128)?HUFFVAL[i]:HUFFVAL[i]-256)+",";
+//            s+=Integer.toHexString(HUFFVAL[i])+",";
+          }
+          s+="};\n";
+          return s;
+        }
+
+        public int readBits(int bitSize)throws IOException{
+          int V = in.readBits(bitSize);
+          int Vt=1<<(bitSize-1);                      // [1] p.105 extend
+          if(V<Vt){                                   // if V should be negative (bit T is zero, hence V is smaller then Vt)
+            Vt=(-1<<bitSize)+1;                       // sign extend: put 1 bits in front of the T bits of V
+            V+=Vt;
+          }
+          return V;
+        }
+
+        private int code,index;
+
+        public void restart()throws IOException{      // Encountered RST marker. This can happen in middle of read()
+          code=0;index=0;                             // Hence need to declare code and index as class variables.
+        }
+
+        public int read()throws IOException{          // [1] p.109 decode
+          int b;
+          index=0;
+          code=in.readBit();
+          if(code==-1){return -1;}
+          while(code>MAXCODE[index++]){
+            b=in.readBit();                          
+            if(b==-1){return -1;}
+            code=(code<<1)|b;
+          }
+          int j=VALPTR[--index];
+          j+=code-MINCODE[index];
+          return HUFFVAL[j];
+        }
+      }
+    
+    // A copy of JPEGACInputStream.java from package uk.co.mmscomputing.imageio.jpeg
+    public class JPEGACInputStream extends InputStream implements JPEGConstants{
+
+        protected JPEGHuffmanInputStream in;
+        protected int[]    qt;                            // quantization table
+
+        protected int      count;
+        protected int[]    buffer=new int[DCTBlockSize];
+
+        public JPEGACInputStream(JPEGHuffmanInputStream in,int[] qt){
+          this.in=in;
+          this.qt=qt;
+          count=DCTBlockSize;
+        }
+
+        public void restart()throws IOException{          // Call at beginning of restart interval
+          in.restart();
+          count=DCTBlockSize;                             // count should be DCTBlockSize !
+        }
+
+        public void fillBuffer()throws IOException{       
+          int K=1,RS,SSSS,RRRR;                           // [1] p.106 decode
+          for(int i=1;i<DCTBlockSize;i++){buffer[i]=0;}   // zero ZZ
+
+          while(K<DCTBlockSize){
+            RS=in.read();
+            if(RS==-1){throw new IOException(getClass().getName()+"fillBuffer:\n\tUnexpected end of file.");}
+            SSSS=RS&0x000F;                               // run length of zero ac coefficients
+            RRRR=(RS>>4)&0x000F;                          // bit size of next non zero ac coefficient
+            if(SSSS==0){
+              if(RRRR!=15){break;}                        //  0/0 => End of block (EOB)
+              K+=16;                                      // 15/0 => 16 0s
+            }else{                                        //  R/S
+              K+=RRRR;                                    // skip over RRRR zero ac coefficients
+              buffer[IZigZagTable[K]]=qt[K]*in.readBits(SSSS);// read non zero ac coefficient; [1] p.107 decodeZZ
+              K++;
+            }
+          }
+        }
+
+        public int read()throws IOException{          
+          if(count==DCTBlockSize){
+            fillBuffer();
+            count=1;
+          }
+          return buffer[count++];
+        }
+      }
+
+    // A copy of JPEGDCInputStream.java from package uk.co.mmscomputing.imageio.java
+    public class JPEGDCInputStream extends InputStream{
+
+        private JPEGHuffmanInputStream in;
+        private int PRED;
+
+        public JPEGDCInputStream(JPEGHuffmanInputStream in){
+          this.in=in;
+          PRED=0;
+        }
+
+        public void restart()throws IOException{      // Call at beginning of restart interval
+          in.restart();
+          PRED=0;
+        }
+
+        public int read()throws IOException{          // [1] p.104 decode
+          int T=in.read();                            
+          if(T==-1){return -1;}                       
+          PRED+=in.readBits(T);
+          return PRED;
+        }
+      }
+
+    
+    // A copy of JPEGTDCTInputStream.java from package uk.co.mmscomputing.imageio.jpeg
+    public class JPEGDCTInputStream extends JPEGACInputStream{
+
+        protected JPEGDCInputStream dc;
+        protected int levelshift,negclamp,posclamp;
+
+        public JPEGDCTInputStream(JPEGHuffmanInputStream dc,JPEGHuffmanInputStream ac,int[] qt,int bps){
+          super(ac,qt);
+          this.dc=new JPEGDCInputStream(dc);
+          levelshift=1<<(bps-1);negclamp=-levelshift;posclamp= levelshift-1;
+        }
+
+        public void restart()throws IOException{                 // Call at beginning of restart interval
+          dc.restart();
+          super.restart();
+        }
+
+        public int[] getBuffer(){return buffer;}
+
+        protected void levelShift(){
+          int col;
+          for(int i=0;i<DCTBlockSize;i++){
+            col=buffer[i];
+            if(col<negclamp){       col=negclamp;                // clamp to -128 .. 127 or -2048 .. 2047
+            }else if(col>posclamp){ col=posclamp;
+            }
+            col+=levelshift;                                     // level shift;[1] A.3.1; F.1.1.3 p.87
+            buffer[i]=col;
+          }
+        }
+
+        public void fillBuffer()throws IOException{       
+          buffer[0]=qt[0]*dc.read();
+          super.fillBuffer();
+          inverseDCT(buffer);
+          levelShift();
+          count=0;
+        }
+
+        public int read()throws IOException{          
+          if(count==DCTBlockSize){
+            fillBuffer();
+          }
+          return buffer[count++];
+        }
+
+        protected int matr1[]=new int[DCTBlockSize];             // temp buffer; used in JPEGFastDCTInputStream as well
+
+        public void inverseDCT(int[] buffer)throws IOException{  // The text book DCT algorithm.
+
+          double[] coeff={1.0/Math.sqrt(2.0),1,1,1,1,1,1,1};
+
+          double sum;
+          for(int y=0;y<DCTSize;y++){
+            for(int x=0;x<DCTSize;x++){
+              sum = 0.0;
+              for(int v=0;v<DCTSize;v++) {
+                for(int u=0;u<DCTSize;u++) {
+                  sum+=coeff[u]*coeff[v]*buffer[v*DCTSize+u]*Math.cos(((2.0*x+1.0)/16.0)*u*Math.PI)*Math.cos(((2.0*y+1.0)/16.0)*v*Math.PI);
+                }
+              }
+              sum/=4.0;
+              matr1[y*DCTSize+x]=((int)Math.round(sum));  
+            }
+          }
+          System.arraycopy(matr1,0,buffer,0,DCTBlockSize);
+        }
+      }
+
+    
+    // A copy of JPEGFastDCTInputStream.java from package uk.co.mmscomputing.imageio.jpeg
+    public class JPEGFastDCTInputStream extends JPEGDCTInputStream{
+
+        public JPEGFastDCTInputStream(JPEGHuffmanInputStream dc,JPEGHuffmanInputStream ac,int[] qt,int bps){
+          super(dc,ac,qt,bps);
+        }
+
+        static private final int CONST_BITS = 11;
+
+        private int compute(double val){return (int)(val*(1<<CONST_BITS));}
+
+        static private final int VAL_BITS   = 11;
+        static private final int ALLBITS    = CONST_BITS + VAL_BITS;
+        static private final int TWO        = CONST_BITS + 1;
+
+        private final int C6      = compute(2.0*Math.sin(Math.PI/8.0));
+        private final int C4C6    = compute(2.0*Math.sqrt(2.0)*Math.sin(Math.PI/8.0));
+        private final int C4      = compute(Math.sqrt(2.0));
+        private final int Q       = compute(2.0*(Math.cos(Math.PI/8.0)-Math.sin(Math.PI/8.0)));
+        private final int C4Q     = compute(2.0*Math.sqrt(2.0)*(Math.cos(Math.PI/8.0)-Math.sin(Math.PI/8.0)));
+        private final int R       = compute(2.0*(Math.cos(Math.PI/8.0)+Math.sin(Math.PI/8.0)));
+        private final int C4R     = compute(2.0*Math.sqrt(2.0)*(Math.cos(Math.PI/8.0)+Math.sin(Math.PI/8.0)));
+
+//        protected int matr1[]=new int[DCTBlockSize];  // declared in JPEGDCTInputStream
+        protected int matr2[]=new int[DCTBlockSize];
+
+        public void inverseDCT(int[] buffer){
+          int tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
+          int plus8, plus16, plus24, plus32, plus40, plus48, plus56;
+          int co1, co2, co3, co5, co6, co7, co35, co17;
+          int n1, n2, n3;
+          int tmp;
+          int l0 = 0, l1 = 0, l2 = 0, l3 = 0;
+          int g0, g1, g2, g3;
+          int i, j, p;
+
+          for (p = j = 0; j < 64; j+=8) {
+            matr1[p++] = buffer[j+0];
+            matr1[p++] = buffer[j+4];
+            matr1[p++] = (co2 = buffer[j+2])-(co6 = buffer[j+6]);
+            matr1[p++] = co2+co6;
+            matr1[p++] =-(co3=buffer[j+3])+(co5=buffer[j+5]); 
+            matr1[p++] = (co17=(co1=buffer[j+1]+(co7=buffer[j+7])))-(co35=co3+co5);
+            matr1[p++] = co1-co7;
+            matr1[p++] = co17+co35;
+          }
+
+          for (p = i = 0; i < 8; i++) {
+            switch(i) {
+            case 0:
+            case 1:
+            case 3:
+            case 7:
+              tmp4 = (co3=matr1[24+i])-(co5=matr1[40+i]);
+              tmp6 = (co1=matr1[ 8+i])-(co7=matr1[56+i]);
+              tmp = C6 * (tmp6-tmp4);
+              matr2[p++] =  matr1[i  ] << CONST_BITS;
+              matr2[p++] =  matr1[32+i] << CONST_BITS;
+              matr2[p++] =  ((co2=matr1[16+i])-(co6=matr1[48+i]))*C4;
+              matr2[p++] =  (co2+co6) << CONST_BITS;
+              matr2[p++] =  Q*tmp4-tmp;
+              matr2[p++] =  ((co17=co1 + co7)-(co35=co3+co5))*C4;
+              matr2[p++] =  R*tmp6-tmp;
+              matr2[p++] =  (co17+co35) << CONST_BITS;
+              break;
+            case 2:
+            case 5:
+              tmp4 = (co3=matr1[24+i])-(co5=matr1[40+i]);
+              tmp6 = (co1=matr1[ 8+i])-(co7=matr1[56+i]);
+              tmp = C4C6 * (tmp6-tmp4);
+              matr2[p++] = C4*matr1[i  ];
+              matr2[p++] = C4*matr1[i+32];
+              matr2[p++] = ((co2=matr1[16+i])-(co6=matr1[48+i])) << TWO;
+              matr2[p++] = C4*(co2+co6);
+              matr2[p++] = C4Q*tmp4-tmp;
+              matr2[p++] = ((co17 =co1+co7)-(co35=co3+co5)) << TWO;
+              matr2[p++] = C4R*tmp6-tmp;
+              matr2[p++] = C4* (co17+co35);
+              break;
+            case 4:
+              matr2[p++] = matr1[   i];
+              matr2[p++] = matr1[32+i];
+              matr2[p++] = (co2=matr1[16+i])-(co6=matr1[48+i]);
+              matr2[p] = co2+co6;
+              l0 = l2 = -(co3=matr1[24+i])+(co5=matr1[40+i]);
+              p += 2;
+              matr2[p] = (co17 =(co1=matr1[ 8+i]) + (co7=matr1[56+i]))-(co35=co3+co5);
+              l3 = -( l1 = co1-co7);
+              p += 2;
+              matr2[p++] = co17+co35;
+              break;
+            case 6:
+              matr2[p++] = matr1[   i];
+              matr2[p++] = matr1[32+i];
+              matr2[p++] = (co2=matr1[16+i])-(co6=matr1[48+i]);
+              matr2[p] = co2+co6;
+              l1 += (tmp4 = -(co3=matr1[24+i])+(co5=matr1[40+i]));
+              l3 += tmp4;
+              p += 2;
+              matr2[p] = (co17 =(co1=matr1[ 8+i]) + (co7=matr1[56+i]))-(co35=co3+co5);
+              l2 += (tmp6 = co1-co7);
+              l0 -= tmp6;
+              p += 2;
+              matr2[p++] = co17+co35;
+              break;
+            }
+          }
+
+          g0 = C4*(l0+l1);
+          g1 = C4*(l0-l1);
+          g2 = l2 << TWO;
+          g3 = l3 << TWO;
+
+          matr2[36] = g0+g2;
+          matr2[38] = g1+g3;
+          matr2[52] = g1-g3;
+          matr2[54] = g2-g0;
+
+          tmp = C6*(matr2[32]+matr2[48]);
+          matr2[32] = -Q*matr2[32]-tmp;
+          matr2[48] =  R*matr2[48]-tmp;
+
+          tmp = C6*(matr2[33] + matr2[49]);
+          matr2[33] = -Q*matr2[33]-tmp;
+          matr2[49] =  R*matr2[49]-tmp;
+
+          tmp = C4C6 * (matr2[34] + matr2[50]);
+          matr2[34] = -C4Q*matr2[34]-tmp;
+          matr2[50] =  C4R*matr2[50]-tmp;
+
+          tmp = C6*(matr2[35] + matr2[51]);
+          matr2[35] = -Q*matr2[35]-tmp;
+          matr2[51] =  R*matr2[51]-tmp;
+
+          tmp = C4C6 * (matr2[37] + matr2[53]);
+          matr2[37] = -C4Q*matr2[37]-tmp;
+          matr2[53] =  C4R*matr2[53]-tmp;
+
+          tmp = C6*(matr2[39] + matr2[55]);
+          matr2[39] = -Q*matr2[39]-tmp;
+          matr2[55] =  R*matr2[55]-tmp;
+
+          for (p=i = 0; i < 8; i++,p+=8) {
+            matr1[p] = (tmp4 = (n3 = matr2[p]+matr2[p+1]) + matr2[p+3]) + matr2[p+7];
+            matr1[p+3] = (tmp6=n3-matr2[p+3])-(tmp7=matr2[p+4]-(tmp1=(tmp2=matr2[p+6]-matr2[p+7])-matr2[p+5]));
+            matr1[p+4] = tmp6+tmp7;
+            matr1[p+1] = (tmp3=(n1=matr2[p]-matr2[p+1])+(n2=matr2[p+2]-matr2[p+3]))+tmp2;
+            matr1[p+2] = (tmp5=n1-n2)-tmp1;
+            matr1[p+5] = tmp5+tmp1;
+            matr1[p+6] = tmp3-tmp2;
+            matr1[p+7] = tmp4-matr2[p+7];
+          }
+          plus8 = 8; plus16 = 16; plus24 = 24; plus32 = 32; plus40 = 40; plus48 = 48; plus56 = 56;
+          for (p = i = 0; p < 64; p+=8) {
+            buffer[p] = ((tmp4 = (n3 = matr1[i]+matr1[plus8]) +matr1[plus24]) + matr1[plus56]) >> ALLBITS;
+            buffer[p+3] = ((tmp6=n3-matr1[plus24])-(tmp7=matr1[plus32++]-(tmp1=(tmp2=matr1[plus48++]-matr1[plus56])-matr1[plus40++])))>>ALLBITS;
+            buffer[p+4] = (tmp6+tmp7) >> ALLBITS;
+            buffer[p+1] = ((tmp3 = (n1 = matr1[i++]-matr1[plus8++])+ (n2 = matr1[plus16++]-matr1[plus24++]))+tmp2) >> ALLBITS;
+            buffer[p+2] = ((tmp5 = n1-n2) -tmp1) >> ALLBITS;
+            buffer[p+5] = (tmp5+tmp1) >> ALLBITS;
+            buffer[p+6] = (tmp3-tmp2) >> ALLBITS;
+            buffer[p+7] = (tmp4-matr1[plus56++]) >> ALLBITS;
+          }
+        }
+
+        void normalize(int qt[]){   // need to normalize quantization tables; called in JPEGInputStream
+          double d;
+
+          for(int j=0;j<DCTSize;j++){
+            for(int i=0;i<DCTSize;i++){
+              d=(double)qt[ZigZagTable[j*DCTSize+i]];
+              if((i==0)&&(j==0)){
+                d/=8.0;
+              }else if((i==0)||(j==0)){
+                d/=8.0/Math.sqrt(2.0);
+              }else{
+                d/=4.0;
+              }
+              qt[ZigZagTable[j*DCTSize+i]]=(int)(d*(1<<VAL_BITS)*Math.cos(Math.PI*i/16.0)* Math.cos(Math.PI*j/16.0)+0.5);
+            }
+          }
+        }
+      }
+
+
+
+    
+    // A copy of JPEGComponentInputStream.java from package uk.co.mmscomputing.imageio.jpeg
+    public class JPEGComponentInputStream extends InputStream{
+
+        protected int   id,shift=0;
+
+        protected int   height,width;
+        protected int   bps,Hf,Vf,HMax,VMax,Yf,Xf;
+        protected int[] qt;
+
+        protected JPEGDCTInputStream in;
+
+        public JPEGComponentInputStream(int id){this.id=id;}
+
+        public int  getId(){return id;}
+
+        public void setShift(int shift)           {this.shift=shift;}
+        public void setBitsPerSample(int bps)     {this.bps=bps;}
+        public void setDimensions(int h,int w)    {height=h;width=w;}
+        public void setSamplingRate(int Vf,int Hf){this.Vf=Vf;this.Hf=Hf;}
+        public void setMaxSamplingRate(int VMax,int HMax){
+          this.VMax=VMax;
+          this.HMax=HMax;
+          Xf=HMax/Hf;
+          Yf=VMax/Vf;
+        }
+        public void setQuantizationTable(int[] qt){this.qt=qt;}
+
+        public void setHuffmanTables(JPEGHuffmanInputStream dc, JPEGHuffmanInputStream ac){
+          in=new JPEGFastDCTInputStream(dc,ac,qt,bps);
+//          in=new JPEGDCTInputStream(dc,ac,qt,bps);
+        }
+
+        public void restart()throws IOException{in.restart();}
+
+        public int read()throws IOException{          
+          return in.read();
+        }
+
+        // YCbCr
+
+        protected void copyPixel(int[] buf,int off,int maxy,int maxx,int b){
+          for(int y=0;y<maxy;y++){
+            for(int x=0;x<maxx;x++){
+//              buf[off+x]=(buf[off+x]<<8)|b;
+              buf[off+x]=buf[off+x]|(b<<shift);
+            }
+            off+=width;
+          }
+        }
+
+        protected void copyDataUnit(int[] buf,int off,int maxy,int maxx,int[] buffer)throws IOException{
+          int count=0;
+          int yoff=off;
+          for(int y=0;y<maxy;y+=Yf){
+            int x=0;
+            while(x<maxx){
+              copyPixel(buf,yoff+x,
+                ((maxy-y)>=Yf)?Yf:maxy&(Yf-1),
+                ((maxx-x)>=Xf)?Xf:maxx&(Xf-1),
+                buffer[count++]
+              );
+              x+=Xf;
+            }
+            while(x<8*Xf){count++;x+=Xf;}
+            yoff+=width*Yf;
+          }
+        }
+
+        public void read(int[] buf,int off,int maxy,int maxx)throws IOException{
+          int yoff=off,yl=0;
+          for(int y=0;y<Vf;y++){
+            int xoff=yoff,xl=0;
+            for(int x=0;x<Hf;x++){
+              in.fillBuffer();
+              if((yl<maxy)&&(xl<maxx)){
+                copyDataUnit(buf,xoff,
+                  ((maxy-yl)>=8*Yf)?8*Yf:maxy&(8*Yf-1),
+                  ((maxx-xl)>=8*Xf)?8*Xf:maxx&(8*Xf-1),
+                  in.getBuffer()
+                );
+              }
+              xoff+=8*Xf;xl+=8*Xf;
+            }
+            yoff+=width*8*Yf;yl+=8*Yf;
+          }
+        }
+
+        // grayscale
+
+        protected void copyPixel(byte[] buf,int off,int maxy,int maxx,int b){
+          for(int y=0;y<maxy;y++){
+            for(int x=0;x<maxx;x++){
+              buf[off+x]=(byte)b;
+            }
+            off+=width;
+          }
+        }
+
+        protected void copyDataUnit(byte[] buf,int off,int maxy,int maxx,int[] buffer)throws IOException{
+          int count=0;
+          int yoff=off;
+          for(int y=0;y<maxy;y+=Yf){
+            int x=0;
+            while(x<maxx){
+              copyPixel(buf,yoff+x,
+                ((maxy-y)>=Yf)?Yf:maxy&(Yf-1),
+                ((maxx-x)>=Xf)?Xf:maxx&(Xf-1),
+                buffer[count++]
+              );
+              x+=Xf;
+            }
+            while(x<8*Xf){count++;x+=Xf;}
+            yoff+=width*Yf;
+          }
+        }
+
+        public void read(byte[] buf,int off,int maxy,int maxx)throws IOException{
+          int yoff=off,yl=0;
+          for(int y=0;y<Vf;y++){
+            int xoff=yoff,xl=0;
+            for(int x=0;x<Hf;x++){
+              in.fillBuffer();
+              if((yl<maxy)&&(xl<maxx)){
+                copyDataUnit(buf,xoff,
+                  ((maxy-yl)>=8*Yf)?8*Yf:maxy&(8*Yf-1),
+                  ((maxx-xl)>=8*Xf)?8*Xf:maxx&(8*Xf-1),
+                  in.getBuffer()
+                );
+              }
+              xoff+=8*Xf;xl+=8*Xf;
+            }
+            yoff+=width*8*Yf;yl+=8*Yf;
+          }
+        }
+
+        public String toString(){
+          String s="";
+          s+="id  ="+id+"\n";
+          s+="bps ="+bps+"\n";
+          s+="Hf  ="+Hf+"\n";
+          s+="Vf  ="+Vf+"\n";
+          s+="HMax  ="+HMax+"\n";
+          s+="VMax  ="+VMax+"\n";
+          s+="Yf  ="+Yf+"\n";
+          s+="Xf  ="+Xf+"\n";
+          return s;
+        }
+      }
+
+    
+    // A copy of IntFilterInputStream form package uk.co.mmscomputing.io.
+
+    abstract public class IntFilterInputStream extends FilterInputStream{
+
+      public IntFilterInputStream(InputStream in){super(in);}
+
+      public void setIn(InputStream in){this.in=in;}
+
+      public int read(int[] buf)throws IOException{return read(buf,0,buf.length);}
+
+      abstract public int read(int[] buf, int off, int len)throws IOException;
+    }
+
+
+    
+    // A copy of JPEGInputStream.java from package uk.co.mmscomputing.imageio.jpeg
+    public class JPEGInputStream extends IntFilterInputStream implements JPEGConstants{
+
+        JPEGBitInputStream in;
+
+        protected int   bps;                         // bits per sample: DCT compression [8,12] or lossless [2..16]
+        protected int   height,width;
+        protected int   maxHor,maxVert;
+        protected int   mcuHeight,mcuWidth,mcuRows,mcuCols;
+        protected int   spp;                         // samples per pixel
+
+        private   int[][] qts = new int[4][];        // available quantization tables
+
+        protected JPEGHuffmanInputStream[]   dcins   = new JPEGHuffmanInputStream[4];
+        protected JPEGHuffmanInputStream[]   acins   = new JPEGHuffmanInputStream[4];
+
+        protected JPEGComponentInputStream[] compins = new JPEGComponentInputStream[4];
+        protected JPEGComponentInputStream[] scanins = new JPEGComponentInputStream[4];
+
+        protected int Ri;                            // restart segment: how many MCUs in interval;
+
+        public JPEGInputStream(InputStream input)throws IOException{
+          super(null);
+          Ri=0;maxHor=0;maxVert=0;
+          in=new JPEGBitInputStream(input,this);
+          ((JPEGBitInputStream)in).start();
+        }
+
+        public JPEGInputStream(
+            InputStream input,
+            int[][] qts,
+            JPEGHuffmanInputStream[] dcins,
+            JPEGHuffmanInputStream[] acins
+        )throws IOException{
+          super(null);
+          Ri=0;maxHor=0;maxVert=0;
+          this.qts  =qts;
+          this.dcins=dcins;
+          this.acins=acins;
+          in=new JPEGBitInputStream(input,this);
+          ((JPEGBitInputStream)in).start();
+          for(int i=0;(dcins[i]!=null)&&(i<dcins.length);i++){dcins[i].setInputStream(in);}
+          for(int i=0;(acins[i]!=null)&&(i<acins.length);i++){acins[i].setInputStream(in);}
+        }
+
+        public int[][]                  getQTs()  {return qts;}
+        public JPEGHuffmanInputStream[] getDCIns(){return dcins;}
+        public JPEGHuffmanInputStream[] getACIns(){return acins;}
+
+        public int getHeight(){return height;}
+        public int getWidth(){ return width;}
+        public int getNumComponents(){return spp;}
+
+        protected int readIn(InputStream in)throws IOException{
+          int b=in.read();
+          if(b==-1){
+            IOException ioe=new IOException(getClass().getName()+"readIn:\n\tUnexpected end of file.");
+            ioe.printStackTrace();
+            throw ioe;
+          }
+          return b;
+        }
+
+        public void startOfFrame(InputStream in,int mode)throws IOException{ // 0xC0,0xC1
+          bps   =readIn(in);
+          height=(readIn(in)<<8)|readIn(in);                        // System.out.println("Height="+height);
+          width =(readIn(in)<<8)|readIn(in);                        // System.out.println("Width="+width);
+          spp   =readIn(in);                                        // System.out.println("3\bspp="+spp);
+
+          for(int i=0;i<spp;i++){
+            compins[i]=new JPEGComponentInputStream(readIn(in));    // Component id can be between 0..255
+            compins[i].setBitsPerSample(bps);
+            compins[i].setDimensions(height,width);
+            int b  = readIn(in);
+            int Hi = ((b>>4)&0x0F);                                 // 1..4
+            int Vi =  (b    &0x0F);                                 // 1..4
+
+            if(spp==1){                                             // [1]p.25 order left to right and top to bottom whatever the Hi,Vi values
+              maxHor=1;maxVert=1;
+              compins[i].setSamplingRate(1,1);
+            }else{
+              if(Hi>maxHor){maxHor=Hi;}
+              if(Vi>maxVert){maxVert=Vi;}
+              compins[i].setSamplingRate(Vi,Hi);
+            }
+            compins[i].setQuantizationTable(qts[readIn(in)]);       // assign one of the available QTs to a component
+//            System.out.println(compins[i].toString());
+          }    
+          for(int i=0;i<spp;i++){
+            compins[i].setMaxSamplingRate(maxVert,maxHor);
+          }
+
+          mcuHeight = maxVert*DCTSize;
+          mcuWidth  = maxHor *DCTSize;
+          mcuRows   =(height+mcuHeight-1)/mcuHeight;
+          mcuCols   =(width +mcuWidth -1)/mcuWidth ;
+      /*
+          System.out.println("maxHor="+maxHor);
+          System.out.println("maxVert="+maxVert);
+          System.out.println("mcuHeight="+mcuHeight);
+          System.out.println("mcuWidth="+mcuWidth);
+          System.out.println("mcuRows="+mcuRows);
+          System.out.println("mcuCols="+mcuCols);
+      */
+        }
+
+        public void defineHuffmanTables(InputStream tables)throws IOException{   // 0xC4
+//          System.out.println("3\bDefine Huffman Tables");
+
+          for(int n=0;n<8;n++){                                                  // max 8 tables possible
+            int b=tables.read();
+            switch((b>>4)&0x0F){                                                 // table class
+            case 0:  dcins[b&0x0F]=new JPEGHuffmanInputStream(in,tables);break;  // DC table 
+            case 1:  acins[b&0x0F]=new JPEGHuffmanInputStream(in,tables);break;  // AC table
+            default: return;
+            }
+          }
+        }
+
+        public void defineArithmeticConditioning(InputStream in)throws IOException{ // 0xC8
+          System.out.println("3\bDefine Arithmetic Conditioning");
+        }
+
+        public void restartIntervalTermination(int no)throws IOException{        // 0xD0 .. 0xD7; no = 0..7
+          for(int c=0;c<spp;c++){scanins[c].restart();}                          // System.out.println("3\bRestart Interval Termination: no = "+no);
+        }
+
+        public void startOfImage(){                                              // 0xD8
+//          System.out.println("3\bStart Of Image");
+        }
+
+        public void endOfImage(){                                                // 0xD9
+//          System.out.println("3\bEnd Of Image");
+        }
+
+        public void startOfScan(InputStream in)throws IOException{               // 0xDA
+          spp=readIn(in);                                                        // number of components: max 4
+          for(int i=0;i<spp;i++){
+            int c=readIn(in);                                                    // Component id can be between 0..255
+            for(int j=0;(compins[j]!=null)&&(j<4);j++){
+              if(compins[j].getId()==c){scanins[i]=compins[j];break;}
+            }
+            int b=readIn(in);
+            scanins[i].setHuffmanTables(dcins[(b>>4)&0x0F],acins[b&0x0F]);
+            switch(i){
+            case 0: scanins[i].setShift(16); break;   // R        Y
+            case 1: scanins[i].setShift( 8); break;   // G        Cb
+            case 2: scanins[i].setShift( 0); break;   // B        Cr
+            case 3: scanins[i].setShift(24); break;   // alpha
+            }
+          }
+          int ss=readIn(in);
+          int se=readIn(in);
+          
+          int b=readIn(in);
+          int ah =((b>>4)&0x0F);
+          int al = (b    &0x0F);
+        }
+
+        public void defineQuantizationTables(InputStream in)throws IOException{  // 0xDB
+//          System.out.println("3\bDefine Quantization Tables");
+
+          int[] qt;
+          for(int n=0;n<4;n++){                                                  // max 4 tables
+            int b=in.read();
+            int t=(b>>4)&0x0F;
+            int c=b&0x0F;
+            switch(t){                                                           // table class
+            case 0:                                                              // 8bit table
+              qt=new int[64];for(int i=0;i<64;i++){qt[i]=readIn(in);}            // are in zigzag scan order [1]p.40
+              break;
+            case 1:                                                              // 16bit table
+              qt=new int[64];for(int i=0;i<64;i++){qt[i]=(readIn(in)<<8)|readIn(in);}
+              break;
+            default: return;
+            }
+            normalize(qt); // comment this out if you want to use JPEGDCTInputStream.inverseDCT
+            qts[c]=qt;
+          }
+        }
+        
+        void normalize(int qt[]){   // need to normalize quantization tables; called in JPEGInputStream
+            final int VAL_BITS   = 11;
+            double d;
+
+            for(int j=0;j<DCTSize;j++){
+              for(int i=0;i<DCTSize;i++){
+                d=(double)qt[ZigZagTable[j*DCTSize+i]];
+                if((i==0)&&(j==0)){
+                  d/=8.0;
+                }else if((i==0)||(j==0)){
+                  d/=8.0/Math.sqrt(2.0);
+                }else{
+                  d/=4.0;
+                }
+                qt[ZigZagTable[j*DCTSize+i]]=(int)(d*(1<<VAL_BITS)*Math.cos(Math.PI*i/16.0)* Math.cos(Math.PI*j/16.0)+0.5);
+              }
+            }
+          }
+
+        public void defineNumberOfLines(InputStream in)throws IOException{       // 0xDC Not allowed in TIFF file
+          height = (readIn(in)<<8)|readIn(in);                                      System.out.println("3\bDefine Number of Lines: height="+height);    
+        }
+
+        public void defineRestartInterval(InputStream in)throws IOException{     // 0xDD
+          Ri     = (readIn(in)<<8)|readIn(in);                                   // System.out.println("3\bDefine Restart Interval: Ri = "+Ri);    
+        }
+
+        public void defineHierarchicalProgression(InputStream in)throws IOException{     // 0xDE
+          throw new IOException(getClass().getName()+"defineHierarchicalProgression:\n\tDo not support 'Hierarchical Progression' mode.");
+        }
+
+        public void expandReferenceComponents(InputStream in)throws IOException{ // 0xDF
+          throw new IOException(getClass().getName()+"defineHierarchicalProgression:\n\tDo not support 'expand reference component(s)'.");
+        }
+
+        protected void dump(InputStream in)throws IOException{
+          int b,i=0;
+          while((b=in.read())!=-1){
+            System.out.println("appl["+i+"] 0x"+Integer.toHexString(b)+" "+(char)((b>=' ')?b:' ')+" "+b);i++;
+          }
+        }
+
+        public void app0(InputStream in)throws IOException{dump(in);}            // 0xE0  JFIF
+        public void app1(InputStream in)throws IOException{dump(in);}            // 0xE1  Exif
+        public void app2(InputStream in)throws IOException{dump(in);}            // 0xE2
+        public void app3(InputStream in)throws IOException{dump(in);}            // 0xE3
+        public void app4(InputStream in)throws IOException{dump(in);}            // 0xE4
+        public void app5(InputStream in)throws IOException{dump(in);}            // 0xE5
+        public void app6(InputStream in)throws IOException{dump(in);}            // 0xE6
+        public void app7(InputStream in)throws IOException{dump(in);}            // 0xE7
+        public void app8(InputStream in)throws IOException{dump(in);}            // 0xE8
+        public void app9(InputStream in)throws IOException{dump(in);}            // 0xE9
+        public void app10(InputStream in)throws IOException{dump(in);}           // 0xEA
+        public void app11(InputStream in)throws IOException{dump(in);}           // 0xEB
+        public void app12(InputStream in)throws IOException{dump(in);}           // 0xEC
+        public void app13(InputStream in)throws IOException{dump(in);}           // 0xED
+        public void app14(InputStream in)throws IOException{dump(in);}           // 0xEE
+        public void app15(InputStream in)throws IOException{dump(in);}           // 0xEF
+        public void comment(InputStream in)throws IOException{dump(in);}         // 0xFE
+
+        public int read()throws IOException{
+          throw new IOException(getClass().getName()+".read():\nInternal Error: Don't support simple read().");
+        }
+
+        public int read(int[] buf, int off, int len)throws IOException{
+          int y=0;
+          for(int row=0;row<mcuRows;row++){
+            int x=0;
+            for(int col=0;col<mcuCols;col++){
+              for(int c=0;c<spp;c++){
+                scanins[c].read(
+                  buf,
+                  off+y*width+x,
+                  (mcuHeight<(height-y))?mcuHeight:(height-y),
+                  (mcuWidth <(width -x))?mcuWidth: (width-x)
+                );
+              }
+              x+=mcuWidth;
+            }
+            y+=mcuHeight;
+          }
+          return len;
+        }
+
+        // call only if one component and BufferedImage has grayscale type
+
+        public int read(byte[] buf, int off, int len)throws IOException{
+          int y=0;
+          for(int row=0;row<mcuRows;row++){
+            int x=0;
+            for(int col=0;col<mcuCols;col++){
+              scanins[0].read(
+                buf,
+                off+y*width+x,
+                (mcuHeight<(height-y))?mcuHeight:(height-y),
+                (mcuWidth <(width -x))?mcuWidth: (width-x)
+              );
+              x+=mcuWidth;
+            }
+            y+=mcuHeight;
+          }
+          return len;
+        }
+      }
+
+    
+    // A copy of JPEGBitInputStream from package uk.co.mmscomputing.imageio.jpeg
+    public class JPEGBitInputStream extends FilterInputStream implements JPEGConstants{
+
+        JPEGInputStream jpeg;                        // wrapping jpeg input stream. if marked segment then call this object 
+        private   int bitBuffer;                     // entropy buffer; huffman coding
+        private   int bitCount;
+
+
+        public JPEGBitInputStream(InputStream in,JPEGInputStream jpeg)throws IOException{
+          super(in);this.jpeg=jpeg;
+        }
+
+        private int readIn()throws IOException{
+          int b=in.read();
+          if(b==-1){
+            IOException ioe=new IOException(getClass().getName()+"readIn:\n\tUnexpected end of file.");
+            ioe.printStackTrace();
+            throw ioe;
+          }
+          return b;
+        }
+
+        protected InputStream readMarkedSegment()throws IOException{
+          int    length =((readIn()<<8)|readIn())-2;
+          byte[] data   = new byte[length];
+          int    len    = in.read(data);
+
+          if(len!=length){throw new IOException(getClass().getName()+".readMarkedSegment:\n\tUnexpected end of file.");}
+          return new ByteArrayInputStream(data);
+        }
+
+        //  JPEG Syntax:
+        //  1-coded image data
+        //  2-marked segments for additional information: 
+        //    a-0xFF 0x00  => 'byte stuffing' 0xFF 0x00 is interpreted as image data 0xFF
+        //    b-0xFF 0xmarker
+        //    c-0xFF 0xmarker 0xlenHigh 0xlenLow MarkerPayload[0xlenHigh<<8 | 0xlenLow]
+
+        public int readCompressed()throws IOException{
+          int b,marker;
+          while(true){
+            b=readIn();
+            if(b==MARK){
+              do{marker=readIn();}while(marker==MARK);                                         // [1]p.30 B.1.1.2
+              switch(marker){
+              case 0:    /*System.out.println("b="+Integer.toBinaryString(b));*/ return 0x00FF;// byte stuffing
+              case SOF0:    // BaseLine sequential DCT, non differential, Huffman coding
+              case SOF1:    // Extended sequential DCT, non differential, Huffman coding
+                         jpeg.startOfFrame(readMarkedSegment(),marker&0x000F);
+                break;        
+
+              case DHT:  jpeg.defineHuffmanTables(readMarkedSegment());          break;        // Define Hufman Tables
+              case DAC:  jpeg.defineArithmeticConditioning(readMarkedSegment()); break;        // Define Arithmetic Conditioning
+              case RST0:case RST1:case RST2:case RST3:case RST4:case RST5:case RST6:case RST7:
+                         jpeg.restartIntervalTermination(marker&0x0007);
+                         bitBuffer=0;bitCount=0;
+                break;
+              case SOI:  jpeg.startOfImage();                                    break;        // Start Of Image        
+              case EOI:  jpeg.endOfImage();                                      return -1;    // End Of Image        
+              case SOS:  jpeg.startOfScan(readMarkedSegment());bitCount = 0;     break;        // Start of Scan;reset entropy decoder buffer
+              case DQT:  jpeg.defineQuantizationTables(readMarkedSegment());     break;        // Define Quantization Tables
+              case DNL:  jpeg.defineNumberOfLines(readMarkedSegment());          break;        // Define Number of Lines
+              case DRI:  jpeg.defineRestartInterval(readMarkedSegment());        break;        // Define Restart Interval
+              case DHP:  jpeg.defineHierarchicalProgression(readMarkedSegment());break;        // Define Hierarchical Progression
+              case EXP:  jpeg.expandReferenceComponents(readMarkedSegment());    break;        // Expand reference component(s)
+
+              case APP0: jpeg.app0(readMarkedSegment());                         break;        // Application i.e. JFIF
+              case APP1: jpeg.app1(readMarkedSegment());                         break;        // Application i.e. Exif
+              case APP2: jpeg.app2(readMarkedSegment());                         break;        // Application
+              case APP3: jpeg.app3(readMarkedSegment());                         break;        // Application
+              case APP4: jpeg.app4(readMarkedSegment());                         break;        // Application
+              case APP5: jpeg.app5(readMarkedSegment());                         break;        // Application
+              case APP6: jpeg.app6(readMarkedSegment());                         break;        // Application
+              case APP7: jpeg.app7(readMarkedSegment());                         break;        // Application
+              case APP8: jpeg.app8(readMarkedSegment());                         break;        // Application
+              case APP9: jpeg.app9(readMarkedSegment());                         break;        // Application
+              case APP10:jpeg.app10(readMarkedSegment());                        break;        // Application
+              case APP11:jpeg.app11(readMarkedSegment());                        break;        // Application
+              case APP12:jpeg.app12(readMarkedSegment());                        break;        // Application
+              case APP13:jpeg.app13(readMarkedSegment());                        break;        // Application
+              case APP14:jpeg.app14(readMarkedSegment());                        break;        // Application
+              case APP15:jpeg.app15(readMarkedSegment());                        break;        // Application
+
+              case COM:  jpeg.comment(readMarkedSegment());                      break;        // Comment
+              default:   throw new IOException(getClass().getName()+".readCompressed:\n\tUnknown marker = "+Integer.toHexString(marker));
+              }
+            }else{                                                                        
+//            System.out.println("b="+Integer.toBinaryString(b));
+              return b;                                                                   // coded image data
+            }
+          }
+        }
+
+        public void start()throws IOException{
+          int b=readCompressed();
+          if(b==-1){return;}   // no image data as such; [1] p.47 B.5 abbreviated format for table specification data; i.e. TIFF JPEGTables tag
+          bitBuffer=(b<<24);
+          bitCount=8;
+        }
+
+        public int readBit()throws IOException{
+          if(bitCount==0){
+            int b=readCompressed();
+            if(b==-1){return -1;}
+            bitBuffer=(b<<24);
+            bitCount=8;
+          }
+          int bit=bitBuffer>>>31;
+          bitBuffer<<=1;
+          bitCount--;
+          return bit;
+        }
+
+        public int readBits(int neededBits)throws IOException{
+          if(neededBits==0){return 0;}
+          while(bitCount<neededBits){
+            int b=readCompressed();
+            if(b==-1){return -1;}
+            bitBuffer|=(b<<(24-bitCount));
+            bitCount+=8;
+          }
+          int bits=bitBuffer>>>(32-neededBits);
+          bitBuffer<<=neededBits;
+          bitCount-=neededBits;
+          return bits;
+        }
+      }
+
     
     /**
      * Passed in a LeicaSeries object, this function builds a 2d or 3d reconstruction using the Vector of filenames
@@ -3639,6 +5044,13 @@ public class FileTiff extends FileBase {
                         if (debuggingFileIO) {
                             Preferences.debug("FileTiff.openIFD: compression = LZW\n ", Preferences.DEBUG_FILEIO);
                         }
+                    } else if (valueArray[0] == 7) {
+                        packBit = false;
+                        jpegCompression = true;
+                        
+                        if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: compression = jpeg\n", Preferences.DEBUG_FILEIO);
+                        }
                     } else if ((valueArray[0] == 8) || (valueArray[0] == 32946)) {
                         packBit = false;
                         zlibCompression = true;
@@ -4566,6 +5978,20 @@ public class FileTiff extends FileBase {
                         }
                     }
 
+                    break;
+                    
+                case JPEG_TABLES:
+                    if (type != UNDEFINED) {
+                        throw new IOException("JPEG_TABLES has illegal type = " + type + "\n");
+                    }
+                    
+                    jpegTables = new byte[count];
+                    for (i1 = 0; i1 < count; i1++) {
+                        jpegTables[i1] = (byte)valueArray[i1];
+                    }
+                    
+                    tableStream = new JPEGInputStream(new ByteArrayInputStream(jpegTables));
+                    
                     break;
 
                 default:
@@ -8681,7 +10107,7 @@ public class FileTiff extends FileBase {
                         break;
 
                     case ModelStorageBase.ARGB:
-                        if (isYCbCr) {
+                        if (isYCbCr && (!jpegCompression)) {
                             if (chunky == true) {
                                 
                                 if (byteBuffer == null) {
@@ -8842,13 +10268,13 @@ public class FileTiff extends FileBase {
                                 x = xTile * tileWidth;
                                 y = yTile * tileLength;
                             } // if (chunky == true)    
-                        } // if (isYCbCr)
-                        else { //  notYCbCr
+                        } // if (isYCbCr && (!jpegCompression))
+                        else { //  notYCbCr ||| jpegCompression
                             if (chunky == true) {
     
                                 if (byteBuffer == null) {
     
-                                    if (lzwCompression || zlibCompression) {
+                                    if (lzwCompression || zlibCompression || jpegCompression) {
                                         byteBuffer = new byte[tileMaxByteCount];
                                     } else {
                                         byteBuffer = new byte[nBytes];
@@ -8867,7 +10293,7 @@ public class FileTiff extends FileBase {
                                 mod = progressLength / 100;
     
     
-                                if (lzwCompression || zlibCompression) {
+                                if (lzwCompression || zlibCompression || jpegCompression) {
     
                                     //System.err.println("Read " + nBytes + " from raFile");
                                     if (decomp == null) {
@@ -8877,6 +10303,13 @@ public class FileTiff extends FileBase {
                                     if (lzwCompression) {
                                         lzwDecoder.decode(byteBuffer, decomp, tileLength);
                                         resultLength = decomp.length;
+                                    }
+                                    else if (jpegCompression) {
+                                        data = new byte[nBytes];
+                                        for (j = 0; j < nBytes; j++) {
+                                            data[j] = byteBuffer[j];
+                                        }
+                                        resultLength = jpegDecompresser(decomp, data);
                                     }
                                     else { // zlibCompression
                                         try {
@@ -9364,7 +10797,7 @@ public class FileTiff extends FileBase {
             }
         } // for (i = 0; i < tilesPerSlice; i++)
         
-        if (isYCbCr) {
+        if (isYCbCr && (!jpegCompression)) {
             YCbCrtoRGB(buffer, YBuffer, CbInBuffer, CrInBuffer);
         }
 
