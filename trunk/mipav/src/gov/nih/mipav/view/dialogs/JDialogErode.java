@@ -218,7 +218,7 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                 try {
 
                     // resultImage.setImageName("Eroded image");
-                    new ViewJFrameImage(resultImage);
+                    openNewFrame(resultImage);
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -261,7 +261,7 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                 try {
 
                     // resultImage.setImageName("Eroded image");
-                    new ViewJFrameImage(resultImage);
+                    openNewFrame(resultImage);
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -303,7 +303,7 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                 try {
 
                     // resultImage.setImageName("Eroded image");
-                    new ViewJFrameImage(resultImage);
+                    openNewFrame(resultImage);
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }

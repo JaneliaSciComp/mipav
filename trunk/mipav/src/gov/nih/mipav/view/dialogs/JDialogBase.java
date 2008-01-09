@@ -1009,6 +1009,19 @@ public abstract class JDialogBase extends JDialog
 
         return name;
     }
+        
+    /**
+     * JDialogs that create result image's in new frame should call this method instead of creating a new ViewJFrameImage
+     * @param image the result image to be opened in a new frame that extends ViewJFrameImage
+     * @return the new frame
+     */
+    protected ViewJFrameImage openNewFrame(ModelImage image) {
+    	if (parentFrame instanceof ViewOpenFrameInterface) {
+    		return (((ViewOpenFrameInterface)parentFrame).openFrame(image));
+    	} else {
+    		return null;
+    	}
+    }
     
     /**
      * Returns whether the current dialog is being run from within a script.

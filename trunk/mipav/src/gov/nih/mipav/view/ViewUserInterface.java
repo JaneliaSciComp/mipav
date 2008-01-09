@@ -177,6 +177,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** DOCUMENT ME! */
     private JXCEDEExplorer xcedeExplorer;
 
+    /** boolean to force the algorithm to replace the image rather than opening a new frame */
+    private boolean forceAlgorithmInPlace = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -2458,6 +2461,22 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         DICOMQueryFrame = frame;
     }
 
+    /**
+     * Checks whether the dialog should force the algorithm to replace the image (no new frame)
+     * @return if only algorithm image replacement is allowed
+     */
+    public boolean doForceInPlace() {
+    	return this.forceAlgorithmInPlace;
+    }
+    
+    /**
+     * Sets the dialogs to only replace the image (no new frame)
+     * @param doForce do force the dialog to replace the image (in-place)
+     */
+    public void setForceInPlace(boolean doForce) {
+    	this.forceAlgorithmInPlace = doForce;
+    }
+    
     /**
      * Accessor to set text of global data FRAME.
      *
