@@ -788,7 +788,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             updateImages(true);
             getActiveImage().notifyImageDisplayListeners();
 
-        } else if (command.equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER)) {
+        } else if (command.equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand())) {
             componentImage.setCursorMode(ViewJComponentEditImage.DEFAULT);
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_POINT.getActionCommand())) {
 
