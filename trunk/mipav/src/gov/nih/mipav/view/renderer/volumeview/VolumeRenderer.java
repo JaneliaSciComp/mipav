@@ -13,6 +13,7 @@ import com.sun.j3d.utils.universe.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
+import java.util.Date;
 
 import javax.media.j3d.*;
 
@@ -670,6 +671,13 @@ public abstract class VolumeRenderer extends RenderViewBase implements MouseMoti
             componentImageXY.mouseReleased(kEvent);
             updateImage();
             isRotate = false;
+            
+
+            Date kDate = new Date();
+            double dCurrentTime = kDate.getTime() / 1000.0;
+            double dDelta = dCurrentTime - m_dLastTime;
+            System.err.println( "FPS (full-resolution): " + 1.0f/dDelta );
+            ResetTime();
         }
 
         mouseReleased = false;
@@ -1045,7 +1053,11 @@ public abstract class VolumeRenderer extends RenderViewBase implements MouseMoti
 
         if (MouseBehaviorCallback.ROTATE == type) {
             isRotate = true;
-            componentImageXY.updateView(type, transform);
+            if ( componentImageXY.updateView(type, transform) )
+            {
+                MeasureTime();
+                UpdateFrameCount();
+            }
         } else {
             objTransXY.setTransform(transform);
         }
@@ -1066,7 +1078,11 @@ public abstract class VolumeRenderer extends RenderViewBase implements MouseMoti
 
         if ((MouseBehaviorCallback.ROTATE == type) && parallelRotation && (transform != null)) {
             isRotate = true;
-            componentImageXY.updateView(type, transform);
+            if ( componentImageXY.updateView(type, transform) )
+            {
+                MeasureTime();
+                UpdateFrameCount();
+            }
             processMouseReleased(null);
         }
     }
@@ -1667,4 +1683,67 @@ public abstract class VolumeRenderer extends RenderViewBase implements MouseMoti
 
     }
 
+    private boolean m_bTestFrameRate = false;
+    /** Framerate Performance paramters: */
+    protected double m_dLastTime = -1.0f, m_dAccumulatedTime = 0.0f, m_dFrameRate = 0.0f;
+    /** Framerate Performance paramters: */
+    protected int m_iFrameCount = 0, m_iAccumulatedFrameCount = 0, m_iTimer = 30, m_iMaxTimer = 30;
+
+    /** Resets time */
+    public void ResetTime ()
+    {
+        m_dLastTime = -1.0f;
+    }
+    
+    /** Measure time */
+    protected void MeasureTime ()
+    {
+        Date kDate = new Date();
+        // start performance measurements
+        if (m_dLastTime == -1.0)
+        {
+            m_dLastTime = kDate.getTime() / 1000.0;
+            m_dAccumulatedTime = 0.0;
+            //m_dFrameRate = 0.0;
+            m_iFrameCount = 0;
+            m_iAccumulatedFrameCount = 0;
+            m_iTimer = m_iMaxTimer;
+        }
+
+        // accumulate the time only when the miniature time allows it
+        if (--m_iTimer == 0)
+        {
+            double dCurrentTime = kDate.getTime() / 1000.0;
+            double dDelta = dCurrentTime - m_dLastTime;
+            m_dLastTime = dCurrentTime;
+            m_dAccumulatedTime += dDelta;
+            m_iAccumulatedFrameCount += m_iFrameCount;
+            m_iFrameCount = 0;
+            m_iTimer = m_iMaxTimer;
+            m_dFrameRate = m_iAccumulatedFrameCount/m_dAccumulatedTime;
+
+            System.err.println( "FPS: " + m_dFrameRate );
+            ResetTime();
+        }
+        kDate = null;
+    }
+
+    /** Update frame count */
+    protected void UpdateFrameCount ()
+    {
+        m_iFrameCount++;
+    }
+
+    public void SetTestFrameRate( boolean bTest )
+    {
+        m_bTestFrameRate = bTest;
+    }
+    
+    public boolean GetTestFrameRate( )
+    {
+        return m_bTestFrameRate;
+    }
+
+    
+    
 }

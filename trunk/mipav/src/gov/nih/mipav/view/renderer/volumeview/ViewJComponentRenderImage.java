@@ -1025,20 +1025,21 @@ public abstract class ViewJComponentRenderImage implements MouseMotionListener {
      * @param  type       Transform type, current not used.
      * @param  transform  Transform3D
      */
-    public synchronized void updateView(int type, Transform3D transform) {
+    public synchronized boolean updateView(int type, Transform3D transform) {
 
         transformBU = transform;
 
         if (transformCounter < 2) {
             transformCounter++;
 
-            return;
+            return false;
         }
 
         transformCounter = 0;
 
         updateTransform(transform);
         show(timeSliceA, null, null, false, false);
+        return true;
     }
 
     /**

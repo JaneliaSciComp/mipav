@@ -324,10 +324,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_pkRenderer.DisplayBackBuffer();
 
         UpdateFrameCount();
-        if ( m_bTestFrameRate )
-        {
-            System.err.println( "FPS: " + m_dFrameRate );
-        }
+
         if ( m_bFirstRender )
         {
             m_bFirstRender = false;
