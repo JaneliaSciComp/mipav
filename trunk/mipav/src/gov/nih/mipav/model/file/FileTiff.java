@@ -95,6 +95,10 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     public static final int IMAGE_DESCRIPTION = 270;
+    
+    public static final int MAKE = 271;
+    
+    public static final int MODEL = 272;
 
     /** DOCUMENT ME! */
     public static final int STRIP_OFFSETS = 273;
@@ -189,6 +193,11 @@ public class FileTiff extends FileBase {
     public static final int YCBCR_POSITIONING = 531;
     
     public static final int REFERENCE_BLACK_WHITE = 532;
+    
+    public static final int COPYRIGHT = 33432;
+    
+    // Pointer to EXIF private directory
+    public static final int EXIFIFD = 34665;
 
     /** EchoTech Tiff TAGS. */
     public static final int ZRESOLUTION = 65000;
@@ -254,6 +263,10 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     private byte[] imageDescription;
+    
+    private byte[] make;
+    
+    private byte[] model;
 
     /** DOCUMENT ME! */
     private int imageSlice = 0;
@@ -313,6 +326,8 @@ public class FileTiff extends FileBase {
     private byte[] documentName;
     
     private byte[] inkNames;
+    
+    private byte[] copyright;
 
     /** DOCUMENT ME! */
     private String str;
@@ -546,17 +561,6 @@ public class FileTiff extends FileBase {
         try {
             file = new File(fileDir + fileName);
             raFile = new RandomAccessFile(file, "r");
-            /*byte buf[] = new byte[86348];
-            raFile.read(buf);
-            buf[190] = 0;
-            buf[191] = 0;
-            buf[192] = 0;
-            buf[193] = 0;
-            File file1 = new File(fileDir + fileName + "_slice1");
-            RandomAccessFile raFile1 = new RandomAccessFile(file1, "rw");
-            raFile1.setLength(0);
-            raFile1.write(buf);
-            raFile1.close();*/
             
             fileLength = raFile.length();
 
@@ -5994,7 +5998,43 @@ public class FileTiff extends FileBase {
                     str = new String(imageDescription);
                     fileInfo.setImageDescription(str);
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: imageDescription = " + str + "\n",
+                        Preferences.debug("FileTiff.openIFD: imageDescription = " + str.trim() + "\n",
+                                          Preferences.DEBUG_FILEIO);
+                    }
+
+                    break;
+                    
+                case MAKE:
+                    if (type != ASCII) {
+                        throw new IOException("MAKE has illegal type = " + type + "\n");
+                    }
+
+                    make = new byte[count];
+                    for (i1 = 0; i1 < count; i1++) {
+                        make[i1] = (byte) valueArray[i1];
+                    }
+
+                    str = new String(make);
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: make = " + str.trim() + "\n",
+                                          Preferences.DEBUG_FILEIO);
+                    }
+
+                    break;
+                    
+                case MODEL:
+                    if (type != ASCII) {
+                        throw new IOException("MODEL has illegal type = " + type + "\n");
+                    }
+
+                    model = new byte[count];
+                    for (i1 = 0; i1 < count; i1++) {
+                        model[i1] = (byte) valueArray[i1];
+                    }
+
+                    str = new String(model);
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: model = " + str.trim() + "\n",
                                           Preferences.DEBUG_FILEIO);
                     }
 
@@ -6115,6 +6155,24 @@ public class FileTiff extends FileBase {
                     }
 
                     break;
+                    
+                case COPYRIGHT:
+                    if (type != ASCII) {
+                        throw new IOException("COPYRIGHT has illegal type = " + type + "\n");
+                    }
+
+                    copyright = new byte[count];
+                    for (i1 = 0; i1 < count; i1++) {
+                        copyright[i1] = (byte) valueArray[i1];
+                    }
+
+                    str = new String(copyright);
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: copyright = " + str.trim() + "\n",
+                                          Preferences.DEBUG_FILEIO);
+                    }
+
+                    break;
 
                 case DATE_TIME:
                     if (type != ASCII) {
@@ -6132,7 +6190,7 @@ public class FileTiff extends FileBase {
                     }
 
                     str = new String(dateTime);
-                    Preferences.debug("FileTiff.openIFD: dateTime = " + str + "\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("FileTiff.openIFD: dateTime = " + str.trim() + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case SAMPLE_FORMAT:
@@ -6207,6 +6265,20 @@ public class FileTiff extends FileBase {
                     tableStream = new JPEGInputStream(new ByteArrayInputStream(jpegTables));
                     
                     break;
+                    
+                case EXIFIFD:
+                    if (type != LONG) {
+                        throw new IOException("EXIFIFD has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("EXIFIFD has illegal count = " + count + "\n");
+                    }
+                    
+                    if (debuggingFileIO) {
+                        Preferences.debug("EXIF private directory located at " + valueArray[0] + "\n",
+                                          Preferences.DEBUG_FILEIO);
+                    }
 
                 default:
                     break;
