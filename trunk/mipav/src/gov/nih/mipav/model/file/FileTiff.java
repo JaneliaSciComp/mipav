@@ -19,6 +19,7 @@ import java.util.zip.*;
  * Almost all of the FAX decompression code, modified Huffman decompression code, and JPEG decompression code
  * was taken from the free software at the website 
  * http://www.mms-computing.co.uk/uk/co/mmscomputing/imageio/tiff
+ * ThunderScan decompression code was obtained by porting C++ code from tif_thunder.c in  tif-4.0.0.alpha\libtiff.
  *
  * @version  1.0 Feb 29, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
@@ -69,6 +70,8 @@ public class FileTiff extends FileBase {
 
     /** Tiff Tags. */
     public static final int NEW_SUBFILE_TYPE = 254;
+    
+    public static final int SUBFILE_TYPE = 255;
 
     /** DOCUMENT ME! */
     public static final int IMAGE_WIDTH = 256;
@@ -79,7 +82,8 @@ public class FileTiff extends FileBase {
     /** DOCUMENT ME! */
     public static final int BITS_PER_SAMPLE = 258;
 
-    /** Compression: 1 = no compression 2 = modified huffman 3 = CCITT-T4 4 = CCITT-T6 5 = LZW 32773 = packbits. */
+    /** Compression: 1 = no compression 2 = modified huffman 3 = CCITT-T4(FAX3) 4 = CCITT-T6(FAX4) 5 = LZW 6 = old JPEG
+     *               7 = JPEG  8 or 32946 = zlib 32773 = packbits 32809 = thunderscan RLE. */
     public static final int COMPRESSION = 259;
 
     /** DOCUMENT ME! */
@@ -454,6 +458,8 @@ public class FileTiff extends FileBase {
     private byte jpegTables[] = null;
     
     private JPEGInputStream tableStream = null;
+    
+    private boolean ThunderScanCompression = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -540,6 +546,18 @@ public class FileTiff extends FileBase {
         try {
             file = new File(fileDir + fileName);
             raFile = new RandomAccessFile(file, "r");
+            /*byte buf[] = new byte[86348];
+            raFile.read(buf);
+            buf[190] = 0;
+            buf[191] = 0;
+            buf[192] = 0;
+            buf[193] = 0;
+            File file1 = new File(fileDir + fileName + "_slice1");
+            RandomAccessFile raFile1 = new RandomAccessFile(file1, "rw");
+            raFile1.setLength(0);
+            raFile1.write(buf);
+            raFile1.close();*/
+            
             fileLength = raFile.length();
 
             short byteOrder = raFile.readShort();
@@ -587,7 +605,8 @@ public class FileTiff extends FileBase {
             Preferences.debug("Just past init IFD read", Preferences.DEBUG_FILEIO);
 
             if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) &&
-                                 (!modHuffmanCompression) && (!jpegCompression) && haveTileOffsets) {
+                                 (!modHuffmanCompression) && (!jpegCompression) && (!ThunderScanCompression) &&
+                                 haveTileOffsets) {
                 if (chunky) {
                    tilesPerSlice = tilesAcross * tilesDown;
                 }
@@ -598,7 +617,7 @@ public class FileTiff extends FileBase {
                 // System.err.println("DoTile: tilesPerSlice: " + tilesPerSlice + " imageSlice: " + imageSlice);
             } // if (haveTileWidth && (!lzwCompression) && (!zlibCompression)&& (!fax3Compression) && (!fax4Compression) 
             else if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression ||
-                     modHuffmanCompression || jpegCompression) {
+                     modHuffmanCompression || jpegCompression || ThunderScanCompression) {
 
                 // set the tile width to the xDim for use in LZW Decoder or zlib deflater or fax decompression
                 if (!haveTileWidth) {
@@ -747,7 +766,7 @@ public class FileTiff extends FileBase {
             } // else foundTag43314
 
             if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) && 
-               (!modHuffmanCompression) && (!jpegCompression) && haveTileOffsets) {
+               (!modHuffmanCompression) && (!jpegCompression) && (!ThunderScanCompression) && haveTileOffsets) {
                 imageSlice = tilesPerImage / tilesPerSlice;
             }
 
@@ -840,7 +859,7 @@ public class FileTiff extends FileBase {
                     try {
 
                         if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression ||
-                            modHuffmanCompression || jpegCompression) {
+                            modHuffmanCompression || jpegCompression || ThunderScanCompression) {
                             readTileBuffer(i, sliceBufferFloat);
                         } else {
 
@@ -1566,6 +1585,172 @@ public class FileTiff extends FileBase {
             dataOut[3*i + 2] = (byte)(0xff & dataOutInt[i]);
         }
         return 3*resultLength;
+    }
+    
+    // ThunderScanDecompresser is a port and modification of C++ code in 
+    // tif_thunder.c in tif-4.0.0.alpha\libtiff
+    // The following copyright notice appears in the original code
+    /*
+     * Copyright (c) 1988-1997 Sam Leffler
+     * Copyright (c) 1991-1997 Silicon Graphics, Inc.
+     *
+     * Permission to use, copy, modify, distribute, and sell this software and 
+     * its documentation for any purpose is hereby granted without fee, provided
+     * that (i) the above copyright notices and this permission notice appear in
+     * all copies of the software and related documentation, and (ii) the names of
+     * Sam Leffler and Silicon Graphics may not be used in any advertising or
+     * publicity relating to the software without the specific, prior written
+     * permission of Sam Leffler and Silicon Graphics.
+     * 
+     * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND, 
+     * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY 
+     * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  
+     * 
+     * IN NO EVENT SHALL SAM LEFFLER OR SILICON GRAPHICS BE LIABLE FOR
+     * ANY SPECIAL, INCIDENTAL, INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND,
+     * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+     * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF 
+     * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
+     * OF THIS SOFTWARE.
+     */
+    
+    /*
+     * ThunderScan uses an encoding scheme designed for
+     * 4-bit pixel values.  Data is encoded in bytes, with
+     * each byte split into a 2-bit code word and a 6-bit
+     * data value.  The encoding gives raw data, runs of
+     * pixels, or pixel values encoded as a delta from the
+     * previous pixel value.  For the latter, either 2-bit
+     * or 3-bit delta values are used, with the deltas packed
+     * into a single byte.
+     */
+
+
+    private int ThunderScanDecompresser(byte dataOut[], byte dataIn[], int rowsToDo) {
+        final int THUNDER_CODE = 0xc0; /* Mask for 2 bit data code word */
+        // Code values
+        final int THUNDER_RUN = 0x00; /* Run of pixels with encoded count */
+        final int THUNDER_2BITDELTAS = 0x40; /* 3 pixels with encoded 2-bit deltas */
+        final int DELTA2_SKIP = 2; /* skip code for 2 bit deltas */
+        final int THUNDER_3BITDELTAS = 0x80; /* 2 pixels with encoded 3-bit deltas */
+        final int DELTA3_SKIP = 4; /* skip code for 3-bit deltas */
+        final int THUNDER_RAW = 0xc0; /* raw data encoded */
+        int twobitdeltas[] = new int[]{0, 1, 0, -1};
+        int threebitdeltas[] = new int[]{0, 1, 2, 3, 0, -3, -2, -1};
+        int inPosition = 0;
+        int outPosition = 0;
+        int outPositionLoop;
+        int bytesToGenerate = ((xDim + 1)/2) * rowsToDo;
+        int bytesToRead = dataIn.length;
+        byte lastPixel;
+        int nPixels;
+        int n;
+        int delta;
+        byte dataPack[] = new byte[(dataOut.length+1)/2];
+        while (bytesToGenerate > 0) {
+            lastPixel = 0;
+            nPixels = 0;
+            outPositionLoop = outPosition;
+            while (bytesToRead > 0 && nPixels < xDim) {
+                n = (dataIn[inPosition++] & 0xff);
+                bytesToRead--;
+                switch(n & THUNDER_CODE) {
+                    case THUNDER_RUN:            /* pixel run */
+                        // Replicate the last pixel n1 times,
+                        // where n1 is the low-order 6 bits
+                        if ((nPixels & 1) != 0) {
+                            dataPack[outPositionLoop] |= lastPixel;  
+                            lastPixel = dataPack[outPositionLoop++];
+                            nPixels++;
+                            n--;
+                        }
+                        else {
+                            lastPixel |= (lastPixel << 4);
+                        }
+                        nPixels += n;
+                        if (nPixels < xDim) {
+                            for (; n > 0; n -= 2) {
+                                dataPack[outPositionLoop++] = lastPixel;
+                            }
+                        }
+                        if (n == -1) {
+                            dataPack[--outPositionLoop] &= 0xf0;
+                        }
+                        lastPixel &= 0xf;
+                        break;
+                    case THUNDER_2BITDELTAS:            /* 2-bit deltas */
+                        delta = (n >> 4) & 3;
+                        if (delta != DELTA2_SKIP) {
+                            lastPixel = (byte)((lastPixel + twobitdeltas[delta]) & 0xf);
+                            if ((nPixels++ & 1) != 0) {
+                                dataPack[outPositionLoop++] |= lastPixel;
+                            }
+                            else {
+                                dataPack[outPositionLoop] = (byte)(lastPixel << 4);
+                            }
+                        } // if (delta != DELTA2_SKIP)
+                        delta = (n >> 2) & 3;
+                        if (delta != DELTA2_SKIP) {
+                            lastPixel = (byte)((lastPixel + twobitdeltas[delta]) & 0xf);
+                            if ((nPixels++ & 1) != 0) {
+                                dataPack[outPositionLoop++] |= lastPixel;
+                            }
+                            else {
+                                dataPack[outPositionLoop] = (byte)(lastPixel << 4);
+                            }
+                        } // if (delta != DELTA2_SKIP)
+                        delta = n & 3;
+                        if (delta != DELTA2_SKIP) {
+                            lastPixel = (byte)((lastPixel + twobitdeltas[delta]) & 0xf);
+                            if ((nPixels++ & 1) != 0) {
+                                dataPack[outPositionLoop++] |= lastPixel;
+                            }
+                            else {
+                                dataPack[outPositionLoop] = (byte)(lastPixel << 4);
+                            }
+                        } // if (delta != DELTA2_SKIP)
+                        break;
+                    case THUNDER_3BITDELTAS:       /* 3-bit deltas */
+                        delta = (n >> 3) & 7;
+                        if (delta != DELTA3_SKIP) {
+                            lastPixel = (byte)((lastPixel + threebitdeltas[delta]) & 0xf);
+                            if ((nPixels++ & 1) != 0) {
+                                dataPack[outPositionLoop++] |= lastPixel;
+                            }
+                            else {
+                                dataPack[outPositionLoop] = (byte)(lastPixel << 4);
+                            }
+                        } // if (delta != DELTA3_SKIP)
+                        delta = n & 7;
+                        if (delta != DELTA3_SKIP) {
+                            lastPixel = (byte)((lastPixel + threebitdeltas[delta]) & 0xf);
+                            if ((nPixels++ & 1) != 0) {
+                                dataPack[outPositionLoop++] |= lastPixel;
+                            }
+                            else {
+                                dataPack[outPositionLoop] = (byte)(lastPixel << 4);
+                            }
+                        } // if (delta != DELTA3_SKIP)
+                        break;
+                    case THUNDER_RAW:    /* raw data */
+                        lastPixel = (byte)(n & 0xf);
+                        if ((nPixels++ & 1) != 0) {
+                            dataPack[outPositionLoop++] |= lastPixel;
+                        }
+                        else {
+                            dataPack[outPositionLoop] = (byte)(lastPixel << 4);
+                        }
+                        break;
+                }
+            } // while (bytesToRead > 0 && nPixels < xDim)
+            bytesToGenerate -= (xDim+1)/2;
+            outPosition += (xDim + 1)/2;
+        } // while (bytesToGenerate > 0)
+        for (n = 0; n < outPosition; n++) {
+            dataOut[2*n] = (byte)((dataPack[n] >> 4) & 0xf);
+            dataOut[2*n + 1] = (byte)(dataPack[n] & 0xf);
+        }
+        return xDim * rowsToDo;
     }
 
     
@@ -4628,6 +4813,35 @@ public class FileTiff extends FileBase {
 
             switch (tag) {
 
+                case SUBFILE_TYPE:
+                    if (type != SHORT) {
+                        throw new IOException("SUBFILE_TYPE has illegal TYPE = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("SUBFILE_TYPE has illegal count = " + count + "\n");    
+                    }
+                    
+                    if (debuggingFileIO) {
+                        if (valueArray[0] == 1) {
+                            Preferences.debug("SUBFILE_TYPE = 1 for full resolution image data\n",
+                                               Preferences.DEBUG_FILEIO);
+                        }
+                        else if (valueArray[0] == 2) {
+                            Preferences.debug("SUBFILE_TYPE = 2 for reduced-resolution image data\n",
+                                               Preferences.DEBUG_FILEIO);
+                        }
+                        else if (valueArray[0] == 3) {
+                            Preferences.debug("SUBFILE_TYPE = 3 for a single page of a multi-page image\n",
+                                               Preferences.DEBUG_FILEIO);   
+                        }
+                        else {
+                            Preferences.debug("SUBFILE_TYPE has an unrecognized value = " + valueArray[0] + "\n",
+                                               Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    
+                    break;
                 case NEW_SUBFILE_TYPE:
                     if (type != LONG) {
                         throw new IOException("NEW_SUBFILE_TYPE has illegal TYPE = " + type + "\n");
@@ -4638,7 +4852,7 @@ public class FileTiff extends FileBase {
                     }
 
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: tag = NEW_SUBTYPE_FILE\n", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("FileTiff.openIFD: tag = NEW_SUBFILE_TYPE\n", Preferences.DEBUG_FILEIO);
 
                         if ((valueArray[0] & 0x01) == 0x01) {
                             Preferences.debug("Image is a reduced resolution version of another " +
@@ -5001,14 +5215,12 @@ public class FileTiff extends FileBase {
                     }
 
                     if (valueArray[0] == 1) {
-                        packBit = false;
 
                         if (debuggingFileIO) {
                             Preferences.debug("FileTiff.openIFD: compression = no compression\n ",
                                               Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == 2) {
-                        packBit = false;
                         modHuffmanCompression = true;
                         
                         if (debuggingFileIO) {
@@ -5016,7 +5228,6 @@ public class FileTiff extends FileBase {
                                                Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == 3) {
-                        packBit = false;
                         fax3Compression = true;
                         
                         if (debuggingFileIO) {
@@ -5024,7 +5235,6 @@ public class FileTiff extends FileBase {
                                               Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == 4) {
-                        packBit = false;
                         fax4Compression = true;
                         
                         if (debuggingFileIO) {
@@ -5038,25 +5248,29 @@ public class FileTiff extends FileBase {
                             Preferences.debug("FileTiff.openIFD: compression = packed bit\n ", 2);
                         }
                     } else if (valueArray[0] == 5) {
-                        packBit = false;
                         lzwCompression = true;
 
                         if (debuggingFileIO) {
                             Preferences.debug("FileTiff.openIFD: compression = LZW\n ", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == 7) {
-                        packBit = false;
                         jpegCompression = true;
                         
                         if (debuggingFileIO) {
                             Preferences.debug("FileTiff.openIFD: compression = jpeg\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if ((valueArray[0] == 8) || (valueArray[0] == 32946)) {
-                        packBit = false;
                         zlibCompression = true;
                         
                         if (debuggingFileIO) {
                             Preferences.debug("FileTiff.openIFD: compression = zlib\n", Preferences.DEBUG_FILEIO);
+                        }
+                    } else if (valueArray[0] == 32809) {
+                        ThunderScanCompression = true;
+                        
+                        if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: compression = ThunderScan\n",
+                                              Preferences.DEBUG_FILEIO);
                         }
                     }
                     else {
@@ -6804,7 +7018,7 @@ public class FileTiff extends FileBase {
     
                                     buffer[i] = byteBuffer[j + currentIndex] & 0xff;
                                     if (fileInfo.getPhotometric() == 0) {
-                                        // White is zero in oroginal readin
+                                        // White is zero in original readin
                                         // Convert to black is zero for usual display
                                         buffer[i] = 255 - buffer[i];
                                     }
@@ -9156,6 +9370,7 @@ public class FileTiff extends FileBase {
         int h;
         int w;
         int halfXDim = xDim/2;
+        int rowsToDo;
         
         if (isYCbCr) {
             YBuffer = new int[buffer.length/4];
@@ -9484,7 +9699,7 @@ public class FileTiff extends FileBase {
 
                             if (byteBuffer == null) {
 
-                                if (lzwCompression || zlibCompression) {
+                                if (lzwCompression || zlibCompression || ThunderScanCompression) {
                                     byteBuffer = new byte[tileMaxByteCount];
                                 } else {
                                     byteBuffer = new byte[nBytes];
@@ -9500,7 +9715,7 @@ public class FileTiff extends FileBase {
                             mod = progressLength / 100;
 
 
-                            if (lzwCompression || zlibCompression) {
+                            if (lzwCompression || zlibCompression || ThunderScanCompression) {
 
                                 if (decomp == null) {
                                     decomp = new byte[tileWidth * tileLength];
@@ -9509,6 +9724,14 @@ public class FileTiff extends FileBase {
                                 if (lzwCompression) {
                                     lzwDecoder.decode(byteBuffer, decomp, tileLength);
                                     resultLength = decomp.length;
+                                }
+                                else if (ThunderScanCompression) {
+                                    data = new byte[nBytes];
+                                    for (j = 0; j < nBytes; j++) {
+                                        data[j] = byteBuffer[j];
+                                    }
+                                    rowsToDo = Math.min(rowsPerStrip, yDim - y);
+                                    resultLength = ThunderScanDecompresser(decomp, data, rowsToDo);
                                 }
                                 else { // zlibCompression
                                     try {
@@ -9530,6 +9753,15 @@ public class FileTiff extends FileBase {
                                         }
 
                                         buffer[x + (y * xDim)] = decomp[j] & 0xff;
+                                        if (fileInfo.getPhotometric() == 0) {
+                                            // white is 0 in original readin
+                                            if (ThunderScanCompression) {
+                                                buffer[x + (y * xDim)] = 15 - buffer[x + (y * xDim)];
+                                            }
+                                            else {
+                                                buffer[x + (y * xDim)] = 255 - buffer[x + (y * xDim)];
+                                            }
+                                        } // if (fileInfo.getPhotometric() == 0)
                                         i++;
                                     }
 
@@ -9552,6 +9784,10 @@ public class FileTiff extends FileBase {
                                         }
 
                                         buffer[x + (y * xDim)] = byteBuffer[j] & 0xff;
+                                        if (fileInfo.getPhotometric() == 0) {
+                                            // white is 0 in original readin
+                                            buffer[x + (y * xDim)] = 255 - buffer[x + (y * xDim)];
+                                        }
                                         i++;
                                     } // if ((x < xDim) && (y < yDim))
 
