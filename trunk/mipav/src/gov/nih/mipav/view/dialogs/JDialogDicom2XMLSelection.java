@@ -6,6 +6,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.*;
 
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.*;
 
@@ -52,6 +53,7 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
         setTitle("Select DICOM tags to convert to XML");
         populateLists();
         addSortButtons();
+        setPreferredSize(new Dimension(1200, 800));
         pack();
         addWindowListener(this);
     }
