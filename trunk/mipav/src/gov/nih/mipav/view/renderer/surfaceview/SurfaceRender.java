@@ -3638,6 +3638,8 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
         switch (ucKey)
         {
         case 'f':
+
+            canvas.ResetTime();
             canvas.SetTestFrameRate(!canvas.GetTestFrameRate());
             rotationAlpha.setLoopCount(-1);
             if ( canvas.GetTestFrameRate() )

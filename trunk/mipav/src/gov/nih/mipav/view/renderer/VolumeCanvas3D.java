@@ -66,8 +66,14 @@ public class VolumeCanvas3D extends Canvas3D {
     /** Framerate Performance paramters: */
     protected double m_dLastTime = -1.0f, m_dAccumulatedTime = 0.0f, m_dFrameRate = 0.0f;
     /** Framerate Performance paramters: */
-    protected int m_iFrameCount = 0, m_iAccumulatedFrameCount = 0, m_iTimer = 10, m_iMaxTimer = 10;
+    protected int m_iFrameCount = 0, m_iAccumulatedFrameCount = 0, m_iTimer = 30, m_iMaxTimer = 30;
 
+    /** Resets time */
+    public void ResetTime ()
+    {
+        m_dLastTime = -1.0f;
+    }
+    
     /** Measure time */
     protected void MeasureTime ()
     {
@@ -77,7 +83,7 @@ public class VolumeCanvas3D extends Canvas3D {
         {
             m_dLastTime = kDate.getTime() / 1000.0;
             m_dAccumulatedTime = 0.0;
-            m_dFrameRate = 0.0;
+            //m_dFrameRate = 0.0;
             m_iFrameCount = 0;
             m_iAccumulatedFrameCount = 0;
             m_iTimer = m_iMaxTimer;
@@ -89,20 +95,17 @@ public class VolumeCanvas3D extends Canvas3D {
             double dCurrentTime = kDate.getTime() / 1000.0;
             double dDelta = dCurrentTime - m_dLastTime;
             m_dLastTime = dCurrentTime;
-            if (m_dFrameRate <= 0.0) {
-                m_dFrameRate = m_iFrameCount/dDelta;
-            } else {
-                // use a decaying filter to keep some framerate history.
-                m_dFrameRate = 0.6 * m_iFrameCount/dDelta + 0.4 * m_dFrameRate;
-            }
-            
-            //m_iAccumulatedFrameCount += m_iFrameCount;
+            m_dAccumulatedTime += dDelta;
+            m_iAccumulatedFrameCount += m_iFrameCount;
             m_iFrameCount = 0;
             m_iTimer = m_iMaxTimer;
+            m_dFrameRate = m_iAccumulatedFrameCount/m_dAccumulatedTime;
+            System.err.println( "FPS: " + m_dFrameRate );
+            ResetTime();
         }
         kDate = null;
     }
-
+    
     /** Update frame count */
     protected void UpdateFrameCount ()
     {
@@ -122,10 +125,9 @@ public class VolumeCanvas3D extends Canvas3D {
     public void postSwap()
     {
         if ( m_bTestFrameRate )
-        {
-            System.err.println( "FPS: " + m_dFrameRate );
-            UpdateFrameCount();
+        {   
             MeasureTime();
+            UpdateFrameCount();
         }
     }
     
