@@ -166,7 +166,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         fillIn[1] = true;  //everything inside should be filled
         fillIn[2] = false;  
         
-        display = new MuscleImageDisplay(((ViewJFrameImage)parentFrame).getImageA(), titles, fillIn, mirrorArr, mirrorZ, 
+        display = new MuscleImageDisplay(((ViewJFrameImage)parentFrame).getActiveImage(), titles, fillIn, mirrorArr, mirrorZ, 
                                                             noMirrorArr, noMirrorZ, ImageType.ABDOMEN, Symmetry.LEFT_RIGHT);
         
     }
@@ -406,34 +406,32 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         /**Whether this dialog produced a novel Voi. */
         private boolean novelVoiProduced;
 
-        public VoiDialogPrompt(MuscleImageDisplay theParentFrame, String objectName, boolean closedVoi, int numVoi, TreeMap zeroStatus) {
+        public VoiDialogPrompt(MuscleImageDisplay theParentFrame) {
             super(theParentFrame);
            
             setButtons(buttonStringList);
             
-            this.objectName = objectName;
-            this.closedVoi = closedVoi;
-            this.numVoi = numVoi;
+            //this.objectName = objectName;
+            //this.closedVoi = closedVoi;
+            //this.numVoi = numVoi;
 
-            voiExists = voiExists(objectName);
+            //voiExists = voiExists(objectName);
             
-            novelVoiProduced = false;
-            completed = false;
+            //novelVoiProduced = false;
+            //completed = false;
             
             //initImage();
-	        initDialog();	
+	        //initDialog();	
             
         }
         
         private boolean voiExists(String objectName) {
-        	String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+display.VOI_DIR;
-            File allVOIs = new File(fileDir);
+        	String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR;
             
             if(new File(fileDir+objectName+".xml").exists()) {
                 return true;
-            } else {
-            	return false;
-            }
+            } 
+            return false;
         }
         
         public void actionPerformed(ActionEvent e) {
@@ -442,8 +440,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 
             if(command.equals(CLEAR)) {
                 //clear all VOIs drawn
-                parentFrame.getImageA().unregisterAllVOIs();
-                parentFrame.updateImages();
+                display.getImageA().unregisterAllVOIs();
+                display.updateImages(true);
             } else {
 
                 if (command.equals("OK")) {
@@ -462,8 +460,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 
                         MipavUtil.displayInfo(objectName+" VOI saved in folder\n " + fileDir + MuscleImageDisplay.VOI_DIR);
                         
-                        parentFrame.getImageA().unregisterAllVOIs();
-                        parentFrame.updateImages();
+                        display.getImageA().unregisterAllVOIs();
+                        display.updateImages(true);
                         
                         completed = true;
                         novelVoiProduced = true; //not necessarily
@@ -481,6 +479,25 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 }
             }
             
+        }
+        
+        public void takeDownDialog() {
+        	removeAll();
+        	
+        	completed = true;
+        }
+        
+        public void setUpDialog(String name, boolean closedVoi, int numVoi) {	
+        	this.objectName = name;
+        	this.closedVoi = closedVoi;
+        	this.numVoi = numVoi;
+        	
+        	voiExists = voiExists(objectName);
+            
+            novelVoiProduced = false;
+            completed = false;
+            
+            initDialog();
         }
         
 
@@ -501,9 +518,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             return new File(fileName).exists();
         }
         
-        private void setCompleted(boolean completed) {
-            this.completed = completed;
-        }
+        
         
         /**
          * Initializes the dialog box.
@@ -512,8 +527,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         protected void initDialog() {
             setForeground(Color.black);
-            addNotify();
-                        
+            addNotify();    
+            
             setLayout(new BorderLayout());
             
             JPanel mainPanel = new JPanel(new GridLayout(1, 1));
@@ -556,13 +571,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private VOI checkVoi() {
             int qualifiedVoi = 0;
-            VOIVector srcVOI = ((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs();
+            VOIVector srcVOI = parentFrame.getImageA().getVOIs();
             int countQualifiedVOIs = 0; //equal to 1 when the right  amount of VOIs have been created
             VOI goodVOI = null;
             for(int i=0; i<srcVOI.size(); i++) {
                 //System.out.println(((VOI)srcVOI.get(i)).getName());
-                if(((VOI)srcVOI.get(i)).getName().equals(objectName)) {
-                    goodVOI = ((VOI)srcVOI.get(i));
+                if(srcVOI.get(i).getName().equals(objectName)) {
+                    goodVOI = srcVOI.get(i);
                     countQualifiedVOIs++;
                     qualifiedVoi = 1;
                 }
@@ -585,7 +600,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             }
             Vector[] curves = goodVOI.getCurves();
             VOI voi = goodVOI;
-            if(((Vector)curves[0]).size() == numVoi) {
+            if(curves[0].size() == numVoi) {
                 for(int i=0; i<numVoi; i++) {
                     if(closedVoi && voi.getCurveType() == VOI.CONTOUR) {
                         goodVOI.setName(objectName);
@@ -599,7 +614,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                                             "Any curves made must be open.";
                 MipavUtil.displayError(error);
             } else {
-                String error = ((Vector)curves[0]).size() > numVoi ? "You have created too many curves." : 
+                String error = curves[0].size() > numVoi ? "You have created too many curves." : 
                                                                     "You haven't created enough curves.";
                 MipavUtil.displayError(error);
             }
@@ -620,17 +635,19 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
     	private AnalysisPrompt analysisPrompt;
 
-        public static final int REMOVED_INTENSITY = -2048;
+        //public static final int REMOVED_INTENSITY = -2048;
         
         public static final String CHECK_VOI = "CHECK_VOI";
         
         public static final String VOI_DIR = "NIA_Seg\\";
         
-        private VoiDialogPrompt voiPrompt;
+        private int voiTabLoc;
         
-        private int voiIndex;
+        private int resultTabLoc;
         
-        private int componentShown = 0;
+        //private int voiIndex; not needed since seperate classes now
+        
+        //private int componentShown = 0;
 
         /**
          * Text for muscles where a mirror muscle may exist. 
@@ -662,14 +679,14 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private int activeTab;
         
-        private MuscleDialogPrompt[] tabs;
+        private DialogPrompt[] tabs;
         
         private TreeMap zeroStatus;
         
         private String[] titles; 
         
         //does have zeroes
-        private ModelImage tempImage2;
+        //private ModelImage tempImage2;
         
         private boolean[] fillIn;
         
@@ -677,13 +694,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private TreeMap locationStatus;
         
-        private ModelImage[] imageDiff;
+        //private ModelImage[] imageDiff;
         
-        private boolean componentRock = false;
+        //private boolean componentRock = false;
         
         private BuildThighAxes thighAxes;
         
-        private boolean stateChanged;
+        //private boolean stateChanged;
         
         public MuscleImageDisplay(ModelImage image, String[] titles, boolean[] fillIn,
                 String[][] mirrorArr, boolean[][] mirrorZ, 
@@ -695,7 +712,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             //super(image, true);
             //if we don't have an image, then we're done
             this.setImageA(image);
-            tempImage2 = (ModelImage)image.clone();
+            //tempImage2 = (ModelImage)image.clone();
             this.fillIn = fillIn;
             this.titles = titles;
             this.mirrorArr = mirrorArr;
@@ -704,17 +721,17 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             this.noMirrorZ = noMirrorZ;
             this.imageType = imageType;
             this.symmetry = symmetry;
-            this.imageDiff = new ModelImage[fillIn.length];
-            for(int i=0; i<fillIn.length; i++) {
-                imageDiff[i] = (ModelImage)image.clone();
-            }
+            //this.imageDiff = new ModelImage[fillIn.length];
+            //for(int i=0; i<fillIn.length; i++) {
+            //    imageDiff[i] = (ModelImage)image.clone();
+            //}
             
-            voiIndex = fillIn.length;
+            //voiIndex = fillIn.length;
             
             fillStatus = new TreeMap();
             locationStatus = new TreeMap();
             
-            stateChanged = false;
+            //stateChanged = false;
             
             if (imageA == null) {
                 return;
@@ -803,26 +820,24 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             if(command.equals(MuscleImageDisplay.CHECK_VOI)) {
                 //initVoiImage();
                 String voiString = ((JButton)(e.getSource())).getText();
-                voiPrompt = new VoiDialogPrompt(this, voiString, true, 1, zeroStatus);
+                ((VoiDialogPrompt)tabs[voiTabLoc]).setUpDialog(voiString, true, 1);
                 // This is very important. Adding this object as a listener allows the subdialog to
                 // notify this object when it has completed or failed. 
                 // This is could be generalized by making a subDialog interface.
-                voiPrompt.addListener(this);
-                voiPrompt.addComponentListener(this);
-                lockToPanel(voiPrompt, "VOI");
+                lockToPanel(tabs[voiTabLoc], "VOI"); //includes making visible
                 //setVisible(false); // Hide dialog
             } else if(command.equals(DialogPrompt.CALCULATE)) {
             	//display the result display prompt in same way
-            	System.out.println("OK Command, proceed with analysis.");
-            	analysisPrompt = new AnalysisPrompt(this, mirrorArr, noMirrorArr, symmetry);
+            	//System.out.println("OK Command, proceed with analysis.");
+            	//analysisPrompt = new AnalysisPrompt(this, mirrorArr, noMirrorArr, symmetry);
             	// This is could be generalized by making a subDialog interface.
-            	analysisPrompt.addListener(this);
-            	analysisPrompt.addComponentListener(this);
-            	lockToPanel(analysisPrompt, "Analysis");
+            	//analysisPrompt.addListener(this);
+            	//analysisPrompt.addComponentListener(this);
+            	lockToPanel(tabs[resultTabLoc], "Analysis"); //includes making visible
             	
-            } else if (!(command.equals(AnalysisPrompt.OUTPUT) ||
-            		command.equals(AnalysisPrompt.SAVE) ||
-            		command.equals(AnalysisPrompt.OUTPUT_ALL))) {
+            } else if (!(command.equals(DialogPrompt.OUTPUT) ||
+            		command.equals(DialogPrompt.SAVE) ||
+            		command.equals(DialogPrompt.OUTPUT_ALL))) {
             	unlockToPanel();
                 initMuscleImage(activeTab);
             } 
@@ -832,38 +847,34 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 //          The component image will be displayed in a scrollpane.
             zeroStatus = new TreeMap();
             
-            scrollPane = new JScrollPane(componentImage, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollPane = new JScrollPane(componentImage, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
             imagePane = new JTabbedPane();
             
-            tabs = new MuscleDialogPrompt[mirrorArr.length];
-
-            for(int i=0; i<tabs.length; i++) {
-                tabs[i] = new MuscleDialogPrompt(this, mirrorArr[i], mirrorZ[i],
-                                                    noMirrorArr[i], noMirrorZ[i],
-                                                    imageType, symmetry);
-                
-                tabs[i].addComponentListener(this);
-                tabs[i].addListener(this);
-                tabs[i].setName(titles[i]);
-                imagePane.addTab((i+1)+": "+titles[i], tabs[i]);
-                
-                zeroStatus.putAll(tabs[i].getZeroStatus());
-                fillStatus.put(titles[i], fillIn[i]);
-                
-                                                                            
-            }
+            tabs = new DialogPrompt[mirrorArr.length+2]; //+2 for VOI and AnalysisPrompt
             
             JPanel panelA = new JPanel(new GridLayout(1, 3, 10, 10));
             
             splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, imagePane, scrollPane);
             scrollPane.setBackground(Color.black);
             panelA.add(splitPane);
-            
-            for(int i=0; i<tabs.length; i++) {
-                JButton[] mirror = tabs[i].getMirrorButton();
-                JButton[] noMirror = tabs[i].getNoMirrorButton();
+         
+            for(int i=0; i<mirrorArr.length; i++) { 
+            	tabs[i] = new MuscleDialogPrompt(this, mirrorArr[i], mirrorZ[i],
+                        noMirrorArr[i], noMirrorZ[i],
+                        imageType, symmetry);
+
+            	tabs[i].addComponentListener(this);
+            	tabs[i].addListener(this);
+            	tabs[i].setName(titles[i]);
+            	imagePane.addTab((i+1)+": "+titles[i], tabs[i]);
+
+            	zeroStatus.putAll(((MuscleDialogPrompt)tabs[i]).getZeroStatus());
+            	fillStatus.put(titles[i], fillIn[i]);
+            	
+            	JButton[] mirror = ((MuscleDialogPrompt)tabs[i]).getMirrorButton();
+                JButton[] noMirror = ((MuscleDialogPrompt)tabs[i]).getNoMirrorButton();
                 for(int j=0; j<mirror.length; j++) {
                     locationStatus.put(mirror[j].getText(), i);
                 }
@@ -871,6 +882,19 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                     locationStatus.put(noMirror[j].getText(), i);
                 }
             }
+            //now put voiTab up
+            voiTabLoc = mirrorArr.length;
+            tabs[voiTabLoc] = new VoiDialogPrompt(this);
+            tabs[voiTabLoc].addListener(this);
+            tabs[voiTabLoc].addComponentListener(this);
+            tabs[voiTabLoc].setVisible(false);
+            
+            //now put resultsTab up
+            resultTabLoc = mirrorArr.length+1;
+            tabs[resultTabLoc] = new AnalysisPrompt(this, mirrorArr, noMirrorArr, symmetry);
+            tabs[resultTabLoc].addListener(this);
+            tabs[resultTabLoc].addComponentListener(this);
+            tabs[resultTabLoc].setVisible(false);
             
             return panelA;
             
@@ -881,7 +905,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
             getContentPane().add(panelA);
             getContentPane().remove(0);
-            Container c = getContentPane();
+            //Container c = getContentPane();
             
             pack();
             initMuscleImage(0);
@@ -892,8 +916,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		public void componentHidden(ComponentEvent event) {
 		    //System.out.println("Selected pane: "+imagePane.getSelectedIndex()+"\tVOI pane: "+voiIndex);
 		    //System.out.println("Active pane: "+activeTab);
-		    Component c = event.getComponent();
-		    Object obj = event.getSource();
+		    //Component c = event.getComponent();
+		    //Object obj = event.getSource();
 		    if(imagePane != null) {
 		        if(event.getComponent().equals(tabs[activeTab])) {
 		            getImageA().unregisterAllVOIs();
@@ -906,8 +930,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		@Override
 		public void componentShown(ComponentEvent event) {
 		    //System.out.println("Active pane: "+activeTab);
-		    Component c = event.getComponent();
-		    Object obj = event.getSource();
+		    /*
+			Component c = event.getComponent();
+		    //Object obj = event.getSource();
 		    if(c instanceof VoiDialogPrompt) {
                 getActiveImage().unregisterAllVOIs();
                 initVoiImage(voiPrompt, activeTab);
@@ -925,7 +950,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		                }
 		            }
 		        }
-		    }
+		    }*/
 		    super.componentShown(event);
 		}
 
@@ -965,7 +990,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private void loadVOI(int pane) {
             getImageA().unregisterAllVOIs();
-            int colorChoice = 0;
+            //int colorChoice = 0;
             String fileDir = getImageA().getFileInfo(0).getFileDirectory()+VOI_DIR;
             File allVOIs = new File(fileDir);
             if(allVOIs.isDirectory()) {
@@ -999,12 +1024,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             int colorChoice = 0;
             VOIVector voiFullVec = getActiveImage().getVOIs();
             for(int i=0; i<voiFullVec.size(); i++) {
-                Color c = hasColor((VOI)voiFullVec.get(i));
+                Color c = hasColor(voiFullVec.get(i));
                 if(c != null) {
-                    ((VOI)voiFullVec.get(i)).setColor(c);
+                    voiFullVec.get(i).setColor(c);
                     
                 } else {
-                    ((VOI)voiFullVec.get(i)).setColor(colorPick[colorChoice % colorPick.length]);
+                    voiFullVec.get(i).setColor(colorPick[colorChoice % colorPick.length]);
                     colorChoice++;
                 }
                 //getImageA().registerVOI((VOI)voiFullVec.get(i));
@@ -1032,8 +1057,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             	for(int i=0; i<vec.size(); i++) {            
             		for(int j=0; j<tabs.length; j++) {
             			if(tabs[j] instanceof MuscleDialogPrompt) {
-            				if(((MuscleDialogPrompt)tabs[j]).hasButton(((VOI)vec.get(i)).getName())) {
-            					((MuscleDialogPrompt)tabs[j]).setButton(((VOI)vec.get(i)).getName());
+            				if(((MuscleDialogPrompt)tabs[j]).hasButton(vec.get(i).getName())) {
+            					((MuscleDialogPrompt)tabs[j]).setButton(vec.get(i).getName());
             				}	
             			}
             		}
@@ -1055,7 +1080,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private void initVoiImage(VoiDialogPrompt voiDialog, int pane) {
             //getImageA().unregisterAllVOIs();
-            componentRock = true;
+            //componentRock = true;
             int colorChoice = 0;
             String fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+VOI_DIR;
             File allVOIs = new File(fileDir);
@@ -1064,7 +1089,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 for(int i=0; i<voiName.length; i++) {
                     //System.out.println(voiName);
                 	//if exists replace, color already set
-                    VOI voi = getSingleVOI(voiName[i]);
+                    //test method
+                	//VOI voi = getSingleVOI(voiName[i]);
                 	
                 	
                     if(new File(fileDir+voiName[i]).exists()) {
@@ -1097,10 +1123,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 }
             }
             
-            componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+            componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
             
             for(int i=0; i<getActiveImage().getVOIs().size(); i++) {
-                VOI v = (VOI)getActiveImage().getVOIs().get(i);
+                VOI v = getActiveImage().getVOIs().get(i);
                 if((Boolean)zeroStatus.get(v.getName()) && !voiDialog.getObjectName().equals(v.getName())) {
                     v.setDisplayMode(VOI.SOLID);
                 } else {
@@ -1113,81 +1139,17 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             updateImages(true);
         }
         
-        /*************************************************************************
-         * Removed code from initVoiImage, functionality includes zeroing out
-         * areas not needed, mask coverage, and creating seperate images for different tasks.
-         * @param voiVec
-         * @return
-         */
-      //VOIVector vector = srcImage.getVOIs();
-        //VOI removedVoi = null;
         
-        //for(int i=0; i < vector.size() ; i++) {
-        	//TODO: debug
-        	//Find same voi, and remove it from original image
-            //if(((VOI)vector.get(i)).getName().equals(voiDialog.getObjectName())) {
-            //    removedVoi = (VOI)getImageA().getVOIs().remove(i);
-            //    break;
-            //}
-        //}
-        //VOIVector tempVOI = (VOIVector)getImageA().getVOIs().clone();
-        //VOIVector zeroVOI = getImageA().getVOIs();  //not cloned to maintain consistency of for loop
-        
-        //System.out.println("Size: "+getImageA().getVOIs().size());
-        //int k = zeroVOI.size();
-        //int j=0;
-        //int count = 0;
-        
-        
-        //srcImage.getVOIs().removeAllElements();
-        //if(removedVoi != null) {
-        //    srcImage.registerVOI(removedVoi);
-        //}
-        
-        //while(count<k*j) {
-        //    if(!(Boolean)zeroStatus.get(((VOI)zeroVOI.get(j)).getName())) {
-        //        ((ModelImage)getImageA()).getVOIs().remove(j);
-        //    } else {
-        //        j++;
-        //    }
-        //    count++;
-            //System.out.println("Size: "+getImageA().getVOIs().size());
-        //}
-        
-        //BitSet fullMask = getImageA().generateVOIMask();
-
-        //for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-        //    getImageA().set(i, REMOVED_INTENSITY);
-            //componentImage.getImageA().set(i, REMOVED_INTENSITY);
-            //srcImage.set(i, REMOVED_INTENSITY);
-        //}
-        
-        //srcImage.setMask(fullMask);
-        
-        //Display VOI of current objects.
-        
-        //getImageA().getVOIs().removeAllElements();
-      //srcImage.registerVOI(v);
-        //need to register it to componentImage
-        //System.out.println("About to register: "+v.getName());
-        //componentImage.getImageA().registerVOI(v);
-      //componentImage.getImageA().clearMask();
-        
-        //getImageA().clearMask();
-        
-        //should be process in general, change and compute based on srcImage, do not need to load!
-        //simply resets the image, otherwise would have those removed intensities
-        //componentImage.setImageA(srcImage);
 
 		private Color hasColor(VOI voiVec) {
             Color c = null;
             VOIVector tempVec = componentImage.getImageA().getVOIs();
             for(int i=0; i<tempVec.size(); i++) {
                 if(voiVec.getName().contains("Left") || voiVec.getName().contains("Right")) {
-                    if( !(((VOI)tempVec.get(i)).getName().contains("Left")  &&  voiVec.getName().contains("Left")) && 
-                            !(((VOI)tempVec.get(i)).getName().contains("Right")  &&  voiVec.getName().contains("Right")) && 
-                            ((VOI)tempVec.get(i)).getName().endsWith(voiVec.getName().substring(voiVec.getName().indexOf(" ")))) {
-                        c =  ((VOI)tempVec.get(i)).getColor();
+                    if( !(tempVec.get(i).getName().contains("Left")  &&  voiVec.getName().contains("Left")) && 
+                            !(tempVec.get(i).getName().contains("Right")  &&  voiVec.getName().contains("Right")) && 
+                            tempVec.get(i).getName().endsWith(voiVec.getName().substring(voiVec.getName().indexOf(" ")))) {
+                        c =  tempVec.get(i).getColor();
                     }
                 }
             }
@@ -1254,7 +1216,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             private void initThighAxes() {
                 Vector[][] contours = new Vector[2][]; //either 2 or 3 dimensions
                 defaultPts = new int[2];
-                int nVOI, nContours;
+                int nVOI;//, nContours;
                 float[] xPoints = null;
                 float[] yPoints = null;
             
@@ -1270,11 +1232,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 
                 for (groupNum = 0; groupNum < nVOI; groupNum++) {
             
-                    if (((VOI)VOIs.get(groupNum)).getName().equals("Left Thigh")) {
-                        thighVOIs[0] = ((VOI)VOIs.get(groupNum));
+                    if (VOIs.get(groupNum).getName().equals("Left Thigh")) {
+                        thighVOIs[0] = VOIs.get(groupNum);
                     }
-                    else if (((VOI)VOIs.get(groupNum)).getName().equals("Right Thigh")) {
-                        thighVOIs[1] = ((VOI)VOIs.get(groupNum));
+                    else if (VOIs.get(groupNum).getName().equals("Right Thigh")) {
+                        thighVOIs[1] = VOIs.get(groupNum);
                     }
                 }
                 
@@ -1290,7 +1252,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 
                     //Color voiColor = thighVOIs[i].getColor();
                     contours[i] = thighVOIs[i].getCurves();
-                    nContours = contours[i][zSlice].size();
+                    //nContours = contours[i][zSlice].size();
             
                     int elementNum = 0;
                
@@ -1507,10 +1469,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         //~ Instance fields ------------------------------------------------------------------------------------------------
         
-
-        
         /** Denotes the anatomical part represented in the image. Implemented seperatly in case this class
-         *  is moved to its own class at a later time.
+         *  is moved to its own class at a later time.  
          */
         private ImageType imageType;
         
@@ -1542,10 +1502,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private boolean[] noMirrorZ;
         
-        
         private TreeMap zeroStatus;
-        
-      
         
         //private ModelImage srcImg;
         
@@ -1581,9 +1538,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         public boolean hasButton(String buttonText) {
             if(zeroStatus.get(buttonText) != null) {
                 return true;
-            } else {
-                return false;
-            }
+            } 
+            return false;
         }
         
         public void setButton(String buttonText) {
@@ -1602,7 +1558,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         public void actionPerformed(ActionEvent e) {
             
             String command = e.getActionCommand();
-            //System.out.println("Caught1: "+command);
+            System.out.println("Caught1: "+command);
             
             
         }
@@ -1684,7 +1640,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 mirrorGroup.add(mirrorButtonArr[i]);
                 
                 for(int j=0; j<existingVois.size(); j++) {
-                    if(((VOI)existingVois.get(j)).getName().equals(mirrorButtonArr[i].getText())) {
+                    if(existingVois.get(j).getName().equals(mirrorButtonArr[i].getText())) {
                         mirrorCheckArr[i].setSelected(true);
                     }
                 }
@@ -1768,7 +1724,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 
                 gbc.gridy++;
                 for(int j=0; j<existingVois.size(); j++) {
-                    if(((VOI)existingVois.get(j)).getName().equals(noMirrorButtonArr[i].getText())) {
+                    if(existingVois.get(j).getName().equals(noMirrorButtonArr[i].getText())) {
                         noMirrorCheckArr[i].setSelected(true);
                     }
                 }
@@ -1876,11 +1832,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		
 
 		
-		private final String[] buttonStringList = { OUTPUT, OUTPUT_ALL, SAVE, HELP, CANCEL};
+		private final String[] buttonStringList = {OUTPUT, OUTPUT_ALL, SAVE, HELP, CANCEL};
 		
-		private boolean novelVoiProduced;
+		//private boolean novelVoiProduced;
 		
-		private boolean completed;
+		//private boolean completed;
 	
 		private Symmetry symmetry;
 	
@@ -1911,7 +1867,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		
 		private int time = 0;
 		
-		private TreeMap calculatedStatus;
+		//private TreeMap calculatedStatus;
 		
 		public AnalysisPrompt(MuscleImageDisplay theParentFrame, String[][] mirrorArr, String[][] noMirrorArr, Symmetry symmetry) {
 	        super(theParentFrame);
@@ -1925,8 +1881,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        
 	        //this.zeroStatus = zeroStatus;
 	        
-	        novelVoiProduced = false;
-	        completed = false;
+	        //novelVoiProduced = false;
+	        //completed = false;
 	        
 	        //initImage();
 	        initDialog();	        
@@ -1997,13 +1953,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    }
 	    
 	    private JScrollPane initSymmetricalObjects(int index, String title) {
-	        
-	        VOIVector existingVois = ((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs();
 	         
-	        //JCheckBox[] mirrorCheckArr = new JCheckBox[mirrorArr[index].length * 2];
 	        String[] mirrorString = new String[mirrorArr[index].length * 2];
-	        ButtonGroup mirrorGroup = new ButtonGroup();
-	       
 	        
 	        for(int i=0; i<mirrorArr[index].length * 2; i++) {
 	            String symmetry1 = "", symmetry2 = "";
@@ -2014,32 +1965,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	                symmetry1 = "Top ";
 	                symmetry2 = "Bottom ";
 	            }
-	            //mirrorCheckArr[i] = new JCheckBox();
-	            //mirrorCheckArr[i].setEnabled(false);
-	            //mirrorCheckArr[i].setHorizontalAlignment(SwingConstants.RIGHT);
-	            
 	            
 	            mirrorString[i] = (i % 2) == 0 ? new String(symmetry1+mirrorArr[index][i/2]) : 
 	                                                        new String(symmetry2+mirrorArr[index][i/2]);
-	            //mirrorString[i].setFont(MipavUtil.font12B);
-	            //mirrorString[i].setActionCommand(MuscleImageDisplay.CHECK_VOI);
-	            //mirrorString[i].addActionListener(parentFrame);
-	            //mirrorGroup.add(mirrorString[i]);
-	            
-	            //if(i != 0 && i % 4 == 0) {
-	            //    gbc.gridy++;
-	            //    gbc.gridx = 0;
-	            //}
-	            //gbc.weightx = 0;
-	            //mirrorPanel.add(mirrorCheckArr[i], gbc);
-	            //gbc.gridx++;
-	            //gbc.weightx = 1;
-	            //mirrorPanel.add(mirrorString[i], gbc);
-	            //gbc.gridx++;
-	            
-	            //System.out.println(mirrorButtonArr[i].getText()+" is "+mirrorZ[i/2]);
-	            //zeroStatus.put(mirrorButtonArr[i].getText(), mirrorZ[i/2]);
-	        
 	        }
 	        
 	        list[index] = new JList(mirrorString);
@@ -2048,8 +1976,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        list[index].setVisibleRowCount(mirrorArr[index].length); //was*2
 	        list[index].addListSelectionListener(this);
 	        
-	        JScrollPane mirrorPanel = new JScrollPane(list[index], JScrollPane.VERTICAL_SCROLLBAR_NEVER,
-	        											JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+	        JScrollPane mirrorPanel = new JScrollPane(list[index], ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
+	        											ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 	        mirrorPanel.setForeground(Color.black);
 	        mirrorPanel.setBorder(MipavUtil.buildTitledBorder("Select a "+title));
 	        
@@ -2124,8 +2052,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	                    parentFrame.getImageA().unregisterAllVOIs();
 	                    parentFrame.updateImages();
 	                    
-	                    completed = true;
-	                    novelVoiProduced = true; //not necessarily
+	                    //completed = true;
+	                    //novelVoiProduced = true; //not necessarily
 	                    notifyListeners(OK);
 	                    //dispose();
 	                } else {
@@ -2136,13 +2064,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	                setCompleted(false);//savedVoiExists());
 	                notifyListeners(CANCEL);
 	                //dispose();
-	            } else if (command.equals("Output")) {
+	            } else if (command.equals(OUTPUT)) {
 	            	processCalculations(false, false);
-	            } else if (command.equals("Output All")) { 
+	            } else if (command.equals(OUTPUT_ALL)) { 
 	            	processCalculations(true, false);
-	            } else if (command.equals("Save")) {
+	            } else if (command.equals(SAVE)) {
 	            	processCalculations(true, true);
-	            } else if (command.equals("Help")) {
+	            } else if (command.equals(HELP)) {
 	           
 	                MipavUtil.showHelp("19014");
 	            }
@@ -2207,7 +2135,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    				}
 	    				pdfCreated = true;
 	    			}
-	    			ModelLUT lut;
+	    			//ModelLUT lut;
 	    			//Load VOIs and calculations
 	    			loadVOIs(listStrings);
 	    			//parentFrame.updateImages(true);
@@ -2215,17 +2143,19 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    			VOIVector voi = parentFrame.getActiveImage().getVOIs();
 	    			for(int i=0; i<voi.size(); i++) {
 	    				VOI v = voi.get(i);
-	    				double totalAreaCalc = 0, totalAreaCount = 0, fatArea = 0, leanArea = 0, partialArea = 0;
+	    				double totalAreaCalc = 0, totalAreaCount = 0, fatArea = 0, leanArea = 0;//, partialArea = 0;
 	    				double meanFatH = 0, meanLeanH = 0, meanTotalH = 0;
 	    				//pixels -> cm^2
 	    				totalAreaCalc = getTotalAreaCalc(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
 	    				totalAreaCount = getTotalAreaCount(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
 	    				fatArea = getFatArea(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
 	    				leanArea = getLeanArea(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
-	    				partialArea = getPartialArea(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
+	    				//partialArea = getPartialArea(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
 	    				meanFatH = getMeanFatH(v);
 	    				meanLeanH = getMeanLeanH(v);
 	    				meanTotalH = getMeanTotalH(v);
+	    				
+	    				System.out.println("Compare areas: "+totalAreaCalc+"\tcount: "+totalAreaCount);
 	    				
 	    				if (doSave) {
 	    					addToPDF(listStrings[i], fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH);
@@ -2251,7 +2181,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    private void loadVOIs(String[] voiName) {
             parentFrame.getActiveImage().unregisterAllVOIs();
             int colorChoice = new Random().nextInt(colorPick.length);
-            String fileDir = parentFrame.getActiveImage().getFileInfo(0).getFileDirectory()+parentFrame.VOI_DIR;
+            String fileDir = parentFrame.getActiveImage().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR;
             File allVOIs = new File(fileDir);
             if(allVOIs.isDirectory()) {
                 for(int i=0; i<voiName.length; i++) {
@@ -2296,10 +2226,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             }
             for(int i=0; i<tempVec.size(); i++) {
                 if(voiVec.getName().contains(side1) || voiVec.getName().contains(side2)) {
-                    if( !(((VOI)tempVec.get(i)).getName().contains(side1)  &&  voiVec.getName().contains(side1)) && 
-                            !(((VOI)tempVec.get(i)).getName().contains(side2)  &&  voiVec.getName().contains(side2)) && 
-                            ((VOI)tempVec.get(i)).getName().endsWith(voiVec.getName().substring(voiVec.getName().indexOf(" ")))) {
-                        c =  ((VOI)tempVec.get(i)).getColor();
+                    if( !(tempVec.get(i).getName().contains(side1)  &&  voiVec.getName().contains(side1)) && 
+                            !(tempVec.get(i).getName().contains(side2)  &&  voiVec.getName().contains(side2)) && 
+                            tempVec.get(i).getName().endsWith(voiVec.getName().substring(voiVec.getName().indexOf(" ")))) {
+                        c =  tempVec.get(i).getColor();
                     }
                 }
             }
@@ -2308,8 +2238,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	}
     
     public VOI getSingleVOI(String name) {
-        String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+display.VOI_DIR;
-        File allVOIs = new File(fileDir);
+        String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR;
+        //File allVOIs = new File(fileDir);
         //Remove xml extension
         name = name.contains(".xml") ? name.substring(0, name.indexOf(".xml")) : name;
         
@@ -2381,7 +2311,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     	int totalArea = 0;
     	BitSet fullMask = new BitSet();
     	v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
-    	double mark = 0;
     	for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) 
             totalArea++;
     	return totalArea;
@@ -2400,7 +2329,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     			meanFatH += mark;
     		}
     	}
-    	meanFatH /= (double)fatArea;
+    	meanFatH /= fatArea;
     	return meanFatH;
     }
     
@@ -2417,7 +2346,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     			meanLeanH += mark;
     		}
     	}
-    	meanLeanH /= (double)leanArea;
+    	double testMean = meanLeanH;
+    	testMean /= leanArea;
+    	meanLeanH /= leanArea;
     	return meanLeanH;
     }
     
@@ -2432,7 +2363,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             totalArea++;
 			meanTotalH += mark;
     	}
-    	meanTotalH /= (double)totalArea;
+    	meanTotalH /= totalArea;
     	return meanTotalH;
     }
     
@@ -2638,3 +2569,69 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	}
     
 }
+
+/*************************************************************************
+ * Removed code from initVoiImage, functionality includes zeroing out
+ * areas not needed, mask coverage, and creating seperate images for different tasks.
+ * @param voiVec
+ * @return
+ */
+//VOIVector vector = srcImage.getVOIs();
+//VOI removedVoi = null;
+
+//for(int i=0; i < vector.size() ; i++) {
+	//TODO: debug
+	//Find same voi, and remove it from original image
+    //if(((VOI)vector.get(i)).getName().equals(voiDialog.getObjectName())) {
+    //    removedVoi = (VOI)getImageA().getVOIs().remove(i);
+    //    break;
+    //}
+//}
+//VOIVector tempVOI = (VOIVector)getImageA().getVOIs().clone();
+//VOIVector zeroVOI = getImageA().getVOIs();  //not cloned to maintain consistency of for loop
+
+//System.out.println("Size: "+getImageA().getVOIs().size());
+//int k = zeroVOI.size();
+//int j=0;
+//int count = 0;
+
+
+//srcImage.getVOIs().removeAllElements();
+//if(removedVoi != null) {
+//    srcImage.registerVOI(removedVoi);
+//}
+
+//while(count<k*j) {
+//    if(!(Boolean)zeroStatus.get(((VOI)zeroVOI.get(j)).getName())) {
+//        ((ModelImage)getImageA()).getVOIs().remove(j);
+//    } else {
+//        j++;
+//    }
+//    count++;
+    //System.out.println("Size: "+getImageA().getVOIs().size());
+//}
+
+//BitSet fullMask = getImageA().generateVOIMask();
+
+//for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
+//    getImageA().set(i, REMOVED_INTENSITY);
+    //componentImage.getImageA().set(i, REMOVED_INTENSITY);
+    //srcImage.set(i, REMOVED_INTENSITY);
+//}
+
+//srcImage.setMask(fullMask);
+
+//Display VOI of current objects.
+
+//getImageA().getVOIs().removeAllElements();
+//srcImage.registerVOI(v);
+//need to register it to componentImage
+//System.out.println("About to register: "+v.getName());
+//componentImage.getImageA().registerVOI(v);
+//componentImage.getImageA().clearMask();
+
+//getImageA().clearMask();
+
+//should be process in general, change and compute based on srcImage, do not need to load!
+//simply resets the image, otherwise would have those removed intensities
+//componentImage.setImageA(srcImage);
