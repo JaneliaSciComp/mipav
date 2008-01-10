@@ -2534,7 +2534,7 @@ public class FileIO {
                 System.out.println("tags2save is null");
             }
         } else {
-            JDialogDicom2XMLSelection jdl = new JDialogDicom2XMLSelection();
+            JDialogDicom2XMLSelection jdl = new JDialogDicom2XMLSelection(sourceInfo);
             jdl.setVisible(true);
 
             if (jdl.wasOkay()) {

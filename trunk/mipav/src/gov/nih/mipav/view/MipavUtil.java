@@ -49,15 +49,24 @@ public class MipavUtil extends JComponent {
 
     /** A 12 point, italic, serif font. */
     public static Font font12I = new Font("Serif", Font.ITALIC, 12);
+    
+    /** A 13 point, plain, serif font. */
+    public static Font font13 = new Font("Serif", Font.PLAIN, 13);
 
     /** A 13 point, bold, serif font. */
     public static Font font13B = new Font("Serif", Font.BOLD, 13);
+    
+    /** A 13 point, italic, serif font. */
+    public static Font font13I = new Font("Serif", Font.ITALIC, 13);
 
     /** A 14 point, plain, serif font. */
     public static Font font14 = new Font("Serif", Font.PLAIN, 14);
 
     /** A 14 point, bold, serif font. */
     public static Font font14B = new Font("Serif", Font.BOLD, 14);
+    
+    /** A 14 point, italic, serif font. */
+    public static Font font14I = new Font("Serif", Font.ITALIC, 14);
 
     /** A 16 point, bold, serif font. */
     public static Font font16B = new Font("Serif", Font.BOLD, 16);
@@ -73,6 +82,18 @@ public class MipavUtil extends JComponent {
 
     /** A 12 point, bold, courier font. */
     public static Font courier12B = new Font("Courier", Font.BOLD, 12);
+    
+    /** A 13 point, plain, courier font. */
+    public static Font courier13 = new Font("Courier", Font.PLAIN, 13);
+
+    /** A 13 point, bold, courier font. */
+    public static Font courier13B = new Font("Courier", Font.BOLD, 13);
+    
+    /** A 13 point, plain, arial font. */
+    public static Font arial13 = new Font("Arial", Font.PLAIN, 13);
+
+    /** A 13 point, bold, arial font. */
+    public static Font arial13B = new Font("Arial", Font.BOLD, 13);
 
     /** Standard cursor: default. */
     public static final Cursor defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
