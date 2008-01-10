@@ -5,6 +5,8 @@ import gov.nih.mipav.model.file.*;
 
 import gov.nih.mipav.view.*;
 
+import java.awt.Component;
+import java.awt.Font;
 import java.awt.event.*;
 
 import java.io.*;
@@ -32,14 +34,21 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
      * Boolean that determines if the window was closed (hitting the X) wasOkay = true means the [x] was not clicked.
      */
     private boolean wasOkay = true;
+    
+    
+    /**
+     * FileInfoDicom for source image
+     */
+    private FileInfoDicom sourceInfo;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new instance of JDialogDicom2XMLSelection.
      */
-    public JDialogDicom2XMLSelection() {
+    public JDialogDicom2XMLSelection(FileInfoDicom sourceInfo) {
         super();
+        this.sourceInfo = sourceInfo;
         setTitle("Select DICOM tags to convert to XML");
         populateLists();
         addSortButtons();
@@ -267,6 +276,7 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
      */
     protected void populateLists() {
         getSourceList().setListData(getSourceListData());
+        getSourceList().setCellRenderer(new MyCellRenderer());
         getSelectedList().setListData(getSaveListData());
     }
 
@@ -377,5 +387,77 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
         public String toString() {
             return new String("(" + key.toString() + ") -- " + tag.getName());
         }
+    }
+    
+    
+    
+    
+    /**
+     * This inner class is the font style renderer for the dicom tags
+     * The left panel will display all possible DICOM tags...however, if the
+     * image has that particular tag, it will be bold font
+     * 
+     * @author pandyan
+     *
+     */
+    class MyCellRenderer extends JLabel implements ListCellRenderer {
+    	Font arial13 = MipavUtil.arial13;
+    	Font arial13B = MipavUtil.arial13B;
+    	ArrayList sourceTagsAL = new ArrayList();
+    	
+    	public MyCellRenderer() {
+    		populateSourceTagsList();
+    	}
+    	
+    	public void populateSourceTagsList() {
+    		Enumeration e;
+    		String name;
+            FileDicomKey key;
+    		Hashtable tagsList = sourceInfo.getTagTable().getTagList();
+    		int ii;
+    		for (ii = 0, e = tagsList.keys(); e.hasMoreElements(); ii++) {
+    			key = (FileDicomKey) e.nextElement();
+                name = key.getKey();
+                if (((FileDicomTag) tagsList.get(key)).getValue(true) != null) {
+                	String tagName = "(" + name + ")";
+                	sourceTagsAL.add(tagName);
+                }
+    		}
+    	}
+    	
+		public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+			String s = value.toString();
+			String tag = s.substring(0, (s.indexOf(")")+1));
+			if(sourceTagsAL.size() > 0) {
+				for(int i=0;i<sourceTagsAL.size();i++) {
+					String sourceTag = (String)sourceTagsAL.get(i);
+					if(tag.equals(sourceTag)) {
+						setFont(arial13B);
+						break;
+					}else {
+						setFont(arial13);
+					}
+				}
+			}else {
+				setFont(arial13);
+			}
+			if(isSelected) {
+				setBackground(list.getSelectionBackground());
+				setForeground(list.getSelectionForeground());
+			}else {
+				setBackground(list.getBackground());
+				setForeground(list.getForeground());
+			}
+			setEnabled(true);
+			setText(s);
+			setOpaque(true);
+			
+			return this;
+		}
+    	
+    	
+    			
+    	
+    	
     }
 }
