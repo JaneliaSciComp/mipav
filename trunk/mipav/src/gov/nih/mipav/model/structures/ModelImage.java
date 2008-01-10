@@ -113,6 +113,7 @@ public class ModelImage extends ModelStorageBase {
         // MIPAV. I keep a reference to the userinterface here so that when an image
         // is created it can added to the hashtable in the user interface.
         UI = ViewUserInterface.getReference();
+        
         imageName = makeImageName(name, ""); // removes suffix if one is there.
 
         if (UI == null) {
@@ -2630,9 +2631,14 @@ public class ModelImage extends ModelStorageBase {
         FileInfoBase[] fInfos = this.getFileInfo();
         String tempName = fInfos[0].getFileName();
         String suffix = "";
+        
+        if ((name != null) && (name.lastIndexOf(".") != -1)) {
+            suffix = name.substring(name.lastIndexOf("."), name.length()); 
+            name = name.substring(0,name.lastIndexOf("."));
+        }
 
 
-        if ((tempName != null) && (tempName.lastIndexOf(".") != -1)) {
+        if ((suffix == null) && (tempName != null) && (tempName.lastIndexOf(".") != -1)) {
             suffix = tempName.substring(tempName.lastIndexOf("."), tempName.length());
         }
 
