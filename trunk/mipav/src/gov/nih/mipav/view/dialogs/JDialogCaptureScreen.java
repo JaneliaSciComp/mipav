@@ -423,6 +423,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
         short[] buffer = null;
         ModelImage testImage = null;
         Robot robot;
+        String imageName;
 
         try {
             robot = new Robot();
@@ -455,7 +456,9 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
             extents[0] = xDim; // RGB
             extents[1] = yDim;
 
+            imageName = activeFrame.getImageNameA() + "_screen_capture.tif";
             testImage = new ModelImage(ModelStorageBase.ARGB, extents, activeFrame.getImageNameA() + "_screen_capture");
+            testImage.setImageName(imageName);
             testImage.getFileInfo()[0].setFileDirectory(activeFrame.getImageA().getFileInfo(0).getFileDirectory());
             buffer = new short[bufferSize];
         } catch (OutOfMemoryError error) {
@@ -496,7 +499,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
 
             chooser.setSelectedFile(new File(testImage.getFileInfo(0).getFileDirectory() + testImage.getImageFileName()));
             
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
 
             int returnVal = chooser.showSaveDialog(this);
 
