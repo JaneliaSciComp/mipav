@@ -14,7 +14,7 @@ import java.io.*;
  * rsrc and rdest are specified in units of the min((xDim-1)/2, (yDim-1)/2)
  * 
  * Reference 1.) Correcting Barrel Distortion by Helmut Dersch at
- * http://www.aa-in-one.ee/~dersch/barrel/barrel.html
+ * http://www.all-in-one.ee/~dersch/barrel/barrel.html
  * Quoting from this reference:
  * How to determine suitable Parameters:
 
