@@ -47,6 +47,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     /**The display*/
     private MuscleImageDisplay display;
     
+    /**For writing PDF docs below. */
     private Document pdfDocument = null;
 	private PdfWriter writer = null;
 	private PdfPTable aTable = null;
@@ -238,7 +239,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         fillIn[1] = true;  //everything inside should be filled
         fillIn[2] = false;  
         
-        display = new MuscleImageDisplay(((ViewJFrameImage)parentFrame).getImageA(), titles, fillIn, mirrorArr, mirrorZ, 
+        display = new MuscleImageDisplay(((ViewJFrameImage)parentFrame).getActiveImage(), titles, fillIn, mirrorArr, mirrorZ, 
                                                             noMirrorArr, noMirrorZ, ImageType.TWO_THIGHS, Symmetry.LEFT_RIGHT);
         
         
@@ -410,19 +411,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             super(theParentFrame);
            
             setButtons(buttonStringList);
-            
-            //this.objectName = objectName;
-            //this.closedVoi = closedVoi;
-            //this.numVoi = numVoi;
-
-            //voiExists = voiExists(objectName);
-            
-            //novelVoiProduced = false;
-            //completed = false;
-            
-            //initImage();
-	        //initDialog();	
-            
         }
         
         private boolean voiExists(String objectName) {
@@ -468,7 +456,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                         notifyListeners(OK);
                         //dispose();
                     } else {
-                        //individual error messages are already displayed
+                        MipavUtil.displayError("Note that no VOI has been saved due to previous error.");
                     }
                 } else if (command.equals("Cancel")) {
                     setCompleted(savedVoiExists());
@@ -633,7 +621,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     
     public class MuscleImageDisplay extends ViewJFrameImage {
         
-    	private AnalysisPrompt analysisPrompt;
+    	//private AnalysisPrompt analysisPrompt;
 
         //public static final int REMOVED_INTENSITY = -2048;
         
@@ -706,13 +694,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 String[][] mirrorArr, boolean[][] mirrorZ, 
                 String[][] noMirrorArr, boolean[][] noMirrorZ,  
                 ImageType imageType, Symmetry symmetry) {
-            
-            
+
             super(image);
-            //super(image, true);
-            //if we don't have an image, then we're done
             this.setImageA(image);
-            //tempImage2 = (ModelImage)image.clone();
             this.fillIn = fillIn;
             this.titles = titles;
             this.mirrorArr = mirrorArr;
@@ -721,17 +705,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             this.noMirrorZ = noMirrorZ;
             this.imageType = imageType;
             this.symmetry = symmetry;
-            //this.imageDiff = new ModelImage[fillIn.length];
-            //for(int i=0; i<fillIn.length; i++) {
-            //    imageDiff[i] = (ModelImage)image.clone();
-            //}
-            
-            //voiIndex = fillIn.length;
             
             fillStatus = new TreeMap();
             locationStatus = new TreeMap();
-            
-            //stateChanged = false;
             
             if (imageA == null) {
                 return;
@@ -743,7 +719,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         /**
          * This method saves all VOIs for the active image to a given directory.  Note:  This method differs quite a bit in execution 
-         * compared with saveALLVOIsTo(voiDir) in ViewJFrameBase (its direct super method).
+         * compared with saveALLVOIsTo(voiDir) in ViewJFrameBase.
          *
          * @param  voiDir  directory that contains VOIs for this image.
          */
@@ -838,8 +814,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             } else if (!(command.equals(DialogPrompt.OUTPUT) ||
             		command.equals(DialogPrompt.SAVE) ||
             		command.equals(DialogPrompt.OUTPUT_ALL))) {
-            	unlockToPanel();
-                initMuscleImage(activeTab);
+            	//unlockToPanel();
+                //initMuscleImage(activeTab);
             } 
         }
         
@@ -909,7 +885,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
             pack();
             initMuscleImage(0);
-            this.setResizable(false);
+            this.setResizable(true);
         }
         
         @Override
@@ -929,46 +905,189 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 
 		@Override
 		public void componentShown(ComponentEvent event) {
-		    //System.out.println("Active pane: "+activeTab);
-		    /*
-			Component c = event.getComponent();
-		    //Object obj = event.getSource();
-		    if(c instanceof VoiDialogPrompt) {
-                getActiveImage().unregisterAllVOIs();
-                initVoiImage(voiPrompt, activeTab);
-                updateImages(true);
+		    Component c = event.getComponent();
+		    if(c instanceof MuscleDialogPrompt) {
+		    	for(int i=0; i<voiTabLoc; i++) {
+		    		if(tabs[i].equals(c)) {
+		    			initMuscleImage(i);
+		    			activeTab = i;
+		    		}
+		    	}
+		    } else if(c instanceof VoiDialogPrompt) {
+		    	initVoiImage((VoiDialogPrompt)tabs[voiTabLoc], activeTab); //replacing current image and updating
+		    	activeTab = voiTabLoc;
+		    } else if(c instanceof AnalysisPrompt) {
+		    	getActiveImage().unregisterAllVOIs();
+		    	updateImages(true);
+		    	activeTab = resultTabLoc;
 		    }
-		    
-		    if(imagePane != null) {
-		        boolean found = false;
-		        for(int i=0; i<tabs.length; i++) {
-		            if(!found) {
-		                if(event.getComponent().equals(tabs[i])) {
-		                    initMuscleImage(i);
-		                    activeTab =  i;
-		                    found = true; 
-		                }
-		            }
-		        }
-		    }*/
 		    super.componentShown(event);
 		}
 
 		/**
-         * Resizes frame and all components.
+         * Version of componentResized that is very similar to super, but works with the embedded dialog box.
          *
          * @param  event  event that triggered function
          */
         public synchronized void componentResized(ComponentEvent event) {
+        	int width, height, imageWidth, imageHeight;
+            float bigger;
+            int minFrameWidth = 123;  ///minimum frame width... function of java or windows?  need to check w\ linux build
             
-            //System.out.println("Resizing here.");
+            boolean imageSizeSmall = false;
+            //check to see if the image width is SMALLER than the minimum frame width
+            if (componentImage.getActiveImage().getExtents()[0] <= minFrameWidth) {
+            	imageSizeSmall = true;
+            //	System.err.println("Image size small");
+            }
+        
+           // System.err.println("Current zoom: " + componentImage.getZoomX());
+
+            
+            
+            // if the window size is greater than the display window size - 20 (in either direction)
+            //  do nothing
+            if ((getSize().width >= (xScreen - 20)) || (getSize().height >= (yScreen - 20))) {
+                return;
+            }
+
+           
+
+            //width and height calculated by size minus both insets of entire image+dialogbox
+            width = getSize().width - (getInsets().left + getInsets().right);
+            height = getSize().height - (getInsets().top + getInsets().bottom);
+            
+            width -= (scrollPane.getInsets().left + scrollPane.getInsets().right);
+            height -= (scrollPane.getInsets().top + scrollPane.getInsets().bottom);
+            
+            //width and height of image only, for use in detecting whether zoom occurred
+            imageWidth = componentImage.getSize(null).width - (getInsets().left + getInsets().right);
+            imageHeight = componentImage.getSize(null).height - (getInsets().top + getInsets().bottom);
+            
+            imageWidth -= (scrollPane.getInsets().left + scrollPane.getInsets().right);
+            imageHeight -= (scrollPane.getInsets().top + scrollPane.getInsets().bottom);
+            
+            //System.err.println("current size: " + getSize());
+            //System.err.println("current insets: " + getInsets());
+            //System.err.println("current scrollinsets: " + scrollPane.getInsets());
+            //System.err.println("Current comp size: " + componentImage.getSize(null));
+            //System.err.println("Current scrollPane size: " + scrollPane.getSize() + "\n");
+            
+            //System.err.println("calculated width, height: " + width + " , " + height);
+            
+            
+            //determine the larger of width/height
+            //in order to find the zoom based the current window size (not necessarily the current zoom)
+            bigger = Math.max(imageWidth, imageHeight);
+            zoom = (int) Math.min((bigger ) / ((imageA.getExtents()[0] * widthResFactor) ),
+                                  (bigger ) / ((imageA.getExtents()[1] * heightResFactor) ));
+
+            
+            //check to see if we are dealing with a small sized image at the minimum frame width
+            if (imageSizeSmall && (zoom > componentImage.getZoomX()) && (getSize().width <= minFrameWidth)) {
+            	
+            		//System.err.println("Doing nothing, returning\n\n\n");
+            	return;
+            }
+            
+            // remove the componentListener so this function will not be called twice
+            removeComponentListener(this);
+            
+            //System.err.println("Calculated zoom: " + zoom);
+            //System.err.println("ComponentImage size (pre-adjustment): " + componentImage.getSize(null));
+            
+            //if the zoom is larger than the current zoom, set the current zoom to the calculated zoom
+            if (zoom > componentImage.getZoomX()) {
+            	//System.err.println("Setting componentImage to calculated zoom");
+                componentImage.setZoom((int) zoom, (int) zoom); // ***************************
+               
+                updateImages(true);
+
+                //checking componentImage size after updateImages (with new zoom)
+                 
+                if ((componentImage.getSize(null).width + 200) > xScreen) {
+                    width = xScreen - 200;
+                } else {
+                    width = componentImage.getSize(null).width;
+                }
+
+                if ((componentImage.getSize(null).height + 200) > yScreen) {
+                    height = yScreen - 200;
+                } else {
+                    height = componentImage.getSize(null).height;
+                }
+               // System.err.println("componentImage size now: " + componentImage.getSize(null));
+                
+            } else if ((imageWidth < componentImage.getSize(null).width) && (imageHeight >= componentImage.getSize(null).height)) {
+            	//System.err.println("Width is less than compImage.width, height is greater than compImage.height");
+
+                height = componentImage.getSize(null).height + scrollPane.getHorizontalScrollBar().getHeight();
+            } else if ((imageWidth >= componentImage.getSize(null).width) && (imageHeight < componentImage.getSize(null).height)) {
+                width = componentImage.getSize(null).width + scrollPane.getVerticalScrollBar().getWidth();
+
+                //System.err.println("Height is less than compImage.height, width is greater than compImage.width");
+                            
+            } else if ((imageWidth < componentImage.getSize(null).width) || (imageHeight < componentImage.getSize(null).height)) { // width += fudgeFactor;
+               
+            	//System.err.println("either width is less than component width or height is less than component height... returning\n\n");
+            	addComponentListener(this);
+
+                return;
+            } else if ((imageWidth > componentImage.getSize(null).width) || (imageHeight > componentImage.getSize(null).height)) {
+
+            	//System.err.println("Width or height is greater than compImage width/height, setting to compImage width and height");
+            	
+                if (width > componentImage.getSize(null).width) {
+                    width = componentImage.getSize(null).width;
+                }
+
+                if (height > componentImage.getSize(null).height) {
+                    height = componentImage.getSize(null).height;
+                }
+            } else {
+            	//System.err.println("apparently width and height are set okay (comparing to compeditimage)...returning\n\n");
+            	
+                addComponentListener(this);
+
+                return;
+            }
+
+           // System.err.println("Adjusting scrollpane width, height with scrollpane insets: " + scrollPane.getInsets());
+            
+            imageWidth += scrollPane.getInsets().left + scrollPane.getInsets().right;
+            imageHeight += scrollPane.getInsets().top + scrollPane.getInsets().bottom;
+            
+         //   System.err.println("Old scrollpane width, height: " + scrollPane.getSize());
+            
+            
+            
+            if (scrollPane.getSize().width != imageWidth ||
+            		scrollPane.getSize().height != imageHeight) {
+            	//System.err.println("New scrollpane width, height: " + width + " , " + height);
+            	scrollPane.setSize(imageWidth, imageHeight);
+            	//System.err.println("Scrollpane after setting width, height: " + scrollPane.getSize());
+            	
+            	//System.err.println("Frame insets are currently: " + getInsets());
+            	
+            	//System.err.println("setting frame size to: " + (scrollPane.getSize().width + getInsets().left + getInsets().right) + " , " +
+                //		(scrollPane.getSize().height + getInsets().top + getInsets().bottom));
+                setSize(width,
+                        height);
+                validate();
+                setTitle();
+               // System.err.println("New frame size: " + getSize());
+                updateImages(true);
+            }
+            
+           // System.err.println("Adding complistener back...done\n\n");
+            addComponentListener(this);
             
         }
         
         public void lockToPanel(JPanel panel, String title) {
             //System.out.println("Got here.");
             activeTab = imagePane.getSelectedIndex();
-            for(int i=0; i<imagePane.getTabCount(); i++) {
+            for(int i=0; i<voiTabLoc-1; i++) {
                 imagePane.setEnabledAt(i, false);
             }
             imagePane.addTab(title, panel);
@@ -1053,7 +1172,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             //added before button check so that they can be accessed in this way, optional to change.
             
             VOIVector vec = getImageA().getVOIs();
-            if(pane != -1) {
+            //if(pane != -1) {
             	for(int i=0; i<vec.size(); i++) {            
             		for(int j=0; j<tabs.length; j++) {
             			if(tabs[j] instanceof MuscleDialogPrompt) {
@@ -1063,10 +1182,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             			}
             		}
             	}
-            } else {
+            //} else {
             	//working with results tab
             	//System.out.println("The results tab follows here.");
-            }
+            //}
             
             
             
