@@ -2,6 +2,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmArcLength;
 import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
@@ -673,22 +674,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private String[] titles; 
         
-        //does have zeroes
-        //private ModelImage tempImage2;
-        
         private boolean[] fillIn;
         
         private TreeMap fillStatus;
         
         private TreeMap locationStatus;
         
-        //private ModelImage[] imageDiff;
-        
-        //private boolean componentRock = false;
-        
         private BuildThighAxes thighAxes;
-        
-        //private boolean stateChanged;
         
         public MuscleImageDisplay(ModelImage image, String[] titles, boolean[] fillIn,
                 String[][] mirrorArr, boolean[][] mirrorZ, 
@@ -800,7 +792,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 // This is very important. Adding this object as a listener allows the subdialog to
                 // notify this object when it has completed or failed. 
                 // This is could be generalized by making a subDialog interface.
-                lockToPanel(tabs[voiTabLoc], "VOI"); //includes making visible
+                lockToPanel(voiTabLoc, "VOI"); //includes making visible
                 //setVisible(false); // Hide dialog
             } else if(command.equals(DialogPrompt.CALCULATE)) {
             	//display the result display prompt in same way
@@ -809,7 +801,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             	// This is could be generalized by making a subDialog interface.
             	//analysisPrompt.addListener(this);
             	//analysisPrompt.addComponentListener(this);
-            	lockToPanel(tabs[resultTabLoc], "Analysis"); //includes making visible
+            	lockToPanel(resultTabLoc, "Analysis"); //includes making visible
             	
             } else if (!(command.equals(DialogPrompt.OUTPUT) ||
             		command.equals(DialogPrompt.SAVE) ||
@@ -820,7 +812,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         }
         
         private JPanel initDialog() {
-//          The component image will be displayed in a scrollpane.
+        	//The component image will be displayed in a scrollpane.
             zeroStatus = new TreeMap();
             
             scrollPane = new JScrollPane(componentImage, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -914,7 +906,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		    		}
 		    	}
 		    } else if(c instanceof VoiDialogPrompt) {
-		    	initVoiImage((VoiDialogPrompt)tabs[voiTabLoc], activeTab); //replacing current image and updating
+		    	initVoiImage(); //replacing current image and updating
 		    	activeTab = voiTabLoc;
 		    } else if(c instanceof AnalysisPrompt) {
 		    	getActiveImage().unregisterAllVOIs();
@@ -966,15 +958,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
             imageWidth -= (scrollPane.getInsets().left + scrollPane.getInsets().right);
             imageHeight -= (scrollPane.getInsets().top + scrollPane.getInsets().bottom);
-            
-            //System.err.println("current size: " + getSize());
-            //System.err.println("current insets: " + getInsets());
-            //System.err.println("current scrollinsets: " + scrollPane.getInsets());
-            //System.err.println("Current comp size: " + componentImage.getSize(null));
-            //System.err.println("Current scrollPane size: " + scrollPane.getSize() + "\n");
-            
-            //System.err.println("calculated width, height: " + width + " , " + height);
-            
             
             //determine the larger of width/height
             //in order to find the zoom based the current window size (not necessarily the current zoom)
@@ -1053,7 +1036,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             }
 
            // System.err.println("Adjusting scrollpane width, height with scrollpane insets: " + scrollPane.getInsets());
-            
+            //moves only based on zoom
             imageWidth += scrollPane.getInsets().left + scrollPane.getInsets().right;
             imageHeight += scrollPane.getInsets().top + scrollPane.getInsets().bottom;
             
@@ -1063,43 +1046,38 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
             if (scrollPane.getSize().width != imageWidth ||
             		scrollPane.getSize().height != imageHeight) {
-            	//System.err.println("New scrollpane width, height: " + width + " , " + height);
+            	
             	scrollPane.setSize(imageWidth, imageHeight);
-            	//System.err.println("Scrollpane after setting width, height: " + scrollPane.getSize());
             	
-            	//System.err.println("Frame insets are currently: " + getInsets());
-            	
-            	//System.err.println("setting frame size to: " + (scrollPane.getSize().width + getInsets().left + getInsets().right) + " , " +
-                //		(scrollPane.getSize().height + getInsets().top + getInsets().bottom));
                 setSize(width,
                         height);
                 validate();
                 setTitle();
-               // System.err.println("New frame size: " + getSize());
+               
                 updateImages(true);
             }
             
-           // System.err.println("Adding complistener back...done\n\n");
             addComponentListener(this);
             
         }
         
-        public void lockToPanel(JPanel panel, String title) {
-            //System.out.println("Got here.");
-            activeTab = imagePane.getSelectedIndex();
-            for(int i=0; i<voiTabLoc-1; i++) {
-                imagePane.setEnabledAt(i, false);
-            }
-            imagePane.addTab(title, panel);
-            imagePane.setSelectedIndex(imagePane.getTabCount()-1);
-   
+        public void lockToPanel(int tabLoc, String title) {
+            //saving selected tab to get back to
+        	activeTab = imagePane.getSelectedIndex();
+        	if(tabLoc >= voiTabLoc) {
+            	tabs[tabLoc].setVisible(true);
+            	for(int i=0; i<voiTabLoc; i++)
+            		imagePane.setEnabledAt(i, false);
+            	imagePane.addTab(title, tabs[tabLoc]);
+            	imagePane.setSelectedIndex(voiTabLoc);
+            } 
         }
         
-        public void unlockToPanel() {
-            imagePane.removeTabAt(imagePane.getTabCount()-1);
-            for(int i=0; i<imagePane.getTabCount(); i++) {
+        public void unlockToPanel(int closingTabLoc) {
+        	tabs[closingTabLoc].setVisible(false);
+        	imagePane.remove(tabs[closingTabLoc]);
+            for(int i=0; i<voiTabLoc; i++) 
                 imagePane.setEnabledAt(i, true);
-            }
             imagePane.setSelectedIndex(activeTab);
             
         }
@@ -1115,9 +1093,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             if(allVOIs.isDirectory()) {
                 String[] voiName = allVOIs.list();
                 for(int i=0; i<voiName.length; i++) {
-                    //System.out.println(voiName[i]);
-
-                    if(new File(fileDir+voiName[i]).exists()) {
+                	String name = voiName[i];
+                	if(name.indexOf(".xml") != -1) 
+                		name = name.substring(0, name.indexOf(".xml"));
+                	System.out.println(name);
+                    if(new File(fileDir+voiName[i]).exists() && 
+                    			(Integer)locationStatus.get(name) == pane 
+                    			|| pane == -1) {
                         String fileName = voiName[i];
                         FileVOI v;
                         VOI[] voiVec = null;
@@ -1130,9 +1112,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                         if(voiVec.length > 1) {
                             MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+fileName);
                         } else {               
-                            if(pane == -1 || (Integer)locationStatus.get(voiName[i].substring(0, voiName[i].indexOf(".xml"))) == pane) {
-                                getImageA().registerVOI(voiVec[0]);
-                            }
+                            
+                        	getImageA().registerVOI(voiVec[0]);
                         }
                     }
                 }
@@ -1141,6 +1122,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private void initVOIColor() {
             int colorChoice = 0;
+            getImageA();
             VOIVector voiFullVec = getActiveImage().getVOIs();
             for(int i=0; i<voiFullVec.size(); i++) {
                 Color c = hasColor(voiFullVec.get(i));
@@ -1155,15 +1137,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             }
         }
         
-        private void initMuscleImage(int pane) {
-            
-            
+        private void initMuscleImage(int pane) {        
             ///if pane == -1, will load all VOIs
             loadVOI(pane);
             initVOIColor();
             
             ctMode(getImageA(), -175, 275);
-            
             
             //if(thighAxes == null || stateChanged){
             //    thighAxes = new BuildThighAxes(getImageA(), 0);
@@ -1172,89 +1151,38 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             //added before button check so that they can be accessed in this way, optional to change.
             
             VOIVector vec = getImageA().getVOIs();
-            //if(pane != -1) {
-            	for(int i=0; i<vec.size(); i++) {            
-            		for(int j=0; j<tabs.length; j++) {
-            			if(tabs[j] instanceof MuscleDialogPrompt) {
-            				if(((MuscleDialogPrompt)tabs[j]).hasButton(vec.get(i).getName())) {
-            					((MuscleDialogPrompt)tabs[j]).setButton(vec.get(i).getName());
-            				}	
-            			}
-            		}
-            	}
-            //} else {
-            	//working with results tab
-            	//System.out.println("The results tab follows here.");
-            //}
-            
-            
-            
+        	for(int i=0; i<vec.size(); i++) {            
+        		for(int j=0; j<tabs.length; j++) {
+        			if(tabs[j] instanceof MuscleDialogPrompt) {
+        				if(((MuscleDialogPrompt)tabs[j]).hasButton(vec.get(i).getName())) {
+        					((MuscleDialogPrompt)tabs[j]).setButton(vec.get(i).getName());
+        				}	
+        			}
+        		}
+        	}
+
             updateImages(true);
-            //componentRock = true;
         }
         
-        
-        //TODO: local copies of VOIs, combine with loadVOI(int pane)
-        
-        
-        private void initVoiImage(VoiDialogPrompt voiDialog, int pane) {
-            //getImageA().unregisterAllVOIs();
-            //componentRock = true;
-            int colorChoice = 0;
+        private void initVoiImage() {
+            getActiveImage().unregisterAllVOIs();
             String fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+VOI_DIR;
             File allVOIs = new File(fileDir);
             if(allVOIs.isDirectory()) {
                 String[] voiName = allVOIs.list();
                 for(int i=0; i<voiName.length; i++) {
-                    //System.out.println(voiName);
-                	//if exists replace, color already set
-                    //test method
-                	//VOI voi = getSingleVOI(voiName[i]);
-                	
-                	
-                    if(new File(fileDir+voiName[i]).exists()) {
-                        String fileName = voiName[i];
-                        FileVOI v;
-                        VOI[] voiVec = null;
-                        try {
-                            v = new FileVOI(fileName, fileDir, getImageA());
-                            voiVec = v.readVOI(false);
-                        } catch(IOException e) {
-                        	//though could be abdomen (not currently)
-                            MipavUtil.displayError("Unable to load old VOI from location:\n"+fileDir+"\\NIA_Seg\\Thigh_VOI\\"+"\nWith name: "+fileName);
-                        }
-                        if(voiVec.length > 1) {
-                            MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+fileName);
-                        } else {
-                            Color c = hasColor(voiVec[0]);
-                            if(c != null) {
-                                voiVec[0].setColor(c);
-                                
-                            } else {
-                                voiVec[0].setColor(colorPick[colorChoice % colorPick.length]);
-                                colorChoice++;
-                            }                      
-                            if((Integer)locationStatus.get(voiName[i].substring(0, voiName[i].indexOf(".xml"))) == pane) {
-                                getActiveImage().registerVOI(voiVec[0]);
-                            }
-                        }
-                    }
+                	VOI v = getSingleVOI(voiName[i]);
+                	getActiveImage().registerVOI(v);
+                	if((Boolean)zeroStatus.get(v.getName()) && 
+                			!((VoiDialogPrompt)tabs[voiTabLoc]).getObjectName().equals(v.getName())) {
+                		v.setDisplayMode(VOI.SOLID);
+                	} else {
+                		v.setDisplayMode(VOI.CONTOUR);
+                	}
                 }
             }
             
             componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
-            
-            for(int i=0; i<getActiveImage().getVOIs().size(); i++) {
-                VOI v = getActiveImage().getVOIs().get(i);
-                if((Boolean)zeroStatus.get(v.getName()) && !voiDialog.getObjectName().equals(v.getName())) {
-                    v.setDisplayMode(VOI.SOLID);
-                } else {
-                    v.setDisplayMode(VOI.CONTOUR);
-                }
-                
-               
-            }
-            
             updateImages(true);
         }
         
@@ -2297,64 +2225,68 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    	
 	    }
 	    	    	    
-	    private void loadVOIs(String[] voiName) {
-            parentFrame.getActiveImage().unregisterAllVOIs();
-            int colorChoice = new Random().nextInt(colorPick.length);
-            String fileDir = parentFrame.getActiveImage().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR;
-            File allVOIs = new File(fileDir);
-            if(allVOIs.isDirectory()) {
-                for(int i=0; i<voiName.length; i++) {
-                    //System.out.println(voiName[i]);
-
-                    if(new File(fileDir+voiName[i]).exists()) {
-                        String fileName = voiName[i];
-                        FileVOI v;
-                        VOI[] voiVec = null;
-                        try {
-                            v = new FileVOI(fileName, fileDir, parentFrame.getActiveImage());
-                            voiVec = v.readVOI(false);
-                        } catch(IOException e) {
-                            MipavUtil.displayError("Unable to load old VOI from location:\n"+fileDir+"\nWith name: "+fileName);
-                        }
-                        if(voiVec.length > 1) {
-                            MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+fileName);
-                        } else {
-                        	Color c = hasColor(voiVec[0]);
-                            if(c != null) {
-                                voiVec[0].setColor(c);
-                                
-                            } else {
-                                voiVec[0].setColor(colorPick[colorChoice % colorPick.length]);
-                                colorChoice++;
-                            }                      
-                            voiVec[0].setThickness(2);
-                        	parentFrame.getActiveImage().registerVOI(voiVec[0]);
-                        }
-                    }
-                }
-            }
-	    }
 	    
-	    private Color hasColor(VOI voiVec) {
-            Color c = null;
-            VOIVector tempVec = parentFrame.getActiveImage().getVOIs();
-            String side1 = "", side2 = ""; 
-            if(symmetry == Symmetry.LEFT_RIGHT) {
-            	side1 = "Left";
-            	side2 = "Right";
-            }
-            for(int i=0; i<tempVec.size(); i++) {
-                if(voiVec.getName().contains(side1) || voiVec.getName().contains(side2)) {
-                    if( !(tempVec.get(i).getName().contains(side1)  &&  voiVec.getName().contains(side1)) && 
-                            !(tempVec.get(i).getName().contains(side2)  &&  voiVec.getName().contains(side2)) && 
-                            tempVec.get(i).getName().endsWith(voiVec.getName().substring(voiVec.getName().indexOf(" ")))) {
-                        c =  tempVec.get(i).getColor();
+	    
+	    
+	}
+    
+    public void loadVOIs(String[] voiName) {
+        display.getActiveImage().unregisterAllVOIs();
+        int colorChoice = new Random().nextInt(colorPick.length);
+        String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR;
+        File allVOIs = new File(fileDir);
+        if(allVOIs.isDirectory()) {
+            for(int i=0; i<voiName.length; i++) {
+                //System.out.println(voiName[i]);
+
+                if(new File(fileDir+voiName[i]).exists()) {
+                    String fileName = voiName[i];
+                    FileVOI v;
+                    VOI[] voiVec = null;
+                    try {
+                        v = new FileVOI(fileName, fileDir, display.getActiveImage());
+                        voiVec = v.readVOI(false);
+                    } catch(IOException e) {
+                        MipavUtil.displayError("Unable to load old VOI from location:\n"+fileDir+"\nWith name: "+fileName);
+                    }
+                    if(voiVec.length > 1) {
+                        MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+fileName);
+                    } else {
+                    	Color c = hasColor(voiVec[0]);
+                        if(c != null) {
+                            voiVec[0].setColor(c);
+                            
+                        } else {
+                            voiVec[0].setColor(colorPick[colorChoice % colorPick.length]);
+                            colorChoice++;
+                        }                      
+                        voiVec[0].setThickness(2);
+                        display.getActiveImage().registerVOI(voiVec[0]);
                     }
                 }
             }
-            return c;
+        }  
+    }
+    
+    private Color hasColor(VOI voiVec) {
+        Color c = null;
+        VOIVector tempVec = display.getActiveImage().getVOIs();
+        String side1 = "", side2 = ""; 
+        if(Symmetry.LEFT_RIGHT == Symmetry.LEFT_RIGHT) {
+        	side1 = "Left";
+        	side2 = "Right";
         }
-	}
+        for(int i=0; i<tempVec.size(); i++) {
+            if(voiVec.getName().contains(side1) || voiVec.getName().contains(side2)) {
+                if( !(tempVec.get(i).getName().contains(side1)  &&  voiVec.getName().contains(side1)) && 
+                        !(tempVec.get(i).getName().contains(side2)  &&  voiVec.getName().contains(side2)) && 
+                        tempVec.get(i).getName().endsWith(voiVec.getName().substring(voiVec.getName().indexOf(" ")))) {
+                    c =  tempVec.get(i).getColor();
+                }
+            }
+        }
+        return c;
+    }
     
     public VOI getSingleVOI(String name) {
         String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR;
@@ -2536,16 +2468,17 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			mct2.setAlignment(Element.ALIGN_LEFT);
 			mct2.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
 			mct2.addElement(new Paragraph("Name:", fontBold));
-			mct2.addElement(new Paragraph("1000140811", fontNormal));
+			mct2.addElement(new Paragraph(display.getActiveImage().getFileInfo()[0].getFileName(), fontNormal));
 			mct2.addElement(new Paragraph("Center:", fontBold));
 			mct2.addElement(new Paragraph("Hjartavernd", fontNormal));
+			FileInfoBase[] f = display.getActiveImage().getFileInfo();
 			pdfDocument.add(mct2);
 			
 			MultiColumnText mct3 = new MultiColumnText(20);
 			mct3.setAlignment(Element.ALIGN_LEFT);
 			mct3.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
 			mct3.addElement(new Paragraph("ID:", fontBold));
-			mct3.addElement(new Paragraph("1000140811", fontNormal));
+			mct3.addElement(new Paragraph(display.getActiveImage().getFileInfo()[0].getFileName(), fontNormal));
 			mct3.addElement(new Paragraph("Scan Date:", fontBold));
 			mct3.addElement(new Paragraph("05/09/2003", fontNormal));
 			pdfDocument.add(mct3);
@@ -2563,7 +2496,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			spTable.addCell("Pixel Size:");
 			spTable.addCell(Double.toString(display.getActiveImage().getResolutions(0)[0]*.1));
 			spTable.addCell("Slice Thickness: (mm)");
-			spTable.addCell("10.00");
+			spTable.addCell(Float.toString(display.getActiveImage().getFileInfo()[0].getSliceThickness()));
 			spTable.addCell("Table Height: (cm)");
 			spTable.addCell("143.00");
 			
