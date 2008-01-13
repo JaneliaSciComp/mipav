@@ -293,13 +293,17 @@ void computeColor( vec3 kModelPosition, vec3 kModelNormal, vec3 CameraWorldPosit
 {
     if ( LightType == -1.0 )
     {
+//         color_sample.r = kModelNormal.x;
+//         color_sample.g = kModelNormal.y;
+//         color_sample.b = kModelNormal.z;
         color_sample.r = 0.0;
         color_sample.g = 0.0;
         color_sample.b = 0.0;
     }
     else
     {
-        vec3 local_normal = kModelNormal.xyz - (0.5, 0.5, 0.5);
+        //vec3 local_normal = kModelNormal.xyz - (0.5, 0.5, 0.5);
+        vec3 local_normal = ((2.0,2.0,2.0)* kModelNormal.xyz) - (1.0, 1.0, 1.0);
         local_normal = normalize( local_normal );
 
         vec3 LocalMaterialAmbient = MaterialAmbient;
@@ -420,13 +424,13 @@ bool myClip(const vec3 myvec,
 varying vec4 outPos;
 uniform mat4 WVPMatrix;
 uniform mat4 WMatrix;
-uniform sampler2D aSceneImage; 
-uniform sampler3D bVolumeImageA; 
-uniform sampler1D cColorMapA; 
-uniform sampler1D dOpacityMapA; 
-uniform sampler3D eNormalMapA; 
-uniform sampler3D fVolumeImageA_GM; 
-uniform sampler1D gOpacityMapA_GM; 
+uniform sampler2D aSceneImage_TEXUNIT0; 
+uniform sampler3D bVolumeImageA_TEXUNIT1; 
+uniform sampler1D cColorMapA_TEXUNIT2; 
+uniform sampler1D dOpacityMapA_TEXUNIT3; 
+uniform sampler3D eVolumeImageA_GM_TEXUNIT4; 
+uniform sampler1D fOpacityMapA_GM_TEXUNIT5; 
+uniform sampler3D gNormalMapA_TEXUNIT6; 
 uniform float stepsize;
 uniform vec4  steps;
 uniform float IsColor;
@@ -489,7 +493,7 @@ void p_VolumeShaderSUR()
 {
     // find the right place to lookup in the backside buffer
     vec2 texc = ((outPos.xy / outPos.w) + 1.0) / 2.0;
-    vec4 back_position  = texture2D(aSceneImage, texc);
+    vec4 back_position  = texture2D(aSceneImage_TEXUNIT0, texc);
 
     // the start position of the ray is stored in the texturecoordinate
     vec3 start = gl_TexCoord[0].xyz; 
@@ -586,24 +590,24 @@ void p_VolumeShaderSUR()
             // The value is not clipped, compute the color:
             if ( !bClipped )
             {
-                color = texture3D(bVolumeImageA,position);
-                opacity = texture1D(dOpacityMapA,color.r).r;
+                color = texture3D(bVolumeImageA_TEXUNIT1,position);
+                opacity = texture1D(dOpacityMapA_TEXUNIT3,color.r).r;
                 if ( GradientMagnitude != 0.0 )
                 {
-                    colorGM = texture3D(fVolumeImageA_GM,position);
-                    opacityGM = texture1D(gOpacityMapA_GM,colorGM.r).r;
+                    colorGM = texture3D(eVolumeImageA_GM_TEXUNIT4,position);
+                    opacityGM = texture1D(fOpacityMapA_GM_TEXUNIT5,colorGM.r).r;
                     opacity = opacity * opacityGM;
                 }
 
                 if ( IsColor != 0.0 )
                 {
-                    color.r = texture1D(cColorMapA,color.r).r;
-                    color.g = texture1D(cColorMapA,color.g).g;
-                    color.b = texture1D(cColorMapA,color.b).b;
+                    color.r = texture1D(cColorMapA_TEXUNIT2,color.r).r;
+                    color.g = texture1D(cColorMapA_TEXUNIT2,color.g).g;
+                    color.b = texture1D(cColorMapA_TEXUNIT2,color.b).b;
                 }
                 else
                 {
-                    color = texture1D(cColorMapA,color.r);
+                    color = texture1D(cColorMapA_TEXUNIT2,color.r);
                 }
             }
         }
@@ -611,7 +615,7 @@ void p_VolumeShaderSUR()
         if ( opacity > 0.0 )
         {
             // Surface and Composite surface display:
-            normal = texture3D(eNormalMapA,position);
+            normal = texture3D(gNormalMapA_TEXUNIT6,position);
             normal.w = 0.0;
 
             // First light is static light:
@@ -744,11 +748,11 @@ void p_VolumeShaderSUR()
             if ( !break1 )
             {
                 // If we find a non-zero opacity, remove the color contribution
-                color = texture3D(bVolumeImageA,position1);
-                opacity = texture1D(dOpacityMapA,color.r).r;
+                color = texture3D(bVolumeImageA_TEXUNIT1,position1);
+                opacity = texture1D(dOpacityMapA_TEXUNIT3,color.r).r;
                 if (opacity > 0.0)
                 {
-                    normal2 = texture3D(eNormalMapA,position1);
+                    normal2 = texture3D(gNormalMapA_TEXUNIT6,position1);
                     local_normal2 = normal2.xyz - (0.5, 0.5, 0.5);
                     local_normal2 = normalize( local_normal2 );
                     if ( dot(local_normal.xyz, local_normal2.xyz) < 0.0 )
@@ -778,11 +782,11 @@ void p_VolumeShaderSUR()
             if ( !break2 )
             {
                 // If we find a non-zero opacity, remove the color contribution
-                color = texture3D(bVolumeImageA,position2);
-                opacity = texture1D(dOpacityMapA,color.r).r;
+                color = texture3D(bVolumeImageA_TEXUNIT1,position2);
+                opacity = texture1D(dOpacityMapA_TEXUNIT3,color.r).r;
                 if (opacity > 0.0)
                 {
-                    normal2 = texture3D(eNormalMapA,position2);
+                    normal2 = texture3D(gNormalMapA_TEXUNIT6,position2);
                     local_normal2 = normal2.xyz - (0.5, 0.5, 0.5);
                     local_normal2 = normalize( local_normal2 );
                     if ( dot(local_normal.xyz, local_normal2.xyz) < 0.0 )
@@ -811,11 +815,11 @@ void p_VolumeShaderSUR()
             if ( !break3 )
             {
                 // If we find a non-zero opacity, remove the color contribution
-                color = texture3D(bVolumeImageA,position3);
-                opacity = texture1D(dOpacityMapA,color.r).r;
+                color = texture3D(bVolumeImageA_TEXUNIT1,position3);
+                opacity = texture1D(dOpacityMapA_TEXUNIT3,color.r).r;
                 if (opacity > 0.0)
                 {
-                    normal2 = texture3D(eNormalMapA,position3);
+                    normal2 = texture3D(gNormalMapA_TEXUNIT6,position3);
                     local_normal2 = normal2.xyz - (0.5, 0.5, 0.5);
                     local_normal2 = normalize( local_normal2 );
                     if ( dot(local_normal.xyz, local_normal2.xyz) < 0.0 )

@@ -194,7 +194,7 @@ public class VolumeOrientationCube extends VolumeObject
                  * names from the axis strings: */
                 m_aakAxisFiles[i*2 +0] = new String( String.valueOf( akAxisLabels[i].charAt(0) ) );
                 m_aakAxisFiles[i*2 +1] = new String( String.valueOf( akAxisLabels[i].charAt( akAxisLabels[i].lastIndexOf( " " ) + 1 ) ) );
-                System.err.println(m_aakAxisFiles[i*2 +1]);
+                //System.err.println(m_aakAxisFiles[i*2 +1]);
             }
         }
     }

@@ -108,7 +108,7 @@ public class VolumeCalcEffect extends ShaderEffect
         if ( pkProgram.GetUC("StepSize") != null ) 
         {
             pkProgram.GetUC("StepSize").SetDataSource(m_afExtents);
-            System.err.println( m_afExtents[0] + " " + m_afExtents[1] + " " + m_afExtents[2] );
+            //System.err.println( m_afExtents[0] + " " + m_afExtents[1] + " " + m_afExtents[2] );
         }
     }
     /** Extents of the volume data for setting the texture step size. */    

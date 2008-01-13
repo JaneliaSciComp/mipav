@@ -132,10 +132,10 @@ public class VolumeShaderEffect_WM extends ShaderEffect
         m_kPShaderMIP.SetTexture(2, m_kVolumeImageA.GetColorMapTarget() );
         m_kPShaderMIP.SetImageName(3, "OpacityMapA");
         m_kPShaderMIP.SetTexture(3, m_kVolumeImageA.GetOpacityMapTarget() );
-//         m_kPShaderMIP.SetImageName(4,"VolumeImageA_GM");
-//         m_kPShaderMIP.SetTexture(4, m_kVolumeImageA.GetVolumeGMTarget());
-//         m_kPShaderMIP.SetImageName(5, "OpacityMapA_GM");
-//         m_kPShaderMIP.SetTexture(5, m_kVolumeImageA.GetOpacityMapGMTarget() );
+        m_kPShaderMIP.SetImageName(4,"VolumeImageA_GM");
+        m_kPShaderMIP.SetTexture(4, m_kVolumeImageA.GetVolumeGMTarget());
+        m_kPShaderMIP.SetImageName(5, "OpacityMapA_GM");
+        m_kPShaderMIP.SetTexture(5, m_kVolumeImageA.GetOpacityMapGMTarget() );
 
         /* The following block creates the DDR volume shader, implemented in
          * VolumShaderDDR.cg. The DDR shader uses the same texture images and
@@ -151,10 +151,10 @@ public class VolumeShaderEffect_WM extends ShaderEffect
         m_kPShaderDDR.SetTexture(2,m_kVolumeImageA.GetColorMapTarget());
         m_kPShaderDDR.SetImageName(3, "OpacityMapA");
         m_kPShaderDDR.SetTexture(3,m_kVolumeImageA.GetOpacityMapTarget());
-//         m_kPShaderDDR.SetImageName(4,"VolumeImageA_GM");
-//         m_kPShaderDDR.SetTexture(4,m_kVolumeImageA.GetVolumeGMTarget());
-//         m_kPShaderDDR.SetImageName(5, "OpacityMapA_GM");
-//         m_kPShaderDDR.SetTexture(5, m_kVolumeImageA.GetOpacityMapGMTarget());
+        m_kPShaderDDR.SetImageName(4,"VolumeImageA_GM");
+        m_kPShaderDDR.SetTexture(4,m_kVolumeImageA.GetVolumeGMTarget());
+        m_kPShaderDDR.SetImageName(5, "OpacityMapA_GM");
+        m_kPShaderDDR.SetTexture(5, m_kVolumeImageA.GetOpacityMapGMTarget());
 
         /* The following block creates the Composite volume shader,
          * implemented in VolumShaderCMP.cg. The Composite shader uses the
@@ -170,10 +170,10 @@ public class VolumeShaderEffect_WM extends ShaderEffect
         m_kPShaderCMP.SetTexture(2,m_kVolumeImageA.GetColorMapTarget());
         m_kPShaderCMP.SetImageName(3, "OpacityMapA");
         m_kPShaderCMP.SetTexture(3,m_kVolumeImageA.GetOpacityMapTarget());
-//         m_kPShaderCMP.SetImageName(4,"VolumeImageA_GM");
-//         m_kPShaderCMP.SetTexture(4,m_kVolumeImageA.GetVolumeGMTarget());
-//         m_kPShaderCMP.SetImageName(5, "OpacityMapA_GM");
-//         m_kPShaderCMP.SetTexture(5, m_kVolumeImageA.GetOpacityMapGMTarget());
+        m_kPShaderCMP.SetImageName(4,"VolumeImageA_GM");
+        m_kPShaderCMP.SetTexture(4,m_kVolumeImageA.GetVolumeGMTarget());
+        m_kPShaderCMP.SetImageName(5, "OpacityMapA_GM");
+        m_kPShaderCMP.SetTexture(5, m_kVolumeImageA.GetOpacityMapGMTarget());
 
         /* The following block creates the Surface and Composite Surface
          * volume shader, both are implemented in a single pixel program in
@@ -196,8 +196,6 @@ public class VolumeShaderEffect_WM extends ShaderEffect
         m_kPShaderSUR.SetTexture(5, m_kVolumeImageA.GetOpacityMapGMTarget());
         m_kPShaderSUR.SetImageName(6, "NormalMapA" );
         m_kPShaderSUR.SetTexture(6, m_kVolumeImageA.GetNormalMapTarget());
-//         m_kPShaderSUR.SetImageName(4, "NormalMapA" );
-//         m_kPShaderSUR.SetTexture(4, m_kVolumeImageA.GetNormalMapTarget());
          
         /* The vertex shader is set, it never changes. The first parameter is
          * the pass number used when applying different shaders during

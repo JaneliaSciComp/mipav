@@ -1137,6 +1137,7 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
      *                        HepticLagragian, or WindowedSinc (see AlgorithmTransform.java).
      */
     public void doResample(int[] volExtents, float[] newRes, boolean forceResample, int nDim, int iFilterType) {
+
         AlgorithmTransform transformFunct = null;
 
         if (forceResample) {
@@ -1207,6 +1208,11 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
                 resetLUTMinMax(imageB, LUTb);
             }
         }
+
+        /*
+        imageA = (ModelImage)imageA.clone( imageA.getImageFileName() );
+        imageA.calcMinMax();
+        */
     }
 
     /**

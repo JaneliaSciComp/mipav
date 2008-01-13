@@ -1150,7 +1150,7 @@ public class OpenGLRenderer extends Renderer
         
         Program kCompiledProgram = new Program();
         kCompiledProgram.SetProgramID(iProgramID);
-
+        //System.err.println( pkVProgram.GetName() + " " + pkPProgram.GetName() );
         RecurseParamsInProgram(kCompiledProgram);
         pkVProgram.SetInputAttributes(kCompiledProgram.GetInputAttributes());
         pkVProgram.SetOutputAttributes(kCompiledProgram.GetInputAttributes());
@@ -1682,10 +1682,18 @@ public class OpenGLRenderer extends Renderer
             // uniform sampler
             if ( eSType != SamplerInformation.Type.MAX_SAMPLER_TYPES )
             {
-                int iUnit = iTexUnit++;
+                int iUnit = sName.lastIndexOf( "TEXUNIT" );
+                if ( iUnit != -1 )
+                {
+                    iUnit = ( new Integer(sName.substring( iUnit + 7 )) ).intValue();
+                }
+                else
+                {
+                    iUnit = iTexUnit++;
+                }
                 SamplerInformation kSI = new SamplerInformation(sName,eSType,iUnit, iBaseRegister);
                 rkProgram.AddSamplerInformation(kSI);
-                //System.err.println( sName + " " + kSI.GetName() + " " + iUnit + " " + iBaseRegister);
+                //System.err.println( "     RecurseParamsInProgram " + sName + " " + kSI.GetName() + " " + iUnit + " " + iBaseRegister);
             }
             else {
                 
@@ -1736,14 +1744,6 @@ public class OpenGLRenderer extends Renderer
         int iComponent = ms_aeImageComponents[pkImage.GetFormat().Value()];
         int eFormat = ms_aeImageFormats[pkImage.GetFormat().Value()];
         int eIType = ms_aeImageTypes[pkImage.GetFormat().Value()];
-//         if ( aucData instanceof ShortBuffer )
-//         {
-//             eIType = GL.GL_UNSIGNED_SHORT;
-//         }
-//         else if ( aucData instanceof ByteBuffer )
-//         {
-//             eIType = GL.GL_BYTE;
-//         }
         if ( aucData instanceof ByteBuffer )
         {
             eIType = GL.GL_UNSIGNED_BYTE;
@@ -1754,9 +1754,15 @@ public class OpenGLRenderer extends Renderer
         gl.glGenTextures((int)1,m_aiParams,0);
         pkResource.ID = m_aiParams[0];
         gl.glBindTexture(eTarget,pkResource.ID);
-
-        System.err.println( "LoadTexture  " + pkTexture.GetImage().GetName() + " " + pkResource.ID );
-
+/*
+        System.err.print( "     LoadTexture  " + pkTexture.GetImage().GetName() + " " + pkResource.ID + " SI "
+                + pkSI.GetName() + " " + pkSI.GetTextureUnit() + " " + pkSI.GetBaseRegister() );
+        for ( int i = 0; i < pkTexture.GetImage().GetDimension(); i++ )
+        {
+            System.err.print( " " + pkTexture.GetImage().GetBound(i) );
+        }
+        System.err.println();
+*/
         // Set the filter mode.
         Texture.FilterType eFType = pkTexture.GetFilterType();
         if (eFType == Texture.FilterType.NEAREST)
