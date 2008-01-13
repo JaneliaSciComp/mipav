@@ -40,12 +40,12 @@ bool myClip(const vec3 myvec,
 
 varying vec4 outPos;
 uniform mat4 WVPMatrix;
-uniform sampler2D aSceneImage; 
-uniform sampler3D bVolumeImageA; 
-uniform sampler1D cColorMapA; 
-uniform sampler1D dOpacityMapA; 
-uniform sampler3D eVolumeImageA_GM; 
-uniform sampler1D fOpacityMapA_GM; 
+uniform sampler2D aSceneImage_TEXUNIT0; 
+uniform sampler3D bVolumeImageA_TEXUNIT1; 
+uniform sampler1D cColorMapA_TEXUNIT2; 
+uniform sampler1D dOpacityMapA_TEXUNIT3; 
+uniform sampler3D eVolumeImageA_GM_TEXUNIT4; 
+uniform sampler1D fOpacityMapA_GM_TEXUNIT5; 
 uniform float stepsize;
 uniform vec4  steps;
 uniform float IsColor;
@@ -67,7 +67,7 @@ void p_VolumeShaderMIP()
 {
     // find the right place to lookup in the backside buffer
     vec2 texc = ((outPos.xy / outPos.w) + 1.0) / 2.0;
-    vec4 back_position  = texture2D(aSceneImage, texc);
+    vec4 back_position  = texture2D(aSceneImage_TEXUNIT0, texc);
 
     // the start position of the ray is stored in the texture coordinate
     vec3 start = gl_TexCoord[0].xyz; 
@@ -160,13 +160,13 @@ void p_VolumeShaderMIP()
             // The value is not clipped, compute the color:
             if ( !bClipped )
             {
-                color = texture3D(bVolumeImageA,position);
-                opacity = texture1D(dOpacityMapA,color.r).r;
+                color = texture3D(bVolumeImageA_TEXUNIT1,position);
+                opacity = texture1D(dOpacityMapA_TEXUNIT3,color.r).r;
 
                 if ( GradientMagnitude != 0.0 )
                 {
-                    colorGM = texture3D(eVolumeImageA_GM,position);
-                    opacityGM = texture1D(fOpacityMapA_GM,colorGM.r).r;
+                    colorGM = texture3D(eVolumeImageA_GM_TEXUNIT4,position);
+                    opacityGM = texture1D(fOpacityMapA_GM_TEXUNIT5,colorGM.r).r;
                     opacity = opacity * opacityGM;
                 }
             }
@@ -199,13 +199,13 @@ void p_VolumeShaderMIP()
 
     if ( IsColor != 0.0 )
     {
-        gl_FragColor.r = texture1D(cColorMapA,color_max.r).r;
-        gl_FragColor.g = texture1D(cColorMapA,color_max.g).g;
-        gl_FragColor.b = texture1D(cColorMapA,color_max.b).b;
+        gl_FragColor.r = texture1D(cColorMapA_TEXUNIT2,color_max.r).r;
+        gl_FragColor.g = texture1D(cColorMapA_TEXUNIT2,color_max.g).g;
+        gl_FragColor.b = texture1D(cColorMapA_TEXUNIT2,color_max.b).b;
     }
     else
     {
-        gl_FragColor.rgb = texture1D(cColorMapA,fMax).rgb;
+        gl_FragColor.rgb = texture1D(cColorMapA_TEXUNIT2,fMax).rgb;
     }
     // Blend with the background color:
     gl_FragColor = fMax * gl_FragColor + (1.0 - fMax) * BackgroundColor;

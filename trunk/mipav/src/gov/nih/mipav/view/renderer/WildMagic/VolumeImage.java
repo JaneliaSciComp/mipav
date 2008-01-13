@@ -63,6 +63,7 @@ public class VolumeImage
         /* Map the ModelImage volume data to a texture image, including for
          * the ModelImage gradient magnitude data: */
         m_kVolumeA = UpdateData(m_kImageA, null, m_kVolumeTargetA, new String("A") );
+        
         m_kImageA_GM = CalcHistogramsGM( m_kImageA );
         m_kVolumeA_GM = UpdateData(m_kImageA_GM, null, m_kVolumeTargetA_GM, new String("A_GM") );
 
