@@ -2138,13 +2138,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		    	String[] selectedString = new String[selected.length];
 		    	for(int i=0; i<selected.length; i++) {
 		    		selectedString[i] = (String)selected[i]+".xml";
-		    		//System.out.println("Selected "+i+": "+selectedString[i]);
 		    	}
 		    	for(int i=0; i<list.length; i++) {
-		    		if(!source.equals(list[i])) {
+		    		if(!source.equals(list[i]) && selectedString.length > 0) {
 		    			list[i].clearSelection();
 		    		}
 		    	}
+		    	
 		    	//Load VOIs and calculations
 		    	loadVOIs(selectedString);
 		    	parentFrame.updateImages(true);
@@ -2209,7 +2209,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    				} else {
 	    					DecimalFormat dec = new DecimalFormat("0.#");
 		    				String appMessage = v.getName()+" calculations:\n"+"Fat Area: "+dec.format(fatArea)+
-		    				"\t\t\tMean H: "+dec.format(meanFatH)+"\nLean Area: "+dec.format(leanArea)+
+		    				"\t\t\t\tMean H: "+dec.format(meanFatH)+"\nLean Area: "+dec.format(leanArea)+
 		    				"\t\t\tMean H: "+dec.format(meanLeanH)+"\nTotal Area: "+dec.format(totalAreaCount)+
 		    				"\t\t\tMean H: "+dec.format(meanTotalH) + "\n\n";
 		    			
@@ -2231,6 +2231,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	}
     
     public void loadVOIs(String[] voiName) {
+    	if (display == null) {
+    		return;
+    	}
         display.getActiveImage().unregisterAllVOIs();
         int colorChoice = new Random().nextInt(colorPick.length);
         String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR;
