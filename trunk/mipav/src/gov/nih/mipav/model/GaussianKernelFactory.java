@@ -37,9 +37,8 @@ public class GaussianKernelFactory implements KernelFactory {
 	public static GaussianKernelFactory getInstance(float[] sigmas){
 		return new GaussianKernelFactory(sigmas);
 	}
-	
-	@Override
-	public Kernel createKernel() {
+	 
+	public Kernel createKernel(){
 		if(kernelType == BLUR_KERNEL){
 			return createBlurKernel();
 		}else if(kernelType == X_DERIVATIVE_KERNEL){
