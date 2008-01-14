@@ -626,7 +626,7 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Fill objects");
+        setTitle("Fill holes");
 
         destinationPanel = new JPanel(new GridBagLayout());
         destinationPanel.setForeground(Color.black);
@@ -639,7 +639,7 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
 
         replaceImage = new JRadioButton("Replace image", false);
         replaceImage.setFont(serif12);
-        // destinationGroup.add(replaceImage);
+        destinationGroup.add(replaceImage);
 
         GridBagConstraints gbc = new GridBagConstraints();
 
@@ -649,7 +649,7 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
         gbc.anchor = GridBagConstraints.WEST;
         destinationPanel.add(newImage, gbc);
         gbc.gridy = 1;
-        // destinationPanel.add(replaceImage, gbc);
+        destinationPanel.add(replaceImage, gbc);
 
         // following part may be used later sometimes
         imageVOIPanel = new JPanel(new GridBagLayout());
@@ -705,7 +705,7 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
 
         controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.Y_AXIS));
         controlPanel.add(imageVOIPanel);
-        controlPanel.add(destinationPanel);
+        //controlPanel.add(destinationPanel);
 
         controlPanel.add(buttonPanel);
         getContentPane().add(controlPanel);
@@ -722,12 +722,13 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
     private boolean setVariables() {
         System.gc();
 
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
+        //if (replaceImage.isSelected()) {
+        //    displayLoc = REPLACE;
+        //} else if (newImage.isSelected()) {
+        //    displayLoc = NEW;
 
-        }
+        //}
+        displayLoc = NEW;
 
         if (wholeImage.isSelected()) {
             regionFlag = true;
