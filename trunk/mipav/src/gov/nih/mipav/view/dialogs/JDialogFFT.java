@@ -624,7 +624,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
 
                 // Make algorithm
                 FFTAlgo = new AlgorithmFFT(resultImage, image, transformDir, logMagDisplay, unequalDim, image25D);
-
+                FFTAlgo.setMultiThreadingEnabled(Preferences.isMultiThreadingEnabled());
+                FFTAlgo.setNumberOfThreads(Preferences.getNumberOfThreads());
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface

@@ -26,6 +26,8 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
     /** Contains parameters used to run or record the dialog action, along with some common helper methods. */
     protected AlgorithmParameters scriptParameters = null;
 
+	protected boolean displayInNewFrame;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**

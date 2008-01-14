@@ -11,6 +11,7 @@ import gov.nih.mipav.view.renderer.WildMagic.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -902,7 +903,7 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
                 rendererProgressBar.setValue(60);
                 rendererProgressBar.update(rendererProgressBar.getGraphics());
 
-                AlgorithmGradientMagnitudeSep gradMagAlgo_B = new AlgorithmGradientMagnitudeSep(gradMag_B, imageB,
+                AlgorithmGradientMagnitudeSep gradMagAlgo_B = new AlgorithmGradientMagnitudeSep(imageB,
                                                                                                 sigma, true, false);
 
                 gradMagAlgo_B.setRed(true);
@@ -912,6 +913,13 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
                 gradMagAlgo_B.run();
 
                 if (gradMagAlgo_B.isCompleted()) {
+                    try{
+                    	gradMag_B.importData(0, gradMagAlgo_B.getResultBuffer(), true);
+                    }catch(IOException e){
+            			MipavUtil.displayError("Algorithm Watershed importData: Image(s) locked");
+            			gradMag_B.disposeLocal();
+            			return;
+                    }
                     gradMagAlgo_B.finalize();
                     gradMagAlgo_B = null;
                 }

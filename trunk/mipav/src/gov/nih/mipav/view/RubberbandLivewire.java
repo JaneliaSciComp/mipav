@@ -198,16 +198,18 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
             // AlgorithmGradientMagnitude magnitude = new AlgorithmGradientMagnitude(null, new float[] {1.75f, 1.75f},
             // true, false);
-            AlgorithmGradientMagnitudeSep magnitude = new AlgorithmGradientMagnitudeSep(null,
+            AlgorithmGradientMagnitudeSep magnitude = new AlgorithmGradientMagnitudeSep(((ViewJComponentEditImage) component).getActiveImage(),
                                                                                         new float[] { 1.75f, 1.75f },
-                                                                                        true, false);
+                                                                                        true, true);
+        	magnitude.setDirectionNeeded(true);
             progressBar.updateValueImmed(10);
 
             if (((ViewJComponentEditImage) component).getActiveImage().isColorImage()) {
-                localCosts = magnitude.calcInBuffer2DUnnormalized(((ViewJComponentEditImage) component)
-                                                                      .getActiveImageSliceBuffer(), extents,
-                                                                  ((ViewJComponentEditImage) component).getActiveImage().isColorImage(),
-                                                                  xDirections, yDirections);
+            	magnitude.setNormalized(false);
+            	magnitude.run();
+                localCosts = magnitude.getResultBuffer();
+                xDirections = magnitude.getXDerivativeDirections();
+                yDirections = magnitude.getYDerivativeDirections();
                 progressBar.updateValueImmed(20);
 
                 float[] localCostsTemp = new float[length];
@@ -321,10 +323,11 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
                 // calculates gradient magnitude and stores in localCosts; stores normalized xDirections
                 // and yDirections in the corresponding arrays.
-                localCosts = magnitude.calcInBuffer2D(((ViewJComponentEditImage) component).getActiveImageSliceBuffer(),
-                                                      extents,
-                                                      ((ViewJComponentEditImage) component).getActiveImage().isColorImage(),
-                                                      xDirections, yDirections);
+            	magnitude.setNormalized(true);
+            	magnitude.run();
+                localCosts = magnitude.getResultBuffer();
+                xDirections = magnitude.getXDerivativeDirections();
+                yDirections = magnitude.getYDerivativeDirections();
                 progressBar.updateValueImmed(65);
 
             } // not color
@@ -675,16 +678,17 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
         // direction of the unit vector of the partial derivative in the y direction
         yDirections = new float[xDim * yDim];
 
-        // AlgorithmGradientMagnitude magnitude = new AlgorithmGradientMagnitude(null, grad_sigmas, true, false);
-        AlgorithmGradientMagnitudeSep magnitude = new AlgorithmGradientMagnitudeSep(null, grad_sigmas, true, false);
         progressBar.updateValueImmed(30);
 
         // calculates gradient magnitude and stores in localCosts; stores normalized xDirections
         // and yDirections in the corresponding arrays.
-        localCosts = magnitude.calcInBuffer2D(((ViewJComponentEditImage) component).getActiveImageSliceBuffer(),
-                                              extents,
-                                              ((ViewJComponentEditImage) component).getActiveImage().isColorImage(),
-                                              xDirections, yDirections);
+        AlgorithmGradientMagnitudeSep magnitude = new AlgorithmGradientMagnitudeSep(((ViewJComponentEditImage) component).getActiveImage(), grad_sigmas, true, true);
+        magnitude.setDirectionNeeded(true);
+        magnitude.setNormalized(true);
+        magnitude.run();
+        localCosts = magnitude.getResultBuffer();
+        xDirections = magnitude.getXDerivativeDirections();
+        yDirections = magnitude.getYDerivativeDirections();
         progressBar.updateValueImmed(65);
 
         float[] sigmas = new float[2];

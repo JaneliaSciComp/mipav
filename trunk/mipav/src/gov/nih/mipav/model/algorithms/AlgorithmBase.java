@@ -1,17 +1,20 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.util.MipavUtil;
+import gov.nih.mipav.view.ProgressChangeEvent;
+import gov.nih.mipav.view.ProgressChangeListener;
+import gov.nih.mipav.view.ViewJProgressBar;
 
-import gov.nih.mipav.view.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.util.BitSet;
+import java.util.Vector;
 
-import java.awt.event.*;
-
-import java.text.*;
-
-import java.util.*;
-
-import javax.swing.event.*;
+import javax.swing.event.EventListenerList;
 
 
 /**
@@ -63,10 +66,10 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     private EventListenerList listenerList = new EventListenerList();
 
     /** Used to store the maximum value of the progress bar. */
-    private int maxProgressValue = 100;
+    protected int maxProgressValue = 100;
 
     /** Used to store the minimum value of the progress bar. */
-    private int minProgressValue = 0;
+    protected int minProgressValue = 0;
 
     /**
      * Vector list of AlgorithmInterface objects. When the algorithm has been stopped or completed, all listeners in
@@ -80,9 +83,9 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     /**
      * Store the progress being made.
      */
-    private float progress;
+    protected float progress;
     
-    private float progressStep;
+    protected float progressStep;
     
     /** Indicates if multi-threading will be used to optimize the algorithm. */
     protected boolean multiThreadingEnabled;
@@ -91,6 +94,11 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      * The number of threads will be used to execute the algorithm if multi-threading is enabled 
      */
     protected int nthreads;
+    
+    /**
+     * Indicates if the source image buffer can not be changed.
+     */
+    protected boolean inputBufferChangeable;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -103,6 +111,11 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         this.srcImage = null;
         destFlag = false;
         threadStopped = false;
+        nthreads = MipavUtil.getAvailableCores();
+        if( nthreads > 1){
+        	multiThreadingEnabled = true;
+        }
+        inputBufferChangeable = true;
     }
 
 
@@ -123,6 +136,11 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         }
 
         threadStopped = false;
+        nthreads = MipavUtil.getAvailableCores();
+        if( nthreads > 1){
+        	multiThreadingEnabled = true;
+        }
+        inputBufferChangeable = true;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -194,7 +212,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      * @param  error  string that is displayed
      */
     public void displayError(String error) {
-        MipavUtil.displayError(error);
+        gov.nih.mipav.view.MipavUtil.displayError(error);
     }
 
     /**
@@ -437,6 +455,9 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         setStartTime();
         runAlgorithm();
 
+        if(threadStopped){
+        	return;
+        }
         computeElapsedTime();
 
         notifyListeners(this);
@@ -695,10 +716,10 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         }
 
         // adjust value based on minProgress and maxProgress
-        if ((value != ViewJProgressBar.PROGRESS_VALUE_UNCHANGED) &&
-                (value != ViewJProgressBar.PROGRESS_WINDOW_CLOSING)) {
-            value = ViewJProgressBar.getProgressFromInt(minProgressValue, maxProgressValue, value);
-        }
+//        if ((value != ViewJProgressBar.PROGRESS_VALUE_UNCHANGED) &&
+//                (value != ViewJProgressBar.PROGRESS_WINDOW_CLOSING)) {
+//            value = ViewJProgressBar.getProgressFromInt(minProgressValue, maxProgressValue, value);
+//        }
 
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
 
@@ -776,12 +797,22 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     }
 
 
-    public int getNthreads() {
+    public int getNumberOfThreads() {
         return nthreads;
     }
 
 
-    public void setNthreads(int nthreads) {
+    public void setNumberOfThreads(int nthreads) {
         this.nthreads = nthreads;
     }
+
+
+	public boolean isInputImageBufferChangeable() {
+		return inputBufferChangeable;
+	}
+
+
+	public void setInputImageBufferChangeable(boolean inputImageBufferChangeable) {
+		this.inputBufferChangeable = inputImageBufferChangeable;
+	}
 }

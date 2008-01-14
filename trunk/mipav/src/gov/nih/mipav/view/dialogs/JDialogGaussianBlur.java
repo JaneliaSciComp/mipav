@@ -1,21 +1,34 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlurSep;
+import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.DialogDefaultsInterface;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.components.JPanelAlgorithmOutputOptions;
+import gov.nih.mipav.view.components.JPanelColorChannels;
+import gov.nih.mipav.view.components.JPanelSigmas;
+import gov.nih.mipav.view.components.PanelManager;
+import gov.nih.mipav.view.components.WidgetFactory;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.components.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.io.IOException;
+import java.util.StringTokenizer;
+import java.util.Vector;
 
-import java.awt.*;
-import java.awt.event.*;
-
-import java.util.*;
-
-import javax.swing.*;
+import javax.swing.JCheckBox;
 
 
 /**
@@ -77,9 +90,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
-    //~ Constructors ---------------------------------------------------------------------------------------------------
-
+    
     /**
      * Empty constructor needed for dynamic instantiation.
      */
@@ -137,6 +148,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
         }
+        String name = makeImageName(image.getImageName(), "_gblur");
 
         if (algorithm instanceof AlgorithmGaussianBlur) {
             Preferences.debug("Gaussian Elapsed: " + algorithm.getElapsedTime());
@@ -194,58 +206,103 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         } // if (algorithm instanceof AlgorithmGaussianBlur)
 
         if (algorithm instanceof AlgorithmGaussianBlurSep) {
-            Preferences.debug("GaussianSep Elapsed: " + algorithm.getElapsedTime());
-            image.clearMask();
+			Preferences.debug("GaussianSep Elapsed: " + algorithm.getElapsedTime());
+			image.clearMask();
 
-            if ((gaussianBlurSepAlgo.isCompleted() == true) && (resultImage != null)) {
+			if (gaussianBlurSepAlgo.isCompleted()) {
+				if (displayInNewFrame) {
+					// Make result image
+					if (image.getType() == ModelImage.ARGB) {
+						resultImage = new ModelImage(ModelImage.ARGB, image
+								.getExtents(), name);
+					} else if (image.getType() == ModelImage.ARGB_USHORT) {
+						resultImage = new ModelImage(ModelImage.ARGB_USHORT,
+								image.getExtents(), name);
+					} else if (image.getType() == ModelImage.ARGB_FLOAT) {
+						resultImage = new ModelImage(ModelImage.ARGB_FLOAT,
+								image.getExtents(), name);
+					} else {
 
-                // The algorithm has completed and produced a new image to be displayed.
-                if (resultImage.isColorImage()) {
-                    updateFileInfo(image, resultImage);
-                }
+						// resultImage = new ModelImage(ModelImage.FLOAT,
+						// destExtents, name, userInterface);
+						resultImage = (ModelImage) image.clone();
+						resultImage.setImageName(name);
 
-                resultImage.clearMask();
+						if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
-                try {
-                    openNewFrame(resultImage);
-                } catch (OutOfMemoryError error) {
-                    System.gc();
-                    MipavUtil.displayError("Out of memory: unable to open new frame");
-                }
-            } else if (resultImage == null) {
+							for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+								((FileInfoDicom) (resultImage.getFileInfo(i)))
+										.setSecondaryCaptureTags();
+							}
+						}
+					}
+					try {
+						resultImage.importData(0, gaussianBlurSepAlgo.getResultBuffer(), true);
+					} catch (IOException e) {
+						resultImage.disposeLocal();
+						MipavUtil.displayError("Algorithm Gausssian Blur importData: Image(s) Locked.");
+						return;
+					}
 
-                // These next lines set the titles in all frames where the source image is displayed to
-                // image name so as to indicate that the image is now unlocked!
-                // The image frames are enabled and then registered to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+					// The algorithm has completed and produced a new image to
+					// be displayed.
+					if (resultImage.isColorImage()) {
+						updateFileInfo(image, resultImage);
+					}
 
-                for (int i = 0; i < imageFrames.size(); i++) {
-                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
-                    ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+					resultImage.clearMask();
 
-                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
-                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-                }
+					try {
+						openNewFrame(resultImage);
+					} catch (OutOfMemoryError error) {
+						System.gc();
+						MipavUtil.displayError("Out of memory: unable to open new frame");
+					}
+				} else {
 
-                if (parentFrame != null) {
-                    userInterface.registerFrame(parentFrame);
-                }
+					// These next lines set the titles in all frames where the
+					// source image is displayed to
+					// image name so as to indicate that the image is now
+					// unlocked!
+					// The image frames are enabled and then registered to the
+					// userinterface.
+					try {
+						image.importData(0, gaussianBlurSepAlgo
+								.getResultBuffer(), true);
+					} catch (IOException e) {
 
-                image.notifyImageDisplayListeners(null, true);
-            } else if (resultImage != null) {
+					}
+					Vector imageFrames = image.getImageFrameVector();
 
-                // algorithm failed but result image still has garbage
-                resultImage.disposeLocal(); // clean up memory
-                resultImage = null;
-                System.gc();
+					for (int i = 0; i < imageFrames.size(); i++) {
+						((Frame) (imageFrames.elementAt(i)))
+								.setTitle(titles[i]);
+						((Frame) (imageFrames.elementAt(i))).setEnabled(true);
 
-            }
+						if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+							userInterface.registerFrame((Frame) (imageFrames
+									.elementAt(i)));
+						}
+					}
 
-            if (algorithm.isCompleted()) {
-                insertScriptLine();
-            }
-        } // if (algorithm instanceof AlgorithmGaussianBlurSep)
+					if (parentFrame != null) {
+						userInterface.registerFrame(parentFrame);
+					}
+					image.notifyImageDisplayListeners(null, true);
+				}
+			} else if (resultImage != null) {
+
+				// algorithm failed but result image still has garbage
+				resultImage.disposeLocal(); // clean up memory
+				resultImage = null;
+				System.gc();
+
+			}
+
+			if (algorithm.isCompleted()) {
+				insertScriptLine();
+			}
+		} // if (algorithm instanceof AlgorithmGaussianBlurSep)
 
         if (gaussianBlurAlgo != null) {
             gaussianBlurAlgo.finalize();
@@ -261,10 +318,10 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
     }
 
     /**
-     * Accessor that returns the image.
-     *
-     * @return  The result image.
-     */
+	 * Accessor that returns the image.
+	 * 
+	 * @return The result image.
+	 */
     public ModelImage getResultImage() {
         return resultImage;
     }
@@ -363,269 +420,164 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
      */
     protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_gblur");
-        
-        if ((image.getNDims() == 2) && separable) { // source image is 2D and kernel is separable
+        displayInNewFrame = outputOptionsPanel.isOutputNewImageSet();
+        if ((image.getNDims() == 2) && separable) { // source image is 2D and
+													// kernel is separable
 
-            float[] sigmas = sigmaPanel.getNormalizedSigmas();
+			float[] sigmas = sigmaPanel.getNormalizedSigmas();
+			try {
 
-            if (outputOptionsPanel.isOutputNewImageSet()) {
+				// Make algorithm
+				gaussianBlurSepAlgo = new AlgorithmGaussianBlurSep(image,
+						sigmas, outputOptionsPanel.isProcessWholeImageSet(),
+						false);
 
-                try {
+				// This is very important. Adding this object as a listener
+				// allows the algorithm to
+				// notify this object when it has completed of failed. See
+				// algorithm performed event.
+				// This is made possible by implementing AlgorithmedPerformed
+				// interface
+				gaussianBlurSepAlgo.addListener(this);
 
-                    // Make result image
-                    if (image.getType() == ModelImage.ARGB) {
-                        resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name);
-                    } else if (image.getType() == ModelImage.ARGB_USHORT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_USHORT, image.getExtents(), name);
-                    } else if (image.getType() == ModelImage.ARGB_FLOAT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name);
-                    } else {
+				createProgressBar(image.getImageName(), gaussianBlurSepAlgo);
 
-                        // resultImage     = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
-                        resultImage = (ModelImage) image.clone();
-                        resultImage.setImageName(name);
+				gaussianBlurSepAlgo.setRed(colorChannelPanel
+						.isRedProcessingRequested());
+				gaussianBlurSepAlgo.setGreen(colorChannelPanel
+						.isGreenProcessingRequested());
+				gaussianBlurSepAlgo.setBlue(colorChannelPanel
+						.isBlueProcessingRequested());
 
-                        if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                            ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
-                        }
-                    }
+				if (!outputOptionsPanel.isProcessWholeImageSet()) {
+					gaussianBlurSepAlgo.setMask(image.generateVOIMask());
+				}
 
-                    // Make algorithm
-                    gaussianBlurSepAlgo = new AlgorithmGaussianBlurSep(resultImage, image, sigmas,
-                                                                       outputOptionsPanel.isProcessWholeImageSet(),
-                                                                       false);
+				// Hide dialog
+				setVisible(false);
 
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    gaussianBlurSepAlgo.addListener(this);
+				if (isRunInSeparateThread()) {
 
-                    createProgressBar(image.getImageName(), gaussianBlurSepAlgo);
+					// Start the thread as a low priority because we wish to
+					// still have user interface work fast.
+					if (gaussianBlurSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+						MipavUtil
+								.displayError("A thread is already running on this object");
+					}
+				} else {
 
-                    gaussianBlurSepAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
-                    gaussianBlurSepAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
-                    gaussianBlurSepAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
+					gaussianBlurSepAlgo.run();
+				}
 
-                    if (!outputOptionsPanel.isProcessWholeImageSet()) {
-                        gaussianBlurSepAlgo.setMask(image.generateVOIMask());
-                    }
+				// Make result image
+				if (image.getType() == ModelImage.ARGB) {
+					resultImage = new ModelImage(ModelImage.ARGB, image
+							.getExtents(), name);
+				} else if (image.getType() == ModelImage.ARGB_USHORT) {
+					resultImage = new ModelImage(ModelImage.ARGB_USHORT, image
+							.getExtents(), name);
+				} else if (image.getType() == ModelImage.ARGB_FLOAT) {
+					resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image
+							.getExtents(), name);
+				} else {
 
-                    // Hide dialog
-                    setVisible(false);
+					// resultImage = new ModelImage(ModelImage.FLOAT,
+					// destExtents, name, userInterface);
+					resultImage = (ModelImage) image.clone();
+					resultImage.setImageName(name);
 
-                    if (isRunInSeparateThread()) {
+					if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
+						((FileInfoDicom) (resultImage.getFileInfo(0)))
+								.setSecondaryCaptureTags();
+					}
+				}
+			} catch (OutOfMemoryError x) {
 
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (gaussianBlurSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
+				if (resultImage != null) {
+					resultImage.disposeLocal(); // Clean up memory of result
+												// image
+					resultImage = null;
+				}
 
-                        gaussianBlurSepAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                	
-                	if (resultImage != null) {
-                    resultImage.disposeLocal(); // Clean up memory of result image
-                    resultImage = null;
+				System.gc();
+				MipavUtil
+						.displayError("Dialog Gaussian blur: unable to allocate enough memory");
+
+				return;
+			}
+		} else if ((image.getNDims() >= 3) && separable) { // kernel is
+															// separable
+
+			float[] sigmas = sigmaPanel.getNormalizedSigmas();
+			if(!displayInNewFrame){
+                Vector imageFrames = image.getImageFrameVector();
+
+                titles = new String[imageFrames.size()];
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                    ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                    userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                 }
 
-                    System.gc();
-                    MipavUtil.displayError("Dialog Gaussian blur: unable to allocate enough memory");
+			}
+			try {
 
-                    return;
-                }
-            } else {
+				// Make algorithm
+				gaussianBlurSepAlgo = new AlgorithmGaussianBlurSep(image,
+						sigmas, outputOptionsPanel.isProcessWholeImageSet(),
+						image25D);
 
-                try {
+				// This is very important. Adding this object as a listener
+				// allows the algorithm to
+				// notify this object when it has completed of failed. See
+				// algorithm performed event.
+				// This is made possible by implementing AlgorithmedPerformed
+				// interface
+				gaussianBlurSepAlgo.addListener(this);
+				gaussianBlurSepAlgo.setRed(colorChannelPanel
+						.isRedProcessingRequested());
+				gaussianBlurSepAlgo.setGreen(colorChannelPanel
+						.isGreenProcessingRequested());
+				gaussianBlurSepAlgo.setBlue(colorChannelPanel
+						.isBlueProcessingRequested());
 
-                    // No need to make new image space because the user has choosen to replace the source image
-                    // Make the algorithm class
-                    gaussianBlurSepAlgo = new AlgorithmGaussianBlurSep(image, sigmas,
-                                                                       outputOptionsPanel.isProcessWholeImageSet(),
-                                                                       false);
+				if (!outputOptionsPanel.isProcessWholeImageSet()) {
+					gaussianBlurSepAlgo.setMask(image.generateVOIMask());
+				}
 
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    gaussianBlurSepAlgo.addListener(this);
+				// Hide dialog
+				setVisible(false);
 
-                    createProgressBar(image.getImageName(), gaussianBlurSepAlgo);
+				createProgressBar(image.getImageName(), gaussianBlurSepAlgo);
 
-                    gaussianBlurSepAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
-                    gaussianBlurSepAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
-                    gaussianBlurSepAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
+				if (isRunInSeparateThread()) {
 
-                    if (!outputOptionsPanel.isProcessWholeImageSet()) {
-                        gaussianBlurSepAlgo.setMask(image.generateVOIMask());
-                    }
+					// Start the thread as a low priority because we wish to
+					// still have user interface work fast.
+					if (gaussianBlurSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+						MipavUtil
+								.displayError("A thread is already running on this object");
+					}
+				} else {
+					gaussianBlurSepAlgo.run();
+				}
+			} catch (OutOfMemoryError x) {
 
-                    // Hide the dialog since the algorithm is about to run.
-                    setVisible(false);
+				if (resultImage != null) {
+					resultImage.disposeLocal(); // Clean up image memory
+					resultImage = null;
+				}
 
+				System.gc();
+				MipavUtil
+						.displayError("Dialog Gaussian blur: unable to allocate enough memory");
 
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (gaussianBlurSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-
-                        gaussianBlurSepAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    System.gc();
-                    MipavUtil.displayError("Dialog Gaussian blur: unable to allocate enough memory");
-
-                    return;
-                }
-            }
-        } else if ((image.getNDims() >= 3) && separable) { // kernel is separable
-
-            float[] sigmas = sigmaPanel.getNormalizedSigmas();
-
-            if (outputOptionsPanel.isOutputNewImageSet()) {
-
-                try {
-
-                    // Make result image
-                    if (image.getType() == ModelImage.ARGB) {
-                        resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name);
-                    } else if (image.getType() == ModelImage.ARGB_USHORT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_USHORT, image.getExtents(), name);
-                    } else if (image.getType() == ModelImage.ARGB_FLOAT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name);
-                    } else {
-
-                        // resultImage     = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
-                        resultImage = (ModelImage) image.clone();
-                        resultImage.setImageName(name);
-
-                        if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-
-                            for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                                ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
-                            }
-                        }
-                    }
-
-                    // Make algorithm
-                    gaussianBlurSepAlgo = new AlgorithmGaussianBlurSep(resultImage, image, sigmas,
-                                                                       outputOptionsPanel.isProcessWholeImageSet(),
-                                                                       image25D);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    gaussianBlurSepAlgo.addListener(this);
-                    gaussianBlurSepAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
-                    gaussianBlurSepAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
-                    gaussianBlurSepAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
-
-                    if (!outputOptionsPanel.isProcessWholeImageSet()) {
-                        gaussianBlurSepAlgo.setMask(image.generateVOIMask());
-                    }
-
-                    // Hide dialog
-                    setVisible(false);
-
-                    createProgressBar(image.getImageName(), gaussianBlurSepAlgo);
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (gaussianBlurSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-
-                        gaussianBlurSepAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                	
-                	if (resultImage != null) {
-                		resultImage.disposeLocal(); // Clean up image memory
-                		resultImage = null;
-                    }
-
-                    System.gc();
-                    MipavUtil.displayError("Dialog Gaussian blur: unable to allocate enough memory");
-
-                    return;
-                }
-            } else {
-
-                try {
-
-                    // Make algorithm
-                    gaussianBlurSepAlgo = new AlgorithmGaussianBlurSep(image, sigmas,
-                                                                       outputOptionsPanel.isProcessWholeImageSet(),
-                                                                       image25D);
-                    gaussianBlurSepAlgo.addListener(this);
-
-                    createProgressBar(image.getImageName(), gaussianBlurSepAlgo);
-
-                    gaussianBlurSepAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
-                    gaussianBlurSepAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
-                    gaussianBlurSepAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
-
-                    if (!outputOptionsPanel.isProcessWholeImageSet()) {
-                        gaussianBlurSepAlgo.setMask(image.generateVOIMask());
-                    }
-
-                    // Hide dialog
-                    setVisible(false);
-
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (gaussianBlurSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-
-                        gaussianBlurSepAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    System.gc();
-                    MipavUtil.displayError("Dialog Gaussian blur: unable to allocate enough memory");
-
-                    return;
-                }
-            }
-        } else if (image.getNDims() == 2) { // source image is 2D and kernel not separable
+				return;
+			}
+		} else if (image.getNDims() == 2) { // source image is 2D and kernel not
+											// separable
 
             float[] sigmas = sigmaPanel.getNormalizedSigmas();
 

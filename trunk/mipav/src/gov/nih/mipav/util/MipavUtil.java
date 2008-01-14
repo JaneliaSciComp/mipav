@@ -1,19 +1,12 @@
 package gov.nih.mipav.util;
 
-import gov.nih.mipav.view.Preferences;
-
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class MipavUtil {
     public static final int nthreads = 2 * getAvailableCores();
     
-    public static Executor mipavThreadPool;
-    static{
-        if(Preferences.isMultiThreadingEnabled()){
-            mipavThreadPool = Executors.newFixedThreadPool(nthreads);
-        }
-    }
+    public static Executor mipavThreadPool  = Executors.newFixedThreadPool(nthreads);
     
     /**
      * Return the available processors in your machine.
@@ -229,6 +222,14 @@ public class MipavUtil {
         for(int i = 0; i < length; i++){
             dest[destPos + i * destDist] = src[srcPos + i * srcDist];
         }
+    }
+
+    public static int calculateImageSize(int[] dims){
+        int size = 1;
+        for(int i = 0; i < dims.length; i++){
+            size *= dims[i];
+        }
+        return size;
     }
 
 }
