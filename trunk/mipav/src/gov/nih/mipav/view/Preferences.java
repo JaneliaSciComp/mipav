@@ -1,16 +1,25 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.dialogs.JDialogOverlay;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Event;
+import java.awt.event.InputEvent;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Properties;
+import java.util.StringTokenizer;
+import java.util.Vector;
 
-import java.io.*;
-
-import java.util.*;
-
-import javax.swing.*;
+import javax.swing.KeyStroke;
 
 
 /**
@@ -267,7 +276,7 @@ public class Preferences {
 
     /** Constant that indicated if the multi-theading is enabled */
     public static final String PREF_MULTI_THREADING_ENABLED = "multiThreadingEnabled";
-    
+    public static final String PREF_NUMBER_OF_THREADS = "numberOfThreads";
     /**
      * Constant that indicates the last used paint brush so that it will be set as the default when new images are
      * opened or mipav is restarted.
@@ -577,7 +586,8 @@ public class Preferences {
         defaultProps.setProperty(PREF_STORAGE_RESOURCE_SRB, "");
         
         // multi-threading property
-        defaultProps.setProperty(PREF_MULTI_THREADING_ENABLED, "false");
+        defaultProps.setProperty(PREF_MULTI_THREADING_ENABLED, (gov.nih.mipav.util.MipavUtil.getAvailableCores() > 1)?"true":"flase");
+        defaultProps.setProperty(PREF_NUMBER_OF_THREADS, String.valueOf(gov.nih.mipav.util.MipavUtil.getAvailableCores()));
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -3031,5 +3041,16 @@ public class Preferences {
             return true;
         }
         return false;
+    }
+
+    public static int getNumberOfThreads(){
+        if(mipavProps == null){
+            read();
+        }
+        String numberOfThreads = mipavProps.getProperty(PREF_NUMBER_OF_THREADS);
+        if(numberOfThreads == null){
+        	numberOfThreads = defaultProps.getProperty(PREF_NUMBER_OF_THREADS);
+        }
+        return Integer.parseInt(numberOfThreads);
     }
 }

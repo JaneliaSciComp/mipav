@@ -193,11 +193,11 @@ public class AlgorithmWatershed extends AlgorithmBase {
 
             try {
                 energyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_gm");
-                gradMagAlgo = new AlgorithmGradientMagnitudeSep(energyImage, srcImage, sigmas, true, false);
+                gradMagAlgo = new AlgorithmGradientMagnitudeSep(srcImage, sigmas, true, false);
                 gradMagAlgo.setRunningInSeparateThread(runningInSeparateThread);
                 gradMagAlgo.run();
 
-                if (gradMagAlgo.isCompleted() == false) {
+                if (!gradMagAlgo.isCompleted()) {
                     setCompleted(false);
 
                     if (energyImage != null) {
@@ -751,7 +751,7 @@ Found:
             try {
                 energyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_gm");
 
-                gradMagAlgo = new AlgorithmGradientMagnitudeSep(energyImage, srcImage, sigmas, true, false);
+                gradMagAlgo = new AlgorithmGradientMagnitudeSep(srcImage, sigmas, true, false);
                 gradMagAlgo.setRunningInSeparateThread(runningInSeparateThread);
 
                 linkProgressToAlgorithm(gradMagAlgo);
@@ -768,6 +768,14 @@ Found:
                     return;
                 }
 
+                try{
+                	energyImage.importData(0, gradMagAlgo.getResultBuffer(), true);
+                }catch(IOException e){
+        			errorCleanUp("Algorithm Watershed importData: Image(s) locked", false);
+        			fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+
+        			return;
+                }
                 length = energyImage.getSize();
 
                 float max = (float) energyImage.getMax();

@@ -152,11 +152,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         super(destImg, srcImg);
         this.transformDir = transformDir;
         this.logMagDisplay = logMagDisplay;
-        if(destImage == null){
-            srcImage.setLogMagDisplay(logMagDisplay);
-        }else{
-            destImage.setLogMagDisplay(logMagDisplay);
-        }
+
         if (transformDir == FORWARD) {
             this.unequalDim = unequalDim;
             if(destImage == null){
@@ -225,9 +221,8 @@ public class AlgorithmFFT extends AlgorithmBase {
      * @param iData
      * @param z
      */
-    private void executeMT(final float[] rData, final float[] iData){
+    private void performMT(){
         int direction;
-        boolean haveWindowed;
         int dimNumber;
         int newLength;
         if (transformDir == FORWARD) {
@@ -247,7 +242,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         final int zdim = (newDimLengths.length == 3)?newDimLengths[2]:1;
         if(transformDir == FORWARD){
             fireProgressStateChanged(-1, null, "Centering data before FFT algorithm ...");
-            center(rData, iData);
+            center(realData, imagData);
         }
 
         fireProgressStateChanged(-1, null, "Running FFT algorithm ...");
@@ -266,7 +261,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         }
 
         final CountDownLatch doneSignalX = new CountDownLatch(nthreads);
-        MipavUtil.swapSlices(rData, iData, xdim, ydim, zdim, MipavConstants.SLICE_YZ);
+        MipavUtil.swapSlices(realData, imagData, xdim, ydim, zdim, MipavConstants.SLICE_YZ);
         for (int i = 0; i < nthreads; i++) {
             int nslices = zdim / nthreads;
             final int sliceLen = xdim * ydim;
@@ -276,7 +271,7 @@ public class AlgorithmFFT extends AlgorithmBase {
             final int dir = direction;
             Runnable task = new Runnable() {
                 public void run() {
-                    doFFT(rData, iData, start, end, 1, xdim, length, dir);
+                    doFFT(realData, imagData, start, end, 1, xdim, length, dir);
                     doneSignalX.countDown();
                 }
             };
@@ -292,7 +287,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         }
 
         final CountDownLatch doneSignalY = new CountDownLatch(nthreads);
-        MipavUtil.swapSlices(rData, iData, xdim, ydim, zdim, MipavConstants.SLICE_ZX);
+        MipavUtil.swapSlices(realData, imagData, xdim, ydim, zdim, MipavConstants.SLICE_ZX);
         for (int i = 0; i < nthreads; i++) {
             int nslices = ydim / nthreads;
             final int start = i * nslices;
@@ -300,7 +295,7 @@ public class AlgorithmFFT extends AlgorithmBase {
             final int dir = direction;
             Runnable task = new Runnable() {
                 public void run() {
-                    doFFT(rData, iData, start, end, xdim, xdim * ydim, xdim
+                    doFFT(realData, imagData, start, end, xdim, xdim * ydim, xdim
                             * ydim * zdim, dir);
                     doneSignalY.countDown();
                 }
@@ -318,7 +313,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         
         if (dimNumber == 3) {
             final CountDownLatch doneSignalZ = new CountDownLatch(nthreads);
-            MipavUtil.swapSlices(rData, iData, xdim, ydim, zdim, MipavConstants.SLICE_XY);
+            MipavUtil.swapSlices(realData, imagData, xdim, ydim, zdim, MipavConstants.SLICE_XY);
             for (int i = 0; i < nthreads; i++) {
                 int nslices = ydim / nthreads;
                 final int start = i * nslices * xdim;
@@ -326,7 +321,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                 final int dir = direction;
                 Runnable task = new Runnable() {
                     public void run() {
-                        doFFT(rData, iData, start, end, xdim * ydim, xdim
+                        doFFT(realData, imagData, start, end, xdim * ydim, xdim
                                 * ydim * zdim, xdim * ydim * zdim, dir);
                         doneSignalZ.countDown();
                     }
@@ -346,7 +341,7 @@ public class AlgorithmFFT extends AlgorithmBase {
         if (transformDir == INVERSE) {
             fireProgressStateChanged(-1, null, "Centering data after inverse FFT ...");
 
-            center(rData, iData);
+            center(realData, imagData);
         }
 
         if (transformDir == INVERSE) {
@@ -357,7 +352,7 @@ public class AlgorithmFFT extends AlgorithmBase {
             }
             
             originalDimLengths = srcImage.getOriginalExtents();
-            finalData = new float[getArrayLength(originalDimLengths)];
+            finalData = new float[MipavUtil.calculateImageSize(originalDimLengths)];
             if(!hasSameDimension(newDimLengths, originalDimLengths)){
                 if (ndim == 1) {
                     System.arraycopy(realData, 0, finalData, 0, originalDimLengths[0]);
@@ -634,6 +629,13 @@ public class AlgorithmFFT extends AlgorithmBase {
         }
     }
 
+    public void execute(){
+    	if(multiThreadingEnabled && ndim > 2){
+    		performMT();
+    	}else{
+    		perform();
+    	}
+    }
     /**
      * This is the method that calculates the FFT Perform a data centering operation after the forward FFT Perform a
      * data centering operation before the inverse FFT Note that a frequency filter operation performs a forward FFT.
@@ -641,7 +643,7 @@ public class AlgorithmFFT extends AlgorithmBase {
      * @param  rData  real data buffer
      * @param  iData  imaginary data buffer
      */
-    private void execute() {
+    private void perform() {
 
         double TWO_PI = 2 * java.lang.Math.PI;
         double wt1Imag, wt1Real;
@@ -764,7 +766,7 @@ public class AlgorithmFFT extends AlgorithmBase {
             }
             
             originalDimLengths = srcImage.getOriginalExtents();
-            finalData = new float[getArrayLength(originalDimLengths)];
+            finalData = new float[MipavUtil.calculateImageSize(originalDimLengths)];
             if(!hasSameDimension(newDimLengths, originalDimLengths)){
                 if (ndim == 1) {
                     System.arraycopy(realData, 0, finalData, 0, originalDimLengths[0]);
@@ -904,13 +906,6 @@ public class AlgorithmFFT extends AlgorithmBase {
         return false;
     }
     
-    private int getArrayLength(int[] arrayDimension){
-        int arrayLength = 1;
-        for(int i = 0; i < arrayDimension.length; i++){
-            arrayLength *= arrayDimension[i];
-        }
-        return arrayLength;
-    }
     /**
      * In order to use FFT, first thing is to rearrange the order of signals. 
      * @param l the length of one dimension FFT

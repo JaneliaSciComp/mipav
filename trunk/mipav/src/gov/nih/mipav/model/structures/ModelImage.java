@@ -2023,6 +2023,14 @@ public class ModelImage extends ModelStorageBase {
         }
     }
     
+    public boolean is2DImage(){
+    	return (getExtents().length == 2);
+    }
+    
+    public boolean is3DImage(){
+    	return (getExtents().length == 3);
+    }
+    
     /**
      * Accessor that returns whether or not the image is a COMPLEX or DCOMPLEX image.
      *

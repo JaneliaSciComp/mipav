@@ -1,21 +1,36 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientMagnitude;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientMagnitudeSep;
+import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.DialogDefaultsInterface;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.components.JPanelAlgorithmOutputOptions;
+import gov.nih.mipav.view.components.JPanelColorChannels;
+import gov.nih.mipav.view.components.JPanelSigmas;
+import gov.nih.mipav.view.components.PanelManager;
+import gov.nih.mipav.view.components.WidgetFactory;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.components.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.io.IOException;
+import java.util.StringTokenizer;
+import java.util.Vector;
 
-import java.awt.*;
-import java.awt.event.*;
-
-import java.util.*;
-
-import javax.swing.*;
+import javax.swing.JCheckBox;
 
 
 /**
@@ -140,6 +155,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
         }
+        String name = makeImageName(image.getImageName(), "_gmag");
 
         if (algorithm instanceof AlgorithmGradientMagnitude) {
             image.clearMask();
@@ -192,44 +208,89 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         if (algorithm instanceof AlgorithmGradientMagnitudeSep) {
             image.clearMask();
 
-            if ((gradientMagSepAlgo.isCompleted() == true) && (resultImage != null)) {
+            if (gradientMagSepAlgo.isCompleted()) {
+				if (displayInNewFrame) {
 
-                if (resultImage.isColorImage()) {
-                    updateFileInfo(image, resultImage);
-                }
+					// Make result image
+					if (image.getType() == ModelImage.ARGB) {
+						resultImage = new ModelImage(ModelImage.ARGB, image
+								.getExtents(), name);
+					} else if (image.getType() == ModelImage.ARGB_USHORT) {
+						resultImage = new ModelImage(ModelImage.ARGB_USHORT, image
+								.getExtents(), name);
+					} else if (image.getType() == ModelImage.ARGB_FLOAT) {
+						resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name);
+					} else {
 
-                resultImage.clearMask();
+						// resultImage = new ModelImage(ModelImage.FLOAT,
+						// destExtents, name, userInterface);
+						resultImage = (ModelImage) image.clone();
+						resultImage.setImageName(name);
 
-                // The algorithm has completed and produced a new image to be displayed.
-                try {
+						if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
+							((FileInfoDicom) (resultImage.getFileInfo(0)))
+									.setSecondaryCaptureTags();
+						}
+					}
+					if (resultImage.isColorImage()) {
+						updateFileInfo(image, resultImage);
+					}
 
-                    // resultImage.setImageName("Gradient magnitude");
-                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
-                } catch (OutOfMemoryError error) {
-                    MipavUtil.displayError("Out of memory: unable to open new frame");
-                }
-            } else if (resultImage == null) {
+					resultImage.clearMask();
+					try{
+						resultImage.importData(0, gradientMagSepAlgo.getResultBuffer(), true);
+					}catch(IOException e){
+						resultImage.disposeLocal();
+						MipavUtil.displayError("Algorithm Gradient Magnitude importData: Image(s) lockced.");
+						return;
+					}
 
-                // These next lines set the titles in all frames where the source image is displayed to
-                // image name so as to indicate that the image is now unlocked!
-                // The image frames are enabled and then registered to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+					// The algorithm has completed and produced a new image to
+					// be
+					// displayed.
+					try {
 
-                for (int i = 0; i < imageFrames.size(); i++) {
-                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
-                    ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+						// resultImage.setImageName("Gradient magnitude");
+						new ViewJFrameImage(resultImage, null, new Dimension(
+								610, 200));
+					} catch (OutOfMemoryError error) {
+						MipavUtil
+								.displayError("Out of memory: unable to open new frame");
+					}
 
-                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
-                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-                }
+				} else {
 
-                if (parentFrame != null) {
-                    userInterface.registerFrame(parentFrame);
-                }
+					// These next lines set the titles in all frames where the
+					// source image is displayed to
+					// image name so as to indicate that the image is now
+					// unlocked!
+					// The image frames are enabled and then registered to the
+					// userinterface.
+					try{
+						image.importData(0, gradientMagSepAlgo.getResultBuffer(), true);
+					}catch(IOException e){
+						
+					}
+					Vector imageFrames = image.getImageFrameVector();
 
-                image.notifyImageDisplayListeners(null, true);
-            } else if (resultImage != null) {
+					for (int i = 0; i < imageFrames.size(); i++) {
+						((Frame) (imageFrames.elementAt(i)))
+								.setTitle(titles[i]);
+						((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+
+						if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+							userInterface.registerFrame((Frame) (imageFrames
+									.elementAt(i)));
+						}
+					}
+
+					if (parentFrame != null) {
+						userInterface.registerFrame(parentFrame);
+					}
+
+					image.notifyImageDisplayListeners(null, true);
+				}
+			} else if (resultImage != null) {
 
                 // algorithm failed but result image still has garbage
                 resultImage.disposeLocal(); // clean up memory
@@ -371,250 +432,86 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
      */
     protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_gmag");
-
-        if ((image.getNDims() == 2) && separable) { // source image is 2D and kernel is separable
-
-            int[] destExtents = new int[2];
-            destExtents[0] = image.getExtents()[0]; // X dim
-            destExtents[1] = image.getExtents()[1]; // Y dim
-
+        displayInNewFrame = outputOptionsPanel.isOutputNewImageSet();
+        if(!displayInNewFrame){
+        	
+        }
+        if (separable) { // source image is 2D and kernel is separable
             float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
-            if (outputOptionsPanel.isOutputNewImageSet()) {
+            if (!displayInNewFrame) {
+				// These next lines set the titles in all frames where the
+				// source image is displayed to
+				// "locked - " image name so as to indicate that the image is
+				// now read/write locked!
+				// The image frames are disabled and then unregisted from the
+				// userinterface until the
+				// algorithm has completed.
+				Vector imageFrames = image.getImageFrameVector();
+				titles = new String[imageFrames.size()];
 
-                try {
+				for (int i = 0; i < imageFrames.size(); i++) {
+					titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+					((Frame) (imageFrames.elementAt(i))).setTitle("Locked: "
+							+ titles[i]);
+					((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+					userInterface.unregisterFrame((Frame) (imageFrames
+							.elementAt(i)));
+				}
+			}
 
-                    // Make result image
-                    if (image.getType() == ModelImage.ARGB) {
-                        resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name);
-                    } else if (image.getType() == ModelImage.ARGB_USHORT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_USHORT, image.getExtents(), name);
-                    } else if (image.getType() == ModelImage.ARGB_FLOAT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name);
-                    } else {
+			try {
+				// Make algorithm
+				gradientMagSepAlgo = new AlgorithmGradientMagnitudeSep(image,
+						sigmas, outputOptionsPanel.isProcessWholeImageSet(),
+						false);
 
-                        // resultImage     = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
-                        resultImage = (ModelImage) image.clone();
-                        resultImage.setImageName(name);
+				// This is very important. Adding this object as a listener
+				// allows the algorithm to
+				// notify this object when it has completed of failed. See
+				// algorithm performed event.
+				// This is made possible by implementing AlgorithmedPerformed
+				// interface
+				gradientMagSepAlgo.addListener(this);
 
-                        if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                            ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
-                        }
-                    }
+				createProgressBar(image.getImageName(), gradientMagSepAlgo);
 
-                    // Make algorithm
-                    gradientMagSepAlgo = new AlgorithmGradientMagnitudeSep(resultImage, image, sigmas,
-                                                                           outputOptionsPanel.isProcessWholeImageSet(),
-                                                                           false);
+				gradientMagSepAlgo.setRed(colorChannelPanel
+						.isRedProcessingRequested());
+				gradientMagSepAlgo.setGreen(colorChannelPanel
+						.isGreenProcessingRequested());
+				gradientMagSepAlgo.setBlue(colorChannelPanel
+						.isBlueProcessingRequested());
+				gradientMagSepAlgo.setMinProgressValue(0);
+				gradientMagSepAlgo.setMaxProgressValue(100);
+				// Hide dialog
+				setVisible(false);
 
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    gradientMagSepAlgo.addListener(this);
+				if (isRunInSeparateThread()) {
 
-                    createProgressBar(image.getImageName(), gradientMagSepAlgo);
+					// Start the thread as a low priority because we wish to
+					// still have user interface work fast
+					if (gradientMagSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+						MipavUtil
+								.displayError("A thread is already running on this object");
+					}
+				} else {
+					gradientMagSepAlgo.run();
+				}
+			} catch (OutOfMemoryError x) {
 
-                    gradientMagSepAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
-                    gradientMagSepAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
-                    gradientMagSepAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
+				if (resultImage != null) {
+					resultImage.disposeLocal(); // Clean up memory of result
+					// image
+					resultImage = null;
+				}
 
-                    // Hide dialog
-                    setVisible(false);
+				MipavUtil
+						.displayError("Dialog Gradient magnitude: unable to allocate enough memory");
 
-                    if (isRunInSeparateThread()) {
+				return;
+			}
 
-                        // Start the thread as a low priority because we wish to still have user interface work fast
-                        if (gradientMagSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                        gradientMagSepAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up memory of result image
-                        resultImage = null;
-                    }
-
-                    MipavUtil.displayError("Dialog Gradient magnitude: unable to allocate enough memory");
-
-                    return;
-                }
-            } else {
-
-                try {
-
-                    // No need to make new image space because the user has choosen to replace the source image
-                    // Make the algorithm class
-                    gradientMagSepAlgo = new AlgorithmGradientMagnitudeSep(image, sigmas,
-                                                                           outputOptionsPanel.isProcessWholeImageSet(),
-                                                                           false);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    gradientMagSepAlgo.addListener(this);
-
-                    createProgressBar(image.getImageName(), gradientMagSepAlgo);
-
-                    gradientMagSepAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
-                    gradientMagSepAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
-                    gradientMagSepAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
-
-                    // Hide the dialog since the algorithm is about to run.
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast
-                        if (gradientMagSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                        gradientMagSepAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    System.gc();
-                    MipavUtil.displayError("Dialog Gradient Magnitude: unable to allocate enough memory");
-
-                    return;
-                }
-            }
-        } else if ((image.getNDims() >= 3) && separable) { // kernel is separable
-
-            float[] sigmas = sigmaPanel.getNormalizedSigmas();
-
-            if (outputOptionsPanel.isOutputNewImageSet()) {
-
-                try {
-
-                    if (image.getType() == ModelImage.ARGB) {
-                        resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name);
-                    } else if (image.getType() == ModelImage.ARGB_USHORT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_USHORT, image.getExtents(), name);
-                    } else if (image.getType() == ModelImage.ARGB_FLOAT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name);
-                    } else {
-
-                        // resultImage     = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
-                        resultImage = (ModelImage) image.clone();
-                        resultImage.setImageName(name);
-
-                        if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-
-                            for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                                ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
-                            }
-                        }
-                    }
-
-                    // Make algorithm
-                    gradientMagSepAlgo = new AlgorithmGradientMagnitudeSep(resultImage, image, sigmas,
-                                                                           outputOptionsPanel.isProcessWholeImageSet(),
-                                                                           image25D);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    gradientMagSepAlgo.addListener(this);
-
-                    createProgressBar(image.getImageName(), gradientMagSepAlgo);
-
-                    gradientMagSepAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
-                    gradientMagSepAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
-                    gradientMagSepAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
-
-                    // Hide dialog
-                    setVisible(false);
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast
-                        if (gradientMagSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                        gradientMagSepAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up image memory
-                        resultImage = null;
-                    }
-
-                    MipavUtil.displayError("Dialog Gradient Magnitude: unable to allocate enough memory");
-
-                    return;
-                }
-            } else {
-
-                try {
-
-                    // Make algorithm
-                    gradientMagSepAlgo = new AlgorithmGradientMagnitudeSep(image, sigmas,
-                                                                           outputOptionsPanel.isProcessWholeImageSet(),
-                                                                           image25D);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    gradientMagSepAlgo.addListener(this);
-
-                    createProgressBar(image.getImageName(), gradientMagSepAlgo);
-
-                    gradientMagSepAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
-                    gradientMagSepAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
-                    gradientMagSepAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
-
-                    // Hide dialog
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast
-                        if (gradientMagSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                        gradientMagSepAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    System.gc();
-                    MipavUtil.displayError("Dialog Gradient magnitude: unable to allocate enough memory");
-
-                    return;
-                }
-            }
         } else if (image.getNDims() == 2) { // source image is 2D and kernel is not separable
 
             int[] destExtents = new int[2];

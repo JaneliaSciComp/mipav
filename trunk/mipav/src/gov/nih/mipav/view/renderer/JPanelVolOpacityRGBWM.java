@@ -1,18 +1,42 @@
 package gov.nih.mipav.view.renderer;
 
 
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.*;
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.model.algorithms.AlgorithmHistogram;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientMagnitude;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientMagnitudeSep;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
+import gov.nih.mipav.model.structures.ModelHistogram;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransferFunction;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewToolBarBuilder;
+import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.JavaApplication3DWM;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.io.IOException;
 
-import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
+import javax.swing.JSlider;
+import javax.swing.JTabbedPane;
+import javax.swing.JToolBar;
+import javax.swing.border.Border;
 
 
 /**
@@ -817,7 +841,7 @@ public class JPanelVolOpacityRGBWM extends JPanelVolOpacityBaseWM {
                 rendererProgressBar.setValue(60);
                 rendererProgressBar.update(rendererProgressBar.getGraphics());
 
-                AlgorithmGradientMagnitudeSep gradMagAlgo_B = new AlgorithmGradientMagnitudeSep(gradMag_B, imageB,
+                AlgorithmGradientMagnitudeSep gradMagAlgo_B = new AlgorithmGradientMagnitudeSep(imageB,
                                                                                                 sigma, true, false);
 
                 gradMagAlgo_B.setRed(true);
@@ -827,8 +851,15 @@ public class JPanelVolOpacityRGBWM extends JPanelVolOpacityBaseWM {
                 gradMagAlgo_B.run();
 
                 if (gradMagAlgo_B.isCompleted()) {
-                    gradMagAlgo_B.finalize();
-                    gradMagAlgo_B = null;
+                	try{
+                		gradMag_B.importData(0, gradMagAlgo_B.getResultBuffer(), true);
+                	}catch(IOException e){
+                		gradMag_B.disposeLocal();
+                		MipavUtil.displayError("Algorithm Gradient Magnitude Separable importData: Image(s) locked.");
+                        gradMagAlgo_B.finalize();
+                        gradMagAlgo_B = null;
+                		return;
+                	}
                 }
 
                 rendererProgressBar.setValue(70);
