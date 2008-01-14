@@ -116,11 +116,14 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         this.imgExtents = iExtents;
         this.kernelBuffer = new float[kExtents.length][];
         this.kernelExtents = kExtents;
-        int offset = 0;
+
+        int interval = 1;
         for(int i = 0; i < kernelExtents.length; i++){
         	kernelBuffer[i] = new float[kernelExtents[i]];
-        	System.arraycopy(kernBuffers, offset, kernelBuffer[i], 0, kernelExtents[i]);
-        	offset += kernelExtents[i];
+        	for(int j = 0; j < kernelExtents[i]; j++){
+        		kernelBuffer[i][j] = kernBuffers[j*interval];
+        	}
+        	interval *= kernelExtents[i];
         }
         this.colorImage = colorImage;
 

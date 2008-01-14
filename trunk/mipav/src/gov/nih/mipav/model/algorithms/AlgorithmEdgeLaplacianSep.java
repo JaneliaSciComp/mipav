@@ -286,8 +286,8 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
         setStartTime();
         makeKernels2D();
 
-        float[] xResultBuffer = new float[buffer.length];
-        float[] yResultBuffer = new float[buffer.length];
+        float[] xResultBuffer;
+        float[] yResultBuffer;
         AlgorithmSeparableConvolver xConvolver = new AlgorithmSeparableConvolver(buffer, extents,
                                                                                  GxxData, kExtents, false, Preferences.isMultiThreadingEnabled(), false); // assume not color
 
@@ -583,8 +583,6 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
         try {
             length = srcImage.getSliceSize();
             buffer = new float[length];
-            xResultBuffer = new float[length];
-            yResultBuffer = new float[length];
             // fireProgressStateChanged(srcImage.getImageName(), "Calculating the Edge ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
@@ -729,9 +727,6 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
             totalLength = srcImage.getSliceSize() * srcImage.getExtents()[2];
             nImages = srcImage.getExtents()[2];
             buffer = new float[totalLength];
-            xResultBuffer = new float[totalLength];
-            yResultBuffer = new float[totalLength];
-            zResultBuffer = new float[totalLength];
             sliceBuffer = new float[length];
             srcImage.exportData(0, totalLength, buffer); // locks and releases lock
 
