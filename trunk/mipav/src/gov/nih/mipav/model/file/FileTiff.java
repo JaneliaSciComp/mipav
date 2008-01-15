@@ -19,7 +19,9 @@ import java.util.zip.*;
  * Almost all of the FAX decompression code, modified Huffman decompression code, and JPEG decompression code
  * was taken from the free software at the website 
  * http://www.mms-computing.co.uk/uk/co/mmscomputing/imageio/tiff
- * ThunderScan decompression code was obtained by porting C++ code from tif_thunder.c in  tif-4.0.0.alpha\libtiff.
+ * ThunderScan decompression code was obtained by porting C++ code from tif_thunder.c in tif-4.0.0.alpha\libtiff.
+ * 16 bit integer data with SGILogCompression and photometric = CIE Log2(L)was obtained by porting LogL16Decode in 
+ * tif_luv.c in tif-4.0.0.alpha\libtiff.
  *
  * @version  1.0 Feb 29, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
@@ -83,7 +85,8 @@ public class FileTiff extends FileBase {
     public static final int BITS_PER_SAMPLE = 258;
 
     /** Compression: 1 = no compression 2 = modified huffman 3 = CCITT-T4(FAX3) 4 = CCITT-T6(FAX4) 5 = LZW 6 = old JPEG
-     *               7 = JPEG  8 or 32946 = zlib 32773 = packbits 32809 = thunderscan RLE. */
+     *               7 = JPEG  8 or 32946 = zlib 32773 = packbits 32809 = thunderscan RLE. 
+     *               34676 = SGI Log Luminance RLE 34677 = SGI Log 24-bit packed */
     public static final int COMPRESSION = 259;
 
     /** DOCUMENT ME! */
@@ -198,6 +201,11 @@ public class FileTiff extends FileBase {
     
     // Pointer to EXIF private directory
     public static final int EXIFIFD = 34665;
+    
+    /** Sample value to Nits, where Nits is the photometric unit for luminance,
+     *  also written candelas/meter**2.
+     */
+    public static final int STONITS = 37439;
 
     /** EchoTech Tiff TAGS. */
     public static final int ZRESOLUTION = 65000;
@@ -475,6 +483,10 @@ public class FileTiff extends FileBase {
     private JPEGInputStream tableStream = null;
     
     private boolean ThunderScanCompression = false;
+    
+    private boolean isLogL = false; // photometric CIE Log2(L) 
+    
+    private boolean SGILogCompression = false; // SGI Log Luminance RLE
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -610,7 +622,7 @@ public class FileTiff extends FileBase {
 
             if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) &&
                                  (!modHuffmanCompression) && (!jpegCompression) && (!ThunderScanCompression) &&
-                                 haveTileOffsets) {
+                                 (!SGILogCompression) && haveTileOffsets) {
                 if (chunky) {
                    tilesPerSlice = tilesAcross * tilesDown;
                 }
@@ -621,7 +633,7 @@ public class FileTiff extends FileBase {
                 // System.err.println("DoTile: tilesPerSlice: " + tilesPerSlice + " imageSlice: " + imageSlice);
             } // if (haveTileWidth && (!lzwCompression) && (!zlibCompression)&& (!fax3Compression) && (!fax4Compression) 
             else if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression ||
-                     modHuffmanCompression || jpegCompression || ThunderScanCompression) {
+                     modHuffmanCompression || jpegCompression || ThunderScanCompression || SGILogCompression) {
 
                 // set the tile width to the xDim for use in LZW Decoder or zlib deflater or fax decompression
                 if (!haveTileWidth) {
@@ -770,7 +782,8 @@ public class FileTiff extends FileBase {
             } // else foundTag43314
 
             if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) && 
-               (!modHuffmanCompression) && (!jpegCompression) && (!ThunderScanCompression) && haveTileOffsets) {
+               (!modHuffmanCompression) && (!jpegCompression) && (!ThunderScanCompression) && 
+               (!SGILogCompression) && haveTileOffsets) {
                 imageSlice = tilesPerImage / tilesPerSlice;
             }
 
@@ -863,7 +876,7 @@ public class FileTiff extends FileBase {
                     try {
 
                         if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression ||
-                            modHuffmanCompression || jpegCompression || ThunderScanCompression) {
+                            modHuffmanCompression || jpegCompression || ThunderScanCompression || SGILogCompression) {
                             readTileBuffer(i, sliceBufferFloat);
                         } else {
 
@@ -1589,6 +1602,101 @@ public class FileTiff extends FileBase {
             dataOut[3*i + 2] = (byte)(0xff & dataOutInt[i]);
         }
         return 3*resultLength;
+    }
+    
+    /* LogL16Decompresser is created from a port of LogL16Decode in tif_luv.h 
+     * LogL16Decode was set up to work on only 1 row at a time, so I added the
+     * outer loop for (r = 0; r < rowsToDo; r++)
+     * After the decoding, note that the luminance is then a sign bit followed
+     * by a 15-bit integer.  I convert this to a traditional signed short.
+     * I leave the data in short form.  However, if desired conversion to actual
+     * luminance in candelas/meter**2 could be accomplished by converting to a float with the formula
+     * L = 2**((Le + 0.5)/256 - 64)
+     * and multiplying L by the value found in the STONITS tag.
+     */
+     // The following copyright notice appears in the original code:
+    /*
+     * Copyright (c) 1997 Greg Ward Larson
+     * Copyright (c) 1997 Silicon Graphics, Inc.
+     *
+     * Permission to use, copy, modify, distribute, and sell this software and 
+     * its documentation for any purpose is hereby granted without fee, provided
+     * that (i) the above copyright notices and this permission notice appear in
+     * all copies of the software and related documentation, and (ii) the names of
+     * Sam Leffler, Greg Larson and Silicon Graphics may not be used in any
+     * advertising or publicity relating to the software without the specific,
+     * prior written permission of Sam Leffler, Greg Larson and Silicon Graphics.
+     * 
+     * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND, 
+     * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY 
+     * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  
+     * 
+     * IN NO EVENT SHALL SAM LEFFLER, GREG LARSON OR SILICON GRAPHICS BE LIABLE
+     * FOR ANY SPECIAL, INCIDENTAL, INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND,
+     * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+     * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF 
+     * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
+     * OF THIS SOFTWARE.
+     */
+
+    private int LogL16Decompresser(byte dataOut[], byte dataIn[], int rowsToDo) {
+        int nPixels = xDim;
+        int bytesToRead = dataIn.length;
+        int inPosition = 0;
+        int i;
+        int rc;
+        byte b;
+        short temp;
+        int r;
+        /* get each byte string */
+        for (r = 0; r < rowsToDo; r++) {
+            for (i = 0; i < nPixels && bytesToRead > 0; ) {
+                if ((dataIn[inPosition] & 0xff) >= 128) { // run
+                    rc = (dataIn[inPosition++] & 0xff) + (2 - 128);   
+                    b = dataIn[inPosition++];
+                    bytesToRead -= 2;
+                    while ((rc-- > 0) && (i < nPixels)) {
+                        dataOut[2*r*xDim + 2*i] = b;
+                        i++;
+                    }
+                } // if (dataIn[inPosition] >= 128)
+                else { // non-run
+                    rc = dataIn[inPosition++] & 0xff;
+                    while ((--bytesToRead > 0) && (rc-- > 0) && (i < nPixels)) {
+                        dataOut[2*r*xDim + 2*i] =  dataIn[inPosition++];
+                        i++;
+                    }
+                } // else non-run
+            } // for (i = 0; i < nPixels && bytesToRead > 0; )
+            for (i = 0; i < nPixels && bytesToRead > 0; ) {
+                if ((dataIn[inPosition] & 0xff) >= 128) { // run
+                    rc = (dataIn[inPosition++] & 0xff) + (2 - 128);   
+                    b = dataIn[inPosition++];
+                    bytesToRead -= 2;
+                    while ((rc-- > 0) && (i < nPixels)) {
+                        dataOut[2*r*xDim + 2*i + 1] = b;
+                        i++;
+                    }
+                } // if (dataIn[inPosition] >= 128)
+                else { // non-run
+                    rc = dataIn[inPosition++] & 0xff;
+                    while ((--bytesToRead > 0) && (rc-- > 0) && (i < nPixels)) {
+                        dataOut[2*r*xDim + 2*i + 1] =  dataIn[inPosition++];
+                        i++;
+                    }
+                } // else non-run
+            } // for (i = 0; i < nPixels && bytesToRead > 0; )
+        } // for (r = 0; r < rowsToDo; r++)
+        for (i = 0; i < xDim * rowsToDo; i++) {
+            temp = (short)((dataOut[2*i] << 8) + dataOut[2*i+1]);
+            if ((temp & 0x8000) != 0) {
+                temp = (short)(temp & 0x7fff);
+                temp = (short)(-temp);
+                dataOut[2*i] = (byte)(temp >>> 8);
+                dataOut[2*i + 1] = (byte)(temp & 0xff);
+            }
+          }
+        return 2 * xDim * rowsToDo;
     }
     
     // ThunderScanDecompresser is a port and modification of C++ code in 
@@ -5093,10 +5201,6 @@ public class FileTiff extends FileBase {
                         throw new IOException("PHOTO_INTERP has illegal count = " + count + "\n");
                     }
 
-                    if (valueArray[0] > 8) {
-                        throw new IOException("PHOTO_INTERP has illegal value = " + valueArray[0] + "\n");
-                    }
-
                     if (debuggingFileIO) {
                         Preferences.debug("FileTiff.openIFD: PhotoInterp= " + valueArray[0] + "\n",
                                           Preferences.DEBUG_FILEIO);
@@ -5135,7 +5239,8 @@ public class FileTiff extends FileBase {
                             Preferences.debug("FileTiff.openIFD: PhotoInterp = Transparency Mask\n",
                                               Preferences.DEBUG_FILEIO);
                         }
-                    } else if (valueArray[0] == 5) { // Separated
+                    } else if (valueArray[0] == 5) { // Separated - usually CMYK
+                        // bits per pixel = 8,8,8,8 for CMYK
                         fileInfo.setPhotometric((short) 5);
                          
                         if (debuggingFileIO) {
@@ -5158,6 +5263,16 @@ public class FileTiff extends FileBase {
                             Preferences.debug("FileTiff.openIFD: PhotoInterp = CIELAB\n",
                                               Preferences.DEBUG_FILEIO);
                         }
+                    } else if (valueArray[0] == 32844) { // CIE Log2(L)
+                        isLogL = true;
+                        fileInfo.setPhotometric((short) 32844);
+                        
+                        if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: PhotoInterp = CIE Log2(L)\n",
+                                               Preferences.DEBUG_FILEIO);
+                        }
+                    } else {
+                        throw new IOException("PHOTOINTERP has illegal value = " + valueArray[0]);
                     }
 
                     break;
@@ -5275,6 +5390,14 @@ public class FileTiff extends FileBase {
                         if (debuggingFileIO) {
                             Preferences.debug("FileTiff.openIFD: compression = ThunderScan\n",
                                               Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    else if (valueArray[0] == 34676) {
+                        SGILogCompression = true;
+                        
+                        if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: compression = SGI Log Luminance RLE\n",
+                                               Preferences.DEBUG_FILEIO);
                         }
                     }
                     else {
@@ -6279,6 +6402,24 @@ public class FileTiff extends FileBase {
                         Preferences.debug("EXIF private directory located at " + valueArray[0] + "\n",
                                           Preferences.DEBUG_FILEIO);
                     }
+                    
+                    break;
+                    
+                case STONITS:
+                    if (type != DOUBLE) {
+                        throw new IOException("STONITS has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("STONITS has illegal count = " + count + "\n");
+                    }
+                    
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: STONITS = " + valueDouble + 
+                                          " candelas/meter**2\n", Preferences.DEBUG_FILEIO);
+                    }
+                    
+                    break;
 
                 default:
                     break;
@@ -9972,7 +10113,7 @@ public class FileTiff extends FileBase {
                     case ModelStorageBase.SHORT:
                         if (byteBuffer == null) {
 
-                            if (lzwCompression || zlibCompression) {
+                            if (lzwCompression || zlibCompression || SGILogCompression) {
                                 byteBuffer = new byte[tileMaxByteCount];
                             } else {
                                 byteBuffer = new byte[nBytes];
@@ -9987,7 +10128,7 @@ public class FileTiff extends FileBase {
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
 
-                        if (lzwCompression || zlibCompression) {
+                        if (lzwCompression || zlibCompression || SGILogCompression) {
 
                             if (decomp == null) {
                                 decomp = new byte[tileWidth * tileLength * 3];
@@ -9997,7 +10138,7 @@ public class FileTiff extends FileBase {
                                 lzwDecoder.decode(byteBuffer, decomp, tileLength);
                                 resultLength = decomp.length;
                             }
-                            else { // zlibCompression
+                            else if (zlibCompression){ 
                                 try {
                                     resultLength = zlibDecompresser.inflate(decomp);
                                 }
@@ -10005,6 +10146,14 @@ public class FileTiff extends FileBase {
                                     MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
                                 }
                                 zlibDecompresser.reset();
+                            }
+                            else { // SGILogCompression
+                                data = new byte[nBytes];
+                                for (j = 0; j < nBytes; j++) {
+                                    data[j] = byteBuffer[j];
+                                }
+                                rowsToDo = Math.min(rowsPerStrip, yDim - y);
+                                resultLength = LogL16Decompresser(decomp, data, rowsToDo);    
                             }
 
                             for (j = 0; j < resultLength; j += 2) {
