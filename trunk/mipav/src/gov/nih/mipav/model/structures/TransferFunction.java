@@ -48,7 +48,7 @@ public class TransferFunction extends ModelSerialCloneable {
      *
      * @param  pt  DOCUMENT ME!
      */
-    public void addPoint(Point2Df pt) {
+    public synchronized void addPoint(Point2Df pt) {
 
         checkSize();
 
@@ -64,7 +64,7 @@ public class TransferFunction extends ModelSerialCloneable {
      * @param  x  the x coordinate of point to be added
      * @param  y  the y coordinate of point to be added
      */
-    public void addPoint(float x, float y) {
+    public synchronized void addPoint(float x, float y) {
 
         checkSize();
 
@@ -96,7 +96,7 @@ public class TransferFunction extends ModelSerialCloneable {
      * @param  x  array of x coordinates
      * @param  y  array of y coordinates
      */
-    public void exportArrays(float[] x, float[] y) {
+    public synchronized void exportArrays(float[] x, float[] y) {
         int i;
 
         if ((x == null) || (y == null)) {
@@ -118,7 +118,7 @@ public class TransferFunction extends ModelSerialCloneable {
      *
      * @return  the 2D point array of floats
      */
-    public Point2Df[] getFunction() {
+    public synchronized Point2Df[] getFunction() {
         return pts;
     }
 
@@ -129,7 +129,7 @@ public class TransferFunction extends ModelSerialCloneable {
      *
      * @return  the 2D point
      */
-    public Point2Df getPoint(int index) {
+    public synchronized Point2Df getPoint(int index) {
 
         if ((index >= 0) && (index < endPtr)) {
             return pts[index];
@@ -146,7 +146,7 @@ public class TransferFunction extends ModelSerialCloneable {
      *
      * @return  the remapped value
      */
-    public final float getRemappedValue(float inputValue, int height) {
+    public synchronized final float getRemappedValue(float inputValue, int height) {
 
         int i;
         float slope = 0;
@@ -186,7 +186,7 @@ public class TransferFunction extends ModelSerialCloneable {
      * @param  y  array of y points
      * @param  n  number of points in the array
      */
-    public void importArrays(float[] x, float[] y, int n) {
+    public synchronized void importArrays(float[] x, float[] y, int n) {
         int i;
 
         try {
@@ -207,7 +207,7 @@ public class TransferFunction extends ModelSerialCloneable {
      * @param  pt     the 2D point to be added to the function.
      * @param  index  the index the point is to be inserted.
      */
-    public void insertPoint(Point2Df pt, int index) {
+    public synchronized void insertPoint(Point2Df pt, int index) {
 
         checkSize();
 
@@ -227,7 +227,7 @@ public class TransferFunction extends ModelSerialCloneable {
      * @param  y      the y coordinate of the 2D point to be added to the function.
      * @param  index  the index the point is to be inserted.
      */
-    public void insertPoint(float x, float y, int index) {
+    public synchronized void insertPoint(float x, float y, int index) {
 
         checkSize();
 
@@ -248,14 +248,14 @@ public class TransferFunction extends ModelSerialCloneable {
      *
      * @return  boolean
      */
-    public boolean isEndpoint(int index) {
+    public  synchronized boolean isEndpoint(int index) {
         return (index == 0) || (index == (endPtr - 1));
     }
 
     /**
      * Removes all points from the funcitons.
      */
-    public void removeAll() {
+    public synchronized void removeAll() {
         endPtr = 0;
         recalculateSlopes();
     }
@@ -265,7 +265,7 @@ public class TransferFunction extends ModelSerialCloneable {
      *
      * @param  index  the index where the point is to be removed
      */
-    public void removePoint(int index) {
+    public synchronized void removePoint(int index) {
 
         for (int i = index; i < endPtr; i++) {
             pts[i] = pts[i + 1];
@@ -281,7 +281,7 @@ public class TransferFunction extends ModelSerialCloneable {
      * @param  pt     Point2Df the new point
      * @param  index  int the index of the point to be replaced
      */
-    public void replacePoint(Point2Df pt, int index) {
+    public synchronized void replacePoint(Point2Df pt, int index) {
 
         if ((index >= 0) && (index < pts.length)) {
             pts[index].x = pt.x;
@@ -298,7 +298,7 @@ public class TransferFunction extends ModelSerialCloneable {
      * @param  y      float the y-coordinate of the new point
      * @param  index  int the index of the point to be replaced
      */
-    public void replacePoint(float x, float y, int index) {
+    public synchronized void replacePoint(float x, float y, int index) {
 
         if ((index >= 0) && (index < pts.length)) {
             pts[index].x = x;
@@ -313,7 +313,7 @@ public class TransferFunction extends ModelSerialCloneable {
      *
      * @return  the number of points in the function.
      */
-    public int size() {
+    public synchronized int size() {
         return endPtr;
     }
 
@@ -333,7 +333,7 @@ public class TransferFunction extends ModelSerialCloneable {
      * Checks the size of the point array to make sure it is big enough. If not the Points buffer is reallocated to a
      * larger size.
      */
-    private void checkSize() {
+    private synchronized void checkSize() {
 
         if (endPtr == pts.length) {
             capacity = capacity + 10;
@@ -350,17 +350,17 @@ public class TransferFunction extends ModelSerialCloneable {
     /**
      * DOCUMENT ME!
      */
-    private void recalculateSlopes() {
+    private synchronized void recalculateSlopes() {
 
         if (endPtr > 1) {
             float[] in = new float[endPtr];
             float[] out = new float[endPtr];
-
-            for (int i = 0; i < endPtr; i++) {
+//System.err.println("Pts.length: " + pts.length + ", endPtr: " + endPtr);
+            for (int i = 0; i < endPtr ; i++) {
                 in[i] = pts[i].x;
                 out[i] = 255.0f - (pts[i].y);
             }
-
+//System.err.println("endPtr - 1 = " + (endPtr - 1));
             slopes = new float[endPtr - 1];
 
             for (int i = 1; i < endPtr; i++) {
