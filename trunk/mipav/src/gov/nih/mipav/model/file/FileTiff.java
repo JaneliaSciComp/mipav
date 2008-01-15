@@ -22,6 +22,8 @@ import java.util.zip.*;
  * ThunderScan decompression code was obtained by porting C++ code from tif_thunder.c in tif-4.0.0.alpha\libtiff.
  * 16 bit integer data with SGILogCompression and photometric = CIE Log2(L)was obtained by porting LogL16Decode in 
  * tif_luv.c in tif-4.0.0.alpha\libtiff.
+ * 32 bit integer data with SGILogCompression and photometric = CIE Log2(L) (u', v') was obtained by porting
+ * LogLuvDecode32, LogL16toY, LogLuv32toXYZ, and XYZtoRGB24 in tif_luv.c in tif-4.0.0.alpha\libtiff.
  *
  * @version  1.0 Feb 29, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
@@ -484,7 +486,9 @@ public class FileTiff extends FileBase {
     
     private boolean ThunderScanCompression = false;
     
-    private boolean isLogL = false; // photometric CIE Log2(L) 
+    private boolean isLogL = false; // photometric CIE Log2(L)
+    
+    private boolean isLogLuv = false; // photometric CIE Log2(L) (u', v')
     
     private boolean SGILogCompression = false; // SGI Log Luminance RLE
 
@@ -1648,47 +1652,32 @@ public class FileTiff extends FileBase {
         byte b;
         short temp;
         int r;
+        int m;
         /* get each byte string */
         for (r = 0; r < rowsToDo; r++) {
-            for (i = 0; i < nPixels && bytesToRead > 0; ) {
-                if ((dataIn[inPosition] & 0xff) >= 128) { // run
-                    rc = (dataIn[inPosition++] & 0xff) + (2 - 128);   
-                    b = dataIn[inPosition++];
-                    bytesToRead -= 2;
-                    while ((rc-- > 0) && (i < nPixels)) {
-                        dataOut[2*r*xDim + 2*i] = b;
-                        i++;
-                    }
-                } // if (dataIn[inPosition] >= 128)
-                else { // non-run
-                    rc = dataIn[inPosition++] & 0xff;
-                    while ((--bytesToRead > 0) && (rc-- > 0) && (i < nPixels)) {
-                        dataOut[2*r*xDim + 2*i] =  dataIn[inPosition++];
-                        i++;
-                    }
-                } // else non-run
-            } // for (i = 0; i < nPixels && bytesToRead > 0; )
-            for (i = 0; i < nPixels && bytesToRead > 0; ) {
-                if ((dataIn[inPosition] & 0xff) >= 128) { // run
-                    rc = (dataIn[inPosition++] & 0xff) + (2 - 128);   
-                    b = dataIn[inPosition++];
-                    bytesToRead -= 2;
-                    while ((rc-- > 0) && (i < nPixels)) {
-                        dataOut[2*r*xDim + 2*i + 1] = b;
-                        i++;
-                    }
-                } // if (dataIn[inPosition] >= 128)
-                else { // non-run
-                    rc = dataIn[inPosition++] & 0xff;
-                    while ((--bytesToRead > 0) && (rc-- > 0) && (i < nPixels)) {
-                        dataOut[2*r*xDim + 2*i + 1] =  dataIn[inPosition++];
-                        i++;
-                    }
-                } // else non-run
-            } // for (i = 0; i < nPixels && bytesToRead > 0; )
+            for (m = 0; m < 2; m++) {
+                for (i = 0; i < nPixels && bytesToRead > 0; ) {
+                    if ((dataIn[inPosition] & 0xff) >= 128) { // run
+                        rc = (dataIn[inPosition++] & 0xff) + (2 - 128);   
+                        b = dataIn[inPosition++];
+                        bytesToRead -= 2;
+                        while ((rc-- > 0) && (i < nPixels)) {
+                            dataOut[2*r*xDim + 2*i + m] = b;
+                            i++;
+                        }
+                    } // if (dataIn[inPosition] >= 128)
+                    else { // non-run
+                        rc = dataIn[inPosition++] & 0xff;
+                        while ((--bytesToRead > 0) && (rc-- > 0) && (i < nPixels)) {
+                            dataOut[2*r*xDim + 2*i + m] =  dataIn[inPosition++];
+                            i++;
+                        }
+                    } // else non-run
+                } // for (i = 0; i < nPixels && bytesToRead > 0; )
+            } // for (m = 0; m < 2; m++)
         } // for (r = 0; r < rowsToDo; r++)
         for (i = 0; i < xDim * rowsToDo; i++) {
-            temp = (short)((dataOut[2*i] << 8) + dataOut[2*i+1]);
+            temp = (short)(((dataOut[2*i] << 8) & 0xff00) | (dataOut[2*i+1] & 0xff));
             if ((temp & 0x8000) != 0) {
                 temp = (short)(temp & 0x7fff);
                 temp = (short)(-temp);
@@ -1697,6 +1686,145 @@ public class FileTiff extends FileBase {
             }
           }
         return 2 * xDim * rowsToDo;
+    }
+    
+    
+    /* LogLuv32Decompresser is created from a port of LogLuvDecode32, 
+     * LogL16toY, LogLuv32toXYZ, and XYZtoRGB24 in tif_luv.h 
+     * LogLuvDecode32 was set up to work on only 1 row at a time, so I added the
+     * outer loop for (r = 0; r < rowsToDo; r++)
+     * After the decoding, note that the luminance is then a sign bit followed
+     * by a 15-bit integer.  Then follows an 8 bit ue.  Finally an 8 bit ve. I convert this to RGB.
+     */
+     // The following copyright notice appears in the original code:
+    /*
+     * Copyright (c) 1997 Greg Ward Larson
+     * Copyright (c) 1997 Silicon Graphics, Inc.
+     *
+     * Permission to use, copy, modify, distribute, and sell this software and 
+     * its documentation for any purpose is hereby granted without fee, provided
+     * that (i) the above copyright notices and this permission notice appear in
+     * all copies of the software and related documentation, and (ii) the names of
+     * Sam Leffler, Greg Larson and Silicon Graphics may not be used in any
+     * advertising or publicity relating to the software without the specific,
+     * prior written permission of Sam Leffler, Greg Larson and Silicon Graphics.
+     * 
+     * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND, 
+     * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY 
+     * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  
+     * 
+     * IN NO EVENT SHALL SAM LEFFLER, GREG LARSON OR SILICON GRAPHICS BE LIABLE
+     * FOR ANY SPECIAL, INCIDENTAL, INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND,
+     * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+     * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF 
+     * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
+     * OF THIS SOFTWARE.
+     */
+
+    private int LogLuv32Decompresser(byte dataOut[], byte dataIn[], int rowsToDo) {
+        int nPixels = xDim;
+        int bytesToRead = dataIn.length;
+        int inPosition = 0;
+        int i;
+        int rc;
+        byte by;
+        int row;
+        int m;
+        int LogL;
+        int Le;
+        final double M_LN2 = 0.69314718055994530942;
+        final double UVSCALE = 410.0;
+        double L;
+        double u;
+        double v;
+        double s;
+        double x;
+        double y;
+        double xyz[] = new double[3];
+        double r;
+        double g;
+        double b;
+        byte dataTemp[] = new byte[4 * rowsToDo * xDim];
+  
+
+        /* get each byte string */
+        for (row = 0; row < rowsToDo; row++) {
+            for (m = 0; m < 4; m++) {
+                for (i = 0; i < nPixels && bytesToRead > 0; ) {
+                    if ((dataIn[inPosition] & 0xff) >= 128) { // run
+                        rc = (dataIn[inPosition++] & 0xff) + (2 - 128);   
+                        by = dataIn[inPosition++];
+                        bytesToRead -= 2;
+                        while ((rc-- > 0) && (i < nPixels)) {
+                            dataTemp[4*row*xDim + 4*i + m] = by;
+                            i++;
+                        }
+                    } // if (dataIn[inPosition] >= 128)
+                    else { // non-run
+                        rc = dataIn[inPosition++] & 0xff;
+                        while ((--bytesToRead > 0) && (rc-- > 0) && (i < nPixels)) {
+                            dataTemp[4*row*xDim + 4*i + m] =  dataIn[inPosition++];
+                            i++;
+                        }
+                    } // else non-run
+                } // for (i = 0; i < nPixels && bytesToRead > 0; )
+            } // for (m = 0; m < 4; m++)
+        } // for (row = 0; row < rowsToDo; row++)
+        for (i = 0; i < xDim * rowsToDo; i++) {
+            LogL = (((dataTemp[4*i] << 8) & 0xff00) | (dataTemp[4*i+1] & 0xff));
+            if (((LogL & 0x8000) != 0) || (LogL == 0)) {
+                // Don't allow negative luminance
+                dataOut[3*i] = 0;
+                dataOut[3*i + 1] = 0;
+                dataOut[3*i + 2] = 0;
+            }
+            else {
+                Le = LogL & 0x7fff;
+                L = Math.exp(M_LN2/256.0*(Le + 0.5) - M_LN2*64.0);
+                u = 1./UVSCALE * ((dataTemp[4*i + 2] & 0xff) + 0.5);
+                v = 1./UVSCALE * ((dataTemp[4*i + 3] & 0xff) + 0.5);
+                s = 1./(6.0 * u - 16.0*v + 12.0);
+                x = 9.0 * u * s;
+                y = 4.0 * v * s;
+                xyz[0] = x/y * L;
+                xyz[1] = L;
+                xyz[2] = (1.0 - x - y)/y * L;
+                /* assume CCIR-709 primaries */
+                r =  2.690*xyz[0] + -1.276*xyz[1] + -0.414*xyz[2];
+                g = -1.022*xyz[0] +  1.978*xyz[1] +  0.044*xyz[2];
+                b =  0.061*xyz[0] + -0.224*xyz[1] +  1.163*xyz[2];
+                                /* assume 2.0 gamma for speed */
+                /* could use integer sqrt approx., but this is probably faster */
+                if (r <= 0) {
+                    dataOut[3*i] = 0;
+                }
+                else if (r >= 1.0) {
+                    dataOut[3*i] = (byte)255;
+                }
+                else {
+                    dataOut[3*i] = (byte)(256.0* Math.sqrt(r));
+                }
+                if (g <= 0) {
+                    dataOut[3*i + 1] = 0;
+                }
+                else if (g >= 1.0) {
+                    dataOut[3*i + 1] = (byte)255;
+                }
+                else {
+                    dataOut[3*i + 1] = (byte)(256.0* Math.sqrt(g));
+                }
+                if (b <= 0) {
+                    dataOut[3*i + 2] = 0;
+                }
+                else if (b >= 1.0) {
+                    dataOut[3*i + 2] = (byte)255;
+                }
+                else {
+                    dataOut[3*i + 2] = (byte)(256.0* Math.sqrt(b));
+                }
+            }
+          }
+        return 3 * xDim * rowsToDo;
     }
     
     // ThunderScanDecompresser is a port and modification of C++ code in 
@@ -5271,6 +5399,14 @@ public class FileTiff extends FileBase {
                             Preferences.debug("FileTiff.openIFD: PhotoInterp = CIE Log2(L)\n",
                                                Preferences.DEBUG_FILEIO);
                         }
+                    } else if (valueArray[0] == 32845) { // CIE Log2(L) (u', v')
+                        isLogLuv = true;
+                        fileInfo.setPhotometric((short) 32845);
+                        
+                        if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: PhotoInterp = CIE Log2(L) (u', v')\n",
+                                               Preferences.DEBUG_FILEIO);
+                        }
                     } else {
                         throw new IOException("PHOTOINTERP has illegal value = " + valueArray[0]);
                     }
@@ -6562,12 +6698,25 @@ public class FileTiff extends FileBase {
                     } // switch(bitsPerSample[0])
                 } // if (sampleFormat == 1)
                 else if (sampleFormat == 2) {
-
-                    if (debuggingFileIO) {
-                        Preferences.debug("TIFF signed data cannot have multiple channels\n", 2);
+                    switch(bitsPerSample[0]) {
+                        case 8:
+                            fileInfo.setDataType(ModelStorageBase.ARGB);
+                            Preferences.debug("Signed byte color is being treated as unsigned byte color\n");
+                            break;
+                        case 16:
+                            if (SGILogCompression) {
+                                fileInfo.setDataType(ModelStorageBase.ARGB);
+                                Preferences.debug("Signed short color is being treated as unsigned byte color\n");
+                            }
+                            else {
+                                fileInfo.setDataType(ModelStorageBase.ARGB_USHORT);
+                                Preferences.debug("Signed short color is being treated as unsigned short color\n");   
+                            }
+                            break;
+                        default:
+                            throw new IOException("TIFF Tag BitsPerSample has illegal value = " + bitsPerSample[0]);
                     }
-
-                    throw new IOException("TIFF signed data cannot have multiple channels");
+                    
                 } // else if (sampleFormat == 2)
                 else if (sampleFormat == 3) {
 
@@ -10726,12 +10875,12 @@ public class FileTiff extends FileBase {
                                 y = yTile * tileLength;
                             } // if (chunky == true)    
                         } // if (isYCbCr && (!jpegCompression))
-                        else { //  notYCbCr ||| jpegCompression
+                        else { //  notYCbCr || jpegCompression
                             if (chunky == true) {
     
                                 if (byteBuffer == null) {
     
-                                    if (lzwCompression || zlibCompression || jpegCompression) {
+                                    if (lzwCompression || zlibCompression || jpegCompression || SGILogCompression) {
                                         byteBuffer = new byte[tileMaxByteCount];
                                     } else {
                                         byteBuffer = new byte[nBytes];
@@ -10750,7 +10899,7 @@ public class FileTiff extends FileBase {
                                 mod = progressLength / 100;
     
     
-                                if (lzwCompression || zlibCompression || jpegCompression) {
+                                if (lzwCompression || zlibCompression || jpegCompression || SGILogCompression) {
     
                                     //System.err.println("Read " + nBytes + " from raFile");
                                     if (decomp == null) {
@@ -10768,7 +10917,7 @@ public class FileTiff extends FileBase {
                                         }
                                         resultLength = jpegDecompresser(decomp, data);
                                     }
-                                    else { // zlibCompression
+                                    else if (zlibCompression) {
                                         try {
                                             resultLength = zlibDecompresser.inflate(decomp);
                                         }
@@ -10776,6 +10925,14 @@ public class FileTiff extends FileBase {
                                             MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
                                         }
                                         zlibDecompresser.reset();
+                                    }
+                                    else { // SGILogCompression
+                                        data = new byte[nBytes];
+                                        for (j = 0; j < nBytes; j++) {
+                                            data[j] = byteBuffer[j];
+                                        }
+                                        rowsToDo = Math.min(rowsPerStrip, yDim - y);
+                                        resultLength = LogLuv32Decompresser(decomp, data, rowsToDo);       
                                     }
     
                                     //System.err.println("Decoded byte length: " + resultLength);
