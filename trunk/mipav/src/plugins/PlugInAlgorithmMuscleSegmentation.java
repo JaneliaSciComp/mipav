@@ -282,6 +282,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     	public static final String CALCULATE = "Calculate";
     	public static final String SAVE = "Save";
     	public static final String OUTPUT_ALL = "Output All";
+    	public static final String LOAD_LUT = "Load LUT";
     	public static final String OUTPUT = "Output";
     	
     	private String buttonStringGroup[] = {OK, CLEAR, HELP};
@@ -333,7 +334,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             		}
             		buttonGroup[i].setFont(MipavUtil.font12B);
             	
-            		if (i < 2) {
+            		if (i < 3) {
             			topPanel.add(buttonGroup[i]);
             		} else {
             			bottomPanel.add(buttonGroup[i]);
@@ -1873,7 +1874,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		
 
 		
-		private final String[] buttonStringList = {OUTPUT, OUTPUT_ALL, SAVE, HELP, CANCEL};
+		private final String[] buttonStringList = {OUTPUT, OUTPUT_ALL, SAVE, LOAD_LUT, HELP, CANCEL};
 		
 		//private boolean novelVoiProduced;
 		
@@ -1928,6 +1929,37 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        //initImage();
 	        initDialog();	        
 	    }
+		
+		private void loadLUT() {
+			float min = (float)display.getActiveImage().getMin();
+			float max = (float)display.getActiveImage().getMax();
+			
+			TransferFunction transfer = new TransferFunction();
+			transfer.addPoint(new Point2Df(min, 255));
+			
+			//fat = blue
+			transfer.addPoint(new Point2Df(-190, 255));
+			transfer.addPoint(new Point2Df(-190, 254));
+			transfer.addPoint(new Point2Df(-30, 254));
+			
+			//partial = white
+			transfer.addPoint(new Point2Df(-30, 5));
+			transfer.addPoint(new Point2Df(0, 5));
+			
+			//muscle = red
+			transfer.addPoint(new Point2Df(0, 0));
+			transfer.addPoint(new Point2Df(100, 0));
+			
+			//rest is black
+			transfer.addPoint(new Point2Df(100, 255));
+			transfer.addPoint(new Point2Df(max, 255));
+			
+			display.getActiveImage().getParentFrame().getLUTa().makeCTThighTransferFunctions();
+			display.getActiveImage().getParentFrame().getLUTa().setTransferFunction(transfer);
+			display.getActiveImage().getParentFrame().getLUTa().makeLUT(256);
+			display.getActiveImage().getParentFrame().updateImages(true);
+			display.updateImages(true);
+		}
 		
 		/**
 	     * Initializes the dialog box.
@@ -2111,6 +2143,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	            	processCalculations(true, false);
 	            } else if (command.equals(SAVE)) {
 	            	processCalculations(true, true);
+	            } else if (command.equals(LOAD_LUT)) {
+	            	loadLUT();
 	            } else if (command.equals(HELP)) {
 	           
 	                MipavUtil.showHelp("19014");
