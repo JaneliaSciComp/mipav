@@ -675,6 +675,102 @@ public class ModelLUT extends ModelStorageBase {
     }
 
     /**
+     * Makes a LUT specifically for viewing CT thigh images
+     *
+     */
+    public void makeCTThighTransferFunctions() {
+    	 float[] x = null;
+         float[] y = null;
+         float[] z = null;
+
+         try {
+             x = new float[7];
+             y = new float[7];
+             z = new float[7];
+         } catch (OutOfMemoryError error) {
+             System.gc();
+             MipavUtil.displayError("Out of memory: ModelLUT: makeGrayBRTransferFunctions");
+
+             return;
+         }
+
+         int height;
+         height = getExtents()[1];
+
+         x[0] = 0;
+         y[0] = height - 1;
+         z[0] = 0;
+         
+         x[1] = 1;
+         y[1] = 0;
+         z[1] = 0;
+
+         x[2] = 2;
+         y[2] = 0;
+         z[2] = 0;
+
+         x[3] = 2;
+         y[3] = height - 1;
+         z[3] = 0;
+
+         x[4] = 254;
+         y[4] = 0;
+         z[4] = 0;
+
+         x[5] = 254;
+         y[5] = height - 1;
+         z[5] = 0;
+
+         x[6] = 255;
+         y[6] = height - 1;
+         z[6] = 0;
+
+         blueLine.importArrays(x, y, 7);
+
+         x[0] = 0;
+         y[0] = height - 1;
+         z[0] = 0;
+
+         x[1] = 2;
+         y[1] = height - 1;
+         z[1] = 0;
+
+         x[2] = 254;
+         y[2] = 0;
+         z[2] = 0;
+
+         x[3] = 254;
+         y[3] = height - 1;
+         z[3] = 0;
+
+         x[4] = 255;
+         y[4] = height - 1;
+         z[4] = 0;
+
+         greenLine.importArrays(x, y, 5);
+
+         x[0] = 0;
+         y[0] = height - 1;
+         z[0] = 0;
+
+         x[1] = 2;
+         y[1] = height - 1;
+         z[1] = 0;
+
+         x[2] = 254;
+         y[2] = 0;
+         z[2] = 0;
+
+         x[3] = 255;
+         y[3] = 0;
+         z[3] = 0;
+
+         redLine.importArrays(x, y, 4);
+         resetAlphaLine();
+         type = GRAY_BR;
+    }
+    
+    /**
      * Creates the R, G, and B transfer functions to produce a gray scale LUT.
      */
     public void makeGrayBRTransferFunctions() {
