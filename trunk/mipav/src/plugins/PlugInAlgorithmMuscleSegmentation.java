@@ -436,7 +436,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 
             if(command.equals(CLEAR)) {
                 //clear all VOIs drawn
-                display.getImageA().unregisterAllVOIs();
+                display.getActiveImage().unregisterAllVOIs();
                 display.updateImages(true);
             } else if (command.equals(OK)) {
                     VOI goodVoi = checkVoi();
@@ -444,12 +444,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                     if ( goodVoi != null ) { 
                         
                         //save modified/created VOI to file
-                        parentFrame.getActiveImage().unregisterAllVOIs();
-                        parentFrame.getActiveImage().registerVOI(goodVoi);
-                        String dir = parentFrame.getActiveImage().getImageDirectory()+MuscleImageDisplay.VOI_DIR;
-                        parentFrame.saveAllVOIsTo(dir);
+                        display.getActiveImage().unregisterAllVOIs();
+                        display.getActiveImage().registerVOI(goodVoi);
+                        String dir = display.getActiveImage().getImageDirectory()+MuscleImageDisplay.VOI_DIR;
+                        display.saveAllVOIsTo(dir);
                         
-                        String fileDir = parentFrame.getActiveImage().getFileInfo(0).getFileDirectory();
+                        String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory();
 
                         MipavUtil.displayInfo(objectName+" VOI saved in folder\n " + fileDir + MuscleImageDisplay.VOI_DIR);
                         
@@ -914,11 +914,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		    	}
 		    } else if(c instanceof VoiDialogPrompt && activeTab != voiTabLoc) {
 		    	initVoiImage(activeTab); //replacing current image and updating
-		    	activeTab = voiTabLoc;
+		    	//activeTab = voiTabLoc;
 		    } else if(c instanceof AnalysisPrompt && activeTab != resultTabLoc) {
 		    	getActiveImage().unregisterAllVOIs();
 		    	updateImages(true);
-		    	activeTab = resultTabLoc;
+		    	//activeTab = resultTabLoc;
 		    }
 		    super.componentShown(event);
 		}
@@ -1179,23 +1179,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
             componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
             updateImages(true);
-        }
-        
-        
-
-		private Color hasColor(VOI voiVec) {
-            Color c = null;
-            VOIVector tempVec = componentImage.getImageA().getVOIs();
-            for(int i=0; i<tempVec.size(); i++) {
-                if(voiVec.getName().contains("Left") || voiVec.getName().contains("Right")) {
-                    if( !(tempVec.get(i).getName().contains("Left")  &&  voiVec.getName().contains("Left")) && 
-                            !(tempVec.get(i).getName().contains("Right")  &&  voiVec.getName().contains("Right")) && 
-                            tempVec.get(i).getName().endsWith(voiVec.getName().substring(voiVec.getName().indexOf(" ")))) {
-                        c =  tempVec.get(i).getColor();
-                    }
-                }
-            }
-            return c;
         }
 
         private class BuildThighAxes implements AlgorithmInterface {
