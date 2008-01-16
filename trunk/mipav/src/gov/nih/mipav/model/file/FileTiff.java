@@ -24,6 +24,9 @@ import java.util.zip.*;
  * tif_luv.c in tif-4.0.0.alpha\libtiff.
  * 32 bit integer data with SGILogCompression and photometric = CIE Log2(L) (u', v') was obtained by porting
  * LogLuvDecode32, LogL16toY, LogLuv32toXYZ, and XYZtoRGB24 in tif_luv.c in tif-4.0.0.alpha\libtiff.
+ * 24 bit integer data with SGILog24Compression and photometric = CIE Log2(L) (u', v') was obtained by porting
+ * LogLuvDecode24, LogLuv24toXYZ, LogL10toY, uv_decode and XYZtoRGB24 in tif_luv.h and uvcode.h in
+ * tif-4.0.0.alpha\libtiff.
  *
  * @version  1.0 Feb 29, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
@@ -491,6 +494,8 @@ public class FileTiff extends FileBase {
     private boolean isLogLuv = false; // photometric CIE Log2(L) (u', v')
     
     private boolean SGILogCompression = false; // SGI Log Luminance RLE
+    
+    private boolean SGILog24Compression = false; // SGI Log 24-bit packed
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -626,7 +631,7 @@ public class FileTiff extends FileBase {
 
             if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) &&
                                  (!modHuffmanCompression) && (!jpegCompression) && (!ThunderScanCompression) &&
-                                 (!SGILogCompression) && haveTileOffsets) {
+                                 (!SGILogCompression) && (!SGILog24Compression) && haveTileOffsets) {
                 if (chunky) {
                    tilesPerSlice = tilesAcross * tilesDown;
                 }
@@ -637,7 +642,8 @@ public class FileTiff extends FileBase {
                 // System.err.println("DoTile: tilesPerSlice: " + tilesPerSlice + " imageSlice: " + imageSlice);
             } // if (haveTileWidth && (!lzwCompression) && (!zlibCompression)&& (!fax3Compression) && (!fax4Compression) 
             else if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression ||
-                     modHuffmanCompression || jpegCompression || ThunderScanCompression || SGILogCompression) {
+                     modHuffmanCompression || jpegCompression || ThunderScanCompression || SGILogCompression ||
+                     SGILog24Compression) {
 
                 // set the tile width to the xDim for use in LZW Decoder or zlib deflater or fax decompression
                 if (!haveTileWidth) {
@@ -787,7 +793,7 @@ public class FileTiff extends FileBase {
 
             if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) && 
                (!modHuffmanCompression) && (!jpegCompression) && (!ThunderScanCompression) && 
-               (!SGILogCompression) && haveTileOffsets) {
+                (!SGILogCompression) && (!SGILog24Compression) && haveTileOffsets) {
                 imageSlice = tilesPerImage / tilesPerSlice;
             }
 
@@ -880,7 +886,8 @@ public class FileTiff extends FileBase {
                     try {
 
                         if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression ||
-                            modHuffmanCompression || jpegCompression || ThunderScanCompression || SGILogCompression) {
+                            modHuffmanCompression || jpegCompression || ThunderScanCompression || SGILogCompression ||
+                            SGILog24Compression) {
                             readTileBuffer(i, sliceBufferFloat);
                         } else {
 
@@ -1686,6 +1693,203 @@ public class FileTiff extends FileBase {
             }
           }
         return 2 * xDim * rowsToDo;
+    }
+    
+    /* LogLuv24Decompresser is created from a port of LogLuvDecode24, LogLuv24toXYZ,
+     * LogL10toY, uv_decode and XYZtoRGB24 in tif_luv.h and uvcode.h
+     */
+    // The following copyright notice appears in the original code:
+    /*
+     * Copyright (c) 1997 Greg Ward Larson
+     * Copyright (c) 1997 Silicon Graphics, Inc.
+     *
+     * Permission to use, copy, modify, distribute, and sell this software and 
+     * its documentation for any purpose is hereby granted without fee, provided
+     * that (i) the above copyright notices and this permission notice appear in
+     * all copies of the software and related documentation, and (ii) the names of
+     * Sam Leffler, Greg Larson and Silicon Graphics may not be used in any
+     * advertising or publicity relating to the software without the specific,
+     * prior written permission of Sam Leffler, Greg Larson and Silicon Graphics.
+     * 
+     * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND, 
+     * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY 
+     * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  
+     * 
+     * IN NO EVENT SHALL SAM LEFFLER, GREG LARSON OR SILICON GRAPHICS BE LIABLE
+     * FOR ANY SPECIAL, INCIDENTAL, INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND,
+     * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+     * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF 
+     * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
+     * OF THIS SOFTWARE.
+     */
+    private int LogLuv24Decompresser(byte dataOut[], byte dataIn[], int rowsToDo) {
+        final double M_LN2 = 0.69314718055994530942;
+        final double U_NEU = 0.210526316;
+        final double V_NEU = 0.473684211;
+        float ustart[] = new float[]
+        { 0.247663f, 0.243779f, 0.241684f, 0.237874f, 0.235906f, 0.232153f, 0.228352f, 0.226259f,
+          0.222371f, 0.220410f, 0.214710f, 0.212714f, 0.210721f, 0.204976f, 0.202986f, 0.199245f,
+          0.195525f, 0.193560f, 0.189878f, 0.186216f, 0.186216f, 0.182592f, 0.179003f, 0.175466f,
+          0.172001f, 0.172001f, 0.168612f, 0.168612f, 0.163575f, 0.158642f, 0.158642f, 0.158642f,
+          0.153815f, 0.153815f, 0.149097f, 0.149097f, 0.142746f, 0.142746f, 0.142746f, 0.138270f,
+          0.138270f, 0.138270f, 0.132166f, 0.132166f, 0.126204f, 0.126204f, 0.126204f, 0.120381f,
+          0.120381f, 0.120381f, 0.120381f, 0.112962f, 0.112962f, 0.112962f, 0.107450f, 0.107450f,
+          0.107450f, 0.107450f, 0.100343f, 0.100343f, 0.100343f, 0.095126f, 0.095126f, 0.095126f,
+          0.095126f, 0.088276f, 0.088276f, 0.088276f, 0.088276f, 0.081523f, 0.081523f, 0.081523f,
+          0.081523f, 0.074861f, 0.074861f, 0.074861f, 0.074861f, 0.068290f, 0.068290f, 0.068290f,
+          0.068290f, 0.063573f, 0.063573f, 0.063573f, 0.063573f, 0.057219f, 0.057219f, 0.057219f,
+          0.057219f, 0.050985f, 0.050985f, 0.050985f, 0.050985f, 0.050985f, 0.044859f, 0.044859f,
+          0.044859f, 0.044859f, 0.040571f, 0.040571f, 0.040571f, 0.040571f, 0.036339f, 0.036339f,
+          0.036339f, 0.036339f, 0.032139f, 0.032139f, 0.032139f, 0.032139f, 0.027947f, 0.027947f,
+          0.027947f, 0.023739f, 0.023739f, 0.023739f, 0.023739f, 0.019504f, 0.019504f, 0.019504f,
+          0.016976f, 0.016976f, 0.016976f, 0.016976f, 0.012639f, 0.012639f, 0.012639f, 0.009991f,
+          0.009991f, 0.009991f, 0.009016f, 0.009016f, 0.009016f, 0.006217f, 0.006217f, 0.005097f,
+          0.005097f, 0.005097f, 0.003909f, 0.003909f, 0.002340f, 0.002389f, 0.001068f, 0.001653f,
+          0.000717f, 0.001614f, 0.000270f, 0.000484f, 0.001103f, 0.001242f, 0.001188f, 0.001011f,
+          0.000709f, 0.000301f, 0.002416f, 0.003251f, 0.003246f, 0.004141f, 0.005963f, 0.008839f,
+          0.010490f, 0.016994f, 0.023659f};
+        int ncum[] = new int[]
+        { 0,         4,         10,        17,        26,        36,        48,        62,
+          77,        94,        112,       133,       155,       178,       204,       231,
+          260,       291,       323,       357,       393,       429,       467,       507,
+          549,       593,       637,       683,       729,       778,       830,       882,
+          934,       989,       1044,      1102,      1160,      1222,      1284,      1346,
+          1411,      1476,      1541,      1610,      1679,      1752,      1825,      1898,
+          1975,      2052,      2129,      2206,      2288,      2370,      2452,      2538,
+          2624,      2710,      2796,      2887,      2978,      3069,      3164,      3259,
+          3354,      3449,      3549,      3649,      3749,      3849,      3954,      4059,
+          4164,      4269,      4379,      4489,      4599,      4709,      4824,      4939,
+          5054,      5169,      5288,      5407,      5526,      5645,      5769,      5893,
+          6017,      6141,      6270,      6399,      6528,      6657,      6786,      6920,
+          7054,      7188,      7322,      7460,      7598,      7736,      7874,      8016,
+          8158,      8300,      8442,      8588,      8734,      8880,      9026,      9176,
+          9326,      9476,      9630,      9784,      9938,      10092,     10250,     10408,
+          10566,     10727,     10888,     11049,     11210,     11375,     11540,     11705,
+          11873,     12041,     12209,     12379,     12549,     12719,     12892,     13065,
+          13240,     13415,     13590,     13767,     13944,     14121,     14291,     14455,
+          14612,     14762,     14905,     15041,     15170,     15293,     15408,     15517,
+          15620,     15717,     15806,     15888,     15964,     16033,     16095,     16150,
+          16197,     16237,     16268};
+        final int UV_NDIVS = 16289;
+        final float UV_VSTART = 0.016940f;
+        final float UV_SQSIZ = 0.003500f;
+        final int UV_NVS = 163;
+
+        int row;
+        int nPixels = xDim;
+        int i;
+        int bytesToRead = dataIn.length;
+        int tp;
+        int p10;
+        double L;
+        int Ce;
+        double u;
+        double v;
+        int lower;
+        int upper;
+        int ui;
+        int vi;
+        double s;
+        double x;
+        double y;
+        double xyz[] = new double[3];
+        double r;
+        double g;
+        double b;
+        for (row = 0; row < rowsToDo; row++) {
+            for (i = 0; i < nPixels && bytesToRead > 0; i++) {    
+              tp = ((dataIn[3*row*xDim + 3*i] << 16) & 0xff0000) |
+                   ((dataIn[3*row*xDim + 3*i + 1] << 8) & 0xff00) |
+                   (dataIn[3*row*xDim + 3*i + 2] & 0xff);
+              p10 = (tp >> 14 & 0x3ff);
+              // Compute luminance from 10-bit LogL
+              if (p10 == 0) {
+                  dataOut[3*row*xDim + 3*i] = 0;
+                  dataOut[3*row*xDim + 3*i + 1] = 0;
+                  dataOut[3*row*xDim + 3*i + 2] = 0;
+              }
+              else {
+                  L = Math.exp(M_LN2/64.0 * (p10 + 0.5) - M_LN2 * 12.0);
+                  if (L <= 0.0) {
+                      dataOut[3*row*xDim + 3*i] = 0;
+                      dataOut[3*row*xDim + 3*i + 1] = 0;
+                      dataOut[3*row*xDim + 3*i + 2] = 0;
+                  }
+                  else {
+                      // Decode color
+                      Ce = tp & 0x3fff;
+                      if ((Ce < 0) || (Ce >= UV_NDIVS)) {
+                          u = U_NEU;
+                          v = V_NEU;
+                      }
+                      else {
+                          // binary search
+                          lower = 0;
+                          upper = UV_NVS;
+                          while (upper - lower > 1) {
+                              vi = (lower + upper) >> 1;
+                              ui = Ce - ncum[vi];
+                              if (ui > 0) {
+                                  lower = vi;
+                              }
+                              else if (ui < 0) {
+                                  upper = vi;
+                              }
+                              else {
+                                  lower = vi;
+                                  break;
+                              }
+                          } // while (upper - lower > 1)
+                          vi = lower;
+                          ui = Ce - ncum[vi];
+                          u = ustart[vi] + (ui + 0.5)*UV_SQSIZ;
+                          v = UV_VSTART + (vi + .5)*UV_SQSIZ;
+                      } // else binary search
+                      s = 1.0/(6.0 * u - 16.0*v + 12.0);
+                      x = 9.0 * u * s;
+                      y = 4.0 * v * s;
+                      // Convert to XYZ
+                      xyz[0] = x/y * L;
+                      xyz[1] = L;
+                      xyz[2] = (1.0 - x - y)/y * L;
+                      /* assume CCIR-709 primaries */
+                      r =  2.690*xyz[0] + -1.276*xyz[1] + -0.414*xyz[2];
+                      g = -1.022*xyz[0] +  1.978*xyz[1] +  0.044*xyz[2];
+                      b =  0.061*xyz[0] + -0.224*xyz[1] +  1.163*xyz[2];
+                                      /* assume 2.0 gamma for speed */
+                      /* could use integer sqrt approx., but this is probably faster */
+                      if (r <= 0) {
+                          dataOut[3*row*xDim + 3*i] = 0;
+                      }
+                      else if (r >= 1.0) {
+                          dataOut[3*row*xDim + 3*i] = (byte)255;
+                      }
+                      else {
+                          dataOut[3*row*xDim + 3*i] = (byte)(256.0* Math.sqrt(r));
+                      }
+                      if (g <= 0) {
+                          dataOut[3*row*xDim + 3*i + 1] = 0;
+                      }
+                      else if (g >= 1.0) {
+                          dataOut[3*row*xDim + 3*i + 1] = (byte)255;
+                      }
+                      else {
+                          dataOut[3*row*xDim + 3*i + 1] = (byte)(256.0* Math.sqrt(g));
+                      }
+                      if (b <= 0) {
+                          dataOut[3*row*xDim + 3*i + 2] = 0;
+                      }
+                      else if (b >= 1.0) {
+                          dataOut[3*row*xDim + 3*i + 2] = (byte)255;
+                      }
+                      else {
+                          dataOut[3*row*xDim + 3*i + 2] = (byte)(256.0* Math.sqrt(b));
+                      }
+                  }
+              }
+            } // for (i = 0; i < nPixels && bytesToRead > 0; i++)
+        } // for (row = 0; row < rowsToDo; row++)
+        return 3 * xDim *rowsToDo;
     }
     
     
@@ -5536,6 +5740,14 @@ public class FileTiff extends FileBase {
                                                Preferences.DEBUG_FILEIO);
                         }
                     }
+                    else if (valueArray[0] == 34677) {
+                        SGILog24Compression = true;
+                        
+                        if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: compression = SGI Log 24-bit packed\n",
+                                               Preferences.DEBUG_FILEIO);
+                        }
+                    }
                     else {
                             throw new IOException("COMPRESSION has illegal value = " + valueArray[0] + "\n");
                     }
@@ -6704,7 +6916,7 @@ public class FileTiff extends FileBase {
                             Preferences.debug("Signed byte color is being treated as unsigned byte color\n");
                             break;
                         case 16:
-                            if (SGILogCompression) {
+                            if (SGILogCompression || SGILog24Compression) {
                                 fileInfo.setDataType(ModelStorageBase.ARGB);
                                 Preferences.debug("Signed short color is being treated as unsigned byte color\n");
                             }
@@ -10880,7 +11092,8 @@ public class FileTiff extends FileBase {
     
                                 if (byteBuffer == null) {
     
-                                    if (lzwCompression || zlibCompression || jpegCompression || SGILogCompression) {
+                                    if (lzwCompression || zlibCompression || jpegCompression || SGILogCompression ||
+                                        SGILog24Compression) {
                                         byteBuffer = new byte[tileMaxByteCount];
                                     } else {
                                         byteBuffer = new byte[nBytes];
@@ -10899,7 +11112,8 @@ public class FileTiff extends FileBase {
                                 mod = progressLength / 100;
     
     
-                                if (lzwCompression || zlibCompression || jpegCompression || SGILogCompression) {
+                                if (lzwCompression || zlibCompression || jpegCompression || SGILogCompression ||
+                                    SGILog24Compression) {
     
                                     //System.err.println("Read " + nBytes + " from raFile");
                                     if (decomp == null) {
@@ -10926,13 +11140,21 @@ public class FileTiff extends FileBase {
                                         }
                                         zlibDecompresser.reset();
                                     }
-                                    else { // SGILogCompression
+                                    else if (SGILogCompression) {
                                         data = new byte[nBytes];
                                         for (j = 0; j < nBytes; j++) {
                                             data[j] = byteBuffer[j];
                                         }
                                         rowsToDo = Math.min(rowsPerStrip, yDim - y);
                                         resultLength = LogLuv32Decompresser(decomp, data, rowsToDo);       
+                                    }
+                                    else { // SGILog24Compression
+                                        data = new byte[nBytes];
+                                        for (j = 0; j < nBytes; j++) {
+                                            data[j] = byteBuffer[j];
+                                        }
+                                        rowsToDo = Math.min(rowsPerStrip, yDim - y);
+                                        resultLength = LogLuv24Decompresser(decomp, data, rowsToDo);      
                                     }
     
                                     //System.err.println("Decoded byte length: " + resultLength);
