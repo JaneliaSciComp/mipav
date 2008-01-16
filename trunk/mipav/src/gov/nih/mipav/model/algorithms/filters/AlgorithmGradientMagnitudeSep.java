@@ -325,11 +325,6 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 		beforeExecute();
 		execute();
 		afterExecute();
-		try{
-		    Thread.sleep(3000000);
-		}catch(InterruptedException e){
-		    e.printStackTrace();
-		}
 	}
 
 	/**
