@@ -6,6 +6,7 @@ import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.JDialogCaptureScreen;
 
 import com.lowagie.text.*;
 import com.lowagie.text.Font;
@@ -34,8 +35,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     
     //~ Static fields --------------------------------------------------------------------------------------------------
     
-    public static final Color[] colorPick = {Color.GREEN, Color.ORANGE, 
+    public static final Color[] colorPick = {Color.GREEN, Color.ORANGE, Color.CYAN, 
                                                 Color.YELLOW, Color.MAGENTA};
+    
+    public static final String LUT_IMAGE = "lutImage.tif";
+    public static final String VOI_IMAGE = "voiImage.tif";
     
     //~ Instance fields ------------------------------------------------------------------------------------------------    
     
@@ -52,6 +56,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     private Document pdfDocument = null;
 	private PdfWriter writer = null;
 	private PdfPTable aTable = null;
+	private PdfPTable imageTable = null;
 	
     /**
      * Constructor.
@@ -284,10 +289,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     	public static final String OUTPUT_ALL = "Output All";
     	public static final String TOGGLE_LUT = "Toggle LUT";
     	public static final String OUTPUT = "Output";
+    	public static final String BACK = "Back";
     	
     	private String buttonStringGroup[] = {OK, CLEAR, HELP};
     	
-    	private JButton buttonGroup[];
+    	protected JButton buttonGroup[];
     	
     	protected MuscleImageDisplay parentFrame;
     	
@@ -688,6 +694,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 
             super(image);
             this.setImageA(image);
+            this.setActiveImage(IMAGE_A);
             this.fillIn = fillIn;
             this.titles = titles;
             this.mirrorArr = mirrorArr;
@@ -800,6 +807,19 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             	// This is could be generalized by making a subDialog interface.
             	//analysisPrompt.addListener(this);
             	//analysisPrompt.addComponentListener(this);
+            	String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR;
+    			
+            	ViewJFrameImage capImage = display.openFrame(display.getActiveImage());
+            	
+            	//create screen capture dialog and set up properly
+            	JDialogCaptureScreen capture = new JDialogCaptureScreen(this);
+            	capture.setVisible(false);
+            	capture.actionPerformed(new ActionEvent(capture, 0, "Window"));
+            	capture.windowActivated(new WindowEvent(capImage, 0));
+            	//show which window to work on
+            	this.setActiveImage(ViewJFrameBase.IMAGE_A);
+            	capture.actionPerformed(new ActionEvent(capture, 1, "OK"));
+            	
             	lockToPanel(resultTabLoc, "Analysis"); //includes making visible
             	
             } else if (!(command.equals(DialogPrompt.OUTPUT) ||
@@ -813,6 +833,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             		updateImages(true);
             	} else if(command.equals(DialogPrompt.OK)) {
             		unlockToPanel(voiTabLoc);
+            		initMuscleImage(activeTab);
+            	} else if(command.equals(DialogPrompt.BACK)) {
+            		unlockToPanel(resultTabLoc);
             		initMuscleImage(activeTab);
             	}
             } 
@@ -1107,7 +1130,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         //TODO: Local copies of VOIs
         
         private void loadVOI(int pane) {
-            getImageA().unregisterAllVOIs();
+            int colorChoice = 0;
+        	getImageA().unregisterAllVOIs();
             String fileDir = getImageA().getFileInfo(0).getFileDirectory()+VOI_DIR;
             File allVOIs = new File(fileDir);
             if(allVOIs.isDirectory()) {
@@ -1118,34 +1142,56 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 	VOI v;
                 	if((Integer)locationStatus.get(name) == pane) {
                 		v = getSingleVOI(name+ext);
-                		if(v != null) 
+                		if(v != null) {
+                			v.setThickness(2);
+                			Color c = null;
+                        	if((c = hasColor(v)) == null)
+                                v.setColor(colorPick[colorChoice++ % colorPick.length]);
+                        	else
+                        		v.setColor(c);
                 			getActiveImage().registerVOI(v);
+                		}
                 	}
                 }
             }
         }
         
-        private void initVOIColor() {
+        /*private void initVOIColor() {
             int colorChoice = 0;
-            getImageA();
             VOIVector voiFullVec = getActiveImage().getVOIs();
             for(int i=0; i<voiFullVec.size(); i++) {
-                Color c = hasColor(voiFullVec.get(i));
-                if(c != null) {
-                    voiFullVec.get(i).setColor(c);
-                    
-                } else {
-                    voiFullVec.get(i).setColor(colorPick[colorChoice % colorPick.length]);
-                    colorChoice++;
-                }
-                //getImageA().registerVOI((VOI)voiFullVec.get(i));
+            	Color c = null;
+            	if((c = hasColor(voiFullVec.get(i))) == null)
+                    voiFullVec.get(i).setColor(colorPick[colorChoice++ % colorPick.length]);
+            	else
+            		voiFullVec.get(i).setColor(c);
             }
+        }*/
+        
+        private Color hasColor(VOI voiVec) {
+            Color c = null;
+            VOIVector tempVec = display.getActiveImage().getVOIs();
+            String side1 = "", side2 = ""; 
+            if(Symmetry.LEFT_RIGHT == Symmetry.LEFT_RIGHT) {
+            	side1 = "Left";
+            	side2 = "Right";
+            }
+            for(int i=0; i<tempVec.size(); i++) {
+                if(voiVec.getName().contains(side1) || voiVec.getName().contains(side2)) {
+                    if( !(tempVec.get(i).getName().contains(side1)  &&  voiVec.getName().contains(side1)) && 
+                            !(tempVec.get(i).getName().contains(side2)  &&  voiVec.getName().contains(side2)) && 
+                            tempVec.get(i).getName().endsWith(voiVec.getName().substring(voiVec.getName().indexOf(" ")))) {
+                        c =  tempVec.get(i).getColor();
+                    }
+                }
+            }
+            return c;
         }
         
         private void initMuscleImage(int pane) {        
             ///if pane == -1, will load all VOIs
             loadVOI(pane);
-            initVOIColor();
+            //initVOIColor();
             
             ctMode(getImageA(), -175, 275);
             
@@ -1174,7 +1220,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         	//load VOIs of activeTab
         	loadVOI(pane);
         	//set VOIs to correct colors
-        	initVOIColor();
+        	//initVOIColor();
         	//make all other VOIs solid
             VOIVector voiVec = getActiveImage().getVOIs();
         	for(int i=0; i<voiVec.size(); i++) {
@@ -1864,7 +1910,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		
 
 		
-		private final String[] buttonStringList = {OUTPUT, OUTPUT_ALL, SAVE, TOGGLE_LUT, HELP, EXIT};
+		private final String[] buttonStringList = {OUTPUT, OUTPUT_ALL, SAVE, TOGGLE_LUT, HELP, BACK};
 	
 		private Symmetry symmetry;
 	
@@ -1906,6 +1952,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        this.mirrorArr = mirrorArr;
 	        
 	        this.symmetry = symmetry;
+	        
+	        
+	        
 	        
 	        initDialog();	        
 	    }
@@ -2000,6 +2049,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        //}
 	
 	        mainPanel.add(buildButtons());
+	        
+	        for(int i=0; i<buttonGroup.length; i++) {
+	        	if(buttonGroup[i].getText().equals(TOGGLE_LUT))
+	        		buttonGroup[i].setText("Show LUT");
+	        }
 	        
 	        add(mainPanel, BorderLayout.CENTER);
 	        
@@ -2138,11 +2192,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	                } else {
 	                    //individual error messages are already displayed
 	                }
-	            } else if (command.equals("Cancel")) {
-	         
-	                setCompleted(false);//savedVoiExists());
-	                notifyListeners(CANCEL);
-	                //dispose();
 	            } else if (command.equals(OUTPUT)) {
 	            	processCalculations(false, false);
 	            } else if (command.equals(OUTPUT_ALL)) { 
@@ -2150,14 +2199,16 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	            } else if (command.equals(SAVE)) {
 	            	processCalculations(true, true);
 	            } else if (command.equals(TOGGLE_LUT)) {
-	            	if(!lutOn)
+	            	if(!lutOn) {
 	            		loadLUT();
-	            	else
+	            		((JButton)e.getSource()).setText("Hide LUT");
+	            	} else {
 	            		removeLUT();
+	            		((JButton)e.getSource()).setText("Show LUT");
+	            	}
 	            } else if (command.equals(HELP)) {
-	           
 	                MipavUtil.showHelp("19014");
-	            }
+	            } 
 	        }
 	        
 	    }
@@ -2614,7 +2665,19 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			//total HU
 			aTable.addCell(dec.format(meanTotalH));
 			
+			imageTable = new PdfPTable(2);
+			imageTable.addCell("LUT Image");
+			imageTable.addCell("VOI Image");
 			
+			String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR;
+			
+			//loadLut
+			
+			//imageTable.addCell(Image.getInstance(chooser.getSelectedFile().getPath()));
+			
+			//load all VOIs
+			
+	        //imageTable.addCell(Image.getInstance(chooser.getSelectedFile().getPath()));
 					
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -2629,7 +2692,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		aPar.add(aTable);
 		pdfDocument.add(new Paragraph());
 		pdfDocument.add(aPar);
-	
+		
+		Paragraph pImage = new Paragraph();
+		pImage.setAlignment(Element.ALIGN_CENTER);
+		pImage.add(new Paragraph());
+		pImage.add(imageTable);
+		pdfDocument.add(new Paragraph());
+		pdfDocument.add(pImage);
 		
 		pdfDocument.close();
 		
