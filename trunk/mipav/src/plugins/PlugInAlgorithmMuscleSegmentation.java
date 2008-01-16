@@ -34,7 +34,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     
     //~ Static fields --------------------------------------------------------------------------------------------------
     
-    public static final Color[] colorPick = {Color.BLUE, Color.RED, Color.GREEN, Color.ORANGE, 
+    public static final Color[] colorPick = {Color.GREEN, Color.ORANGE, 
                                                 Color.YELLOW, Color.MAGENTA};
     
     //~ Instance fields ------------------------------------------------------------------------------------------------    
@@ -282,7 +282,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     	public static final String CALCULATE = "Calculate";
     	public static final String SAVE = "Save";
     	public static final String OUTPUT_ALL = "Output All";
-    	public static final String LOAD_LUT = "Load LUT";
+    	public static final String TOGGLE_LUT = "Toggle LUT";
     	public static final String OUTPUT = "Output";
     	
     	private String buttonStringGroup[] = {OK, CLEAR, HELP};
@@ -1096,6 +1096,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         	return loc;
         }
         
+        public boolean getZeroStatus(String name) {
+        	boolean fill = false;
+        	if(zeroStatus.get(name) != null)
+        		fill = (Boolean)zeroStatus.get(name);
+        	return fill;
+        }
+        
         
         //TODO: Local copies of VOIs
         
@@ -1857,11 +1864,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		
 
 		
-		private final String[] buttonStringList = {OUTPUT, OUTPUT_ALL, SAVE, LOAD_LUT, HELP, CANCEL};
-		
-		//private boolean novelVoiProduced;
-		
-		//private boolean completed;
+		private final String[] buttonStringList = {OUTPUT, OUTPUT_ALL, SAVE, TOGGLE_LUT, HELP, EXIT};
 	
 		private Symmetry symmetry;
 	
@@ -1886,13 +1889,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		 * Vector list of objects that listen to this dialog box. When the action for this pseudo-algorithm has
 		 * completed, the program will notify all listeners.
 		 */
-		private Vector objectList = new Vector();
+		//private Vector objectList = new Vector();
 		
 		private String name[] = {"thigh", "bone component", "muscle"};
 		
 		private int time = 0;
 		
-		//private TreeMap calculatedStatus;
+		private boolean lutOn = false;
 		
 		public AnalysisPrompt(MuscleImageDisplay theParentFrame, String[][] mirrorArr, String[][] noMirrorArr, Symmetry symmetry) {
 	        super(theParentFrame);
@@ -1904,12 +1907,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        
 	        this.symmetry = symmetry;
 	        
-	        //this.zeroStatus = zeroStatus;
-	        
-	        //novelVoiProduced = false;
-	        //completed = false;
-	        
-	        //initImage();
 	        initDialog();	        
 	    }
 		
@@ -1937,11 +1934,37 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			transfer.addPoint(new Point2Df(100, 255));
 			transfer.addPoint(new Point2Df(max, 255));
 			
-			display.getActiveImage().getParentFrame().getLUTa().makeCTThighTransferFunctions();
-			display.getActiveImage().getParentFrame().getLUTa().setTransferFunction(transfer);
-			display.getActiveImage().getParentFrame().getLUTa().makeLUT(256);
-			display.getActiveImage().getParentFrame().updateImages(true);
+			display.getLUTa().makeCTThighTransferFunctions();
+			display.getLUTa().setTransferFunction(transfer);
+			display.getLUTa().makeLUT(256);
+			
+			VOIVector vec = display.getActiveImage().getVOIs();
+			for(int i=0; i<vec.size(); i++) {
+				if(display.getZeroStatus(vec.get(i).getName())) {
+                	vec.get(i).setDisplayMode(VOI.SOLID);
+                	vec.get(i).setOpacity((float)0.7);
+                }
+			}
+			
 			display.updateImages(true);
+			
+			lutOn = true;
+		}
+		
+		private void removeLUT() {
+			
+			display.ctMode(display.getActiveImage(), -175, 275);
+			
+			display.getLUTa().makeGrayTransferFunctions();
+			display.getLUTa().makeLUT(256);
+			
+			VOIVector vec = display.getActiveImage().getVOIs();
+			for(int i=0; i<vec.size(); i++) 
+				vec.get(i).setDisplayMode(VOI.CONTOUR);
+			
+			display.updateImages(true);
+			
+			lutOn = false;
 		}
 		
 		/**
@@ -2126,8 +2149,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	            	processCalculations(true, false);
 	            } else if (command.equals(SAVE)) {
 	            	processCalculations(true, true);
-	            } else if (command.equals(LOAD_LUT)) {
-	            	loadLUT();
+	            } else if (command.equals(TOGGLE_LUT)) {
+	            	if(!lutOn)
+	            		loadLUT();
+	            	else
+	            		removeLUT();
 	            } else if (command.equals(HELP)) {
 	           
 	                MipavUtil.showHelp("19014");
@@ -2157,7 +2183,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		    	}
 		    	
 		    	//Load VOIs and calculations
-		    	loadVOIs(selectedString);
+		    	loadVOIs(selectedString, lutOn);
 		    	parentFrame.updateImages(true);
 		    	time = 0;
 	    	} else 
@@ -2195,7 +2221,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    			}
 	    			//ModelLUT lut;
 	    			//Load VOIs and calculations
-	    			loadVOIs(listStrings);
+	    			loadVOIs(listStrings, lutOn);
 	    			//parentFrame.updateImages(true);
 	    			//Image now contains all valid VOIs, display calculations
 	    			VOIVector voi = parentFrame.getActiveImage().getVOIs();
@@ -2241,7 +2267,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    
 	}
     
-    public void loadVOIs(String[] voiName) {
+    public void loadVOIs(String[] voiName, boolean fillVOIs) {
     	if (display == null) {
     		return;
     	}
@@ -2275,6 +2301,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                             colorChoice++;
                         }                      
                         voiVec[0].setThickness(2);
+                        if(fillVOIs && display.getZeroStatus(voiVec[0].getName())) {
+                        	voiVec[0].setDisplayMode(VOI.SOLID);
+                        	voiVec[0].setOpacity((float)0.7);
+                        }
                         display.getActiveImage().registerVOI(voiVec[0]);
                     }
                 }
@@ -2583,6 +2613,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 				
 			//total HU
 			aTable.addCell(dec.format(meanTotalH));
+			
+			
 					
 		} catch (Exception e) {
 			e.printStackTrace();
