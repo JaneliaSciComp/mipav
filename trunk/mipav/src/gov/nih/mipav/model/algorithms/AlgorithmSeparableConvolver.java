@@ -270,7 +270,8 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         try{
       	  doneSignalx.await();
         }catch(InterruptedException e){
-      	  
+      	  gov.nih.mipav.view.MipavUtil.displayError(e.getMessage());
+      	  return;
         }
 
         // y kernel dimensions
@@ -289,7 +290,8 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         try{
       	  doneSignaly.await();
         }catch(InterruptedException e){
-      	  
+            gov.nih.mipav.view.MipavUtil.displayError(e.getMessage());
+            return;
         }
 
         if(imgExtents.length < 3 || kernelBuffer.length < 3){
@@ -312,7 +314,8 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         try{
       	  doneSignalz.await();
         }catch(InterruptedException e){
-      	  
+            gov.nih.mipav.view.MipavUtil.displayError(e.getMessage());
+            return;      	  
         }
     }
     
