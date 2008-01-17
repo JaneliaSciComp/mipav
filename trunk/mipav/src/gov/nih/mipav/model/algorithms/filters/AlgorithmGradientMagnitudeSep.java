@@ -10,6 +10,7 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJProgressBar;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * Calculates the gradient magnitude of an image at a scale defined by the user (using separable convolutions). Adapted
@@ -69,8 +70,12 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 			boolean maskFlag, boolean img25D) {
 		super(null, srcImg);
 
-		this.sigmas = sigmas;
 		image25D = img25D;
+		if(image25D){
+			this.sigmas = new float[]{sigmas[0], sigmas[1]};
+		}else{
+			this.sigmas = sigmas;
+		}
 		entireImage = maskFlag;
 
 		if (entireImage == false) {
@@ -127,7 +132,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 		gaussianKernel = gkf.createKernel();
 
 		float[] xDerivativeBuffer = calculateDerivativeImage(buffer, color,
-				gaussianKernel.getData(), progressFrom, progressTo);
+				gaussianKernel.getData(), progressFrom, progressTo, false);
 
 		if(threadStopped){
 			return;
@@ -135,7 +140,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 
 		// Calculate the y derivatives of the image.
 		progressFrom = progressTo+1;
-		if(srcImage.is2DImage() || image25D){
+		if(srcImage.is2DImage() || !is3DKernel()){
 			progressTo = progressFrom + (int)((maxProgressValue - minProgressValue) * 0.3)-1;
 		}else{
 			progressTo = progressFrom + (int)((maxProgressValue - minProgressValue) * 0.25)-1;
@@ -143,14 +148,14 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 		gkf.setKernelType(GaussianKernelFactory.Y_DERIVATIVE_KERNEL);
 		gaussianKernel = gkf.createKernel();
 		float[] yDerivativeBuffer = calculateDerivativeImage(buffer, color,
-				gaussianKernel.getData(), progressFrom, progressTo);
+				gaussianKernel.getData(), progressFrom, progressTo, false);
 
 		if(threadStopped){
 			return;
 		}
 
 		// Calculate the z derivative of the image.
-		if (srcImage.getExtents().length > 2 && !image25D) {
+		if (srcImage.is3DImage() && is3DKernel()) {
 			progressFrom = progressTo+1;
 			progressTo = progressFrom + (int)((maxProgressValue - minProgressValue) * 0.25)-1;
 
@@ -158,7 +163,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 			gaussianKernel = gkf.createKernel();
 
 			float[] zDerivativeBuffer = calculateDerivativeImage(buffer, color,
-					gaussianKernel.getData(), progressFrom, progressTo);
+					gaussianKernel.getData(), progressFrom, progressTo, true);
 
 			if (threadStopped) {
 				return;
@@ -170,6 +175,9 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 			progress = progressFrom;
 			outputBuffer = magnitude(buffer, cFactor, xDerivativeBuffer,
 					yDerivativeBuffer, zDerivativeBuffer, progressFrom, progressTo);
+			xDerivativeBuffer = null;
+			yDerivativeBuffer = null;
+			zDerivativeBuffer = null;
 			return;
 		}
 		progressFrom = progressTo+1;
@@ -178,6 +186,8 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 		// Calculate the gradient magnitude of the image.
 		outputBuffer = magnitude(buffer, cFactor, xDerivativeBuffer,
 				yDerivativeBuffer, null, progressFrom, progressTo);
+		xDerivativeBuffer = null;
+		yDerivativeBuffer = null;
 	}
 
 	public void afterExecute() {
@@ -186,9 +196,10 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 	}
 
 	private float[] calculateDerivativeImage(float[] imgData, boolean color,
-			float[][] kernelData, int progressFrom, int progressTo) {
+			float[][] kernelData, int progressFrom, int progressTo, boolean sourcBufferChangeable) {
 		AlgorithmSeparableConvolver convolver = new AlgorithmSeparableConvolver(
-				imgData, srcImage.getExtents(), kernelData, color, Preferences.isMultiThreadingEnabled(), false);
+				imgData, srcImage.getExtents(), kernelData, color, Preferences.isMultiThreadingEnabled(),
+				sourcBufferChangeable);
 		convolver.setNumberOfThreads(Preferences.getNumberOfThreads());
 		convolver.setProgressValues(generateProgressValues(progressFrom,
 				progressTo));
@@ -226,8 +237,16 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 		}else{
 			resultBuffer = xDerivatives;
 		}
-		progressStep = xDerivatives.length / (progressTo - progressFrom);
-		for (int i = 0; i < xDerivatives.length && !threadStopped; i += cFactor) {
+		int start = calculateValidStartZIndex() * srcImage.getSliceSize() * cFactor;
+		int end = calculateValidEndZIndex() * srcImage.getSliceSize() * cFactor;
+		if(start > 0){
+			Arrays.fill(resultBuffer, 0, start, 0);
+		}
+		if(end < xDerivatives.length){
+			Arrays.fill(resultBuffer, end, xDerivatives.length, 0);
+		}
+		progressStep = (end-start) / (progressTo - progressFrom);
+		for (int i = start; i < end && !threadStopped; i += cFactor) {
 			if(i % progressStep == 0){
 				makeProgress(1);
 				fireProgressStateChanged((int)progress);
@@ -380,5 +399,29 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 
 	public void setDirectionNeeded(boolean directionNeeded) {
 		this.directionNeeded = directionNeeded;
+	}
+	
+	private boolean is3DKernel(){
+		if(sigmas.length > 2){
+			return true;
+		}
+		return false;
+	}
+	public int calculateValidStartZIndex(){
+		if(srcImage.is3DImage() && is3DKernel()){
+			return (gaussianKernel.getExtents()[2]+1)/2;
+		}
+		return 0;
+	}
+	
+	public int calculateValidEndZIndex(){
+		if(srcImage.is3DImage() && is3DKernel()){
+			return srcImage.getExtents()[2]-(gaussianKernel.getExtents()[2]+1)/2;
+		}
+		if(srcImage.is3DImage()){
+			return srcImage.getExtents()[2];
+		}
+		
+		return 1;
 	}
 }

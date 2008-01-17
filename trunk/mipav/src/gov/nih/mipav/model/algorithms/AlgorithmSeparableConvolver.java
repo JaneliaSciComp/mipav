@@ -82,6 +82,8 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 
 		if(multiThreadingEnabled){
 			this.outputBuffer = new float[inputBuffer.length];
+		}else{
+			this.outputBuffer = this.inputBuffer;
 		}
 
         this.imgExtents = iExtents;
@@ -642,9 +644,6 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
     }
  
     public float[] getOutputBuffer(){
-        if(outputBuffer != null){
             return outputBuffer;
-        }
-        return inputBuffer;
     }
 }

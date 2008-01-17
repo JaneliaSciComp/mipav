@@ -210,7 +210,9 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
 
             if (gradientMagSepAlgo.isCompleted()) {
 				if (displayInNewFrame) {
-
+					float[] resultBuffer = gradientMagSepAlgo.getResultBuffer();
+					gradientMagSepAlgo.finalize();
+					gradientMagSepAlgo = null;
 					// Make result image
 					if (image.getType() == ModelImage.ARGB) {
 						resultImage = new ModelImage(ModelImage.ARGB, image
@@ -238,7 +240,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
 
 					resultImage.clearMask();
 					try{
-						resultImage.importData(0, gradientMagSepAlgo.getResultBuffer(), true);
+						resultImage.importData(0, resultBuffer, true);
 					}catch(IOException e){
 						resultImage.disposeLocal();
 						MipavUtil.displayError("Algorithm Gradient Magnitude importData: Image(s) lockced.");
@@ -433,9 +435,6 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
     protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_gmag");
         displayInNewFrame = outputOptionsPanel.isOutputNewImageSet();
-        if(!displayInNewFrame){
-        	
-        }
         if (separable) { // source image is 2D and kernel is separable
             float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
@@ -464,7 +463,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
 				// Make algorithm
 				gradientMagSepAlgo = new AlgorithmGradientMagnitudeSep(image,
 						sigmas, outputOptionsPanel.isProcessWholeImageSet(),
-						false);
+						image25D);
 
 				// This is very important. Adding this object as a listener
 				// allows the algorithm to
@@ -492,8 +491,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
 					// Start the thread as a low priority because we wish to
 					// still have user interface work fast
 					if (gradientMagSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-						MipavUtil
-								.displayError("A thread is already running on this object");
+						MipavUtil.displayError("A thread is already running on this object");
 					}
 				} else {
 					gradientMagSepAlgo.run();
@@ -506,8 +504,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
 					resultImage = null;
 				}
 
-				MipavUtil
-						.displayError("Dialog Gradient magnitude: unable to allocate enough memory");
+				MipavUtil.displayError("Dialog Gradient magnitude: unable to allocate enough memory");
 
 				return;
 			}
