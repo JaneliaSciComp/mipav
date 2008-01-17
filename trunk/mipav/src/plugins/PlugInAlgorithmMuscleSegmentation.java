@@ -14,7 +14,9 @@ import com.lowagie.text.Image;
 import com.lowagie.text.pdf.*;
 
 import java.awt.*;
+import java.awt.Rectangle;
 import java.awt.event.*;
+import java.awt.image.PixelGrabber;
 import java.io.*;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -807,18 +809,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             	// This is could be generalized by making a subDialog interface.
             	//analysisPrompt.addListener(this);
             	//analysisPrompt.addComponentListener(this);
-            	String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR;
-    			
-            	ViewJFrameImage capImage = display.openFrame(display.getActiveImage());
             	
-            	//create screen capture dialog and set up properly
-            	JDialogCaptureScreen capture = new JDialogCaptureScreen(this);
-            	capture.setVisible(false);
-            	capture.actionPerformed(new ActionEvent(capture, 0, "Window"));
-            	capture.windowActivated(new WindowEvent(capImage, 0));
-            	//show which window to work on
-            	this.setActiveImage(ViewJFrameBase.IMAGE_A);
-            	capture.actionPerformed(new ActionEvent(capture, 1, "OK"));
             	
             	lockToPanel(resultTabLoc, "Analysis"); //includes making visible
             	
@@ -1959,6 +1950,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        initDialog();	        
 	    }
 		
+		/**
+		 * Loads the CT Thigh specific lut
+		 *
+		 */
 		private void loadLUT() {
 			float min = (float)display.getActiveImage().getMin();
 			float max = (float)display.getActiveImage().getMax();
@@ -1996,6 +1991,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			}
 			
 			display.updateImages(true);
+			display.getActiveImage().getParentFrame().updateImages(true);
 			
 			lutOn = true;
 		}
@@ -2014,6 +2010,17 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			display.updateImages(true);
 			
 			lutOn = false;
+		}
+		
+		/**
+		 * sets all the VOIs to solid-type
+		 *
+		 */
+		private void solidifyVOIs() {
+			VOIVector VOIs = display.getActiveImage().getVOIs();
+			for (int i = 0; i < VOIs.size(); i++) {
+				VOIs.elementAt(i).setDisplayMode(VOI.SOLID);
+			}			
 		}
 		
 		/**
@@ -2308,7 +2315,41 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    	}
 	    	
 	    	if (doSave) {
-	    		closePDF();
+	    		
+	    		display.getActiveImage().getParentFrame().requestFocus();
+	    		
+	    		
+	    		//now load all VOIs at once:
+	    		int totalSize = 0;
+	    		for (int listNum = 0; listNum < list.length; listNum++) {
+		    		ListModel model = list[listNum].getModel();	
+		    		totalSize += model.getSize();
+	    		}
+	    		
+	    		String [] allStrings = new String[totalSize];
+	    		
+	    		int counter = 0;
+	    		for (int listNum = 0; listNum < list.length; listNum++) {
+		    		ListModel model = list[listNum].getModel();		    	
+		    		String [] listStrings = new String[model.getSize()];
+		    			
+		    		
+		    		for (int i = 0; i < listStrings.length; i++, counter++) {
+		    			allStrings[counter] = (String)model.getElementAt(i) + ".xml";
+		    		}
+	    		} 
+	    		loadVOIs(allStrings, false);
+	    		//solidifyVOIs();
+	    		display.getActiveImage().getParentFrame().updateImages(true);
+	    		
+	    		java.awt.Image qaImage = captureImage();
+	    		
+	    		loadVOIs(new String[] {}, false);
+	    		loadLUT();
+	    		
+	    		java.awt.Image edgeImage = captureImage();
+	    		
+	    		closePDF(edgeImage, qaImage);
 	    	}
 	    	
 	    }
@@ -2318,6 +2359,30 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    
 	}
     
+    private java.awt.Image captureImage() {
+    	Rectangle currentRectangle;
+    	Point p = new Point();
+    	p.x = 0;
+        p.y = 0;
+        SwingUtilities.convertPointToScreen(p, display.getActiveImage().getParentFrame().getContentPane());
+        p.x++; // must correct this slightly
+        p.y++; // ""
+
+        Dimension d = new Dimension();
+        d.width = display.getActiveImage().getParentFrame().getContentPane().getWidth() - 3; // the -3 is a correction
+        d.height = display.getActiveImage().getParentFrame().getContentPane().getHeight() - 3; // ""
+        currentRectangle = new Rectangle(p, d);
+        
+        try {
+            Robot robot = new Robot();
+
+            return robot.createScreenCapture(currentRectangle);
+        } catch (OutOfMemoryError error) {
+        } catch (AWTException error) {
+        }
+        return null;
+    }
+ 
     public void loadVOIs(String[] voiName, boolean fillVOIs) {
     	if (display == null) {
     		return;
@@ -2602,21 +2667,19 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			pTable.setAlignment(Element.ALIGN_CENTER);
 			pTable.add(spTable);
 			pdfDocument.add(new Paragraph(new Chunk("")));
-			pdfDocument.add(new Paragraph(pTable));
-			
-			pdfDocument.add(new Paragraph(new Chunk("")));
+			pdfDocument.add(pTable);
 			
 			//create the Table where we will insert the data:
 			aTable = new PdfPTable(7);
 			
 			// add Column Titles (in bold)
-			aTable.addCell(new PdfPCell(new Paragraph("Area (cm^2)", new Font(Font.TIMES_ROMAN, 13, Font.BOLD))));
-			aTable.addCell(new PdfPCell(new Paragraph("Total Area", new Font(Font.TIMES_ROMAN, 13, Font.BOLD))));
-			aTable.addCell(new PdfPCell(new Paragraph("Fat Area", new Font(Font.TIMES_ROMAN, 13, Font.BOLD))));
-			aTable.addCell(new PdfPCell(new Paragraph("Lean Area", new Font(Font.TIMES_ROMAN, 13, Font.BOLD))));
-			aTable.addCell(new PdfPCell(new Paragraph("Fat HU", new Font(Font.TIMES_ROMAN, 13, Font.BOLD))));
-			aTable.addCell(new PdfPCell(new Paragraph("Lean HU", new Font(Font.TIMES_ROMAN, 13, Font.BOLD))));
-			aTable.addCell(new PdfPCell(new Paragraph("Total HU", new Font(Font.TIMES_ROMAN, 13, Font.BOLD))));
+			aTable.addCell(new PdfPCell(new Paragraph("Area (cm^2)", fontBold)));
+			aTable.addCell(new PdfPCell(new Paragraph("Total Area", fontBold)));
+			aTable.addCell(new PdfPCell(new Paragraph("Fat Area", fontBold)));
+			aTable.addCell(new PdfPCell(new Paragraph("Lean Area", fontBold)));
+			aTable.addCell(new PdfPCell(new Paragraph("Fat HU", fontBold)));
+			aTable.addCell(new PdfPCell(new Paragraph("Lean HU", fontBold)));
+			aTable.addCell(new PdfPCell(new Paragraph("Total HU", fontBold)));
 			
 			
 			return true;
@@ -2639,31 +2702,32 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			double meanFatH, double meanLeanH, double meanTotalH) {
 		
 		try {
+			Font fontNormal = FontFactory.getFont("Helvetica", 10, Font.NORMAL, Color.DARK_GRAY);
 			if (name.endsWith(".xml")) {
 				name = name.substring(0, name.length() - 4);
 			}
 			DecimalFormat dec = new DecimalFormat("0.#");
 			
 			//name of area
-			aTable.addCell(name);
+			aTable.addCell(new Paragraph( name, fontNormal) );
 				
 			//total area
-			aTable.addCell(dec.format(totalAreaCount));
+			aTable.addCell(new Paragraph( dec.format(totalAreaCount), fontNormal) );
 				
 			//fat area
-			aTable.addCell(dec.format(fatArea));
+			aTable.addCell(new Paragraph( dec.format(fatArea), fontNormal) );
 			
 			//lean area
-			aTable.addCell(dec.format(leanArea));
+			aTable.addCell(new Paragraph( dec.format(leanArea), fontNormal) );
 				
 			//fat HU
-			aTable.addCell(dec.format(meanFatH));
+			aTable.addCell(new Paragraph( dec.format(meanFatH), fontNormal) );
 				
 			//lean HU
-			aTable.addCell(dec.format(meanLeanH));
+			aTable.addCell(new Paragraph( dec.format(meanLeanH), fontNormal) );
 				
 			//total HU
-			aTable.addCell(dec.format(meanTotalH));
+			aTable.addCell(new Paragraph( dec.format(meanTotalH), fontNormal) );
 			
 			imageTable = new PdfPTable(2);
 			imageTable.addCell("LUT Image");
@@ -2684,26 +2748,31 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		}
 	}
 	
-	private void closePDF() {
+	private void closePDF(java.awt.Image edgeImage, java.awt.Image qaImage) {
 		try {
 		Paragraph aPar = new Paragraph();
 		aPar.setAlignment(Element.ALIGN_CENTER);
-		aPar.add(new Paragraph());
 		aPar.add(aTable);
 		pdfDocument.add(new Paragraph());
 		pdfDocument.add(aPar);
+		PdfPTable imageTable = new PdfPTable(2);
+		imageTable.addCell("Edge Image");
+		imageTable.addCell("QA Image");
+		imageTable.addCell(Image.getInstance(edgeImage, null));
+		
+		imageTable.addCell(Image.getInstance(qaImage, null));
 		
 		Paragraph pImage = new Paragraph();
-		pImage.setAlignment(Element.ALIGN_CENTER);
 		pImage.add(new Paragraph());
 		pImage.add(imageTable);
-		pdfDocument.add(new Paragraph());
 		pdfDocument.add(pImage);
-		
 		pdfDocument.close();
 		
-	//	PdfPTable imageTable = new PdfPTable(2);
-	//	imageTable.addCell("Edge Image");
+		
+		
+		
+	//	imageTable.addCell(Image.getInstance(display.get));
+		
 	//	imageTable.addCell("QA Image");
 		
 	//	chooser = new JFileChooser();
