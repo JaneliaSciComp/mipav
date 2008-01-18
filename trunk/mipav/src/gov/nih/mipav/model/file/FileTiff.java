@@ -97,6 +97,8 @@ public class FileTiff extends FileBase {
     /** DOCUMENT ME! */
     public static final int PHOTO_INTERP = 262;
     
+    public static final int THRESHHOLDING = 263;
+    
     public static final int FILL_ORDER = 266;
     
     public static final int DOCUMENT_NAME = 269;
@@ -181,6 +183,12 @@ public class FileTiff extends FileBase {
     /** DOCUMENT ME! */
     public static final int TILE_BYTE_COUNTS = 325;
     
+    public static final int BAD_FAX_LINES = 326;
+    
+    public static final int CLEAN_FAX_DATA = 327;
+    
+    public static final int CONSECUTIVE_BAD_FAX_LINES = 328;
+    
     public static final int INK_SET = 332;
     
     public static final int INK_NAMES = 333;
@@ -204,8 +212,10 @@ public class FileTiff extends FileBase {
     
     public static final int COPYRIGHT = 33432;
     
+    // Exposure time, given in seconds.
     public static final int EXIFTAG_EXPOSURE_TIME = 33434;
     
+    // The F number.
     public static final int EXIFTAG_FNUMBER = 33437;
     
     // Pointer to EXIF private directory
@@ -229,6 +239,17 @@ public class FileTiff extends FileBase {
     //  The format is "YYYY:MM:DD HH:MM:SS" with the time shown in 24-hour format
     public static final int EXIFTAG_DATE_TIME_DIGITIZED = 36868;
     
+    // Shutter speed.  The unit is the APEX(Additive System of Photographic Exposure)setting.
+    public static final int EXIFTAG_SHUTTER_SPEED_VALUE = 37377;
+    
+    // The lens aperture.  The unit is the APEX value.
+    public static final int EXIFTAG_APERTURE_VALUE = 37378;
+    
+    // The value of birghtness.  The unit is the APEX value.  Ordinarily it is given in the range
+    // of -99.99 to 99.99.  Note that if the numerator of the recorded value is FFFFFFFF.H, unknown
+    // shall be recorded.
+    public static final int EXIFTAG_BRIGHTNESS_VALUE = 37379;
+    
     // The exposure bias.  The unit is the apex value.  Ordinarily it is given
     // in the range of -99.99 to 99.99
     public static final int EXIFTAG_EXPOSURE_BIAS_VALUE = 37380;
@@ -237,23 +258,102 @@ public class FileTiff extends FileBase {
     // in the range of 00.00 to 99.99, but it is not limited to this range
     public static final int EXIFTAG_MAX_APERTURE_VALUE = 37381;
     
+    // The metering mode
     public static final int EXIFTAG_METERING_MODE = 37383;
     
+    // The kind of light source.
     public static final int EXIFTAG_LIGHT_SOURCE = 37384;
     
+    // This tag indicates the status of flash when the image was shot.  Bit 0 indicates the
+    // flash firing status, bits 1 and 2 indicate the flash return status, bits 3 and 4
+    // indicate the flash mode, bit 5 indicates whether the flash function is present,
+    // and bit 6 indicates "red eye" mode.
     public static final int EXIFTAG_FLASH = 37385;
     
     // The actual focal length of the lens in millimeters
     public static final int EXIFTAG_FOCAL_LENGTH = 37386;
     
+    // A tag for manufacturers of Exif writers to record any desired information.
     public static final int EXIFTAG_MAKER_NOTE = 37500;
     
+    // A tag for Exif users to write keywords or comments on the image besides those in
+    // imageDescription, and without the character code limitations of the imageDescription tag.
     public static final int EXIFTAG_USER_COMMENT = 37510;
     
     /** Sample value to Nits, where Nits is the photometric unit for luminance,
      *  also written candelas/meter**2.
      */
     public static final int STONITS = 37439;
+    
+    // The Flashpix format version supported by a FPXR file.
+    public static final int EXIFTAG_FLASHPIX_VERSION = 40960;
+    
+    // Normally sRGB(=1) is used to define the color space based on the PC monitor conditions
+    // and environment.  If a colorSpace other than sRGB is used, uncalibrated(0xFFFF) is set.
+    // Image data recorded as uncalibrated can be treated as sRGB when it is converted to Flashpix.
+    public static final int EXIFTAG_COLOR_SPACE = 40961;
+    
+    // Indicates the number of pixels in the image width (X) direction per FocalPlaneResolutionUnit on
+    // the camera focal plane.
+    public static final int EXIFTAG_FOCAL_PLANE_X_RESOLUTION = 41486;
+    
+    // Indicates the number of pixels in the image height (Y) direction per FocalPlaneResolutionUnit on
+    // the camera focal plane.
+    public static final int EXIFTAG_FOCAL_PLANE_Y_RESOLUTION = 41487;
+    
+    // Indicates the unit for measuring focalPlaneXResolution and focalPlaneYResolution.
+    // This value is the same as ResolutionUnit.
+    public static final int EXIFTAG_FOCAL_PLANE_RESOLUTION_UNIT = 41488;
+    
+    // Indicates the image sensor type on the camera or input device.
+    public static final int EXIFTAG_SENSING_METHOD = 41495;
+    
+    // Indicates the image source.  If a DSC recorded the image, the tag value of this tag
+    // is set to 3.
+    public static final int EXIFTAG_FILE_SOURCE = 41728;
+    
+    // Indicates the type of a scene.  If a DSC recorded the image, this tatg shall always be
+    // set to 1, indicating that the image was directly photographed.
+    public static final int EXIFTAG_SCENE_TYPE = 41729;
+    
+    // This tag indicates the use of special processing on image data, such as rendering geared
+    // to output.  When special processing is performed, the reader is expected to disable or
+    // minimize any further processing.
+    public static final int EXIFTAG_CUSTOM_RENDERED = 41985;
+    
+    // This tag indicates the exposure mode set when the image was shot.  In auto-bracketing
+    // node the camera shoots a series of frames of the same image at different exposure settings.
+    public static final int EXIFTAG_EXPOSURE_MODE = 41986;
+    
+    // This tag indicates the white balance mode when the image was shot.
+    public static final int EXIFTAG_WHITE_BALANCE = 41987;
+    
+    // This tag indicates the digital zoom ratio when the image was shot.  If the numerator
+    // of the recorded value is zero, this indicates that digital zoom was not used.
+    public static final int EXIFTAG_DIGITAL_ZOOM_RATIO = 41988;
+    
+    // This tag indicates the type of scene that was shot.  It can also be used to record
+    // the mode in which the image was shot.
+    public static final int EXIFTAG_SCENE_CAPTURE_TYPE = 41990;
+    
+    // This tag indicates the degree of overall image gain adjustment
+    public static final int EXIFTAG_GAIN_CONTROL = 41991;
+    
+    // This tag indicates the direction of contrast processing applied by the camera
+    // when image was shot.
+    public static final int EXIFTAG_CONTRAST = 41992;
+    
+    // This tag indicates the direction of saturation processing applied by the camera
+    // when the image was shot.
+    public static final int EXIFTAG_SATURATION = 41993;
+    
+    // This tag indicates the direction of sharpness processing applied by the camera
+    // when the image was shot.
+    public static final int EXIFTAG_SHARPNESS = 41994;
+    
+    // Used by the GDAL library, holds an XML list of name=value 'metadata' values
+    // about the image as a whole, and about specific samples.
+    public static final int GDAL_METADATA = 42112;
 
     /** EchoTech Tiff TAGS. */
     public static final int ZRESOLUTION = 65000;
@@ -534,16 +634,14 @@ public class FileTiff extends FileBase {
     
     private boolean isLogL = false; // photometric CIE Log2(L)
     
-    private boolean isLogLuv = false; // photometric CIE Log2(L) (u', v')
+    private boolean isLogLuv = false; // photometric CIE Log2(L) (u',
     
     private boolean SGILogCompression = false; // SGI Log Luminance RLE
     
     private boolean SGILog24Compression = false; // SGI Log 24-bit packed
     
-    private float exposureTime;
-    
+    private float exposureTime; 
     private float fNumber;
-    
     private short exposureProgram;
     private short isoSpeedRatings[];
     private byte[] exifVersion;
@@ -558,6 +656,34 @@ public class FileTiff extends FileBase {
     private byte[] makerNote;
     private byte[] characterCode;
     private byte[] userComment;
+    private byte[] flashPixVersion;
+    private int colorSpace;
+    private int fileSource;
+    private int sceneType;
+    private short customRendered;
+    private short exposureMode;
+    private short whiteBalance;
+    private float digitalZoomRatio;
+    private short sceneCaptureType;
+    private short gainControl;
+    private short contrast;
+    private short saturation;
+    private short sharpness;
+    private float shutterSpeed;
+    private float aperture;
+    private float brightness;
+    private float focalPlaneXResolution;
+    private float focalPlaneYResolution;
+    private short focalPlaneResolutionUnit;
+    private short sensingMethod;
+    
+    private byte[] gdalMetadata;
+    
+    private int badFaxLines = 0;
+    private short cleanFaxData = 0;
+    private int consecutiveBadFaxLines = 0;
+    
+    private short threshholding = 1;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -7082,83 +7208,85 @@ public class FileTiff extends FileBase {
                     
                     lightSource = (short)valueArray[0];
                     
-                    switch(lightSource) {
-                        case 0:
-                            Preferences.debug("OpenIFD: Light source is unknown\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 1:
-                            Preferences.debug("OpenIFD: Light source is daylight\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 2:
-                            Preferences.debug("OpenIFD: Light source is fluorescent\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 3:
-                            Preferences.debug("OpenIFD: Light source is tungsten(incandescent light)\n",
-                                              Preferences.DEBUG_FILEIO);
-                            break;
-                        case 4:
-                            Preferences.debug("OpenIFD: Light source is flash\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 9:
-                            Preferences.debug("OpenIFD: Light source is fine weather\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 10:
-                            Preferences.debug("OpenIFD: Light source is cloudy weather\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 11:
-                            Preferences.debug("OpenIFD: Light source is shade\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 12:
-                            Preferences.debug("OpenIFD: Light source is daylight fluorescent(D 5700 - 7100K)\n",
-                                              Preferences.DEBUG_FILEIO);
-                            break;
-                        case 13:
-                            Preferences.debug("OpenIFD: Light source is day white fluorescent(N 4600 - 5400K)\n",
-                                              Preferences.DEBUG_FILEIO);
-                            break;
-                        case 14:
-                            Preferences.debug("OpenIFD: Light source is cool white fluorescent(W 3900 - 4500K)\n",
-                                              Preferences.DEBUG_FILEIO);
-                            break;
-                        case 15:
-                            Preferences.debug("OpenIFD: Light source is white fluorescent(WW 3200 - 3700K)\n",
-                                              Preferences.DEBUG_FILEIO);
-                            break;
-                        case 17:
-                            Preferences.debug("OpenIFD: Light source is standard light A\n",
-                                              Preferences.DEBUG_FILEIO);
-                            break;
-                        case 18:
-                            Preferences.debug("OpenIFD: Light source is standard light B\n",
-                                              Preferences.DEBUG_FILEIO);
-                            break;
-                        case 19:
-                            Preferences.debug("OpenIFD: Light source is standard light C\n",
-                                              Preferences.DEBUG_FILEIO);
-                            break;
-                        case 20:
-                            Preferences.debug("OpenIFD: Light source is D55\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 21:
-                            Preferences.debug("OpenIFD: Light source is D65\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 22:
-                            Preferences.debug("OpenIFD: Light source is D75\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 23:
-                            Preferences.debug("OpenIFD: Light source is D50\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 24:
-                            Preferences.debug("OpenIFD: Light source is ISO studio tungsten\n",
-                                              Preferences.DEBUG_FILEIO);
-                            break;
-                        case 255:
-                            Preferences.debug("OpenIFD: Light source is other light source\n",
-                                              Preferences.DEBUG_FILEIO);
-                            break;
-                        default:
-                            Preferences.debug("OpenIFD: Light source has unrecognized value = " +
-                                               lightSource + "\n", Preferences.DEBUG_FILEIO);
+                    if (debuggingFileIO) {
+                        switch(lightSource) {
+                            case 0:
+                                Preferences.debug("OpenIFD: Light source is unknown\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 1:
+                                Preferences.debug("OpenIFD: Light source is daylight\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 2:
+                                Preferences.debug("OpenIFD: Light source is fluorescent\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 3:
+                                Preferences.debug("OpenIFD: Light source is tungsten(incandescent light)\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 4:
+                                Preferences.debug("OpenIFD: Light source is flash\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 9:
+                                Preferences.debug("OpenIFD: Light source is fine weather\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 10:
+                                Preferences.debug("OpenIFD: Light source is cloudy weather\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 11:
+                                Preferences.debug("OpenIFD: Light source is shade\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 12:
+                                Preferences.debug("OpenIFD: Light source is daylight fluorescent(D 5700 - 7100K)\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 13:
+                                Preferences.debug("OpenIFD: Light source is day white fluorescent(N 4600 - 5400K)\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 14:
+                                Preferences.debug("OpenIFD: Light source is cool white fluorescent(W 3900 - 4500K)\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 15:
+                                Preferences.debug("OpenIFD: Light source is white fluorescent(WW 3200 - 3700K)\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 17:
+                                Preferences.debug("OpenIFD: Light source is standard light A\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 18:
+                                Preferences.debug("OpenIFD: Light source is standard light B\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 19:
+                                Preferences.debug("OpenIFD: Light source is standard light C\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 20:
+                                Preferences.debug("OpenIFD: Light source is D55\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 21:
+                                Preferences.debug("OpenIFD: Light source is D65\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 22:
+                                Preferences.debug("OpenIFD: Light source is D75\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 23:
+                                Preferences.debug("OpenIFD: Light source is D50\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 24:
+                                Preferences.debug("OpenIFD: Light source is ISO studio tungsten\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 255:
+                                Preferences.debug("OpenIFD: Light source is other light source\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            default:
+                                Preferences.debug("OpenIFD: Light source has unrecognized value = " +
+                                                   lightSource + "\n", Preferences.DEBUG_FILEIO);
+                        }
                     }
                     
                     break;
@@ -7174,94 +7302,96 @@ public class FileTiff extends FileBase {
                     
                     flash = (short)valueArray[0];
                     
-                    switch(flash) {
-                        case 0x0:
-                            Preferences.debug("OpenIFD: Flash did not fire\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x1:
-                            Preferences.debug("OpenIFD: Flash fired\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x5:
-                            Preferences.debug("OpenIFD: Strobe return light not detected\n",
-                                              Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x7:
-                            Preferences.debug("OpenIFD: Strobe return light detected\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x9:
-                            Preferences.debug("OpenIFD: Flash fired, compulsory flash mode\n",
-                                              Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0xD:
-                            Preferences.debug("OpenIFD: Flash fired, compulsory flash mode\n" +
-                                              "Return light not detected\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0xF:
-                            Preferences.debug("OpenIFD: Flash fired, compulsory flash mode\n" +
-                                              "Return light detected\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x10:
-                            Preferences.debug("OpenIFD: Flash did not fire, compulsory flash mode\n",
-                                              Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x18:
-                            Preferences.debug("OpenIFD: Flash did not fire, auto mode\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x19:
-                            Preferences.debug("OpenIFD: Flash fired, auto mode\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x1D:
-                            Preferences.debug("OpenIFD: Flash fired, auto mode, return light not detected\n",
-                                               Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x1F:
-                            Preferences.debug("OpenIFD: Flash fired, auto mode, return light detected\n",
-                                               Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x20:
-                            Preferences.debug("OpenIFD: No flash function\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x41:
-                            Preferences.debug("OpenIFD: Flash fired, red-eye reduction mode\n",
-                                              Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x45:
-                            Preferences.debug("OpenIFD: Flash fired, red-eye reduction mode\n" +
-                                              "Return light not detected\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x47:
-                            Preferences.debug("OpenIFD: Flash fired, red-eye reduction mode\n" +
-                                              "Return light detected\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x49:
-                            Preferences.debug("OpenIFD: Flash fired, compulsory flash mode\n" +
-                                              "Red-eye reduction mode\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x4D:
-                            Preferences.debug("OpenIFD: Flash fired, compulsory flash mode\n" +
-                                              "red-eye reduction mode, return light not detected\n",
-                                              Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x4F:
-                            Preferences.debug("OpenIFD: Flash fired, compulsory flash mode\n" +
-                                              "red-eye reduction mode, return light detected\n",
-                                              Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x59:
-                            Preferences.debug("OpenIFD: Flash fired, auto mode, red-eye reduction mode\n",
-                                              Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x5D:
-                            Preferences.debug("OpenIFD: Flash fired, auto mode, return light not detected\n" +
-                                               "Red-eye reduction mode\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        case 0x5F:
-                            Preferences.debug("OpenIFD: Flash fired, auto mode, return light detected\n" +
-                                              "Red-eye reduction mode\n", Preferences.DEBUG_FILEIO);
-                            break;
-                        default:
-                            Preferences.debug("OpenIFD: Flash has unrecognized value = " + flash + "\n",
-                                              Preferences.DEBUG_FILEIO);
+                    if (debuggingFileIO) {
+                        switch(flash) {
+                            case 0x0:
+                                Preferences.debug("OpenIFD: Flash did not fire\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x1:
+                                Preferences.debug("OpenIFD: Flash fired\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x5:
+                                Preferences.debug("OpenIFD: Strobe return light not detected\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x7:
+                                Preferences.debug("OpenIFD: Strobe return light detected\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x9:
+                                Preferences.debug("OpenIFD: Flash fired, compulsory flash mode\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0xD:
+                                Preferences.debug("OpenIFD: Flash fired, compulsory flash mode\n" +
+                                                  "Return light not detected\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0xF:
+                                Preferences.debug("OpenIFD: Flash fired, compulsory flash mode\n" +
+                                                  "Return light detected\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x10:
+                                Preferences.debug("OpenIFD: Flash did not fire, compulsory flash mode\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x18:
+                                Preferences.debug("OpenIFD: Flash did not fire, auto mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x19:
+                                Preferences.debug("OpenIFD: Flash fired, auto mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x1D:
+                                Preferences.debug("OpenIFD: Flash fired, auto mode, return light not detected\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x1F:
+                                Preferences.debug("OpenIFD: Flash fired, auto mode, return light detected\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x20:
+                                Preferences.debug("OpenIFD: No flash function\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x41:
+                                Preferences.debug("OpenIFD: Flash fired, red-eye reduction mode\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x45:
+                                Preferences.debug("OpenIFD: Flash fired, red-eye reduction mode\n" +
+                                                  "Return light not detected\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x47:
+                                Preferences.debug("OpenIFD: Flash fired, red-eye reduction mode\n" +
+                                                  "Return light detected\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x49:
+                                Preferences.debug("OpenIFD: Flash fired, compulsory flash mode\n" +
+                                                  "Red-eye reduction mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x4D:
+                                Preferences.debug("OpenIFD: Flash fired, compulsory flash mode\n" +
+                                                  "red-eye reduction mode, return light not detected\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x4F:
+                                Preferences.debug("OpenIFD: Flash fired, compulsory flash mode\n" +
+                                                  "red-eye reduction mode, return light detected\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x59:
+                                Preferences.debug("OpenIFD: Flash fired, auto mode, red-eye reduction mode\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x5D:
+                                Preferences.debug("OpenIFD: Flash fired, auto mode, return light not detected\n" +
+                                                   "Red-eye reduction mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0x5F:
+                                Preferences.debug("OpenIFD: Flash fired, auto mode, return light detected\n" +
+                                                  "Red-eye reduction mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            default:
+                                Preferences.debug("OpenIFD: Flash has unrecognized value = " + flash + "\n",
+                                                  Preferences.DEBUG_FILEIO);
+                        }
                     }
                     
                     break;
@@ -7337,7 +7467,595 @@ public class FileTiff extends FileBase {
                                                   Preferences.DEBUG_FILEIO);
                             }
                         }
+                        else if (str.trim().equals("UNICODE")) {
+                            for (i1 = 0; i1 < count - 8; i1++) {
+                                userComment[i1] = (byte)valueArray[i1+8];
+                            }
+                            str = new String(userComment, 0, count-8, "UTF_16BE");
+                            if (debuggingFileIO) {
+                                Preferences.debug("OpenIFD: User comment = " + str.trim() + "\n",
+                                                  Preferences.DEBUG_FILEIO);
+                            }
+                        }
                     }
+                    break;
+                    
+                case EXIFTAG_FLASHPIX_VERSION:
+                    if (type != UNDEFINED) {
+                        throw new IOException("EXIFTAG_FLASHPIX_VERSION has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 4) {
+                        throw new IOException("EXIFTAG_FLASHPIX_VERSION has illegal count = " + count + "\n");
+                    }
+                    
+                    flashPixVersion = new byte[4];
+                    for (i1 = 0; i1 < 4; i1++) {
+                        flashPixVersion[i1] = (byte)valueArray[i1];
+                    }
+                    str = new String(flashPixVersion);
+                    if (debuggingFileIO) {
+                        Preferences.debug("OpenIFD: Flashpix Format Version = " + str + "\n",
+                                           Preferences.DEBUG_FILEIO);
+                    }   
+                    break;
+                    
+                case EXIFTAG_COLOR_SPACE:
+                    if (type != SHORT) {
+                        throw new IOException("EXIFTAG_COLOR_SPACE has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_COLOR_SPACE has illegal count = " + count + "\n");
+                    }
+                    
+                    colorSpace = (int)valueArray[0];
+                    
+                    if (debuggingFileIO) {
+                        switch(colorSpace) {
+                            case 1:
+                                Preferences.debug("OpenIFD: EXIFTAG_COlOR_SPACE = sRGB\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 0xffff:
+                                Preferences.debug("OpenIFD: EXIFTAG_COLOR_SPACE = uncalibrated\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            default:
+                                Preferences.debug("OpenIFD: EXIFTAG_COLOR_SPACE has an unrecognized value = " +
+                                                   colorSpace + "\n",Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    
+                    break;
+                    
+                case EXIFTAG_FILE_SOURCE:
+                    if (type != UNDEFINED) {
+                        throw new IOException("EXIFTAG_FILE_SOURCE has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_FILE_SOURCE has illegal count = " + count + "\n");
+                    }
+                    
+                    fileSource = (int)valueArray[0];
+                    
+                    if (debuggingFileIO) {
+                        switch(fileSource) {
+                            case 3:
+                                Preferences.debug("OpenIFD: Image was recorded on a DSC\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            default:
+                                Preferences.debug("OpenIFD: EXIFTAG_FILE_SOURCE has an unrecognized value = " +
+                                                   fileSource + "\n",Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    
+                    break;
+                    
+                case EXIFTAG_SCENE_TYPE:
+                    if (type != UNDEFINED) {
+                        throw new IOException("EXIFTAG_SCENE_TYPE has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_SCENE_TYPE has illegal count = " + count + "\n");
+                    }
+                    
+                    sceneType = (int)valueArray[0];
+                    
+                    if (debuggingFileIO) {
+                        switch(sceneType) {
+                            case 1:
+                                Preferences.debug("OpenIFD: Image was directly photographed\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            default:
+                                Preferences.debug("OpenIFD: EXIFTAG_SCENE_TYPE has an unrecognized value = " +
+                                                   sceneType + "\n",Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    
+                    break;
+                    
+                case EXIFTAG_CUSTOM_RENDERED:
+                    if (type != SHORT) {
+                        throw new IOException("EXIFTAG_CUSTOM_RENDERED has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_CUSTOM_RENDERED has illegal count = " + count + "\n");
+                    }
+                    
+                    customRendered = (short)valueArray[0];
+                    
+                    if (debuggingFileIO) {
+                        switch(customRendered) {
+                            case 0:
+                                Preferences.debug("OpenIFD: Normal processing on image data\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 1:
+                                Preferences.debug("OpenIFD: Custom processing on image data\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            default:
+                                Preferences.debug("OpenIFD: EXIFTAG_CUSTOM_RENDERED has unrecognized value = " +
+                                                  customRendered + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    
+                    break;
+                    
+                case EXIFTAG_EXPOSURE_MODE:
+                    if (type != SHORT) {
+                        throw new IOException("EXIFTAG_EXPOSURE_MODE has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_EXPOSURE_MODE has illegal count = " + count + "\n");
+                    }
+                    
+                    exposureMode = (short)valueArray[0];
+                    
+                    if (debuggingFileIO) {
+                        switch(exposureMode) {
+                            case 0:
+                                Preferences.debug("OpenIFD: Exposure mode is auto exposure\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 1:
+                                Preferences.debug("OpenIFD: Exposure mode is manual exposure\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 2:
+                                Preferences.debug("OpenIFD: Exposure mode is auto bracket\n" +
+                                        "In auto-bracketing mode the camera shoots a series of frames at\n" +
+                                        "different exposure settings\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            default:
+                                Preferences.debug("OpenIFD: EXIFTAG_EXPOSURE_MODE has unrecognized value = " +
+                                                  exposureMode + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    
+                    break;
+                    
+                case EXIFTAG_WHITE_BALANCE:
+                    if (type != SHORT) {
+                        throw new IOException("EXIFTAG_WHITE_BALANCE has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_WHITE_BALANCE has illegal count = " + count + "\n");
+                    }
+                    
+                    whiteBalance = (short)valueArray[0];
+                    
+                    if (debuggingFileIO) {
+                        switch(whiteBalance) {
+                            case 0:
+                                Preferences.debug("OpenIFD: White balance mode is auto white balance\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 1:
+                                Preferences.debug("OpenIFD: White balance mode is manual white balance\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            default:
+                                Preferences.debug("OpenIFD: EXIFTAG_WHITE_BALANCE has unrecognized value = " +
+                                                  whiteBalance + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    
+                    break;
+                    
+                case EXIFTAG_DIGITAL_ZOOM_RATIO:
+                    if (type != RATIONAL) {
+                        throw new IOException("EXIFTAG_DIGITAL_ZOOM_RATIO has illegal type = " + type + "\n");
+                    }
+
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_DIGITAL_ZOOM_RATIO has illegal count = " + count + "\n");
+                    }
+
+                    numerator = valueArray[0];
+                    denominator = valueArray[1];
+                    digitalZoomRatio = (float) numerator / denominator;
+                    if (debuggingFileIO) {
+                        if (numerator == 0) {
+                            Preferences.debug("OpneIFD: Digital zoom was not used\n", Preferences.DEBUG_FILEIO);
+                        }
+                        else {
+                        Preferences.debug("OpenIFD: Digital zoom ratio = " + digitalZoomRatio  +
+                                          "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    break;
+                    
+                case EXIFTAG_SCENE_CAPTURE_TYPE:
+                    if (type != SHORT) {
+                        throw new IOException("EXIFTAG_SCENE_CAPTURE_TYPE has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_SCENE_CAPTURE_TYPE has illegal count = " + count + "\n");
+                    }
+                    
+                    sceneCaptureType = (short)valueArray[0];
+                    
+                    if (debuggingFileIO) {
+                        switch(sceneCaptureType) {
+                            case 0:
+                                Preferences.debug("OpenIFD: Scene capture type is standard\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 1:
+                                Preferences.debug("OpenIFD: Scene capture type is landscape\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 2:
+                                Preferences.debug("OpenIFD: Scene capture type is portrait\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 3:
+                                Preferences.debug("OpenIFD: Scene capture type is night scene\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            default:
+                                Preferences.debug("OpenIFD: EXIFTAG_SCENE_CAPTURE_TYPE has unrecognized value = " +
+                                                  sceneCaptureType + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    
+                    break;
+                    
+                case EXIFTAG_GAIN_CONTROL:
+                    if (type != SHORT) {
+                        throw new IOException("EXIFTAG_GAIN_CONTROL has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_GAIN_CONTROL has illegal count = " + count + "\n");
+                    }
+                    
+                    gainControl = (short)valueArray[0];
+                    
+                    if (debuggingFileIO) {
+                        switch(gainControl) {
+                            case 0:
+                                Preferences.debug("OpenIFD: Overall image gain adjustment is none\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 1:
+                                Preferences.debug("OpenIFD: Overall image gain adjustment is low gain up\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 2:
+                                Preferences.debug("OpenIFD: Overall image gain adjustment is high gain up\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 3:
+                                Preferences.debug("OpenIFD: Overall image gain adjustment is low gain down\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 4:
+                                Preferences.debug("OpenIFD: Overall image gain adjustment is high gain down\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            default:
+                                Preferences.debug("OpenIFD: EXIFTAG_GAIN_CONTROL has unrecognized value = " +
+                                                  gainControl + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    
+                    break;
+                    
+                case EXIFTAG_CONTRAST:
+                    if (type != SHORT) {
+                        throw new IOException("EXIFTAG_CONTRAST has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_CONTRAST has illegal count = " + count + "\n");
+                    }
+                    
+                    contrast = (short)valueArray[0];
+                    
+                    if (debuggingFileIO) {
+                        switch(contrast) {
+                            case 0:
+                                Preferences.debug(
+                                "OpenIFD: Direction of contrast processing applied by the camera is normal\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 1:
+                                Preferences.debug(
+                                "OpenIFD: Direction of contrast processing applied by the camera is soft\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 2:
+                                Preferences.debug(
+                                "OpenIFD: Direction of contrast processing applied by the camera is hard\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            default:
+                                Preferences.debug("OpenIFD: EXIFTAG_CONTRAST has unrecognized value = " +
+                                                  contrast + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    
+                    break;
+                    
+                case EXIFTAG_SATURATION:
+                    if (type != SHORT) {
+                        throw new IOException("EXIFTAG_SATURATION has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_SATAURATION has illegal count = " + count + "\n");
+                    }
+                    
+                    saturation = (short)valueArray[0];
+                    
+                    if (debuggingFileIO) {
+                        switch(saturation) {
+                            case 0:
+                                Preferences.debug(
+                                "OpenIFD: Direction of saturation processing applied by the camera is normal\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 1:
+                                Preferences.debug(
+                                "OpenIFD: Direction of saturation processing applied by the camera is low saturation\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 2:
+                                Preferences.debug(
+                                "OpenIFD: Direction of saturation processing applied by the camera is high saturation\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            default:
+                                Preferences.debug("OpenIFD: EXIFTAG_SATURATION has unrecognized value = " +
+                                                  saturation + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    
+                    break;
+                    
+                case EXIFTAG_SHARPNESS:
+                    if (type != SHORT) {
+                        throw new IOException("EXIFTAG_SHARPNESS has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_SHARPNESS has illegal count = " + count + "\n");
+                    }
+                    
+                    sharpness = (short)valueArray[0];
+                    
+                    if (debuggingFileIO) {
+                        switch(sharpness) {
+                            case 0:
+                                Preferences.debug(
+                                "OpenIFD: Direction of sharpness processing applied by the camera is normal\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 1:
+                                Preferences.debug(
+                                "OpenIFD: Direction of sharpness processing applied by the camera is soft\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 2:
+                                Preferences.debug(
+                                "OpenIFD: Direction of sharpness processing applied by the camera is hard\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            default:
+                                Preferences.debug("OpenIFD: EXIFTAG_SHARPNESS has unrecognized value = " +
+                                                  sharpness + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    
+                    break;
+                    
+                case EXIFTAG_SHUTTER_SPEED_VALUE:
+                    if (type != SRATIONAL) {
+                        throw new IOException("EXIFTAG_SHUTTER_SPEED_VALUE has illegal type = " + type + "\n");
+                    }
+
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_SHUTTER_SPEED_VALUE has illegal count = " + count + "\n");
+                    }
+
+                    numerator = valueArray[0];
+                    denominator = valueArray[1];
+                    shutterSpeed = (float) numerator / denominator;
+                    if (debuggingFileIO) {
+                        Preferences.debug("OpenIFD: Shutter speed = " + shutterSpeed  +
+                                          "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    break;
+                    
+                case EXIFTAG_APERTURE_VALUE:
+                    if (type != RATIONAL) {
+                        throw new IOException("EXIFTAG_APERTURE_VALUE has illegal type = " + type + "\n");
+                    }
+
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_APERTURE_VALUE has illegal count = " + count + "\n");
+                    }
+
+                    numerator = valueArray[0];
+                    denominator = valueArray[1];
+                    aperture = (float) numerator / denominator;
+                    if (debuggingFileIO) {
+                        Preferences.debug("OpenIFD: Aperture = " + aperture  +
+                                          "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    break;
+                    
+                case EXIFTAG_BRIGHTNESS_VALUE:
+                    if (type != SRATIONAL) {
+                        throw new IOException("EXIFTAG_BRIGHTNESS_VALUE has illegal type = " + type + "\n");
+                    }
+
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_BRIGHTNESS_VALUE has illegal count = " + count + "\n");
+                    }
+
+                    numerator = valueArray[0];
+                    denominator = valueArray[1];
+                    brightness = (float) numerator / denominator;
+                    if (debuggingFileIO) {
+                        if (numerator == 0xffffffff) {
+                            Preferences.debug("OpenIFD: Brightness is unknown\n", Preferences.DEBUG_FILEIO);
+                        }
+                        else {
+                            Preferences.debug("OpenIFD: Brightness = " + brightness  +
+                                          "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    break;
+                    
+                case EXIFTAG_FOCAL_PLANE_X_RESOLUTION:
+                    if (type != RATIONAL) {
+                        throw new IOException("EXIFTAG_FOCAL_PLANE_X_RESOLUTION has illegal type = " + type + "\n");
+                    }
+
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_FOCAL_PLANE_X_RESOLUTION has illegal count = " + count + "\n");
+                    }
+
+                    numerator = valueArray[0];
+                    denominator = valueArray[1];
+                    focalPlaneXResolution = (float) numerator / denominator;
+                    if (debuggingFileIO) {
+                        Preferences.debug(
+                        "OpenIFD: Number of pixels in the image width direction\n" +
+                        "per focal plane resolution unit on the camera focal plane = " 
+                                          + focalPlaneXResolution  + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    break;
+                  
+                case EXIFTAG_FOCAL_PLANE_Y_RESOLUTION:
+                    if (type != RATIONAL) {
+                        throw new IOException("EXIFTAG_FOCAL_PLANE_Y_RESOLUTION has illegal type = " + type + "\n");
+                    }
+
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_FOCAL_PLANE_Y_RESOLUTION has illegal count = " + count + "\n");
+                    }
+
+                    numerator = valueArray[0];
+                    denominator = valueArray[1];
+                    focalPlaneYResolution = (float) numerator / denominator;
+                    if (debuggingFileIO) {
+                        Preferences.debug(
+                        "OpenIFD: Number of pixels in the image height direction\n" +
+                        "per focal plane resolution unit on the camera focal plane = " 
+                                          + focalPlaneYResolution  + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    break;
+                    
+                case EXIFTAG_FOCAL_PLANE_RESOLUTION_UNIT:
+                    if (type != SHORT) {
+                        throw new IOException("EXIFTAG_FOCAL_PLANE_RESOLUTION_UNIT has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_FOCAL_PLANE_RESOLUTION_UNIT has illegal count = " + count + "\n");
+                    }
+                    
+                    focalPlaneResolutionUnit = (short)valueArray[0];
+                    
+                    if (debuggingFileIO) {
+                        switch(focalPlaneResolutionUnit) {
+                            case 1:
+                                Preferences.debug("Focal plane resolution unit has no absolute unit of measurement\n",
+                                                   Preferences.DEBUG_FILEIO);
+                                break;
+                            case 2:
+                                Preferences.debug("Focal plane resolution unit = inch\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 3:
+                                Preferences.debug("Focal plane resolution unit = centimeter\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            default:
+                                Preferences.debug("EXIFTAG_FOCAL_PLANE_RESOLUTION_UNIT has unrecognized value = " +
+                                                  focalPlaneResolutionUnit + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    
+                    break;
+                    
+                case EXIFTAG_SENSING_METHOD:
+                    if (type != SHORT) {
+                        throw new IOException("EXIFTAG_SENSING_METHOD has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_SENSING_METHOD has illegal count = " + count + "\n");
+                    }
+                    
+                    sensingMethod = (short)valueArray[0];
+                    
+                    if (debuggingFileIO) {
+                        switch(sensingMethod) {
+                            case 1:
+                                Preferences.debug("OpenIFD: Sensing method is not defined\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 2:
+                                Preferences.debug("OpenIFD: One-chip color area sensor\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 3:
+                                Preferences.debug("OpenIFD: Two-chip color area sensor\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 4:
+                                Preferences.debug("OpenIFD: Three-chip color area sensor\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 5:
+                                Preferences.debug("OpenIFD: Color sequential area sensor\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 7:
+                                Preferences.debug("OpenIFD: Trilinear sensor\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 8:
+                                Preferences.debug("OpenIFD: Color sequential linear sensor\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            default:
+                                Preferences.debug("openIFD: EXIFTAG_SENSING_METHOD has unrecognized value = " +
+                                                  sensingMethod + "\n");
+                        }
+                    }
+                    
                     break;
                     
                 case STONITS:
@@ -7355,7 +8073,129 @@ public class FileTiff extends FileBase {
                     }
                     
                     break;
+                    
+                case GDAL_METADATA:
+                    if (type != ASCII) {
+                        throw new IOException("GDAL_METADATA has illegal type = " + type + "\n");
+                    }
 
+                    gdalMetadata = new byte[count];
+                    for (i1 = 0; i1 < count; i1++) {
+                        gdalMetadata[i1] = (byte) valueArray[i1];
+                    }
+
+                    str = new String(gdalMetadata);
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: GDAL metadata = " + str.trim() + "\n",
+                                          Preferences.DEBUG_FILEIO);
+                    }
+
+                    break;
+                    
+                case BAD_FAX_LINES:
+                    if ((type != SHORT) && (type != LONG)) {
+                        throw new IOException("BAD_FAX_LINES has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("BAD_FAX_LINES has illegal count = " + count + "\n");
+                    }
+                    
+                    badFaxLines = (int)valueArray[0];
+                    if (debuggingFileIO) {
+                        Preferences.debug("OpenIFD: " + badFaxLines +
+                                " bad fax lines were encountered by the facsimile device\n",
+                                          Preferences.DEBUG_FILEIO);
+                    }
+                    
+                    break;
+                    
+                case CLEAN_FAX_DATA:
+                    if (type != SHORT) {
+                        throw new IOException("CLEAN_FAX_DATA has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("CLEAN_FAX_DATA has illegal count = " + count + "\n");
+                    }
+                    
+                    cleanFaxData = (short)valueArray[0];
+                    
+                    if (debuggingFileIO) {
+                        switch(cleanFaxData) {
+                            case 0:
+                                Preferences.debug("OpenIFD: Tag CLEAN_FAX_DATA: No bad fax lines exist\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 1:
+                                Preferences.debug("OpenIFD: Tag CLEAN_FAX_DATA: Bad fax lines exist,\n" +
+                                        "but were regenerated by the receiver\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 2:
+                                Preferences.debug("OpenIFD: Tag CLEAN_FAX_DATA: Bad fax lines exist,\n" +
+                                        "but have not been regenerated\n", Preferences.DEBUG_FILEIO);
+                                break;  
+                            default:
+                                Preferences.debug("OpenIFD: Tag CLEAN_FAX_DATA has unrecognized value = " +
+                                       cleanFaxData +  "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    
+                    break;
+                    
+                case CONSECUTIVE_BAD_FAX_LINES:
+                    if ((type != SHORT) && (type != LONG)) {
+                        throw new IOException("CONSECUTIVE_BAD_FAX_LINES has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("CONSECUTIVE_BAD_FAX_LINES has illegal count = " + count + "\n");
+                    }
+                    
+                    consecutiveBadFaxLines = (int)valueArray[0];
+                    if (debuggingFileIO) {
+                        Preferences.debug("OpenIFD: " + consecutiveBadFaxLines +
+                                " consecutive bad fax lines were encountered by the facsimile device\n",
+                                          Preferences.DEBUG_FILEIO);
+                    }
+                    
+                    break;
+                    
+                case THRESHHOLDING:
+                    if (type != SHORT) {
+                        throw new IOException("THRESHHOLDING has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("THRESHHOLDING has illegal count = " + count + "\n");
+                    }
+                    
+                    threshholding = (short)valueArray[0];
+                    
+                    if (debuggingFileIO) {
+                        switch(threshholding) {
+                            case 1:
+                                Preferences.debug(
+                                "OpenIFD: No dithering or halftoning has been applied to the image data\n",
+                                                  Preferences.DEBUG_FILEIO);
+                                break;
+                            case 2:
+                                Preferences.debug(
+                                "OpenIFD: An ordered dither or halftone technique has been applied to the image data\n",
+                                Preferences.DEBUG_FILEIO);
+                                break;
+                            case 3:
+                                Preferences.debug(
+                                "OpenIFD: A randomzied process such as error diffusion has been applied\n" +
+                                "to the image data\n", Preferences.DEBUG_FILEIO);
+                                break;  
+                            default:
+                                Preferences.debug("OpenIFD: Tag THRESHHOLDING has unrecognized value = " +
+                                       threshholding +  "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    
+                    break;
                 default:
                     break;
             }
