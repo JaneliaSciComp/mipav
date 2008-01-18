@@ -2341,15 +2341,18 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    		loadVOIs(allStrings, false);
 	    		//solidifyVOIs();
 	    		display.getActiveImage().getParentFrame().updateImages(true);
+	    		display.updateImages(true);
 	    		
-	    		java.awt.Image qaImage = captureImage();
+	    		java.awt.Image edgeImage = captureImage();
 	    		
 	    		loadVOIs(new String[] {}, false);
 	    		loadLUT();
 	    		
-	    		java.awt.Image edgeImage = captureImage();
-	    		
+	    		java.awt.Image qaImage = captureImage();
+	    		removeLUT();
 	    		closePDF(edgeImage, qaImage);
+	    		display.getActiveImage().getParentFrame().updateImages(true);
+	    		display.updateImages(true);
 	    	}
 	    	
 	    }
@@ -2612,11 +2615,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			p.add(new Chunk("Thigh Tissue Analysis Report", new Font(Font.TIMES_ROMAN, 12)));
 			pdfDocument.add(new Paragraph(p));
 			pdfDocument.add(new Paragraph(new Chunk("")));
-          
+			pdfDocument.add(new Paragraph());
 			
 			Font fontNormal = FontFactory.getFont("Helvetica", 10, Font.NORMAL, Color.DARK_GRAY);
 			Font fontBold = FontFactory.getFont("Helvetica", 10, Font.BOLD, Color.BLACK);
 
+			/**
 			MultiColumnText mct = new MultiColumnText(20);
 			mct.setAlignment(Element.ALIGN_LEFT);
 			mct.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
@@ -2668,6 +2672,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			pTable.add(spTable);
 			pdfDocument.add(new Paragraph(new Chunk("")));
 			pdfDocument.add(pTable);
+			**/
 			
 			//create the Table where we will insert the data:
 			aTable = new PdfPTable(7);
