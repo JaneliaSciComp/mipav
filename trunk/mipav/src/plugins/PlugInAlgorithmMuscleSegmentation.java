@@ -2249,9 +2249,14 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    	
 	    }
 	    
-	    	    
+	    	
+	    /**
+	     * Does calculations on each (or all) of the various areas, and either saves them
+	     * to disk in a PDF or outputs in the Output-Data tab
+	     * @param all whether to calculate all (true if PDF)
+	     * @param doSave whether to save the output (and screen grabs) to a pdf
+	     */
 	    private void processCalculations(boolean all, boolean doSave) {
-	    	boolean pdfCreated = false;
 	    	for (int listNum = 0; listNum < list.length; listNum++) {
 	    		ListModel model = list[listNum].getModel();		    	
 	    		String [] listStrings = null;
@@ -2271,11 +2276,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    		if (listStrings.length > 0) {
 	    			
 	    			//if PDF hasnt been created and we're saving, create it now
-	    			if (doSave && !pdfCreated) {
-	    				if (!createPDF()) {
-	    					return;
-	    				}
-	    				pdfCreated = true;
+	    			if (doSave) {
+	    				createPDF();
 	    			}
 	    			//ModelLUT lut;
 	    			//Load VOIs and calculations
@@ -2315,10 +2317,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    	}
 	    	
 	    	if (doSave) {
-	    		
-	    		display.getActiveImage().getParentFrame().requestFocus();
-	    		
-	    		
+	    			    		
 	    		//now load all VOIs at once:
 	    		int totalSize = 0;
 	    		for (int listNum = 0; listNum < list.length; listNum++) {
@@ -2340,6 +2339,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    		} 
 	    		loadVOIs(allStrings, true);
 	    	
+	    		//loadLUT();
 	    		display.getActiveImage().getParentFrame().updateImages(true);
 	    		display.updateImages(true);
 	    		
@@ -2353,6 +2353,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    		closePDF(edgeImage, qaImage);
 	    		display.getActiveImage().getParentFrame().updateImages(true);
 	    		display.updateImages(true);
+	    		display.requestFocus();
 	    	}
 	    	
 	    }
@@ -2362,7 +2363,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    
 	}
     
+    /**
+     * Does a screen capture into a java.awt.Image of the original image
+     * @return the java.awt.Image
+     */
     private java.awt.Image captureImage() {
+    	display.getActiveImage().getParentFrame().requestFocus();
     	Rectangle currentRectangle;
     	Point p = new Point();
     	p.x = 0;
@@ -2584,19 +2590,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     }
     
     
-    private boolean createPDF() {
-    	JFileChooser chooser = new JFileChooser();
-		chooser.setDialogTitle("Save to PDF");
-		chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "pdf" }));
-		
-		File file = null;
-		int returnVal = chooser.showSaveDialog(null);
-
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-           file = chooser.getSelectedFile();
-        } else {
-        	return false;
-        }
+    private void createPDF() {		
+    	String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory();
+    	long time = System.currentTimeMillis();
+    	
+		File file = new File(fileDir + File.separator + "NIA_Seg-" + time + ".pdf");
 		
 		try {
 			pdfDocument = new Document();
@@ -2675,7 +2673,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			**/
 			
 			//create the Table where we will insert the data:
-			aTable = new PdfPTable(7);
+			aTable = new PdfPTable(new float[] {1.8f, 1f, 1f, 1f, 1f, 1f, 1f});
 			
 			// add Column Titles (in bold)
 			aTable.addCell(new PdfPCell(new Paragraph("Area (cm^2)", fontBold)));
@@ -2687,9 +2685,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			aTable.addCell(new PdfPCell(new Paragraph("Total HU", fontBold)));
 			
 			
-			return true;
+			return;
 		} catch (Exception e) {
-			return false;
+			return;
 		}
     }
     
@@ -2757,6 +2755,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		try {
 		Paragraph aPar = new Paragraph();
 		aPar.setAlignment(Element.ALIGN_CENTER);
+		aPar.add(new Paragraph());
 		aPar.add(aTable);
 		pdfDocument.add(new Paragraph());
 		pdfDocument.add(aPar);
