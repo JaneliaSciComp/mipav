@@ -2338,8 +2338,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		    			allStrings[counter] = (String)model.getElementAt(i) + ".xml";
 		    		}
 	    		} 
-	    		loadVOIs(allStrings, false);
-	    		//solidifyVOIs();
+	    		loadVOIs(allStrings, true);
+	    	
 	    		display.getActiveImage().getParentFrame().updateImages(true);
 	    		display.updateImages(true);
 	    		
