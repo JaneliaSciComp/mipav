@@ -27,6 +27,27 @@ import java.util.zip.*;
  * 24 bit integer data with SGILog24Compression and photometric = CIE Log2(L) (u', v') was obtained by porting
  * LogLuvDecode24, LogLuv24toXYZ, LogL10toY, uv_decode and XYZtoRGB24 in tif_luv.h and uvcode.h in
  * tif-4.0.0.alpha\libtiff.
+ * The current port of the LogLuv color compression is not ideal for the MIPAV system.  off_l16.tif, a grayscale picture
+ * of an office with a view out a much brighter window, preserves the wide range of pixels both inside the darker 
+ * office and outside the brighter window when converted to short in MIPAV.  However, when 24 bit SGILog24Compression
+ * off_luv24 and 32 bit SGILogCompression off_luv32 are converted to ARGB in MIPAV only the darker view inside the
+ * office is adequately represented.  The brighter view thru the window is mostly saturated, so a transformation
+ * to ARGB_USHORT which preserves the window information is really needed.
+ * Note that compression = 7 for new JPEG has been implemented, but compression = 6 for deprecated JPEG has not been
+ * implemented.  libtiff does have a 46 page file tif_ojpeg which reads in old JPEG, but even porting this would not
+ * be sufficient since the tif_ojpeg.c file interfaces with Release 6B of the independent JPEG library written by
+ * the Independent JPEG group.
+ * Note that deprecated LZW is not supported.  In TIFFLZWDecoder an exception is thrown if deprecated LZW is encountered:
+ *      if ((data[0] == (byte) 0x00) && (data[1] == (byte) 0x01)) {
+            throw new UnsupportedOperationException("TIFFLZWDecoder0");
+        }
+ * This happens with the libtiff file quad-lzw.tif.
+ * This problem could be resolved by porting tif_lzw.c from the libtiff library.
+ * Note that the tif reader will not work properly for some files with different tag values for different slices.
+ * For example, the libtiff file dscf0013.tif, which has slice 1 with 640 by 480 pixels and 15 rows per strip and slice 2 with 
+ * 160 by 120 pixels and 120 rows per strip, will not be read in properly.  The libtiff file text.tif with 4 bits per
+ * sample and thunderscan compression in the first slice and 1 bit per sample and no compression in the second
+ * slice will not be read in properly.
  *
  * @version  1.0 Feb 29, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
@@ -5884,18 +5905,15 @@ public class FileTiff extends FileBase {
                             Preferences.debug("FileTiff.openIFD: compression = CCITT FAX4 or T6\n",
                                               Preferences.DEBUG_FILEIO);
                         }
-                    } else if (valueArray[0] == 32773) {
-                        packBit = true;
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: compression = packed bit\n ", 2);
-                        }
+                    
                     } else if (valueArray[0] == 5) {
                         lzwCompression = true;
 
                         if (debuggingFileIO) {
                             Preferences.debug("FileTiff.openIFD: compression = LZW\n ", Preferences.DEBUG_FILEIO);
                         }
+                    } else if (valueArray[0] == 6) {
+                        throw new IOException("Deprecated JPEG compression is not implemented");
                     } else if (valueArray[0] == 7) {
                         jpegCompression = true;
                         
@@ -5907,6 +5925,12 @@ public class FileTiff extends FileBase {
                         
                         if (debuggingFileIO) {
                             Preferences.debug("FileTiff.openIFD: compression = zlib\n", Preferences.DEBUG_FILEIO);
+                        }
+                    } else if (valueArray[0] == 32773) {
+                        packBit = true;
+
+                        if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: compression = packed bit\n ", 2);
                         }
                     } else if (valueArray[0] == 32809) {
                         ThunderScanCompression = true;
