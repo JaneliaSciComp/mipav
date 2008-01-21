@@ -170,6 +170,8 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     public static final int COLOR_MAP = 320;
+    
+    public static final int HALFTONE_HINTS = 321;
 
     /** DOCUMENT ME! */
     public static final int TILE_WIDTH = 322;
@@ -192,6 +194,8 @@ public class FileTiff extends FileBase {
     public static final int INK_SET = 332;
     
     public static final int INK_NAMES = 333;
+    
+    public static final int EXTRA_SAMPLES = 338;
 
     /** DOCUMENT ME! */
     public static final int SAMPLE_FORMAT = 339;
@@ -442,6 +446,12 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     private int LUTOffset;
+    
+    private short lightHalftone;
+    
+    private short darkHalftone;
+    
+    private short extraSamples[];
 
     /** DOCUMENT ME! */
     private boolean lzwCompression = false; // true if the read data file has LZW compression
@@ -1838,9 +1848,8 @@ public class FileTiff extends FileBase {
      * OF THIS SOFTWARE.
      */
 
-    private int LogL16Decompresser(byte dataOut[], byte dataIn[], int rowsToDo) {
+    private int LogL16Decompresser(byte dataOut[], byte dataIn[], int bytesToRead, int rowsToDo) {
         int nPixels = xDim;
-        int bytesToRead = dataIn.length;
         int inPosition = 0;
         int i;
         int rc;
@@ -1910,7 +1919,7 @@ public class FileTiff extends FileBase {
      * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
      * OF THIS SOFTWARE.
      */
-    private int LogLuv24Decompresser(byte dataOut[], byte dataIn[], int rowsToDo) {
+    private int LogLuv24Decompresser(byte dataOut[], byte dataIn[], int bytesToRead, int rowsToDo) {
         final double M_LN2 = 0.69314718055994530942;
         final double U_NEU = 0.210526316;
         final double V_NEU = 0.473684211;
@@ -1966,7 +1975,6 @@ public class FileTiff extends FileBase {
         int row;
         int nPixels = xDim;
         int i;
-        int bytesToRead = dataIn.length;
         int tp;
         int p10;
         double L;
@@ -2113,9 +2121,8 @@ public class FileTiff extends FileBase {
      * OF THIS SOFTWARE.
      */
 
-    private int LogLuv32Decompresser(byte dataOut[], byte dataIn[], int rowsToDo) {
+    private int LogLuv32Decompresser(byte dataOut[], byte dataIn[], int bytesToRead, int rowsToDo) {
         int nPixels = xDim;
-        int bytesToRead = dataIn.length;
         int inPosition = 0;
         int i;
         int rc;
@@ -2258,7 +2265,7 @@ public class FileTiff extends FileBase {
      */
 
 
-    private int ThunderScanDecompresser(byte dataOut[], byte dataIn[], int rowsToDo) {
+    private int ThunderScanDecompresser(byte dataOut[], byte dataIn[], int bytesToRead, int rowsToDo) {
         final int THUNDER_CODE = 0xc0; /* Mask for 2 bit data code word */
         // Code values
         final int THUNDER_RUN = 0x00; /* Run of pixels with encoded count */
@@ -2273,7 +2280,6 @@ public class FileTiff extends FileBase {
         int outPosition = 0;
         int outPositionLoop;
         int bytesToGenerate = ((xDim + 1)/2) * rowsToDo;
-        int bytesToRead = dataIn.length;
         byte lastPixel;
         int nPixels;
         int n;
@@ -6913,6 +6919,10 @@ public class FileTiff extends FileBase {
                     
                     tableStream = new JPEGInputStream(new ByteArrayInputStream(jpegTables));
                     
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: JPEG tables are above\n", Preferences.DEBUG_FILEIO);
+                    }
+                    
                     break;
                     
                 case EXIFIFD:
@@ -8195,6 +8205,67 @@ public class FileTiff extends FileBase {
                         }
                     }
                     
+                    break;
+                    
+                case HALFTONE_HINTS:
+                    if (type != SHORT) {
+                        throw new IOException("HALFTONE_HINTS has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 2) {
+                        throw new IOException("HALFTONE_HINTS has illegal count = " + count + "\n");
+                    }
+                    
+                    lightHalftone = (short)valueArray[0];
+                    darkHalftone = (short)valueArray[1];
+                    if (debuggingFileIO) {
+                        Preferences.debug("OpenIFD: The highlight gray level which should be halftoned at the\n" +
+                                "lightest printable tint of the final output device = " + lightHalftone + "\n",
+                                Preferences.DEBUG_FILEIO);
+                        Preferences.debug("OpenIFD: The shadow gray level which should be halftoned at the\n" +
+                                "darkest printable tint of the final output device = " + darkHalftone + "\n",
+                                Preferences.DEBUG_FILEIO);
+                    }
+                    break;
+                    
+                case EXTRA_SAMPLES:
+                    if (type != SHORT) {
+                        throw new IOException("EXTRA_SAMPLES has illegal type = " + type + "\n");
+                    }
+                    
+                    extraSamples = new short[count];
+                    for (i1 = 0; i1 < count; i1++) {
+                        extraSamples[i1] = (short)valueArray[i1];
+                    }
+                    
+                    if (debuggingFileIO) {
+                        for (i1 = 0; i1 < count; i1++) {
+                            switch(extraSamples[i1]) {
+                                case 0:
+                                    Preferences.debug("OpenIFD: Extra sample " + (i1 + 1) + " is unspecified data\n",
+                                                      Preferences.DEBUG_FILEIO);
+                                    break;
+                                case 1:
+                                    Preferences.debug("OpenIFD: Extra sample " + (i1 + 1) + 
+                                            " is asscociated alpha data(with pre-multiplied color)\n" +
+                                            "Associated alpha data is opacity information\n",
+                                            Preferences.DEBUG_FILEIO);
+                                    break;
+                                case 2:
+                                    Preferences.debug("OpenIFD: Extra sample " + (i1 + 1) +
+                                            " is unassociated alpha data\n" +
+                                            "Unassociated alpha data is transparency information that logically\n" +
+                                            "exists independent of the image; it is commonly called a soft matte\n",
+                                            Preferences.DEBUG_FILEIO);
+                                    break;
+                                default:
+                                    Preferences.debug("OpenIFD: Extra sample " + (i1 + 1) +
+                                            " has an unrecognized value = " + extraSamples[i1] + "\n",
+                                            Preferences.DEBUG_FILEIO);
+                                    
+                            }
+                        }
+                    }
                     break;
                 default:
                     break;
@@ -11730,12 +11801,8 @@ public class FileTiff extends FileBase {
                                     resultLength = decomp.length;
                                 }
                                 else if (ThunderScanCompression) {
-                                    data = new byte[nBytes];
-                                    for (j = 0; j < nBytes; j++) {
-                                        data[j] = byteBuffer[j];
-                                    }
                                     rowsToDo = Math.min(rowsPerStrip, yDim - y);
-                                    resultLength = ThunderScanDecompresser(decomp, data, rowsToDo);
+                                    resultLength = ThunderScanDecompresser(decomp, byteBuffer, nBytes, rowsToDo);
                                 }
                                 else { // zlibCompression
                                     try {
@@ -11939,12 +12006,8 @@ public class FileTiff extends FileBase {
                                 zlibDecompresser.reset();
                             }
                             else { // SGILogCompression
-                                data = new byte[nBytes];
-                                for (j = 0; j < nBytes; j++) {
-                                    data[j] = byteBuffer[j];
-                                }
                                 rowsToDo = Math.min(rowsPerStrip, yDim - y);
-                                resultLength = LogL16Decompresser(decomp, data, rowsToDo);    
+                                resultLength = LogL16Decompresser(decomp, byteBuffer, nBytes, rowsToDo);    
                             }
 
                             for (j = 0; j < resultLength; j += 2) {
@@ -12571,20 +12634,12 @@ public class FileTiff extends FileBase {
                                         zlibDecompresser.reset();
                                     }
                                     else if (SGILogCompression) {
-                                        data = new byte[nBytes];
-                                        for (j = 0; j < nBytes; j++) {
-                                            data[j] = byteBuffer[j];
-                                        }
                                         rowsToDo = Math.min(rowsPerStrip, yDim - y);
-                                        resultLength = LogLuv32Decompresser(decomp, data, rowsToDo);       
+                                        resultLength = LogLuv32Decompresser(decomp, byteBuffer, nBytes, rowsToDo);       
                                     }
                                     else { // SGILog24Compression
-                                        data = new byte[nBytes];
-                                        for (j = 0; j < nBytes; j++) {
-                                            data[j] = byteBuffer[j];
-                                        }
                                         rowsToDo = Math.min(rowsPerStrip, yDim - y);
-                                        resultLength = LogLuv24Decompresser(decomp, data, rowsToDo);      
+                                        resultLength = LogLuv24Decompresser(decomp, byteBuffer, nBytes, rowsToDo);      
                                     }
     
                                     //System.err.println("Decoded byte length: " + resultLength);
