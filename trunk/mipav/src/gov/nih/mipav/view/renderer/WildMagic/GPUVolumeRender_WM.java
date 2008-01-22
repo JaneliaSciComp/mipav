@@ -117,26 +117,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
             m_kCuller = null;
         }
 
-        /*
-        if ( m_kClipArb != null )
-        {
-            m_kClipArb.dispose();
-            m_kClipArb = null;
-        }
-        if ( m_kClipEye != null )
-        {
-            m_kClipEye.dispose();
-            m_kClipEye = null;
-        }
-        if ( m_kClipEyeInv != null )
-        {
-            m_kClipEyeInv.dispose();
-            m_kClipEyeInv = null;
-        }
-
-        m_abDisplayPolyline = null;
-        */
-
         m_kImageA = null;
         m_kLUTa = null;
         m_kRGBTa = null;
@@ -281,10 +261,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
                     //Draw frame rate:
                     m_pkRenderer.SetCamera(m_spkCamera);
-                    //if ( m_bTestFrameRate )
-                    //{
-                     //   DrawFrameRate(8,16,ColorRGBA.WHITE);
-                    //}
+                    if ( m_bTestFrameRate )
+                    {
+                       DrawFrameRate(8,16,ColorRGBA.WHITE);
+                    }
 
 
                     if ( (m_kSculptor != null) && m_kSculptor.IsSculptDrawn() )
@@ -309,10 +289,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
                 //Draw frame rate:
                 m_pkRenderer.SetCamera(m_spkCamera);
-                //if ( m_bTestFrameRate )
-                //{
-                 //   DrawFrameRate(8,16,ColorRGBA.WHITE);
-                //}
+                if ( m_bTestFrameRate )
+                {
+                    DrawFrameRate(8,16,ColorRGBA.WHITE);
+                }
 
                 if ( (m_kSculptor != null) && m_kSculptor.IsSculptDrawn() )
                 {
@@ -557,8 +537,33 @@ implements GLEventListener, KeyListener, MouseMotionListener
         case 'o':
             DisplayOrientationCube( !m_kVolumeCube.GetDisplay() );
             return;
+        case 'q':
+            setOrthographicProjection();
+            return;
+        case 'Q':
+            setPerspectiveProjection();
+            return;
+        case 'w':
+            m_afArbEquation[3] += 0.05;
+            System.err.println( "+ " + m_afArbEquation[3]);
+            // Update shader with rotated normal and distance:
+            if ( m_kVolumeRayCast != null )
+            {
+                m_kVolumeRayCast.SetClipArb(m_afArbEquation);
+            }
+            return;
+        case 'W':
+            m_afArbEquation[3] -= 0.05;
+            System.err.println( "- " + m_afArbEquation[3]);
+            // Update shader with rotated normal and distance:
+            if ( m_kVolumeRayCast != null )
+            {
+                m_kVolumeRayCast.SetClipArb(m_afArbEquation);
+            }
+            return;
 
             /*
+
 
         case 'v':
             m_bDisplayEllipsoids = !m_bDisplayEllipsoids;
@@ -1032,14 +1037,15 @@ implements GLEventListener, KeyListener, MouseMotionListener
      */
     public void enableArbitraryClipPlane( boolean bEnable, boolean bDisplay, ColorRGB kColor )
     {
-        /*
-        setArbColor(kColor);
-        displayArbitraryClipPlane(bDisplay);
+        if ( m_kVolumeClip != null )
+        {
+            m_kVolumeClip.setArbColor(kColor);
+            m_kVolumeClip.DisplayArb(bDisplay);
+        }
         if ( !bEnable )
         {
-            setArbitraryClipPlane((float)(m_kImageA.getExtents()[0]-1));
+            setArbitraryClipPlane((float)(m_kImageA.getExtents()[0] -1));
         }
-        */
     }
 
     /**
@@ -1048,22 +1054,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
      */
     public void displayArbitraryClipPlane( boolean bDisplay )
     {
-        /*
-        if ( m_bDisplayClipArb != bDisplay )
+        if ( m_kVolumeClip != null )
         {
-            m_bDisplayClipArb = bDisplay;
-            if ( m_bDisplayClipArb )
-            {
-                m_spkScene.AttachChild(m_kArbRotate); //m_kClipArb);
-            }
-            else
-            {
-                m_spkScene.DetachChild(m_kArbRotate); //m_kClipArb);
-            }
-            m_spkScene.UpdateGS();
-            m_spkScene.UpdateRS();
+            m_kVolumeClip.DisplayArb(bDisplay);
         }
-        */
     }
 
 
@@ -1073,50 +1067,51 @@ implements GLEventListener, KeyListener, MouseMotionListener
      */
     public void setArbitraryClipPlane( float f4 )
     {
-        /*
-        f4 /= (m_kImageA.getExtents()[0] -1);
+        System.err.println( f4 );
+        f4 /= (m_kImageA.getExtents()[0] -1);     
         m_kArbitraryClip = new Vector4f(1,0,0,f4);
         doClip();
-        */
     }
 
     /**
      * Calculates the rotation for the arbitrary clip plane.
      */
-    private void doClip() 
-    {        
-        /*
-        // update position of the bounding box:
-        Vector3f kTranslate = new Vector3f( m_kArbitraryClip.W() * m_fX, 0, 0 );
-        kTranslate.addEquals(m_kTranslate);
-        m_kClipArb.Local.SetTranslate( kTranslate );
+    private void doClip( ) 
+    {           
+        if ( m_kArbitraryClip == null )
+        {
+            m_kArbitraryClip = new Vector4f(1,0,0,0);            
+        }
+        if ( m_kVolumeClip != null )
+        {
+            m_kVolumeClip.SetArbPlane( m_kArbitraryClip.W() * m_fX );
+        }
 
         // Rotate normal vector:
-        Matrix3f kClipRotate = m_kArbRotate.Local.GetRotate();
-        Vector3f kNormal = new Vector3f( m_kArbitraryClip.X(), m_kArbitraryClip.Y(), m_kArbitraryClip.Z() );
-        kNormal = kClipRotate.mult(kNormal);
+        Matrix3f kClipRotate = m_kVolumeClip.ArbRotate().Local.GetRotate();
+        Vector3f kNormal = new Vector3f( 1,0,0 );
+        kClipRotate.mult(kNormal, kNormal);
         kNormal.Normalize();
 
-        float[] afEquation = new float[4];
-        afEquation[0] = kNormal.X();
-        afEquation[1] = kNormal.Y();
-        afEquation[2] = kNormal.Z();
-        afEquation[3] = m_kArbitraryClip.W();
+        // Scale kNormal based on the scaled volume:
+        kNormal.SetData( kNormal.X() * m_fX, kNormal.Y() * m_fY, kNormal.Z() * m_fZ );
+        float fLength = kNormal.Length();
+        kNormal.Normalize();
+        m_afArbEquation[0] = kNormal.X();
+        m_afArbEquation[1] = kNormal.Y();
+        m_afArbEquation[2] = kNormal.Z();
 
-        Vector3f kPos = new Vector3f( m_kArbitraryClip.W(), 0, 0 );
-        kPos.subEquals( new Vector3f( .5f, .5f, .5f ));
-        kPos = kClipRotate.mult(kPos);
+        // Calculate the distance to the plane, scaled based on the scaled kNormal:
+        Vector3f kPos = new Vector3f();
+        kNormal.scale( (m_kArbitraryClip.W() - 0.5f)/fLength, kPos );
         kPos.addEquals( new Vector3f( .5f, .5f, .5f ));
-        afEquation[3] = kNormal.Dot(kPos);
-
+        m_afArbEquation[3] = kNormal.Dot(kPos);   
+        
         // Update shader with rotated normal and distance:
         if ( m_kVolumeRayCast != null )
         {
-            m_kVolumeRayCast.SetClipArb(afEquation);
+            m_kVolumeRayCast.SetClipArb(m_afArbEquation);
         }
-        m_spkScene.UpdateGS();
-        m_spkScene.UpdateRS();
-        */
     }
 
     /**
@@ -1157,16 +1152,13 @@ implements GLEventListener, KeyListener, MouseMotionListener
      */
     public void setArbColor( ColorRGB kColor )
     {
-        /*
         kColor.R( (float)(kColor.R()/255.0) );
         kColor.G( (float)(kColor.G()/255.0) );
         kColor.B( (float)(kColor.B()/255.0) );
-        for ( int i = 0; i < 4; i++ )
+        if ( m_kVolumeClip != null )
         {
-            m_kClipArb.VBuffer.SetColor3( 0, i, kColor );
+            m_kVolumeClip.setArbColor(kColor);
         }
-        m_kClipArb.VBuffer.Release();
-        */
     }
 
     /**
@@ -1193,14 +1185,12 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             super.mousePressed(e);
         }
-        /*
-        else if ( m_bDisplayClipArb )
+        else if ( (m_kVolumeClip != null) && (m_kVolumeClip.DisplayArb()) )
         {
-            InitializeObjectMotion(m_kArbRotate);
+            InitializeObjectMotion(m_kVolumeClip.ArbRotate());
             super.mousePressed(e);
             InitializeObjectMotion(m_spkScene);
         }
-        */
     }
 
 
@@ -1215,15 +1205,13 @@ implements GLEventListener, KeyListener, MouseMotionListener
             {
                 super.mouseDragged(e);
             }
-            /*
-            else if ( m_bDisplayClipArb )
+            else if ( (m_kVolumeClip != null) && (m_kVolumeClip.DisplayArb()) )
             {
-                InitializeObjectMotion(m_kArbRotate);
+                InitializeObjectMotion(m_kVolumeClip.ArbRotate());
                 super.mouseDragged(e);
                 InitializeObjectMotion(m_spkScene);
                 doClip();
             }
-            */
         }
     }
 
@@ -1676,6 +1664,37 @@ implements GLEventListener, KeyListener, MouseMotionListener
         }
     }
 
+    public void resetAxisX()
+    {
+        m_spkScene.Local.SetRotateCopy( Matrix3f.IDENTITY );
+        m_spkScene.Local.GetRotate().FromAxisAngle( Vector3f.UNIT_X, (float)Math.PI/2.0f );
+        UpdateSceneRotation();
+    }
+
+    public void resetAxisY()
+    {
+        m_spkScene.Local.SetRotateCopy( Matrix3f.IDENTITY );
+        m_spkScene.Local.GetRotate().FromAxisAngle( Vector3f.UNIT_Y, -(float)Math.PI/2.0f );
+        UpdateSceneRotation();
+    }
+
+    public void resetAxis()
+    {
+        m_spkScene.Local.SetRotateCopy( Matrix3f.IDENTITY );
+        UpdateSceneRotation();
+    }
+
+    private void UpdateSceneRotation()
+    {
+        m_spkScene.UpdateGS();
+        m_kCuller.ComputeVisibleSet(m_spkScene);
+        
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+        }
+    }
+
 
     private VolumeImage m_kVolumeImageA;
     private VolumeImage m_kVolumeImageB;
@@ -1720,14 +1739,12 @@ implements GLEventListener, KeyListener, MouseMotionListener
     private boolean m_bInit = false;
     /** Scene translation, centers the scene: */
     private Vector3f m_kTranslate;
-//     /** Arbitrary clip plane equation: */
-//     private Vector4f m_kArbitraryClip;
+    /** Arbitrary clip plane equation: */
+    private Vector4f m_kArbitraryClip;
     /** Normalized volume extents: */
     private float m_fX, m_fY, m_fZ, m_fMax;
     /** Flag for indicating the that Java Container is visible or not: */
     private boolean m_bVisible = true;
-    /** Node for rotating the arbitrary clip plane with the mouse trackball: */
-    private Node m_kArbRotate = new Node();
 
     /** Window with the shader paramter interface: */
     private ApplicationGUI m_kShaderParamsWindow = null;
@@ -1753,4 +1770,5 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
     private boolean m_bFirstRender = true;
 
+    float[] m_afArbEquation = new float[4];
 }
