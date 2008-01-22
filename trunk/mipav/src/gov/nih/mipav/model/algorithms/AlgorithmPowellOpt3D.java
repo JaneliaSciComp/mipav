@@ -1,10 +1,12 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
+import java.util.concurrent.CountDownLatch;
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.model.structures.Point3Dd;
+import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.model.structures.jama.Matrix;
+import gov.nih.mipav.util.MipavUtil;
 
 
 /**
@@ -525,29 +527,33 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
      */
     public void runAlgorithm() {
         int count = 0;
-        int boundGuess;
-        double initialGuess;
-        double[] pt = new double[nDims];
-        double[] directions = new double[nDims];
+        double[][] pts = new double[nDims][nDims];
         boolean keepGoing = true;
 
         functionAtBest = Double.MAX_VALUE;
+        
+        final double[][] bestCosts = new double[nDims][1];
+        progressStep = (maxProgressValue -minProgressValue)/ maxIterations;
 
-        while ((count < maxIterations) && keepGoing) {
+        while ((count < maxIterations) && keepGoing && !parent.isThreadStopped()) {
 
             // Initialize data for testing tolerance.
             for (int i = 0; i < nDims; i++) {
-                pt[i] = point[i];
+            	for(int j = 0; j < nDims; j++){
+            		pts[i][j] = point[j];
+            	}
             }
 
             keepGoing = false; // Only terminate loop when point changes for ALL directions are less
 
             // than their respective tolerances.  Will only stay false if ALL are false.
 
+        	fireProgressStateChanged((int)(minProgressValue + count*progressStep));
+            
+            final CountDownLatch doneSignal = new CountDownLatch(nDims);
+
             for (int i = 0; (i < nDims) && !parent.isThreadStopped(); i++) {
 
-                    fireProgressStateChanged(((((nDims * count) + (i + 1)) * 100) / (nDims * maxIterations)));
-              
                 // Change by Z Cohen on 6/14/04
                 // Old code handled the first run through this loop differently than
                 // subsequent runs.
@@ -573,23 +579,39 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
                 // End of old code.
                 //
                 // Here's the new code:
-                boundGuess = bracketBound;
-                initialGuess = 0;
+                final int boundGuess = bracketBound;
+                final double initialGuess = 0;
+                final double[] directions = new double[nDims];
 
                 // directions should hold "1" for i and "0" for all other dimensions.
                 for (int j = 0; j < nDims; j++) {
                     directions[j] = 0;
                 }
-
                 directions[i] = 1;
 
+                final int dimIndex = i;
                 // Preferences.debug("Calling lineMinimization for dimension "+i +".\n");
-                functionAtBest = lineMinimization(initialGuess, boundGuess, directions);
-
-                if (Math.abs(point[i] - pt[i]) > tolerance[i]) {
-                    keepGoing = true;
-                }
+                Runnable task = new Runnable(){
+                	public void run(){
+                        lineMinimization(point, initialGuess, boundGuess, directions, bestCosts[dimIndex]);
+                        doneSignal.countDown();
+                	}
+                };
+                MipavUtil.mipavThreadPool.execute(task);
             } // end of nDims loop
+            try {
+                doneSignal.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            int index = findBestDirection(bestCosts);
+            if (Math.abs(point[index] - pts[index][index]) > tolerance[index]) {
+                keepGoing = true;
+                for(int i = 0; i < nDims; i++){
+                	point[i] = pts[index][i];
+                }
+            }
 
             if (parent.isThreadStopped()) {
                 return;
@@ -600,9 +622,21 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
 
         // Preferences.debug("Exited loop with count= " +count +", maxIters " +maxIterations +
         // ", and keepGoing= " +keepGoing +".\n");
+        fireProgressStateChanged((int)maxProgressValue);
         return;
     }
 
+    private int findBestDirection(double[][] costs){
+    	double best = costs[0][0];
+    	int indexAtBest = 0;
+    	for(int i = 1; i < nDims; i++){
+    		if(best < costs[i][0]){
+    			best = costs[i][0];
+    			indexAtBest = i;
+    		}
+    	}
+    	return indexAtBest;
+    }
     /**
      * Sets the initial point to the value passed in.
      *

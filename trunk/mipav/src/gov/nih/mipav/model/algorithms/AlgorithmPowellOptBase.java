@@ -229,7 +229,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
      *
      * @return  Minimum of the point along the given vector.
      */
-    protected double lineMinimization(double initial, double boundguess, double[] directions) {
+    protected void lineMinimization(double[] pt, double initial, double boundguess, double[] directions, double[]bestCost) {
 
         // Set up tolerances in direction of line minimization.
         // "unit_directions" is a unit vector in the direction of "directions"
@@ -254,18 +254,18 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
         Bracket bracket = new Bracket();
 
         bracket.a = boundguess * unit_tolerance;
-        bracket.functionAtA = oneDimension(bracket.a, unit_directions);
+        bracket.functionAtA = oneDimension(pt, bracket.a, unit_directions);
 
         bracket.b = 0;
 
         if (initial == 0) { // for first call to lineMinimization within PowellOpt3D
-            bracket.functionAtB = oneDimension(bracket.b, unit_directions);
+            bracket.functionAtB = oneDimension(pt, bracket.b, unit_directions);
         } else {
             bracket.functionAtB = initial;
         }
 
         // minimumBracket is called and will set bracket.c and functionAtC.
-        minimumBracket(bracket, unit_directions);
+        minimumBracket(pt, bracket, unit_directions);
         // if (initial == 0)  Preferences.debug("Initial bracket: \n" +bracket);
 
         double minDist = 0.1 * unit_tolerance;
@@ -306,7 +306,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
                 xNew = bracket.b - (directionN * 5 * minDist);
             }
 
-            yNew = oneDimension(xNew, unit_directions);
+            yNew = oneDimension(pt, xNew, unit_directions);
 
             if (((xNew - bracket.b) * (bracket.c - bracket.b)) > 0) { // is xnew between bracket.c and bracket.b ?
 
@@ -341,7 +341,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
             point[i] = (bracket.b * unit_directions[i]) + point[i];
         }
 
-        return bracket.functionAtB;
+        bestCost[0] = bracket.functionAtB;
     }
 
     /**
@@ -409,14 +409,14 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
      *
      * @return  The class Bracket which contains a, b, c, and f(a), f(b), and f(c).
      */
-    private Bracket minimumBracket(Bracket bracket, double[] unit_directions) {
+    private Bracket minimumBracket(double[] pt, Bracket bracket, double[] unit_directions) {
 
         if (bracket.functionAtA == 0) {
-            bracket.functionAtA = oneDimension(bracket.a, unit_directions);
+            bracket.functionAtA = oneDimension(pt, bracket.a, unit_directions);
         }
 
         if (bracket.functionAtB == 0) {
-            bracket.functionAtB = oneDimension(bracket.b, unit_directions);
+            bracket.functionAtB = oneDimension(pt, bracket.b, unit_directions);
         }
 
         if (bracket.functionAtA < bracket.functionAtB) { // f(a) should be > f(b).  if not, swap a and b
@@ -437,7 +437,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
         }
 
         bracket.c = bracket.b + (GOLD * (bracket.b - bracket.a));
-        bracket.functionAtC = oneDimension(bracket.c, unit_directions);
+        bracket.functionAtC = oneDimension(pt, bracket.c, unit_directions);
 
         while (bracket.functionAtB > bracket.functionAtC) { // note: must maintain bracket.functionAtA >=
                                                             // bracket.functionAtB
@@ -448,7 +448,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
                 newX2 = bracket.b + (GOLD * (bracket.c - bracket.a));
             }
 
-            newY2 = oneDimension(newX2, unit_directions);
+            newY2 = oneDimension(pt, newX2, unit_directions);
 
             if (((newX2 - bracket.b) * (newX2 - bracket.a)) < 0) { // newx2 is between bracket.a and bracket.b
 
@@ -526,12 +526,12 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
      *
      * @return  Cost of function at x.
      */
-    private double oneDimension(double x, double[] unit_directions) {
+    private double oneDimension(double[] pt, double x, double[] unit_directions) {
         double f;
-        double[] xt = new double[nDims];
+        double[] xt = new double[pt.length];
 
-        for (int i = 0; i < nDims; i++) {
-            xt[i] = point[i] + (x * unit_directions[i]);
+        for (int i = 0; i < pt.length; i++) {
+            xt[i] = pt[i] + (x * unit_directions[i]);
         }
 
         f = costFunction.cost(convertToMatrix(xt));
