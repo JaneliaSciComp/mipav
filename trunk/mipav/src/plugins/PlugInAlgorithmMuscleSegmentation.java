@@ -324,37 +324,34 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         protected JPanel buildButtons() {
             JPanel buttonPanel = new JPanel();
             buttonGroup = new JButton[buttonStringGroup.length];
-            int rowSize = 3;
-            System.out.println((buttonGroup.length/rowSize)+"\t\t"+((buttonGroup.length/rowSize)));
-            for(int mod=0; mod<buttonGroup.length/rowSize; mod++) {
-            //if (buttonGroup.length > 3) {
-            	JPanel buttonRow = new JPanel();
-            	//JPanel bottomPanel = new JPanel();
-            	for(int i=0; i<rowSize; i++) {
-            		buttonGroup[i+rowSize*mod] = new JButton(buttonStringGroup[i*mod]);
-            		buttonGroup[i+rowSize*mod].addActionListener(parentFrame);
-            		buttonGroup[i+rowSize*mod].addActionListener(this);
-            		buttonGroup[i+rowSize*mod].setActionCommand(buttonStringGroup[i*mod]);
-            		if (buttonStringGroup[i+rowSize*mod].length() < 10) { 
-            			buttonGroup[i+rowSize*mod].setMinimumSize(MipavUtil.defaultButtonSize);
-            			buttonGroup[i+rowSize*mod].setPreferredSize(MipavUtil.defaultButtonSize);
+            
+            if (buttonGroup.length > 3) {
+            	JPanel topPanel = new JPanel();
+            	JPanel bottomPanel = new JPanel();
+            	for(int i=0; i<buttonStringGroup.length; i++) {
+            		buttonGroup[i] = new JButton(buttonStringGroup[i]);
+            		buttonGroup[i].addActionListener(parentFrame);
+            		buttonGroup[i].addActionListener(this);
+            		buttonGroup[i].setActionCommand(buttonStringGroup[i]);
+            		if (buttonStringGroup[i].length() < 10) { 
+            			buttonGroup[i].setMinimumSize(MipavUtil.defaultButtonSize);
+            			buttonGroup[i].setPreferredSize(MipavUtil.defaultButtonSize);
             		} else {
-            			buttonGroup[i+rowSize*mod].setMinimumSize(MipavUtil.widenButtonSize);
-            			buttonGroup[i+rowSize*mod].setPreferredSize(MipavUtil.widenButtonSize);
+            			buttonGroup[i].setMinimumSize(MipavUtil.widenButtonSize);
+            			buttonGroup[i].setPreferredSize(MipavUtil.widenButtonSize);
             		}
-            		buttonGroup[i+rowSize*mod].setFont(MipavUtil.font12B);
+            		buttonGroup[i].setFont(MipavUtil.font12B);
             	
-            		//if (i < 3) {
-            			buttonRow.add(buttonGroup[i*mod]);
-            		//} else {
-            			//bottomPanel.add(buttonGroup[i*mod]);
-            		//}
+            		if (i < 3) {
+            			topPanel.add(buttonGroup[i]);
+            		} else {
+            			bottomPanel.add(buttonGroup[i]);
+            		}
             	}
-            	buttonPanel.setLayout(new GridLayout(buttonGroup.length/rowSize, 1));
-            	buttonPanel.add(buttonRow, mod);
-            }
-            	//buttonPanel.add(bottomPanel, BorderLayout.SOUTH);
-            /*	
+            	buttonPanel.setLayout(new BorderLayout());
+            	buttonPanel.add(topPanel, BorderLayout.NORTH);
+            	buttonPanel.add(bottomPanel, BorderLayout.SOUTH);
+            	
             } else {
             
             	for(int i=0; i<buttonStringGroup.length; i++) {
@@ -373,7 +370,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             	
             		buttonPanel.add(buttonGroup[i]);
             	}
-            }*/
+            }
             return buttonPanel;
         }
     	
@@ -1849,6 +1846,21 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
         }
         
+        private boolean checkVariables() {
+            boolean done = true;
+            for(int i=0; i<mirrorCheckArr.length; i++) {
+                if(!mirrorCheckArr[i].isSelected()) {
+                    done = false;
+                }
+            }
+            for(int i=0; i<mirrorCheckArr.length; i++) {
+                if(!mirrorCheckArr[i].isSelected()) {
+                    done = false;
+                }
+            }
+            return done;
+        }
+        
         public TreeMap getIdentifiers() {
             return zeroStatus;
         }
@@ -1909,8 +1921,14 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		private String[][] noMirrorArr;
 		
 		private JList[] list;
+
+		/**
+		 * Vector list of objects that listen to this dialog box. When the action for this pseudo-algorithm has
+		 * completed, the program will notify all listeners.
+		 */
+		//private Vector objectList = new Vector();
 		
-		private String name[];
+		private String name[] = {"thigh", "bone component", "muscle"};
 		
 		private int time = 0;
 		
@@ -1926,13 +1944,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        
 	        this.symmetry = symmetry;
 	        
-	        name = new String[theParentFrame.titles.length];
 	        
-	        for(int i=0; i<theParentFrame.titles.length; i++) {
-	        	name[i] = theParentFrame.titles[i].toLowerCase();
-	        	name[i] = name[i].indexOf('s') != name[i].length()-1 ? name[i] : 
-	        		name[i].substring(0, name[i].length()-2);
-	        }
 	        
 	        
 	        initDialog();	        
@@ -2001,17 +2013,30 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		}
 		
 		/**
+		 * sets all the VOIs to solid-type
+		 *
+		 */
+		private void solidifyVOIs() {
+			VOIVector VOIs = display.getActiveImage().getVOIs();
+			for (int i = 0; i < VOIs.size(); i++) {
+				VOIs.elementAt(i).setDisplayMode(VOI.SOLID);
+			}			
+		}
+		
+		/**
 	     * Initializes the dialog box.
 	     *
 	     */
 	    
 		protected void initDialog() {
 	        setForeground(Color.black);
+	        //zeroStatus = new TreeMap();
 	        
 	        JPanel instructionPanel = initInstructionPanel();
 	        
 	        JScrollPane mirrorPanel[] = new JScrollPane[mirrorArr.length];
 	        
+	        //JPanel noMirrorPanel[] = new JPanel[noMirrorArr.length];
 	        
 	        JPanel mainPanel = new JPanel();
 	        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
@@ -2024,6 +2049,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        	mirrorPanel[i] = initSymmetricalObjects(i, name[i]);
 	        	mainPanel.add(mirrorPanel[i]);
 	        }
+	        
+	        //for(int i=0; i<noMirrorArr.length; i++) {
+	        //	initNonSymmetricalObjects(i);
+	        //	mainPanel.add(noMirrorPanel[i]);
+	        //}
 	
 	        mainPanel.add(buildButtons());
 	        
@@ -2211,7 +2241,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		    	}
 		    	
 		    	//Load VOIs and calculations
-		    	//loadVOIs(selectedString, lutOn);
+		    	loadVOIs(selectedString, lutOn);
 		    	parentFrame.updateImages(true);
 		    	time = 0;
 	    	} else 
