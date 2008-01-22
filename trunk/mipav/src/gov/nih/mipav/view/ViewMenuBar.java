@@ -937,6 +937,7 @@ public class ViewMenuBar {
                                                                                            "flipvert.gif", true)
                                                              }),
                                         menuBuilder.buildMenuItem("Image calculator", "Calculator", 0, null, false),
+                                        menuBuilder.buildMenuItem("Image calculator - Bulk Images", "BulkCalculator", 0, null, false),
                                         menuBuilder.buildMenuItem("Image math", null, 0, null, false),
                                         menuBuilder.buildMenuItem("Invert", null, 0, null, false),
                                         menuBuilder.buildMenuItem("Match images", "matchImages", 0, null, false),
