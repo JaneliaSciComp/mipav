@@ -37,7 +37,7 @@ public class VolumeClip extends VolumeObject
      */
     public void PreRender( Renderer kRenderer, Culler kCuller )
     {
-        if ( !m_bDisplay )
+        if ( !m_bDisplay  && ! m_bDisplayClipArb )
         {
             return;
         }
@@ -53,7 +53,7 @@ public class VolumeClip extends VolumeObject
      */
     public void Render( Renderer kRenderer, Culler kCuller )
     {
-        if ( !m_bDisplay )
+        if ( !m_bDisplay  && ! m_bDisplayClipArb )
         {
             return;
         }
@@ -246,10 +246,10 @@ public class VolumeClip extends VolumeObject
      */
     public void setEyeClipPlane( float fZ )
     {
-        m_kClipEye.VBuffer.SetPosition3( 0, -.2f, -.2f, fZ ) ;
-        m_kClipEye.VBuffer.SetPosition3( 1, m_fX +.2f, -.2f, fZ ) ;
-        m_kClipEye.VBuffer.SetPosition3( 2, m_fX +.2f, m_fY +.2f, fZ ) ;
-        m_kClipEye.VBuffer.SetPosition3( 3, -.2f, m_fY +.2f, fZ ) ;
+        m_kClipEye.VBuffer.SetPosition3( 0, 0f, 0f, fZ ) ;
+        m_kClipEye.VBuffer.SetPosition3( 1, m_fX, 0f, fZ ) ;
+        m_kClipEye.VBuffer.SetPosition3( 2, m_fX, m_fY, fZ ) ;
+        m_kClipEye.VBuffer.SetPosition3( 3, 0f, m_fY, fZ ) ;
         m_kClipEye.VBuffer.Release();
 
         m_kClipEye.UpdateGS();
@@ -263,10 +263,10 @@ public class VolumeClip extends VolumeObject
      */
     public void setEyeInvClipPlane( float fZ )
     {
-        m_kClipEyeInv.VBuffer.SetPosition3( 0, -.2f, -.2f, fZ ) ;
-        m_kClipEyeInv.VBuffer.SetPosition3( 1, m_fX +.2f, -.2f, fZ ) ;
-        m_kClipEyeInv.VBuffer.SetPosition3( 2, m_fX +.2f, m_fY +.2f, fZ ) ;
-        m_kClipEyeInv.VBuffer.SetPosition3( 3, -.2f, m_fY +.2f, fZ );
+        m_kClipEyeInv.VBuffer.SetPosition3( 0, 0f, 0f, fZ ) ;
+        m_kClipEyeInv.VBuffer.SetPosition3( 1, m_fX, 0f, fZ ) ;
+        m_kClipEyeInv.VBuffer.SetPosition3( 2, m_fX, m_fY, fZ ) ;
+        m_kClipEyeInv.VBuffer.SetPosition3( 3, 0f, m_fY, fZ ) ;
         m_kClipEyeInv.VBuffer.Release();
 
         m_kClipEyeInv.UpdateGS();
@@ -287,6 +287,58 @@ public class VolumeClip extends VolumeObject
     public void DisplayEyeInv(boolean bDisplay)
     {
         m_bDisplayClipEyeInv = bDisplay;
+    }
+
+
+    /** Turns displaying the aribtrary clip plane on/off.
+     * @param bDisplay, when true display the arbitrary clip plane.
+     */
+    public void DisplayArb(boolean bDisplay)
+    {
+        m_bDisplayClipArb = bDisplay;
+        if ( bDisplay )
+        {
+            m_kScene.AttachChild(m_kArbRotate);
+        }
+        else
+        {
+            m_kScene.DetachChild(m_kArbRotate);
+        }
+        m_kScene.UpdateGS();
+        m_kScene.UpdateRS();
+    }
+
+    public boolean DisplayArb()
+    {
+        return m_bDisplayClipArb;
+    }
+
+    public Node ArbRotate()
+    {
+        return m_kArbRotate;
+    }
+
+    /**
+     * Sets the arbitrary clip plane color.
+     * @param kColor, the new color.
+     */
+    public void setArbColor( ColorRGB kColor )
+    {
+        for ( int i = 0; i < 4; i++ )
+        {
+            m_kClipArb.VBuffer.SetColor3( 0, i, kColor );
+        }
+        m_kClipArb.VBuffer.Release();
+    }
+
+    public void SetArbPlane( float fX )
+    {
+        m_kClipArb.VBuffer.SetPosition3( 0, fX, 0, 0 ) ;
+        m_kClipArb.VBuffer.SetPosition3( 1, fX, 0, m_fMax ) ;
+        m_kClipArb.VBuffer.SetPosition3( 2, fX, m_fMax, m_fMax ) ;
+        m_kClipArb.VBuffer.SetPosition3( 3, fX, m_fMax, 0 ) ;
+        m_kClipArb.VBuffer.Release();
+        m_kScene.UpdateGS();
     }
 
     /** Returns the value of the specified axis-aligend clip plane.
@@ -393,16 +445,18 @@ public class VolumeClip extends VolumeObject
             m_akPolyline[i].Local.SetTranslate(m_kTranslate);
         }
 
+        m_fMax = Math.max( m_fX, Math.max( m_fY, m_fZ ) );
+
         VertexBuffer kOutlineSquare = new VertexBuffer( kAttributes, 4);
         // arbitrary clipping:
         for ( int i = 0; i < 4; i++ )
         {
             kOutlineSquare.SetColor3( 0, i, 1, 0, 0 ) ;
         }
-        kOutlineSquare.SetPosition3( 0, 0, 0, 0 ) ;
-        kOutlineSquare.SetPosition3( 1, 0, 0, m_fZ ) ;
-        kOutlineSquare.SetPosition3( 2, 0, m_fY, m_fZ ) ;
-        kOutlineSquare.SetPosition3( 3, 0, m_fY, 0 ) ;
+        kOutlineSquare.SetPosition3( 0, 0f, 0, 0 ) ;
+        kOutlineSquare.SetPosition3( 1, 0f, 0, m_fMax ) ;
+        kOutlineSquare.SetPosition3( 2, 0f, m_fMax, m_fMax ) ;
+        kOutlineSquare.SetPosition3( 3, 0f, m_fMax, 0 ) ;
         m_kClipArb = new Polyline( new VertexBuffer(kOutlineSquare), true, true );
         m_kClipArb.AttachEffect( m_kVertexColor3Shader );
         m_kClipArb.Local.SetTranslate(m_kTranslate);
@@ -424,10 +478,10 @@ public class VolumeClip extends VolumeObject
         {
             kOutlineSquare.SetColor3( 0, i, 1, 0, 0 ) ;
         }
-        kOutlineSquare.SetPosition3( 0, -.2f, -.2f, m_fZ ) ;
-        kOutlineSquare.SetPosition3( 1, m_fX +.2f, -.2f, m_fZ ) ;
-        kOutlineSquare.SetPosition3( 2, m_fX +.2f, m_fY +.2f, m_fZ ) ;
-        kOutlineSquare.SetPosition3( 3, -.2f, m_fY +.2f, m_fZ ) ;
+        kOutlineSquare.SetPosition3( 0, 0f, 0f, 0 ) ;
+        kOutlineSquare.SetPosition3( 1, m_fX, 0f, 0 ) ;
+        kOutlineSquare.SetPosition3( 2, m_fX, m_fY, 0 ) ;
+        kOutlineSquare.SetPosition3( 3, 0f, m_fY, 0 ) ;
         m_kClipEye = new Polyline( new VertexBuffer(kOutlineSquare), true, true );
         m_kClipEye.Local.SetTranslate(m_kTranslate);
         m_kClipEye.AttachEffect( m_kVertexColor3Shader );
@@ -438,10 +492,10 @@ public class VolumeClip extends VolumeObject
         {
             kOutlineSquare.SetColor3( 0, i, 1, 0, 0 ) ;
         }
-        kOutlineSquare.SetPosition3( 0, -.2f, -.2f, 1.0f ) ;
-        kOutlineSquare.SetPosition3( 1, m_fX +.2f, -.2f, 1.0f ) ;
-        kOutlineSquare.SetPosition3( 2, m_fX +.2f, m_fY +.2f, 1.0f ) ;
-        kOutlineSquare.SetPosition3( 3, -.2f, m_fY +.2f, 1.0f ) ;
+        kOutlineSquare.SetPosition3( 0, 0f, 0f, m_fZ ) ;
+        kOutlineSquare.SetPosition3( 1, m_fX, 0f, m_fZ ) ;
+        kOutlineSquare.SetPosition3( 2, m_fX, m_fY, m_fZ ) ;
+        kOutlineSquare.SetPosition3( 3, 0f, m_fY, m_fZ ) ;
         m_kClipEyeInv = new Polyline( new VertexBuffer(kOutlineSquare), true, true );
         m_kClipEyeInv.Local.SetTranslate(m_kTranslate);
         m_kClipEyeInv.AttachEffect( m_kVertexColor3Shader );
@@ -476,5 +530,7 @@ public class VolumeClip extends VolumeObject
     private boolean m_bDisplayClipEye = false;
     /** Enables/Disables displaying the inverse-eye clip plane: */
     private boolean m_bDisplayClipEyeInv = false;
+    
+    private float m_fMax;
 
 }

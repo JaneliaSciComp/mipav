@@ -15,6 +15,7 @@ import com.sun.opengl.util.*;
 import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibRenderers.OpenGLRenderer.*;
 
@@ -154,6 +155,7 @@ public class PlaneRender_WM extends JavaApplication3D
 
     /** x-axis label: */
     private String m_kLabelX = new String("X");
+    private String m_kLabelXDisplay = new String("X");
 
     /** y-axis label: */
     private String m_kLabelY = new String("Y");
@@ -162,6 +164,10 @@ public class PlaneRender_WM extends JavaApplication3D
     private VolumeViewer m_kParent;
 
     private WindowLevel m_kWinLevel;
+
+    private TriMesh[] m_kXArrow;
+    private TriMesh[] m_kYArrow;
+    private Camera m_spkScreenCamera;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -210,8 +216,7 @@ public class PlaneRender_WM extends JavaApplication3D
         setOrientation();
         m_kWinLevel = new WindowLevel();
 
-        /* Create the scene graph and initialize the rendering */
-        //init();
+
     }
 
     public void display(GLAutoDrawable arg0) {
@@ -231,12 +236,42 @@ public class PlaneRender_WM extends JavaApplication3D
             m_spkScene.UpdateGS();
             m_kCuller.ComputeVisibleSet(m_spkScene);
         }
+
+        ColorRGBA kXSliceHairColor =
+            new ColorRGBA( m_aakColors[m_iPlaneOrientation][0].R(),
+                           m_aakColors[m_iPlaneOrientation][0].G(),
+                           m_aakColors[m_iPlaneOrientation][0].B(), 1.0f );
+
+        ColorRGBA kYSliceHairColor =
+            new ColorRGBA( m_aakColors[m_iPlaneOrientation][1].R(),
+                           m_aakColors[m_iPlaneOrientation][1].G(),
+                           m_aakColors[m_iPlaneOrientation][1].B(), 1.0f );
         
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
         {
             m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+
+            if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
+            {
+                m_pkRenderer.Draw( 50, 20, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
+                m_pkRenderer.Draw( 10, 68, kYSliceHairColor,m_kLabelY.toCharArray());
+            }
+            else
+            {
+                m_pkRenderer.Draw( 10,m_iHeight - 55,kYSliceHairColor,m_kLabelY.toCharArray());
+                m_pkRenderer.Draw( 50,m_iHeight - 10,kXSliceHairColor,m_kLabelXDisplay.toCharArray());
+            }
+
+            m_pkRenderer.SetCamera(m_spkScreenCamera);
+            m_pkRenderer.Draw(m_kXArrow[0]);
+            m_pkRenderer.Draw(m_kXArrow[1]);
+            m_pkRenderer.Draw(m_kYArrow[0]);
+            m_pkRenderer.Draw(m_kYArrow[1]);
+            m_pkRenderer.SetCamera(m_spkCamera);
+
             m_pkRenderer.EndScene();
+
         }
         m_pkRenderer.DisplayBackBuffer();
 
@@ -638,6 +673,21 @@ public class PlaneRender_WM extends JavaApplication3D
         }
         m_kBoundingBox.VBuffer.Release();
 
+        for ( int j = 0; j < 4; j++ )
+        {
+            m_kXArrow[0].VBuffer.SetColor3( 0, j, kXSliceHairColor );
+            m_kYArrow[0].VBuffer.SetColor3( 0, j, kYSliceHairColor );
+        }
+        for ( int j = 0; j < 3; j++ )
+        {
+            m_kXArrow[1].VBuffer.SetColor3( 0, j, kXSliceHairColor );
+            m_kYArrow[1].VBuffer.SetColor3( 0, j, kYSliceHairColor );
+        }
+        for ( int i = 0; i < 2; i++ )
+        {
+            m_kXArrow[i].VBuffer.Release();
+            m_kYArrow[i].VBuffer.Release();
+        }
     }
 
     /**
@@ -760,6 +810,136 @@ public class PlaneRender_WM extends JavaApplication3D
             m_akYBar[i].AttachEffect( m_spkVertexColor3Shader );
             m_spkScene.AttachChild(m_akYBar[i]);
         }
+
+        // The screen camera is designed to map (x,y,z) in [0,1]^3 to (x',y,'z')
+        // in [-1,1]^2 x [0,1].
+        m_spkScreenCamera = new Camera();
+        m_spkScreenCamera.Perspective = false;
+        m_spkScreenCamera.SetFrustum(0.0f,1.0f,0.0f,1.0f,0.0f,1.0f);
+        m_spkScreenCamera.SetFrame(Vector3f.ZERO,Vector3f.UNIT_Z,
+                Vector3f.UNIT_Y,Vector3f.UNIT_X);
+
+        m_kXArrow = new TriMesh[2];
+        m_kYArrow = new TriMesh[2];
+
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetCChannels(0,3);
+        VertexBuffer pkVBuffer = new VertexBuffer(kAttr,4);
+        pkVBuffer.SetPosition3(0, 0.05f,0.05f,0.0f);
+        pkVBuffer.SetPosition3(1, 0.15f,0.05f,0.0f);
+        pkVBuffer.SetPosition3(2, 0.15f,0.06f,0.0f);
+        pkVBuffer.SetPosition3(3, 0.05f,0.06f,0.0f);
+        pkVBuffer.SetColor3(0,0,m_aakColors[m_iPlaneOrientation][0] );
+        pkVBuffer.SetColor3(0,1,m_aakColors[m_iPlaneOrientation][0] );
+        pkVBuffer.SetColor3(0,2,m_aakColors[m_iPlaneOrientation][0] );
+        pkVBuffer.SetColor3(0,3,m_aakColors[m_iPlaneOrientation][0] );
+        IndexBuffer pkIBuffer = new IndexBuffer(6);
+        int[] aiIndex = pkIBuffer.GetData();
+        aiIndex[0] = 0;  aiIndex[1] = 1;  aiIndex[2] = 2;
+        aiIndex[3] = 0;  aiIndex[4] = 2;  aiIndex[5] = 3;
+        m_kXArrow[0] = new TriMesh( new VertexBuffer(pkVBuffer),new IndexBuffer(pkIBuffer));
+        m_kXArrow[0].AttachEffect( new VertexColor3Effect() );
+        m_kXArrow[0].UpdateGS();
+        m_kXArrow[0].UpdateRS();
+        m_pkRenderer.LoadResources(m_kXArrow[0]);
+
+        pkVBuffer = new VertexBuffer(kAttr,3);
+        pkVBuffer.SetPosition3(0, 0.15f,0.04f,0.0f);
+        pkVBuffer.SetPosition3(1, 0.18f,0.055f,0.0f);
+        pkVBuffer.SetPosition3(2, 0.15f,0.07f,0.0f);
+        pkVBuffer.SetColor3(0,0,m_aakColors[m_iPlaneOrientation][0] );
+        pkVBuffer.SetColor3(0,1,m_aakColors[m_iPlaneOrientation][0] );
+        pkVBuffer.SetColor3(0,2,m_aakColors[m_iPlaneOrientation][0] );
+        pkIBuffer = new IndexBuffer(3);
+        aiIndex = pkIBuffer.GetData();
+        aiIndex[0] = 0;  aiIndex[1] = 1;  aiIndex[2] = 2;
+        m_kXArrow[1] = new TriMesh( new VertexBuffer(pkVBuffer),new IndexBuffer(pkIBuffer));
+        m_kXArrow[1].AttachEffect( new VertexColor3Effect() );
+        m_kXArrow[1].UpdateGS();
+        m_kXArrow[1].UpdateRS();
+        m_pkRenderer.LoadResources(m_kXArrow[1]);
+
+        // YArrow:
+
+        pkVBuffer = new VertexBuffer(kAttr,4);
+        pkVBuffer.SetPosition3(0, 0.05f,0.05f,0.0f);
+        pkVBuffer.SetPosition3(1, 0.06f,0.05f,0.0f);
+        pkVBuffer.SetPosition3(2, 0.06f,0.15f,0.0f);
+        pkVBuffer.SetPosition3(3, 0.05f,0.15f,0.0f);
+        pkVBuffer.SetColor3(0,0,m_aakColors[m_iPlaneOrientation][1] );
+        pkVBuffer.SetColor3(0,1,m_aakColors[m_iPlaneOrientation][1] );
+        pkVBuffer.SetColor3(0,2,m_aakColors[m_iPlaneOrientation][1] );
+        pkVBuffer.SetColor3(0,3,m_aakColors[m_iPlaneOrientation][1] );
+        pkIBuffer = new IndexBuffer(6);
+        aiIndex = pkIBuffer.GetData();
+        aiIndex[0] = 0;  aiIndex[1] = 1;  aiIndex[2] = 2;
+        aiIndex[3] = 0;  aiIndex[4] = 2;  aiIndex[5] = 3;
+        m_kYArrow[0] = new TriMesh( new VertexBuffer(pkVBuffer),new IndexBuffer(pkIBuffer));
+        m_kYArrow[0].AttachEffect( new VertexColor3Effect() );
+        m_kYArrow[0].UpdateGS();
+        m_kYArrow[0].UpdateRS();
+        m_pkRenderer.LoadResources(m_kYArrow[0]);
+
+        pkVBuffer = new VertexBuffer(kAttr,3);
+        pkVBuffer.SetPosition3(0, 0.04f,0.15f,0.0f);
+        pkVBuffer.SetPosition3(1, 0.07f,0.15f,0.0f);
+        pkVBuffer.SetPosition3(2, 0.055f,0.18f,0.0f);
+        pkVBuffer.SetColor3(0,0,m_aakColors[m_iPlaneOrientation][1] );
+        pkVBuffer.SetColor3(0,1,m_aakColors[m_iPlaneOrientation][1] );
+        pkVBuffer.SetColor3(0,2,m_aakColors[m_iPlaneOrientation][1] );
+        pkIBuffer = new IndexBuffer(3);
+        aiIndex = pkIBuffer.GetData();
+        aiIndex[0] = 0;  aiIndex[1] = 1;  aiIndex[2] = 2;
+        m_kYArrow[1] = new TriMesh( new VertexBuffer(pkVBuffer),new IndexBuffer(pkIBuffer));
+        m_kYArrow[1].AttachEffect( new VertexColor3Effect() );
+        m_kYArrow[1].UpdateGS();
+        m_kYArrow[1].UpdateRS();
+        m_pkRenderer.LoadResources(m_kYArrow[1]);
+
+        if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
+        {
+            Vector3f kPosition = new Vector3f();
+            Vector3f kDiff = new Vector3f( 0f, 0.9f, 0f );
+            for ( int j = 0; j < 4; j++ )
+            {
+                m_kXArrow[0].VBuffer.GetPosition3(j, kPosition);
+                kPosition.addEquals(kDiff);
+                m_kXArrow[0].VBuffer.SetPosition3(j, kPosition );
+            }
+            for ( int j = 0; j < 3; j++ )
+            {
+                m_kXArrow[1].VBuffer.GetPosition3(j, kPosition);
+                kPosition.addEquals(kDiff);
+                m_kXArrow[1].VBuffer.SetPosition3(j, kPosition );
+            }
+            for ( int i = 0; i < 2; i++ )
+            {
+                m_kXArrow[i].VBuffer.Release();
+                m_kXArrow[i].UpdateGS();
+                m_kXArrow[i].UpdateRS();
+                m_pkRenderer.LoadResources(m_kXArrow[i]);
+            }
+
+            pkVBuffer = m_kYArrow[0].VBuffer;
+            pkVBuffer.SetPosition3(0, 0.05f,0.85f,0.0f);
+            pkVBuffer.SetPosition3(1, 0.06f,0.85f,0.0f);
+            pkVBuffer.SetPosition3(2, 0.06f,0.95f,0.0f);
+            pkVBuffer.SetPosition3(3, 0.05f,0.95f,0.0f);
+            pkVBuffer.Release();
+            m_kYArrow[0].UpdateGS();
+            m_kYArrow[0].UpdateRS();
+            m_pkRenderer.LoadResources(m_kYArrow[0]);
+
+            pkVBuffer = m_kYArrow[1].VBuffer;
+            pkVBuffer.SetPosition3(0, 0.04f,0.85f,0.0f);
+            pkVBuffer.SetPosition3(1, 0.055f,0.82f,0.0f);
+            pkVBuffer.SetPosition3(2, 0.07f,0.85f,0.0f);
+            pkVBuffer.Release();
+            m_kYArrow[1].UpdateGS();
+            m_kYArrow[1].UpdateRS();
+            m_pkRenderer.LoadResources(m_kYArrow[1]);
+        }
     }
 
     private void UpdateBarPosition()
@@ -857,175 +1037,6 @@ public class PlaneRender_WM extends JavaApplication3D
 //         localPt.z = 1.0f;
     }
 
-
-    /**
-     * Initializes the Axis labels based on the ModelImage orientation. Axes are displayed with 3D text objects and
-     * arrows drawn as polygons. They are colored and labeled to match the axes they represent.
-     */
-    private void initAxes() {
-
-//         if (m_kTextBranchGroup != null) {
-//             m_kOrderedGroup.removeChild(m_kTextBranchGroup);
-//             m_kTextBranchGroup = null;
-//             m_kTextTransformGroup = null;
-//         }
-//         if ( !m_bDrawAxes )
-//         {
-//             return;
-//         }
-
-//         String kLabelX = new String( m_kLabelX );
-//         if ( !m_kImageA.getRadiologicalView() && (m_iPlaneOrientation != FileInfoBase.SAGITTAL) )
-//         {
-//             if ( !m_bPatientOrientation )
-//             {
-//                 kLabelX = new String( "-X" );
-//             }
-//             else
-//             {
-//                 kLabelX = new String( "R" );
-//             }
-//         }
-//         Text3D kXText = new Text3D(new Font3D(MipavUtil.courier12B, new FontExtrusion()), kLabelX,
-//                                    new Point3f(25f, 1f, 0f));
-
-//         Text3D kYText = new Text3D(new Font3D(MipavUtil.courier12B, new FontExtrusion()), m_kLabelY,
-//                                    new Point3f(-2f, -25f, 0f));
-
-//         if ( m_bPatientOrientation &&
-//             (m_iPlaneOrientation != FileInfoBase.AXIAL) ) {
-//             kYText.setPosition(new Point3f(-2f, 31f, 0f));
-//         }
-
-//         QuadArray kXGeometry = new QuadArray(4, QuadArray.COORDINATES | QuadArray.COLOR_3);
-
-//         Color3f kXSliceHairColor = m_akColors[2];
-//         Color3f kYSliceHairColor = m_akColors[0];
-//         if ( m_iPlaneOrientation == FileInfoBase.AXIAL )
-//         {
-//             kXSliceHairColor = m_akColors[2];
-//             kYSliceHairColor = m_akColors[1];
-//         }
-//         else if ( m_iPlaneOrientation == FileInfoBase.SAGITTAL )
-//         {
-//             kXSliceHairColor = m_akColors[1];
-//             kYSliceHairColor = m_akColors[0];
-//         }
-
-//         kXGeometry.setColor(0, kXSliceHairColor);
-//         kXGeometry.setColor(1, kXSliceHairColor);
-//         kXGeometry.setColor(2, kXSliceHairColor);
-//         kXGeometry.setColor(3, kXSliceHairColor);
-//         kXGeometry.setCoordinate(0, new Point3d(2f, 4f, 0.5f));
-//         kXGeometry.setCoordinate(1, new Point3d(18f, 4f, 0.5f));
-//         kXGeometry.setCoordinate(2, new Point3d(18f, 6f, 0.5f));
-//         kXGeometry.setCoordinate(3, new Point3d(2f, 6f, 0.5f));
-
-//         TriangleArray kXTri = new TriangleArray(3, TriangleArray.COORDINATES | TriangleArray.COLOR_3);
-
-//         kXTri.setColor(0, kXSliceHairColor);
-//         kXTri.setColor(1, kXSliceHairColor);
-//         kXTri.setColor(2, kXSliceHairColor);
-//         kXTri.setCoordinate(0, new Point3d(18f, 9f, 0.5f));
-//         kXTri.setCoordinate(1, new Point3d(18f, 1f, 0.5f));
-//         kXTri.setCoordinate(2, new Point3d(23f, 5f, 0.5f));
-
-//         QuadArray kYGeometry = new QuadArray(4, QuadArray.COORDINATES | QuadArray.COLOR_3);
-
-//         kYGeometry.setColor(0, kYSliceHairColor);
-//         kYGeometry.setColor(1, kYSliceHairColor);
-//         kYGeometry.setColor(2, kYSliceHairColor);
-//         kYGeometry.setColor(3, kYSliceHairColor);
-
-//         if (m_bPatientOrientation &&
-//             (m_iPlaneOrientation != FileInfoBase.AXIAL)) {
-//             kYGeometry.setCoordinate(0, new Point3d(2f, 4f, 0.5f));
-//             kYGeometry.setCoordinate(1, new Point3d(0f, 4f, 0.5f));
-//             kYGeometry.setCoordinate(2, new Point3d(0f, 22f, 0.5f));
-//             kYGeometry.setCoordinate(3, new Point3d(2f, 22f, 0.5f));
-//         } else {
-//             kYGeometry.setCoordinate(0, new Point3d(2f, 6f, 0.5f));
-//             kYGeometry.setCoordinate(1, new Point3d(0f, 6f, 0.5f));
-//             kYGeometry.setCoordinate(2, new Point3d(0f, -12f, 0.5f));
-//             kYGeometry.setCoordinate(3, new Point3d(2f, -12f, 0.5f));
-//         }
-
-//         TriangleArray kYTri = new TriangleArray(3, TriangleArray.COORDINATES | TriangleArray.COLOR_3);
-
-//         kYTri.setColor(0, kYSliceHairColor);
-//         kYTri.setColor(1, kYSliceHairColor);
-//         kYTri.setColor(2, kYSliceHairColor);
-
-//         if (m_bPatientOrientation &&
-//             (m_iPlaneOrientation != FileInfoBase.AXIAL)) {
-//             kYTri.setCoordinate(0, new Point3d(5f, 22f, 0.5f));
-//             kYTri.setCoordinate(1, new Point3d(-4f, 22f, 0.5f));
-//             kYTri.setCoordinate(2, new Point3d(1f, 27f, 0.5f));
-//         } else {
-//             kYTri.setCoordinate(0, new Point3d(5f, -12f, 0.5f));
-//             kYTri.setCoordinate(1, new Point3d(-4f, -12f, 0.5f));
-//             kYTri.setCoordinate(2, new Point3d(1f, -17f, 0.5f));
-//         }
-
-//         PolygonAttributes kPolygonAttributes = new PolygonAttributes();
-
-//         kPolygonAttributes.setCullFace(PolygonAttributes.CULL_NONE);
-
-//         Material kXMaterial = new Material( kXSliceHairColor, kXSliceHairColor, kXSliceHairColor,
-//                                             kXSliceHairColor, 1.0f);
-//         Material kYMaterial = new Material( kYSliceHairColor, kYSliceHairColor, kYSliceHairColor,
-//                                             kYSliceHairColor, 1.0f);
-
-//         Appearance kXAppearance = new Appearance();
-
-//         kXAppearance.setMaterial(kXMaterial);
-//         kXAppearance.setPolygonAttributes(kPolygonAttributes);
-
-//         Appearance kYAppearance = new Appearance();
-
-//         kYAppearance.setMaterial(kYMaterial);
-//         kYAppearance.setPolygonAttributes(kPolygonAttributes);
-
-//         Shape3D kXBox = new Shape3D(kXGeometry, kXAppearance);
-//         Shape3D kXArrows = new Shape3D(kXTri, kXAppearance);
-//         Shape3D kYBox = new Shape3D(kYGeometry, kYAppearance);
-//         Shape3D kYArrows = new Shape3D(kYTri, kYAppearance);
-//         Shape3D kXAxisLabel = new Shape3D(kXText, kXAppearance);
-//         Shape3D kYAxisLabel = new Shape3D(kYText, kYAppearance);
-
-//         float fXTrans = m_fX0 * 0.85f / m_fZoomScale;
-//         float fYTrans = m_fY1 * 0.85f / m_fZoomScale;
-
-//         if (m_bPatientOrientation &&
-//             (m_iPlaneOrientation != FileInfoBase.AXIAL)) {
-//             fYTrans = -fYTrans;
-//         }
-
-//         Transform3D kTextTransform = new Transform3D();
-//         kTextTransform.setScale(0.01f / m_fZoomScale);
-//         kTextTransform.setTranslation(new Vector3f(fXTrans, fYTrans, -2.5f));
-//         m_kTextTransformGroup = new TransformGroup();
-//         m_kTextTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-//         m_kTextTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-//         m_kTextTransformGroup.setCapability(TransformGroup.ALLOW_CHILDREN_WRITE);
-//         m_kTextTransformGroup.setCapability(TransformGroup.ALLOW_CHILDREN_READ);
-//         m_kTextTransformGroup.setCapability(TransformGroup.ALLOW_CHILDREN_EXTEND);
-//         m_kTextTransformGroup.setTransform(kTextTransform);
-
-//         m_kTextTransformGroup.addChild(kXBox);
-//         m_kTextTransformGroup.addChild(kXArrows);
-//         m_kTextTransformGroup.addChild(kYBox);
-//         m_kTextTransformGroup.addChild(kYArrows);
-//         m_kTextTransformGroup.addChild(kXAxisLabel);
-//         m_kTextTransformGroup.addChild(kYAxisLabel);
-
-//         m_kTextBranchGroup = new BranchGroup();
-//         m_kTextBranchGroup.setCapability(BranchGroup.ALLOW_DETACH);
-//         m_kTextBranchGroup.addChild(m_kTextTransformGroup);
-//         m_kTextBranchGroup.compile();
-
-//         m_kOrderedGroup.addChild(m_kTextBranchGroup);
-    }
 
     /**
      * Dragging the mouse with the left-mouse button held down changes the
@@ -1244,6 +1255,23 @@ public class PlaneRender_WM extends JavaApplication3D
                 m_kLabelY = new String("Z");
             }
         }
+
+        m_kLabelXDisplay = new String( m_kLabelX );
+        if ( !m_kImageA.getRadiologicalView() && (m_iPlaneOrientation != FileInfoBase.SAGITTAL) )
+        {
+            if ( !m_bPatientOrientation )
+            {
+                m_kLabelXDisplay = new String( "-X" );
+            }
+            else
+            {
+                m_kLabelXDisplay = new String( "R" );
+            }
+        }
     }
 
+    public void SetModified ( boolean bModified )
+    {
+        m_bModified = bModified;
+    }
 }

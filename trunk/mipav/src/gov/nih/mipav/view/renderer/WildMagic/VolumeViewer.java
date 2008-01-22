@@ -1529,42 +1529,30 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
      * Reset image volume orieint along X axis.
      */
     public void resetAxisX() {
-
-//         if (isSurfaceRenderEnable) {
-//             surRender.resetAxisX();
-//         }
-
-        //if (isRayCastEnable) {
-            //raycastRenderWM.resetAxisX();
-        //}
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.resetAxisX();
+        }
     }
 
     /**
      * Reset image volume orieint along Y axis.
      */
     public void resetAxisY() {
-
-//         if (isSurfaceRenderEnable) {
-//             surRender.resetAxisY();
-//         }
-
-       // if (isRayCastEnable) {
-            //raycastRenderWM.resetAxisY();
-        //}
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.resetAxisY();
+        }
     }
 
     /**
      * Reset image volume orieint along Z axis.
      */
     public void resetImage() {
-
-//         if (isSurfaceRenderEnable) {
-//             surRender.resetImage();
-//         }
-//
-       // if (isRayCastEnable) {
-            //raycastRenderWM.resetImage();
-       // }
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.resetAxis();
+        }
     }
 
 
@@ -2030,8 +2018,13 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
 //         }
 
         if (m_kVolumeImageA != null) {
-            m_kVolumeImageA.UpdateImages(LUTa, LUTb);
+            m_kVolumeImageA.UpdateImages(LUTa, LUTb);    
+            for (int i = 0; i < 3; i++) {
+                m_akPlaneRender[i].SetModified(true);
+            }
         }
+
+
         return true;
     }
 
