@@ -237,6 +237,7 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
 
         functionAtBest = 0;
 
+        final double[] costAtBest = new double[1];
         double[] directions = new double[nDims];
 
         while ((count < maxIterations) && keepGoing && (nDims > 0)) {
@@ -278,7 +279,7 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
                 }
 
                 // Preferences.debug("Calling lineMinimization for dimension "+i +".\n");
-                functionAtBest = lineMinimization(initialGuess, boundGuess, directions);
+                lineMinimization(point, initialGuess, boundGuess, directions, costAtBest);
 
                 if (Math.abs(point[i] - pt[i]) > tolerance[i]) {
                     keepGoing = true;

@@ -77,7 +77,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private double aT00, aT10, aT20;
+//    private double aT00, aT10, aT20;
 
     /** DOCUMENT ME! */
     private int costCalled = 0;
@@ -92,34 +92,34 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
     private ModelSimpleImage inputWgtImage = null;
 
     /** DOCUMENT ME! */
-    private double iT00, iT10, iT20;
+//    private double iT00, iT10, iT20;
 
     /** DOCUMENT ME! */
-    private double[] jointHist;
+//    private double[] jointHist;
 
     /** DOCUMENT ME! */
     private double M_PI = Math.PI;
 
     /** DOCUMENT ME! */
-    private double[] margHistI;
+//    private double[] margHistI;
 
     /** DOCUMENT ME! */
-    private double[] margHistR;
+//    private double[] margHistR;
 
     /** DOCUMENT ME! */
-    private Point minMaxPt = new Point();
+//    private Point minMaxPt = new Point();
 
     /** DOCUMENT ME! */
     private int nBins;
 
     /** DOCUMENT ME! */
-    private double newPtX, newPtY, newPtZ;
+//    private double newPtX, newPtY, newPtZ;
 
     /** DOCUMENT ME! */
-    private double nOverlap;
+//    private double nOverlap;
 
     /** DOCUMENT ME! */
-    private double[] numY;
+//    private double[] numY;
 
     /** DOCUMENT ME! */
     private int nVoxels;
@@ -158,13 +158,13 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
     private float smoothSize;
 
     /** DOCUMENT ME! */
-    private double[] sumY;
+//    private double[] sumY;
 
     /** DOCUMENT ME! */
-    private double[] sumY2;
+//    private double[] sumY2;
 
     /** DOCUMENT ME! */
-    private double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+//    private double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
     /** DOCUMENT ME! */
     private int xDim;
@@ -176,7 +176,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
     private double xEnd2;
 
     /** DOCUMENT ME! */
-    private double[][] xfrm;
+//    private double[][] xfrm;
 
     /** DOCUMENT ME! */
     private int yDim;
@@ -219,7 +219,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         refImage.calcMinMax();
         inputImage.calcMinMax();
 
-        setNBins(nBins);
+//        setNBins(nBins);
 
         xDim = inputImage.xDim;
         yDim = inputImage.yDim;
@@ -355,13 +355,13 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         refWgtImage = null;
         inputWgtImage = null;
 
-        sumY = null;
-        sumY2 = null;
-        numY = null;
+//        sumY = null;
+//        sumY2 = null;
+//        numY = null;
 
-        jointHist = null;
-        margHistR = null;
-        margHistI = null;
+//        jointHist = null;
+//        margHistR = null;
+//        margHistI = null;
         pLogP = null;
         System.gc();
     }
@@ -391,19 +391,19 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
      *
      * @return  The number of times the cost function has been called.
      */
-    public double[] getOverlap() {
-        double[] toReturn = new double[] { 0, 0, 0 };
-
-        if ((costFunctID < MUTUAL_INFORMATION_SMOOTHED) || (costFunctID > NORMALIZED_MUTUAL_INFORMATION)) {
-            return toReturn;
-        } else {
-            toReturn[0] = (double) nOverlap;
-            toReturn[1] = (double) nVoxels;
-            toReturn[2] = 100 * toReturn[0] / toReturn[1];
-
-            return toReturn;
-        }
-    }
+//    public double[] getOverlap() {
+//        double[] toReturn = new double[] { 0, 0, 0 };
+//
+//        if ((costFunctID < MUTUAL_INFORMATION_SMOOTHED) || (costFunctID > NORMALIZED_MUTUAL_INFORMATION)) {
+//            return toReturn;
+//        } else {
+//            toReturn[0] = (double) nOverlap;
+//            toReturn[1] = (double) nVoxels;
+//            toReturn[2] = 100 * toReturn[0] / toReturn[1];
+//
+//            return toReturn;
+//        }
+//    }
 
     /**
      * Sets the input weight image. If the weight values are outside the range [0:1] then the weigthts will be remapped
@@ -438,24 +438,24 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
      *
      * @param  nBins  DOCUMENT ME!
      */
-    public void setNBins(int nBins) {
-
-        sumY = null;
-        sumY2 = null;
-        numY = null;
-        System.gc();
-
-        try {
-            sumY = new double[nBins];
-            sumY2 = new double[nBins];
-            numY = new double[nBins];
-        } catch (OutOfMemoryError error) {
-            System.gc();
-            MipavUtil.displayError("Out of memory: CostFunctions.setBins");
-
-            return;
-        }
-    }
+//    public void setNBins(int nBins) {
+//
+//        sumY = null;
+//        sumY2 = null;
+//        numY = null;
+//        System.gc();
+//
+//        try {
+//            sumY = new double[nBins];
+//            sumY2 = new double[nBins];
+//            numY = new double[nBins];
+//        } catch (OutOfMemoryError error) {
+//            System.gc();
+//            MipavUtil.displayError("Out of memory: CostFunctions.setBins");
+//
+//            return;
+//        }
+//    }
 
     /**
      * Sets the reference weight image. If the weight values are outside the range [0:1] then the weigthts will be
@@ -505,23 +505,24 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double b1, b2;
         double value;
 
-        xfrm = tMatrix.getArray();
-        T00 = xfrm[0][0];
-        T01 = xfrm[0][1];
-        T02 = xfrm[0][2];
-        T03 = xfrm[0][3];
-        T10 = xfrm[1][0];
-        T11 = xfrm[1][1];
-        T12 = xfrm[1][2];
-        T13 = xfrm[1][3];
-        T20 = xfrm[2][0];
-        T21 = xfrm[2][1];
-        T22 = xfrm[2][2];
-        T23 = xfrm[2][3];
-        aT00 = T00;
-        aT10 = T10;
-        aT20 = T20;
-
+        double[][] xfrm = tMatrix.getArray();
+        double T00 = xfrm[0][0];
+        double T01 = xfrm[0][1];
+        double T02 = xfrm[0][2];
+        double T03 = xfrm[0][3];
+        double T10 = xfrm[1][0];
+        double T11 = xfrm[1][1];
+        double T12 = xfrm[1][2];
+        double T13 = xfrm[1][3];
+        double T20 = xfrm[2][0];
+        double T21 = xfrm[2][1];
+        double T22 = xfrm[2][2];
+        double T23 = xfrm[2][3];
+        double aT00 = T00;
+        double aT10 = T10;
+        double aT20 = T20;
+        double iT00, iT10, iT20;
+        double newPtX, newPtY, newPtZ;
         if (aT00 < 0) {
             aT00 = -aT00;
         }
@@ -536,16 +537,26 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
+        }else{
+        	iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
+        }else{
+        	iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
+        }else{
+        	iT20 = Double.MAX_VALUE;
         }
 
+        double[] jointHist = new double[nBins * nBins];
+        double[] margHistR = new double[nBins];
+        double[] margHistI = new double[nBins];
+ 
         for (int i = 0; i < (nBins * nBins); i++) {
             jointHist[i] = 0;
         }
@@ -567,6 +578,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             constantI = (nBins - 1) / (inputImage.max - inputImage.min);
         }
 
+        Point minMaxPt = new Point();
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
@@ -580,7 +592,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 newPtZ = (y * T21) + tmpZ3;
 
                 // determine range
-                findRangeX(minMaxPt);
+                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
 
                 newPtX += minMaxPt.x * T00;
                 newPtY += minMaxPt.x * T10;
@@ -665,7 +677,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             }
         }
 
-        nOverlap = 0.0;
+        double nOverlap = 0.0;
 
         for (int i = 0; i < nBins; i++) {
             n = (int) MipavMath.round(margHistI[i]);
@@ -738,22 +750,24 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        xfrm = tMatrix.getArray();
-        T00 = xfrm[0][0];
-        T01 = xfrm[0][1];
-        T02 = xfrm[0][2];
-        T03 = xfrm[0][3];
-        T10 = xfrm[1][0];
-        T11 = xfrm[1][1];
-        T12 = xfrm[1][2];
-        T13 = xfrm[1][3];
-        T20 = xfrm[2][0];
-        T21 = xfrm[2][1];
-        T22 = xfrm[2][2];
-        T23 = xfrm[2][3];
-        aT00 = T00;
-        aT10 = T10;
-        aT20 = T20;
+        double[][] xfrm = tMatrix.getArray();
+        double T00 = xfrm[0][0];
+        double T01 = xfrm[0][1];
+        double T02 = xfrm[0][2];
+        double T03 = xfrm[0][3];
+        double T10 = xfrm[1][0];
+        double T11 = xfrm[1][1];
+        double T12 = xfrm[1][2];
+        double T13 = xfrm[1][3];
+        double T20 = xfrm[2][0];
+        double T21 = xfrm[2][1];
+        double T22 = xfrm[2][2];
+        double T23 = xfrm[2][3];
+        double aT00 = T00;
+        double aT10 = T10;
+        double aT20 = T20;
+        double iT00, iT10, iT20;
+        double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
             aT00 = -aT00;
@@ -769,15 +783,25 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
+        }else{
+        	iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
+        }else{
+        	iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
+        }else{
+        	iT20 = Double.MAX_VALUE;
         }
+        double[] jointHist = new double[nBins * nBins];
+        double[] margHistR = new double[nBins];
+        double[] margHistI = new double[nBins];
+ 
 
         for (int i = 0; i < (nBins * nBins); i++) {
             jointHist[i] = 0;
@@ -800,6 +824,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             constantI = (nBins - 1) / (inputImage.max - inputImage.min);
         }
 
+        Point minMaxPt = new Point();
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
@@ -813,7 +838,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 newPtZ = (y * T21) + tmpZ3;
 
                 // determine range
-                findRangeX(minMaxPt);
+                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
 
                 newPtX += minMaxPt.x * T00;
                 newPtY += minMaxPt.x * T10;
@@ -903,7 +928,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         int k;
 
         nVoxels = refImage.data.length;
-        nOverlap = 0.0;
+        double nOverlap = 0.0;
 
         for (int i = 0; i < nBins; i++) {
             nI = margHistI[i];
@@ -983,19 +1008,24 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        xfrm = tMatrix.getArray();
-        T00 = xfrm[0][0];
-        T01 = xfrm[0][1];
-        T02 = xfrm[0][2];
-        T03 = xfrm[0][3];
-        T10 = xfrm[1][0];
-        T11 = xfrm[1][1];
-        T12 = xfrm[1][2];
-        T13 = xfrm[1][3];
-        T20 = xfrm[2][0];
-        T21 = xfrm[2][1];
-        T22 = xfrm[2][2];
-        T23 = xfrm[2][3];
+        double[][] xfrm = tMatrix.getArray();
+        double T00 = xfrm[0][0];
+        double T01 = xfrm[0][1];
+        double T02 = xfrm[0][2];
+        double T03 = xfrm[0][3];
+        double T10 = xfrm[1][0];
+        double T11 = xfrm[1][1];
+        double T12 = xfrm[1][2];
+        double T13 = xfrm[1][3];
+        double T20 = xfrm[2][0];
+        double T21 = xfrm[2][1];
+        double T22 = xfrm[2][2];
+        double T23 = xfrm[2][3];
+        double aT00 = T00;
+        double aT10 = T10;
+        double aT20 = T20;
+        double iT00, iT10, iT20;
+        double newPtX, newPtY, newPtZ;
 
         // The variables aT00, aT10, aT20, iT00... etc. will be used for findRangeX, but calculated before
         // entering the loop for efficiency.
@@ -1019,15 +1049,26 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         // Also take the inverse of each multiplier, unless it is smaller than 1.0e-8
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
+        }else{
+        	iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
+        }else{
+        	iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
+        }else{
+        	iT20 = Double.MAX_VALUE;
         }
+
+        double[] jointHist = new double[nBins * nBins];
+        double[] margHistR = new double[nBins];
+        double[] margHistI = new double[nBins];
+ 
 
         for (int i = 0; i < (nBins * nBins); i++) {
             jointHist[i] = 0;
@@ -1052,6 +1093,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         if ((inputImage.max - inputImage.min) != 0) {
             constantI = (nBins - 1) / (inputImage.max - inputImage.min);
         }
+        Point minMaxPt = new Point();
 
         // zEnd has been previously defined to be refImage.zDim-1 (likewise xEnd and yEnd)
         for (z = 0; z <= zEnd; z++) {
@@ -1068,7 +1110,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
                 // determine range of x values for the current y value, so don't have to loop through all x's
                 // and always check that it's in bounds
-                findRangeX(minMaxPt);
+                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
 
                 // Full formula for newPt's:
                 // newPtX = minMaxPt.x*T00 + y*T01 + z*T02 + T03
@@ -1215,7 +1257,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         }
 
         // Marginal entropy of input image H(A)
-        nOverlap = 0.0;
+        double nOverlap = 0.0;
 
         for (int i = 0; i < nBins; i++) {
             n = margHistI[i];
@@ -1270,33 +1312,29 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double dx, dy, dz, dx1, dy1;
         double b1, b2;
 
-        // clear out some variables
-        for (int i = 0; i < nBins; i++) {
-            numY[i] = 0.0;
-            sumY[i] = 0.0;
-            sumY2[i] = 0.0;
-        }
+        double[] numY = new double[nBins];
+        double[] sumY = new double[nBins];
+        double[] sumY2 = new double[nBins];
 
         // get transformation matrix into quick access variables.
-        xfrm = tMatrix.getArray();
-        T00 = xfrm[0][0];
-        T01 = xfrm[0][1];
-        T02 = xfrm[0][2];
-        T03 = xfrm[0][3];
-        T10 = xfrm[1][0];
-        T11 = xfrm[1][1];
-        T12 = xfrm[1][2];
-        T13 = xfrm[1][3];
-        T20 = xfrm[2][0];
-        T21 = xfrm[2][1];
-        T22 = xfrm[2][2];
-        T23 = xfrm[2][3];
-
-        // the next variable are used in the "findRangeX" method. They are calculated only once to
-        // speed up the cost function calculation
-        aT00 = T00;
-        aT10 = T10;
-        aT20 = T20;
+        double[][] xfrm = tMatrix.getArray();
+        double T00 = xfrm[0][0];
+        double T01 = xfrm[0][1];
+        double T02 = xfrm[0][2];
+        double T03 = xfrm[0][3];
+        double T10 = xfrm[1][0];
+        double T11 = xfrm[1][1];
+        double T12 = xfrm[1][2];
+        double T13 = xfrm[1][3];
+        double T20 = xfrm[2][0];
+        double T21 = xfrm[2][1];
+        double T22 = xfrm[2][2];
+        double T23 = xfrm[2][3];
+        double aT00 = T00;
+        double aT10 = T10;
+        double aT20 = T20;
+        double iT00, iT10, iT20;
+        double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
             aT00 = -aT00;
@@ -1312,14 +1350,20 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
+        }else{
+        	iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
+        }else{
+        	iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
+        }else{
+        	iT20 = Double.MAX_VALUE;
         }
 
         // precalculates this constant for rebinning
@@ -1330,6 +1374,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         }
 
         int nCalcs = 0;
+        Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) { // zEnd = the bound of ref image
             tmpZ1 = (z * T02) + T03;
@@ -1344,7 +1389,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 newPtZ = (y * T21) + tmpZ3;
 
                 // determine range
-                findRangeX(minMaxPt);
+                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
 
                 newPtX += minMaxPt.x * T00;
                 newPtY += minMaxPt.x * T10;
@@ -1484,34 +1529,32 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        // clear out some variables
-        for (int i = 0; i < nBins; i++) {
-            numY[i] = 0.0;
-            sumY[i] = 0.0;
-            sumY2[i] = 0.0;
-        }
+        double[] numY = new double[nBins];
+        double[] sumY = new double[nBins];
+        double[] sumY2 = new double[nBins];
 
         // get transformation matrix into quick access variables.
-        xfrm = tMatrix.getArray();
-        T00 = xfrm[0][0];
-        T01 = xfrm[0][1];
-        T02 = xfrm[0][2];
-        T03 = xfrm[0][3];
-        T10 = xfrm[1][0];
-        T11 = xfrm[1][1];
-        T12 = xfrm[1][2];
-        T13 = xfrm[1][3];
-        T20 = xfrm[2][0];
-        T21 = xfrm[2][1];
-        T22 = xfrm[2][2];
-        T23 = xfrm[2][3];
+        double [][]xfrm = tMatrix.getArray();
+        double T00 = xfrm[0][0];
+        double T01 = xfrm[0][1];
+        double T02 = xfrm[0][2];
+        double T03 = xfrm[0][3];
+        double T10 = xfrm[1][0];
+        double T11 = xfrm[1][1];
+        double T12 = xfrm[1][2];
+        double T13 = xfrm[1][3];
+        double T20 = xfrm[2][0];
+        double T21 = xfrm[2][1];
+        double T22 = xfrm[2][2];
+        double T23 = xfrm[2][3];
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
-        aT00 = T00;
-        aT10 = T10;
-        aT20 = T20;
-
+        double aT00 = T00;
+        double aT10 = T10;
+        double aT20 = T20;
+        double iT00, iT10, iT20;
+        double newPtX, newPtY, newPtZ;
         if (aT00 < 0) {
             aT00 = -aT00;
         }
@@ -1526,14 +1569,20 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
+        }else{
+        	iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
+        }else{
+        	iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
+        }else{
+        	iT20 = Double.MAX_VALUE;
         }
 
         // precalculates this constant for rebinning
@@ -1544,6 +1593,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         }
 
         int nCalcs = 0;
+        Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) { // zEnd = the bound of ref image
             tmpZ1 = (z * T02) + T03;
@@ -1558,7 +1608,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 newPtZ = (y * T21) + tmpZ3;
 
                 // determine range
-                findRangeX(minMaxPt);
+                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
 
                 newPtX += minMaxPt.x * T00;
                 newPtY += minMaxPt.x * T10;
@@ -1723,29 +1773,31 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        for (int i = 0; i < nBins; i++) {
-            numY[i] = 0.0;
-            sumY[i] = 0.0;
-            sumY2[i] = 0.0;
-        }
+        double[] numY = new double[nBins];
+        double[] sumY = new double[nBins];
+        double[] sumY2 = new double[nBins];
 
-        xfrm = tMatrix.getArray();
-        T00 = xfrm[0][0];
-        T01 = xfrm[0][1];
-        T02 = xfrm[0][2];
-        T03 = xfrm[0][3];
-        T10 = xfrm[1][0];
-        T11 = xfrm[1][1];
-        T12 = xfrm[1][2];
-        T13 = xfrm[1][3];
-        T20 = xfrm[2][0];
-        T21 = xfrm[2][1];
-        T22 = xfrm[2][2];
-        T23 = xfrm[2][3];
+        double [][]xfrm = tMatrix.getArray();
+        double T00 = xfrm[0][0];
+        double T01 = xfrm[0][1];
+        double T02 = xfrm[0][2];
+        double T03 = xfrm[0][3];
+        double T10 = xfrm[1][0];
+        double T11 = xfrm[1][1];
+        double T12 = xfrm[1][2];
+        double T13 = xfrm[1][3];
+        double T20 = xfrm[2][0];
+        double T21 = xfrm[2][1];
+        double T22 = xfrm[2][2];
+        double T23 = xfrm[2][3];
 
-        aT00 = T00;
-        aT10 = T10;
-        aT20 = T20;
+        // the next variable are used in the "findRangeX" method. They are calculated only once to
+        // speed up the cost function calculation
+        double aT00 = T00;
+        double aT10 = T10;
+        double aT20 = T20;
+        double iT00, iT10, iT20;
+        double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
             aT00 = -aT00;
@@ -1761,14 +1813,20 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
+        }else{
+        	iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
+        }else{
+        	iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
+        }else{
+        	iT20 = Double.MAX_VALUE;
         }
 
         // Something to think about - could we use shear-warping to speed this process ???(Paeth, Levoy)
@@ -1782,6 +1840,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         }
 
         int nCalcs = 0;
+        Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
@@ -1796,7 +1855,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 newPtZ = (y * T21) + tmpZ3;
 
                 // determine range
-                findRangeX(minMaxPt);
+                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
 
                 newPtX += minMaxPt.x * T00;
                 newPtY += minMaxPt.x * T10;
@@ -1928,7 +1987,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
      *
      * @param  minMaxPt  DOCUMENT ME!
      */
-    private void findRangeX(Point minMaxPt) {
+    private void findRangeX(Point minMaxPt, double newPtX, double newPtY, 
+    		double newPtZ, double aT00, double aT10, double aT20, 
+    		double iT00, double iT10, double iT20) {
         double x1, x2, xMin, xMax, xMin0, xMax0;
 
         xMin0 = 0;
@@ -2164,23 +2225,27 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double sum = 0.0;
         long count = 0;
 
-        xfrm = tMatrix.getArray();
-        T00 = xfrm[0][0];
-        T01 = xfrm[0][1];
-        T02 = xfrm[0][2];
-        T03 = xfrm[0][3];
-        T10 = xfrm[1][0];
-        T11 = xfrm[1][1];
-        T12 = xfrm[1][2];
-        T13 = xfrm[1][3];
-        T20 = xfrm[2][0];
-        T21 = xfrm[2][1];
-        T22 = xfrm[2][2];
-        T23 = xfrm[2][3];
+        double [][]xfrm = tMatrix.getArray();
+        double T00 = xfrm[0][0];
+        double T01 = xfrm[0][1];
+        double T02 = xfrm[0][2];
+        double T03 = xfrm[0][3];
+        double T10 = xfrm[1][0];
+        double T11 = xfrm[1][1];
+        double T12 = xfrm[1][2];
+        double T13 = xfrm[1][3];
+        double T20 = xfrm[2][0];
+        double T21 = xfrm[2][1];
+        double T22 = xfrm[2][2];
+        double T23 = xfrm[2][3];
 
-        aT00 = T00;
-        aT10 = T10;
-        aT20 = T20;
+        // the next variable are used in the "findRangeX" method. They are calculated only once to
+        // speed up the cost function calculation
+        double aT00 = T00;
+        double aT10 = T10;
+        double aT20 = T20;
+        double iT00, iT10, iT20;
+        double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
             aT00 = -aT00;
@@ -2196,15 +2261,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
+        }else{
+        	iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
+        }else{
+        	iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
+        }else{
+        	iT20 = Double.MAX_VALUE;
         }
+
+        Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
@@ -2219,7 +2292,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 newPtZ = (y * T21) + tmpZ3;
 
                 // determine range
-                findRangeX(minMaxPt);
+                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
 
                 newPtX += minMaxPt.x * T00;
                 newPtY += minMaxPt.x * T10;
@@ -2300,23 +2373,27 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double sum = 0.0;
         long count = 0;
 
-        xfrm = tMatrix.getArray();
-        T00 = xfrm[0][0];
-        T01 = xfrm[0][1];
-        T02 = xfrm[0][2];
-        T03 = xfrm[0][3];
-        T10 = xfrm[1][0];
-        T11 = xfrm[1][1];
-        T12 = xfrm[1][2];
-        T13 = xfrm[1][3];
-        T20 = xfrm[2][0];
-        T21 = xfrm[2][1];
-        T22 = xfrm[2][2];
-        T23 = xfrm[2][3];
+        double [][]xfrm = tMatrix.getArray();
+        double T00 = xfrm[0][0];
+        double T01 = xfrm[0][1];
+        double T02 = xfrm[0][2];
+        double T03 = xfrm[0][3];
+        double T10 = xfrm[1][0];
+        double T11 = xfrm[1][1];
+        double T12 = xfrm[1][2];
+        double T13 = xfrm[1][3];
+        double T20 = xfrm[2][0];
+        double T21 = xfrm[2][1];
+        double T22 = xfrm[2][2];
+        double T23 = xfrm[2][3];
 
-        aT00 = T00;
-        aT10 = T10;
-        aT20 = T20;
+        // the next variable are used in the "findRangeX" method. They are calculated only once to
+        // speed up the cost function calculation
+        double aT00 = T00;
+        double aT10 = T10;
+        double aT20 = T20;
+        double iT00, iT10, iT20;
+        double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
             aT00 = -aT00;
@@ -2332,15 +2409,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
+        }else{
+        	iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
+        }else{
+        	iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
+        }else{
+        	iT20 = Double.MAX_VALUE;
         }
+
+        Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
@@ -2355,7 +2440,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 newPtZ = (y * T21) + tmpZ3;
 
                 // determine range
-                findRangeX(minMaxPt);
+                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
 
                 newPtX += minMaxPt.x * T00;
                 newPtY += minMaxPt.x * T10;
@@ -2452,22 +2537,27 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        xfrm = tMatrix.getArray();
-        T00 = xfrm[0][0];
-        T01 = xfrm[0][1];
-        T02 = xfrm[0][2];
-        T03 = xfrm[0][3];
-        T10 = xfrm[1][0];
-        T11 = xfrm[1][1];
-        T12 = xfrm[1][2];
-        T13 = xfrm[1][3];
-        T20 = xfrm[2][0];
-        T21 = xfrm[2][1];
-        T22 = xfrm[2][2];
-        T23 = xfrm[2][3];
-        aT00 = T00;
-        aT10 = T10;
-        aT20 = T20;
+        double [][]xfrm = tMatrix.getArray();
+        double T00 = xfrm[0][0];
+        double T01 = xfrm[0][1];
+        double T02 = xfrm[0][2];
+        double T03 = xfrm[0][3];
+        double T10 = xfrm[1][0];
+        double T11 = xfrm[1][1];
+        double T12 = xfrm[1][2];
+        double T13 = xfrm[1][3];
+        double T20 = xfrm[2][0];
+        double T21 = xfrm[2][1];
+        double T22 = xfrm[2][2];
+        double T23 = xfrm[2][3];
+
+        // the next variable are used in the "findRangeX" method. They are calculated only once to
+        // speed up the cost function calculation
+        double aT00 = T00;
+        double aT10 = T10;
+        double aT20 = T20;
+        double iT00, iT10, iT20;
+        double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
             aT00 = -aT00;
@@ -2483,16 +2573,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
+        }else{
+        	iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
+        }else{
+        	iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
+        }else{
+        	iT20 = Double.MAX_VALUE;
         }
 
+        Point minMaxPt = new Point();
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
@@ -2506,7 +2603,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 newPtZ = (y * T21) + tmpZ3;
 
                 // determine range
-                findRangeX(minMaxPt);
+                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
 
                 newPtX += minMaxPt.x * T00;
                 newPtY += minMaxPt.x * T10;
@@ -2623,22 +2720,27 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        xfrm = tMatrix.getArray();
-        T00 = xfrm[0][0];
-        T01 = xfrm[0][1];
-        T02 = xfrm[0][2];
-        T03 = xfrm[0][3];
-        T10 = xfrm[1][0];
-        T11 = xfrm[1][1];
-        T12 = xfrm[1][2];
-        T13 = xfrm[1][3];
-        T20 = xfrm[2][0];
-        T21 = xfrm[2][1];
-        T22 = xfrm[2][2];
-        T23 = xfrm[2][3];
-        aT00 = T00;
-        aT10 = T10;
-        aT20 = T20;
+        double [][]xfrm = tMatrix.getArray();
+        double T00 = xfrm[0][0];
+        double T01 = xfrm[0][1];
+        double T02 = xfrm[0][2];
+        double T03 = xfrm[0][3];
+        double T10 = xfrm[1][0];
+        double T11 = xfrm[1][1];
+        double T12 = xfrm[1][2];
+        double T13 = xfrm[1][3];
+        double T20 = xfrm[2][0];
+        double T21 = xfrm[2][1];
+        double T22 = xfrm[2][2];
+        double T23 = xfrm[2][3];
+
+        // the next variable are used in the "findRangeX" method. They are calculated only once to
+        // speed up the cost function calculation
+        double aT00 = T00;
+        double aT10 = T10;
+        double aT20 = T20;
+        double iT00, iT10, iT20;
+        double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
             aT00 = -aT00;
@@ -2654,15 +2756,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
+        }else{
+        	iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
+        }else{
+        	iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
+        }else{
+        	iT20 = Double.MAX_VALUE;
         }
+
+        Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
@@ -2677,7 +2787,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 newPtZ = (y * T21) + tmpZ3;
 
                 // determine range
-                findRangeX(minMaxPt);
+                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
 
                 newPtX += minMaxPt.x * T00;
                 newPtY += minMaxPt.x * T10;
@@ -2800,22 +2910,27 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        xfrm = tMatrix.getArray();
-        T00 = xfrm[0][0];
-        T01 = xfrm[0][1];
-        T02 = xfrm[0][2];
-        T03 = xfrm[0][3];
-        T10 = xfrm[1][0];
-        T11 = xfrm[1][1];
-        T12 = xfrm[1][2];
-        T13 = xfrm[1][3];
-        T20 = xfrm[2][0];
-        T21 = xfrm[2][1];
-        T22 = xfrm[2][2];
-        T23 = xfrm[2][3];
-        aT00 = T00;
-        aT10 = T10;
-        aT20 = T20;
+        double [][]xfrm = tMatrix.getArray();
+        double T00 = xfrm[0][0];
+        double T01 = xfrm[0][1];
+        double T02 = xfrm[0][2];
+        double T03 = xfrm[0][3];
+        double T10 = xfrm[1][0];
+        double T11 = xfrm[1][1];
+        double T12 = xfrm[1][2];
+        double T13 = xfrm[1][3];
+        double T20 = xfrm[2][0];
+        double T21 = xfrm[2][1];
+        double T22 = xfrm[2][2];
+        double T23 = xfrm[2][3];
+
+        // the next variable are used in the "findRangeX" method. They are calculated only once to
+        // speed up the cost function calculation
+        double aT00 = T00;
+        double aT10 = T10;
+        double aT20 = T20;
+        double iT00, iT10, iT20;
+        double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
             aT00 = -aT00;
@@ -2831,15 +2946,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
+        }else{
+        	iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
+        }else{
+        	iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
+        }else{
+        	iT20 = Double.MAX_VALUE;
         }
+
+        Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
@@ -2854,7 +2977,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 newPtZ = (y * T21) + tmpZ3;
 
                 // determine range
-                findRangeX(minMaxPt);
+                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
 
                 newPtX += minMaxPt.x * T00;
                 newPtY += minMaxPt.x * T10;
@@ -2980,22 +3103,27 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        xfrm = tMatrix.getArray();
-        T00 = xfrm[0][0];
-        T01 = xfrm[0][1];
-        T02 = xfrm[0][2];
-        T03 = xfrm[0][3];
-        T10 = xfrm[1][0];
-        T11 = xfrm[1][1];
-        T12 = xfrm[1][2];
-        T13 = xfrm[1][3];
-        T20 = xfrm[2][0];
-        T21 = xfrm[2][1];
-        T22 = xfrm[2][2];
-        T23 = xfrm[2][3];
-        aT00 = T00;
-        aT10 = T10;
-        aT20 = T20;
+        double [][]xfrm = tMatrix.getArray();
+        double T00 = xfrm[0][0];
+        double T01 = xfrm[0][1];
+        double T02 = xfrm[0][2];
+        double T03 = xfrm[0][3];
+        double T10 = xfrm[1][0];
+        double T11 = xfrm[1][1];
+        double T12 = xfrm[1][2];
+        double T13 = xfrm[1][3];
+        double T20 = xfrm[2][0];
+        double T21 = xfrm[2][1];
+        double T22 = xfrm[2][2];
+        double T23 = xfrm[2][3];
+
+        // the next variable are used in the "findRangeX" method. They are calculated only once to
+        // speed up the cost function calculation
+        double aT00 = T00;
+        double aT10 = T10;
+        double aT20 = T20;
+        double iT00, iT10, iT20;
+        double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
             aT00 = -aT00;
@@ -3011,15 +3139,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
+        }else{
+        	iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
+        }else{
+        	iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
+        }else{
+        	iT20 = Double.MAX_VALUE;
         }
+
+        Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
@@ -3034,7 +3170,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 newPtZ = (y * T21) + tmpZ3;
 
                 // determine range
-                findRangeX(minMaxPt);
+                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
 
                 newPtX += minMaxPt.x * T00;
                 newPtY += minMaxPt.x * T10;
@@ -3276,22 +3412,27 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double countSqr = 0;
         double varX, varY, varXY;
 
-        xfrm = tMatrix.getArray();
-        T00 = xfrm[0][0];
-        T01 = xfrm[0][1];
-        T02 = xfrm[0][2];
-        T03 = xfrm[0][3];
-        T10 = xfrm[1][0];
-        T11 = xfrm[1][1];
-        T12 = xfrm[1][2];
-        T13 = xfrm[1][3];
-        T20 = xfrm[2][0];
-        T21 = xfrm[2][1];
-        T22 = xfrm[2][2];
-        T23 = xfrm[2][3];
-        aT00 = T00;
-        aT10 = T10;
-        aT20 = T20;
+        double [][]xfrm = tMatrix.getArray();
+        double T00 = xfrm[0][0];
+        double T01 = xfrm[0][1];
+        double T02 = xfrm[0][2];
+        double T03 = xfrm[0][3];
+        double T10 = xfrm[1][0];
+        double T11 = xfrm[1][1];
+        double T12 = xfrm[1][2];
+        double T13 = xfrm[1][3];
+        double T20 = xfrm[2][0];
+        double T21 = xfrm[2][1];
+        double T22 = xfrm[2][2];
+        double T23 = xfrm[2][3];
+
+        // the next variable are used in the "findRangeX" method. They are calculated only once to
+        // speed up the cost function calculation
+        double aT00 = T00;
+        double aT10 = T10;
+        double aT20 = T20;
+        double iT00, iT10, iT20;
+        double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
             aT00 = -aT00;
@@ -3307,15 +3448,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
+        }else{
+        	iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
+        }else{
+        	iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
+        }else{
+        	iT20 = Double.MAX_VALUE;
         }
+
+        Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
@@ -3330,7 +3479,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 newPtZ = (y * T21) + tmpZ3;
 
                 // determine range
-                findRangeX(minMaxPt);
+                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
 
                 newPtX += minMaxPt.x * T00;
                 newPtY += minMaxPt.x * T10;
@@ -3426,22 +3575,27 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double varX, varY, varXY;
         double countSqr = 0;
 
-        xfrm = tMatrix.getArray();
-        T00 = xfrm[0][0];
-        T01 = xfrm[0][1];
-        T02 = xfrm[0][2];
-        T03 = xfrm[0][3];
-        T10 = xfrm[1][0];
-        T11 = xfrm[1][1];
-        T12 = xfrm[1][2];
-        T13 = xfrm[1][3];
-        T20 = xfrm[2][0];
-        T21 = xfrm[2][1];
-        T22 = xfrm[2][2];
-        T23 = xfrm[2][3];
-        aT00 = T00;
-        aT10 = T10;
-        aT20 = T20;
+        double [][]xfrm = tMatrix.getArray();
+        double T00 = xfrm[0][0];
+        double T01 = xfrm[0][1];
+        double T02 = xfrm[0][2];
+        double T03 = xfrm[0][3];
+        double T10 = xfrm[1][0];
+        double T11 = xfrm[1][1];
+        double T12 = xfrm[1][2];
+        double T13 = xfrm[1][3];
+        double T20 = xfrm[2][0];
+        double T21 = xfrm[2][1];
+        double T22 = xfrm[2][2];
+        double T23 = xfrm[2][3];
+
+        // the next variable are used in the "findRangeX" method. They are calculated only once to
+        // speed up the cost function calculation
+        double aT00 = T00;
+        double aT10 = T10;
+        double aT20 = T20;
+        double iT00, iT10, iT20;
+        double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
             aT00 = -aT00;
@@ -3457,17 +3611,24 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
+        }else{
+        	iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
+        }else{
+        	iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
+        }else{
+        	iT20 = Double.MAX_VALUE;
         }
 
         setupKernel(); // setups sinc kernal
+        Point minMaxPt = new Point();
 
         for (z = 0; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
@@ -3482,7 +3643,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 newPtZ = (y * T21) + tmpZ3;
 
                 // determine range
-                findRangeX(minMaxPt);
+                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
 
                 newPtX += minMaxPt.x * T00;
                 newPtY += minMaxPt.x * T10;
@@ -3573,22 +3734,27 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        xfrm = tMatrix.getArray();
-        T00 = xfrm[0][0];
-        T01 = xfrm[0][1];
-        T02 = xfrm[0][2];
-        T03 = xfrm[0][3];
-        T10 = xfrm[1][0];
-        T11 = xfrm[1][1];
-        T12 = xfrm[1][2];
-        T13 = xfrm[1][3];
-        T20 = xfrm[2][0];
-        T21 = xfrm[2][1];
-        T22 = xfrm[2][2];
-        T23 = xfrm[2][3];
-        aT00 = T00;
-        aT10 = T10;
-        aT20 = T20;
+        double [][]xfrm = tMatrix.getArray();
+        double T00 = xfrm[0][0];
+        double T01 = xfrm[0][1];
+        double T02 = xfrm[0][2];
+        double T03 = xfrm[0][3];
+        double T10 = xfrm[1][0];
+        double T11 = xfrm[1][1];
+        double T12 = xfrm[1][2];
+        double T13 = xfrm[1][3];
+        double T20 = xfrm[2][0];
+        double T21 = xfrm[2][1];
+        double T22 = xfrm[2][2];
+        double T23 = xfrm[2][3];
+
+        // the next variable are used in the "findRangeX" method. They are calculated only once to
+        // speed up the cost function calculation
+        double aT00 = T00;
+        double aT10 = T10;
+        double aT20 = T20;
+        double iT00, iT10, iT20;
+        double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
             aT00 = -aT00;
@@ -3604,15 +3770,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
+        }else{
+        	iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
+        }else{
+        	iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
+        }else{
+        	iT20 = Double.MAX_VALUE;
         }
+
+        Point minMaxPt = new Point();
 
         for (iter = 0; iter <= 1; iter++) {
 
@@ -3629,7 +3803,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     newPtZ = (y * T21) + tmpZ3;
 
                     // determine range
-                    findRangeX(minMaxPt);
+                    findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
 
                     newPtX += minMaxPt.x * T00;
                     newPtY += minMaxPt.x * T10;
@@ -3778,22 +3952,27 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        xfrm = tMatrix.getArray();
-        T00 = xfrm[0][0];
-        T01 = xfrm[0][1];
-        T02 = xfrm[0][2];
-        T03 = xfrm[0][3];
-        T10 = xfrm[1][0];
-        T11 = xfrm[1][1];
-        T12 = xfrm[1][2];
-        T13 = xfrm[1][3];
-        T20 = xfrm[2][0];
-        T21 = xfrm[2][1];
-        T22 = xfrm[2][2];
-        T23 = xfrm[2][3];
-        aT00 = T00;
-        aT10 = T10;
-        aT20 = T20;
+        double [][]xfrm = tMatrix.getArray();
+        double T00 = xfrm[0][0];
+        double T01 = xfrm[0][1];
+        double T02 = xfrm[0][2];
+        double T03 = xfrm[0][3];
+        double T10 = xfrm[1][0];
+        double T11 = xfrm[1][1];
+        double T12 = xfrm[1][2];
+        double T13 = xfrm[1][3];
+        double T20 = xfrm[2][0];
+        double T21 = xfrm[2][1];
+        double T22 = xfrm[2][2];
+        double T23 = xfrm[2][3];
+
+        // the next variable are used in the "findRangeX" method. They are calculated only once to
+        // speed up the cost function calculation
+        double aT00 = T00;
+        double aT10 = T10;
+        double aT20 = T20;
+        double iT00, iT10, iT20;
+        double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
             aT00 = -aT00;
@@ -3809,15 +3988,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT00 >= 1.0e-8) {
             iT00 = 1 / T00;
+        }else{
+        	iT00 = Double.MAX_VALUE;
         }
 
         if (aT10 >= 1.0e-8) {
             iT10 = 1 / T10;
+        }else{
+        	iT10 = Double.MAX_VALUE;
         }
 
         if (aT20 >= 1.0e-8) {
             iT20 = 1 / T20;
+        }else{
+        	iT20 = Double.MAX_VALUE;
         }
+
+        Point minMaxPt = new Point();
 
         for (iter = 0; iter <= 1; iter++) {
 
@@ -3834,7 +4021,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     newPtZ = (y * T21) + tmpZ3;
 
                     // determine range
-                    findRangeX(minMaxPt);
+                    findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
 
                     newPtX += minMaxPt.x * T00;
                     newPtY += minMaxPt.x * T10;
@@ -3963,9 +4150,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 pLogP[num] = -p * Math.log(p);
             }
 
-            jointHist = new double[nBins * nBins];
-            margHistR = new double[nBins];
-            margHistI = new double[nBins];
+//            jointHist = new double[nBins * nBins];
+//            margHistR = new double[nBins];
+//            margHistI = new double[nBins];
 
         } catch (OutOfMemoryError error) {
             System.gc();
