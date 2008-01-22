@@ -2002,7 +2002,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	            } else if (command.equals(OUTPUT_ALL)) { 
 	            	processCalculations(true, false);
 	            } else if (command.equals(SAVE)) {
+	            	display.setVisible(false);
+	            	display.getActiveImage().getParentFrame().requestFocus();
+	            	
 	            	processCalculations(true, true);
+	            	display.setVisible(true);
 	            } else if (command.equals(TOGGLE_LUT)) {
 	            	if(!lutOn) {
 	            		loadLUT();
@@ -2055,6 +2059,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	     * @param doSave whether to save the output (and screen grabs) to a pdf
 	     */
 	    private void processCalculations(boolean all, boolean doSave) {
+	    	boolean pdfCreated = false;
 	    	for (int listNum = 0; listNum < list.length; listNum++) {
 	    		ListModel model = list[listNum].getModel();		    	
 	    		String [] listStrings = null;
@@ -2074,8 +2079,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    		if (listStrings.length > 0) {
 	    			
 	    			//if PDF hasnt been created and we're saving, create it now
-	    			if (doSave) {
+	    			if (doSave && !pdfCreated) {
 	    				createPDF();
+	    				pdfCreated = true;
 	    			}
 	    			//ModelLUT lut;
 	    			//Load VOIs and calculations
@@ -2547,7 +2553,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     	long time = System.currentTimeMillis();
     	
 		File file = new File(fileDir + File.separator + "NIA_Seg-" + time + ".pdf");
-		
+		System.err.println("file: " + file.toString());
 		try {
 			pdfDocument = new Document();
 			writer = PdfWriter.getInstance(pdfDocument, new FileOutputStream(file));
