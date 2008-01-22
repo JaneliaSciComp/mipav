@@ -1547,6 +1547,16 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 return;
             }
+        }else if (command.equals("BulkCalculator")) {
+
+            if (isMultipleSameSizeImages(true) == true) {
+                new JDialogBulkImageCalculator(this, getActiveImage());
+            } else {
+                MipavUtil.displayError("There are no images with the same dimensions as\n" +
+                                       getActiveImage().getImageName() + " to operate on.");
+
+                return;
+            }
         } else if (command.equals("Anonymize face (BET)")) {
             new JDialogFaceAnonymizerBET(this, getActiveImage());
         } else if (command.equals("Image math")) {

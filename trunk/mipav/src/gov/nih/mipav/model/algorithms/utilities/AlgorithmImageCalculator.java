@@ -184,6 +184,9 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 
     /** DOCUMENT ME! */
     private JTextField textOperator;
+    
+    /** when performing bulk operations via Image Calculator (Bulk Images) dialog, this array is populated */
+    private ModelImage[] srcImages;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -246,6 +249,29 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         if (srcImageA.isColorImage()) {
             colorFactor = 4;
         }
+    }
+    
+    
+    /**
+     * constructor used for bulk images
+     * @param destImage
+     * @param srcImages
+     * @param opType
+     * @param clipMode
+     */
+    public AlgorithmImageCalculator(ModelImage destImage, ModelImage[] srcImages, int opType, int clipMode) {
+    	this.srcImages = srcImages;
+    	this.destImage = destImage;
+    	this.opType = opType;
+    	this.clipMode = clipMode;
+    	entireImage = true;
+    	srcImageA = srcImages[0];
+    	setClipValues();
+    	if (srcImageA.isColorImage()) {
+            colorFactor = 4;
+        }
+    	
+    	
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -446,46 +472,62 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
      * Starts the program.
      */
     public void runAlgorithm() {
-
-        if ((srcImageA == null) || (srcImageB == null)) {
-            displayError("ImageCalculator.run(): Source Image A or source Image B or both are null");
-
-            return;
-        }
-
-        if ((opType == ADVANCED) && (adOpString == null)) {
-            createAdOpDialog(this);
-
-            while (!pressedOK) {
-
-                try {
-                    sleep(5L);
-                } catch (InterruptedException error) { }
-            }
-
-            if (cancel) {
-                setCompleted(false);
-                setThreadStopped(true);
-
-                return;
-            }
-
-            if (adOpString == null) {
-                displayError("AlgorithmImageCalculator: Error on createAdOpDialog");
-                setCompleted(false);
-                setThreadStopped(true);
-
-                return;
-            }
-        }
-
-        
-
-        if (destImage != null) {
-            calcStoreInDest();
-        } else {
-            calcInPlace();
-        }
+    	
+    	if(srcImages == null || srcImages.length == 2) {
+    		//means we are operating on 2 images
+    		System.out.println("here");
+    		if(srcImages != null) {
+    			srcImageA = srcImages[0];
+    			srcImageB = srcImages[1];
+    		}
+	        if ((srcImageA == null) || (srcImageB == null)) {
+	            displayError("ImageCalculator.run(): Source Image A or source Image B or both are null");
+	
+	            return;
+	        }
+	
+	        if ((opType == ADVANCED) && (adOpString == null)) {
+	            createAdOpDialog(this);
+	
+	            while (!pressedOK) {
+	
+	                try {
+	                    sleep(5L);
+	                } catch (InterruptedException error) { }
+	            }
+	
+	            if (cancel) {
+	                setCompleted(false);
+	                setThreadStopped(true);
+	
+	                return;
+	            }
+	
+	            if (adOpString == null) {
+	                displayError("AlgorithmImageCalculator: Error on createAdOpDialog");
+	                setCompleted(false);
+	                setThreadStopped(true);
+	
+	                return;
+	            }
+	        }
+	
+	        if (destImage != null) {
+	            calcStoreInDest();
+	        } else {
+	            calcInPlace();
+	        }
+    	} else {
+    		//means we are performing on bulk images
+    		srcImageA = srcImages[0];
+			srcImageB = srcImages[1];
+			calcStoreInDest();
+    		for(int i=2;i<srcImages.length;i++) {
+    			srcImageA = destImage;
+    			srcImageB = srcImages[i];
+    			calcStoreInDest();	
+    		}
+    	}
     }
 
     /**
