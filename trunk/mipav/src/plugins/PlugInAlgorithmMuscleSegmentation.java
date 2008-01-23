@@ -110,17 +110,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     } // end runAlgorithm()
     
     
-    /**
-     * Prepares this class for destruction.
-     */
-    public void finalize() {
-        destImage = null;
-        srcImage = null;
-        super.finalize();
-    }
-    
-    
-    
     private void performAbdomenDialog() {
         
     	String[][] mirrorArr = new String[3][];
@@ -715,6 +704,44 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
             initNext();
 
+        }
+        
+        /**
+         * Closes window and disposes of frame and component.
+         */
+        public void close() {
+        	this.setVisible(false);
+        	try {
+                this.finalize();
+            } catch (Throwable t) {
+                MipavUtil.displayError("Error encountered cleaning up image frame: " + t);
+            }
+        }
+        
+        /**
+         * Cleans memory.
+         *
+         * @throws  Throwable  the <code>Exception</code> raised by this method
+         */
+        public void finalize() throws Throwable {
+        	removeComponentListener(this);
+        	for (int i = 0; i < tabs.length; i++) {
+        		tabs[i].removeAll();
+        		tabs[i].removeComponentListener(this);
+        		tabs[i] = null;
+        	}
+        	tabs = null;
+        	
+        	imagePane.removeAll();
+        	imagePane = null;
+        	
+        	splitPane.removeAll();
+        	splitPane = null;
+        	
+        	zeroStatus = null;
+        	fillStatus = null;
+        	locationStatus = null;
+        	System.gc();
         }
         
         /**
