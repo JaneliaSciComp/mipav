@@ -59,21 +59,22 @@ import gov.nih.mipav.view.ViewUserInterface;
  */
 public class JDialogBulkImageCalculator extends JDialogScriptableBase implements AlgorithmInterface {
 	
-	/** source image. */
+	/** source image. **/
     private ModelImage imageA;
     
+    /** result image **/
     private ModelImage resultImage;
     
-    /** is color boolean */
+    /** is color boolean **/
     private boolean isColor = false;
     
-    /** operator combo box */
+    /** operator combo box **/
     private JComboBox comboBoxOperator;
     
-    /** table model for the srcimages. */
+    /** table model for the srcimages. **/
     private ViewTableModel srcTableModel;
     
-    /** table to display the src image names. */
+    /** table to display the src image names. **/
     private JTable srcImagesTable;
     
     /** list of images to send to algorithm **/
@@ -82,32 +83,41 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
     /** list of any additional images browsed to  **/
     private ArrayList additionalImagesList = new ArrayList();;
     
-    /** clip radio button*/
+    /** clip radio button **/
     private JRadioButton radioClip;
 
-    /** promote radio button*/
+    /** promote radio button **/
     private JRadioButton radioPromote;
     
-    /** clip mode */
+    /** clip mode **/
     private int clipMode = AlgorithmImageMath.CLIP;
     
     /** handle to algorithm **/
     private AlgorithmImageCalculator alg;
     
-    /** operation type....for now set to ADD */
+    /** operation type....for now set to ADD **/
     private int opType = AlgorithmImageCalculator.ADD;
     
-    /** result image in new frame */
+    /** result image in new frame **/
     private int displayLoc = NEW;
     
-    /** label for browsing for additional images**/
+    /** label for browsing for additional images **/
     private JLabel additionalImagesLabel;
     
-    /** browse button**/
+    /** browse button **/
     private JButton addImageBrowseButton;
+    
+    /** label for removing selected images **/
+    private JLabel removeSelectedImagesLabel;
+    
+    /** remove button **/
+    private JButton removeSelectedButton;
     
     /** boolean isMultifile **/
     private boolean isMultifile;
+    
+    /** indices of selcted rows to remove **/
+    private int[] selectedRows;
     
     
 	
@@ -198,7 +208,7 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
 	         		}
 	         	}
 	         	if(isColor != addImage.isColorImage()) {
-	         		MipavUtil.displayError("Image color properties is not correct");
+	         		MipavUtil.displayError("Image color properties are not correct");
 	         		if(addImage != null) {
 	         			addImage.disposeLocal();
 	         		}
@@ -210,8 +220,27 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
                 srcTableModel.addRow(rowData);
                 additionalImagesList.add(addImage);
 	         	srcImagesList.add(addImage);
-	         }
+	         } 
+	     }else if(command.equals("removeSelected")) {
+	    	 // cannot remove first entry..since this is imageA
+	    	 if(srcImagesTable.getSelectedRow() == 0) {
+	    		 MipavUtil.displayError("Can not remove the first entry since this is the image in which the dialog was opened on");
+	    		 return;
+	    	 }
+	    	 selectedRows = srcImagesTable.getSelectedRows();
+	    	 //need at least 2 images for algorithm to work
+	    	 if((srcImagesTable.getRowCount() - selectedRows.length) < 2) {
+	    		 MipavUtil.displayError("At least 2 images need to be present for algorithm to operate");
+	    		 return; 
+	    	 }
+	    	 for(int i=(selectedRows.length-1);i>=0;i--) {
+	    		 //need to remove from the table
+	             srcTableModel.removeRow(selectedRows[i]);
+	             // need to remove that entry from the List
+	             srcImagesList.remove(selectedRows[i]); 
+	    	 }
 	    	 
+	    	
 	     }
 
 	}
@@ -343,7 +372,6 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
         srcImagesTable = new JTable(srcTableModel);
         srcImagesTable.setPreferredScrollableViewportSize(new Dimension(250, 100));
         JScrollPane srcImagesScrollPane = new JScrollPane(srcImagesTable);
-        srcImagesTable.addMouseListener(new MouseHandler());
         srcPanel.add(srcImagesScrollPane);
         
         //populate with images of like dimensionality that are open in MIPAV
@@ -360,6 +388,14 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
         addImageBrowseButton = new JButton("Browse");
         addImageBrowseButton.addActionListener(this);
         addImageBrowseButton.setActionCommand("addImageBrowse");
+        
+        
+        removeSelectedImagesLabel = new JLabel(" Remove Selected Images: ");
+        removeSelectedImagesLabel.setForeground(Color.black);
+        removeSelectedImagesLabel.setFont(serif12);
+        removeSelectedButton = new JButton("Remove");
+        removeSelectedButton.addActionListener(this);
+        removeSelectedButton.setActionCommand("removeSelected");
         
         ButtonGroup group = new ButtonGroup();
         radioClip = new JRadioButton("Clip", true);
@@ -400,18 +436,24 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
         gbc.gridx = 1;
         inputPanel.add(addImageBrowseButton, gbc);
         gbc.gridx = 0;
+        gbc.gridy = 3;
+        inputPanel.add(removeSelectedImagesLabel, gbc);
+        gbc.gridx = 1;
+        inputPanel.add(removeSelectedButton, gbc);
+        gbc.gridx = 0;
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.NONE;
         gbc.insets = new Insets(0, 0, 0, 0);
-        gbc.gridy = 3;
-        inputPanel.add(radioClip, gbc);
         gbc.gridy = 4;
+        inputPanel.add(radioClip, gbc);
+        gbc.gridy = 5;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         inputPanel.add(radioPromote, gbc);
         
         
         getContentPane().add(inputPanel);
         getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
+        setResizable(false);
         pack();
         setVisible(true);
         
@@ -618,73 +660,6 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
 	
 	
 	
-//Inner Classes --------------------------------------------------------------------------------------------------
 
-    /**
-     * This is an inner class that is used by the table within the dialogs to delete src images from the
-     * tables.
-     */
-    private class MouseHandler extends MouseAdapter implements ActionListener {
-    	
-    	/** point representing where the mouse event took place. */
-        Point p;
-
-        /** popup menu for removing files. */
-        JPopupMenu popupMenu;
-
-        /** rowIndex. */
-        int rowIndex;
-        
-        /** name of the image file. */
-        String imageName;
-
-        /** menu item in the popup menu. */
-        JMenuItem menuItem;
-
-        /** DefaultTableModel for the corresponding table. */
-        DefaultTableModel model;
-    	
-    	public void actionPerformed(ActionEvent event) {
-    		
-    		String command = event.getActionCommand();
-    		
-    		if (command.equals("remove")) {
-    			//need to remove from the table
-                JDialogBulkImageCalculator.this.srcTableModel.removeRow(rowIndex);
-
-                // need to remove that entry from the List
-                JDialogBulkImageCalculator.this.srcImagesList.remove(rowIndex);
-    		}
-    		
-    	}
-    	
-    	
-    	/**
-         * mouseClicked.
-         *
-         * @param  e  DOCUMENT ME!
-         */
-        public void mouseClicked(MouseEvent e) {
-
-            if (e.getButton() == MouseEvent.BUTTON3) {
-                p = new Point(e.getX(), e.getY());
-                popupMenu = new JPopupMenu();
-                rowIndex = ((JTable) e.getSource()).rowAtPoint(p);
-                //doesnt make sense to do bulk calculations if there is not at least 2 images
-                if(((JTable) e.getSource()).getRowCount() > 2) {
-                	//dont let user delete the initial image
-	                if(rowIndex != 0) {
-		                model = (DefaultTableModel) ((JTable) e.getSource()).getModel();
-		                imageName = (String) model.getValueAt(rowIndex, 0);
-		                menuItem = new JMenuItem("Remove " + imageName);
-		                menuItem.addActionListener(this);
-		                menuItem.setActionCommand("remove");
-		                popupMenu.add(menuItem);
-		                popupMenu.show((JTable) e.getSource(), e.getX(), e.getY());
-	                }
-                }
-            }
-        }
-    }
 
 }
