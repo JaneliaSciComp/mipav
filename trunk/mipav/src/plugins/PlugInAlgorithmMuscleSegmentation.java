@@ -707,18 +707,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         }
         
         /**
-         * Closes window and disposes of frame and component.
-         */
-        public void close() {
-        	this.setVisible(false);
-        	try {
-                this.finalize();
-            } catch (Throwable t) {
-                MipavUtil.displayError("Error encountered cleaning up image frame: " + t);
-            }
-        }
-        
-        /**
          * Cleans memory.
          *
          * @throws  Throwable  the <code>Exception</code> raised by this method
@@ -739,7 +727,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         	splitPane = null;
         	
         	zeroStatus = null;
-        	fillStatus = null;
         	locationStatus = null;
         	System.gc();
         }
@@ -868,7 +855,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             ProvenanceRecorder.getReference().addLine(new ActionCloseFrame(getActiveImage()));
 
             setVisible(false);
-
+            try {
+                this.finalize();
+            } catch (Throwable t) {
+                MipavUtil.displayError("Error encountered cleaning up image frame: " + t);
+            }
+            
             //next step would normally be to finalize, but we don't want the controls removed since the original image
             //may still be worked on
 
