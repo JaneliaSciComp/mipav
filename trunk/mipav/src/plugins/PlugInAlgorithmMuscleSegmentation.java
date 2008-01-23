@@ -670,7 +670,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private String[] titles; 
         
-        private boolean[] fillIn;
+        private boolean displayChanged = false;
+
+		private boolean[] fillIn;
         
         private TreeMap locationStatus;
         
@@ -811,6 +813,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 lockToPanel(voiTabLoc, "VOI"); //includes making visible
             } else if(command.equals(DialogPrompt.CALCULATE)) {
             	lockToPanel(resultTabLoc, "Analysis"); //includes making visible
+            	((AnalysisPrompt)tabs[resultTabLoc]).performCalculations();
             } else if (!(command.equals(DialogPrompt.OUTPUT) ||
             		command.equals(DialogPrompt.SAVE) ||
             		command.equals(DialogPrompt.OUTPUT_ALL))) {
@@ -932,9 +935,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             this.setResizable(true);
         }
         
-        private boolean displayChanged = false;
-        
-		@Override
+        @Override
 		public void componentShown(ComponentEvent event) {
 		    Component c = event.getComponent();
 		    if(c instanceof MuscleDialogPrompt) {
@@ -1113,6 +1114,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         		imagePane.setEnabledAt(i, false);
         	imagePane.addTab(title, tabs[tabLoc]);
         	imagePane.setSelectedIndex(voiTabLoc);
+        	display.updateImages(true);
         }
         
         /**
@@ -1126,7 +1128,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             for(int i=0; i<voiTabLoc; i++) 
                 imagePane.setEnabledAt(i, true);
             imagePane.setSelectedIndex(activeTab);
-            
+            display.updateImages(true);
         }
         
         /**
@@ -1705,6 +1707,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		 * Text for muscles where a mirror muscle may exist. 
 		 */
 		private String[][] mirrorArr;
+		
+		private String[] totalList;
 
 		/**
 		 * Text for muscles where mirror muscles are not considered. 
@@ -1712,29 +1716,77 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		private String[][] noMirrorArr;
 		
 		private JList[] list;
-
-		/**
-		 * Vector list of objects that listen to this dialog box. When the action for this pseudo-algorithm has
-		 * completed, the program will notify all listeners.
-		 */
-		//private Vector objectList = new Vector();
 		
 		private String name[] = {"thigh", "bone component", "muscle"};
 		
 		private int time = 0;
 		
+		private MuscleCalculation muscleCalc = new MuscleCalculation();
+
 		private boolean lutOn = false;
+		
+		//Keeping as treeMap since expected size is so small, if number of muscles were greater than say 128, might use HashMap
+		private Map totalAreaCalcTree, totalAreaCountTree, partialAreaTree, fatAreaTree, leanAreaTree;
+		
+		private Map meanFatHTree, meanLeanHTree, meanTotalHTree;
+	
+		/**
+		 * Constructor, note is called at beginning of program, so mirrorArr and noMirrorArr
+		 * may be used in threaded calculations.
+		 * 
+		 * @param theParentFrame
+		 * @param mirrorArr
+		 * @param noMirrorArr
+		 */
 		
 		public AnalysisPrompt(MuscleImageDisplay theParentFrame, String[][] mirrorArr, String[][] noMirrorArr) {
 	        super(theParentFrame, "Analysis");
+	        
+	        //even though done flag exists, synchronized just in case
+	        totalAreaCalcTree = Collections.synchronizedMap(new TreeMap());
+	        totalAreaCountTree = Collections.synchronizedMap(new TreeMap()); 
+	        partialAreaTree = Collections.synchronizedMap(new TreeMap()); 
+	        fatAreaTree = Collections.synchronizedMap(new TreeMap()); 
+	        leanAreaTree = Collections.synchronizedMap(new TreeMap());
+			
+			meanFatHTree = Collections.synchronizedMap(new TreeMap());
+			meanLeanHTree  = Collections.synchronizedMap(new TreeMap());;
+			meanTotalHTree = Collections.synchronizedMap(new TreeMap());
 	        
 	        setButtons(buttonStringList);
 	        
 	        this.noMirrorArr = noMirrorArr;
 	        this.mirrorArr = mirrorArr;
-
-	        initDialog();	        
+	        
+	        totalList = populateTotalList();
+	        
+	        initDialog();
 	    }
+		
+		private String[] populateTotalList() {
+			int totalSize = 0;
+    		for(int i=0; i<mirrorArr.length; i++) 
+    			totalSize += mirrorArr[i].length*2;
+    		String[] totalList = new String[totalSize];
+
+    		for(int i=0, index=0; i<mirrorArr.length; i++) {
+    			for(int j=0; j<mirrorArr[i].length * 2; j++, index++) {
+    				String symmetry1 = "", symmetry2 = "";
+    				if(symmetry.equals(Symmetry.LEFT_RIGHT)) {
+    					symmetry1 = "Left ";
+    					symmetry2 = "Right ";
+    				} else if(symmetry.equals(Symmetry.TOP_BOTTOM)) {
+    					symmetry1 = "Top ";
+    					symmetry2 = "Bottom ";
+    				}
+	            
+    				totalList[index] = (j % 2) == 0 ? new String(symmetry1+mirrorArr[i][j/2]+".xml") : 
+    													new String(symmetry2+mirrorArr[i][j/2]+".xml");
+    			}
+    		}
+    		
+	        return totalList;  
+		}
 		
 		/**
 		 * Loads the CT Thigh specific lut
@@ -1832,8 +1884,15 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        mainPanel.add(buildButtons());
 	        
 	        for(int i=0; i<buttonGroup.length; i++) {
-	        	if(buttonGroup[i].getText().equals(TOGGLE_LUT))
+	        	if(buttonGroup[i].getText().equals(TOGGLE_LUT)) 
 	        		buttonGroup[i].setText("Show LUT");
+	        	else if(buttonGroup[i].getText().equals(OUTPUT)) {
+	        		buttonGroup[i].setEnabled(false);
+	        	} else if(buttonGroup[i].getText().equals(OUTPUT_ALL)) {
+	        		buttonGroup[i].setEnabled(false);
+	        	} else if(buttonGroup[i].getText().equals(SAVE)) {
+	        		buttonGroup[i].setEnabled(false);
+	        	}
 	        }
 	        
 	        add(mainPanel, BorderLayout.CENTER);
@@ -1865,8 +1924,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        
 	        return instructionPanel;
 	    }
-	    
-	    private JScrollPane initSymmetricalObjects(int index, String title) {
+		
+		private JScrollPane initSymmetricalObjects(int index, String title) {
 	         
 	        String[] mirrorString = new String[mirrorArr[index].length * 2];
 	        
@@ -2028,86 +2087,84 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    	
 	    }
 	    
-	    	
 	    /**
-	     * Does calculations on each (or all) of the various areas, and either saves them
-	     * to disk in a PDF or outputs in the Output-Data tab
-	     * @param all whether to calculate all (true if PDF)
-	     * @param doSave whether to save the output (and screen grabs) to a pdf
-	     */
-	    private void processCalculations(boolean all, boolean doSave) {
-	    	boolean pdfCreated = false;
-	    	for (int listNum = 0; listNum < list.length; listNum++) {
-	    		ListModel model = list[listNum].getModel();		    	
-	    		String [] listStrings = null;
-	    		if (all) {
-	    			listStrings = new String[model.getSize()];
-	    			for (int i = 0; i < listStrings.length; i++) {
-		    			listStrings[i] = (String)model.getElementAt(i) + ".xml";
-		    		}
-	    		} else {
+		 * Does calculations on each (or all) of the various areas, and either saves them
+		 * to disk in a PDF or outputs in the Output-Data tab
+		 * @param all whether to calculate all (true if PDF)
+		 * @param doSave whether to save the output (and screen grabs) to a pdf
+		 */
+		private void processCalculations(boolean all, boolean doSave) {
+			if(!muscleCalc.isFinished()) {
+				//Note that since the buttons are disabled, this could only happen by being
+				//directly called in the code
+				MipavUtil.displayError("Still processing calculations.  Please try again");
+				return;
+			}
+			
+			boolean pdfCreated = false;
+			
+			//if PDF hasnt been created and we're saving, create it now
+			if (doSave && !pdfCreated) {
+				createPDF();
+				pdfCreated = true;
+			}
+			Iterator itr;
+			if(all)
+				itr = fatAreaTree.keySet().iterator();
+			else {
+				ArrayList totalList = new ArrayList(), subList = new ArrayList();
+				for (int listNum = 0; listNum < list.length; listNum++) {	    	
 	    			Object[] selected = list[listNum].getSelectedValues();
-	    			listStrings = new String[selected.length];
-	    			for(int i=0; i<selected.length; i++) {
-	    				listStrings[i] = (String)selected[i]+".xml";
-			    	}
-	    		}
-	    		
-	    		if (listStrings.length > 0) {
-	    			
-	    			//if PDF hasnt been created and we're saving, create it now
-	    			if (doSave && !pdfCreated) {
-	    				createPDF();
-	    				pdfCreated = true;
-	    			}
-	    			//Load VOIs and calculations
-	    			loadVOIs(listStrings, lutOn);
-	    			//Image now contains all valid VOIs, display calculations
-	    			VOIVector voi = parentFrame.getActiveImage().getVOIs();
-	    			for(int i=0; i<voi.size(); i++) {
-	    				VOI v = voi.get(i);
-	    				double totalAreaCalc = 0, totalAreaCount = 0, fatArea = 0, leanArea = 0;//, partialArea = 0;
-	    				double meanFatH = 0, meanLeanH = 0, meanTotalH = 0;
-	    				//pixels -> cm^2
-	    				totalAreaCalc = getTotalAreaCalc(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
-	    				totalAreaCount = getTotalAreaCount(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
-	    				fatArea = getFatArea(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
-	    				leanArea = getLeanArea(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
-	    				//partialArea = getPartialArea(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
-	    				meanFatH = getMeanFatH(v);
-	    				meanLeanH = getMeanLeanH(v);
-	    				meanTotalH = getMeanTotalH(v);
-	    				
-	    				System.out.println("Compare areas: "+totalAreaCalc+"\tcount: "+totalAreaCount);
-	    				
-	    				if (doSave) {
-	    					addToPDF(listStrings[i], fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH);
-	    				} else {
-	    					DecimalFormat dec = new DecimalFormat("0.#");
-		    				String appMessage = v.getName()+" calculations:\n"+"Fat Area: "+dec.format(fatArea)+
-		    				"\t\t\t\tMean H: "+dec.format(meanFatH)+"\nLean Area: "+dec.format(leanArea)+
-		    				"\t\t\tMean H: "+dec.format(meanLeanH)+"\nTotal Area: "+dec.format(totalAreaCount)+
-		    				"\t\t\tMean H: "+dec.format(meanTotalH) + "\n\n";
-		    			
-		    				ViewUserInterface.getReference().getMessageFrame().append(appMessage, ViewJFrameMessage.DATA);
-	    				}	
-	    			}
-	    		}
-	    	}
-	    	
-	    	if (doSave) {
-	    			    		
-	    		//now load all VOIs at once:
-	    		int totalSize = 0;
-	    		for (int listNum = 0; listNum < list.length; listNum++) {
+	    			for(int i=0; i<selected.length; i++) 
+	    				subList.add(selected[i]);   
+	    			totalList.addAll(subList);
+		    	}
+	    		itr = totalList.iterator();
+			}
+				
+			
+			while(itr.hasNext()) {
+				Object itrObj = itr.next();
+				double totalAreaCalc = 0, totalAreaCount = 0, fatArea = 0, leanArea = 0;//, partialArea = 0;
+				double meanFatH = 0, meanLeanH = 0, meanTotalH = 0;
+				//pixels -> cm^2
+				totalAreaCalc = (Double)totalAreaCalcTree.get(itrObj);
+				totalAreaCount = (Double)totalAreaCountTree.get(itrObj);
+				fatArea = (Double)fatAreaTree.get(itrObj);
+				leanArea = (Double)leanAreaTree.get(itrObj);
+				//partialArea = getPartialArea(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2));
+				meanFatH = (Double)meanFatHTree.get(itrObj);
+				meanLeanH = (Double)meanLeanHTree.get(itrObj);
+				meanTotalH = (Double)meanTotalHTree.get(itrObj);
+				
+				System.out.println("Compare areas: "+totalAreaCalc+"\tcount: "+totalAreaCount);
+				
+				if (doSave) {
+					addToPDF((String)itrObj, fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH);
+				} else {
+					DecimalFormat dec = new DecimalFormat("0.#");
+					String appMessage = itrObj+" calculations:\n"+"Fat Area: "+dec.format(fatArea)+
+					"\t\t\t\tMean H: "+dec.format(meanFatH)+"\nLean Area: "+dec.format(leanArea)+
+					"\t\t\tMean H: "+dec.format(meanLeanH)+"\nTotal Area: "+dec.format(totalAreaCount)+
+					"\t\t\tMean H: "+dec.format(meanTotalH) + "\n\n";
+				
+					ViewUserInterface.getReference().getMessageFrame().append(appMessage, ViewJFrameMessage.DATA);
+				}	
+			}
+		
+			if (doSave) {
+					    		
+				//now load all VOIs at once:
+				int totalSize = 0;
+				for (int listNum = 0; listNum < list.length; listNum++) {
 		    		ListModel model = list[listNum].getModel();	
 		    		totalSize += model.getSize();
-	    		}
-	    		
-	    		String [] allStrings = new String[totalSize];
-	    		
-	    		int counter = 0;
-	    		for (int listNum = 0; listNum < list.length; listNum++) {
+				}
+				
+				String [] allStrings = new String[totalSize];
+				
+				int counter = 0;
+				for (int listNum = 0; listNum < list.length; listNum++) {
 		    		ListModel model = list[listNum].getModel();		    	
 		    		String [] listStrings = new String[model.getSize()];
 		    			
@@ -2115,25 +2172,182 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		    		for (int i = 0; i < listStrings.length; i++, counter++) {
 		    			allStrings[counter] = (String)model.getElementAt(i) + ".xml";
 		    		}
-	    		} 
-	    		loadVOIs(allStrings, true);
+				} 
+				loadVOIs(allStrings, true);
+			
+				//loadLUT();
+				display.getActiveImage().getParentFrame().updateImages(true);
+				display.updateImages(true);
+				
+				
+				java.awt.Image edgeImage = captureImage();
+				
+				loadVOIs(new String[] {}, false);
+				loadLUT();
+				java.awt.Image qaImage = captureImage();
+				removeLUT();
+				closePDF(edgeImage, qaImage);
+				display.getActiveImage().getParentFrame().updateImages(true);
+				display.updateImages(true);
+				display.requestFocus();
+			}	
+		}
+		
+		private void enableCalcOutput() {
+			for(int i=0; i<buttonGroup.length; i++) {
+	        	if(buttonGroup[i].getText().equals(OUTPUT)) {
+	        		buttonGroup[i].setEnabled(true);
+	        	} else if(buttonGroup[i].getText().equals(OUTPUT_ALL)) {
+	        		buttonGroup[i].setEnabled(true);
+	        	} else if(buttonGroup[i].getText().equals(SAVE)) {
+	        		buttonGroup[i].setEnabled(true);
+	        	}
+	        }
+		}
+
+		private void performCalculations() {
+	    	Thread calc = new Thread(muscleCalc);
+	    	calc.start();
+	    }
+	    
+	    private class MuscleCalculation implements Runnable {
+	    	private boolean done = false;
 	    	
-	    		//loadLUT();
-	    		display.getActiveImage().getParentFrame().updateImages(true);
-	    		display.updateImages(true);
+	    	public void run() {
+	    		long time = System.currentTimeMillis();
+	    		loadVOIs(totalList, false);
+	    		VOIVector vec = (VOIVector)display.getActiveImage().getVOIs().clone();
+	    		display.getActiveImage().unregisterAllVOIs();
+	    		for(int i=0; i<vec.size(); i++) {
+	    			VOI v = vec.get(i);
+	    			String name = v.getName();
+	    			
+	    			fatAreaTree.put(name, getFatArea(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2)));
+	    			partialAreaTree.put(name, getPartialArea(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2)));
+	    			leanAreaTree.put(name, getLeanArea(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2)));
+	    			totalAreaCalcTree.put(name, getTotalAreaCalc(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2)));
+	    			totalAreaCountTree.put(name, getTotalAreaCount(v)*(Math.pow(parentFrame.getActiveImage().getResolutions(0)[0]*.1, 2)));
+	    			
+	    			meanFatHTree.put(name, getMeanFatH(v));
+	    			meanLeanHTree.put(name, getMeanLeanH(v));
+	    			meanTotalHTree.put(name, getMeanTotalH(v));
+	    		}
+	    		time = System.currentTimeMillis() - time;
 	    		
+	    		enableCalcOutput();
 	    		
-	    		java.awt.Image edgeImage = captureImage();
-	    		
-	    		loadVOIs(new String[] {}, false);
-	    		loadLUT();
-	    		java.awt.Image qaImage = captureImage();
-	    		removeLUT();
-	    		closePDF(edgeImage, qaImage);
-	    		display.getActiveImage().getParentFrame().updateImages(true);
-	    		display.updateImages(true);
-	    		display.requestFocus();
-	    	}	
+	    		System.out.println("Finished in "+time);
+	    		done = true;
+	    	}
+	    	
+	    	public boolean isFinished() {
+	    		return done;
+	    	}
+
+			public double getFatArea(VOI v) {
+				int fatArea = 0;
+				BitSet fullMask = new BitSet();
+				v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
+				double mark = 0;
+				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
+			        mark = display.getImageA().getDouble(i);
+					if(mark  >= -190 && mark <= -30) 
+						fatArea++;
+				}
+				return fatArea;
+			}
+
+			public double getPartialArea(VOI v) {
+				int partialArea = 0;
+				BitSet fullMask = new BitSet();
+				v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
+				double mark = 0;
+				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
+			        mark = display.getImageA().getDouble(i);
+					if(mark  >= -30 && mark <= 0) 
+						partialArea++;
+				}
+				return partialArea;
+			}
+
+			public double getLeanArea(VOI v) {
+				int leanArea = 0;
+				BitSet fullMask = new BitSet();
+				v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
+				double mark = 0;
+				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
+			        mark = display.getImageA().getDouble(i);
+					if(mark  >= 0 && mark <= 100) 
+						leanArea++;
+				}
+				return leanArea;
+			}
+
+			//TODO: Partial voluming difference between VOI calculations and counting
+			
+			public double getTotalAreaCalc(VOI v) {
+				return v.area();
+			}
+
+			public double getTotalAreaCount(VOI v) {
+				int totalArea = 0;
+				BitSet fullMask = new BitSet();
+				v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
+				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) 
+			        totalArea++;
+				return totalArea;
+			}
+
+			public double getMeanFatH(VOI v) {
+				int fatArea = 0;
+				double meanFatH = 0;
+				BitSet fullMask = new BitSet();
+				v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
+				double mark = 0;
+				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
+			        mark = display.getImageA().getDouble(i);
+					if(mark  >= -190 && mark <= -30) {
+						fatArea++;
+						meanFatH += mark;
+					}
+				}
+				meanFatH /= fatArea;
+				return meanFatH;
+			}
+
+			public double getMeanLeanH(VOI v) {
+				int leanArea = 0;
+				double meanLeanH = 0;
+				BitSet fullMask = new BitSet();
+				v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
+				double mark = 0;
+				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
+			        mark = display.getImageA().getDouble(i);
+					if(mark  >= 0 && mark <= 100) {
+						leanArea++;
+						meanLeanH += mark;
+					}
+				}
+				double testMean = meanLeanH;
+				testMean /= leanArea;
+				meanLeanH /= leanArea;
+				return meanLeanH;
+			}
+
+			public double getMeanTotalH(VOI v) {
+				int totalArea = 0;
+				double meanTotalH = 0;
+				BitSet fullMask = new BitSet();
+				v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
+				double mark = 0;
+				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
+			        mark = display.getImageA().getDouble(i);
+			        totalArea++;
+					meanTotalH += mark;
+				}
+				meanTotalH /= totalArea;
+				return meanTotalH;
+			}
 	    }
 	}
     
@@ -2258,112 +2472,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         return null;
     }
         
-    public int getFatArea(VOI v) {
-    	int fatArea = 0;
-    	BitSet fullMask = new BitSet();
-    	v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
-    	double mark = 0;
-    	for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-            mark = display.getImageA().getDouble(i);
-    		if(mark  >= -190 && mark <= -30) 
-    			fatArea++;
-    	}
-    	return fatArea;
-    }
-    
-    public int getPartialArea(VOI v) {
-    	int partialArea = 0;
-    	BitSet fullMask = new BitSet();
-    	v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
-    	double mark = 0;
-    	for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-            mark = display.getImageA().getDouble(i);
-    		if(mark  >= -30 && mark <= 0) 
-    			partialArea++;
-    	}
-    	return partialArea;
-    }
-    
-    public int getLeanArea(VOI v) {
-    	int leanArea = 0;
-    	BitSet fullMask = new BitSet();
-    	v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
-    	double mark = 0;
-    	for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-            mark = display.getImageA().getDouble(i);
-    		if(mark  >= 0 && mark <= 100) 
-    			leanArea++;
-    	}
-    	return leanArea;
-    }
-    
-    //TODO: Partial voluming difference between VOI calculations and counting
-    
-    public int getTotalAreaCalc(VOI v) {
-    	return v.area();
-    }
-    
-    public int getTotalAreaCount(VOI v) {
-    	int totalArea = 0;
-    	BitSet fullMask = new BitSet();
-    	v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
-    	for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) 
-            totalArea++;
-    	return totalArea;
-    }
-    
-    public double getMeanFatH(VOI v) {
-    	int fatArea = 0;
-    	double meanFatH = 0;
-    	BitSet fullMask = new BitSet();
-    	v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
-    	double mark = 0;
-    	for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-            mark = display.getImageA().getDouble(i);
-    		if(mark  >= -190 && mark <= -30) {
-    			fatArea++;
-    			meanFatH += mark;
-    		}
-    	}
-    	meanFatH /= fatArea;
-    	return meanFatH;
-    }
-    
-    public double getMeanLeanH(VOI v) {
-    	int leanArea = 0;
-    	double meanLeanH = 0;
-    	BitSet fullMask = new BitSet();
-    	v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
-    	double mark = 0;
-    	for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-            mark = display.getImageA().getDouble(i);
-    		if(mark  >= 0 && mark <= 100) {
-    			leanArea++;
-    			meanLeanH += mark;
-    		}
-    	}
-    	double testMean = meanLeanH;
-    	testMean /= leanArea;
-    	meanLeanH /= leanArea;
-    	return meanLeanH;
-    }
-    
-    public double getMeanTotalH(VOI v) {
-    	int totalArea = 0;
-    	double meanTotalH = 0;
-    	BitSet fullMask = new BitSet();
-    	v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
-    	double mark = 0;
-    	for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-            mark = display.getImageA().getDouble(i);
-            totalArea++;
-			meanTotalH += mark;
-    	}
-    	meanTotalH /= totalArea;
-    	return meanTotalH;
-    }
-    
-    
     private void createPDF() {		
     	String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory();
     	long time = System.currentTimeMillis();
