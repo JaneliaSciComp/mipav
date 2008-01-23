@@ -268,6 +268,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         /** denotes that the srcImg is two thighs */
         TWO_THIGHS,
+        
+        /** unknown image type, generally represents an error state */
+        UNKNOWN
     }
     
     public enum Symmetry{

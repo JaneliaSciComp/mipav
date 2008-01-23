@@ -9,6 +9,9 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Iterator;
+
 import javax.swing.*;
 
 /**
@@ -59,7 +62,11 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         super(theParentFrame, false);
 
         image = im;
-        init();
+        imageType = detectImageType(im);
+        if(imageType == PlugInAlgorithmMuscleSegmentation.ImageType.UNKNOWN)
+        	init();
+        else
+        	callAlgorithm();
     }
     
 //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -273,5 +280,104 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
             return false;
         }
         return true;
+    }
+    
+    private PlugInAlgorithmMuscleSegmentation.ImageType detectImageType(ModelImage im) {
+    	int xBound = im.getFileInfo()[0].getExtents()[0];
+    	int yBound = im.getFileInfo()[0].getExtents()[1];
+    	
+    	//comparing each row to an expected two thigh profile
+    	int qualifiedRows = 0;
+    	int boneCountLeft = 0;
+		int boneCountRight = 0;
+		int airCountCenter = 0;
+		int muscleCountLeftFar = 0;
+		int muscleCountLeftNear = 0;
+		int muscleCountRightNear = 0;
+		int muscleCountRightFar = 0;
+    	
+		boolean foundBoneLeft = false;
+		boolean foundBoneRight = false;
+		
+		ArrayList boneRowHigh = new ArrayList();
+		ArrayList bonePercent = new ArrayList();
+		
+		for(int y=0; y<yBound; y++) {
+			int boneNumber = 0;
+			double percent = 0;
+			for(int x=0; x<xBound; x++) {
+				if(im.getDouble(x, y) > 400) {
+					boneNumber++;
+				}
+			}
+			if((percent = ((double)boneNumber)/((double)xBound)) > 0.05) {
+				boneRowHigh.add(y);
+				bonePercent.add(percent);
+			}
+		}
+		
+		double test = 0.0;
+		Iterator itrBone = boneRowHigh.iterator();
+		Iterator itrPercent = bonePercent.iterator();
+		while(itrBone.hasNext()) {
+			int y = ((Integer)itrBone.next()).intValue();
+    		boneCountLeft = 0;
+    		boneCountRight = 0;
+    		airCountCenter = 0;
+    		muscleCountLeftFar = 0;
+    		muscleCountLeftNear = 0;
+    		muscleCountRightNear = 0;
+    		muscleCountRightFar = 0;
+    		
+    		foundBoneLeft = false;
+    		foundBoneRight = false;
+    		
+    		double boneTest = ((Double)itrPercent.next()).doubleValue();
+    		
+    		for(int x=0; x<xBound; x++){
+    			test = im.getDouble(x, y);
+    			if(!foundBoneLeft) {
+    				if(test > 0 && test < 100)
+    					muscleCountLeftFar++;
+    				else if(test > 400)
+    					boneCountLeft++;
+    			} else if(foundBoneLeft && !foundBoneRight) {
+    				if(test > 0 && test < 100) {
+    					if(((double)airCountCenter)/((double)xBound) > 0.001)
+    						muscleCountRightNear++;
+    					else
+    						muscleCountLeftNear++;
+    				}
+    				else if(test > 400)
+    					boneCountRight++;
+    				else if(test < -900) 
+    					airCountCenter++;
+    			} else if(foundBoneRight && test > 0 && test < 100) {
+    					muscleCountRightFar++;
+    			}
+    			
+    			if(!foundBoneLeft && ((double)boneCountLeft)/((double)xBound) > boneTest/2-.01) {
+    				foundBoneLeft = true;
+    			}
+    			if(!foundBoneRight && xBound-x < xBound/2 && ((double)boneCountRight)/((double)xBound) > boneTest/2-.01) {
+    				foundBoneRight = true;
+    			}
+    		}
+    		
+    		if(foundBoneLeft && foundBoneRight) {
+    			if(((double)airCountCenter)/((double)xBound) > 0.001) {
+    				qualifiedRows++;
+    			} else if(muscleCountLeftNear > .75*muscleCountLeftFar + .75*muscleCountRightFar) {
+    				qualifiedRows++;
+    			}
+    		}
+    	}
+		
+		//compares rows where bone was found to rows which matched two thigh description
+		if(((double)qualifiedRows)/((double)boneRowHigh.size()) > .75) {
+			return PlugInAlgorithmMuscleSegmentation.ImageType.TWO_THIGHS;
+		} 
+		
+		return PlugInAlgorithmMuscleSegmentation.ImageType.UNKNOWN;
     }
 }
