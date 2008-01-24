@@ -88,6 +88,9 @@ public class PlugInAlgorithmDTIOpenListFile extends AlgorithmBase {
 	/** extents for dest image **/
 	private int[] extents;
 	
+	/** endianness **/
+	private boolean endianness = FileBase.LITTLE_ENDIAN;;
+	
 	
 	ArrayList pathsAL;
 	
@@ -129,6 +132,9 @@ public class PlugInAlgorithmDTIOpenListFile extends AlgorithmBase {
 			if(format.equalsIgnoreCase("dicom")) {
 				fireProgressStateChanged("Reading dicom files");
 				success = openDicom();
+			} else if(format.equalsIgnoreCase("float")) {
+				fireProgressStateChanged("Reading raw files");
+				success = openRaw();
 			}
 			if (success) {
 				setCompleted(true);
@@ -176,6 +182,11 @@ public class PlugInAlgorithmDTIOpenListFile extends AlgorithmBase {
             	}else if(lineString.startsWith("<slice_thickness>")) {
             		String zResStr = lineString.substring(lineString.indexOf("<slice_thickness>") + 17, lineString.indexOf("</slice_thickness>")).trim(); 
             		zRes = Float.parseFloat(zResStr);
+            	}else if(lineString.startsWith("<endian_raw_in>")) {
+            		String endiannessStr = lineString.substring(lineString.indexOf("<endian_raw_in>") + 15, lineString.indexOf("</endian_raw_in>")).trim(); 
+            		if(endiannessStr.equalsIgnoreCase("BIG")) {
+            			endianness = FileBase.BIG_ENDIAN;
+            		}
             	}
             }
             extents = new int[4];
@@ -190,6 +201,94 @@ public class PlugInAlgorithmDTIOpenListFile extends AlgorithmBase {
 			e.printStackTrace();
 			return false;
 		}
+	}
+	
+	
+	/**
+	 * reads raw and exports to 4d dataset
+	 * @return
+	 */
+	public boolean openRaw() {
+		long begTime = System.currentTimeMillis();
+		fireProgressStateChanged(15);
+		int length;
+		float[] buffer;	
+		length = xDim * yDim;
+		int[] ext2D = new int[2];
+		ext2D[0] = xDim;
+		ext2D[1] = yDim;
+		buffer = new float[length];
+		int[] unitsOfMeas2D = new int[2];
+		unitsOfMeas2D[0] = FileInfoBase.MILLIMETERS;
+		unitsOfMeas2D[1] = FileInfoBase.MILLIMETERS;
+		float[] res2D = new float[2];
+		res2D[0] = xRes;
+		res2D[1] = yRes;
+		String dir;
+		String filename;
+		FileInfoImageXML fileInfo = null;
+		float[] resols = new float[4];
+		resols[0] = xRes;
+		resols[1] = yRes;
+		resols[2] = zRes;
+		resols[3] = 0;
+        int[] units = new int[4];
+        units[0] = FileInfoBase.MILLIMETERS;
+        units[1] = FileInfoBase.MILLIMETERS;
+        units[2] = FileInfoBase.MILLIMETERS;
+        units[3] = FileInfoBase.MILLIMETERS;
+        float[] startLocs = new float[4];
+        startLocs[0] = 0;
+        startLocs[1] = 0;
+        startLocs[2] = 0;
+        startLocs[3] = 0;
+		int j=0;
+		FileRaw fileRaw = null;
+		fireProgressStateChanged(20);
+		try {
+			for(int i=0;i<tDim;i++) {
+				int currVol = i + 1;
+				int totVols = tDim;
+				fireProgressStateChanged("Reading raw files...Vol " + currVol + "/" + totVols);
+				fireProgressStateChanged(20 + (i * 75 /tDim));
+				for(int k=i;k<pathsAL.size();k=k+tDim) {
+					String path = (String)pathsAL.get(k);
+					dir = path.substring(0,path.lastIndexOf(File.separator)) + File.separator;
+					filename = path.substring(path.lastIndexOf(File.separator) + 1, path.length());
+					fileInfo = new FileInfoImageXML(filename, dir, FileUtility.RAW);
+					fileInfo.setDataType(ModelStorageBase.FLOAT);
+					fileInfo.setExtents(ext2D);
+					fileInfo.setUnitsOfMeasure(unitsOfMeas2D);
+					fileInfo.setResolutions(res2D);
+					fileInfo.setEndianess(endianness);
+					fileInfo.setOffset(0);
+					fileRaw = new FileRaw(filename, dir, fileInfo, FileBase.READ);
+					fileRaw.readImage(buffer, 0, ModelStorageBase.FLOAT);
+					if(j == 0) {
+						destImage = new ModelImage(ModelStorageBase.FLOAT, extents, studyName);
+					}
+					destImage.importData(length * j, buffer, false);
+					destImage.setFileInfo((FileInfoBase) (fileInfo.clone()), j);
+			        destImage.getFileInfo(j).setResolutions(resols);
+	                destImage.getFileInfo(j).setUnitsOfMeasure(units);
+	                destImage.getFileInfo(j).setExtents(extents);
+	                destImage.getFileInfo(j).setOrigin(startLocs);
+
+					j++;
+					
+				}
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		destImage.calcMinMax();
+		long endTime = System.currentTimeMillis();
+        long diffTime = endTime - begTime;
+        float seconds = ((float) diffTime) / 1000;
+		fireProgressStateChanged(95);
+		System.out.println("** Algorithm took " + seconds + " seconds \n");
+		return true;
 	}
 
 	
