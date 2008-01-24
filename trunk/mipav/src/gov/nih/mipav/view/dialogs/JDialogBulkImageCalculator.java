@@ -162,6 +162,8 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
 	     		}
 	         }
 	         dispose();
+	     } else if (command.equals("Help")) {
+	            MipavUtil.showHelp("U4070");
 	     } else if (command.equals("addImageBrowse")) {
 	    	 ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
 	         JFileChooser chooser = fileChooser.getFileChooser();
@@ -408,9 +410,12 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
         
         JPanel OKCancelPanel = new JPanel();
         buildOKButton();
-        OKCancelPanel.add(OKButton, BorderLayout.WEST);
+        OKCancelPanel.add(OKButton);
         buildCancelButton();
-        OKCancelPanel.add(cancelButton, BorderLayout.EAST);
+        OKCancelPanel.add(cancelButton);
+        buildHelpButton();
+        OKCancelPanel.add(helpButton);
+        
         
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
