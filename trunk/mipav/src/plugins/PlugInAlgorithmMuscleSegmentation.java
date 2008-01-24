@@ -2379,7 +2379,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         }
         return null;
     }
- 
+    
+    /**
+     * loads the given VOIs, note that the .xml extension is optional (method now works either way
+     * 
+     * @param voiName
+     * @param fillVOIs whether the VOIs should be filled
+     */
     public void loadVOIs(String[] voiName, boolean fillVOIs) {
     	if (display == null) {
     		return;
@@ -2388,22 +2394,23 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         int colorChoice = new Random().nextInt(colorPick.length);
         String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR;
         File allVOIs = new File(fileDir);
+        String ext = voiName[0].contains(".xml") ? "" : ".xml";
         if(allVOIs.isDirectory()) {
             for(int i=0; i<voiName.length; i++) {
                 //System.out.println(voiName[i]);
 
-                if(new File(fileDir+voiName[i]).exists()) {
+                if(new File(fileDir+voiName[i]+ext).exists()) {
                     String fileName = voiName[i];
                     FileVOI v;
                     VOI[] voiVec = null;
                     try {
-                        v = new FileVOI(fileName, fileDir, display.getActiveImage());
+                        v = new FileVOI(fileName+ext, fileDir, display.getActiveImage());
                         voiVec = v.readVOI(false);
                     } catch(IOException e) {
-                        MipavUtil.displayError("Unable to load old VOI from location:\n"+fileDir+"\nWith name: "+fileName);
+                        MipavUtil.displayError("Unable to load old VOI from location:\n"+fileDir+"\nWith name: "+fileName+ext);
                     }
                     if(voiVec.length > 1) {
-                        MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+fileName);
+                        MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+fileName+ext);
                     } else {
                     	Color c = hasColor(voiVec[0]);
                         if(c != null) {
@@ -2448,9 +2455,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     public VOI getSingleVOI(String name) {
     	if(display == null) {
     		return null;
-    	} else if(display.getActiveImage() == null) {
-    		int j = 1;
-    	}
+    	} 
         String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR;
         String ext = name.contains(".xml") ? "" : ".xml";
         
