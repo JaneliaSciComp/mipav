@@ -1697,23 +1697,81 @@ public class FileTiff extends FileBase {
      * Method to decode LZW compressed data.
      *
      * @param   inData        The compressed data.
+     * @param   bytesToRead   bytes to be read from inData
      * @param   outData  Array to return the uncompressed data in.
+     * @param   startingRow First row to be generated from the call
      * @param   rowsToDo The number of rows the compressed data contains.
      * @param   bytesGeneratedPerRow
      */
-    private void LZWDecompresser(byte[] inData, byte[] outData, int rowsToDo, int bytesToGeneratePerRow) 
+    // Ported from C++ code in tif_lzw.c in tif-4.0.0.alpha\libtiff
+    // The following copyright notices appear in the original code.
+    /*
+     * Copyright (c) 1988-1997 Sam Leffler
+     * Copyright (c) 1991-1997 Silicon Graphics, Inc.
+     *
+     * Permission to use, copy, modify, distribute, and sell this software and 
+     * its documentation for any purpose is hereby granted without fee, provided
+     * that (i) the above copyright notices and this permission notice appear in
+     * all copies of the software and related documentation, and (ii) the names of
+     * Sam Leffler and Silicon Graphics may not be used in any advertising or
+     * publicity relating to the software without the specific, prior written
+     * permission of Sam Leffler and Silicon Graphics.
+     * 
+     * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND, 
+     * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY 
+     * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  
+     * 
+     * IN NO EVENT SHALL SAM LEFFLER OR SILICON GRAPHICS BE LIABLE FOR
+     * ANY SPECIAL, INCIDENTAL, INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND,
+     * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+     * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF 
+     * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
+     * OF THIS SOFTWARE.
+     */
+    /*
+     * TIFF Library.  
+     * Rev 5.0 Lempel-Ziv & Welch Compression Support
+     *
+     * This code is derived from the compress program whose code is
+     * derived from software contributed to Berkeley by James A. Woods,
+     * derived from original work by Spencer Thomas and Joseph Orost.
+     *
+     * The original Berkeley copyright notice appears below in its entirety.
+     */
+    
+    /*
+     * Copyright (c) 1985, 1986 The Regents of the University of California.
+     * All rights reserved.
+     *
+     * This code is derived from software contributed to Berkeley by
+     * James A. Woods, derived from original work by Spencer Thomas
+     * and Joseph Orost.
+     *
+     * Redistribution and use in source and binary forms are permitted
+     * provided that the above copyright notice and this paragraph are
+     * duplicated in all such forms and that any documentation,
+     * advertising materials, and other materials related to such
+     * distribution and use acknowledge that the software was developed
+     * by the University of California, Berkeley.  The name of the
+     * University may not be used to endorse or promote products derived
+     * from this software without specific prior written permission.
+     * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+     * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+     * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+     */
+
+    private void LZWDecompresser(byte[] inData, int bytesToRead, byte[] outData, int startingRow, int rowsToDo, int bytesToGeneratePerRow) 
                  throws IOException {
+        System.out.println("startingRow = " + startingRow);
         final int BITS_MIN = 9; // Start LZW with 9 bits
         final int BITS_MAX = 12; // max of 12 bit strings for LZW
         final int CODE_CLEAR = 256; // code to clear string table
         final int CODE_EOI = 257; // end-of-information code
         final int CODE_FIRST = 258; // first free code entry
         // +1024 is for compatibility with old LZW files
-        final int CSIZE = ((1 << BITS_MAX)-1) + 1024;
+        final int CSIZE = (1 << BITS_MAX) + 1023;
         int i;
-        int bytesToRead = inData.length;
         short code;
-        int predictor = 1;
         int r;
         int occ;
         int inPosition = 0;
@@ -1731,6 +1789,7 @@ public class FileTiff extends FileBase {
         int localNextFreeEntry;
         int localMaxAvailableEntry;
         int localPreviousRecognizedCode;
+        int len;
         if (!haveLZWInit) {
             haveLZWInit = true;
             next = new int[CSIZE];
@@ -1746,6 +1805,8 @@ public class FileTiff extends FileBase {
             } while (code-- > 0);
         } // if (!haveLZWInit)
         if ((inData[0] == 0) && ((inData[1] & 0x1) == 1)) {
+            // Check for old bit-reversed codes.
+            Preferences.debug("Old-style LZW codes\n");
             newLZW = false;
             maxCode = ((1 << BITS_MIN) - 1);
         }
@@ -1760,6 +1821,8 @@ public class FileTiff extends FileBase {
         nBitsMask = ((1L << BITS_MIN)- 1);
         bitsLeft = (bytesToRead << 3);
         nextFreeEntry = CODE_FIRST;
+        // Zero entries that are not yet filled in.  We do this to guard against bogus input data
+        // that causes us to index into undefined entries.
         for (i = nextFreeEntry; i < CSIZE; i++) {
             value[i] = (byte)0;
             firstChar[i] = (byte)0;
@@ -1771,26 +1834,29 @@ public class FileTiff extends FileBase {
         op = op0;
         if (newLZW) {
             for (r = 0; r < rowsToDo; r++) {
+                System.out.println("r = " + r);
                 occ = bytesToGeneratePerRow;  
                 if (restart > 0) {
+                    System.out.println("restart = " + restart);
                     // Restart interrupted output operation
-                    residue = length[currentRecognizedCode] - restart;
+                    localCurrentRecognizedCode = currentRecognizedCode;
+                    residue = length[localCurrentRecognizedCode] - restart;
                     if (residue > occ) {
                         // Residue from previous decode is sufficient to satisfy the decode request.
-                        // Skip to the start of the decoded string, place decoded values in output 
+                        // Skip to the start of the decoded string, place decoded values in the output 
                         // buffer, and return.
                         restart += occ;
                         do {
-                            currentRecognizedCode = next[currentRecognizedCode];
-                        } while ((--residue > occ) && (currentRecognizedCode >= 0));
-                        if (currentRecognizedCode >= 0) {
+                            localCurrentRecognizedCode = next[localCurrentRecognizedCode];
+                        } while ((--residue > occ) && (localCurrentRecognizedCode >= 0));
+                        if (localCurrentRecognizedCode >= 0) {
                             tp = op + occ;
                             do {
-                                outData[--tp] = value[currentRecognizedCode];
-                                currentRecognizedCode = next[currentRecognizedCode];
-                            } while ((-occ > 0) && (currentRecognizedCode >= 0));
-                            continue; // start the for loop at the next value of r
-                        } // if (currentRecognizedCode >= 0)
+                                outData[--tp] = value[localCurrentRecognizedCode];
+                                localCurrentRecognizedCode = next[localCurrentRecognizedCode];
+                            } while ((--occ > 0) && (localCurrentRecognizedCode >= 0));
+                        } // if (localCurrentRecognizedCode >= 0)
+                        continue; // start the for loop at the next value of r
                     } // if (residue > occ)
                     // residue satisfies only part of the decode request
                     op += residue;
@@ -1798,10 +1864,10 @@ public class FileTiff extends FileBase {
                     tp = op;
                     do {
                         --tp;
-                        t = value[currentRecognizedCode];
-                        currentRecognizedCode = next[currentRecognizedCode];
+                        t = value[localCurrentRecognizedCode];
+                        localCurrentRecognizedCode = next[localCurrentRecognizedCode];
                         outData[tp] = t;
-                    } while ((--residue > 0) && (currentRecognizedCode >= 0));
+                    } while ((--residue > 0) && (localCurrentRecognizedCode >= 0));
                     restart = 0;
                 } // if (restart > 0)
                 
@@ -1816,18 +1882,19 @@ public class FileTiff extends FileBase {
                 
                 while (occ > 0) {
                     if (bitsLeft < localNBits) {
-                        Preferences.debug("row " + r + " not terminated with EOI code\n");
+                        Preferences.debug("row " + (startingRow + r) + " not terminated with EOI code\n");
                         code = CODE_EOI;
                     }
                     else {
-                        localNextData = (0xff00 & (localNextData << 8)) | (0x00 & inData[bp]++);
+                        localNextData = (localNextData << 8) | (0xffL & inData[bp++]);
                         localNextBits += 8;
                         if (localNextBits < localNBits) {
-                            localNextData = (0xffff00 & (localNextData << 8)) | (0x00 & inData[bp]++);
+                            localNextData = (localNextData << 8) | (0xffL & inData[bp++]);
                             localNextBits += 8;
                         }
                         code = (short)((localNextData >> (localNextBits - localNBits)) & localNBitsMask);
                         localNextBits -= localNBits;
+                        bitsLeft -= localNBits;
                     }
                     if (code == CODE_EOI) {
                         break;
@@ -1838,18 +1905,19 @@ public class FileTiff extends FileBase {
                         localNBitsMask = (1L << BITS_MIN) - 1;
                         localMaxAvailableEntry = (int)(localNBitsMask - 1);
                         if (bitsLeft < localNBits) {
-                            Preferences.debug("row " + r + " not terminated with EOI code\n");
+                            Preferences.debug("row " + (startingRow + r) + " not terminated with EOI code\n");
                             code = CODE_EOI;
                         }
                         else {
-                            localNextData = (0xff00 & (localNextData << 8)) | (0x00 & inData[bp]++);
+                            localNextData = (localNextData << 8) | (0xffL & inData[bp++]);
                             localNextBits += 8;
                             if (localNextBits < localNBits) {
-                                localNextData = (0xffff00 & (localNextData << 8)) | (0x00 & inData[bp]++);
+                                localNextData = (localNextData << 8) | (0xffL & inData[bp++]);
                                 localNextBits += 8;
                             }
                             code = (short)((localNextData >> (localNextBits - localNBits)) & localNBitsMask);
                             localNextBits -= localNBits;
+                            bitsLeft -= localNBits;
                         }
                         if (code == CODE_EOI) {
                             break;
@@ -1861,13 +1929,14 @@ public class FileTiff extends FileBase {
                     } // if (code == CODE_CLEAR)
                     localCurrentRecognizedCode = code;
                     
+                    // Add new entry to the code table
                     if ((localNextFreeEntry < 0) || (localNextFreeEntry >= CSIZE)) {
-                        throw new IOException("Corrupted LZW table at row = " + r);
+                        throw new IOException("Corrupted LZW table at row = " + (startingRow + r));
                     }
                     
                     next[localNextFreeEntry] = localPreviousRecognizedCode;
                     if ((next[localNextFreeEntry] < 0) || (next[localNextFreeEntry] >= CSIZE)) {
-                        throw new IOException("Corrupted LZW table at row = " + r);
+                        throw new IOException("Corrupted LZW table at row = " + (startingRow + r));
                     }
                     firstChar[localNextFreeEntry] = firstChar[next[localNextFreeEntry]];
                     length[localNextFreeEntry] = (short)(length[next[localNextFreeEntry]] + 1);
@@ -1881,24 +1950,245 @@ public class FileTiff extends FileBase {
                         if (++localNBits > BITS_MAX) {
                             // should not happen
                             localNBits = BITS_MAX;
-                            localNBitsMask = (1L << localNBits) - 1;
-                            localMaxAvailableEntry = (int)(localNBitsMask - 1);
                         }
+                        localNBitsMask = (1L << localNBits) - 1;
+                        localMaxAvailableEntry = (int)(localNBitsMask - 1);
                     } // if (++localNextFreeEntry > localMaxAvailableEntry)
                     localPreviousRecognizedCode = localCurrentRecognizedCode;
                     if (code >= 256) {
                         // Code maps to a string, copy string
                         // value to output (written in reverse).
                         if (length[localCurrentRecognizedCode] == 0) {
-                            throw new IOException("Wrong length of decoded string Data probably corrupted at row = " + r);
+                            throw new IOException("Wrong length of decoded string Data probably corrupted at row = " +
+                                    (startingRow + r));
                         }
                         if (length[localCurrentRecognizedCode] > occ) {
-                            
+                            // String is too long for decode buffer, locate portion that will fit,
+                            // copy to the decode buffer, and setup restart logic for the next
+                            // decoding call.
+                            currentRecognizedCode = localCurrentRecognizedCode;
+                            do {
+                                localCurrentRecognizedCode = next[localCurrentRecognizedCode];
+                            } while((localCurrentRecognizedCode >= 0) && (length[localCurrentRecognizedCode] > occ));
+                            if (localCurrentRecognizedCode >= 0) {
+                                restart = (long)occ;
+                                tp = op + occ;
+                                do {
+                                    outData[--tp] = value[localCurrentRecognizedCode];
+                                    localCurrentRecognizedCode = next[localCurrentRecognizedCode];
+                                } while ((--occ > 0) && (localCurrentRecognizedCode >= 0));
+                                if (localCurrentRecognizedCode >= 0) {
+                                    throw new IOException("Bogus encoding, loop in the code table, row = " +
+                                            (startingRow + r));
+                                } // if (localCurrentRecognizedCode >= 0)
+                            } // if (localCurrentRecognizedCode >= 0)
+                            break; // break out of while (occ > 0)
                         } // if (length[localCurrentRecognizedCode] > occ)
+                        len = length[localCurrentRecognizedCode];
+                        tp = op + len;
+                        do {
+                            --tp;
+                            t = value[localCurrentRecognizedCode];
+                            localCurrentRecognizedCode = next[localCurrentRecognizedCode];
+                            outData[tp] = t;
+                        } while ((localCurrentRecognizedCode >= 0) && (tp > op));
+                        if (localCurrentRecognizedCode >= 0) {
+                            throw new IOException("Bogus encoding, loop in the code table, row = " +
+                                    (startingRow + r));
+                        }
+                        if (occ < len) {
+                            throw new IOException("occ < len, row = " + (startingRow + r));
+                        }
+                        op += len;
+                        occ -= len;
                     } // if (code >= 256)
+                    else {
+                        outData[op++] = (byte)code;
+                        occ--;
+                    }
                 } // while (occ > 0)
+                inPosition = bp;
+                nBits = (short)localNBits;
+                nextData = localNextData;
+                nextBits = localNextBits;
+                nBitsMask = localNBitsMask;
+                previousRecognizedCode = localPreviousRecognizedCode;
+                nextFreeEntry = localNextFreeEntry;
+                maxAvailableEntry = localMaxAvailableEntry;
+                if (occ > 0) {
+                    throw new IOException("Not enough data at row = " +
+                            (startingRow + r) + " short by " + occ + " bytes");
+                }
             }  // for (r = 0; r < rowsToDo; r++)
         } // if (newLZW)
+        else { // oldLZW
+            for (r = 0; r < rowsToDo; r++) {
+                occ = bytesToGeneratePerRow;  
+                if (restart > 0) {
+                    // Restart interrupted output operation
+                    localCurrentRecognizedCode = currentRecognizedCode;
+                    residue = length[localCurrentRecognizedCode] - restart;
+                    if (residue > occ) {
+                        // Residue from previous decode is sufficient to satisfy the decode request.
+                        // Skip to the start of the decoded string, place decoded values in the output 
+                        // buffer, and return.
+                        restart += occ;
+                        do {
+                            localCurrentRecognizedCode = next[localCurrentRecognizedCode];
+                        } while (--residue > occ); 
+                        tp = op + occ;
+                        do {
+                            outData[--tp] = value[localCurrentRecognizedCode];
+                            localCurrentRecognizedCode = next[localCurrentRecognizedCode];
+                        } while (--occ > 0);
+                        continue; // continue for loop with next value of r
+                    } // if (residue > occ)
+                    // Residue satisfies only part of the decode request.
+                    op += residue;
+                    occ -= residue;
+                    tp = op;
+                    do {
+                        outData[--tp] = value[localCurrentRecognizedCode];
+                        localCurrentRecognizedCode = next[localCurrentRecognizedCode];
+                    } while (--residue > 0);
+                    restart = 0;
+                } // if (restart > 0)
+                
+                bp = inPosition;
+                localNBits = nBits;
+                localNextData = nextData;
+                localNextBits = nextBits;
+                localNBitsMask = nBitsMask;
+                localPreviousRecognizedCode = previousRecognizedCode;
+                localNextFreeEntry = nextFreeEntry;
+                localMaxAvailableEntry = maxAvailableEntry;
+                
+                while (occ > 0) {
+                    if (bitsLeft < localNBits) {
+                        Preferences.debug("row " + (startingRow + r) + " not terminated with EOI code\n");
+                        code = CODE_EOI;
+                    }
+                    else {
+                        localNextData |= ((0xffL & inData[bp++]) << localNextBits);
+                        localNextBits += 8;
+                        if (localNextBits < localNBits) {
+                            localNextData |= ((0xffL & inData[bp++]) << localNextBits);
+                            localNextBits += 8;
+                        }
+                        code = (short)(localNextData & localNBitsMask);
+                        localNextData >>= localNBits;
+                        localNextBits -= localNBits;
+                        bitsLeft -= localNBits;
+                    }
+                    if (code == CODE_EOI) {
+                        break;
+                    }
+                    if (code == CODE_CLEAR) {
+                        localNextFreeEntry = CODE_FIRST;
+                        localNBits = BITS_MIN;
+                        localNBitsMask = (1L << BITS_MIN)-1;
+                        localMaxAvailableEntry = (int)localNBitsMask;
+                        if (bitsLeft < localNBits) {
+                            Preferences.debug("row " + (startingRow + r) + " not terminated with EOI code\n");
+                            code = CODE_EOI;
+                        }
+                        else {
+                            localNextData |= ((0xffL & inData[bp++]) << localNextBits);
+                            localNextBits += 8;
+                            if (localNextBits < localNBits) {
+                                localNextData |= ((0xffL & inData[bp++]) << localNextBits);
+                                localNextBits += 8;
+                            }
+                            code = (short)(localNextData & localNBitsMask);
+                            localNextData >>= localNBits;
+                            localNextBits -= localNBits;
+                            bitsLeft -= localNBits;
+                        }
+                        if (code == CODE_EOI) {
+                            break;
+                        }
+                        outData[op++] = (byte)code;
+                        occ--;
+                        localPreviousRecognizedCode = code;
+                        continue;
+                    } // if (code == CODE_CLEAR)
+                    localCurrentRecognizedCode = code;
+                    
+                    // Add the new entry to the code table
+                    if ((localNextFreeEntry < 0) || (localNextFreeEntry >= CSIZE)) {
+                        throw new IOException("Corrupted LZW table at row = " + (startingRow + r));
+                    }
+                    next[localNextFreeEntry] = localMaxAvailableEntry;
+                    if ((next[localNextFreeEntry] < 0) || (next[localNextFreeEntry] >= CSIZE)) {
+                        throw new IOException("Corrupted LZW table at row = " + (startingRow + r));
+                    }
+                    firstChar[localNextFreeEntry] = firstChar[next[localNextFreeEntry]];
+                    length[localNextFreeEntry] = (short)(length[next[localNextFreeEntry]] + 1);
+                    if (localCurrentRecognizedCode < localNextFreeEntry) {
+                        value[localNextFreeEntry] = firstChar[localCurrentRecognizedCode];
+                    }
+                    else {
+                        value[localNextFreeEntry] = firstChar[localNextFreeEntry];
+                    }
+                    if (++localNextFreeEntry > localMaxAvailableEntry) {
+                        if (++localNBits > BITS_MAX) {
+                            // should not happen
+                            localNBits = BITS_MAX;
+                        }
+                        localNBitsMask = (1L << localNBits)-1;
+                        localMaxAvailableEntry = (int)localNBitsMask;
+                    } // if (++localNextFreeEntry > localMaxAvailableEntry)
+                    localPreviousRecognizedCode = localCurrentRecognizedCode;
+                    if (code >= 256) {
+                        // Code maps to a string, copy string value to output (written in reverse).
+                        if (length[localCurrentRecognizedCode] == 0) {
+                            throw new IOException("Wrong length of decoded string: Data probably corrupted, row = " +
+                                    (startingRow + r));
+                        }
+                        if (length[localCurrentRecognizedCode] > occ) {
+                            // String is too long for decode buffer, locate portion that will fit, copy to
+                            // the decode buffer, and setup restart logic for the next decoding call.
+                            currentRecognizedCode = localCurrentRecognizedCode;
+                            do {
+                                localCurrentRecognizedCode = next[localCurrentRecognizedCode];
+                            } while (length[localCurrentRecognizedCode] > occ);
+                            restart = occ;
+                            tp = op + occ;
+                            do {
+                                outData[--tp] = value[localCurrentRecognizedCode];
+                                localCurrentRecognizedCode = next[localCurrentRecognizedCode];
+                            } while (--occ > 0);
+                            break;
+                        } // if (length[localCurrentRecognizedCode] > occ)
+                        if (occ < length[localCurrentRecognizedCode]) {
+                            throw new IOException("occ < length[localCurrentRecognizedCode], row = " +
+                                                 (startingRow + r));
+                        }
+                        op += length[localCurrentRecognizedCode];
+                        occ -= length[localCurrentRecognizedCode];
+                        tp = op;
+                        do {
+                            outData[--tp] = value[localCurrentRecognizedCode];
+                        } while ((localCurrentRecognizedCode = next[localCurrentRecognizedCode]) != -1);
+                    } // if (code >= 256)
+                    else {
+                        outData[op++] = (byte)code;
+                        occ--;
+                    }
+                } // while (occ > 0)
+                inPosition = bp;
+                nBits = (short)localNBits;
+                nextData = localNextData;
+                nextBits = localNextBits;
+                nBitsMask = localNBitsMask;
+                previousRecognizedCode = localPreviousRecognizedCode;
+                nextFreeEntry = localNextFreeEntry;
+                maxAvailableEntry = localMaxAvailableEntry;
+                if (occ > 0) {
+                    throw new IOException("Not enough data at row = " + (startingRow + r) + " short by " + occ + " bytes");
+                }
+            } // for (r = 0; r < rowsToDo; r++)
+        } // else oldLZW
     }
     
     // Almost all of the FAX decompression code and modified Huffman decompression code 
@@ -12871,7 +13161,9 @@ public class FileTiff extends FileBase {
                                     }
     
                                     if (lzwCompression) {
-                                        lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                        //lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                        rowsToDo = Math.min(rowsPerStrip, yDim - y);
+                                        LZWDecompresser(byteBuffer, nBytes, decomp, y, rowsToDo, xDim * samplesPerPixel);
                                         resultLength = decomp.length;
                                     }
                                     else if (jpegCompression) {
