@@ -446,7 +446,8 @@ public class JDialogVolViewResample extends JDialogBase {
     public void exec() {
 
         try {
-            if ( m_kVolViewType.equals( "VolTriplanar" ) || m_kVolViewType.equals( "WMStandAlone" ) )
+            if ( m_kVolViewType.equals( "VolTriplanar" ) || m_kVolViewType.equals( "WMStandAlone" )
+            		|| m_kVolViewType.equals( "DTIStandAlone" ) )
             {
                 if ( m_kVolViewType.equals( "VolTriplanar" ) )
                 {
@@ -455,8 +456,15 @@ public class JDialogVolViewResample extends JDialogBase {
             }
                 else if ( m_kVolViewType.equals( "WMStandAlone" ) )
                 {   
-                    sr = new ViewJFrameVolumeViewWildMagic(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
-                                                           rightPanelRenderMode, this);          
+                   sr = new ViewJFrameVolumeViewWildMagic(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
+                                                           rightPanelRenderMode, this);  
+                     
+                }
+                else if ( m_kVolViewType.equals( "DTIStandAlone" ) )
+                {   
+                	System.err.println("afa");
+                    sr = new ViewJFrameVolumeViewDTI(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
+                            rightPanelRenderMode, this);  
                 }
                 sr.setImageOriginal(imageAOriginal);
                 
