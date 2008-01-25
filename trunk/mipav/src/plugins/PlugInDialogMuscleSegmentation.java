@@ -34,7 +34,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     
     private JRadioButton abdomenRadio;
     
-    private PlugInAlgorithmMuscleSegmentation.ImageType imageType;
+    private ImageType imageType;
     
     /** Result image. */
     private ModelImage resultImage = null;
@@ -63,7 +63,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
 
         image = im;
         imageType = detectImageType(im);
-        if(imageType == PlugInAlgorithmMuscleSegmentation.ImageType.UNKNOWN)
+        if(imageType == ImageType.UNKNOWN)
         	init();
         else
         	callAlgorithm();
@@ -272,9 +272,9 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     private boolean setVariables() {
 
         if (twoThighRadio.isSelected()) {
-            imageType = PlugInAlgorithmMuscleSegmentation.ImageType.TWO_THIGHS;
+            imageType = ImageType.TWO_THIGHS;
         } else if (abdomenRadio.isSelected()) {
-            imageType = PlugInAlgorithmMuscleSegmentation.ImageType.ABDOMEN;
+            imageType = ImageType.ABDOMEN;
         } else {
             MipavUtil.displayWarning("You have selected an unsupported image type.");
             return false;
@@ -282,7 +282,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         return true;
     }
     
-    private PlugInAlgorithmMuscleSegmentation.ImageType detectImageType(ModelImage im) {
+    private ImageType detectImageType(ModelImage im) {
     	int xBound = im.getFileInfo()[0].getExtents()[0];
     	int yBound = im.getFileInfo()[0].getExtents()[1];
     	
@@ -375,9 +375,9 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
 		
 		//compares rows where bone was found to rows which matched two thigh description
 		if(((double)qualifiedRows)/((double)boneRowHigh.size()) > .75) {
-			return PlugInAlgorithmMuscleSegmentation.ImageType.TWO_THIGHS;
+			return ImageType.TWO_THIGHS;
 		} 
 		
-		return PlugInAlgorithmMuscleSegmentation.ImageType.UNKNOWN;
+		return ImageType.UNKNOWN;
     }
 }
