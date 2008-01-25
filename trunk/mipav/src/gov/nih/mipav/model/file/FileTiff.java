@@ -13161,9 +13161,9 @@ public class FileTiff extends FileBase {
                                     }
     
                                     if (lzwCompression) {
-                                        //lzwDecoder.decode(byteBuffer, decomp, tileLength);
-                                        rowsToDo = Math.min(rowsPerStrip, yDim - y);
-                                        LZWDecompresser(byteBuffer, nBytes, decomp, y, rowsToDo, xDim * samplesPerPixel);
+                                        lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                        //rowsToDo = Math.min(rowsPerStrip, yDim - y);
+                                        //LZWDecompresser(byteBuffer, nBytes, decomp, y, rowsToDo, xDim * samplesPerPixel);
                                         resultLength = decomp.length;
                                     }
                                     else if (jpegCompression) {
