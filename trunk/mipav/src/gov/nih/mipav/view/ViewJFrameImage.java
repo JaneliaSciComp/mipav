@@ -28,6 +28,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 
+
 /**
  * Makes a frame and put a single image component into it.
  *
@@ -2212,7 +2213,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         } else if (command.equals("VolTriplanar") || 
                    command.equals("WMVolTriplanar") ||
-                   command.equals("WMStandAlone") ) {
+                   command.equals("WMStandAlone") || 
+                   command.equals("DTIStandAlone") ) {
 
             // 3 space representation makes no sense on a 2d image!
             if (componentImage.getImageA().getNDims() == 2) {
