@@ -34,8 +34,6 @@ import javax.swing.event.ListSelectionListener;
  * @author senseneyj
  *
  */
-
-
 public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     
     //~ Static fields --------------------------------------------------------------------------------------------------
@@ -76,7 +74,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         super(resultImage, srcImg);
         this.imageType = imageType;
         this.parentFrame = parentFrame;
-        //writeToPDF();
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -161,121 +158,426 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         String[] titles = new String[3];
         titles[0] = "Thigh";
         titles[1] = "Bone";
-        titles[2] = "Muscles";
+        titles[2] = "Muscles"; 
         
-        //needs better expl.
-        
-        boolean[] fillIn = new boolean[3]; //what is its effect on other images
-        fillIn[0] = false; //everything outside should be filled
-        fillIn[1] = true;  //everything inside should be filled
-        fillIn[2] = false;  
-        
-        display = new MuscleImageDisplay(((ViewJFrameImage)parentFrame).getActiveImage(), titles, fillIn, mirrorArr, mirrorZ, 
+        display = new MuscleImageDisplay(((ViewJFrameImage)parentFrame).getActiveImage(), titles, mirrorArr, mirrorZ, 
                                                             noMirrorArr, noMirrorZ, ImageType.ABDOMEN, Symmetry.LEFT_RIGHT);
         
     }
     
     /**
-     *   Builds thigh dialogue.
-     */
-    private void performThighDialog() {
-        
-        String[][] mirrorArr = new String[3][];
-        mirrorArr[0] = new String[1];
-        mirrorArr[0][0] = "Thigh";
-        
-        mirrorArr[1] = new String[2];
-        mirrorArr[1][0] = "Bone";
-        mirrorArr[1][1] = "Marrow";
-        
-        mirrorArr[2] = new String[5];
-        mirrorArr[2][0] = "Fascia";
-        mirrorArr[2][1] = "Quads";
-        mirrorArr[2][2] = "Hamstrings";
-        mirrorArr[2][3] = "Sartorius";
-        mirrorArr[2][4] = "Adductors";
-        
-        boolean[][] mirrorZ = new boolean[3][];
-        mirrorZ[0] = new boolean[1];
-        mirrorZ[0][0] = false;
-        
-        mirrorZ[1] = new boolean[2];
-        mirrorZ[1][0] = false;
-        mirrorZ[1][1] = false;
-        
-        mirrorZ[2] = new boolean[5];
-        mirrorZ[2][0] = false;
-        mirrorZ[2][1] = true;
-        mirrorZ[2][2] = true;
-        mirrorZ[2][3] = true;
-        mirrorZ[2][4] = true;
-        
-        String[][] noMirrorArr = new String[3][];
-        noMirrorArr[0] = new String[1];
-        noMirrorArr[0][0] = "Phantom";
-        
-        noMirrorArr[1] = new String[1];
-        noMirrorArr[1][0] = "Bone sample";
-        
-        noMirrorArr[2] = new String[1];
-        noMirrorArr[2][0] = "Water sample";
-        
-        boolean[][] noMirrorZ = new boolean[3][];
-        noMirrorZ[0] = new boolean[1];
-        noMirrorZ[0][0] = false;
-        
-        noMirrorZ[1] = new boolean[1];
-        noMirrorZ[1][0] = false;
-        
-        noMirrorZ[2] = new boolean[1];
-        noMirrorZ[2][0] = false;
-        
-        String[] titles = new String[3];
-        titles[0] = "Thigh";
-        titles[1] = "Bone";
-        titles[2] = "Muscles";
-        
-        //needs better expl.
-        
-        boolean[] fillIn = new boolean[3]; //what is its effect on other images
-        fillIn[0] = false; //everything outside should be filled
-        fillIn[1] = true;  //everything inside should be filled
-        fillIn[2] = false;  
-        
-        this.symmetry = Symmetry.LEFT_RIGHT;
-        
-        display = new MuscleImageDisplay(((ViewJFrameImage)parentFrame).getActiveImage(), titles, fillIn, mirrorArr, mirrorZ, 
-                                                            noMirrorArr, noMirrorZ, ImageType.TWO_THIGHS, symmetry);
-        
-        
-    }
-    
-    public enum ImageType{
-        
-        /** denotes that the srcImg is an abdomen */
-        ABDOMEN,
-        
-        /** denotes that the srcImg is two thighs */
-        TWO_THIGHS,
-        
-        /** unknown image type, generally represents an error state */
-        UNKNOWN
-    }
-    
-    public enum Symmetry{
-        
-        /** Indicates the image has no symmetry. */
-        NO_SYMMETRY, 
-        
-        /** Indicates that image has left-right symmetry. */
-        LEFT_RIGHT, 
-        
-        /** Indicates the image has top-bottom symmetry. */
-        TOP_BOTTOM
-    }
-    
+	 *   Builds thigh dialogue.
+	 */
+	private void performThighDialog() {
+	    
+	    String[][] mirrorArr = new String[3][];
+	    mirrorArr[0] = new String[1];
+	    mirrorArr[0][0] = "Thigh";
+	    
+	    mirrorArr[1] = new String[2];
+	    mirrorArr[1][0] = "Bone";
+	    mirrorArr[1][1] = "Marrow";
+	    
+	    mirrorArr[2] = new String[5];
+	    mirrorArr[2][0] = "Fascia";
+	    mirrorArr[2][1] = "Quads";
+	    mirrorArr[2][2] = "Hamstrings";
+	    mirrorArr[2][3] = "Sartorius";
+	    mirrorArr[2][4] = "Adductors";
+	    
+	    boolean[][] mirrorZ = new boolean[3][];
+	    mirrorZ[0] = new boolean[1];
+	    mirrorZ[0][0] = false;
+	    
+	    mirrorZ[1] = new boolean[2];
+	    mirrorZ[1][0] = false;
+	    mirrorZ[1][1] = false;
+	    
+	    mirrorZ[2] = new boolean[5];
+	    mirrorZ[2][0] = false;
+	    mirrorZ[2][1] = true;
+	    mirrorZ[2][2] = true;
+	    mirrorZ[2][3] = true;
+	    mirrorZ[2][4] = true;
+	    
+	    String[][] noMirrorArr = new String[3][];
+	    noMirrorArr[0] = new String[1];
+	    noMirrorArr[0][0] = "Phantom";
+	    
+	    noMirrorArr[1] = new String[1];
+	    noMirrorArr[1][0] = "Bone sample";
+	    
+	    noMirrorArr[2] = new String[1];
+	    noMirrorArr[2][0] = "Water sample";
+	    
+	    boolean[][] noMirrorZ = new boolean[3][];
+	    noMirrorZ[0] = new boolean[1];
+	    noMirrorZ[0][0] = false;
+	    
+	    noMirrorZ[1] = new boolean[1];
+	    noMirrorZ[1][0] = false;
+	    
+	    noMirrorZ[2] = new boolean[1];
+	    noMirrorZ[2][0] = false;
+	    
+	    String[] titles = new String[3];
+	    titles[0] = "Thigh";
+	    titles[1] = "Bone";
+	    titles[2] = "Muscles";
+	    
+	    this.symmetry = Symmetry.LEFT_RIGHT;
+	    
+	    display = new MuscleImageDisplay(((ViewJFrameImage)parentFrame).getActiveImage(), titles, mirrorArr, mirrorZ, 
+	                                                        noMirrorArr, noMirrorZ, ImageType.TWO_THIGHS, symmetry);
+	    
+	    
+	}
 
-    private abstract class DialogPrompt extends JPanel implements ActionListener {
+	/**
+	 * Gets a single VOI for a given name.  The .xml extension for the name is optional
+	 * 
+	 * @param name the name of the VOI to load
+	 * @return the VOI, else null if no such VOI exists
+	 */
+	public VOI getSingleVOI(String name) {
+		if(display == null) {
+			return null;
+		} 
+	    String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR;
+	    String ext = name.contains(".xml") ? "" : ".xml";
+	    
+	    if(new File(fileDir+name+ext).exists()) {
+	        FileVOI v;
+	        VOI[] voiVec = null;
+	        try {
+	            v = new FileVOI(name+ext, fileDir, display.getActiveImage());
+	            voiVec = v.readVOI(false);
+	        } catch(IOException e) {
+	            MipavUtil.displayError("Unable to load old VOI from location:\n"+fileDir+"\nWith name: "+name);
+	        }
+	        if(voiVec.length > 1) {
+	            MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+name);
+	        } else {
+	        	return voiVec[0];
+	        }
+	    }
+	    return null;
+	}
+
+	/**
+	 * loads the given VOIs, note that the .xml extension is optional (method now works either way)
+	 * 
+	 * @param voiName all names to load
+	 * @param fillVOIs whether the VOIs should be filled
+	 */
+	public void loadVOIs(String[] voiName, boolean fillVOIs) {
+		if (display == null) {
+			return;
+		}
+	    display.getActiveImage().unregisterAllVOIs();
+	    int colorChoice = new Random().nextInt(colorPick.length);
+	    String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR;
+	    File allVOIs = new File(fileDir);
+	    String ext = "";
+	    if(voiName.length > 0 && !voiName[0].contains(".xml"))
+	    	ext = ".xml";
+	    if(allVOIs.isDirectory()) {
+	        for(int i=0; i<voiName.length; i++) {
+	            //System.out.println(voiName[i]);
+	
+	            if(new File(fileDir+voiName[i]+ext).exists()) {
+	                String fileName = voiName[i];
+	                FileVOI v;
+	                VOI[] voiVec = null;
+	                try {
+	                    v = new FileVOI(fileName+ext, fileDir, display.getActiveImage());
+	                    voiVec = v.readVOI(false);
+	                } catch(IOException e) {
+	                    MipavUtil.displayError("Unable to load old VOI from location:\n"+fileDir+"\nWith name: "+fileName+ext);
+	                }
+	                if(voiVec.length > 1) {
+	                    MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+fileName+ext);
+	                } else {
+	                	Color c = hasColor(voiVec[0]);
+	                    if(c != null) {
+	                        voiVec[0].setColor(c);
+	                        
+	                    } else {
+	                        voiVec[0].setColor(colorPick[colorChoice % colorPick.length]);
+	                        colorChoice++;
+	                    }                      
+	                    voiVec[0].setThickness(2);
+	                    if(fillVOIs && display.getZeroStatus(voiVec[0].getName())) {
+	                    	voiVec[0].setDisplayMode(VOI.SOLID);
+	                    	voiVec[0].setOpacity((float)0.7);
+	                    }
+	                    display.getActiveImage().registerVOI(voiVec[0]);
+	                }
+	            }
+	        }
+	    }  
+	}
+
+	/**
+	 * Adds a row to the PDF Table
+	 * @param name the name of the area
+	 * @param fatArea the amount of fat area
+	 * @param leanArea amount of lean area
+	 * @param totalAreaCount total area
+	 * @param meanFatH mean fat area HU
+	 * @param meanLeanH mean lean area HU
+	 * @param meanTotalH mean total area HU
+	 */
+	private void addToPDF(String name, double fatArea, double leanArea, double totalAreaCount, 
+			double meanFatH, double meanLeanH, double meanTotalH) {
+		
+		try {
+			Font fontNormal = FontFactory.getFont("Helvetica", 10, Font.NORMAL, Color.DARK_GRAY);
+			if (name.endsWith(".xml")) {
+				name = name.substring(0, name.length() - 4);
+			}
+			DecimalFormat dec = new DecimalFormat("0.#");
+			
+			//name of area
+			aTable.addCell(new Paragraph( name, fontNormal) );
+				
+			//total area
+			aTable.addCell(new Paragraph( dec.format(totalAreaCount), fontNormal) );
+				
+			//fat area
+			aTable.addCell(new Paragraph( dec.format(fatArea), fontNormal) );
+			
+			//lean area
+			aTable.addCell(new Paragraph( dec.format(leanArea), fontNormal) );
+				
+			//fat HU
+			aTable.addCell(new Paragraph( dec.format(meanFatH), fontNormal) );
+				
+			//lean HU
+			aTable.addCell(new Paragraph( dec.format(meanLeanH), fontNormal) );
+				
+			//total HU
+			aTable.addCell(new Paragraph( dec.format(meanTotalH), fontNormal) );
+			
+			imageTable = new PdfPTable(2);
+			imageTable.addCell("LUT Image");
+			imageTable.addCell("VOI Image");
+					
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Does a screen capture into a java.awt.Image of the original image
+	 * @return the java.awt.Image
+	 */
+	private java.awt.Image captureImage() {
+		display.getActiveImage().getParentFrame().requestFocus();
+		Rectangle currentRectangle;
+		Point p = new Point();
+		p.x = 0;
+	    p.y = 0;
+	    SwingUtilities.convertPointToScreen(p, display.getActiveImage().getParentFrame().getContentPane());
+	    p.x++; // must correct this slightly
+	    p.y++; // ""
+	
+	    Dimension d = new Dimension();
+	    d.width = display.getActiveImage().getParentFrame().getContentPane().getWidth() - 3; // the -3 is a correction
+	    d.height = display.getActiveImage().getParentFrame().getContentPane().getHeight() - 3; // ""
+	    currentRectangle = new Rectangle(p, d);
+	    
+	    try {
+	        Robot robot = new Robot();
+	
+	        return robot.createScreenCapture(currentRectangle);
+	    } catch (OutOfMemoryError error) {
+	    } catch (AWTException error) {
+	    }
+	    return null;
+	}
+
+	private void closePDF(java.awt.Image edgeImage, java.awt.Image qaImage) {
+			try {
+			Paragraph aPar = new Paragraph();
+			aPar.setAlignment(Element.ALIGN_CENTER);
+			aPar.add(new Paragraph());
+			aPar.add(aTable);
+			pdfDocument.add(new Paragraph());
+			pdfDocument.add(aPar);
+			PdfPTable imageTable = new PdfPTable(2);
+			imageTable.addCell("Edge Image");
+			imageTable.addCell("QA Image");
+			imageTable.addCell(Image.getInstance(edgeImage, null));
+			
+			imageTable.addCell(Image.getInstance(qaImage, null));
+			
+			Paragraph pImage = new Paragraph();
+			pImage.add(new Paragraph());
+			pImage.add(imageTable);
+			pdfDocument.add(pImage);
+			pdfDocument.close();
+			
+			
+			
+			
+		//	imageTable.addCell(Image.getInstance(display.get));
+			
+		//	imageTable.addCell("QA Image");
+			
+		//	chooser = new JFileChooser();
+		//	chooser.setDialogTitle("Open image 1");
+		//	returnVal = chooser.showOpenDialog(null);
+	
+	   //     while (returnVal != JFileChooser.APPROVE_OPTION) {
+	   //     	returnVal = chooser.showOpenDialog(null);
+	   //     } 
+			
+		//	imageTable.addCell(Image.getInstance(chooser.getSelectedFile().getPath()));
+			
+		//	chooser.setDialogTitle("Open image 1");
+		//	returnVal = chooser.showOpenDialog(null);
+	
+	   //     while (returnVal != JFileChooser.APPROVE_OPTION) {
+	   //     	returnVal = chooser.showOpenDialog(null);
+	   //     } 
+			
+	   //     imageTable.addCell(Image.getInstance(chooser.getSelectedFile().getPath()));
+	        
+	   //     Paragraph pImage = new Paragraph();
+	   //     pImage.add(new Paragraph());
+	   //     pImage.add(imageTable);
+	        
+		//	pdfDocument.add(pImage);
+			
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+		}
+
+	private void createPDF() {		
+		String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory();
+		long time = System.currentTimeMillis();
+		
+		File file = new File(fileDir + File.separator + "NIA_Seg-" + time + ".pdf");
+		System.err.println("file: " + file.toString());
+		try {
+			pdfDocument = new Document();
+			writer = PdfWriter.getInstance(pdfDocument, new FileOutputStream(file));
+			pdfDocument.addTitle("Thigh Tissue Analysis Report");
+			pdfDocument.addCreator("MIPAV: Muscle Segmentation");
+			pdfDocument.open();
+			
+			
+			Paragraph p = new Paragraph();
+			
+			//add the Title and subtitle
+			p.setAlignment(Element.ALIGN_CENTER);
+			p.add(new Chunk("MIPAV: Segmentation", new Font(Font.TIMES_ROMAN, 18)));
+			p.add(new Paragraph());
+			p.add(new Chunk("Thigh Tissue Analysis Report", new Font(Font.TIMES_ROMAN, 12)));
+			pdfDocument.add(new Paragraph(p));
+			pdfDocument.add(new Paragraph(new Chunk("")));
+			pdfDocument.add(new Paragraph());
+			
+			Font fontNormal = FontFactory.getFont("Helvetica", 10, Font.NORMAL, Color.DARK_GRAY);
+			Font fontBold = FontFactory.getFont("Helvetica", 10, Font.BOLD, Color.BLACK);
+	
+			/**
+			MultiColumnText mct = new MultiColumnText(20);
+			mct.setAlignment(Element.ALIGN_LEFT);
+			mct.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
+			mct.addElement(new Paragraph("Analyst:", fontBold));
+			mct.addElement(new Paragraph("akoyama", fontNormal));
+			mct.addElement(new Paragraph("Analysis Date:", fontBold));
+			mct.addElement(new Paragraph("05/06/2007", fontNormal));
+			pdfDocument.add(mct);
+			
+			MultiColumnText mct2 = new MultiColumnText(20);
+			mct2.setAlignment(Element.ALIGN_LEFT);
+			mct2.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
+			mct2.addElement(new Paragraph("Name:", fontBold));
+			mct2.addElement(new Paragraph(display.getActiveImage().getFileInfo()[0].getFileName(), fontNormal));
+			mct2.addElement(new Paragraph("Center:", fontBold));
+			mct2.addElement(new Paragraph("Hjartavernd", fontNormal));
+			FileInfoBase[] f = display.getActiveImage().getFileInfo();
+			pdfDocument.add(mct2);
+			
+			MultiColumnText mct3 = new MultiColumnText(20);
+			mct3.setAlignment(Element.ALIGN_LEFT);
+			mct3.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
+			mct3.addElement(new Paragraph("ID:", fontBold));
+			mct3.addElement(new Paragraph(display.getActiveImage().getFileInfo()[0].getFileName(), fontNormal));
+			mct3.addElement(new Paragraph("Scan Date:", fontBold));
+			mct3.addElement(new Paragraph("05/09/2003", fontNormal));
+			pdfDocument.add(mct3);
+			
+			//add the scanning parameters table
+			PdfPTable spTable = new PdfPTable(2);
+			PdfPCell cell = new PdfPCell(new Paragraph("Scanning Parameters"));
+			cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+			cell.setColspan(2);
+			spTable.addCell(cell);
+			spTable.addCell("kVp:");
+			spTable.addCell("120");
+			spTable.addCell("mA:");
+			spTable.addCell("213");
+			spTable.addCell("Pixel Size:");
+			spTable.addCell(Double.toString(display.getActiveImage().getResolutions(0)[0]*.1));
+			spTable.addCell("Slice Thickness: (mm)");
+			spTable.addCell(Float.toString(display.getActiveImage().getFileInfo()[0].getSliceThickness()));
+			spTable.addCell("Table Height: (cm)");
+			spTable.addCell("143.00");
+			
+			Paragraph pTable = new Paragraph();
+			pTable.add(new Paragraph());
+			pTable.setAlignment(Element.ALIGN_CENTER);
+			pTable.add(spTable);
+			pdfDocument.add(new Paragraph(new Chunk("")));
+			pdfDocument.add(pTable);
+			**/
+			
+			//create the Table where we will insert the data:
+			aTable = new PdfPTable(new float[] {1.8f, 1f, 1f, 1f, 1f, 1f, 1f});
+			
+			// add Column Titles (in bold)
+			aTable.addCell(new PdfPCell(new Paragraph("Area (cm^2)", fontBold)));
+			aTable.addCell(new PdfPCell(new Paragraph("Total Area", fontBold)));
+			aTable.addCell(new PdfPCell(new Paragraph("Fat Area", fontBold)));
+			aTable.addCell(new PdfPCell(new Paragraph("Lean Area", fontBold)));
+			aTable.addCell(new PdfPCell(new Paragraph("Fat HU", fontBold)));
+			aTable.addCell(new PdfPCell(new Paragraph("Lean HU", fontBold)));
+			aTable.addCell(new PdfPCell(new Paragraph("Total HU", fontBold)));
+			
+			
+			return;
+		} catch (Exception e) {
+			return;
+		}
+	}
+
+	private Color hasColor(VOI voiVec) {
+	    Color c = null;
+	    VOIVector tempVec = display.getActiveImage().getVOIs();
+	    String side1 = "", side2 = ""; 
+	    if(Symmetry.LEFT_RIGHT == Symmetry.LEFT_RIGHT) {
+	    	side1 = "Left";
+	    	side2 = "Right";
+	    }
+	    for(int i=0; i<tempVec.size(); i++) {
+	        if(voiVec.getName().contains(side1) || voiVec.getName().contains(side2)) {
+	            if( !(tempVec.get(i).getName().contains(side1)  &&  voiVec.getName().contains(side1)) && 
+	                    !(tempVec.get(i).getName().contains(side2)  &&  voiVec.getName().contains(side2)) && 
+	                    tempVec.get(i).getName().endsWith(voiVec.getName().substring(voiVec.getName().indexOf(" ")))) {
+	                c =  tempVec.get(i).getColor();
+	            }
+	        }
+	    }
+	    return c;
+	}
+
+	private abstract class DialogPrompt extends JPanel implements ActionListener {
     	
     	//~ Static fields/initializers -------------------------------------------------------------------------------------
     	
@@ -295,13 +597,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     	
     	private String buttonStringList[] = {OK, CLEAR, HELP};
     	
-    	protected JButton buttonGroup[];
+    	private Vector objectList = new Vector();
+
+		private String title;
+
+		protected JButton buttonGroup[];
     	
     	protected MuscleImageDisplay parentFrame;
-    	
-    	private Vector objectList = new Vector();
-    	
-    	private String title;
     	
     	protected boolean completed = false;
     	
@@ -316,10 +618,16 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     		this.buttonStringList = buttonString;
     	}
     	
+    	/**
+    	 * Returns the title of the dialog prompt.
+    	 */
     	public String getTitle() {
     		return title;
     	}
     	
+    	/**
+    	 * Returns whether this dialog has completed
+    	 */
     	public boolean completed() {
     		return completed;
     	}
@@ -399,7 +707,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         }
         
         /**
-         * Used to notify all listeners that the pseudo-algorithm has completed.
+         * Used to notify all listeners that the dialog prompt has completed.
          *
          * @param  dialog the sub-dialog that has completed the function
          */
@@ -413,23 +721,29 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         public abstract void actionPerformed(ActionEvent e);
     }
 
+	/**
+	 * A class to represent all dialog prompts
+	 * 
+	 * @author senseneyj
+	 *
+	 */
     private class VoiDialogPrompt extends DialogPrompt implements ActionListener {
 
         private final String[] buttonStringList = {OK, CLEAR, CANCEL};
     	
-        private String objectName;
-        
         private boolean closedVoi;
-        
-        private int numVoi;
-        
-        boolean voiExists;
+
+		private int numVoi;
+
+		private String objectName;
         
         private JLabel selectText;
 
+		private boolean voiExists;
+        
         public VoiDialogPrompt(MuscleImageDisplay theParentFrame) {
-            super(theParentFrame, "VOI");
-           
+            //parentFrame is in fact display
+        	super(theParentFrame, "VOI");
             setButtons(buttonStringList);
             
             initDialog();
@@ -437,7 +751,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private boolean voiExists(String objectName) {
         	
-        	String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR;
+        	String fileDir = parentFrame.getActiveImage().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR;
             
             if(new File(fileDir+objectName+".xml").exists()) {
                 return true;
@@ -451,49 +765,51 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 
             if(command.equals(CLEAR)) {
                 //clear all VOIs drawn
-                display.getActiveImage().unregisterAllVOIs();
-                display.updateImages(true);
+                parentFrame.getActiveImage().unregisterAllVOIs();
+                parentFrame.updateImages(true);
             } else if (command.equals(OK)) {
-                    VOI goodVoi = checkVoi();
-                    //check that VOI conforms to requirements, returns the VOI being modified/created
-                    if ( goodVoi != null ) { 
-                        
-                        //save modified/created VOI to file
-                        display.getActiveImage().unregisterAllVOIs();
-                        display.getActiveImage().registerVOI(goodVoi);
-                        String dir = display.getActiveImage().getImageDirectory()+MuscleImageDisplay.VOI_DIR;
-                        display.saveAllVOIsTo(dir);
-                        
-                        String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory();
+                VOI goodVoi = checkVoi();
+                //check that VOI conforms to requirements, returns the VOI being modified/created
+                if ( goodVoi != null ) { 
+                    
+                    //save modified/created VOI to file
+                	parentFrame.getActiveImage().unregisterAllVOIs();
+                	parentFrame.getActiveImage().registerVOI(goodVoi);
+                    String dir = parentFrame.getActiveImage().getImageDirectory()+MuscleImageDisplay.VOI_DIR;
+                    parentFrame.saveAllVOIsTo(dir);
+                    
+                    String fileDir = parentFrame.getActiveImage().getFileInfo(0).getFileDirectory();
 
-                        MipavUtil.displayInfo(objectName+" VOI saved in folder\n " + fileDir + MuscleImageDisplay.VOI_DIR);
-                        completed = true;
-                        
-                        display.getActiveImage().unregisterAllVOIs();
-                        display.updateImages(true);
-                        
-                        notifyListeners(OK);
-                    } else {
-                    	//Note that no VOI has been saved due to previous error.  will not return to main dialog.
-                    	completed = false;
-                    }
-                } else if (command.equals(CANCEL)) {
-                    notifyListeners(CANCEL);
-                    //dispose();
-                } else if (command.equals(HELP)) {
-                    MipavUtil.showHelp("19014");
+                    MipavUtil.displayInfo(objectName+" VOI saved in folder\n " + fileDir + MuscleImageDisplay.VOI_DIR);
+                    completed = true;
                     
+                    parentFrame.getActiveImage().unregisterAllVOIs();
+                    parentFrame.updateImages(true);
                     
-                    
+                    notifyListeners(OK);
+                } else {
+                	//Note that no VOI has been saved due to previous error.  will not return to main dialog.
+                	completed = false;
                 }
+            } else if (command.equals(CANCEL)) {
+                notifyListeners(CANCEL);
+                //dispose();
+            } else if (command.equals(HELP)) {
+                MipavUtil.showHelp("19014");
+                
+                
+                
             }
-            
-        
-        
-        public void takeDownDialog() {
-        	removeAll();
         }
         
+        /**
+         * Sets up the dialog to select the next voi.  closedVoi and numVoi are both determined
+         * by parameters specified in performXDialog where X = the part of the body worked on
+         * 
+         * @param name the name of the VOI
+         * @param closedVoi whether the VOI should be closed
+         * @param numVoi the number of curves required for the VOI
+         */
         public void setUpDialog(String name, boolean closedVoi, int numVoi) {	
         	this.objectName = name;
         	this.closedVoi = closedVoi;
@@ -502,11 +818,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         	voiExists = voiExists(objectName);
             
             updateSelectionLabel();
-        }
-        
-
-        public String getObjectName() {
-            return objectName;
         }
         
         /**
@@ -523,6 +834,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             String voiStr = new String(existStr+" "+numVoi+" "+closedStr+"VOI curve"+pluralVOI+" around the "+
                                         objectName.toLowerCase()+".");
             selectText.setText(voiStr); //automatically updates
+        }
+        
+        /**
+         * Returns the name of the VOI currently selected.
+         */
+        public String getObjectName() {
+            return objectName;
         }
         
         /**
@@ -564,7 +882,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
          * 
          * @return VOI created by user.  Null if no such VOI was created.
          */
-        
         private VOI checkVoi() {
             VOIVector srcVOI = parentFrame.getActiveImage().getVOIs();
             int countQualifiedVOIs = 0; //equal to numVoi when the right  amount of VOIs have been created
@@ -579,7 +896,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             if(countQualifiedVOIs != 1) {
 	            //else VOI no longer exists, look for a VOI that doesn't fit to call objectName
 	            for(int i=0; i<srcVOI.size(); i++) {
-	            	if(display.getLocationStatus(srcVOI.get(i).getName()) == -1) {
+	            	if(parentFrame.getLocationStatus(srcVOI.get(i).getName()) == -1) {
 	            		goodVOI = srcVOI.get(i);
 	            		countQualifiedVOIs++;
 	            	}
@@ -622,7 +939,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
      * 
      * Test class for image to confirm correct behavior.
      * 
-     * TODO: Incorporate into MuscleIMageDisplay
      */
     
     public class MuscleImageDisplay extends ViewJFrameImage {
@@ -672,13 +988,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private boolean displayChanged = false;
 
-		private boolean[] fillIn;
-        
         private TreeMap locationStatus;
         
         private BuildThighAxes thighAxes;
         
-        public MuscleImageDisplay(ModelImage image, String[] titles, boolean[] fillIn,
+        public MuscleImageDisplay(ModelImage image, String[] titles,
                 String[][] mirrorArr, boolean[][] mirrorZ, 
                 String[][] noMirrorArr, boolean[][] noMirrorZ,  
                 ImageType imageType, Symmetry symmetry) {
@@ -689,7 +1003,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
             this.setImageA(image);
             this.setActiveImage(IMAGE_A);
-            this.fillIn = fillIn;
             this.titles = titles;
             this.mirrorArr = mirrorArr;
             this.mirrorZ = mirrorZ;
@@ -1114,7 +1427,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         		imagePane.setEnabledAt(i, false);
         	imagePane.addTab(title, tabs[tabLoc]);
         	imagePane.setSelectedIndex(voiTabLoc);
-        	display.updateImages(true);
+        	updateImages(true);
         }
         
         /**
@@ -1128,7 +1441,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             for(int i=0; i<voiTabLoc; i++) 
                 imagePane.setEnabledAt(i, true);
             imagePane.setSelectedIndex(activeTab);
-            display.updateImages(true);
+            updateImages(true);
         }
         
         /**
@@ -1157,6 +1470,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         	return fill;
         }
 
+        /**
+         * Loads VOIs of a particular pane.  Simply a combination of loadVOIs(String[]) and
+         * getLocationStatus to determine which VOIs should be loaded
+         * @param pane
+         */
         private void loadVOI(int pane) {
             int colorChoice = 0;
         	getImageA().unregisterAllVOIs();
@@ -1196,9 +1514,14 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             }
         }
         
+        /**
+         * Gets the color of the opposite VOI if it exists.
+         * @param voiVec the vector to find the opposite of
+         * @return the color of the opposite VOI, else null
+         */
         private Color hasColor(VOI voiVec) {
             Color c = null;
-            VOIVector tempVec = display.getActiveImage().getVOIs();
+            VOIVector tempVec = getActiveImage().getVOIs();
             String side1 = "", side2 = ""; 
             if(Symmetry.LEFT_RIGHT == Symmetry.LEFT_RIGHT) {
             	side1 = "Left";
@@ -1216,6 +1539,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             return c;
         }
         
+        /**
+         * Loads the image with all relevent VOIs set for a particular pane
+         * 
+         * @param pane which VOIs to load
+         */
         private void initMuscleImage(int pane) {        
             loadVOI(pane);
             
@@ -1241,6 +1569,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             updateImages(true);
         }
         
+        /**
+         * Loads the image for a VOI selection panel with particular VOIs loaded given a pane.
+         * 
+         * @param pane which VOIs to load
+         */
         private void initVoiImage(int pane) {
         	getActiveImage().unregisterAllVOIs();
         	//load VOIs of activeTab
@@ -1363,6 +1696,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
     }
 
+    /**
+     * A class that represents any of the panels with selectable buttons to view VOIs
+     * 
+     * @author senseneyj
+     *
+     */
     private class MuscleDialogPrompt extends DialogPrompt {
         
         //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -1460,6 +1799,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
         }
         
+        /**
+         * A treemap representing whether the muscles whithin this dialog prompt should be filled
+         * in when that option is selected by the user
+         * @return a treemap
+         */
         public TreeMap getZeroStatus() {
             return zeroStatus;
         }
@@ -1494,7 +1838,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         private JPanel initSymmetricalObjects() {
             
             VOIVector existingVois = parentFrame.getImageA().getVOIs();
-            zeroStatus = new TreeMap();
              
             mirrorCheckArr = new JCheckBox[mirrorArr.length * 2];
             mirrorButtonArr = new JButton[mirrorArr.length * 2];
@@ -1663,10 +2006,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             gbc.anchor = GridBagConstraints.SOUTH;
             gbc.gridy++;
             add(buildButtons(), gbc);                
-        }
-        
-        public TreeMap getIdentifiers() {
-            return zeroStatus;
         }
         
         public JButton[] getMirrorButton() {
@@ -2244,6 +2583,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    		return done;
 	    	}
 
+	    	/**
+	    	 * Calculates the amount of fat in a particular VOI, returns in units of pixels
+	    	 * (between -190 and -30)
+	    	 * 
+	    	 * @param v the voi to calculate
+	    	 * @return number of pixels which contain fat
+	    	 */
 			public double getFatArea(VOI v) {
 				int fatArea = 0;
 				BitSet fullMask = new BitSet();
@@ -2256,7 +2602,15 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 				}
 				return fatArea;
 			}
-
+			
+			/**
+	    	 * Calculates the number of pixels in a particular VOI that may be either fat, muscle
+	    	 * or a combination.  These intensity values may come from partial voluming problems in
+	    	 * the source image. (between -30 and 0)
+	    	 * 
+	    	 * @param v the voi to calculate
+	    	 * @return number of pixels with borderline intensities
+	    	 */
 			public double getPartialArea(VOI v) {
 				int partialArea = 0;
 				BitSet fullMask = new BitSet();
@@ -2270,6 +2624,14 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 				return partialArea;
 			}
 
+			
+			/**
+	    	 * Calculates the amount of muscle in a particular VOI, returns in units of pixels
+	    	 * (between 0 and 100)
+	    	 * 
+	    	 * @param v the voi to calculate
+	    	 * @return number of pixels which contain fat
+	    	 */
 			public double getLeanArea(VOI v) {
 				int leanArea = 0;
 				BitSet fullMask = new BitSet();
@@ -2283,12 +2645,20 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 				return leanArea;
 			}
 
-			//TODO: Partial voluming difference between VOI calculations and counting
 			
+			/**
+			 * Calls v.area();
+			 */
 			public double getTotalAreaCalc(VOI v) {
 				return v.area();
 			}
-
+			
+			/**
+			 * Counts all whole pixels which are contained within this VOI
+			 * 
+			 * @param v the VOI to count
+			 * @return units of pixels
+			 */
 			public double getTotalAreaCount(VOI v) {
 				int totalArea = 0;
 				BitSet fullMask = new BitSet();
@@ -2298,6 +2668,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 				return totalArea;
 			}
 
+			/****
+			 * Gets the mean housfield unit for all fat pixels in the given VOI. Fat is denoted by -190 to -30
+			 * 
+			 * @param v the voi to use for calculations.
+			 * @return mean hounsfield unit
+			 */
 			public double getMeanFatH(VOI v) {
 				int fatArea = 0;
 				double meanFatH = 0;
@@ -2315,6 +2691,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 				return meanFatH;
 			}
 
+			/****
+			 * Gets the mean housfield unit for all muscle pixels in the given VOI. Muscle is denoted by 0 to 100
+			 * This method is useful for comparing VOIs to see if intensity parameters need to be adjusted.
+			 * 
+			 * @param v the voi to use for calculations.
+			 * @return mean housfield unit
+			 */
 			public double getMeanLeanH(VOI v) {
 				int leanArea = 0;
 				double meanLeanH = 0;
@@ -2334,6 +2717,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 				return meanLeanH;
 			}
 
+			/****
+			 * Gets the mean housfield unit for all pixels in the given VOI. 
+			 * 
+			 * @param v the voi to use for calculations.
+			 * @return mean housfield unit
+			 */
 			public double getMeanTotalH(VOI v) {
 				int totalArea = 0;
 				double meanTotalH = 0;
@@ -2351,343 +2740,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    }
 	}
     
-    /**
-     * Does a screen capture into a java.awt.Image of the original image
-     * @return the java.awt.Image
-     */
-    private java.awt.Image captureImage() {
-    	display.getActiveImage().getParentFrame().requestFocus();
-    	Rectangle currentRectangle;
-    	Point p = new Point();
-    	p.x = 0;
-        p.y = 0;
-        SwingUtilities.convertPointToScreen(p, display.getActiveImage().getParentFrame().getContentPane());
-        p.x++; // must correct this slightly
-        p.y++; // ""
-
-        Dimension d = new Dimension();
-        d.width = display.getActiveImage().getParentFrame().getContentPane().getWidth() - 3; // the -3 is a correction
-        d.height = display.getActiveImage().getParentFrame().getContentPane().getHeight() - 3; // ""
-        currentRectangle = new Rectangle(p, d);
-        
-        try {
-            Robot robot = new Robot();
-
-            return robot.createScreenCapture(currentRectangle);
-        } catch (OutOfMemoryError error) {
-        } catch (AWTException error) {
-        }
-        return null;
-    }
-    
-    /**
-     * loads the given VOIs, note that the .xml extension is optional (method now works either way
-     * 
-     * @param voiName
-     * @param fillVOIs whether the VOIs should be filled
-     */
-    public void loadVOIs(String[] voiName, boolean fillVOIs) {
-    	if (display == null) {
-    		return;
-    	}
-        display.getActiveImage().unregisterAllVOIs();
-        int colorChoice = new Random().nextInt(colorPick.length);
-        String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR;
-        File allVOIs = new File(fileDir);
-        String ext = voiName[0].contains(".xml") ? "" : ".xml";
-        if(allVOIs.isDirectory()) {
-            for(int i=0; i<voiName.length; i++) {
-                //System.out.println(voiName[i]);
-
-                if(new File(fileDir+voiName[i]+ext).exists()) {
-                    String fileName = voiName[i];
-                    FileVOI v;
-                    VOI[] voiVec = null;
-                    try {
-                        v = new FileVOI(fileName+ext, fileDir, display.getActiveImage());
-                        voiVec = v.readVOI(false);
-                    } catch(IOException e) {
-                        MipavUtil.displayError("Unable to load old VOI from location:\n"+fileDir+"\nWith name: "+fileName+ext);
-                    }
-                    if(voiVec.length > 1) {
-                        MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+fileName+ext);
-                    } else {
-                    	Color c = hasColor(voiVec[0]);
-                        if(c != null) {
-                            voiVec[0].setColor(c);
-                            
-                        } else {
-                            voiVec[0].setColor(colorPick[colorChoice % colorPick.length]);
-                            colorChoice++;
-                        }                      
-                        voiVec[0].setThickness(2);
-                        if(fillVOIs && display.getZeroStatus(voiVec[0].getName())) {
-                        	voiVec[0].setDisplayMode(VOI.SOLID);
-                        	voiVec[0].setOpacity((float)0.7);
-                        }
-                        display.getActiveImage().registerVOI(voiVec[0]);
-                    }
-                }
-            }
-        }  
-    }
-    
-    private Color hasColor(VOI voiVec) {
-        Color c = null;
-        VOIVector tempVec = display.getActiveImage().getVOIs();
-        String side1 = "", side2 = ""; 
-        if(Symmetry.LEFT_RIGHT == Symmetry.LEFT_RIGHT) {
-        	side1 = "Left";
-        	side2 = "Right";
-        }
-        for(int i=0; i<tempVec.size(); i++) {
-            if(voiVec.getName().contains(side1) || voiVec.getName().contains(side2)) {
-                if( !(tempVec.get(i).getName().contains(side1)  &&  voiVec.getName().contains(side1)) && 
-                        !(tempVec.get(i).getName().contains(side2)  &&  voiVec.getName().contains(side2)) && 
-                        tempVec.get(i).getName().endsWith(voiVec.getName().substring(voiVec.getName().indexOf(" ")))) {
-                    c =  tempVec.get(i).getColor();
-                }
-            }
-        }
-        return c;
-    }
-    
-    public VOI getSingleVOI(String name) {
-    	if(display == null) {
-    		return null;
-    	} 
-        String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory()+MuscleImageDisplay.VOI_DIR;
-        String ext = name.contains(".xml") ? "" : ".xml";
-        
-        if(new File(fileDir+name+ext).exists()) {
-            FileVOI v;
-            VOI[] voiVec = null;
-            try {
-                v = new FileVOI(name+ext, fileDir, display.getActiveImage());
-                voiVec = v.readVOI(false);
-            } catch(IOException e) {
-                MipavUtil.displayError("Unable to load old VOI from location:\n"+fileDir+"\nWith name: "+name);
-            }
-            if(voiVec.length > 1) {
-                MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+name);
-            } else {
-            	return voiVec[0];
-            }
-        }
-        return null;
-    }
-        
-    private void createPDF() {		
-    	String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory();
-    	long time = System.currentTimeMillis();
-    	
-		File file = new File(fileDir + File.separator + "NIA_Seg-" + time + ".pdf");
-		System.err.println("file: " + file.toString());
-		try {
-			pdfDocument = new Document();
-			writer = PdfWriter.getInstance(pdfDocument, new FileOutputStream(file));
-			pdfDocument.addTitle("Thigh Tissue Analysis Report");
-			pdfDocument.addCreator("MIPAV: Muscle Segmentation");
-			pdfDocument.open();
-			
-			
-			Paragraph p = new Paragraph();
-			
-			//add the Title and subtitle
-			p.setAlignment(Element.ALIGN_CENTER);
-			p.add(new Chunk("MIPAV: Segmentation", new Font(Font.TIMES_ROMAN, 18)));
-			p.add(new Paragraph());
-			p.add(new Chunk("Thigh Tissue Analysis Report", new Font(Font.TIMES_ROMAN, 12)));
-			pdfDocument.add(new Paragraph(p));
-			pdfDocument.add(new Paragraph(new Chunk("")));
-			pdfDocument.add(new Paragraph());
-			
-			Font fontNormal = FontFactory.getFont("Helvetica", 10, Font.NORMAL, Color.DARK_GRAY);
-			Font fontBold = FontFactory.getFont("Helvetica", 10, Font.BOLD, Color.BLACK);
-
-			/**
-			MultiColumnText mct = new MultiColumnText(20);
-			mct.setAlignment(Element.ALIGN_LEFT);
-			mct.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
-			mct.addElement(new Paragraph("Analyst:", fontBold));
-			mct.addElement(new Paragraph("akoyama", fontNormal));
-			mct.addElement(new Paragraph("Analysis Date:", fontBold));
-			mct.addElement(new Paragraph("05/06/2007", fontNormal));
-			pdfDocument.add(mct);
-			
-			MultiColumnText mct2 = new MultiColumnText(20);
-			mct2.setAlignment(Element.ALIGN_LEFT);
-			mct2.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
-			mct2.addElement(new Paragraph("Name:", fontBold));
-			mct2.addElement(new Paragraph(display.getActiveImage().getFileInfo()[0].getFileName(), fontNormal));
-			mct2.addElement(new Paragraph("Center:", fontBold));
-			mct2.addElement(new Paragraph("Hjartavernd", fontNormal));
-			FileInfoBase[] f = display.getActiveImage().getFileInfo();
-			pdfDocument.add(mct2);
-			
-			MultiColumnText mct3 = new MultiColumnText(20);
-			mct3.setAlignment(Element.ALIGN_LEFT);
-			mct3.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
-			mct3.addElement(new Paragraph("ID:", fontBold));
-			mct3.addElement(new Paragraph(display.getActiveImage().getFileInfo()[0].getFileName(), fontNormal));
-			mct3.addElement(new Paragraph("Scan Date:", fontBold));
-			mct3.addElement(new Paragraph("05/09/2003", fontNormal));
-			pdfDocument.add(mct3);
-			
-			//add the scanning parameters table
-			PdfPTable spTable = new PdfPTable(2);
-			PdfPCell cell = new PdfPCell(new Paragraph("Scanning Parameters"));
-			cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-			cell.setColspan(2);
-			spTable.addCell(cell);
-			spTable.addCell("kVp:");
-			spTable.addCell("120");
-			spTable.addCell("mA:");
-			spTable.addCell("213");
-			spTable.addCell("Pixel Size:");
-			spTable.addCell(Double.toString(display.getActiveImage().getResolutions(0)[0]*.1));
-			spTable.addCell("Slice Thickness: (mm)");
-			spTable.addCell(Float.toString(display.getActiveImage().getFileInfo()[0].getSliceThickness()));
-			spTable.addCell("Table Height: (cm)");
-			spTable.addCell("143.00");
-			
-			Paragraph pTable = new Paragraph();
-			pTable.add(new Paragraph());
-			pTable.setAlignment(Element.ALIGN_CENTER);
-			pTable.add(spTable);
-			pdfDocument.add(new Paragraph(new Chunk("")));
-			pdfDocument.add(pTable);
-			**/
-			
-			//create the Table where we will insert the data:
-			aTable = new PdfPTable(new float[] {1.8f, 1f, 1f, 1f, 1f, 1f, 1f});
-			
-			// add Column Titles (in bold)
-			aTable.addCell(new PdfPCell(new Paragraph("Area (cm^2)", fontBold)));
-			aTable.addCell(new PdfPCell(new Paragraph("Total Area", fontBold)));
-			aTable.addCell(new PdfPCell(new Paragraph("Fat Area", fontBold)));
-			aTable.addCell(new PdfPCell(new Paragraph("Lean Area", fontBold)));
-			aTable.addCell(new PdfPCell(new Paragraph("Fat HU", fontBold)));
-			aTable.addCell(new PdfPCell(new Paragraph("Lean HU", fontBold)));
-			aTable.addCell(new PdfPCell(new Paragraph("Total HU", fontBold)));
-			
-			
-			return;
-		} catch (Exception e) {
-			return;
-		}
-    }
-    
-    /**
-     * Adds a row to the PDF Table
-     * @param name the name of the area
-     * @param fatArea the amount of fat area
-     * @param leanArea amount of lean area
-     * @param totalAreaCount total area
-     * @param meanFatH mean fat area HU
-     * @param meanLeanH mean lean area HU
-     * @param meanTotalH mean total area HU
-     */
-	private void addToPDF(String name, double fatArea, double leanArea, double totalAreaCount, 
-			double meanFatH, double meanLeanH, double meanTotalH) {
-		
-		try {
-			Font fontNormal = FontFactory.getFont("Helvetica", 10, Font.NORMAL, Color.DARK_GRAY);
-			if (name.endsWith(".xml")) {
-				name = name.substring(0, name.length() - 4);
-			}
-			DecimalFormat dec = new DecimalFormat("0.#");
-			
-			//name of area
-			aTable.addCell(new Paragraph( name, fontNormal) );
-				
-			//total area
-			aTable.addCell(new Paragraph( dec.format(totalAreaCount), fontNormal) );
-				
-			//fat area
-			aTable.addCell(new Paragraph( dec.format(fatArea), fontNormal) );
-			
-			//lean area
-			aTable.addCell(new Paragraph( dec.format(leanArea), fontNormal) );
-				
-			//fat HU
-			aTable.addCell(new Paragraph( dec.format(meanFatH), fontNormal) );
-				
-			//lean HU
-			aTable.addCell(new Paragraph( dec.format(meanLeanH), fontNormal) );
-				
-			//total HU
-			aTable.addCell(new Paragraph( dec.format(meanTotalH), fontNormal) );
-			
-			imageTable = new PdfPTable(2);
-			imageTable.addCell("LUT Image");
-			imageTable.addCell("VOI Image");
-					
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	private void closePDF(java.awt.Image edgeImage, java.awt.Image qaImage) {
-		try {
-		Paragraph aPar = new Paragraph();
-		aPar.setAlignment(Element.ALIGN_CENTER);
-		aPar.add(new Paragraph());
-		aPar.add(aTable);
-		pdfDocument.add(new Paragraph());
-		pdfDocument.add(aPar);
-		PdfPTable imageTable = new PdfPTable(2);
-		imageTable.addCell("Edge Image");
-		imageTable.addCell("QA Image");
-		imageTable.addCell(Image.getInstance(edgeImage, null));
-		
-		imageTable.addCell(Image.getInstance(qaImage, null));
-		
-		Paragraph pImage = new Paragraph();
-		pImage.add(new Paragraph());
-		pImage.add(imageTable);
-		pdfDocument.add(pImage);
-		pdfDocument.close();
-		
-		
-		
-		
-	//	imageTable.addCell(Image.getInstance(display.get));
-		
-	//	imageTable.addCell("QA Image");
-		
-	//	chooser = new JFileChooser();
-	//	chooser.setDialogTitle("Open image 1");
-	//	returnVal = chooser.showOpenDialog(null);
-
-   //     while (returnVal != JFileChooser.APPROVE_OPTION) {
-   //     	returnVal = chooser.showOpenDialog(null);
-   //     } 
-		
-	//	imageTable.addCell(Image.getInstance(chooser.getSelectedFile().getPath()));
-		
-	//	chooser.setDialogTitle("Open image 1");
-	//	returnVal = chooser.showOpenDialog(null);
-
-   //     while (returnVal != JFileChooser.APPROVE_OPTION) {
-   //     	returnVal = chooser.showOpenDialog(null);
-   //     } 
-		
-   //     imageTable.addCell(Image.getInstance(chooser.getSelectedFile().getPath()));
-        
-   //     Paragraph pImage = new Paragraph();
-   //     pImage.add(new Paragraph());
-   //     pImage.add(imageTable);
-        
-	//	pdfDocument.add(pImage);
-		
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-	}
-
-	private class BuildThighAxes implements AlgorithmInterface {
+    private class BuildThighAxes implements AlgorithmInterface {
 		
 	    private int zSlice;
 	    
@@ -2839,4 +2892,28 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        }
 	    }
 	}
+}
+
+enum ImageType{
+    
+    /** denotes that the srcImg is an abdomen */
+    ABDOMEN,
+    
+    /** denotes that the srcImg is two thighs */
+    TWO_THIGHS,
+    
+    /** unknown image type, generally represents an error state */
+    UNKNOWN
+}
+
+enum Symmetry{
+    
+    /** Indicates the image has no symmetry. */
+    NO_SYMMETRY, 
+    
+    /** Indicates that image has left-right symmetry. */
+    LEFT_RIGHT, 
+    
+    /** Indicates the image has top-bottom symmetry. */
+    TOP_BOTTOM
 }
