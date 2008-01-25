@@ -475,7 +475,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
     	
     	if(srcImages == null || srcImages.length == 2) {
     		//means we are operating on 2 images
-    		System.out.println("here");
     		if(srcImages != null) {
     			srcImageA = srcImages[0];
     			srcImageB = srcImages[1];
@@ -519,14 +518,12 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 	        }
     	} else {
     		//means we are performing on bulk images
-    		srcImageA = srcImages[0];
-			srcImageB = srcImages[1];
-			calcStoreInDest();
-    		for(int i=2;i<srcImages.length;i++) {
-    			srcImageA = destImage;
-    			srcImageB = srcImages[i];
-    			calcStoreInDest();	
+    		if(opType == AlgorithmImageCalculator.ADD) {
+	    		performBulkAdding();
     		}
+    		else if(opType == AlgorithmImageCalculator.AVERAGE) {
+    			performBulkAveraging();
+    		}	
     	}
     }
 
@@ -1269,6 +1266,154 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
             srcImageA.calcMinMaxMag(true);
         } else {
             srcImageA.calcMinMax();
+        }
+
+        setCompleted(true);
+    }
+    
+    
+    /**
+     * perform bulk adidng
+     *
+     */
+    private void performBulkAdding() {
+    	srcImageA = srcImages[0];
+		srcImageB = srcImages[1];
+		calcStoreInDest();
+		for(int i=2;i<srcImages.length;i++) {
+			srcImageA = destImage;
+			srcImageB = srcImages[i];
+			calcStoreInDest();	
+		}
+    }
+    
+    /**
+     * perform bulk averaging
+     *
+     */
+    private void performBulkAveraging() {
+    	int i, j, k, m;
+        int z, t, f;
+        int offset;
+        int length; // total number of data-elements (pixels) in image slice
+        double[] bufferA; // data-buffer (for pixel data) which is the "heart" of the image
+        double[] bufferAI = null;
+        boolean doComplex = false;
+        int numSrcImages = srcImages.length;
+        
+        //first do bulk adding..set clipMode to PROMOTE to do the bulk adding...but remember original clipMode for the averaging part
+        opType = AlgorithmImageCalculator.ADD;
+		performBulkAdding();
+		
+		//now do averaging by dividing dest image by numSrcImages
+		opType = AlgorithmImageCalculator.AVERAGE;
+        try {
+            length = destImage.getSliceSize() * colorFactor;
+            bufferA = new double[length];
+            if ((srcImageA.getType() == ModelStorageBase.COMPLEX) ||
+                    (srcImageA.getType() == ModelStorageBase.DCOMPLEX)) {
+                bufferAI = new double[length];
+                doComplex = true;
+            }
+        }catch (OutOfMemoryError e) {
+            bufferA = null;
+            System.gc();
+            displayError("Algorithm ImageCalculator reports: Out of memory when creating image buffer");
+            setCompleted(false);
+            setThreadStopped(true);
+
+            return;
+        }
+        
+        if (destImage.getNDims() == 5) {
+            f = destImage.getExtents()[4];
+        } else {
+            f = 1;
+        }
+
+        if (destImage.getNDims() >= 4) {
+            t = destImage.getExtents()[3];
+        } else {
+            t = 1;
+        }
+
+        if (destImage.getNDims() >= 3) {
+            z = destImage.getExtents()[2];
+        } else {
+            z = 1;
+        }
+        
+        for (m = 0; (m < f) && !threadStopped; m++) {
+            for (k = 0; (k < t) && !threadStopped; k++) {
+                for (j = 0; (j < z) && !threadStopped; j++) {
+                    try {
+                        offset = (m * t * z * length) + (k * z * length) + (j * length);
+
+                        if (doComplex) {
+                            destImage.exportDComplexData(2 * offset, length, bufferA, bufferAI);
+                        } else {
+                            destImage.exportData(offset, length, bufferA); // locks and releases lock
+                        }
+                    } catch (IOException error) {
+                        displayError("Algorithm Image Calculator : Image(s) locked");
+                        setCompleted(false);
+                        setThreadStopped(true);
+
+                        return;
+                    }
+                    for (i = 0; (i < length) && !threadStopped; i++) {
+                    	bufferA[i] = bufferA[i]/numSrcImages;
+                        if (doComplex) {
+                            bufferAI[i] = bufferAI[i]/numSrcImages;
+                        }
+                    }
+                    try {
+
+                        if (threadStopped) { // do BEFORE buffer has been exported to Image
+                            finalize();
+                            return;
+                        }
+
+                        if (doComplex) {
+                            destImage.importDComplexData(2 * offset, bufferA, bufferAI, false, true);
+                        } else {
+                            destImage.importData(offset, bufferA, false);
+                        }
+                    } catch (IOException error) {
+                        displayError("Algorithm ImageCalculator: Image(s) locked");
+                        setCompleted(false);
+                        setThreadStopped(true);
+                        return;
+                    }
+                }
+            } // k loop
+        } // f loop
+
+        if (threadStopped) { // do BEFORE 'completed'
+            finalize();
+
+            return;
+        }
+
+        if (doComplex) {
+            destImage.calcMinMaxMag(true);
+            destImage.setOriginalExtents(srcImageA.getOriginalExtents());
+            destImage.setOriginalMinimum(srcImageA.getOriginalMinimum());
+            destImage.setOriginalMaximum(srcImageA.getOriginalMaximum());
+            destImage.setOriginalDoCrop(srcImageA.getOriginalDoCrop());
+
+            if (srcImageA.getOriginalDoCrop()) {
+                destImage.setOriginalStart(srcImageA.getOriginalStart());
+                destImage.setOriginalEnd(srcImageA.getOriginalEnd());
+            }
+
+            destImage.setUnequalDim(srcImageA.getUnequalDim());
+            destImage.setImage25D(srcImageA.getImage25D());
+            destImage.setOriginalKernelDimension(srcImageA.getOriginalKernelDimension());
+            destImage.setOriginalFilterConstruction(srcImageA.getOriginalFilterConstruction());
+            destImage.setHaveWindowed(srcImageA.getHaveWindowed());
+        } else {
+            destImage.calcMinMax();
         }
 
         setCompleted(true);

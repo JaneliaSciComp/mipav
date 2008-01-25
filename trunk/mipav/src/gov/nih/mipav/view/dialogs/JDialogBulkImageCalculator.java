@@ -84,13 +84,13 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
     private ArrayList additionalImagesList = new ArrayList();;
     
     /** clip radio button **/
-    private JRadioButton radioClip;
+    //private JRadioButton radioClip;
 
     /** promote radio button **/
-    private JRadioButton radioPromote;
+    //private JRadioButton radioPromote;
     
     /** clip mode **/
-    private int clipMode = AlgorithmImageMath.CLIP;
+    private int clipMode = AlgorithmImageMath.PROMOTE;
     
     /** handle to algorithm **/
     private AlgorithmImageCalculator alg;
@@ -150,9 +150,8 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
 	public void actionPerformed(ActionEvent event) {
 		String command = event.getActionCommand();
 		 if (command.equals("OK")) {
-			 if (setVariables()) {
-				 callAlgorithm();
-	         }
+			 callAlgorithm();
+
 	     } else if (command.equals("Cancel")) {
 	    	 if(additionalImagesList.size() > 0) {
 	         	for(int i=0;i<additionalImagesList.size();i++) {
@@ -251,11 +250,7 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
 	 *  call algorithm
 	 */
 	protected void callAlgorithm() {
-		//testing
-		for(int i=0;i<srcImagesList.size();i++) {
-			System.out.println(((ModelImage)srcImagesList.get(i)).getImageName());
-		}
-		
+
 		resultImage = new ModelImage(imageA.getType(), imageA.getExtents(), makeImageName(imageA.getImageName(), "_calc"));
 		
 		Object[] objs = srcImagesList.toArray();
@@ -364,9 +359,11 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
         labelOperator.setFont(serif12);
         
         comboBoxOperator = new JComboBox();
+        comboBoxOperator.addItemListener(this);
         comboBoxOperator.setFont(serif12);
         comboBoxOperator.setBackground(Color.white);
         comboBoxOperator.addItem("Add");
+        comboBoxOperator.addItem("Average");
         
         JPanel srcPanel = new JPanel();
         srcTableModel = new ViewTableModel();
@@ -399,14 +396,14 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
         removeSelectedButton.addActionListener(this);
         removeSelectedButton.setActionCommand("removeSelected");
         
-        ButtonGroup group = new ButtonGroup();
+        /*ButtonGroup group = new ButtonGroup();
         radioClip = new JRadioButton("Clip", true);
         radioClip.setFont(serif12);
         group.add(radioClip);
-
         radioPromote = new JRadioButton("Promote destination image type", false);
         radioPromote.setFont(serif12);
         group.add(radioPromote);
+        */
         
         JPanel OKCancelPanel = new JPanel();
         buildOKButton();
@@ -445,7 +442,7 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
         inputPanel.add(removeSelectedImagesLabel, gbc);
         gbc.gridx = 1;
         inputPanel.add(removeSelectedButton, gbc);
-        gbc.gridx = 0;
+        /*gbc.gridx = 0;
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.NONE;
         gbc.insets = new Insets(0, 0, 0, 0);
@@ -454,7 +451,7 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
         gbc.gridy = 5;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         inputPanel.add(radioPromote, gbc);
-        
+        */
         
         getContentPane().add(inputPanel);
         getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
@@ -621,31 +618,15 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
 
             if (comboBoxOperator.getSelectedIndex() == 0) {
                 opType = AlgorithmImageCalculator.ADD;
+            }else if (comboBoxOperator.getSelectedIndex() == 1) {
+                opType = AlgorithmImageCalculator.AVERAGE;
             }
+            
             
         }
     }
 
-	
 
-	
-	
-	/**
-     * Use the GUI results to set up the variables needed to run the algorithm.
-     *
-     * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
-     */
-    private boolean setVariables() {
-
-        if (radioClip.isSelected()) {
-            clipMode = AlgorithmImageCalculator.CLIP;
-        } else if (radioPromote.isSelected()) {
-            clipMode = AlgorithmImageCalculator.PROMOTE;
-        }
-
-
-        return true;
-    }
 
     
     /**
