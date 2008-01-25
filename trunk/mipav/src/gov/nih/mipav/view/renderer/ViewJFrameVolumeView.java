@@ -2553,8 +2553,8 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * Called when the view position changes in the FlyThruRenderer, updates the position representation in the Slice
      * views:
      *
-     * @param  kPosition        Ruida please add comment
-     * @param  kScaledPosition  Ruida please add comment
+     * @param  kPosition        center position.
+     * @param  kScaledPosition  position of the flythru view point along the flythru path.
      */
     public void setPathPosition(Point3f kPosition, Point3f kScaledPosition) {
         Point3Df kCenter = new Point3Df(kPosition.x * imageA.getExtents()[0], kPosition.y * imageA.getExtents()[1],
@@ -3238,6 +3238,8 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
 
         setLocation(100, 100);
 
+       
+        
         if (leftPanelRenderMode == SURFACE) {
             imagePanel.add(surRender.getCanvas(), BorderLayout.CENTER);
         } else if (leftPanelRenderMode == RAYCAST) {
@@ -3251,7 +3253,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
 
         int imagePanelWidth = (int) (screenWidth * 0.51f);
         int imagePanelHeight = (int) (screenHeight * 0.43f);
-
+        
         if ( isSurfaceViewEnable ) imagePanelHeight = (int) (screenHeight * 0.7f);
         
         imagePanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
@@ -3260,9 +3262,9 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
 
         rightPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, imagePanel, triImagePanel);
 
-        rightPane.setOneTouchExpandable(false);
+        rightPane.setOneTouchExpandable(true);
         rightPane.setDividerSize(6);
-        rightPane.setContinuousLayout(false);
+        rightPane.setContinuousLayout(true);
         rightPane.setResizeWeight(1);
 
         tabbedPane.setPreferredSize(new Dimension(maxPanelWidth, tabbedPane.getPreferredSize().height));
