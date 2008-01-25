@@ -49,7 +49,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     /** denotes the type of srcImg (see enum ImageType) */
     private ImageType imageType; 
     
-    /** denotes the symmetry of srcImae */
+    /** denotes the symmetry of srcImage */
     private Symmetry symmetry;
     
     /** the parent frame. */
@@ -328,7 +328,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	 * @param meanLeanH mean lean area HU
 	 * @param meanTotalH mean total area HU
 	 */
-	private void addToPDF(String name, double fatArea, double leanArea, double totalAreaCount, 
+	protected void addToPDF(String name, double fatArea, double leanArea, double totalAreaCount, 
 			double meanFatH, double meanLeanH, double meanTotalH) {
 		
 		try {
@@ -372,7 +372,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	 * Does a screen capture into a java.awt.Image of the original image
 	 * @return the java.awt.Image
 	 */
-	private java.awt.Image captureImage() {
+	protected java.awt.Image captureImage() {
 		display.getActiveImage().getParentFrame().requestFocus();
 		Rectangle currentRectangle;
 		Point p = new Point();
@@ -397,7 +397,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    return null;
 	}
 
-	private void closePDF(java.awt.Image edgeImage, java.awt.Image qaImage) {
+	protected void closePDF(java.awt.Image edgeImage, java.awt.Image qaImage) {
 			try {
 			Paragraph aPar = new Paragraph();
 			aPar.setAlignment(Element.ALIGN_CENTER);
@@ -456,7 +456,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			
 		}
 
-	private void createPDF() {		
+	protected void createPDF() {		
 		String fileDir = display.getActiveImage().getFileInfo(0).getFileDirectory();
 		long time = System.currentTimeMillis();
 		
@@ -1203,7 +1203,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             for(int i=0; i<mirrorArr.length; i++) { 
             	tabs[i] = new MuscleDialogPrompt(this, titles[i], mirrorArr[i], mirrorZ[i],
                         noMirrorArr[i], noMirrorZ[i],
-                        imageType, symmetry);
+                        imageType);
 
             	tabs[i].addComponentListener(this);
             	tabs[i].addListener(this);
@@ -1718,10 +1718,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
          *  is moved to its own class at a later time.  
          */
         private ImageType imageType;
-        
-        /** Whether this image has mirror image muscles (eg VIEWS of thighs, abdomen. */
-        private Symmetry symmetry;
-        
+
         /** Labels for instructions. */
         private JLabel[] instructionLabel;
         
@@ -1757,7 +1754,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
          */
         public MuscleDialogPrompt(MuscleImageDisplay theParentFrame, String title, String[] mirrorArr, boolean[] mirrorZ, 
                 String[] noMirrorArr, boolean[] noMirrorZ,  
-                ImageType imageType, Symmetry symmetry) {
+                ImageType imageType) {
             //super(theParentFrame, false);
             super(theParentFrame, title);
             
@@ -1770,7 +1767,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             this.noMirrorZ = noMirrorZ;
             
             this.imageType = imageType;
-            this.symmetry = symmetry;
             
             initDialog();    
         }
@@ -2065,9 +2061,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		private boolean lutOn = false;
 		
 		//Keeping as treeMap since expected size is so small, if number of muscles were greater than say 128, might use HashMap
-		private Map totalAreaCalcTree, totalAreaCountTree, partialAreaTree, fatAreaTree, leanAreaTree;
+		protected Map totalAreaCalcTree, totalAreaCountTree, partialAreaTree, fatAreaTree, leanAreaTree;
 		
-		private Map meanFatHTree, meanLeanHTree, meanTotalHTree;
+		protected Map meanFatHTree, meanLeanHTree, meanTotalHTree;
 	
 		/**
 		 * Constructor, note is called at beginning of program, so mirrorArr and noMirrorArr
@@ -2132,8 +2128,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		 *
 		 */
 		private void loadLUT() {
-			float min = (float)display.getActiveImage().getMin();
-			float max = (float)display.getActiveImage().getMax();
+			float min = (float)parentFrame.getActiveImage().getMin();
+			float max = (float)parentFrame.getActiveImage().getMax();
 			
 			TransferFunction transfer = new TransferFunction();
 			transfer.addPoint(new Point2Df(min, 255));
@@ -2155,36 +2151,36 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			transfer.addPoint(new Point2Df(100, 255));
 			transfer.addPoint(new Point2Df(max, 255));
 			
-			display.getLUTa().makeCTThighTransferFunctions();
-			display.getLUTa().setTransferFunction(transfer);
-			display.getLUTa().makeLUT(256);
+			parentFrame.getLUTa().makeCTThighTransferFunctions();
+			parentFrame.getLUTa().setTransferFunction(transfer);
+			parentFrame.getLUTa().makeLUT(256);
 			
-			VOIVector vec = display.getActiveImage().getVOIs();
+			VOIVector vec = parentFrame.getActiveImage().getVOIs();
 			for(int i=0; i<vec.size(); i++) {
-				if(display.getZeroStatus(vec.get(i).getName())) {
+				if(parentFrame.getZeroStatus(vec.get(i).getName())) {
                 	vec.get(i).setDisplayMode(VOI.SOLID);
                 	vec.get(i).setOpacity((float)0.7);
                 }
 			}
 			
-			display.updateImages(true);
-			display.getActiveImage().getParentFrame().updateImages(true);
+			parentFrame.updateImages(true);
+			parentFrame.getActiveImage().getParentFrame().updateImages(true);
 			
 			lutOn = true;
 		}
 		
 		private void removeLUT() {
 			
-			display.ctMode(display.getActiveImage(), -175, 275);
+			parentFrame.ctMode(display.getActiveImage(), -175, 275);
 			
-			display.getLUTa().makeGrayTransferFunctions();
-			display.getLUTa().makeLUT(256);
+			parentFrame.getLUTa().makeGrayTransferFunctions();
+			parentFrame.getLUTa().makeLUT(256);
 			
-			VOIVector vec = display.getActiveImage().getVOIs();
+			VOIVector vec = parentFrame.getActiveImage().getVOIs();
 			for(int i=0; i<vec.size(); i++) 
 				vec.get(i).setDisplayMode(VOI.CONTOUR);
 			
-			display.updateImages(true);
+			parentFrame.updateImages(true);
 			
 			lutOn = false;
 		}
@@ -2346,43 +2342,16 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	            parentFrame.getImageA().unregisterAllVOIs();
 	            parentFrame.updateImages();
 	        } else {
-	
-	            if (command.equals(OK)) {
-	                VOI goodVoi = null; //was checkVOI)_
-	                //check that VOI conforms to requirements, returns the VOI being modified/created
-	                
-	                if ( goodVoi != null ) { 
-	                    
-	                    //save modified/created VOI to file
-	                    parentFrame.getImageA().unregisterAllVOIs();
-	                    parentFrame.getImageA().registerVOI(goodVoi);
-	                    String dir = parentFrame.getImageA().getImageDirectory()+MuscleImageDisplay.VOI_DIR;
-	                    parentFrame.saveAllVOIsTo(dir);
-	                    
-	                    String fileDir = parentFrame.getImageA().getFileInfo(0).getFileDirectory();
-	
-	                    MipavUtil.displayInfo(/*objectName*/"test"+" VOI saved in folder\n " + fileDir + MuscleImageDisplay.VOI_DIR);
-	                    
-	                    parentFrame.getImageA().unregisterAllVOIs();
-	                    parentFrame.updateImages();
-	                    
-	                    //completed = true;
-	                    //novelVoiProduced = true; //not necessarily
-	                    notifyListeners(OK);
-	                    //dispose();
-	                } else {
-	                    //individual error messages are already displayed
-	                }
-	            } else if (command.equals(OUTPUT)) {
+	        	if (command.equals(OUTPUT)) {
 	            	processCalculations(false, false);
 	            } else if (command.equals(OUTPUT_ALL)) { 
 	            	processCalculations(true, false);
 	            } else if (command.equals(SAVE)) {
-	            	display.setVisible(false);
-	            	display.getActiveImage().getParentFrame().requestFocus();
+	            	parentFrame.setVisible(false);
+	            	parentFrame.getActiveImage().getParentFrame().requestFocus();
 	            	
 	            	processCalculations(true, true);
-	            	display.setVisible(true);
+	            	parentFrame.setVisible(true);
 	            } else if (command.equals(TOGGLE_LUT)) {
 	            	if(!lutOn) {
 	            		loadLUT();
@@ -2515,8 +2484,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 				loadVOIs(allStrings, true);
 			
 				//loadLUT();
-				display.getActiveImage().getParentFrame().updateImages(true);
-				display.updateImages(true);
+				parentFrame.getActiveImage().getParentFrame().updateImages(true);
+				parentFrame.updateImages(true);
 				
 				
 				java.awt.Image edgeImage = captureImage();
@@ -2526,13 +2495,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 				java.awt.Image qaImage = captureImage();
 				removeLUT();
 				closePDF(edgeImage, qaImage);
-				display.getActiveImage().getParentFrame().updateImages(true);
-				display.updateImages(true);
-				display.requestFocus();
+				parentFrame.getActiveImage().getParentFrame().updateImages(true);
+				parentFrame.updateImages(true);
+				parentFrame.requestFocus();
 			}	
 		}
 		
-		private void enableCalcOutput() {
+		protected void enableCalcOutput() {
 			for(int i=0; i<buttonGroup.length; i++) {
 	        	if(buttonGroup[i].getText().equals(OUTPUT)) {
 	        		buttonGroup[i].setEnabled(true);
@@ -2555,8 +2524,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    	public void run() {
 	    		long time = System.currentTimeMillis();
 	    		loadVOIs(totalList, false);
-	    		VOIVector vec = (VOIVector)display.getActiveImage().getVOIs().clone();
-	    		display.getActiveImage().unregisterAllVOIs();
+	    		VOIVector vec = (VOIVector)parentFrame.getActiveImage().getVOIs().clone();
+	    		parentFrame.getActiveImage().unregisterAllVOIs();
 	    		for(int i=0; i<vec.size(); i++) {
 	    			VOI v = vec.get(i);
 	    			String name = v.getName();
@@ -2593,10 +2562,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			public double getFatArea(VOI v) {
 				int fatArea = 0;
 				BitSet fullMask = new BitSet();
-				v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
+				v.createBinaryMask(fullMask, parentFrame.getActiveImage().getExtents()[0], parentFrame.getActiveImage().getExtents()[1]);
 				double mark = 0;
 				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-			        mark = display.getImageA().getDouble(i);
+			        mark = parentFrame.getImageA().getDouble(i);
 					if(mark  >= -190 && mark <= -30) 
 						fatArea++;
 				}
@@ -2614,10 +2583,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			public double getPartialArea(VOI v) {
 				int partialArea = 0;
 				BitSet fullMask = new BitSet();
-				v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
+				v.createBinaryMask(fullMask, parentFrame.getActiveImage().getExtents()[0], parentFrame.getActiveImage().getExtents()[1]);
 				double mark = 0;
 				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-			        mark = display.getImageA().getDouble(i);
+			        mark = parentFrame.getImageA().getDouble(i);
 					if(mark  >= -30 && mark <= 0) 
 						partialArea++;
 				}
@@ -2635,10 +2604,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			public double getLeanArea(VOI v) {
 				int leanArea = 0;
 				BitSet fullMask = new BitSet();
-				v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
+				v.createBinaryMask(fullMask, parentFrame.getActiveImage().getExtents()[0], parentFrame.getActiveImage().getExtents()[1]);
 				double mark = 0;
 				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-			        mark = display.getImageA().getDouble(i);
+			        mark = parentFrame.getImageA().getDouble(i);
 					if(mark  >= 0 && mark <= 100) 
 						leanArea++;
 				}
@@ -2662,7 +2631,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			public double getTotalAreaCount(VOI v) {
 				int totalArea = 0;
 				BitSet fullMask = new BitSet();
-				v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
+				v.createBinaryMask(fullMask, parentFrame.getActiveImage().getExtents()[0], parentFrame.getActiveImage().getExtents()[1]);
 				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) 
 			        totalArea++;
 				return totalArea;
@@ -2678,10 +2647,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 				int fatArea = 0;
 				double meanFatH = 0;
 				BitSet fullMask = new BitSet();
-				v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
+				v.createBinaryMask(fullMask, parentFrame.getActiveImage().getExtents()[0], parentFrame.getActiveImage().getExtents()[1]);
 				double mark = 0;
 				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-			        mark = display.getImageA().getDouble(i);
+			        mark = parentFrame.getImageA().getDouble(i);
 					if(mark  >= -190 && mark <= -30) {
 						fatArea++;
 						meanFatH += mark;
@@ -2702,10 +2671,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 				int leanArea = 0;
 				double meanLeanH = 0;
 				BitSet fullMask = new BitSet();
-				v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
+				v.createBinaryMask(fullMask, parentFrame.getActiveImage().getExtents()[0], parentFrame.getActiveImage().getExtents()[1]);
 				double mark = 0;
 				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-			        mark = display.getImageA().getDouble(i);
+			        mark = parentFrame.getImageA().getDouble(i);
 					if(mark  >= 0 && mark <= 100) {
 						leanArea++;
 						meanLeanH += mark;
@@ -2727,10 +2696,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 				int totalArea = 0;
 				double meanTotalH = 0;
 				BitSet fullMask = new BitSet();
-				v.createBinaryMask(fullMask, display.getActiveImage().getExtents()[0], display.getActiveImage().getExtents()[1]);
+				v.createBinaryMask(fullMask, parentFrame.getActiveImage().getExtents()[0], parentFrame.getActiveImage().getExtents()[1]);
 				double mark = 0;
 				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-			        mark = display.getImageA().getDouble(i);
+			        mark = parentFrame.getImageA().getDouble(i);
 			        totalArea++;
 					meanTotalH += mark;
 				}
@@ -2770,7 +2739,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        
 	        thighCompleted = new boolean[2];
 	        thighCompleted[0] = false;
-	        thighCompleted[1] = false;
+	        thighCompleted[1] = (i % 2 == 0);
 	        
 	        initThighAxes();
 	    }
