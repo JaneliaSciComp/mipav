@@ -9718,6 +9718,11 @@ public class FileTiff extends FileBase {
                                         }
 
                                         buffer[i] = byteBuffer[j + currentIndex] & 0xff;
+                                        if (fileInfo.getPhotometric() == 0) {
+                                            // White is zero in original readin
+                                            // Convert to black is zero for usual display
+                                            buffer[i] = 255 - buffer[i];
+                                        }
                                     }
                                 } // end of if (byteBuffer[j] & 0x80 == 0)
 
@@ -9740,6 +9745,11 @@ public class FileTiff extends FileBase {
                                         }
 
                                         buffer[i] = byteBuffer[j + currentIndex] & 0xff;
+                                        if (fileInfo.getPhotometric() == 0) {
+                                            // White is zero in original readin
+                                            // Convert to black is zero for usual display
+                                            buffer[i] = 255 - buffer[i];
+                                        }
                                     }
 
                                     j++;
