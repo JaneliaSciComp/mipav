@@ -14,7 +14,7 @@ import java.util.zip.*;
 
 
 /**
- * Tagged Image File Format (TIFF 6.0) reader/ writer. Only packed bit compression is supported at this time. Note that
+ * Tagged Image File Format (TIFF 6.0) reader/ writer. Note that
  * although EchoTech has a tResolution field, there is no provision for 4D in TIFF.
  * Almost all of the FAX decompression code, modified Huffman decompression code, and JPEG decompression code
  * was taken from the free software at the website 
