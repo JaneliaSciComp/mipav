@@ -3,27 +3,13 @@ import java.awt.event.*;
 import java.util.Vector;
 
 import javax.swing.*;
-import javax.swing.border.EtchedBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.*;
-
-
-
-import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.file.FileInfoImageXML;
-import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
-import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.JDialogGaussianBlur;
-import gov.nih.mipav.view.dialogs.JDialogLivewire;
-import gov.nih.mipav.view.dialogs.JDialogWinLevel;
+import gov.nih.mipav.view.dialogs.*;
 
 
 /**
@@ -32,73 +18,8 @@ import gov.nih.mipav.view.dialogs.JDialogWinLevel;
  * @author linkb
  *
  */
-public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements MouseListener {
+public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements MouseListener, AdjustmentListener {
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
-   
-    /** Reference to the toolbars located in the controls object. */
-    protected ViewControlsImage controls;
-        
-    /**
-     * The width resolution factor
-     */
-    float widthResFactor;
-    
-    /**
-     * The height resolution factor
-     */
-    float heightResFactor;
-    
-    /**
-     * The zoom level of the image
-     */
-    float zoom;
-    
-    /** Width of the display screen. */
-    protected static final int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-
-    /** Height of the display screen. */
-    protected static final int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-    
-    /**
-     * The buffers that hold the current slice dat for imageA and imageB
-     */
-    float [] imageBufferA, imageBufferB;
-    
-    /**
-     * The buffers that hold the draw-on-screen data for both imageA and imageB
-     */
-    int [] pixBuffer, pixBufferB;
-    
-    /** Number of slices in a 3D dataset. */
-    protected int nImage;
-
-    /** Number of time sequences in a 4D dataset. */
-    protected int nTImage;
-    
-    /**
-     * The current time and z-slice of the displayed image
-     */
-    protected int tSlice, zSlice;
-    
-
-    /** Reference to the two window and level dialogs where [0] is for imageA, [1] for imageB. */
-    protected JDialogWinLevel[] windowLevel;
-    
-    /**
-     * Flag indicating whether or not that the image should be displayed in Log scale. Used primarily for displaying the
-     * FFT of an image.
-     */
-    protected boolean logMagDisplay;
-    
-    /** Reference to the frame's menu bar. */
-    protected JMenuBar menuBar;
-
-    /** Constructs the image menu bar. */
-    protected ViewMenuBar menuBarMaker;
-
-    /** This object contains a number of useful functions for building a menu and querying the state of menu items. */
-    protected ViewMenuBuilder menuBuilder;
     
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -108,7 +29,7 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
     */
     public PlugInDialogImageVOIDisplay(ModelImage image) {
     	super(image, null, null, false, false);
-        init(LUTa);
+        init();
     }
 
     
@@ -125,6 +46,10 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
     // ************************** Event Processing ****************************
     // ************************************************************************  
     
+    public void adjustmentValueChanged(AdjustmentEvent e) {
+    	updateImages(true);
+    }
+    
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
      *
@@ -139,6 +64,8 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
        
         if (command.equals("Gaussian blur")) {
             new JDialogGaussianBlur(this, getActiveImage());
+        } else if (command.equals("Gradient magnitude")) {
+            new JDialogGradientMagnitude(this, getActiveImage());
         } else if (command.equals("Open")) {
         	//ViewUserInterface.getReference().openImageFrame();
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER)) {
@@ -336,7 +263,7 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
     /**
      * Override MouseListener functions to prevent MouseEvent catching in ViewJFrameImage
      */
-    public void mousePressed(MouseEvent e) {}
+     public void mousePressed(MouseEvent e) {}
      public void mouseReleased(MouseEvent e) {}
      public void mouseEntered(MouseEvent e) {}
      public void mouseExited(MouseEvent e) {}
@@ -348,7 +275,7 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
       * @param LUTa the ModelLUT
       * @throws OutOfMemoryError
       */
-     private void init(ModelLUT LUTa) throws OutOfMemoryError {
+     private void init() throws OutOfMemoryError {
 
          try {
              setIconImage(MipavUtil.getIconImage("davinci_32x32.gif"));
@@ -364,7 +291,6 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
 
          initResolutions();
          initZoom();
-         System.err.println("zoom: " + zoom);
          
          int[] extents = createBuffers();
 
@@ -414,7 +340,7 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, scrollPane, 
     		   ViewUserInterface.getReference().getMessageFrame().getTabbedPane());
        splitPane.setDividerLocation(350);
-       
+      
        getContentPane().add(splitPane);
        scrollPane.setBackground(Color.black);
 
@@ -438,6 +364,9 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
          pack();
         
          scrollPane.setPreferredSize(new Dimension(800,800));
+         scrollPane.getVerticalScrollBar().addAdjustmentListener(this);
+         scrollPane.getHorizontalScrollBar().addAdjustmentListener(this);
+         scrollPane.addComponentListener(this);
          
          setSize(1000,750);
          // User interface will have list of frames
@@ -459,230 +388,6 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
          setVisible(true);
      } // end init()
      
-     /**
-      * Creates and initializes the component image for the given image.
-      *
-      * @param   extents  the image dimensionality.
-      *
-      * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
-      */
-     private void initComponentImage(int[] extents) throws OutOfMemoryError {
-
-         componentImage = new ViewJComponentEditImage(this, imageA, LUTa, imageBufferA, null, null, imageBufferB,
-                                                      pixBuffer, zoom, extents, logMagDisplay,
-                                                      FileInfoBase.UNKNOWN_ORIENT);
-
-         componentImage.setBuffers(imageBufferA, imageBufferB, pixBuffer, pixBufferB);
-
-         if (resols[1] >= resols[0]) {
-             componentImage.setResolutions(1, heightResFactor);
-         } else {
-             componentImage.setResolutions(widthResFactor, 1);
-         }
-
-         // if this is a color image, then update the RGB info in the component
-         if (imageA.isColorImage()) {
-
-             if (getRGBTA() == null) {
-                 setRGBTA(initRGB(imageA));
-             }
-         } // end if image is an RGB type
-
-     } // end initComponentImage()
-     
-     /**
-      * Initializes the variables based on the image extents. (i.e. number of slices, number of time slices, the initial
-      * z-slice, etc.
-      *
-      * @param  img  the image to set the extent variables for
-      */
-     public void initExtentsVariables(ModelImage img) {
-         int[] slices = null;
-         int[] numImages = null;
-
-         slices = initSlicePositions(img);
-         numImages = initNumSlices(img);
-
-         zSlice = slices[0];
-         tSlice = slices[1];
-
-         nImage = numImages[0];
-         nTImage = numImages[1];
-     }
-
-     
-     /**
-      * Create the buffers for imageA and imageB.
-      *
-      * @return  the extents of the buffers
-      *
-      * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
-      */
-     protected int[] createBuffers() throws OutOfMemoryError {
-         int[] extents = initExtents(imageA);
-
-         imageBufferA = initImageBuffer(extents, imageA.isColorImage());
-         pixBuffer = initPixelBuffer(extents);
-
-         if (imageB != null) {
-             imageBufferB = initImageBuffer(imageB.getExtents(), imageB.isColorImage());
-             pixBufferB = initPixelBuffer(imageB.getExtents());
-         }
-
-         return extents;
-
-     } // end createBuffers()
-
-     /**
-      * Initializes the resolutions and units from the image.
-      */
-     protected void initResolutions() {
-         resols = initResolutions(imageA);
-         units = initUnits(imageA);
-
-         float[] factor = initResFactor(resols, units);
-
-         widthResFactor = factor[0];
-         heightResFactor = factor[1];
-     } // end initResolutions()
-
-     /**
-      * Initializes the zoom variables for the first image (imageA).
-      */
-     protected void initZoom() {
-         zoom = initZoom(imageA, widthResFactor, heightResFactor, xScreen, yScreen);
-     } // end initZoom()
-     
-     public void incSlice() {
-    	 setSlice(zSlice+1);
-     }
-     
-     public void decSlice() {
-    	 setSlice(zSlice-1);
-     }
-     
-     public void setSlice(int slice) {
-
-         if (imageA.getNDims() <= 2) {
-             return;
-         }
-
-         if (zSlice < imageA.getExtents()[2]) {
-             zSlice = slice;
-             controls.setZSlider(zSlice);
-             updateImages(true);            
-
-             // livewire grad mag. should be recalculated for the new slice
-             // componentImage.deactivateAllVOI();
-             componentImage.getVOIHandler().resetLivewire();
-             setTitle();
-         }
-     }
-     
-    /**
-	 * get controls
-	 */
-	public ViewControlsImage getControls() {
-		return controls;
-	}
-
-	
-	
-	/**
-	 * get image a
-	 */
-	public ModelImage getImageA() {
-		return componentImage.getImageA();
-	}
-
-	
-	
-	/**
-	 * get image b
-	 */
-	public ModelImage getImageB() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	
-	
-	/**
-	 * remove controls
-	 */
-	public void removeControls() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	
-	
-	/**
-	 * set active image
-	 */
-	public void setActiveImage(int active) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	
-	
-	/**
-	 * set alpha blend
-	 */
-	public void setAlphaBlend(int value) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	
-	
-	/**
-	 * set controls
-	 */
-	public void setControls() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	
-	
-	/**
-	 * set enabled
-	 */
-	public void setEnabled(boolean flag) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	
-	/**
-	 * set image b
-	 */
-	public void setImageB(ModelImage imageB) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	
-	
-	/**
-	 * set paint bitmap switch
-	 */
-	public void setPaintBitmapSwitch(boolean flag) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	
-	
-	/**
-	 * set rgbtb
-	 */
-	public void setRGBTB(ModelRGB RGBT) {
-		// TODO Auto-generated method stub
-		
-	}
 
 	/**
 	 * Sets the title of the frame
@@ -691,125 +396,6 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
 		this.setTitle("Simple Image Frame: " + imageA.getImageName());
 	}
 
-	
-	
-	/**
-	 * update image extents
-	 */
-	public boolean updateImageExtents() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-	
-	/**
-	 * set time slice
-	 */
-	public void setTimeSlice(int tSlice) {
-		// TODO Auto-generated method stub
-		
-	}
 
-	
-	
-	/**
-     * This methods calls the componentImage's update method to redraw the screen - fastest of the three update methods.
-     *
-     * @return  boolean confirming successful update
-     */
-    public synchronized boolean updateImages() {
-
-        if (componentImage == null) {
-            return false;
-        }
-
-        try {
-            componentImage.paintComponent(componentImage.getGraphics());
-            // componentImage.repaint(); // problems with this method on some machines seems to eat lots of  memory on
-            // JVM 1.3
-        } catch (OutOfMemoryError error) {
-            System.gc();
-        }
-
-        ViewControlsImage myControls = getControls();
-
-        if (myControls != null) {
-            myControls.repaint();
-        }
-
-        return true;
-    }
-
-    /**
-     * This methods calls the componentImage's update method to redraw the screen. Without LUT changes.
-     *
-     * @param   forceShow  forces show to re import image and calc. java image
-     *
-     * @return  boolean confirming successful update
-     */
-    public synchronized boolean updateImages(boolean forceShow) {
-        if (componentImage == null) {
-            return false;
-        }
-
-        if (componentImage.show(tSlice, zSlice, null, null, forceShow, -1) == false) {
-            return false;
-        }
-
-        ViewControlsImage myControls = getControls();
-
-        if (myControls != null) {
-            myControls.repaint();
-        }
-
-        return true;
-    }
-
-	
-	
-	/**
-	 * update images
-	 */
-	public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean flag, int interpMode) {
-		updateImages(true);
-		return true;
-	}
-   
-	/**
-	    * Gets the RGB LUT table for ARGB image A.
-	    * @return  RGBT the new RGB LUT to be applied to the image
-	    */
-	   public ModelRGB getRGBTA() {
-	       return null;
-	   }
-	   
-	   
-	   
-	   /**
-	    * Sets the RGB LUT table for ARGB image A.
-	    * @param  RGBT  the new RGB LUT to be applied to the image
-	    */
-	   public void setRGBTA(ModelRGB RGBT) {
-
-	   }
-	   
-	    /**
-	     * Returns the reference to the currently active image.
-	     *
-	     * @return  the active image
-	     */
-	    public ModelImage getActiveImage() {
-
-	        if (componentImage != null) {
-	            return componentImage.getActiveImage();
-	        } else {
-	            return null;
-	        }
-	    }
-	    /**
-	     * Returns the frame's component image
-	     */
-	    public ViewJComponentEditImage getComponentImage() {
-	    	return this.componentImage;
-	    }
 	
 }
