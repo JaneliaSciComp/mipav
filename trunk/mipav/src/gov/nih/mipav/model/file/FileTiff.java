@@ -9028,6 +9028,10 @@ public class FileTiff extends FileBase {
                         case 32:
                             fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
                             break;
+                        case 64:
+                            // Ideally should be ARGB_DOUBLE, but MIPAV does not have this type
+                            fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
+                            break;
 
                         default:
                             throw new IOException("TIFF Tag BitsPerSample has illegal value = " + bitsPerSample[0]);
@@ -12011,6 +12015,9 @@ public class FileTiff extends FileBase {
         int a, i, j;
         int iCount, iNext;
         int b1, b2, b3, b4, b5, b6, b7, b8;
+        long b1L, b2L, b3L, b4L, b5L, b6L, b7L, b8L;
+        long tmpLong;
+        double tmpDouble;
         long progress, progressLength, mod;
         int nBytes;
         int nLength;
@@ -13376,6 +13383,7 @@ public class FileTiff extends FileBase {
                                 if (lzwCompression || zlibCompression) {
     
                                     //System.err.println("Read " + nBytes + " from raFile");
+                                    
                                     if (decomp == null) {
                                         decomp = new byte[tileWidth * tileLength];
                                     }
@@ -13582,6 +13590,7 @@ public class FileTiff extends FileBase {
                             if (lzwCompression || zlibCompression) {
 
                                 // System.err.println("Read " + nBytes + " from raFile");
+                                
                                 if (decomp == null) {
                                     decomp = new byte[tileWidth * tileLength * samplesPerPixel * 2];
                                 }
@@ -13732,6 +13741,317 @@ public class FileTiff extends FileBase {
                             y = yTile * tileLength;
                         } // if (chunky == true)
 
+                        break;
+                    case ModelStorageBase.ARGB_FLOAT:
+                        if (chunky == false && bitsPerSample[0] == 64) {
+                            if (byteBuffer == null) {
+                                
+                                if (lzwCompression || zlibCompression) {
+                                    byteBuffer = new byte[tileMaxByteCount];
+                                } else {
+                                    byteBuffer = new byte[nBytes];
+                                }
+                            }
+
+                            // System.err.println("About to read " + nBytes + " bytes");
+                            raFile.read(byteBuffer, 0, nBytes);
+                            if (zlibCompression) {
+                                zlibDecompresser.setInput(byteBuffer, 0, nBytes);
+                            }
+
+                            // System.err.println("________");
+                            progress = slice * xDim * yDim;
+                            progressLength = imageSlice * xDim * yDim;
+                            mod = progressLength / 100;
+
+
+                            if (lzwCompression || zlibCompression) {
+
+                                //System.err.println("Read " + nBytes + " from raFile");
+                                
+                                if (decomp == null) {
+                                    decomp = new byte[8 *tileWidth * tileLength];
+                                }
+
+                                if (lzwCompression) {
+                                    //lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                    rowsToDo = Math.min(tileLength, yDim - y);
+                                    LZWDecompresser(byteBuffer, nBytes, decomp, y, rowsToDo, tileWidth);
+                                    resultLength = decomp.length;
+                                }
+                                else { // zlibCompression
+                                    try {
+                                        resultLength = zlibDecompresser.inflate(decomp);
+                                    }
+                                    catch (DataFormatException e){
+                                        MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
+                                    }
+                                    zlibDecompresser.reset();
+                                }
+
+                                //System.err.println("Decoded byte length: " + resultLength);
+                                if (planarRGB < stripsPerImage) {
+
+                                    for (j = 0; j < resultLength; j+= 8, i += 4) {
+
+                                        if ((x < xDim) && (y < yDim)) {
+
+                                            if (((i + progress) % mod) == 0) {
+                                                fireProgressStateChanged(Math.round((float) (i/3 + progress) /
+                                                                                        progressLength * 100));
+                                            }
+
+                                            buffer[4 * (x + (y * xDim))] = 255.0f;
+                                            b1L = getUnsignedByte(decomp,j) & 0xff;
+                                            b2L = getUnsignedByte(decomp,j+1) & 0xff;
+                                            b3L = getUnsignedByte(decomp,j+2) & 0xff;
+                                            b4L = getUnsignedByte(decomp,j+3) & 0xff;
+                                            b5L = getUnsignedByte(decomp,j+4) & 0xff;
+                                            b6L = getUnsignedByte(decomp,j+5) & 0xff;
+                                            b7L = getUnsignedByte(decomp,j+6) & 0xff;
+                                            b8L = getUnsignedByte(decomp,j+7) & 0xff;
+
+                                            if (endianess) {
+                                                tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) | (b5L << 24) | (b6L << 16) |
+                                                               (b7L << 8) | b8L); // Big Endian
+                                            } else {
+                                                tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) | (b4L << 24) | (b3L << 16) |
+                                                               (b2L << 8) | b1L);
+                                            }
+
+                                            tmpDouble = Double.longBitsToDouble(tmpLong);
+                                            buffer[(4* (x + (y * xDim))) + 1] = (float)tmpDouble;
+                                        }
+
+                                        x++;
+
+                                        if (x == ((xTile + 1) * tileWidth)) {
+                                            x = xTile * tileWidth;
+                                            y++;
+                                        }
+                                    } // for (j = 0; j < decomp.length; j+=  8, i += 4)
+                                } // if (planarRGB < stripsPerImage)
+                                else if (planarRGB < (2 * stripsPerImage)) {
+                                    for (j = 0; j < resultLength; j+= 8, i += 4) {
+                                        
+                                        if ((x < xDim) && (y < yDim)) {
+
+                                            if (((i + progress) % mod) == 0) {
+                                                fireProgressStateChanged(Math.round((float) (i/3 + buffer.length/3 + 
+                                                                         progress) / progressLength * 100));
+                                            }
+
+                                            b1L = getUnsignedByte(decomp,j) & 0xff;
+                                            b2L = getUnsignedByte(decomp,j+1) & 0xff;
+                                            b3L = getUnsignedByte(decomp,j+2) & 0xff;
+                                            b4L = getUnsignedByte(decomp,j+3) & 0xff;
+                                            b5L = getUnsignedByte(decomp,j+4) & 0xff;
+                                            b6L = getUnsignedByte(decomp,j+5) & 0xff;
+                                            b7L = getUnsignedByte(decomp,j+6) & 0xff;
+                                            b8L = getUnsignedByte(decomp,j+7) & 0xff;
+
+                                            if (endianess) {
+                                                tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) | (b5L << 24) | (b6L << 16) |
+                                                               (b7L << 8) | b8L); // Big Endian
+                                            } else {
+                                                tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) | (b4L << 24) | (b3L << 16) |
+                                                               (b2L << 8) | b1L);
+                                            }
+
+                                            tmpDouble = Double.longBitsToDouble(tmpLong);
+                                            buffer[(4* (x + (y * xDim))) + 2] = (float)tmpDouble;
+                                        }
+
+                                        x++;
+
+                                        if (x == ((xTile + 1) * tileWidth)) {
+                                            x = xTile * tileWidth;
+                                            y++;
+                                        }
+                                    } // for (j = 0; j < decomp.length; j+= 8, i += 4)    
+                                } // else if (planarRGB < (2 * stripsPerImage))
+                                else { // planarRGB >= (2 * stripsPerImage)
+                                    for (j = 0; j < resultLength; j+= 8, i += 4) {
+                                        
+                                        if ((x < xDim) && (y < yDim)) {
+
+                                            if (((i + progress) % mod) == 0) {
+                                                fireProgressStateChanged(Math.round((float) (i/3 + 
+                                                                         2*buffer.length/3 + progress) /
+                                                                         progressLength * 100));
+                                            }
+
+                                            b1L = getUnsignedByte(decomp,j) & 0xff;
+                                            b2L = getUnsignedByte(decomp,j+1) & 0xff;
+                                            b3L = getUnsignedByte(decomp,j+2) & 0xff;
+                                            b4L = getUnsignedByte(decomp,j+3) & 0xff;
+                                            b5L = getUnsignedByte(decomp,j+4) & 0xff;
+                                            b6L = getUnsignedByte(decomp,j+5) & 0xff;
+                                            b7L = getUnsignedByte(decomp,j+6) & 0xff;
+                                            b8L = getUnsignedByte(decomp,j+7) & 0xff;
+
+                                            if (endianess) {
+                                                tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) | (b5L << 24) | (b6L << 16) |
+                                                               (b7L << 8) | b8L); // Big Endian
+                                            } else {
+                                                tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) | (b4L << 24) | (b3L << 16) |
+                                                               (b2L << 8) | b1L);
+                                            }
+
+                                            tmpDouble = Double.longBitsToDouble(tmpLong);
+                                            buffer[(4* (x + (y * xDim))) + 3] = (float)tmpDouble;
+                                        }
+
+                                        x++;
+
+                                        if (x == ((xTile + 1) * tileWidth)) {
+                                            x = xTile * tileWidth;
+                                            y++;
+                                        }
+                                    } // for (j = 0; j < decomp.length; j+= 8, i += 4)    
+                                } // else planarRGB >= (2 * stripsPerImage)
+                            } else { // not (lzwCompression ||| zlibCompression)
+                                if (planarRGB < stripsPerImage) {
+
+                                    for (j = 0; j < nBytes; j+= 8, i += 4) {
+    
+                                        if ((x < xDim) && (y < yDim)) {
+    
+                                            if (((i + progress) % mod) == 0) {
+                                                fireProgressStateChanged(Math.round((float) (i/3 + progress) /
+                                                                                        progressLength * 100));
+                                            }
+    
+                                            buffer[4 * (x + (y * xDim))] = 255.0f;
+                                            b1L = getUnsignedByte(decomp,j) & 0xff;
+                                            b2L = getUnsignedByte(decomp,j+1) & 0xff;
+                                            b3L = getUnsignedByte(decomp,j+2) & 0xff;
+                                            b4L = getUnsignedByte(decomp,j+3) & 0xff;
+                                            b5L = getUnsignedByte(decomp,j+4) & 0xff;
+                                            b6L = getUnsignedByte(decomp,j+5) & 0xff;
+                                            b7L = getUnsignedByte(decomp,j+6) & 0xff;
+                                            b8L = getUnsignedByte(decomp,j+7) & 0xff;
+
+                                            if (endianess) {
+                                                tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) | (b5L << 24) | (b6L << 16) |
+                                                               (b7L << 8) | b8L); // Big Endian
+                                            } else {
+                                                tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) | (b4L << 24) | (b3L << 16) |
+                                                               (b2L << 8) | b1L);
+                                            }
+
+                                            tmpDouble = Double.longBitsToDouble(tmpLong);
+                                            buffer[(4* (x + (y * xDim))) + 1] = (float)tmpDouble;
+                                        } // if ((x < xDim) && (y < yDim))
+    
+                                        x++;
+    
+                                        if (x == ((xTile + 1) * tileWidth)) {
+                                            x = xTile * tileWidth;
+                                            y++;
+                                        }
+                                    } // for (j = 0; j < nBytes; j+= 8, i += 4)
+                                } // if (planarRGB < stripsPerImage)
+                                else if (planarRGB < (2 * stripsPerImage)) {
+                                    for (j = 0; j < nBytes; j+= 8, i += 4) {
+                                        
+                                        if ((x < xDim) && (y < yDim)) {
+    
+                                            if (((i + progress) % mod) == 0) {
+                                                fireProgressStateChanged(Math.round((float) (i/3 + 
+                                                                         buffer.length/3 + progress) /
+                                                                                        progressLength * 100));
+                                            }
+    
+                                            b1L = getUnsignedByte(decomp,j) & 0xff;
+                                            b2L = getUnsignedByte(decomp,j+1) & 0xff;
+                                            b3L = getUnsignedByte(decomp,j+2) & 0xff;
+                                            b4L = getUnsignedByte(decomp,j+3) & 0xff;
+                                            b5L = getUnsignedByte(decomp,j+4) & 0xff;
+                                            b6L = getUnsignedByte(decomp,j+5) & 0xff;
+                                            b7L = getUnsignedByte(decomp,j+6) & 0xff;
+                                            b8L = getUnsignedByte(decomp,j+7) & 0xff;
+
+                                            if (endianess) {
+                                                tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) | (b5L << 24) | (b6L << 16) |
+                                                               (b7L << 8) | b8L); // Big Endian
+                                            } else {
+                                                tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) | (b4L << 24) | (b3L << 16) |
+                                                               (b2L << 8) | b1L);
+                                            }
+
+                                            tmpDouble = Double.longBitsToDouble(tmpLong);
+                                            buffer[(4* (x + (y * xDim))) + 2] = (float)tmpDouble;
+                                        } // if ((x < xDim) && (y < yDim))
+    
+                                        x++;
+    
+                                        if (x == ((xTile + 1) * tileWidth)) {
+                                            x = xTile * tileWidth;
+                                            y++;
+                                        }
+                                    } // for (j = 0; j < nBytes; j+= 8, i += 4)    
+                                } // else if (planarRGB < (2 * stripsPerImage))
+                                else { // planarRGB >= (2 * stripsPerImage)
+                                    for (j = 0; j < nBytes; j+= 8, i += 4) {
+                                        
+                                        if ((x < xDim) && (y < yDim)) {
+    
+                                            if (((i + progress) % mod) == 0) {
+                                                fireProgressStateChanged(Math.round((float) (i/3 + 
+                                                                         2*buffer.length/3 + progress) /
+                                                                                        progressLength * 100));
+                                            }
+    
+                                            b1L = getUnsignedByte(decomp,j) & 0xff;
+                                            b2L = getUnsignedByte(decomp,j+1) & 0xff;
+                                            b3L = getUnsignedByte(decomp,j+2) & 0xff;
+                                            b4L = getUnsignedByte(decomp,j+3) & 0xff;
+                                            b5L = getUnsignedByte(decomp,j+4) & 0xff;
+                                            b6L = getUnsignedByte(decomp,j+5) & 0xff;
+                                            b7L = getUnsignedByte(decomp,j+6) & 0xff;
+                                            b8L = getUnsignedByte(decomp,j+7) & 0xff;
+
+                                            if (endianess) {
+                                                tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) | (b5L << 24) | (b6L << 16) |
+                                                               (b7L << 8) | b8L); // Big Endian
+                                            } else {
+                                                tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) | (b4L << 24) | (b3L << 16) |
+                                                               (b2L << 8) | b1L);
+                                            }
+
+                                            tmpDouble = Double.longBitsToDouble(tmpLong);
+                                            buffer[(4* (x + (y * xDim))) + 3] = (float)tmpDouble;
+                                        } // if ((x < xDim) && (y < yDim))
+    
+                                        x++;
+    
+                                        if (x == ((xTile + 1) * tileWidth)) {
+                                            x = xTile * tileWidth;
+                                            y++;
+                                        }
+                                    } // for (j = 0; j < nBytes; j+= 8, i += 4)     
+                                } // else planarRGB >= (2 * stripsPerImage)
+                            } // else not lzwCompression
+
+                            xTile++;
+
+                            if (xTile == tilesAcross) {
+                                xTile = 0;
+                                yTile++;
+                            }
+
+                            x = xTile * tileWidth;
+                            y = yTile * tileLength;  
+                            planarRGB++;
+                            if ((planarRGB == stripsPerImage) || (planarRGB == 2*stripsPerImage)) {
+                                i = 0;
+                                x = 0;
+                                y = 0;
+                                xTile = 0;
+                                yTile = 0;
+                            }        
+                        } // if (chunky == false && bitsPerSample[0] == 64)
                         break;
                 } // switch(fileInfo.getDataType())
             } // try
