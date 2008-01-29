@@ -118,7 +118,7 @@ public class ViewMenuBar {
      *
      * @return  the algorithms menu
      */
-    protected JMenu makeAlgorithmsMenu() {
+    public JMenu makeAlgorithmsMenu() {
         return menuBuilder.makeMenu("Algorithms", 'A', false,
                                     new JComponent[] {
                                         menuBuilder.buildMenuItem("Autocorrelation coefficients", "ACC", 0, null,
@@ -513,7 +513,7 @@ public class ViewMenuBar {
      *
      * @see     #makeFileMenu(boolean)
      */
-    protected JMenu makeCaptureMenu(boolean isAnImageOpen) {
+    public JMenu makeCaptureMenu(boolean isAnImageOpen) {
         JMenu captureMenu = menuBuilder.makeMenu("Capture/print image", true,
                                                  new JComponent[] {
                                                      menuBuilder.buildMenuItem("Capture and print image", "PrintImage",
@@ -558,7 +558,7 @@ public class ViewMenuBar {
      *
      * @see     #makeFileMenu(boolean)
      */
-    protected JMenu makeDicomMenu() {
+    public JMenu makeDicomMenu() {
         return menuBuilder.makeMenu("DICOM", true,
                                     new JComponent[] {
                                         menuBuilder.buildMenuItem("DICOM browser", "BrowseDICOM", 0, null, true),
@@ -578,7 +578,7 @@ public class ViewMenuBar {
      *
      * @see     #makeFileMenu(boolean)
      */
-    protected JMenu makeDiffusionTensorMenu() {
+    public JMenu makeDiffusionTensorMenu() {
         return menuBuilder.makeMenu("Diffusion Tensor Imaging", true,
                                     new JComponent[] {
                                         menuBuilder.buildMenuItem("Open Diffusion Weighted Images", "loadDWI", 0, "open.gif", true),
@@ -596,7 +596,7 @@ public class ViewMenuBar {
      *
      * @return  the file menu
      */
-    protected JMenu makeFileMenu(boolean isAnImageOpen) {
+    public JMenu makeFileMenu(boolean isAnImageOpen) {
         JMenu loadMenu = makeLoadBMenu(isAnImageOpen);
 
         JMenu captureMenu = makeCaptureMenu(isAnImageOpen);
@@ -653,7 +653,7 @@ public class ViewMenuBar {
      *
      * @return  the help menu
      */
-    protected JMenu makeHelpMenu() {
+    public JMenu makeHelpMenu() {
         return menuBuilder.makeMenu("Help", 'H', false,
                                     new JComponent[] {
                                         menuBuilder.buildMenuItem("About MIPAV", "About", 0, null, true),
@@ -680,7 +680,7 @@ public class ViewMenuBar {
      *
      * @return  the image menu
      */
-    protected JMenu makeImageMenu(boolean isDicomImage) {
+    public JMenu makeImageMenu(boolean isDicomImage) {
 
         // grabs the show overlay from prefs
         boolean showOverlay = false;
@@ -760,7 +760,7 @@ public class ViewMenuBar {
      *
      * @see     #makeFileMenu(boolean)
      */
-    protected JMenu makeLoadBMenu(boolean isAnImageOpen) {
+    public JMenu makeLoadBMenu(boolean isAnImageOpen) {
         JMenu loadMenu = menuBuilder.makeMenu("Load image (B)", true,
                                               new JMenuItem[] {
                                                   menuBuilder.buildMenuItem("From frame", "ComponentLoadB", 0,
@@ -780,7 +780,7 @@ public class ViewMenuBar {
      *
      * @return  the LUT menu
      */
-    protected JMenu makeLUTMenu() {
+    public JMenu makeLUTMenu() {
         return menuBuilder.makeMenu("LUT", 'L', false,
                                     new JComponent[] {
                                         menuBuilder.buildMenuItem("Open LUT", null, 0, "open.gif", true),
@@ -802,7 +802,7 @@ public class ViewMenuBar {
      *
      * @return  The new scripting menu
      */
-    protected JMenu makeScriptingMenu() {
+    public JMenu makeScriptingMenu() {
         return menuBuilder.makeMenu("Scripts", false,
                                     new JMenuItem[] {
                                         menuBuilder.buildMenuItem("Record script", "RecordScript", 0, null, false),
@@ -820,7 +820,7 @@ public class ViewMenuBar {
      *
      * @see     #makeFileMenu(boolean)
      */
-    protected JMenu makeSRBMenu(boolean imageOpened) {
+    public JMenu makeSRBMenu(boolean imageOpened) {
         boolean isAutoUploadEnabled = ((userInterface != null) && (userInterface.getNDARPipeline() != null));
         //JMenuItem saveXCEDESchemaItem = menuBuilder.buildMenuItem("Save XCEDE schema", "SaveXCEDESchema", 0, "save.gif",
         //                                                          true);
@@ -848,7 +848,7 @@ public class ViewMenuBar {
      *
      * @return  the toolbar menu
      */
-    protected JMenu makeToolbarsMenu() {
+    public JMenu makeToolbarsMenu() {
         boolean showVOIToolbar = Preferences.is(Preferences.PREF_VOI_TOOLBAR_ON);
         boolean showPaintToolbar = Preferences.is(Preferences.PREF_PAINT_TOOLBAR_ON);
         boolean showScriptingToolbar = Preferences.is(Preferences.PREF_SCRIPTING_TOOLBAR_ON);
@@ -880,7 +880,7 @@ public class ViewMenuBar {
      *
      * @return  the utilities menu
      */
-    protected JMenu makeUtilitiesMenu() {
+    public JMenu makeUtilitiesMenu() {
         return menuBuilder.makeMenu("Utilities", 'U', false,
                                     new JMenuItem[] {
                                         menuBuilder.makeMenu("4D tools", false,
@@ -1006,7 +1006,7 @@ public class ViewMenuBar {
      *
      * @return  the VOI menu
      */
-    protected JMenu makeVOIMenu() {
+    public JMenu makeVOIMenu() {
         return menuBuilder.makeMenu("VOI", 'V', false,
                                     new JComponent[] {
                                         
@@ -1216,7 +1216,7 @@ public class ViewMenuBar {
      * @param  numberOfDimensions  Dimensionality of image (2D, 3D, 4D...)
      * @param  type                Data type from <code>ModelStorageBase</code>, byte, short, argb, etc.
      */
-    protected void setEnabledMenuItems(int numberOfDimensions, int type) {
+    public void setEnabledMenuItems(int numberOfDimensions, int type) {
 
         // if (!InsightToolkitSupport.isLibraryPresent()) {
         // menuBuilder.setMenuItemEnabled("Insight toolkit (ITK)", false);
