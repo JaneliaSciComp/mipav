@@ -5616,6 +5616,15 @@ public class FileTiff extends FileBase {
                         rgbFormat = 6;
                         intAlign = 0;
                         break;
+                        
+                    case ModelStorageBase.ARGB_FLOAT:
+                        bytesPerSample = 4;
+                        samplesPerPixel = 3;
+                        nDirEntries = (short) (14 + ztEntries);
+                        rgbCount = 6;
+                        rgbFormat = 6;
+                        intAlign = 0;
+                        break;
 
                     default:
                         throw new IOException("Unsupported Image Type");
@@ -12009,7 +12018,7 @@ public class FileTiff extends FileBase {
                                 }        
                             } // else if (isRGB32UINTtoFLOAT)
                             else { // ordinary 32 bit float
-//                              if (byteBuffer == null)
+                                // if (byteBuffer == null)
                                 // byteBuffer = new byte[4 * buffer.length];
                                 // raFile.read(byteBuffer, 0, nBytes);
                                 progress = slice * buffer.length;
@@ -14764,6 +14773,18 @@ public class FileTiff extends FileBase {
                 bitsPerSampleOffset = (int) raFile.getFilePointer() + (2 + (nDirEntries * 12) + 4 + resolutionCount);
                 rgbCount = 6;
                 break;
+                
+            case ModelStorageBase.ARGB_FLOAT:
+                bitsPerSample = 32;
+                bytesPerSample = 4; // since SamplesPerPixel is defined as 3 for RGB images
+                samplesPerPixel = 3;
+                nDirEntries = (short) (14 + ztEntries);
+
+                // RGB stores 32,32,32 for bitsPerSample
+                // RGB stores 3,3,3 for sampleFormat
+                bitsPerSampleOffset = (int) raFile.getFilePointer() + (2 + (nDirEntries * 12) + 4 + resolutionCount);
+                rgbCount = 6;
+                break;
 
             default:
                 throw new IOException("Unsupported ModelStorageBase type\n");
@@ -14781,7 +14802,8 @@ public class FileTiff extends FileBase {
 
         if (type != ModelStorageBase.BOOLEAN) {
 
-            if ((type == ModelStorageBase.ARGB) || (type == ModelStorageBase.ARGB_USHORT)) {
+            if ((type == ModelStorageBase.ARGB) || (type == ModelStorageBase.ARGB_USHORT) ||
+                (type == ModelStorageBase.ARGB_FLOAT)) {
                 writeIFD(BITS_PER_SAMPLE, SHORT, 3, bitsPerSampleOffset, 0);
             } else {
                 writeIFD(BITS_PER_SAMPLE, SHORT, 1, bitsPerSample, 0);
@@ -14797,7 +14819,8 @@ public class FileTiff extends FileBase {
         writeIFD(PHOTO_INTERP, SHORT, 1, image.getFileInfo(index).getPhotometric(), 0);
         writeIFD(STRIP_OFFSETS, LONG, 1, imageOffset, 0);
 
-        if ((type == ModelStorageBase.ARGB) || (type == ModelStorageBase.ARGB_USHORT)) {
+        if ((type == ModelStorageBase.ARGB) || (type == ModelStorageBase.ARGB_USHORT) ||
+            (type == ModelStorageBase.ARGB_FLOAT)) {
             writeIFD(SAMPLES_PER_PIXEL, SHORT, 1, 3, 0);
         }
 
@@ -14814,7 +14837,8 @@ public class FileTiff extends FileBase {
             writeIFD(TRESOLUTION, DOUBLE, 1, tResOffset, 0);
         }
 
-        if ((type == ModelStorageBase.ARGB) || (type == ModelStorageBase.ARGB_USHORT)) {
+        if ((type == ModelStorageBase.ARGB) || (type == ModelStorageBase.ARGB_USHORT) ||
+            (type == ModelStorageBase.ARGB_FLOAT)) {
             writeIFD(PLANAR_CONFIG, SHORT, 1, 1, 0); // chucky format (rgb,rgb,rgb ...) baseline tiff
         }
 
@@ -14831,12 +14855,11 @@ public class FileTiff extends FileBase {
         } else if ((type == ModelStorageBase.BYTE) || (type == ModelStorageBase.SHORT) ||
                        (type == ModelStorageBase.INTEGER)) {
             writeIFD(SAMPLE_FORMAT, SHORT, 1, 2, 0);
-        } else if ((type == ModelStorageBase.ARGB) || (type == ModelStorageBase.ARGB_USHORT)) {
+        } else if ((type == ModelStorageBase.ARGB) || (type == ModelStorageBase.ARGB_USHORT) ||
+                   (type == ModelStorageBase.ARGB_FLOAT)) {
             writeIFD(SAMPLE_FORMAT, SHORT, 3, sampleFormatOffset, 0);
         } else if ((type == ModelStorageBase.FLOAT) || (type == ModelStorageBase.DOUBLE)) {
             writeIFD(SAMPLE_FORMAT, SHORT, 1, 3, 0);
-        } else if ((type == ModelStorageBase.ARGB_FLOAT)) {
-            writeIFD(SAMPLE_FORMAT, SHORT, 3, sampleFormatOffset, 0);
         }
 
         writeInt(nextIFD, endianess);
@@ -14864,6 +14887,10 @@ public class FileTiff extends FileBase {
             writeShort((short) 16, endianess); // RGB bitsPerSample ( R plane)
             writeShort((short) 16, endianess); // RGB bitsPerSample ( G plane)
             writeShort((short) 16, endianess); // RGB bitsPerSample ( B plane)
+        } else if (type == ModelStorageBase.ARGB_FLOAT) {
+            writeShort((short) 32, endianess); // RGB bitsPerSample ( R plane)
+            writeShort((short) 32, endianess); // RGB bitsPerSample ( G plane)
+            writeShort((short) 32, endianess); // RGB bitsPerSample ( B plane)    
         }
 
         if (zRes >= 0.0) {
