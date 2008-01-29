@@ -633,8 +633,8 @@ public class FileTiff extends FileBase {
     private boolean isRGB10 = false;
     private boolean isRGB12 = false;
     private boolean isRGB14 = false;
-    private boolean isRGB24 = false;
-    private boolean isRGB32 = false;
+    private boolean isRGB24UINTtoFLOAT = false;
+    private boolean isRGB32UINTtoFLOAT = false;
     
     // CCITT FAX3 or T4 encoding
     private boolean fax3Compression = false;
@@ -8998,13 +8998,13 @@ public class FileTiff extends FileBase {
                             fileInfo.setDataType(ModelStorageBase.ARGB_USHORT);
                             break;
                         case 24:
-                            isRGB24 = true;
+                            isRGB24UINTtoFLOAT = true;
                             Preferences.debug("Ideally should be ARGB_UINTEGER, but MIPAV does not have this type\n");
                             Preferences.debug("so making ARGB_FLOAT\n");
                             fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
                             break;
                         case 32:
-                            isRGB32 = true;
+                            isRGB32UINTtoFLOAT = true;
                             Preferences.debug("Ideally should be ARGB_UINTEGER, but MIPAV does not have this type\n");
                             Preferences.debug("so making ARGB_FLOAT\n");
                             fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
@@ -11911,7 +11911,7 @@ public class FileTiff extends FileBase {
                         break;
                     case ModelStorageBase.ARGB_FLOAT:
                         if (chunky) {
-                            if (isRGB24) { // cast UINTEGER To FLOAT
+                            if (isRGB24UINTtoFLOAT) { // cast UINTEGER To FLOAT
                                 // if (byteBuffer == null)
                                 // byteBuffer = new byte[3 * buffer.length];
                                 // raFile.read(byteBuffer, 0, nBytes);
@@ -11957,8 +11957,8 @@ public class FileTiff extends FileBase {
                                         buffer[i + 3] = (float)((b3 << 16) | (b2 << 8) | b1);
                                     }
                                 }    
-                            } // if (isRGB24)
-                            else if (isRGB32) { // cast UINTEGER to FLOAT
+                            } // if (isRGB24UINTtoFLOAT)
+                            else if (isRGB32UINTtoFLOAT) { // cast UINTEGER to FLOAT
                                 // if (byteBuffer == null)
                                 // byteBuffer = new byte[4 * buffer.length];
                                 // raFile.read(byteBuffer, 0, nBytes);
@@ -12007,10 +12007,63 @@ public class FileTiff extends FileBase {
                                         buffer[i + 3] = (float)((b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
                                     }
                                 }        
-                            } // else if (isRGB32)
+                            } // else if (isRGB32UINTtoFLOAT)
+                            else { // ordinary 32 bit float
+//                              if (byteBuffer == null)
+                                // byteBuffer = new byte[4 * buffer.length];
+                                // raFile.read(byteBuffer, 0, nBytes);
+                                progress = slice * buffer.length;
+                                progressLength = buffer.length * imageSlice;
+                                mod = progressLength / 10;
+
+
+                                for (j = 0; j < nBytes; j += 12, i += 4) {
+
+                                    if (((i + progress) % mod) == 0) {
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                                    }
+
+                                    buffer[i] = 255.0f;
+                                    b1 = getUnsignedByte(byteBuffer, j + currentIndex);
+                                    b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+                                    b3 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
+                                    b4 = getUnsignedByte(byteBuffer, j + currentIndex + 3);
+
+                                    if (endianess) {
+                                        tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+                                    } else {
+                                        tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+                                    }
+                                    buffer[i+1] = Float.intBitsToFloat(tmpInt);
+                                    
+                                    b1 = getUnsignedByte(byteBuffer, j + currentIndex + 4);
+                                    b2 = getUnsignedByte(byteBuffer, j + currentIndex + 5);
+                                    b3 = getUnsignedByte(byteBuffer, j + currentIndex + 6);
+                                    b4 = getUnsignedByte(byteBuffer, j + currentIndex + 7);
+
+                                    if (endianess) {
+                                        tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+                                    } else {
+                                        tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+                                    }
+                                    buffer[i+2] = Float.intBitsToFloat(tmpInt);
+                                     
+                                    b1 = getUnsignedByte(byteBuffer, j + currentIndex + 8);
+                                    b2 = getUnsignedByte(byteBuffer, j + currentIndex + 9);
+                                    b3 = getUnsignedByte(byteBuffer, j + currentIndex + 10);
+                                    b4 = getUnsignedByte(byteBuffer, j + currentIndex + 11);
+
+                                    if (endianess) {
+                                        tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+                                    } else {
+                                        tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+                                    }
+                                    buffer[i+3] = Float.intBitsToFloat(tmpInt);
+                                }            
+                            }
                         } // if (chunky)
                         else { // planar
-                            if (isRGB24) { // cast UINTEGER to FLOAT
+                            if (isRGB24UINTtoFLOAT) { // cast UINTEGER to FLOAT
                                 if (planarRGB < stripsPerImage) {
 
                                     // if (byteBuffer == null)
@@ -12106,8 +12159,8 @@ public class FileTiff extends FileBase {
 
                                     planarRGB++;
                                 } // end of else for planarRGB >= 2*StripsPerImage    
-                            } // if (isRGB24)
-                            else if (isRGB32) { // cast UINTEGER to FLOAT
+                            } // if (isRGB24UINTtoFLOAT)
+                            else if (isRGB32UINTtoFLOAT) { // cast UINTEGER to FLOAT
                                 if (planarRGB < stripsPerImage) {
 
                                     // if (byteBuffer == null)
@@ -12206,7 +12259,7 @@ public class FileTiff extends FileBase {
 
                                     planarRGB++;
                                 } // end of else for planarRGB >= 2*StripsPerImage        
-                            } // else if (isRGB32)
+                            } // else if (isRGB32UINTtoFLOAT)
                         } // else planar
                         break;
                         
