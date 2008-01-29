@@ -428,21 +428,11 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
          generalPanel.setLayout(new BorderLayout());
 
          numberOfDimensions = frame.getImageA().getNDims();
-
-         System.err.println("ndim is: " + numberOfDimensions);
          
          if (frame.getImageB() != null) {
              numberOfDimensions = Math.max(numberOfDimensions, frame.getImageB().getNDims());
          }
          
-         
-        
-         
-         //panelToolbars.add(toolBar, "Center");
-        
-
-         //panelToolbars.add(panelOptionToolbars, "Center");
-
          if (panelImageSlider != null) {
              generalPanel.remove(panelImageSlider);
              panelImageSlider = null;
@@ -545,7 +535,6 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
              generalPanel.add(panelToolbars, "Center");
          }
 
-         // generalPanel.validate();
          add(generalPanel, "North");
 
          panelActiveImage = new JPanel();
