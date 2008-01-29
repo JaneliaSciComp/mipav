@@ -121,13 +121,13 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("U4003");
         } else if (command.equals("XAxis")) {
-            labelSlice.setText("Select index from 1 to " + xSlices);
+            labelSlice.setText("Select index from 0 to " + (xSlices-1));
         } else if (command.equals("YAxis")) {
-            labelSlice.setText("Select index from 1 to " + ySlices);
+            labelSlice.setText("Select index from 0 to " + (ySlices-1));
         } else if (command.equals("ZAxis")) {
-            labelSlice.setText("Select index from 1 to " + zSlices);
+            labelSlice.setText("Select index from 0 to " + (zSlices-1));
         } else if (command.equals("TAxis")) {
-            labelSlice.setText("Select index from 1 to " + tSlices);
+            labelSlice.setText("Select index from 0 to " + (tSlices-1));
         }
     }
 
@@ -259,31 +259,31 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
         }
 
         if (sliceNum < 0) {
-            MipavUtil.displayError("Slice number must be at least 1");
+            MipavUtil.displayError("Slice number must be at least 0");
             textSlice.requestFocus();
             textSlice.selectAll();
 
             return;
-        } else if ((removeDim == AlgorithmSubset.REMOVE_X) && (sliceNum >= xSlices)) {
-            MipavUtil.displayError("X number must not exceed " + xSlices);
+        } else if ((removeDim == AlgorithmSubset.REMOVE_X) && (sliceNum > (xSlices-1))) {
+            MipavUtil.displayError("X number must not exceed " + (xSlices-1));
             textSlice.requestFocus();
             textSlice.selectAll();
 
             return;
-        } else if ((removeDim == AlgorithmSubset.REMOVE_Y) && (sliceNum >= ySlices)) {
-            MipavUtil.displayError("Y number must not exceed " + ySlices);
+        } else if ((removeDim == AlgorithmSubset.REMOVE_Y) && (sliceNum > (ySlices-1))) {
+            MipavUtil.displayError("Y number must not exceed " + (ySlices-1));
             textSlice.requestFocus();
             textSlice.selectAll();
 
             return;
-        } else if ((removeDim == AlgorithmSubset.REMOVE_Z) && (sliceNum >= zSlices)) {
-            MipavUtil.displayError("Z number must not exceed " + zSlices);
+        } else if ((removeDim == AlgorithmSubset.REMOVE_Z) && (sliceNum > (zSlices-1))) {
+            MipavUtil.displayError("Z number must not exceed " + (zSlices-1));
             textSlice.requestFocus();
             textSlice.selectAll();
 
             return;
-        } else if ((removeDim == AlgorithmSubset.REMOVE_T) && (sliceNum >= tSlices)) {
-            MipavUtil.displayError("T number must not exceed " + tSlices);
+        } else if ((removeDim == AlgorithmSubset.REMOVE_T) && (sliceNum > (tSlices-1))) {
+            MipavUtil.displayError("T number must not exceed " + (tSlices-1));
             textSlice.requestFocus();
             textSlice.selectAll();
 
@@ -421,13 +421,13 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
         JPanel textPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
         textSlice = new JTextField(5);
-        textSlice.setText("1");
+        textSlice.setText("0");
         textSlice.setFont(serif12);
         textSlice.setEnabled(true);
         textSlice.addFocusListener(this);
         textPanel.add(textSlice);
 
-        labelSlice = new JLabel("Select index from 1 to " + max);
+        labelSlice = new JLabel("Select index from 0 to " + (max-1));
         labelSlice.setForeground(Color.black);
         labelSlice.setFont(serif12);
         labelSlice.setEnabled(true);
@@ -456,7 +456,7 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
 
         getContentPane().add(panel);
         pack();
-        labelSlice.setText("Select index from 1 to " + zSlices);
+        labelSlice.setText("Select index from 0 to " + (zSlices-1));
         setVisible(true);
     }
 
@@ -478,7 +478,7 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
         }
 
         textString = textSlice.getText();
-        sliceNum = Integer.parseInt(textString) - 1;
+        sliceNum = Integer.parseInt(textString);
 
         return true;
     }
