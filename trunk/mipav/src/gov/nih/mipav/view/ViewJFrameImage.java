@@ -5272,7 +5272,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      *
      * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
      */
-    private void initComponentImage(int[] extents) throws OutOfMemoryError {
+    protected void initComponentImage(int[] extents) throws OutOfMemoryError {
 
         componentImage = new ViewJComponentEditImage(this, imageA, LUTa, imageBufferA, null, null, imageBufferB,
                                                      pixBuffer, zoom, extents, logMagDisplay,
