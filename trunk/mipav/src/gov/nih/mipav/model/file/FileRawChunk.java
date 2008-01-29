@@ -1561,6 +1561,11 @@ public class FileRawChunk extends FileBase {
                         bufferInt = new int[4 * bufferSize];
                         bufferByte = new byte[6 * bufferSize];
                         break;
+                        
+                    case ModelStorageBase.ARGB_FLOAT:
+                        bufferFloat = new float[4 * bufferSize];
+                        bufferByte = new byte[12 * bufferSize];
+                        break;
 
                     case ModelStorageBase.COMPLEX:
                         bufferFloat = new float[2 * bufferSize];
@@ -1969,7 +1974,7 @@ public class FileRawChunk extends FileBase {
 
                         if (endianess == BIG_ENDIAN) {
 
-                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 1) {
+                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 2) {
                                 bufferByte[j] = (byte) (bufferInt[i + 1] >>> 8);
                                 bufferByte[j + 1] = (byte) (bufferInt[i + 1] & 0xff);
                                 bufferByte[j + bufferSize] = (byte) (bufferInt[i + 2] >>> 8);
@@ -1980,7 +1985,7 @@ public class FileRawChunk extends FileBase {
                         } // if (endianess == BIG_ENDIAN)
                         else { // endianess == LITTLE_ENDIAN
 
-                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 1) {
+                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 2) {
                                 bufferByte[j] = (byte) (bufferInt[i + 1] & 0xff);
                                 bufferByte[j + 1] = (byte) (bufferInt[i + 1] >>> 8);
                                 bufferByte[j + bufferSize] = (byte) (bufferInt[i + 2] & 0xff);
@@ -2024,6 +2029,121 @@ public class FileRawChunk extends FileBase {
                  * else endianess == LITTLE_ENDIAN raFile.write(bufferByte); } catch (IOException error) { throw error;
                  * } } }
                  */
+                break;
+                
+            case ModelStorageBase.ARGB_FLOAT:
+                
+                if (planarConfig == 0) {
+
+                    try {
+                        int tmpInt;
+                        image.exportData(4 * start, 4 * bufferSize, bufferFloat);
+
+                        if (endianess == BIG_ENDIAN) {
+
+                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 12) {
+                                tmpInt = Float.floatToIntBits(bufferFloat[i+1]);
+                                bufferByte[j] = (byte) (tmpInt >>> 24);
+                                bufferByte[j+1] = (byte) (tmpInt >>> 16);
+                                bufferByte[j+2] = (byte) (tmpInt >>> 8);
+                                bufferByte[j+3] = (byte) (tmpInt & 0xff);
+                                tmpInt = Float.floatToIntBits(bufferFloat[i+2]);
+                                bufferByte[j+4] = (byte) (tmpInt >>> 24);
+                                bufferByte[j+5] = (byte) (tmpInt >>> 16);
+                                bufferByte[j+6] = (byte) (tmpInt >>> 8);
+                                bufferByte[j+7] = (byte) (tmpInt & 0xff);
+                                tmpInt = Float.floatToIntBits(bufferFloat[i+3]);
+                                bufferByte[j+8] = (byte) (tmpInt >>> 24);
+                                bufferByte[j+9] = (byte) (tmpInt >>> 16);
+                                bufferByte[j+10] = (byte) (tmpInt >>> 8);
+                                bufferByte[j+11] = (byte) (tmpInt & 0xff);
+                            }
+                        } // if (endianess == BIG_ENDIAN)
+                        else { // endianess == LITTLE_ENDIAN
+
+                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 12) {
+                                tmpInt = Float.floatToIntBits(bufferFloat[i+1]);
+                                bufferByte[j] = (byte) (tmpInt & 0xff);
+                                bufferByte[j+1] = (byte) (tmpInt >>> 8);
+                                bufferByte[j+2] = (byte) (tmpInt >>> 16);
+                                bufferByte[j+3] = (byte) (tmpInt >>> 24);
+                                tmpInt = Float.floatToIntBits(bufferFloat[i+2]);
+                                bufferByte[j+4] = (byte) (tmpInt & 0xff);
+                                bufferByte[j+5] = (byte) (tmpInt >>> 8);
+                                bufferByte[j+6] = (byte) (tmpInt >>> 16);
+                                bufferByte[j+7] = (byte) (tmpInt >>> 24);
+                                tmpInt = Float.floatToIntBits(bufferFloat[i+3]);
+                                bufferByte[j+8] = (byte) (tmpInt & 0xff);
+                                bufferByte[j+9] = (byte) (tmpInt >>> 8);
+                                bufferByte[j+10] = (byte) (tmpInt >>> 16);
+                                bufferByte[j+11] = (byte) (tmpInt >>> 24);
+                            }
+                        }
+
+                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                            raFile.write(bufferByte);
+                        } else {
+                            deflaterStream.write(bufferByte);
+                        }
+                    } catch (IOException error) {
+                        throw error;
+                    }
+                } else {
+
+                    try {
+                        int tmpInt;
+                        image.exportData(4 * start, 4 * bufferSize, bufferFloat);
+
+                        if (endianess == BIG_ENDIAN) {
+
+                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 4) {
+                                tmpInt = Float.floatToIntBits(bufferFloat[i+1]);
+                                bufferByte[j] = (byte) (tmpInt >>> 24);
+                                bufferByte[j+1] = (byte) (tmpInt >>> 16);
+                                bufferByte[j+2] = (byte) (tmpInt >>> 8);
+                                bufferByte[j+3] = (byte) (tmpInt & 0xff);
+                                tmpInt = Float.floatToIntBits(bufferFloat[i+2]);
+                                bufferByte[j + bufferSize] = (byte) (tmpInt >>> 24);
+                                bufferByte[j+1 + bufferSize] = (byte) (tmpInt >>> 16);
+                                bufferByte[j+2 + bufferSize] = (byte) (tmpInt >>> 8);
+                                bufferByte[j+3 + bufferSize] = (byte) (tmpInt & 0xff);
+                                tmpInt = Float.floatToIntBits(bufferFloat[i+3]);
+                                bufferByte[j + (2*bufferSize)] = (byte) (tmpInt >>> 24);
+                                bufferByte[j+1 + (2*bufferSize)] = (byte) (tmpInt >>> 16);
+                                bufferByte[j+2 + (2*bufferSize)] = (byte) (tmpInt >>> 8);
+                                bufferByte[j+3 + (2*bufferSize)] = (byte) (tmpInt & 0xff);
+                            }
+                        } // if (endianess == BIG_ENDIAN)
+                        else { // endianess == LITTLE_ENDIAN
+
+                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 4) {
+                                tmpInt = Float.floatToIntBits(bufferFloat[i+1]);
+                                bufferByte[j] = (byte) (tmpInt & 0xff);
+                                bufferByte[j+1] = (byte) (tmpInt >>> 8);
+                                bufferByte[j+2] = (byte) (tmpInt >>> 16);
+                                bufferByte[j+3] = (byte) (tmpInt >>> 24);
+                                tmpInt = Float.floatToIntBits(bufferFloat[i+2]);
+                                bufferByte[j + bufferSize] = (byte) (tmpInt & 0xff);
+                                bufferByte[j+1 + bufferSize] = (byte) (tmpInt >>> 8);
+                                bufferByte[j+2 + bufferSize] = (byte) (tmpInt >>> 16);
+                                bufferByte[j+3 + bufferSize] = (byte) (tmpInt >>> 24);
+                                tmpInt = Float.floatToIntBits(bufferFloat[i+3]);
+                                bufferByte[j + (2*bufferSize)] = (byte) (tmpInt & 0xff);
+                                bufferByte[j+1 + (2*bufferSize)] = (byte) (tmpInt >>> 8);
+                                bufferByte[j+2 + (2*bufferSize)] = (byte) (tmpInt >>> 16);
+                                bufferByte[j+3 + (2*bufferSize)] = (byte) (tmpInt >>> 24);
+                            }
+                        } // else endianess == LITTLE_ENDIAN
+
+                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                            raFile.write(bufferByte);
+                        } else {
+                            deflaterStream.write(bufferByte);
+                        }
+                    } catch (IOException error) {
+                        throw error;
+                    }
+                }
                 break;
 
             case ModelStorageBase.COMPLEX:
