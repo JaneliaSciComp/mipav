@@ -78,6 +78,11 @@ public abstract class VolumeObject
         {
             m_kAlpha = null;
         }
+        if ( m_kLightShader != null )
+        {
+            m_kLightShader.dispose();
+            m_kLightShader = null;
+        }
     }
 
     /**
@@ -130,6 +135,40 @@ public abstract class VolumeObject
     {
         return m_kScene;
     }
+    
+
+    /**
+     * Sets the light for the EllipsoidsShader.
+     * @param kLightType, the name of the light to set (Light0, Light1, etc.)
+     * @param afType, the type of light (Ambient = 0, Directional = 1, Point = 2, Spot = 3).
+     */
+    public void SetLight( String kLightType, float[] afType )
+    {
+        if ( m_kLightShader != null )
+        {
+            m_kLightShader.SetLight(kLightType, afType);
+        }
+    }
+
+    public void SetPolygonMode( boolean bEnable, WireframeState.FillMode eType )
+    {
+        if ( m_kWireframe != null )
+        {
+            m_kWireframe.Enabled = bEnable;
+            m_kWireframe.Fill = eType;
+        }
+    }
+
+    public String GetName()
+    {
+        return null;
+    }
+    
+
+    public void Blend( float fValue ) {}
+    
+    public void SetColor( ColorRGB kColor ){}
+
     /** boolean to turn rendering on/off for this object. */
     protected boolean m_bDisplay = false;
     /** the scene-graph node containing the rendered object. */
@@ -142,7 +181,12 @@ public abstract class VolumeObject
     protected CullState m_kCull;
     /** Alpha blending for this object. */
     protected AlphaState m_kAlpha;
+    /** Wireframe for this object. */
+    protected WireframeState m_kWireframe;
     
     /** Volume coordinates of the data (extents * resolutions): */
     protected float m_fX, m_fY, m_fZ;
+    
+
+    protected MipavLightingEffect m_kLightShader = null;
 }

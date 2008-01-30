@@ -212,14 +212,28 @@ public abstract class Triangles extends Geometry
 
         Vector3f kNormalized = new Vector3f();
         for (i = 0; i < iVQuantity; i++)
-        {
+        {                    
             kNormalized.SetData( VBuffer.GetNormal3fX(i), VBuffer.GetNormal3fY(i), VBuffer.GetNormal3fZ(i));
+            if (m_bInside)
+            {
+                kNormalized.negEquals();
+            }
             kNormalized.Normalize();
             VBuffer.SetNormal3(i, kNormalized);
         }
         kNormalized = null;
     }
 
+    
+    public void SetInside( boolean bInside )
+    {
+        m_bInside = bInside;
+    }
+    
+
+    /** Inside mesh, or Outside mesh. */
+    private boolean m_bInside;
+    
     /**
      * Loads this object from the input parameter rkStream, using the input
      * Stream.Link to store the IDs of children objects of this object

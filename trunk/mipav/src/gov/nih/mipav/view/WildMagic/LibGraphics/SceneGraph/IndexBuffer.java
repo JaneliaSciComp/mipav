@@ -35,6 +35,18 @@ public class IndexBuffer extends Bindable
         m_aiIndex = new int[m_iIQuantity];
         m_iOffset = 0;
     }
+    
+    /** Create an IndexBuffer with the input number of indices.
+     * @param iIQuantity, the number of int elements.
+     */
+    public IndexBuffer (int iIQuantity, int[] aiIndex)
+    {
+        assert(iIQuantity > 0);
+
+        m_iIQuantity = iIQuantity;
+        m_aiIndex = aiIndex;
+        m_iOffset = 0;
+    }
 
     /** Copy constructor.
      * @param pkIBuffer, the IndexBuffer to copy into this.

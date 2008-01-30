@@ -19,6 +19,7 @@ import gov.nih.mipav.view.dialogs.DialogDTIColorDisplay;
 import gov.nih.mipav.view.dialogs.JDialogDirectResample;
 import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.surfaceview.*;
+import gov.nih.mipav.view.renderer.WildMagic.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -102,7 +103,7 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
     /** Anisotropy image **/
     private ModelImage m_kAnisotropyImage;
 
-    private ViewJFrameVolumeViewDTI parentFrame;
+    private VolumeViewerDTI parentFrame;
 	
     /** handle to the algorithm **/
     private AlgorithmDTIColorDisplay alg;
@@ -110,7 +111,7 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
     /** result image **/
     private ModelImage resultImage;
     
-	public JPanelDTILoad(ViewJFrameVolumeViewDTI _parentFrame) {
+	public JPanelDTILoad(VolumeViewerDTI _parentFrame) {
 		parentFrame = _parentFrame;
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new BorderLayout());

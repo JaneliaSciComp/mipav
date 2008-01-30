@@ -192,5 +192,5 @@ void p_VolumeShaderCMP(  in float3 inTexCoord1    : TEXCOORD0,
     } 
 
     kColor.rgb = alpha_acc * color_acc.rgb + (1-alpha_acc)*BackgroundColor.rgb;
-    kColor.a = blend;
+    kColor.a = blend * alpha_acc;
 }

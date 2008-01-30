@@ -155,6 +155,20 @@ public class ColorRGB
         m_afTuple[2] = fB;
     }
     
+    /** Construction.  The components are intended to be in the interval
+     * [0,1].  For accessing of colors by array index, the map is 0 = red, 1 =
+     * green, and 2 = blue.
+     * @param fR, red value
+     * @param fG, green value
+     * @param fB, blue value
+     */
+    public final void SetData (ColorRGB kColor )
+    {
+        m_afTuple[0] = kColor.m_afTuple[0];
+        m_afTuple[1] = kColor.m_afTuple[1];
+        m_afTuple[2] = kColor.m_afTuple[2];
+    }
+    
     /** Transform the color channels to [0,1].  Clamp sets negative values to
      * zero and values larger than one to one.  ScaleByMax assumes the color
      * channels are nonnegative, finds the maximum color channel, and divides

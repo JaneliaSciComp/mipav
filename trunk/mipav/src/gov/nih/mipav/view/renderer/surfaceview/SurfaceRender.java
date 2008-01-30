@@ -81,8 +81,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
 
     /** Raycast based renderer reference, raycast renderer or shear warp renderer. */
     protected VolumeRenderer rayBasedRender = null;
-
-    private GPUVolumeRender rayBasedRenderWM = null;
     
     /** Mode is tri-planar volume view or not. */
     boolean isTriPlanarVolView = false;
@@ -510,10 +508,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
         if (!cubicBG.isLive()) {
             objRootBG.addChild(cubicBG);
         }
-        if ( parent instanceof ViewJFrameVolumeViewWildMagic )
-        {
-            ((ViewJFrameVolumeViewWildMagic)parent).setShowOrientationCube(true);
-        }  
     }
 
     /**
@@ -1246,10 +1240,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
      */
     public void hideBoxFrame() {
         objBoxFrameBG.detach();
-        if ( parent instanceof ViewJFrameVolumeViewWildMagic )
-        {
-            ((ViewJFrameVolumeViewWildMagic)parent).setShowBoxFrame(false);
-        }
     }
 
     /**
@@ -1372,10 +1362,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
         if (cubicBG.isLive()) {
             cubicBG.detach();
         }
-        if ( parent instanceof ViewJFrameVolumeViewWildMagic )
-        {
-            ((ViewJFrameVolumeViewWildMagic)parent).setShowOrientationCube(false);
-        }  
     }
 
     /**
@@ -1759,21 +1745,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
     }
 
     /**
-     * Set the reference to ray based renderer, raycast renderer or shear warp
-     * renderer. This method set the clipping dialog to control the both the
-     * 3D texture renderer and raycast based renderer.
-     *
-     * @param  _rayBasedRender  VolumeRenderer reference
-     */
-    public void setRayBasedRender(GPUVolumeRender _rayBasedRender) {
-        rayBasedRenderWM = _rayBasedRender;
-        clipPanel.setRayBasedRender(_rayBasedRender);
-        //volOpacityPanel.setRayBasedRender(_rayBasedRender);
-        surfacePanel.getLightDialog().setRayBasedRender(_rayBasedRender);
-        sculptorPanel.setVolumeSculptor(_rayBasedRender);
-    }
-
-    /**
      * Enable perspective projection rendering; otherwise use orthographic projection.
      *
      * @param  bEnable  true to enable perspective projection
@@ -1982,10 +1953,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
      */
     public void showBoxFrame() {
         sceneRootTG.addChild(objBoxFrameBG);
-        if ( parent instanceof ViewJFrameVolumeViewWildMagic )
-        {
-            ((ViewJFrameVolumeViewWildMagic)parent).setShowBoxFrame(true);
-        }  
     }
 
     /**
@@ -2514,13 +2481,10 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
         if (update3DTriplanar(null, null, flag) == false) {
             return false;
         }
-
-        if ( !(getParentFrame() instanceof ViewJFrameVolumeViewWildMagic) )
-        {
-            if (updateVolume(null, null, flag) == false) {
-                return false;
-            }
+        if (updateVolume(null, null, flag) == false) {
+            return false;
         }
+
 
         return true;
     }
@@ -2680,15 +2644,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
      * invokes this method call.
      */
     public void updateRaycastRender() {
-
-        if (rayBasedRenderWM != null) {
-            Transform3D kTransform = new Transform3D(currentTransform);
-            kTransform.setScale(new Vector3d(1,1,1));
-            float[] data = new float[16];
-            kTransform.get(data);
-            rayBasedRenderWM.transformUpdate(data);
-        }
-
         if (rayBasedRender != null) {
             rayBasedRender.transformUpdate(currentTransformType, currentTransform);
         }
@@ -3616,11 +3571,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
     public void updateParent()
     {
         getParentFrame().updateImages(true);
-    }
-
-    public GPUVolumeRender getGPURenderer()
-    {
-        return rayBasedRenderWM;
     }
 
     public void keyPressed(KeyEvent arg0) {

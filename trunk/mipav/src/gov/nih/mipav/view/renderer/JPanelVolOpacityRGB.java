@@ -252,16 +252,6 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
             ViewJComponentVolOpacityBase selectedComponent = getSelectedComponent();
             selectedComponent.horizonMode();
         }
-        if ( renderBase instanceof 
-                gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
-        {
-            gov.nih.mipav.view.renderer.surfaceview.SurfaceRender kParent = (gov.nih.mipav.view.renderer.surfaceview.SurfaceRender) renderBase;
-            ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
-            if ( kParentFrame instanceof ViewJFrameVolumeViewWildMagic )
-            {
-                ((ViewJFrameVolumeViewWildMagic)kParentFrame).updateImages(true);
-            }
-        }
         if ( m_kVolumeViewer != null )
         {
             m_kVolumeViewer.updateImages(true);
@@ -297,17 +287,7 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
                     tabbedPane.addTab(OPACITY_COMPONENT_TAB_B_GM, null, panelOpacityGM_B);
                 }
             }
-        }
-        if ( renderBase instanceof 
-                gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
-        {
-            gov.nih.mipav.view.renderer.surfaceview.SurfaceRender kParent = (gov.nih.mipav.view.renderer.surfaceview.SurfaceRender) renderBase;
-            ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
-            if ( kParentFrame instanceof ViewJFrameVolumeViewWildMagic )
-            {
-                ((ViewJFrameVolumeViewWildMagic)kParentFrame).setGradientMagnitude(true);
-            }
-        }            
+        }           
         if ( m_kVolumeViewer != null )
         {
             m_kVolumeViewer.setGradientMagnitude(true);
@@ -593,16 +573,6 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
         if (imageB != null) {
             tabbedPane.remove(panelOpacityGM_B);
         }
-        if ( renderBase instanceof 
-                gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
-        {
-            gov.nih.mipav.view.renderer.surfaceview.SurfaceRender kParent = (gov.nih.mipav.view.renderer.surfaceview.SurfaceRender) renderBase;
-            ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
-            if ( kParentFrame instanceof ViewJFrameVolumeViewWildMagic )
-            {
-                ((ViewJFrameVolumeViewWildMagic)kParentFrame).setGradientMagnitude(false);
-            }
-        }    
         if ( m_kVolumeViewer != null )
         {
             m_kVolumeViewer.setGradientMagnitude(false);

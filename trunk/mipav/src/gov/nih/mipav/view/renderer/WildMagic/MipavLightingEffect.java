@@ -1,4 +1,4 @@
-package gov.nih.mipav.view.renderer.volumeview;
+package gov.nih.mipav.view.renderer.WildMagic;
 
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
@@ -14,6 +14,17 @@ public class MipavLightingEffect extends ShaderEffect
         m_kPShader.set(0, new PixelShader("PassThrough4"));
     }
 
+    /** This function is called in LoadPrograms once the shader programs are
+     * created.  It gives the ShaderEffect-derived classes a chance to do
+     * any additional work to hook up the effect with the low-level objects.
+     * @param iPass the ith rendering pass
+     */
+    public void OnLoadPrograms (int iPass, Program pkVProgram,
+                                Program pkPProgram)
+    {
+        Blend(1.0f);
+    }
+    
     /**
      * Sets the light type for the given light.
      * @param kLightType, the name of the light to set (Light0, Light1, etc.)
@@ -29,6 +40,19 @@ public class MipavLightingEffect extends ShaderEffect
         if ( pkProgram.GetUC(kLightType) != null)
         {
             pkProgram.GetUC(kLightType).SetDataSource(afType);
+        }
+    }
+    
+    public void Blend( float fValue )
+    {
+        Program pkProgram = GetVProgram(0);
+        if ( pkProgram == null )
+        {
+            return;
+        }
+        if ( pkProgram.GetUC("Blend") != null)
+        {
+            pkProgram.GetUC("Blend").SetDataSource(new float[]{fValue,0,0,0});
         }
     }
 

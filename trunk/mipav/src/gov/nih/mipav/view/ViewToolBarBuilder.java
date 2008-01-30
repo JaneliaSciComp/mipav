@@ -345,7 +345,6 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         JButton triPlanarButton = buildButton(CustomUIBuilder.PARAM_IMAGE_TRIPLANAR);
         JButton quadPlanarButton = buildButton(CustomUIBuilder.PARAM_IMAGE_VOLUME_RENDERER);
         JButton wmPlanarButton = buildButton(CustomUIBuilder.PARAM_IMAGE_VOLUME_RENDERER_GPU);
-        JButton wmStandAloneButton = buildButton(CustomUIBuilder.PARAM_IMAGE_VOLUME_RENDERER_WILDMAGIC);
         JButton DTIStandAloneButton = buildButton(CustomUIBuilder.PARAM_IMAGE_VOLUME_RENDERER_DTI);
         JButton lightBoxButton = buildButton(CustomUIBuilder.PARAM_IMAGE_LIGHTBOX);
         // JButton gpuButton = buildButton(CustomUIBuilder.PARAM_IMAGE_GPU);
@@ -356,7 +355,6 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
             triPlanarButton.setEnabled(false);
             quadPlanarButton.setEnabled(false);
             wmPlanarButton.setEnabled(false);
-            wmStandAloneButton.setEnabled(false);
             DTIStandAloneButton.setEnabled(false);
             lightBoxButton.setEnabled(false);
             // gpuButton.setEnabled(false);
@@ -367,7 +365,6 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         tBar.add(triPlanarButton);
         tBar.add(quadPlanarButton);
         tBar.add(wmPlanarButton);
-        tBar.add(wmStandAloneButton);
         tBar.add(DTIStandAloneButton);
         tBar.add(lightBoxButton);
 

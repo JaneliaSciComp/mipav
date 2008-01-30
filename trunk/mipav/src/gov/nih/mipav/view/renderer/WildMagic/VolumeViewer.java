@@ -18,6 +18,8 @@ import gov.nih.mipav.view.renderer.surfaceview.rfaview.*;
 import gov.nih.mipav.view.renderer.volumeview.*;
 
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.ImageCatalog;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
@@ -36,7 +38,8 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
 
-public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemListener, ChangeListener {
+public class VolumeViewer extends ViewJFrameBase 
+implements MouseListener, ItemListener, ChangeListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -84,6 +87,8 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
     /** DOCUMENT ME! */
     private JPanelClip_WM clipBox;
     private JPanelSlices sliceGUI;
+    private JPanelSurface_WM surfaceGUI;
+    private JPanelSculptor sculptGUI;
 
     private JCheckBox m_kDisplayVolumeCheck;
     private JCheckBox m_kDisplaySlicesCheck;
@@ -350,6 +355,7 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
             insertTab("Geodesic", m_kGeodesicPanel);
         } else if (command.equals("Sculpt")) {
             insertTab("Sculpt", m_kSculptPanel);
+            sculptGUI.getMainPanel().setVisible(true);
         } else if (command.equals("AutoCapture")) {
             insertTab("Camera", raycastCameraPanel);
         } else if (command.equals("Repaint")) {
@@ -427,30 +433,15 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
 //             surRender.saveCropVolume();
         } else if (command.equals("Slices")) {
             sliceGUI.getMainPanel().setVisible(true);
-            //clipBox.setVisible(false);
-            clipButton.setEnabled(false);
-            clipPlaneButton.setEnabled(false);
-            clipDisableButton.setEnabled(false);
-            clipMaskButton.setEnabled(false);
-            clipMaskUndoButton.setEnabled(false);
-            clipSaveButton.setEnabled(false);
             insertTab("Slices", slicePanel);
             raycastRenderWM.DisplayVolumeSlices( m_kDisplaySlicesCheck.isSelected() );
-            //enableSurfaceRender();
         } else if (command.equals("VolumeSlices")) {
             sliceGUI.getMainPanel().setVisible(true);
-            //clipBox.setVisible(false);
-            clipButton.setEnabled(false);
-            clipPlaneButton.setEnabled(false);
-            clipDisableButton.setEnabled(false);
-            clipMaskButton.setEnabled(false);
-            clipMaskUndoButton.setEnabled(false);
-            clipSaveButton.setEnabled(false);
             insertTab("Slices", slicePanel);
             raycastRenderWM.DisplayVolumeSlices( m_kDisplaySlicesCheck.isSelected() );
-            //enableSurfaceRender();
         } else if (command.equals("SurfaceDialog")) {
             insertTab("Surface", surfacePanel);
+            surfaceGUI.getMainPanel().setVisible(true);
             setSize(getSize().width, getSize().height - 1);
 
             int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
@@ -797,7 +788,9 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
      */
     public void buildSculpt() {
         m_kSculptPanel = new JPanel();
-//         m_kSculptPanel.add(surRender.getSculptorPanel().getMainPanel());
+        sculptGUI = new JPanelSculptor(this);
+        sculptGUI.setVolumeSculptor( raycastRenderWM );
+        m_kSculptPanel.add(sculptGUI.getMainPanel());
         maxPanelWidth = Math.max(m_kSculptPanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -816,7 +809,8 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
      */
     public void buildSurfacePanel() {
         surfacePanel = new JPanel();
-//         surfacePanel.add(surRender.getSurfaceDialog().getMainPanel());
+        surfaceGUI = new JPanelSurface_WM(this);
+        surfacePanel.add(surfaceGUI.getMainPanel());
         maxPanelWidth = Math.max(surfacePanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -1799,7 +1793,7 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
      * @param  center  the new slice positions in FileCoordinates
      */
     public void setSliceFromPlane(Point3Df center) {
-        //setPositionLabels(center);
+        setPositionLabels(center);
 
          for (int i = 0; i < 3; i++) {
              m_akPlaneRender[i].setCenter(center);
@@ -2083,7 +2077,37 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
         disposeLocal(true);
         dispose();
     }
+    
+    /**
+     * Tells the UI that this frame is the currently active one.
+     *
+     * @param  event  the window event
+     */
+    public void windowActivated(WindowEvent event) {
+        if ( m_akPlaneRender != null )
+        {
+            for (int i = 0; i < 3; i++) {
+                m_akPlaneRender[i].SetModified(true);
+            }
+        }
+        super.windowActivated(event);
+    }
 
+    /**
+     * Does nothing.
+     *
+     * @param  event  the component event
+     */
+    public void componentMoved(ComponentEvent event)
+    {       
+        if ( m_akPlaneRender != null )
+        {
+            for (int i = 0; i < 3; i++) {
+                m_akPlaneRender[i].SetModified(true);
+            }
+        }
+    }
+    
     /**
      * Builds menus for the tri-planar view.
      *
@@ -2629,6 +2653,7 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
 //             }
 
         sliceGUI.resizePanel(maxPanelWidth, height);
+        surfaceGUI.resizePanel(maxPanelWidth, height);
 //             if (surRender.getSlicePanel() != null) {
 //                 surRender.getSlicePanel().resizePanel(maxPanelWidth, height);
 //             }
@@ -2693,12 +2718,30 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
      * @param  position  DOCUMENT ME!
      */
     private void set3DModelPosition(Point3Df position) {
-//         Point3Df screen = new Point3Df();
-//         surRender.ModelToScreen(position, screen);
 
-//         modelViewLabelVals[0].setText("X: " + screen.x);
-//         modelViewLabelVals[1].setText("Y: " + screen.y);
-//         modelViewLabelVals[2].setText("Z: " + screen.z);
+        float fMaxX = (m_kVolumeImageA.GetImage().getExtents()[0] - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[0];
+        float fMaxY = (float) (m_kVolumeImageA.GetImage().getExtents()[1] - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (float) (m_kVolumeImageA.GetImage().getExtents()[2] - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[2];
+
+        float fMax = fMaxX;
+        if (fMaxY > fMax) {
+            fMax = fMaxY;
+        }
+        if (fMaxZ > fMax) {
+            fMax = fMaxZ;
+        }
+        float fX = fMaxX/fMax;
+        float fY = fMaxY/fMax;
+        float fZ = fMaxZ/fMax;
+
+        fX *= position.x/(m_kVolumeImageA.GetImage().getExtents()[0] - 1);
+        fY *= position.y/(m_kVolumeImageA.GetImage().getExtents()[1] - 1);
+        fZ *= position.z/(m_kVolumeImageA.GetImage().getExtents()[2] - 1);
+
+         modelViewLabelVals[0].setText("X: " + fX);
+         modelViewLabelVals[1].setText("Y: " + fY);
+         modelViewLabelVals[2].setText("Z: " + fZ);
+
     }
 
     /**
@@ -2779,5 +2822,101 @@ public class VolumeViewer extends ViewJFrameBase implements MouseListener, ItemL
             m_kVolumeImageA.UpdateImages(kTransfer, 2);
         }
     }
+    
+    public void addSurface(TriMesh[] akSurfaces)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.addSurface(akSurfaces);
+            insertTab("Light", lightPanel);
+            m_kLightsPanel.enableLight(0, true);
+            insertTab("Surface", surfacePanel);
+        }
+    }    
 
+    public void removeSurface(String kSurfaceName)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.removeSurface(kSurfaceName);
+        }
+    }
+
+    public void setPolygonMode(String kSurfaceName, WireframeState.FillMode eMode)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.setPolygonMode(kSurfaceName, eMode );
+        }
+    }
+    
+
+    public void setTransparency(String kSurfaceName, float fValue)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.Blend(kSurfaceName, fValue );
+        }
+    }
+    
+    
+
+    public void setColor(String kSurfaceName, ColorRGB kColor)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.setColor(kSurfaceName, kColor);
+        }
+    }    
+
+    public float getVolume(String kSurfaceName)
+    {
+        if ( raycastRenderWM != null )
+        {
+            return raycastRenderWM.GetVolume(kSurfaceName);
+        }
+        return 0;
+    }
+
+    public float getSurfaceArea(String kSurfaceName)
+    {
+        if ( raycastRenderWM != null )
+        {
+            return raycastRenderWM.GetSurfaceArea(kSurfaceName);
+        }
+        return 0;
+    }
+    
+    public MaterialState getMaterial(String kSurfaceName)
+    {
+        if ( raycastRenderWM != null )
+        {
+            return raycastRenderWM.GetMaterial(kSurfaceName);
+        }
+        return null;
+    }
+    
+    public void setMaterial(String kSurfaceName, MaterialState kMaterial)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.SetMaterial(kSurfaceName, kMaterial);
+        }
+    }
+    
+    
+    public GeneralLight[] GetLights()
+    {
+        if ( raycastRenderWM != null )
+        {
+            return raycastRenderWM.GetLights();
+        }
+        return null;
+    }
+    
+    public Animator GetAnimator()
+    {
+        return m_kAnimator;
+    }
+  
 }

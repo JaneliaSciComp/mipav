@@ -360,6 +360,8 @@ public class JPanelClip_WM
             }
             if ( rayBasedRenderWM != null )
             {
+                aSlice = sliderA.getValue() - 1;
+                rayBasedRenderWM.setArbitraryClipPlane(aSlice);
                 rayBasedRenderWM.enableArbitraryClipPlane( boxA.isSelected(), boundingCheckA.isSelected(),
                                                            new ColorRGB( colorButtonA.getBackground().getRed(),
                                                                          colorButtonA.getBackground().getGreen(),
@@ -374,6 +376,8 @@ public class JPanelClip_WM
             }
             if ( rayBasedRenderWM != null )
             {
+                sSlice = clipSliderStatic.getValue() - 1;
+                rayBasedRenderWM.setEyeClipPlane(sSlice, boundingCheckStatic.isSelected());
                 rayBasedRenderWM.enableEyeClipPlane( boxStatic.isSelected(), boundingCheckStatic.isSelected(),
                             new ColorRGB( colorButtonStatic.getBackground().getRed(),
                                           colorButtonStatic.getBackground().getGreen(),
@@ -388,6 +392,8 @@ public class JPanelClip_WM
             }
             if ( rayBasedRenderWM != null )
             {
+                sSliceInv = clipSliderStaticInv.getValue() - 1;
+                rayBasedRenderWM.setEyeInvClipPlane(sSliceInv, boundingCheckStaticInv.isSelected());
                 rayBasedRenderWM.enableEyeInvClipPlane( boxStaticInv.isSelected(), boundingCheckStaticInv.isSelected(),
                             new ColorRGB( colorButtonStaticInv.getBackground().getRed(),
                                           colorButtonStaticInv.getBackground().getGreen(),
@@ -486,10 +492,12 @@ public class JPanelClip_WM
             }
             if ( rayBasedRenderWM != null )
             {
+                aSlice = sliderA.getValue() - 1;
+                rayBasedRenderWM.setArbitraryClipPlane(aSlice);
                 rayBasedRenderWM.enableArbitraryClipPlane( boxA.isSelected(), boundingCheckA.isSelected(),
-                        new ColorRGB( colorButtonA.getBackground().getRed(),
-                                colorButtonA.getBackground().getGreen(),
-                                colorButtonA.getBackground().getBlue() ) );
+                                                           new ColorRGB( colorButtonA.getBackground().getRed(),
+                                                                         colorButtonA.getBackground().getGreen(),
+                                                                         colorButtonA.getBackground().getBlue() ) );
             }
        } else if (command.equals("EYE")) {
 
@@ -506,6 +514,8 @@ public class JPanelClip_WM
             }
             if ( rayBasedRenderWM != null )
             {
+                sSlice = clipSliderStatic.getValue() - 1;
+                rayBasedRenderWM.setEyeClipPlane(sSlice, boundingCheckStatic.isSelected());
                 rayBasedRenderWM.enableEyeClipPlane( boxStatic.isSelected(), boundingCheckStatic.isSelected(),
                             new ColorRGB( colorButtonStatic.getBackground().getRed(),
                                           colorButtonStatic.getBackground().getGreen(),
@@ -526,6 +536,8 @@ public class JPanelClip_WM
             }
             if ( rayBasedRenderWM != null )
             {
+                sSliceInv = clipSliderStaticInv.getValue() - 1;
+                rayBasedRenderWM.setEyeInvClipPlane(sSliceInv, boundingCheckStaticInv.isSelected());
                 rayBasedRenderWM.enableEyeInvClipPlane( boxStaticInv.isSelected(), boundingCheckStaticInv.isSelected(),
                             new ColorRGB( colorButtonStaticInv.getBackground().getRed(),
                                           colorButtonStaticInv.getBackground().getGreen(),

@@ -18,7 +18,6 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.volumeview.GPUVolumeRender;
 import gov.nih.mipav.view.renderer.WildMagic.*;
 import gov.nih.mipav.view.renderer.surfaceview.JPanelSurface;
 import gov.nih.mipav.view.renderer.surfaceview.SurfaceRender;
@@ -125,9 +124,6 @@ public class JDialogDTIInput extends JDialogBase
     private int m_iType;
 
     /** GPUVolumeRender object for loading fiber bundle tracts. */
-    private GPUVolumeRender m_kVolumeDisplay = null;
-
-    /** GPUVolumeRender object for loading fiber bundle tracts. */
     private GPUVolumeRender_WM m_kVolumeDisplay_WM = null;
 
     /** JPanelSurface object for loading fiber bundle tracts. */
@@ -209,26 +205,6 @@ public class JDialogDTIInput extends JDialogBase
         m_iType = iType;
     }
 
-    /** Create a new JDialogDTIInput of one of the four types:
-     * @param iType, type of Diffusion Tensor Input dialog to create.
-     * @param kDisplay, reference to the GPUVolumeRender display for
-     * loading fiber bundle tracts.
-     * @param kDialog, JPanelSurface display displaying fiber bundle line arrays.
-     * @param kImage, ModelImage displayed in GPUVolumeRender
-     */
-    public JDialogDTIInput( int iType,
-                            GPUVolumeRender kDisplay,
-                            JPanelSurface kDialog,
-                            ModelImage kImage ) 
-    {
-        super();
-        init( iType );
-        m_iType = iType;
-        m_kVolumeDisplay = kDisplay;
-        m_kSurfaceDialog = kDialog;
-        m_kImage = kImage;
-    }
-    
 
     /** Create a new JDialogDTIInput of one of the four types:
      * @param iType, type of Diffusion Tensor Input dialog to create.
@@ -280,7 +256,6 @@ public class JDialogDTIInput extends JDialogBase
         }
         m_kBMatrix = null;
         m_aakDWIList = null;
-        m_kVolumeDisplay = null;
         m_kVolumeDisplay_WM = null;
         m_kSurfaceDialog = null;
         m_kImage = null;
@@ -420,10 +395,6 @@ public class JDialogDTIInput extends JDialogBase
             {
                 ((SurfaceRender)m_kSurfaceDialog.getSurfaceRender()).getSurfaceDialog().getLightDialog().refreshLighting();
             }
-            else if ( m_kVolumeDisplay != null )
-            {
-                m_kVolumeDisplay.setDisplayEllipsoids( m_kUseEllipsoids.isSelected() );
-            }
             else if ( m_kVolumeDisplay_WM != null )
             {
                 m_kVolumeDisplay_WM.setDisplayEllipsoids( m_kUseEllipsoids.isSelected() );
@@ -434,10 +405,6 @@ public class JDialogDTIInput extends JDialogBase
             if ( m_kSurfaceDialog != null )
             {
                 ((SurfaceRender)m_kSurfaceDialog.getSurfaceRender()).getSurfaceDialog().getLightDialog().refreshLighting();
-            }
-            else if ( m_kVolumeDisplay != null )
-            {
-                m_kVolumeDisplay.setDisplayAllEllipsoids( m_kAllEllipsoids.isSelected() );
             }
             else if ( m_kVolumeDisplay_WM != null )
             {
@@ -495,11 +462,7 @@ public class JDialogDTIInput extends JDialogBase
         Object source = e.getSource();
 
         if (source == m_kDisplaySlider) {
-            if ( m_kVolumeDisplay != null )
-            {
-                m_kVolumeDisplay.setEllipseMod( m_kDisplaySlider.getValue() );
-            }
-            else if ( m_kVolumeDisplay_WM != null )
+            if ( m_kVolumeDisplay_WM != null )
             {
                 m_kVolumeDisplay_WM.setEllipseMod( m_kDisplaySlider.getValue() );
             }
@@ -511,7 +474,7 @@ public class JDialogDTIInput extends JDialogBase
      */
     public void valueChanged(ListSelectionEvent kEvent) {
 
-        if ( (m_kVolumeDisplay == null) && (m_kVolumeDisplay_WM == null) )
+        if ( m_kVolumeDisplay_WM == null )
         {
             return;
         }
@@ -537,11 +500,7 @@ public class JDialogDTIInput extends JDialogBase
             int iLength = kName.length();
             int iGroup = (new Integer(kName.substring( iHeaderLength, iLength ))).intValue();
             ColorRGB kColor = null;
-            if ( m_kVolumeDisplay != null )
-            {
-                kColor = m_kVolumeDisplay.getPolylineColor(iGroup);
-            }
-            else if ( m_kVolumeDisplay_WM != null )
+            if ( m_kVolumeDisplay_WM != null )
             {
                 kColor = m_kVolumeDisplay_WM.getPolylineColor(iGroup);
             }
@@ -1638,12 +1597,7 @@ public class JDialogDTIInput extends JDialogBase
     protected void setDTIImage( ModelImage kDTIImage )
     {
         m_kDTIImage = kDTIImage;
-        if ( m_kVolumeDisplay != null )
-        {
-            m_kVolumeDisplay.setDTIImage( m_kDTIImage );
-            m_kVolumeDisplay.setEllipseMod( m_kDisplaySlider.getValue() );
-        }
-        else if ( m_kVolumeDisplay_WM != null )
+        if ( m_kVolumeDisplay_WM != null )
         {
             m_kVolumeDisplay_WM.setDTIImage( m_kDTIImage );
             m_kVolumeDisplay_WM.setEllipseMod( m_kDisplaySlider.getValue() );
@@ -1769,11 +1723,7 @@ public class JDialogDTIInput extends JDialogBase
      */
     protected void addPolyline( Polyline kLine )
     {
-        if ( m_kVolumeDisplay != null )
-        {
-            m_kVolumeDisplay.addPolyline( kLine, m_iBundleCount );
-        }
-        else if ( m_kVolumeDisplay_WM != null )
+        if ( m_kVolumeDisplay_WM != null )
         {
             m_kVolumeDisplay_WM.addPolyline( kLine, m_iBundleCount );
         }
@@ -1894,25 +1844,7 @@ public class JDialogDTIInput extends JDialogBase
 
         for (int i = 0; i < aiSelected.length; i++)
         {
-            if ( m_kVolumeDisplay != null )
-            {
-                String kName = ((String)(kList.elementAt(aiSelected[i])));
-                int iLength = kName.length();
-                int iGroup = (new Integer(kName.substring( iHeaderLength, iLength ))).intValue();
-                if ( color == null )
-                {
-                    m_kVolumeDisplay.setPolylineColor( iGroup,null);
-                }
-	    
-                else if ( !m_kUseVolumeColor.isSelected() )
-                {
-                    m_kVolumeDisplay.setPolylineColor( iGroup,
-                                                       new ColorRGB( color.getRed()/255.0f,
-                                                                     color.getGreen()/255.0f,
-                                                                     color.getBlue()/255.0f  ));
-                }
-            }
-            else if ( m_kVolumeDisplay_WM != null )
+            if ( m_kVolumeDisplay_WM != null )
             {
                 String kName = ((String)(kList.elementAt(aiSelected[i])));
                 int iLength = kName.length();
@@ -1943,21 +1875,7 @@ public class JDialogDTIInput extends JDialogBase
 
         for (int i = 0; i < aiSelected.length; i++)
         {
-            if ( m_kVolumeDisplay != null )
-            {
-                String kName = ((String)(kList.elementAt(aiSelected[i])));
-                int iLength = kName.length();
-                int iGroup = (new Integer(kName.substring( iHeaderLength, iLength ))).intValue();
-                m_kVolumeDisplay.removePolyline( iGroup );
-
-                if ( m_kSurfaceDialog != null )
-                {
-                    BranchGroup kBranch = m_kLineArrayMap.get( new Integer(iGroup) );
-                    m_kSurfaceDialog.removeLineArray( kBranch );
-                }
-                m_kBundleList.remove( new Integer( iGroup ) );
-            }           
-            else if ( m_kVolumeDisplay_WM != null )
+            if ( m_kVolumeDisplay_WM != null )
             {
                 String kName = ((String)(kList.elementAt(aiSelected[i])));
                 int iLength = kName.length();

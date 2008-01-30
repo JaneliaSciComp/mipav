@@ -217,5 +217,5 @@ void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
     }
     // Blend with the background color:
     kColor = fMax * kColor + (1 - fMax) * BackgroundColor;
-    kColor.a = blend;
+    kColor.a = blend * fMax;
 }

@@ -2213,7 +2213,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         } else if (command.equals("VolTriplanar") || 
                    command.equals("WMVolTriplanar") ||
-                   command.equals("WMStandAlone") || 
                    command.equals("DTIStandAlone") ) {
 
             // 3 space representation makes no sense on a 2d image!

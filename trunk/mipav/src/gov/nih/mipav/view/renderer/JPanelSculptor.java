@@ -6,6 +6,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.surfaceview.*;
 import gov.nih.mipav.view.renderer.volumeview.*;
+import gov.nih.mipav.view.renderer.WildMagic.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -86,8 +87,8 @@ public class JPanelSculptor extends JPanelRendererBase {
     /** Toolbar builder reference. */
     private ViewToolBarBuilder toolbarBuilder;
     
-    private GPUVolumeRender m_kVolumeRendererGPU = null;
-
+    private GPUVolumeRender_WM m_kVolumeRendererGPU = null;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -106,6 +107,16 @@ public class JPanelSculptor extends JPanelRendererBase {
 
     }
 
+    /**
+     * Contructor. Called from the surface render to create the sculptor control panel.
+     *
+     * @param  parent  surface render
+     */
+    public JPanelSculptor(VolumeViewer kVolumeViewer) {
+        super(kVolumeViewer);
+        init();
+    }
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -192,8 +203,8 @@ public class JPanelSculptor extends JPanelRendererBase {
         if ( m_kVolumeRendererGPU != null )
         {
             m_kVolumeRendererGPU.applySculpt();
-            surRender.updateData();
-            surRender.updateImages();
+         //   surRender.updateData();
+         //   surRender.updateImages();
         }
 
     }
@@ -255,8 +266,8 @@ public class JPanelSculptor extends JPanelRendererBase {
 
         if ( m_kVolumeRendererGPU != null )
         {
-            m_kVolumeRendererGPU.enableSculpt(!m_kVolumeRendererGPU.getSculptEnabled());
-        }
+           m_kVolumeRendererGPU.enableSculpt(!m_kVolumeRendererGPU.getSculptEnabled());
+       }
 
         /* tell the m_kSculptor object that drawing is enabled */
         if (m_kVolumeSculptor != null) {
@@ -496,7 +507,7 @@ public class JPanelSculptor extends JPanelRendererBase {
      *
      * @param  _rayBasedRender  VolumeRenderer
      */
-    public void setVolumeSculptor(GPUVolumeRender _rayBasedRender) {
+    public void setVolumeSculptor(GPUVolumeRender_WM _rayBasedRender) {
         m_kVolumeRendererGPU = _rayBasedRender;
     }
 
@@ -539,8 +550,8 @@ public class JPanelSculptor extends JPanelRendererBase {
         if ( m_kVolumeRendererGPU != null )
         {
             m_kVolumeRendererGPU.undoSculpt();
-            surRender.updateData();
-            surRender.updateImages();
+         //   surRender.updateData();
+         //   surRender.updateImages();
        }
 
     }

@@ -17,6 +17,7 @@
 //
 
 package gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph;
+import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 public class TriMesh extends Triangles
     implements StreamInterface
@@ -84,6 +85,7 @@ public class TriMesh extends Triangles
     {
         Type = GeometryType.GT_TRIMESH;
     }
+
 
     /**
      * Loads this object from the input parameter rkStream, using the input

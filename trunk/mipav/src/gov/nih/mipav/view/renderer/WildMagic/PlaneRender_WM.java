@@ -330,6 +330,7 @@ public class PlaneRender_WM extends JavaApplication3D
             m_iHeight = iHeight;
             m_bModified = true;
 
+            m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
         }
         
     }

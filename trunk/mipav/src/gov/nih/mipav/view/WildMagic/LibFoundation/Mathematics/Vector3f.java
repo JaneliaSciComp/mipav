@@ -230,8 +230,7 @@ public class Vector3f
                         -m_afTuple[2]);
     }
 
-    /** Negate this vector, return result, this vector is unchanged:
-     * @return -1*this
+    /** Negate this vector.
      */
     public void negEquals ()
     {
