@@ -452,6 +452,50 @@ public class JDialogVolViewResample extends JDialogBase {
                 {
                     sr = new ViewJFrameVolumeView(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
                             rightPanelRenderMode, this);
+                    sr.setImageOriginal(imageAOriginal);
+
+                    if (forcePadding) {
+                        sr.doPadding(extents, volExtents);
+                    }  else if (forceResample) {
+                        sr.doResample(volExtents, newRes, forceResample, nDim, m_iFilter);
+                    }
+
+                    if (rightPanelRenderMode == ViewJFrameVolumeView.SHEARWARP) {
+                        sr.calcShearWarpImage(imageA, imageB);
+                    }
+
+                    sr.constructRenderers();
+
+                    // can't do this before sr.initialize() since it uses the plane renderer list, which is setup there
+                    sr.addAttachedSurfaces();
+
+                    if (sr.getProbeDialog() != null) {
+
+                        // need to update the rfa target labels in case there were attached surfaces that we should show info
+                        // about
+                        sr.getProbeDialog().updateTargetList();
+                    }
+
+                    if (forceResample) {
+
+                        if (imageA != null) {
+                            imageA.disposeLocal();
+                            imageA = null;
+                        }
+
+                        if (imageB != null) {
+                            imageB.disposeLocal();
+                            imageB = null;
+                        }
+                    }
+
+                    if (startupCommand != null) {
+                        sr.actionPerformed(new ActionEvent(this, 0, startupCommand));
+                    }
+
+                    if (segmentationImage != null) {
+                        sr.setSegmentationImage(segmentationImage);
+                    }
                 }
                 else if ( m_kVolViewType.equals( "DTIStandAlone" ) )
                 {
