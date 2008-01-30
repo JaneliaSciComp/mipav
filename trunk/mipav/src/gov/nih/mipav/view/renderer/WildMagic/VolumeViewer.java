@@ -88,6 +88,7 @@ implements MouseListener, ItemListener, ChangeListener {
     private JPanelClip_WM clipBox;
     private JPanelSlices sliceGUI;
     private JPanelSurface_WM surfaceGUI;
+    private JPanelDisplay_WM displayGUI;
     private JPanelSculptor sculptGUI;
 
     private JCheckBox m_kDisplayVolumeCheck;
@@ -598,7 +599,9 @@ implements MouseListener, ItemListener, ChangeListener {
      */
     public void buildDisplayPanel() {
         displayPanel = new JPanel();
-//         displayPanel.add(((SurfaceRender) surRender).getDisplayDialog().getMainPanel());
+        displayGUI = new JPanelDisplay_WM(this);
+        displayGUI.setVisible(true);
+        displayPanel.add(displayGUI.getMainPanel());
         maxPanelWidth = Math.max(displayPanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -2630,7 +2633,7 @@ implements MouseListener, ItemListener, ChangeListener {
         int height;
 
         height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
-                 panelToolbar.getHeight();
+        panelToolbar.getHeight();
 
         if (panelHistoLUT != null) {
             panelHistoLUT.resizePanel(maxPanelWidth, height);
@@ -2639,75 +2642,11 @@ implements MouseListener, ItemListener, ChangeListener {
         if (panelHistoRGB != null) {
             panelHistoRGB.resizePanel(maxPanelWidth, height);
         }
-
-//         if (isSurfaceRenderEnable) {
-
-//             if (surRender.getSurfaceDialog() != null) {
-//                 surRender.getSurfaceDialog().resizePanel(maxPanelWidth, height);
-//             }
-
-//             if (surRender.getViewDialog() != null) {
-//                 surRender.getViewDialog().resizePanel(maxPanelWidth, height);
-//             }
-
         sliceGUI.resizePanel(maxPanelWidth, height);
         surfaceGUI.resizePanel(maxPanelWidth, height);
-//             if (surRender.getSlicePanel() != null) {
-//                 surRender.getSlicePanel().resizePanel(maxPanelWidth, height);
-//             }
-
-//             if (((SurfaceRender) surRender).getDisplayDialog() != null) {
-//                 ((SurfaceRender) surRender).getDisplayDialog().resizePanel(maxPanelWidth, height);
-//             }
-
+        displayGUI.resizePanel(maxPanelWidth, height);
         m_kLightsPanel.resizePanel(maxPanelWidth, height);
-//             if (surRender.getSurfaceDialog().getLightDialog() != null) {
-//                 surRender.getSurfaceDialog().getLightDialog().resizePanel(maxPanelWidth, height);
-//             }
-
-//             if (surRender.getClipDialog() != null) {
         ((JPanelClip_WM)clipBox).resizePanel(maxPanelWidth, height);
-//             }
-
-//             if (surRender.getProbeDialog() != null) {
-//                 surRender.getProbeDialog().resizePanel(maxPanelWidth, height);
-//             }
-
-//             if (surRender.getCameraControl() != null) {
-//                 surRender.getCameraControl().resizePanel(maxPanelWidth, height);
-//             }
-
-//             if (m_kVolOpacityPanel != null) {
-//                 m_kVolOpacityPanel.resizePanel(maxPanelWidth, height);
-//             }
-
-//             if (surRender.getGeodesicPanel() != null) {
-//                 surRender.getGeodesicPanel().resizePanel(maxPanelWidth, height);
-//             }
-
-//             if (surRender.getSculptorPanel() != null) {
-//                 surRender.getSculptorPanel().resizePanel(maxPanelWidth, height);
-//             }
-//         }
-
-        //if (isRayCastEnable) {
-
-//             if (raycastRender.getVolOpacity() != null) {
-//                 raycastRender.getVolOpacity().resizePanel(maxPanelWidth, height);
-//             }
-
-//             if (raycastRender.getCameraControl() != null) {
-//                 raycastRender.getCameraControl().resizePanel(maxPanelWidth, height);
-//             }
-
-//             if (raycastRender.getOptionsPanel() != null) {
-//                 raycastRender.getOptionsPanel().resizePanel(maxPanelWidth, height);
-//             }
-
-//             if (raycastRender.getLightControlPanel() != null) {
-//                 raycastRender.getLightControlPanel().resizePanel(maxPanelWidth, height);
-//             }
-        //}
     }
 
     /**
