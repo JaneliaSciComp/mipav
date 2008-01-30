@@ -214,6 +214,9 @@ public class FileTiff extends FileBase {
     
     public static final int INK_NAMES = 333;
     
+    // The component values that correspond to a 0% dot and 100% dot
+    public static final int DOT_RANGE = 336;
+    
     public static final int EXTRA_SAMPLES = 338;
 
     /** DOCUMENT ME! */
@@ -8956,7 +8959,21 @@ public class FileTiff extends FileBase {
                     }
                     break;
                     
+                case DOT_RANGE:
+                    if ((type != BYTE) && (type != SHORT)) {
+                        throw new IOException("DOT_RANGE Has illegal type = " + type + "\n");
+                    }
+                    
+                    if (debuggingFileIO) {
+                        for (i1 = 0; i1 < count/2; i1++) {
+                            Preferences.debug("DotRange[" + (2*i1) + "] corresponds to a " + valueArray[0] + "% dot\n");
+                            Preferences.debug("DotRange[" + (2*i1 + 1) + "] corresponds to a " + valueArray[1] + "% dot\n");
+                        }
+                    }
+                    break;
+                
                 default:
+                    
                     break;
             }
             if ((i != 0) && (i == iExifStart + exifDirEntries)) {
