@@ -252,6 +252,7 @@ public class PlaneRender_WM extends JavaApplication3D
         {
             m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
 
+            m_pkRenderer.SetCamera(m_spkScreenCamera);
             if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
             {
                 m_pkRenderer.Draw( 50, 20, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
@@ -263,7 +264,6 @@ public class PlaneRender_WM extends JavaApplication3D
                 m_pkRenderer.Draw( 50,m_iHeight - 10,kXSliceHairColor,m_kLabelXDisplay.toCharArray());
             }
 
-            m_pkRenderer.SetCamera(m_spkScreenCamera);
             m_pkRenderer.Draw(m_kXArrow[0]);
             m_pkRenderer.Draw(m_kXArrow[1]);
             m_pkRenderer.Draw(m_kYArrow[0]);

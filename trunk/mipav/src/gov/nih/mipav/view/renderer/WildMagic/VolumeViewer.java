@@ -887,7 +887,7 @@ implements MouseListener, ItemListener, ChangeListener {
 
             
 
-            raycastRenderWM = new GPUVolumeRender_WM(m_kAnimator, m_kVolumeImageA, imageA, LUTa, RGBTA,
+            raycastRenderWM = new GPUVolumeRender_WM( this, m_kAnimator, m_kVolumeImageA, imageA, LUTa, RGBTA,
                                                      m_kVolumeImageB, imageB, LUTb, RGBTB);
 
 
@@ -2013,9 +2013,7 @@ implements MouseListener, ItemListener, ChangeListener {
 
         if (m_kVolumeImageA != null) {
             m_kVolumeImageA.UpdateImages(LUTa, LUTb);    
-            for (int i = 0; i < 3; i++) {
-                m_akPlaneRender[i].SetModified(true);
-            }
+            setModified();
         }
 
 
@@ -2084,15 +2082,20 @@ implements MouseListener, ItemListener, ChangeListener {
      * @param  event  the window event
      */
     public void windowActivated(WindowEvent event) {
+        setModified();
+        super.windowActivated(event);
+    }
+
+    public void setModified()
+    {
         if ( m_akPlaneRender != null )
         {
             for (int i = 0; i < 3; i++) {
                 m_akPlaneRender[i].SetModified(true);
             }
         }
-        super.windowActivated(event);
     }
-
+    
     /**
      * Does nothing.
      *
@@ -2100,12 +2103,7 @@ implements MouseListener, ItemListener, ChangeListener {
      */
     public void componentMoved(ComponentEvent event)
     {       
-        if ( m_akPlaneRender != null )
-        {
-            for (int i = 0; i < 3; i++) {
-                m_akPlaneRender[i].SetModified(true);
-            }
-        }
+        setModified();
     }
     
     /**

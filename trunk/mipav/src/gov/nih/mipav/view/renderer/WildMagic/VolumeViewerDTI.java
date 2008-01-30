@@ -983,7 +983,7 @@ implements MouseListener, ItemListener, ChangeListener {
 
             
 
-            raycastRenderWM = new GPUVolumeRender_WM(m_kAnimator, m_kVolumeImageA, imageA, LUTa, RGBTA,
+            raycastRenderWM = new GPUVolumeRender_WM(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa, RGBTA,
                                                      m_kVolumeImageB, imageB, LUTb, RGBTB);
 
 
