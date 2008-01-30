@@ -484,7 +484,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			Font fontNormal = FontFactory.getFont("Helvetica", 10, Font.NORMAL, Color.DARK_GRAY);
 			Font fontBold = FontFactory.getFont("Helvetica", 10, Font.BOLD, Color.BLACK);
 	
-			/**
+			// Comment here to return paragraph /**
 			MultiColumnText mct = new MultiColumnText(20);
 			mct.setAlignment(Element.ALIGN_LEFT);
 			mct.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
@@ -536,7 +536,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			pTable.add(spTable);
 			pdfDocument.add(new Paragraph(new Chunk("")));
 			pdfDocument.add(pTable);
-			**/
+			
+			// *// end commenting
 			
 			//create the Table where we will insert the data:
 			aTable = new PdfPTable(new float[] {1.8f, 1f, 1f, 1f, 1f, 1f, 1f});
@@ -557,6 +558,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		}
 	}
 
+	/**
+	 * Detects whether the given VOI already contains a color and if so returns it.  Meant to assign
+	 * the same colors to both sides of the thigh (eg. right and left hamstrings, etc).
+	 */
 	private Color hasColor(VOI voiVec) {
 	    Color c = null;
 	    VOIVector tempVec = display.getActiveImage().getVOIs();
@@ -577,6 +582,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    return c;
 	}
 
+	/**
+	 * All dialog prompts used in this plugin are descendents of this class.  This allows
+	 * each dialog to have an expected layout and to take advantage of common buttons.
+	 * 
+	 * @author senseneyj
+	 */
 	private abstract class DialogPrompt extends JPanel implements ActionListener {
     	
     	//~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -595,6 +606,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     	public static final String OUTPUT = "Output";
     	public static final String BACK = "Back";
     	
+    	/**
+    	 * The default button list, most use the static Strings specified above since they can
+    	 * then be dealt with in MuscleImageDisplay.actionPerformed(event)
+    	 */
     	private String buttonStringList[] = {OK, CLEAR, HELP};
     	
     	private Vector objectList = new Vector();
@@ -632,10 +647,19 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     		return completed;
     	}
     	
+    	/**
+    	 * Call before initDialog() to allow the dialog to have the necessary buttons, else 
+    	 * default is OK, HELP, EXIT
+    	 * 
+    	 * @param buttonString the array of buttons to insert into this dialog
+    	 */
     	protected void setButtons(String[] buttonString) {
     		this.buttonStringList = buttonString;
     	}
     	
+    	/**
+    	 * Builds the dialog, note must be called by the implementing class.
+    	 */
     	protected abstract void initDialog();
     	
     	/**
@@ -722,10 +746,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     }
 
 	/**
-	 * A class to represent all dialog prompts
+	 * A class to represent all voi selection dialog prompts.  All MIPAV tools can be used
+	 * when creating the VOI.
 	 * 
 	 * @author senseneyj
-	 *
 	 */
     private class VoiDialogPrompt extends DialogPrompt implements ActionListener {
 
@@ -795,10 +819,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 notifyListeners(CANCEL);
                 //dispose();
             } else if (command.equals(HELP)) {
-                MipavUtil.showHelp("19014");
-                
-                
-                
+                MipavUtil.showHelp("19014"); 
             }
         }
         
@@ -844,8 +865,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         }
         
         /**
-         * Initializes the dialog box. Call updateSelectionLabel to change name
-         *
+         * Initializes the dialog box. Call updateSelectionLabel(name) to change name
          */
         protected void initDialog() {
             setForeground(Color.black);
@@ -901,8 +921,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	            		countQualifiedVOIs++;
 	            	}
 	            }
-            }
-            
+            } 
             if(countQualifiedVOIs != 1) {
                 String error = countQualifiedVOIs > 1 ? "You have created too many VOIs." : 
                                                                 "You haven't created any VOIs.";
@@ -945,6 +964,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         public static final String CHECK_VOI = "CHECK_VOI";
         
+        /** The location where all VOIs (but not PDFs) are saved to. */
         public static final String VOI_DIR = "NIA_Seg\\";
         
         private int voiTabLoc;
@@ -1016,9 +1036,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             if (imageA == null) {
                 return;
             }
-            
-            initNext();
+       
+            getContentPane().add(initDialog());
+            getContentPane().remove(0);
 
+            pack();
+            initMuscleImage(0);
+            setResizable(true);
         }
         
         /**
@@ -1238,16 +1262,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             return panelA;
         }
         
-        private void initNext() {
-            
-            getContentPane().add(initDialog());
-            getContentPane().remove(0);
-
-            pack();
-            initMuscleImage(0);
-            this.setResizable(true);
-        }
-        
+        /**
+         * Called when a pane becomes visible.  Performs an action when that pane happens to 
+         * be a kind of DialogPrompt.
+         */
         @Override
 		public void componentShown(ComponentEvent event) {
 		    Component c = event.getComponent();
@@ -2085,7 +2103,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        leanAreaTree = Collections.synchronizedMap(new TreeMap());
 			
 			meanFatHTree = Collections.synchronizedMap(new TreeMap());
-			meanLeanHTree  = Collections.synchronizedMap(new TreeMap());;
+			meanLeanHTree  = Collections.synchronizedMap(new TreeMap());
 			meanTotalHTree = Collections.synchronizedMap(new TreeMap());
 	        
 	        setButtons(buttonStringList);
@@ -2097,6 +2115,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        
 	        initDialog();
 	    }
+		
+		/** A 1D array of all the elements to display. */
 		
 		private String[] populateTotalList() {
 			int totalSize = 0;
@@ -2124,7 +2144,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 		}
 		
 		/**
-		 * Loads the CT Thigh specific lut
+		 * Loads the CT Thigh specific lut (blue/whit/red)
 		 *
 		 */
 		private void loadLUT() {
@@ -2169,9 +2189,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			lutOn = true;
 		}
 		
+		/**
+		 * Removes the blue/white/red look up table for this image, returning it to the regular
+		 * CT LUT.
+		 */
 		private void removeLUT() {
 			
-			parentFrame.ctMode(display.getActiveImage(), -175, 275);
+			parentFrame.ctMode(parentFrame.getActiveImage(), -175, 275);
 			
 			parentFrame.getLUTa().makeGrayTransferFunctions();
 			parentFrame.getLUTa().makeLUT(256);
@@ -2234,6 +2258,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        
 	    }
 		
+		/**
+		 * Creates the instruction panel.
+		 */
 		private JPanel initInstructionPanel() {
 	        GridBagConstraints gbc = new GridBagConstraints();
 	        gbc.anchor = GridBagConstraints.NORTHWEST;
@@ -2260,6 +2287,15 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        return instructionPanel;
 	    }
 		
+		/**
+		 * Creates a symmetrical objects panel for the results tab.  int index is the pane from
+		 * which you'd like to populate (eg. in two thighs mode, 0 would be left thigh, right
+		 * thigh.
+		 * 
+		 * @param index which pane to work with
+		 * @param title the title of this pane
+		 * @return the created JPanel
+		 */
 		private JScrollPane initSymmetricalObjects(int index, String title) {
 	         
 	        String[] mirrorString = new String[mirrorArr[index].length * 2];
@@ -2293,6 +2329,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	                
 	    }
 	    
+		/**
+		 * Creates the non-symmetrical objects panel for the results tab.  Not currently called since
+		 * there are no interesting non-symmetrical objects
+		 * 
+		 * @param index which pane to work with
+		 * @return the created JPanel
+		 */
 	    private JPanel initNonSymmetricalObjects(int index) {
 	        //VOIVector existingVois = ((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs();
 	        JCheckBox[] noMirrorCheckArr = new JCheckBox[noMirrorArr[index].length];
@@ -2336,7 +2379,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    public void actionPerformed(ActionEvent e) {
 	    	System.out.println("Caught 2");
 	    	String command = e.getActionCommand();
-	        display.displayChanged = false;
+	        parentFrame.displayChanged = false;
 	        if(command.equals(CLEAR)) {
 	            //clear all VOIs drawn
 	            parentFrame.getImageA().unregisterAllVOIs();
@@ -2368,7 +2411,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    }
 	    
 	
-	    
+	    /**
+	     * Detects whether a list element has been de/selected.
+	     */
 	    public void valueChanged(ListSelectionEvent e) {
 	    	//should be process in general, change and compute based on srcImage, do not need to load into component,
 	    	//though that's where VOIs should be registered.
@@ -2501,6 +2546,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 			}	
 		}
 		
+		/**\
+		 * When the calculations are complete, calling this method will enable the buttons
+		 * that display calculation output.
+		 */
 		protected void enableCalcOutput() {
 			for(int i=0; i<buttonGroup.length; i++) {
 	        	if(buttonGroup[i].getText().equals(OUTPUT)) {
@@ -2520,6 +2569,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    
 	    private class MuscleCalculation implements Runnable {
 	    	private boolean done = false;
+	    	
+	    	/**Default constructor for now. */
+	    	public MuscleCalculation() {}
 	    	
 	    	public void run() {
 	    		long time = System.currentTimeMillis();
@@ -2709,6 +2761,14 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    }
 	}
     
+    /**
+     * Optional class for building axes across both thighs, designed to measure length of
+     * fascial border at longest point that passes through bone and shortest point perpendicular
+     * to this one.
+     * 
+     * @author senseneyj
+     *
+     */
     private class BuildThighAxes implements AlgorithmInterface {
 		
 	    private int zSlice;
@@ -2834,6 +2894,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	        }
 	    }
 	    
+	    /**
+	     * Begins the axis creation algorithm, getAxesCompleted() will return true when done.
+	     */
 	    public void createAxes() {
 	        
 	        for(int i=0; i<thighVOIs.length; i++) {
