@@ -1129,13 +1129,21 @@ public class FileIO {
             if ((firstSliceTagTable.get("0018,0050") != null) || (firstSliceTagTable.get("0018,0088") != null)) {
 
                 if ((String) firstSliceTagTable.getValue("0018,0050") != null) {
-                    sliceThickness = Float.parseFloat((String) firstSliceTagTable.getValue("0018,0050"));
+                    try {
+                        sliceThickness = Float.parseFloat((String) firstSliceTagTable.getValue("0018,0050"));
+                    } catch (NumberFormatException nfe) {
+                        Preferences.debug("0018,0050:\tInvalid float value found in slice thickness tag.", Preferences.DEBUG_FILEIO);
+                    }
                 }
 
                 // 0018,0088 = Spacing Between Slices
                 // 0018,0050 = Slice Thickness
                 if ((String) firstSliceTagTable.getValue("0018,0088") != null) {
-                    sliceSpacing = Float.parseFloat((String) firstSliceTagTable.getValue("0018,0088"));
+                    try {
+                        sliceSpacing = Float.parseFloat((String) firstSliceTagTable.getValue("0018,0088"));
+                    } catch (NumberFormatException nfe) {
+                        Preferences.debug("0018,0088:\tInvalid float value found in slice spacing tag.", Preferences.DEBUG_FILEIO);
+                    }
                 }
 
                 // System.err.println("Slice Spacing: " + sliceSpacing);
