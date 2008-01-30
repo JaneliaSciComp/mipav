@@ -167,6 +167,13 @@ public class PlaneRender_WM extends JavaApplication3D
 
     private TriMesh[] m_kXArrow;
     private TriMesh[] m_kYArrow;
+
+    private int m_iLabelX_SpacingX;
+    private int m_iLabelX_SpacingY;
+    private int m_iLabelY_SpacingX;
+    private int m_iLabelY_SpacingY;
+    private boolean m_bUpdateSpacing = false;
+    
     private Camera m_spkScreenCamera;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -252,18 +259,17 @@ public class PlaneRender_WM extends JavaApplication3D
         {
             m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
 
-            m_pkRenderer.SetCamera(m_spkScreenCamera);
             if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
             {
-                m_pkRenderer.Draw( 50, 20, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
-                m_pkRenderer.Draw( 10, 68, kYSliceHairColor,m_kLabelY.toCharArray());
+                m_pkRenderer.Draw( m_iLabelX_SpacingX, m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
+                m_pkRenderer.Draw( m_iLabelY_SpacingX, m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY.toCharArray());
             }
             else
             {
-                m_pkRenderer.Draw( 10,m_iHeight - 55,kYSliceHairColor,m_kLabelY.toCharArray());
-                m_pkRenderer.Draw( 50,m_iHeight - 10,kXSliceHairColor,m_kLabelXDisplay.toCharArray());
+                m_pkRenderer.Draw( m_iLabelX_SpacingX, m_iHeight - m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
+                m_pkRenderer.Draw( m_iLabelY_SpacingX, m_iHeight - m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY.toCharArray());               
             }
-
+            m_pkRenderer.SetCamera(m_spkScreenCamera);  
             m_pkRenderer.Draw(m_kXArrow[0]);
             m_pkRenderer.Draw(m_kXArrow[1]);
             m_pkRenderer.Draw(m_kYArrow[0]);
@@ -320,7 +326,17 @@ public class PlaneRender_WM extends JavaApplication3D
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
        // ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         if (iWidth > 0 && iHeight > 0)
-        {
+        {            
+            if ( m_bUpdateSpacing )
+            {
+                m_iLabelX_SpacingX *= (float)iWidth/(float)m_iWidth;
+                m_iLabelX_SpacingY *= (float)iHeight/(float)m_iHeight;
+                m_iLabelY_SpacingX *= (float)iWidth/(float)m_iWidth;
+                m_iLabelY_SpacingY *= (float)iHeight/(float)m_iHeight;
+            }
+            m_bUpdateSpacing = true;
+            
+            
             if (m_pkRenderer != null)
             {
                 m_pkRenderer.Resize(iWidth,iHeight);
@@ -1269,6 +1285,21 @@ public class PlaneRender_WM extends JavaApplication3D
                 m_kLabelXDisplay = new String( "R" );
             }
         }
+        if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
+        {
+            m_iLabelX_SpacingX = 50;
+            m_iLabelX_SpacingY = 20;
+            m_iLabelY_SpacingX = 10;
+            m_iLabelY_SpacingY = 68;
+        }
+        else
+        {     
+            m_iLabelX_SpacingX = 50;
+            m_iLabelX_SpacingY = 10;
+            m_iLabelY_SpacingX = 10;
+            m_iLabelY_SpacingY = 55;
+        }
+        
     }
 
     public void SetModified ( boolean bModified )
