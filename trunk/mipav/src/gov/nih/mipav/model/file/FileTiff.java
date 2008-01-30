@@ -233,6 +233,9 @@ public class FileTiff extends FileBase {
     
     public static final int REFERENCE_BLACK_WHITE = 532;
     
+    // XML packet containing XMP metadata
+    public static final int XMP = 700;
+    
     public static final int COPYRIGHT = 33432;
     
     // Exposure time, given in seconds.
@@ -241,8 +244,17 @@ public class FileTiff extends FileBase {
     // The F number.
     public static final int EXIFTAG_FNUMBER = 33437;
     
+    // IPTC(International Press Telecommunications Council) metadata.
+    public static final int IPTC = 33723;
+    
+    // Collection of Photoshop image resource blocks
+    public static final int PHOTOSHOP = 34377;
+    
     // Pointer to EXIF private directory
     public static final int EXIFIFD = 34665;
+    
+    // ICC profile data
+    public static final int ICC_PROFILE = 34675;
     
     // The class of program used by the camera to set exposure when the picture is taken.
     public static final int EXIFTAG_EXPOSURE_PROGRAM = 34850;
@@ -315,6 +327,12 @@ public class FileTiff extends FileBase {
     // and environment.  If a colorSpace other than sRGB is used, uncalibrated(0xFFFF) is set.
     // Image data recorded as uncalibrated can be treated as sRGB when it is converted to Flashpix.
     public static final int EXIFTAG_COLOR_SPACE = 40961;
+    
+    // Specific to compressed data, the valid width of the meaningful image
+    public static final int EXIFTAG_PIXEL_X_DIMENSION = 40962;
+    
+    // Specific to compressed data, the valid height of the meaningful image
+    public static final int EXIFTAG_PIXEL_Y_DIMENSION = 40963;
     
     // Indicates the number of pixels in the image width (X) direction per FocalPlaneResolutionUnit on
     // the camera focal plane.
@@ -5963,7 +5981,7 @@ public class FileTiff extends FileBase {
                                       count + "\n", Preferences.DEBUG_FILEIO);
                 }
 
-                throw new IOException("OpenIFD: Unknown field type = " + type + " Tag = " + tag + " count = " + count);
+                throw new IOException("FileTiff.openIFD: Unknown field type = " + type + " Tag = " + tag + " count = " + count);
             }
 
             if (debuggingFileIO) {
@@ -6046,9 +6064,9 @@ public class FileTiff extends FileBase {
                                       Preferences.DEBUG_FILEIO);
                 }
             } else if ((type == DOUBLE) && (count == 1) && debuggingFileIO) {
-                Preferences.debug("FIleTiff.openIFD: value = " + valueDouble + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("FileTiff.openIFD: value = " + valueDouble + "\n", Preferences.DEBUG_FILEIO);
             } else if ((type == FLOAT) && (count == 1) && debuggingFileIO) {
-                Preferences.debug("fileTiff.openIFD: value = " + valueFloat + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("FileTiff.openIFD: value = " + valueFloat + "\n", Preferences.DEBUG_FILEIO);
             }
 
             switch (tag) {
@@ -6751,12 +6769,12 @@ public class FileTiff extends FileBase {
                                               Preferences.DEBUG_FILEIO);
                         }
                         else if (YCbCrSubsampleHoriz == 2) {
-                            Preferences.debug("FileTIff.openIFD: Image width of this chroma image is half the image\n" +
+                            Preferences.debug("FileTiff.openIFD: Image width of this chroma image is half the image\n" +
                                               "width of the associated luma image\n",
                                               Preferences.DEBUG_FILEIO);
                         }
                         else if (YCbCrSubsampleHoriz == 4) {
-                            Preferences.debug("FileTIff.openIFD: Image width of this chroma image is one-quarter the\n" +
+                            Preferences.debug("FileTiff.openIFD: Image width of this chroma image is one-quarter the\n" +
                                     "image width of the associated luma image\n",
                                     Preferences.DEBUG_FILEIO);   
                         }
@@ -6766,12 +6784,12 @@ public class FileTiff extends FileBase {
                                               Preferences.DEBUG_FILEIO);
                         }
                         else if (YCbCrSubsampleVert == 2) {
-                            Preferences.debug("FileTIff.openIFD: Image height of this chroma image is half the image\n" +
+                            Preferences.debug("FileTiff.openIFD: Image height of this chroma image is half the image\n" +
                                               "height of the associated luma image\n",
                                               Preferences.DEBUG_FILEIO);
                         }
                         else if (YCbCrSubsampleVert == 4) {
-                            Preferences.debug("FileTIff.openIFD: Image height of this chroma image is one-quarter the\n" +
+                            Preferences.debug("FileTiff.openIFD: Image height of this chroma image is one-quarter the\n" +
                                     "image height of the associated luma image\n",
                                     Preferences.DEBUG_FILEIO);   
                         }
@@ -6791,13 +6809,13 @@ public class FileTiff extends FileBase {
                     YCbCrPositioning = (int)valueArray[0];
                     if (debuggingFileIO) {
                         if (YCbCrPositioning == 1) {
-                            Preferences.debug("FileTIff.openIFD: YCbCrPositioning = 1 for centered\n" +
+                            Preferences.debug("FileTiff.openIFD: YCbCrPositioning = 1 for centered\n" +
                                               "xOffset[0,0] = chromaSubsampleHoriz/2 - 0.5\n" +
                                               "yOffset[0,0] = chromaSubsampleVert/2 - 0.5\n",
                                               Preferences.DEBUG_FILEIO);
                         }
                         else if (YCbCrPositioning == 2) {
-                            Preferences.debug("FileTIff.openIFD: YCbCrPositioning = 2 for cosited\n" +
+                            Preferences.debug("FileTiff.openIFD: YCbCrPositioning = 2 for cosited\n" +
                                     "xOffset[0,0] = 0, yOffset[0,0] = 0\n",
                                     Preferences.DEBUG_FILEIO);   
                         }
@@ -7508,6 +7526,17 @@ public class FileTiff extends FileBase {
 
                     break;
                     
+                case XMP:
+                    if ((type != BYTE) && (type != UNDEFINED)) {
+                        throw new IOException("XMP has illegal type = " + type + "\n");
+                    }
+                    
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: XMP metadata is above\n");
+                    }
+                    break;
+                    
+                    
                 case JPEG_TABLES:
                     if (type != UNDEFINED) {
                         throw new IOException("JPEG_TABLES has illegal type = " + type + "\n");
@@ -7567,7 +7596,7 @@ public class FileTiff extends FileBase {
                     denominator = valueArray[1];
                     exposureTime = (float) numerator / denominator;
                     if (debuggingFileIO) {
-                        Preferences.debug("OpenIFD: Exposure time = " + exposureTime  +
+                        Preferences.debug("FileTiff.openIFD: Exposure time = " + exposureTime  +
                                           " seconds\n", Preferences.DEBUG_FILEIO);
                     }
                     break;
@@ -7585,7 +7614,7 @@ public class FileTiff extends FileBase {
                     denominator = valueArray[1];
                     fNumber = (float) numerator / denominator;
                     if (debuggingFileIO) {
-                        Preferences.debug("OpenIFD: F number = " + fNumber  +
+                        Preferences.debug("FileTiff.openIFD: F number = " + fNumber  +
                                           "\n", Preferences.DEBUG_FILEIO);
                     }
                     break;
@@ -7604,45 +7633,45 @@ public class FileTiff extends FileBase {
                     if (debuggingFileIO) {
                         switch (exposureProgram) {
                             case 0:
-                                Preferences.debug("OpenIFD: Exposure program is not defined\n",
+                                Preferences.debug("FileTiff.openIFD: Exposure program is not defined\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 1:
-                                Preferences.debug("OpenIFD: Exposure program is manual\n",
+                                Preferences.debug("FileTiff.openIFD: Exposure program is manual\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 2:
-                                Preferences.debug("OpenIFD: Exposure program is normal program\n",
+                                Preferences.debug("FileTiff.openIFD: Exposure program is normal program\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 3:
-                                Preferences.debug("OpenIFD: Exposure program is aperture priority\n",
+                                Preferences.debug("FileTiff.openIFD: Exposure program is aperture priority\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 4:
-                                Preferences.debug("OpenIFD: Exposure program is shutter priority\n",
+                                Preferences.debug("FileTiff.openIFD: Exposure program is shutter priority\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 5:
-                                Preferences.debug("OpenIFD: Exposure program is creative program\n" +
+                                Preferences.debug("FileTiff.openIFD: Exposure program is creative program\n" +
                                                   "Biased toward depth of field\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 6:
-                                Preferences.debug("OpenIFD: Exposure program is action program\n" +
+                                Preferences.debug("FileTiff.openIFD: Exposure program is action program\n" +
                                                   "Biased towad fast shutter speed\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 7:
-                                Preferences.debug("OpenIFD: Exposure program is portrait mode\n" +
+                                Preferences.debug("FileTiff.openIFD: Exposure program is portrait mode\n" +
                                                   "For closeup photos with the background out of focus\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 8:
-                                Preferences.debug("OpenIFD: Exposure program is landscape mode\n" +
+                                Preferences.debug("FileTiff.openIFD: Exposure program is landscape mode\n" +
                                                   "For landscape photos with the background in focus\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             default:
-                                Preferences.debug("OpenIFD: Exposure program is " + exposureProgram + 
+                                Preferences.debug("FileTiff.openIFD: Exposure program is " + exposureProgram + 
                                                   ", an unrecognized value\n", Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -7654,7 +7683,7 @@ public class FileTiff extends FileBase {
                     }
                     
                     if (debuggingFileIO) {
-                        Preferences.debug("OpenIFD: ISO speed ratings are above\n", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("FileTiff.openIFD: ISO speed ratings are above\n", Preferences.DEBUG_FILEIO);
                     }
                     
                     isoSpeedRatings = new short[count];
@@ -7679,7 +7708,7 @@ public class FileTiff extends FileBase {
                     }
                     str = new String(exifVersion);
                     if (debuggingFileIO) {
-                        Preferences.debug("OpenIFD: EXIF_VERSION = " + str + "\n",
+                        Preferences.debug("FileTiff.openIFD: EXIF_VERSION = " + str + "\n",
                                            Preferences.DEBUG_FILEIO);
                     }   
                     break;
@@ -7700,7 +7729,7 @@ public class FileTiff extends FileBase {
                     str = new String(dateTimeOriginal);
                     
                     if (debuggingFileIO) {
-                        Preferences.debug("OpenIFD: Date and time original image generated = " + str.trim() + "\n",
+                        Preferences.debug("FileTiff.openIFD: Date and time original image generated = " + str.trim() + "\n",
                                           Preferences.DEBUG_FILEIO);
                     }
                     break;
@@ -7721,7 +7750,7 @@ public class FileTiff extends FileBase {
                     str = new String(dateTimeDigitized);
                     
                     if (debuggingFileIO) {
-                        Preferences.debug("OpenIFD: Date and time image digitized = " + str.trim() + "\n",
+                        Preferences.debug("FileTiff.openIFD: Date and time image digitized = " + str.trim() + "\n",
                                           Preferences.DEBUG_FILEIO);
                     }
                     break;
@@ -7739,7 +7768,7 @@ public class FileTiff extends FileBase {
                     denominator = valueArray[1];
                     exposureBias = (float) numerator / denominator;
                     if (debuggingFileIO) {
-                        Preferences.debug("OpenIFD: Exposure bias = " + exposureBias  +
+                        Preferences.debug("FileTiff.openIFD: Exposure bias = " + exposureBias  +
                                           "\n", Preferences.DEBUG_FILEIO);
                     }
                     break;
@@ -7757,7 +7786,7 @@ public class FileTiff extends FileBase {
                     denominator = valueArray[1];
                     maxAperture = (float) numerator / denominator;
                     if (debuggingFileIO) {
-                        Preferences.debug("OpenIFD: Smallest lens F number = " + maxAperture  +
+                        Preferences.debug("FileTiff.openIFD: Smallest lens F number = " + maxAperture  +
                                           "\n", Preferences.DEBUG_FILEIO);
                     }
                     break;
@@ -7776,32 +7805,32 @@ public class FileTiff extends FileBase {
                     if (debuggingFileIO) {
                         switch(meteringMode) {
                             case 0:
-                                Preferences.debug("OpenIFD: Metering mode is unknown\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Metering mode is unknown\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 1:
-                                Preferences.debug("OpenIFD: Metering mode is average\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Metering mode is average\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 2:
-                                Preferences.debug("OpenIFD: Metering mode is center weighted average\n",
+                                Preferences.debug("FileTiff.openIFD: Metering mode is center weighted average\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 3:
-                                Preferences.debug("OpenIFD: Metering mode is spot\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Metering mode is spot\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 4:
-                                Preferences.debug("OpenIFD: Metering mode is multispot\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Metering mode is multispot\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 5:
-                                Preferences.debug("OpenIFD: Metering mode is pattern\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Metering mode is pattern\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 6:
-                                Preferences.debug("OpenIFD: Metering mode is partial\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Metering mode is partial\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 255:
-                                Preferences.debug("OpenIFD: Metering mode is other\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Metering mode is other\n", Preferences.DEBUG_FILEIO);
                                 break;
                             default:
-                                Preferences.debug("OpenIFD: Metering mode has unrecognized value = " + 
+                                Preferences.debug("FileTiff.openIFD: Metering mode has unrecognized value = " + 
                                                   meteringMode + "\n", Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -7822,80 +7851,80 @@ public class FileTiff extends FileBase {
                     if (debuggingFileIO) {
                         switch(lightSource) {
                             case 0:
-                                Preferences.debug("OpenIFD: Light source is unknown\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Light source is unknown\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 1:
-                                Preferences.debug("OpenIFD: Light source is daylight\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Light source is daylight\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 2:
-                                Preferences.debug("OpenIFD: Light source is fluorescent\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Light source is fluorescent\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 3:
-                                Preferences.debug("OpenIFD: Light source is tungsten(incandescent light)\n",
+                                Preferences.debug("FileTiff.openIFD: Light source is tungsten(incandescent light)\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 4:
-                                Preferences.debug("OpenIFD: Light source is flash\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Light source is flash\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 9:
-                                Preferences.debug("OpenIFD: Light source is fine weather\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Light source is fine weather\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 10:
-                                Preferences.debug("OpenIFD: Light source is cloudy weather\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Light source is cloudy weather\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 11:
-                                Preferences.debug("OpenIFD: Light source is shade\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Light source is shade\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 12:
-                                Preferences.debug("OpenIFD: Light source is daylight fluorescent(D 5700 - 7100K)\n",
+                                Preferences.debug("FileTiff.openIFD: Light source is daylight fluorescent(D 5700 - 7100K)\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 13:
-                                Preferences.debug("OpenIFD: Light source is day white fluorescent(N 4600 - 5400K)\n",
+                                Preferences.debug("FileTiff.openIFD: Light source is day white fluorescent(N 4600 - 5400K)\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 14:
-                                Preferences.debug("OpenIFD: Light source is cool white fluorescent(W 3900 - 4500K)\n",
+                                Preferences.debug("FileTiff.openIFD: Light source is cool white fluorescent(W 3900 - 4500K)\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 15:
-                                Preferences.debug("OpenIFD: Light source is white fluorescent(WW 3200 - 3700K)\n",
+                                Preferences.debug("FileTiff.openIFD: Light source is white fluorescent(WW 3200 - 3700K)\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 17:
-                                Preferences.debug("OpenIFD: Light source is standard light A\n",
+                                Preferences.debug("FileTiff.openIFD: Light source is standard light A\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 18:
-                                Preferences.debug("OpenIFD: Light source is standard light B\n",
+                                Preferences.debug("FileTiff.openIFD: Light source is standard light B\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 19:
-                                Preferences.debug("OpenIFD: Light source is standard light C\n",
+                                Preferences.debug("FileTiff.openIFD: Light source is standard light C\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 20:
-                                Preferences.debug("OpenIFD: Light source is D55\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Light source is D55\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 21:
-                                Preferences.debug("OpenIFD: Light source is D65\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Light source is D65\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 22:
-                                Preferences.debug("OpenIFD: Light source is D75\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Light source is D75\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 23:
-                                Preferences.debug("OpenIFD: Light source is D50\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Light source is D50\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 24:
-                                Preferences.debug("OpenIFD: Light source is ISO studio tungsten\n",
+                                Preferences.debug("FileTiff.openIFD: Light source is ISO studio tungsten\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 255:
-                                Preferences.debug("OpenIFD: Light source is other light source\n",
+                                Preferences.debug("FileTiff.openIFD: Light source is other light source\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             default:
-                                Preferences.debug("OpenIFD: Light source has unrecognized value = " +
+                                Preferences.debug("FileTiff.openIFD: Light source has unrecognized value = " +
                                                    lightSource + "\n", Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -7916,91 +7945,91 @@ public class FileTiff extends FileBase {
                     if (debuggingFileIO) {
                         switch(flash) {
                             case 0x0:
-                                Preferences.debug("OpenIFD: Flash did not fire\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Flash did not fire\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x1:
-                                Preferences.debug("OpenIFD: Flash fired\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Flash fired\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x5:
-                                Preferences.debug("OpenIFD: Strobe return light not detected\n",
+                                Preferences.debug("FileTiff.openIFD: Strobe return light not detected\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x7:
-                                Preferences.debug("OpenIFD: Strobe return light detected\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Strobe return light detected\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x9:
-                                Preferences.debug("OpenIFD: Flash fired, compulsory flash mode\n",
+                                Preferences.debug("FileTiff.openIFD: Flash fired, compulsory flash mode\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 0xD:
-                                Preferences.debug("OpenIFD: Flash fired, compulsory flash mode\n" +
+                                Preferences.debug("FileTiff.openIFD: Flash fired, compulsory flash mode\n" +
                                                   "Return light not detected\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 0xF:
-                                Preferences.debug("OpenIFD: Flash fired, compulsory flash mode\n" +
+                                Preferences.debug("FileTiff.openIFD: Flash fired, compulsory flash mode\n" +
                                                   "Return light detected\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x10:
-                                Preferences.debug("OpenIFD: Flash did not fire, compulsory flash mode\n",
+                                Preferences.debug("FileTiff.openIFD: Flash did not fire, compulsory flash mode\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x18:
-                                Preferences.debug("OpenIFD: Flash did not fire, auto mode\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Flash did not fire, auto mode\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x19:
-                                Preferences.debug("OpenIFD: Flash fired, auto mode\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Flash fired, auto mode\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x1D:
-                                Preferences.debug("OpenIFD: Flash fired, auto mode, return light not detected\n",
+                                Preferences.debug("FileTiff.openIFD: Flash fired, auto mode, return light not detected\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x1F:
-                                Preferences.debug("OpenIFD: Flash fired, auto mode, return light detected\n",
+                                Preferences.debug("FileTiff.openIFD: Flash fired, auto mode, return light detected\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x20:
-                                Preferences.debug("OpenIFD: No flash function\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: No flash function\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x41:
-                                Preferences.debug("OpenIFD: Flash fired, red-eye reduction mode\n",
+                                Preferences.debug("FileTiff.openIFD: Flash fired, red-eye reduction mode\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x45:
-                                Preferences.debug("OpenIFD: Flash fired, red-eye reduction mode\n" +
+                                Preferences.debug("FileTiff.openIFD: Flash fired, red-eye reduction mode\n" +
                                                   "Return light not detected\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x47:
-                                Preferences.debug("OpenIFD: Flash fired, red-eye reduction mode\n" +
+                                Preferences.debug("FileTiff.openIFD: Flash fired, red-eye reduction mode\n" +
                                                   "Return light detected\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x49:
-                                Preferences.debug("OpenIFD: Flash fired, compulsory flash mode\n" +
+                                Preferences.debug("FileTiff.openIFD: Flash fired, compulsory flash mode\n" +
                                                   "Red-eye reduction mode\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x4D:
-                                Preferences.debug("OpenIFD: Flash fired, compulsory flash mode\n" +
+                                Preferences.debug("FileTiff.openIFD: Flash fired, compulsory flash mode\n" +
                                                   "red-eye reduction mode, return light not detected\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x4F:
-                                Preferences.debug("OpenIFD: Flash fired, compulsory flash mode\n" +
+                                Preferences.debug("FileTiff.openIFD: Flash fired, compulsory flash mode\n" +
                                                   "red-eye reduction mode, return light detected\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x59:
-                                Preferences.debug("OpenIFD: Flash fired, auto mode, red-eye reduction mode\n",
+                                Preferences.debug("FileTiff.openIFD: Flash fired, auto mode, red-eye reduction mode\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x5D:
-                                Preferences.debug("OpenIFD: Flash fired, auto mode, return light not detected\n" +
+                                Preferences.debug("FileTiff.openIFD: Flash fired, auto mode, return light not detected\n" +
                                                    "Red-eye reduction mode\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 0x5F:
-                                Preferences.debug("OpenIFD: Flash fired, auto mode, return light detected\n" +
+                                Preferences.debug("FileTiff.openIFD: Flash fired, auto mode, return light detected\n" +
                                                   "Red-eye reduction mode\n", Preferences.DEBUG_FILEIO);
                                 break;
                             default:
-                                Preferences.debug("OpenIFD: Flash has unrecognized value = " + flash + "\n",
+                                Preferences.debug("FileTiff.openIFD: Flash has unrecognized value = " + flash + "\n",
                                                   Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -8020,7 +8049,7 @@ public class FileTiff extends FileBase {
                     denominator = valueArray[1];
                     focalLength = (float) numerator / denominator;
                     if (debuggingFileIO) {
-                        Preferences.debug("OpenIFD: Focal length of lens = " + focalLength  +
+                        Preferences.debug("FileTiff.openIFD: Focal length of lens = " + focalLength  +
                                           " millimeters\n", Preferences.DEBUG_FILEIO);
                     }
                     break;
@@ -8036,7 +8065,7 @@ public class FileTiff extends FileBase {
                     }
                     str = new String(makerNote);
                     if (debuggingFileIO) {
-                        Preferences.debug("OpenIFD: Maker note = " + str.trim() + "\n",
+                        Preferences.debug("FileTiff.openIFD: Maker note = " + str.trim() + "\n",
                                            Preferences.DEBUG_FILEIO);
                     }   
                     break;
@@ -8057,14 +8086,14 @@ public class FileTiff extends FileBase {
                     
                     if (zero) {
                         if (debuggingFileIO) {
-                            Preferences.debug("OpenIFD: Character code for user comment is undefined\n",
+                            Preferences.debug("FileTiff.openIFD: Character code for user comment is undefined\n",
                                               Preferences.DEBUG_FILEIO);
                         }
                     }
                     else {
                         str = new String(characterCode);
                         if (debuggingFileIO) {
-                            Preferences.debug("OpenIFD: Character code for user comment = " + str.trim() + "\n",
+                            Preferences.debug("FileTiff.openIFD: Character code for user comment = " + str.trim() + "\n",
                                                Preferences.DEBUG_FILEIO);
                         } 
                         
@@ -8074,7 +8103,7 @@ public class FileTiff extends FileBase {
                             }
                             str = new String(userComment);
                             if (debuggingFileIO) {
-                                Preferences.debug("OpenIFD: User comment = " + str.trim() + "\n",
+                                Preferences.debug("FileTiff.openIFD: User comment = " + str.trim() + "\n",
                                                   Preferences.DEBUG_FILEIO);
                             }
                         }
@@ -8084,7 +8113,7 @@ public class FileTiff extends FileBase {
                             }
                             str = new String(userComment, 0, count-8, "UTF_16BE");
                             if (debuggingFileIO) {
-                                Preferences.debug("OpenIFD: User comment = " + str.trim() + "\n",
+                                Preferences.debug("FileTiff.openIFD: User comment = " + str.trim() + "\n",
                                                   Preferences.DEBUG_FILEIO);
                             }
                         }
@@ -8106,7 +8135,7 @@ public class FileTiff extends FileBase {
                     }
                     str = new String(flashPixVersion);
                     if (debuggingFileIO) {
-                        Preferences.debug("OpenIFD: Flashpix Format Version = " + str + "\n",
+                        Preferences.debug("FileTiff.openIFD: Flashpix Format Version = " + str + "\n",
                                            Preferences.DEBUG_FILEIO);
                     }   
                     break;
@@ -8125,14 +8154,14 @@ public class FileTiff extends FileBase {
                     if (debuggingFileIO) {
                         switch(colorSpace) {
                             case 1:
-                                Preferences.debug("OpenIFD: EXIFTAG_COlOR_SPACE = sRGB\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: EXIFTAG_COlOR_SPACE = sRGB\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 0xffff:
-                                Preferences.debug("OpenIFD: EXIFTAG_COLOR_SPACE = uncalibrated\n",
+                                Preferences.debug("FileTiff.openIFD: EXIFTAG_COLOR_SPACE = uncalibrated\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             default:
-                                Preferences.debug("OpenIFD: EXIFTAG_COLOR_SPACE has an unrecognized value = " +
+                                Preferences.debug("FileTiff.openIFD: EXIFTAG_COLOR_SPACE has an unrecognized value = " +
                                                    colorSpace + "\n",Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -8153,10 +8182,10 @@ public class FileTiff extends FileBase {
                     if (debuggingFileIO) {
                         switch(fileSource) {
                             case 3:
-                                Preferences.debug("OpenIFD: Image was recorded on a DSC\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Image was recorded on a DSC\n", Preferences.DEBUG_FILEIO);
                                 break;
                             default:
-                                Preferences.debug("OpenIFD: EXIFTAG_FILE_SOURCE has an unrecognized value = " +
+                                Preferences.debug("FileTiff.openIFD: EXIFTAG_FILE_SOURCE has an unrecognized value = " +
                                                    fileSource + "\n",Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -8177,11 +8206,11 @@ public class FileTiff extends FileBase {
                     if (debuggingFileIO) {
                         switch(sceneType) {
                             case 1:
-                                Preferences.debug("OpenIFD: Image was directly photographed\n",
+                                Preferences.debug("FileTiff.openIFD: Image was directly photographed\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             default:
-                                Preferences.debug("OpenIFD: EXIFTAG_SCENE_TYPE has an unrecognized value = " +
+                                Preferences.debug("FileTiff.openIFD: EXIFTAG_SCENE_TYPE has an unrecognized value = " +
                                                    sceneType + "\n",Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -8202,15 +8231,15 @@ public class FileTiff extends FileBase {
                     if (debuggingFileIO) {
                         switch(customRendered) {
                             case 0:
-                                Preferences.debug("OpenIFD: Normal processing on image data\n",
+                                Preferences.debug("FileTiff.openIFD: Normal processing on image data\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 1:
-                                Preferences.debug("OpenIFD: Custom processing on image data\n",
+                                Preferences.debug("FileTiff.openIFD: Custom processing on image data\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             default:
-                                Preferences.debug("OpenIFD: EXIFTAG_CUSTOM_RENDERED has unrecognized value = " +
+                                Preferences.debug("FileTiff.openIFD: EXIFTAG_CUSTOM_RENDERED has unrecognized value = " +
                                                   customRendered + "\n", Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -8231,20 +8260,20 @@ public class FileTiff extends FileBase {
                     if (debuggingFileIO) {
                         switch(exposureMode) {
                             case 0:
-                                Preferences.debug("OpenIFD: Exposure mode is auto exposure\n",
+                                Preferences.debug("FileTiff.openIFD: Exposure mode is auto exposure\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 1:
-                                Preferences.debug("OpenIFD: Exposure mode is manual exposure\n",
+                                Preferences.debug("FileTiff.openIFD: Exposure mode is manual exposure\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 2:
-                                Preferences.debug("OpenIFD: Exposure mode is auto bracket\n" +
+                                Preferences.debug("FileTiff.openIFD: Exposure mode is auto bracket\n" +
                                         "In auto-bracketing mode the camera shoots a series of frames at\n" +
                                         "different exposure settings\n", Preferences.DEBUG_FILEIO);
                                 break;
                             default:
-                                Preferences.debug("OpenIFD: EXIFTAG_EXPOSURE_MODE has unrecognized value = " +
+                                Preferences.debug("FileTiff.openIFD: EXIFTAG_EXPOSURE_MODE has unrecognized value = " +
                                                   exposureMode + "\n", Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -8265,15 +8294,15 @@ public class FileTiff extends FileBase {
                     if (debuggingFileIO) {
                         switch(whiteBalance) {
                             case 0:
-                                Preferences.debug("OpenIFD: White balance mode is auto white balance\n",
+                                Preferences.debug("FileTiff.openIFD: White balance mode is auto white balance\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 1:
-                                Preferences.debug("OpenIFD: White balance mode is manual white balance\n",
+                                Preferences.debug("FileTiff.openIFD: White balance mode is manual white balance\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             default:
-                                Preferences.debug("OpenIFD: EXIFTAG_WHITE_BALANCE has unrecognized value = " +
+                                Preferences.debug("FileTiff.openIFD: EXIFTAG_WHITE_BALANCE has unrecognized value = " +
                                                   whiteBalance + "\n", Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -8297,7 +8326,7 @@ public class FileTiff extends FileBase {
                             Preferences.debug("OpneIFD: Digital zoom was not used\n", Preferences.DEBUG_FILEIO);
                         }
                         else {
-                        Preferences.debug("OpenIFD: Digital zoom ratio = " + digitalZoomRatio  +
+                        Preferences.debug("FileTiff.openIFD: Digital zoom ratio = " + digitalZoomRatio  +
                                           "\n", Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -8317,23 +8346,23 @@ public class FileTiff extends FileBase {
                     if (debuggingFileIO) {
                         switch(sceneCaptureType) {
                             case 0:
-                                Preferences.debug("OpenIFD: Scene capture type is standard\n",
+                                Preferences.debug("FileTiff.openIFD: Scene capture type is standard\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 1:
-                                Preferences.debug("OpenIFD: Scene capture type is landscape\n",
+                                Preferences.debug("FileTiff.openIFD: Scene capture type is landscape\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 2:
-                                Preferences.debug("OpenIFD: Scene capture type is portrait\n",
+                                Preferences.debug("FileTiff.openIFD: Scene capture type is portrait\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 3:
-                                Preferences.debug("OpenIFD: Scene capture type is night scene\n",
+                                Preferences.debug("FileTiff.openIFD: Scene capture type is night scene\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             default:
-                                Preferences.debug("OpenIFD: EXIFTAG_SCENE_CAPTURE_TYPE has unrecognized value = " +
+                                Preferences.debug("FileTiff.openIFD: EXIFTAG_SCENE_CAPTURE_TYPE has unrecognized value = " +
                                                   sceneCaptureType + "\n", Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -8354,27 +8383,27 @@ public class FileTiff extends FileBase {
                     if (debuggingFileIO) {
                         switch(gainControl) {
                             case 0:
-                                Preferences.debug("OpenIFD: Overall image gain adjustment is none\n",
+                                Preferences.debug("FileTiff.openIFD: Overall image gain adjustment is none\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 1:
-                                Preferences.debug("OpenIFD: Overall image gain adjustment is low gain up\n",
+                                Preferences.debug("FileTiff.openIFD: Overall image gain adjustment is low gain up\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 2:
-                                Preferences.debug("OpenIFD: Overall image gain adjustment is high gain up\n",
+                                Preferences.debug("FileTiff.openIFD: Overall image gain adjustment is high gain up\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 3:
-                                Preferences.debug("OpenIFD: Overall image gain adjustment is low gain down\n",
+                                Preferences.debug("FileTiff.openIFD: Overall image gain adjustment is low gain down\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 4:
-                                Preferences.debug("OpenIFD: Overall image gain adjustment is high gain down\n",
+                                Preferences.debug("FileTiff.openIFD: Overall image gain adjustment is high gain down\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             default:
-                                Preferences.debug("OpenIFD: EXIFTAG_GAIN_CONTROL has unrecognized value = " +
+                                Preferences.debug("FileTiff.openIFD: EXIFTAG_GAIN_CONTROL has unrecognized value = " +
                                                   gainControl + "\n", Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -8396,21 +8425,21 @@ public class FileTiff extends FileBase {
                         switch(contrast) {
                             case 0:
                                 Preferences.debug(
-                                "OpenIFD: Direction of contrast processing applied by the camera is normal\n",
+                                "FileTiff.openIFD: Direction of contrast processing applied by the camera is normal\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 1:
                                 Preferences.debug(
-                                "OpenIFD: Direction of contrast processing applied by the camera is soft\n",
+                                "FileTiff.openIFD: Direction of contrast processing applied by the camera is soft\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 2:
                                 Preferences.debug(
-                                "OpenIFD: Direction of contrast processing applied by the camera is hard\n",
+                                "FileTiff.openIFD: Direction of contrast processing applied by the camera is hard\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             default:
-                                Preferences.debug("OpenIFD: EXIFTAG_CONTRAST has unrecognized value = " +
+                                Preferences.debug("FileTiff.openIFD: EXIFTAG_CONTRAST has unrecognized value = " +
                                                   contrast + "\n", Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -8432,21 +8461,21 @@ public class FileTiff extends FileBase {
                         switch(saturation) {
                             case 0:
                                 Preferences.debug(
-                                "OpenIFD: Direction of saturation processing applied by the camera is normal\n",
+                                "FileTiff.openIFD: Direction of saturation processing applied by the camera is normal\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 1:
                                 Preferences.debug(
-                                "OpenIFD: Direction of saturation processing applied by the camera is low saturation\n",
+                                "FileTiff.openIFD: Direction of saturation processing applied by the camera is low saturation\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 2:
                                 Preferences.debug(
-                                "OpenIFD: Direction of saturation processing applied by the camera is high saturation\n",
+                                "FileTiff.openIFD: Direction of saturation processing applied by the camera is high saturation\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             default:
-                                Preferences.debug("OpenIFD: EXIFTAG_SATURATION has unrecognized value = " +
+                                Preferences.debug("FileTiff.openIFD: EXIFTAG_SATURATION has unrecognized value = " +
                                                   saturation + "\n", Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -8468,21 +8497,21 @@ public class FileTiff extends FileBase {
                         switch(sharpness) {
                             case 0:
                                 Preferences.debug(
-                                "OpenIFD: Direction of sharpness processing applied by the camera is normal\n",
+                                "FileTiff.openIFD: Direction of sharpness processing applied by the camera is normal\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 1:
                                 Preferences.debug(
-                                "OpenIFD: Direction of sharpness processing applied by the camera is soft\n",
+                                "FileTiff.openIFD: Direction of sharpness processing applied by the camera is soft\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             case 2:
                                 Preferences.debug(
-                                "OpenIFD: Direction of sharpness processing applied by the camera is hard\n",
+                                "FileTiff.openIFD: Direction of sharpness processing applied by the camera is hard\n",
                                                    Preferences.DEBUG_FILEIO);
                                 break;
                             default:
-                                Preferences.debug("OpenIFD: EXIFTAG_SHARPNESS has unrecognized value = " +
+                                Preferences.debug("FileTiff.openIFD: EXIFTAG_SHARPNESS has unrecognized value = " +
                                                   sharpness + "\n", Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -8502,7 +8531,7 @@ public class FileTiff extends FileBase {
                     denominator = valueArray[1];
                     shutterSpeed = (float) numerator / denominator;
                     if (debuggingFileIO) {
-                        Preferences.debug("OpenIFD: Shutter speed = " + shutterSpeed  +
+                        Preferences.debug("FileTiff.openIFD: Shutter speed = " + shutterSpeed  +
                                           "\n", Preferences.DEBUG_FILEIO);
                     }
                     break;
@@ -8520,7 +8549,7 @@ public class FileTiff extends FileBase {
                     denominator = valueArray[1];
                     aperture = (float) numerator / denominator;
                     if (debuggingFileIO) {
-                        Preferences.debug("OpenIFD: Aperture = " + aperture  +
+                        Preferences.debug("FileTiff.openIFD: Aperture = " + aperture  +
                                           "\n", Preferences.DEBUG_FILEIO);
                     }
                     break;
@@ -8539,10 +8568,10 @@ public class FileTiff extends FileBase {
                     brightness = (float) numerator / denominator;
                     if (debuggingFileIO) {
                         if (numerator == 0xffffffff) {
-                            Preferences.debug("OpenIFD: Brightness is unknown\n", Preferences.DEBUG_FILEIO);
+                            Preferences.debug("FileTiff.openIFD: Brightness is unknown\n", Preferences.DEBUG_FILEIO);
                         }
                         else {
-                            Preferences.debug("OpenIFD: Brightness = " + brightness  +
+                            Preferences.debug("FileTiff.openIFD: Brightness = " + brightness  +
                                           "\n", Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -8562,7 +8591,7 @@ public class FileTiff extends FileBase {
                     focalPlaneXResolution = (float) numerator / denominator;
                     if (debuggingFileIO) {
                         Preferences.debug(
-                        "OpenIFD: Number of pixels in the image width direction\n" +
+                        "FileTiff.openIFD: Number of pixels in the image width direction\n" +
                         "per focal plane resolution unit on the camera focal plane = " 
                                           + focalPlaneXResolution  + "\n", Preferences.DEBUG_FILEIO);
                     }
@@ -8582,7 +8611,7 @@ public class FileTiff extends FileBase {
                     focalPlaneYResolution = (float) numerator / denominator;
                     if (debuggingFileIO) {
                         Preferences.debug(
-                        "OpenIFD: Number of pixels in the image height direction\n" +
+                        "FileTiff.openIFD: Number of pixels in the image height direction\n" +
                         "per focal plane resolution unit on the camera focal plane = " 
                                           + focalPlaneYResolution  + "\n", Preferences.DEBUG_FILEIO);
                     }
@@ -8635,38 +8664,66 @@ public class FileTiff extends FileBase {
                     if (debuggingFileIO) {
                         switch(sensingMethod) {
                             case 1:
-                                Preferences.debug("OpenIFD: Sensing method is not defined\n",
+                                Preferences.debug("FileTiff.openIFD: Sensing method is not defined\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 2:
-                                Preferences.debug("OpenIFD: One-chip color area sensor\n",
+                                Preferences.debug("FileTiff.openIFD: One-chip color area sensor\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 3:
-                                Preferences.debug("OpenIFD: Two-chip color area sensor\n",
+                                Preferences.debug("FileTiff.openIFD: Two-chip color area sensor\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 4:
-                                Preferences.debug("OpenIFD: Three-chip color area sensor\n",
+                                Preferences.debug("FileTiff.openIFD: Three-chip color area sensor\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 5:
-                                Preferences.debug("OpenIFD: Color sequential area sensor\n",
+                                Preferences.debug("FileTiff.openIFD: Color sequential area sensor\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 7:
-                                Preferences.debug("OpenIFD: Trilinear sensor\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("FileTiff.openIFD: Trilinear sensor\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 8:
-                                Preferences.debug("OpenIFD: Color sequential linear sensor\n",
+                                Preferences.debug("FileTiff.openIFD: Color sequential linear sensor\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             default:
-                                Preferences.debug("openIFD: EXIFTAG_SENSING_METHOD has unrecognized value = " +
+                                Preferences.debug("FileTiff.openIFD: EXIFTAG_SENSING_METHOD has unrecognized value = " +
                                                   sensingMethod + "\n");
                         }
                     }
                     
+                    break;
+                    
+                case EXIFTAG_PIXEL_X_DIMENSION:
+                    if ((type != SHORT) && (type != LONG)) {
+                        throw new IOException("EXIFTAG_PIXEL_X_DIMENSION has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_PIXEL_X_DIMENSION has illegal count = " + count + "\n");
+                    }
+                    
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: EXIFTAG_PIXEL_X DIMENSION = valid image width = " + valueArray[0] + "\n");
+                    }
+                    break;
+                    
+                case EXIFTAG_PIXEL_Y_DIMENSION:
+                    if ((type != SHORT) && (type != LONG)) {
+                        throw new IOException("EXIFTAG_PIXEL_Y_DIMENSION has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 1) {
+                        throw new IOException("EXIFTAG_PIXEL_Y_DIMENSION has illegal count = " + count + "\n");
+                    }
+                    
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: EXIFTAG_PIXEL_Y DIMENSION = valid image height = " + valueArray[0] + "\n");
+                    }
                     break;
                     
                 case STONITS:
@@ -8714,7 +8771,7 @@ public class FileTiff extends FileBase {
                     
                     badFaxLines = (int)valueArray[0];
                     if (debuggingFileIO) {
-                        Preferences.debug("OpenIFD: " + badFaxLines +
+                        Preferences.debug("FileTiff.openIFD: " + badFaxLines +
                                 " bad fax lines were encountered by the facsimile device\n",
                                           Preferences.DEBUG_FILEIO);
                     }
@@ -8735,19 +8792,19 @@ public class FileTiff extends FileBase {
                     if (debuggingFileIO) {
                         switch(cleanFaxData) {
                             case 0:
-                                Preferences.debug("OpenIFD: Tag CLEAN_FAX_DATA: No bad fax lines exist\n",
+                                Preferences.debug("FileTiff.openIFD: Tag CLEAN_FAX_DATA: No bad fax lines exist\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 1:
-                                Preferences.debug("OpenIFD: Tag CLEAN_FAX_DATA: Bad fax lines exist,\n" +
+                                Preferences.debug("FileTiff.openIFD: Tag CLEAN_FAX_DATA: Bad fax lines exist,\n" +
                                         "but were regenerated by the receiver\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 2:
-                                Preferences.debug("OpenIFD: Tag CLEAN_FAX_DATA: Bad fax lines exist,\n" +
+                                Preferences.debug("FileTiff.openIFD: Tag CLEAN_FAX_DATA: Bad fax lines exist,\n" +
                                         "but have not been regenerated\n", Preferences.DEBUG_FILEIO);
                                 break;  
                             default:
-                                Preferences.debug("OpenIFD: Tag CLEAN_FAX_DATA has unrecognized value = " +
+                                Preferences.debug("FileTiff.openIFD: Tag CLEAN_FAX_DATA has unrecognized value = " +
                                        cleanFaxData +  "\n", Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -8765,7 +8822,7 @@ public class FileTiff extends FileBase {
                     
                     consecutiveBadFaxLines = (int)valueArray[0];
                     if (debuggingFileIO) {
-                        Preferences.debug("OpenIFD: " + consecutiveBadFaxLines +
+                        Preferences.debug("FileTiff.openIFD: " + consecutiveBadFaxLines +
                                 " consecutive bad fax lines were encountered by the facsimile device\n",
                                           Preferences.DEBUG_FILEIO);
                     }
@@ -8787,21 +8844,21 @@ public class FileTiff extends FileBase {
                         switch(threshholding) {
                             case 1:
                                 Preferences.debug(
-                                "OpenIFD: No dithering or halftoning has been applied to the image data\n",
+                                "FileTiff.openIFD: No dithering or halftoning has been applied to the image data\n",
                                                   Preferences.DEBUG_FILEIO);
                                 break;
                             case 2:
                                 Preferences.debug(
-                                "OpenIFD: An ordered dither or halftone technique has been applied to the image data\n",
+                                "FileTiff.openIFD: An ordered dither or halftone technique has been applied to the image data\n",
                                 Preferences.DEBUG_FILEIO);
                                 break;
                             case 3:
                                 Preferences.debug(
-                                "OpenIFD: A randomzied process such as error diffusion has been applied\n" +
+                                "FileTiff.openIFD: A randomzied process such as error diffusion has been applied\n" +
                                 "to the image data\n", Preferences.DEBUG_FILEIO);
                                 break;  
                             default:
-                                Preferences.debug("OpenIFD: Tag THRESHHOLDING has unrecognized value = " +
+                                Preferences.debug("FileTiff.openIFD: Tag THRESHHOLDING has unrecognized value = " +
                                        threshholding +  "\n", Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -8820,10 +8877,10 @@ public class FileTiff extends FileBase {
                     lightHalftone = (short)valueArray[0];
                     darkHalftone = (short)valueArray[1];
                     if (debuggingFileIO) {
-                        Preferences.debug("OpenIFD: The highlight gray level which should be halftoned at the\n" +
+                        Preferences.debug("FileTiff.openIFD: The highlight gray level which should be halftoned at the\n" +
                                 "lightest printable tint of the final output device = " + lightHalftone + "\n",
                                 Preferences.DEBUG_FILEIO);
-                        Preferences.debug("OpenIFD: The shadow gray level which should be halftoned at the\n" +
+                        Preferences.debug("FileTiff.openIFD: The shadow gray level which should be halftoned at the\n" +
                                 "darkest printable tint of the final output device = " + darkHalftone + "\n",
                                 Preferences.DEBUG_FILEIO);
                     }
@@ -8843,24 +8900,24 @@ public class FileTiff extends FileBase {
                         for (i1 = 0; i1 < count; i1++) {
                             switch(extraSamples[i1]) {
                                 case 0:
-                                    Preferences.debug("OpenIFD: Extra sample " + (i1 + 1) + " is unspecified data\n",
+                                    Preferences.debug("FileTiff.openIFD: Extra sample " + (i1 + 1) + " is unspecified data\n",
                                                       Preferences.DEBUG_FILEIO);
                                     break;
                                 case 1:
-                                    Preferences.debug("OpenIFD: Extra sample " + (i1 + 1) + 
+                                    Preferences.debug("FileTiff.openIFD: Extra sample " + (i1 + 1) + 
                                             " is asscociated alpha data(with pre-multiplied color)\n" +
                                             "Associated alpha data is opacity information\n",
                                             Preferences.DEBUG_FILEIO);
                                     break;
                                 case 2:
-                                    Preferences.debug("OpenIFD: Extra sample " + (i1 + 1) +
+                                    Preferences.debug("FileTiff.openIFD: Extra sample " + (i1 + 1) +
                                             " is unassociated alpha data\n" +
                                             "Unassociated alpha data is transparency information that logically\n" +
                                             "exists independent of the image; it is commonly called a soft matte\n",
                                             Preferences.DEBUG_FILEIO);
                                     break;
                                 default:
-                                    Preferences.debug("OpenIFD: Extra sample " + (i1 + 1) +
+                                    Preferences.debug("FileTiff.openIFD: Extra sample " + (i1 + 1) +
                                             " has an unrecognized value = " + extraSamples[i1] + "\n",
                                             Preferences.DEBUG_FILEIO);
                                     
@@ -8868,6 +8925,37 @@ public class FileTiff extends FileBase {
                         }
                     }
                     break;
+                    
+                case PHOTOSHOP:
+                    if (type != BYTE) {
+                        throw new IOException("PHOTOSHOP has illegal type = " + type + "\n");
+                    }
+                    
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: PHOTOSHOP 'Image Resource Block' is above\n");
+                    }
+                    break;
+                    
+                case ICC_PROFILE:
+                    if (type != UNDEFINED) {
+                        throw new IOException("ICC_PROFILE has illegal type = " + type + "\n");
+                    }
+                    
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: ICC profile data is above\n");
+                    }
+                    break;
+                    
+                case IPTC:
+                    if ((type != UNDEFINED) && (type != BYTE) && (type != LONG)) {
+                        throw new IOException("IPTC has illegal type = " + type + "\n");
+                    }
+                    
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: IPTC metadata is above\n");
+                    }
+                    break;
+                    
                 default:
                     break;
             }
@@ -9165,6 +9253,7 @@ public class FileTiff extends FileBase {
         int y = 0;
         int c = 0;
         int m;
+        int brightness;
         
         if (isYCbCr) {
             YBuffer = new int[buffer.length/4];
@@ -10216,14 +10305,18 @@ public class FileTiff extends FileBase {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                     }
     
+                                    brightness = 255 - getUnsignedByte(byteBuffer, j + currentIndex + 3);
                                     buffer[i] = 255;
-                                    // red = 255 - cyan
-                                    buffer[i + 1] = 255 - getUnsignedByte(byteBuffer, j + currentIndex);
-                                    // green = 255 - magenta
-                                    buffer[i + 2] = 255 - getUnsignedByte(byteBuffer, j + currentIndex + 1);
-                                    // blue = 255 - yellow
-                                    buffer[i + 3] = 255 - getUnsignedByte(byteBuffer, j + currentIndex + 2);
-                                    // don't use black
+                                    // brightness = 255 - k
+                                    // red = brightness*(255 - cyan)/255
+                                    buffer[i + 1] = 
+                                    (brightness*(255 - getUnsignedByte(byteBuffer, j + currentIndex)))/255;
+                                    // green = brightness*(255 - magenta)/255
+                                    buffer[i + 2] = 
+                                    (brightness*(255 - getUnsignedByte(byteBuffer, j + currentIndex + 1)))/255;
+                                    // blue = brightness*(255 - yellow)/255
+                                    buffer[i + 3] = 
+                                   (brightness*(255 - getUnsignedByte(byteBuffer, j + currentIndex + 2)))/255;
                                 }  
                             } // if (chunky)
                             else { // planar
@@ -10240,8 +10333,8 @@ public class FileTiff extends FileBase {
                                     // For the moment I compress RGB images to unsigned bytes
                                     for (j = 0; j < nBytes; j++, i += 4) {
 
-                                        if ((((i / 3) + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
+                                        if ((((i / 4) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 4) + progress) /
                                                                                     progressLength * 100));
                                         }
 
@@ -10266,8 +10359,8 @@ public class FileTiff extends FileBase {
 
                                     for (j = 0; j < nBytes; j++, i += 4) {
 
-                                        if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
+                                        if ((((i / 4) + (buffer.length / 4) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 4) + (buffer.length / 4) +
                                                                                          progress) / progressLength * 100));
                                         }
                                         // green = 255 - magenta
@@ -10290,9 +10383,9 @@ public class FileTiff extends FileBase {
 
                                     for (j = 0; j < nBytes; j++, i += 4) {
 
-                                        if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) ((i / 3) +
-                                                                                         (2 * buffer.length / 3) +
+                                        if ((((i / 4) + (2 * buffer.length / 4) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 4) +
+                                                                                         (2 * buffer.length / 4) +
                                                                                          progress) / progressLength * 100));
                                         }
                                         // blue = 255 - yellow
@@ -10300,7 +10393,34 @@ public class FileTiff extends FileBase {
                                     }
 
                                     planarRGB++;
-                                } // end of else if (planarRGB < 3*stripsPerImage)    
+                                    
+                                    if (planarRGB == (3 * stripsPerImage)) {
+                                        i = 0;
+                                    }
+                                } // end of else if (planarRGB < 3*stripsPerImage)  
+                                else { // planarRGB < 4*stripsPerImage
+                                    // raFile.read(byteBuffer, 0, nBytes);
+                                    progress = slice * buffer.length;
+                                    progressLength = buffer.length * imageSlice;
+                                    mod = progressLength / 10;
+
+
+                                    for (j = 0; j < nBytes; j++, i += 4) {
+
+                                        if ((((i / 4) + (3 * buffer.length / 4) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 4) +
+                                                                                         (3 * buffer.length / 4) +
+                                                                                         progress) / progressLength * 100));
+                                        }
+                                        // brightness = 255 -k
+                                        brightness = 255 - getUnsignedByte(byteBuffer, j + currentIndex);
+                                        buffer[i+1] = (brightness*buffer[i+1])/255;
+                                        buffer[i+2] = (brightness*buffer[i+2])/255;
+                                        buffer[i+3] = (brightness*buffer[i+3])/255;
+                                    }
+
+                                    planarRGB++;    
+                                } // else planarRGB < 4*stripsPerImage
                             } // else planar
                         } // else if (isCMYK)
                         else if (chunky && isRGB2) {
@@ -10892,8 +11012,6 @@ public class FileTiff extends FileBase {
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
 
-
-                                // For the moment I compress RGB images to unsigned bytes.
                                 for (j = 0; j < nBytes; j += 8, i += 4) {
 
                                     if (((i + progress) % mod) == 0) {
@@ -10901,36 +11019,44 @@ public class FileTiff extends FileBase {
                                     }
 
                                     buffer[i] = 65535;
+                                    b1 = getUnsignedByte(byteBuffer, j + currentIndex + 6);
+                                    b2 = getUnsignedByte(byteBuffer, j + currentIndex + 7);
+
+                                    // birghtness = 65535 - k
+                                    if (endianess) {
+                                        brightness = 65535 - ((b1 << 8) | b2);
+                                    } else {
+                                        brightness = 65535 - ((b2 << 8) | b1);
+                                    }
                                     b1 = getUnsignedByte(byteBuffer, j + currentIndex);
                                     b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
 
-                                    // red = 65535 - cyan
+                                    // red = brightness*(65535 - cyan)/65535
                                     if (endianess) {
-                                        buffer[i + 1] = 65535 - ((b1 << 8) + b2);
+                                        buffer[i + 1] = (brightness*(65535L - ((b1 << 8) | b2)))/65535L;
                                     } else {
-                                        buffer[i + 1] = 65535 - ((b2 << 8) + b1);
+                                        buffer[i + 1] = (brightness*(65535L - ((b2 << 8) | b1)))/65535L;
                                     }
 
                                     b1 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
                                     b2 = getUnsignedByte(byteBuffer, j + currentIndex + 3);
 
-                                    // green = 65535 - magenta
+                                    // green = brightness*(65535 - magenta)/65535
                                     if (endianess) {
-                                        buffer[i + 2] = 65535 - ((b1 << 8) + b2);
+                                        buffer[i + 2] = (brightness*(65535L - ((b1 << 8) | b2)))/65535L;
                                     } else {
-                                        buffer[i + 2] = 65535 - ((b2 << 8) + b1);
+                                        buffer[i + 2] = (brightness*(65535L - ((b2 << 8) | b1)))/65535L;
                                     }
 
                                     b1 = getUnsignedByte(byteBuffer, j + currentIndex + 4);
                                     b2 = getUnsignedByte(byteBuffer, j + currentIndex + 5);
 
-                                    // blue = 65535 - yellow
+                                    // blue = brightness*(65535 - yellow)/65535
                                     if (endianess) {
-                                        buffer[i + 3] = 65535 - ((b1 << 8) + b2);
+                                        buffer[i + 3] = (brightness*(65535L - ((b1 << 8) | b2)))/65535L;
                                     } else {
-                                        buffer[i + 3] = 65535 - ((b2 << 8) + b1);
+                                        buffer[i + 3] = (brightness*(65535L - ((b2 << 8) | b1)))/65535L;
                                     }
-                                    // don't use black
                                 }    
                             } // if (chunky)
                             else { // planar
@@ -10947,8 +11073,8 @@ public class FileTiff extends FileBase {
                                     // For the moment I compress RGB images to unsigned bytes
                                     for (j = 0; j < nBytes; j += 2, i += 4) {
 
-                                        if ((((i / 3) + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
+                                        if ((((i / 4) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 4) + progress) /
                                                                                     progressLength * 100));
                                         }
 
@@ -10958,9 +11084,9 @@ public class FileTiff extends FileBase {
 
                                         // red = 65535 - cyan
                                         if (endianess) {
-                                            buffer[i + 1] = 65535 - ((b1 << 8) + b2);
+                                            buffer[i + 1] = 65535 - ((b1 << 8) | b2);
                                         } else {
-                                            buffer[i + 1] = 65535 - ((b2 << 8) + b1);
+                                            buffer[i + 1] = 65535 - ((b2 << 8) | b1);
                                         }
                                     }
 
@@ -10980,8 +11106,8 @@ public class FileTiff extends FileBase {
 
                                     for (j = 0; j < nBytes; j += 2, i += 4) {
 
-                                        if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
+                                        if ((((i / 4) + (buffer.length / 4) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 4) + (buffer.length / 4) +
                                                                                          progress) / progressLength * 100));
                                         }
 
@@ -10990,9 +11116,9 @@ public class FileTiff extends FileBase {
 
                                         // green = 65535 - magenta
                                         if (endianess) {
-                                            buffer[i + 2] = 65535 - ((b1 << 8) + b2);
+                                            buffer[i + 2] = 65535 - ((b1 << 8) | b2);
                                         } else {
-                                            buffer[i + 2] = 65535 - ((b2 << 8) + b1);
+                                            buffer[i + 2] = 65535 - ((b2 << 8) | b1);
                                         }
                                     }
 
@@ -11012,9 +11138,9 @@ public class FileTiff extends FileBase {
 
                                     for (j = 0; j < nBytes; j += 2, i += 4) {
 
-                                        if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) ((i / 3) +
-                                                                                         (2 * buffer.length / 3) +
+                                        if ((((i / 4) + (2 * buffer.length / 4) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 4) +
+                                                                                         (2 * buffer.length / 4) +
                                                                                          progress) / progressLength * 100));
                                         }
 
@@ -11030,7 +11156,43 @@ public class FileTiff extends FileBase {
                                     }
 
                                     planarRGB++;
-                                } // end of else if (planarRGB < (3 * stripsPerImage)    
+                                    
+                                    if (planarRGB == (3 *stripsPerImage)) {
+                                        i = 0;
+                                    }
+                                } // end of else if (planarRGB < (3 * stripsPerImage)) 
+                                else { // planarRGB < (4 * stripsPerImage)
+                                    // raFile.read(byteBuffer, 0, nBytes);
+                                    progress = slice * buffer.length;
+                                    progressLength = buffer.length * imageSlice;
+                                    mod = progressLength / 10;
+
+
+                                    for (j = 0; j < nBytes; j += 2, i += 4) {
+
+                                        if ((((i / 4) + (3 * buffer.length / 4) + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) ((i / 4) +
+                                                                                         (3 * buffer.length / 4) +
+                                                                                         progress) / progressLength * 100));
+                                        }
+
+                                        b1 = getUnsignedByte(byteBuffer, j + currentIndex);
+                                        b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+
+                                        // brightness = 65535 - k
+                                        if (endianess) {
+                                            brightness = 65535 - ((b1 << 8) + b2);
+                                        } else {
+                                            brightness = 65535 - ((b2 << 8) + b1);
+                                        }
+                                        
+                                        buffer[i+1] = (brightness * buffer[i+1])/65535;
+                                        buffer[i+2] = (brightness * buffer[i+2])/65535;
+                                        buffer[i+3] = (brightness * buffer[i+3])/65535;
+                                    }
+
+                                    planarRGB++;   
+                                } // else planarRGB < (4 * stripsPerImage)
                             } // else planar
                         } // if (isCMYK)
                         else if (chunky && isRGB10 && endianess) {
@@ -13417,7 +13579,90 @@ public class FileTiff extends FileBase {
                         break;
 
                     case ModelStorageBase.ARGB:
-                        if (isYCbCr && (!jpegCompression)) {
+                        if (isCMYK) {
+                            if (chunky == true) {
+                            
+                                if (byteBuffer == null) {
+                                    
+                                    if (lzwCompression || zlibCompression) {
+                                        byteBuffer = new byte[tileMaxByteCount];
+                                    } else {
+                                        byteBuffer = new byte[nBytes];
+                                    }
+                                }
+    
+                                // System.err.println("About to read " + nBytes + " bytes");
+                                raFile.read(byteBuffer, 0, nBytes);
+                                if (zlibCompression) {
+                                    zlibDecompresser.setInput(byteBuffer, 0, nBytes);
+                                }
+    
+                                // System.err.println("________");
+                                progress = slice * xDim * yDim;
+                                progressLength = imageSlice * xDim * yDim;
+                                mod = progressLength / 100;
+    
+    
+                                if (lzwCompression || zlibCompression) {
+    
+                                    //System.err.println("Read " + nBytes + " from raFile");
+                                    if (decomp == null) {
+                                        decomp = new byte[tileWidth * tileLength * samplesPerPixel];
+                                    }
+    
+                                    if (lzwCompression) {
+                                        //lzwDecoder.decode(byteBuffer, decomp, tileLength);
+                                        rowsToDo = Math.min(tileLength, yDim - y);
+                                        LZWDecompresser(byteBuffer, nBytes, decomp, y, rowsToDo, 
+                                                        samplesPerPixel * tileWidth);
+                                        resultLength = decomp.length;
+                                    }
+                                    else { // zlibCompression
+                                        try {
+                                            resultLength = zlibDecompresser.inflate(decomp);
+                                        }
+                                        catch (DataFormatException e){
+                                            MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
+                                        }
+                                        zlibDecompresser.reset();
+                                    }
+                                }
+                                else {
+                                    decomp = byteBuffer;
+                                    resultLength = nBytes;
+                                }
+                                
+                                for (j = 0; j < resultLength; j += 4) {
+                                    
+                                    if ((x < xDim) && (y < yDim)) {
+
+                                        if (((i + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
+                                        }
+                                        
+                                        // brightness = 255 -k
+                                        brightness = 255 - getUnsignedByte(decomp, j + 3);
+                                        buffer[(4 * (x + (y * xDim)))] = 255;
+                                        buffer[(4 * (x + (y * xDim))) + 1] = 
+                                        (brightness * (255 - getUnsignedByte(decomp, j)))/255;
+                                        buffer[(4 * (x + (y * xDim))) + 2] =
+                                        (brightness * (255 - getUnsignedByte(decomp, j + 1)))/255;
+                                        buffer[(4 * (x + (y * xDim))) + 3] = 
+                                        (brightness * (255 - getUnsignedByte(decomp, j + 2)))/255;
+                                        i++;
+                                    }
+
+                                    x++;
+
+                                    if (x == ((xTile + 1) * tileWidth)) {
+                                        x = xTile * tileWidth;
+                                        y++;
+                                    }
+                                }
+                            } // if (chunky == true)
+                        } // if (isCMYK)
+                        else if (isYCbCr && (!jpegCompression)) {
                             if (chunky == true) {
                                 
                                 if (byteBuffer == null) {
