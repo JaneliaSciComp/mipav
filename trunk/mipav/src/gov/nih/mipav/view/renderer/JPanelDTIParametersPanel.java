@@ -15,7 +15,7 @@ import gov.nih.mipav.view.dialogs.JDialogDTIInput;
 import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.surfaceview.*;
 
-import gov.nih.mipav.view.renderer.volumeview.GPUVolumeRender;
+import gov.nih.mipav.view.renderer.WildMagic.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -58,9 +58,9 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
     /** User-control over the number of ellipsoids displayed in GPUVolumeRender */
     private JSlider m_kDisplaySlider;
  
-    private ViewJFrameVolumeViewDTI parentFrame;
+    private VolumeViewerDTI parentFrame;
     
-    private GPUVolumeRender m_kVolumeDisplay;
+    private GPUVolumeRender_WM m_kVolumeDisplay;
     
     private ModelImage m_kDTIImage;
 	
@@ -94,7 +94,7 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 	/** Fiber bundle tract file input path name text box. */
 	private JTextField m_kTractPath;
 	
-	public JPanelDTIParametersPanel(ViewJFrameVolumeViewDTI _parentFrame, GPUVolumeRender _m_kVolumeDisplay) {
+	public JPanelDTIParametersPanel(VolumeViewerDTI _parentFrame, GPUVolumeRender_WM _m_kVolumeDisplay) {
 		parentFrame = _parentFrame;
 		m_kVolumeDisplay = _m_kVolumeDisplay;
 		mainPanel = new JPanel();
@@ -551,7 +551,6 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 		boolean bClosed = false;
 		boolean bContiguous = true;
 		addPolyline(new Polyline(pkVBuffer, bClosed, bContiguous));
-		addLineArray(kLine);
 	}
 	
 	/**
@@ -563,24 +562,6 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 	protected void addPolyline(Polyline kLine) {
 		m_kVolumeDisplay.addPolyline(kLine, m_iBundleCount);
 	}
-	
-	/**
-	 * Add a LineArray to the JPanelSurface.
-	 * 
-	 * @param kLine,
-	 *            the Polyline to add.
-	 */
-	protected void addLineArray(LineArray kLine) {
-		if (m_kLineArrayMap == null) {
-			m_kLineArrayMap = new HashMap<Integer, BranchGroup>();
-		}
-
-		BranchGroup kBranch = parentFrame.getSurfaceControl().addLineArray(kLine,
-				m_iBundleCount);
-		if (kBranch != null) {
-			m_kLineArrayMap.put(new Integer(m_iBundleCount), kBranch);
-		}
-	}	
 	
 	/** Removes the fiber bundle from the GPUVolumeRender and JPanelSurface. */
 	private void removePolyline() {
@@ -596,11 +577,6 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 				int iGroup = (new Integer(kName.substring(iHeaderLength,
 						iLength))).intValue();
 				m_kVolumeDisplay.removePolyline(iGroup);
-
-				if (parentFrame.getSurfaceControl() != null) {
-					BranchGroup kBranch = m_kLineArrayMap.get(new Integer(iGroup));
-					parentFrame.getSurfaceControl().removeLineArray(kBranch);
-				}
 				m_kBundleList.remove(new Integer(iGroup));
 			}
 			kList.remove(aiSelected[i]);

@@ -75,9 +75,6 @@ public abstract class JPanelRendererBase extends JPanel
     /** Raycast based renderer reference, raycast renderer or shear warp renderer. */
     protected VolumeRenderer rayBasedRender;
 
-    /** Raycast based renderer reference, raycast renderer or shear warp renderer. */
-    protected GPUVolumeRender rayBasedRenderWM;
-
     /** Render base. */
     protected RenderViewBase renderBase = null;
     protected VolumeViewer m_kVolumeViewer = null;
@@ -278,16 +275,6 @@ public abstract class JPanelRendererBase extends JPanel
      */
     public void setRayBasedRender(VolumeRenderer _rayBasedRender) {
         rayBasedRender = _rayBasedRender;
-    }
-
-    /**
-     * Set the reference to ray based renderer, raycast renderer or shear warp renderer. This method set the clipping
-     * dialog to control the both the 3D texture renderer and raycast based renderer.
-     *
-     * @param  _rayBasedRender  VolumeRenderer reference
-     */
-    public void setRayBasedRender(GPUVolumeRender _rayBasedRender) {
-        rayBasedRenderWM = _rayBasedRender;
     }
 
     /**

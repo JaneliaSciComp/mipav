@@ -418,10 +418,6 @@ public class SurfaceView extends SurfaceRender {
         if (!cubicBG.isLive()) {
             objRootBG.addChild(cubicBG);
         }
-        if ( parent instanceof ViewJFrameVolumeViewWildMagic )
-        {
-            ((ViewJFrameVolumeViewWildMagic)parent).setShowOrientationCube(true);
-        }  
     }
 
     /**
@@ -977,10 +973,6 @@ public class SurfaceView extends SurfaceRender {
      */
     public void hideBoxFrame() {
         objBoxFrameBG.detach();
-        if ( parent instanceof ViewJFrameVolumeViewWildMagic )
-        {
-            ((ViewJFrameVolumeViewWildMagic)parent).setShowBoxFrame(false);
-        }
     }
 
     /**
@@ -1042,10 +1034,6 @@ public class SurfaceView extends SurfaceRender {
         if (cubicBG.isLive()) {
             cubicBG.detach();
         }
-        if ( parent instanceof ViewJFrameVolumeViewWildMagic )
-        {
-            ((ViewJFrameVolumeViewWildMagic)parent).setShowOrientationCube(false);
-        }  
     }
 
     /**
@@ -1403,18 +1391,6 @@ public class SurfaceView extends SurfaceRender {
     }
 
     /**
-     * Set the reference to ray based renderer, raycast renderer or shear warp
-     * renderer. This method set the clipping dialog to control the both the
-     * 3D texture renderer and raycast based renderer.
-     *
-     * @param  _rayBasedRender  VolumeRenderer reference
-     */
-    public void setRayBasedRender(GPUVolumeRender _rayBasedRender) {
-        clipPanel.setRayBasedRender(_rayBasedRender);
-        surfacePanel.getLightDialog().setRayBasedRender(_rayBasedRender);
-    }
-
-    /**
      * Enable perspective projection rendering; otherwise use orthographic projection.
      *
      * @param  bEnable  true to enable perspective projection
@@ -1553,10 +1529,6 @@ public class SurfaceView extends SurfaceRender {
      */
     public void showBoxFrame() {
         sceneRootTG.addChild(objBoxFrameBG);
-        if ( parent instanceof ViewJFrameVolumeViewWildMagic )
-        {
-            ((ViewJFrameVolumeViewWildMagic)parent).setShowBoxFrame(true);
-        }  
     }
 
     /**
@@ -1955,11 +1927,8 @@ public class SurfaceView extends SurfaceRender {
     public boolean updateImages(boolean flag) {
 
         
-        if ( !(getParentFrame() instanceof ViewJFrameVolumeViewWildMagic) )
-        {
-            if (updateVolume(null, null, flag) == false) {
-                return false;
-            }
+        if (updateVolume(null, null, flag) == false) {
+            return false;
         }
 
         return true;

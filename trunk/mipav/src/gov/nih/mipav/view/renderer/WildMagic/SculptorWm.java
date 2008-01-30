@@ -1,4 +1,4 @@
-package gov.nih.mipav.view.renderer.volumeview;
+package gov.nih.mipav.view.renderer.WildMagic;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
@@ -297,7 +297,7 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
 
 
         Vector4f kIn = new Vector4f(0,0,0,1);
-        Vector4f kOut;
+        Vector4f kOut = new Vector4f();
         int iA = 0;
         int iB = 0;
         for (int iZ = 0; iZ < iZBound; iZ++)
@@ -310,10 +310,8 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
                     kIn.Y(((float)iY/(float)iYBound)*fY);
                     kIn.Z(((float)iZ/(float)iZBound)*fZ);
 
-                    kOut = Matrix4f.mult( kIn, m_kWVPMatrix);
-                    kOut.X( kOut.X()/kOut.W() );
-                    kOut.Y( kOut.Y()/kOut.W() );
-                    kOut.Z( kOut.Z()/kOut.W() );
+                    Matrix4f.mult( kIn, m_kWVPMatrix, kOut);
+                    kOut.scaleEquals(1.0f/kOut.W());
 
                     int iXIndex = (int)((m_iSculptImageWidth-1) * (1 + kOut.X())/2.0f);
                     int iYIndex = (int)((m_iSculptImageHeight-1) * (1 - kOut.Y())/2.0f);

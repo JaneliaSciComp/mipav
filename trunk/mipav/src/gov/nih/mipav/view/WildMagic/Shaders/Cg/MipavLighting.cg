@@ -295,6 +295,11 @@ void computeColor( float3 kModelPosition, float3 kModelNormal, float3 CameraWorl
 {
     if ( LightType == -1 )
     {
+//         float3 local_normal = normalize(kModelNormal);
+
+//         color_sample.r = local_normal.x;
+//         color_sample.g = local_normal.y;
+//         color_sample.b = local_normal.z;
         color_sample.r = 0;
         color_sample.g = 0;
         color_sample.b = 0;
@@ -412,6 +417,7 @@ void v_MipavLighting(
                      out float4       kClipPosition : POSITION,
                      out float4       kVertexColor : COLOR,
 
+                     uniform float  Blend,
                      uniform float3 MaterialEmissive,
                      uniform float3 MaterialAmbient,
                      uniform float4 MaterialDiffuse,
@@ -490,5 +496,5 @@ void v_MipavLighting(
                   Light3Type, color3 );
     
     kVertexColor = color0 + color1 + color2 + color3;
-    kVertexColor.a = 1.0f;
+    kVertexColor.a = Blend;
 }

@@ -775,9 +775,6 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
         if (rayBasedRender != null) {
             rayBasedRender.updateLighting();
         }
-        if (rayBasedRenderWM != null) {
-            rayBasedRenderWM.updateLighting(m_akLights);
-        }
         if (m_kGPUVolumeRender != null) {
             m_kGPUVolumeRender.updateLighting(m_akLights);
         }
@@ -1290,7 +1287,7 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
     /**
      * Refresh the light control panel.
      */
-    private void refreshControlPanel() {
+    public void refreshControlPanel() {
 
         DefaultListModel listModel = (DefaultListModel) list.getModel();
 
@@ -1452,6 +1449,14 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
         bNeedsRedraw = false;
     }
 
+    public void enableLight( int iSelect, boolean bOn )
+    {
+        onOffCheckBox.setSelected(bOn);
+        m_akLights[iSelect].enable(bOn);
+        refreshControlPanel();
+        refreshLighting();
+    }
+    
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**

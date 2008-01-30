@@ -86,7 +86,28 @@ public class Vector4f
         }
         m_afTuple = null;
     }
-
+    
+    /** construction
+     * @param fX, x-value
+     * @param fY, y-value
+     * @param fZ, z-value
+     * @param fW, w-value
+     */
+    public void SetData (float fX, float fY, float fZ, float fW)
+    {
+        m_afTuple[0] = fX;
+        m_afTuple[1] = fY;
+        m_afTuple[2] = fZ;
+        m_afTuple[3] = fW;
+    }
+    
+    public void scaleEquals (float fScale)
+    {
+        m_afTuple[0] *= fScale;
+        m_afTuple[1] *= fScale;
+        m_afTuple[2] *= fScale;
+    }
+    
     /** Return x-value
      * @return x-value
      */

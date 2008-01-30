@@ -589,24 +589,12 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
         {
             if ( renderBase instanceof gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
             {
-                if ( ((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).getParentFrame()
-                     instanceof ViewJFrameVolumeViewWildMagic )
-                {
-                    ((ViewJFrameVolumeViewWildMagic)((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).getParentFrame()).
-                        updateBlend();
-                }
             }
         }
         else if ( event.getSource() == stepsSlider )
         {
             if ( renderBase instanceof gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
             {
-                if ( ((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).getParentFrame()
-                     instanceof ViewJFrameVolumeViewWildMagic )
-                {
-                    ((ViewJFrameVolumeViewWildMagic)((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).getParentFrame()).
-                    updateRayTracingSteps();
-                }
             }
             else if ( m_kVolumeViewer != null )
             {
@@ -711,12 +699,7 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
         stepsSlider.setPaintLabels(true);
         stepsSlider.addMouseListener(this);
         stepsSlider.addChangeListener(this);
-        if ( renderBase != null )
-        {
-            stepsSlider.setEnabled(((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).getParentFrame()
-                    instanceof ViewJFrameVolumeViewWildMagic);
-        }
-        else if ( m_kVolumeViewer != null )
+        if ( m_kVolumeViewer != null )
         {
             stepsSlider.setEnabled(true);
         }

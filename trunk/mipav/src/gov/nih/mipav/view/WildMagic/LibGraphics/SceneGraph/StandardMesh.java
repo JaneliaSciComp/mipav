@@ -1321,7 +1321,7 @@ public class StandardMesh
      * @param iTQuantity, number of triangles.
      * @param aiIndex, index array to modify.
      */
-    private void ReverseTriangleOrder (int iTQuantity, int[] aiIndex)
+    public static void ReverseTriangleOrder (int iTQuantity, int[] aiIndex)
     {
         for (int i = 0; i < iTQuantity; i++)
         {

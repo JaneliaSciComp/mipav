@@ -5,6 +5,7 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.surfaceview.*;
+import gov.nih.mipav.view.renderer.WildMagic.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -27,9 +28,9 @@ public class JPanelDTIFiberTrack extends JPanelRendererBase {
 
 	private JButton computeButton;
 
-    private ViewJFrameVolumeViewDTI parentFrame;
+    private VolumeViewerDTI parentFrame;
 	
-	public JPanelDTIFiberTrack(ViewJFrameVolumeViewDTI _parentFrame) {
+	public JPanelDTIFiberTrack(VolumeViewerDTI _parentFrame) {
 		parentFrame = _parentFrame;
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new BorderLayout());

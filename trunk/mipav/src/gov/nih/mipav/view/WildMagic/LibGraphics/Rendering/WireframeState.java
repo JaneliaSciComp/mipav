@@ -18,11 +18,16 @@
 
 package gov.nih.mipav.view.WildMagic.LibGraphics.Rendering;
 
+import java.util.HashMap;
 import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.ZBufferState.CompareMode;
 
 public class WireframeState extends GlobalState
     implements StreamInterface
 {
+
+    /** Maps compare mode enum to int values. */
+    private static HashMap<Integer,FillMode> ms_pkFillModeMap = new HashMap<Integer,FillMode>();
 
     /** Static initialization of the WireframeState in the GlobalState.Default
      * array. */
@@ -34,6 +39,35 @@ public class WireframeState extends GlobalState
             Default[StateType.WIREFRAME.Value()] = new WireframeState();
         }
     }
+    
+    /** Depth compre modes. */
+    public enum FillMode
+    {
+        FM_FILL("FM_FILL"),
+        FM_LINE("FM_LINE"),
+        FM_POINT("FM_POINT"),
+        FM_QUANTITY("FM_QUANTITY");
+
+        FillMode( String kName )
+        {
+            m_iValue = Init();
+            m_kName = kName;
+            ms_pkFillModeMap.put( m_iValue, this );
+        }
+        private int Init ()
+        {
+            return m_iInitValue++;
+        }
+        public int Value() { return m_iValue; }
+        public String Name() { return m_kName; }
+        private int m_iValue;
+        private String m_kName;
+        private static int m_iInitValue = 0;
+    };
+
+    /** Initializes static enum for depth compare modes. */
+    private static FillMode ms_eFillModeStatic = FillMode.FM_QUANTITY;
+    
     /** Default constructor. */
     public WireframeState () {}
 
@@ -44,6 +78,8 @@ public class WireframeState extends GlobalState
 
     /** Wireframe enabled default: false */
     public boolean Enabled = false;  
+    /** FillMode default: FM_FILL */
+    public FillMode Fill = FillMode.FM_FILL;
 
     /**
      * Loads this object from the input parameter rkStream, using the input

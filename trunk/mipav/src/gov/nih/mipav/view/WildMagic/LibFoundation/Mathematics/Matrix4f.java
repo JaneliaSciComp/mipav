@@ -630,6 +630,21 @@ public class Matrix4f
     }
 
 
+    /** matrix times vector
+     * v^T * M
+     * @param rkV, vector
+     * @param rkM, matrix
+     * @return v^T * M 
+     */
+    public static void mult(Vector4f rkV, Matrix4f rkM, Vector4f rkOut)
+    {
+        rkOut.SetData(
+                     rkV.X()*rkM.m_afEntry[0] + rkV.Y()*rkM.m_afEntry[4] + rkV.Z()*rkM.m_afEntry[8] + rkV.W()*rkM.m_afEntry[12],
+                     rkV.X()*rkM.m_afEntry[1] + rkV.Y()*rkM.m_afEntry[5] + rkV.Z()*rkM.m_afEntry[9] + rkV.W()*rkM.m_afEntry[13],
+                     rkV.X()*rkM.m_afEntry[2] + rkV.Y()*rkM.m_afEntry[6] + rkV.Z()*rkM.m_afEntry[10] + rkV.W()*rkM.m_afEntry[14],
+                     rkV.X()*rkM.m_afEntry[3] + rkV.Y()*rkM.m_afEntry[7] + rkV.Z()*rkM.m_afEntry[11] + rkV.W()*rkM.m_afEntry[15]);
+    }
+
     /** Transpose this matrix and return the result, this matrix is unchanged.
      * @return  M^T
      */

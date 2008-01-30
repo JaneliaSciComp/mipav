@@ -105,34 +105,7 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
         Object source = event.getSource();
         String command = event.getActionCommand();
 
-        if ( command.equals( "AdvancedMaterialOptions" ) ) {
-            if ( renderBase instanceof SurfaceRender )
-            {
-                Material kMaterial = new Material();
-                if ( ((SurfaceRender)renderBase).getGPURenderer() != null )
-                {
-                    MaterialState kMaterialSt = ((SurfaceRender)renderBase).getGPURenderer().GetMaterialState();
-                    kMaterial.setAmbientColor( new javax.vecmath.Color3f( kMaterialSt.Ambient.R(),
-                                                                          kMaterialSt.Ambient.G(),
-                                                                          kMaterialSt.Ambient.B() ) );
-
-                    kMaterial.setEmissiveColor(new javax.vecmath.Color3f( kMaterialSt.Emissive.R(),
-                                                                          kMaterialSt.Emissive.G(),
-                                                                          kMaterialSt.Emissive.B() ) );
-                    kMaterial.setDiffuseColor(new javax.vecmath.Color3f( kMaterialSt.Diffuse.R(),
-                                                                         kMaterialSt.Diffuse.G(),
-                                                                         kMaterialSt.Diffuse.B() ) );
-                    kMaterial.setSpecularColor(new javax.vecmath.Color3f( kMaterialSt.Specular.R(),
-                                                                          kMaterialSt.Specular.G(),
-                                                                          kMaterialSt.Specular.B() ) );
-                    kMaterial.setShininess(kMaterialSt.Shininess);
-                }
-                new JFrameSurfaceMaterialProperties(this, 0,
-                                                    ((SurfaceRender)renderBase).getSurfaceDialog().getLightDialog().getGeneralLights(),
-                                                    0, kMaterial );
-            }
-        }
-        else if (source instanceof JButton) {
+        if (source instanceof JButton) {
             colorChooser = new ViewJColorChooser(new Frame(), "Pick color", new OkColorListener((JButton) source),
                                                  new CancelListener());
         } else if (source == boundingCheck) {
@@ -315,20 +288,8 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
 
         if (button == colorButton) {
             renderBase.setBoxColor(color);
-            if (renderBase instanceof SurfaceRender) {
-                ViewJFrameVolumeView kParent = ((SurfaceRender) renderBase).getParentFrame();
-                if ( kParent instanceof ViewJFrameVolumeViewWildMagic )
-                {
-                    ((ViewJFrameVolumeViewWildMagic)kParent).setBoundingBoxColor(color);
-                }                    
-            }        } else if (button == colorButtonBackground) {
-            renderBase.setBackgroundColor(color);
-            if (renderBase instanceof SurfaceRender) {
-                ViewJFrameVolumeView kParent = ((SurfaceRender) renderBase).getParentFrame();
-                if ( kParent instanceof ViewJFrameVolumeViewWildMagic )
-                {
-                    ((ViewJFrameVolumeViewWildMagic)kParent).setBackgroundColor(color);
-                }                    
+            if (button == colorButtonBackground) {
+                renderBase.setBackgroundColor(color);
             }
         }
     }
@@ -484,24 +445,6 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
         contentBox.add(panel2);
         contentBox.add(cubePanel);
         contentBox.add(projectionTypePanel);
-        if ( (renderBase instanceof SurfaceRender) &&
-             !( ((SurfaceRender)renderBase).getParentFrame() instanceof ViewJFrameVolumeViewWildMagic ))
-        {
-            contentBox.add(viewTexturePanel);
-        }
-        else
-        {
-            JPanel buttonPanel = new JPanel();
-            /* Creates the advanced material options button, which launches the
-             * material editor dialog: */
-            JButton kAdvancedMaterialOptionsButton = new JButton("Material");
-            kAdvancedMaterialOptionsButton.setToolTipText("Change material properties");
-            kAdvancedMaterialOptionsButton.addActionListener(this);
-            kAdvancedMaterialOptionsButton.setActionCommand("AdvancedMaterialOptions");
-            kAdvancedMaterialOptionsButton.setEnabled(true);
-            buttonPanel.add(kAdvancedMaterialOptionsButton);
-            contentBox.add(buttonPanel);
-        }
 
         // Scroll panel that hold the control panel layout in order to use JScrollPane
         scrollPanel = new DrawingPanel();
@@ -600,12 +543,6 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
         kMaterialState.Specular = new ColorRGB(kColor.x, kColor.y, kColor.z);
 
         kMaterialState.Shininess = kMaterial.getShininess();
-
-        if ( (renderBase instanceof SurfaceRender) &&
-             ( ((SurfaceRender)renderBase).getParentFrame() instanceof ViewJFrameVolumeViewWildMagic ))
-        {
-            ((ViewJFrameVolumeViewWildMagic)((SurfaceRender)renderBase).getParentFrame()).getRaycastRenderWM().SetMaterialState( kMaterialState );
-        }
     }
 
 

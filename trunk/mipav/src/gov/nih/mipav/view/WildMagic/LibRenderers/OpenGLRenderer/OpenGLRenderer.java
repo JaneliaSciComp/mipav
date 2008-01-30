@@ -897,7 +897,8 @@ public class OpenGLRenderer extends Renderer
         super.SetWireframeState(pkState);
         if (pkState.Enabled)
         {
-            gl.glPolygonMode(GL.GL_FRONT_AND_BACK,GL.GL_LINE);
+            gl.glPolygonMode(GL.GL_FRONT_AND_BACK, ms_aeFillTypes[ pkState.Fill.Value() ] );
+            //gl.glPolygonMode(GL.GL_FRONT_AND_BACK,GL.GL_LINE);
         }
         else
         {
@@ -2812,6 +2813,13 @@ public class OpenGLRenderer extends Renderer
             GL.GL_TEXTURE_2D,        // SamplerInformation::SAMPLER_PROJ
         };
 
+    public static int[] ms_aeFillTypes = new int[]
+        {
+           GL.GL_FILL,
+           GL.GL_LINE,
+           GL.GL_POINT
+        };
+    
     /** Returns the GLCanvas for drawing.
      * @return the current GLCanvas.
      */

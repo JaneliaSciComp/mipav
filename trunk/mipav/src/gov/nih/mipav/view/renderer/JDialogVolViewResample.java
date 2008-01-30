@@ -82,7 +82,7 @@ public class JDialogVolViewResample extends JDialogBase {
 
     /** Radio button of the fly througth mode in the left panel. */
     private JRadioButton radioFlythruL;
-    
+
     /** Radio button of the surface view mode in the left panel. */
     private JRadioButton radioSurfaceView;
 
@@ -255,7 +255,7 @@ public class JDialogVolViewResample extends JDialogBase {
         String command = event.getActionCommand();
 
         if (command.equals("Resample")) {
-        	
+
             volExtents[0] = Integer.parseInt(extXOutput.getText());
 
             if (!isPowerOfTwo(volExtents[0])) {
@@ -264,9 +264,9 @@ public class JDialogVolViewResample extends JDialogBase {
             }
 
             if ( radioSurfaceView.isSelected() ) {
-            	volExtents[0] = 16;
+                volExtents[0] = 16;
             }
-            
+
             newRes[0] = (float) (extents[0] * res[0]) / (float) volExtents[0];
 
             volExtents[1] = Integer.parseInt(extYOutput.getText());
@@ -277,9 +277,9 @@ public class JDialogVolViewResample extends JDialogBase {
             }
 
             if ( radioSurfaceView.isSelected() ) {
-            	volExtents[1] = 16;
+                volExtents[1] = 16;
             }
-            
+
             newRes[1] = (float) (extents[1] * res[1]) / (float) volExtents[1];
 
             if (nDim >= 3) {
@@ -290,7 +290,7 @@ public class JDialogVolViewResample extends JDialogBase {
                     volExtents[2] = dimPowerOfTwo(volExtents[2]);
                 }
                 if ( radioSurfaceView.isSelected() ) {
-                	volExtents[2] = 16;
+                    volExtents[2] = 16;
                 }
                 newRes[2] = (float) (extents[2] * res[2]) / (float) volExtents[2];
             }
@@ -446,130 +446,120 @@ public class JDialogVolViewResample extends JDialogBase {
     public void exec() {
 
         try {
-            if ( m_kVolViewType.equals( "VolTriplanar" ) || m_kVolViewType.equals( "WMStandAlone" )
-            		|| m_kVolViewType.equals( "DTIStandAlone" ) )
+            if ( m_kVolViewType.equals( "VolTriplanar" ) )
             {
                 if ( m_kVolViewType.equals( "VolTriplanar" ) )
                 {
                     sr = new ViewJFrameVolumeView(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
-                                                  rightPanelRenderMode, this);
-            }
-                else if ( m_kVolViewType.equals( "WMStandAlone" ) )
-                {   
-                   sr = new ViewJFrameVolumeViewWildMagic(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
-                                                           rightPanelRenderMode, this);  
-                     
+                            rightPanelRenderMode, this);
                 }
                 else if ( m_kVolViewType.equals( "DTIStandAlone" ) )
-                {   
-                	System.err.println("afa");
-                    sr = new ViewJFrameVolumeViewDTI(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
-                            rightPanelRenderMode, this);  
-                }
-                sr.setImageOriginal(imageAOriginal);
-                
-                if (forcePadding) {
-                    sr.doPadding(extents, volExtents);
-                }  else if (forceResample) {
-                    sr.doResample(volExtents, newRes, forceResample, nDim, m_iFilter);
-                }
-                
-                if (rightPanelRenderMode == ViewJFrameVolumeView.SHEARWARP) {
-                    sr.calcShearWarpImage(imageA, imageB);
-                }
-                
-                sr.constructRenderers();
-                
-                // can't do this before sr.initialize() since it uses the plane renderer list, which is setup there
-                sr.addAttachedSurfaces();
-                
-                if (sr.getProbeDialog() != null) {
-                    
-                    // need to update the rfa target labels in case there were attached surfaces that we should show info
-                    // about
-                    sr.getProbeDialog().updateTargetList();
-                }
-                
-                if (forceResample) {
-                    
-                    if (imageA != null) {
-                        imageA.disposeLocal();
-                        imageA = null;
+                {
+                    System.err.println("afa");
+                    VolumeViewerDTI kWM = new VolumeViewerDTI (imageA, LUTa, RGBTA,
+                            imageB, LUTb, RGBTB,
+                            leftPanelRenderMode,
+                            rightPanelRenderMode, this);
+                    kWM.setImageOriginal(imageAOriginal);
+
+                    if (forcePadding) {
+                        kWM.doPadding(extents, volExtents);
+                    }  else if (forceResample) {
+                        kWM.doResample(volExtents, newRes, forceResample, nDim, m_iFilter);
+                    }                
+                    kWM.constructRenderers();
+
+                    // can't do this before kWM.initialize() since it uses the plane renderer list, which is setup there
+                    kWM.addAttachedSurfaces();
+
+                    if (kWM.getProbeDialog() != null) {
+
+                        // need to update the rfa target labels in case there were attached surfaces that we should show info
+                        // about
+                        kWM.getProbeDialog().updateTargetList();
                     }
-                    
-                    if (imageB != null) {
-                        imageB.disposeLocal();
-                        imageB = null;
+
+                    if (forceResample) {
+
+                        if (imageA != null) {
+                            imageA.disposeLocal();
+                            imageA = null;
+                        }
+
+                        if (imageB != null) {
+                            imageB.disposeLocal();
+                            imageB = null;
+                        }
                     }
-                }
-                
-                if (startupCommand != null) {
-                    sr.actionPerformed(new ActionEvent(this, 0, startupCommand));
-                }
-                
-                if (segmentationImage != null) {
-                    sr.setSegmentationImage(segmentationImage);
-                }
-            }
-            else if ( m_kVolViewType.equals( "WMVolTriplanar" ) )
+
+                    if (startupCommand != null) {
+                        kWM.actionPerformed(new ActionEvent(this, 0, startupCommand));
+                    }
+
+                    if (segmentationImage != null) {
+                        kWM.setSegmentationImage(segmentationImage);
+                    }
+                } 
+
+            }            else if ( m_kVolViewType.equals( "WMVolTriplanar" ) )
             {
                 VolumeViewer kWM = new VolumeViewer (imageA, LUTa, RGBTA,
-                                                     imageB, LUTb, RGBTB,
-                                                     leftPanelRenderMode,
-                                                     rightPanelRenderMode, this);
+                        imageB, LUTb, RGBTB,
+                        leftPanelRenderMode,
+                        rightPanelRenderMode, this);
                 kWM.setImageOriginal(imageAOriginal);
-                
+
                 if (forcePadding) {
                     kWM.doPadding(extents, volExtents);
                 }  else if (forceResample) {
                     kWM.doResample(volExtents, newRes, forceResample, nDim, m_iFilter);
                 }                
                 kWM.constructRenderers();
-                
+
                 // can't do this before kWM.initialize() since it uses the plane renderer list, which is setup there
                 kWM.addAttachedSurfaces();
-                
+
                 if (kWM.getProbeDialog() != null) {
-                    
+
                     // need to update the rfa target labels in case there were attached surfaces that we should show info
                     // about
                     kWM.getProbeDialog().updateTargetList();
                 }
-                
+
                 if (forceResample) {
-                    
+
                     if (imageA != null) {
                         imageA.disposeLocal();
                         imageA = null;
                     }
-                    
+
                     if (imageB != null) {
                         imageB.disposeLocal();
                         imageB = null;
                     }
                 }
-                
+
                 if (startupCommand != null) {
                     kWM.actionPerformed(new ActionEvent(this, 0, startupCommand));
                 }
-                
+
                 if (segmentationImage != null) {
                     kWM.setSegmentationImage(segmentationImage);
                 }
             } 
-            
+
         } catch (NoClassDefFoundError notAvailableError) {
             Preferences.debug("ViewJFrameSurfaceRenderer cannot be called; encountered " +
-                              "a NoClassDefFoundError.  \nIt is likely that java3D is " +
-                              "not available on this system.  The error is: \n" +
-                              notAvailableError.getLocalizedMessage());
+                    "a NoClassDefFoundError.  \nIt is likely that java3D is " +
+                    "not available on this system.  The error is: \n" +
+                    notAvailableError.getLocalizedMessage());
             MipavUtil.displayError("The surface renderer requires java 3D and it cannot " + "be found.");
         } catch (OutOfMemoryError notEnoughError) {
             Preferences.debug("ViewJFrameSurfaceRenderer cannot be called as there was " +
-                              "not enough memory allocated.  \n" + "The error is: \n" +
-                              notEnoughError.getLocalizedMessage());
+                    "not enough memory allocated.  \n" + "The error is: \n" +
+                    notEnoughError.getLocalizedMessage());
             MipavUtil.displayError("The surface renderer requires more memory " + "than is currently available;\n" +
-                                   "See the Memory Allocation menu");
+            "See the Memory Allocation menu");
         }
 
     }
@@ -578,7 +568,7 @@ public class JDialogVolViewResample extends JDialogBase {
      * Build the resample dialog.
      */
     public void init() {
-        if ( m_kVolViewType.equals( "WMVolTriplanar" ) || m_kVolViewType.equals( "WMStandAlone" ) )
+        if ( m_kVolViewType.equals( "WMVolTriplanar" ) )
         {
             initWM();
             return;
@@ -592,11 +582,11 @@ public class JDialogVolViewResample extends JDialogBase {
 
         endPanel.setLayout(new BorderLayout());
         endPanel.add(new JLabel(" Selecting _Resample_ will resample the image's extents to a Power of 2."),
-                     BorderLayout.NORTH);
+                BorderLayout.NORTH);
         endPanel.add(new JLabel(" Selecting _Do not resample_ will disable the volume render button of "),
-                     BorderLayout.CENTER);
+                BorderLayout.CENTER);
         endPanel.add(new JLabel(" Surface Renderer since the image's extents are not a Power of 2."),
-                     BorderLayout.SOUTH);
+                BorderLayout.SOUTH);
         mainBox.add(endPanel);
 
         Box contentBox = new Box(BoxLayout.X_AXIS);
@@ -791,7 +781,7 @@ public class JDialogVolViewResample extends JDialogBase {
         radioFlythruL.setFont(serif12);
         radioFlythruL.addItemListener(this);
         group1.add(radioFlythruL);
-        
+
         radioSurfaceView = new JRadioButton("Surface View", false);
         radioSurfaceView.setFont(serif12);
         radioSurfaceView.addItemListener(this);
@@ -821,7 +811,7 @@ public class JDialogVolViewResample extends JDialogBase {
         radioButtonPanelRight.setLayout(gbl);
 
         ButtonGroup group2 = new ButtonGroup();
-        
+
         radioSurfaceR = new JRadioButton("Surface & 3D Texture Volume Renderer", false);
         radioSurfaceR.setFont(serif12);
         radioSurfaceR.addItemListener(this);
@@ -837,7 +827,7 @@ public class JDialogVolViewResample extends JDialogBase {
         group2.add(radioShearwarpR);
         radioShearwarpR.addItemListener(this);
         radioShearwarpR.setEnabled(false);
-        
+
         radioBrainSurfaceFlattenerR = new JRadioButton("Brain Surface Flattener Renderer", false);
         radioBrainSurfaceFlattenerR.setFont(serif12);
         group2.add(radioBrainSurfaceFlattenerR);
@@ -904,11 +894,11 @@ public class JDialogVolViewResample extends JDialogBase {
 
         endPanel.setLayout(new BorderLayout());
         endPanel.add(new JLabel(" Selecting _Resample_ will resample the image's extents to a Power of 2."),
-                     BorderLayout.NORTH);
+                BorderLayout.NORTH);
         endPanel.add(new JLabel(" Selecting _Do not resample_ will disable the volume render button of "),
-                     BorderLayout.CENTER);
+                BorderLayout.CENTER);
         endPanel.add(new JLabel(" Surface Renderer since the image's extents are not a Power of 2."),
-                     BorderLayout.SOUTH);
+                BorderLayout.SOUTH);
         mainBox.add(endPanel);
 
         Box contentBox = new Box(BoxLayout.X_AXIS);
@@ -1177,7 +1167,7 @@ public class JDialogVolViewResample extends JDialogBase {
             }
         } else if (radioFlythruL.isSelected()) {
             leftPanelRenderMode = ViewJFrameVolumeView.ENDOSCOPY;
-            if ( !m_kVolViewType.equals( "WMVolTriplanar" ) && !m_kVolViewType.equals( "WMStandAlone" ))
+            if ( !m_kVolViewType.equals( "WMVolTriplanar" ) )
             {
                 radioShearwarpR.setSelected(false);
                 radioShearwarpR.setEnabled(false);
@@ -1192,7 +1182,7 @@ public class JDialogVolViewResample extends JDialogBase {
             }
         } else if (radioSurfaceView.isSelected()) {
             leftPanelRenderMode = ViewJFrameVolumeView.SURFACEVIEW;
-            if ( !m_kVolViewType.equals( "WMVolTriplanar" ) && !m_kVolViewType.equals( "WMStandAlone" ))
+            if ( !m_kVolViewType.equals( "WMVolTriplanar" ) )
             {
                 radioShearwarpR.setSelected(false);
                 radioShearwarpR.setEnabled(false);
@@ -1207,7 +1197,7 @@ public class JDialogVolViewResample extends JDialogBase {
             }
         }
 
-        if ( !m_kVolViewType.equals( "WMVolTriplanar" ) && !m_kVolViewType.equals( "WMStandAlone" ) )
+        if ( !m_kVolViewType.equals( "WMVolTriplanar" ) )
         {
             if (radioSurfaceR.isSelected()) {
                 rightPanelRenderMode = ViewJFrameVolumeView.SURFACE;

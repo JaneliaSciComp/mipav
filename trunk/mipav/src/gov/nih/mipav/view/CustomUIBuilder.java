@@ -199,7 +199,6 @@ public class CustomUIBuilder {
 	public static final UIParams PARAM_IMAGE_TRIPLANAR = new UIParams("Tri-planar", "Tri-Planar View", "3plane");
 	public static final UIParams PARAM_IMAGE_VOLUME_RENDERER = new UIParams("VolTriplanar", "Volume Renderer", "java3d");
 	public static final UIParams PARAM_IMAGE_VOLUME_RENDERER_GPU = new UIParams("WMVolTriplanar", "GPU-based Volume Renderer - Beta", "wm");
-	public static final UIParams PARAM_IMAGE_VOLUME_RENDERER_WILDMAGIC = new UIParams("WMStandAlone", "WildMagic Volume Renderer Standalone - Beta", "vr");
 	public static final UIParams PARAM_IMAGE_VOLUME_RENDERER_DTI = new UIParams("DTIStandAlone", "DTI Volume Renderer Standalone - Beta", "vr");
 	public static final UIParams PARAM_IMAGE_LIGHTBOX = new UIParams("Light box", "View Light Box", "lightbox");
 	public static final UIParams PARAM_IMAGE_GPU = new UIParams("GPU", "GPU rendering", "gpu");

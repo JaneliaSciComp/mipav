@@ -6,7 +6,6 @@ import java.util.Vector;
 
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.ViewJProgressBar;
-import gov.nih.mipav.view.renderer.volumeview.MipavLightingEffect;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;

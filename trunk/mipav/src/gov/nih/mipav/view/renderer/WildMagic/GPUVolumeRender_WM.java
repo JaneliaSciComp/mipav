@@ -313,6 +313,11 @@ implements GLEventListener, KeyListener, MouseMotionListener
             VolumeImageViewer.main(m_kVolumeImageA);
             CMPMode();
         }
+        if ( m_bSurfaceAdded )
+        {
+            m_bSurfaceAdded = false;
+            updateLighting( m_akLights );
+        }
     }
 
     /**
@@ -1067,7 +1072,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
      */
     public void setArbitraryClipPlane( float f4 )
     {
-        System.err.println( f4 );
         f4 /= (m_kImageA.getExtents()[0] -1);     
         m_kArbitraryClip = new Vector4f(1,0,0,f4);
         doClip();
@@ -1249,12 +1253,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
             return;
         }
         m_akLights = akGLights;
-
-//         if ( m_kSphere != null )
-//         {
-//             m_kSphere.DetachAllLights();
-//         }
-
         if ( m_bInit )
         {
             for ( int i = 0; i < akGLights.length; i++ )
@@ -1268,12 +1266,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
                     {
                         Light kLight = akGLights[i].createWMLight();
                         m_pkRenderer.SetLight( i, kLight );
-
-//                         if ( m_kSphere != null )
-//                         {
-//                             m_kSphere.AttachLight( kLight );
-//                         }
-
                         if ( akGLights[i].isTypeAmbient() )
                         {
                             afType[0] = 0;
@@ -1290,31 +1282,24 @@ implements GLEventListener, KeyListener, MouseMotionListener
                         {
                             afType[0] = 3;
                         }
-                        if ( m_kVolumeRayCast != null )
+                        for ( int j = 0; j < m_kDisplayList.size(); j++ )
                         {
-                            m_kVolumeRayCast.SetLight(kLightType, afType);
+                            m_kDisplayList.get(j).SetLight(kLightType, afType);
                         }
-                        if ( m_kDTIDisplay != null )
-                        {
-                            m_kDTIDisplay.SetLight(kLightType, afType);
-                        }
+
                     }
                     else
                     {
                         m_pkRenderer.SetLight( i, new Light() );
                         afType[0] = -1;
-                        if ( m_kVolumeRayCast != null )
+                        for ( int j = 0; j < m_kDisplayList.size(); j++ )
                         {
-                            m_kVolumeRayCast.SetLight(kLightType, afType);
+                            m_kDisplayList.get(j).SetLight(kLightType, afType);
                         }
                     }
                 }
             }
         }
-//         if ( m_kSphere != null )
-//         {
-//             m_kSphere.UpdateRS();
-//         }
     }
 
     /**
@@ -1694,8 +1679,164 @@ implements GLEventListener, KeyListener, MouseMotionListener
             m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
         }
     }
+    
+    public void addSurface(TriMesh[] akSurfaces)
+    {
+        for ( int i = 0; i < akSurfaces.length; i++ )
+        {
+            m_kDisplayList.add( new VolumeSurface( m_pkRenderer, m_kVolumeImageA,
+                                                   m_kTranslate,
+                                                   m_fX, m_fY, m_fZ,
+                                                   akSurfaces[i] ) );
+        }
+        UpdateSceneRotation();
+        m_bSurfaceAdded = true;
+    }
 
+    public void setPolygonMode(String kSurfaceName, WireframeState.FillMode eMode)
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    m_kDisplayList.get(i).SetPolygonMode( true, eMode );
+                }
+            }
+        }
+    }
 
+    /**
+     * Sets blending between imageA and imageB.
+     * @param fValue, the blend value (0-1)
+     */
+    public void Blend( String kSurfaceName, float fValue )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    m_kDisplayList.get(i).Blend( fValue );
+                }
+            }
+        }
+    }
+    
+    /**
+     * Sets blending between imageA and imageB.
+     * @param fValue, the blend value (0-1)
+     */
+    public void setColor( String kSurfaceName, ColorRGB kColor )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    m_kDisplayList.get(i).SetColor( kColor );
+                }
+            }
+        }
+    }
+    
+    /**
+     * Sets blending between imageA and imageB.
+     * @param fValue, the blend value (0-1)
+     */
+    public void removeSurface( String kSurfaceName )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    VolumeSurface kSurface = (VolumeSurface)m_kDisplayList.remove(i);
+                    kSurface.dispose();
+                    kSurface = null;
+                }
+            }
+        }
+    }
+
+    /**
+     */
+    public float GetVolume( String kSurfaceName )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    return ((VolumeSurface)(m_kDisplayList.get(i))).GetVolume();
+                }
+            }
+        }
+        return 0;
+    }
+    
+    /**
+     */
+    public float GetSurfaceArea( String kSurfaceName )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    return ((VolumeSurface)(m_kDisplayList.get(i))).GetSurfaceArea();
+                }
+            }
+        }
+        return 0;
+    }
+    
+    
+    /**
+     */
+    public MaterialState GetMaterial( String kSurfaceName )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    return ((VolumeSurface)(m_kDisplayList.get(i))).GetMaterial();
+                }
+            }
+        }
+        return null;
+    }
+    
+    
+    /**
+     */
+    public void SetMaterial( String kSurfaceName, MaterialState kMaterial )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    ((VolumeSurface)(m_kDisplayList.get(i))).SetMaterial(kMaterial);
+                }
+            }
+        }
+    }
+    
+    public GeneralLight[] GetLights()
+    {
+        return m_akLights;
+    }
+    
     private VolumeImage m_kVolumeImageA;
     private VolumeImage m_kVolumeImageB;
     
@@ -1770,5 +1911,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
     private boolean m_bFirstRender = true;
 
-    float[] m_afArbEquation = new float[4];
+    private float[] m_afArbEquation = new float[4];
+    private boolean m_bSurfaceAdded = false;
 }
