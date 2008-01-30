@@ -62,7 +62,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
      * @param kLUTb, LUT for ModelImage B
      * @param kRGBTb, RGB lookup table for ModelImage B
      */
-    public GPUVolumeRender_WM( Animator kAnimator, VolumeImage kVolumeImageA, ModelImage kImageA, ModelLUT kLUTa, ModelRGB kRGBTa,
+    public GPUVolumeRender_WM( VolumeViewer kParent, Animator kAnimator, VolumeImage kVolumeImageA, ModelImage kImageA, ModelLUT kLUTa, ModelRGB kRGBTa,
             VolumeImage kVolumeImageB, ModelImage kImageB, ModelLUT kLUTb, ModelRGB kRGBTb  )
     {
 
@@ -86,7 +86,8 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_kImageB = kImageB;
         m_kLUTb = kLUTb;
         m_kRGBTb = kRGBTb;
-
+        m_kParent = kParent;
+        
         m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
     }
 
@@ -718,6 +719,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         */
         m_kSculptor.undoSculpt();
         m_kVolumeImageA.ReleaseVolume();
+        m_kParent.setModified();
     }
 
     /**
@@ -758,6 +760,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             m_kVolumeImageA.ReleaseVolume();
             m_kSculptor.clearSculpt();
+            m_kParent.setModified();
         }
     }
 
@@ -1913,4 +1916,5 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
     private float[] m_afArbEquation = new float[4];
     private boolean m_bSurfaceAdded = false;
+    private VolumeViewer m_kParent = null;
 }
