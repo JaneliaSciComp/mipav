@@ -121,7 +121,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
                 resultImage.clearMask();
 
                 try {
-                    new ViewJFrameImage(resultImage);
+                    openNewFrame(resultImage);
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
