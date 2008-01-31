@@ -3,10 +3,7 @@ import java.awt.event.*;
 import java.util.Vector;
 
 import javax.swing.*;
-import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelLUT;
-import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -250,6 +247,26 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
                 MipavUtil.displayWarning("Image has no VOIs!");
             }
 
+        } else if (command.equals("About")) {
+            about();
+        } else if (command.equals("License")) {
+            ViewUserInterface.getReference().showLicense();
+        } else if (command.equals("AboutJava")) {
+        	ViewUserInterface.getReference().aboutJava();
+        } else if (command.equals("DataProvenance")) {
+        	ViewUserInterface.getReference().aboutDataProvenance();
+        } else if (command.equals("Help")) {
+            MipavUtil.showHelp(null);
+        } else if (command.equals("MemoryUsage")) {
+        	ViewUserInterface.getReference().memoryFrame();
+        } else if (command.equals("MemoryAdjust")) {
+        	ViewUserInterface.getReference().memoryAllocation();
+        } else if (command.equals("ImageRegistryMonitor")) {
+        	ViewUserInterface.getReference().imageRegistryMonitoring();
+        } else if (command.equals("Options")) {
+        	ViewUserInterface.getReference().options();
+        } else if (command.equals("Shortcuts")) {
+        	ViewUserInterface.getReference().showShortcutEditor(false);
         }
     }
 
@@ -257,7 +274,7 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
      * Can handle actions for the resizing of the frame
      */
     public synchronized void componentResized(ComponentEvent event) {
-    	
+    	// do nothing, this simply catches the ComponentEvent from being handled by ViewJFrameImage
     }
     
     /**
@@ -321,7 +338,9 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
          
          menuBar.add(menuBarMaker.makeCustomMenu("VOI example", voiParams));
          menuBar.add(menuBarMaker.makeCustomMenu("Simple algorithm menu", algoParams));
-                 
+         menuBar.add(menuBarMaker.makeHelpMenu());  
+         
+         
          //create a simple toolbar (rather than the default ViewJFrameImage specific toolbar)
          //buttons will be added to the toolbar with the function call .addCustomToolBar()
          controls.buildSimpleToolBar();
@@ -334,17 +353,17 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
          centerPanel.add(componentImage, BorderLayout.CENTER);
          
          // The component image will be displayed in a scrollpane.
-       scrollPane = new JScrollPane(centerPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+         scrollPane = new JScrollPane(centerPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                       JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
          
-       JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, scrollPane, 
+         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, scrollPane, 
     		   ViewUserInterface.getReference().getMessageFrame().getTabbedPane());
-       splitPane.setDividerLocation(350);
+         splitPane.setDividerLocation(350);
       
-       getContentPane().add(splitPane);
-       scrollPane.setBackground(Color.black);
+      	 getContentPane().add(splitPane);
+      	 scrollPane.setBackground(Color.black);
 
-       setBackground(Color.black);
+      	 setBackground(Color.black);
 
 
 
