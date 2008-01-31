@@ -9086,7 +9086,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case ICC_PROFILE:
-                    if (type != UNDEFINED) {
+                    if ((type != UNDEFINED) && (type != BYTE)) {
                         throw new IOException("ICC_PROFILE has illegal type = " + type + "\n");
                     }
                     
