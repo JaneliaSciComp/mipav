@@ -2,6 +2,8 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -46,6 +48,9 @@ import java.util.zip.*;
  * 160 by 120 pixels and 120 rows per strip, will not be read in properly.  The libtiff file text.tif with 4 bits per
  * sample and thunderscan compression in the first slice and 1 bit per sample and no compression in the second
  * slice will not be read in properly.
+ * You can make an excellent CMYK file from an RGB file, but you can only make a mediocre RGB file from a CMYK file.
+ * The gamut of RGB colorspace is significantly larger than the gamut of CMYK colorspace.  When you convert from RGB
+ * to CMYK, you are throwing away a lot of data, and you can't get it back.
  *
  * @version  1.0 Feb 29, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
@@ -322,6 +327,9 @@ public class FileTiff extends FileBase {
      *  also written candelas/meter**2.
      */
     public static final int STONITS = 37439;
+    
+    // Used by Adobe Photoshop
+    public static final int IMAGE_SOURCE_DATA = 37724;
     
     // The Flashpix format version supported by a FPXR file.
     public static final int EXIFTAG_FLASHPIX_VERSION = 40960;
@@ -761,6 +769,16 @@ public class FileTiff extends FileBase {
     private int previousRecognizedCode; // previously recognized code
     private int nextFreeEntry; // next free entry in dec_codetab
     private int maxAvailableEntry; // max available entry
+    
+    private boolean flipHorizontal = false;
+    private boolean rotate180 = false;
+    private boolean flipVertical = false;
+    private boolean interchangeXY = false;
+    private boolean rotatePlus90 = false;
+    private boolean negInterchangeXY = false;
+    private boolean rotateMinus90 = false;
+    private AlgorithmFlip flipAlgo;
+    private AlgorithmRotate rotateAlgo;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1194,6 +1212,74 @@ public class FileTiff extends FileBase {
 
             fileInfo.setExtents(imgExtents);
             raFile.close();
+            
+            if (flipHorizontal) {
+                flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE_AND_VOI);
+                flipAlgo.run();
+                flipAlgo.finalize();
+                flipAlgo = null;
+            }
+            else if (rotate180) {
+                rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_180);
+                rotateAlgo.run();
+                image.disposeLocal();
+                image = null;
+                image = rotateAlgo.returnImage();
+                rotateAlgo.finalize();
+                rotateAlgo = null;
+            }
+            else if (flipVertical) {
+                flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE_AND_VOI);
+                flipAlgo.run();
+                flipAlgo.finalize();
+                flipAlgo = null;    
+            }
+            else if (interchangeXY) {
+                // Vertical flip followed by +90 degrees rotation
+                flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE_AND_VOI);
+                flipAlgo.run();
+                flipAlgo.finalize();
+                flipAlgo = null;
+                rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_PLUS);
+                rotateAlgo.run();
+                image.disposeLocal();
+                image = null;
+                image = rotateAlgo.returnImage();
+                rotateAlgo.finalize();
+                rotateAlgo = null;
+            }
+            else if (rotatePlus90) {
+                rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_PLUS);
+                rotateAlgo.run();
+                image.disposeLocal();
+                image = null;
+                image = rotateAlgo.returnImage();
+                rotateAlgo.finalize();
+                rotateAlgo = null;
+            }
+            else if (negInterchangeXY) {
+                // +90 degrees rotation followed by vertical flip
+                rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_PLUS);
+                rotateAlgo.run();
+                image.disposeLocal();
+                image = null;
+                image = rotateAlgo.returnImage();
+                rotateAlgo.finalize();
+                rotateAlgo = null; 
+                flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE_AND_VOI);
+                flipAlgo.run();
+                flipAlgo.finalize();
+                flipAlgo = null;
+            }
+            else if (rotateMinus90) {
+                rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_MINUS);
+                rotateAlgo.run();
+                image.disposeLocal();
+                image = null;
+                image = rotateAlgo.returnImage();
+                rotateAlgo.finalize();
+                rotateAlgo = null;    
+            }
 
         } catch (OutOfMemoryError error) {
 
@@ -6647,15 +6733,75 @@ public class FileTiff extends FileBase {
                     if ((valueArray[0] < 1) || (valueArray[0] > 8)) {
                         throw new IOException("ORIENTATION has illegal value = " + valueArray[0] + "\n");
                     }
+                    
+                    switch ((int)valueArray[0]) {
+                        case 1:
+                            break;
+                        case 2:
+                            flipHorizontal = true;
+                            break;
+                        case 3:
+                            rotate180 = true;
+                            break;
+                        case 4:
+                            flipVertical = true;
+                            break;
+                        case 5:
+                            interchangeXY = true;
+                            break;
+                        case 6:
+                            rotatePlus90 = true;
+                            break;
+                        case 7:
+                            negInterchangeXY = true;
+                            break;
+                        case 8:
+                            rotateMinus90 = true;
+                            break;
+                    }
 
-                    if (valueArray[0] > 1) {
-                        throw new IOException("Only default orientation is currently supported\n");
-                    } else {
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n");
-                            Preferences.debug("the top of the image, and the 0th column representing\n");
-                            Preferences.debug("the left hand side of the image\n");
+                    if (debuggingFileIO) {
+                        switch((int)valueArray[0]) {
+                            case 1:
+                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n");
+                                Preferences.debug("the top of the image, and the 0th column representing\n");
+                                Preferences.debug("the left hand side of the image\n");
+                                break;
+                            case 2:
+                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n");
+                                Preferences.debug("the top of the image, and the 0th column representing\n");
+                                Preferences.debug("the right hand side of the image\n");
+                                break;    
+                            case 3:
+                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n");
+                                Preferences.debug("the bottom of the image, and the 0th column representing\n");
+                                Preferences.debug("the right hand side of the image\n");
+                                break; 
+                            case 4:
+                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n");
+                                Preferences.debug("the bottom of the image, and the 0th column representing\n");
+                                Preferences.debug("the left hand side of the image\n");
+                                break;
+                            case 5:
+                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n");
+                                Preferences.debug("the left hand side of the image, and the 0th column representing\n");
+                                Preferences.debug("the top of the image\n");
+                                break; 
+                            case 6:
+                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n");
+                                Preferences.debug("the right hand side of the image, and the 0th column representing\n");
+                                Preferences.debug("the top of the image\n");
+                                break;
+                            case 7:
+                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n");
+                                Preferences.debug("the right hand side of the image, and the 0th column representing\n");
+                                Preferences.debug("the bottom of the image\n");
+                                break;
+                            case 8:
+                                Preferences.debug("FileTiff.openIFD: orientation has 0th row representing\n");
+                                Preferences.debug("the left hand side of the image, and the 0th column representing\n");
+                                Preferences.debug("the bottom of the image\n");
+                                break;    
                         }
                     }
 
@@ -8969,6 +9115,16 @@ public class FileTiff extends FileBase {
                             Preferences.debug("DotRange[" + (2*i1) + "] corresponds to a " + valueArray[0] + "% dot\n");
                             Preferences.debug("DotRange[" + (2*i1 + 1) + "] corresponds to a " + valueArray[1] + "% dot\n");
                         }
+                    }
+                    break;
+                    
+                case IMAGE_SOURCE_DATA:
+                    if (type != UNDEFINED) {
+                        throw new IOException("IMAGE_SOURCE_DATA has illegal type = " + type + "\n");
+                    }
+                    
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: Image source data used by Adobe Photoshop is above\n");
                     }
                     break;
                 
