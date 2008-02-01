@@ -860,19 +860,19 @@ public class FileDicom extends FileDicomBase {
         }
 
         if ((photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2")) &&
-                (fileInfo.pixelRepresentation == 0) && (fileInfo.bitsAllocated == 8)) {
+                (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP) && (fileInfo.bitsAllocated == 8)) {
             fileInfo.setDataType(ModelStorageBase.UBYTE);
             fileInfo.displayType = ModelStorageBase.UBYTE;
             fileInfo.bytesPerPixel = 1;
         } else if ((photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2")) &&
-                       (fileInfo.pixelRepresentation == 1) && (fileInfo.bitsAllocated == 8)) {
+                       (fileInfo.pixelRepresentation == FileInfoDicom.SIGNED_PIXEL_REP) && (fileInfo.bitsAllocated == 8)) {
             fileInfo.setDataType(ModelStorageBase.BYTE);
             fileInfo.displayType = ModelStorageBase.BYTE;
             fileInfo.bytesPerPixel = 1;
         } else if ((photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2")) &&
-                       (fileInfo.pixelRepresentation == 0) && (fileInfo.bitsAllocated > 8)) {
+                       (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP) && (fileInfo.bitsAllocated > 8)) {
 
-            if (fileInfo.getModality() == FileInfoBase.COMPUTED_TOMOGRAPHY) {
+            //if (fileInfo.getModality() == FileInfoBase.COMPUTED_TOMOGRAPHY) {
 
                 // Found an CT that was incorrectly label pixelRepresentation = 0 (unsigned when
                 // in fact all CT images are signed!
@@ -880,13 +880,13 @@ public class FileDicom extends FileDicomBase {
                 //fileInfo.setDataType(ModelStorageBase.SHORT);
                 //fileInfo.displayType = ModelStorageBase.SHORT;
                 //fileInfo.bytesPerPixel = 2;
-            } else {
+            //} else {
                 fileInfo.setDataType(ModelStorageBase.USHORT);
                 fileInfo.displayType = ModelStorageBase.USHORT;
                 fileInfo.bytesPerPixel = 2;
-            }
+            //}
         } else if ((photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2")) &&
-                       (fileInfo.pixelRepresentation == 1) && (fileInfo.bitsAllocated > 8)) {
+                       (fileInfo.pixelRepresentation == FileInfoDicom.SIGNED_PIXEL_REP) && (fileInfo.bitsAllocated > 8)) {
             fileInfo.setDataType(ModelStorageBase.SHORT);
             fileInfo.displayType = ModelStorageBase.SHORT;
             fileInfo.bytesPerPixel = 2;
@@ -912,7 +912,7 @@ public class FileDicom extends FileDicomBase {
             } else {
                 fileInfo.planarConfig = 0; // rgb, rgb, rgb
             }
-        } else if (photometricInterp.equals("PALETTE COLOR") && (fileInfo.pixelRepresentation == 0) &&
+        } else if (photometricInterp.equals("PALETTE COLOR") && (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP) &&
                        (fileInfo.bitsAllocated == 8)) {
             fileInfo.setDataType(ModelStorageBase.UBYTE);
             fileInfo.displayType = ModelStorageBase.UBYTE;
@@ -951,10 +951,10 @@ public class FileDicom extends FileDicomBase {
 //			 This if statement should be deleted most likely.
             if (fileInfo.getDataType() == ModelStorageBase.UBYTE) {
                 fileInfo.displayType = ModelStorageBase.BYTE;
-                fileInfo.setDataType(ModelStorageBase.BYTE);
+                //fileInfo.setDataType(ModelStorageBase.BYTE);
             } else if (fileInfo.getDataType() == ModelStorageBase.USHORT) {
-            //    fileInfo.displayType = ModelStorageBase.SHORT;
-            //    fileInfo.setDataType(ModelStorageBase.SHORT);
+                fileInfo.displayType = ModelStorageBase.SHORT;
+                //fileInfo.setDataType(ModelStorageBase.SHORT);
             }
         }
 

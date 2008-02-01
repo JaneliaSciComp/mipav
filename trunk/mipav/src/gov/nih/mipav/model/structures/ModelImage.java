@@ -320,7 +320,9 @@ public class ModelImage extends ModelStorageBase {
 
         super.calcMinMax();
 
-        if (fileInfo[0].getModality() == FileInfoBase.COMPUTED_TOMOGRAPHY) {
+        /*
+         * 
+         if (fileInfo[0].getModality() == FileInfoBase.COMPUTED_TOMOGRAPHY) {
 
             if (getMin() < -1024) { // Do nothing
             } else {
@@ -332,7 +334,8 @@ public class ModelImage extends ModelStorageBase {
                 setMax(3071);
             }
         }
-
+		*/
+        
         for (int i = 0; i < fileInfo.length; i++) {
 
             if (!isColorImage()) {
