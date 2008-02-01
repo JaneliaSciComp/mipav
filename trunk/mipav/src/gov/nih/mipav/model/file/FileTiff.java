@@ -12819,8 +12819,13 @@ public class FileTiff extends FileBase {
                             if (lzwCompression) {
                                 //lzwDecoder.decode(byteBuffer, decomp, tileLength);
                                 rowsToDo = Math.min(tileLength, yDim - y);
-                                LZWDecompresser(byteBuffer, nBytes, decomp, y, rowsToDo, tileWidth);
+                                LZWDecompresser(byteBuffer, nBytes, decomp, y, rowsToDo, (tileWidth/8 + tileWidth%8));
                                 resultLength = decomp.length;
+                                if (fileInfo.getPhotometric() == 0) {
+                                    for (j = 0; j < resultLength; j++) {
+                                        decomp[j] = (byte)(~decomp[j]);
+                                    }
+                                }
                             }
                             else if (fax3Compression || fax4Compression) {
                                 data = new byte[nBytes];
@@ -12843,6 +12848,12 @@ public class FileTiff extends FileBase {
                             else { // zlibCompression
                                 try {
                                     resultLength = zlibDecompresser.inflate(decomp);
+                                    resultLength = decomp.length;
+                                    if (fileInfo.getPhotometric() == 0) {
+                                        for (j = 0; j < resultLength; j++) {
+                                            decomp[j] = (byte)(~decomp[j]);
+                                        }
+                                    }
                                 }
                                 catch (DataFormatException e){
                                     MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
