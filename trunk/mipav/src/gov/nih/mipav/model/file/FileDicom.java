@@ -871,20 +871,9 @@ public class FileDicom extends FileDicomBase {
             fileInfo.bytesPerPixel = 1;
         } else if ((photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2")) &&
                        (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP) && (fileInfo.bitsAllocated > 8)) {
-
-            //if (fileInfo.getModality() == FileInfoBase.COMPUTED_TOMOGRAPHY) {
-
-                // Found an CT that was incorrectly label pixelRepresentation = 0 (unsigned when
-                // in fact all CT images are signed!
-            	// The above statement is not true 7/19/2007
-                //fileInfo.setDataType(ModelStorageBase.SHORT);
-                //fileInfo.displayType = ModelStorageBase.SHORT;
-                //fileInfo.bytesPerPixel = 2;
-            //} else {
-                fileInfo.setDataType(ModelStorageBase.USHORT);
-                fileInfo.displayType = ModelStorageBase.USHORT;
-                fileInfo.bytesPerPixel = 2;
-            //}
+            fileInfo.setDataType(ModelStorageBase.USHORT);
+            fileInfo.displayType = ModelStorageBase.USHORT;
+            fileInfo.bytesPerPixel = 2;
         } else if ((photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2")) &&
                        (fileInfo.pixelRepresentation == FileInfoDicom.SIGNED_PIXEL_REP) && (fileInfo.bitsAllocated > 8)) {
             fileInfo.setDataType(ModelStorageBase.SHORT);
@@ -945,16 +934,14 @@ public class FileDicom extends FileDicomBase {
             // always 0 for PET).
         }
 
-        if (((fileInfo.getDataType() == ModelStorageBase.UBYTE) ||
-                 (fileInfo.getDataType() == ModelStorageBase.USHORT)) && (fileInfo.getRescaleIntercept() < 0)) { // if image originally was unsigned and rescale makes a negative, change
-//        	 The above statement is not true 7/19/2007 - a negative rescale intercept is not sufficient to impose signed image.
-//			 This if statement should be deleted most likely.
+        if (((fileInfo.getDataType() == ModelStorageBase.UBYTE) || (fileInfo.getDataType() == ModelStorageBase.USHORT)) && (fileInfo.getRescaleIntercept() < 0)) {
+            // this performs a similar method as the pet adjustment for float images stored on disk as short to read in
+            // signed byte and signed short images stored on disk as unsigned byte or unsigned short with a negative
+            // rescale intercept
             if (fileInfo.getDataType() == ModelStorageBase.UBYTE) {
                 fileInfo.displayType = ModelStorageBase.BYTE;
-                //fileInfo.setDataType(ModelStorageBase.BYTE);
             } else if (fileInfo.getDataType() == ModelStorageBase.USHORT) {
                 fileInfo.displayType = ModelStorageBase.SHORT;
-                //fileInfo.setDataType(ModelStorageBase.SHORT);
             }
         }
 
@@ -1769,7 +1756,7 @@ public class FileDicom extends FileDicomBase {
         getNextElement(endianess);
         name = convertGroupElement(groupWord, elementWord);
 
-        Vector v = new Vector();
+        Vector<byte[]> v = new Vector<byte[]>();
 
         while (name.equals(SEQ_ITEM_BEGIN)) {
             byte[] imageFrag = new byte[elementLength]; // temp buffer
@@ -1790,20 +1777,18 @@ public class FileDicom extends FileDicomBase {
             }
         }
 
-
-
         raFile.close();
 
         if (v.size() > 1) {
-            Vector v2 = new Vector();
+            Vector<int[]> v2 = new Vector<int[]>();
             int[] jpegImage;
 
-            for (Enumeration en = v.elements(); en.hasMoreElements();) {
+            for (Enumeration<byte[]> en = v.elements(); en.hasMoreElements();) {
 
                 if (lossy == true) {
-                    jpegImage = extractLossyJPEGImage((byte[]) en.nextElement());
+                    jpegImage = extractLossyJPEGImage(en.nextElement());
                 } else {
-                    FileDicomJPEG fileReader = new FileDicomJPEG((byte[]) en.nextElement(), fileInfo.getExtents()[0],
+                    FileDicomJPEG fileReader = new FileDicomJPEG(en.nextElement(), fileInfo.getExtents()[0],
                                                                  fileInfo.getExtents()[1]);
                     jpegImage = fileReader.extractJPEGImage();
                 }
@@ -1813,15 +1798,15 @@ public class FileDicom extends FileDicomBase {
 
             int size = 0;
 
-            for (Enumeration en = v2.elements(); en.hasMoreElements();) {
-                size += ((int[]) en.nextElement()).length;
+            for (Enumeration<int[]> en = v2.elements(); en.hasMoreElements();) {
+                size += en.nextElement().length;
             }
 
             int count = 0;
             int[] imageData = new int[size];
 
-            for (Enumeration en = v2.elements(); en.hasMoreElements();) {
-                int[] temp = (int[]) en.nextElement();
+            for (Enumeration<int[]> en = v2.elements(); en.hasMoreElements();) {
+                int[] temp = en.nextElement();
 
                 for (int i = 0; i < temp.length; i++) {
                     imageData[count++] = temp[i];
@@ -1837,9 +1822,9 @@ public class FileDicom extends FileDicomBase {
             if (lossy == true) {
                 inSQ = false;
 
-                return extractLossyJPEGImage((byte[]) v.elementAt(0));
+                return extractLossyJPEGImage(v.elementAt(0));
             } else {
-                FileDicomJPEG fileReader = new FileDicomJPEG((byte[]) v.elementAt(0), fileInfo.getExtents()[0],
+                FileDicomJPEG fileReader = new FileDicomJPEG(v.elementAt(0), fileInfo.getExtents()[0],
                                                              fileInfo.getExtents()[1]);
                 inSQ = false;
 
