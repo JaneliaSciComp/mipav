@@ -12766,6 +12766,7 @@ public class FileTiff extends FileBase {
         int w;
         int halfXDim = xDim/2;
         int rowsToDo;
+        byte decomp2[];
         
         if (isYCbCr) {
             YBuffer = new int[buffer.length/4];
@@ -13134,8 +13135,22 @@ public class FileTiff extends FileBase {
                                 if (lzwCompression) {
                                     //lzwDecoder.decode(byteBuffer, decomp, tileLength);
                                     rowsToDo = Math.min(tileLength, yDim - y);
-                                    LZWDecompresser(byteBuffer, nBytes, decomp, y, rowsToDo, tileWidth);
-                                    resultLength = decomp.length;
+                                    if (isBW4) {
+                                        LZWDecompresser(byteBuffer, nBytes, decomp, y, rowsToDo,
+                                                       (tileWidth/2 + tileWidth % 2));
+                                        resultLength = decomp.length;
+                                        decomp2 = new byte[decomp.length];
+                                        for (j = 0; j < resultLength/2; j++) {
+                                            decomp2[2*j] = (byte)(0x0f & (decomp[j] >> 4));
+                                            decomp2[2*j+1] = (byte)(0x0f & decomp[j]); 
+                                        }
+                                        decomp = null;
+                                        decomp = decomp2;
+                                    }
+                                    else {
+                                        LZWDecompresser(byteBuffer, nBytes, decomp, y, rowsToDo, tileWidth); 
+                                        resultLength = decomp.length;
+                                    }
                                 }
                                 else if (ThunderScanCompression) {
                                     rowsToDo = Math.min(tileLength, yDim - y);
@@ -13163,7 +13178,7 @@ public class FileTiff extends FileBase {
                                         buffer[x + (y * xDim)] = decomp[j] & 0xff;
                                         if (fileInfo.getPhotometric() == 0) {
                                             // white is 0 in original readin
-                                            if (ThunderScanCompression) {
+                                            if (isBW4) {
                                                 buffer[x + (y * xDim)] = 15 - buffer[x + (y * xDim)];
                                             }
                                             else {
