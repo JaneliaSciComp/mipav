@@ -37,6 +37,15 @@ public class FileInfoDicom extends FileInfoBase {
 
     /** Used to indicate that the DICOM tags are implicit (i.e. they use the DICOM dictionary). */
     public static final boolean IMPLICIT = true;
+    
+    /** (0028,0103) Pixel Representations */
+    public static final int UNDEFINED_PIXEL_REP = -1;
+    
+    /** (0028,0103) Pixel Representations */
+    public static final int UNSIGNED_PIXEL_REP = 0;
+    
+    /** (0028,0103) Pixel Representations */
+    public static final int SIGNED_PIXEL_REP = 1;
 
     /**
      * these are the DICOM tag ID numbers corresponding to the tags which are anonymized. They are kept here for
@@ -152,7 +161,8 @@ public class FileInfoDicom extends FileInfoBase {
      * 	-1 = undefined
      * 	 0 = unsigned 
      *   1 = signed */
-    public short pixelRepresentation = -1;
+    public short pixelRepresentation = UNDEFINED_PIXEL_REP;
+    
 
     /** 0 = RGB, RGB, 1 = R R R, G G G, B B B. */
     public short planarConfig = 0; //
