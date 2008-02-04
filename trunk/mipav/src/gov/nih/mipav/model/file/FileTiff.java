@@ -12820,7 +12820,7 @@ public class FileTiff extends FileBase {
                             if (lzwCompression) {
                                 //lzwDecoder.decode(byteBuffer, decomp, tileLength);
                                 rowsToDo = Math.min(tileLength, yDim - y);
-                                LZWDecompresser(byteBuffer, nBytes, decomp, y, rowsToDo, (tileWidth/8 + tileWidth%8));
+                                LZWDecompresser(byteBuffer, nBytes, decomp, y, rowsToDo, ((tileWidth+7)/8));
                                 resultLength = decomp.length;
                                 if (fileInfo.getPhotometric() == 0) {
                                     for (j = 0; j < resultLength; j++) {
@@ -13137,7 +13137,7 @@ public class FileTiff extends FileBase {
                                     rowsToDo = Math.min(tileLength, yDim - y);
                                     if (isBW4) {
                                         LZWDecompresser(byteBuffer, nBytes, decomp, y, rowsToDo,
-                                                       (tileWidth/2 + tileWidth % 2));
+                                                       ((tileWidth+1)/2));
                                         resultLength = decomp.length;
                                         decomp2 = new byte[decomp.length];
                                         for (j = 0; j < resultLength/2; j++) {
