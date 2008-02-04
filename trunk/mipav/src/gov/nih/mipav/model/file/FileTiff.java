@@ -916,7 +916,7 @@ public class FileTiff extends FileBase {
 
             if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) &&
                                  (!modHuffmanCompression) && (!jpegCompression) && (!ThunderScanCompression) &&
-                                 (!SGILogCompression) && (!SGILog24Compression) && haveTileOffsets) {
+                                 (!SGILogCompression) && (!SGILog24Compression) && (!packBit) && haveTileOffsets) {
                 if (chunky) {
                    tilesPerSlice = tilesAcross * tilesDown;
                 }
@@ -11029,7 +11029,7 @@ public class FileTiff extends FileBase {
                                 buffer[i + 3] = getUnsignedByte(byteBuffer, j + currentIndex + 2);
                             }
                         } // if (chunky == true && packBit == false)
-                        else if ((chunky == true) && (packBit == true)) {
+                        else if ((chunky == true) && (packBit == true) && (samplesPerPixel == 3)) {
                             int rgbLoc = 1;
 
                             // if (byteBuffer == null)
@@ -11104,7 +11104,94 @@ public class FileTiff extends FileBase {
                                     j++;
                                 } // end of else for compressed data bytes
                             } // end of while (j < nBytes)
-                        } // else if (chunky == true && packBit == true)
+                        } // else if ((chunky == true) && (packBit == true) && (samplesPerPixel == 3))
+                        else if ((chunky == true) && (packBit == true) && (samplesPerPixel == 4)) {
+                            int rgbLoc = 1;
+
+                            // if (byteBuffer == null)
+                            // byteBuffer = new byte[buffer.length];
+                            // raFile.read(byteBuffer, 0, nBytes);
+                            progress = slice * buffer.length;
+                            progressLength = buffer.length * imageSlice;
+                            mod = progressLength / 10;
+
+                            j = 0;
+
+                            while (j < nBytes) {
+
+                                // uncompressed data bytes follow
+                                // Copy the next n+1 bytes literally
+                                if ((byteBuffer[j + currentIndex] & 0x80) == 0) {
+                                    iCount = byteBuffer[j + currentIndex] + 1;
+                                    j++;
+
+                                    for (iNext = 0; iNext < iCount; iNext++, j++) {
+
+                                        if (((i + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
+                                        }
+
+                                        if (rgbLoc == 1) {
+                                            buffer[i++] = 255;
+                                        }
+
+                                        if (rgbLoc != 4) {
+                                            buffer[i++] = byteBuffer[j + currentIndex] & 0xff;
+                                        }
+
+                                        if ((rgbLoc == 4) && isRGBA) {
+                                            buffer[i-4] = byteBuffer[j + currentIndex] & 0xff;
+                                            rgbLoc = 1;    
+                                        }
+                                        else if (rgbLoc == 4) {
+                                            rgbLoc = 1;
+                                        } else {
+                                            rgbLoc++;
+                                        }
+                                    }
+                                } // end of if (byteBuffer[j] & 0x80 == 0)
+
+                                // Do nothing if the byte value is -128
+                                else if (byteBuffer[j + currentIndex] == -128) {
+                                    j++;
+                                }
+                                // compressed data bytes follow
+                                // (~byteBuffer[j]) + 1 is the 2's complement of n or -n
+                                // Hence (~byteBuffer[j]) + 2 equals -n + 1
+                                else {
+                                    iCount = (~byteBuffer[j + currentIndex]) + 2;
+                                    j++;
+
+                                    for (iNext = 0; iNext < iCount; iNext++) {
+
+                                        if (((i + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
+                                        }
+
+                                        if (rgbLoc == 1) {
+                                            buffer[i++] = 255;
+                                        }
+
+                                        if (rgbLoc != 4) {
+                                            buffer[i++] = byteBuffer[j + currentIndex] & 0xff;
+                                        }
+
+                                        if ((rgbLoc == 4) && isRGBA) {
+                                            buffer[i-4] = byteBuffer[j + currentIndex] & 0xff;
+                                            rgbLoc = 1;
+                                        } else if (rgbLoc == 4) {
+                                            rgbLoc = 1;
+                                        } else {
+                                            rgbLoc++;
+                                        }
+                                    }
+
+                                    j++;
+                                } // end of else for compressed data bytes
+                            } // end of while (j < nBytes)
+                        } // else if ((chunky == true) && (packBit == true) && (samplesPerPixel == 4))
                         else if (packBit == false) { // planar RGB configuration
 
                             if (planarRGB < stripsPerImage) {
@@ -14035,7 +14122,262 @@ public class FileTiff extends FileBase {
                                 y = yTile * tileLength;
                             } // if (chunky == true)    
                         } // if (isYCbCr && (!jpegCompression))
-                        else { //  notYCbCr || jpegCompression
+                        else if ((chunky == true) && (packBit == true) && (samplesPerPixel == 3)) {
+                            if (byteBuffer == null) {
+                                byteBuffer = new byte[tileMaxByteCount];
+                            }
+
+                            // System.err.println("About to read " + nBytes + " bytes");
+                            raFile.read(byteBuffer, 0, nBytes);
+                            
+
+                            // System.err.println("________");
+                            progress = slice * xDim * yDim;
+                            progressLength = imageSlice * xDim * yDim;
+                            mod = progressLength / 100;
+                            int rgbLoc = 1;
+
+                            j = 0;
+
+                            while (j < nBytes) {
+
+                                // uncompressed data bytes follow
+                                // Copy the next n+1 bytes literally
+                                if ((byteBuffer[j] & 0x80) == 0) {
+                                    iCount = byteBuffer[j] + 1;
+                                    j++;
+
+                                    for (iNext = 0; iNext < iCount; iNext++, j++) {
+
+                                        if ((x < xDim) && (y < yDim)) {
+                                            if (((i + progress) % mod) == 0) {
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                        progressLength * 100));
+                                            }
+    
+                                            if (rgbLoc == 1) {
+                                                if ((x < xDim) && (y < yDim)) {
+                                                    buffer[4*(x + y * xDim)] = 255;
+                                                }
+                                            }
+    
+                                            if ((x < xDim) && (y < yDim)) {
+                                                buffer[4*(x + y*xDim) + rgbLoc] = byteBuffer[j] & 0xff;
+                                            }
+    
+                                            if (rgbLoc == 3) {
+                                                rgbLoc = 1;
+                                                i++;
+                                            } else {
+                                                rgbLoc++;
+                                            }
+                                        } // if ((x < xDim) && (y < yDim))
+                                        
+                                        x++;
+
+                                        if (x == ((xTile + 1) * tileWidth)) {
+                                            x = xTile * tileWidth;
+                                            y++;
+                                        }
+                                    }
+                                } // end of if (byteBuffer[j] & 0x80 == 0)
+
+                                // Do nothing if the byte value is -128
+                                else if (byteBuffer[j] == -128) {
+                                    j++;
+                                }
+                                // compressed data bytes follow
+                                // (~byteBuffer[j]) + 1 is the 2's complement of n or -n
+                                // Hence (~byteBuffer[j]) + 2 equals -n + 1
+                                else {
+                                    iCount = (~byteBuffer[j]) + 2;
+                                    j++;
+
+                                    for (iNext = 0; iNext < iCount; iNext++) {
+
+                                            if (((i + progress) % mod) == 0) {
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                        progressLength * 100));
+                                            }
+    
+                                            if (rgbLoc == 1) {
+                                                if ((x < xDim) && (y < yDim)) {
+                                                    buffer[4*(x + y * xDim)] = 255;
+                                                }
+                                            }
+    
+                                            if ((x < xDim) && (y < yDim)) {
+                                                buffer[4*(x + y*xDim) + rgbLoc] = byteBuffer[j] & 0xff;
+                                            }
+    
+                                            if (rgbLoc == 3) {
+                                                rgbLoc = 1;
+                                                i++;
+                                            } else {
+                                                rgbLoc++;
+                                            }
+                                        x++;
+
+                                        if (x == ((xTile + 1) * tileWidth)) {
+                                            x = xTile * tileWidth;
+                                            y++;
+                                        }
+                                    }
+
+                                    j++;
+                                } // end of else for compressed data bytes
+                            } // end of while (j < nBytes)
+                            xTile++;
+                            
+                            if (xTile == tilesAcross) {
+                                xTile = 0;
+                                yTile++;
+                            }
+
+                            x = xTile * tileWidth;
+                            y = yTile * tileLength;
+                        } // else if ((chunky == true) && (packBit == true) && (samplesPerPixel == 3))
+                        else if ((chunky == true) && (packBit == true) && (samplesPerPixel == 4)) {
+                            if (byteBuffer == null) {
+                                byteBuffer = new byte[tileMaxByteCount];
+                            }
+
+                            // System.err.println("About to read " + nBytes + " bytes");
+                            raFile.read(byteBuffer, 0, nBytes);
+                            
+
+                            // System.err.println("________");
+                            progress = slice * xDim * yDim;
+                            progressLength = imageSlice * xDim * yDim;
+                            mod = progressLength / 100;
+                            int rgbLoc = 1;
+
+                            j = 0;
+
+                            while (j < nBytes) {
+
+                                // uncompressed data bytes follow
+                                // Copy the next n+1 bytes literally
+                                if ((byteBuffer[j] & 0x80) == 0) {
+                                    iCount = byteBuffer[j] + 1;
+                                    j++;
+
+                                    for (iNext = 0; iNext < iCount; iNext++, j++) {
+                                        if (((i + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
+                                        }
+
+                                        if (rgbLoc == 1) {
+                                            if ((x < xDim) & (y < yDim)) {
+                                                buffer[4*(x + y * xDim)] = 255;
+                                            }
+                                        }
+
+                                        if (rgbLoc != 4) {
+                                            if ((x < xDim) && (y < yDim)) {
+                                                buffer[4*(x + y*xDim) + rgbLoc] = byteBuffer[j] & 0xff;
+                                            }
+                                        }
+
+                                        if ((rgbLoc == 4) && isRGBA) {
+                                            if ((x < xDim) && (y < yDim)) {
+                                                buffer[4*(x + y*xDim)] = byteBuffer[j] & 0xff;
+                                            }
+                                            rgbLoc = 1;  
+                                            i++;
+                                            x++;
+
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        }
+                                        else if (rgbLoc == 4) {
+                                            rgbLoc = 1;
+                                            i++;
+                                            x++;
+
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        } else {
+                                            rgbLoc++;
+                                        }
+                                        
+                                    }
+                                } // end of if (byteBuffer[j] & 0x80 == 0)
+
+                                // Do nothing if the byte value is -128
+                                else if (byteBuffer[j] == -128) {
+                                    j++;
+                                }
+                                // compressed data bytes follow
+                                // (~byteBuffer[j]) + 1 is the 2's complement of n or -n
+                                // Hence (~byteBuffer[j]) + 2 equals -n + 1
+                                else {
+                                    iCount = (~byteBuffer[j]) + 2;
+                                    j++;
+
+                                    for (iNext = 0; iNext < iCount; iNext++) {
+                                        if (((i + progress) % mod) == 0) {
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
+                                        }
+
+                                        if (rgbLoc == 1) {
+                                            if ((x < xDim) && (y < yDim)) {
+                                                buffer[4*(x + y * xDim)] = 255;
+                                            }
+                                        }
+
+                                        if (rgbLoc != 4) {
+                                            if ((x < xDim) && (y < yDim)) {
+                                                buffer[4*(x + y*xDim) + rgbLoc] = byteBuffer[j] & 0xff;
+                                            }
+                                        }
+
+                                        if ((rgbLoc == 4) && isRGBA) {
+                                            if ((x < xDim) && (y < yDim)) {
+                                                buffer[4*(x + y*xDim)] = byteBuffer[j] & 0xff;
+                                            }
+                                            rgbLoc = 1;
+                                            i++;
+                                            x++;
+
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        } else if (rgbLoc == 4) {
+                                            rgbLoc = 1;
+                                            i++;
+                                            x++;
+
+                                            if (x == ((xTile + 1) * tileWidth)) {
+                                                x = xTile * tileWidth;
+                                                y++;
+                                            }
+                                        } else {
+                                            rgbLoc++;
+                                        }
+                                    }
+
+                                    j++;
+                                } // end of else for compressed data bytes
+                            } // end of while (j < nBytes)
+                            xTile++;
+                            
+                            if (xTile == tilesAcross) {
+                                xTile = 0;
+                                yTile++;
+                            }
+
+                            x = xTile * tileWidth;
+                            y = yTile * tileLength;
+                        } // else if ((chunky == true) && (packBit == true) && (samplesPerPixel == 4))
+                        else {
                             if (chunky == true) {
     
                                 if (byteBuffer == null) {
@@ -14395,7 +14737,7 @@ public class FileTiff extends FileBase {
                                     yTile = 0;
                                 }
                             } // not chunky
-                        } // else not YCbCr
+                        } // else
 
                         break;
                         
