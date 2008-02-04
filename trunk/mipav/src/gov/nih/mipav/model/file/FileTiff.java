@@ -779,6 +779,8 @@ public class FileTiff extends FileBase {
     private boolean rotateMinus90 = false;
     private AlgorithmFlip flipAlgo;
     private AlgorithmRotate rotateAlgo;
+    
+    private boolean isRGBA = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -9057,6 +9059,9 @@ public class FileTiff extends FileBase {
                                             " is asscociated alpha data(with pre-multiplied color)\n" +
                                             "Associated alpha data is opacity information\n",
                                             Preferences.DEBUG_FILEIO);
+                                    if (count == 1) {
+                                        isRGBA = true;
+                                    }
                                     break;
                                 case 2:
                                     Preferences.debug("FileTiff.openIFD: Extra sample " + (i1 + 1) +
@@ -11007,14 +11012,18 @@ public class FileTiff extends FileBase {
                             mod = progressLength / 10;
 
 
-                            // For the moment I compress RGB images to unsigned bytes.
-                            for (j = 0; j < nBytes; j += 3, i += 4) {
+                            for (j = 0; j < nBytes; j += samplesPerPixel, i += 4) {
 
                                 if (((i + progress) % mod) == 0) {
                                     fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
-                                buffer[i] = 255;
+                                if (isRGBA) {
+                                    buffer[i] = getUnsignedByte(byteBuffer, j + currentIndex + 3);
+                                }
+                                else {
+                                    buffer[i] = 255;
+                                }
                                 buffer[i + 1] = getUnsignedByte(byteBuffer, j + currentIndex);
                                 buffer[i + 2] = getUnsignedByte(byteBuffer, j + currentIndex + 1);
                                 buffer[i + 3] = getUnsignedByte(byteBuffer, j + currentIndex + 2);
@@ -14145,7 +14154,7 @@ public class FileTiff extends FileBase {
                                     }
                                 } else {
     
-                                    for (j = 0; j < nBytes; j += 3) {
+                                    for (j = 0; j < nBytes; j += samplesPerPixel) {
     
                                         if ((x < xDim) && (y < yDim)) {
     
@@ -14154,7 +14163,12 @@ public class FileTiff extends FileBase {
                                                                                         progressLength * 100));
                                             }
     
-                                            buffer[4 * (x + (y * xDim))] = 255;
+                                            if (isRGBA) {
+                                                buffer[4 * (x + (y * xDim))] = getUnsignedByte(byteBuffer, j + 3);
+                                            }
+                                            else {
+                                                buffer[4 * (x + (y * xDim))] = 255;
+                                            }
                                             buffer[(4 * (x + (y * xDim))) + 1] = getUnsignedByte(byteBuffer, j);
                                             buffer[(4 * (x + (y * xDim))) + 2] = getUnsignedByte(byteBuffer, j + 1);
                                             buffer[(4 * (x + (y * xDim))) + 3] = getUnsignedByte(byteBuffer, j + 2);
@@ -14167,7 +14181,7 @@ public class FileTiff extends FileBase {
                                             x = xTile * tileWidth;
                                             y++;
                                         }
-                                    } // for (j = 0; j < nBytes; j+= 3)
+                                    } // for (j = 0; j < nBytes; j+= samplesPerPixel)
                                 }
     
                                 xTile++;
