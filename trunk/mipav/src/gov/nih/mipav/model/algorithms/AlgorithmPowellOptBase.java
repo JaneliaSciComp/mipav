@@ -82,7 +82,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
     protected AlgorithmBase parent;
 
     /** Point that is currently being optimized. */
-    protected double[] point;
+    protected volatile double[] point;
 
        /** Point that was initially passed into function. */
     protected double[] start;
@@ -229,8 +229,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
      *
      * @return  Minimum of the point along the given vector.
      */
-    protected void lineMinimization(double[] pt, double initial, double boundguess, double[] directions, double[]bestCost) {
-
+    protected void lineMinimization(double[] pt, double initial, double boundguess, double[] directions) {
         // Set up tolerances in direction of line minimization.
         // "unit_directions" is a unit vector in the direction of "directions"
         double tol = 0, sum = 0;
@@ -338,10 +337,8 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
         }
 
         for (int i = 0; i < nDims; i++) {
-            point[i] = (bracket.b * unit_directions[i]) + point[i];
+            pt[i] = (bracket.b * unit_directions[i]) + pt[i];
         }
-
-        bestCost[0] = bracket.functionAtB;
     }
 
     /**
