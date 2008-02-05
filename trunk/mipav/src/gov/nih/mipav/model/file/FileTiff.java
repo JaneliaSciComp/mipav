@@ -14426,6 +14426,22 @@ public class FileTiff extends FileBase {
                                     else if (zlibCompression) {
                                         try {
                                             resultLength = zlibDecompresser.inflate(decomp);
+                                            // Horizontal Differencing Predictor
+                                            if (predictor == 2) {
+                                                rowsToDo = Math.min(tileLength, yDim - y);
+                                                int count;
+
+                                                for (j = 0; j < rowsToDo; j++) {
+
+                                                    count = samplesPerPixel * ((j * tileWidth) + 1);
+
+                                                    for (i = samplesPerPixel; i < (tileWidth * samplesPerPixel); i++) {
+
+                                                        decomp[count] += decomp[count - samplesPerPixel];
+                                                        count++;
+                                                    }
+                                                }
+                                            }
                                         }
                                         catch (DataFormatException e){
                                             MipavUtil.displayError("DataFormatException on zlibDecompresser.inflate(decomp)");  
