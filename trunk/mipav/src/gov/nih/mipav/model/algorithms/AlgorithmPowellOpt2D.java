@@ -1,9 +1,12 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import java.util.concurrent.CountDownLatch;
+
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
+import gov.nih.mipav.util.MipavUtil;
 import gov.nih.mipav.view.*;
 
 
@@ -231,42 +234,58 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
      */
     public void runAlgorithm() {
         int count = 0;
-        double boundGuess;
-        double initialGuess;
         boolean keepGoing = true;
 
         functionAtBest = 0;
-
-        final double[] costAtBest = new double[1];
-        double[] directions = new double[nDims];
-
+        double[] pt = new double[nDims];
         while ((count < maxIterations) && keepGoing && (nDims > 0)) {
-
-            // Save current point
-            double[] pt = new double[nDims];
-
-            for (int i = 0; i < nDims; i++) {
-                pt[i] = point[i];
-            }
-
             keepGoing = false; // Only terminate loop when point changes for ALL directions are less
 
             // than their respective tolerances.  Will only stay false if ALL are false.
 
+        	fireProgressStateChanged((int)(minProgressValue + count*progressStep));
+            System.arraycopy(point, 0, pt, 0, nDims);
+            
+            final CountDownLatch doneSignal = new CountDownLatch(nDims);
+
             for (int i = 0; (i < nDims) && !parent.isThreadStopped(); i++) {
 
-               
-                    fireProgressStateChanged(((((nDims * count) + (i + 1)) * 100) / (nDims * maxIterations)));
-                
+                // Change by Z Cohen on 6/14/04
+                // Old code handled the first run through this loop differently than
+                // subsequent runs.
+                // The first time, initialGuess was set to zero and the boundGuess was
+                // set to the bracketBound.  On subsequent runs, initialGuess was set to
+                // functionAtBest and boundGuess to 1.
+                // Each parsing of this loop, though, is for a different degree of freedom and
+                // so the Powell parameters should be the same each the loop starts.
+                // Here's the old code:
+                //
+                // Initialize values for call to lineMinimization.
+                //
+                // if (count == 0) {
+                // // first time through use large bounds (obtained from JDialogRegistrationOAR3D)
+                // // lineMinimization will use boundGuess*tolerance to get bracket
+                // boundGuess = bracketBound;
+                // initialGuess = 0;
+                // } else {
+                // boundGuess = 1;
+                // initialGuess = functionAtBest;
+                // }
+                //
+                // End of old code.
+                //
+                // Here's the new code:
+                int boundGuess = bracketBound;
+                double initialGuess = 0;
+                final double[] directions = new double[nDims];
 
+                // directions should hold "1" for i and "0" for all other dimensions.
                 for (int j = 0; j < nDims; j++) {
                     directions[j] = 0;
                 }
-
                 if (i < directions.length) {
                     directions[i] = 1;
                 }
-
                 if (count == 0) {
                     boundGuess = bracketBound; // first time through use large bounds
 
@@ -278,13 +297,29 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
                     // old version of algorithm had boundGuess = 10 or =1
                 }
 
+                final int fboundGuess = boundGuess;
+                final double finitialGuess = initialGuess;
                 // Preferences.debug("Calling lineMinimization for dimension "+i +".\n");
-                lineMinimization(point, initialGuess, boundGuess, directions, costAtBest);
-
-                if (Math.abs(point[i] - pt[i]) > tolerance[i]) {
-                    keepGoing = true;
-                }
+                Runnable task = new Runnable(){
+                	public void run(){
+                        lineMinimization(point, finitialGuess, fboundGuess, directions);
+                        doneSignal.countDown();
+                	}
+                };
+                MipavUtil.mipavThreadPool.execute(task);
             } // end of nDims loop
+            try {
+                doneSignal.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            for(int i = 0; i < nDims; i++){
+                if (Math.abs(point[i] - pt[i]) > tolerance[i]){
+                	keepGoing = true;
+                	break;
+                }
+            }
 
             if (parent.isThreadStopped()) {
                 return;
