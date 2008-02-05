@@ -929,11 +929,11 @@ public class FileTiff extends FileBase {
             else if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression ||
                      modHuffmanCompression || jpegCompression || ThunderScanCompression || SGILogCompression ||
                      SGILog24Compression) {
-
                 // set the tile width to the xDim for use in LZW Decoder or zlib deflater or fax decompression
                 if (!haveTileWidth) {
                     tileWidth = xDim;
                 }
+          
                 // Code to put all the rows in 1 strip often uses rowsPerStrip = 2**32 -1
                 // which shows up as -1.
                 if (!haveTileLength && haveRowsPerStrip && (rowsPerStrip != -1)) {
@@ -6163,7 +6163,7 @@ public class FileTiff extends FileBase {
             switch (tag) {
 
                 case SUBFILE_TYPE:
-                    if (type != SHORT) {
+                    if ((type != SHORT) && (type != LONG)) {
                         throw new IOException("SUBFILE_TYPE has illegal TYPE = " + type + "\n");
                     }
                     
