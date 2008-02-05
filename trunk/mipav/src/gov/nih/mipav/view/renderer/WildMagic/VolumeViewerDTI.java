@@ -719,7 +719,7 @@ implements MouseListener, ItemListener, ChangeListener {
      * The label panel of the x, y, z slider position.
      */
     public void buildLabelPanel() {
-        super.buildLabelPanel();
+        // super.buildLabelPanel();
         patientSliceLabel = new JLabel("Patient Slice Position");
         patientSliceLabel.setForeground(Color.black);
         patientSliceLabel.setFont(MipavUtil.font14B);
@@ -810,7 +810,7 @@ implements MouseListener, ItemListener, ChangeListener {
         panelLabels.add(viewPanel);
         panelLabels.add(panelLabelsModel);
 
-        tabbedPane.addTab("Positions", null, panelLabels);
+        // tabbedPane.addTab("Positions", null, panelLabels);
     }
 
     /**
@@ -999,6 +999,10 @@ implements MouseListener, ItemListener, ChangeListener {
                 panelHistoLUT = new JPanelHistoLUT(imageA, imageB, LUTa, LUTb, true);
             }
 
+            DTIimageLoadPanel = new JPanelDTILoad(this);
+            DTIFiberTrackPanel = new JPanelDTIFiberTrack(this);
+            DTIparamsPanel = new JPanelDTIParametersPanel(this, raycastRenderWM);
+            
             progressBar.updateValueImmed(100);
 
             this.configureFrame();
@@ -2293,7 +2297,7 @@ implements MouseListener, ItemListener, ChangeListener {
 
         redBorder = BorderFactory.createCompoundBorder(redline, compound);
 
-        buildLabelPanel();
+        // buildLabelPanel();
         buildHistoLUTPanel();
         buildOpacityPanel();
 
