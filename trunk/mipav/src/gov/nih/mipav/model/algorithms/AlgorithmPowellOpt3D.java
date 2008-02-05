@@ -527,28 +527,21 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
      */
     public void runAlgorithm() {
         int count = 0;
-        double[][] pts = new double[nDims][nDims];
+        final double[] pt = new double[nDims];
         boolean keepGoing = true;
 
         functionAtBest = Double.MAX_VALUE;
         
-        final double[][] bestCosts = new double[nDims][1];
         progressStep = (maxProgressValue -minProgressValue)/ maxIterations;
 
         while ((count < maxIterations) && keepGoing && !parent.isThreadStopped()) {
-
-            // Initialize data for testing tolerance.
-            for (int i = 0; i < nDims; i++) {
-            	for(int j = 0; j < nDims; j++){
-            		pts[i][j] = point[j];
-            	}
-            }
 
             keepGoing = false; // Only terminate loop when point changes for ALL directions are less
 
             // than their respective tolerances.  Will only stay false if ALL are false.
 
         	fireProgressStateChanged((int)(minProgressValue + count*progressStep));
+            System.arraycopy(point, 0, pt, 0, nDims);
             
             final CountDownLatch doneSignal = new CountDownLatch(nDims);
 
@@ -589,11 +582,10 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
                 }
                 directions[i] = 1;
 
-                final int dimIndex = i;
                 // Preferences.debug("Calling lineMinimization for dimension "+i +".\n");
                 Runnable task = new Runnable(){
                 	public void run(){
-                        lineMinimization(point, initialGuess, boundGuess, directions, bestCosts[dimIndex]);
+                        lineMinimization(point, initialGuess, boundGuess, directions);
                         doneSignal.countDown();
                 	}
                 };
@@ -605,11 +597,10 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
                 e.printStackTrace();
             }
 
-            int index = findBestDirection(bestCosts);
-            if (Math.abs(point[index] - pts[index][index]) > tolerance[index]) {
-                keepGoing = true;
-                for(int i = 0; i < nDims; i++){
-                	point[i] = pts[index][i];
+            for(int i = 0; i < nDims; i++){
+                if (Math.abs(point[i] - pt[i]) > tolerance[i]){
+                	keepGoing = true;
+                	break;
                 }
             }
 
