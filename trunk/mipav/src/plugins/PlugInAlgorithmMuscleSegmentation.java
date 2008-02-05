@@ -31,11 +31,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     
     /** the parent frame. */
     private Frame parentFrame;
-    
-    /**The display*/
-    private PlugInMuscleImageDisplay display;
-    
-   
+       
 	
     /**
      * Constructor.
@@ -43,8 +39,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
      * @param  resultImage  Result image model
      * @param  srcImg       Source image model.
      */
-    public PlugInAlgorithmMuscleSegmentation(ModelImage resultImage, ModelImage srcImg, PlugInMuscleImageDisplay.ImageType imageType, Frame parentFrame) {
-        super(resultImage, srcImg);
+    public PlugInAlgorithmMuscleSegmentation(ModelImage srcImg, PlugInMuscleImageDisplay.ImageType imageType, Frame parentFrame) {
+        super(null, srcImg);
         this.imageType = imageType;
         this.parentFrame = parentFrame;
     }
@@ -133,10 +129,17 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         titles[1] = "Bone";
         titles[2] = "Muscles"; 
         
-        display = new PlugInMuscleImageDisplay(((ViewJFrameImage)parentFrame).getActiveImage(), titles, mirrorArr, mirrorZ, 
-                                                            noMirrorArr, noMirrorZ, 
-                                                            PlugInMuscleImageDisplay.ImageType.ABDOMEN, 
-                                                            PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT);
+        if (ViewUserInterface.getReference().isAppFrameVisible()) {
+        	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
+        			noMirrorArr, noMirrorZ, 
+        			PlugInMuscleImageDisplay.ImageType.ABDOMEN, 
+        			PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT);
+        } else {
+        	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
+        			noMirrorArr, noMirrorZ, 
+        			PlugInMuscleImageDisplay.ImageType.ABDOMEN, 
+        			PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT, true);
+        }
         
     }
     
@@ -202,10 +205,15 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    
 	    this.symmetry = PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT;
 	    
-	    display = new PlugInMuscleImageDisplay(((ViewJFrameImage)parentFrame).getActiveImage(), titles, mirrorArr, mirrorZ, 
-	                                                        noMirrorArr, noMirrorZ, 
-	                                                        PlugInMuscleImageDisplay.ImageType.TWO_THIGHS, symmetry);
-	    
+	    if (ViewUserInterface.getReference().isAppFrameVisible()) {
+	    	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
+	    			noMirrorArr, noMirrorZ, 
+	    			PlugInMuscleImageDisplay.ImageType.TWO_THIGHS, symmetry);
+	    } else {
+	    	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
+	    			noMirrorArr, noMirrorZ, 
+	    			PlugInMuscleImageDisplay.ImageType.TWO_THIGHS, symmetry, true);
+	    }
 	}
 	
 }

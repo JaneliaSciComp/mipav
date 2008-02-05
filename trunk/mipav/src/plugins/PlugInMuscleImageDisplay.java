@@ -3,13 +3,16 @@ import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
 import gov.nih.mipav.model.scripting.actions.ActionCloseFrame;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.CustomUIBuilder.UIParams;
 import gov.nih.mipav.view.dialogs.JDialogCaptureScreen;
+import gov.nih.mipav.view.dialogs.JDialogWinLevel;
 
 import com.lowagie.text.*;
 import com.lowagie.text.Font;
@@ -88,13 +91,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
     private String[] titles; 
     
     private boolean displayChanged = false;
-
-	private boolean[] fillIn;
     
     private TreeMap locationStatus;
-    
-    private BuildThighAxes thighAxes;
-    
+        
     public enum ImageType{
         
         /** denotes that the srcImg is an abdomen */
@@ -119,13 +118,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
         TOP_BOTTOM
     }
    
-    
     public PlugInMuscleImageDisplay(ModelImage image, String[] titles,
             String[][] mirrorArr, boolean[][] mirrorZ, 
             String[][] noMirrorArr, boolean[][] noMirrorZ,  
             ImageType imageType, Symmetry symmetry) {
-
-        super(image);
+    	super(image);
+    	
+    	this.setVisible(true);
         
         Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, "yes");
         
@@ -146,8 +145,116 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
         }
         
         initNext();
-
     }
+    
+    public PlugInMuscleImageDisplay(ModelImage image, String[] titles,
+            String[][] mirrorArr, boolean[][] mirrorZ, 
+            String[][] noMirrorArr, boolean[][] noMirrorZ,  
+            ImageType imageType, Symmetry symmetry, boolean standAlone) {
+
+    	super(image, null, null, false, false);
+    	this.setImageA(image);
+        
+        this.titles = titles;
+        this.mirrorArr = mirrorArr;
+        this.mirrorZ = mirrorZ;
+        this.noMirrorArr = noMirrorArr;
+        this.noMirrorZ = noMirrorZ;
+        this.imageType = imageType;
+        this.symmetry = symmetry;
+        
+        locationStatus = new TreeMap();
+        
+        Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, "yes");
+        
+    	initStandAlone(LUTa);
+    	this.setActiveImage(IMAGE_A);
+    	setVisible(true);
+    }
+    
+    /**
+     * Initializes the frame and variables.
+     *
+     * @param   LUTa           LUT of the imageA (if null grayscale LUT is constructed)
+     * 
+     * @throws  OutOfMemoryError  if enough memory cannot be allocated for the GUI
+     */
+    private void initStandAlone(ModelLUT LUTa) throws OutOfMemoryError {
+        try {
+            setIconImage(MipavUtil.getIconImage("davinci_32x32.gif"));
+        } catch (FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
+                              ">.  Check that this file is available.\n");
+        }
+
+        setResizable(true);
+
+        // initialize logMagDisplay
+        this.LUTa = LUTa;
+
+        initResolutions();
+        initZoom();
+        initLUT();
+
+        int[] extents = createBuffers();
+
+        initComponentImage(extents);
+        initExtentsVariables(imageA);
+
+        // create and build the menus and controls
+        controls = new ViewControlsImage(this); // Build controls used in this frame
+        menuBuilder = new ViewMenuBuilder(this);
+
+        // build the menuBar based on the number of dimensions for imageA
+        menuBarMaker = new ViewMenuBar(menuBuilder);
+        
+
+//      add pre-defined UIParams to the vector
+        Vector<CustomUIBuilder.UIParams> voiParams = new Vector<CustomUIBuilder.UIParams>();
+        voiParams.addElement(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER);
+        voiParams.addElement(CustomUIBuilder.PARAM_VOI_LEVELSET);
+        voiParams.addElement(CustomUIBuilder.PARAM_VOI_LIVEWIRE);
+        voiParams.addElement(CustomUIBuilder.PARAM_VOI_ELLIPSE);
+        voiParams.addElement(CustomUIBuilder.PARAM_VOI_RECTANGLE);
+        
+        Vector<CustomUIBuilder.UIParams> voiActionParams = new Vector<CustomUIBuilder.UIParams>();
+        voiActionParams.addElement(CustomUIBuilder.PARAM_VOI_NEW);
+        voiActionParams.addElement(CustomUIBuilder.PARAM_VOI_UNDO);
+        voiActionParams.addElement(CustomUIBuilder.PARAM_VOI_CUT);
+        voiActionParams.addElement(CustomUIBuilder.PARAM_VOI_COPY);
+        voiActionParams.addElement(CustomUIBuilder.PARAM_VOI_PASTE);
+       
+        
+        controls.buildSimpleToolBar();
+        controls.addCustomToolBar(voiParams);
+        controls.addCustomToolBar(voiActionParams);
+        
+        setTitle();
+        
+        // MUST register frame to image models
+        imageA.addImageDisplayListener(this);
+
+        windowLevel = new JDialogWinLevel[2];
+	
+        MipavUtil.centerOnScreen(this);
+      
+        updateImages(true);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+        pack();
+        
+        // User interface will have list of frames
+        userInterface.registerFrame(this);
+
+//      System.err.println("adding controls....");
+        getContentPane().add(controls, BorderLayout.NORTH);
+        // getContentPane().add(ViewUserInterface.getReference().getMessageFrame().getTabbedPane(), BorderLayout.SOUTH);
+  
+        //setJMenuBar(menuBar);
+        
+        //call the normal init function here
+        initNext();
+    } // end init()
     
     /**
      * Cleans memory.
@@ -155,6 +262,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
      * @throws  Throwable  the <code>Exception</code> raised by this method
      */
     public void finalize() throws Throwable {
+    	
+    	if (imageA != null) {
+    		imageA.disposeLocal(true);
+    	}
+    	if (componentImage != null) {
+    		componentImage.disposeLocal(true);
+    	}
     	removeComponentListener(this);
     	for (int i = 0; i < tabs.length; i++) {
     		tabs[i].removeAll();
@@ -249,6 +363,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
     public void actionPerformed(ActionEvent e) {
         displayChanged = false;
         String command = e.getActionCommand();
+        
+        //run through toggle buttons to see if a menu selected one (updates the button status)
+        getControls().getTools().setToggleButtonSelected(command);
+        
         if(command.equals(PlugInMuscleImageDisplay.CHECK_VOI)) {
             ((VoiDialogPrompt)tabs[voiTabLoc]).setUpDialog(((JButton)(e.getSource())).getText(), true, 1);
             lockToPanel(voiTabLoc, "VOI"); //includes making visible
@@ -317,7 +435,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
         
         scrollPane = new JScrollPane(componentImage, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
+        
         imagePane = new JTabbedPane();
         
         tabs = new DialogPrompt[mirrorArr.length+2]; //+2 for VOI and AnalysisPrompt
@@ -362,14 +480,29 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
         tabs[resultTabLoc].addListener(this);
         tabs[resultTabLoc].addComponentListener(this);
         tabs[resultTabLoc].setVisible(false);
-        
+                
         return panelA;
     }
     
     private void initNext() {
         
-        getContentPane().add(initDialog());
-        getContentPane().remove(0);
+    	JPanel mainPanel = initDialog();
+    	if (ViewUserInterface.getReference().isAppFrameVisible()) {
+    		getContentPane().add(mainPanel, BorderLayout.CENTER);
+    	} else {
+    		JTabbedPane messageTabs = ViewUserInterface.getReference().getMessageFrame().getTabbedPane();
+    		messageTabs.setPreferredSize(new Dimension(this.getWidth(), 100));
+    		JSplitPane mainSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, mainPanel, messageTabs );
+    		mainSplit.setDividerLocation(550);
+    		getContentPane().add(mainSplit, BorderLayout.CENTER);
+    	}
+        
+        	
+      
+        
+        if (ViewUserInterface.getReference().isAppFrameVisible()) {
+        	getContentPane().remove(0);
+        }
 
         pack();
         initMuscleImage(0);
@@ -641,13 +774,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
         loadVOI(pane);
         
         ctMode(getImageA(), -175, 275);
-        
-        //if(pane == 0){
-        //    thighAxes = new BuildThighAxes(getImageA(), 0);
-        //    thighAxes.createAxes();
-        //} //else they're loaded in loadVOI
-        //added before button check so that they can be accessed in this way, optional to change.
-        
+    
         VOIVector vec = getImageA().getVOIs();
     	for(int i=0; i<vec.size(); i++) {            
     		for(int j=0; j<tabs.length; j++) {

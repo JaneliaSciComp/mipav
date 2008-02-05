@@ -28,9 +28,6 @@ public class PlugInCommandLineTest implements PlugInGeneric {
     
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Dialog for this plugin. */
-    private PlugInDialogImageVOIDisplay cmdDialog;
-
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -59,7 +56,7 @@ public class PlugInCommandLineTest implements PlugInGeneric {
           
             FileIO fileIO = new FileIO();
            
-            cmdDialog = new PlugInDialogImageVOIDisplay(fileIO.readImage(imageFile.getAbsolutePath()));
+             new PlugInDialogImageVOIDisplay(fileIO.readImage(imageFile.getAbsolutePath()));
         }
     	
     	

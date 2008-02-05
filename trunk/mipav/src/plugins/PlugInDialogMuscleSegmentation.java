@@ -112,29 +112,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         if (algorithm instanceof PlugInAlgorithmMuscleSegmentation) {
             Preferences.debug("Muscle segmentation, Elapsed time: " + algorithm.getElapsedTime());
             image.clearMask();
-            
-            if ((muscleSegAlgo.isCompleted() == true) && (resultImage != null)) {
-
-                // The algorithm has completed
-                updateFileInfo(image, resultImage);
-
-                resultImage.clearMask();
-
-                try {
-                    openNewFrame(resultImage);
-                } catch (OutOfMemoryError error) {
-                    System.gc();
-                    MipavUtil.displayError("Out of memory: unable to open new frame");
-                }
-            } else if (resultImage != null) {
-
-                // algorithm failed but result image still has garbage
-                resultImage.disposeLocal(); // clean up memory
-                resultImage = null;
-                System.gc();
-
-            }
-
+           
             if (algorithm.isCompleted()) {
                 insertScriptLine();
             }
@@ -158,11 +136,8 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         try {
             //FileInfoBase[] info = image.getFileInfo();
             //info[0].displayAboutInfo(this); //expecting a 2D image
-
-            String name = makeImageName(image.getImageName(), "_muscle");
-            resultImage = (ModelImage) image.clone();
-            resultImage.setImageName(name);
-            muscleSegAlgo = new PlugInAlgorithmMuscleSegmentation(resultImage, image, imageType, parentFrame);
+           
+            muscleSegAlgo = new PlugInAlgorithmMuscleSegmentation(image, imageType, parentFrame);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
