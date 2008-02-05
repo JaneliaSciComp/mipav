@@ -412,6 +412,7 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 				Vector<Integer> kTract = inputTract(kFileReader);
 				iBufferNext += kTract.size() * 4 + 4;
 				int iVQuantity = kTract.size();
+				// System.err.println("kTract iVQuantity = " + iVQuantity);
 				if (contains(kVOIImage, kTract)) {
 					if ((iVQuantity > iTractMinLength)
 							&& (iVQuantity < iTractMaxLength)) {
@@ -487,10 +488,6 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 		kAttr.SetCChannels(1, 3);
 		VertexBuffer pkVBuffer = new VertexBuffer(kAttr, iVQuantity);
 
-		int iTractCount = 0;
-		LineArray kLine = new LineArray(2 * (iVQuantity - 1),
-				GeometryArray.COORDINATES | GeometryArray.COLOR_3);
-
 		float fR = 0, fG = 0, fB = 0;
 
 		for (int i = 0; i < iVQuantity; i++) {
@@ -527,31 +524,125 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 					(float) (fZ - .5f));
 			pkVBuffer.SetColor3(0, i, new ColorRGB(fX, fY, fZ));
 			pkVBuffer.SetColor3(1, i, kColor1);
+        }
 
-			fY = 1 - fY;
-			fZ = 1 - fZ;
-			fX = 2 * (fX - .5f);
-			fY = 2 * (fY - .5f);
-			fZ = 2 * (fZ - .5f);
-
-			fX *= fXScale;
-			fY *= fYScale;
-			fZ *= fZScale;
-
-			kLine.setCoordinate(iTractCount, new float[] { fX, fY, fZ });
-			kLine.setColor(iTractCount, new Color3f(fR, fG, fB));
-			if ((i != 0) && (i != iVQuantity - 1)) {
-				iTractCount++;
-				kLine.setCoordinate(iTractCount, new float[] { fX, fY, fZ });
-				kLine.setColor(iTractCount, new Color3f(fR, fG, fB));
-			}
-			iTractCount++;
-
-		}
 		boolean bClosed = false;
 		boolean bContiguous = true;
+
+		// apply B-spline filter to smooth the track
 		addPolyline(new Polyline(pkVBuffer, bClosed, bContiguous));
+		// addPolyline(new Polyline(smoothTrack(pkVBuffer, kTract,iVQuantity), bClosed, bContiguous));
 	}
+	
+	/**
+	 * Smooth the fiber tracks with B-spline interpolation
+	 * 
+	 * @param pkVBuffer,
+	 *            fiber track vertex coordinates as the control points.
+	 * @param kTract,
+	 *            fiber track index list.
+	 * @param iVQuantity,
+	 *            number of voxels in the fiber bundle.
+	 * @return  B-spline interpolated fiber track
+	 */
+	private VertexBuffer smoothTrack(VertexBuffer pkVBuffer, Vector<Integer> kTract, int iVQuantity) {
+		float fX_0, fY_0, fZ_0;
+		float fX_1, fY_1, fZ_1;
+		float fX_2, fY_2, fZ_2;
+		float fX_3, fY_3, fZ_3;
+		
+		int curveSubD = 100;
+		float u, u_2, u_3;
+		
+		Attributes attr = new Attributes();
+		attr.SetPChannels(3);
+		attr.SetCChannels(0, 3);
+		attr.SetCChannels(1, 3);
+		VertexBuffer bsplineVBuffer = new VertexBuffer(attr, iVQuantity * curveSubD);		
+
+		int index = 0;
+		
+		float fR = 0, fG = 0, fB = 0;
+		
+		float pos_x, pos_y, pos_z;
+				
+		for (int i = 0; i < iVQuantity-3; i++) {
+			for(int j = 0; j < curveSubD; j++) {
+
+				ColorRGB resultUnit0, resultUnit1;		
+	
+				u = (float)j / curveSubD;
+				u_2 = u * u;
+				u_3 = u_2 * u;
+					
+				fX_0 = pkVBuffer.GetPosition3fX(i);
+				fY_0 = pkVBuffer.GetPosition3fY(i);
+				fZ_0 = pkVBuffer.GetPosition3fZ(i);
+				
+				fX_1 = pkVBuffer.GetPosition3fX(i+1);
+				fY_1 = pkVBuffer.GetPosition3fY(i+1);
+				fZ_1 = pkVBuffer.GetPosition3fZ(i+1);
+				
+				fX_2 = pkVBuffer.GetPosition3fX(i+2);
+				fY_2 = pkVBuffer.GetPosition3fY(i+2);
+				fZ_2 = pkVBuffer.GetPosition3fZ(i+2);
+				
+				fX_3 = pkVBuffer.GetPosition3fX(i+3);
+				fY_3 = pkVBuffer.GetPosition3fY(i+3);
+				fZ_3 = pkVBuffer.GetPosition3fZ(i+3);
+				
+				pos_x = B_SPLINE(u, u_2, u_3, fX_0, fX_1, fX_2, fX_3);
+				pos_y = B_SPLINE(u, u_2, u_3, fY_0, fY_1, fY_2, fY_3);
+				pos_z = B_SPLINE(u, u_2, u_3, fZ_0, fZ_1, fZ_2, fZ_3);
+			
+		
+				int iIndex = kTract.get(i);
+				
+				if (m_kImage.isColorImage()) {
+					fR = m_kImage.getFloat(iIndex * 4 + 1) / 255.0f;
+					fG = m_kImage.getFloat(iIndex * 4 + 2) / 255.0f;
+					fB = m_kImage.getFloat(iIndex * 4 + 3) / 255.0f;
+					resultUnit1 = new ColorRGB(fR, fG, fB);
+				} else {
+					fR = m_kImage.getFloat(iIndex);
+					resultUnit1 = new ColorRGB(fR, fR, fR);
+				}
+				
+				resultUnit0 = new ColorRGB(pos_x, pos_y, pos_z);
+				
+				bsplineVBuffer.SetPosition3(index, pos_x, pos_y, pos_z);
+				bsplineVBuffer.SetColor3(0, index, resultUnit0);
+				bsplineVBuffer.SetColor3(1, index, resultUnit1);
+				
+				index++;
+			}
+		}
+		
+		return bsplineVBuffer;
+				
+	}
+	
+	/**
+	 * B-spline computation. 
+	 * @param u       u parameter 
+	 * @param u_2     u^2 parameter
+	 * @param u_3     u^3 parameter
+	 * @param cntrl0  1st control point coordinate
+	 * @param cntrl1  2nd control point coordinate
+	 * @param cntrl2  3rd control point coordinate
+	 * @param cntrl3  4th control point coordinate
+	 * @return  interpolated position
+	 */
+	private float B_SPLINE(float u, float u_2, float u_3, float cntrl0, float cntrl1, float cntrl2, float cntrl3) {
+	
+		return (( 
+			(-1*u_3 + 3*u_2 - 3*u + 1) * (cntrl0) + 
+			( 3*u_3 - 6*u_2 + 0*u + 4) * (cntrl1) + 
+			(-3*u_3 + 3*u_2 + 3*u + 1) * (cntrl2) + 
+			( 1*u_3 + 0*u_2 + 0*u + 0) * (cntrl3)   
+		) / 6f);
+	}
+
 	
 	/**
 	 * Add a polyline to the GPUVolumeRender.
