@@ -113,9 +113,6 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
     protected ViewToolBarBuilder toolBarObj;
 
     /** DOCUMENT ME! */
-    protected ViewToolBarBuilder.JVOIToolBar VOIToolBar;
-
-    /** DOCUMENT ME! */
     protected JSlider zImageSlider;
 
     /** DOCUMENT ME! */
@@ -226,7 +223,6 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
         Font font12 = MipavUtil.font12;
 
         toolBar = null;
-        VOIToolBar = null;
         panelToolbars = new JPanel();
         panelOptionToolbars = new JPanel();
         generalPanel = new JPanel();
@@ -243,8 +239,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
         }
 
         if (showVOI) {
-            VOIToolBar = toolBarObj.buildVOIToolBar(numberOfDimensions, voiIndex);
-            panelToolbars.add(VOIToolBar, "North");
+            panelToolbars.add(toolBarObj.buildVOIToolBar(numberOfDimensions, voiIndex), "North");
         }
 
         if (showPaint) {
@@ -573,7 +568,6 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
     public void finalize() {
         frame = null; // image(s) frame
         toolBar = null;
-        VOIToolBar = null;
         paintToolBar = null;
         registrationToolBar = null;
         scriptToolBar = null;
@@ -747,8 +741,8 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
      */
     public void setVOIColor(int voiUID) {
 
-        if (VOIToolBar != null) {
-            VOIToolBar.setVOIColor(voiUID);
+        if (toolBarObj.getVOIColorButton() != null) {
+        	toolBarObj.getVOIColorButton().setVOIColor(voiUID);
         }
     }
 
@@ -759,8 +753,8 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
      */
     public void setVOIColor(Color newColor) {
 
-        if (VOIToolBar != null) {
-            VOIToolBar.setVOIColor(newColor);
+        if (toolBarObj.getVOIColorButton() != null) {
+        	toolBarObj.getVOIColorButton().setVOIColor(newColor);
         }
     }
 

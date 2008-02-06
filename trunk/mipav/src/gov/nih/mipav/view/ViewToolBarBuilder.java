@@ -102,6 +102,8 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
     /** A button group for all toggle buttons which change the effect of mouse usage in the image. */
     protected ButtonGroup VOIGroup = new ButtonGroup();
 
+    protected VOIColorButton voiColorButton = null;
+    
     /** Vector to hold all toggle groups for VOI toggle (and custom toggle configurations)*/
     protected Vector<ButtonGroup> bgVector = new Vector<ButtonGroup>();
     
@@ -859,7 +861,12 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
     			}
     			nextComponent = buildToggleButton(paramVector.elementAt(i), bg);
     		} else {
-    			nextComponent = buildButton(paramVector.elementAt(i));
+    			if (paramVector.elementAt(i).equals(CustomUIBuilder.PARAM_VOI_COLOR)) {
+    				voiColorButton = new VOIColorButton(0);
+    				nextComponent = voiColorButton;
+    			} else {
+    				nextComponent = buildButton(paramVector.elementAt(i));
+    			}
     		}
     		tBar.add(nextComponent);
     	}
@@ -880,8 +887,8 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
      *
      * @return  the VOI toolbar
      */
-    public JVOIToolBar buildVOIToolBar(int numberOfDimensions, int voiIndex) {
-        JVOIToolBar VOIToolBar = new JVOIToolBar(voiIndex);
+    public JToolBar buildVOIToolBar(int numberOfDimensions, int voiIndex) {
+    	JToolBar VOIToolBar = new JToolBar();
         VOIToolBar.setBorder(etchedBorder);
         VOIToolBar.setBorderPainted(true);
         VOIToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
@@ -924,19 +931,10 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
         VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_SPLITTER, null));
         
-        JButton temp = VOIToolBar.getVOIColorButton();
-        temp.addActionListener((ActionListener) UI);
-        temp.setActionCommand("VOIPropertiesColor");
-        temp.setPreferredSize(new Dimension(24, 24));
-        temp.setMaximumSize(new Dimension(24, 24));
-        temp.setSize(new Dimension(24, 24));
-        temp.setEnabled(true);
-        temp.setRolloverEnabled(false);
-        temp.setInputMap(0, new InputMap());
-        temp.setBorder(BorderFactory.createEtchedBorder(Color.white, Color.black));
+        voiColorButton = new VOIColorButton(voiIndex);
         VOIToolBar.add(makeSeparator());
         VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_NEW, VOIGroup));
-        VOIToolBar.add(temp);
+        VOIToolBar.add(voiColorButton);
 
         VOIToolBar.add(makeSeparator());
 
@@ -1037,6 +1035,14 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         return (String) scriptTable.get((String) currentScriptComboBox.getSelectedItem());
     }
 
+    /**
+     * Returns the VOI Color/properties button
+     * @return voi color button
+     */
+    public VOIColorButton getVOIColorButton() {
+    	return this.voiColorButton;
+    }
+    
     // *******************************************************************
     // ************************* Item Events ****************************
     // *******************************************************************
@@ -1522,45 +1528,24 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
     }
 
 
-    /**
-     * Helper class used to build a button with user specified color.
-     */
-    public class JVOIToolBar extends JToolBar {
-
-        /** Use serialVersionUID for interoperability. */
-        private static final long serialVersionUID = 454439928707152408L;
-
-        /** The voiColor button. */
-        private JButton voiColor;
-
-        /**
-         * Constructs a new button with a color based on the index.
-         *
-         * @param  voiIndex  controls the color of the button.
-         */
-        public JVOIToolBar(int voiIndex) {
-            super();
-            voiColor = new JButton(MipavUtil.getIcon("transparent.gif"));
+    public class VOIColorButton extends JButton {
+    	
+    	public VOIColorButton(int voiIndex) {
+    		super(MipavUtil.getIcon(CustomUIBuilder.PARAM_VOI_COLOR.getIconBase() + ".gif"));
             setVOIColor(voiIndex);
-            voiColor.setToolTipText("Current/change VOI Color");
-        }
-
-        /**
-         * Gets the button.
-         *
-         * @return  JButton the button of a specified color
-         */
-        public JButton getVOIColorButton() {
-            return voiColor;
-        }
-
-        /**
-         * Sets the color fo the button based on an index. A difference of 1 between indexes will produce a noticable
-         * change in the color (hue) of the button.
-         *
-         * @param  voiIndex  The index.
-         */
-        public void setVOIColor(int voiIndex) {
+            setToolTipText(CustomUIBuilder.PARAM_VOI_COLOR.getToolTip());
+            setActionCommand(CustomUIBuilder.PARAM_VOI_COLOR.getActionCommand());
+            addActionListener((ActionListener) UI);
+            setPreferredSize(new Dimension(24, 24));
+            setMaximumSize(new Dimension(24, 24));
+            setSize(new Dimension(24, 24));
+            setEnabled(true);
+            setRolloverEnabled(false);
+            setInputMap(0, new InputMap());
+            setBorder(BorderFactory.createEtchedBorder(Color.white, Color.black));
+            
+    	}
+    	public void setVOIColor(int voiIndex) {
 
             if (voiIndex == -1) {
                 voiIndex = 0;
@@ -1571,18 +1556,18 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
             // System.err.println("Color is: R=" + color.getRed() + ", G=" + color.getGreen() + ", B=" +
             // color.getBlue());
-            voiColor.setBackground(color);
-            voiColor.setForeground(color);
+            setBackground(color);
+            setForeground(color);
         }
-
-        /**
+    	
+    	/**
          * Sets the buttons background and foreground to a specified color.
          *
          * @param  newColor  Color
          */
         public void setVOIColor(Color newColor) {
-            voiColor.setBackground(newColor);
-            voiColor.setForeground(newColor);
+            setBackground(newColor);
+           setForeground(newColor);
         }
     }
 
