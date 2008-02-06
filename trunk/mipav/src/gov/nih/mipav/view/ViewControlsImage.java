@@ -423,7 +423,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
          generalPanel = new JPanel();
          toolBarObj = new ViewToolBarBuilder(frame);
 
-         panelToolbars.setLayout(new BorderLayout());
+         panelToolbars.setLayout(new BoxLayout(panelToolbars, BoxLayout.X_AXIS));
          panelOptionToolbars.setLayout(new BorderLayout());
          generalPanel.setLayout(new BorderLayout());
 

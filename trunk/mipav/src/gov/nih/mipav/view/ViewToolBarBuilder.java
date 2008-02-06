@@ -836,6 +836,10 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
     public final JToggleButton buildToggleButton(String cmd, int mnemonic, String tooltip, String iconBase,
                                                  ButtonGroup group) {
         JToggleButton button = buildToggleButton(cmd, tooltip, iconBase, group);
+        if (button.getActionCommand().equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand())) {
+        	pointerVOIButton = button;
+        }
+        
         if (mnemonic != UIParams.INVALID_MNEMONIC) {
         	button.setMnemonic(mnemonic);
         }
@@ -863,7 +867,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
     	if (bg != null) {
     		bgVector.add(bg);
     	}
-    	
+    	tBar.add(makeSeparator());
     	return tBar;
     }
     
