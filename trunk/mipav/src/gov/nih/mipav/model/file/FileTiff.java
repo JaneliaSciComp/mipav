@@ -252,8 +252,27 @@ public class FileTiff extends FileBase {
     // The F number.
     public static final int EXIFTAG_FNUMBER = 33437;
     
+    // This tag may be used to specify the size of raster pixel spacing in the model space units,
+    // when the raster space can be embedded in the model space coordinate system without rotation,
+    // and consists of the following 3 values:
+    // ModelPixelScaleTag = (scaleX, scaleY, scaleZ)
+    // where scaleX and scaleY give the horizontal and vertical spacing of raster pixels.  The scaleZ 
+    // is primarily used to map the pixel value of a digital elevation model into the correct z-scale,
+    // and so for most other purposes this value should be zero (since most model spaces are 2D, with
+    // z = 0).
+    public static final int MODEL_PIXEL_SCALE = 33550;
+    
     // IPTC(International Press Telecommunications Council) metadata.
     public static final int IPTC = 33723;
+    
+    // This tag is also known as "Georeference tag'.  This tag stores raster->model tiepoint tags in
+    // the order:
+    // ModelTiepointTag = (...,I,J,K, X,Y,Z,...)
+    // where (I,J,K) is the point at location (I,J) in raster space with pixel value K, and (X,Y,Z)
+    // is a vector in model space.  In most cases the model space is only 2D, in which case both K 
+    // and Z should be set to zero; this third dimension is provided in anticipation of future 
+    // support for 3D digital elevation models and vertical coordinate systems.
+    public static final int MODEL_TIEPOINT = 33922;
     
     // Collection of Photoshop image resource blocks
     public static final int PHOTOSHOP = 34377;
@@ -5871,7 +5890,7 @@ public class FileTiff extends FileBase {
         int nDirEntries;
         long numerator, denominator;
         float valueFloat = 0.0f;
-        double valueDouble = 0.0;
+        double valueDouble[] = new double[30];
         long saveLocus;
         long preExifLocus = 0L;
         int sampleFormat = 1; // 1 is default for unsigned integers
@@ -5957,17 +5976,14 @@ public class FileTiff extends FileBase {
                 }
 
                 raFile.seek(saveLocus);
-            } else if ((type == DOUBLE) && (count == 1)) {
+            } else if (type == DOUBLE) {
                 value_offset = getInt(endianess);
-
                 saveLocus = raFile.getFilePointer();
                 raFile.seek(value_offset);
-                valueDouble = getDouble(endianess);
+                for (i1 = 0; ((i1 < count) && (i1 < valueDouble.length)); i1++) {
+                    valueDouble[i1] = getDouble(endianess);
+                }
                 raFile.seek(saveLocus);
-            } else if ((type == DOUBLE) && (count > 1)) {
-
-                // Ignore these EchoTech fields for now
-                value_offset = getInt(endianess);
             } else if (((type == BYTE) || (type == UNDEFINED) || (type == ASCII)) && (count == 0)) {
                 raFile.seek(raFile.getFilePointer() + 4);
                 // raFile.readUnsignedByte();
@@ -7205,7 +7221,7 @@ public class FileTiff extends FileBase {
                         throw new IOException("ZRESOLUTION has illegal count = " + count + "\n");
                     }
 
-                    imgResols[2] = (float) valueDouble;
+                    imgResols[2] = (float) valueDouble[0];
                     if (debuggingFileIO) {
                         Preferences.debug("FileTiff.openIFD: Z Resolution = " + imgResols[2] + "\n",
                                           Preferences.DEBUG_FILEIO);
@@ -7224,7 +7240,7 @@ public class FileTiff extends FileBase {
                         throw new IOException("TRESOLUTION has illegal count = " + count + "\n");
                     }
 
-                    imgResols[3] = (float) valueDouble;
+                    imgResols[3] = (float) valueDouble[0];
                     if (debuggingFileIO) {
                         Preferences.debug("FileTiff.openIFD: T Resolution = " + imgResols[3] + "\n",
                                           Preferences.DEBUG_FILEIO);
@@ -9131,6 +9147,45 @@ public class FileTiff extends FileBase {
                     if (debuggingFileIO) {
                         Preferences.debug("FileTiff.openIFD: Image source data used by Adobe Photoshop is above\n");
                     }
+                    break;
+                    
+                case MODEL_PIXEL_SCALE:
+                    if (type != DOUBLE) {
+                        throw new IOException("MODEL_PIXEL_SCALE has illegal type = " + type + "\n");
+                    }
+                    
+                    if (count != 3) {
+                        throw new IOException("MODEL_PIXEL_SCALE has illegal count = " + count + "\n");
+                    }
+                    
+                    if (debuggingFileIO) {
+                        Preferences.debug("scaleX = " + valueDouble[0] + 
+                        " is the horizontal spacing of raster pixels in model space units\n");
+                        Preferences.debug("scaleY = " + valueDouble[1] + 
+                        " is the vertical spacing of raster pixels in model space units\n");
+                        Preferences.debug("scaleZ = " + valueDouble[2] + "\n");
+                    }
+                    
+                    break;
+                    
+                case MODEL_TIEPOINT:
+                    if (type != DOUBLE) {
+                        throw new IOException("MODEL_TIEPOINT has illegal type = " + type + "\n");
+                    }
+                    
+                    if ((count % 6) != 0) {
+                        throw new IOException("MODEL_TIEPOINT has illegal count = " + count + "\n");
+                    }
+                    
+                    if (debuggingFileIO) {
+                        for (i1 = 0; ((i1 < count/6) && (i1 < valueDouble.length/6)); i1++) {
+                            Preferences.debug("Tiepoint (" + valueDouble[6*i1] + ", " + valueDouble[6*i1+1] +
+                                    ", " + valueDouble[6*i1+2] + ") in raster space to\n (" +
+                                    valueDouble[6*i1+3] + ", " + valueDouble[6*i1+4] + ", " +
+                                    valueDouble[6*i1+5]+ ") in model space\n");
+                        }
+                    }
+                    
                     break;
                 
                 default:
