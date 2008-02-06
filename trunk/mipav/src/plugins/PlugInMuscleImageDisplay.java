@@ -2101,6 +2101,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
 	    	calc.start();
 	    }
 	    
+		/**
+		 * Performs required calculations for plugin. Error estimated at 2%.
+		 * 
+		 * @author senseneyj
+		 *
+		 */
 	    private class MuscleCalculation implements Runnable {
 	    	private boolean done = false;
 	    	
@@ -2489,14 +2495,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
 		Point p = new Point();
 		p.x = 0;
 	    p.y = 0;
-	    SwingUtilities.convertPointToScreen(p, getActiveImage().getParentFrame().getContentPane());
-	    p.x++; // must correct this slightly
-	    p.y++; // ""
+	    SwingUtilities.convertPointToScreen(p, getActiveImage().getParentFrame());//.getContentPane());
+	    p.x += 356; // correcting for side panel TODO: find lengths
+	    p.y += (42-7); // correcting for titled border
 	
 	    Dimension d = new Dimension();
-	    d.width = getActiveImage().getParentFrame().getContentPane().getWidth() - 3; // the -3 is a correction
-	    d.height = getActiveImage().getParentFrame().getContentPane().getHeight() - 3; // ""
-	    currentRectangle = new Rectangle(p, d);
+	    d.width = getActiveImage().getFileInfo()[0].getExtents()[0];//.getParentFrame().getContentPane().getWidth() - 3; // the -3 is a correction
+	    d.height = getActiveImage().getFileInfo()[0].getExtents()[1];//getActiveImage().getParentFrame().getContentPane().getHeight() - 3; // ""
+	    currentRectangle = new Rectangle(p, d); //p, d
 	    
 	    try {
 	        Robot robot = new Robot();
