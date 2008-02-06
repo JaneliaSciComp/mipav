@@ -122,6 +122,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
             String[][] mirrorArr, boolean[][] mirrorZ, 
             String[][] noMirrorArr, boolean[][] noMirrorZ,  
             ImageType imageType, Symmetry symmetry) {
+    	//calls the super that will invoke ViewJFrameImage's init() function
     	super(image);
     	
     	this.setVisible(true);
@@ -147,11 +148,24 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
         initNext();
     }
     
+    /**
+     * Constructor for calling this as a standalone.  will invoke the class's own init() function
+     * for setting up the image rather than ViewJFrameImage's init()
+     * @param image the model image
+     * @param titles
+     * @param mirrorArr
+     * @param mirrorZ
+     * @param noMirrorArr
+     * @param noMirrorZ
+     * @param imageType
+     * @param symmetry
+     * @param standAlone
+     */
     public PlugInMuscleImageDisplay(ModelImage image, String[] titles,
             String[][] mirrorArr, boolean[][] mirrorZ, 
             String[][] noMirrorArr, boolean[][] noMirrorZ,  
             ImageType imageType, Symmetry symmetry, boolean standAlone) {
-
+    	// calls the super that will not call ViewJFrameImage's init() function
     	super(image, null, null, false, false);
     	this.setImageA(image);
         
@@ -167,7 +181,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
         
         Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, "yes");
         
-    	initStandAlone(LUTa);
+    	initStandAlone();
     	this.setActiveImage(IMAGE_A);
     	setVisible(true);
     }
@@ -179,19 +193,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
      * 
      * @throws  OutOfMemoryError  if enough memory cannot be allocated for the GUI
      */
-    private void initStandAlone(ModelLUT LUTa) throws OutOfMemoryError {
-        try {
-            setIconImage(MipavUtil.getIconImage("davinci_32x32.gif"));
-        } catch (FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
-                              ">.  Check that this file is available.\n");
-        }
-
-        setResizable(true);
-
-        // initialize logMagDisplay
-        this.LUTa = LUTa;
-
+    private void initStandAlone() throws OutOfMemoryError {
         initResolutions();
         initZoom();
         initLUT();
@@ -207,7 +209,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
 
         // build the menuBar based on the number of dimensions for imageA
         menuBarMaker = new ViewMenuBar(menuBuilder);
-        
 
 //      add pre-defined UIParams to the vector
         Vector<CustomUIBuilder.UIParams> voiParams = new Vector<CustomUIBuilder.UIParams>();
@@ -216,8 +217,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
         voiParams.addElement(CustomUIBuilder.PARAM_VOI_LIVEWIRE);
         voiParams.addElement(CustomUIBuilder.PARAM_VOI_ELLIPSE);
         voiParams.addElement(CustomUIBuilder.PARAM_VOI_RECTANGLE);
+        voiParams.addElement(CustomUIBuilder.PARAM_PAINT_FILL);
+        voiParams.addElement(CustomUIBuilder.PARAM_PAINT_ERASE_SLICE);
         
         Vector<CustomUIBuilder.UIParams> voiActionParams = new Vector<CustomUIBuilder.UIParams>();
+        voiActionParams.addElement(CustomUIBuilder.PARAM_VOI_COLOR);
         voiActionParams.addElement(CustomUIBuilder.PARAM_VOI_NEW);
         voiActionParams.addElement(CustomUIBuilder.PARAM_VOI_UNDO);
         voiActionParams.addElement(CustomUIBuilder.PARAM_VOI_CUT);
@@ -225,11 +229,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
         voiActionParams.addElement(CustomUIBuilder.PARAM_VOI_PASTE);
        
         
+        //build the toolbar and add the custom button vectors
         controls.buildSimpleToolBar();
         controls.addCustomToolBar(voiParams);
         controls.addCustomToolBar(voiActionParams);
-        
-        setTitle();
         
         // MUST register frame to image models
         imageA.addImageDisplayListener(this);
@@ -238,7 +241,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
 	
         MipavUtil.centerOnScreen(this);
       
-        updateImages(true);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
         pack();
@@ -246,11 +248,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
         // User interface will have list of frames
         userInterface.registerFrame(this);
 
-//      System.err.println("adding controls....");
         getContentPane().add(controls, BorderLayout.NORTH);
-        // getContentPane().add(ViewUserInterface.getReference().getMessageFrame().getTabbedPane(), BorderLayout.SOUTH);
-  
-        //setJMenuBar(menuBar);
         
         //call the normal init function here
         initNext();
@@ -286,6 +284,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
     	zeroStatus = null;
     	locationStatus = null;
     	System.gc();
+    	
     }
     
     /**
@@ -487,6 +486,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
     private void initNext() {
         
     	JPanel mainPanel = initDialog();
+    	
+    	//if this is standalone (app frame hidden), add the tabbedpane from the messageframe to the bottom of the plugin's frame
     	if (ViewUserInterface.getReference().isAppFrameVisible()) {
     		getContentPane().add(mainPanel, BorderLayout.CENTER);
     	} else {
@@ -497,9 +498,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
     		getContentPane().add(mainSplit, BorderLayout.CENTER);
     	}
         
-        	
-      
-        
+    	//not sure what this does, but it seems to work in reverse for standalone vs mipav shown
         if (ViewUserInterface.getReference().isAppFrameVisible()) {
         	getContentPane().remove(0);
         }
@@ -544,14 +543,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
         boolean imageSizeSmall = false;
         //check to see if the image width is SMALLER than the minimum frame width
         if (componentImage.getActiveImage().getExtents()[0] <= minFrameWidth) {
-        	imageSizeSmall = true;
-        //	System.err.println("Image size small");
+        	imageSizeSmall = true;     
         }
-    
-       // System.err.println("Current zoom: " + componentImage.getZoomX());
-
-        
-        
+            
         // if the window size is greater than the display window size - 20 (in either direction)
         //  do nothing
         if ((getSize().width >= (xScreen - 20)) || (getSize().height >= (yScreen - 20))) {
