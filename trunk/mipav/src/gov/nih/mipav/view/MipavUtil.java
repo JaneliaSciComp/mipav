@@ -421,7 +421,9 @@ public class MipavUtil extends JComponent {
                 // exit with an abnormal return value to indicate a problem
                 // (useful when running mipav from the command line and testing
                 // whether the algorithm completed successfully)
-                System.exit(1);
+                if (ViewUserInterface.getReference().doExitCmdLineOnError()) {
+                	System.exit(1);
+                }
             } else {
 
                 try {

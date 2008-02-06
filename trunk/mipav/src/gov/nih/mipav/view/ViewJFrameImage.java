@@ -3736,7 +3736,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     public void keyReleased(KeyEvent e) {
         int keyCode = e.getKeyCode();
-
+System.err.println("KEY RELEASED");
         switch (keyCode) {
 
             case KeyEvent.VK_HOME:
@@ -5249,11 +5249,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         // User interface will have list of frames
         userInterface.registerFrame(this);
 
-        
-
-    
-        
-       
         this.updateImages();
         addComponentListener(this);
         

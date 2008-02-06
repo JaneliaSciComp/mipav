@@ -180,6 +180,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** boolean to force the algorithm to replace the image rather than opening a new frame */
     private boolean forceAlgorithmInPlace = false;
     
+    /** error handling for cmd line, if set to false will not exit on MipavUtil.displayError()*/
+    private boolean exitCmdLineOnError = true;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -2461,6 +2464,22 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         DICOMQueryFrame = frame;
     }
 
+    /**
+     * Sets MIPAV to exit (true) or not (false) on an error when running from the command line
+     * @param doExit
+     */
+    public void setExitCmdLineOnError(boolean doExit) {
+    	this.exitCmdLineOnError = doExit;
+    }
+    
+    /**
+     * Tells whether or not to exit on an error when running from the command line
+     * @return boolean whether to exit
+     */
+    public boolean doExitCmdLineOnError() {
+    	return this.exitCmdLineOnError;
+    }
+    
     /**
      * Checks whether the dialog should force the algorithm to replace the image (no new frame)
      * @return if only algorithm image replacement is allowed
