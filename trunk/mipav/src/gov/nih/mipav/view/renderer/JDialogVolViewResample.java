@@ -446,7 +446,7 @@ public class JDialogVolViewResample extends JDialogBase {
     public void exec() {
 
         try {
-            if ( m_kVolViewType.equals( "VolTriplanar" ) )
+            if ( m_kVolViewType.equals( "VolTriplanar" ) || m_kVolViewType.equals( "DTIStandAlone" ) )
             {
                 if ( m_kVolViewType.equals( "VolTriplanar" ) )
                 {
