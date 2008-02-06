@@ -530,8 +530,8 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 		boolean bContiguous = true;
 
 		// apply B-spline filter to smooth the track
-		addPolyline(new Polyline(pkVBuffer, bClosed, bContiguous));
-		// addPolyline(new Polyline(smoothTrack(pkVBuffer, kTract,iVQuantity), bClosed, bContiguous));
+		// addPolyline(new Polyline(pkVBuffer, bClosed, bContiguous));
+		addPolyline(new Polyline(smoothTrack(pkVBuffer, kTract,iVQuantity), bClosed, bContiguous));
 	}
 	
 	/**
