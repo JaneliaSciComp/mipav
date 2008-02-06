@@ -164,6 +164,9 @@ public class FileTiff extends FileBase {
     /** DOCUMENT ME! */
     public static final int PLANAR_CONFIG = 284;
     
+    // The name of the page from which this image was scanned
+    public static final int PAGE_NAME = 285;
+    
     public static final int XPOSITION = 286;
     
     public static final int YPOSITION = 287;
@@ -481,6 +484,8 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     private byte[] hostComputer;
+    
+    private byte[] pageName;
 
     /** DOCUMENT ME! */
     private int[] IFDoffsets = new int[4096];
@@ -7440,6 +7445,25 @@ public class FileTiff extends FileBase {
                     fileInfo.setImageDescription(str);
                     if (debuggingFileIO) {
                         Preferences.debug("FileTiff.openIFD: imageDescription = " + str.trim() + "\n",
+                                          Preferences.DEBUG_FILEIO);
+                    }
+
+                    break;
+                    
+                case PAGE_NAME:
+                    if (type != ASCII) {
+                        throw new IOException("PAGE_NAME has illegal type = " + type + "\n");
+                    }
+
+                    pageName = new byte[count];
+                    for (i1 = 0; i1 < count; i1++) {
+                        pageName[i1] = (byte) valueArray[i1];
+                    }
+
+                    str = new String(pageName);
+                    fileInfo.setImageDescription(str);
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: Page name = " + str.trim() + "\n",
                                           Preferences.DEBUG_FILEIO);
                     }
 
