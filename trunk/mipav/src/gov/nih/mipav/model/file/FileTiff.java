@@ -2453,12 +2453,12 @@ public class FileTiff extends FileBase {
     
     // Modified from routines readRGBImage and readYCbCrImage in TiffBaselineFactory.java in 
     // package uk.co.mmscomputing.imageio.tiff
-    private int jpegDecompresser(byte dataOut[], byte dataIn[]) {
+    private int jpegDecompresser(byte dataOut[], byte dataIn[], int rowsToDo) {
         InputStream is;
         IntFilterInputStream intis;
         TIFFYCbCrInputStream ycbcris;
         int resultLength;
-        int mbps = xDim * rowsPerStrip;
+        int mbps = tileWidth * rowsToDo;
         int max = xDim * yDim;
         int dataOutInt[] = new int[dataOut.length/samplesPerPixel];
         int i;
@@ -14500,7 +14500,8 @@ public class FileTiff extends FileBase {
                                         for (j = 0; j < nBytes; j++) {
                                             data[j] = byteBuffer[j];
                                         }
-                                        resultLength = jpegDecompresser(decomp, data);
+                                        rowsToDo = Math.min(tileLength, yDim - y);
+                                        resultLength = jpegDecompresser(decomp, data, rowsToDo);
                                     }
                                     else if (zlibCompression) {
                                         try {
