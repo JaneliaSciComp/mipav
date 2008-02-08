@@ -498,8 +498,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
     		getContentPane().add(mainSplit, BorderLayout.CENTER);
     	}
         
-    	//not sure what this does, but it seems to work in reverse for standalone vs mipav shown
-        if (ViewUserInterface.getReference().isAppFrameVisible()) {
+    	//removes extra scrollPane from the mipav-loaded plugin
+    	if (ViewUserInterface.getReference().isAppFrameVisible()) {
         	getContentPane().remove(0);
         }
 
@@ -2013,28 +2013,31 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
 				Object itrObj = itr.next();
 				double totalAreaCalc = 0, totalAreaCount = 0, fatArea = 0, leanArea = 0;//, partialArea = 0;
 				double meanFatH = 0, meanLeanH = 0, meanTotalH = 0;
-				//pixels -> cm^2
-				totalAreaCalc = (Double)totalAreaCalcTree.get(itrObj);
-				totalAreaCount = (Double)totalAreaCountTree.get(itrObj);
-				fatArea = (Double)fatAreaTree.get(itrObj);
-				leanArea = (Double)leanAreaTree.get(itrObj);
-				meanFatH = (Double)meanFatHTree.get(itrObj);
-				meanLeanH = (Double)meanLeanHTree.get(itrObj);
-				meanTotalH = (Double)meanTotalHTree.get(itrObj);
-				
-				System.out.println("Compare areas: "+totalAreaCalc+"\tcount: "+totalAreaCount);
-				
-				if (doSave) {
-					addToPDF((String)itrObj, fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH);
-				} else {
-					DecimalFormat dec = new DecimalFormat("0.#");
-					String appMessage = itrObj+" calculations:\n"+"Fat Area: "+dec.format(fatArea)+
-					"\t\t\t\tMean H: "+dec.format(meanFatH)+"\nLean Area: "+dec.format(leanArea)+
-					"\t\t\tMean H: "+dec.format(meanLeanH)+"\nTotal Area: "+dec.format(totalAreaCount)+
-					"\t\t\tMean H: "+dec.format(meanTotalH) + "\n\n";
-				
-					ViewUserInterface.getReference().getMessageFrame().append(appMessage, ViewJFrameMessage.DATA);
-				}	
+				//pixels -> cm^2\
+				if(totalAreaCalcTree.get(itrObj) != null) {
+					
+					totalAreaCalc = (Double)totalAreaCalcTree.get(itrObj);
+					totalAreaCount = (Double)totalAreaCountTree.get(itrObj);
+					fatArea = (Double)fatAreaTree.get(itrObj);
+					leanArea = (Double)leanAreaTree.get(itrObj);
+					meanFatH = (Double)meanFatHTree.get(itrObj);
+					meanLeanH = (Double)meanLeanHTree.get(itrObj);
+					meanTotalH = (Double)meanTotalHTree.get(itrObj);
+					
+					System.out.println("Compare areas: "+totalAreaCalc+"\tcount: "+totalAreaCount);
+					
+					if (doSave) {
+						addToPDF((String)itrObj, fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH);
+					} else {
+						DecimalFormat dec = new DecimalFormat("0.#");
+						String appMessage = itrObj+" calculations:\n"+"Fat Area: "+dec.format(fatArea)+
+						"\t\t\t\tMean H: "+dec.format(meanFatH)+"\nLean Area: "+dec.format(leanArea)+
+						"\t\t\tMean H: "+dec.format(meanLeanH)+"\nTotal Area: "+dec.format(totalAreaCount)+
+						"\t\t\tMean H: "+dec.format(meanTotalH) + "\n\n";
+					
+						ViewUserInterface.getReference().getMessageFrame().append(appMessage, ViewJFrameMessage.DATA);
+					}	
+				}
 			}
 		
 			if (doSave) {
