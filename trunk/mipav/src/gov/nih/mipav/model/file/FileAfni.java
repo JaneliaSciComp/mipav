@@ -6520,7 +6520,7 @@ public class FileAfni extends FileBase {
                 }
 
                 // A dialog has the user choose between dataset and dicom order
-                if ((readACPC) || (readTLRC)) {
+                if ((viewType == FileInfoAfni.AFNI_ACPC) || (viewType == FileInfoAfni.AFNI_TLRC)) {
                     doDicom = true;
                 } else if (loadB) {
                     doDicom = false;
