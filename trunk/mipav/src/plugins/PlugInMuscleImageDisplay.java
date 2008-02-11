@@ -47,40 +47,34 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	private PdfPTable aTable = null;
 	private PdfPTable imageTable = null;
     
-    public static final String CHECK_VOI = "CHECK_VOI";
-    
     public static final String VOI_DIR = "NIA_Seg\\";
     
+    /** Location of the VOI tab. */
     private int voiTabLoc;
     
+    /** Location of the analysis tab. */
     private int resultTabLoc;
-    /**
-     * Text for muscles where a mirror muscle may exist. 
-     */
+    
+    /** Text for muscles where a mirror muscle may exist. */
     private String[][] mirrorArr;
 
     private boolean[][] mirrorZ;
 
-    /**
-     * Text for muscles where mirror muscles are not considered. 
-     */
+    /** Text for muscles where mirror muscles are not considered. */
     private String[][] noMirrorArr;
 
     private boolean[][] noMirrorZ;
 
-    /**
-     * Denotes the anatomical part represented in the image. Implemented seperatly in case this class is moved to its own class at a later time.
+    /** 
+     * Denotes the anatomical part represented in the image. Implemented seperatly in case 
+     * this class is moved to its own class at a later time.
      */
     private ImageType imageType;
 
-    /**
-     * Whether this image has mirror image muscles (eg VIEWS of thighs, abdomen. 
-     */
+    /** Whether this image has mirror image muscles (eg VIEWS of thighs, abdomen. */
     private Symmetry symmetry;
     
     private JTabbedPane imagePane;
-    
-    private JSplitPane splitPane;
     
     private int activeTab;
     
@@ -284,9 +278,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	imagePane.removeAll();
     	imagePane = null;
     	
-    	splitPane.removeAll();
-    	splitPane = null;
-    	
     	zeroStatus = null;
     	locationStatus = null;
     	System.gc();
@@ -372,7 +363,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         //run through toggle buttons to see if a menu selected one (updates the button status)
         getControls().getTools().setToggleButtonSelected(command);
                 
-        if(command.equals(PlugInMuscleImageDisplay.CHECK_VOI)) {
+        if(command.equals(DialogPrompt.CHECK_VOI)) {
             ((VoiDialogPrompt)tabs[voiTabLoc]).setUpDialog(((JButton)(e.getSource())).getText(), true, 1);
             lockToPanel(voiTabLoc, "VOI"); //includes making visible
         } else if(command.equals(DialogPrompt.CALCULATE)) {
@@ -442,6 +433,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         
         scrollPane.setFocusable(true);
+        scrollPane.setBackground(Color.black);
         scrollPane.addKeyListener(this);
         
         imagePane = new JTabbedPane();
@@ -450,9 +442,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         JPanel panelA = new JPanel(new GridLayout(1, 3, 10, 10));
         
-        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, imagePane, scrollPane);
-        scrollPane.setBackground(Color.black);
-        panelA.add(splitPane);
+        panelA.add(new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, imagePane, scrollPane));
      
         for(int i=0; i<mirrorArr.length; i++) { 
         	tabs[i] = new MuscleDialogPrompt(this, titles[i], mirrorArr[i], mirrorZ[i],
@@ -919,8 +909,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	
     	//~ Static fields/initializers -------------------------------------------------------------------------------------
     	
+    	/**Action commands without associated buttons (usually for OK buton) */
+    	public static final String CHECK_VOI = "Check VOI";
     	public static final String DIALOG_COMPLETED = "Dialog Completed";
     	
+    	/** Possible buttons for dialog prompts. */
     	public static final String OK = "Ok";
     	public static final String CANCEL = "Cancel";
     	public static final String CLEAR = "Clear";
@@ -939,7 +932,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	
     	protected PlugInMuscleImageDisplay muscleFrame;
     	
-    	private Vector objectList = new Vector();
+    	private Vector<ActionListener> objectList = new Vector<ActionListener>();
     	
     	private String title;
     	
@@ -1046,7 +1039,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         public void notifyListeners(String cmd) {
 
             for (int i = 0; i < objectList.size(); i++) {
-                ((ActionListener) objectList.elementAt(i)).actionPerformed(new ActionEvent(this, 0, cmd));
+                objectList.elementAt(i).actionPerformed(new ActionEvent(this, 0, cmd));
             }
         }
         
@@ -1424,7 +1417,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 mirrorButtonArr[i] = (i % 2) == 0 ? new JButton(symmetry1+mirrorArr[i/2]) : 
                                                             new JButton(symmetry2+mirrorArr[i/2]);
                 mirrorButtonArr[i].setFont(MipavUtil.font12B);
-                mirrorButtonArr[i].setActionCommand(PlugInMuscleImageDisplay.CHECK_VOI);
+                mirrorButtonArr[i].setActionCommand(CHECK_VOI);
                 mirrorButtonArr[i].addActionListener(muscleFrame);
                 mirrorGroup.add(mirrorButtonArr[i]);
                 
@@ -1483,7 +1476,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 
                 noMirrorButtonArr[i] = new JButton(noMirrorArr[i]);
                 noMirrorButtonArr[i].setFont(MipavUtil.font12B);
-                noMirrorButtonArr[i].setActionCommand(PlugInMuscleImageDisplay.CHECK_VOI);
+                noMirrorButtonArr[i].setActionCommand(CHECK_VOI);
                 noMirrorButtonArr[i].addActionListener(muscleFrame);
                 noMirrorGroup.add(noMirrorButtonArr[i]);
               
@@ -1622,9 +1615,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		private boolean lutOn = false;
 		
 		//Keeping as treeMap since expected size is so small, if number of muscles were greater than say 128, might use HashMap
-		private Map totalAreaCalcTree, totalAreaCountTree, partialAreaTree, fatAreaTree, leanAreaTree;
+		private Map <String,Double>totalAreaCalcTree, totalAreaCountTree, partialAreaTree, fatAreaTree, leanAreaTree;
 		
-		private Map meanFatHTree, meanLeanHTree, meanTotalHTree;
+		private Map <String,Double>meanFatHTree, meanLeanHTree, meanTotalHTree;
 	
 		/**
 		 * Constructor, note is called at beginning of program, so mirrorArr and noMirrorArr
@@ -1639,15 +1632,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        super(theParentFrame, "Analysis");
 	        
 	        //even though done flag exists, synchronized just in case
-	        totalAreaCalcTree = Collections.synchronizedMap(new TreeMap());
-	        totalAreaCountTree = Collections.synchronizedMap(new TreeMap()); 
-	        partialAreaTree = Collections.synchronizedMap(new TreeMap()); 
-	        fatAreaTree = Collections.synchronizedMap(new TreeMap()); 
-	        leanAreaTree = Collections.synchronizedMap(new TreeMap());
+	        totalAreaCalcTree = Collections.synchronizedMap(new TreeMap<String,Double>());
+	        totalAreaCountTree = Collections.synchronizedMap(new TreeMap<String,Double>()); 
+	        partialAreaTree = Collections.synchronizedMap(new TreeMap<String,Double>()); 
+	        fatAreaTree = Collections.synchronizedMap(new TreeMap<String,Double>()); 
+	        leanAreaTree = Collections.synchronizedMap(new TreeMap<String,Double>());
 			
-			meanFatHTree = Collections.synchronizedMap(new TreeMap());
-			meanLeanHTree  = Collections.synchronizedMap(new TreeMap());;
-			meanTotalHTree = Collections.synchronizedMap(new TreeMap());
+			meanFatHTree = Collections.synchronizedMap(new TreeMap<String,Double>());
+			meanLeanHTree  = Collections.synchronizedMap(new TreeMap<String,Double>());
+			meanTotalHTree = Collections.synchronizedMap(new TreeMap<String,Double>());
 	        
 	        setButtons(buttonStringList);
 	        
@@ -1875,7 +1868,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	            
 	            noMirrorButtonArr[i] = new JButton(noMirrorArr[index][i]);
 	            noMirrorButtonArr[i].setFont(MipavUtil.font12B);
-	            noMirrorButtonArr[i].setActionCommand(PlugInMuscleImageDisplay.CHECK_VOI);
+	            noMirrorButtonArr[i].setActionCommand(CHECK_VOI);
 	            noMirrorButtonArr[i].addActionListener(muscleFrame);
 	            noMirrorGroup.add(noMirrorButtonArr[i]);
 	            noMirrorPanel.add(noMirrorCheckArr[i], gbc);
@@ -2025,13 +2018,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				//pixels -> cm^2\
 				if(totalAreaCalcTree.get(itrObj) != null) {
 					
-					totalAreaCalc = (Double)totalAreaCalcTree.get(itrObj);
-					totalAreaCount = (Double)totalAreaCountTree.get(itrObj);
-					fatArea = (Double)fatAreaTree.get(itrObj);
-					leanArea = (Double)leanAreaTree.get(itrObj);
-					meanFatH = (Double)meanFatHTree.get(itrObj);
-					meanLeanH = (Double)meanLeanHTree.get(itrObj);
-					meanTotalH = (Double)meanTotalHTree.get(itrObj);
+					totalAreaCalc = totalAreaCalcTree.get(itrObj);
+					totalAreaCount = totalAreaCountTree.get(itrObj);
+					fatArea = fatAreaTree.get(itrObj);
+					leanArea = leanAreaTree.get(itrObj);
+					meanFatH = meanFatHTree.get(itrObj);
+					meanLeanH = meanLeanHTree.get(itrObj);
+					meanTotalH = meanTotalHTree.get(itrObj);
 					
 					System.out.println("Compare areas: "+totalAreaCalc+"\tcount: "+totalAreaCount);
 					
