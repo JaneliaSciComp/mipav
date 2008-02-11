@@ -31,7 +31,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-public class PlugInMuscleImageDisplay extends ViewJFrameImage {
+public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyListener {
     
     //~ Static fields --------------------------------------------------------------------------------------------------
     
@@ -237,22 +237,29 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
         // MUST register frame to image models
         imageA.addImageDisplayListener(this);
 
-        windowLevel = new JDialogWinLevel[2];
-	
-        MipavUtil.centerOnScreen(this);
-      
+        windowLevel = new JDialogWinLevel[2];      
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
         pack();
         
+        addKeyListener(this);
+        
         // User interface will have list of frames
-        userInterface.registerFrame(this);
+       userInterface.registerFrame(this);
 
-        getContentPane().add(controls, BorderLayout.NORTH);
+       getContentPane().add(controls, BorderLayout.NORTH);
         
         //call the normal init function here
         initNext();
     } // end init()
+    
+  //  public void setControls() {
+  //  	System.err.println("Caught a setControls");
+  //  }
+    
+   // public void removeControls() {
+  //  	System.err.println("Caught a removeControls");
+  //  }
     
     /**
      * Cleans memory.
@@ -365,7 +372,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
         
         //run through toggle buttons to see if a menu selected one (updates the button status)
         getControls().getTools().setToggleButtonSelected(command);
-        
+                
         if(command.equals(PlugInMuscleImageDisplay.CHECK_VOI)) {
             ((VoiDialogPrompt)tabs[voiTabLoc]).setUpDialog(((JButton)(e.getSource())).getText(), true, 1);
             lockToPanel(voiTabLoc, "VOI"); //includes making visible
@@ -501,7 +508,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
     	//removes extra scrollPane from the mipav-loaded plugin
     	if (ViewUserInterface.getReference().isAppFrameVisible()) {
         	getContentPane().remove(0);
-        }
+        } 
 
         pack();
         initMuscleImage(0);
@@ -2492,9 +2499,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage {
 		Point p = new Point();
 		p.x = 0;
 	    p.y = 0;
-	    SwingUtilities.convertPointToScreen(p, getActiveImage().getParentFrame());//.getContentPane());
-	    p.x += 356; // correcting for side panel TODO: find lengths
-	    p.y += (42-7); // correcting for titled border
+	    
+	    //grab the scrollpane (where image is displayed) location
+	    SwingUtilities.convertPointToScreen(p, scrollPane);
 	
 	    Dimension d = new Dimension();
 	    d.width = getActiveImage().getFileInfo()[0].getExtents()[0];//.getParentFrame().getContentPane().getWidth() - 3; // the -3 is a correction
