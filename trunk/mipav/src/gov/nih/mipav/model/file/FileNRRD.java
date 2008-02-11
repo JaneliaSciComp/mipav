@@ -3432,28 +3432,32 @@ public class FileNRRD extends FileBase {
     		if(image.getNDims() == 4) {
     			int[] orients = image.getAxisOrientation();
     			if(orients.length == 4) {
-	    			if(image.getAxisOrientation()[3] == FileInfoBase.HOURS || 
-	    					image.getAxisOrientation()[3] == FileInfoBase.HZ ||
-	    					image.getAxisOrientation()[3] == FileInfoBase.MICROSEC ||
-	    					image.getAxisOrientation()[3] == FileInfoBase.MILLISEC ||
-	    					image.getAxisOrientation()[3] == FileInfoBase.MINUTES ||
-	    					image.getAxisOrientation()[3] == FileInfoBase.NANOSEC||
-	    					image.getAxisOrientation()[3] == FileInfoBase.SECONDS) {
+	    			if(image.getUnitsOfMeasure(3) == FileInfoBase.HOURS || 
+	    					image.getUnitsOfMeasure(3) == FileInfoBase.HZ ||
+	    					image.getUnitsOfMeasure(3) == FileInfoBase.MICROSEC ||
+	    					image.getUnitsOfMeasure(3) == FileInfoBase.MILLISEC ||
+	    					image.getUnitsOfMeasure(3) == FileInfoBase.MINUTES ||
+	    					image.getUnitsOfMeasure(3) == FileInfoBase.NANOSEC||
+	    					image.getUnitsOfMeasure(3) == FileInfoBase.SECONDS) {
 	    				spaceString = spaceString + "-time";
 	    				isTime = true;	
 	    			}
     			}
     		}
-    		LinkedHashMap matrixMap = image.getMatrixHolder().getMatrixMap();
-            Iterator iter = matrixMap.keySet().iterator();
-            String currentKey = null;
+
+    		//LinkedHashMap matrixMap = image.getMatrixHolder().getMatrixMap();
+            //Iterator iter = matrixMap.keySet().iterator();
+            //String currentKey = null;
             StringBuffer sb = new StringBuffer();
-            while (iter.hasNext()) {
-            	currentKey = (String)iter.next();
-                TransMatrix tMatrix =  (TransMatrix)matrixMap.get(currentKey);
+            
+            TransMatrix tMatrix = image.getMatrix();
+            //while (iter.hasNext()) {
+            	//System.out.println("aaa");
+            	//currentKey = (String)iter.next();
+                //TransMatrix tMatrix =  (TransMatrix)matrixMap.get(currentKey);
                 if (tMatrix != null && tMatrix.getNCols() >= image.getNDims()) {
                 	//if the dimensions arent correct for image/matrix, switch it to correct dim and identity
-                	if (tMatrix.getNCols() != Math.min((image.getNDims() + 1),4)) {
+                	/*if (tMatrix.getNCols() != Math.min((image.getNDims() + 1),4)) {
                     	tMatrix = new TransMatrix(Math.min(image.getNDims() + 1,4), TransMatrix.TRANSFORM_ANOTHER_DATASET);
                     	tMatrix.identity();
                     }
@@ -3490,28 +3494,90 @@ public class FileNRRD extends FileBase {
                                                });
                             }
                         }
-                    } 
-                   double[][] matrix = tMatrix.getMatrix();    
-                   for (int j = 0; j < tMatrix.getNCols() && (j < 3); j++) {
+                    } */
+
+                   double[][] matrix = tMatrix.getMatrix(); 
+                   int[] axisOrients = image.getFileInfo()[0].getAxisOrientation();
+                   
+                   for (int c = 0; c < tMatrix.getNCols() && (c < 3); c++) {
     	               sb.append("(");
-    	               for (int i = 0; i < tMatrix.getNRows() && (i < 3); i++) {
-    	            	   if(i ==0 ) {
-    	            		   sb.append(new Double(matrix[i][j]).toString());
+    	               for (int r = 0; r < tMatrix.getNRows() && (r < 3); r++) {
+    	            	   double value = matrix[r][c];
+    	            	   if(r == 0) {
+    	            		   //we are dealing with R <-> L so we get axisOrients[0] since this is x-axis
+    	            		   if(axisOrients != null && axisOrients.length > 0) {
+    	            			   if(axisOrients[0] == FileInfoBase.ORI_R2L_TYPE) {
+    	            				   
+    	            				   value = Math.abs(value);
+    	            			   }else if(axisOrients[0] == FileInfoBase.ORI_L2R_TYPE && value != 0) {
+    	            				   value = -Math.abs(value);
+    	            			   }
+    	            		   }
+    	            	   }
+    	            	   if(r == 1) {
+    	            		   //we are dealing with P <-> A so we get axisOrients[2] since this is z-axis
+    	            		   if(axisOrients != null && axisOrients.length > 2) {
+    	            			   if(axisOrients[2] == FileInfoBase.ORI_A2P_TYPE) {
+    	            				   value = Math.abs(value);
+    	            			   }else if (axisOrients[2] == FileInfoBase.ORI_P2A_TYPE && value != 0) {
+    	            				   value = -Math.abs(value);
+    	            			   }
+    	            		   }
+    	            	   }
+    	            	   if(r == 2) {
+    	            		   //we are dealing with I <-> S so we get axisOrients[1] since this is y-axis
+    	            		   if(axisOrients != null && axisOrients.length > 1) {
+    	            			   if(axisOrients[1] == FileInfoBase.ORI_I2S_TYPE) {
+    	            				   value = Math.abs(value);
+    	            			   }else if(axisOrients[1] == FileInfoBase.ORI_S2I_TYPE && value != 0) {
+    	            				   value = -Math.abs(value);
+    	            			   }
+    	            		   }
+    	            	   }
+    	            	   if(r == 0 ) {
+    	            		   sb.append(new Double(value).toString());
     	            		}else {
-    	            			sb.append("," + new Double(matrix[i][j]).toString());
+    	            			sb.append("," + new Double(value).toString());
     	            		}
     	            	}
     	               sb.append(") "); 
                    }
+
                    if(image.getNDims() == 4) {
                 	   if(!options.isMultiFile()) {
                 		   sb.append("none");
                 	   }
                    }
                 }
-            } // end while
+            //} // end while
             spaceDirectionsString = sb.toString();
+
+            
+            
             float[] origin = image.getFileInfo(0).getOrigin();
+            
+            
+            int[] axisOrients = image.getFileInfo()[0].getAxisOrientation();
+            if(axisOrients[0] == FileInfoBase.ORI_R2L_TYPE) {
+            	origin[0] = -Math.abs(origin[0]);  
+			}else if(axisOrients[0] == FileInfoBase.ORI_L2R_TYPE) {
+				origin[0] = Math.abs(origin[0]);
+			}
+            if(axisOrients[1] == FileInfoBase.ORI_I2S_TYPE) {
+            	origin[1] = -Math.abs(origin[1]);  
+			}else if(axisOrients[1] == FileInfoBase.ORI_S2I_TYPE) {
+				origin[1] = Math.abs(origin[1]);
+			}
+            if(image.getNDims() > 2) {
+            	if(axisOrients[2] == FileInfoBase.ORI_A2P_TYPE) {
+            		origin[2] = -Math.abs(origin[2]);
+ 			   	}else if (axisOrients[2] == FileInfoBase.ORI_P2A_TYPE) {
+ 			   		origin[2] = Math.abs(origin[2]);
+ 			   	}
+            }
+            
+            
+            
             sb = new StringBuffer();
             sb.append("(");
             for (int i = 0; (i < image.getNDims()) && (i < 3); i++) {
@@ -3523,6 +3589,7 @@ public class FileNRRD extends FileBase {
             }
             sb.append(")");
     		spaceOriginString = sb.toString();
+    		
     	}
     	
     	//per axis info
