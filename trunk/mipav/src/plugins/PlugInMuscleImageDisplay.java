@@ -184,6 +184,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	initStandAlone();
     	this.setActiveImage(IMAGE_A);
     	setVisible(true);
+    	scrollPane.requestFocus();
     }
     
     /**
@@ -233,7 +234,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         controls.buildSimpleToolBar();
         controls.addCustomToolBar(voiParams);
         controls.addCustomToolBar(voiActionParams);
-        
+                
         // MUST register frame to image models
         imageA.addImageDisplayListener(this);
 
@@ -241,8 +242,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
         pack();
-        
-        addKeyListener(this);
         
         // User interface will have list of frames
        userInterface.registerFrame(this);
@@ -293,7 +292,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	System.gc();
     	
     }
-    
+        
     /**
      * This method saves all VOIs for the active image to a given directory.  Note:  This method differs quite a bit in execution 
      * compared with saveALLVOIsTo(voiDir) in ViewJFrameBase.
@@ -441,6 +440,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         scrollPane = new JScrollPane(componentImage, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        
+        scrollPane.setFocusable(true);
+        scrollPane.addKeyListener(this);
         
         imagePane = new JTabbedPane();
         
@@ -2518,6 +2520,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    return null;
 	}
 
+	/**
+	 * Adds the table of voi information to the pdf, adds the images (edge and QA), and closes the document
+	 * @param edgeImage
+	 * @param qaImage
+	 */
 	protected void closePDF(java.awt.Image edgeImage, java.awt.Image qaImage) {
 			try {
 			Paragraph aPar = new Paragraph();
@@ -2577,6 +2584,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			
 		}
 
+	/**
+	 * Creates the PDF file and creates several tables for scanner information as well
+	 * as the VOI statistic information
+	 *
+	 */
 	protected void createPDF() {		
 		String fileDir = getActiveImage().getFileInfo(0).getFileDirectory();
 		long time = System.currentTimeMillis();
@@ -2680,7 +2692,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	}
 	
 	/**
-	 * Adds a row to the PDF Table
+	 * Adds a row to the PDF VOI Table
 	 * @param name the name of the area
 	 * @param fatArea the amount of fat area
 	 * @param leanArea amount of lean area
