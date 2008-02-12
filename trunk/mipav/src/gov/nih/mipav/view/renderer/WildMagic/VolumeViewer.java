@@ -279,7 +279,11 @@ implements MouseListener, ItemListener, ChangeListener {
     private JSlider m_kVolumeBlendSlider;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
-
+    public VolumeViewer() {
+    	super(null, null);
+    }
+    
+    
     /**
      * Make a volume rendering frame, which contains the toolbars on the top, control panel on the left, the volume
      * rendering panel on the right, and the three orthogonal view ( axial, sagittal, coronal, views) on the bottom
