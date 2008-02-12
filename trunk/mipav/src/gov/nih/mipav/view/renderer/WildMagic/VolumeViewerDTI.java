@@ -300,6 +300,12 @@ implements MouseListener, ItemListener, ChangeListener {
 
     private JSlider m_kVolumeBlendSlider;
 
+    private JPanel panelAxial;
+    
+    private JPanel panelSagittal;
+
+    private JPanel panelCoronal;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -318,11 +324,10 @@ implements MouseListener, ItemListener, ChangeListener {
      * @param  _resampleDialog        resample dialog reference.
      */
     public VolumeViewerDTI(ModelImage _imageA, ModelLUT LUTa, ModelRGB _RGBTA, ModelImage _imageB, ModelLUT LUTb,
-                                ModelRGB _RGBTB, int _leftPanelRenderMode, int _rightPanelRenderMode,
-                                JDialogVolViewResample _resampleDialog) {
+                                ModelRGB _RGBTB, int _leftPanelRenderMode, int _rightPanelRenderMode) {
         //super(_imageA,LUTa,_RGBTA,_imageB,LUTb,_RGBTB,_leftPanelRenderMode,_rightPanelRenderMode,_resampleDialog);
-        super(_imageA, LUTa, _RGBTA, _imageB, LUTb, _RGBTB, _leftPanelRenderMode, _rightPanelRenderMode, _resampleDialog);
-        resampleDialog = _resampleDialog;
+        super(_imageA, LUTa, _RGBTA, _imageB, LUTb, _RGBTB, _leftPanelRenderMode, _rightPanelRenderMode, null);
+        
         RGBTA = _RGBTA;
         RGBTB = _RGBTB;
         this.LUTa = LUTa;
@@ -566,7 +571,37 @@ implements MouseListener, ItemListener, ChangeListener {
     
     public void setDTIColorImage(ModelImage _m_kDTIColorImage) {
     	m_kDTIColorImage = _m_kDTIColorImage;
-    	//reConfiguration();
+    	m_kDTIColorImage.setExtents(_m_kDTIColorImage.getExtents());
+    	m_kDTIColorImage.calcMinMax();
+    	imageA = _m_kDTIColorImage;
+    	
+    	  if (imageA.isColorImage()) {
+                               int[] RGBExtents = new int[2];
+                  RGBExtents[0] = 4;
+                  RGBExtents[1] = 256;
+                  RGBTA = new ModelRGB(RGBExtents);
+             
+          } else {
+             
+                  LUTa = initLUT(imageA);
+             
+          }
+
+          if (imageB != null) {
+              imageB = (ModelImage) (imageB.clone());
+
+              if (imageB.isColorImage()) {
+                                      int[] RGBExtents = new int[2];
+                      RGBExtents[0] = 4;
+                      RGBExtents[1] = 256;
+                      RGBTB = new ModelRGB(RGBExtents);
+                
+              } else {
+                     LUTb = new ModelLUT(ModelLUT.GRAY, 256, imageB.getExtents());
+                               }
+          }
+    	
+    	restoreContext();
     }
     
     public String getParentDir() {
@@ -665,6 +700,8 @@ implements MouseListener, ItemListener, ChangeListener {
     public void buildDTIimageLoadPanel() {
     	JPanel DTIimagePanel = new JPanel();
     	
+    	DTIimageLoadPanel = new JPanelDTILoad(this);
+    	
     	DTIimagePanel.add(DTIimageLoadPanel.getMainPanel());
     	
     	maxPanelWidth = Math.max(DTIimagePanel.getPreferredSize().width, maxPanelWidth);
@@ -674,6 +711,8 @@ implements MouseListener, ItemListener, ChangeListener {
     
     public void buildDTIFiberTrackPanel() {
     	DTIFiberPanel = new JPanel();
+
+    	DTIFiberTrackPanel = new JPanelDTIFiberTrack(this);
     	
     	DTIFiberPanel.add(DTIFiberTrackPanel.getMainPanel());
     	
@@ -693,6 +732,8 @@ implements MouseListener, ItemListener, ChangeListener {
     public void buildDTIParametersPanel() {
     	DTIParametersPanel = new JPanel();
     	
+    	DTIparamsPanel = new JPanelDTIParametersPanel(this, raycastRenderWM);
+    	
     	DTIParametersPanel.add(DTIparamsPanel.getMainPanel());
     	
     	maxPanelWidth = Math.max(DTIParametersPanel.getPreferredSize().width, maxPanelWidth);
@@ -706,6 +747,13 @@ implements MouseListener, ItemListener, ChangeListener {
     public void buildHistoLUTPanel() {
         histoLUTPanel = new JPanel();
 
+        if (imageA.isColorImage()) {
+            panelHistoRGB = new JPanelHistoRGB(imageA, imageB, RGBTA, RGBTB, true);
+        } else {
+            panelHistoLUT = new JPanelHistoLUT(imageA, imageB, LUTa, LUTb, true);
+        }
+
+        
         if (imageA.isColorImage()) {
             histoLUTPanel.add(panelHistoRGB.getMainPanel());
         } else {
@@ -843,6 +891,14 @@ implements MouseListener, ItemListener, ChangeListener {
     public void buildOpacityPanel() {
         opacityPanel = new JPanel();
 
+
+        if (imageA.isColorImage()) {
+            m_kVolOpacityPanel = new JPanelVolOpacityRGB(this, imageA, imageB);
+        } else {
+            m_kVolOpacityPanel = new JPanelVolOpacity(this, imageA, imageB);
+        }
+        
+       
         GridBagLayout gbLayout = new GridBagLayout();
         GridBagConstraints gbConstraints = new GridBagConstraints();
 
@@ -950,25 +1006,15 @@ implements MouseListener, ItemListener, ChangeListener {
             serif12B = MipavUtil.font12B;
             progressBar.updateValueImmed(5);
 
-            if (imageA.isColorImage()) {
-                m_kVolOpacityPanel = new JPanelVolOpacityRGB(this, imageA, imageB);
-            } else {
-                m_kVolOpacityPanel = new JPanelVolOpacity(this, imageA, imageB);
-            }
-            
 
             ImageCatalog.SetActive( new ImageCatalog("Main", System.getProperties().getProperty("user.dir")) );      
             VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", System.getProperties().getProperty("user.dir")));       
             PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", System.getProperties().getProperty("user.dir")));
             CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
-            m_kVolumeImageA = new VolumeImage(  imageA, LUTa, RGBTA );
-            if ( imageB != null )
-            {
-                m_kVolumeImageB = new VolumeImage( imageB, LUTb, RGBTB );
-            }
-
+            
             m_kAnimator = new Animator();
             m_akPlaneRender = new PlaneRender_WM[3];
+            /*
             m_akPlaneRender[0] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa,
                                                     m_kVolumeImageB, imageB, LUTb, FileInfoBase.AXIAL,
                                                     false);
@@ -978,38 +1024,31 @@ implements MouseListener, ItemListener, ChangeListener {
             m_akPlaneRender[2] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa,
                                                     m_kVolumeImageB, imageB, LUTb, FileInfoBase.CORONAL,
                                                     false);
+            */
+            m_akPlaneRender[0] = new PlaneRender_WM();
+            m_akPlaneRender[1] = new PlaneRender_WM();
+            m_akPlaneRender[2] = new PlaneRender_WM();
             
             progressBar.setMessage("Constructing gpu renderer...");
 
-            
-
+            /*
             raycastRenderWM = new GPUVolumeRender_WM(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa, RGBTA,
                                                      m_kVolumeImageB, imageB, LUTb, RGBTB);
-
-
-            TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
-            m_kVolumeImageA.UpdateImages(kTransfer, 0);
+            */
+            raycastRenderWM = new GPUVolumeRender_WM();
 
             progressBar.updateValueImmed(80);
             progressBar.setMessage("Constructing Lookup Table...");
 
-            if (imageA.isColorImage()) {
-                panelHistoRGB = new JPanelHistoRGB(imageA, imageB, RGBTA, RGBTB, true);
-            } else {
-                panelHistoLUT = new JPanelHistoLUT(imageA, imageB, LUTa, LUTb, true);
-            }
-
-            DTIimageLoadPanel = new JPanelDTILoad(this);
-            DTIFiberTrackPanel = new JPanelDTIFiberTrack(this);
-            DTIparamsPanel = new JPanelDTIParametersPanel(this, raycastRenderWM);
-            
             progressBar.updateValueImmed(100);
-
+            
             this.configureFrame();
         } finally {
             progressBar.dispose();
         }
 
+                
+        /*
         if (imageA.isColorImage()) {
             setRGBTA(RGBTA);
 
@@ -1023,9 +1062,119 @@ implements MouseListener, ItemListener, ChangeListener {
         {
             updateImages(true);
         }
+        */
         // Toolkit.getDefaultToolkit().setDynamicLayout( false );
     }
 
+    /**
+     * Construct the volume rendering methods based on the choices made from the resample dialog. This method is called
+     * by the Resample dialog.
+     */
+    public void restoreContext() {
+
+        /** Progress bar show up during the volume view frame loading */
+        progressBar = new ViewJProgressBar("Constructing renderers...", "Constructing renderers...", 0, 100, false,
+                                           null, null);
+        progressBar.updateValue(0, true);
+        MipavUtil.centerOnScreen(progressBar);
+        progressBar.setVisible(true);
+        progressBar.updateValueImmed(1);
+
+        try {
+            
+            serif12 = MipavUtil.font12;
+            serif12B = MipavUtil.font12B;
+            progressBar.updateValueImmed(5);
+
+
+            ImageCatalog.SetActive( new ImageCatalog("Main", System.getProperties().getProperty("user.dir")) );      
+            VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", System.getProperties().getProperty("user.dir")));       
+            PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", System.getProperties().getProperty("user.dir")));
+            CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
+            
+            m_kVolumeImageA = new VolumeImage(  imageA, LUTa, RGBTA );
+            if ( imageB != null )
+            {
+                m_kVolumeImageB = new VolumeImage( imageB, LUTb, RGBTB );
+            }
+
+
+            
+            m_kAnimator = new Animator();
+          
+            m_akPlaneRender[0].loadImage(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa,
+                    m_kVolumeImageB, imageB, LUTb, FileInfoBase.AXIAL,
+                    false);
+			m_akPlaneRender[1].loadImage(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa,
+			                    m_kVolumeImageB, imageB, LUTb, FileInfoBase.SAGITTAL,
+			                    false);
+			m_akPlaneRender[2].loadImage(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa,
+			                    m_kVolumeImageB, imageB, LUTb, FileInfoBase.CORONAL,
+			                    false);
+
+            
+            
+            progressBar.setMessage("Constructing gpu renderer...");
+            
+            raycastRenderWM.loadImage(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa, RGBTA,
+                    m_kVolumeImageB, imageB, LUTb, RGBTB);
+
+          
+            progressBar.updateValueImmed(80);
+            progressBar.setMessage("Constructing Lookup Table...");
+
+            progressBar.updateValueImmed(100);
+            
+            
+            tabbedPane.removeAll();
+            // buildLabelPanel();
+
+            buildHistoLUTPanel();
+            buildOpacityPanel();
+
+            
+            buildDisplayPanel();
+            buildViewPanel();
+
+            
+            buildDTIimageLoadPanel();
+            buildDTIFiberTrackPanel();
+            buildDTIParametersPanel();
+            
+            
+            buildLightPanel();
+            buildClipPanel();
+            buildSlicePanel();
+            buildSurfacePanel();
+            buildProbePanel();
+            buildCameraPanel();
+            buildMousePanel();
+            buildGeodesic();
+            buildSculpt();
+            
+            
+            triImagePanel.removeAll();
+            triImagePanel.add(panelAxial);
+            triImagePanel.add(panelSagittal);
+            triImagePanel.add(panelCoronal);
+           
+            imagePanel.removeAll();
+            imagePanel.add(gpuPanel);
+            
+            
+            TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
+            m_kVolumeImageA.UpdateImages(kTransfer, 0);
+            
+            
+            
+        } finally {
+            progressBar.dispose();
+        }
+
+    }
+    
+ 
+    
     /**
      * Disable target point for the RFA probe from within the plane renderer.
      */
@@ -2298,35 +2447,35 @@ implements MouseListener, ItemListener, ChangeListener {
         redBorder = BorderFactory.createCompoundBorder(redline, compound);
 
         // buildLabelPanel();
-        buildHistoLUTPanel();
-        buildOpacityPanel();
+        // buildHistoLUTPanel();
+        // buildOpacityPanel();
 
+        // buildDisplayPanel();
+        // buildViewPanel();
 
-            buildDisplayPanel();
-            buildViewPanel();
+        buildDTIimageLoadPanel();
+        buildDTIFiberTrackPanel();
+        buildDTIParametersPanel();
 
-            buildDTIimageLoadPanel();
-            buildDTIFiberTrackPanel();
-            buildDTIParametersPanel();
+        /*
+        buildLightPanel();
+        buildClipPanel();
+        buildSlicePanel();
+        buildSurfacePanel();
+        buildProbePanel();
+        buildCameraPanel();
+        buildMousePanel();
+        buildGeodesic();
+        buildSculpt();
+       */
 
-            buildLightPanel();
-            buildClipPanel();
-            buildSlicePanel();
-            buildSurfacePanel();
-            buildProbePanel();
-            buildCameraPanel();
-            buildMousePanel();
-            buildGeodesic();
-            buildSculpt();
-
-
-        JPanel panelAxial = new JPanel(new BorderLayout());
+        panelAxial = new JPanel(new BorderLayout());
         panelAxial.add(m_akPlaneRender[0].GetCanvas(), BorderLayout.CENTER);
 
-        JPanel panelSagittal = new JPanel(new BorderLayout());
+        panelSagittal = new JPanel(new BorderLayout());
         panelSagittal.add(m_akPlaneRender[1].GetCanvas(), BorderLayout.CENTER);
 
-        JPanel panelCoronal = new JPanel(new BorderLayout());
+        panelCoronal = new JPanel(new BorderLayout());
         panelCoronal.add(m_akPlaneRender[2].GetCanvas(), BorderLayout.CENTER);
 
         setTitle();
@@ -2756,7 +2905,7 @@ implements MouseListener, ItemListener, ChangeListener {
 //             if (surRender.getViewDialog() != null) {
 //                 surRender.getViewDialog().resizePanel(maxPanelWidth, height);
 //             }
-
+     /* ****************
         sliceGUI.resizePanel(maxPanelWidth, height);
         surfaceGUI.resizePanel(maxPanelWidth, height);
 //             if (surRender.getSlicePanel() != null) {
@@ -2775,7 +2924,7 @@ implements MouseListener, ItemListener, ChangeListener {
 //             if (surRender.getClipDialog() != null) {
         ((JPanelClip_WM)clipBox).resizePanel(maxPanelWidth, height);
 //             }
-
+            */
 //             if (surRender.getProbeDialog() != null) {
 //                 surRender.getProbeDialog().resizePanel(maxPanelWidth, height);
 //             }

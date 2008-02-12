@@ -225,6 +225,49 @@ public class PlaneRender_WM extends JavaApplication3D
 
 
     }
+    
+    public PlaneRender_WM()
+	{
+		super( "PlaneRender", 0, 0, 512, 512,
+		 new ColorRGBA(0.0f,0.0f,0.0f,0.0f));
+		m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
+		                            m_eBuffering, m_eMultisampling,
+		                             m_iWidth, m_iHeight );
+		((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
+		((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
+		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
+		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
+		
+		
+    }
+
+    
+    public void loadImage( VolumeViewer kParent, Animator kAnimator, VolumeImage kVolumeImageA, ModelImage kImageA, ModelLUT kLUTa,
+            VolumeImage kVolumeImageB, ModelImage kImageB, ModelLUT kLUTb,
+            int iPlane, boolean bMemory)
+	{
+		
+        m_kAnimator = kAnimator;
+		
+		m_kParent = kParent;
+    	
+		m_kVolumeImageA = kVolumeImageA;
+		m_iPlaneOrientation = iPlane;
+		m_bMemoryUsage = bMemory;
+		
+		m_kImageA = kImageA;
+		m_kImageB = kImageB;
+		m_kImageA.setImageOrder(ModelImage.IMAGE_A);
+		
+		if (m_kImageB != null) {
+		m_kImageB.setImageOrder(ModelImage.IMAGE_B);
+		}
+		
+		setOrientation();
+		m_kWinLevel = new WindowLevel();
+	}
+
+    
 
     public void display(GLAutoDrawable arg0) {
 
@@ -232,6 +275,11 @@ public class PlaneRender_WM extends JavaApplication3D
         {
             return;
         }
+        
+        if ( m_kImageA == null ) {
+        	return;
+        }
+        
         m_bModified = false;
         if (MoveCamera())
         {
@@ -289,7 +337,12 @@ public class PlaneRender_WM extends JavaApplication3D
 
     }
 
+    
     public void init(GLAutoDrawable arg0) {
+    	if ( m_kImageA == null ) {
+        	return;
+        }
+    	
         arg0.setAutoSwapBufferMode( false );
 
         ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
@@ -305,6 +358,7 @@ public class PlaneRender_WM extends JavaApplication3D
         Vector3f kCRight = Vector3f.UNIT_X;
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
+        
         CreateScene();
 
         // initial update of objects
@@ -325,6 +379,10 @@ public class PlaneRender_WM extends JavaApplication3D
 
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
        // ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+    	if ( m_kImageA == null ) {
+        	return;
+        }
+    	
         if (iWidth > 0 && iHeight > 0)
         {            
             if ( m_bUpdateSpacing )

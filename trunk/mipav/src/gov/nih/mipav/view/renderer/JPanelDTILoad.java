@@ -126,6 +126,7 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
 		computeButton.setToolTipText("Compute Diffusion Tensor Image");
 		computeButton.addActionListener(this);
 		computeButton.setActionCommand("computeImage");
+		computeButton.setEnabled(false);
 		contentBox.add(computeButton);
 
 		mainPanel.add(contentBox);
@@ -330,6 +331,7 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
 			textDTIimage.setText(chooser.getSelectedFile().getAbsolutePath());
 			Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser
 					.getCurrentDirectory().toString());
+			computeButton.setEnabled(true);
 		}
 	}
 

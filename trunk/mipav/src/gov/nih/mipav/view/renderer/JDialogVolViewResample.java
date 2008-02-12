@@ -1,6 +1,12 @@
 package gov.nih.mipav.view.renderer;
 
 
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoImageXML;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
+import gov.nih.mipav.model.scripting.ScriptRecorder;
+import gov.nih.mipav.model.scripting.actions.ActionCreateBlankImage;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -446,9 +452,9 @@ public class JDialogVolViewResample extends JDialogBase {
     public void exec() {
 
         try {
-            if ( m_kVolViewType.equals( "VolTriplanar" ) || m_kVolViewType.equals( "DTIStandAlone" ) )
+            if ( m_kVolViewType.equals( "VolTriplanar" ))
             {
-                if ( m_kVolViewType.equals( "VolTriplanar" ) )
+            	if ( m_kVolViewType.equals( "VolTriplanar" ) )
                 {
                     sr = new ViewJFrameVolumeView(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
                             rightPanelRenderMode, this);
@@ -497,56 +503,8 @@ public class JDialogVolViewResample extends JDialogBase {
                         sr.setSegmentationImage(segmentationImage);
                     }
                 }
-                else if ( m_kVolViewType.equals( "DTIStandAlone" ) )
-                {
-                    System.err.println("afa");
-                    VolumeViewerDTI kWM = new VolumeViewerDTI (imageA, LUTa, RGBTA,
-                            imageB, LUTb, RGBTB,
-                            leftPanelRenderMode,
-                            rightPanelRenderMode, this);
-                    kWM.setImageOriginal(imageAOriginal);
 
-                    if (forcePadding) {
-                        kWM.doPadding(extents, volExtents);
-                    }  else if (forceResample) {
-                        kWM.doResample(volExtents, newRes, forceResample, nDim, m_iFilter);
-                    }                
-                    kWM.constructRenderers();
-
-                    // can't do this before kWM.initialize() since it uses the plane renderer list, which is setup there
-                    kWM.addAttachedSurfaces();
-
-                    if (kWM.getProbeDialog() != null) {
-
-                        // need to update the rfa target labels in case there were attached surfaces that we should show info
-                        // about
-                        kWM.getProbeDialog().updateTargetList();
-                    }
-
-                    if (forceResample) {
-
-                        if (imageA != null) {
-                            imageA.disposeLocal();
-                            imageA = null;
-                        }
-
-                        if (imageB != null) {
-                            imageB.disposeLocal();
-                            imageB = null;
-                        }
-                    }
-
-                    if (startupCommand != null) {
-                        kWM.actionPerformed(new ActionEvent(this, 0, startupCommand));
-                    }
-
-                    if (segmentationImage != null) {
-                        kWM.setSegmentationImage(segmentationImage);
-                    }
-                } 
-
-            }            else if ( m_kVolViewType.equals( "WMVolTriplanar" ) )
-            {
+            } else if ( m_kVolViewType.equals( "WMVolTriplanar" ) ) {
                 VolumeViewer kWM = new VolumeViewer (imageA, LUTa, RGBTA,
                         imageB, LUTb, RGBTB,
                         leftPanelRenderMode,
@@ -607,7 +565,8 @@ public class JDialogVolViewResample extends JDialogBase {
         }
 
     }
-
+    
+ 
     /**
      * Build the resample dialog.
      */

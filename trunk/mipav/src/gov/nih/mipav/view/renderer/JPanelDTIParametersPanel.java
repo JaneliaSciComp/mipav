@@ -444,95 +444,114 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 		m_kTractList.setSelectedIndex(iSize);
 	}
 	
-	/**
-	 * Adds a fiber bundle tract to the GPUVolumeRender and JPanelSurface.
-	 * 
-	 * @param kTract,
-	 *            list of voxels in the fiber bundle.
-	 * @param iVQuantity,
-	 *            number of voxels in the fiber bundle.
-	 * @param iDimX,
-	 *            the x-dimensions of the DTI image used to create the tract.
-	 * @param iDimY,
-	 *            the y-dimensions of the DTI image used to create the tract.
-	 * @param iDimZ,
-	 *            the z-dimensions of the DTI image used to create the tract.
-	 */
-	protected void addTract(Vector<Integer> kTract, int iVQuantity, int iDimX,
-			int iDimY, int iDimZ) {
-		m_kImage = parentFrame.getImageA();
-		int iXBound = m_kImage.getExtents()[0];
-		int iYBound = m_kImage.getExtents()[1];
-		int iZBound = m_kImage.getExtents()[2];
-		float fMaxX = (float) (iXBound - 1)
-				* m_kImage.getFileInfo(0).getResolutions()[0];
-		float fMaxY = (float) (iYBound - 1)
-				* m_kImage.getFileInfo(0).getResolutions()[1];
-		float fMaxZ = (float) (iZBound - 1)
-				* m_kImage.getFileInfo(0).getResolutions()[2];
+    /** Adds a fiber bundle tract to the GPUVolumeRender and JPanelSurface.
+     * @param kTract, list of voxels in the fiber bundle.
+     * @param iVQuantity, number of voxels in the fiber bundle.
+     * @param iDimX, the x-dimensions of the DTI image used to create the tract.
+     * @param iDimY, the y-dimensions of the DTI image used to create the tract.
+     * @param iDimZ, the z-dimensions of the DTI image used to create the tract.
+     */
+    protected void addTract( Vector<Integer> kTract, int iVQuantity, int iDimX, int iDimY, int iDimZ )
+    {
+    	m_kImage = parentFrame.getImageA();
+        int iXBound = m_kImage.getExtents()[0];
+        int iYBound = m_kImage.getExtents()[1];
+        int iZBound = m_kImage.getExtents()[2];
+        float fMaxX = (float) (iXBound - 1) * m_kImage.getFileInfo(0).getResolutions()[0];
+        float fMaxY = (float) (iYBound - 1) * m_kImage.getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (float) (iZBound - 1) * m_kImage.getFileInfo(0).getResolutions()[2];
 
-		float fMax = fMaxX;
-		if (fMaxY > fMax) {
-			fMax = fMaxY;
-		}
-		if (fMaxZ > fMax) {
-			fMax = fMaxZ;
-		}
-		float fXScale = fMaxX / fMax;
-		float fYScale = fMaxY / fMax;
-		float fZScale = fMaxZ / fMax;
-
-		Attributes kAttr = new Attributes();
-		kAttr.SetPChannels(3);
-		kAttr.SetCChannels(0, 3);
-		kAttr.SetCChannels(1, 3);
-		VertexBuffer pkVBuffer = new VertexBuffer(kAttr, iVQuantity);
-
-		float fR = 0, fG = 0, fB = 0;
-
-		for (int i = 0; i < iVQuantity; i++) {
-			int iIndex = kTract.get(i);
-
-			int iX = iIndex % iDimX;
-			iIndex -= iX;
-			iIndex /= iDimX;
-
-			int iY = iIndex % iDimY;
-			iIndex -= iY;
-			iIndex /= iDimY;
-
-			int iZ = iIndex;
-
-			iIndex = kTract.get(i);
-			ColorRGB kColor1;
-			m_kImage = parentFrame.getImageA();
-			if (m_kImage.isColorImage()) {
-				fR = m_kImage.getFloat(iIndex * 4 + 1) / 255.0f;
-				fG = m_kImage.getFloat(iIndex * 4 + 2) / 255.0f;
-				fB = m_kImage.getFloat(iIndex * 4 + 3) / 255.0f;
-				kColor1 = new ColorRGB(fR, fG, fB);
-			} else {
-				fR = m_kImage.getFloat(iIndex);
-				kColor1 = new ColorRGB(fR, fR, fR);
-			}
-
-			float fX = (float) (iX) / (float) (iDimX);
-			float fY = (float) (iY) / (float) (iDimY);
-			float fZ = (float) (iZ) / (float) (iDimZ);
-
-			pkVBuffer.SetPosition3(i, (float) (fX - .5f), (float) (fY - .5f),
-					(float) (fZ - .5f));
-			pkVBuffer.SetColor3(0, i, new ColorRGB(fX, fY, fZ));
-			pkVBuffer.SetColor3(1, i, kColor1);
+        float fMax = fMaxX;
+        if (fMaxY > fMax) {
+            fMax = fMaxY;
         }
+        if (fMaxZ > fMax) {
+            fMax = fMaxZ;
+        }
+        float fXScale = fMaxX/fMax;
+        float fYScale = fMaxY/fMax;
+        float fZScale = fMaxZ/fMax;
 
-		boolean bClosed = false;
-		boolean bContiguous = true;
 
-		// apply B-spline filter to smooth the track
-		// addPolyline(new Polyline(pkVBuffer, bClosed, bContiguous));
-		addPolyline(new Polyline(smoothTrack(pkVBuffer, kTract,iVQuantity), bClosed, bContiguous));
-	}
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetCChannels(0,3);
+        kAttr.SetCChannels(1,3);
+        VertexBuffer pkVBuffer = new VertexBuffer(kAttr,iVQuantity);                        
+
+        int iTractCount = 0;
+        LineArray kLine = new LineArray(2 * (iVQuantity - 1),
+                                        GeometryArray.COORDINATES | GeometryArray.COLOR_3);
+
+        float fR = 0, fG = 0, fB = 0;
+
+        for (int i = 0; i < iVQuantity; i++)
+        {
+            int iIndex = kTract.get(i);
+
+            int iX = iIndex % iDimX;
+            iIndex -= iX;
+            iIndex /= iDimX;
+                                
+            int iY = iIndex % iDimY;
+            iIndex -= iY;
+            iIndex /= iDimY;
+                                
+            int iZ = iIndex;
+                                
+            iIndex = kTract.get(i);
+            ColorRGB kColor1;
+            if ( m_kImage.isColorImage() )
+            {
+                fR = m_kImage.getFloat( iIndex*4 + 1 )/255.0f;
+                fG = m_kImage.getFloat( iIndex*4 + 2 )/255.0f;
+                fB = m_kImage.getFloat( iIndex*4 + 3 )/255.0f;
+                kColor1 = new ColorRGB(fR, fG, fB);
+            }
+            else
+            {
+                fR = m_kImage.getFloat( iIndex );
+                kColor1 = new ColorRGB(fR, fR, fR);
+            }
+
+            float fX = (float)(iX)/(float)(iDimX);
+            float fY = (float)(iY)/(float)(iDimY);
+            float fZ = (float)(iZ)/(float)(iDimZ);
+                                
+            pkVBuffer.SetPosition3(i,
+                                   (float)(fX-.5f), (float)(fY-.5f), (float)(fZ-.5f) );
+            pkVBuffer.SetColor3(0,i, new ColorRGB(fX, fY, fZ));
+            pkVBuffer.SetColor3(1,i, kColor1 );
+
+
+            fY = 1 - fY;
+            fZ = 1 - fZ;
+            fX = 2*(fX-.5f);
+            fY = 2*(fY -.5f);
+            fZ = 2*(fZ-.5f);
+
+            fX *= fXScale;
+            fY *= fYScale;
+            fZ *= fZScale;
+
+            kLine.setCoordinate(iTractCount, new float[]{fX, fY, fZ});
+            kLine.setColor(iTractCount, new Color3f(fR, fG, fB));
+            if ( (i != 0) && (i != iVQuantity-1) )
+            {
+                iTractCount++;
+                kLine.setCoordinate(iTractCount, new float[]{fX, fY, fZ});
+                kLine.setColor(iTractCount, new Color3f(fR, fG, fB));
+            }
+            iTractCount++;
+
+        }
+        boolean bClosed = true;
+        boolean bContiguous = false;
+        // addPolyline( new Polyline(pkVBuffer,bClosed,bContiguous) );
+     // apply B-spline filter to smooth the track
+        addPolyline(new Polyline(smoothTrack(pkVBuffer, kTract,iVQuantity, iDimX, iDimY, iDimZ), bClosed, bContiguous ));
+        // addLineArray(kLine);
+    }
 	
 	/**
 	 * Smooth the fiber tracks with B-spline interpolation
@@ -545,13 +564,14 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 	 *            number of voxels in the fiber bundle.
 	 * @return  B-spline interpolated fiber track
 	 */
-	private VertexBuffer smoothTrack(VertexBuffer pkVBuffer, Vector<Integer> kTract, int iVQuantity) {
+	private VertexBuffer smoothTrack(VertexBuffer pkVBuffer, Vector<Integer> kTract, int iVQuantity, int iDimX, int iDimY, int iDimZ ) {
 		float fX_0, fY_0, fZ_0;
 		float fX_1, fY_1, fZ_1;
 		float fX_2, fY_2, fZ_2;
 		float fX_3, fY_3, fZ_3;
 		
-		int curveSubD = 100;
+		// curve sub-division number, default to 10.  
+		int curveSubD = 10;
 		float u, u_2, u_3;
 		
 		Attributes attr = new Attributes();
@@ -594,10 +614,29 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 				pos_x = B_SPLINE(u, u_2, u_3, fX_0, fX_1, fX_2, fX_3);
 				pos_y = B_SPLINE(u, u_2, u_3, fY_0, fY_1, fY_2, fY_3);
 				pos_z = B_SPLINE(u, u_2, u_3, fZ_0, fZ_1, fZ_2, fZ_3);
-			
-		
+				
 				int iIndex = kTract.get(i);
 				
+				iIndex = kTract.get(i);
+
+	            int iX = iIndex % iDimX;
+	            iIndex -= iX;
+	            iIndex /= iDimX;
+	                                
+	            int iY = iIndex % iDimY;
+	            iIndex -= iY;
+	            iIndex /= iDimY;
+	                                
+	            int iZ = iIndex;
+	                                
+	            float fX = (float)(iX)/(float)(iDimX);
+	            float fY = (float)(iY)/(float)(iDimY);
+	            float fZ = (float)(iZ)/(float)(iDimZ);
+				
+	            resultUnit0 = new ColorRGB(fX, fY, fZ);
+	            
+	            iIndex = kTract.get(i);
+	           
 				if (m_kImage.isColorImage()) {
 					fR = m_kImage.getFloat(iIndex * 4 + 1) / 255.0f;
 					fG = m_kImage.getFloat(iIndex * 4 + 2) / 255.0f;
@@ -608,13 +647,12 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 					resultUnit1 = new ColorRGB(fR, fR, fR);
 				}
 				
-				resultUnit0 = new ColorRGB(pos_x, pos_y, pos_z);
-				
 				bsplineVBuffer.SetPosition3(index, pos_x, pos_y, pos_z);
 				bsplineVBuffer.SetColor3(0, index, resultUnit0);
 				bsplineVBuffer.SetColor3(1, index, resultUnit1);
 				
 				index++;
+		       
 			}
 		}
 		

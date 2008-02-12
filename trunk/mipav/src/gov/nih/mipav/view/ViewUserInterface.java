@@ -11,10 +11,13 @@ import gov.nih.mipav.model.srb.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.util.*;
 import gov.nih.mipav.model.algorithms.AlgorithmParseMIPAVDownloads;
+import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.view.renderer.WildMagic.*;
 
 import gov.nih.mipav.plugins.*;
 
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeViewerDTI;
 import gov.nih.mipav.view.xcede.*;
 import gov.nih.mipav.view.dialogs.JDialogDTIInput;
 
@@ -709,10 +712,72 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             new JDialogDTIInput( JDialogDTIInput.DTI );
         } else if (command.equals("loadEG_FA")) {
             new JDialogDTIInput( JDialogDTIInput.EG_FA );
+        } else if (command.equals("loadDTIFrame")) {
+        	invokeDTIframe();
         }
 
     }
 
+    /**
+     * Calling the DTI framework with blank image during initialization.
+     */
+    public void invokeDTIframe() {
+    	ModelImage imageA = createEmptyImage(null);
+        VolumeViewerDTI kWM = new VolumeViewerDTI (imageA, null, null, null, null, null, 0, 0);
+        kWM.constructRenderers();
+    }
+    
+    
+    /**
+     * Creates a blank Image based on the information found in the default fileInfo object.
+     *
+     * @param  fileInfo  This object contains the enough image information to build a ModelImage with nothing inside
+     *                   (eg. blank image).
+     * @param image   Created blank image. 
+     */
+    public ModelImage createEmptyImage(FileInfoBase fileInfo) {
+    	ModelImage image = null;
+        int[] extents = {256, 256, 32};
+        int[] units = {7, 7, 7, -1, -1};
+        float[] res = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+    	
+        if (fileInfo == null) {
+            fileInfo = new FileInfoImageXML("BlankImage", null, FileUtility.RAW);
+            fileInfo.setDataType(ModelStorageBase.SHORT);
+            fileInfo.setExtents(extents);
+            fileInfo.setUnitsOfMeasure(units);
+            fileInfo.setResolutions(res);
+            fileInfo.setEndianess(false);
+            fileInfo.setOffset(0);
+        }
+
+        try {
+            image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), "BlankImage");
+        } catch (OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+            MipavUtil.displayError("FileIO: " + error);
+
+            return null;
+        }
+
+        if (fileInfo.getExtents().length > 2) { // Set file info
+
+            for (int i = 0; i < fileInfo.getExtents()[2]; i++) {
+                image.setFileInfo(fileInfo, i);
+            }
+        } else {
+            image.setFileInfo(fileInfo, 0);
+        }
+        return image;
+    }
+
+    
     /**
      * Adds a clipped 2D VOI to the clipboard.
      *

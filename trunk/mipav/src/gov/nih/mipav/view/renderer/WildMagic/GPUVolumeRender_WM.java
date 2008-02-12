@@ -90,7 +90,45 @@ implements GLEventListener, KeyListener, MouseMotionListener
         
         m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
     }
+    
+    
+    public GPUVolumeRender_WM( )
+    {
 
+        super("GPUVolumeRender",0,0,512,512, new ColorRGBA(0.0f,0.0f,0.0f,0.0f));
+
+        m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
+                m_eBuffering, m_eMultisampling,
+                m_iWidth, m_iHeight );
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
+
+      
+       
+    }
+    
+    
+    public void loadImage( VolumeViewer kParent, Animator kAnimator, VolumeImage kVolumeImageA, ModelImage kImageA, ModelLUT kLUTa, ModelRGB kRGBTa,
+            VolumeImage kVolumeImageB, ModelImage kImageB, ModelLUT kLUTb, ModelRGB kRGBTb  )
+    {
+
+    	  m_kParent = kParent;
+          m_kAnimator = kAnimator;
+        m_kVolumeImageA = kVolumeImageA;
+        m_kImageA = kImageA;
+        m_kLUTa = kLUTa;
+        m_kRGBTa = kRGBTa;
+
+        m_kVolumeImageB = kVolumeImageB;
+        m_kImageB = kImageB;
+        m_kLUTb = kLUTb;
+        m_kRGBTb = kRGBTb;
+       
+        m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
+    }
+    
     /**
      * memory cleanup.
      */
@@ -185,6 +223,11 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             return;
         }
+        
+        if ( m_kImageA == null ) {
+        	return;
+        }
+        
         if ( m_bFirstRender )
         {
             m_kVolumeRayCast.SetDisplay(true);   
@@ -326,6 +369,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
      */
     public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {}
 
+    
     /**
      * Part of the GLEventListener interface. Init is called once when the
      * GLCanvas is first displayed. Called again if the GLCanvas is removed
@@ -343,6 +387,11 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
 //             return;
 //         }
+    	
+    	if ( m_kImageA == null ) {
+        	return;
+        }
+    	
         m_bInit = true;
 
         arg0.setAutoSwapBufferMode( false );
@@ -393,6 +442,11 @@ implements GLEventListener, KeyListener, MouseMotionListener
      * @param iHeight, the new height
      */
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
+    	
+    	if ( m_kImageA == null ) {
+        	return;
+        }
+    	
         if (iWidth > 0 && iHeight > 0)
         {
             m_iWidth = iWidth;

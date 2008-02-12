@@ -364,7 +364,6 @@ public class ViewJPanelLUT extends JPanel
                 panelParent.setLUTB(panelParent.getLUTb());
             }
         } else if (command.equals("ctPresetsLUT")) {
-            System.err.println("ruida");
             if (isImageASelected()) {
 
                 if (getHistoLUTComponentA() != null) {
