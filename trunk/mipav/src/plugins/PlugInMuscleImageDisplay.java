@@ -261,6 +261,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      */
     public void finalize() throws Throwable {
     	
+    	ViewUserInterface.getReference().unregisterFrame(this);
+    	
     	if (imageA != null) {
     		imageA.disposeLocal(true);
     	}
@@ -281,6 +283,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	zeroStatus = null;
     	locationStatus = null;
     	System.gc();
+    	
+    	if (ViewUserInterface.getReference().isAppFrameVisible() == false &&
+    			ViewUserInterface.getReference().getActiveImageFrame() == null) {
+    		System.exit(0);
+    	}
     	
     }
         
@@ -425,13 +432,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         System.gc();
     }
     
-    private JPanel initDialog() {
+    private JPanel buildMainPanel() {
     	//The component image will be displayed in a scrollpane.
         zeroStatus = new TreeMap();
         
         scrollPane = new JScrollPane(componentImage, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         
+        componentImage.useHighlight(false);
         scrollPane.setFocusable(true);
         scrollPane.setBackground(Color.black);
         scrollPane.addKeyListener(this);
@@ -484,7 +492,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     private void initNext() {
         
-    	JPanel mainPanel = initDialog();
+    	JPanel mainPanel = buildMainPanel();
     	
     	//if this is standalone (app frame hidden), add the tabbedpane from the messageframe to the bottom of the plugin's frame
     	if (ViewUserInterface.getReference().isAppFrameVisible()) {
@@ -667,6 +675,61 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         addComponentListener(this);
         
+    }
+    
+    /**
+     * private void computeIdealWindowSize() This method will enlarge or shrink the window size in response to the
+     * componentImage being zoomed. It will only resize the window to IMAGE_SCREEN_RATIO of the screen size, in this
+     * case 3/5. If the image is zoomed past that size, scrollbars are added. If the user has dragged the window to a
+     * size larger than 3/5 of screen size, I assume he wants it that way and the window will not be resized in that
+     * case upon zoom-in.
+     */
+    protected void computeIdealWindowSize() {
+        boolean addInsets = true;
+        int newWidth = getContentPane().getWidth();
+        int newHeight = getContentPane().getHeight();
+       // int newWidth = getScrollPaneSize().width;
+       // int newHeight = getScrollPaneSize().height;
+
+        final float IMAGE_SCREEN_RATIO = 3.0f / 5.0f; // image will not be resized past 3/5 of screen size
+
+        // if the image is too wide, cap the new window width
+        if (componentImage.getSize().width > (((float) xScreen) * IMAGE_SCREEN_RATIO)) {
+            addInsets = false;
+            newWidth = (int) (xScreen * IMAGE_SCREEN_RATIO);
+        }
+
+        // if the image is too tall, cap the new window height
+        if (componentImage.getSize().height > (((float) yScreen) * IMAGE_SCREEN_RATIO)) {
+            addInsets = false;
+            newHeight = (int) (yScreen * IMAGE_SCREEN_RATIO);
+        }
+
+        // if the window is already wider than IMAGE_SCREEN_RATIO, do not
+        // resize the window, since the only way it could have got that big
+        // is if the user manually resized it to be that large
+        if ((getSize().width > (((float) xScreen) * IMAGE_SCREEN_RATIO)) &&
+                (componentImage.getSize().width > getSize().width)) {
+            addInsets = false;
+            newWidth = getSize().width;
+        }
+
+        // if the window is already taller than IMAGE_SCREEN_RATIO, do not
+        // resize the window, since the only way it could have got that big
+        // is if the user manually resized it to be that large
+        if ((getSize().height > (((float) yScreen) * IMAGE_SCREEN_RATIO)) &&
+                (componentImage.getSize().height > getSize().height)) {
+            addInsets = false;
+            newHeight = getSize().height;
+        }
+
+        scrollPane.setSize(newWidth, newHeight);
+
+        if (addInsets == true) {
+            setSize(getFrameWidth(), getFrameHeight());
+        } else {
+            setSize(newWidth, newHeight);
+        }
     }
     
     /**
