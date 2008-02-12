@@ -143,6 +143,11 @@ public class JPanelSurface_WM
     /** Check Box for surface pickable. */
     private JCheckBox surfacePickableCB;
 
+    /** Check Box for surface back face culling. */
+    private JCheckBox surfaceBackFaceCB;
+
+    /** Check Box for surface clpping of the volume render. */
+    private JCheckBox surfaceClipCB;
 
     /** Counter for surface opacity slider moves. */
     private int surfaceSliderCount;
@@ -175,6 +180,8 @@ public class JPanelSurface_WM
 
     private Vector<TriMesh> m_kMeshes = new Vector<TriMesh>();
 
+    /** Check Box for per-pixel lighting. */
+    private JCheckBox m_kPerPixelLightingCB;
 
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -257,18 +264,23 @@ public class JPanelSurface_WM
             parentScene.getParentFrame().actionPerformed(new ActionEvent(m_kSurfaceTextureButton, 0, "SurfaceTexture"));
         } else if (command.equals("ChangeLight")) {
             m_kLightsControl.setVisible(true);
-        } else if (command.equals("SurfacePickable")) {
-            setPickable(getSelectedSurfaces(surfaceList.getSelectedIndices()));
-        } else if (command.equals("backface")) {
-            setBackface(getSelectedSurfaces(surfaceList.getSelectedIndices()));
-        } */ 
+        } */
+        else if (command.equals("SurfacePickable")) {
+            setPickable(surfaceList.getSelectedIndices());
+        }  
+        else if (command.equals("backface")) {
+            setBackface(surfaceList.getSelectedIndices());
+        }
         else if (command.equals("transparency")) {
             setTransparency(surfaceList.getSelectedIndices());
         }
-        /*
-        else if (command.equals("Clipping") && ((SurfaceRender) parentScene).getDisplayMode3D()) {
-            setClipping(getSelectedSurfaces(surfaceList.getSelectedIndices()));
-            */
+        else if (command.equals("perPixelLighting")) {
+            setPerPixelLighting(surfaceList.getSelectedIndices());
+        }
+        else if (command.equals("Clipping") )
+        {
+            setClipping(surfaceList.getSelectedIndices());
+        }
         else if (command.equals("ChangePolyMode")) {
             changePolyMode(polygonIndexToMode(polygonModeCB.getSelectedIndex()));
         }
@@ -692,7 +704,7 @@ public class JPanelSurface_WM
         surfacePickableCB.setActionCommand("SurfacePickable");
         surfacePickableCB.setFont(serif12B);
         surfacePickableCB.setSelected(false);
-/*
+
         surfaceClipCB = new JCheckBox("Surface Clipping", true);
         surfaceClipCB.addActionListener(this);
         surfaceClipCB.setActionCommand("Clipping");
@@ -705,20 +717,26 @@ public class JPanelSurface_WM
         surfaceBackFaceCB.setActionCommand("backface");
         surfaceBackFaceCB.setFont(serif12B);
         surfaceBackFaceCB.setSelected(true);
-*/
+
         surfaceTransparencyCB = new JCheckBox("Transparency", true);
         surfaceTransparencyCB.addActionListener(this);
         surfaceTransparencyCB.setActionCommand("transparency");
         surfaceTransparencyCB.setFont(serif12B);
         surfaceTransparencyCB.setSelected(true);
 
+        m_kPerPixelLightingCB = new JCheckBox("Per-Pixel Lighting", false);
+        m_kPerPixelLightingCB.addActionListener(this);
+        m_kPerPixelLightingCB.setActionCommand("perPixelLighting");
+        m_kPerPixelLightingCB.setFont(serif12B);
+        m_kPerPixelLightingCB.setSelected(false);
 
         JPanel cbSurfacePanel = new JPanel();
         cbSurfacePanel.setLayout(new BoxLayout(cbSurfacePanel, BoxLayout.Y_AXIS));
         cbSurfacePanel.add(surfacePickableCB);
-        //cbSurfacePanel.add(surfaceClipCB);
-        //cbSurfacePanel.add(surfaceBackFaceCB);
+        cbSurfacePanel.add(surfaceClipCB);
+        cbSurfacePanel.add(surfaceBackFaceCB);
         cbSurfacePanel.add(surfaceTransparencyCB);
+        cbSurfacePanel.add(m_kPerPixelLightingCB);
 
         JPanel cbPanel = new JPanel();
         cbPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
@@ -870,9 +888,10 @@ public class JPanelSurface_WM
         polygonModeCB.setEnabled(flag);
         comboLabel.setEnabled(flag);
         surfacePickableCB.setEnabled(flag);
-        //surfaceClipCB.setEnabled(flag);
-        //surfaceBackFaceCB.setEnabled(flag);
+        surfaceClipCB.setEnabled(flag);
+        surfaceBackFaceCB.setEnabled(flag);
         surfaceTransparencyCB.setEnabled(flag);
+        m_kPerPixelLightingCB.setEnabled(flag);
 
 //         mSurfacePaint.setEnabled(flag);
 
@@ -980,6 +999,66 @@ public class JPanelSurface_WM
             }
         }
     }
+    
+    /**
+     * Turns Transparency on/off for the selected surfaces.
+     *
+     * @param  surfaces  the list of selected surfaces (SurfaceAttributes)
+     */
+    private void setPerPixelLighting(int[] aiSelected) {
+
+        if ( m_kVolumeViewer != null )
+        {
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                m_kVolumeViewer.setPerPixelLighting( (String)kList.elementAt(aiSelected[i]), m_kPerPixelLightingCB.isSelected());
+            }
+
+        }
+    }
+
+    /**
+     * Turns Clipping on/off for the selected surfaces.
+     *
+     * @param  surfaces  the list of selected surfaces (SurfaceAttributes)
+     */
+    private void setClipping(int[] aiSelected) {
+        if ( m_kVolumeViewer != null )
+        {
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                m_kVolumeViewer.setClipping( (String)kList.elementAt(aiSelected[i]),
+                                             surfaceClipCB.isSelected());
+            }
+
+        }
+    }
+    
+
+    private void setBackface(int[] aiSelected) {
+        if ( m_kVolumeViewer != null )
+        {
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                m_kVolumeViewer.setBackface( (String)kList.elementAt(aiSelected[i]),
+                        surfaceBackFaceCB.isSelected());
+            }
+
+        }
+    }    
+
+    private void setPickable(int[] aiSelected) {
+        if ( m_kVolumeViewer != null )
+        {
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                m_kVolumeViewer.setPickable( (String)kList.elementAt(aiSelected[i]),
+                        surfacePickableCB.isSelected());
+            }
+
+        }
+    }
+
 
     /**
      */

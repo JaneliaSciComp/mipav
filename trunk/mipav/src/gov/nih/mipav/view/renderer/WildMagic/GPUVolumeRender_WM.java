@@ -10,6 +10,7 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.renderer.volumeview.*;
 import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Collision.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
@@ -269,6 +270,36 @@ implements GLEventListener, KeyListener, MouseMotionListener
         // Draw the scene to the back buffer/
         if (m_pkRenderer.BeginScene())
         {
+            Vector3f kPos = new Vector3f(0,0,10);
+            Vector3f kDir = new Vector3f(0,0,1);  // the pick ray
+
+            if (m_bPickPending)
+            {
+                if (m_spkCamera.GetPickRay(m_iXPick,m_iYPick,GetWidth(),
+                        GetHeight(),kPos,kDir))
+                {
+                    m_bPickPending = false;
+                    for ( int i = 0; i < m_kDisplayList.size(); i++ )
+                    {
+                        if ( m_kDisplayList.get(i).GetPickable() )
+                        {
+                            m_kPicker.Execute(m_kDisplayList.get(i).GetScene(),kPos,kDir,0.0f,
+                                    Float.MAX_VALUE);
+                            if (m_kPicker.Records.size() > 0)
+                            {
+                                //System.err.println( kPos.X() + " " + kPos.Y() + " " + kPos.Z() );
+                                //System.err.println( kDir.X() + " " + kDir.Y() + " " + kDir.Z() );
+                                System.err.println("Picked " + m_kDisplayList.get(i).getClass().getName());
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            
+            
+            
             m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
             m_pkRenderer.ClearBuffers();
 
@@ -361,6 +392,13 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             m_bSurfaceAdded = false;
             updateLighting( m_akLights );
+            for ( int i = 0; i < m_kDisplayList.size(); i++ )
+            {
+                if ( m_kDisplayList.get(i) instanceof VolumeSurface )
+                {
+                    ((VolumeSurface)m_kDisplayList.get(i)).InitClip(new float[] { 0, 1, 0, 1, 0, 1 });
+                }
+            }
         }
     }
 
@@ -603,25 +641,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
         case 'Q':
             setPerspectiveProjection();
             return;
-        case 'w':
-            m_afArbEquation[3] += 0.05;
-            System.err.println( "+ " + m_afArbEquation[3]);
-            // Update shader with rotated normal and distance:
-            if ( m_kVolumeRayCast != null )
-            {
-                m_kVolumeRayCast.SetClipArb(m_afArbEquation);
-            }
-            return;
-        case 'W':
-            m_afArbEquation[3] -= 0.05;
-            System.err.println( "- " + m_afArbEquation[3]);
-            // Update shader with rotated normal and distance:
-            if ( m_kVolumeRayCast != null )
-            {
-                m_kVolumeRayCast.SetClipArb(m_afArbEquation);
-            }
-            return;
-
             /*
 
 
@@ -909,6 +928,13 @@ implements GLEventListener, KeyListener, MouseMotionListener
         if ( m_kVolumeRayCast != null )
         {
             m_kVolumeRayCast.SetClip(iWhich, data);
+        }  
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i) instanceof VolumeSurface )
+            {
+                ((VolumeSurface)m_kDisplayList.get(i)).SetClip(iWhich,data);
+            }
         }
     }
 
@@ -1003,6 +1029,13 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             m_kVolumeRayCast.SetClip(iWhich,data);
         }
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i) instanceof VolumeSurface )
+            {
+                ((VolumeSurface)m_kDisplayList.get(i)).SetClip(iWhich,data);
+            }
+        }
     }
 
     /**
@@ -1066,6 +1099,13 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             m_kVolumeRayCast.SetClipEye(afEquation);
         }
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i) instanceof VolumeSurface )
+            {
+                ((VolumeSurface)m_kDisplayList.get(i)).SetClipEye(afEquation);
+            }
+        }
     }
 
     /**
@@ -1087,6 +1127,13 @@ implements GLEventListener, KeyListener, MouseMotionListener
         if ( m_kVolumeRayCast != null )
         {
             m_kVolumeRayCast.SetClipEyeInv(afEquation);
+        }
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i) instanceof VolumeSurface )
+            {
+                ((VolumeSurface)m_kDisplayList.get(i)).SetClipEyeInv(afEquation);
+            }
         }
     }
 
@@ -1173,6 +1220,13 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             m_kVolumeRayCast.SetClipArb(m_afArbEquation);
         }
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i) instanceof VolumeSurface )
+            {
+                ((VolumeSurface)m_kDisplayList.get(i)).SetClipArb(m_afArbEquation);
+            }
+        }
     }
 
     /**
@@ -1252,6 +1306,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
             super.mousePressed(e);
             InitializeObjectMotion(m_spkScene);
         }
+        m_iXPick = e.getX();
+        m_iYPick = e.getY();
+        m_bPickPending = true;
     }
 
 
@@ -1742,12 +1799,23 @@ implements GLEventListener, KeyListener, MouseMotionListener
         for ( int i = 0; i < akSurfaces.length; i++ )
         {
             m_kDisplayList.add( new VolumeSurface( m_pkRenderer, m_kVolumeImageA,
-                                                   m_kTranslate,
-                                                   m_fX, m_fY, m_fZ,
-                                                   akSurfaces[i] ) );
+                    m_kTranslate,
+                    m_fX, m_fY, m_fZ,
+                    akSurfaces[i] ) );
         }
         UpdateSceneRotation();
         m_bSurfaceAdded = true;
+    }    
+    
+    public void DisplaySurface(boolean bDisplay)
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i) instanceof VolumeSurface )
+            {
+                m_kDisplayList.get(i).SetDisplay(bDisplay);
+            }
+        }
     }
 
     public void setPolygonMode(String kSurfaceName, WireframeState.FillMode eMode)
@@ -1759,6 +1827,63 @@ implements GLEventListener, KeyListener, MouseMotionListener
                 if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
                 {
                     m_kDisplayList.get(i).SetPolygonMode( true, eMode );
+                }
+            }
+        }
+    }
+    
+    public void setPerPixelLighting(String kSurfaceName, boolean bOn)
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    ((VolumeSurface)m_kDisplayList.get(i)).SetPerPixelLighting( m_pkRenderer, bOn );
+                }
+            }
+        }
+        updateLighting(m_akLights);
+    }
+
+    public void setClipping(String kSurfaceName, boolean bClip)
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    ((VolumeSurface)m_kDisplayList.get(i)).SetClipping( bClip );
+                }
+            }
+        }
+    }
+
+    public void setBackface(String kSurfaceName, boolean bOn)
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    ((VolumeSurface)m_kDisplayList.get(i)).SetBackface( bOn );
+                }
+            }
+        }
+    }
+    
+    public void setPickable(String kSurfaceName, boolean bOn)
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    m_kDisplayList.get(i).SetPickable( bOn );
                 }
             }
         }
@@ -1971,4 +2096,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
     private float[] m_afArbEquation = new float[4];
     private boolean m_bSurfaceAdded = false;
     private VolumeViewer m_kParent = null;
+    
+
+    private int m_iXPick = -1;
+    private int m_iYPick = -1;
+    private boolean m_bPickPending = false;
+    private Picker m_kPicker = new Picker();
 }

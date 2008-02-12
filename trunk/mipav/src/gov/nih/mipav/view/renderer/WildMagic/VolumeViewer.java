@@ -93,6 +93,7 @@ implements MouseListener, ItemListener, ChangeListener {
 
     private JCheckBox m_kDisplayVolumeCheck;
     private JCheckBox m_kDisplaySlicesCheck;
+    private JCheckBox m_kDisplaySurfaceCheck;
 
     /** Button to invoke all the six clipping planes. */
     private JButton clipButton;
@@ -444,6 +445,8 @@ implements MouseListener, ItemListener, ChangeListener {
             sliceGUI.getMainPanel().setVisible(true);
             insertTab("Slices", slicePanel);
             raycastRenderWM.DisplayVolumeSlices( m_kDisplaySlicesCheck.isSelected() );
+        } else if (command.equals("Surface")) {
+            raycastRenderWM.DisplaySurface( m_kDisplaySurfaceCheck.isSelected() );
         } else if (command.equals("SurfaceDialog")) {
             insertTab("Surface", surfacePanel);
             surfaceGUI.getMainPanel().setVisible(true);
@@ -2521,6 +2524,13 @@ implements MouseListener, ItemListener, ChangeListener {
         m_kDisplaySlicesCheck.setActionCommand( "VolumeSlices");
         m_kDisplaySlicesCheck.addActionListener(this);
         viewToolBar.add(m_kDisplaySlicesCheck);
+        
+        m_kDisplaySurfaceCheck = new JCheckBox( "Display Surface" );
+        m_kDisplaySurfaceCheck.setSelected(false);
+        m_kDisplaySurfaceCheck.setEnabled(false);
+        m_kDisplaySurfaceCheck.setActionCommand( "Surface");
+        m_kDisplaySurfaceCheck.addActionListener(this);
+        viewToolBar.add(m_kDisplaySurfaceCheck);
 
         viewToolBar.add(toolbarBuilder.buildButton("Stereo", "Stereo volume renderer", "stereo"));
         viewToolBar.add(ViewToolBarBuilder.makeSeparator());
@@ -2772,6 +2782,9 @@ implements MouseListener, ItemListener, ChangeListener {
             insertTab("Light", lightPanel);
             m_kLightsPanel.enableLight(0, true);
             insertTab("Surface", surfacePanel);
+            m_kDisplaySurfaceCheck.setSelected(true);
+            m_kDisplaySurfaceCheck.setEnabled(true);
+            raycastRenderWM.DisplaySurface(true);
         }
     }    
 
@@ -2797,6 +2810,38 @@ implements MouseListener, ItemListener, ChangeListener {
         if ( raycastRenderWM != null )
         {
             raycastRenderWM.Blend(kSurfaceName, fValue );
+        }
+    }    
+
+    public void setPerPixelLighting(String kSurfaceName, boolean bOn)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.setPerPixelLighting(kSurfaceName, bOn );
+        }
+    }
+    
+    public void setClipping(String kSurfaceName, boolean bClip)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.setClipping(kSurfaceName, bClip );
+        }
+    }    
+    
+    public void setBackface(String kSurfaceName, boolean bOn)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.setBackface(kSurfaceName, bOn );
+        }
+    }    
+    
+    public void setPickable(String kSurfaceName, boolean bOn)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.setPickable(kSurfaceName, bOn );
         }
     }
     

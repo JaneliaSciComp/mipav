@@ -115,6 +115,21 @@ public class VertexBuffer extends Bindable
      * @param i, vertex index.
      * @return position.
      */
+    public Vector3f GetPosition3 (int i)
+    {
+        assert(m_kAttributes.GetPChannels() == 3);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetPOffset();
+        return new Vector3f( m_afChannel[ iIndex + 0 ],
+                             m_afChannel[ iIndex + 1 ],
+                             m_afChannel[ iIndex + 2 ] );
+    }
+    
+    /** Get the position at the given index. Use these accessors for
+     * convenience.  No range checking is performed, so you should be sure
+     * that the attribute exists and that the number of channels is correct.
+     * @param i, vertex index.
+     * @return position.
+     */
     public void GetPosition3 (int i, Vector3f kResult)
     {
         assert(m_kAttributes.GetPChannels() == 3);

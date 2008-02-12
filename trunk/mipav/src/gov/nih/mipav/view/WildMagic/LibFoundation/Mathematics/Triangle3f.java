@@ -26,6 +26,23 @@ public class Triangle3f
     /** construction, uninitialized. */
     public Triangle3f () {}  
 
+    /** construction, uninitialized. */
+    public Triangle3f ( Vector3f kV0, Vector3f kV1, Vector3f kV2)
+    {
+        V[0].SetData(kV0);
+        V[1].SetData(kV1);
+        V[2].SetData(kV2);
+    } 
+    
+
+    /** construction, uninitialized. */
+    public Triangle3f ( Triangle3f kTri)
+    {
+        V[0].SetData(kTri.V[0]);
+        V[1].SetData(kTri.V[1]);
+        V[2].SetData(kTri.V[2]);
+    } 
+
 
     /**
      * delete memory
