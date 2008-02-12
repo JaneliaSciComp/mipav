@@ -75,6 +75,32 @@ public class FileAnalyze extends FileBase {
      * @param  fDir   File directory.
      */
     public FileAnalyze(String fName, String fDir) {
+        String fileDataName;
+        File fileData;
+        int index = fName.length();
+
+        for (int i = fName.length() - 1; i >= 0; i--) {
+
+            if (fName.charAt(i) == '.') {
+                index = i;
+
+                break;
+            }
+        }
+        if (fName.substring(index).equalsIgnoreCase(".HDR")) {
+            fileDataName = fName.substring(0, index) + ".img";
+            fileData = new File(fDir + fileDataName);
+            if (fileData.exists()) {
+                fName = fileDataName;
+            }
+            else {
+                fileDataName = fName.substring(0, index) + ".IMG";
+                fileData = new File(fDir + fileDataName); 
+                if (fileData.exists()) {
+                    fName = fileDataName;
+                }
+            }
+        }
         fileName = fName;
         fileDir = fDir;
     }
