@@ -991,6 +991,40 @@ public class FileUtility {
                         System.gc();
                     }
                 }
+            } else if (suffix.equalsIgnoreCase(".hdr")) {
+                String headerFile = FileInterfile.isInterfile(fileName, fileDir);
+                if (headerFile != null) {
+                    fileType = FileUtility.INTERFILE;
+                }
+                else {
+                    fileType = FileUtility.ANALYZE;
+
+                    try {
+                        File file = new File(fileDir + fileName);
+                        RandomAccessFile raFile = new RandomAccessFile(file, "r");
+
+                        raFile.seek(344L);
+
+                        char[] niftiName = new char[4];
+
+                        for (i = 0; i < 4; i++) {
+                            niftiName[i] = (char) raFile.readUnsignedByte();
+                        }
+
+                        raFile.close();
+
+                        if ((niftiName[0] == 'n') && ((niftiName[1] == 'i') || (niftiName[1] == '+')) &&
+                                (niftiName[2] == '1') && (niftiName[3] == '\0')) {
+                            fileType = FileUtility.NIFTI;
+                        }
+                    } catch (OutOfMemoryError error) {
+                        System.gc();
+                    } catch (FileNotFoundException e) {
+                        System.gc();
+                    } catch (IOException e) {
+                        System.gc();
+                    }    
+                }
             } else if (suffix.equalsIgnoreCase(".ima")) {
 
                 // Both Dicom and Siemens Magnetom Vision file type have the ima suffix
@@ -1211,7 +1245,8 @@ public class FileUtility {
         } else if (suffix.equalsIgnoreCase(".ids")) {
             fileType = FileUtility.ICS;
         } else if (suffix.equalsIgnoreCase(".hdr")) {
-            fileType = FileUtility.INTERFILE;
+            // .hdr found in ANALYZE, INTERFILE, and NIFTI
+            fileType = FileUtility.UNDEFINED;
         } else if (suffix.equalsIgnoreCase(".spm")) {
             fileType = FileUtility.SPM;
         } else if (suffix.equalsIgnoreCase(".fits")) {
