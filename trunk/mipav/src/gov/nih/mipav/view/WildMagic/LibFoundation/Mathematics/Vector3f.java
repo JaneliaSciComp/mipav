@@ -131,6 +131,20 @@ public class Vector3f
     {
         m_afTuple[2] = fZ;
     }
+    
+    /**
+     */
+    public final float GetData ( int i )
+    {
+        return m_afTuple[i];
+    }    
+    
+    /**
+     */
+    public final void SetData ( int i, float fValue )
+    {
+        m_afTuple[i] = fValue;
+    }
 
     
     /** construction
@@ -158,6 +172,19 @@ public class Vector3f
                         m_afTuple[1]+rkV.m_afTuple[1],
                         m_afTuple[2]+rkV.m_afTuple[2]);
     }
+    
+    /** Add the input vector to this, return result, this vector is
+     * unchanged:
+     * @param rkV, input vector to add to this
+     * @return this+rkV
+     */
+    public Vector3f add (Vector3f rkV)
+    {
+        return new Vector3f(
+                        m_afTuple[0]+rkV.m_afTuple[0],
+                        m_afTuple[1]+rkV.m_afTuple[1],
+                        m_afTuple[2]+rkV.m_afTuple[2]);
+    }
 
 
     /** Subtract the input vector from this, return result, this vector is
@@ -168,6 +195,19 @@ public class Vector3f
     public void sub( Vector3f rkV, Vector3f kResult )
     {
         kResult.SetData(
+                        m_afTuple[0]-rkV.m_afTuple[0],
+                        m_afTuple[1]-rkV.m_afTuple[1],
+                        m_afTuple[2]-rkV.m_afTuple[2]);
+    }
+    
+    /** Subtract the input vector from this, return result, this vector is
+     * unchanged:
+     * @param rkV, input vector to subtract from this
+     * @return this-rkV
+     */
+    public Vector3f sub( Vector3f rkV )
+    {
+        return new Vector3f(
                         m_afTuple[0]-rkV.m_afTuple[0],
                         m_afTuple[1]-rkV.m_afTuple[1],
                         m_afTuple[2]-rkV.m_afTuple[2]);
@@ -218,6 +258,18 @@ public class Vector3f
                         fScalar*m_afTuple[1],
                         fScalar*m_afTuple[2]);
     }
+    
+    /** Scale this vector by input, return result, this vector is unchanged:
+     * @param fScalar, scale value
+     * @return this*fScalar
+     */
+    public Vector3f scale( float fScalar )
+    {
+        return new Vector3f(
+                        fScalar*m_afTuple[0],
+                        fScalar*m_afTuple[1],
+                        fScalar*m_afTuple[2]);
+    }
 
     /** Negate this vector, return result, this vector is unchanged:
      * @return -1*this
@@ -254,6 +306,17 @@ public class Vector3f
      * @return true if the input Vector3f is equal to this, false otherwise.
      */
     public boolean isEqual (Vector3f rkV)
+    {
+        return ( (Math.abs(m_afTuple[0] - rkV.m_afTuple[0]) < Mathf.ZERO_TOLERANCE) &&
+                 (Math.abs(m_afTuple[1] - rkV.m_afTuple[1]) < Mathf.ZERO_TOLERANCE) &&
+                 (Math.abs(m_afTuple[2] - rkV.m_afTuple[2]) < Mathf.ZERO_TOLERANCE) );
+    }
+ 
+    /** Return true if the input Vector3f is less than to this.
+     * @param rkV, input vector to compare to this
+     * @return true if the input Vector3f is less than to this, false otherwise.
+     */
+    public boolean isLessThan (Vector3f rkV)
     {
         return ( (Math.abs(m_afTuple[0] - rkV.m_afTuple[0]) < Mathf.ZERO_TOLERANCE) &&
                  (Math.abs(m_afTuple[1] - rkV.m_afTuple[1]) < Mathf.ZERO_TOLERANCE) &&
@@ -425,6 +488,22 @@ public class Vector3f
      * @param rkV, vector to cross with this
      * @return cross-product this^rkV
      */
+    public Vector3f Cross (Vector3f rkV)
+    {
+        return new Vector3f(
+                        m_afTuple[1]*rkV.m_afTuple[2] - m_afTuple[2]*rkV.m_afTuple[1],
+                        m_afTuple[2]*rkV.m_afTuple[0] - m_afTuple[0]*rkV.m_afTuple[2],
+                        m_afTuple[0]*rkV.m_afTuple[1] - m_afTuple[1]*rkV.m_afTuple[0]);
+    }
+
+    /** The cross products are computed using the right-handed rule.  Be aware
+     * that some graphics APIs use a left-handed rule.  If you have to compute
+     * a cross product with these functions and send the result to the API
+     * that expects left-handed, you will need to change sign on the vector
+     * (replace each component value c by -c).
+     * @param rkV, vector to cross with this
+     * @return cross-product this^rkV
+     */
     public void CrossEquals (Vector3f rkV)
     {
         float fX = m_afTuple[1]*rkV.m_afTuple[2] - m_afTuple[2]*rkV.m_afTuple[1];
@@ -525,6 +604,35 @@ public class Vector3f
             rkV.m_afTuple[2] = rkW.m_afTuple[0]*rkU.m_afTuple[1];
         }
     }
+
+
+    public static void ComputeExtremes (int iVQuantity, final Vector3f[] akPoint,
+                                        Vector3f rkMin, Vector3f rkMax)
+    {
+        if ((iVQuantity <= 0) || (akPoint == null))
+        {
+            return;
+        }
+
+        rkMin.SetData(akPoint[0]);
+        rkMax.SetData(akPoint[0]);
+        for (int i = 1; i < iVQuantity; i++)
+        {
+            Vector3f rkPoint = akPoint[i];
+            for (int j = 0; j < 3; j++)
+            {
+                if (rkPoint.m_afTuple[j] < rkMin.m_afTuple[j])
+                {
+                    rkMin.m_afTuple[j] = rkPoint.m_afTuple[j];
+                }
+                else if (rkPoint.m_afTuple[j] > rkMax.m_afTuple[j])
+                {
+                    rkMax.m_afTuple[j] = rkPoint.m_afTuple[j];
+                }
+            }
+        }
+    }
+
 
     /** Vector data: */
     private float[] m_afTuple = new float[]{0,0,0};

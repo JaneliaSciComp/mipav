@@ -424,14 +424,32 @@ public class Camera extends GraphicsObject
         float fViewY = (1.0f-fYWeight)*m_afFrustum[ViewFrustum.VF_UMIN.Value()] +
             fYWeight*m_afFrustum[ViewFrustum.VF_UMAX.Value()];
 
-        rkOrigin = m_kLocation;
+        rkOrigin.SetData(m_kLocation);
+/*
+        rkDirection = m_kDVector.
+             scale(m_afFrustum[ViewFrustum.VF_DMIN.Value()]).
+             add( m_kRVector.scale(fViewX).
+                  add(m_kUVector.scale(fViewY)));
+        */
+        Vector3f kUVectorScale = new Vector3f( m_kUVector );
+        kUVectorScale.scaleEquals(fViewY);        
+        
+        Vector3f kRVectorScale = new Vector3f( m_kRVector );
+        kRVectorScale.scaleEquals(fViewX);   
+        
+        Vector3f kDVectorScale = new Vector3f( m_kDVector );
+        kDVectorScale.scaleEquals(m_afFrustum[ViewFrustum.VF_DMIN.Value()]);
+        
+        rkDirection.SetData(kDVectorScale);
+        rkDirection.addEquals(kRVectorScale);
+        rkDirection.addEquals(kUVectorScale);
 
-//         rkDirection = m_kDVector.
-//             scale(m_afFrustum[ViewFrustum.VF_DMIN.Value()]).
-//             add( m_kRVector.scale(fViewX).
-//                  add(m_kUVector.scale(fViewY)));
-
-
+        //rkOrigin = m_kLocation;
+        //rkDirection = m_afFrustum[VF_DMIN]*m_kDVector + fViewX*m_kRVector +
+        //    fViewY*m_kUVector;
+        rkDirection.Normalize();
+        
+/*
         rkDirection.SetData(m_kUVector);
         rkDirection.scaleEquals(fViewY);
         Vector3f kScale = new Vector3f(m_kRVector);
@@ -442,6 +460,7 @@ public class Camera extends GraphicsObject
         rkDirection.addEquals(kScale);
         rkDirection.Normalize();
         kScale = null;
+        */
         return true;
     }
     

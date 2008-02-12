@@ -126,6 +126,24 @@ public abstract class VolumeObject
     {
         return m_bDisplay;
     }
+    
+    /**
+
+     */
+    public void SetPickable( boolean bPickable )
+    {
+        m_bPickable = bPickable;
+    }
+
+    /**
+     * Get the object display either on/off.
+     * @return when true display this object, when false do not display the
+     * object.
+     */
+    public boolean GetPickable()
+    {
+        return (m_bDisplay&&m_bPickable);
+    }
 
     /**
      * Get the object's parent node in the scene graph.
@@ -150,6 +168,7 @@ public abstract class VolumeObject
         }
     }
 
+
     public void SetPolygonMode( boolean bEnable, WireframeState.FillMode eType )
     {
         if ( m_kWireframe != null )
@@ -163,7 +182,14 @@ public abstract class VolumeObject
     {
         return null;
     }
-    
+
+    public void SetBackface( boolean bOn )
+    {
+        if ( m_kCull != null )
+        {
+            m_kCull.Enabled = bOn;
+        }
+    } 
 
     public void Blend( float fValue ) {}
     
@@ -171,6 +197,8 @@ public abstract class VolumeObject
 
     /** boolean to turn rendering on/off for this object. */
     protected boolean m_bDisplay = false;
+    /** boolean to turn picking on/off for this object. */
+    protected boolean m_bPickable = false;
     /** the scene-graph node containing the rendered object. */
     protected Node m_kScene = null;
     /** a reference to the VolumeImage containing the shared data and textures for display. */

@@ -88,13 +88,58 @@ public class Quaternion
     bool operator>= (const Quaternion& rkQ) const;
 
     // arithmetic operations
-    inline Quaternion operator+ (const Quaternion& rkQ) const;
-    inline Quaternion operator- (const Quaternion& rkQ) const;
-    inline Quaternion operator* (const Quaternion& rkQ) const;
-    inline Quaternion operator* (Real fScalar) const;
-    inline Quaternion operator/ (Real fScalar) const;
-    inline Quaternion operator- () const;
+    */
+    //inline Quaternion operator+ (const Quaternion& rkQ) const;
+    public final Quaternion add( final Quaternion rkQ)
+    {
+        Quaternion kSum = new Quaternion();
+        for (int i = 0; i < 4; i++)
+        {
+            kSum.m_afTuple[i] = m_afTuple[i] + rkQ.m_afTuple[i];
+        }
+        return kSum;
+    }
 
+    //inline Quaternion operator- (const Quaternion& rkQ) const;
+    public final Quaternion sub( final Quaternion rkQ)
+    {
+        Quaternion kDiff = new Quaternion();
+        for (int i = 0; i < 4; i++)
+        {
+            kDiff.m_afTuple[i] = m_afTuple[i] - rkQ.m_afTuple[i];
+        }
+        return kDiff;
+    }
+
+    /*
+    inline Quaternion operator* (const Quaternion& rkQ) const;
+    */
+    //inline Quaternion operator* (Real fScalar) const;
+    public final Quaternion scale( float fScalar )
+    {
+        Quaternion kProd = new Quaternion();
+        for (int i = 0; i < 4; i++)
+        {
+            kProd.m_afTuple[i] = fScalar*m_afTuple[i];
+        }
+        return kProd;
+    }
+
+    /*
+    inline Quaternion operator/ (Real fScalar) const;
+    */
+    //inline Quaternion operator- () const;
+    public final Quaternion neg( )
+    {
+        Quaternion kNeg = new Quaternion();
+        for (int i = 0; i < 4; i++)
+        {
+            kNeg.m_afTuple[i] = -m_afTuple[i];
+        }
+        return kNeg;
+    }
+
+    /*
     // arithmetic updates
     inline Quaternion& operator+= (const Quaternion& rkQ);
     inline Quaternion& operator-= (const Quaternion& rkQ);
@@ -244,7 +289,18 @@ public class Quaternion
     // functions of a quaternion
     inline Real Length () const;  // length of 4-tuple
     inline Real SquaredLength () const;  // squared length of 4-tuple
-    inline Real Dot (const Quaternion& rkQ) const;  // dot product of 4-tuples
+    */
+    public final float Dot (final Quaternion rkQ)  // dot product of 4-tuples
+    {
+        float fDot = 0.0f;
+        for (int i = 0; i < 4; i++)
+        {
+            fDot += m_afTuple[i]*rkQ.m_afTuple[i];
+        }
+        return fDot;
+    }
+
+    /*
     inline Real Normalize ();  // make the 4-tuple unit length
     Quaternion Inverse () const;  // apply to non-zero quaternion
     Quaternion Conjugate () const;

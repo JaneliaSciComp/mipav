@@ -2,6 +2,7 @@ package gov.nih.mipav.view.renderer.WildMagic;
 
 import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Collision.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
@@ -28,7 +29,8 @@ public class VolumeSurface extends VolumeObject
         super(kImageA,kTranslate,fX,fY,fZ);
 
         CreateScene();
-        m_kMesh = kMesh;
+        m_kMesh = new HierarchicalTriMesh(kMesh);
+        m_kMesh.SetName( new String( kMesh.GetName() ) );
         
         int iUnit = 0;
         if ( m_kMesh.VBuffer.GetAttributes().GetCChannels(1) != 0 )
@@ -48,8 +50,9 @@ public class VolumeSurface extends VolumeObject
 
         }
         m_kMesh.Local.SetTranslate(m_kTranslate);
+        m_kMesh.UpdateMS();
 
-        m_kLightShader = new MipavLightingEffect( );
+        m_kLightShader = new SurfaceLightingEffect( );
         m_kMaterial = new MaterialState();
         m_kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
         m_kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
@@ -64,20 +67,9 @@ public class VolumeSurface extends VolumeObject
         m_kScene.AttachChild(m_kMesh);
         m_kScene.UpdateGS();
         m_kScene.UpdateRS();
-        m_bDisplay = true;
-    }
-
-    public void AddMesh( TriMesh kMesh )
-    {
-        if ( m_kMesh != null )
-        {
-            m_kScene.DetachChild(m_kMesh);
-            m_kMesh = null;
-        }
-        m_kMesh = kMesh;
-        m_kScene.AttachChild(m_kMesh);
-        m_kScene.UpdateGS();
-        m_kScene.UpdateRS();
+        
+        BoxBVTree kBoxBV = new BoxBVTree(m_kMesh, 4000, true);
+        m_kMesh.SetBoundingVolumeTree(kBoxBV);
     }
 
     /**
@@ -138,6 +130,72 @@ public class VolumeSurface extends VolumeObject
         m_kLightShader.Blend(fValue);
     }
     
+        /**
+     * Sets the light for the EllipsoidsShader.
+     * @param kLightType, the name of the light to set (Light0, Light1, etc.)
+     * @param afType, the type of light (Ambient = 0, Directional = 1, Point = 2, Spot = 3).
+     */
+    public void SetLight( String kLightType, float[] afType )
+    {
+        if ( m_kLightShader != null )
+        {
+            m_kLightShader.SetLight(kLightType, afType);
+        }
+    }
+
+    public void SetPerPixelLighting( Renderer kRenderer, boolean bOn )
+    {
+        if ( m_kLightShader != null )
+        {
+            m_kLightShader.SetPerPixelLighting(kRenderer, bOn);
+        }
+    }
+
+    public void SetClipping( boolean bClip )
+    {
+        m_kLightShader.SetClipping(bClip);
+    } 
+    
+    /** Initializes axis-aligned clipping for the VolumeShaderEffect.
+     * @param afClip, the initial clipping parameters for axis-aligned clipping.
+     */
+    public void InitClip( float[] afClip )
+    {
+        m_kLightShader.InitClip(afClip);
+    }
+
+    /** Sets axis-aligned clipping for the VolumeShaderEffect.
+     * @param afClip, the clipping parameters for axis-aligned clipping.
+     */
+    public void SetClip( int iWhich, float[] data)
+    {
+        m_kLightShader.SetClip(iWhich, data);
+    }
+
+    /** Sets eye clipping for the VolumeShaderEffect.
+     * @param afEquation, the eye clipping equation.
+     */
+    public void SetClipEye( float[] afEquation )
+    {
+        m_kLightShader.SetClipEye(afEquation);
+    }
+
+    /** Sets inverse-eye clipping for the VolumeShaderEffect.
+     * @param afEquation, the inverse-eye clipping equation.
+     */
+    public void SetClipEyeInv( float[] afEquation )
+    {
+        m_kLightShader.SetClipEyeInv(afEquation);
+    }
+
+    /** Sets arbitrary clipping for the VolumeShaderEffect.
+     * @param afEquation, the arbitrary-clip plane equation.
+     */
+    public void SetClipArb( float[] afEquation )
+    {
+        m_kLightShader.SetClipArb(afEquation);
+    }
+
     public MaterialState GetMaterial()
     {
         return m_kMaterial;
@@ -382,7 +440,6 @@ public class VolumeSurface extends VolumeObject
         m_kScene = new Node();
 
         m_kCull = new CullState();
-        m_kCull.Enabled = false;
         m_kScene.AttachGlobalState(m_kCull);
 
         m_kAlpha = new AlphaState();
@@ -406,9 +463,9 @@ public class VolumeSurface extends VolumeObject
 
     /** ShaderEffect for the plane bounding-boxes. */
     private VertexColor3Effect m_kVertexColor3Shader;
-    private TriMesh m_kMesh = null;
+    private HierarchicalTriMesh m_kMesh = null;
     private MaterialState m_kMaterial = null;
-    
+    private SurfaceLightingEffect m_kLightShader;
 
 
 
