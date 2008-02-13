@@ -696,10 +696,10 @@ public class FilePARREC extends FileBase {
         updateUnitsOfMeasure(fileInfo, image);
 //        updateStartLocations(image.getFileInfo());
 
-
         try { // Construct a FileRaw to actually read the image.
 
             FileRaw rawFile;
+            
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
             linkProgress(rawFile);
 
@@ -1027,6 +1027,8 @@ public class FilePARREC extends FileBase {
 //... % Variables for December 29, 2006 (release 2.1)
         map.put(".    Max. number of diffusion values","special_max_num_diffusion_values");
         map.put(".    Max. number of gradient orients","special_max_num_gradient_orients");
+//...%Variables for Feb 12, 2008
+        map.put(".    Number of label types   <0=no ASL>", "special_num_of_label_types");
         return map;
     }
 
@@ -1073,6 +1075,8 @@ public class FilePARREC extends FileBase {
         map.put("#  contrast type                            (string)",new Integer(1));
         map.put("#  diffusion anisotropy type                (string)",new Integer(1));
         map.put("#  diffusion (ap, fh, rl)                   (3*float)",new Integer(3));
+//...%new columns for Feb 12, 2008
+        map.put("#  label type (ASL)            (imagekey!)  (integer)", new Integer(1));
         return map;
     };
 
