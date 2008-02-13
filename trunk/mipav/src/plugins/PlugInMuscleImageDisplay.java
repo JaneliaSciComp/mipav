@@ -1512,7 +1512,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                     gbc.gridx = 0;
                 }
                 gbc.weightx = 0;
-                mirrorPanel.add(mirrorCheckArr[i], gbc);
+                mirrorPanel.add(new ColorCheckPanel(mirrorCheckArr[i], Color.BLACK), gbc);
                 gbc.gridx++;
                 gbc.weightx = 1;
                 mirrorPanel.add(mirrorButtonArr[i], gbc);
@@ -1700,7 +1700,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 
 		private boolean lutOn = false;
 		
-		private TreeMap<String,JCheckBox> checkBoxLocationTree;
+		private TreeMap<String,ColorCheckPanel> checkBoxLocationTree;
 		
 		//Keeping as treeMap since expected size is so small, if number of muscles were greater than say 128, might use HashMap
 		private Map <String,Double>totalAreaCalcTree, totalAreaCountTree, partialAreaTree, fatAreaTree, leanAreaTree;
@@ -1946,7 +1946,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 mirrorCheckArr[index][i].setSelected(false);
                 mirrorCheckArr[index][i].setHorizontalAlignment(SwingConstants.RIGHT);
                 
-                checkBoxLocationTree.put(mirrorString[i], mirrorCheckArr[index][i]);
+                ColorCheckPanel ccP = new ColorCheckPanel(mirrorCheckArr[index][i], Color.BLACK);
+                
+                checkBoxLocationTree.put(mirrorString[i], ccP);
                 
                 mirrorButtonArr[index][i] = new JButton(mirrorString[i]);
                 mirrorButtonArr[index][i].setEnabled(voiExists(mirrorString[i]));
@@ -1956,7 +1958,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 //mirrorGroup.add(mirrorButtonArr[i]);
                 
                 //for(int j=0; j<existingVois.size(); j++) {
-                //    if(existingVois.get(j).getName().equals(mirrorButtonArr[i].getText())) {
+                //    if(existingVois.get(j).getName().equals(mirrorButtonArr[i].getText())) { 
                 //        mirrorCheckArr[i].setSelected(true);
                 //    }
                // }
@@ -1966,7 +1968,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                     gbc.gridx = 0;
                 }
                 gbc.weightx = 0;
-                subPanel.add(mirrorCheckArr[index][i], gbc);
+                subPanel.add(ccP, gbc);
                 gbc.gridx++;
                 gbc.weightx = 1;
                 subPanel.add(mirrorButtonArr[index][i], gbc);
@@ -2102,20 +2104,24 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	            	for(int i=0; i<vec.size(); i++) 
 	            		if(vec.get(i).getName().equals(text)) {
 	            			vec.remove(i);
-	            			checkBoxLocationTree.get(text).setSelected(false);
+	            			checkBoxLocationTree.get(text).getCheckBox().setSelected(false);
 	            			exists = true;
+	            			checkBoxLocationTree.get(text).setColor(Color.BLACK);
+	            			checkBoxLocationTree.get(text).repaint();
 	            		}
 	            	if(!exists) {
 	            		VOI rec = getSingleVOI(text);
 	            		Color c = null;
-	                	if((c = hasColor(rec)) == null)
-	                		rec.setColor(colorPick[colorChoice++ % colorPick.length]);
-	                	else
-	                		rec.setColor(c);
+	                	if((c = hasColor(rec)) == null) {
+	                		c = colorPick[colorChoice++ % colorPick.length];
+	                	}
+	                	rec.setColor(c);
+	                	
 	            		rec.setThickness(2);
 	            		getActiveImage().registerVOI(rec);
-	            		
-	            		checkBoxLocationTree.get(text).setSelected(true);
+	            		checkBoxLocationTree.get(text).setColor(c);
+	            		checkBoxLocationTree.get(text).getCheckBox().setSelected(true);
+	            		checkBoxLocationTree.get(text).repaint();
 	            	}
 	            		
 	            	updateImages(true);
@@ -2892,4 +2898,31 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			e.printStackTrace();
 		}
 	}
+	
+	private class ColorCheckPanel extends JPanel {
+		
+		private ColorIcon cIcon;
+		private JCheckBox checkBox;
+		
+		public ColorCheckPanel(JCheckBox checkBox, Color c) {
+			super();
+			this.checkBox = checkBox;
+			this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+			add(checkBox);
+			JCheckBox secondBox = new JCheckBox();
+			cIcon = new ColorIcon(c, 15, 15);
+			secondBox.setIcon(cIcon);
+			add(secondBox);
+		}
+		
+		public JCheckBox getCheckBox() {
+			return checkBox;
+		}
+		
+		public void setColor(Color c) {
+			cIcon.setColor(c);
+		}
+		
+	}
+	
 }
