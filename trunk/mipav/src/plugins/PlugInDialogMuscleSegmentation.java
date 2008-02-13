@@ -256,6 +256,13 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         }
         return true;
     }
+    /**
+     * Detects what type of image is being dealt with.  Basically looks for two thighs; if
+     * not found, look for abdomen; if not found, return ImageType.UNKNOWN_TYPE
+     * 
+     * @param im
+     * @return
+     */
     
     private PlugInMuscleImageDisplay.ImageType detectImageType(ModelImage im) {
     	int xBound = im.getFileInfo()[0].getExtents()[0];
