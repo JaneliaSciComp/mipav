@@ -15,7 +15,7 @@ import javax.swing.*;
  * @see      ColorRenderer
  */
 
-class ColorIcon implements Icon {
+public class ColorIcon implements Icon {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
