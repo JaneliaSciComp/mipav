@@ -2945,6 +2945,7 @@ public class FileIO {
 
         try {
             imageFile = new FileAfni(fileName, fileDir, loadB, doRead);
+            createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
             // LUT      = imageFile.getModelLUT();
         } catch (IOException error) {
@@ -7532,6 +7533,7 @@ public class FileIO {
             boolean doRead = false;
 
             afniFile = new FileAfni(options.getFileName(), options.getFileDirectory(), loadB, doRead);
+            createProgressBar(afniFile, options.getFileName(), FILE_WRITE);
             afniFile.writeImage(image, options);
         } catch (IOException error) {
 
