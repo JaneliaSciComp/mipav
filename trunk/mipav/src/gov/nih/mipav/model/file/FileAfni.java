@@ -2235,6 +2235,7 @@ public class FileAfni extends FileBase {
         int t, z;
         int sliceSize;
         byte[] byteBuffer;
+        byte[] byteBuffer2;
         short[] shortBuffer;
         int[] intBuffer;
         float[] floatBuffer;
@@ -3877,6 +3878,21 @@ public class FileAfni extends FileBase {
                 break;
 
             case ModelStorageBase.ARGB:
+                byteBuffer = new byte[4 * sliceSize];
+                byteBuffer2 = new byte[3 * sliceSize];
+                for (t = tBegin; t <= tEnd; t++) {
+
+                    for (z = zBegin; z <= zEnd; z++) {
+                        fireProgressStateChanged((100 * count++) / numberSlices);
+                        image.exportData(4*((t * zDim) + z) * sliceSize, 4 * sliceSize, byteBuffer);
+                        for (j = 0; j < sliceSize; j++) {
+                            byteBuffer2[3*j] = byteBuffer[4*j + 1];
+                            byteBuffer2[3*j + 1] = byteBuffer[4*j + 2];
+                            byteBuffer2[3*j + 2] = byteBuffer[4*j + 3];
+                        }
+                        raFile.write(byteBuffer2);
+                    }
+                }
                 break;
         } // switch(mage.getFileInfo()[0].getDataType())
 
@@ -4422,6 +4438,24 @@ public class FileAfni extends FileBase {
                 break;
 
             case ModelStorageBase.ARGB:
+                byteBuffer = new byte[3*buffer.length/4];
+                nBytes = 3 * numRead;
+                raFile.read(byteBuffer, 0, nBytes);
+                progress = slice * buffer.length;
+                progressLength = buffer.length * numberSlices;
+                mod = progressLength / 100;
+
+                for (j = 0; j < nBytes; j+= 3, i+= 4) {
+
+                    if (((i + progress) % mod) == 0) {
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                    }
+
+                    buffer[i] = 0;
+                    buffer[i+1] = byteBuffer[j] & 0xff;
+                    buffer[i+2] = byteBuffer[j+1] & 0xff;
+                    buffer[i+3] = byteBuffer[j+2] & 0xff;
+                }
                 break;
         } // switch(brikDataType)
 
