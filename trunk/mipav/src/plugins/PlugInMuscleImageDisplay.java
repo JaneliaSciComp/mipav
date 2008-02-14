@@ -836,11 +836,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     		for(int j=0; j<tabs.length; j++) {
     			if(tabs[j] instanceof MuscleDialogPrompt) {
     				if(((MuscleDialogPrompt)tabs[j]).hasButton(vec.get(i).getName())) {
-    					((MuscleDialogPrompt)tabs[j]).setButton(vec.get(i).getName());
+    					((MuscleDialogPrompt)tabs[j]).setButton(vec.get(i).getName(), vec.get(i).getColor());
     				}	
     			}
     		}
     	}
+    	this.repaint();
 
         updateImages(true);
     }
@@ -1338,8 +1339,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         /** Labels for instructions. */
         private JLabel[] instructionLabel;
         
+        private ColorCheckPanel[] mirrorCheckArr;
+        
         /** Check boxes for mirror muscle buttons. */
-        private JCheckBox[] mirrorCheckArr;
+       // private JCheckBox[] mirrorCheckArr;
         
         /** Check boxes for non-mirror object buttons. */
         private JCheckBox[] noMirrorCheckArr;
@@ -1387,7 +1390,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             this.symmetry = symmetry;
             
             this.index = index;
-            
             initDialog();    
         }
         
@@ -1402,10 +1404,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             return false;
         }
         
-        public void setButton(String buttonText) {
+        public void setButton(String buttonText, Color voiColor) {
             for(int i=0; i<mirrorButtonArr.length; i++) {
                 if(mirrorButtonArr[i].getText().equals(buttonText)) {
-                    mirrorCheckArr[i].setSelected(true);
+                    mirrorCheckArr[i].getCheckBox().setSelected(true);
+                    mirrorCheckArr[i].setColor(voiColor);
+                 //   mirrorCheckArr[i].repaint();
+                    
                 }
             }
             for(int i=0; i<noMirrorButtonArr.length; i++) {
@@ -1455,7 +1460,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             VOIVector existingVois = muscleFrame.getImageA().getVOIs();
             zeroStatus = new TreeMap();
              
-            mirrorCheckArr = new JCheckBox[mirrorArr.length * 2];
+            mirrorCheckArr = new ColorCheckPanel[mirrorArr.length * 2];
             mirrorButtonArr = new JButton[mirrorArr.length * 2];
             ButtonGroup mirrorGroup = new ButtonGroup();
             JPanel mirrorPanel = new JPanel(new GridBagLayout());
@@ -1489,9 +1494,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                     symmetry1 = "Top ";
                     symmetry2 = "Bottom ";
                 }
-                mirrorCheckArr[i] = new JCheckBox();
-                mirrorCheckArr[i].setEnabled(false);
-                mirrorCheckArr[i].setHorizontalAlignment(SwingConstants.RIGHT);
+                JCheckBox currentBox = new JCheckBox();
+                mirrorCheckArr[i] = new ColorCheckPanel(currentBox, Color.black);
+                currentBox.setSelected(false);
+                currentBox.setEnabled(false);
+                currentBox.setHorizontalAlignment(SwingConstants.RIGHT);
                 
                 
                 mirrorButtonArr[i] = (i % 2) == 0 ? new JButton(symmetry1+mirrorArr[i/2]) : 
@@ -1500,19 +1507,24 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 mirrorButtonArr[i].setActionCommand(CHECK_VOI);
                 mirrorButtonArr[i].addActionListener(muscleFrame);
                 mirrorGroup.add(mirrorButtonArr[i]);
-                
+               
+                Color voiColor = Color.BLACK;
+               // System.err.println("yo");
                 for(int j=0; j<existingVois.size(); j++) {
                     if(existingVois.get(j).getName().equals(mirrorButtonArr[i].getText())) {
-                        mirrorCheckArr[i].setSelected(true);
+                        mirrorCheckArr[i].getCheckBox().setSelected(true);
+                        voiColor = existingVois.get(j).getColor();
                     }
                 }
                 
+                
+               
                 if(i != 0 && i % 2 == 0) {
                     gbc.gridy++;
                     gbc.gridx = 0;
                 }
                 gbc.weightx = 0;
-                mirrorPanel.add(new ColorCheckPanel(mirrorCheckArr[i], Color.BLACK), gbc);
+                mirrorPanel.add(mirrorCheckArr[i], gbc);
                 gbc.gridx++;
                 gbc.weightx = 1;
                 mirrorPanel.add(mirrorButtonArr[i], gbc);
@@ -2214,7 +2226,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				loadVOIs(allStrings, true);
 			
 				//loadLUT();
-				getActiveImage().getParentFrame().updateImages(true);
 				updateImages(true);
 				
 				
@@ -2225,8 +2236,22 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				java.awt.Image qaImage = captureImage();
 				removeLUT();
 				closePDF(edgeImage, qaImage);
-				getActiveImage().getParentFrame().updateImages(true);
+				
+				
+				Set<String> keys = checkBoxLocationTree.keySet();
+				Iterator<String> iter = keys.iterator();
+				String voiName = null;
+				while(iter.hasNext()) {
+					voiName = iter.next();
+					checkBoxLocationTree.get(voiName).getCheckBox().setSelected(false);
+        			checkBoxLocationTree.get(voiName).setColor(Color.BLACK);
+        			checkBoxLocationTree.get(voiName).repaint();
+				}
+				
+				
 				updateImages(true);
+				
+				
 				requestFocus();
 			}	
 		}
