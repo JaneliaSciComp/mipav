@@ -545,8 +545,8 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
             iTractCount++;
 
         }
-        boolean bClosed = true;
-        boolean bContiguous = false;
+        boolean bClosed = false;
+        boolean bContiguous = true;
         // addPolyline( new Polyline(pkVBuffer,bClosed,bContiguous) );
      // apply B-spline filter to smooth the track
         addPolyline(new Polyline(smoothTrack(pkVBuffer, kTract,iVQuantity, iDimX, iDimY, iDimZ), bClosed, bContiguous ));
@@ -578,7 +578,7 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 		attr.SetPChannels(3);
 		attr.SetCChannels(0, 3);
 		attr.SetCChannels(1, 3);
-		VertexBuffer bsplineVBuffer = new VertexBuffer(attr, iVQuantity * curveSubD);		
+		VertexBuffer bsplineVBuffer = new VertexBuffer(attr, (iVQuantity -3) * curveSubD);		
 
 		int index = 0;
 		
