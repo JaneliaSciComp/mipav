@@ -6878,6 +6878,7 @@ public class FileIO {
 
         try {
             imageFile = new FileTiff(fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(false, one);
             LUT = imageFile.getModelLUT();
 
