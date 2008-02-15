@@ -808,6 +808,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             		if(v != null) {
             			v.setThickness(2);
             			Color c = null;
+            			System.out.println("A new one: "+v.getColor());
                     	if((c = hasColor(v)) == null)
                             v.setColor(colorPick[colorChoice++ % colorPick.length]);
                     	else
@@ -1340,7 +1341,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         private JLabel[] instructionLabel;
         
         private ColorCheckPanel[] mirrorCheckArr;
-        
+
         /** Check boxes for mirror muscle buttons. */
        // private JCheckBox[] mirrorCheckArr;
         
@@ -2223,7 +2224,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				for(int i=0; i<totalList.size(); i++) 
 	    			allStrings[i] = totalList.get(i) + ".xml";
 				 
-				loadVOIs(allStrings, true);
+				loadVOIs(allStrings, .4);
 			
 				//loadLUT();
 				updateImages(true);
@@ -2231,7 +2232,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				
 				java.awt.Image edgeImage = captureImage();
 				
-				loadVOIs(new String[] {}, false);
+				loadVOIs(new String[] {}, 0);
 				loadLUT();
 				java.awt.Image qaImage = captureImage();
 				removeLUT();
@@ -2286,7 +2287,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    	
 	    	public void run() {
 	    		long time = System.currentTimeMillis();
-	    		loadVOIs(totalList, false);
+	    		loadVOIs(totalList, 0);
 	    		VOIVector vec = (VOIVector)getActiveImage().getVOIs().clone();
 	    		getActiveImage().unregisterAllVOIs();
 	    		for(int i=0; i<vec.size(); i++) {
@@ -2425,7 +2426,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    }
 	}
     
-    public void loadVOIs(String[] voiName, boolean fillVOIs) {
+    /**
+     * Loads VOIs of all voiNames, 
+     * @param voiName
+     * @param fillVOIs
+     */
+    public void loadVOIs(String[] voiName, double fillVOIs) {
         getActiveImage().unregisterAllVOIs();
         int colorChoice = new Random().nextInt(colorPick.length);
         String fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
@@ -2447,6 +2453,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                     if(voiVec.length > 1) {
                         MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+fileName);
                     } else {
+                    	System.out.println("A new one: "+voiVec[0].getColor());
                     	Color c = hasColor(voiVec[0]);
                         if(c != null) {
                             voiVec[0].setColor(c);
@@ -2456,9 +2463,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                             colorChoice++;
                         }                      
                         voiVec[0].setThickness(2);
-                        if(fillVOIs && getZeroStatus(voiVec[0].getName())) {
+                        if(fillVOIs != 0 && getZeroStatus(voiVec[0].getName())) {
                         	voiVec[0].setDisplayMode(VOI.SOLID);
-                        	voiVec[0].setOpacity((float)0.7);
+                        	voiVec[0].setOpacity((float)fillVOIs);
                         }
                         getActiveImage().registerVOI(voiVec[0]);
                     }
