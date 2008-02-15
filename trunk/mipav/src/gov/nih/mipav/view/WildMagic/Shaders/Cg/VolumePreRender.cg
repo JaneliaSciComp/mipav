@@ -1,0 +1,15 @@
+//----------------------------------------------------------------------------
+void v_VolumePreRender
+(
+    in float4        kModelPosition  : POSITION,
+    in float3        kInBaseTCoord : TEXCOORD0,
+    out float4       kClipPosition : POSITION,
+    out float3       kVertexColor : COLOR,
+    uniform float4x4 WVPMatrix)
+{
+    // Transform the position from model space to clip space.
+    kClipPosition = mul(kModelPosition,WVPMatrix);
+
+    // Pass through the vertex color.
+    kVertexColor = kInBaseTCoord;
+}

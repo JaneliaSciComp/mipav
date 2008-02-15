@@ -1058,10 +1058,11 @@ public class FileSurface_WM {
             Attributes kAttr = new Attributes();
             kAttr.SetPChannels(3);
             kAttr.SetNChannels(3);
-            kAttr.SetCChannels(0,3);
+            kAttr.SetTChannels(0,3);
+            kAttr.SetCChannels(0,4);
             if ( perVertexColor != null )
             {
-                kAttr.SetCChannels(1,3);
+                kAttr.SetCChannels(1,4);
             }
 
             VertexBuffer pkVB = new VertexBuffer(kAttr,iVertexCount);
@@ -1071,7 +1072,7 @@ public class FileSurface_WM {
                 pkVB.SetNormal3(i, akNormal[i]);
                 if ( perVertexColor != null )
                 {
-                    pkVB.SetColor3(0, i, perVertexColor[i].R(), perVertexColor[i].G(), perVertexColor[i].B());
+                    pkVB.SetColor4(0, i, perVertexColor[i].R(), perVertexColor[i].G(), perVertexColor[i].B(), perVertexColor[i].A());
                 }
             }
             //StandardMesh.ReverseTriangleOrder(iIndexCount/3, aiConnect);

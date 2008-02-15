@@ -90,6 +90,7 @@ public class JPanelSurface_WM
     private JButton levelSButton, levelVButton, levelWButton, levelXMLButton;
 
     // Paint tool-bar (containted in the SurfacePaint class)
+    private SurfacePaint_WM m_kSurfacePaint = null;
 
     /** The material options button, which launches the material editor window. */
     private JButton m_kAdvancedMaterialOptionsButton;
@@ -192,6 +193,7 @@ public class JPanelSurface_WM
         serif12 = MipavUtil.font12;
         serif12B = MipavUtil.font12B;
         surfaceVector = new Vector();
+        m_kSurfacePaint = new SurfacePaint_WM(this, m_kVolumeViewer);
         init();
     }
 
@@ -389,7 +391,7 @@ public class JPanelSurface_WM
         JPanel toolBarPanel = new JPanel();
         toolBarPanel.setLayout(new BorderLayout());
         toolBarPanel.add(toolBar, BorderLayout.WEST);
-        //toolBarPanel.add(mSurfacePaint.getToolBar(), BorderLayout.SOUTH);
+        toolBarPanel.add(m_kSurfacePaint.getToolBar(), BorderLayout.SOUTH);
 
         mainPanel.add(toolBarPanel, BorderLayout.NORTH);
     }
@@ -736,7 +738,7 @@ public class JPanelSurface_WM
         cbSurfacePanel.add(surfaceClipCB);
         cbSurfacePanel.add(surfaceBackFaceCB);
         cbSurfacePanel.add(surfaceTransparencyCB);
-        cbSurfacePanel.add(m_kPerPixelLightingCB);
+        //cbSurfacePanel.add(m_kPerPixelLightingCB);
 
         JPanel cbPanel = new JPanel();
         cbPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
@@ -893,7 +895,7 @@ public class JPanelSurface_WM
         surfaceTransparencyCB.setEnabled(flag);
         m_kPerPixelLightingCB.setEnabled(flag);
 
-//         mSurfacePaint.setEnabled(flag);
+        m_kSurfacePaint.setEnabled(flag);
 
 //         if (((SurfaceRender) parentScene).getSurfaceTexture() != null) {
 //             ((SurfaceRender) parentScene).getSurfaceTexture().setEnabled(flag);
@@ -1105,6 +1107,34 @@ public class JPanelSurface_WM
                                 Color.black);
     }
     
+    /**
+     * Enables/Disables the SurfacePaint per-vertex functions.
+     *
+     * @param  bEnable  when true the SurfacePaint per-vertex functions (PaintBrush, Dropper, Eraser, BrushSize) are
+     *                  enabled, when false they are disabled.
+     */
+    public void enableSurfacePaint(boolean bEnable) {
+        m_kSurfacePaint.enableSurfacePaint(bEnable);
+    }
+
+    /**
+     * Enables/Disables the SurfacePaint Paint Can function.
+     *
+     * @param  bEnable  when true the Paint Can function is enabled, when false it is disabled.
+     */
+    public void enableSurfacePaintCan(boolean bEnable) {
+        m_kSurfacePaint.enableSurfacePaintCan(bEnable);
+    }
+
+    /**
+     * Check if the surface pickable checkbox be selected or not.
+     *
+     * @return  isSelected Surface pickable check box selected or not.
+     */
+    public boolean isSurfacePickableSelected() {
+        return surfacePickableCB.isSelected();
+    }
+
     /**
      * Cancel the color dialog, change nothing.
      */

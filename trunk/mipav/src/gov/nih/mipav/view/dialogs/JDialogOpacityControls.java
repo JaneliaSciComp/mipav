@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.surfaceview.*;
+import gov.nih.mipav.view.renderer.WildMagic.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -40,6 +41,8 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
 
     /** SurfacePaint reference */
     private SurfacePaint surfacePaint = null;
+    /** SurfacePaint reference */
+    private SurfacePaint_WM surfacePaint_WM = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -102,6 +105,18 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
         this.surfacePaint = surfacePaint;
         init(initVal);
     }
+    
+    /**
+     * Creates new dialog with a slider and close button.
+     *
+     * @param  theParentFrame  The parent frame
+     * @param  initVal         The initial value of the opacity.
+     */
+    public JDialogOpacityControls(Frame theParentFrame, SurfacePaint_WM surfacePaint, float initVal) {
+        super(theParentFrame, false);
+        this.surfacePaint_WM = surfacePaint;
+        init(initVal);
+    }
 
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -123,6 +138,10 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
             if ( surfacePaint != null )
             {
                 surfacePaint.setOpacity( opacity );
+            }
+            if ( surfacePaint_WM != null )
+            {
+                surfacePaint_WM.setOpacity( opacity );
             }
 
             dispose();
@@ -249,6 +268,10 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
                 if ( surfacePaint != null )
                 {
                     surfacePaint.setOpacity( opacity );
+                }
+                if ( surfacePaint_WM != null )
+                {
+                    surfacePaint_WM.setOpacity( opacity );
                 }
             }
         }

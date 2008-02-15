@@ -412,27 +412,30 @@ bool myClip ( float3 myVec,
 void v_MipavLightingFragment(
                      in float4        kModelPosition  : POSITION,
                      in float4        kModelNormal : NORMAL,
-                     in float3        kModelColor : COLOR,
+                     in float4        kModelColor0 : COLOR0,
+                     in float3        kInBaseTCoord : TEXCOORD0,
 
                      out float4       kClipPosition : POSITION,
                      out float3       kInPos,
-                     out float3       kInColorPos,
+                     out float3       kInVolumeClipPos,
                      out float3       kInNormal,
+                     out float4       kInColor0,
                      uniform float4x4 WVPMatrix)
 {
     // Transform the position from model space to clip space.
     kClipPosition = mul(kModelPosition,WVPMatrix);
     kInPos = mul(kModelPosition,WVPMatrix);
     kInNormal = kModelNormal;
-    kInColorPos = kModelColor;
+    kInVolumeClipPos = kInBaseTCoord;
+    kInColor0 = kModelColor0;
 }
 
 void p_MipavLightingFragment(
                      out float4       kVertexColor : COLOR,
-
                      in float3        kInPos,
-                     in float3        kInColorPos,
+                     in float3        kInVolumeClipPos,
                      in float3        kInNormal,
+                     in float4       kInColor0,
                      uniform float Blend,
                      uniform float ClipEnabled,
                      uniform float DoClip,
@@ -492,7 +495,7 @@ void p_MipavLightingFragment(
     if ( ClipEnabled == 1.0 )
     {
         // axis-aligned clipping:
-        if ( (DoClip != 0) && myClip( kInColorPos, clipX, clipXInv, clipY, clipYInv, clipZ, clipZInv ) )
+        if ( (DoClip != 0) && myClip( kInVolumeClipPos, clipX, clipXInv, clipY, clipYInv, clipZ, clipZInv ) )
         {
             bClipped = true;
         }
@@ -503,12 +506,12 @@ void p_MipavLightingFragment(
             {
                 // eye clipping and arbitrary clipping:
                 float4 aPosition = float4(0,0,0,0);
-                aPosition.xyz = kInColorPos.xyz - (.5,.5,.5);
+                aPosition.xyz = kInVolumeClipPos.xyz - (.5,.5,.5);
                 aPosition = mul( aPosition, WVPMatrix );
                 aPosition.xyz = aPosition.xyz + (.5,.5,.5);
                 float fDot = dot( aPosition.xyz, clipEye.xyz );
                 float fDotInv = dot( aPosition.xyz, clipEyeInv.xyz );
-                float fDotArb = dot( kInColorPos.xyz, clipArb.xyz );
+                float fDotArb = dot( kInVolumeClipPos.xyz, clipArb.xyz );
                 if ( (fDot < clipEye.w) || (fDotInv > clipEyeInv.w) || (fDotArb > clipArb.w) )
                 {
                     bClipped = true;
@@ -517,15 +520,13 @@ void p_MipavLightingFragment(
         }
         if ( bClipped == true )
         {
-//             kVertexColor.r = 0;
-//             kVertexColor.g = 0;
-//             kVertexColor.b = 0;
-//             kVertexColor.a = 0;
             discard;
         }
     }
     if ( bClipped == false )
     {
+        MaterialDiffuse = kInColor0;
+
         // First light is static light:
         float4 color0 = (0,0,0,0);
         float4 color1 = (0,0,0,0);
@@ -560,6 +561,10 @@ void p_MipavLightingFragment(
                       Light3Type, color3 );
         
         kVertexColor = color0 + color1 + color2 + color3;
-        kVertexColor.a = Blend;
+        kVertexColor.a = Blend * kInColor0.a;
+        if ( kVertexColor.a == 0 )
+        {
+            discard;
+        }
     }
 }

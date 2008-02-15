@@ -443,7 +443,6 @@ implements MouseListener, ItemListener, ChangeListener {
             raycastRenderWM.DisplayVolumeSlices( m_kDisplaySlicesCheck.isSelected() );
         } else if (command.equals("VolumeSlices")) {
             sliceGUI.getMainPanel().setVisible(true);
-            insertTab("Slices", slicePanel);
             raycastRenderWM.DisplayVolumeSlices( m_kDisplaySlicesCheck.isSelected() );
         } else if (command.equals("Surface")) {
             raycastRenderWM.DisplaySurface( m_kDisplaySurfaceCheck.isSelected() );
@@ -2904,5 +2903,20 @@ implements MouseListener, ItemListener, ChangeListener {
     {
         return m_kAnimator;
     }
+    
+    public void enablePaint( ColorRGBA kPaintColor, int iBrushSize, boolean bEnabled, boolean bPaint, boolean bErase )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.enablePaint(kPaintColor, iBrushSize, bEnabled, bPaint, bErase);
+        }
+    }
   
+    public void eraseAllPaint( )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.eraseAllPaint();
+        }
+    }
 }
