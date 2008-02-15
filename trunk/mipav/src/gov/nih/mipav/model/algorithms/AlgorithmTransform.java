@@ -4802,7 +4802,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     }
 
     /**
-     * Transforms and resamples a 2D volume using bilinear interpolation.
+     * Transforms and resamples a 2D VOI using nearest neighbor interpolation.
      *
      * <ol>
      *   <li>Export VOIs as a mask image</li>
@@ -4911,7 +4911,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     }
     
     /**
-     * Transforms and resamples a 3D volume using bilinear interpolation.
+     * Transforms and resamples a 3D VOI using nearest neighbor interpolation.
      *
      * <ol>
      *   <li>Export VOIs as a mask image</li>
@@ -5022,7 +5022,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     }
 
     /**
-     * Transforms and resamples a 3D volume using trilinear interpolation.
+     * Transforms and resamples a 3D VOI using nearest neighbor interpolation.
      *
      * <ol>
      *   <li>Export VOIs as a mask image</li>
