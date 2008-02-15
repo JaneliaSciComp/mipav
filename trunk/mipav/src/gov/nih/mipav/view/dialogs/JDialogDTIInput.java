@@ -1714,7 +1714,7 @@ public class JDialogDTIInput extends JDialogBase
 
         }
         boolean bClosed = false;
-        boolean bContiguous = false;
+        boolean bContiguous = true;
         // addPolyline( new Polyline(pkVBuffer,bClosed,bContiguous) );
      // apply B-spline filter to smooth the track
         addPolyline(new Polyline(smoothTrack(pkVBuffer, kTract,iVQuantity, iDimX, iDimY, iDimZ), bClosed, bContiguous ));
@@ -1739,14 +1739,14 @@ public class JDialogDTIInput extends JDialogBase
 		float fX_3, fY_3, fZ_3;
 		
 		// curve sub-division number, default to 10.  
-		int curveSubD = 10;
+		int curveSubD = 1;
 		float u, u_2, u_3;
 		
 		Attributes attr = new Attributes();
 		attr.SetPChannels(3);
 		attr.SetCChannels(0, 3);
 		attr.SetCChannels(1, 3);
-		VertexBuffer bsplineVBuffer = new VertexBuffer(attr, iVQuantity * curveSubD);		
+		VertexBuffer bsplineVBuffer = new VertexBuffer(attr, (iVQuantity -3) * curveSubD);		
 
 		int index = 0;
 		
