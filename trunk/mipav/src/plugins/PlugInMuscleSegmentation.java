@@ -39,8 +39,7 @@ public class PlugInMuscleSegmentation implements PlugInAlgorithm, PlugInGeneric 
         	//clones the ModelImage before passing into the plugin dialog
             new PlugInDialogMuscleSegmentation(ViewUserInterface.getReference().getMainFrame(), 
             		(ModelImage)image.clone(JDialogBase.makeImageName(image.getImageName(), "_muscle_seg")));
-        } else {
-        }
+        } 
     }
     
     /**
