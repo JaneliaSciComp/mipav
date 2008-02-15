@@ -3875,6 +3875,25 @@ public class FileAfni extends FileBase {
                 break;
 
             case ModelStorageBase.COMPLEX:
+                floatBuffer = new float[2 * sliceSize];
+                byteBuffer = new byte[8 * sliceSize];
+                for (t = tBegin; t <= tEnd; t++) {
+
+                    for (z = zBegin; z <= zEnd; z++) {
+                        fireProgressStateChanged((100 * count++) / numberSlices);
+                        image.exportData(2 * ((t * zDim) + z) * sliceSize, 2 * sliceSize, floatBuffer);
+
+                        for (j = 0; j < 2 * sliceSize; j++) {
+                            tmpInt = Float.floatToIntBits(floatBuffer[j]);
+                            byteBuffer[4 * j] = (byte) (tmpInt >>> 24);
+                            byteBuffer[(4 * j) + 1] = (byte) (tmpInt >>> 16);
+                            byteBuffer[(4 * j) + 2] = (byte) (tmpInt >>> 8);
+                            byteBuffer[(4 * j) + 3] = (byte) (tmpInt);
+                        }
+
+                        raFile.write(byteBuffer);
+                    } // for (z = zBegin; z <= zEnd; z++)
+                } // for (t = tBegin; t <= tEnd; t++)
                 break;
 
             case ModelStorageBase.ARGB:
@@ -4435,6 +4454,32 @@ public class FileAfni extends FileBase {
                 break;
 
             case ModelStorageBase.COMPLEX:
+                byteBuffer = new byte[4 * buffer.length];
+                nBytes = 8 * numRead;
+                raFile.read(byteBuffer, 0, nBytes);
+                progress = slice * buffer.length;
+                progressLength = buffer.length * numberSlices;
+                mod = progressLength / 10;
+
+                for (j = 0; j < nBytes; j += 4, i++) {
+
+                    if (((i + progress) % mod) == 0) {
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                    }
+
+                    b1 = getUnsignedByte(byteBuffer, j);
+                    b2 = getUnsignedByte(byteBuffer, j + 1);
+                    b3 = getUnsignedByte(byteBuffer, j + 2);
+                    b4 = getUnsignedByte(byteBuffer, j + 3);
+
+                    if (endianess) {
+                        tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
+                    } else {
+                        tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1); // Little Endian
+                    }
+
+                    buffer[i] = Float.intBitsToFloat(tmpInt);
+                } // for (j =0; j < nBytes; j+=4, i++ )
                 break;
 
             case ModelStorageBase.ARGB:
@@ -7160,6 +7205,9 @@ public class FileAfni extends FileBase {
             if (ModelImage.isColorImage(fileInfo.getDataType())) {
                 bufferSize = 4 * xDim * yDim * zDim;
                 sliceSize = 4 * xDim * yDim;
+            } else if (fileInfo.getDataType() == ModelStorageBase.COMPLEX) {
+                bufferSize = 2 * xDim * yDim * zDim;
+                sliceSize = 2 * xDim * yDim;
             } else {
                 bufferSize = xDim * yDim * zDim;
                 sliceSize = xDim * yDim;
@@ -7276,6 +7324,9 @@ public class FileAfni extends FileBase {
             if (ModelImage.isColorImage(fileInfo.getDataType())) {
                 bufferSize = 4 * xDim * yDim;
                 volSize = 4 * xDim * yDim * zDim;
+            } else if (fileInfo.getDataType() == ModelStorageBase.COMPLEX) {
+                bufferSize = 2 * xDim * yDim;
+                volSize = 2 * xDim * yDim * zDim;
             } else {
                 bufferSize = xDim * yDim;
                 volSize = xDim * yDim * zDim;
@@ -7529,9 +7580,53 @@ public class FileAfni extends FileBase {
                 break;
 
             case ModelStorageBase.COMPLEX:
+                byteBuffer = new byte[4 * buffer.length];
+                nBytes = 8 * xDim * yDim * zDim;
+                raFile.read(byteBuffer, 0, nBytes);
+                progress = slice * buffer.length;
+                progressLength = buffer.length * numberSlices;
+                mod = progressLength / 10;
+
+                for (j = 0; j < nBytes; j += 4, i++) {
+
+                    if (((i + progress) % mod) == 0) {
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                    }
+
+                    b1 = getUnsignedByte(byteBuffer, j);
+                    b2 = getUnsignedByte(byteBuffer, j + 1);
+                    b3 = getUnsignedByte(byteBuffer, j + 2);
+                    b4 = getUnsignedByte(byteBuffer, j + 3);
+
+                    if (endianess) {
+                        tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
+                    } else {
+                        tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1); // Little Endian
+                    }
+
+                    buffer[i] = Float.intBitsToFloat(tmpInt);
+                } // for (j =0; j < nBytes; j+=4, i++ )
                 break;
 
             case ModelStorageBase.ARGB:
+                byteBuffer = new byte[3*buffer.length/4];
+                nBytes = 3 * xDim * yDim * zDim;
+                raFile.read(byteBuffer, 0, nBytes);
+                progress = slice * buffer.length;
+                progressLength = buffer.length * numberSlices;
+                mod = progressLength / 100;
+
+                for (j = 0; j < nBytes; j+= 3, i+= 4) {
+
+                    if (((i + progress) % mod) == 0) {
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                    }
+
+                    buffer[i] = 0;
+                    buffer[i+1] = byteBuffer[j] & 0xff;
+                    buffer[i+2] = byteBuffer[j+1] & 0xff;
+                    buffer[i+3] = byteBuffer[j+2] & 0xff;
+                }
                 break;
         } // switch(brikDataType)
 
@@ -7633,8 +7728,28 @@ public class FileAfni extends FileBase {
                             break;
                     }
 
-                    dicomBuffer[newX + (dicomXDim * newY) + (dicomSliceSize * newZ)] = buffer[x + (xDim * y) +
+                    if (brikDataType == ModelStorageBase.COMPLEX) {
+                        // Note that sliceSize already has a factor of 2 multiplied in, but
+                        // dicomSliceSize does not
+                        dicomBuffer[2*(newX + (dicomXDim * newY) + (dicomSliceSize * newZ))] = buffer[2*x + (2* xDim * y) +
+                                                                                                  (sliceSize * z)];
+                        dicomBuffer[2*(newX + (dicomXDim * newY) + (dicomSliceSize * newZ))+1] = buffer[2*x + (2* xDim * y) +
+                                (sliceSize * z)+1]; 
+                    }
+                    else if (brikDataType == ModelStorageBase.ARGB) {
+                        // Note that sliceSize already has a factor of 3 multiplied in, but
+                        // dicomSliceSize does not
+                        dicomBuffer[3*(newX + (dicomXDim * newY) + (dicomSliceSize * newZ))] = buffer[3*x + (3*xDim * y) +
+                                (sliceSize * z)];
+                        dicomBuffer[3*(newX + (dicomXDim * newY) + (dicomSliceSize * newZ))+1] = buffer[3*x + (3*xDim * y) +
+                                (sliceSize * z)+1]; 
+                        dicomBuffer[3*(newX + (dicomXDim * newY) + (dicomSliceSize * newZ))+2] = buffer[3*x + (3*xDim * y) +
+                                (sliceSize * z)+2];    
+                    }
+                    else {
+                        dicomBuffer[newX + (dicomXDim * newY) + (dicomSliceSize * newZ)] = buffer[x + (xDim * y) +
                                                                                               (sliceSize * z)];
+                    }
                 } // for (z = 0; z < zDim; z++)
             } // for (y = 0; y < yDim; y++)
         } // for (x = 0; x < xDim; x++)
