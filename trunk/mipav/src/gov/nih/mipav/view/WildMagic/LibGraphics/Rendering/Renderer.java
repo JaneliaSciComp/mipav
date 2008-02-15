@@ -17,6 +17,7 @@
 //
 package gov.nih.mipav.view.WildMagic.LibGraphics.Rendering;
 
+import java.nio.Buffer;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
@@ -1777,6 +1778,7 @@ public abstract class Renderer
     public abstract void OnReloadTexture (ResourceIdentifier pkID);
 
     public abstract void LoadSubTexture (Texture kTarget, int iZ );
+    public abstract void LoadSubVBuffer (VertexBuffer kTarget, int iOffset, int iSize, Buffer kData );
 
     /**
      * Release the Texture described in the ResourceIdentifier parameter.

@@ -131,6 +131,8 @@ public class SurfaceLightingEffect extends VolumeClipEffect
             }
         }
     }
+
+    
     /** Delete memory */
     public void dispose()
     {

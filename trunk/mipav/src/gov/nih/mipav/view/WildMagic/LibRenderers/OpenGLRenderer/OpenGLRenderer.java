@@ -897,12 +897,20 @@ public class OpenGLRenderer extends Renderer
         super.SetWireframeState(pkState);
         if (pkState.Enabled)
         {
-            gl.glPolygonMode(GL.GL_FRONT_AND_BACK, ms_aeFillTypes[ pkState.Fill.Value() ] );
+            if (ms_aeFillTypes[ pkState.Fill.Value() ] == GL.GL_FILL )
+            {
+                gl.glPolygonMode(GL.GL_FRONT,GL.GL_FILL);
+            }
+            else
+            {
+                gl.glPolygonMode(GL.GL_FRONT_AND_BACK, ms_aeFillTypes[ pkState.Fill.Value() ] );
+            }
             //gl.glPolygonMode(GL.GL_FRONT_AND_BACK,GL.GL_LINE);
         }
         else
         {
-            gl.glPolygonMode(GL.GL_FRONT_AND_BACK,GL.GL_FILL);
+            //gl.glPolygonMode(GL.GL_FRONT_AND_BACK,GL.GL_FILL);
+            gl.glPolygonMode(GL.GL_FRONT,GL.GL_FILL);
         }
     }
 
@@ -2032,7 +2040,7 @@ public class OpenGLRenderer extends Renderer
         aucData.clear();
         aucData = null;
     }
-
+    
     public void LoadSubTexture (Texture kTarget, int iZ )
     {
         if ( m_kDrawable == null ) { System.err.println( "OnLoadSubTexture GLDrawable null" ); return; }
@@ -2064,6 +2072,18 @@ public class OpenGLRenderer extends Renderer
         TextureID pkResource = (TextureID)pkID;     
         m_aiParams[0] = pkResource.ID;
         gl.glDeleteTextures((int)1,m_aiParams,0);
+    }
+    
+
+    public void LoadSubVBuffer (VertexBuffer kTarget, int iOffset, int iSize, Buffer kData )
+    {
+        if ( m_kDrawable == null ) { System.err.println( "LoadSubVBuffer GLDrawable null" ); return; }
+        GL gl = m_kDrawable.getGL();
+
+        ResourceIdentifier pkID = kTarget.GetIdentifier(this);
+        VBufferID pkResource = (VBufferID)pkID;
+        gl.glBindBuffer(GL.GL_ARRAY_BUFFER,pkResource.ID);
+        gl.glBufferSubData(GL.GL_ARRAY_BUFFER, iOffset*BufferUtil.SIZEOF_FLOAT, iSize*BufferUtil.SIZEOF_FLOAT, kData);
     }
 
     /** Resource loading and releasing (to/from video memory).

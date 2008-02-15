@@ -269,6 +269,23 @@ public class VertexBuffer extends Bindable
                              m_afChannel[ iIndex + 1 ],
                              m_afChannel[ iIndex + 2 ] );
     }
+    
+    /** Get the color at the given index. Use these accessors for convenience.
+     * No range checking is performed, so you should be sure that the
+     * attribute exists and that the number of channels is correct.
+     * @param iUnit, color unit (1-4).
+     * @param i, vertex index.
+     * @return color.
+     */
+    public void GetColor4 (int iUnit, int i, ColorRGBA kResult)
+    {
+        assert(m_kAttributes.GetCChannels(iUnit) == 4);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetCOffset(iUnit);
+        kResult.SetData( m_afChannel[ iIndex + 0 ], 
+                             m_afChannel[ iIndex + 1 ],
+                             m_afChannel[ iIndex + 2 ],
+                             m_afChannel[ iIndex + 3 ] );
+    }
 
     /** Set the color at the given index.
      * @param iUnit, color unit (1-4).
@@ -297,7 +314,37 @@ public class VertexBuffer extends Bindable
         m_afChannel[ iIndex + 1 ] = fG;
         m_afChannel[ iIndex + 2 ] = fB;
     }
-
+    
+    /** Set the color at the given index.
+     * @param iUnit, color unit (1-4).
+     * @param i, vertex index.
+     * @param kC, new color.
+     */
+    public void SetColor4 (int iUnit, int i, float fR, float fG, float fB, float fA)
+    {
+        assert(m_kAttributes.GetCChannels(iUnit) == 4);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetCOffset(iUnit);
+        m_afChannel[ iIndex + 0 ] = fR; 
+        m_afChannel[ iIndex + 1 ] = fG;
+        m_afChannel[ iIndex + 2 ] = fB;
+        m_afChannel[ iIndex + 3 ] = fA;
+    }    
+    
+    /** Set the color at the given index.
+     * @param iUnit, color unit (1-4).
+     * @param i, vertex index.
+     * @param kC, new color.
+     */
+    public void SetColor4 (int iUnit, int i, ColorRGBA kC)
+    {
+        assert(m_kAttributes.GetCChannels(iUnit) == 4);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetCOffset(iUnit);
+        m_afChannel[ iIndex + 0 ] = kC.R(); 
+        m_afChannel[ iIndex + 1 ] = kC.G();
+        m_afChannel[ iIndex + 2 ] = kC.B();
+        m_afChannel[ iIndex + 3 ] = kC.A();
+    }
+    
     /** Get the texture coordinate (1D) at the given index. Use these
      * accessors for convenience.  No range checking is performed, so you
      * should be sure that the attribute exists and that the number of
@@ -435,6 +482,11 @@ public class VertexBuffer extends Bindable
         m_afChannel[ iIndex + 2 ] = fZ;
     }
 
+    public int GetIndex( int i )
+    {
+        return m_iVertexSize*i;
+    }
+    
     /** Support for building an array from the vertex buffer data, but
      * compatible with the vertex program inputs.  The output array,
      * rafCompatible, if null on input is dynamically allocated.  The caller
@@ -586,6 +638,151 @@ public class VertexBuffer extends Bindable
         }
         return afReturn;
     }
+
+
+    /** Support for building an array from the vertex buffer data, but
+     * compatible with the vertex program inputs.  The output array,
+     * rafCompatible, if null on input is dynamically allocated.  The caller
+     * is responsible for deleting it.  You may pass in an already allocated
+     * array as long as you are certain it has enough channels to store the
+     * data.
+     * @param rkIAttr, vertex program input attributes
+     * @return compatible array data.
+     */
+    public float[] BuildCompatibleSubArray (Attributes rkIAttr, int iMin, int iMax)
+    {
+        Vector<Float> kCompatible = new Vector<Float>();    
+        int iUnit, iIChannels, iVBChannels;
+        int iIndex;
+        for (int i = iMin, j; i <= iMax; i++)
+        {
+            if (rkIAttr.HasPosition())
+            {
+                iIChannels = rkIAttr.GetPChannels();
+                iVBChannels = m_kAttributes.GetPChannels();
+
+                iIndex = m_iVertexSize*i + m_kAttributes.GetPOffset();
+                if (iVBChannels < iIChannels)
+                {
+                    for ( j = 0; j < iVBChannels; j++ )
+                    {
+                        kCompatible.add(m_afChannel[iIndex + j]);
+                    }                    
+                    for (j = iVBChannels; j < iIChannels; j++)
+                    {
+                        // Fill with 1 so that the w-component is compatible with
+                        // a homogeneous point.
+                        kCompatible.add(1.0f);
+                    }
+                }
+                else
+                {
+                    for (j = 0; j < iIChannels; j++)
+                    {
+                        kCompatible.add(m_afChannel[iIndex + j]);
+                    }
+                }
+            }
+
+            if (rkIAttr.HasNormal())
+            {
+                iIChannels = rkIAttr.GetNChannels();
+                iVBChannels = m_kAttributes.GetNChannels();
+                
+                iIndex = m_iVertexSize*i + m_kAttributes.GetNOffset();
+                if (iVBChannels < iIChannels)
+                {
+                    for (j = 0; j < iVBChannels; j++)
+                    {
+                        kCompatible.add(m_afChannel[iIndex + j]);
+                    }
+                    for (j = iVBChannels; j < iIChannels; j++)
+                    {
+                        // Fill with 0 so that the w-component is compatible with
+                        // a homogeneous vector.
+                        kCompatible.add(0.0f);
+                    }
+                }
+                else
+                {
+                    for (j = 0; j < iIChannels; j++)
+                    {
+                        kCompatible.add(m_afChannel[iIndex + j]);
+                    }
+                }
+            }
+
+            for (iUnit = 0; iUnit < (int)rkIAttr.GetMaxColors(); iUnit++)
+            {
+                if (rkIAttr.HasColor(iUnit))
+                {
+                    iIChannels = rkIAttr.GetCChannels(iUnit);
+                    iVBChannels = m_kAttributes.GetCChannels(iUnit);
+                    iIndex = m_iVertexSize*i + m_kAttributes.GetCOffset(iUnit);                  
+                    if (iVBChannels < iIChannels)
+                    {
+                        for (j = 0; j < iVBChannels; j++)
+                        {
+                            kCompatible.add(m_afChannel[iIndex + j]);
+                        }
+                        for (j = iVBChannels; j < iIChannels; j++)
+                        {
+                            // Fill with 1 so that the a-component is compatible
+                            // with an opaque color.
+                            kCompatible.add(1.0f);
+                        }
+                    }
+                    else
+                    {
+                        for (j = 0; j < iIChannels; j++)
+                        {
+                            kCompatible.add(m_afChannel[iIndex + j]);
+                        }
+                    }
+                }
+            }
+
+            for (iUnit = 0; iUnit < (int)rkIAttr.GetMaxTCoords(); iUnit++)
+            {
+                if (rkIAttr.HasTCoord(iUnit))
+                {
+                    iIChannels = rkIAttr.GetTChannels(iUnit);
+                    iVBChannels = m_kAttributes.GetTChannels(iUnit);
+                    iIndex = m_iVertexSize*i + m_kAttributes.GetTOffset(iUnit);                   
+                    if (iVBChannels < iIChannels)
+                    {
+                        for (j = 0; j < iVBChannels; j++)
+                        {
+                            kCompatible.add(m_afChannel[iIndex + j]);
+                        }
+                        for (j = iVBChannels; j < iIChannels; j++)
+                        {
+                            // Fill with 0 so that the components are compatible
+                            // with a higher-dimensional image embedded in a
+                            // lower-dimensional one.
+                            kCompatible.add(0.0f);
+                        }
+                    }
+                    else
+                    {
+                        for (j = 0; j < iIChannels; j++)
+                        {
+                            kCompatible.add(m_afChannel[iIndex + j]);
+                        }
+                    }
+                }
+            }
+        }
+
+        float[] afReturn = new float[kCompatible.size()];
+        for ( int i = 0; i < kCompatible.size(); i++)
+        {
+            afReturn[i] = kCompatible.get(i).floatValue();
+        }
+        return afReturn;
+    }
+
+
 
     /** Support for building an array from the vertex buffer data, but
      * compatible with the vertex program inputs.  The output array,

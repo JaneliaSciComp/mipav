@@ -28,6 +28,7 @@ public class PickRecord
 
     // The index of the triangle that is intersected by the ray.
     public int Triangle;
+    public int iV0, iV1, iV2;
 
     // The barycentric coordinates of the point of intersection.  All of the
     // coordinates are in [0,1] and b0 + b1 + b2 = 1.

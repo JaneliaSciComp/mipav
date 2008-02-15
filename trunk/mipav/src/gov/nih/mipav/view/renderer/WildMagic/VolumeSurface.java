@@ -1,5 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 
+import java.util.Vector;
+import java.nio.*;
 import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Collision.*;
@@ -31,34 +33,43 @@ public class VolumeSurface extends VolumeObject
         CreateScene();
         m_kMesh = new HierarchicalTriMesh(kMesh);
         m_kMesh.SetName( new String( kMesh.GetName() ) );
-        
-        int iUnit = 0;
-        if ( m_kMesh.VBuffer.GetAttributes().GetCChannels(1) != 0 )
-        {
-            iUnit = 1;
-        }
-        for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
-        {
-            m_kMesh.VBuffer.SetPosition3(i, m_kMesh.VBuffer.GetPosition3fX(i) - kTranslate.X(),
-                    m_kMesh.VBuffer.GetPosition3fY(i) - kTranslate.Y(), 
-                    m_kMesh.VBuffer.GetPosition3fZ(i) - kTranslate.Z() );
 
-            m_kMesh.VBuffer.SetColor3( iUnit, i, 
-                    m_kMesh.VBuffer.GetPosition3fX(i) * 1.0f/m_fX,
-                    m_kMesh.VBuffer.GetPosition3fY(i) * 1.0f/m_fY,
-                    m_kMesh.VBuffer.GetPosition3fZ(i) * 1.0f/m_fZ);
-
-        }
-        m_kMesh.Local.SetTranslate(m_kTranslate);
-        m_kMesh.UpdateMS();
-
-        m_kLightShader = new SurfaceLightingEffect( );
         m_kMaterial = new MaterialState();
         m_kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
         m_kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
         m_kMaterial.Diffuse = new ColorRGB(ColorRGB.WHITE);
         m_kMaterial.Specular = new ColorRGB(ColorRGB.WHITE);
         m_kMaterial.Shininess = 32f;
+        
+        if ( m_kMesh.VBuffer.GetAttributes().GetCChannels(1) != 0 )
+        {
+            m_bHasPerVertexColor = true;
+        }
+        m_akBackupColor = new ColorRGBA[m_kMesh.VBuffer.GetVertexQuantity()];
+        for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
+        {
+            m_kMesh.VBuffer.SetPosition3(i, m_kMesh.VBuffer.GetPosition3fX(i) - kTranslate.X(),
+                    m_kMesh.VBuffer.GetPosition3fY(i) - kTranslate.Y(), 
+                    m_kMesh.VBuffer.GetPosition3fZ(i) - kTranslate.Z() );
+
+            m_kMesh.VBuffer.SetTCoord3( 0, i, 
+                    m_kMesh.VBuffer.GetPosition3fX(i) * 1.0f/m_fX,
+                    m_kMesh.VBuffer.GetPosition3fY(i) * 1.0f/m_fY,
+                    m_kMesh.VBuffer.GetPosition3fZ(i) * 1.0f/m_fZ);
+            if ( !m_bHasPerVertexColor )
+            {
+                m_kMesh.VBuffer.SetColor4( 0, i,
+                        m_kMaterial.Diffuse.R(),
+                        m_kMaterial.Diffuse.G(),
+                        m_kMaterial.Diffuse.B(), 1.0f );
+            }
+            m_akBackupColor[i] = new ColorRGBA();
+            m_kMesh.VBuffer.GetColor4( 0, i, m_akBackupColor[i]);
+        }
+        m_kMesh.Local.SetTranslate(m_kTranslate);
+        m_kMesh.UpdateMS();
+
+        m_kLightShader = new SurfaceLightingEffect( );
 
         m_kMesh.AttachGlobalState(m_kMaterial);
         m_kMesh.AttachEffect(m_kLightShader);
@@ -121,6 +132,11 @@ public class VolumeSurface extends VolumeObject
 
     public void SetColor( ColorRGB kColor )
     {
+        for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
+        {
+            m_kMesh.VBuffer.SetColor3( 0, i, kColor );
+        }
+        m_kMesh.VBuffer.Release();
         m_kMaterial.Ambient = kColor;
         m_kMaterial.Diffuse = kColor;
     }
@@ -203,6 +219,11 @@ public class VolumeSurface extends VolumeObject
     
     public void SetMaterial( MaterialState kMaterial)
     {
+        for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
+        {
+            m_kMesh.VBuffer.SetColor3( 0, i, kMaterial.Diffuse );
+        }
+        m_kMesh.VBuffer.Release();
         m_kMaterial.Ambient.SetData( kMaterial.Ambient );
         m_kMaterial.Diffuse.SetData( kMaterial.Diffuse );
         m_kMaterial.Specular.SetData( kMaterial.Specular );
@@ -210,6 +231,155 @@ public class VolumeSurface extends VolumeObject
         m_kMaterial.Shininess = kMaterial.Shininess;
         m_kScene.UpdateGS();
     }
+
+    public void Paint( Renderer kRenderer, PickRecord kRecord, ColorRGBA kPaintColor, int iBrushSize )
+    {
+        m_bPainted = true;
+        m_kMesh.VBuffer.SetColor4(0, kRecord.iV0, kPaintColor.R(), kPaintColor.G(), kPaintColor.B(), kPaintColor.A() );
+        m_kMesh.VBuffer.SetColor4(0, kRecord.iV1, kPaintColor.R(), kPaintColor.G(), kPaintColor.B(), kPaintColor.A() );
+        m_kMesh.VBuffer.SetColor4(0, kRecord.iV2, kPaintColor.R(), kPaintColor.G(), kPaintColor.B(), kPaintColor.A() );
+
+        if ( iBrushSize > 1 )
+        {
+            Vector3f kDiff = new Vector3f();
+            Vector3f kPos1 = new Vector3f();
+            Vector3f kPos2 = new Vector3f();
+            m_kMesh.VBuffer.GetPosition3(kRecord.iV0, kPos1 );
+            int iMin = -1;
+            int iMax = -1;
+            for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
+            {
+                m_kMesh.VBuffer.GetPosition3(i, kPos2 );
+                kPos1.sub(kPos2, kDiff );
+                if ( kDiff.Length() < ((float)iBrushSize/500.0f) )
+                {
+                    m_kMesh.VBuffer.SetColor4(0, i, kPaintColor.R(), kPaintColor.G(), kPaintColor.B(), kPaintColor.A() );
+                    if ( iMin == -1 )
+                    {
+                        iMin = i;
+                    }
+                    if ( i > iMax )
+                    {
+                        iMax = i;
+                    }
+                }
+            }
+            
+            float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(),
+                                                                           iMin, iMax );
+            FloatBuffer kData = FloatBuffer.wrap(afCompatible);
+            kData.rewind();
+            kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, iMin*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
+        }
+        else
+        {
+            float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(), kRecord.iV0,
+                                                                           kRecord.iV0);
+            FloatBuffer kData = FloatBuffer.wrap(afCompatible);
+            kData.rewind();
+            kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, kRecord.iV0*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
+
+            afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(), kRecord.iV1,
+                                                                   kRecord.iV1);
+            kData = FloatBuffer.wrap(afCompatible);
+            kData.rewind();
+            kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, kRecord.iV1*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
+
+            afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(), kRecord.iV2,
+                                                                   kRecord.iV2);
+            kData = FloatBuffer.wrap(afCompatible);
+            kData.rewind();
+            kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, kRecord.iV2*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
+        }
+    }
+
+
+    public void Erase( Renderer kRenderer, PickRecord kRecord, int iBrushSize )
+    {
+        if ( !m_bPainted )
+        {
+            return;
+        }
+        m_kMesh.VBuffer.SetColor4(0, kRecord.iV0, m_akBackupColor[kRecord.iV0]);
+        m_kMesh.VBuffer.SetColor4(0, kRecord.iV1, m_akBackupColor[kRecord.iV1]);
+        m_kMesh.VBuffer.SetColor4(0, kRecord.iV2, m_akBackupColor[kRecord.iV2]);
+
+        if ( iBrushSize > 1 )
+        {
+            Vector3f kDiff = new Vector3f();
+            Vector3f kPos1 = new Vector3f();
+            Vector3f kPos2 = new Vector3f();
+            m_kMesh.VBuffer.GetPosition3(kRecord.iV0, kPos1 );
+            int iMin = -1;
+            int iMax = -1;
+            for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
+            {
+                m_kMesh.VBuffer.GetPosition3(i, kPos2 );
+                kPos1.sub(kPos2, kDiff );
+                if ( kDiff.Length() < ((float)iBrushSize/500.0f) )
+                {
+                    m_kMesh.VBuffer.SetColor4(0, i, m_akBackupColor[i] );
+                    if ( iMin == -1 )
+                    {
+                        iMin = i;
+                    }
+                    if ( i > iMax )
+                    {
+                        iMax = i;
+                    }
+                }
+            }
+            
+            float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(),
+                                                                           iMin, iMax );
+            FloatBuffer kData = FloatBuffer.wrap(afCompatible);
+            kData.rewind();
+            kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, iMin*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
+        }
+        else
+        {
+            float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(), kRecord.iV0,
+                                                                           kRecord.iV0);
+            FloatBuffer kData = FloatBuffer.wrap(afCompatible);
+            kData.rewind();
+            kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, kRecord.iV0*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
+
+
+            afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(), kRecord.iV1,
+                                                                   kRecord.iV1);
+            kData = FloatBuffer.wrap(afCompatible);
+            kData.rewind();
+            kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, kRecord.iV1*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
+
+
+            afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(), kRecord.iV2,
+                                                                   kRecord.iV2);
+            kData = FloatBuffer.wrap(afCompatible);
+            kData.rewind();
+            kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, kRecord.iV2*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
+        }
+    }
+
+
+    public void EraseAllPaint( Renderer kRenderer )
+    {
+        if ( !m_bPainted )
+        {
+            return;
+        }
+        m_bPainted = false;
+        int iMin = 0, iMax = m_kMesh.VBuffer.GetVertexQuantity() -1;
+        for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
+        {
+            m_kMesh.VBuffer.SetColor4(0, i, m_akBackupColor[i]);
+        }
+        float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(),
+                iMin, iMax );
+        FloatBuffer kData = FloatBuffer.wrap(afCompatible);
+        kData.rewind();
+        kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, iMin*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
+    }
+
 
     public float GetVolume()
     {
@@ -436,7 +606,7 @@ public class VolumeSurface extends VolumeObject
     /** Creates the scene graph. */
     private void CreateScene ( )
     {
-        m_kVertexColor3Shader = new VertexColor3Effect();
+        m_kVertexColor3Shader = new VolumePreRenderEffect();
         m_kScene = new Node();
 
         m_kCull = new CullState();
@@ -462,7 +632,7 @@ public class VolumeSurface extends VolumeObject
     }
 
     /** ShaderEffect for the plane bounding-boxes. */
-    private VertexColor3Effect m_kVertexColor3Shader;
+    private VolumePreRenderEffect m_kVertexColor3Shader;
     private HierarchicalTriMesh m_kMesh = null;
     private MaterialState m_kMaterial = null;
     private SurfaceLightingEffect m_kLightShader;
@@ -471,4 +641,8 @@ public class VolumeSurface extends VolumeObject
 
     private float m_fVolume = 0;
     private float m_fSurfaceArea = 0;
+    
+    private boolean m_bHasPerVertexColor = false;
+    private ColorRGBA[] m_akBackupColor = null;
+    private boolean m_bPainted = false;
 }

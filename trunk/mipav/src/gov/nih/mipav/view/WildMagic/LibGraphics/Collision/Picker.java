@@ -216,6 +216,9 @@ public class Picker
                             kRecord.Intersected = pkMesh;
                             kRecord.T = kIntr.GetLineT();
                             kRecord.Triangle = i;
+                            kRecord.iV0 = iV0;
+                            kRecord.iV1 = iV1;
+                            kRecord.iV2 = iV2;
                             kRecord.B0 = kIntr.GetTriB0();
                             kRecord.B1 = kIntr.GetTriB1();
                             kRecord.B2 = kIntr.GetTriB2();

@@ -289,7 +289,18 @@ implements GLEventListener, KeyListener, MouseMotionListener
                             {
                                 //System.err.println( kPos.X() + " " + kPos.Y() + " " + kPos.Z() );
                                 //System.err.println( kDir.X() + " " + kDir.Y() + " " + kDir.Z() );
-                                System.err.println("Picked " + m_kDisplayList.get(i).getClass().getName());
+                                if ( m_bPaintEnabled )
+                                {
+                                    //System.err.println("Picked " + m_kDisplayList.get(i).getClass().getName());
+                                    if ( m_bPaint )
+                                    {
+                                        m_kDisplayList.get(i).Paint( m_pkRenderer, m_kPicker.GetClosestNonnegative(), m_kPaintColor, m_iBrushSize );
+                                    }
+                                    else if ( m_bErase )
+                                    {
+                                        m_kDisplayList.get(i).Erase( m_pkRenderer, m_kPicker.GetClosestNonnegative(), m_iBrushSize );
+                                    }
+                                }
                             }
                         }
                     }
@@ -1306,9 +1317,12 @@ implements GLEventListener, KeyListener, MouseMotionListener
             super.mousePressed(e);
             InitializeObjectMotion(m_spkScene);
         }
-        m_iXPick = e.getX();
-        m_iYPick = e.getY();
-        m_bPickPending = true;
+        if ( e.isControlDown() && m_bPaintEnabled )
+        {
+            m_iXPick = e.getX();
+            m_iYPick = e.getY();
+            m_bPickPending = true;
+        }
     }
 
 
@@ -1323,12 +1337,18 @@ implements GLEventListener, KeyListener, MouseMotionListener
             {
                 super.mouseDragged(e);
             }
-            else if ( (m_kVolumeClip != null) && (m_kVolumeClip.DisplayArb()) )
+            else if ( e.isControlDown() && (m_kVolumeClip != null) && (m_kVolumeClip.DisplayArb()) )
             {
                 InitializeObjectMotion(m_kVolumeClip.ArbRotate());
                 super.mouseDragged(e);
                 InitializeObjectMotion(m_spkScene);
                 doClip();
+            }
+            else if ( e.isControlDown() && m_bPaintEnabled )
+            {
+                m_iXPick = e.getX();
+                m_iYPick = e.getY();
+                m_bPickPending = true;
             }
         }
     }
@@ -1798,10 +1818,12 @@ implements GLEventListener, KeyListener, MouseMotionListener
     {
         for ( int i = 0; i < akSurfaces.length; i++ )
         {
-            m_kDisplayList.add( new VolumeSurface( m_pkRenderer, m_kVolumeImageA,
+            VolumeSurface kSurface = new VolumeSurface( m_pkRenderer, m_kVolumeImageA,
                     m_kTranslate,
                     m_fX, m_fY, m_fZ,
-                    akSurfaces[i] ) );
+                    akSurfaces[i] );
+            kSurface.SetPerPixelLighting( m_pkRenderer, true );
+            m_kDisplayList.add( kSurface );
         }
         UpdateSceneRotation();
         m_bSurfaceAdded = true;
@@ -2019,6 +2041,27 @@ implements GLEventListener, KeyListener, MouseMotionListener
         return m_akLights;
     }
     
+    
+    public void enablePaint( ColorRGBA kPaintColor, int iBrushSize, boolean bEnabled, boolean bPaint, boolean bErase )
+    {
+        m_kPaintColor = kPaintColor;
+        m_iBrushSize = iBrushSize;
+        m_bPaintEnabled = bEnabled;
+        m_bPaint = bPaint;
+        m_bErase = bErase;
+    }
+    
+    public void eraseAllPaint()
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i) instanceof VolumeSurface )
+            {
+                ((VolumeSurface)(m_kDisplayList.get(i))).EraseAllPaint(m_pkRenderer);
+            }
+        }
+    }
+    
     private VolumeImage m_kVolumeImageA;
     private VolumeImage m_kVolumeImageB;
     
@@ -2102,4 +2145,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
     private int m_iYPick = -1;
     private boolean m_bPickPending = false;
     private Picker m_kPicker = new Picker();
+
+    private boolean m_bPaintEnabled = false;
+    private boolean m_bPaint = false;
+    private boolean m_bErase = false;
+    private ColorRGBA m_kPaintColor = null;
+    private int m_iBrushSize = 1;
 }

@@ -12,6 +12,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Collision.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
@@ -194,6 +195,9 @@ public abstract class VolumeObject
     public void Blend( float fValue ) {}
     
     public void SetColor( ColorRGB kColor ){}
+
+    public void Paint(Renderer kRenderer, PickRecord kRecord, ColorRGBA kPaintColor, int iBrushSize ) {}
+    public void Erase(Renderer kRenderer, PickRecord kRecord, int iBrushSize ) {}
 
     /** boolean to turn rendering on/off for this object. */
     protected boolean m_bDisplay = false;
