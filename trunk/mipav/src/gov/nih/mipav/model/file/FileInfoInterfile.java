@@ -762,7 +762,7 @@ public class FileInfoInterfile extends FileInfoBase {
 
             for (i = 0; i < fGroupNumber; i++) {
                 dialog.append("Dynamic Study (each frame group) :=\n");
-                dialog.append("Frame group number := " + (fGroupNumber + 1) + "\n");
+                dialog.append("Frame group number := " + (i + 1) + "\n");
 
                 if (matrixSize1 != null) {
 
