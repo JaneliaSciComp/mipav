@@ -1105,6 +1105,10 @@ public class FileUtility {
 
                 fileType = FileUtility.isAnalyze(fileName, fileDir, quiet);
             }
+            
+            if (fileType == FileUtility.UNDEFINED) {
+                fileType = FileUtility.isInterfile(fileName, fileDir, quiet);
+            }
 
             if (fileType == FileUtility.UNDEFINED) {
                 fileType = FileUtility.isNIFTI(fileName, fileDir, quiet);
@@ -1628,6 +1632,42 @@ public class FileUtility {
                 if (isGESigna5X) {
                     return FileUtility.GE_GENESIS;
                 }
+            }
+
+            return FileUtility.UNDEFINED;
+        } catch (OutOfMemoryError error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+                Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
+            } else {
+                Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
+            }
+
+            return FileUtility.UNDEFINED;
+        }
+    }
+    
+    /**
+     * Tests if the unknown file is of type Interfile.
+     *
+     * @param   fileName  Name of the image file to read.
+     * @param   fileDir   Directory of the image file to read.
+     * @param   quiet     Whether to avoid any user interaction (ie, from error popups).
+     *
+     * @return  <code>FileUtility.Interfile</code> if the file is a Interfile type, and <code>FileUtility.UNDEFINED</code>
+     *          otherwise
+     *
+     * @throws  IOException  If there is a problem determining the type of the given file.
+     */
+    public static final int isInterfile(String fileName, String fileDir, boolean quiet) throws IOException {
+
+        try {
+
+            String fileHeaderName = FileInterfile.isInterfile(fileName, fileDir);
+
+            if (fileHeaderName != null) {
+                return FileUtility.INTERFILE;
             }
 
             return FileUtility.UNDEFINED;
