@@ -268,7 +268,7 @@ public class FileInterfile extends FileBase {
      * @return  <code>true</code> if Cheshire file, <code>false</code> otherwise.
      */
     public static String isInterfile(String fName, String fDir) {
-
+       
         try {
             RandomAccessFile raFile;
             int index = fName.length();
@@ -290,7 +290,8 @@ public class FileInterfile extends FileBase {
                 fileHeader = new File(fDir + fileHeaderName);
 
                 if (fileHeader.exists() == false) {
-                    return null;
+                    fileHeaderName = fName;
+                    fileHeader = new File(fDir + fileHeaderName);
                 }
             }
 
@@ -462,18 +463,22 @@ public class FileInterfile extends FileBase {
                             throw new IOException();
                         }
                     } // else if (keyString.equalsIgnoreCase("IMAGEDATABYTEORDER"))
-                    else if (keyString.equalsIgnoreCase("MATRIXSIZE[1]")) {
+                    else if ((keyString.equalsIgnoreCase("MATRIXSIZE[1]")) ||
+                             (keyString.equalsIgnoreCase("MATRIXSIZE(X)"))) {
                         xDim = Integer.valueOf(valueString).intValue();
                         haveXDim = true;
                         fileInfo.setMatrixSize1(valueString);
-                    } else if (keyString.equalsIgnoreCase("MATRIXSIZE[2]")) {
+                    } else if ((keyString.equalsIgnoreCase("MATRIXSIZE[2]")) ||
+                               (keyString.equalsIgnoreCase("MATRIXSIZE(Y)"))) {
                         yDim = Integer.valueOf(valueString).intValue();
                         haveYDim = true;
                         fileInfo.setMatrixSize2(valueString);
-                    } else if (keyString.equalsIgnoreCase("MATRIXSIZE[3]")) {
+                    } else if ((keyString.equalsIgnoreCase("MATRIXSIZE[3]"))||
+                               (keyString.equalsIgnoreCase("MATRIXSIZE(Z)"))) {
                         zDim = Integer.valueOf(valueString).intValue();
                         haveZDim = true;
                     } else if ((keyString.equalsIgnoreCase("MATRIXSIZE[4]")) ||
+                                   (keyString.equalsIgnoreCase("MATRIXSIZE(T)")) ||
                                    (keyString.equalsIgnoreCase("NUMBEROFTIMEFRAMES"))) {
                         tDim = Integer.valueOf(valueString).intValue();
                         haveTDim = true;
@@ -594,13 +599,13 @@ public class FileInterfile extends FileBase {
                         fileInfo.setStudyID(valueString);
                     } else if (keyString.equalsIgnoreCase("EXAMTYPE")) {
                         fileInfo.setExamType(valueString);
-                    } else if (keyString.equalsIgnoreCase("DATACOMPRESSION")) {
+                    } else if ((keyString.equalsIgnoreCase("DATACOMPRESSION")) && (valueString !=  null)) {
                         fileInfo.setDataCompression(valueString);
 
                         if (!valueString.equalsIgnoreCase("NONE")) {
                             MipavUtil.displayWarning("Data compression = " + valueString);
                         }
-                    } else if (keyString.equalsIgnoreCase("DATAENCODE")) {
+                    } else if ((keyString.equalsIgnoreCase("DATAENCODE")) && (valueString != null)) {
                         fileInfo.setDataEncode(valueString);
 
                         if (!valueString.equalsIgnoreCase("NONE")) {
@@ -610,12 +615,31 @@ public class FileInterfile extends FileBase {
                         fileInfo.setGeneralImageData(true);
                     } else if (keyString.equalsIgnoreCase("TYPEOFDATA")) {
 
-                        if ((valueString.equalsIgnoreCase("STATIC")) || (valueString.equalsIgnoreCase("DYNAMIC")) ||
+                        if ((valueString.equalsIgnoreCase("STATIC")) ||
+                                (valueString.equalsIgnoreCase("STATIC STUDY")) ||
+                                (valueString.equalsIgnoreCase("DYNAMIC")) ||
+                                (valueString.equalsIgnoreCase("DYNAMIC STUDY")) ||
                                 (valueString.equalsIgnoreCase("GATED")) ||
+                                (valueString.equalsIgnoreCase("GATED STUDY")) ||
                                 (valueString.equalsIgnoreCase("TOMOGRAPHIC")) ||
+                                (valueString.equalsIgnoreCase("TOMOGRAPHIC STUDY")) ||
                                 (valueString.equalsIgnoreCase("CURVE")) || (valueString.equalsIgnoreCase("ROI")) ||
                                 (valueString.equalsIgnoreCase("PET")) || (valueString.equalsIgnoreCase("OTHER"))) {
-                            fileInfo.setInterfileDataType(valueString);
+                            if (valueString.equalsIgnoreCase("STATIC STUDY")) {
+                                fileInfo.setInterfileDataType("STATIC");
+                            }
+                            else if (valueString.equalsIgnoreCase("DYNAMIC STUDY")) {
+                                fileInfo.setInterfileDataType("DYNAMIC");
+                            }
+                            else if (valueString.equalsIgnoreCase("GATED STUDY")) {
+                                fileInfo.setInterfileDataType("GATED");
+                            }
+                            else if (valueString.equalsIgnoreCase("TOMOGRAPHIC STUDY")) {
+                                fileInfo.setInterfileDataType("TOMOGRAPHIC");
+                            }
+                            else {
+                                fileInfo.setInterfileDataType(valueString);
+                            }
 
                             if (valueString.equalsIgnoreCase("TOMOGRAPHIC")) {
                                 haveTomographic = true;
@@ -988,8 +1012,8 @@ public class FileInterfile extends FileBase {
             }
 
             if ((!haveZDim) && (!haveTotalImageNumber)) {
-                MipavUtil.displayError("Total number of images and matrix size [3] both not found");
-                throw new IOException();
+                totalImageNumber = 1;
+                zDim = 1;
             }
 
             if (tDim > 1) {
