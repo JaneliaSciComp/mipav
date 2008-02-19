@@ -1,6 +1,6 @@
 package gov.nih.mipav.model.structures.event;
 
-
+import java.awt.*;
 import java.util.*;
 
 
@@ -42,4 +42,6 @@ public interface VOIListener extends EventListener {
      * @param  selection  DOCUMENT ME!
      */
     void selectedVOI(VOIEvent selection);
+    
+    void colorChanged(Color c);
 }

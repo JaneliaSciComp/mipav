@@ -17,6 +17,9 @@ import javax.swing.*;
 
 public class ColorIcon implements Icon {
 
+	public static final Color TRANSPARENT = new Color(0, 0, 0, 0);
+	public static final Color FOREGROUND = new Color(122, 138, 153, 255);
+	
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -86,8 +89,13 @@ public class ColorIcon implements Icon {
      * @param  y  beginning y-coordinate
      */
     public void paintIcon(Component c, Graphics g, int x, int y) {
-        g.setColor(Color.black);
-        g.drawRect(x, y, w - 1, h - 1);
+    	if (color != TRANSPARENT) {
+    		g.setColor(Color.black);
+    		g.drawRect(x, y, w - 1, h - 1);
+    	} else {
+    		g.setColor(FOREGROUND);
+    		g.drawRect(x, y, w - 1, h - 1);
+    	}
         g.setColor(color);
         g.fillRect(x + 1, y + 1, w - 2, h - 2);
     }

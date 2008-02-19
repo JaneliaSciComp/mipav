@@ -2198,6 +2198,10 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
             /* not interested in removing curves */
         }
 
+        public void colorChanged(Color c) {
+        	/* not interested in color change */
+        }
+        
         /**
          * Handles the VOI being selected. -- a state-change.
          *
