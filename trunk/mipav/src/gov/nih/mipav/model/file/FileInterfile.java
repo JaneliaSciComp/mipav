@@ -240,6 +240,8 @@ public class FileInterfile extends FileBase {
 
     /** DOCUMENT ME! */
     private int zDim = 1;
+    
+    private boolean haveStaticStudy = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -640,8 +642,15 @@ public class FileInterfile extends FileBase {
                             else {
                                 fileInfo.setInterfileDataType(valueString);
                             }
+                            
+                            if ((valueString.equalsIgnoreCase("STATIC")) || 
+                                (valueString.equalsIgnoreCase("STATIC STUDY")) ||
+                                (valueString.equalsIgnoreCase("ROI"))) {
+                                haveStaticStudy = true;
+                            }
 
-                            if (valueString.equalsIgnoreCase("TOMOGRAPHIC")) {
+                            if ((valueString.equalsIgnoreCase("TOMOGRAPHIC")) ||
+                                (valueString.equalsIgnoreCase("TOMOGRAPHIC STUDY"))) {
                                 haveTomographic = true;
                             }
                         } else {
@@ -714,7 +723,9 @@ public class FileInterfile extends FileBase {
                         fileInfo.setBranchingFactor("1", valueString);
                     } else if (keyString.equalsIgnoreCase("RADIOPHARMACEUTICAL")) {
                         fileInfo.setRadiopharmaceutical(valueString);
-                    } else if (keyString.equalsIgnoreCase("NUMBEROFENERGYWINDOWS")) {
+                    } else if ((keyString.equalsIgnoreCase("NUMBEROFENERGYWINDOWS")) ||
+                               ((keyString.equalsIgnoreCase("NUMBEROFWINDOWS")) && 
+                                 haveStaticStudy)) {
                         fileInfo.setEnergyWindowsNumber(valueString);
                         haveEnergyWindowsNumber = true;
                     } else if ((keyString.length() >= 15) &&
@@ -815,7 +826,9 @@ public class FileInterfile extends FileBase {
                     } else if (keyString.equalsIgnoreCase("NUMBEROFDETECTORHEADS")) {
                         fileInfo.setDetectorHeadNumber(valueString);
                         haveDetectorHeadNumber = true;
-                    } else if (keyString.equalsIgnoreCase("NUMBEROFIMAGES/ENERGYWINDOW")) {
+                    } else if ((keyString.equalsIgnoreCase("NUMBEROFIMAGES/ENERGYWINDOW")) ||
+                               ((keyString.equalsIgnoreCase("NUMBEROFIMAGES/WINDOW")) &&
+                                 haveStaticStudy)) {
                         fileInfo.setImagesPerEWindow(valueString);
                         haveImagesPerEWindow = true;
                     } else if (keyString.equalsIgnoreCase("PROCESSSTATUS")) {
@@ -962,7 +975,7 @@ public class FileInterfile extends FileBase {
                         fileInfo.setTimeWindows(valueString);
                     } else if (keyString.equalsIgnoreCase("NUMBEROFIMAGESINTIMEWINDOW")) {
                         fileInfo.setTimeWindowImages(valueString);
-                    } else if (keyString.equalsIgnoreCase("NUMBEROFIMAGESINWINDOW")) {
+                    } else if (keyString.equalsIgnoreCase("NUMBEROFIMAGESINWINDOW")){
                         fileInfo.setTimeWindowImages(valueString);
                     } else if (keyString.equalsIgnoreCase("FRAMINGMETHOD")) {
                         fileInfo.setFramingMethod(valueString);
