@@ -3734,7 +3734,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     public void keyReleased(KeyEvent e) {
         int keyCode = e.getKeyCode();
-System.err.println("KEY RELEASED");
         switch (keyCode) {
 
             case KeyEvent.VK_HOME:
@@ -5098,7 +5097,7 @@ System.err.println("KEY RELEASED");
      * size larger than 3/5 of screen size, I assume he wants it that way and the window will not be resized in that
      * case upon zoom-in.
      */
-    private void computeIdealWindowSize() {
+    protected void computeIdealWindowSize() {
         boolean addInsets = true;
         int newWidth = getScrollPaneSize().width;
         int newHeight = getScrollPaneSize().height;

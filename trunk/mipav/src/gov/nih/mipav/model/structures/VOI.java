@@ -4422,6 +4422,18 @@ System.err.println("curves size: " );
         // System.err.println("Setting color externally to: " + color);
         this.color = color;
 
+        if (listenerList != null) {
+        	Object[] listeners = listenerList.getListenerList();
+        	// Process the listeners last to first, notifying
+        	// those that are interested in this event
+        	for (int i = listeners.length - 2; i >= 0; i -= 2) {
+
+        		if (listeners[i] == VOIListener.class) {
+        			((VOIListener) listeners[i + 1]).colorChanged(color);
+        		}
+        	}
+        }
+        
         if (curveType == PROTRACTOR) {
 
             for (int j = 0; j < zDim; j++) {
@@ -4442,6 +4454,19 @@ System.err.println("curves size: " );
 
         // System.err.println("Setting hue externally to: " + hue);
         this.setColor(Color.getHSBColor(hue, (float) 1.0, (float) 1.0));
+        
+        if (listenerList != null) {
+        	Object[] listeners = listenerList.getListenerList();
+        	// Process the listeners last to first, notifying
+        	// those that are interested in this event
+        	for (int i = listeners.length - 2; i >= 0; i -= 2) {
+
+        		if (listeners[i] == VOIListener.class) {
+        			((VOIListener) listeners[i + 1]).colorChanged(color);
+        		}
+        	}
+        }
+        
     }
 
     /**
@@ -4997,7 +5022,6 @@ System.err.println("curves size: " );
 
         // Guaranteed to return a non-null array
         Object[] listeners = listenerList.getListenerList();
-
         // Process the listeners last to first, notifying
         // those that are interested in this event
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
