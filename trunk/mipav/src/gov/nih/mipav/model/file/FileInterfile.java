@@ -490,10 +490,12 @@ public class FileInterfile extends FileBase {
                         }
                     } else if (keyString.equalsIgnoreCase("NUMBERFORMAT")) {
 
-                        if (removedValueString.equalsIgnoreCase("SIGNEDINTEGER")) {
+                        if ((removedValueString.equalsIgnoreCase("SIGNEDINTEGER")) ||
+                            (removedValueString.equalsIgnoreCase("SIGNED"))) {
                             numberFormat = SIGNED_INTEGER;
                             haveNumberFormat = true;
-                        } else if (removedValueString.equalsIgnoreCase("UNSIGNEDINTEGER")) {
+                        } else if ((removedValueString.equalsIgnoreCase("UNSIGNEDINTEGER")) ||
+                                   (removedValueString.equalsIgnoreCase("UNSIGNED"))) {
                             numberFormat = UNSIGNED_INTEGER;
                             haveNumberFormat = true;
                         } else if (removedValueString.equalsIgnoreCase("LONGFLOAT")) {
