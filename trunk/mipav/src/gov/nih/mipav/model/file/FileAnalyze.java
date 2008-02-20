@@ -1111,12 +1111,17 @@ public class FileAnalyze extends FileBase {
         int index;
         int nImagesSaved;
         int nTimePeriodsSaved;
+        String suffix;
 
 
         index = fileName.lastIndexOf(".");
 
         if (index != -1) {
             fhName = fileName.substring(0, index);
+            suffix = fileName.substring(index);
+            if (suffix.equalsIgnoreCase(".hdr")) {
+                fileName = fhName + ".img";
+            }
         } else {
             fhName = fileName.substring(0);
         }
