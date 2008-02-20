@@ -90,6 +90,19 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_kParent = kParent;
         
         m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
+        
+        
+        String class_path_key = "java.class.path";
+        String class_path = System.getProperty(class_path_key);
+        //System.out.println(class_path);
+                   String jar_filename = null;
+        for (String fn : class_path.split(";") ) {
+            if (fn.endsWith("InsightToolkit.jar")) {
+                jar_filename = fn;
+                System.out.println("Found itk jar: " + jar_filename);
+                break;
+            }
+        } 
     }
     
     
@@ -296,6 +309,13 @@ implements GLEventListener, KeyListener, MouseMotionListener
                                     {
                                         m_kDisplayList.get(i).Paint( m_pkRenderer, m_kPicker.GetClosestNonnegative(), m_kPaintColor, m_iBrushSize );
                                     }
+                                    else if ( m_bDropper || m_bPaintCan )
+                                    {
+                                        ColorRGBA kDropperColor = new ColorRGBA();
+                                        Vector3f kPickPoint = new Vector3f();
+                                        m_kDisplayList.get(i).Dropper( m_kPicker.GetClosestNonnegative(), kDropperColor, kPickPoint );
+                                        m_kParent.setDropperColor( kDropperColor, kPickPoint );
+                                    } 
                                     else if ( m_bErase )
                                     {
                                         m_kDisplayList.get(i).Erase( m_pkRenderer, m_kPicker.GetClosestNonnegative(), m_iBrushSize );
@@ -1910,6 +1930,21 @@ implements GLEventListener, KeyListener, MouseMotionListener
             }
         }
     }
+    
+    
+    public void setSurfaceTexture(String kSurfaceName, boolean bOn, boolean bUseNewImage, boolean bUseNewLUT)
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    ((VolumeSurface)m_kDisplayList.get(i)).SetSurfaceTexture( bOn, bUseNewImage, bUseNewLUT );
+                }
+            }
+        }
+    }
 
     /**
      * Sets blending between imageA and imageB.
@@ -2042,12 +2077,14 @@ implements GLEventListener, KeyListener, MouseMotionListener
     }
     
     
-    public void enablePaint( ColorRGBA kPaintColor, int iBrushSize, boolean bEnabled, boolean bPaint, boolean bErase )
+    public void enablePaint( ColorRGBA kPaintColor, int iBrushSize, boolean bEnabled, boolean bPaint, boolean bDropper, boolean bPaintCan, boolean bErase )
     {
         m_kPaintColor = kPaintColor;
         m_iBrushSize = iBrushSize;
         m_bPaintEnabled = bEnabled;
         m_bPaint = bPaint;
+        m_bDropper = bDropper;
+        m_bPaintCan = bPaintCan;
         m_bErase = bErase;
     }
     
@@ -2058,6 +2095,37 @@ implements GLEventListener, KeyListener, MouseMotionListener
             if ( m_kDisplayList.get(i) instanceof VolumeSurface )
             {
                 ((VolumeSurface)(m_kDisplayList.get(i))).EraseAllPaint(m_pkRenderer);
+            }
+        }
+    }
+    
+    
+    public void SetLUTNew( String kSurfaceName, ModelLUT kLUT, ModelRGB kRGBT )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    ((VolumeSurface)(m_kDisplayList.get(i))).SetLUTNew(kLUT, kRGBT);
+                }
+            }
+        }
+    }
+    
+    
+    
+    public void SetImageNew( String kSurfaceName, ModelImage kImage )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    ((VolumeSurface)(m_kDisplayList.get(i))).SetImageNew(kImage);
+                }
             }
         }
     }
@@ -2149,6 +2217,8 @@ implements GLEventListener, KeyListener, MouseMotionListener
     private boolean m_bPaintEnabled = false;
     private boolean m_bPaint = false;
     private boolean m_bErase = false;
+    private boolean m_bDropper = false;
+    private boolean m_bPaintCan = false;
     private ColorRGBA m_kPaintColor = null;
     private int m_iBrushSize = 1;
 }

@@ -3,6 +3,7 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.algorithms.itk.autoItk.*;
 import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
@@ -167,6 +168,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
     /** Data provenance dialog */
     private JDialogDataProvenance dpDialog = null;
+    
+    AutoItkLoader m_kAutoItkLoader = null;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -5254,6 +5257,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else {
             setVisible(false);
         }
+        
+        JMenuItem kAutoITKMenu = menuBuilder.getMenuItem("Insight toolkit (auto ITK)");
+        m_kAutoItkLoader = new AutoItkLoader( this, (JMenu)kAutoITKMenu );
+        
     } // end init()
 
     /**

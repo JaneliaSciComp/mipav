@@ -420,6 +420,7 @@ void v_MipavLightingFragment(
                      out float3       kInVolumeClipPos,
                      out float3       kInNormal,
                      out float4       kInColor0,
+                     out float3       kOutBaseTCoord : TEXCOORD0,
                      uniform float4x4 WVPMatrix)
 {
     // Transform the position from model space to clip space.
@@ -428,14 +429,25 @@ void v_MipavLightingFragment(
     kInNormal = kModelNormal;
     kInVolumeClipPos = kInBaseTCoord;
     kInColor0 = kModelColor0;
+
+    // Pass through the texture coordinate.
+    kOutBaseTCoord = kInBaseTCoord;
 }
 
 void p_MipavLightingFragment(
                      out float4       kVertexColor : COLOR,
+                     in float3         kBaseTCoord : TEXCOORD0,
                      in float3        kInPos,
                      in float3        kInVolumeClipPos,
                      in float3        kInNormal,
                      in float4       kInColor0,
+                     uniform sampler3D VolumeImageA : TEXUNIT1, 
+                     uniform sampler1D ColorMapA : TEXUNIT2,
+                     uniform sampler3D VolumeImageNew : TEXUNIT3, 
+                     uniform sampler1D ColorMapNew : TEXUNIT4,
+                     uniform float UseTexture,
+                     uniform float UseImageNew,
+                     uniform float UseLUTNew,
                      uniform float Blend,
                      uniform float ClipEnabled,
                      uniform float DoClip,
@@ -525,7 +537,31 @@ void p_MipavLightingFragment(
     }
     if ( bClipped == false )
     {
-        MaterialDiffuse = kInColor0;
+        if ( UseTexture == 0 )
+        {
+            MaterialDiffuse = kInColor0;
+        }
+        else
+        {
+            float4 color;
+            if ( UseImageNew == 0 )
+            {
+                color = tex3D(VolumeImageA,kBaseTCoord);
+            }
+            else
+            {
+                color = tex3D(VolumeImageNew,kBaseTCoord);
+            }
+            if ( UseLUTNew == 0 )
+            {
+                MaterialDiffuse.rgb = tex1D(ColorMapA,color.r).rgb;
+            }
+            else
+            {
+                MaterialDiffuse.rgb = tex1D(ColorMapNew,color.r).rgb;
+            }
+            MaterialDiffuse.a = kInColor0.a;
+        }
 
         // First light is static light:
         float4 color0 = (0,0,0,0);
@@ -562,6 +598,7 @@ void p_MipavLightingFragment(
         
         kVertexColor = color0 + color1 + color2 + color3;
         kVertexColor.a = Blend * kInColor0.a;
+
         if ( kVertexColor.a == 0 )
         {
             discard;

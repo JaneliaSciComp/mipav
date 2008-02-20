@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic;
 import java.util.Vector;
 import java.nio.*;
 import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Collision.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
@@ -46,12 +47,47 @@ public class VolumeSurface extends VolumeObject
             m_bHasPerVertexColor = true;
         }
         m_akBackupColor = new ColorRGBA[m_kMesh.VBuffer.GetVertexQuantity()];
+
+        float xMin = Float.MAX_VALUE;
+        float xMax = -Float.MAX_VALUE;
+        float yMin = Float.MAX_VALUE;
+        float yMax = -Float.MAX_VALUE;
+        float zMin = Float.MAX_VALUE;
+        float zMax = -Float.MAX_VALUE;
         for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
         {
+
             m_kMesh.VBuffer.SetPosition3(i, m_kMesh.VBuffer.GetPosition3fX(i) - kTranslate.X(),
                     m_kMesh.VBuffer.GetPosition3fY(i) - kTranslate.Y(), 
                     m_kMesh.VBuffer.GetPosition3fZ(i) - kTranslate.Z() );
+            
+            if ( xMin > m_kMesh.VBuffer.GetPosition3fX(i) )
+            {
+                xMin = m_kMesh.VBuffer.GetPosition3fX(i);
+            }
+            if ( xMax < m_kMesh.VBuffer.GetPosition3fX(i) )
+            {
+                xMax = m_kMesh.VBuffer.GetPosition3fX(i);
+            }
+            
+            if ( yMin > m_kMesh.VBuffer.GetPosition3fY(i) )
+            {
+                yMin = m_kMesh.VBuffer.GetPosition3fY(i);
+            }
+            if ( yMax < m_kMesh.VBuffer.GetPosition3fY(i) )
+            {
+                yMax = m_kMesh.VBuffer.GetPosition3fY(i);
+            }
+            if ( zMin > m_kMesh.VBuffer.GetPosition3fZ(i) )
+            {
+                zMin = m_kMesh.VBuffer.GetPosition3fZ(i);
+            }
+            if ( zMax < m_kMesh.VBuffer.GetPosition3fZ(i) )
+            {
+                zMax = m_kMesh.VBuffer.GetPosition3fZ(i);
+            }
 
+            
             m_kMesh.VBuffer.SetTCoord3( 0, i, 
                     m_kMesh.VBuffer.GetPosition3fX(i) * 1.0f/m_fX,
                     m_kMesh.VBuffer.GetPosition3fY(i) * 1.0f/m_fY,
@@ -66,10 +102,13 @@ public class VolumeSurface extends VolumeObject
             m_akBackupColor[i] = new ColorRGBA();
             m_kMesh.VBuffer.GetColor4( 0, i, m_akBackupColor[i]);
         }
+        System.err.println( xMin + " " + yMin + " " + zMin + " -> " + xMax + " " + yMax + " " + zMax );
+        
+        
         m_kMesh.Local.SetTranslate(m_kTranslate);
         m_kMesh.UpdateMS();
 
-        m_kLightShader = new SurfaceLightingEffect( );
+        m_kLightShader = new SurfaceLightingEffect( kImageA );
 
         m_kMesh.AttachGlobalState(m_kMaterial);
         m_kMesh.AttachEffect(m_kLightShader);
@@ -137,13 +176,19 @@ public class VolumeSurface extends VolumeObject
             m_kMesh.VBuffer.SetColor3( 0, i, kColor );
         }
         m_kMesh.VBuffer.Release();
-        m_kMaterial.Ambient = kColor;
-        m_kMaterial.Diffuse = kColor;
+        m_kMaterial.Diffuse.SetData(kColor);;
     }
     
     public void Blend( float fValue )
     {
         m_kLightShader.Blend(fValue);
+    }
+    
+    
+    public void SetSurfaceTexture( boolean bOn, boolean bUseNewImage, boolean bUseNewLUT )
+    {
+        m_kLightShader.SetSurfaceTexture(bOn, bUseNewImage, bUseNewLUT);
+        m_bTextureOn = bOn;
     }
     
         /**
@@ -294,6 +339,22 @@ public class VolumeSurface extends VolumeObject
     }
 
 
+    public void Dropper(PickRecord kRecord, ColorRGBA rkDropperColor, Vector3f rkPickPoint )
+    {
+        m_kMesh.VBuffer.GetPosition3(kRecord.iV0, rkPickPoint );
+        rkPickPoint.multEquals( new Vector3f( 1.0f/m_fX, 1.0f/m_fY, 1.0f/m_fZ ));
+        int[] iExtents = m_kVolumeImageA.GetImage().getExtents();
+        rkPickPoint.multEquals( new Vector3f( iExtents[0], iExtents[1], iExtents[2] ));
+        
+        m_kMesh.VBuffer.GetColor4(0, kRecord.iV0, rkDropperColor );
+        if ( m_bTextureOn )
+        {
+            Vector3f kTexCoord = new Vector3f();
+            m_kMesh.VBuffer.GetTCoord3( 0, kRecord.iV0, kTexCoord );
+            m_kLightShader.Dropper( kTexCoord, rkDropperColor);
+        }
+    }
+    
     public void Erase( Renderer kRenderer, PickRecord kRecord, int iBrushSize )
     {
         if ( !m_bPainted )
@@ -378,6 +439,17 @@ public class VolumeSurface extends VolumeObject
         FloatBuffer kData = FloatBuffer.wrap(afCompatible);
         kData.rewind();
         kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, iMin*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
+    }
+    
+    
+    public void SetLUTNew( ModelLUT kLUT, ModelRGB kRGBT )
+    {
+        m_kLightShader.SetLUTNew(kLUT, kRGBT);
+    }    
+    
+    public void SetImageNew( ModelImage kImage )
+    {
+        m_kLightShader.SetImageNew(kImage);
     }
 
 
@@ -645,4 +717,5 @@ public class VolumeSurface extends VolumeObject
     private boolean m_bHasPerVertexColor = false;
     private ColorRGBA[] m_akBackupColor = null;
     private boolean m_bPainted = false;
+    private boolean m_bTextureOn = false;
 }

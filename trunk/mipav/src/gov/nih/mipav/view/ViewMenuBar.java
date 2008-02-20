@@ -260,6 +260,8 @@ public class ViewMenuBar {
                                                                                            "WaterShedITK", 0, null,
                                                                                             false), 
                                                              }),
+                                       menuBuilder.makeMenu("Insight toolkit (auto ITK)", false,
+                                               new JMenuItem[] {}),
                                         menuBuilder.makeMenu("Microscopy", false,
                                                              new JMenuItem[] {
                                                                  menuBuilder.makeMenu("Colocalization", false,

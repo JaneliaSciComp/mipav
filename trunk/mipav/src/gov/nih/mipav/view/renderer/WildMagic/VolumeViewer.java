@@ -90,6 +90,7 @@ implements MouseListener, ItemListener, ChangeListener {
     private JPanelSurface_WM surfaceGUI;
     private JPanelDisplay_WM displayGUI;
     private JPanelSculptor sculptGUI;
+    private JPanelSurfaceTexture_WM surfaceTextureGUI;
 
     private JCheckBox m_kDisplayVolumeCheck;
     private JCheckBox m_kDisplaySlicesCheck;
@@ -247,6 +248,9 @@ implements MouseListener, ItemListener, ChangeListener {
 
     /** DOCUMENT ME! */
     private JPanel slicePanel;
+    
+    /** DOCUMENT ME! */
+    private JPanel surfaceTexturePanel;
 
     /** Previoius tab index recorder. */
     private int storeTabbedPaneIndex = 0;
@@ -459,14 +463,13 @@ implements MouseListener, ItemListener, ChangeListener {
 
 //             surRender.getSurfaceDialog().resizePanel(maxPanelWidth, height);
         } else if (command.equals("SurfaceTexture")) {
-//             insertTab("SurfaceTexture", surRender.getSurfaceTexturePanel());
-//             insertSurfaceTab("SurfaceTexture", surRender.getSurfaceTexturePanel());
-//             setSize(getSize().width, getSize().height - 1);
-
-//             int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
-//                          panelToolbar.getHeight();
-
-//             surRender.getSurfaceDialog().resizePanel(maxPanelWidth, height);
+            insertTab("SurfaceTexture", surfaceTexturePanel);
+            surfaceTextureGUI.getMainPanel().setVisible(true);
+            surfaceTextureGUI.setSurfacePanel(surfaceGUI);
+            if ( surfaceGUI.surfaceAdded() )
+            {
+                surfaceTextureGUI.setEnabled(true);
+            }
         } else if (command.equals("RFA")) {
 //             insertTab("RFA", probePanel);
 //             insertSurfaceTab("RFA", probePanel);
@@ -816,6 +819,14 @@ implements MouseListener, ItemListener, ChangeListener {
         maxPanelWidth = Math.max(slicePanel.getPreferredSize().width, maxPanelWidth);
     }
 
+    public void buildSurfaceTexturePanel()
+    {
+        surfaceTexturePanel = new JPanel();
+        surfaceTextureGUI = new JPanelSurfaceTexture_WM(this);
+        surfaceTexturePanel.add(surfaceTextureGUI.getMainPanel());
+        maxPanelWidth = Math.max(surfaceTexturePanel.getPreferredSize().width, maxPanelWidth);
+    }
+    
     /**
      * Build the adding surface control panel for the surface render.
      */
@@ -2218,6 +2229,7 @@ implements MouseListener, ItemListener, ChangeListener {
             buildClipPanel();
             buildSlicePanel();
             buildSurfacePanel();
+            buildSurfaceTexturePanel();
             buildProbePanel();
             buildCameraPanel();
             buildMousePanel();
@@ -2660,6 +2672,7 @@ implements MouseListener, ItemListener, ChangeListener {
         }
         sliceGUI.resizePanel(maxPanelWidth, height);
         surfaceGUI.resizePanel(maxPanelWidth, height);
+        surfaceTextureGUI.resizePanel(maxPanelWidth, height);
         displayGUI.resizePanel(maxPanelWidth, height);
         m_kLightsPanel.resizePanel(maxPanelWidth, height);
         ((JPanelClip_WM)clipBox).resizePanel(maxPanelWidth, height);
@@ -2848,6 +2861,13 @@ implements MouseListener, ItemListener, ChangeListener {
     }
     
     
+    public void setSurfaceTexture(String kSurfaceName, boolean bOn, boolean bUseNewImage, boolean bUseNewLUT)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.setSurfaceTexture(kSurfaceName, bOn, bUseNewImage, bUseNewLUT );
+        }
+    }
 
     public void setColor(String kSurfaceName, ColorRGB kColor)
     {
@@ -2907,11 +2927,11 @@ implements MouseListener, ItemListener, ChangeListener {
         return m_kAnimator;
     }
     
-    public void enablePaint( ColorRGBA kPaintColor, int iBrushSize, boolean bEnabled, boolean bPaint, boolean bErase )
+    public void enablePaint( ColorRGBA kPaintColor, int iBrushSize, boolean bEnabled, boolean bPaint, boolean bDropper, boolean bPaintCan, boolean bErase )
     {
         if ( raycastRenderWM != null )
         {
-            raycastRenderWM.enablePaint(kPaintColor, iBrushSize, bEnabled, bPaint, bErase);
+            raycastRenderWM.enablePaint(kPaintColor, iBrushSize, bEnabled, bPaint, bDropper, bPaintCan, bErase);
         }
     }
   
@@ -2922,4 +2942,30 @@ implements MouseListener, ItemListener, ChangeListener {
             raycastRenderWM.eraseAllPaint();
         }
     }
+    
+    public void setDropperColor( ColorRGBA kDropperColor, Vector3f kPickPoint )
+    {
+        if ( surfaceGUI != null )
+        {
+            surfaceGUI.setDropperColor(kDropperColor, kPickPoint);
+        }
+    }
+    
+    
+    public void SetLUTNew( String kSurfaceName, ModelLUT kLUT, ModelRGB kRGBT )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.SetLUTNew(kSurfaceName, kLUT, kRGBT);
+        }
+    }    
+    
+    public void SetImageNew(  String kSurfaceName, ModelImage kImage )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.SetImageNew(kSurfaceName, kImage);
+        }
+    }
+    
 }

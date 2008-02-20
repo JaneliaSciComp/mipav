@@ -197,6 +197,7 @@ public abstract class VolumeObject
     public void SetColor( ColorRGB kColor ){}
 
     public void Paint(Renderer kRenderer, PickRecord kRecord, ColorRGBA kPaintColor, int iBrushSize ) {}
+    public void Dropper(PickRecord kRecord, ColorRGBA rkDropperColor, Vector3f rkPickPoint ) {}
     public void Erase(Renderer kRenderer, PickRecord kRecord, int iBrushSize ) {}
 
     /** boolean to turn rendering on/off for this object. */

@@ -1736,7 +1736,6 @@ public class OpenGLRenderer extends Renderer
         GL gl = m_kDrawable.getGL();
 
         // Activate the texture unit in hardware that will manage this texture.
-        //System.err.println("OnLoadTexture");
         TextureID pkResource = new TextureID();
         pkResource.TextureObject = pkTexture;
         ResourceIdentifier rpkID = pkResource;
@@ -1763,7 +1762,7 @@ public class OpenGLRenderer extends Renderer
         gl.glGenTextures((int)1,m_aiParams,0);
         pkResource.ID = m_aiParams[0];
         gl.glBindTexture(eTarget,pkResource.ID);
-/*
+
         System.err.print( "     LoadTexture  " + pkTexture.GetImage().GetName() + " " + pkResource.ID + " SI "
                 + pkSI.GetName() + " " + pkSI.GetTextureUnit() + " " + pkSI.GetBaseRegister() );
         for ( int i = 0; i < pkTexture.GetImage().GetDimension(); i++ )
@@ -1771,7 +1770,7 @@ public class OpenGLRenderer extends Renderer
             System.err.print( " " + pkTexture.GetImage().GetBound(i) );
         }
         System.err.println();
-*/
+
         // Set the filter mode.
         Texture.FilterType eFType = pkTexture.GetFilterType();
         if (eFType == Texture.FilterType.NEAREST)

@@ -6,6 +6,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.*;
+import gov.nih.mipav.view.renderer.surfaceview.SurfaceRender;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -261,12 +262,10 @@ public class JPanelSurface_WM
         else if (command.equals("AdvancedMaterialOptions")) {
             displayAdvancedMaterialOptions(surfaceList.getSelectedIndices());
         } 
-        /*
         else if (command.equals("SurfaceTexture")) {
-            parentScene.getParentFrame().actionPerformed(new ActionEvent(m_kSurfaceTextureButton, 0, "SurfaceTexture"));
-        } else if (command.equals("ChangeLight")) {
-            m_kLightsControl.setVisible(true);
-        } */
+            m_kVolumeViewer.actionPerformed(new ActionEvent(m_kSurfaceTextureButton, 0, "SurfaceTexture"));
+        }
+
         else if (command.equals("SurfacePickable")) {
             setPickable(surfaceList.getSelectedIndices());
         }  
@@ -1057,10 +1056,46 @@ public class JPanelSurface_WM
                 m_kVolumeViewer.setPickable( (String)kList.elementAt(aiSelected[i]),
                         surfacePickableCB.isSelected());
             }
-
         }
     }
 
+    public void ImageAsTexture( boolean bTextureOn, boolean bUseNewImage, boolean bUseNewLUT )
+    {
+        int[] aiSelected = surfaceList.getSelectedIndices();
+        if ( m_kVolumeViewer != null )
+        {
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                m_kVolumeViewer.setSurfaceTexture( (String)kList.elementAt(aiSelected[i]),
+                        bTextureOn, bUseNewImage, bUseNewLUT);
+            }
+        }
+        enableSurfacePaintCan(bTextureOn);
+    }
+    
+    public void SetLUTNew(  ModelLUT kLUT, ModelRGB kRGBT )
+    {
+        int[] aiSelected = surfaceList.getSelectedIndices();
+        if ( m_kVolumeViewer != null )
+        {
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                m_kVolumeViewer.SetLUTNew( (String)kList.elementAt(aiSelected[i]), kLUT, kRGBT);
+            }
+        }
+    }
+    
+    public void SetImageNew(  ModelImage kImage )
+    {
+        int[] aiSelected = surfaceList.getSelectedIndices();
+        if ( m_kVolumeViewer != null )
+        {
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                m_kVolumeViewer.SetImageNew( (String)kList.elementAt(aiSelected[i]), kImage);
+            }
+        }
+    }
 
     /**
      */
@@ -1135,6 +1170,24 @@ public class JPanelSurface_WM
         return surfacePickableCB.isSelected();
     }
 
+    public boolean surfaceAdded()
+    {
+        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+        if ( kList.size() > 0 )
+        {
+            return true;
+        }
+        return false;
+    }
+    
+    public void setDropperColor( ColorRGBA kDropperColor, Vector3f kPickPoint )
+    {
+        if ( m_kSurfacePaint != null )
+        {
+            m_kSurfacePaint.setDropperColor(kDropperColor, kPickPoint);
+        }
+    }
+    
     /**
      * Cancel the color dialog, change nothing.
      */
