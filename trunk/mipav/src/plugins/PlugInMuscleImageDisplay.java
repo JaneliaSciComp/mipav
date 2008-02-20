@@ -2988,11 +2988,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	            		}
                 		}
                 		updateImages(true);
-                		getComponentImage().getVOIHandler().showVOIProperties(true);
+                		getComponentImage().getVOIHandler().showColorDialog();
                 	}
                 }
             });
-			colorButton.setActionCommand("VOIColor");
 			add(colorButton);
 		}
 		
