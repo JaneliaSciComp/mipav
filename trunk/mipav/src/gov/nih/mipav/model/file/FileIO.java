@@ -2998,14 +2998,9 @@ public class FileIO {
     private ModelImage readAnalyze(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
         FileAnalyze imageFile;
-        String headerFile = FileInterfile.isInterfile(fileName, fileDir);
 
         if (FileCheshire.isCheshire(fileName, fileDir)) {
             image = readCheshire(fileName, fileDir);
-        } else if (headerFile != null) {
-            image = readInterfile(headerFile, fileDir, one);
-        } else if (FileNIFTI.isNIFTI(fileName, fileDir)) {
-            image = readNIFTI(fileName, fileDir, one);
         } else {
 
             // most likely an Analyze file
