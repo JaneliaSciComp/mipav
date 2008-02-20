@@ -280,6 +280,9 @@ implements MouseListener, ItemListener, ChangeListener {
     private JSlider m_kVolumeBlendSlider;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
+    /**
+     * Specific constructor call from the VolumeViewerDTI.   
+     */
     public VolumeViewer() {
     	super(null, null);
     }
