@@ -948,82 +948,100 @@ public class FileUtility {
                 }
             } else if (suffix.equalsIgnoreCase(".img")) {
 
-                // Both ANALYZE and NIFTI use .img and .hdr
+                // ANALYZE, Interfile, and NIFTI use .img and .hdr
                 if (doWrite) {
                     JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(ViewUserInterface.getReference().getMainFrame());
 
                     if (!choice.okayPressed()) {
                         fileType = FileUtility.ERROR;
-                    } else if (choice.isAnalyzeFile()) {
-                        fileType = FileUtility.ANALYZE;
-                    } else {
-                        fileType = FileUtility.NIFTI;
+                    } 
+                    else {
+                        fileType = choice.fileType();
                     }
                 } else { // read
-                    fileType = FileUtility.ANALYZE;
 
                     int p = fileName.lastIndexOf(".");
                     String fileHeaderName = fileName.substring(0, p + 1) + "hdr";
+                    String headerFile = FileInterfile.isInterfile(fileHeaderName, fileDir);
+                    if (headerFile != null) {
+                        fileType = FileUtility.INTERFILE;
+                    }
+                    else {
+                        fileType = FileUtility.ANALYZE;
+    
 
-                    try {
-                        File file = new File(fileDir + fileHeaderName);
-                        RandomAccessFile raFile = new RandomAccessFile(file, "r");
-
-                        raFile.seek(344L);
-
-                        char[] niftiName = new char[4];
-
-                        for (i = 0; i < 4; i++) {
-                            niftiName[i] = (char) raFile.readUnsignedByte();
+                        try {
+                            File file = new File(fileDir + fileHeaderName);
+                            RandomAccessFile raFile = new RandomAccessFile(file, "r");
+    
+                            raFile.seek(344L);
+    
+                            char[] niftiName = new char[4];
+    
+                            for (i = 0; i < 4; i++) {
+                                niftiName[i] = (char) raFile.readUnsignedByte();
+                            }
+    
+                            raFile.close();
+    
+                            if ((niftiName[0] == 'n') && ((niftiName[1] == 'i') || (niftiName[1] == '+')) &&
+                                    (niftiName[2] == '1') && (niftiName[3] == '\0')) {
+                                fileType = FileUtility.NIFTI;
+                            }
+                        } catch (OutOfMemoryError error) {
+                            System.gc();
+                        } catch (FileNotFoundException e) {
+                            System.gc();
+                        } catch (IOException e) {
+                            System.gc();
                         }
-
-                        raFile.close();
-
-                        if ((niftiName[0] == 'n') && ((niftiName[1] == 'i') || (niftiName[1] == '+')) &&
-                                (niftiName[2] == '1') && (niftiName[3] == '\0')) {
-                            fileType = FileUtility.NIFTI;
-                        }
-                    } catch (OutOfMemoryError error) {
-                        System.gc();
-                    } catch (FileNotFoundException e) {
-                        System.gc();
-                    } catch (IOException e) {
-                        System.gc();
                     }
                 }
             } else if (suffix.equalsIgnoreCase(".hdr")) {
-                String headerFile = FileInterfile.isInterfile(fileName, fileDir);
-                if (headerFile != null) {
-                    fileType = FileUtility.INTERFILE;
-                }
-                else {
-                    fileType = FileUtility.ANALYZE;
+                if (doWrite) {
+                    // ANALYZE, Interfile, and NIFTI use .img and .hdr
+                    JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(ViewUserInterface.getReference().getMainFrame());
 
-                    try {
-                        File file = new File(fileDir + fileName);
-                        RandomAccessFile raFile = new RandomAccessFile(file, "r");
-
-                        raFile.seek(344L);
-
-                        char[] niftiName = new char[4];
-
-                        for (i = 0; i < 4; i++) {
-                            niftiName[i] = (char) raFile.readUnsignedByte();
-                        }
-
-                        raFile.close();
-
-                        if ((niftiName[0] == 'n') && ((niftiName[1] == 'i') || (niftiName[1] == '+')) &&
-                                (niftiName[2] == '1') && (niftiName[3] == '\0')) {
-                            fileType = FileUtility.NIFTI;
-                        }
-                    } catch (OutOfMemoryError error) {
-                        System.gc();
-                    } catch (FileNotFoundException e) {
-                        System.gc();
-                    } catch (IOException e) {
-                        System.gc();
-                    }    
+                    if (!choice.okayPressed()) {
+                        fileType = FileUtility.ERROR;
+                    } 
+                    else {
+                        fileType = choice.fileType();
+                    }
+                } else { // read
+                    String headerFile = FileInterfile.isInterfile(fileName, fileDir);
+                    if (headerFile != null) {
+                        fileType = FileUtility.INTERFILE;
+                    }
+                    else {
+                        fileType = FileUtility.ANALYZE;
+    
+                        try {
+                            File file = new File(fileDir + fileName);
+                            RandomAccessFile raFile = new RandomAccessFile(file, "r");
+    
+                            raFile.seek(344L);
+    
+                            char[] niftiName = new char[4];
+    
+                            for (i = 0; i < 4; i++) {
+                                niftiName[i] = (char) raFile.readUnsignedByte();
+                            }
+    
+                            raFile.close();
+    
+                            if ((niftiName[0] == 'n') && ((niftiName[1] == 'i') || (niftiName[1] == '+')) &&
+                                    (niftiName[2] == '1') && (niftiName[3] == '\0')) {
+                                fileType = FileUtility.NIFTI;
+                            }
+                        } catch (OutOfMemoryError error) {
+                            System.gc();
+                        } catch (FileNotFoundException e) {
+                            System.gc();
+                        } catch (IOException e) {
+                            System.gc();
+                        }    
+                    }
                 }
             } else if (suffix.equalsIgnoreCase(".ima")) {
 
