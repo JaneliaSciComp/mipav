@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.*;
+import gov.nih.mipav.model.file.FileUtility;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -30,6 +31,9 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
 
     /** Radio button to indicate that an analyze img file should be written out. */
     private JRadioButton analyzeFile;
+    
+    /** Radio button to indicate that an Interfile img file should be written out. */
+    private JRadioButton interfileFile;
 
     /** Radio button to indicate that a nifti img file should be written out. */
     private JRadioButton niftiFile;
@@ -83,16 +87,20 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
     }
 
     /**
-     * Returns whether output of an analyze file was selected in the dialog.
+     * Returns whether analyze, interfile, or nifti
      *
-     * @return  whether an analyze .img file should be output
+     * @return  whether analyze, interfile, or nifti
      */
-    public boolean isAnalyzeFile() {
+    public int fileType() {
 
         if (analyzeFile.isSelected()) {
-            return true;
-        } else {
-            return false;
+            return FileUtility.ANALYZE;
+        } 
+        else if (interfileFile.isSelected()){
+            return FileUtility.INTERFILE;
+        }
+        else {
+            return FileUtility.NIFTI;
         }
     }
 
@@ -115,11 +123,13 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
 
         ButtonGroup writeGroup = new ButtonGroup();
         analyzeFile = WidgetFactory.buildRadioButton("Analyze file", true, writeGroup);
+        interfileFile = WidgetFactory.buildRadioButton("Interfile file", false, writeGroup);
         niftiFile = WidgetFactory.buildRadioButton("NIfTI file", false, writeGroup);
         alwaysSaveAnalyzeCheckBox = WidgetFactory.buildCheckBox("Always save .img files in Analyze format", false);
 
         manager.getConstraints().insets = new Insets(0, 15, 0, 10);
         manager.add(analyzeFile);
+        manager.addOnNextLine(interfileFile);
         manager.addOnNextLine(niftiFile);
 
         manager.getConstraints().insets = new Insets(10, 0, 0, 0);
