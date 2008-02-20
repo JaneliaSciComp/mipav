@@ -55,6 +55,8 @@ public class FileInterfile extends FileBase {
 
     /** DOCUMENT ME! */
     private String dataFileName = null;
+    
+    private String headerFileName = null;
 
     /** DOCUMENT ME! */
     private int dataStartingBlock;
@@ -404,8 +406,31 @@ public class FileInterfile extends FileBase {
         int index;
 
         try {
-            file = new File(fileDir + originalFileName);
-            raFile = new RandomAccessFile(file, "r");
+            index = originalFileName.length();
+
+            for (i = originalFileName.length() - 1; i >= 0; i--) {
+
+                if (originalFileName.charAt(i) == '.') {
+                    index = i;
+
+                    break;
+                }
+            }
+
+            String fileHeaderName = originalFileName.substring(0, index) + ".hdr";
+            File fileHeader = new File(fileDir + fileHeaderName);
+
+            if (fileHeader.exists() == false) {
+                fileHeaderName = originalFileName.substring(0, index) + ".HDR";
+                fileHeader = new File(fileDir + fileHeaderName);
+
+                if (fileHeader.exists() == false) {
+                    fileHeaderName = originalFileName;
+                    fileHeader = new File(fileDir + fileHeaderName);
+                }
+            }
+          
+            raFile = new RandomAccessFile(fileHeader, "r");
             fileLength = raFile.length();
 
             fileInfo = new FileInfoInterfile(originalFileName, fileDir, FileUtility.INTERFILE); // dummy fileInfo
@@ -993,6 +1018,8 @@ public class FileInterfile extends FileBase {
                         fileInfo.setAcquiredStudyDuration(valueString);
                     } else if (keyString.equalsIgnoreCase("R-RHISTOGRAM")) {
                         fileInfo.setRRHistogram(valueString);
+                    } else if (keyString.equalsIgnoreCase("ORGAN")) {
+                        fileInfo.setOrgan(valueString);
                     }
                     // else {
                     // MipavUtil.displayError(keyString);
@@ -1342,6 +1369,7 @@ public class FileInterfile extends FileBase {
         String patientSex = null;
         String studyID = null;
         String examType = null;
+        String organ = null;
         String dataCompression = null;
         String dataEncode = null;
         boolean generalImageData = false;
@@ -1461,7 +1489,19 @@ public class FileInterfile extends FileBase {
             tEnd = 0;
         }
 
-        file = new File(fileDir + originalFileName);
+        index = originalFileName.indexOf(".");
+
+        if (index != -1) {
+
+            if (originalFileName.length() > (index + 1))  {
+                dataFileName = originalFileName.substring(0, index + 1) + "img";
+                headerFileName = originalFileName.substring(0, index + 1) + "hdr";
+            }
+        } else {
+            dataFileName = originalFileName + ".img";
+            headerFileName = originalFileName + ".hdr";
+        }
+        file = new File(fileDir + headerFileName);
         raFile = new RandomAccessFile(file, "rw");
 
         try { // In this case, the file must be Interfile
@@ -1571,19 +1611,7 @@ public class FileInterfile extends FileBase {
 
         lineBytes = new String("data offset in bytes := 0\r\n").getBytes();
         raFile.write(lineBytes);
-        index = originalFileName.indexOf(".");
-
-        if (index != -1) {
-
-            if ((originalFileName.length() > (index + 1)) &&
-                    (originalFileName.substring(index + 1, originalFileName.length()).equalsIgnoreCase("IMG"))) {
-                dataFileName = originalFileName.substring(0, index + 1) + "int";
-            } else {
-                dataFileName = originalFileName.substring(0, index + 1) + "img";
-            }
-        } else {
-            dataFileName = originalFileName + ".img";
-        }
+        
 
         dataFile = new File(fileDir + dataFileName);
 
@@ -1661,6 +1689,15 @@ public class FileInterfile extends FileBase {
         raFile.write(lineBytes);
         lineBytes = new String("data encode := none\r\n").getBytes();
         raFile.write(lineBytes);
+        
+        if (!simple) {
+            organ = fileInfo.getOrgan();
+            
+            if (organ != null) {
+                lineBytes = new String("organ := " + organ + "\r\n").getBytes();
+                raFile.write(lineBytes);
+            }
+        }
         lineBytes = new String("!GENERAL IMAGE DATA :=\r\n").getBytes();
         raFile.write(lineBytes);
 
