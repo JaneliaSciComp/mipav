@@ -1171,7 +1171,7 @@ public class FileInterfile extends FileBase {
                 fileInfo.setEnergyWindowsNumber("1");
             }
 
-            if (haveEnergyWindowsNumber && !haveImagesPerEWindow) {
+            if (!haveImagesPerEWindow) {
                 fileInfo.setImagesPerEWindowBrief("1");
             }
 
