@@ -151,6 +151,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
     protected int lastVOI_UID = -1;
     
+    /** Color chooser for VOI color (outside of the properties dialog) */
+    protected ViewJColorChooser colorChooser = null;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -5333,6 +5336,38 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             }
         }
     }
+    
+    public void showColorDialog() {
+    	 ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
+
+         int i;
+         int nVOI = VOIs.size();
+
+         for (i = 0; i < nVOI; i++) {
+
+             if ((VOIs.VOIAt(i).isActive() == true) &&
+                     ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) ||
+                          (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE) ||
+                          (VOIs.VOIAt(i).getCurveType() == VOI.POINT) ||
+                          (VOIs.VOIAt(i).getCurveType() == VOI.LINE) ||
+                          (VOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR))) {
+                 break;
+             } else if ((VOIs.VOIAt(i).isActive() == true) && (VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION)) {
+                 i = -1;
+
+                 break;
+             }
+         }
+         
+         if (i == nVOI && i == -1) {
+            return;
+         } 
+    	
+         colorChooser = new ViewJColorChooser(new Frame(), "Pick VOI color", 
+        		 new OKVOIColorListener(VOIs.VOIAt(i)),
+        		 new ActionListener() { public void actionPerformed(ActionEvent ae) {}});
+        
+    }
 
     /**
      * Undoes the last VOI manipulation.
@@ -6319,4 +6354,34 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         return zoomedGon;
     }
 
+    
+    /**
+     * Listener class (for Color Chooser) that updates the VOI color without the need of the VOI Properties dialog
+     * @author linkb
+     *
+     */
+    private class OKVOIColorListener implements ActionListener {
+
+    	private VOI voi;
+    	
+    	public OKVOIColorListener(VOI voi) {
+    		super();
+    		this.voi = voi;
+    	}
+    	
+        /**
+         * Get color from chooser and set VOI color.
+         *
+         * @param  e  Event that triggered function.
+         */
+        public void actionPerformed(ActionEvent e) {
+            Color color = colorChooser.getColor();
+            if (voi != null) {
+            	voi.setColor(color);
+            	fireVOISelectionChange(voi);
+            	updateVOIColor(color, lastVOI_UID);
+            }
+        }
+    }
+    
 }

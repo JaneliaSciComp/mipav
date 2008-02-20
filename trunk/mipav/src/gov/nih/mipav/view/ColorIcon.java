@@ -2,7 +2,7 @@ package gov.nih.mipav.view;
 
 
 import java.awt.*;
-
+import gov.nih.mipav.model.structures.*;
 import javax.swing.*;
 
 
@@ -15,7 +15,7 @@ import javax.swing.*;
  * @see      ColorRenderer
  */
 
-public class ColorIcon implements Icon {
+public class ColorIcon extends ModelSerialCloneable implements Icon {
 
 	public static final Color TRANSPARENT = new Color(0, 0, 0, 0);
 	public static final Color FOREGROUND = new Color(122, 138, 153, 255);
