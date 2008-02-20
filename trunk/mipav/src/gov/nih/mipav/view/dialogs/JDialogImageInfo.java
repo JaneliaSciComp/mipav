@@ -664,7 +664,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 return null;
             }
         } catch (OutOfMemoryError error) {
-            MipavUtil.displayError("Out of memory: JDialogTransform.displayMatrixFileMenu");
+            MipavUtil.displayError("Out of memory");
 
             return null;
         }
