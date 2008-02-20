@@ -2377,6 +2377,8 @@ public class FileNIFTI extends FileBase {
             oneFile = true;
         } else if (suffix.equalsIgnoreCase(".img")) {
             oneFile = false;
+        } else if (suffix.equalsIgnoreCase(".hdr")) {
+            oneFile = false;
         } else {
             JDialogNIFTIChoice choice = new JDialogNIFTIChoice(ViewUserInterface.getReference().getMainFrame());
 
@@ -2391,6 +2393,9 @@ public class FileNIFTI extends FileBase {
 
         if (index != -1) {
             fhName = fileName.substring(0, index);
+            if (suffix.equalsIgnoreCase(".hdr")) {
+                fileName = fhName + ".img";
+            }
         } else {
             fhName = fileName.substring(0);
         }
