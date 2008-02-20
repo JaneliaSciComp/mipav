@@ -438,6 +438,8 @@ public class FileInfoInterfile extends FileInfoBase {
 
     /** DOCUMENT ME! */
     private String zAxisFilter = null;
+    
+    private String organ = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -543,6 +545,10 @@ public class FileInfoInterfile extends FileInfoBase {
 
         if (dataEncode != null) {
             dialog.append("Data encode = " + dataEncode + "\n");
+        }
+        
+        if (organ != null) {
+            dialog.append("Organ = " + organ + "\n");
         }
 
         if (generalImageData) {
@@ -1984,6 +1990,14 @@ public class FileInfoInterfile extends FileInfoBase {
      */
     public String getZAxisFilter() {
         return zAxisFilter;
+    }
+    
+    public void setOrgan(String organ) {
+        this.organ = organ;
+    }
+    
+    public String getOrgan() {
+        return organ;
     }
 
     /**
