@@ -2140,6 +2140,16 @@ public class ModelImage extends ModelStorageBase {
                     } else if (this == imgL) {
                         ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(null, LUT, forceShow, -1);
                     }
+                }  else if ((frameList.elementAt(i) instanceof
+                                gov.nih.mipav.view.renderer.WildMagic.JPanelSurfaceTexture_WM)) {
+                    ModelImage imgS = ((gov.nih.mipav.view.renderer.WildMagic.JPanelSurfaceTexture_WM)
+                                           frameList.elementAt(i)).getImageSeparate();
+                    ModelImage imgL = ((gov.nih.mipav.view.renderer.WildMagic.JPanelSurfaceTexture_WM)
+                                           frameList.elementAt(i)).getImageLink();
+
+                    if (this == imgS) {
+                        ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(LUT, null, forceShow, -1);
+                    }
                 } else if ((frameList.elementAt(i) instanceof
                         gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDWI2DTI)) {
                     ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages();
@@ -2206,7 +2216,18 @@ public class ModelImage extends ModelStorageBase {
                 } else if (this == imgL) {
                     ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i)).setRGBTB(RGBT);
                 }
+            } else if ((frameList.elementAt(i) instanceof
+                            gov.nih.mipav.view.renderer.WildMagic.JPanelSurfaceTexture_WM)) {
+                ModelImage imgS = ((gov.nih.mipav.view.renderer.WildMagic.JPanelSurfaceTexture_WM) frameList.elementAt(i))
+                                      .getImageSeparate();
+                ModelImage imgL = ((gov.nih.mipav.view.renderer.WildMagic.JPanelSurfaceTexture_WM) frameList.elementAt(i))
+                                      .getImageLink();
+
+                if (this == imgS) {
+                    ((gov.nih.mipav.view.renderer.WildMagic.JPanelSurfaceTexture_WM) frameList.elementAt(i)).setRGBTA(RGBT);
+                } 
             }
+            
         }
 
         if ((getHistoLUTFrame() != null) && (forceShow == true)) {

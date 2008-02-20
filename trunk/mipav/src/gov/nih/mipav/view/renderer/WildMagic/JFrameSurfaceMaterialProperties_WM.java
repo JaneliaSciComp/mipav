@@ -33,7 +33,7 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
     public static int AMBIENT = 0;
     public static int DIFFUSE = 1;
     public static int EMISSIVE = 2;
-    public static int SPECULAR = 0;
+    public static int SPECULAR = 3;
 
 
     /** Use serialVersionUID for interoperability. */

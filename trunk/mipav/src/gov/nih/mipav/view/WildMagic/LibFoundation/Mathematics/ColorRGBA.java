@@ -105,6 +105,21 @@ public class ColorRGBA
         m_afTuple[2] = fB;
         m_afTuple[3] = fA;
     }
+    
+
+    /** Sets the color red,green,blue value
+     * @param fR, red
+     * @param fG, green
+     * @param fB, blue
+     * @param fA, alpha
+     */
+    public final void SetData ( ColorRGBA kColor ) 
+    {
+        m_afTuple[0] = kColor.m_afTuple[0];
+        m_afTuple[1] = kColor.m_afTuple[1];
+        m_afTuple[2] = kColor.m_afTuple[2];
+        m_afTuple[3] = kColor.m_afTuple[3];
+    }
 
     /** Returns the color red value
      * @return  the color red value

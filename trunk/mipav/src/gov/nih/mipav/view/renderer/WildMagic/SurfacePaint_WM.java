@@ -167,7 +167,7 @@ public class SurfacePaint_WM
     public void setEnabled( boolean flag )
     {
         mPaintBrushButton.setEnabled( flag );
-        mDropperButton.setEnabled( false );
+        mDropperButton.setEnabled( flag );
         mEraserButton.setEnabled( flag );
         mEraseAllButton.setEnabled( flag );
         mBrushSizeText.setEnabled( flag );
@@ -195,7 +195,7 @@ public class SurfacePaint_WM
     public void enableSurfacePaint( boolean flag )
     {
         mPaintBrushButton.setEnabled( flag );
-        mDropperButton.setEnabled( false );
+        mDropperButton.setEnabled( flag );
         mEraserButton.setEnabled( flag );
         mBrushSizeText.setEnabled( flag );
     }
@@ -242,7 +242,7 @@ public class SurfacePaint_WM
         }
         else if ( command.equals( "PaintCan" ) )
         {
-            //mPaintGrowDialog = new JDialogPaintGrow(null, this, null);
+            mPaintGrowDialog = new JDialogPaintGrow(null, this, null);
         }
         else if ( command.equals( "Eraser" ) )
         {
@@ -286,7 +286,7 @@ public class SurfacePaint_WM
             mEraserButton.isSelected();
 
         m_kVolumeViewer.enablePaint(mPaintColor, mBrushSize, m_bEnabled, mPaintBrushButton.isSelected(),
-                mEraserButton.isSelected());
+                mDropperButton.isSelected(), mPaintCanButton.isSelected(), mEraserButton.isSelected());
     }
 
     public JToolBar getToolBar() {
@@ -304,6 +304,14 @@ public class SurfacePaint_WM
     }
 
     /**
+     * Returns the ModelImage to paint into.
+     * @return paint/texture ModelImage
+     */
+    public ModelImage getPaintImage()
+    {
+        return m_kVolumeViewer.getImageA();
+    }
+    /**
      * Deletes all member variables, clean memory.
      */
     public void dispose() {}
@@ -317,7 +325,101 @@ public class SurfacePaint_WM
         mOpacity = opacity;
         mPaintColor.A( mOpacity );
     }
+    
+    public void setDropperColor( ColorRGBA kDropperColor, Vector3f kPickPoint )
+    {
+        if (  mPaintCanButton.isSelected() && (mPaintGrowDialog != null) )
+        {
+            regionGrow( m_kVolumeViewer.getImageA(), kPickPoint, kDropperColor );
+        }
+        else
+        {
+            mColorPaintButton.setBackground( new Color(kDropperColor.R(), kDropperColor.G(), kDropperColor.B()) );
+            mOpacity = kDropperColor.A();
+            mPaintColor.SetData(kDropperColor);
+        }
+    }
 
+    
+    /**
+     * Grows a region based on a starting point supplied. A voxel is added to
+     * the the paintMask mask if its intensity is between the the bounds which
+     * are also supplied.
+     *
+     * @param  kImage the image to grow the region in
+     * @param  kSeedPoint the starting point in the image
+     */
+    public void regionGrow( ModelImage kImage, Vector3f kSeedPoint, ColorRGBA kSeedColor  )
+    {
+        
+        mPaintGrowDialog.setPositionText("  X: " + String.valueOf(kSeedPoint.X()) +
+                                         " Y: " + String.valueOf(kSeedPoint.Y()) +
+                                         " Z: " + String.valueOf(kSeedPoint.Z()) + "  Color:  " +
+                                         kSeedColor.R() * 255.0f + " " + kSeedColor.G() * 255.0f + " " + kSeedColor.B() * 255.0f );
+        //Cursor cursor = getCursor();
+        //setCursor(MipavUtil.waitCursor);
+        
+        if ((mPaintGrowDialog.getFuzzyThreshold() == -2.0f) ||
+            (mPaintGrowDialog.getMaxSize() == -2) || (mPaintGrowDialog.getMaxDistance() == -2)) {
+            return;
+        }
+        BitSet paintMask = new BitSet();
+        try {
+
+            int[] imageExtents = kImage.getExtents();
+            Point3Ds seed = new Point3Ds( (short)kSeedPoint.X(),
+                                          (short)kSeedPoint.Y(),
+                                          (short)kSeedPoint.Z() );
+
+            AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(kImage, 1.0f, 1.0f);
+            regionGrowAlgo.setRunningInSeparateThread(false);
+
+            CubeBounds regionGrowBounds = new CubeBounds(imageExtents[0], 0, imageExtents[1], 0, imageExtents[2], 0);
+            int iCount = 0;
+            if ( !kImage.isColorImage() )
+            {
+                float less = mPaintGrowDialog.getLowerBound();
+                float more = mPaintGrowDialog.getUpperBound();
+                if (kImage.getType() == ModelStorageBase.BOOLEAN) {
+                    less = 0;
+                    more = 0;
+                }
+                iCount = regionGrowAlgo.regionGrow3D( paintMask, seed,
+                                             mPaintGrowDialog.getFuzzyThreshold(),
+                                             false,
+                                             mPaintGrowDialog.getDisplayFuzzy(),
+                                             mPaintGrowDialog,
+                                             kSeedColor.R() * 255.0f - less, kSeedColor.R() * 255.0f + more,
+                                             mPaintGrowDialog.getMaxSize(),
+                                             mPaintGrowDialog.getMaxDistance(),
+                                             mPaintGrowDialog.getVariableThresholds(),
+                                             0, regionGrowBounds);
+            }
+            else
+            {
+                iCount = regionGrowAlgo.regionGrow3D( paintMask, seed,
+                                             mPaintGrowDialog.getFuzzyThreshold(),
+                                             false,
+                                             mPaintGrowDialog.getDisplayFuzzy(),
+                                             mPaintGrowDialog,
+                                             kSeedColor.R() * 255.0f - mPaintGrowDialog.getLowerBoundR(),
+                                             kSeedColor.R() * 255.0f + mPaintGrowDialog.getUpperBoundR(),
+                                             kSeedColor.G() * 255.0f - mPaintGrowDialog.getLowerBoundG(),
+                                             kSeedColor.G() * 255.0f + mPaintGrowDialog.getUpperBoundG(),
+                                             kSeedColor.B() * 255.0f - mPaintGrowDialog.getLowerBoundB(),
+                                             kSeedColor.B() * 255.0f + mPaintGrowDialog.getUpperBoundB(),
+                                             mPaintGrowDialog.getMaxSize(),
+                                             mPaintGrowDialog.getMaxDistance(),
+                                             0, regionGrowBounds);
+            }
+            System.err.println( "regionGrow " + iCount );
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("Out of memory: ComponentEditImage.regionGrow");
+        }
+        //setCursor(cursor);
+    }
+    
     /**
      * Display the ModelImage color in the JDialogPaintGrow interface.
      * @param kPickPoint, the model triangle mesh point under the mouse.

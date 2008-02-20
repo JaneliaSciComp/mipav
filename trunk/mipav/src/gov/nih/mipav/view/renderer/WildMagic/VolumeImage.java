@@ -52,20 +52,22 @@ public class VolumeImage
     private Texture m_kNormalMapTargetA;
 
     private boolean m_bByte = true;
+    private ModelLUT m_kLUT = null;
 
     public VolumeImage( ModelImage kImage, ModelLUT kLUTA, ModelRGB kRGBTA )
     {
         m_kImageA = kImage;
+        m_kLUT = kLUTA;
         m_kColorMapA = InitColorMap(kLUTA, kRGBTA, new String("A"));
         m_kOpacityMapA = InitOpacityMap(m_kImageA, new String("A"));
         m_kOpacityMapA_GM = InitOpacityMap(m_kImageA, new String("A_GM"));
 
         /* Map the ModelImage volume data to a texture image, including for
          * the ModelImage gradient magnitude data: */
-        m_kVolumeA = UpdateData(m_kImageA, null, m_kVolumeTargetA, new String("A") );
+        m_kVolumeA = UpdateData(m_kImageA, null, m_kVolumeTargetA, m_bByte, new String("A") );
         
         m_kImageA_GM = CalcHistogramsGM( m_kImageA );
-        m_kVolumeA_GM = UpdateData(m_kImageA_GM, null, m_kVolumeTargetA_GM, new String("A_GM") );
+        m_kVolumeA_GM = UpdateData(m_kImageA_GM, null, m_kVolumeTargetA_GM, m_bByte, new String("A_GM") );
 
 
         m_kVolumeTargetA = new Texture();
@@ -113,7 +115,7 @@ public class VolumeImage
      * @param kPostfix, the string postfix to concatenate to the "ColorMap" image name.
      * @return GraphicsImage, the new GraphicsImage storing the colormap lookup table.
      */
-    public GraphicsImage InitColorMap ( ModelLUT kLUT, ModelRGB kRGBT, String kPostFix )
+    public static GraphicsImage InitColorMap ( ModelLUT kLUT, ModelRGB kRGBT, String kPostFix )
     {
         byte[] aucData;
         if ( kLUT == null )
@@ -163,7 +165,7 @@ public class VolumeImage
         if ( iImage == 0 )
         {
             m_kImageA = kImage;
-            this.UpdateData( m_kImageA, m_kVolumeA, m_kVolumeTargetA, new String( "A" ) );
+            VolumeImage.UpdateData( m_kImageA, m_kVolumeA, m_kVolumeTargetA, m_bByte, new String( "A" ) );
         }
     }
 
@@ -174,8 +176,8 @@ public class VolumeImage
      * @param kVolumeTexture, the volume data texture.
      * @param kPostFix, the postfix string for the image name.
      */
-    private GraphicsImage UpdateData( ModelImage kImage, GraphicsImage kVolumeImage,
-                                      Texture kVolumeTexture, String kPostFix )
+    public static GraphicsImage UpdateData( ModelImage kImage, GraphicsImage kVolumeImage,
+                                      Texture kVolumeTexture, boolean bByte, String kPostFix )
     {
         int iXBound = kImage.getExtents()[0];
         int iYBound = kImage.getExtents()[1];
@@ -219,7 +221,7 @@ public class VolumeImage
             byte[] abData = null;
             float[] afData = null;
 
-            if ( m_bByte )
+            if ( bByte )
             {
                 abData = new byte[iXBound*iYBound*iZBound];
                 
@@ -264,7 +266,7 @@ public class VolumeImage
 
             if ( kVolumeTexture != null )
             {
-                if ( m_bByte )
+                if ( bByte )
                 {
                     kVolumeTexture.GetImage().SetData( abData, iXBound, iYBound, iZBound );
                 }
@@ -488,6 +490,10 @@ public class VolumeImage
      */
     public void UpdateImages(ModelLUT kLUTa, ModelLUT kLUTb)
     {
+        if ( kLUTa == null )
+        {
+            return;
+        }
         this.UpdateImages( m_kColorMapTargetA, m_kColorMapA, kLUTa );
         /*
         if ( m_kImageB != null )
@@ -495,6 +501,7 @@ public class VolumeImage
             this.UpdateImages( m_kColorMapTargetB, m_kColorMapB, kLUTb );
         }
         */
+        m_kLUT = kLUTa;
     }
 
     /**
@@ -503,7 +510,7 @@ public class VolumeImage
      * @param kColorMap, the color-map GraphicsImage object (stores data).
      * @param kLUT, the new LUT.
      */
-    private void UpdateImages(Texture kColorTexture, GraphicsImage kColorMap, ModelLUT kLUT)
+    public static void UpdateImages(Texture kColorTexture, GraphicsImage kColorMap, ModelLUT kLUT)
     {
         if ( kLUT == null )
         {
@@ -609,7 +616,7 @@ public class VolumeImage
      * @param kImage, the GraphicsImage containing the colormap data.
      * @param kRGBT, the new ModelRGB.
      */
-    private void SetRGBT( Texture kTexture, GraphicsImage kImage, ModelRGB kRGBT )
+    public static void SetRGBT( Texture kTexture, GraphicsImage kImage, ModelRGB kRGBT )
     {
         if ( kRGBT == null )
         {
@@ -636,6 +643,11 @@ public class VolumeImage
     public ModelImage GetImage()
     {
         return m_kImageA;
+    }
+    
+    public ModelLUT GetLUT()
+    {
+        return m_kLUT;
     }
 
 }

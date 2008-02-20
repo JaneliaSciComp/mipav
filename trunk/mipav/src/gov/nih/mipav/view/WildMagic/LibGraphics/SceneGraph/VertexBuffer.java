@@ -448,7 +448,6 @@ public class VertexBuffer extends Bindable
     {
         assert(m_kAttributes.GetTChannels(iUnit) == 2);
         int iIndex = m_iVertexSize*i + m_kAttributes.GetTOffset(iUnit);
-        System.err.println("public Vector3f TCoord3 (int iUnit, int i)");
         kResult.SetData( m_afChannel[ iIndex + 0 ],
                              m_afChannel[ iIndex + 1 ],
                              m_afChannel[ iIndex + 2 ] );

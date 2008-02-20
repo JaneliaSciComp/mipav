@@ -42,23 +42,39 @@ public class Bindable extends GraphicsObject
      */
     public ResourceIdentifier GetIdentifier (Renderer pkUser)
     {
-        for (int i = 0; i < m_kInfoArray.size(); i++)
+        if ( !m_bShared )
         {
-            Info rkInfo = m_kInfoArray.get(i);
-            if (rkInfo.User == pkUser)
+            for (int i = 0; i < m_kInfoArray.size(); i++)
             {
-                return rkInfo.ID;
+                Info rkInfo = m_kInfoArray.get(i);
+                if (rkInfo.User == pkUser)
+                {
+                    return rkInfo.ID;
+                }
             }
-        }
 
-        // The resource is not yet bound to the renderer.
+            // The resource is not yet bound to the renderer.
+            return null;
+        }
+        if ( m_kInfo != null )
+        {
+            return m_kInfo.ID;
+        }
         return null;
     }
 
     /** Get number of bound resources. */
     public int GetInfoQuantity ()
     {
-        return m_kInfoArray.size();
+        if ( !m_bShared )
+        {
+            return m_kInfoArray.size();
+        }
+        else if ( m_kInfo != null )
+        {
+            return 1;
+        }
+        return 0;
     }
 
     /** Use these functions when the resource has multiple representations in
@@ -69,26 +85,41 @@ public class Bindable extends GraphicsObject
      */
     public ResourceIdentifier GetIdentifier (int i, Renderer pkUser)
     {
-        if (0 <= i && i < m_kInfoArray.size())
+        if ( !m_bShared )
         {
-            Info rkInfo = m_kInfoArray.get(i);
-            if (rkInfo.User == pkUser)
+            if (0 <= i && i < m_kInfoArray.size())
             {
-                return rkInfo.ID;
+                Info rkInfo = m_kInfoArray.get(i);
+                if (rkInfo.User == pkUser)
+                {
+                    return rkInfo.ID;
+                }
             }
-        }
 
-        // The resource is not yet bound to the renderer.
+            // The resource is not yet bound to the renderer.
+            return null;
+        }        
+        if ( m_kInfo != null )
+        {
+            return m_kInfo.ID;
+        }
         return null;
     }
 
     /** Release the resources, call the release functions they contain. */
     public void Release ()
     {
-        while (m_kInfoArray.size() > 0)
+        if ( !m_bShared )
         {
-            Info rkInfo = m_kInfoArray.get(0);
-            rkInfo.Release.Release(this);
+            while (m_kInfoArray.size() > 0)
+            {
+                Info rkInfo = m_kInfoArray.get(0);
+                rkInfo.Release.Release(this);
+            }
+        }
+        else
+        {
+            m_kInfo.Release.Release(this);
         }
     }
 
@@ -103,38 +134,63 @@ public class Bindable extends GraphicsObject
     protected void OnLoad (Renderer pkUser, ReleaseFunction oRelease,
                            ResourceIdentifier pkID)
     {
-        Info kInfo = new Info();
-        kInfo.User = pkUser;
-        kInfo.Release = oRelease;
-        kInfo.ID = pkID;
-        m_kInfoArray.add(kInfo);
+        if ( !m_bShared )
+        {
+            Info kInfo = new Info();
+            kInfo.User = pkUser;
+            kInfo.Release = oRelease;
+            kInfo.ID = pkID;
+            m_kInfoArray.add(kInfo);
+        }
+        else
+        {
+            m_kInfo = new Info();
+            m_kInfo.User = null;
+            m_kInfo.Release = oRelease;
+            m_kInfo.ID = pkID;
+        }
     }
-
+    
     /** Called when the resouce is released. Removes Info from array.
      * @param pkUser, Renderer the resources are bound to.
      * @param pkID, the resource identifier ID.
      */
     protected void OnRelease (Renderer pkUser, ResourceIdentifier pkID)
     {
-        int iQuantity = m_kInfoArray.size();
-        for (int i = 0; i < iQuantity; i++)
+        if ( !m_bShared )
         {
-            Info rkInfo = m_kInfoArray.get(i);
-            if (rkInfo.User == pkUser && rkInfo.ID == pkID)
+            int iQuantity = m_kInfoArray.size();
+            for (int i = 0; i < iQuantity; i++)
             {
-                // Move the last array element to the current slot, if necessary.
-                if (i < --iQuantity)
+                Info rkInfo = m_kInfoArray.get(i);
+                if (rkInfo.User == pkUser && rkInfo.ID == pkID)
                 {
-                    m_kInfoArray.set(i, m_kInfoArray.get(iQuantity) );
-                }
+                    // Move the last array element to the current slot, if necessary.
+                    if (i < --iQuantity)
+                    {
+                        m_kInfoArray.set(i, m_kInfoArray.get(iQuantity) );
+                    }
 
-                // Remove the last array element.
-                m_kInfoArray.remove(iQuantity);
-                return;
+                    // Remove the last array element.
+                    m_kInfoArray.remove(iQuantity);
+                    return;
+                }
+            }
+        }
+        else
+        {
+            if ( (m_kInfo != null) && (m_kInfo.ID == pkID) )
+            {
+                m_kInfo = null;
             }
         }
     }
 
+    public void SetShared( boolean bShared )
+    {
+        m_bShared = bShared;
+    }
+    
     /** Resource information class. */
     protected class Info
     {
@@ -150,4 +206,6 @@ public class Bindable extends GraphicsObject
 
     /** Resource information. */
     protected Vector<Info> m_kInfoArray = new Vector<Info>();
+    private Info m_kInfo = null;
+    private boolean m_bShared = false;
 }
