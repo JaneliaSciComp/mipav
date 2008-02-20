@@ -2983,7 +2983,7 @@ public class FileIO {
     }
 
     /**
-     * Reads an analyze file by calling the read method of the file. Also checks if it's a Cheshire, Interfile, or NIFTI
+     * Reads an analyze file by calling the read method of the file. Also checks if it's a Cheshire
      * and if so, calls that method instead. This method contains special code to not display the progress bar should
      * the image be <q>splash.img</q>.
      *
