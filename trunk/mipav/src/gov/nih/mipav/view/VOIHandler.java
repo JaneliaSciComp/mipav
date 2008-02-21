@@ -5361,7 +5361,6 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
          if (i == nVOI && i == -1) {
             return;
          } 
-    	
          colorChooser = new ViewJColorChooser(new Frame(), "Pick VOI color", 
         		 new OKVOIColorListener(VOIs.VOIAt(i)),
         		 new ActionListener() { public void actionPerformed(ActionEvent ae) {}});
