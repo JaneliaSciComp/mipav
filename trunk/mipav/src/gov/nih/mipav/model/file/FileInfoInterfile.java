@@ -440,6 +440,20 @@ public class FileInfoInterfile extends FileInfoBase {
     private String zAxisFilter = null;
     
     private String organ = null;
+    
+    private String gatedFrameMode[] = null;
+    
+    private String oldGatedFrameMode[] = null;
+    
+    private int gatedFrameModeIndex = 0;
+    
+    private String windowA = null;
+    
+    private String windowB = null;
+    
+    private String windowC = null;
+    
+    private String sliceOrientation = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -579,6 +593,18 @@ public class FileInfoInterfile extends FileInfoBase {
         if (energyWindowsNumber != null) {
             dialog.append("Number of energy windows = " + energyWindowsNumber + "\n");
         }
+        
+        if (windowA != null) {
+            dialog.append("Window A = " + windowA + "\n");
+        }
+        
+        if (windowB != null) {
+            dialog.append("Window B = " + windowB + "\n");
+        }
+        
+        if (windowC != null) {
+            dialog.append("Window C = " + windowC + "\n");
+        }
 
         for (i = 0; i < isoNumber; i++) {
 
@@ -699,6 +725,13 @@ public class FileInfoInterfile extends FileInfoBase {
 
                     if (imageDuration[i] != null) {
                         dialog.append("Image duration (sec) := " + imageDuration[i] + "\n");
+                    }
+                }
+                
+                if (gatedFrameMode != null) {
+                    
+                    if (gatedFrameMode[i] != null) {
+                        dialog.append("Gated frame mode := " + gatedFrameMode[i] + "\n");
                     }
                 }
 
@@ -1018,6 +1051,10 @@ public class FileInfoInterfile extends FileInfoBase {
                 dialog.append("Number of slices for this head and this energy window = " + sliceNumber + "\n");
             }
         } // if (sliceNumber != null)
+        
+        if (sliceOrientation != null) {
+            dialog.append("Slice orientation = " + sliceOrientation + "\n");
+        }
 
         if (referenceFrameNumber != null) {
             dialog.append("Reference frame number = " + referenceFrameNumber + "\n");
@@ -1396,6 +1433,10 @@ public class FileInfoInterfile extends FileInfoBase {
      */
     public String[] getImageDuration() {
         return imageDuration;
+    }
+    
+    public String[] getGatedFrameMode() {
+        return gatedFrameMode;
     }
 
     /**
@@ -1847,6 +1888,10 @@ public class FileInfoInterfile extends FileInfoBase {
     public String getSliceNumber() {
         return sliceNumber;
     }
+    
+    public String getSliceOrientation() {
+        return sliceOrientation;
+    }
 
     /**
      * DOCUMENT ME!
@@ -1981,6 +2026,18 @@ public class FileInfoInterfile extends FileInfoBase {
      */
     public String getTotalImageNumber() {
         return totalImageNumber;
+    }
+    
+    public String getWindowA() {
+        return windowA;
+    }
+    
+    public String getWindowB() {
+        return windowB;
+    }
+    
+    public String getWindowC() {
+        return windowC;
     }
 
     /**
@@ -2301,6 +2358,7 @@ public class FileInfoInterfile extends FileInfoBase {
         scalingFactor2 = new String[fGroupNumber];
         frameGroupImages = new String[fGroupNumber];
         imageDuration = new String[fGroupNumber];
+        gatedFrameMode = new String[fGroupNumber];
         pauseBetweenImages = new String[fGroupNumber];
         pauseBetweenFrameGroups = new String[fGroupNumber];
         maximumPixelCountInGroup = new String[fGroupNumber];
@@ -2314,6 +2372,7 @@ public class FileInfoInterfile extends FileInfoBase {
             scalingFactor2[i] = null;
             frameGroupImages[i] = null;
             imageDuration[i] = null;
+            gatedFrameMode[i] = null;
             pauseBetweenImages[i] = null;
             pauseBetweenFrameGroups[i] = null;
             maximumPixelCountInGroup[i] = null;
@@ -2406,6 +2465,23 @@ public class FileInfoInterfile extends FileInfoBase {
             }
         }
         imageDuration[imageDurationIndex++] = currentImageDuration;
+    }
+    
+    public void setGatedFrameMode(String currentGatedFrameMode) {
+        if (gatedFrameMode == null) {
+            gatedFrameMode = new String[1];
+        }
+        else if (gatedFrameModeIndex > gatedFrameMode.length - 1) {
+            String oldGatedFrameMode[] = new String[gatedFrameMode.length];
+            for (i = 0; i < gatedFrameMode.length; i++) {
+                oldGatedFrameMode[i] = gatedFrameMode[i];
+            }
+            gatedFrameMode = new String[gatedFrameModeIndex];
+            for (i = 0; i < oldGatedFrameMode.length; i++) {
+                gatedFrameMode[i] = oldGatedFrameMode[i];
+            }
+        }
+        gatedFrameMode[gatedFrameModeIndex++] = currentGatedFrameMode;
     }
 
     /**
@@ -3033,6 +3109,10 @@ public class FileInfoInterfile extends FileInfoBase {
     public void setSliceNumber(String sliceNumber) {
         this.sliceNumber = sliceNumber;
     }
+    
+    public void setSliceOrientation(String sliceOrientation) {
+        this.sliceOrientation = sliceOrientation;
+    }
 
     /**
      * DOCUMENT ME!
@@ -3223,6 +3303,18 @@ public class FileInfoInterfile extends FileInfoBase {
      */
     public void setTotalImageNumber(String totalImageNumber) {
         this.totalImageNumber = totalImageNumber;
+    }
+    
+    public void setWindowA(String windowA) {
+        this.windowA = windowA;
+    }
+    
+    public void setWindowB(String windowB) {
+        this.windowB = windowB;
+    }
+    
+    public void setWindowC(String windowC) {
+        this.windowC = windowC;
     }
 
     /**
