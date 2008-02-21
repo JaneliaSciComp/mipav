@@ -1,9 +1,18 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.BSplineBasisDiscretef;
+import gov.nih.mipav.model.structures.BSplineBasisf;
+import gov.nih.mipav.model.structures.BSplineLattice3Df;
+import gov.nih.mipav.model.structures.ModelSimpleImage;
+import gov.nih.mipav.util.MipavUtil;
 
-import javax.vecmath.*;
+import java.util.concurrent.CountDownLatch;
+
+import javax.vecmath.Point2f;
+import javax.vecmath.Point3f;
+import javax.vecmath.Vector2f;
+import javax.vecmath.Vector3f;
 
 
 /**
@@ -26,12 +35,11 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
     /**
      * Defines the relative offset in control point indices for the triangle mesh associated with the bounding
      * polyhedron formed by the 26 neighboring control points. Triangle vertices are consistently counterclockwise
-     * ordered. First index: 0 for X axis, 1 for Y axis, 2 for Z axis Second index: index of vertex within triangle
+     * ordered. First index: 0 for X axis, 1 for Y axis, 2 for Z axis; Second index: index of vertex within triangle;
      * Third index: index for triangle (there are 48 -- 8 per face; see initPolyhedronTrimeshConnectivity method for
      * description)
      */
     protected static int[][][] ms_aaaiPolyhedronTriangleControlPointOffset = new int[3][3][48];
-
     /**
      * This is a static method called to initialize the class. This method is used to initialize other static members.
      * Create the (relative) trimesh connectivity for the polyhedron of neighboring control points. There are six faces
@@ -149,7 +157,11 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         }
 
         // Update the initial registered source and error images.
-        updateSamples(0, kImageTrg.extents[0] - 1, 0, kImageTrg.extents[1] - 1, 0, kImageTrg.extents[2] - 1);
+        if(nthreads < 2){
+        	updateSamplesST(0, kImageTrg.extents[0] - 1, 0, kImageTrg.extents[1] - 1, 0, kImageTrg.extents[2] - 1);
+        }else{
+            updateSamplesMT(0, kImageTrg.extents[0] - 1, 0, kImageTrg.extents[1] - 1, 0, kImageTrg.extents[2] - 1);        	
+        }
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -384,7 +396,11 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         }
 
         // Update the initial registered source and error images.
-        kReg.updateSamples(0, kImageTrg.extents[0] - 1, 0, kImageTrg.extents[1] - 1, 0, kImageTrg.extents[2] - 1);
+        if(nthreads < 2){
+        	kReg.updateSamplesST(0, kImageTrg.extents[0] - 1, 0, kImageTrg.extents[1] - 1, 0, kImageTrg.extents[2] - 1);
+        }else{
+        	kReg.updateSamplesMT(0, kImageTrg.extents[0] - 1, 0, kImageTrg.extents[1] - 1, 0, kImageTrg.extents[2] - 1);
+        }
 
         return kReg;
     }
@@ -446,7 +462,11 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         }
 
         // Update the initial registered source and error images.
-        kReg.updateSamples(0, kImageTrg.extents[0] - 1, 0, kImageTrg.extents[1] - 1, 0, kImageTrg.extents[2] - 1);
+        if(nthreads < 2){
+        	kReg.updateSamplesST(0, kImageTrg.extents[0] - 1, 0, kImageTrg.extents[1] - 1, 0, kImageTrg.extents[2] - 1);
+        }else{
+        	kReg.updateSamplesMT(0, kImageTrg.extents[0] - 1, 0, kImageTrg.extents[1] - 1, 0, kImageTrg.extents[2] - 1);        	
+        }
 
         return kReg;
     }
@@ -490,7 +510,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
      *                    direction of the negative gradient.
      */
     public void minimizeControlPoint(int iControlX, int iControlY, int iControlZ, int iMaxSteps, float fStepSize) {
-
+//    	long startTime = System.currentTimeMillis();
         // Only allowed to move control points which are not anchored
         // to the boundary.
         if ((iControlX <= 0) || (iControlX >= (m_kBSplineBasisX.getNumControlPoints() - 1))) {
@@ -510,7 +530,10 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
 
         // Compute the error derivative at the specified control point.
         Vector3f kDirection = new Vector3f();
+//        long currentTime = System.currentTimeMillis();
         getErrorDeriv(iControlX, iControlY, iControlZ, kDirection);
+//        System.out.println("Time consumed by getErrorDeriv() is " + (System.currentTimeMillis()-currentTime));
+        
         kDirection.negate();
 
         if (0.0f == kDirection.length()) {
@@ -522,8 +545,9 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         // Compute how far the current control point is from the
         // boundary formed by its neighbor control points in the
         // direction of decreasing gradient.
+//        currentTime = System.currentTimeMillis();
         fMaxDist = getControlPointMaxMoveDist(iControlX, iControlY, iControlZ, kDirection, fMaxDist);
-
+//        System.out.println("Time consumed by getControlPointMaxMoveDist() is " + (System.currentTimeMillis()-currentTime));
         // Compute the error by moving the control point along
         // the decreasing gradient direction.  Move the point by
         // small steps up to the boundary formed by the neighboring
@@ -533,9 +557,12 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         m_kBSpline3D.getControlPoint(iControlX, iControlY, iControlZ, kOrigin);
 
         double dMinError = getError();
+
+
         float fMinErrorT = 0.0f;
         Point3f kNewPoint = new Point3f();
-
+        
+//        currentTime = System.currentTimeMillis();
         for (float fT = fStepSize; fT <= fMaxDist; fT += fStepSize) {
             kNewPoint.scaleAdd(fT, kDirection, kOrigin);
             m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
@@ -548,12 +575,15 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
                 fMinErrorT = fT;
             }
         }
-
+//        System.out.println("Time consumed by loop is " + (System.currentTimeMillis()-currentTime));
+       
         // Set the control point to the point along the ray where
         // the minimum was found.
         kNewPoint.scaleAdd(fMinErrorT, kDirection, kOrigin);
         m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
+//        currentTime = System.currentTimeMillis();
         updateControlPointSamples(iControlX, iControlY, iControlZ);
+//        System.out.println("Time consumed by updateControlPointSamples() is " + (System.currentTimeMillis()-currentTime));
     }
 
     /**
@@ -658,6 +688,8 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
             kV2.sub(kP2, kP0);
             kV1.normalize();
             kV2.normalize();
+            
+            // Create the normal vector of the triangle plane.
             kN.cross(kV1, kV2);
             kN.normalize();
 
@@ -856,7 +888,6 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
      * @param  kDeriv     Vector3f Vector to be filled with the derivative computed along each axis.
      */
     protected void getErrorDeriv(int iControlX, int iControlY, int iControlZ, Vector3f kDeriv) {
-
         // Compute the step of half a sample in each direction.
         float fSmallStepX = 0.5f / (float) (m_kBSplineBasisX.getNumSamples() - 1);
         float fSmallStepY = 0.5f / (float) (m_kBSplineBasisY.getNumSamples() - 1);
@@ -873,6 +904,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         kNewPoint.add(kOrigin);
 
         float fStepXPos = moveControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
+        
         double dErrorXPos = m_kRegMeasure.getError();
         m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kOrigin);
 
@@ -919,7 +951,6 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         // After moving the control point back to the origin, we need
         // to update the samples affected by this move.
         updateControlPointSamples(iControlX, iControlY, iControlZ);
-
         // Compute gradient terms.
         float fStepX = fStepXPos + fStepXNeg;
         float fStepY = fStepYPos + fStepYNeg;
@@ -927,7 +958,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         kDeriv.x = (fStepX > 0.0f) ? ((float) (dErrorXPos - dErrorXNeg) / fStepX) : 0.0f;
         kDeriv.y = (fStepY > 0.0f) ? ((float) (dErrorYPos - dErrorYNeg) / fStepY) : 0.0f;
         kDeriv.z = (fStepZ > 0.0f) ? ((float) (dErrorZPos - dErrorZNeg) / fStepZ) : 0.0f;
-    }
+    } 
 
     /**
      * Update the registered source image and the computed error as a result of making changes to a single control
@@ -939,12 +970,21 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
      * @param  iControlZ  int Identifies the control point in the 3D lattice.
      */
     protected void updateControlPointSamples(int iControlX, int iControlY, int iControlZ) {
-        updateSamples(m_kBSplineBasisX.getControlPointSampleIndexMin(iControlX),
+    	if(nthreads < 2){
+    		updateSamplesST(m_kBSplineBasisX.getControlPointSampleIndexMin(iControlX),
                       m_kBSplineBasisX.getControlPointSampleIndexMax(iControlX),
                       m_kBSplineBasisY.getControlPointSampleIndexMin(iControlY),
                       m_kBSplineBasisY.getControlPointSampleIndexMax(iControlY),
                       m_kBSplineBasisZ.getControlPointSampleIndexMin(iControlZ),
                       m_kBSplineBasisZ.getControlPointSampleIndexMax(iControlZ));
+    	}else{
+            updateSamplesMT(m_kBSplineBasisX.getControlPointSampleIndexMin(iControlX),
+                    m_kBSplineBasisX.getControlPointSampleIndexMax(iControlX),
+                    m_kBSplineBasisY.getControlPointSampleIndexMin(iControlY),
+                    m_kBSplineBasisY.getControlPointSampleIndexMax(iControlY),
+                    m_kBSplineBasisZ.getControlPointSampleIndexMin(iControlZ),
+                    m_kBSplineBasisZ.getControlPointSampleIndexMax(iControlZ));
+    	}
     }
 
     /**
@@ -957,8 +997,8 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
      * @param  iMinZ  int Minimum Z axis sample index.
      * @param  iMaxZ  int Maximum Z axis sample index.
      */
-    protected void updateSamples(int iMinX, int iMaxX, int iMinY, int iMaxY, int iMinZ, int iMaxZ) {
-
+    protected void updateSamplesST(int iMinX, int iMaxX, int iMinY, int iMaxY, int iMinZ, int iMaxZ) {
+		  long startTime = System.nanoTime();
         int iLimitX = m_iNumSamplesSrcX - 1;
         int iLimitY = m_iNumSamplesSrcY - 1;
         int iLimitZ = m_iNumSamplesSrcZ - 1;
@@ -971,6 +1011,132 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
             for (int iY = iMinY; iY <= iMaxY; iY++) {
 
                 for (int iX = iMinX; iX <= iMaxX; iX++) {
+
+                    // evaulate spline and setup for trilinear interpolation
+                    m_kBSpline3D.getPosition(iX, iY, iZ, kPos);
+
+                    float fX = iLimitX * kPos.x;
+                    float fY = iLimitY * kPos.y;
+                    float fZ = iLimitZ * kPos.z;
+                    int iX0 = (int) fX;
+                    int iY0 = (int) fY;
+                    int iZ0 = (int) fZ;
+
+                    if (iX0 >= iLimitX) {
+                        iX0 = iLimitX - 1;
+                        fX = (float) iLimitX;
+                    }
+
+                    if (iY0 >= iLimitY) {
+                        iY0 = iLimitY - 1;
+                        fY = (float) iLimitY;
+                    }
+
+                    if (iZ0 >= iLimitZ) {
+                        iZ0 = iLimitZ - 1; 
+                        fZ = (float) iLimitZ;
+                    }
+
+                    float fX1 = fX - iX0;
+                    float fY1 = fY - iY0;
+                    float fZ1 = fZ - iZ0;
+                    float fX0 = 1.0f - fX1;
+                    float fY0 = 1.0f - fY1;
+                    float fZ0 = 1.0f - fZ1;
+
+                    int iX0Y0Z0 = iX0 + (m_iNumSamplesSrcX * iY0) + (m_iNumSamplesSrcXY * iZ0);
+                    int iX0Y1Z0 = iX0Y0Z0 + m_iNumSamplesSrcX;
+                    int iX1Y0Z0 = iX0Y0Z0 + 1;
+                    int iX1Y1Z0 = iX0Y1Z0 + 1;
+                    int iX0Y0Z1 = iX0Y0Z0 + m_iNumSamplesSrcXY;
+                    int iX0Y1Z1 = iX0Y0Z1 + m_iNumSamplesSrcX;
+                    int iX1Y0Z1 = iX0Y0Z1 + 1;
+                    int iX1Y1Z1 = iX0Y1Z1 + 1;
+
+                    // interpolate across X
+                    float fRegSrcY0Z0 = (m_kImageSrc.data[iX0Y0Z0] * fX0) + (m_kImageSrc.data[iX1Y0Z0] * fX1);
+                    float fRegSrcY1Z0 = (m_kImageSrc.data[iX0Y1Z0] * fX0) + (m_kImageSrc.data[iX1Y1Z0] * fX1);
+                    float fRegSrcY0Z1 = (m_kImageSrc.data[iX0Y0Z1] * fX0) + (m_kImageSrc.data[iX1Y0Z1] * fX1);
+                    float fRegSrcY1Z1 = (m_kImageSrc.data[iX0Y1Z1] * fX0) + (m_kImageSrc.data[iX1Y1Z1] * fX1);
+
+                    // interpolate across Y and the across Z
+                    float fRegSrcZ0 = (fRegSrcY0Z0 * fY0) + (fRegSrcY1Z0 * fY1);
+                    float fRegSrcZ1 = (fRegSrcY0Z1 * fY0) + (fRegSrcY1Z1 * fY1);
+                    float fRegSrcValue = (fRegSrcZ0 * fZ0) + (fRegSrcZ1 * fZ1);
+
+                    int iIndex = iX + (m_iNumSamplesTrgX * iY) + (m_iNumSamplesTrgXY * iZ);
+                    m_kRegMeasure.updateRegistration(iIndex, fRegSrcValue);
+                }
+            }
+        }
+        System.out.println("Time consumed by updateSamplesST(): " + (System.nanoTime()-startTime) + "," + ((iMaxX-iMinX)*(iMaxY-iMinY)*(iMaxZ-iMinZ)));
+    }
+
+    protected void updateSamplesMT(int iMinX, int iMaxX, int iMinY, int iMaxY, int iMinZ, int iMaxZ) {
+    	int nx = 0;
+    	int ny = 0;
+    	int nz = 0;
+    	if(nthreads == 16){
+    		nx = 4;
+    		ny = 2;
+    		nz = 2;
+    	}else if(nthreads == 8){
+    		nx = 2;
+    		ny = 2;
+    		nz = 2;
+    	}else if(nthreads == 4){
+    		nx = 1;
+    		ny = 2;
+    		nz = 2;
+    	}else{
+    		nx = 1;
+    		ny = 1;
+    		nz = 2;
+    	}
+    	float stepX = (float)(iMaxX-iMinX+1)/nx;
+    	float stepY = (float)(iMaxY-iMinY+1)/ny;
+    	float stepZ = (float)(iMaxZ-iMinZ+1)/nz;
+        final CountDownLatch doneSignal = new CountDownLatch(4);
+        for(int i = 0; i < nz; i++){
+        	final int startZ = iMinZ + (int)(i*stepZ);
+        	final int endZ = iMinZ + (int)((i+1)*stepZ);
+        	for(int j = 0; j < ny; j++){
+            	final int startY = iMinY + (int)(j*stepY);
+            	final int endY = iMinY + (int)((j+1)*stepY);
+        		for(int k = 0; k < nx; k++){
+                	final int startX = iMinX + (int)(k*stepX);
+                	final int endX = iMinX + (int)((k+1)*stepX);
+                    Runnable task = new Runnable() {
+                        public void run() {
+                    		update(startX, endX, startY, endY, startZ, endZ);
+                            doneSignal.countDown();
+                        }
+                    };
+                    MipavUtil.mipavThreadPool.execute(task);
+        		}
+        	}
+    	}
+        try {
+            doneSignal.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected void update(int iMinX, int iMaxX, int iMinY, int iMaxY, int iMinZ, int iMaxZ) {
+//    	long startTime = System.nanoTime();
+        int iLimitX = m_iNumSamplesSrcX - 1;
+        int iLimitY = m_iNumSamplesSrcY - 1;
+        int iLimitZ = m_iNumSamplesSrcZ - 1;
+
+        // compute local change to registered source
+        Point3f kPos = new Point3f();
+
+        for (int iZ = iMinZ; iZ < iMaxZ; iZ++) {
+
+            for (int iY = iMinY; iY < iMaxY; iY++) {
+
+                for (int iX = iMinX; iX < iMaxX; iX++) {
 
                     // evaulate spline and setup for trilinear interpolation
                     m_kBSpline3D.getPosition(iX, iY, iZ, kPos);
@@ -1029,6 +1195,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
                 }
             }
         }
+//        System.out.println("Time consumed by Update(): " + (System.nanoTime()-startTime) + "," + ((iMaxX-iMinX)*(iMaxY-iMinY)*(iMaxZ-iMinZ)));
     }
 
     /**
