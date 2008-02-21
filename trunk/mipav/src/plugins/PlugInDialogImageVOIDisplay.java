@@ -211,7 +211,7 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
 
             componentImage.getVOIHandler().showVOIProperties(false);
 
-        } else if (command.equals("VOIPropertiesColor")) {
+        } else if (command.equals("VOIColor")) {
 
             if (getActiveImage().getVOIs().size() > 0) {
 
