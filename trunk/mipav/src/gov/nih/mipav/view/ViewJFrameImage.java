@@ -958,41 +958,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             componentImage.getVOIHandler().showVOIProperties(false);
 
-        } else if (command.equals("VOIPropertiesColor")) {
+        } else if (command.equals("VOIColor")) {
 
-            if (getActiveImage().getVOIs().size() > 0) {
-
-                ViewVOIVector VOIs = getActiveImage().getVOIs();
-
-                int i;
-                int nVOI = VOIs.size();
-
-                for (i = 0; i < nVOI; i++) {
-
-                    if ((VOIs.VOIAt(i).isActive() == true) &&
-                            ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) ||
-                                 (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE) ||
-                                 (VOIs.VOIAt(i).getCurveType() == VOI.POINT) ||
-                                 (VOIs.VOIAt(i).getCurveType() == VOI.LINE) ||
-                                 (VOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR))) {
-                        break;
-                    } else if ((VOIs.VOIAt(i).isActive() == true) && (VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION)) {
-                        MipavUtil.displayInfo("Double-click annotation to change properties");
-                        i = -1;
-
-                        break;
-                    }
-                }
-
-                if (i == nVOI) {
-                    MipavUtil.displayError("Please select VOI");
-                } else if (i == -1) { // there was an annotation selected, do nothing
-                } else {
-                    componentImage.getVOIHandler().showVOIProperties(true);
-                }
-            } else {
-                MipavUtil.displayWarning("Image has no VOIs!");
-            }
+        	getComponentImage().getVOIHandler().showColorDialog();
 
         } else if (command.equals("VOIStatistics")) {
             componentImage.showStatisticsCalculator();

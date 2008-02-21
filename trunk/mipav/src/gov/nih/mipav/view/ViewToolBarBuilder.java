@@ -897,7 +897,8 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         VOIToolBar.add(makeSeparator());
         VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_TEXT, VOIGroup));
         VOIToolBar.add(makeSeparator());
-
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_NEW, VOIGroup));
+        VOIToolBar.add(makeSeparator());
         VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_POINT, VOIGroup));
 
         JToggleButton polysliceButton = buildToggleButton(CustomUIBuilder.PARAM_VOI_POLY_SLICE, VOIGroup);
@@ -930,7 +931,9 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         
         voiColorButton = new VOIColorButton(voiIndex);
         VOIToolBar.add(makeSeparator());
-        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_NEW, VOIGroup));
+       
+        
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_PROPERTIES, VOIGroup));
         VOIToolBar.add(voiColorButton);
 
         VOIToolBar.add(makeSeparator());
