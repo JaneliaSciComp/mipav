@@ -404,6 +404,8 @@ public class FileInterfile extends FileBase {
         String valueString;
         String removedValueString;
         int index;
+        int energyWindowsNumber = 1;
+        int imagesPerEWindow = 1;
 
         try {
             index = originalFileName.length();
@@ -582,6 +584,7 @@ public class FileInterfile extends FileBase {
                             MipavUtil.displayError("Slice orientation has illegal value of " + valueString);
                             throw new IOException();
                         }
+                        fileInfo.setSliceOrientation(valueString);
                     } // else if (keyString.equalsIgnoreCase("SLICEORIENTATION"))
                     else if (keyString.equalsIgnoreCase("IMAGINGMODALITY")) {
                         fileInfo.setImagingModality(valueString);
@@ -751,10 +754,10 @@ public class FileInterfile extends FileBase {
                     } else if (keyString.equalsIgnoreCase("RADIOPHARMACEUTICAL")) {
                         fileInfo.setRadiopharmaceutical(valueString);
                     } else if ((keyString.equalsIgnoreCase("NUMBEROFENERGYWINDOWS")) ||
-                               ((keyString.equalsIgnoreCase("NUMBEROFWINDOWS")) && 
-                                 haveStaticStudy)) {
+                               (keyString.equalsIgnoreCase("NUMBEROFWINDOWS"))) {
                         fileInfo.setEnergyWindowsNumber(valueString);
                         haveEnergyWindowsNumber = true;
+                        energyWindowsNumber = Integer.valueOf(valueString).intValue();
                     } else if ((keyString.length() >= 15) &&
                                    (keyString.substring(0, 13).equalsIgnoreCase("ENERGYWINDOW["))) {
                         index = keyString.indexOf("]");
@@ -797,6 +800,15 @@ public class FileInterfile extends FileBase {
                         fileInfo.setEnergyWindowUpperLevel(windowNumber, valueString);
                     } // else if ((keyString.length() >= 25) &&
                       // (keyString.substring(0,23).equalsIgnoreCase("ENERGYWINDOWUPPERLEVEL[")))
+                    else if (keyString.equalsIgnoreCase("WINDOWA")) {
+                        fileInfo.setWindowA(valueString);
+                    }
+                    else if (keyString.equalsIgnoreCase("WINDOWB")) {
+                        fileInfo.setWindowB(valueString);
+                    }
+                    else if (keyString.equalsIgnoreCase("WINDOWC")) {
+                        fileInfo.setWindowC(valueString);
+                    }
                     else if (keyString.equalsIgnoreCase("FLOODCORRECTED")) {
 
                         if ((valueString.equalsIgnoreCase("Y")) || (valueString.equalsIgnoreCase("N"))) {
@@ -854,10 +866,10 @@ public class FileInterfile extends FileBase {
                         fileInfo.setDetectorHeadNumber(valueString);
                         haveDetectorHeadNumber = true;
                     } else if ((keyString.equalsIgnoreCase("NUMBEROFIMAGES/ENERGYWINDOW")) ||
-                               ((keyString.equalsIgnoreCase("NUMBEROFIMAGES/WINDOW")) &&
-                                 haveStaticStudy)) {
+                               (keyString.equalsIgnoreCase("NUMBEROFIMAGES/WINDOW"))) {
                         fileInfo.setImagesPerEWindow(valueString);
                         haveImagesPerEWindow = true;
+                        imagesPerEWindow = Integer.valueOf(valueString).intValue();
                     } else if (keyString.equalsIgnoreCase("PROCESSSTATUS")) {
 
                         if ((valueString.equalsIgnoreCase("RECONSTRUCTED")) ||
@@ -1021,6 +1033,9 @@ public class FileInterfile extends FileBase {
                     } else if (keyString.equalsIgnoreCase("ORGAN")) {
                         fileInfo.setOrgan(valueString);
                     }
+                    else if (keyString.equalsIgnoreCase("GATEDFRAMEMODE")) {
+                        fileInfo.setGatedFrameMode(valueString);
+                    }
                     // else {
                     // MipavUtil.displayError(keyString);
                     // }
@@ -1054,8 +1069,8 @@ public class FileInterfile extends FileBase {
             }
 
             if ((!haveZDim) && (!haveTotalImageNumber)) {
-                totalImageNumber = 1;
-                zDim = 1;
+                totalImageNumber = energyWindowsNumber * imagesPerEWindow;
+                zDim = energyWindowsNumber * imagesPerEWindow;
             }
 
             if (tDim > 1) {
@@ -1432,6 +1447,7 @@ public class FileInterfile extends FileBase {
         String indexNestingLevel = null;
         int iLevel = 0;
         String[] imageDuration = null;
+        String[] gatedFrameMode = null;
         String[] imageRelativeStartTime = null;
         int index;
         int i;
@@ -1472,6 +1488,9 @@ public class FileInterfile extends FileBase {
         String[] acquiredCardiacCycles = null;
         String[] acquiredStudyDuration = null;
         String[] RRHistogram = null;
+        String windowA = null;
+        String windowB = null;
+        String windowC = null;
 
         if (image.getNDims() >= 3) {
             zBegin = options.getBeginSlice();
@@ -1503,6 +1522,9 @@ public class FileInterfile extends FileBase {
         }
         file = new File(fileDir + headerFileName);
         raFile = new RandomAccessFile(file, "rw");
+        // Necessary so that if this is an overwritten file there isn't any
+        // junk at the end
+        raFile.setLength(0);
 
         try { // In this case, the file must be Interfile
             fileInfo = (FileInfoInterfile) image.getFileInfo(0);
@@ -1859,6 +1881,27 @@ public class FileInterfile extends FileBase {
                 lineBytes = energyWindowsNumber.getBytes();
                 raFile.write(lineBytes);
             }
+            
+            windowA = fileInfo.getWindowA();
+            
+            if (windowA != null) {
+                lineBytes = new String("Window A := " + windowA + "\r\n").getBytes();
+                raFile.write(lineBytes);
+            }
+            
+            windowB = fileInfo.getWindowB();
+            
+            if (windowB != null) {
+                lineBytes = new String("Window B := " + windowB + "\r\n").getBytes();
+                raFile.write(lineBytes);
+            }
+            
+            windowC = fileInfo.getWindowC();
+            
+            if (windowC != null) {
+                lineBytes = new String("Window C := " + windowC + "\r\n").getBytes();
+                raFile.write(lineBytes);
+            }
 
             energyWindowName = fileInfo.getEnergyWindow();
             lowerLevel = fileInfo.getEnergyWindowLowerLevel();
@@ -1937,6 +1980,7 @@ public class FileInterfile extends FileBase {
             imageDuration = fileInfo.getImageDuration();
             imageStartTime = fileInfo.getImageStartTime();
             label = fileInfo.getLabel();
+            maximumPixelCount = fileInfo.getMaximumPixelCount();
             totalCounts = fileInfo.getTotalCounts();
 
             for (i = 0; i < numberImagesPerEWindow; i++) {
@@ -2045,6 +2089,8 @@ public class FileInterfile extends FileBase {
             haveDynamicStudy = true;
             frameGroupNumber = fileInfo.getFrameGroupNumber();
             fGroupNumber = Integer.valueOf(frameGroupNumber).intValue();
+            lineBytes = new String("!number of frame groups := " + frameGroupNumber + "\r\n").getBytes();
+            raFile.write(lineBytes);
             matrixSize1 = fileInfo.getMatrixSize1();
             matrixSize2 = fileInfo.getMatrixSize2();
             numberFormatString = fileInfo.getNumberFormat();
@@ -2060,13 +2106,13 @@ public class FileInterfile extends FileBase {
             for (i = 0; i < fGroupNumber; i++) {
                 lineBytes = new String("!Dynamic Study (each frame group) :=\r\n").getBytes();
                 raFile.write(lineBytes);
-                lineBytes = new String("!frame group number :=" + (i + 1) + "\r\n").getBytes();
+                lineBytes = new String("!frame group number := " + (i + 1) + "\r\n").getBytes();
                 raFile.write(lineBytes);
 
                 if (matrixSize1 != null) {
 
                     if (matrixSize1[i] != null) {
-                        lineBytes = new String("!matrix size [1] :=" + matrixSize1[i] + "\r\n").getBytes();
+                        lineBytes = new String("!matrix size [1] := " + matrixSize1[i] + "\r\n").getBytes();
                         raFile.write(lineBytes);
                     }
                 }
@@ -2074,7 +2120,7 @@ public class FileInterfile extends FileBase {
                 if (matrixSize2 != null) {
 
                     if (matrixSize2[i] != null) {
-                        lineBytes = new String("!matrix size [2] :=" + matrixSize2[i] + "\r\n").getBytes();
+                        lineBytes = new String("!matrix size [2] := " + matrixSize2[i] + "\r\n").getBytes();
                         raFile.write(lineBytes);
                     }
                 }
@@ -2082,7 +2128,7 @@ public class FileInterfile extends FileBase {
                 if (numberFormatString != null) {
 
                     if (numberFormatString[i] != null) {
-                        lineBytes = new String("!number format :=" + numberFormatString[i] + "\r\n").getBytes();
+                        lineBytes = new String("!number format := " + numberFormatString[i] + "\r\n").getBytes();
                         raFile.write(lineBytes);
                     }
                 }
@@ -2090,7 +2136,7 @@ public class FileInterfile extends FileBase {
                 if (bytesPerPixelString != null) {
 
                     if (bytesPerPixelString[i] != null) {
-                        lineBytes = new String("!number of bytes per pixel :=" + bytesPerPixelString[i] + "\r\n").getBytes();
+                        lineBytes = new String("!number of bytes per pixel := " + bytesPerPixelString[i] + "\r\n").getBytes();
                         raFile.write(lineBytes);
                     }
                 }
@@ -2098,7 +2144,7 @@ public class FileInterfile extends FileBase {
                 if (scalingFactor1String != null) {
 
                     if (scalingFactor1String[i] != null) {
-                        lineBytes = new String("scaling factor (mm/pixel) [1] :=" + scalingFactor1String[i] + "\r\n").getBytes();
+                        lineBytes = new String("scaling factor (mm/pixel) [1] := " + scalingFactor1String[i] + "\r\n").getBytes();
                         raFile.write(lineBytes);
                     }
                 }
@@ -2106,7 +2152,7 @@ public class FileInterfile extends FileBase {
                 if (scalingFactor2String != null) {
 
                     if (scalingFactor2String[i] != null) {
-                        lineBytes = new String("scaling factor (mm/pixel) [2] :=" + scalingFactor2String[i] + "\r\n").getBytes();
+                        lineBytes = new String("scaling factor (mm/pixel) [2] := " + scalingFactor2String[i] + "\r\n").getBytes();
                         raFile.write(lineBytes);
                     }
                 }
@@ -2122,7 +2168,7 @@ public class FileInterfile extends FileBase {
                 if (imageDuration != null) {
 
                     if (imageDuration[i] != null) {
-                        lineBytes = new String("!image duration (sec) :=" + imageDuration[i] + "\r\n").getBytes();
+                        lineBytes = new String("!image duration (sec) := " + imageDuration[i] + "\r\n").getBytes();
                         raFile.write(lineBytes);
                     }
                 }
@@ -2368,6 +2414,8 @@ public class FileInterfile extends FileBase {
                 raFile.write(lineBytes);
                 timeWindowImages = fileInfo.getTimeWindowImages();
                 imageDuration = fileInfo.getImageDuration();
+                gatedFrameMode = fileInfo.getGatedFrameMode();
+                framingMethod = fileInfo.getFramingMethod();
                 maximumPixelCount = fileInfo.getMaximumPixelCount();
                 timeWindowLowerLimit = fileInfo.getTimeWindowLowerLimit();
                 timeWindowUpperLimit = fileInfo.getTimeWindowUpperLimit();
@@ -2395,6 +2443,14 @@ public class FileInterfile extends FileBase {
 
                         if (imageDuration[i] != null) {
                             lineBytes = new String("!image duration (sec) := " + imageDuration[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+                    
+                    if (gatedFrameMode != null) {
+
+                        if (gatedFrameMode[i] != null) {
+                            lineBytes = new String("!gated frame mode := " + gatedFrameMode[i] + "\r\n").getBytes();
                             raFile.write(lineBytes);
                         }
                     }
