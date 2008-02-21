@@ -5343,6 +5343,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
          int i;
          int nVOI = VOIs.size();
 
+         if (nVOI == 0) {
+        	 return;
+         }
          for (i = 0; i < nVOI; i++) {
 
              if ((VOIs.VOIAt(i).isActive() == true) &&
