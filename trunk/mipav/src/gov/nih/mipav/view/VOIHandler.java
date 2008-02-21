@@ -5315,28 +5315,24 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
     /**
      * If a VOI is selected the VOI properties dialog is displayed with the current properites of the selected VOI.
      *
-     * @param  openColor  DOCUMENT ME!
      */
-    public void showVOIProperties(boolean openColor) {
+    public void showVOIProperties() {
 
         if (voiDialog == null) {
             voiDialog = new JDialogVOIStats(compImage.getFrame(), compImage.getActiveImage(), null);
             addVOIUpdateListener(voiDialog);
-
-            if (openColor) {
-                voiDialog.showColorChooser();
-            }
         }
 
         if (voiDialog != null) {
             voiDialog.setVisible(true);
-
-            if (openColor) {
-                voiDialog.showColorChooser();
-            }
         }
     }
     
+    
+    /**
+     * Shows the Color change dialog for the selected VOI
+     *
+     */
     public void showColorDialog() {
     	 ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
 

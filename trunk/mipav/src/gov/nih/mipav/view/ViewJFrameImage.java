@@ -956,7 +956,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.getVOIHandler().changeVOIOrder(true, VOIHandler.BACKWARD);
         } else if (command.equals("VOIProperties")) {
 
-            componentImage.getVOIHandler().showVOIProperties(false);
+            componentImage.getVOIHandler().showVOIProperties();
 
         } else if (command.equals("VOIColor")) {
 
