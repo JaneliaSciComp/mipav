@@ -1,9 +1,10 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
-
+import gov.nih.mipav.model.structures.BSplineBasisDiscretef;
+import gov.nih.mipav.model.structures.ModelSimpleImage;
+import gov.nih.mipav.model.structures.jama.Matrix;
+import gov.nih.mipav.util.MipavUtil;
 
 /**
  * This is a common base class for all BSpline-based registrations.
@@ -24,6 +25,10 @@ public class BSplineRegistrationBasef {
     /** Defines the cost measure for comparing the target image with the registered image. */
     protected RegistrationMeasure m_kRegMeasure;
 
+    /**
+     * The number of threads.
+     */
+    protected int nthreads;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -48,6 +53,18 @@ public class BSplineRegistrationBasef {
 
         // Pass the target information to the registration measure.
         kRegMeasure.setImages(kImageSrc, kImageTrg);
+        nthreads = MipavUtil.getAvailableCores();
+        if(nthreads > 16){
+        	nthreads = 16;
+        }else if(nthreads > 8){
+        	nthreads = 8;
+        }else if(nthreads >= 4){
+        	nthreads = 4;
+        }else if(nthreads >= 2){
+        	nthreads = 2;
+        }else{
+        	nthreads = 1;
+        }
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

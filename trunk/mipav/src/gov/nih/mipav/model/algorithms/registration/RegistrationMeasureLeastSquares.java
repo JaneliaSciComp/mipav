@@ -1,7 +1,7 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelSimpleImage;
 
 
 /**
