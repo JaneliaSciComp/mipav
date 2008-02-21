@@ -224,6 +224,9 @@ public class JDialogVOIStats extends JDialogBase
             frameFollowsSelection = followVOISelectionBox.isSelected();
         } else if (source == applyButton) {
             ViewVOIVector vectorVOI = image.getVOIs();
+            if (vectorVOI.size() == 0) {
+            	return;
+            }
             ViewVOIVector newVOIVector;
             int[] temp;
             int j = 0, location = -1;
@@ -337,7 +340,9 @@ public class JDialogVOIStats extends JDialogBase
             updateTree();
             image.notifyImageDisplayListeners(null, true);
         } else if (source == calcButton) {
-
+        	if (image.getVOIs().size() == 0) {
+            	return;
+            }
             if (textMin.isEnabled()) {
                 String tempStr = textMin.getText();
 
@@ -1537,7 +1542,7 @@ public class JDialogVOIStats extends JDialogBase
         GridBagConstraints gb = new GridBagConstraints();
 
         JPanel mainTreePanel = new JPanel(new GridBagLayout());
-        mainTreePanel.setBorder(buildTitledBorder("VOI Tree"));
+        mainTreePanel.setBorder(buildTitledBorder("VOI Browser"));
 
         gb.anchor = GridBagConstraints.CENTER;
         gb.gridx = 0;
@@ -2065,7 +2070,7 @@ public class JDialogVOIStats extends JDialogBase
 
                     voiPopup.show(voiTree, event.getX(), event.getY());
                 } else {
-                    System.err.println("VOIs are of different types, select only like-contours...");
+                    //System.err.println("VOIs are of different types, select only like-contours...");
                 }
             }
         }
