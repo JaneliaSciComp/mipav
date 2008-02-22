@@ -614,16 +614,30 @@ public class JDialogVOIStats extends JDialogBase
                 		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
                 		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
             		       		}
-            		       	}else if (statsList[j].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[9])) {
+                            }else if (statsList[j].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[9])) {
+                                name = statsList[j].getString();
+                                value = algoVOI.getGeometricCenter();
+                                fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("string");
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+            		       	}else if (statsList[j].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[10])) {
             		       		name = statsList[j].getString();
-            		       		value = algoVOI.getCenterOfMass();
+                                if (image.isColorImage()) {
+                                    value = algoVOI.getCenterOfMassR() + "R" + algoVOI.getCenterOfMassG() + "G" +
+                                            algoVOI.getCenterOfMassB() + "B";
+                                }
+                                else {
+            		       		    value = algoVOI.getCenterOfMass();
+                                }
             		       		fInfoBase[i].getPSet(pSetDesc).addParameter(name);
             		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
             		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("string");
             		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
             		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
             				
-            		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[10])) {
+            		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[11])) {
             		       		name = statsList[j].getString();
             		       		value = Float.toString(algoVOI.getPrincipalAxis());
             		       		fInfoBase[i].getPSet(pSetDesc).addParameter(name);
@@ -631,7 +645,7 @@ public class JDialogVOIStats extends JDialogBase
             		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
             		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
             		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[11])) {
+            		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[12])) {
             		       		name = statsList[j].getString();
             		       		value = Float.toString(algoVOI.getEccentricity());
             		       		fInfoBase[i].getPSet(pSetDesc).addParameter(name);
@@ -639,7 +653,7 @@ public class JDialogVOIStats extends JDialogBase
             		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
             		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
             		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[12])) {
+            		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[13])) {
             		       		if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
             		       			unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
             		       		}
@@ -654,7 +668,7 @@ public class JDialogVOIStats extends JDialogBase
             		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
             		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
             		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[13])) {
+            		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[14])) {
             		       		if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
             		       			unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
             		       		}
@@ -670,7 +684,7 @@ public class JDialogVOIStats extends JDialogBase
             		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
             		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
             		       	}
-                        } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[14])) {
+                        } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[15])) {
                             name = statsList[j].getString();
                             if (image.isColorImage()) {
                                 value = Float.toString(algoVOI.getSkewnessR()) + "R" + Float.toString(algoVOI.getSkewnessG()) +
@@ -684,7 +698,7 @@ public class JDialogVOIStats extends JDialogBase
                                 fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
                                 fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
                                 fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-                        } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[15])) {
+                        } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[16])) {
                             name = statsList[j].getString();
                             if (image.isColorImage()) {
                                 value = Float.toString(algoVOI.getKurtosisR()) + "R" + Float.toString(algoVOI.getKurtosisG()) +
@@ -808,13 +822,22 @@ public class JDialogVOIStats extends JDialogBase
                             UI.setDataText("  Sum Intensities \t= " + algoVOI.getSumIntensities() + "\n");
                         }
                     } else if (statsList[i].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[9])) {
-                        UI.setDataText("  Center of Mass               \t= " + algoVOI.getCenterOfMass() + "\n");
-                    } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[10])) {
+                        UI.setDataText("  Geometric center               \t= " + algoVOI.getGeometricCenter() + "\n");
+                    } else if (statsList[i].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[10])) {
+                        if (image.isColorImage()) {
+                            UI.setDataText("  Center of Mass               \t= " + algoVOI.getCenterOfMassR() + " R, " +
+                                           algoVOI.getCenterOfMassG() + " G, " + algoVOI.getCenterOfMassB() + " B, " +
+                                           "\n");    
+                        }
+                        else {
+                            UI.setDataText("  Center of Mass               \t= " + algoVOI.getCenterOfMass() + "\n");
+                        }
+                    } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[11])) {
                         UI.setDataText("  Principal axis (only 2D)     \t= " + algoVOI.getPrincipalAxis() +
                                        "  degrees\n");
-                    } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[11])) {
-                        UI.setDataText("  Eccentricity (only 2D)       \t= " + algoVOI.getEccentricity() + "\n");
                     } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[12])) {
+                        UI.setDataText("  Eccentricity (only 2D)       \t= " + algoVOI.getEccentricity() + "\n");
+                    } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[13])) {
 
                         if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
                             unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
@@ -826,7 +849,7 @@ public class JDialogVOIStats extends JDialogBase
                         } else {
                             UI.setDataText("  Major axis length (only 2D)     \t= " + algoVOI.getMajorAxis() + "\n");
                         }
-                    } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[13])) {
+                    } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[14])) {
 
                         if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
                             unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
@@ -838,7 +861,7 @@ public class JDialogVOIStats extends JDialogBase
                         } else {
                             UI.setDataText("  Minor axis length (only 2D)     \t= " + algoVOI.getMinorAxis() + "\n");
                         }
-                    } else if (statsList[i].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[14])) {
+                    } else if (statsList[i].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[15])) {
 
                         if (image.isColorImage()) {
                             UI.setDataText("  Skewness of voxel intensity \t= " + algoVOI.getSkewnessR() + " R, " +
@@ -846,7 +869,7 @@ public class JDialogVOIStats extends JDialogBase
                         } else {
                             UI.setDataText("  Skewness of voxel intensity \t= " + algoVOI.getSkewness() + "\n");
                         }
-                    } else if (statsList[i].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[15])) {
+                    } else if (statsList[i].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[16])) {
 
                         if (image.isColorImage()) {
                             UI.setDataText("  Kurtosis of voxel intensity \t= " + algoVOI.getKurtosisR() + " R, " +
