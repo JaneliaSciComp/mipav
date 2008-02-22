@@ -107,7 +107,8 @@ public class PlugInDialogDTIOpenListFile extends JDialogBase implements Algorith
 			
 			try {
                 new ViewJFrameImage(resultImage, null);
-            } catch (OutOfMemoryError error) {
+            } catch (Exception error) {
+            	error.printStackTrace();
                 MipavUtil.displayError("Out of memory: unable to open new frame");
             }
             setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
