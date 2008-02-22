@@ -189,9 +189,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     /**
      * Initializes the frame and variables.
      *
-     * @param   LUTa           LUT of the imageA (if null grayscale LUT is constructed)
-     * 
-     * @throws  OutOfMemoryError  if enough memory cannot be allocated for the GUI
      */
     private void initStandAlone() throws OutOfMemoryError {
         initResolutions();
@@ -222,6 +219,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         Vector<CustomUIBuilder.UIParams> voiActionParams = new Vector<CustomUIBuilder.UIParams>();
         voiActionParams.addElement(CustomUIBuilder.PARAM_VOI_COLOR);
+        voiActionParams.addElement(CustomUIBuilder.PARAM_VOI_PROPERTIES);
         voiActionParams.addElement(CustomUIBuilder.PARAM_VOI_NEW);
         voiActionParams.addElement(CustomUIBuilder.PARAM_VOI_UNDO);
         voiActionParams.addElement(CustomUIBuilder.PARAM_VOI_CUT);
@@ -2960,6 +2958,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		}
 	}
 	
+	/**
+	 * simple class that contains a ColorIcon for displaying the VOI color, and 
+	 * has a button for changing the color of the linked VOI (linked by name)
+	 * @author linkb
+	 *
+	 */
 	private class ColorButtonPanel extends JPanel implements VOIListener {
 		
 		private ColorIcon cIcon;
@@ -3016,16 +3020,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	            /* not interested in removing curves */
 	        }
 
+	        /**
+	         * VOI Listener call (listens only to color changes)
+	         */
 	        public void colorChanged(Color c) {
 	        	cIcon.setColor(c);
 	        	this.repaint();
 	        }
 	        
-	        /**
-	         * Handles the VOI being selected. -- a state-change.
-	         *
-	         * @param  selection  DOCUMENT ME!
-	         */
+	        /** ignored */
 	        public void selectedVOI(VOIEvent selection) {
 	        }
 		
