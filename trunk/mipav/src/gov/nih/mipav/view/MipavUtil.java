@@ -400,7 +400,8 @@ public class MipavUtil extends JComponent {
     public static void displayError(String error) {
 
         if ((ViewUserInterface.getReference() != null) &&
-                (ViewUserInterface.getReference().isAppFrameVisible() == true)) {
+        		(ViewUserInterface.getReference().isAppFrameVisible() || 
+                		ViewUserInterface.getReference().isPlugInFrameVisible())) {
 
             try {
                 JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
@@ -453,7 +454,8 @@ public class MipavUtil extends JComponent {
     public static void displayInfo(String info) {
 
         if ((ViewUserInterface.getReference() != null) &&
-                (ViewUserInterface.getReference().isAppFrameVisible() == true)) {
+                (ViewUserInterface.getReference().isAppFrameVisible() || 
+                		ViewUserInterface.getReference().isPlugInFrameVisible())) {
 
             try {
                 JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
@@ -498,7 +500,8 @@ public class MipavUtil extends JComponent {
     public static void displayWarning(String warning) {
 
         if ((ViewUserInterface.getReference() != null) &&
-                (ViewUserInterface.getReference().isAppFrameVisible() == true)) {
+        		(ViewUserInterface.getReference().isAppFrameVisible() || 
+                		ViewUserInterface.getReference().isPlugInFrameVisible())) {
 
             try {
                 JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
