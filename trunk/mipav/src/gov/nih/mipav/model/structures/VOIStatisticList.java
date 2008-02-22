@@ -45,13 +45,20 @@ public interface VOIStatisticList {
      * @see  gov.nih.mipav.view.JPanelStatisticsList
      */
     String deviationDescription = "Std Dev of Intensity";
+    
+    /**
+     * string to test for when checking on statistics to calculate.
+     *
+     * @see  gov.nih.mipav.view.JPanelStatisticsList
+     */
+    String geometricCenterDescription = "Geometric center";
 
     /**
      * string to test for when checking on statistics to calculate.
      *
      * @see  gov.nih.mipav.view.JPanelStatisticsList
      */
-    String centerDescription = "Center of Mass";
+    String massCenterDescription = "Center of Mass";
 
     /**
      * string to test for when checking on statistics to calculate.
@@ -127,8 +134,9 @@ public interface VOIStatisticList {
      */
     String[] statisticDescription = {
         quantityDescription, volumeDescription, areaDescription, perimeterDescription, minIntensity, maxIntensity,
-        avgIntensity, deviationDescription, sumIntensities, centerDescription, axisDescription, eccentricityDescription,
-        majorAxisDescription, minorAxisDescription, skewnessDescription, kurtosisDescription
+        avgIntensity, deviationDescription, sumIntensities, geometricCenterDescription, massCenterDescription,
+        axisDescription, eccentricityDescription, majorAxisDescription, minorAxisDescription, skewnessDescription,
+        kurtosisDescription
     };
 
     /** number of statistics in the list. */
