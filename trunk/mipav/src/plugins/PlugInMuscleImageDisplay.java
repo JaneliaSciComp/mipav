@@ -2723,11 +2723,20 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    p.y = 0;
 	    
 	    //grab the scrollpane (where image is displayed) location
-	    SwingUtilities.convertPointToScreen(p, scrollPane);
+	    SwingUtilities.convertPointToScreen(p, scrollPane.getViewport());
 	
 	    Dimension d = new Dimension();
-	    d.width = getActiveImage().getFileInfo()[0].getExtents()[0];//.getParentFrame().getContentPane().getWidth() - 3; // the -3 is a correction
-	    d.height = getActiveImage().getFileInfo()[0].getExtents()[1];//getActiveImage().getParentFrame().getContentPane().getHeight() - 3; // ""
+	    d = scrollPane.getViewport().getSize();
+	    
+	    int width = (int)(getActiveImage().getFileInfo()[0].getExtents()[0] * getComponentImage().getZoomX());
+	    int height = (int)(getActiveImage().getFileInfo()[0].getExtents()[1] * getComponentImage().getZoomY());
+	    
+	    if (d.height > height) {
+	    	d.height = height;
+	    } 
+	    if (d.width > width) {
+	    	d.width = width;
+	    }
 	    currentRectangle = new Rectangle(p, d); //p, d
 	    
 	    try {
