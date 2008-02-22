@@ -467,19 +467,19 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
             // UI.setDataText("\n I'm here start");
             boolean flagVOI = false;
             VOI cRGVOIs = allRGVOIs.VOIAt(rgvoisCnt);
-            Point3Df centmasscRGVOIs = cRGVOIs.getCenterOfMass();
+            Point3Df geomCentercRGVOIs = cRGVOIs.getGeometricCenter();
             int areacRGVOIs = cRGVOIs.area();
             Polygon[] cRGVOIsPoly = cRGVOIs.exportPolygons(0);
             // UI.setDataText("\n Number of polygons in C = " + rgvoisCnt + ", " + cRGVOIsPoly.length);
 
             for (int rgvoisCnt1 = rgvoisCnt + 1; rgvoisCnt1 < allRGVOIs.size(); rgvoisCnt1++) {
                 VOI nRGVOIs = allRGVOIs.VOIAt(rgvoisCnt1);
-                Point3Df centmassnRGVOIs = nRGVOIs.getCenterOfMass();
+                Point3Df centmassnRGVOIs = nRGVOIs.getGeometricCenter();
                 int areanRGVOIs = nRGVOIs.area();
                 Polygon[] nRGVOIsPoly = nRGVOIs.exportPolygons(0);
 
                 // UI.setDataText("\n  Number of polygons in N = "  + rgvoisCnt1 + ", " +  nRGVOIsPoly.length);
-                if (nRGVOIsPoly[0].contains(centmasscRGVOIs.x, centmasscRGVOIs.y)) {
+                if (nRGVOIsPoly[0].contains(geomCentercRGVOIs.x, geomCentercRGVOIs.y)) {
 
                     if (areanRGVOIs < areacRGVOIs) {
                         newallRGVOIs.addElement(cRGVOIs);
@@ -1007,7 +1007,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         UI.setDataText("\n   Major Axis (2D-Only) \t = " + algoVOIProps.getMajorAxis());
         UI.setDataText("\n   Minor Axis (2D-Only) \t = " + algoVOIProps.getMinorAxis());
         UI.setDataText("\n   Principal Axis (2D-Only) \t = " + algoVOIProps.getPrincipalAxis() + " Degrees");
-        UI.setDataText("\n   Center Of Mass \t = " + algoVOIProps.getCenterOfMass());
+        UI.setDataText("\n   Center Of Mass \t = " + algoVOIProps.getGeometricCenter());
         UI.setDataText("\n--------------------------------------------------------");
         algoVOIProps.finalize();
         algoVOIProps = null;
