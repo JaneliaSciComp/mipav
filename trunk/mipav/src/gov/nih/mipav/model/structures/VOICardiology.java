@@ -1014,7 +1014,7 @@ public class VOICardiology extends VOIBase {
     }
 
     /**
-     * Draws center of mass of contour (2D).
+     * Draws geometric center of contour (2D).
      *
      * @param  scaleX       scale for the x coordinate
      * @param  scaleY       scale for the y coordinate
@@ -1022,18 +1022,18 @@ public class VOICardiology extends VOIBase {
      * @param  resolutionY  Y resolution (aspect ratio)
      * @param  g            graphics to paint in
      */
-    public void drawCenterOfMass(float scaleX, float scaleY, float resolutionX, float resolutionY, Graphics g) {
+    public void drawGeometricCenter(float scaleX, float scaleY, float resolutionX, float resolutionY, Graphics g) {
         int xS, yS;
 
         if (g == null) {
-            MipavUtil.displayError("VOIContour.drawCenterOfMass: grapics = null");
+            MipavUtil.displayError("VOIContour.drawGeometricCenter: grapics = null");
 
             return;
         }
 
-        getCenterOfMass();
-        xS = Math.round(cMassPt.x * scaleX * resolutionX);
-        yS = Math.round(cMassPt.y * scaleY * resolutionY);
+        getGeometricCenter();
+        xS = Math.round(gcPt.x * scaleX * resolutionX);
+        yS = Math.round(gcPt.y * scaleY * resolutionY);
         g.drawLine(xS, yS - 3, xS, yS + 3);
         g.drawLine(xS - 3, yS, xS + 3, yS);
 
@@ -1064,7 +1064,7 @@ public class VOICardiology extends VOIBase {
 
         length = getLengthPtToPt(res);
 
-        Point3Df pt = getCenterOfMass();
+        Point3Df pt = getGeometricCenter();
 
         // g.setColor(Color.yellow);
         tmpString = String.valueOf(length);
@@ -1486,13 +1486,13 @@ public class VOICardiology extends VOIBase {
             throw error;
         }
 
-        getCenterOfMass();
+        getGeometricCenter();
 
         // construct transMatrix object
-        tMatrix.setTranslate((cMassPt.x + tX), (cMassPt.y + tY), (cMassPt.z + tZ));
+        tMatrix.setTranslate((gcPt.x + tX), (gcPt.y + tY), (gcPt.z + tZ));
         tMatrix.setRotate(thetaX, thetaY, thetaZ, TransMatrix.DEGREES);
         tMatrix.setZoom(scaleX, scaleY, scaleZ);
-        tMatrix.setTranslate(-cMassPt.x, -cMassPt.y, -cMassPt.z);
+        tMatrix.setTranslate(-gcPt.x, -gcPt.y, -gcPt.z);
 
         for (i = 0; i < size(); i++) {
             tMatrix.transform((Point3Df) (elementAt(i)), pt);
@@ -1602,14 +1602,14 @@ public class VOICardiology extends VOIBase {
             throw error;
         }
 
-        getCenterOfMass();
+        getGeometricCenter();
 
         // construct transMatrix object
         // check into order of translate
-        tMatrix.setTranslate((cMassPt.x + tX), (cMassPt.y + tY), (cMassPt.z + tZ));
+        tMatrix.setTranslate((gcPt.x + tX), (gcPt.y + tY), (gcPt.z + tZ));
         tMatrix.setRotate(thetaX, thetaY, thetaZ, TransMatrix.DEGREES);
         tMatrix.setZoom(scaleX, scaleY, scaleZ);
-        tMatrix.setTranslate(-cMassPt.x, -cMassPt.y, -cMassPt.z);
+        tMatrix.setTranslate(-gcPt.x, -gcPt.y, -gcPt.z);
 
         for (i = 0; i < size(); i++) {
             tMatrix.transform((Point3Df) (elementAt(i)), pt);
@@ -1960,11 +1960,11 @@ public class VOICardiology extends VOIBase {
     }
 
     /**
-     * Gets the center of mass of the contour.
+     * Gets the geometric center of the contour.
      *
-     * @return  returns the center of mass
+     * @return  returns the geometric center
      */
-    public Point3Df getCenterOfMass() {
+    public Point3Df getGeometricCenter() {
         int nPts = 0;
         int x, y;
         contains(0, 0, true);
@@ -1989,19 +1989,19 @@ public class VOICardiology extends VOIBase {
             }
         }
 
-        cMassPt.x = Math.round(sumX / nPts);
-        cMassPt.y = Math.round(sumY / nPts);
-        cMassPt.z = ((Point3Df) (elementAt(0))).z;
+        gcPt.x = Math.round(sumX / nPts);
+        gcPt.y = Math.round(sumY / nPts);
+        gcPt.z = ((Point3Df) (elementAt(0))).z;
 
-        return cMassPt;
+        return gcPt;
     }
 
     /**
-     * Gets the center of mass of the contour.
+     * Gets the geometric center of the contour.
      *
-     * @return  returns the center of mass
+     * @return  returns the geometric center
      */
-    public Point3Df getCenterOfMassOld() {
+    public Point3Df getFGeometricCenterOld() {
         int j;
         float sumX = (float) 0.0;
         float sumY = (float) 0.0;
@@ -2016,13 +2016,13 @@ public class VOICardiology extends VOIBase {
         }
 
         try {
-            cMassPt = new Point3Df(Math.round(sumX / nPts), Math.round(sumY / nPts), Math.round(sumZ / nPts));
+            gcPt = new Point3Df(Math.round(sumX / nPts), Math.round(sumY / nPts), Math.round(sumZ / nPts));
         } catch (OutOfMemoryError error) {
-            cMassPt = null;
+            gcPt = null;
             System.gc();
         }
 
-        return cMassPt;
+        return gcPt;
     }
 
     /**
@@ -3037,14 +3037,14 @@ public class VOICardiology extends VOIBase {
             throw error;
         }
 
-        getCenterOfMass();
+        getGeometricCenter();
 
         // construct transMatrix object
-        // tMatrix.translate((cMassPt.x+tX)*scaleX, (cMassPt.y+tY)*scaleY, (cMassPt.z+tZ)*scaleZ);
-        tMatrix.setTranslate((cMassPt.x + tX), (cMassPt.y + tY), (cMassPt.z + tZ));
+        // tMatrix.translate((gcPt.x+tX)*scaleX, (gcPt.y+tY)*scaleY, (gcPt.z+tZ)*scaleZ);
+        tMatrix.setTranslate((gcPt.x + tX), (gcPt.y + tY), (gcPt.z + tZ));
         tMatrix.setRotate(thetaX, thetaY, thetaZ, TransMatrix.DEGREES);
         tMatrix.setZoom(scaleX, scaleY, scaleZ);
-        tMatrix.setTranslate(-cMassPt.x, -cMassPt.y, -cMassPt.z);
+        tMatrix.setTranslate(-gcPt.x, -gcPt.y, -gcPt.z);
 
         for (i = 0; i < size(); i++) {
             tMatrix.transform((Point3Df) (elementAt(i)), point);
