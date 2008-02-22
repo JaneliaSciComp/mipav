@@ -557,7 +557,7 @@ public class VOIContour extends VOIBase {
     }
 
     /**
-     * Draws center of mass of contour (2D).
+     * Draws geometric center of contour (2D).
      *
      * @param  scaleX       scale for the x coordinate
      * @param  scaleY       scale for the y coordinate
@@ -565,18 +565,18 @@ public class VOIContour extends VOIBase {
      * @param  resolutionY  Y resolution (aspect ratio)
      * @param  g            graphics to paint in
      */
-    public void drawCenterOfMass(float scaleX, float scaleY, float resolutionX, float resolutionY, Graphics g) {
+    public void drawGeometricCenter(float scaleX, float scaleY, float resolutionX, float resolutionY, Graphics g) {
         int xS, yS;
 
         if (g == null) {
-            MipavUtil.displayError("VOIContour.drawCenterOfMass: grapics = null");
+            MipavUtil.displayError("VOIContour.drawGeometricCenter: grapics = null");
 
             return;
         }
 
-        getCenterOfMass();
-        xS = MipavMath.round(cMassPt.x * scaleX * resolutionX);
-        yS = MipavMath.round(cMassPt.y * scaleY * resolutionY);
+        getGeometricCenter();
+        xS = MipavMath.round(gcPt.x * scaleX * resolutionX);
+        yS = MipavMath.round(gcPt.y * scaleY * resolutionY);
         g.drawLine(xS, yS - 3, xS, yS + 3);
         g.drawLine(xS - 3, yS, xS + 3, yS);
 
@@ -611,7 +611,7 @@ public class VOIContour extends VOIBase {
 
         length = getLengthPtToPt(res);
 
-        Point3Df pt = getCenterOfMass();
+        Point3Df pt = getGeometricCenter();
 
         // g.setColor(Color.yellow);
         tmpString = String.valueOf(length);
@@ -707,7 +707,7 @@ public class VOIContour extends VOIBase {
         
         if (active) {
         	if (closed) {
-        		drawCenterOfMass(zoomX, zoomY, resolutionX, resolutionY, g);
+        		drawGeometricCenter(zoomX, zoomY, resolutionX, resolutionY, g);
         	} else {
         		drawLength(g, zoomX, zoomY, unitsOfMeasure, resols);
         	}
@@ -1088,7 +1088,7 @@ public class VOIContour extends VOIBase {
         
         if (active) {
         	if (closed) {
-        		drawCenterOfMass(zoomX, zoomY, resolutionX, resolutionY, g);
+        		drawGeometricCenter(zoomX, zoomY, resolutionX, resolutionY, g);
         	} else {
         		drawLength(g, zoomX, zoomY, unitsOfMeasure, resols);
         	}
@@ -1618,13 +1618,13 @@ public class VOIContour extends VOIBase {
             throw error;
         }
 
-        getCenterOfMass();
+        getGeometricCenter();
 
         // construct transMatrix object
-        tMatrix.setTranslate((cMassPt.x + tX), (cMassPt.y + tY), (cMassPt.z + tZ));
+        tMatrix.setTranslate((gcPt.x + tX), (gcPt.y + tY), (gcPt.z + tZ));
         tMatrix.setRotate(thetaX, thetaY, thetaZ, TransMatrix.DEGREES);
         tMatrix.setZoom(scaleX, scaleY, scaleZ);
-        tMatrix.setTranslate(-cMassPt.x, -cMassPt.y, -cMassPt.z);
+        tMatrix.setTranslate(-gcPt.x, -gcPt.y, -gcPt.z);
 
         for (i = 0; i < size(); i++) {
             tMatrix.transform((Point3Df) (elementAt(i)), pt);
@@ -1734,14 +1734,14 @@ public class VOIContour extends VOIBase {
             throw error;
         }
 
-        getCenterOfMass();
+        getGeometricCenter();
 
         // construct transMatrix object
         // check into order of translate
-        tMatrix.setTranslate((cMassPt.x + tX), (cMassPt.y + tY), (cMassPt.z + tZ));
+        tMatrix.setTranslate((gcPt.x + tX), (gcPt.y + tY), (gcPt.z + tZ));
         tMatrix.setRotate(thetaX, thetaY, thetaZ, TransMatrix.DEGREES);
         tMatrix.setZoom(scaleX, scaleY, scaleZ);
-        tMatrix.setTranslate(-cMassPt.x, -cMassPt.y, -cMassPt.z);
+        tMatrix.setTranslate(-gcPt.x, -gcPt.y, -gcPt.z);
 
         for (i = 0; i < size(); i++) {
             tMatrix.transform((Point3Df) (elementAt(i)), pt);
@@ -2099,11 +2099,11 @@ public class VOIContour extends VOIBase {
     }
 
     /**
-     * Gets the center of mass of the contour.
+     * Gets the geometric center of the contour.
      *
-     * @return  returns the center of mass
+     * @return  returns the geometric center
      */
-    public Point3Df getCenterOfMass() {
+    public Point3Df getGeometricCenter() {
         int nPts = 0;
         int x, y;
         contains(0, 0, true);
@@ -2128,18 +2128,214 @@ public class VOIContour extends VOIBase {
             }
         }
 
-        cMassPt.x = MipavMath.round(sumX / nPts);
-        cMassPt.y = MipavMath.round(sumY / nPts);
+        gcPt.x = MipavMath.round(sumX / nPts);
+        gcPt.y = MipavMath.round(sumY / nPts);
 
         if (this.size() > 0) {
-            cMassPt.z = ((Point3Df) (elementAt(0))).z;
+            gcPt.z = ((Point3Df) (elementAt(0))).z;
         } else {
             System.err.println("Why is size == 0? weird");
             System.err.println("Here's the name: " + name + ", and label: " + label);
             System.err.println(this.toString());
         }
 
-        return cMassPt;
+        return gcPt;
+    }
+    
+    /**
+     * Gets the center of mass of the contour.
+     * @param   imageBuffer  image array in which VOIs and lines are found
+     * @param   xDim         x-Dimension of image
+     * @return  returns the center of mass
+     */
+    public Point3Df getCenterOfMass(float[] imageBuffer, int xDim) {
+        double valTot = 0.0;
+        int x, y;
+        int index;
+        float val;
+        contains(0, 0, true);
+        getBounds(xBounds, yBounds, zBounds);
+
+        int xbs = (int) xBounds[0];
+        int xbe = (int) xBounds[1];
+        int ybs = (int) yBounds[0];
+        int ybe = (int) yBounds[1];
+        double sumX = 0.0;
+        double sumY = 0.0;
+
+        for (y = ybs; y <= ybe; y++) {
+
+            for (x = xbs; x <= xbe; x++) {
+
+                if (contains(x, y, false)) {
+                    index = x + y * xDim;
+                    val = imageBuffer[index];
+                    valTot += val;
+                    sumX += x*val;
+                    sumY += y*val;
+                }
+            }
+        }
+
+        cenMassPt.x = MipavMath.round(sumX / valTot);
+        cenMassPt.y = MipavMath.round(sumY / valTot);
+
+        if (this.size() > 0) {
+            cenMassPt.z = ((Point3Df) (elementAt(0))).z;
+        } else {
+            System.err.println("Why is size == 0? weird");
+            System.err.println("Here's the name: " + name + ", and label: " + label);
+            System.err.println(this.toString());
+        }
+
+        return cenMassPt;
+    }
+    
+    /**
+     * Gets the red center of mass of the contour.
+     * @param   imageBuffer  image array in which VOIs and lines are found
+     * @param   xDim         x-Dimension of image
+     * @return  returns the center of mass
+     */
+    public Point3Df getCenterOfMassR(float[] imageBuffer, int xDim) {
+        double valTot = 0.0;
+        int x, y;
+        int index;
+        float val;
+        contains(0, 0, true);
+        getBounds(xBounds, yBounds, zBounds);
+
+        int xbs = (int) xBounds[0];
+        int xbe = (int) xBounds[1];
+        int ybs = (int) yBounds[0];
+        int ybe = (int) yBounds[1];
+        double sumX = 0.0;
+        double sumY = 0.0;
+
+        for (y = ybs; y <= ybe; y++) {
+
+            for (x = xbs; x <= xbe; x++) {
+
+                if (contains(x, y, false)) {
+                    index = x + y * xDim;
+                    val = imageBuffer[4*index+1];
+                    valTot += val;
+                    sumX += x*val;
+                    sumY += y*val;
+                }
+            }
+        }
+
+        cenMassPtR.x = MipavMath.round(sumX / valTot);
+        cenMassPtR.y = MipavMath.round(sumY / valTot);
+
+        if (this.size() > 0) {
+            cenMassPtR.z = ((Point3Df) (elementAt(0))).z;
+        } else {
+            System.err.println("Why is size == 0? weird");
+            System.err.println("Here's the name: " + name + ", and label: " + label);
+            System.err.println(this.toString());
+        }
+
+        return cenMassPtR;
+    }
+    
+    /**
+     * Gets the green center of mass of the contour.
+     * @param   imageBuffer  image array in which VOIs and lines are found
+     * @param   xDim         x-Dimension of image
+     * @return  returns the center of mass
+     */
+    public Point3Df getCenterOfMassG(float[] imageBuffer, int xDim) {
+        double valTot = 0.0;
+        int x, y;
+        int index;
+        float val;
+        contains(0, 0, true);
+        getBounds(xBounds, yBounds, zBounds);
+
+        int xbs = (int) xBounds[0];
+        int xbe = (int) xBounds[1];
+        int ybs = (int) yBounds[0];
+        int ybe = (int) yBounds[1];
+        double sumX = 0.0;
+        double sumY = 0.0;
+
+        for (y = ybs; y <= ybe; y++) {
+
+            for (x = xbs; x <= xbe; x++) {
+
+                if (contains(x, y, false)) {
+                    index = x + y * xDim;
+                    val = imageBuffer[4*index+2];
+                    valTot += val;
+                    sumX += x*val;
+                    sumY += y*val;
+                }
+            }
+        }
+
+        cenMassPtG.x = MipavMath.round(sumX / valTot);
+        cenMassPtG.y = MipavMath.round(sumY / valTot);
+
+        if (this.size() > 0) {
+            cenMassPtG.z = ((Point3Df) (elementAt(0))).z;
+        } else {
+            System.err.println("Why is size == 0? weird");
+            System.err.println("Here's the name: " + name + ", and label: " + label);
+            System.err.println(this.toString());
+        }
+
+        return cenMassPtG;
+    }
+    
+    /**
+     * Gets the blue center of mass of the contour.
+     * @param   imageBuffer  image array in which VOIs and lines are found
+     * @param   xDim         x-Dimension of image
+     * @return  returns the center of mass
+     */
+    public Point3Df getCenterOfMassB(float[] imageBuffer, int xDim) {
+        double valTot = 0.0;
+        int x, y;
+        int index;
+        float val;
+        contains(0, 0, true);
+        getBounds(xBounds, yBounds, zBounds);
+
+        int xbs = (int) xBounds[0];
+        int xbe = (int) xBounds[1];
+        int ybs = (int) yBounds[0];
+        int ybe = (int) yBounds[1];
+        double sumX = 0.0;
+        double sumY = 0.0;
+
+        for (y = ybs; y <= ybe; y++) {
+
+            for (x = xbs; x <= xbe; x++) {
+
+                if (contains(x, y, false)) {
+                    index = x + y * xDim;
+                    val = imageBuffer[4*index+3];
+                    valTot += val;
+                    sumX += x*val;
+                    sumY += y*val;
+                }
+            }
+        }
+
+        cenMassPtB.x = MipavMath.round(sumX / valTot);
+        cenMassPtB.y = MipavMath.round(sumY / valTot);
+
+        if (this.size() > 0) {
+            cenMassPtB.z = ((Point3Df) (elementAt(0))).z;
+        } else {
+            System.err.println("Why is size == 0? weird");
+            System.err.println("Here's the name: " + name + ", and label: " + label);
+            System.err.println(this.toString());
+        }
+
+        return cenMassPtB;
     }
 
     /**
@@ -3464,14 +3660,14 @@ public class VOIContour extends VOIBase {
             throw error;
         }
 
-        getCenterOfMass();
+        getGeometricCenter();
 
         // construct transMatrix object
-        // tMatrix.translate((cMassPt.x+tX)*scaleX, (cMassPt.y+tY)*scaleY, (cMassPt.z+tZ)*scaleZ);
-        tMatrix.setTranslate((cMassPt.x + tX), (cMassPt.y + tY), (cMassPt.z + tZ));
+        // tMatrix.translate((gcPt.x+tX)*scaleX, (gcPt.y+tY)*scaleY, (gcPt.z+tZ)*scaleZ);
+        tMatrix.setTranslate((gcPt.x + tX), (gcPt.y + tY), (gcPt.z + tZ));
         tMatrix.setRotate(thetaX, thetaY, thetaZ, TransMatrix.DEGREES);
         tMatrix.setZoom(scaleX, scaleY, scaleZ);
-        tMatrix.setTranslate(-cMassPt.x, -cMassPt.y, -cMassPt.z);
+        tMatrix.setTranslate(-gcPt.x, -gcPt.y, -gcPt.z);
 
         for (i = 0; i < size(); i++) {
             tMatrix.transform((Point3Df) (elementAt(i)), point);
