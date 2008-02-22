@@ -125,6 +125,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** Whether the mipav GUI should be shown; set by the -hide command line option. */
     private boolean isAppFrameVisible = true;
 
+    /** Whether a plugin standalone frame is visible */
+    private boolean isPlugInFrameVisible = false;
+    
     /** DOCUMENT ME! */
     private boolean isClippedVOI2D = true;
 
@@ -1654,6 +1657,22 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         return isAppFrameVisible;
     }
 
+    /**
+     * Accessor to see if a stand-alone plugin frame is visible (not app frame)
+     * @return
+     */
+    public boolean isPlugInFrameVisible() {
+    	return isPlugInFrameVisible;
+    }
+    
+    /**
+     * Tells the UI that a standalone plugin frame is visible
+     * @param isVisible is the plugin frame visible
+     */
+    public void setPlugInFrameVisible(boolean isVisible) {
+    	this.isPlugInFrameVisible = isVisible;
+    }
+    
     /**
      * Whether or not the VOI is a 2D (true = 2d, false = 3d+).
      *
