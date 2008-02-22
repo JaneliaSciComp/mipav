@@ -96,13 +96,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     public enum ImageType{
         
         /** denotes that the srcImg is an abdomen */
-        ABDOMEN,
+        Abdomen,
         
         /** denotes that the srcImg is two thighs */
-        TWO_THIGHS,
+        Thigh,
         
         /** unknown image type, generally represents an error state */
-        UNKNOWN
+        Unknown
     }
     
     public enum Symmetry{
@@ -2819,7 +2819,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		try {
 			pdfDocument = new Document();
 			pdfWriter = PdfWriter.getInstance(pdfDocument, new FileOutputStream(pdfFile));
-			pdfDocument.addTitle("Thigh Tissue Analysis Report");
+			pdfDocument.addTitle(imageType+" Tissue Analysis Report");
 			pdfDocument.addCreator("MIPAV: Muscle Segmentation");
 			pdfDocument.open();
 			

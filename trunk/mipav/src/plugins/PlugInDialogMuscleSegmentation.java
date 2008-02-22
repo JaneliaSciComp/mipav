@@ -63,7 +63,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
 
         image = im;
         imageType = detectImageType(im);
-        if(imageType == PlugInMuscleImageDisplay.ImageType.UNKNOWN)
+        if(imageType == PlugInMuscleImageDisplay.ImageType.Unknown)
         	init();
         else
         	callAlgorithm();
@@ -247,9 +247,9 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     private boolean setVariables() {
 
         if (twoThighRadio.isSelected()) {
-            imageType = PlugInMuscleImageDisplay.ImageType.TWO_THIGHS;
+            imageType = PlugInMuscleImageDisplay.ImageType.Thigh;
         } else if (abdomenRadio.isSelected()) {
-            imageType = PlugInMuscleImageDisplay.ImageType.ABDOMEN;
+            imageType = PlugInMuscleImageDisplay.ImageType.Abdomen;
         } else {
             MipavUtil.displayWarning("You have selected an unsupported image type.");
             return false;
@@ -357,9 +357,9 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
 		
 		//compares rows where bone was found to rows which matched two thigh description
 		if(((double)qualifiedRows)/((double)boneRowHigh.size()) > .75) {
-			return PlugInMuscleImageDisplay.ImageType.TWO_THIGHS;
+			return PlugInMuscleImageDisplay.ImageType.Thigh;
 		} 
 		
-		return PlugInMuscleImageDisplay.ImageType.ABDOMEN;
+		return PlugInMuscleImageDisplay.ImageType.Abdomen;
     }
 }
