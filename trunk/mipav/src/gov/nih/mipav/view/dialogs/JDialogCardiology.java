@@ -206,7 +206,7 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
 
         double angleInc = 0;
 
-        Point3Df centerPt = image.getVOIs().VOIAt(outerVOIIndex).getCenterOfMass();
+        Point3Df centerPt = image.getVOIs().VOIAt(outerVOIIndex).getGeometricCenter();
 
         float[] x;
         float[] y;
