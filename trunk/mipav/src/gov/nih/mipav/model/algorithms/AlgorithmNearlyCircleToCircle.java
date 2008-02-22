@@ -118,7 +118,7 @@ public class AlgorithmNearlyCircleToCircle extends AlgorithmBase {
         int contourVOIs;
         Vector[] contours = null;
         int nContours = 0;
-        Point3Df centerOfMass;
+        Point3Df geometricCenter;
         VOI selectedVOI = null;
         double radSq;
         double theta[];
@@ -215,9 +215,9 @@ public class AlgorithmNearlyCircleToCircle extends AlgorithmBase {
             return;
         }
         
-        centerOfMass = ((VOIContour)(contours[0].elementAt(0))).getCenterOfMass();
-        xcen = centerOfMass.x;
-        ycen = centerOfMass.y;
+        geometricCenter = ((VOIContour)(contours[0].elementAt(0))).getGeometricCenter();
+        xcen = geometricCenter.x;
+        ycen = geometricCenter.y;
         Preferences.debug("X center = " + xcen + "\n");
         Preferences.debug("Y center = " + ycen + "\n");
         gon = ((VOIContour)(contours[0].elementAt(0))).exportPolygon();
