@@ -42,7 +42,7 @@ public class CustomUIBuilder {
 	public static final UIParams PARAM_VOI_POINT_ADD = new UIParams("Add point", "addPoint", UIParams.INVALID_MNEMONIC, "Add point", "pointROI", false);
 	
 	/** VOI Actions/Properties */
-	public static final UIParams PARAM_VOI_PROPERTIES = new UIParams("VOIProperties", "View VOI Properties", "voiproperties");
+	public static final UIParams PARAM_VOI_PROPERTIES = new UIParams("VOIProperties", "View VOI Properties", "voiquestion");
 	public static final UIParams PARAM_VOI_COLOR = new UIParams("VOIColor", "Current/change VOI Color", "transparent");
 	public static final UIParams PARAM_VOI_NEW = new UIParams("NewVOI", "Initiate new VOI", "newvoi");
 	public static final UIParams PARAM_VOI_UNDO = new UIParams("undoVOI", "Undo last VOI change (Ctrl-Z)", "undopaint");
