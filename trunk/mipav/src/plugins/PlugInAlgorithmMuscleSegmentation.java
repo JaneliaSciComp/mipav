@@ -60,11 +60,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 
         switch (imageType) {
             
-            case ABDOMEN:
+            case Abdomen:
                 performAbdomenDialog();
                 break;
                 
-            case TWO_THIGHS:
+            case Thigh:
                 performThighDialog();
                 break;
                 
@@ -132,12 +132,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         if (ViewUserInterface.getReference().isAppFrameVisible()) {
         	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
         			noMirrorArr, noMirrorZ, 
-        			PlugInMuscleImageDisplay.ImageType.ABDOMEN, 
+        			PlugInMuscleImageDisplay.ImageType.Abdomen, 
         			PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT);
         } else {
         	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
         			noMirrorArr, noMirrorZ, 
-        			PlugInMuscleImageDisplay.ImageType.ABDOMEN, 
+        			PlugInMuscleImageDisplay.ImageType.Abdomen, 
         			PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT, true);
         }
         
@@ -208,11 +208,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    if (ViewUserInterface.getReference().isAppFrameVisible()) {
 	    	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
 	    			noMirrorArr, noMirrorZ, 
-	    			PlugInMuscleImageDisplay.ImageType.TWO_THIGHS, symmetry);
+	    			PlugInMuscleImageDisplay.ImageType.Thigh, symmetry);
 	    } else {
 	    	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
 	    			noMirrorArr, noMirrorZ, 
-	    			PlugInMuscleImageDisplay.ImageType.TWO_THIGHS, symmetry, true);
+	    			PlugInMuscleImageDisplay.ImageType.Thigh, symmetry, true);
 	    }
 	}
 	
