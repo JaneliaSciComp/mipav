@@ -246,7 +246,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
             }   
         }
         
-        center = selectedVOI.getCenterOfMass();
+        center = selectedVOI.getGeometricCenter();
         centerX = center.x;
         centerY = center.y;
         
@@ -891,7 +891,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
             }   
         }
         
-        center = selectedVOI.getCenterOfMass();
+        center = selectedVOI.getGeometricCenter();
         centerX = center.x;
         centerY = center.y;
         
