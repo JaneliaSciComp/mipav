@@ -44,7 +44,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 
     /**For writing PDF docs below. */
     private Document pdfDocument = null;
-	private PdfWriter writer = null;
+	private PdfWriter pdfWriter = null;
+	private File pdfFile = null;
 	private PdfPTable aTable = null;
 	private PdfPTable imageTable = null;
     
@@ -179,7 +180,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         locationStatus = new TreeMap();
         
         Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, "yes");
-        
+                
     	initStandAlone();
     	this.setActiveImage(IMAGE_A);
     	setVisible(true);
@@ -2763,8 +2764,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			pdfDocument.add(pImage);
 			pdfDocument.close();
 			
-			
-			
+			MipavUtil.displayInfo("PDF saved to: " + pdfFile);
+			ViewUserInterface.getReference().getMessageFrame().append("PDF saved to: " + pdfFile, ViewJFrameMessage.DATA);
 			
 		//	imageTable.addCell(Image.getInstance(display.get));
 			
@@ -2810,11 +2811,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		String fileDir = getActiveImage().getFileInfo(0).getFileDirectory();
 		long time = System.currentTimeMillis();
 		
-		File file = new File(fileDir + File.separator + "NIA_Seg-" + time + ".pdf");
-		System.err.println("file: " + file.toString());
+		pdfFile = new File(fileDir + File.separator + "NIA_Seg-" + time + ".pdf");
+		
+		
 		try {
 			pdfDocument = new Document();
-			writer = PdfWriter.getInstance(pdfDocument, new FileOutputStream(file));
+			pdfWriter = PdfWriter.getInstance(pdfDocument, new FileOutputStream(pdfFile));
 			pdfDocument.addTitle("Thigh Tissue Analysis Report");
 			pdfDocument.addCreator("MIPAV: Muscle Segmentation");
 			pdfDocument.open();

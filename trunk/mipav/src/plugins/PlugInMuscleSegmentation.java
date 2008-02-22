@@ -51,7 +51,7 @@ public class PlugInMuscleSegmentation implements PlugInAlgorithm, PlugInGeneric 
     	
     	
     	ViewUserInterface.getReference().setExitCmdLineOnError(false);
-    	
+    	ViewUserInterface.getReference().setPlugInFrameVisible(!ViewUserInterface.getReference().isAppFrameVisible());
     	ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
         JFileChooser chooser = fileChooser.getFileChooser();
         chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
