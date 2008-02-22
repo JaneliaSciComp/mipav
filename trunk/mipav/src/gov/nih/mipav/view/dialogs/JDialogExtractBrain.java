@@ -151,7 +151,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
     private ViewUserInterface userInterface;
 
     /** When true estimates that boundary of the VOI by a sphere. */
-    private boolean useSphere;
+    private boolean useSphere = true;
 
     /** Initially not checked, estimates the boundary by a sphere rather than an ellipse. */
     private JCheckBox useSphereCheckbox;
@@ -161,7 +161,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
-    public JDialogExtractBrain() { }
+    public JDialogExtractBrain() { }  
 
     /**
      * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
@@ -214,11 +214,11 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         int sliceSize = xDim * yDim;
         int imgSize = sliceSize * zDim;
 
-        int[] imgBuffer = new int[xDim * yDim * zDim];
+        int[] imgBuffer = new int[imgSize];
         float fMin = (float) img.getMin();
         float fMax = (float) img.getMax();
 
-        // Remap image data to 0 - 1023
+        // Re-map image data to 0 - 1023
         float fMult = 1023.0f / (fMax - fMin);
 
         for (int i = 0; i < imgSize; i++) {
@@ -397,8 +397,8 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
 
         if (maxCountIndex == iMax) {
 
-            // unable to find background from above - use cummalitive histogram method
-            for (i = 0; i < 64; i++) {
+            // unable to find background from above - use cumulative histogram method
+            for (i = 0; i < iMax; i++) {
                 iAccum += aiHistogram[i];
 
                 if (iAccum <= iMaxCutoff) {
