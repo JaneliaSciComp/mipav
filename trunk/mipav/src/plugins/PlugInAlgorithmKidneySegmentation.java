@@ -1154,8 +1154,8 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
 
 
         // Find the x center of mass of each of the 2 drawn curves
-        xcen1 = ((VOIContour) (curves[zc].elementAt(0))).getCenterOfMass().x;
-        xcen2 = ((VOIContour) (curves[zc].elementAt(1))).getCenterOfMass().x;
+        xcen1 = ((VOIContour) (curves[zc].elementAt(0))).getGeometricCenter().x;
+        xcen2 = ((VOIContour) (curves[zc].elementAt(1))).getGeometricCenter().x;
         contourVOIL = new VOI((short) 10, "contourL", zDim, VOI.CONTOUR, -1.0f);
         contourVOIR = new VOI((short) 11, "contourR", zDim, VOI.CONTOUR, -1.0f);
 
@@ -1860,8 +1860,8 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         }
 
         // Find the x center of mass of each of the 2 drawn curves
-        xcen1 = ((VOIContour) (curves[z].elementAt(0))).getCenterOfMass().x;
-        xcen2 = ((VOIContour) (curves[z].elementAt(1))).getCenterOfMass().x;
+        xcen1 = ((VOIContour) (curves[z].elementAt(0))).getGeometricCenter().x;
+        xcen2 = ((VOIContour) (curves[z].elementAt(1))).getGeometricCenter().x;
 
         contourVOI.setActive(true);
         algoVOIProps = new AlgorithmVOIProps(srcImage, AlgorithmVOIProps.PROCESS_PER_VOI,
@@ -2131,7 +2131,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             num2 = 0;
 
             for (i = 0; i < nCurves; i++) {
-                xcen = ((VOIContour) (curves2[z].elementAt(i))).getCenterOfMass().x;
+                xcen = ((VOIContour) (curves2[z].elementAt(i))).getGeometricCenter().x;
 
                 if (Math.abs(xcen - xcen1) < Math.abs(xcen - xcen2)) {
                     setMem[i] = 1;
