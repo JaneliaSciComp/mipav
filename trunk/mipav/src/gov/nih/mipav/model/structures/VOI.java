@@ -223,18 +223,19 @@ public class VOI extends ModelSerialCloneable {
         // this ensures that color gets set in
         // all protractor contours.
         this.zDim = zDim;
-        stats = new ViewList[11];
+        stats = new ViewList[12];
         stats[0] = new ViewList("No. of voxels", false);
         stats[1] = new ViewList("Volume", false);
         stats[2] = new ViewList("Area", true);
         stats[3] = new ViewList("Average voxel intensity", false);
         stats[4] = new ViewList("Std. dev. of voxel intensity", false);
         stats[5] = new ViewList("Sum Intensities", false);
-        stats[6] = new ViewList("Center of Mass", false);
-        stats[7] = new ViewList("Principal axis (only 2D)", false);
-        stats[8] = new ViewList("Eccentricity (only 2D)", false);
-        stats[9] = new ViewList("Major axis length (only 2D)", false);
-        stats[10] = new ViewList("Minor axis length (only 2D)", false);
+        stats[6] = new ViewList("Geometric center", false);
+        stats[7] = new ViewList("Center of Mass", false);
+        stats[8] = new ViewList("Principal axis (only 2D)", false);
+        stats[9] = new ViewList("Eccentricity (only 2D)", false);
+        stats[10] = new ViewList("Major axis length (only 2D)", false);
+        stats[11] = new ViewList("Minor axis length (only 2D)", false);
     }
 
     /**
@@ -288,18 +289,19 @@ public class VOI extends ModelSerialCloneable {
         // this ensures that color gets set in
         // all protractor contours.
         this.zDim = zDim;
-        stats = new ViewList[11];
+        stats = new ViewList[12];
         stats[0] = new ViewList("No. of voxels", false);
         stats[1] = new ViewList("Volume", false);
         stats[2] = new ViewList("Area", true);
         stats[3] = new ViewList("Average voxel intensity", false);
         stats[4] = new ViewList("Std. dev. of voxel intensity", false);
         stats[5] = new ViewList("Sum Intensities", false);
-        stats[6] = new ViewList("Center of Mass", false);
-        stats[7] = new ViewList("Principal axis (only 2D)", false);
-        stats[8] = new ViewList("Eccentricity (only 2D)", false);
-        stats[9] = new ViewList("Major axis length (only 2D)", false);
-        stats[10] = new ViewList("Minor axis length (only 2D)", false);
+        stats[6] = new ViewList("Geometric center", false);
+        stats[7] = new ViewList("Center of Mass", false);
+        stats[8] = new ViewList("Principal axis (only 2D)", false);
+        stats[9] = new ViewList("Eccentricity (only 2D)", false);
+        stats[10] = new ViewList("Major axis length (only 2D)", false);
+        stats[11] = new ViewList("Minor axis length (only 2D)", false);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -1753,11 +1755,11 @@ public class VOI extends ModelSerialCloneable {
         int i;
         int z;
         Polygon[][] transformedGon = null;
-        Point3Df cMassPt = null;
+        Point3Df gcPt = null;
         TransMatrix tMatrix = null;
 
         try {
-            cMassPt = new Point3Df();
+            gcPt = new Point3Df();
             tMatrix = new TransMatrix(4);
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -1766,13 +1768,13 @@ public class VOI extends ModelSerialCloneable {
             return null;
         }
 
-        cMassPt = getCenterOfMass();
+        gcPt = getGeometricCenter();
 
         // construct transMatrix object
-        tMatrix.setTranslate((cMassPt.x + tX), (cMassPt.y + tY), (cMassPt.z + tZ));
+        tMatrix.setTranslate((gcPt.x + tX), (gcPt.y + tY), (gcPt.z + tZ));
         tMatrix.setRotate(thetaX, thetaY, thetaZ, TransMatrix.DEGREES);
         tMatrix.setZoom(scaleX, scaleY, scaleZ);
-        tMatrix.setTranslate(-cMassPt.x, -cMassPt.y, -cMassPt.z);
+        tMatrix.setTranslate(-gcPt.x, -gcPt.y, -gcPt.z);
 
         if (curveType == CONTOUR) {
 
@@ -2236,11 +2238,11 @@ public class VOI extends ModelSerialCloneable {
     }
 
     /**
-     * Returns the center of mass of the VOI (only contour).
+     * Returns the geometric center of the VOI (only contour).
      *
-     * @return  returns the center of mass
+     * @return  returns the geometric center
      */
-    public Point3Df getCenterOfMass() {
+    public Point3Df getGeometricCenter() {
         int i, z;
         int ncurves = 0;
         Point3Df tempPt = new Point3Df(0, 0, 0);
@@ -2257,7 +2259,7 @@ public class VOI extends ModelSerialCloneable {
             if (curves[z].size() != 0) {
 
                 for (i = 0; i < curves[z].size(); i++) {
-                    tempPt = ((VOIContour) (curves[z].elementAt(i))).getCenterOfMass();
+                    tempPt = ((VOIContour) (curves[z].elementAt(i))).getGeometricCenter();
                     ncurves++;
                     sumX += tempPt.x;
                     sumY += tempPt.y;
@@ -2270,14 +2272,14 @@ public class VOI extends ModelSerialCloneable {
     }
 
     /**
-     * Caclulates the center of mass for all the contours on a particular slice. (This should find for seperate, but
+     * Caclulates the geometric center for all the contours on a particular slice. (This should find for seperate, but
      * grouped, contours as well, but this hasn't been proven!)
      *
      * @param   slice  DOCUMENT ME!
      *
-     * @return  returns the center of mass
+     * @return  returns the geometric center
      */
-    public Point3Df getCenterOfMass(int slice) {
+    public Point3Df getGeometricCenter(int slice) {
         int i;
         int ncurves = 0;
         Point3Df tempPt = new Point3Df(0, 0, 0);
@@ -2295,7 +2297,7 @@ public class VOI extends ModelSerialCloneable {
 
             for (i = 0; i < curves[slice].size(); i++) {
                 ncurves++;
-                tempPt = ((VOIContour) (curves[slice].elementAt(i))).getCenterOfMass();
+                tempPt = ((VOIContour) (curves[slice].elementAt(i))).getGeometricCenter();
                 sumX += tempPt.x;
                 sumY += tempPt.y;
                 sumZ += tempPt.z;
@@ -4855,10 +4857,10 @@ System.err.println("curves size: " );
                              float sZ) {
         int z;
         TransMatrix tMatrix = null;
-        Point3Df cMassPt = null;
+        Point3Df gcPt = null;
 
         try {
-            cMassPt = new Point3Df();
+            gcPt = new Point3Df();
             tMatrix = new TransMatrix(4);
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -4867,11 +4869,11 @@ System.err.println("curves size: " );
             return;
         }
 
-        cMassPt = getCenterOfMass();
-        tMatrix.setTranslate((cMassPt.x + tX), (cMassPt.y + tY), (cMassPt.z + tZ));
+        gcPt = getGeometricCenter();
+        tMatrix.setTranslate((gcPt.x + tX), (gcPt.y + tY), (gcPt.z + tZ));
         tMatrix.setRotate(rotX, rotY, rotZ, TransMatrix.DEGREES);
         tMatrix.setZoom(sX, sY, sZ);
-        tMatrix.setTranslate(-cMassPt.x, -cMassPt.y, -cMassPt.z);
+        tMatrix.setTranslate(-gcPt.x, -gcPt.y, -gcPt.z);
 
         if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
 
@@ -4903,10 +4905,10 @@ System.err.println("curves size: " );
     public void transformVOI(float rotX, float rotY, float rotZ, float tX, float tY, float tZ, float sX, float sY,
                              float sZ, int slice, int element, boolean doRound) {
         TransMatrix tMatrix = null;
-        Point3Df cMassPt = null;
+        Point3Df gcPt = null;
 
         try {
-            cMassPt = new Point3Df();
+            gcPt = new Point3Df();
             tMatrix = new TransMatrix(4);
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -4915,11 +4917,11 @@ System.err.println("curves size: " );
             return;
         }
 
-        cMassPt = ((VOIContour) (curves[slice].elementAt(element))).getCenterOfMass();
-        tMatrix.setTranslate((cMassPt.x + tX), (cMassPt.y + tY), (cMassPt.z + tZ));
+        gcPt = ((VOIContour) (curves[slice].elementAt(element))).getGeometricCenter();
+        tMatrix.setTranslate((gcPt.x + tX), (gcPt.y + tY), (gcPt.z + tZ));
         tMatrix.setRotate(rotX, rotY, rotZ, TransMatrix.DEGREES);
         tMatrix.setZoom(sX, sY, sZ);
-        tMatrix.setTranslate(-cMassPt.x, -cMassPt.y, -cMassPt.z);
+        tMatrix.setTranslate(-gcPt.x, -gcPt.y, -gcPt.z);
 
         if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
             ((VOIContour) (curves[slice].elementAt(element))).transformContour(tMatrix, doRound);
