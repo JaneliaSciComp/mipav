@@ -69,8 +69,20 @@ public abstract class VOIBase extends Vector<Point3Df> {
     /** General use color (black) used in VOI. */
     protected Color black = new Color(0, 0, 0);
 
-    /** Stores the Center of Mass of the contour of a VOI. */
-    protected Point3Df cMassPt = new Point3Df(0, 0, 0);
+    /** Stores the geometric center of the contour of a VOI. */
+    protected Point3Df gcPt = new Point3Df(0, 0, 0);
+    
+    /** Stores the black and white center of mass of the contour of a VOI. */
+    protected Point3Df cenMassPt = new Point3Df(0, 0, 0);
+    
+    /** Stores the red center of mass of the contour of a VOI. */
+    protected Point3Df cenMassPtR = new Point3Df(0, 0, 0);
+    
+    /** Stores the green center of mass of the contour of a VOI. */
+    protected Point3Df cenMassPtG = new Point3Df(0, 0, 0);
+    
+    /** Stores the blue center of mass of the contour of a VOI. */
+    protected Point3Df cenMassPtB = new Point3Df(0, 0, 0);
 
     /** DOCUMENT ME! */
     protected boolean doName = false;
