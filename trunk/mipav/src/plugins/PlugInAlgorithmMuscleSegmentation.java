@@ -80,16 +80,16 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
     	String[][] mirrorArr = new String[3][];
         mirrorArr[0] = new String[1];
-        mirrorArr[0][0] = "Abdomen";
+        mirrorArr[0][0] = "fascial area";
         
         mirrorArr[1] = new String[3];
-        mirrorArr[1][0] = "Psoas";
-        mirrorArr[1][1] = "Lateral Abdominal";
-        mirrorArr[1][2] = "Paraspinous";
+        mirrorArr[1][0] = "psoas";
+        mirrorArr[1][1] = "lateral";
+        mirrorArr[1][2] = "paraspinous";
         
         mirrorArr[2] = new String[2];
-        mirrorArr[2][0] = "Aortic calcium";
-        mirrorArr[2][1] = "Rectus abdominus";
+        mirrorArr[2][0] = "aortic calcium";
+        mirrorArr[2][1] = "rectus abdominus";
         
         boolean[][] mirrorZ = new boolean[3][];
         mirrorZ[0] = new boolean[1];
@@ -125,8 +125,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         noMirrorZ[2][0] = false;
         
         String[] titles = new String[3];
-        titles[0] = "Thigh";
-        titles[1] = "Bone";
+        titles[0] = "Abdomen";
+        titles[1] = "Samples";
         titles[2] = "Muscles"; 
         
         if (ViewUserInterface.getReference().isAppFrameVisible()) {
