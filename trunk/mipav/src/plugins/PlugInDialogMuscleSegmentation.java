@@ -360,6 +360,6 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
 			return PlugInMuscleImageDisplay.ImageType.TWO_THIGHS;
 		} 
 		
-		return PlugInMuscleImageDisplay.ImageType.UNKNOWN;
+		return PlugInMuscleImageDisplay.ImageType.ABDOMEN;
     }
 }

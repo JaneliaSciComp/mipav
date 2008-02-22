@@ -90,6 +90,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     private TreeMap locationStatus;
     
+    private TreeMap<String, ColorButtonPanel> panelSelect;
     private TreeMap<String, Color> voiColor;
         
     public enum ImageType{
@@ -137,6 +138,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.imageType = imageType;
         this.symmetry = symmetry;
         
+        panelSelect = new TreeMap();
         voiColor = new TreeMap();
         locationStatus = new TreeMap();
         
@@ -2994,6 +2996,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	            		}
                 		}
                 		updateImages(true);
+                		
                 		getComponentImage().getVOIHandler().showColorDialog();
                 	}
                 }
@@ -3010,29 +3013,34 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		}
 		
 		 public void addedCurve(VOIEvent added) {
-	            /* not interested in adding curves */
-	        }
+            /* not interested in adding curves */
+        }
 
-	        /**
-	         * We are not interested in removing Curves, so this method is empty.
-	         *
-	         * @param  added  DOCUMENT ME!
-	         */
-	        public void removedCurve(VOIEvent added) {
-	            /* not interested in removing curves */
-	        }
+        /**
+         * We are not interested in removing Curves, so this method is empty.
+         *
+         * @param  added  DOCUMENT ME!
+         */
+        public void removedCurve(VOIEvent added) {
+            /* not interested in removing curves */
+        }
 
-	        /**
-	         * VOI Listener call (listens only to color changes)
-	         */
-	        public void colorChanged(Color c) {
-	        	cIcon.setColor(c);
-	        	this.repaint();
-	        }
-	        
-	        /** ignored */
-	        public void selectedVOI(VOIEvent selection) {
-	        }
+        /**
+         * VOI Listener call (listens only to color changes)
+         */
+        public void colorChanged(Color c) {
+        	cIcon.setColor(c);
+        	voiColor.put(voiName, c);
+        	String oppString = new String();
+        	//if(voiColor.get((oppString = getOpposite(voiName)) != null)) {
+        	//	voiColor.put(oppString, c); 		
+        	//}
+        	this.repaint();
+        }
+        
+        /** ignored */
+        public void selectedVOI(VOIEvent selection) {
+        }
 		
 	}
 	
