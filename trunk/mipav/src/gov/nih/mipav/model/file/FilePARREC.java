@@ -44,7 +44,23 @@ public class FilePARREC extends FileBase {
     /** Voxel offset tag used to read in the image. */
     private float vox_offset = 0.0f;
 
+    /** file info **/
     private FileInfoBase outInfo;
+    
+    /** vol map **/
+    private HashMap VolMap;
+    
+    /** slice map **/
+    private HashMap SliceMap;
+    
+    /** vol paramters **/
+    private HashMap VolParameters;
+    
+    /** slice parameters **/
+    private Vector SliceParameters;
+    
+    /** sliecs **/
+    private Vector Slices;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -401,12 +417,12 @@ public class FilePARREC extends FileBase {
 
         // Begin the processing loop
 
-        HashMap VolMap = buildParVolMap();
-        HashMap SliceMap = buildParSliceMap();
+        VolMap = buildParVolMap();
+        SliceMap = buildParSliceMap();
 
-        HashMap VolParameters = new HashMap();
-        Vector SliceParameters = new Vector();
-        Vector Slices = new Vector();
+        VolParameters = new HashMap();
+        SliceParameters = new Vector();
+        Slices = new Vector();
 
         String nextLine = raFile.readLine();
 
@@ -1270,4 +1286,32 @@ public class FilePARREC extends FileBase {
 
         fp.close();
     }
+
+    /** getter for volMap **/
+	public HashMap getVolMap() {
+		return VolMap;
+	}
+
+	/** getter for vol parameters **/
+	public HashMap getVolParameters() {
+		return VolParameters;
+	}
+
+	/** getter for slice parameters **/
+	public Vector getSliceParameters() {
+		return SliceParameters;
+	}
+	
+	/** getter for sliecs **/
+	public Vector getSlices() {
+		return Slices;
+	}
+
+	
+	
+	
+	
+    
+    
+    
 }
