@@ -736,7 +736,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         float totalMajorAxis = 0;
         float totalMinorAxis = 0;
         int nVox = 0, totalNVox = 0;
-        Point3Df totalC = new Point3Df(0, 0, 0);
+        Point3Df totalC = new Point3Df(0, 0, 0); // geometric center
         float[] imgBuffer;
         float[] tmpPAxis = null;
         float[] tmpEcc = null;
@@ -744,8 +744,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         float[] tmpMinorAxis = null;
         float totalPerimeter = 0f;
         Point3Df gCenter;
-        Point3Df mCenter;
         String comStr;
+        int x;
+        int y;
+        int z;
+        double xMass, yMass, zMass, xMassR, yMassR, zMassR, xMassG, yMassG, zMassG, xMassB, yMassB, zMassB;
+        double xCOM, yCOM, zCOM, xCOMR, yCOMR, zCOMR, xCOMG, yCOMG, zCOMG, xCOMB, yCOMB, zCOMB;
+        double totalXMass = 0, totalYMass = 0, totalZMass = 0;
+        double totalXMassR = 0, totalYMassR = 0, totalZMassR = 0;
+        double totalXMassG = 0, totalYMassG = 0, totalZMassG = 0;
+        double totalXMassB = 0, totalYMassB = 0, totalZMassB = 0;
 
         int length;
 
@@ -817,6 +825,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                              nf.format(tmpMinorAxis[0]));
 
                     gCenter = ((VOIContour) (contours[q].elementAt(r))).getGeometricCenter();
+                    z = (int)Math.round(gCenter.z);
                     gCenter.x *= srcImage.getFileInfo(0).getResolutions()[0];
                     gCenter.y *= srcImage.getFileInfo(0).getResolutions()[1];
 
@@ -950,44 +959,6 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         statProperty.setProperty(VOIStatisticList.sumIntensities + "Green" + "0;" + r, nf.format(sumG));
                         statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue" + "0;" + r, nf.format(sumB));
                         
-                        mCenter = ((VOIContour) (contours[q].elementAt(r))).getCenterOfMassR(imgBuffer, 
-                                srcImage.getExtents()[0]);
-                        mCenter.x *= srcImage.getFileInfo(0).getResolutions()[0];
-                        mCenter.y *= srcImage.getFileInfo(0).getResolutions()[1];
-                        
-                        if (srcImage.getNDims() > 2) {
-                        mCenter.z *= srcImage.getFileInfo(0).getResolutions()[2];
-                        }
-                        
-                        comStr = nf.format(mCenter.x) + "\t" + nf.format(mCenter.y) + "\t" +
-                        nf.format(mCenter.z);
-                        statProperty.setProperty(VOIStatisticList.massCenterDescription + "Red" + "0;" + r, comStr);
-                        
-                        mCenter = ((VOIContour) (contours[q].elementAt(r))).getCenterOfMassG(imgBuffer, 
-                                srcImage.getExtents()[0]);
-                        mCenter.x *= srcImage.getFileInfo(0).getResolutions()[0];
-                        mCenter.y *= srcImage.getFileInfo(0).getResolutions()[1];
-                        
-                        if (srcImage.getNDims() > 2) {
-                        mCenter.z *= srcImage.getFileInfo(0).getResolutions()[2];
-                        }
-                        
-                        comStr = nf.format(mCenter.x) + "\t" + nf.format(mCenter.y) + "\t" +
-                        nf.format(mCenter.z);
-                        statProperty.setProperty(VOIStatisticList.massCenterDescription + "Green" + "0;" + r, comStr);
-                        
-                        mCenter = ((VOIContour) (contours[q].elementAt(r))).getCenterOfMassB(imgBuffer, 
-                                srcImage.getExtents()[0]);
-                        mCenter.x *= srcImage.getFileInfo(0).getResolutions()[0];
-                        mCenter.y *= srcImage.getFileInfo(0).getResolutions()[1];
-                        
-                        if (srcImage.getNDims() > 2) {
-                        mCenter.z *= srcImage.getFileInfo(0).getResolutions()[2];
-                        }
-                        
-                        comStr = nf.format(mCenter.x) + "\t" + nf.format(mCenter.y) + "\t" +
-                        nf.format(mCenter.z);
-                        statProperty.setProperty(VOIStatisticList.massCenterDescription + "Blue" + "0;" + r, comStr);
                     } else {
                         minIntensity = Float.MAX_VALUE;
                         maxIntensity = -Float.MAX_VALUE;
@@ -1026,19 +997,6 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         statProperty.setProperty(VOIStatisticList.avgIntensity + "0;" + r, nf.format(avgInten));
                         statProperty.setProperty(VOIStatisticList.quantityDescription + "0;" + r, nf.format(nVox));
                         statProperty.setProperty(VOIStatisticList.sumIntensities + "0;" + r, nf.format(sum));
-                        mCenter = ((VOIContour) (contours[q].elementAt(r))).getCenterOfMass(imgBuffer, 
-                                                                            srcImage.getExtents()[0]);
-                        mCenter.x *= srcImage.getFileInfo(0).getResolutions()[0];
-                        mCenter.y *= srcImage.getFileInfo(0).getResolutions()[1];
-
-                        if (srcImage.getNDims() > 2) {
-                            mCenter.z *= srcImage.getFileInfo(0).getResolutions()[2];
-                        }
-
-
-                        comStr = nf.format(mCenter.x) + "\t" + nf.format(mCenter.y) + "\t" +
-                                        nf.format(mCenter.z);
-                        statProperty.setProperty(VOIStatisticList.massCenterDescription + "0;" + r, comStr);
                     }
 
                     area = nVox * (fileInfo[0].getResolutions()[0] * fileInfo[0].getResolutions()[1]);
@@ -1052,6 +1010,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                     // calculate standard deviation, coefficient of skewness, and coefficient of kurtosis
                     sum2 = sumR2 = sumG2 = sumB2 = sum3 = sumR3 = sumG3 = sumB3 = sum4 = sumR4 = sumG4 = sumB4 = 0;
+                    // Calculate centers of mass
+                    xMass = yMass = zMass = 0;
+                    xMassR = yMassR = zMassR = xMassG = yMassG = zMassG = xMassB = yMassB = zMassB = 0;
 
                     int cnt = 0;
 
@@ -1062,6 +1023,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
                                     !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
                                     !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
+                                x = (i/4) % srcImage.getExtents()[0];
+                                y = (i/4) / srcImage.getExtents()[0];
+                                xMassR += x * imgBuffer[i + 1];
+                                yMassR += y * imgBuffer[i + 1];
+                                zMassR += z * imgBuffer[i + 1];
                                 diffR = imgBuffer[i + 1] - avgIntenR;
                                 R2 = diffR * diffR;
                                 sumR2 += R2;
@@ -1069,6 +1035,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                 sumR3 += R3;
                                 R4 = R3 * diffR;
                                 sumR4 += R4;
+                                xMassG += x * imgBuffer[i + 2];
+                                yMassG += y * imgBuffer[i + 2];
+                                zMassG += z * imgBuffer[i + 2];
                                 diffG = imgBuffer[i + 2] - avgIntenG;
                                 G2 = diffG * diffG;
                                 sumG2 += G2;
@@ -1076,6 +1045,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                 sumG3 += G3;
                                 G4 = G3 * diffG;
                                 sumG4 += G4;
+                                xMassB += x * imgBuffer[i + 3];
+                                yMassB += y * imgBuffer[i + 3];
+                                zMassB += z * imgBuffer[i + 3];
                                 diffB = imgBuffer[i + 3] - avgIntenB;
                                 B2 = diffB * diffB;
                                 sumB2 += B2;
@@ -1124,7 +1096,39 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                                  nf.format(kurtosisG));
                         statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Blue" + "0;" + r,
                                                  nf.format(kurtosisB));
+                        // Centers of mass
+                        xCOMR = xMassR * srcImage.getFileInfo(0).getResolutions()[0]/sumR;
+                        yCOMR = yMassR * srcImage.getFileInfo(0).getResolutions()[1]/sumR;
+                        zCOMR = zMassR/sumR;
+                        if (srcImage.getNDims() > 2) {
+                            zCOMR *= srcImage.getFileInfo(0).getResolutions()[2];
+                        }
 
+                        comStr = nf.format(xCOMR) + "\t" + nf.format(yCOMR) + "\t" +
+                                        nf.format(zCOMR);
+                        statProperty.setProperty(VOIStatisticList.massCenterDescription + "Red" + "0;" + r, comStr);
+                        
+                        xCOMG = xMassG * srcImage.getFileInfo(0).getResolutions()[0]/sumG;
+                        yCOMG = yMassG * srcImage.getFileInfo(0).getResolutions()[1]/sumG;
+                        zCOMG= zMassG/sumG;
+                        if (srcImage.getNDims() > 2) {
+                            zCOMG *= srcImage.getFileInfo(0).getResolutions()[2];
+                        }
+
+                        comStr = nf.format(xCOMG) + "\t" + nf.format(yCOMG) + "\t" +
+                                        nf.format(zCOMG);
+                        statProperty.setProperty(VOIStatisticList.massCenterDescription + "Green" + "0;" + r, comStr);
+                        
+                        xCOMB = xMassB * srcImage.getFileInfo(0).getResolutions()[0]/sumB;
+                        yCOMB = yMassB * srcImage.getFileInfo(0).getResolutions()[1]/sumB;
+                        zCOMB = zMassB/sumB;
+                        if (srcImage.getNDims() > 2) {
+                            zCOMB *= srcImage.getFileInfo(0).getResolutions()[2];
+                        }
+
+                        comStr = nf.format(xCOMB) + "\t" + nf.format(yCOMB) + "\t" +
+                                        nf.format(zCOMB);
+                        statProperty.setProperty(VOIStatisticList.massCenterDescription + "Blue" + "0;" + r, comStr);
                         totalSumR2 += sumR2;
                         totalSumG2 += sumG2;
                         totalSumB2 += sumB2;
@@ -1134,11 +1138,25 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         totalSumR4 += sumR4;
                         totalSumG4 += sumG4;
                         totalSumB4 += sumB4;
+                        totalXMassR += xMassR;
+                        totalYMassR += yMassR;
+                        totalZMassR += zMassR;
+                        totalXMassG += xMassG;
+                        totalYMassG += yMassG;
+                        totalZMassG += zMassG;
+                        totalXMassB += xMassB;
+                        totalYMassB += yMassB;
+                        totalZMassB += zMassB;
                     } else {
 
                         for (int i = 0; i < length; i++) {
 
                             if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[i])) {
+                                x = i % srcImage.getExtents()[0];
+                                y = i / srcImage.getExtents()[0];
+                                xMass += x * imgBuffer[i];
+                                yMass += y * imgBuffer[i];
+                                zMass += z * imgBuffer[i];
                                 diff = imgBuffer[i] - avgInten;
                                 s2 = diff * diff;
                                 sum2 += s2;
@@ -1159,9 +1177,23 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         statProperty.setProperty(VOIStatisticList.skewnessDescription + "0;" + r, nf.format(skewness));
                         kurtosis = moment4/(moment2 * moment2);
                         statProperty.setProperty(VOIStatisticList.kurtosisDescription + "0;" + r, nf.format(kurtosis));
+                        // Center of mass
+                        xCOM = xMass * srcImage.getFileInfo(0).getResolutions()[0]/sum;
+                        yCOM = yMass * srcImage.getFileInfo(0).getResolutions()[1]/sum;
+                        zCOM = zMass/sum;
+                        if (srcImage.getNDims() > 2) {
+                            zCOM *= srcImage.getFileInfo(0).getResolutions()[2];
+                        }
+
+                        comStr = nf.format(xCOM) + "\t" + nf.format(yCOM) + "\t" +
+                                        nf.format(zCOM);
+                        statProperty.setProperty(VOIStatisticList.massCenterDescription + "0;" + r, comStr);
                         totalSum2 += sum2;
                         totalSum3 += sum3;
                         totalSum4 += sum4;
+                        totalXMass += xMass;
+                        totalYMass += yMass;
+                        totalZMass += zMass;
                     }
                 }
 
@@ -1233,6 +1265,39 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     statProperty.setProperty(VOIStatisticList.sumIntensities + "Red" + "Total", nf.format(totalSumR));
                     statProperty.setProperty(VOIStatisticList.sumIntensities + "Green" + "Total", nf.format(totalSumG));
                     statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue" + "Total", nf.format(totalSumB));
+                    // Centers of mass
+                    xCOMR = totalXMassR * srcImage.getFileInfo(0).getResolutions()[0]/totalSumR;
+                    yCOMR = totalYMassR * srcImage.getFileInfo(0).getResolutions()[1]/totalSumR;
+                    zCOMR = totalZMassR/totalSumR;
+                    if (srcImage.getNDims() > 2) {
+                        zCOMR *= srcImage.getFileInfo(0).getResolutions()[2];
+                    }
+
+                    comStr = nf.format(xCOMR) + "\t" + nf.format(yCOMR) + "\t" +
+                                    nf.format(zCOMR);
+                    statProperty.setProperty(VOIStatisticList.massCenterDescription + "Red" + "Total", comStr);
+                    
+                    xCOMG = totalXMassG * srcImage.getFileInfo(0).getResolutions()[0]/totalSumG;
+                    yCOMG = totalYMassG * srcImage.getFileInfo(0).getResolutions()[1]/totalSumG;
+                    zCOMG = totalZMassG/totalSumG;
+                    if (srcImage.getNDims() > 2) {
+                        zCOMG *= srcImage.getFileInfo(0).getResolutions()[2];
+                    }
+
+                    comStr = nf.format(xCOMG) + "\t" + nf.format(yCOMG) + "\t" +
+                                    nf.format(zCOMG);
+                    statProperty.setProperty(VOIStatisticList.massCenterDescription + "Green" + "Total", comStr);
+                    
+                    xCOMB = totalXMassB * srcImage.getFileInfo(0).getResolutions()[0]/totalSumB;
+                    yCOMB = totalYMassB * srcImage.getFileInfo(0).getResolutions()[1]/totalSumB;
+                    zCOMB = totalZMassB/totalSumB;
+                    if (srcImage.getNDims() > 2) {
+                        zCOMB *= srcImage.getFileInfo(0).getResolutions()[2];
+                    }
+
+                    comStr = nf.format(xCOMB) + "\t" + nf.format(yCOMB) + "\t" +
+                                    nf.format(zCOMB);
+                    statProperty.setProperty(VOIStatisticList.massCenterDescription + "Blue" + "Total", comStr);
                 } else {
                     statProperty.setProperty(VOIStatisticList.minIntensity + "Total", nf.format(totalMinIntensity));
                     statProperty.setProperty(VOIStatisticList.maxIntensity + "Total", nf.format(totalMaxIntensity));
@@ -1247,6 +1312,17 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Total",
                                              nf.format(moment4/(moment2 * moment2)));
                     statProperty.setProperty(VOIStatisticList.sumIntensities + "Total", nf.format(totalSum));
+                    // Center of mass
+                    xCOM = totalXMass * srcImage.getFileInfo(0).getResolutions()[0]/totalSum;
+                    yCOM = totalYMass * srcImage.getFileInfo(0).getResolutions()[1]/totalSum;
+                    zCOM = totalZMass/totalSum;
+                    if (srcImage.getNDims() > 2) {
+                        zCOM *= srcImage.getFileInfo(0).getResolutions()[2];
+                    }
+
+                    comStr = nf.format(xCOM) + "\t" + nf.format(yCOM) + "\t" +
+                                    nf.format(zCOM);
+                    statProperty.setProperty(VOIStatisticList.massCenterDescription + "Total", comStr);
                 }
             }
         } else {
@@ -1412,6 +1488,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
             // calculate standard deviation, coefficient of skewness, and coefficient of kurtosis
             sum2 = sumR2 = sumG2 = sumB2 = sum3 = sumR3 = sumG3 = sumB3 = sum4 = sumR4 = sumG4 = sumB4 = 0;
+            // Calculate center of mass
+            xMass = yMass = 0;
+            xMassR = yMassR = xMassG = yMassG = xMassB = yMassB = 0;
 
             int cnt = 0;
 
@@ -1422,6 +1501,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
                             !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
                             !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
+                        x = (i/4) % srcImage.getExtents()[0];
+                        y = (i/4) / srcImage.getExtents()[0];
+                        xMassR += x * imgBuffer[i + 1];
+                        yMassR += y * imgBuffer[i + 1];
                         diffR = imgBuffer[i + 1] - avgIntenR;
                         R2 = diffR * diffR;
                         sumR2 += R2;
@@ -1429,6 +1512,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         sumR3 += R3;
                         R4 = R3 * diffR;
                         sumR4 += R4;
+                        xMassG += x * imgBuffer[i + 2];
+                        yMassG += y * imgBuffer[i + 2];
                         diffG = imgBuffer[i + 2] - avgIntenG;
                         G2 = diffG * diffG;
                         sumG2 += G2;
@@ -1436,6 +1521,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         sumG3 += G3;
                         G4 = G3 * diffG;
                         sumG4 += G4;
+                        xMassB += x * imgBuffer[i + 3];
+                        yMassB += y * imgBuffer[i + 3];
                         diffB = imgBuffer[i + 3] - avgIntenB;
                         B2 = diffB * diffB;
                         sumB2 += B2;
@@ -1485,11 +1572,35 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Red", nf.format(kurtosisR));
                 statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Green", nf.format(kurtosisG));
                 statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Blue", nf.format(kurtosisB));
+                // Centers of mass
+                xCOMR = xMassR * srcImage.getFileInfo(0).getResolutions()[0]/sumR;
+                yCOMR = yMassR * srcImage.getFileInfo(0).getResolutions()[1]/sumR;
+
+                comStr = nf.format(xCOMR) + "\t" + nf.format(yCOMR);
+                statProperty.setProperty(VOIStatisticList.massCenterDescription + "Red" + "0;", comStr);
+                statProperty.setProperty(VOIStatisticList.massCenterDescription + "Red", comStr);
+                
+                xCOMG = xMassG * srcImage.getFileInfo(0).getResolutions()[0]/sumG;
+                yCOMG = yMassG * srcImage.getFileInfo(0).getResolutions()[1]/sumG;
+                comStr = nf.format(xCOMG) + "\t" + nf.format(yCOMG);
+                statProperty.setProperty(VOIStatisticList.massCenterDescription + "Green" + "0;", comStr);
+                statProperty.setProperty(VOIStatisticList.massCenterDescription + "Green", comStr);
+                
+                xCOMB = xMassB * srcImage.getFileInfo(0).getResolutions()[0]/sumB;
+                yCOMB = yMassB * srcImage.getFileInfo(0).getResolutions()[1]/sumB;
+
+                comStr = nf.format(xCOMB) + "\t" + nf.format(yCOMB);
+                statProperty.setProperty(VOIStatisticList.massCenterDescription + "Blue" + "0;", comStr);
+                statProperty.setProperty(VOIStatisticList.massCenterDescription + "Blue", comStr);
             } else {
 
                 for (int i = 0; i < length; i++) {
 
                     if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[i])) {
+                        x = i % srcImage.getExtents()[0];
+                        y = i / srcImage.getExtents()[0];
+                        xMass += x * imgBuffer[i];
+                        yMass += y * imgBuffer[i];
                         diff = imgBuffer[i] - avgInten;
                         s2 = diff * diff;
                         sum2 += s2;
@@ -1513,6 +1624,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 kurtosis = moment4/(moment2 * moment2);
                 statProperty.setProperty(VOIStatisticList.kurtosisDescription + "0;", nf.format(kurtosis));
                 statProperty.setProperty(VOIStatisticList.kurtosisDescription, nf.format(kurtosis));
+                // Center of mass
+                xCOM = xMass * srcImage.getFileInfo(0).getResolutions()[0]/sum;
+                yCOM = yMass * srcImage.getFileInfo(0).getResolutions()[1]/sum;
+                comStr = nf.format(xCOM) + "\t" + nf.format(yCOM);
+                statProperty.setProperty(VOIStatisticList.massCenterDescription + "0;", comStr);
+                statProperty.setProperty(VOIStatisticList.massCenterDescription, comStr);
             }
 
 
@@ -1573,7 +1690,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         int length;
         float perimeter = 0f;
         float totalPerimeter = 0f;
-
+        int x;
+        int y;
+        int z;
+        double xMass, yMass, zMass, xMassR, yMassR, zMassR, xMassG, yMassG, zMassG, xMassB, yMassB, zMassB;
+        double xCOM, yCOM, zCOM, xCOMR, yCOMR, zCOMR, xCOMG, yCOMG, zCOMG, xCOMB, yCOMB, zCOMB;
+        double totalXMass = 0, totalYMass = 0, totalZMass = 0;
+        double totalXMassR = 0, totalYMassR = 0, totalZMassR = 0;
+        double totalXMassG = 0, totalYMassG = 0, totalZMassG = 0;
+        double totalXMassB = 0, totalYMassB = 0, totalZMassB = 0;
 
         Vector[] contours;
         BitSet mask;
@@ -1885,6 +2010,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                     // calculate standard deviation, coefficient of skewness, and coefficient of kurtosis
                     sum2 = sumR2 = sumG2 = sumB2 = sum3 = sumR3 = sumG3 = sumB3 = sum4 = sumR4 = sumG4 = sumB4 = 0;
+                    // Calculate centers of mass
+                    xMass = yMass = zMass = 0;
+                    xMassR = yMassR = zMassR = xMassG = yMassG = zMassG = xMassB = yMassB = zMassB = 0;
 
                     int cnt = 0;
 
@@ -1896,6 +2024,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i + 1]) &&
                                     !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i + 2]) &&
                                     !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i + 3])) {
+                                x = (i/4) % srcImage.getExtents()[0];
+                                y = (i/4) / srcImage.getExtents()[0];
+                                xMassR += x * imgBuffer[offset + i + 1];
+                                yMassR += y * imgBuffer[offset + i + 1];
+                                zMassR += q * imgBuffer[offset + i + 1];
                                 diffR = imgBuffer[offset + i + 1] - avgIntenR;
                                 R2 = diffR * diffR;
                                 sumR2 += R2;
@@ -1903,6 +2036,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                 sumR3 += R3;
                                 R4 = R3 * diffR;
                                 sumR4 += R4;
+                                xMassG += x * imgBuffer[offset + i + 2];
+                                yMassG += y * imgBuffer[offset + i + 2];
+                                zMassG += q * imgBuffer[offset + i + 2];
                                 diffG = imgBuffer[offset + i + 2] - avgIntenG;
                                 G2 = diffG * diffG;
                                 sumG2 += G2;
@@ -1910,6 +2046,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                 sumG3 += G3;
                                 G4 = G3 * diffG;
                                 sumG4 += G4;
+                                xMassB += x * imgBuffer[offset + i + 3];
+                                yMassB += y * imgBuffer[offset + i + 3];
+                                zMassB += q * imgBuffer[offset + i + 3];
                                 diffB = imgBuffer[offset + i + 3] - avgIntenB;
                                 B2 = diffB * diffB;
                                 sumB2 += B2;
@@ -1959,6 +2098,39 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                                  nf.format(kurtosisG));
                         statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Blue" + end,
                                                  nf.format(kurtosisB));
+                        // Centers of mass
+                        xCOMR = xMassR * srcImage.getFileInfo(0).getResolutions()[0]/sumR;
+                        yCOMR = yMassR * srcImage.getFileInfo(0).getResolutions()[1]/sumR;
+                        zCOMR = zMassR/sumR;
+                        if (srcImage.getNDims() > 2) {
+                            zCOMR *= srcImage.getFileInfo(0).getResolutions()[2];
+                        }
+
+                        comStr = nf.format(xCOMR) + "\t" + nf.format(yCOMR) + "\t" +
+                                        nf.format(zCOMR);
+                        statProperty.setProperty(VOIStatisticList.massCenterDescription + "Red" + end, comStr);
+                        
+                        xCOMG = xMassG * srcImage.getFileInfo(0).getResolutions()[0]/sumG;
+                        yCOMG = yMassG * srcImage.getFileInfo(0).getResolutions()[1]/sumG;
+                        zCOMG= zMassG/sumG;
+                        if (srcImage.getNDims() > 2) {
+                            zCOMG *= srcImage.getFileInfo(0).getResolutions()[2];
+                        }
+
+                        comStr = nf.format(xCOMG) + "\t" + nf.format(yCOMG) + "\t" +
+                                        nf.format(zCOMG);
+                        statProperty.setProperty(VOIStatisticList.massCenterDescription + "Green" + end, comStr);
+                        
+                        xCOMB = xMassB * srcImage.getFileInfo(0).getResolutions()[0]/sumB;
+                        yCOMB = yMassB * srcImage.getFileInfo(0).getResolutions()[1]/sumB;
+                        zCOMB = zMassB/sumB;
+                        if (srcImage.getNDims() > 2) {
+                            zCOMB *= srcImage.getFileInfo(0).getResolutions()[2];
+                        }
+
+                        comStr = nf.format(xCOMB) + "\t" + nf.format(yCOMB) + "\t" +
+                                        nf.format(zCOMB);
+                        statProperty.setProperty(VOIStatisticList.massCenterDescription + "Blue" + end, comStr);
 
                         totalSumR2 += sumR2;
                         totalSumG2 += sumG2;
@@ -1969,12 +2141,26 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         totalSumR4 += sumR4;
                         totalSumG4 += sumG4;
                         totalSumB4 += sumB4;
+                        totalXMassR += xMassR;
+                        totalYMassR += yMassR;
+                        totalZMassR += zMassR;
+                        totalXMassG += xMassG;
+                        totalYMassG += yMassG;
+                        totalZMassG += zMassG;
+                        totalXMassB += xMassB;
+                        totalYMassB += yMassB;
+                        totalZMassB += zMassB;
                     } else {
                         int offset = length * q;
 
                         for (int i = 0; i < length; i++) {
 
                             if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i])) {
+                                x = i % srcImage.getExtents()[0];
+                                y = i / srcImage.getExtents()[0];
+                                xMass += x * imgBuffer[offset + i];
+                                yMass += y * imgBuffer[offset + i];
+                                zMass += q * imgBuffer[offset + i];
                                 diff = imgBuffer[offset + i] - avgInten;
                                 s2 = diff * diff;
                                 sum2 += s2;
@@ -1995,9 +2181,23 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         statProperty.setProperty(VOIStatisticList.skewnessDescription + end, nf.format(skewness));
                         kurtosis = moment4/(moment2 * moment2);
                         statProperty.setProperty(VOIStatisticList.kurtosisDescription + end, nf.format(kurtosis));
+                        // Center of mass
+                        xCOM = xMass * srcImage.getFileInfo(0).getResolutions()[0]/sum;
+                        yCOM = yMass * srcImage.getFileInfo(0).getResolutions()[1]/sum;
+                        zCOM = zMass/sum;
+                        if (srcImage.getNDims() > 2) {
+                            zCOM *= srcImage.getFileInfo(0).getResolutions()[2];
+                        }
+
+                        comStr = nf.format(xCOM) + "\t" + nf.format(yCOM) + "\t" +
+                                        nf.format(zCOM);
+                        statProperty.setProperty(VOIStatisticList.massCenterDescription + end, comStr);
                         totalSum2 += sum2;
                         totalSum3 += sum3;
                         totalSum4 += sum4;
+                        totalXMass += xMass;
+                        totalYMass += yMass;
+                        totalZMass += zMass;
                     }
                 }
             }
@@ -2075,6 +2275,39 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             nf.format(totalSumG));
                     statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue" + "Total",
                             nf.format(totalSumB));
+                    // Centers of mass
+                    xCOMR = totalXMassR * srcImage.getFileInfo(0).getResolutions()[0]/totalSumR;
+                    yCOMR = totalYMassR * srcImage.getFileInfo(0).getResolutions()[1]/totalSumR;
+                    zCOMR = totalZMassR/totalSumR;
+                    if (srcImage.getNDims() > 2) {
+                        zCOMR *= srcImage.getFileInfo(0).getResolutions()[2];
+                    }
+
+                    comStr = nf.format(xCOMR) + "\t" + nf.format(yCOMR) + "\t" +
+                                    nf.format(zCOMR);
+                    statProperty.setProperty(VOIStatisticList.massCenterDescription + "Red" + "Total", comStr);
+                    
+                    xCOMG = totalXMassG * srcImage.getFileInfo(0).getResolutions()[0]/totalSumG;
+                    yCOMG = totalYMassG * srcImage.getFileInfo(0).getResolutions()[1]/totalSumG;
+                    zCOMG = totalZMassG/totalSumG;
+                    if (srcImage.getNDims() > 2) {
+                        zCOMG *= srcImage.getFileInfo(0).getResolutions()[2];
+                    }
+
+                    comStr = nf.format(xCOMG) + "\t" + nf.format(yCOMG) + "\t" +
+                                    nf.format(zCOMG);
+                    statProperty.setProperty(VOIStatisticList.massCenterDescription + "Green" + "Total", comStr);
+                    
+                    xCOMB = totalXMassB * srcImage.getFileInfo(0).getResolutions()[0]/totalSumB;
+                    yCOMB = totalYMassB * srcImage.getFileInfo(0).getResolutions()[1]/totalSumB;
+                    zCOMB = totalZMassB/totalSumB;
+                    if (srcImage.getNDims() > 2) {
+                        zCOMB *= srcImage.getFileInfo(0).getResolutions()[2];
+                    }
+
+                    comStr = nf.format(xCOMB) + "\t" + nf.format(yCOMB) + "\t" +
+                                    nf.format(zCOMB);
+                    statProperty.setProperty(VOIStatisticList.massCenterDescription + "Blue" + "Total", comStr);
                 } else {
                     statProperty.setProperty(VOIStatisticList.minIntensity + "Total", nf.format(totalMinIntensity));
                     statProperty.setProperty(VOIStatisticList.maxIntensity + "Total", nf.format(totalMaxIntensity));
@@ -2089,6 +2322,17 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Total",
                                              nf.format(moment4/(moment2 * moment2)));
                     statProperty.setProperty(VOIStatisticList.sumIntensities + "Total", nf.format(totalSum));
+                    // Center of mass
+                    xCOM = totalXMass * srcImage.getFileInfo(0).getResolutions()[0]/totalSum;
+                    yCOM = totalYMass * srcImage.getFileInfo(0).getResolutions()[1]/totalSum;
+                    zCOM = totalZMass/totalSum;
+                    if (srcImage.getNDims() > 2) {
+                        zCOM *= srcImage.getFileInfo(0).getResolutions()[2];
+                    }
+
+                    comStr = nf.format(xCOM) + "\t" + nf.format(yCOM) + "\t" +
+                                    nf.format(zCOM);
+                    statProperty.setProperty(VOIStatisticList.massCenterDescription + "Total", comStr);
                 }
             }
         } else {
@@ -2244,6 +2488,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
             // calculate standard deviation, coefficient of skewness, and coefficient of kurtosis
             sum2 = sumR2 = sumG2 = sumB2 = sum3 = sumR3 = sumG3 = sumB3 = sum4 = sumR4 = sumG4 = sumB4 = 0;
+            // Calculate centers of mass
+            xMass = yMass = zMass = 0;
+            xMassR = yMassR = zMassR = xMassG = yMassG = zMassG = xMassB = yMassB = zMassB = 0;
 
             int cnt = 0;
 
@@ -2254,6 +2501,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
                             !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
                             !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
+                        x = (i/4) % srcImage.getExtents()[0];
+                        y = ((i/4) % srcImage.getSliceSize())/ srcImage.getExtents()[0];
+                        z = (i/4)/srcImage.getSliceSize();
+                        xMassR += x * imgBuffer[i + 1];
+                        yMassR += y * imgBuffer[i + 1];
+                        zMassR += z * imgBuffer[i + 1];
                         diffR = imgBuffer[i + 1] - avgIntenR;
                         R2 = diffR * diffR;
                         sumR2 += R2;
@@ -2261,6 +2514,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         sumR3 += R3;
                         R4 = R3 * diffR;
                         sumR4 += R4;
+                        xMassG += x * imgBuffer[i + 2];
+                        yMassG += y * imgBuffer[i + 2];
+                        zMassG += z * imgBuffer[i + 2];
                         diffG = imgBuffer[i + 2] - avgIntenG;
                         G2 = diffG * diffG;
                         sumG2 += G2;
@@ -2268,6 +2524,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         sumG3 += G3;
                         G4 = G3 * diffG;
                         sumG4 += G4;
+                        xMassB += x * imgBuffer[i + 3];
+                        yMassB += y * imgBuffer[i + 3];
+                        zMassB += z * imgBuffer[i + 3];
                         diffB = imgBuffer[i + 3] - avgIntenB;
                         B2 = diffB * diffB;
                         sumB2 += B2;
@@ -2285,7 +2544,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.deviationDescription + "Red", nf.format(stdDevR));
                 statProperty.setProperty(VOIStatisticList.deviationDescription + "Green", nf.format(stdDevG));
                 statProperty.setProperty(VOIStatisticList.deviationDescription + "Blue", nf.format(stdDevB));
-//              moments around the mean
+                // moments around the mean
                 moment2R = sumR2/cnt;
                 moment2G = sumG2/cnt;
                 moment2B = sumB2/cnt;
@@ -2307,12 +2566,51 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Red", nf.format(kurtosisR));
                 statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Green", nf.format(kurtosisG));
                 statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Blue", nf.format(kurtosisB));
+                // Centers of mass
+                xCOMR = xMassR * srcImage.getFileInfo(0).getResolutions()[0]/sumR;
+                yCOMR = yMassR * srcImage.getFileInfo(0).getResolutions()[1]/sumR;
+                zCOMR = zMassR/sumR;
+                if (srcImage.getNDims() > 2) {
+                    zCOMR *= srcImage.getFileInfo(0).getResolutions()[2];
+                }
+
+                comStr = nf.format(xCOMR) + "\t" + nf.format(yCOMR) + "\t" +
+                                nf.format(zCOMR);
+                statProperty.setProperty(VOIStatisticList.massCenterDescription + "Red", comStr);
+                
+                xCOMG = xMassG * srcImage.getFileInfo(0).getResolutions()[0]/sumG;
+                yCOMG = yMassG * srcImage.getFileInfo(0).getResolutions()[1]/sumG;
+                zCOMG= zMassG/sumG;
+                if (srcImage.getNDims() > 2) {
+                    zCOMG *= srcImage.getFileInfo(0).getResolutions()[2];
+                }
+
+                comStr = nf.format(xCOMG) + "\t" + nf.format(yCOMG) + "\t" +
+                                nf.format(zCOMG);
+                statProperty.setProperty(VOIStatisticList.massCenterDescription + "Green", comStr);
+                
+                xCOMB = xMassB * srcImage.getFileInfo(0).getResolutions()[0]/sumB;
+                yCOMB = yMassB * srcImage.getFileInfo(0).getResolutions()[1]/sumB;
+                zCOMB = zMassB/sumB;
+                if (srcImage.getNDims() > 2) {
+                    zCOMB *= srcImage.getFileInfo(0).getResolutions()[2];
+                }
+
+                comStr = nf.format(xCOMB) + "\t" + nf.format(yCOMB) + "\t" +
+                                nf.format(zCOMB);
+                statProperty.setProperty(VOIStatisticList.massCenterDescription + "Blue", comStr);
 
             } else {
 
                 for (int i = 0; i < imgBuffer.length; i++) {
 
                     if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[i])) {
+                        x = i % srcImage.getExtents()[0];
+                        y = (i % srcImage.getSliceSize())/ srcImage.getExtents()[0];
+                        z = i / srcImage.getSliceSize();
+                        xMass += x * imgBuffer[i];
+                        yMass += y * imgBuffer[i];
+                        zMass += z * imgBuffer[i];
                         diff = imgBuffer[i] - avgInten;
                         s2 = diff * diff;
                         sum2 += s2;
@@ -2333,6 +2631,17 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.skewnessDescription, nf.format(skewness));
                 kurtosis = moment4/(moment2 * moment2);
                 statProperty.setProperty(VOIStatisticList.kurtosisDescription, nf.format(kurtosis));
+                // Center of mass
+                xCOM = xMass * srcImage.getFileInfo(0).getResolutions()[0]/sum;
+                yCOM = yMass * srcImage.getFileInfo(0).getResolutions()[1]/sum;
+                zCOM = zMass/sum;
+                if (srcImage.getNDims() > 2) {
+                    zCOM *= srcImage.getFileInfo(0).getResolutions()[2];
+                }
+
+                comStr = nf.format(xCOM) + "\t" + nf.format(yCOM) + "\t" +
+                                nf.format(zCOM);
+                statProperty.setProperty(VOIStatisticList.massCenterDescription, comStr);
             }
         }
 
