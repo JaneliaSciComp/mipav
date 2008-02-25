@@ -8,9 +8,21 @@ import javax.swing.*;
 
 
 public class ItkFilterSelectorDialog extends JDialog implements ActionListener {
+    /**
+     * modal dialog instance
+     */
     private static ItkFilterSelectorDialog dialog;
+    /**
+     * modal dialog return value
+     */
     private static boolean value = false;
+    /**
+     * panel for checkboxes, turning on/off the filters.
+     */
     private JPanel m_CheckBoxPanel = null;
+    /**
+     * List of filters, which we modify the active state of.
+     */
     private List<FilterRecord> m_FilterRecord = null;
     
 
@@ -22,6 +34,11 @@ public class ItkFilterSelectorDialog extends JDialog implements ActionListener {
      * to come up with its left corner in the center of the screen;
      * otherwise, it should be the component on top of which the
      * dialog should appear.
+     * @param frameComp
+     * @param locationComp
+     * @param labelText label at the top of the dialog
+     * @param title title bar text
+     * @param possibleValues List of filters which the user might choose to de-activate.
      */
     public static boolean showDialog(Component frameComp,
                                     Component locationComp,
@@ -38,11 +55,21 @@ public class ItkFilterSelectorDialog extends JDialog implements ActionListener {
         return value;
     }
 
+    /** Set modal dialog return value.
+     * @param newValue
+     */
     private void setValue(boolean newValue) {
         value = newValue;
         //list.setSelectedValue(value, true);
     }
 
+    /** Create the dialog
+     * @param frame
+     * @param locationComp
+     * @param labelText
+     * @param title
+     * @param data List of filters which the user might choose to de-activate.
+     */
     ItkFilterSelectorDialog(Frame frame,
                             Component locationComp,
                             String labelText,
@@ -119,7 +146,12 @@ public class ItkFilterSelectorDialog extends JDialog implements ActionListener {
             for (Component cmp : m_CheckBoxPanel.getComponents() ) {
                 JCheckBox cb = (JCheckBox)cmp;
                 System.out.println(cb.getText() + " " + cb.isSelected());
-                it.next().m_Active = cb.isSelected();
+                FilterRecord fr = it.next();
+                fr.m_Active = cb.isSelected();
+                // New filters have now been seen and accepted.
+                if (fr.m_State == FilterRecord.FilterState.NEW) {
+                	fr.m_State = FilterRecord.FilterState.NORMAL;
+                }
             }
         }
         ItkFilterSelectorDialog.dialog.setVisible(false);
