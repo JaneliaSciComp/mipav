@@ -209,7 +209,7 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
             componentImage.getVOIHandler().changeVOIOrder(true, VOIHandler.BACKWARD);
         } else if (command.equals("VOIProperties")) {
 
-            componentImage.getVOIHandler().showVOIProperties(false);
+            componentImage.getVOIHandler().showVOIProperties();
 
         } else if (command.equals("VOIColor")) {
 
@@ -241,7 +241,7 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
                     MipavUtil.displayError("Please select VOI");
                 } else if (i == -1) { // there was an annotation selected, do nothing
                 } else {
-                    componentImage.getVOIHandler().showVOIProperties(true);
+                    componentImage.getVOIHandler().showVOIProperties();
                 }
             } else {
                 MipavUtil.displayWarning("Image has no VOIs!");
