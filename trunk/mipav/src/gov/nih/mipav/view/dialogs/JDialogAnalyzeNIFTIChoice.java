@@ -12,7 +12,7 @@ import javax.swing.*;
 
 
 /**
- * Confirmation Dialog giving user the choice to write an analyze file or a nifti file.
+ * Confirmation Dialog giving user the choice to write an analyze file , interfile file, or a nifti file.
  *
  * @author   not attributable
  * @version  1.0
@@ -26,9 +26,6 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Check box indicating that the user wants to always save .img files in Analyze format. */
-    private JCheckBox alwaysSaveAnalyzeCheckBox;
-
     /** Radio button to indicate that an analyze img file should be written out. */
     private JRadioButton analyzeFile;
     
@@ -40,6 +37,9 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
 
     /** Whether the window was closed through the user clicking the OK button (and not just killing the dialog). */
     private boolean okayPressed = false;
+    
+    /** Whehter to save as selected by dialog or always as analyze, interfile, or nifti. */
+    private JComboBox comboBoxSaveMethod;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -54,11 +54,27 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
 
         // skip the dialog if the user has requested to not be bothered
         if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE)) {
-            alwaysSaveAnalyzeCheckBox.setSelected(true);
+            comboBoxSaveMethod.setSelectedIndex(1);
             analyzeFile.setSelected(true);
             okayPressed = true;
             dispose();
 
+            return;
+        }
+        else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE)){
+            comboBoxSaveMethod.setSelectedIndex(2);
+            interfileFile.setSelected(true);
+            okayPressed = true;
+            dispose();
+            
+            return;
+        }
+        else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI)){
+            comboBoxSaveMethod.setSelectedIndex(3);
+            niftiFile.setSelected(true);
+            okayPressed = true;
+            dispose();
+            
             return;
         }
 
@@ -76,8 +92,19 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
 
         if (event.getSource() == OKButton) {
 
-            if (alwaysSaveAnalyzeCheckBox.isSelected()) {
-                Preferences.setAlwaysSaveImgAsAnalyze(true);
+            switch(comboBoxSaveMethod.getSelectedIndex()) {
+                case 0:
+                    // do nothing
+                    break;
+                case 1:
+                    Preferences.setAlwaysSaveImgAsAnalyze(true);
+                    break;
+                case 2:
+                    Preferences.setAlwaysSaveImgAsInterfile(true);
+                    break;
+                case 3:
+                    Preferences.setAlwaysSaveImgAsNifti(true);
+                    break;
             }
 
             okayPressed = true;
@@ -117,15 +144,26 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
      * Creates and displays dialog.
      */
     private void init() {
+        JLabel saveLabel;
         setTitle("Choose type of file to write");
 
-        PanelManager manager = new PanelManager("Write .img as..");
+        PanelManager manager = new PanelManager("Write .hdr/.img as..");
 
         ButtonGroup writeGroup = new ButtonGroup();
         analyzeFile = WidgetFactory.buildRadioButton("Analyze file", true, writeGroup);
         interfileFile = WidgetFactory.buildRadioButton("Interfile file", false, writeGroup);
-        niftiFile = WidgetFactory.buildRadioButton("NIfTI file", false, writeGroup);
-        alwaysSaveAnalyzeCheckBox = WidgetFactory.buildCheckBox("Always save .img files in Analyze format", false);
+        niftiFile = WidgetFactory.buildRadioButton("Nifti file", false, writeGroup);
+        saveLabel = new JLabel("Always save .hdr/.img files ");
+        saveLabel.setFont(serif12);
+        saveLabel.setForeground(Color.black);
+        comboBoxSaveMethod = new JComboBox();
+        comboBoxSaveMethod.setFont(serif12);
+        comboBoxSaveMethod.setBackground(Color.white);
+        comboBoxSaveMethod.addItem("from dialog choice");
+        comboBoxSaveMethod.addItem("in Analyze format");
+        comboBoxSaveMethod.addItem("in Interfile format");
+        comboBoxSaveMethod.addItem("in Nifti format");
+        comboBoxSaveMethod.setSelectedIndex(0);
 
         manager.getConstraints().insets = new Insets(0, 15, 0, 10);
         manager.add(analyzeFile);
@@ -133,7 +171,8 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
         manager.addOnNextLine(niftiFile);
 
         manager.getConstraints().insets = new Insets(10, 0, 0, 0);
-        manager.addOnNextLine(alwaysSaveAnalyzeCheckBox);
+        manager.addOnNextLine(saveLabel);
+        manager.add(comboBoxSaveMethod);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
