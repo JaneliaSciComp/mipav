@@ -154,9 +154,12 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     /** DOCUMENT ME! */
     private JCheckBox saveDefaultsCheckBox;
-
-    /** DOCUMENT ME! */
-    private JCheckBox saveImgAsAnalyzeCheckBox;
+    
+    /** Label before combBoxSaveMethod */
+    private JLabel saveLabel;
+    
+    /** Whehter to save as selected by dialog or always as analyze, interfile, or nifti. */
+    private JComboBox comboBoxSaveMethod;
 
     /** DOCUMENT ME! */
     private JCheckBox savePromptOverwriteBox;
@@ -277,7 +280,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         makeSaveAllOptions(gbc, gbl);
 
         // makeSaveDefaultsOptions(gbc, gbl);
-        makeSaveImgAsAnalyzeOptions(gbc, gbl);
+        makeSaveHdrImgOptions(gbc, gbl);
         makeSaveXMLOnHDRSaveOptions(gbc, gbl);
         makeSaveXMLThumbnailOptions(gbc, gbl);
         makeSaveXMLZipOptions(gbc, gbl);
@@ -483,7 +486,11 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             Preferences.setProperty(Preferences.PREF_IMAGE_LEVEL_DATA_PROVENANCE, String.valueOf(provenanceImageCheckBox.isSelected()));
             
             Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE,
-                                    String.valueOf(saveImgAsAnalyzeCheckBox.isSelected()));
+                                    String.valueOf(comboBoxSaveMethod.getSelectedIndex() == 1));
+            Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE,
+                    String.valueOf(comboBoxSaveMethod.getSelectedIndex() == 2));
+            Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI,
+                    String.valueOf(comboBoxSaveMethod.getSelectedIndex() == 3));
             Preferences.setProperty(Preferences.PREF_SAVE_XML_ON_HDR_SAVE, String.valueOf(saveXMLOnHDRSaveCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SAVE_ALL_ON_SAVE, String.valueOf(saveAllCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SAVE_DEFAULTS, String.valueOf(saveDefaultsCheckBox.isSelected()));
@@ -1523,24 +1530,46 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     }
 
     /**
-     * Makes the "Always save .img files in Analyze format" option line in the otherPanel.
+     * Makes the "Always save .hdr/.img files from dialog/ in Analyze format/
+     *           in Interfile format/ in Nifti format" combo box in the otherPanel.
      *
      * @param  gbc  the constraints used in the globalChangesPanel
-     * @param  gbl  the layout used in the globablChangesPanel
+     * @param  gbl  the layout used in the globbalChangesPanel
      */
-    protected void makeSaveImgAsAnalyzeOptions(GridBagConstraints gbc, GridBagLayout gbl) {
-        saveImgAsAnalyzeCheckBox = new JCheckBox("Always save .img files in Analyze format");
-        saveImgAsAnalyzeCheckBox.setFont(MipavUtil.font12);
-        saveImgAsAnalyzeCheckBox.setForeground(Color.black);
-        saveImgAsAnalyzeCheckBox.addActionListener(this);
+    protected void makeSaveHdrImgOptions(GridBagConstraints gbc, GridBagLayout gbl) {
+        saveLabel = new JLabel("Always save .hdr/.img files ");
+        saveLabel.setFont(MipavUtil.font12);
+        saveLabel.setForeground(Color.black);
+        gbc.insets = new Insets(0, 0, 0, 5);
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(saveLabel, gbc);
+        fileSavePanel.add(saveLabel);
+        
+        comboBoxSaveMethod = new JComboBox();
+        comboBoxSaveMethod.setFont(MipavUtil.font12);
+        comboBoxSaveMethod.setBackground(Color.white);
+        comboBoxSaveMethod.addItem("from dialog choice");
+        comboBoxSaveMethod.addItem("in Analyze format");
+        comboBoxSaveMethod.addItem("in Interfile format");
+        comboBoxSaveMethod.addItem("in Nifti format");
+        comboBoxSaveMethod.setSelectedIndex(0);
         gbc.insets = new Insets(0, 0, 0, 0);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbl.setConstraints(saveImgAsAnalyzeCheckBox, gbc);
-        fileSavePanel.add(saveImgAsAnalyzeCheckBox);
+        gbc.anchor = GridBagConstraints.WEST;  
+        gbl.setConstraints(comboBoxSaveMethod, gbc);
+        fileSavePanel.add(comboBoxSaveMethod);
 
         // preset the choices.
-        saveImgAsAnalyzeCheckBox.setSelected(Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE));
+        if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE)) {
+            comboBoxSaveMethod.setSelectedIndex(1);
+        }
+        else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE)) {
+            comboBoxSaveMethod.setSelectedIndex(2);
+        }
+        else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI)) {
+            comboBoxSaveMethod.setSelectedIndex(3);
+        }
     }
 
     /**
