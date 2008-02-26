@@ -329,23 +329,11 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
     protected void callAlgorithm() {
 
         float[] thresholds = new float[2];
-        int[] destExtents = null;
         thresholds[0] = thres1;
         thresholds[1] = thres2;
 
         // System.err.println("Name is: " + name + " lower thresh: " + thresholds[0] + " upper thresh: " +
         // thresholds[1]);
-
-        if (image.getNDims() == 2) { // source image is 2D
-            destExtents = new int[2];
-            destExtents[0] = image.getExtents()[0]; // X dim
-            destExtents[1] = image.getExtents()[1]; // Y dim
-        } else if (image.getNDims() == 3) {
-            destExtents = new int[3];
-            destExtents[0] = image.getExtents()[0];
-            destExtents[1] = image.getExtents()[1];
-            destExtents[2] = image.getExtents()[2];
-        } 
 
         try {
 
