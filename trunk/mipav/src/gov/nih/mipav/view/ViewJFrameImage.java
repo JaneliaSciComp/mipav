@@ -1973,6 +1973,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     new JDialogThreshold(this, getActiveImage());
                 }
             }
+        } else if (command.equals("COM")) {
+            if (getActiveImage().isColorImage()) {
+                //new JDialogCenterOfMassRGB(this, getActiveImage());
+            } else {
+                new JDialogCenterOfMass(this, getActiveImage());
+            }
         } else if(command.equals("threshStdDev")) {
         	new JDialogStandardDeviationThreshold(this,getActiveImage());
         }else if (command.equals("Levelset")) {
