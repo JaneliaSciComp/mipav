@@ -140,6 +140,8 @@ public class ViewMenuBar {
                                                                                            "Midsagittal", 0, null,
                                                                                            false),
                                                              }),
+                                        menuBuilder.buildMenuItem("Center of mass", "COM", 0, null,
+                                                                   false),
                                         menuBuilder.buildMenuItem("Density based clustering", "DENCLUE", 0, null,
                                                                   false),
                                         menuBuilder.makeMenu("Edge detection", false,
@@ -1227,6 +1229,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Close image(B)", false);
 
         if (numberOfDimensions == 4) {
+            menuBuilder.setMenuItemEnabled("Center of mass", false);
             menuBuilder.setMenuItemEnabled("Density based clustering", false);
             menuBuilder.setMenuItemEnabled("Edge detection", false);
             menuBuilder.setMenuItemEnabled("Evaluate segmentation", false); // vois
