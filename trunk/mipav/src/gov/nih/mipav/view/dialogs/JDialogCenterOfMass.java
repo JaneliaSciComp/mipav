@@ -2,7 +2,6 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -455,7 +454,7 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
-        setTitle("Threshold");
+        setTitle("Center of Mass");
         setResizable(false);
 
         JPanel scalePanel = new JPanel(new GridBagLayout());
@@ -535,7 +534,7 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
 
         JPanel imageVOIPanel = new JPanel(new GridBagLayout());
         imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Threshold"));
+        imageVOIPanel.setBorder(buildTitledBorder("Process"));
 
         ButtonGroup imageVOIGroup = new ButtonGroup();
         wholeImage = new JRadioButton("Whole image", true);
