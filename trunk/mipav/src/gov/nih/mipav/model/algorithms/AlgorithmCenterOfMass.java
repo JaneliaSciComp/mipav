@@ -26,12 +26,6 @@ public class AlgorithmCenterOfMass extends AlgorithmBase {
      */
     private boolean entireImage;
 
-    /**
-     * Inverse threshold: false means leave out all pixels outside of the lower and upper thresholds,
-     * true means include all pixels within the lower and upper thresholds.
-     */
-    private boolean isInverse = false;
-
     /** Array of two thresholds. threshold[0] = Minimum threshold, threshold[1] = Maximum threshold. */
     private float[] threshold;
 
