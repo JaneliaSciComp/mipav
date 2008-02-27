@@ -2403,6 +2403,7 @@ public class FileNIFTI extends FileBase {
         if (options.isMultiFile()) {
             FileRaw rawFile;
             rawFile = new FileRaw(image.getFileInfo(0));
+            rawFile.setZeroLengthFlag(true);
             linkProgress(rawFile);
             flipTopBottom(image);
 
@@ -2435,6 +2436,7 @@ public class FileNIFTI extends FileBase {
             try {
                 FileRaw rawFile;
                 rawFile = new FileRaw(fileName, fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
+                rawFile.setZeroLengthFlag(true);
                 linkProgress(rawFile);
                 flipTopBottom(image);
 
@@ -3143,8 +3145,11 @@ public class FileNIFTI extends FileBase {
         fileHeader = new File(fileDir + fileHeaderName);
         raFile = new RandomAccessFile(fileHeader, "rw");
 
-        // Don't do raFile.setLength(0) because the data is written to this file
+        // Don't do raFile.setLength(0) if only one file is present because the data is written to this file
         // before the header
+        if (!oneFile) {
+            raFile.setLength(0);
+        }
         // 4 extension bytes after 348 header bytes
         bufferByte = new byte[headerSize + 4];
 
