@@ -18,22 +18,10 @@ import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 
 /**
- * FileSurface. Reads and writes surface files for the JPanelSurface class. When surface files are loaded by the user in
- * the JPanelSurface.java class through the "Add" button, when surfaces are loaded as surfaces attached to .xml image
- * files, or surfaces loaded through the FlyThruRender class. Any time a surface file is read from disk for display in
- * the JPanelSurface (SurfaceRender) class the FileSurface.java class is used to provide the interface. Loaded surfaces
- * are returned in an array of SurfaceAttributes[] which are then used to add the surfaces to the SurfaceRender scene
- * graph.
+ * FilePolyline. Reads and writes Polyline files for the JPanelSurface class. When polyline files are loaded by the user in
+ * the JPanelSurface.java class through the "AddPolyline" button.
  *
- * <p>This class also handles saving files from the JPanelSurface class. Surfaces are saved as surface files (.sur),
- * single-level (.wrl), multi-level (.wrl) or XML surfaces (.xml).</p>
- *
- * @see  JPanelSurface.java
- * @see  SurfaceRender.java
- * @see  SurfaceAttributes.java
- * @see  FileSurfaceXML.java
- * @see  FileInfoSurfaceXML.java
- * @see  ModelTriangleMesh.java
+ * @see  JPanelSurface_WM.java
  */
 public class FilePolyline_WM {
     /** DOCUMENT ME! */
@@ -86,12 +74,24 @@ public class FilePolyline_WM {
         return kPolyline;
     }
 
+    /**
+     * Create the polyline from the given polyline coordinates vector.  
+     * This method converts the image space to viewing space
+     * @param kImage        Image A
+     * @param coordVector   polyline coordinate vector
+     * @return  polyline     created
+     */
     public static Polyline createPolyline(ModelImage kImage, Vector<Point3Df> coordVector) {
 
 		int iType = 0, iQuantity = 0;
 		ColorRGB kColor1;
 		float fX, fY, fZ;
 		boolean isSur = true;
+	
+		TransMatrix dicomMatrix = null;
+	    TransMatrix inverseDicomMatrix = null;
+	    double[][] inverseDicomArray = null;
+		
 		int[] extents = kImage.getExtents();
 		int xDim = extents[0];
 		int yDim = extents[1];
@@ -103,9 +103,58 @@ public class FilePolyline_WM {
 		float zBox = (zDim - 1) * resols[2];
 		float maxBox = Math.max(xBox, Math.max(yBox, zBox));
 	
+		
+		box[0] = xBox;
+		box[1] = yBox;
+		box[2] = zBox;
+		
 		startLocation = kImage.getFileInfo(0).getOrigin();
 		direction = MipavCoordinateSystems.getModelDirections(kImage);
 		
+		boolean dicom = false;
+		boolean flip = true;
+		
+		float[] tCoord = new float[3];
+        float[] coord = new float[3];
+		
+        int actions;
+        
+        if (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
+
+            // Get the DICOM transform that describes the transformation from
+            // axial to this image orientation
+            dicomMatrix = (TransMatrix) (kImage.getMatrix().clone());
+            inverseDicomMatrix = (TransMatrix) (kImage.getMatrix().clone());
+            inverseDicomMatrix.invert();
+            inverseDicomArray = inverseDicomMatrix.getMatrix();
+            // inverseDicomMatrix = null;
+            dicom = true;
+            inverseDicomMatrix.setMatrix(inverseDicomArray);
+        }
+		
+        if (inverseDicomArray == null) {
+
+            if (flip) {
+                actions = 1;
+            } else {
+                actions = 0;
+            }
+        } else {
+
+            if (flip) {
+                actions = 3;
+            } else {
+                actions = 2;
+            }
+        }
+        
+        if ((actions == 1) || (actions == 3)) {
+            flip = true;
+        } else {
+            flip = false;
+        }
+        flip = !flip;
+        
 		Attributes kAttr = new Attributes();
 		kAttr.SetPChannels(3);
 		kAttr.SetCChannels(0, 3);
@@ -119,6 +168,30 @@ public class FilePolyline_WM {
 			fY = point.y;
 			fZ = point.z;
 
+			
+			 if (dicom) {
+             	System.err.println("dicom");
+             	
+                 tCoord[0] = fX - startLocation[0];
+                 tCoord[1] = fY - startLocation[1];
+                 tCoord[2] = fZ - startLocation[2];
+                 inverseDicomMatrix.transform(tCoord, coord);
+                 fX = ( (coord[0] * direction[0]) + startLocation[0] );
+                 fY = ( (coord[1] * direction[1]) + startLocation[1] );
+                 fZ = ( (coord[2] * direction[2]) + startLocation[2] );
+                 
+             } // if (dicom)
+
+			 
+			 
+             if (flip) {
+             	System.err.println("flip");
+//               Flip (kVertex.y - startLocation[1], but
+//               don't flip startLocation[1]
+                 fY = ( (2 * startLocation[1]) + (box[1] * direction[1]) - fY );
+                 fZ = ( (2 * startLocation[2]) + (box[2] * direction[2]) - fZ );
+             }
+			
 		    fX =  ((2.0f * (fX - startLocation[0]) / direction[0]) -
                      ((xDim - 1) * resols[0])) / (2.0f*maxBox);
             fY =  ((2.0f * (fY - startLocation[1]) / direction[1]) -
