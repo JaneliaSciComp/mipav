@@ -31,20 +31,8 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
     /** Use serialVersionUID for interoperability. */
     //private static final long serialVersionUID;
 
-    /** DOCUMENT ME! */
-    private static final int DEFAULT = 0;
-
-    /** DOCUMENT ME! */
-    private static final int OTSU = 1;
-
-    /** DOCUMENT ME! */
-    private static final int MAX_ENT = 2;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-
-    /** DOCUMENT ME! */
-    private ModelHistogram histogram;
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -59,13 +47,7 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
     private JLabel labelThres2;
 
     /** DOCUMENT ME! */
-    private JCheckBox maxEntCheckbox;
-
-    /** DOCUMENT ME! */
     private float min, max;
-
-    /** DOCUMENT ME! */
-    private JCheckBox otsuCheckbox;
 
     /** or if the source image is to be replaced. */
     private boolean regionFlag; // true = apply algorithm to the whole image
@@ -84,9 +66,6 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
 
     /** DOCUMENT ME! */
     private AlgorithmCenterOfMass comAlgo;
-
-    /** DOCUMENT ME! */
-    private int thresholdType = DEFAULT; // 0 = default, 1 = otsu, 2 = max entropy
 
     /** DOCUMENT ME! */
     private String[] titles;
@@ -192,108 +171,9 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
         dispose();
     }
 
-    /**
-     * DOCUMENT ME!
-     */
-    public void calcHistogram() {
-        int[] dimExtents = new int[1];
-        int type = image.getType();
-
-        dimExtents[0] = 256;
-        
-   //     if ((type == ModelStorageBase.UBYTE) || (type == ModelStorageBase.BYTE)) {
-   //         dimExtents[0] = 256;
-   //     } else if ((type != ModelStorageBase.FLOAT) && (type != ModelStorageBase.DOUBLE) &&
-   //                    (type != ModelStorageBase.COMPLEX)) {
-   //         dimExtents[0] = (int) (image.getMax() - image.getMin() + 0.5) + 1;
-//
-   //         if (dimExtents[0] < 256) {
-    //            dimExtents[0] = 256;
-   //         }
-   //     } else {
-   //         dimExtents[0] = 256;
-   //     }
-
-        histogram = new ModelHistogram(ModelStorageBase.INTEGER, dimExtents);
-
-        AlgorithmHistogram histoAlgoA = new AlgorithmHistogram(histogram, image, true);
-        histoAlgoA.setRunningInSeparateThread(false);
-        histoAlgoA.run();
-    }
-
     // *******************************************************************
     // ************************* Item Events ****************************
     // *******************************************************************
-
-    /**
-     * Sets the fill value text box to enabled or disabled depending on if the binary checkbox is selected.
-     *
-     * @param  event  Event that cause the method to fire.
-     */
-    public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
-
-        if (source == otsuCheckbox || source == maxEntCheckbox) {
-
-            if (otsuCheckbox.isSelected() || maxEntCheckbox.isSelected()) {
-
-                if ((source == otsuCheckbox) && maxEntCheckbox.isSelected()) {
-                    maxEntCheckbox.removeItemListener(this);
-                    maxEntCheckbox.setSelected(false);
-                    maxEntCheckbox.addItemListener(this);
-                } else if ((source == maxEntCheckbox) && otsuCheckbox.isSelected()) {
-                	otsuCheckbox.removeItemListener(this);
-                    otsuCheckbox.setSelected(false);
-                    otsuCheckbox.addItemListener(this);
-                }
-
-                if (maxEntCheckbox.isSelected()) {
-                	thresholdType = MAX_ENT;
-                } else if (otsuCheckbox.isSelected()) {
-                	thresholdType = OTSU;
-                }
-                
-                
-                if (histogram == null) {
-                    calcHistogram();
-                }
-                
-                
-
-                int maxBin = 0;
-                if (thresholdType == OTSU) {
-                	maxBin = histogram.getOtsuThreshold();
-                } else {
-                	maxBin = histogram.getMaxEntropyThreshold();
-                }
-                
-            	double dif = image.getMax() - image.getMin();
-            	
-            	double factor = dif / histogram.getExtents()[0];
-            	            	
-            	double thresVal = ((maxBin * factor) + image.getMin());
-                
-                if (inverseCheckbox.isSelected()) {
-                    textThres1.setText(new Double(thresVal).toString());
-                    textThres2.setText(new Double(image.getMax()).toString());
-                } else {
-                    textThres1.setText(new Double(image.getMin()).toString());
-                    textThres2.setText(new Double(thresVal).toString());
-                }
-
-                textThres1.setEnabled(false);
-                textThres2.setEnabled(false);
-            } else {
-                thresholdType = DEFAULT;
-                textThres1.setEnabled(true);
-                textThres2.setEnabled(true);
-            }
-
-            textThres1.setCaretPosition(0);
-            textThres2.setCaretPosition(0);
-        } 
-
-    }
 
     /**
      * Accessor that sets the region flag.
@@ -399,38 +279,11 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
         max = (float) image.getMax();
 
         regionFlag = scriptParameters.doProcessWholeImage();
-        thresholdType = scriptParameters.getParams().getInt("threshold_type");
 
         isInverse = scriptParameters.getParams().getBoolean("is_inverse_threshold");
 
-        if (thresholdType == DEFAULT) {
-            setThres1(scriptParameters.getParams().getFloat("min_threshold"));
-            setThres2(scriptParameters.getParams().getFloat("max_threshold"));
-        } else {
-
-            // using otsu or max entropy threshold, so calculate histogram
-            calcHistogram();
-            int maxBin = 0;
-            if (thresholdType == OTSU) {
-            	maxBin = histogram.getOtsuThreshold();
-            } else {
-            	maxBin = histogram.getMaxEntropyThreshold();
-            }
-        	double dif = image.getMax() - image.getMin();
-        	double factor = dif / histogram.getNDims();
-        	
-        	float thresVal = (float)((maxBin * factor) + image.getMin());
-            
-            
-            if (isInverse) {
-            	setThres1(thresVal);
-                
-                setThres2((float) image.getMax());
-            } else {
-                setThres1((float) image.getMin());
-                setThres2(thresVal);
-            }
-        }
+        setThres1(scriptParameters.getParams().getFloat("min_threshold"));
+        setThres2(scriptParameters.getParams().getFloat("max_threshold"));
     }
 
     /**
@@ -440,12 +293,9 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
         scriptParameters.storeInputImage(image);
 
         scriptParameters.storeProcessWholeImage(regionFlag);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_type", thresholdType));
 
-        if (thresholdType == DEFAULT) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("min_threshold", thres1));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("max_threshold", thres2));
-        }
+        scriptParameters.getParams().put(ParameterFactory.newParameter("min_threshold", thres1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_threshold", thres2));
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("is_inverse_threshold", isInverse));
     }
@@ -466,7 +316,6 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
         labelThres1.setFont(serif12);
 
         textThres1 = new JTextField(6);
-        //textThres1.setText(makeString((max + min) / 3, 6));
         textThres1.setText(makeString(min, 6));
         textThres1.setFont(serif12);
         textThres1.setCaretPosition(0);
@@ -481,7 +330,6 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
         labelThres2.setFont(serif12);
 
         textThres2 = new JTextField(6);
-        //textThres2.setText(makeString((max + min) / 1.5f, 6));
         textThres2.setText(makeString(max, 6));
         textThres2.setFont(serif12);
         textThres2.setCaretPosition(0);
@@ -493,16 +341,6 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
         inverseCheckbox.setFont(serif12);
         inverseCheckbox.setSelected(false);
         inverseCheckbox.addItemListener(this);
-
-        otsuCheckbox = new JCheckBox("Otsu threshold");
-        otsuCheckbox.setFont(serif12);
-        otsuCheckbox.setSelected(false);
-        otsuCheckbox.addItemListener(this);
-
-        maxEntCheckbox = new JCheckBox("Maximum entropy threshold");
-        maxEntCheckbox.setFont(serif12);
-        maxEntCheckbox.setSelected(false);
-        maxEntCheckbox.addItemListener(this);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -526,10 +364,6 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridy = 2;
-        scalePanel.add(otsuCheckbox, gbc);
-        gbc.gridy = 3;
-        scalePanel.add(maxEntCheckbox, gbc);
-        gbc.gridy = 4;
         scalePanel.add(inverseCheckbox, gbc);
 
         JPanel imageVOIPanel = new JPanel(new GridBagLayout());
@@ -565,11 +399,7 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(buildButtons());
-        //buildOKButton();
-        //buttonPanel.add(OKButton);
-        //buildCancelButton();
-        //buttonPanel.add(cancelButton);
-
+        
         mainDialogPanel.add(mainPanel);
         mainDialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 
