@@ -22,7 +22,7 @@ import javax.swing.*;
  *
  * <p>Description: dialog for running RGB center of mass calculations on color images</p>
  *
- * <p>Copyright: Copyright (c) 2003</p>
+ * <p>Copyright: Copyright (c) 2008</p>
  *
  * <p>Company:</p>
  *
@@ -40,19 +40,7 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
 
     /** false = apply algorithm only to VOI regions apply same threshold to all. */
     private JCheckBox applyToAllBox;
-
-    /** enable blue threshold. */
-    private JCheckBox applyToBlueBox;
-
-    /** enable green threshold. */
-    private JCheckBox applyToGreenBox;
-
-    /** enable red threshold. */
-    private JCheckBox applyToRedBox;
-
-    /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
-
+   
     /** DOCUMENT ME! */
     private ModelImage image; // source image
 
@@ -68,20 +56,8 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
     /** Minimum and maximum values for red/gree/blue. */
     private float[] mins = new float[3];
 
-    /** DOCUMENT ME! */
-    private JRadioButton newImage;
-
     /** or if the source image is to be replaced. */
     private boolean regionFlag; // true = apply algorithm to the whole image
-
-    /** DOCUMENT ME! */
-    private JRadioButton replaceImage;
-
-    /** DOCUMENT ME! */
-    private ModelImage resultImage = null; // result image
-
-    /** DOCUMENT ME! */
-    private JTextField[] textFills;
 
     /** Text fields for lower & upper thresholds and fill values. */
     private JTextField[] textThreshold1;
@@ -265,15 +241,6 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
     }
 
     /**
-     * Accessor that returns the image.
-     *
-     * @return  The result image.
-     */
-    public ModelImage getResultImage() {
-        return resultImage;
-    }
-
-    /**
      * Monitors the checkboxes and handles events according (enable/disable).
      *
      * @param  event  ItemEvent
@@ -290,72 +257,23 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
                 textThreshold1[2].setEnabled(false);
                 textThreshold2[1].setEnabled(false);
                 textThreshold2[2].setEnabled(false);
-                textFills[0].setEnabled(true);
-                textFills[1].setEnabled(false);
-                textFills[2].setEnabled(false);
 
                 textThreshold1[1].setText(textThreshold1[0].getText());
                 textThreshold1[2].setText(textThreshold1[0].getText());
                 textThreshold2[1].setText(textThreshold1[0].getText());
                 textThreshold2[2].setText(textThreshold1[0].getText());
-                textFills[1].setText(textFills[0].getText());
-                textFills[2].setText(textFills[0].getText());
-
-                applyToRedBox.setEnabled(false);
-                applyToGreenBox.setEnabled(false);
-                applyToBlueBox.setEnabled(false);
 
             } else {
-                textThreshold1[0].setEnabled(applyToRedBox.isSelected());
-                textThreshold1[1].setEnabled(applyToGreenBox.isSelected());
-                textThreshold1[2].setEnabled(applyToBlueBox.isSelected());
-
-                textThreshold2[0].setEnabled(applyToRedBox.isSelected());
-                textThreshold2[1].setEnabled(applyToGreenBox.isSelected());
-                textThreshold2[2].setEnabled(applyToBlueBox.isSelected());
-
-                textFills[0].setEnabled(applyToRedBox.isSelected());
-                textFills[1].setEnabled(applyToGreenBox.isSelected());
-                textFills[2].setEnabled(applyToBlueBox.isSelected());
-
-                applyToRedBox.setEnabled(true);
-                applyToGreenBox.setEnabled(true);
-                applyToBlueBox.setEnabled(true);
-            }
-        } else if (source.equals(applyToRedBox)) {
-
-            if (applyToRedBox.isSelected()) {
                 textThreshold1[0].setEnabled(true);
-                textThreshold2[0].setEnabled(true);
-                textFills[0].setEnabled(true);
-            } else {
-                textThreshold1[0].setEnabled(false);
-                textThreshold2[0].setEnabled(false);
-                textFills[0].setEnabled(false);
-            }
-        } else if (source.equals(applyToGreenBox)) {
-
-            if (applyToGreenBox.isSelected()) {
                 textThreshold1[1].setEnabled(true);
-                textThreshold2[1].setEnabled(true);
-                textFills[1].setEnabled(true);
-            } else {
-                textThreshold1[1].setEnabled(false);
-                textThreshold2[1].setEnabled(false);
-                textFills[1].setEnabled(false);
-            }
-        } else if (source.equals(applyToBlueBox)) {
-
-            if (applyToBlueBox.isSelected()) {
                 textThreshold1[2].setEnabled(true);
+
+                textThreshold2[0].setEnabled(true);
+                textThreshold2[1].setEnabled(true);
                 textThreshold2[2].setEnabled(true);
-                textFills[2].setEnabled(true);
-            } else {
-                textThreshold1[2].setEnabled(false);
-                textThreshold2[2].setEnabled(false);
-                textFills[2].setEnabled(false);
+
             }
-        }
+        } 
     }
 
     /**
@@ -450,10 +368,6 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
      * {@inheritDoc}
      */
     protected void doPostAlgorithmActions() {
-
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(resultImage);
-        }
     }
 
     /**
@@ -463,12 +377,6 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
         image = scriptParameters.retrieveInputImage();
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
-
-        if (scriptParameters.doOutputNewImage()) {
-            displayLoc = NEW;
-        } else {
-            displayLoc = REPLACE;
-        }
 
         regionFlag = scriptParameters.doProcessWholeImage();
 
@@ -484,8 +392,6 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, displayLoc == NEW);
-
 
         scriptParameters.storeProcessWholeImage(regionFlag);
 
@@ -522,7 +428,7 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
         thresholdLabels1[panelNum].setFont(serif12);
 
         textThreshold1[panelNum] = new JTextField(4);
-        textThreshold1[panelNum].setText(makeString((maxs[panelNum] + mins[panelNum]) / 3, 2));
+        textThreshold1[panelNum].setText(makeString(mins[panelNum], 2));
         textThreshold1[panelNum].setFont(serif12);
         textThreshold1[panelNum].setCaretPosition(0);
         textThreshold1[panelNum].addFocusListener(this);
@@ -534,21 +440,10 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
         thresholdLabels2[panelNum].setFont(serif12);
 
         textThreshold2[panelNum] = new JTextField(4);
-        textThreshold2[panelNum].setText(makeString((maxs[panelNum] + mins[panelNum]) / 1.5f, 2));
+        textThreshold2[panelNum].setText(makeString(maxs[panelNum], 2));
         textThreshold2[panelNum].setFont(serif12);
         textThreshold2[panelNum].setCaretPosition(0);
         textThreshold2[panelNum].addFocusListener(this);
-
-        JLabel labelFill = new JLabel("Set outside values to: ");
-        labelFill.setForeground(Color.black);
-        labelFill.setFont(serif12);
-
-        textFills[panelNum] = new JTextField(4);
-        textFills[panelNum].setText(makeString(mins[panelNum], 2));
-        textFills[panelNum].setFont(serif12);
-        textFills[panelNum].setCaretPosition(0);
-        textFills[panelNum].setEnabled(true);
-        textFills[panelNum].addFocusListener(this);
 
         GridBagConstraints gbc = new GridBagConstraints();
 
@@ -574,18 +469,6 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
         gbc.anchor = GridBagConstraints.EAST;
         gbc.gridx = 1;
         panel.add(textThreshold2[panelNum], gbc);
-
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.gridx = 0;
-        gbc.gridy++;
-
-        gbc.gridwidth = 1;
-        panel.add(labelFill, gbc);
-
-        gbc.anchor = GridBagConstraints.EAST;
-        gbc.gridx = 1;
-        panel.add(textFills[panelNum], gbc);
-
         return panel;
     }
 
@@ -593,7 +476,7 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
-        setTitle("Threshold");
+        setTitle("Center of Mass");
 
         mins[0] = (float) image.getMinR();
         maxs[0] = (float) image.getMaxR();
@@ -613,8 +496,6 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
         thresholdLabels1 = new JLabel[3];
         thresholdLabels2 = new JLabel[3];
 
-        textFills = new JTextField[3];
-
         JPanel thresholdPanel = new JPanel();
         thresholdPanel.setLayout(new BoxLayout(thresholdPanel, BoxLayout.Y_AXIS));
         thresholdPanel.setBorder(buildTitledBorder("Thresholds"));
@@ -632,21 +513,6 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
         applyToAllBox.addItemListener(this);
         applyToAllBox.setFont(MipavUtil.font12);
 
-        applyToRedBox = new JCheckBox("Use red channel");
-        applyToRedBox.setSelected(true);
-        applyToRedBox.addItemListener(this);
-        applyToRedBox.setFont(MipavUtil.font12);
-
-        applyToGreenBox = new JCheckBox("Use green channel");
-        applyToGreenBox.setSelected(true);
-        applyToGreenBox.addItemListener(this);
-        applyToGreenBox.setFont(MipavUtil.font12);
-
-        applyToBlueBox = new JCheckBox("Use blue channel");
-        applyToBlueBox.setSelected(true);
-        applyToBlueBox.addItemListener(this);
-        applyToBlueBox.setFont(MipavUtil.font12);
-
         inverseOptionBox = new JCheckBox("Use inverse threshold");
         inverseOptionBox.addItemListener(this);
         inverseOptionBox.setFont(MipavUtil.font12);
@@ -655,15 +521,6 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
         applyPanel.add(applyToAllBox, gbc2);
 
         gbc2.gridy = 1;
-        applyPanel.add(applyToRedBox, gbc2);
-
-        gbc2.gridy = 2;
-        applyPanel.add(applyToGreenBox, gbc2);
-
-        gbc2.gridy = 3;
-        applyPanel.add(applyToBlueBox, gbc2);
-
-        gbc2.gridy = 4;
         applyPanel.add(inverseOptionBox, gbc2);
 
         thresholdPanel.add(applyPanel);
@@ -674,31 +531,9 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
 
         GridBagConstraints gbc = new GridBagConstraints();
 
-        JPanel destinationPanel = new JPanel(new GridBagLayout());
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-
-        ButtonGroup destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage);
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setBounds(10, 42, 120, 25);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage);
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        destinationPanel.add(newImage, gbc);
-        gbc.gridy = 1;
-        destinationPanel.add(replaceImage, gbc);
-
         JPanel imageVOIPanel = new JPanel(new GridBagLayout());
         imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Threshold"));
+        imageVOIPanel.setBorder(buildTitledBorder("Process"));
 
         ButtonGroup imageVOIGroup = new ButtonGroup();
         wholeImage = new JRadioButton("Whole image", true);
@@ -711,16 +546,11 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
 
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.anchor = GridBagConstraints.WEST;
         imageVOIPanel.add(wholeImage, gbc);
         gbc.gridy = 1;
         imageVOIPanel.add(VOIRegions, gbc);
-
-        // Only if the image is unlocked can it be replaced.
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
-        } else {
-            replaceImage.setEnabled(false);
-        }
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;
@@ -729,9 +559,9 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
         mainPanel.add(thresholdPanel, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        mainPanel.add(destinationPanel, gbc);
-        gbc.gridx = 1;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(imageVOIPanel, gbc);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
@@ -753,12 +583,6 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
      */
     private boolean setVariables() {
         String tmpStr, tmpStr2;
-
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-        }
 
         if (wholeImage.isSelected()) {
             regionFlag = true;
@@ -789,7 +613,7 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
                 return false;
             }
 
-        } else {
+        } else { // applyToAllBox not selected
             float tempThres = 0f;
 
             // test the lower threshold, upper threshold, and fill values
@@ -861,10 +685,9 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
                         return false;
                     }
 
-                } else {
-                }
-            }
-        }
+                } 
+            } // for (int i = 0; i < 3; i++)
+        } // else applyToAllBox not selected
 
         this.isInverse = inverseOptionBox.isSelected();
 
