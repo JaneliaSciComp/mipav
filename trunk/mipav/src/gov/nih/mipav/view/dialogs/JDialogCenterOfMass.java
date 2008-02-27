@@ -38,12 +38,6 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
     private ModelImage image; // source image
 
     /** DOCUMENT ME! */
-    private JCheckBox inverseCheckbox;
-
-    /** DOCUMENT ME! */
-    private boolean isInverse = true;
-
-    /** DOCUMENT ME! */
     private JLabel labelThres2;
 
     /** DOCUMENT ME! */
@@ -218,7 +212,7 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
 
             // No need to make new image space because the user has choosen to replace the source image
             // Make the algorithm class
-            comAlgo = new AlgorithmCenterOfMass(image, thresholds, regionFlag, isInverse);
+            comAlgo = new AlgorithmCenterOfMass(image, thresholds, regionFlag);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -280,8 +274,6 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
 
         regionFlag = scriptParameters.doProcessWholeImage();
 
-        isInverse = scriptParameters.getParams().getBoolean("is_inverse_threshold");
-
         setThres1(scriptParameters.getParams().getFloat("min_threshold"));
         setThres2(scriptParameters.getParams().getFloat("max_threshold"));
     }
@@ -296,8 +288,6 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_threshold", thres1));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_threshold", thres2));
-
-        scriptParameters.getParams().put(ParameterFactory.newParameter("is_inverse_threshold", isInverse));
     }
 
     /**
@@ -337,11 +327,6 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
         textThres2.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("ENTER"), "checkValue");
         textThres2.getActionMap().put("checkValue", new CheckValueAction());
 
-        inverseCheckbox = new JCheckBox("Inverse threshold");
-        inverseCheckbox.setFont(serif12);
-        inverseCheckbox.setSelected(false);
-        inverseCheckbox.addItemListener(this);
-
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -359,12 +344,6 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
         gbc.gridx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         scalePanel.add(textThres2, gbc);
-        
-        gbc.gridwidth = 1;
-        gbc.gridx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.gridy = 2;
-        scalePanel.add(inverseCheckbox, gbc);
 
         JPanel imageVOIPanel = new JPanel(new GridBagLayout());
         imageVOIPanel.setForeground(Color.black);
@@ -449,8 +428,6 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
 
             return false;
         }
-
-        isInverse = inverseCheckbox.isSelected();
 
         return true;
     }
