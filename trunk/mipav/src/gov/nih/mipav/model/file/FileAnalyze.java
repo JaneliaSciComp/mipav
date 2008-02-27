@@ -1129,6 +1129,7 @@ public class FileAnalyze extends FileBase {
         if (options.isMultiFile()) {
             FileRaw rawFile;
             rawFile = new FileRaw(image.getFileInfo(0));
+            rawFile.setZeroLengthFlag(true);
             linkProgress(rawFile);
             flipTopBottom(image);
 
@@ -1146,6 +1147,7 @@ public class FileAnalyze extends FileBase {
             try {
                 FileRaw rawFile;
                 rawFile = new FileRaw(fileName, fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
+                rawFile.setZeroLengthFlag(true);
                 linkProgress(rawFile);
 
                 flipTopBottom(image);
