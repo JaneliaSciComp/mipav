@@ -704,37 +704,37 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @param  selectedVOI  DOCUMENT ME!
      */
     private void calc2D(VOI selectedVOI) {
-        float minIntensity = Float.MAX_VALUE, totalMinIntensity = Float.MAX_VALUE;
-        float maxIntensity = -Float.MAX_VALUE, totalMaxIntensity = -Float.MAX_VALUE;
-        float minIntenRed = Float.MAX_VALUE, totalMinIntenRed = Float.MAX_VALUE;
-        float maxIntenRed = -Float.MAX_VALUE, totalMaxIntenRed = -Float.MAX_VALUE;
-        float minIntenGreen = Float.MAX_VALUE, totalMinIntenGreen = Float.MAX_VALUE;
-        float maxIntenGreen = -Float.MAX_VALUE, totalMaxIntenGreen = -Float.MAX_VALUE;
-        float minIntenBlue = Float.MAX_VALUE, totalMinIntenBlue = Float.MAX_VALUE;
-        float maxIntenBlue = -Float.MAX_VALUE, totalMaxIntenBlue = -Float.MAX_VALUE;
-        float avgInten = 0;
-        float avgIntenR = 0;
-        float avgIntenG = 0;
-        float avgIntenB = 0;
-        float stdDev = 0, stdDevR = 0, stdDevG = 0, stdDevB = 0;
-        float skewness = 0, skewnessR = 0, skewnessG = 0, skewnessB = 0;
-        float kurtosis = 0, kurtosisR = 0, kurtosisG = 0, kurtosisB = 0;
-        float R2, R3, R4, G2, G3, G4, B2, B3, B4, s2, s3, s4;
-        float diff, diffR, diffG, diffB;
-        float sum = 0, sumR = 0, sumG = 0, sumB = 0;
-        float sum2 = 0, sumR2 = 0, sumG2 = 0, sumB2 = 0, area = 0;
-        float sum3 = 0, sumR3 = 0, sumG3 = 0, sumB3 = 0;
-        float sum4 = 0, sumR4 = 0, sumG4 = 0, sumB4 = 0;
-        float moment2, moment2R, moment2G, moment2B;
-        float moment3, moment3R, moment3G, moment3B;
-        float moment4, moment4R, moment4G, moment4B;
-        float totalSum = 0, totalSumR = 0, totalSumG = 0, totalSumB = 0, totalArea = 0;
-        float totalSum2 = 0, totalSumR2 = 0, totalSumG2 = 0, totalSumB2 = 0;
-        float totalSum3 = 0, totalSumR3 = 0, totalSumG3 = 0, totalSumB3 = 0;
-        float totalSum4 = 0, totalSumR4 = 0, totalSumG4 = 0, totalSumB4 = 0;
-        float totalAxis = 0, totalEcc = 0;
-        float totalMajorAxis = 0;
-        float totalMinorAxis = 0;
+        double minIntensity = Double.MAX_VALUE, totalMinIntensity = Double.MAX_VALUE;
+        double maxIntensity = -Double.MAX_VALUE, totalMaxIntensity = -Double.MAX_VALUE;
+        double minIntenRed = Double.MAX_VALUE, totalMinIntenRed = Double.MAX_VALUE;
+        double maxIntenRed = -Double.MAX_VALUE, totalMaxIntenRed = -Double.MAX_VALUE;
+        double minIntenGreen = Double.MAX_VALUE, totalMinIntenGreen = Double.MAX_VALUE;
+        double maxIntenGreen = -Double.MAX_VALUE, totalMaxIntenGreen = -Double.MAX_VALUE;
+        double minIntenBlue = Double.MAX_VALUE, totalMinIntenBlue = Double.MAX_VALUE;
+        double maxIntenBlue = -Double.MAX_VALUE, totalMaxIntenBlue = -Double.MAX_VALUE;
+        double avgInten = 0;
+        double avgIntenR = 0;
+        double avgIntenG = 0;
+        double avgIntenB = 0;
+        double stdDev = 0, stdDevR = 0, stdDevG = 0, stdDevB = 0;
+        double skewness = 0, skewnessR = 0, skewnessG = 0, skewnessB = 0;
+        double kurtosis = 0, kurtosisR = 0, kurtosisG = 0, kurtosisB = 0;
+        double R2, R3, R4, G2, G3, G4, B2, B3, B4, s2, s3, s4;
+        double diff, diffR, diffG, diffB;
+        double sum = 0, sumR = 0, sumG = 0, sumB = 0;
+        double sum2 = 0, sumR2 = 0, sumG2 = 0, sumB2 = 0, area = 0;
+        double sum3 = 0, sumR3 = 0, sumG3 = 0, sumB3 = 0;
+        double sum4 = 0, sumR4 = 0, sumG4 = 0, sumB4 = 0;
+        double moment2, moment2R, moment2G, moment2B;
+        double moment3, moment3R, moment3G, moment3B;
+        double moment4, moment4R, moment4G, moment4B;
+        double totalSum = 0, totalSumR = 0, totalSumG = 0, totalSumB = 0, totalArea = 0;
+        double totalSum2 = 0, totalSumR2 = 0, totalSumG2 = 0, totalSumB2 = 0;
+        double totalSum3 = 0, totalSumR3 = 0, totalSumG3 = 0, totalSumB3 = 0;
+        double totalSum4 = 0, totalSumR4 = 0, totalSumG4 = 0, totalSumB4 = 0;
+        double totalAxis = 0, totalEcc = 0;
+        double totalMajorAxis = 0;
+        double totalMinorAxis = 0;
         int nVox = 0, totalNVox = 0;
         Point3Df totalC = new Point3Df(0, 0, 0); // geometric center
         float[] imgBuffer;
@@ -742,7 +742,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         float[] tmpEcc = null;
         float[] tmpMajorAxis = null;
         float[] tmpMinorAxis = null;
-        float totalPerimeter = 0f;
+        double totalPerimeter = 0;
         Point3Df gCenter;
         String comStr;
         int x;
@@ -860,12 +860,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     ((VOIContour) (contours[q].elementAt(r))).setActive(false);
 
                     if (srcImage.isColorImage()) {
-                        minIntenRed = Float.MAX_VALUE;
-                        maxIntenRed = -Float.MAX_VALUE;
-                        minIntenGreen = Float.MAX_VALUE;
-                        maxIntenGreen = -Float.MAX_VALUE;
-                        minIntenBlue = Float.MAX_VALUE;
-                        maxIntenBlue = -Float.MAX_VALUE;
+                        minIntenRed = Double.MAX_VALUE;
+                        maxIntenRed = -Double.MAX_VALUE;
+                        minIntenGreen = Double.MAX_VALUE;
+                        maxIntenGreen = -Double.MAX_VALUE;
+                        minIntenBlue = Double.MAX_VALUE;
+                        maxIntenBlue = -Double.MAX_VALUE;
 
                         for (int i = 0; i < length; i += 4) {
 
@@ -960,8 +960,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue" + "0;" + r, nf.format(sumB));
                         
                     } else {
-                        minIntensity = Float.MAX_VALUE;
-                        maxIntensity = -Float.MAX_VALUE;
+                        minIntensity = Double.MAX_VALUE;
+                        maxIntensity = -Double.MAX_VALUE;
 
                         for (int i = 0; i < length; i++) {
 
@@ -1644,39 +1644,38 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @param  selectedVOI  DOCUMENT ME!
      */
     private void calc34D(VOI selectedVOI) {
-        float minIntensity = Float.MAX_VALUE, totalMinIntensity = Float.MAX_VALUE;
-        float maxIntensity = -Float.MAX_VALUE, totalMaxIntensity = -Float.MAX_VALUE;
-        float minIntenRed = Float.MAX_VALUE, totalMinIntenRed = Float.MAX_VALUE;
-        float maxIntenRed = -Float.MAX_VALUE, totalMaxIntenRed = -Float.MAX_VALUE;
-        float minIntenGreen = Float.MAX_VALUE, totalMinIntenGreen = Float.MAX_VALUE;
-        float maxIntenGreen = -Float.MAX_VALUE, totalMaxIntenGreen = -Float.MAX_VALUE;
-        float minIntenBlue = Float.MAX_VALUE, totalMinIntenBlue = Float.MAX_VALUE;
-        float maxIntenBlue = -Float.MAX_VALUE, totalMaxIntenBlue = -Float.MAX_VALUE;
-        float avgInten = 0;
-        float avgIntenR = 0;
-        float avgIntenG = 0;
-        float avgIntenB = 0;
-        float skewness = 0, skewnessR = 0, skewnessG = 0, skewnessB = 0;
-        float kurtosis = 0, kurtosisR = 0, kurtosisG = 0, kurtosisB = 0;
-        float R2, R3, R4, G2, G3, G4, B2, B3, B4, s2, s3, s4;
-        float diff, diffR, diffG, diffB;
-        float stdDev = 0, stdDevR = 0, stdDevG = 0, stdDevB = 0;
-        float totalStdDev = 0, totalStdDevR = 0, totalStdDevG = 0, totalStdDevB = 0;
-        float volume = 0, totalVolume = 0;
-        float sum = 0, sumR = 0, sumG = 0, sumB = 0, area = 0;
-        float sum2 = 0, sumR2 = 0, sumG2 = 0, sumB2 = 0;
-        float sum3 = 0, sumR3 = 0, sumG3 = 0, sumB3 = 0;
-        float sum4 = 0, sumR4 = 0, sumG4 = 0, sumB4 = 0;
-        float moment2, moment2R, moment2G, moment2B;
-        float moment3, moment3R, moment3G, moment3B;
-        float moment4, moment4R, moment4G, moment4B;
-        float totalSum = 0, totalSumR = 0, totalSumG = 0, totalSumB = 0, totalArea = 0;
-        float totalSum2 = 0, totalSumR2 = 0, totalSumG2 = 0, totalSumB2 = 0;
-        float totalSum3 = 0, totalSumR3 = 0, totalSumG3 = 0, totalSumB3 = 0;
-        float totalSum4 = 0, totalSumR4 = 0, totalSumG4 = 0, totalSumB4 = 0;
-        float totalAxis = 0, totalEcc = 0;
-        float totalMajorAxis = 0;
-        float totalMinorAxis = 0;
+        double minIntensity = Double.MAX_VALUE, totalMinIntensity = Double.MAX_VALUE;
+        double maxIntensity = -Double.MAX_VALUE, totalMaxIntensity = -Double.MAX_VALUE;
+        double minIntenRed = Double.MAX_VALUE, totalMinIntenRed = Double.MAX_VALUE;
+        double maxIntenRed = -Double.MAX_VALUE, totalMaxIntenRed = -Double.MAX_VALUE;
+        double minIntenGreen = Double.MAX_VALUE, totalMinIntenGreen = Double.MAX_VALUE;
+        double maxIntenGreen = -Double.MAX_VALUE, totalMaxIntenGreen = -Double.MAX_VALUE;
+        double minIntenBlue = Double.MAX_VALUE, totalMinIntenBlue = Double.MAX_VALUE;
+        double maxIntenBlue = -Double.MAX_VALUE, totalMaxIntenBlue = -Double.MAX_VALUE;
+        double avgInten = 0;
+        double avgIntenR = 0;
+        double avgIntenG = 0;
+        double avgIntenB = 0;
+        double skewness = 0, skewnessR = 0, skewnessG = 0, skewnessB = 0;
+        double kurtosis = 0, kurtosisR = 0, kurtosisG = 0, kurtosisB = 0;
+        double R2, R3, R4, G2, G3, G4, B2, B3, B4, s2, s3, s4;
+        double diff, diffR, diffG, diffB;
+        double stdDev = 0, stdDevR = 0, stdDevG = 0, stdDevB = 0;
+        double volume = 0, totalVolume = 0;
+        double sum = 0, sumR = 0, sumG = 0, sumB = 0, area = 0;
+        double sum2 = 0, sumR2 = 0, sumG2 = 0, sumB2 = 0;
+        double sum3 = 0, sumR3 = 0, sumG3 = 0, sumB3 = 0;
+        double sum4 = 0, sumR4 = 0, sumG4 = 0, sumB4 = 0;
+        double moment2, moment2R, moment2G, moment2B;
+        double moment3, moment3R, moment3G, moment3B;
+        double moment4, moment4R, moment4G, moment4B;
+        double totalSum = 0, totalSumR = 0, totalSumG = 0, totalSumB = 0, totalArea = 0;
+        double totalSum2 = 0, totalSumR2 = 0, totalSumG2 = 0, totalSumB2 = 0;
+        double totalSum3 = 0, totalSumR3 = 0, totalSumG3 = 0, totalSumB3 = 0;
+        double totalSum4 = 0, totalSumR4 = 0, totalSumG4 = 0, totalSumB4 = 0;
+        double totalAxis = 0, totalEcc = 0;
+        double totalMajorAxis = 0;
+        double totalMinorAxis = 0;
         int nVox = 0, totalNVox = 0;
         Point3Df totalC = new Point3Df(0, 0, 0);
         float[] imgBuffer;
@@ -1688,8 +1687,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         float[] yExtents = null;
         float[] zExtents = null;
         int length;
-        float perimeter = 0f;
-        float totalPerimeter = 0f;
+        double perimeter = 0;
+        double totalPerimeter = 0;
         int x;
         int y;
         int z;
