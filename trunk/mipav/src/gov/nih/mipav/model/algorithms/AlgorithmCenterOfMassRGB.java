@@ -164,7 +164,7 @@ public class AlgorithmCenterOfMassRGB extends AlgorithmBase {
     
                
     
-                if (isInverse) {
+                if (!isInverse) {
 
                     if ((entireImage == true) || mask.get(i / 4)) {
                         if ((buffer[i+1] >= thresholdR[0]) && (buffer[i+1] <= thresholdR[1])) {
@@ -313,7 +313,7 @@ public class AlgorithmCenterOfMassRGB extends AlgorithmBase {
                         fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
                     }
         
-                    if (isInverse) {
+                    if (!isInverse) {
     
                         if ((entireImage == true) || mask.get(i / 4)) {
                             if ((buffer[i+1] >= thresholdR[0]) && (buffer[i+1] <= thresholdR[1])) {
