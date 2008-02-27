@@ -2789,6 +2789,22 @@ implements MouseListener, ItemListener, ChangeListener {
         }
     }
     
+    public void addPolyline(Polyline[] akPolylines)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.addPolyline(akPolylines);
+        }
+    }    
+    
+    public void removePolyline(int groupIndex)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.removePolyline(groupIndex);
+        }
+    }
+    
     public void addSurface(TriMesh[] akSurfaces)
     {
         if ( raycastRenderWM != null )

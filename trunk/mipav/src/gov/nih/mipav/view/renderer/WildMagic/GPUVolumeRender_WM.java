@@ -547,6 +547,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
         return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
     }
 
+    public Vector3f getTranslate() {
+    	return m_kTranslate;
+    }
+    
     /**
      * Called by the init() function. Creates and initialized the scene-graph.
      * @param arg0, the GLCanvas
@@ -1834,6 +1838,34 @@ implements GLEventListener, KeyListener, MouseMotionListener
         }
     }
     
+    public void addPolyline(Polyline[] akPolylines)
+    {
+        for ( int i = 0; i < akPolylines.length; i++ )
+        {
+        	  for ( int j = 0; j < akPolylines[i].VBuffer.GetVertexQuantity(); j++ )
+              {
+
+        		  akPolylines[i].VBuffer.SetPosition3(j, akPolylines[i].VBuffer.GetPosition3fX(j) - m_kTranslate.X(),
+        				  akPolylines[i].VBuffer.GetPosition3fY(j) - m_kTranslate.Y(), 
+        				  akPolylines[i].VBuffer.GetPosition3fZ(j) - m_kTranslate.Z() );
+              }
+        	  
+              addPolyline(akPolylines[i], i);
+        }
+        
+    }    
+    
+    public void DisplayPolyline(boolean bDisplay)
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i) instanceof VolumeSurface )
+            {
+                m_kDisplayList.get(i).SetDisplay(bDisplay);
+            }
+        }
+    }
+    
     public void addSurface(TriMesh[] akSurfaces)
     {
         for ( int i = 0; i < akSurfaces.length; i++ )
@@ -2002,6 +2034,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         }
     }
 
+    
     /**
      */
     public float GetVolume( String kSurfaceName )
