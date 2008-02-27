@@ -26,9 +26,6 @@ public class AlgorithmCenterOfMassRGB extends AlgorithmBase {
      */
     private boolean entireImage;
 
-    /** fill values are for values outside (inverse) or inside (normal/false). */
-    private boolean isInverse;
-
     /** DOCUMENT ME! */
     private float[] thresholdB;
 
@@ -48,16 +45,14 @@ public class AlgorithmCenterOfMassRGB extends AlgorithmBase {
      * @param  thresholdG   float[] green thresh
      * @param  thresholdB   float[] blue thresh
      * @param  maskFlag     boolean whole image or voi
-     * @param  isInverse    boolean replace values outside (true) or inside (false)
      */
     public AlgorithmCenterOfMassRGB(ModelImage srcImage, float[] thresholdR, float[] thresholdG, float[] thresholdB,
-                                     boolean maskFlag, boolean isInverse) {
+                                     boolean maskFlag) {
         super(null, srcImage);
         this.thresholdR = thresholdR;
         this.thresholdG = thresholdG;
         this.thresholdB = thresholdB;
         entireImage = maskFlag;
-        this.isInverse = isInverse;
 
         if (entireImage == false) {
             mask = srcImage.generateVOIMask();
@@ -161,50 +156,24 @@ public class AlgorithmCenterOfMassRGB extends AlgorithmBase {
                 if (((i % mod) == 0)) {
                     fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
                 }
-    
-               
-    
-                if (!isInverse) {
 
-                    if ((entireImage == true) || mask.get(i / 4)) {
-                        if ((buffer[i+1] >= thresholdR[0]) && (buffer[i+1] <= thresholdR[1])) {
-                            xMassR += x * buffer[i+1];
-                            yMassR += y * buffer[i+1];
-                            valTotR += buffer[i+1];
-                        }
-                        if ((buffer[i+2] >= thresholdG[0]) && (buffer[i+2] <= thresholdG[1])) {
-                            xMassG += x * buffer[i+2];
-                            yMassG += y * buffer[i+2];
-                            valTotG += buffer[i+2];
-                        }
-                        if ((buffer[i+3] >= thresholdB[0]) && (buffer[i+3] <= thresholdB[1])) {
-                            xMassB += x * buffer[i+3];
-                            yMassB += y * buffer[i+3];
-                            valTotB += buffer[i+3];
-                        }
+                if ((entireImage == true) || mask.get(i / 4)) {
+                    if ((buffer[i+1] >= thresholdR[0]) && (buffer[i+1] <= thresholdR[1])) {
+                        xMassR += x * buffer[i+1];
+                        yMassR += y * buffer[i+1];
+                        valTotR += buffer[i+1];
                     }
-                    
-                } else {
-
-                    if ((entireImage == true) || mask.get(i / 4)) {
-                        if ((buffer[i+1] < thresholdR[0]) || (buffer[i+1] > thresholdR[1])) {
-                            xMassR += x * buffer[i+1];
-                            yMassR += y * buffer[i+1];
-                            valTotR += buffer[i+1];
-                        }
-                        if ((buffer[i+2] < thresholdG[0]) || (buffer[i+2] > thresholdG[1])) {
-                            xMassG += x * buffer[i+2];
-                            yMassG += y * buffer[i+2];
-                            valTotG += buffer[i+2];
-                        }
-                        if ((buffer[i+3] < thresholdB[0]) || (buffer[i+3] > thresholdB[1])) {
-                            xMassB += x * buffer[i+3];
-                            yMassB += y * buffer[i+3];
-                            valTotB += buffer[i+3];
-                        }
+                    if ((buffer[i+2] >= thresholdG[0]) && (buffer[i+2] <= thresholdG[1])) {
+                        xMassG += x * buffer[i+2];
+                        yMassG += y * buffer[i+2];
+                        valTotG += buffer[i+2];
                     }
-                    
-                }
+                    if ((buffer[i+3] >= thresholdB[0]) && (buffer[i+3] <= thresholdB[1])) {
+                        xMassB += x * buffer[i+3];
+                        yMassB += y * buffer[i+3];
+                        valTotB += buffer[i+3];
+                    }
+                }      
             }
         }
 
@@ -313,53 +282,26 @@ public class AlgorithmCenterOfMassRGB extends AlgorithmBase {
                         fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
                     }
         
-                    if (!isInverse) {
-    
-                        if ((entireImage == true) || mask.get(i / 4)) {
-                            if ((buffer[i+1] >= thresholdR[0]) && (buffer[i+1] <= thresholdR[1])) {
-                                xMassR += x * buffer[i+1];
-                                yMassR += y * buffer[i+1];
-                                zMassR += z * buffer[i+1];
-                                valTotR += buffer[i+1];
-                            }
-                            if ((buffer[i+2] >= thresholdG[0]) && (buffer[i+2] <= thresholdG[1])) {
-                                xMassG += x * buffer[i+2];
-                                yMassG += y * buffer[i+2];
-                                zMassG += z * buffer[i+2];
-                                valTotG += buffer[i+2];
-                            }
-                            if ((buffer[i+3] >= thresholdB[0]) && (buffer[i+3] <= thresholdB[1])) {
-                                xMassB += x * buffer[i+3];
-                                yMassB += y * buffer[i+3];
-                                zMassB += z * buffer[i+3];
-                                valTotB += buffer[i+3];
-                            }
+                    if ((entireImage == true) || mask.get(i / 4)) {
+                        if ((buffer[i+1] >= thresholdR[0]) && (buffer[i+1] <= thresholdR[1])) {
+                            xMassR += x * buffer[i+1];
+                            yMassR += y * buffer[i+1];
+                            zMassR += z * buffer[i+1];
+                            valTotR += buffer[i+1];
                         }
-                        
-                    } else {
-    
-                        if ((entireImage == true) || mask.get(i / 4)) {
-                            if ((buffer[i+1] < thresholdR[0]) || (buffer[i+1] > thresholdR[1])) {
-                                xMassR += x * buffer[i+1];
-                                yMassR += y * buffer[i+1];
-                                zMassR += z * buffer[i+1];
-                                valTotR += buffer[i+1];
-                            }
-                            if ((buffer[i+2] < thresholdG[0]) || (buffer[i+2] > thresholdG[1])) {
-                                xMassG += x * buffer[i+2];
-                                yMassG += y * buffer[i+2];
-                                zMassG += z * buffer[i+2];
-                                valTotG += buffer[i+2];
-                            }
-                            if ((buffer[i+3] < thresholdB[0]) || (buffer[i+3] > thresholdB[1])) {
-                                xMassB += x * buffer[i+3];
-                                yMassB += y * buffer[i+3];
-                                zMassB += z * buffer[i+3];
-                                valTotB += buffer[i+3];
-                            }
+                        if ((buffer[i+2] >= thresholdG[0]) && (buffer[i+2] <= thresholdG[1])) {
+                            xMassG += x * buffer[i+2];
+                            yMassG += y * buffer[i+2];
+                            zMassG += z * buffer[i+2];
+                            valTotG += buffer[i+2];
                         }
-                        
-                    }
+                        if ((buffer[i+3] >= thresholdB[0]) && (buffer[i+3] <= thresholdB[1])) {
+                            xMassB += x * buffer[i+3];
+                            yMassB += y * buffer[i+3];
+                            zMassB += z * buffer[i+3];
+                            valTotB += buffer[i+3];
+                        }
+                    } 
                 }
             }
         }
