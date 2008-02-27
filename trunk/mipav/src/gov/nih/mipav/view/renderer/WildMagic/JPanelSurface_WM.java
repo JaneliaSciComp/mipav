@@ -134,6 +134,9 @@ public class JPanelSurface_WM
     /** The directory where a surface file was last loaded/saved. Defaults to MIPAV default directory. */
     private String surfaceDirectoryName;
 
+    /** Polyline list box in the dialog for surfaces. */
+    private JList polylineList;
+    
     // Surface list:
     /** The list box in the dialog for surfaces. */
     private JList surfaceList;
@@ -249,6 +252,12 @@ public class JPanelSurface_WM
         else if (command.equals("Remove")) {
             removeSurface();
         }
+        else if (command.equals("AddPolyline")) {
+            addPolyline();
+        } 
+        else if (command.equals("RemovePolyline")) {
+            removePolyline();
+        }
 
         else if (command.equals("ChangeColor")) {
             colorChooser = new ViewJColorChooser(new Frame(), "Pick surface color", new OkColorListener(),
@@ -302,7 +311,40 @@ public class JPanelSurface_WM
         */
     }
 
+    private void addPolyline() {
+    	Polyline[] akPolylines = FilePolyline_WM.openPolylines(m_kVolumeViewer.getImageA(), surfaceVector.size());
+        if ( akPolylines != null )
+        {
+            m_kVolumeViewer.addPolyline(akPolylines);
+           
+            DefaultListModel kList = (DefaultListModel)polylineList.getModel();
+            int iSize = kList.getSize();
+            for ( int i = 0; i < akPolylines.length; i++ )
+            {
+                kList.add( iSize + i, akPolylines[i].GetName() );
+               
+            }
+            polylineList.setSelectedIndex(iSize);
+            
+        }
+    }
 
+    private void removePolyline() {
+    	int[] aiSelected = polylineList.getSelectedIndices();
+        System.err.println("afa1");
+        DefaultListModel kList = (DefaultListModel)polylineList.getModel();
+        if ( m_kVolumeViewer != null )
+        {
+            for (int i = 0; i < aiSelected.length; i++) {
+                m_kVolumeViewer.removePolyline( aiSelected[i] );
+            }
+        }
+        for (int i = 0; i < aiSelected.length; i++) {
+            kList.remove(aiSelected[i]);
+        }
+    }
+    
+   
     /**
      * Return the main surface panel.
      *
@@ -521,6 +563,46 @@ public class JPanelSurface_WM
         listPanel.add(buttonPanel, BorderLayout.SOUTH);
         listPanel.setBorder(buildTitledBorder("Surface list"));
 
+        // Polyline start
+        JPanel buttonPanelPolyline = new JPanel();
+
+        // buttons for add/remove of surfaces from list
+        JButton addButtonPolyline = new JButton("Add");
+
+        addButtonPolyline.addActionListener(this);
+        addButtonPolyline.setActionCommand("AddPolyline");
+        addButtonPolyline.setFont(serif12B);
+        addButtonPolyline.setPreferredSize(MipavUtil.defaultButtonSize);
+
+        JButton removeButtonPolyline = new JButton("Remove");
+
+        removeButtonPolyline.addActionListener(this);
+        removeButtonPolyline.setActionCommand("RemovePolyline");
+        removeButtonPolyline.setFont(serif12B);
+        removeButtonPolyline.setPreferredSize(MipavUtil.defaultButtonSize);
+
+        buttonPanelPolyline.add(addButtonPolyline);
+        buttonPanelPolyline.add(removeButtonPolyline);
+
+        // list panel for surface filenames
+        polylineList = new JList(new DefaultListModel());
+        polylineList.addListSelectionListener(this);
+        polylineList.setPrototypeCellValue("aaaaaaaaaaaaaaaa.aaa    ");
+
+        JScrollPane kScrollPanePolyline = new JScrollPane(polylineList);
+        JPanel scrollPanelPolyline = new JPanel();
+
+        scrollPanelPolyline.setLayout(new BorderLayout());
+        scrollPanelPolyline.add(kScrollPanePolyline);
+        scrollPanelPolyline.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        JPanel listPanelPolyline = new JPanel();
+        listPanelPolyline.setLayout(new BorderLayout());
+        listPanelPolyline.add(scrollPanelPolyline, BorderLayout.CENTER);
+        listPanelPolyline.add(buttonPanelPolyline, BorderLayout.SOUTH);
+        listPanelPolyline.setBorder(buildTitledBorder("Polyline list"));
+        // polyline end
+        
         JPanel paintTexturePanel = new JPanel();
         paintTexturePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
 
@@ -765,11 +847,21 @@ public class JPanelSurface_WM
         rightPanel.setLayout(new BorderLayout());
         rightPanel.add(optionsPanel, BorderLayout.NORTH);
 
+        
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(MipavUtil.font12B);
+        tabbedPane.setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
+        tabbedPane.addChangeListener(this);
+        
+        tabbedPane.addTab("Surface", null, listPanel);
+        tabbedPane.addTab("Polyline", null, listPanelPolyline);
+        tabbedPane.setSelectedIndex(0);
+        
         // distinguish between the swing Box and the j3d Box
         javax.swing.Box contentBox = new javax.swing.Box(BoxLayout.Y_AXIS);
 
         contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        contentBox.add(listPanel);
+        contentBox.add(tabbedPane);
         contentBox.add(rightPanel);
 
         mainScrollPanel.add(contentBox, BorderLayout.NORTH);
