@@ -44,12 +44,6 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
     /** DOCUMENT ME! */
     private ModelImage image; // source image
 
-    /** choose inverse or no inverse threshold. */
-    private JCheckBox inverseOptionBox;
-
-    /** inverse? */
-    private boolean isInverse = false;
-
     /** DOCUMENT ME! */
     private float[] maxs = new float[3];
 
@@ -322,7 +316,7 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
             // No need to make new image space because the user has choosen to replace the source image
             // Make the algorithm class
             comAlgoRGB = new AlgorithmCenterOfMassRGB(image, thresholdR, thresholdG, thresholdB,
-                                                             regionFlag, isInverse);
+                                                             regionFlag);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -383,8 +377,6 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
         thresholdR = scriptParameters.getParams().getList("thresholdR").getAsFloatArray();
         thresholdG = scriptParameters.getParams().getList("thresholdG").getAsFloatArray();
         thresholdB = scriptParameters.getParams().getList("thresholdB").getAsFloatArray();
-
-        isInverse = scriptParameters.getParams().getBoolean("isInverse");
     }
 
     /**
@@ -398,8 +390,6 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
         scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdR", thresholdR));
         scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdG", thresholdG));
         scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdB", thresholdB));
-
-        scriptParameters.getParams().put(ParameterFactory.newParameter("isInverse", isInverse));
     }
 
     /**
@@ -513,15 +503,8 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
         applyToAllBox.addItemListener(this);
         applyToAllBox.setFont(MipavUtil.font12);
 
-        inverseOptionBox = new JCheckBox("Use inverse threshold");
-        inverseOptionBox.addItemListener(this);
-        inverseOptionBox.setFont(MipavUtil.font12);
-
         applyPanel.setBorder(buildTitledBorder(""));
         applyPanel.add(applyToAllBox, gbc2);
-
-        gbc2.gridy = 1;
-        applyPanel.add(inverseOptionBox, gbc2);
 
         thresholdPanel.add(applyPanel);
 
@@ -688,8 +671,6 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
                 } 
             } // for (int i = 0; i < 3; i++)
         } // else applyToAllBox not selected
-
-        this.isInverse = inverseOptionBox.isSelected();
 
         return true;
     }
