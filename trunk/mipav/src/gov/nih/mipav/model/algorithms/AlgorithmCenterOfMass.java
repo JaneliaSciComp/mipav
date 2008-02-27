@@ -43,16 +43,13 @@ public class AlgorithmCenterOfMass extends AlgorithmBase {
      * @param  srcImg       source image model
      * @param  threshold    array of two thresholds
      * @param  maskFlag     true indicates that the whole image should be processed
-     * @param  isInverse    false means turn all pixels outside of the lower and upper thresholds to the given fill
-     *                      value, true means turn all data within the lower and upper thresholds to the fill value
      */
-    public AlgorithmCenterOfMass(ModelImage srcImg, float[] threshold, boolean maskFlag, boolean isInverse) {
+    public AlgorithmCenterOfMass(ModelImage srcImg, float[] threshold, boolean maskFlag) {
 
         super(null, srcImg);
 
         this.threshold = threshold;
         entireImage = maskFlag;
-        this.isInverse = isInverse;
 
         if (entireImage == false) {
             mask = srcImage.generateVOIMask();
@@ -145,28 +142,16 @@ public class AlgorithmCenterOfMass extends AlgorithmBase {
                 i = x + y * xDim;
                 if (((i % mod) == 0)) {
                     fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
-                }
+                }  
     
-                if (!isInverse) {
-    
-                    if (((entireImage == true) || mask.get(i)) &&
-                            ((buffer[i] >= threshold[0]) && (buffer[i] <= threshold[1]))) {
-    
-                        xMass += x * buffer[i];
-                        yMass += y * buffer[i];
-                        valTot += buffer[i];
-                    } 
-                } else {
-    
-                    if (((entireImage == true) || mask.get(i)) &&
-                            ((buffer[i] < threshold[0]) || (buffer[i] > threshold[1]))) {
-    
-                        xMass += x * buffer[i];
-                        yMass += y * buffer[i];
-                        valTot += buffer[i];    
-                    } 
-    
-                }
+                if (((entireImage == true) || mask.get(i)) &&
+                        ((buffer[i] >= threshold[0]) && (buffer[i] <= threshold[1]))) {
+
+                    xMass += x * buffer[i];
+                    yMass += y * buffer[i];
+                    valTot += buffer[i];
+                } 
+                
             }
         }
 
@@ -252,28 +237,14 @@ public class AlgorithmCenterOfMass extends AlgorithmBase {
                         fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
                     }
         
-                    if (!isInverse) {
-        
-                        if (((entireImage == true) || mask.get(i)) &&
-                                ((buffer[i] >= threshold[0]) && (buffer[i] <= threshold[1]))) {
-                            xMass += x * buffer[i];
-                            yMass += y * buffer[i];
-                            zMass += z * buffer[i];
-                            valTot += buffer[i];
-                            
-                        } 
-                    } else {
-        
-                        if (((entireImage == true) || mask.get(i)) &&
-                                ((buffer[i] < threshold[0]) || (buffer[i] > threshold[1]))) {
-        
-                            xMass += x * buffer[i];
-                            yMass += y * buffer[i];
-                            zMass += z * buffer[i];
-                            valTot += buffer[i];    
-                        } 
-        
-                    }
+                    if (((entireImage == true) || mask.get(i)) &&
+                            ((buffer[i] >= threshold[0]) && (buffer[i] <= threshold[1]))) {
+                        xMass += x * buffer[i];
+                        yMass += y * buffer[i];
+                        zMass += z * buffer[i];
+                        valTot += buffer[i];    
+                    } 
+                    
                 }
             }
         }
