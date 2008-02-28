@@ -15,6 +15,8 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.GMatrixf;
+import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.Matrix3f;
+import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.view.dialogs.DialogDTIColorDisplay;
 import gov.nih.mipav.view.dialogs.JDialogDirectResample;
 import gov.nih.mipav.view.renderer.*;
@@ -26,6 +28,8 @@ import java.awt.event.*;
 import java.awt.image.PixelGrabber;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 
@@ -111,6 +115,7 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
     /** result image **/
     private ModelImage resultImage;
     
+    
 	public JPanelDTILoad(VolumeViewerDTI _parentFrame) {
 		parentFrame = _parentFrame;
 		mainPanel = new JPanel();
@@ -177,9 +182,12 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
 			textDTIimageListFile.setEnabled(true);
 			openDTIimageListFile.setEnabled(true);
 			textDTIimageListFile.setEnabled(true);
+			
+	
 		}
 
 	}
+	
 	
 	 public void algorithmPerformed(AlgorithmBase algorithm) {
 	        if(alg.isCompleted()) {
@@ -212,7 +220,7 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
 		openDTIimageButton.setActionCommand("openDTIimage");
 
 		textDTIimage = new JTextField("Open DTI image...");
-		textDTIimage.setPreferredSize(new Dimension(175, 21));
+		textDTIimage.setPreferredSize(new Dimension(275, 21));
 		textDTIimage.setEditable(false);
 		textDTIimage.setFont(MipavUtil.font12);
 		textDTIimage.setBackground(Color.white);
@@ -254,7 +262,7 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
 		openDTIimageListFile.setActionCommand("openDTIimageList");
 
 		textDTIimageListFile = new JTextField("Open DWI image (.list)");
-		textDTIimageListFile.setPreferredSize(new Dimension(175, 21));
+		textDTIimageListFile.setPreferredSize(new Dimension(275, 21));
 		textDTIimageListFile.setEditable(false);
 		textDTIimageListFile.setFont(MipavUtil.font12);
 		textDTIimageListFile.setBackground(Color.white);
