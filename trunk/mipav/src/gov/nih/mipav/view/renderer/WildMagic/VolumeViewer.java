@@ -2789,11 +2789,11 @@ implements MouseListener, ItemListener, ChangeListener {
         }
     }
     
-    public void addPolyline(Polyline[] akPolylines)
+    public void addPolyline(Polyline akPolyline, int groupIndex)
     {
         if ( raycastRenderWM != null )
         {
-            raycastRenderWM.addPolyline(akPolylines);
+            raycastRenderWM.addPolyline(akPolyline, groupIndex);
         }
     }    
     
