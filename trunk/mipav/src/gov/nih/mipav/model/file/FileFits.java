@@ -287,7 +287,7 @@ public class FileFits extends FileBase {
                         } else if (nDimensions == 0) {
                             raFile.close();
 
-                            MipavUtil.displayError("NAXIS value of 0 indicates no data is associated with the header");
+                            MipavUtil.displayError("NAXIS value of 0 indicates no binary data matrix is associated with the header");
                             throw new IOException();
                         }
                     }
