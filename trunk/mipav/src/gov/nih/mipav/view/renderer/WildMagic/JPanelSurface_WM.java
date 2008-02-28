@@ -258,7 +258,6 @@ public class JPanelSurface_WM
         else if (command.equals("RemovePolyline")) {
             removePolyline();
         }
-
         else if (command.equals("ChangeColor")) {
             colorChooser = new ViewJColorChooser(new Frame(), "Pick surface color", new OkColorListener(),
                                                  new CancelListener());
@@ -311,14 +310,36 @@ public class JPanelSurface_WM
         */
     }
 
+    
+    DefaultListModel polyCounterList = new DefaultListModel();
+    int count = 0;
+    
+    /** 
+     * Add polyline to the render.
+     */
     private void addPolyline() {
     	Polyline[] akPolylines = FilePolyline_WM.openPolylines(m_kVolumeViewer.getImageA(), surfaceVector.size());
-        if ( akPolylines != null )
+    	Vector3f m_kTranslate = m_kVolumeViewer.getVolumeGPU().getTranslate();
+    	
+    	if ( akPolylines != null )
         {
-            m_kVolumeViewer.addPolyline(akPolylines);
-           
-            DefaultListModel kList = (DefaultListModel)polylineList.getModel();
+        	DefaultListModel kList = (DefaultListModel)polylineList.getModel();
             int iSize = kList.getSize();
+            
+            for ( int i = 0; i < akPolylines.length ; i++ ) {
+            	polyCounterList.add(iSize + i, count);
+            	
+            	 for ( int j = 0; j < akPolylines[i].VBuffer.GetVertexQuantity(); j++ )
+                 {
+
+           		  akPolylines[i].VBuffer.SetPosition3(j, akPolylines[i].VBuffer.GetPosition3fX(j) - m_kTranslate.X(),
+           				  akPolylines[i].VBuffer.GetPosition3fY(j) - m_kTranslate.Y(), 
+           				  akPolylines[i].VBuffer.GetPosition3fZ(j) - m_kTranslate.Z() );
+                 }
+            	m_kVolumeViewer.addPolyline(akPolylines[i], count);
+            	count++;
+            }
+            
             for ( int i = 0; i < akPolylines.length; i++ )
             {
                 kList.add( iSize + i, akPolylines[i].GetName() );
@@ -329,14 +350,19 @@ public class JPanelSurface_WM
         }
     }
 
+    /**
+     * Remove polyline from the render
+     */
     private void removePolyline() {
     	int[] aiSelected = polylineList.getSelectedIndices();
-        System.err.println("afa1");
+    	int index;
         DefaultListModel kList = (DefaultListModel)polylineList.getModel();
         if ( m_kVolumeViewer != null )
         {
             for (int i = 0; i < aiSelected.length; i++) {
-                m_kVolumeViewer.removePolyline( aiSelected[i] );
+            	index = (Integer)(polyCounterList.elementAt(aiSelected[i]));
+                m_kVolumeViewer.removePolyline( index );
+                polyCounterList.remove(aiSelected[i]);
             }
         }
         for (int i = 0; i < aiSelected.length; i++) {
