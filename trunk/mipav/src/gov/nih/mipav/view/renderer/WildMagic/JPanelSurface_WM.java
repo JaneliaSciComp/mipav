@@ -188,6 +188,12 @@ public class JPanelSurface_WM
     /** Check Box for per-pixel lighting. */
     private JCheckBox m_kPerPixelLightingCB;
 
+    /** Polyline counter list <index, groupID> */
+    private DefaultListModel polylineCounterList = new DefaultListModel();
+    
+    /** constant polyline counter */
+    private int polylineCounter = 0;
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
     public JPanelSurface_WM( VolumeViewer kParent )
@@ -309,10 +315,7 @@ public class JPanelSurface_WM
         }
         */
     }
-
     
-    DefaultListModel polyCounterList = new DefaultListModel();
-    int count = 0;
     
     /** 
      * Add polyline to the render.
@@ -327,7 +330,7 @@ public class JPanelSurface_WM
             int iSize = kList.getSize();
             
             for ( int i = 0; i < akPolylines.length ; i++ ) {
-            	polyCounterList.add(iSize + i, count);
+            	polylineCounterList.add(iSize + i, polylineCounter);
             	
             	 for ( int j = 0; j < akPolylines[i].VBuffer.GetVertexQuantity(); j++ )
                  {
@@ -336,8 +339,8 @@ public class JPanelSurface_WM
            				  akPolylines[i].VBuffer.GetPosition3fY(j) - m_kTranslate.Y(), 
            				  akPolylines[i].VBuffer.GetPosition3fZ(j) - m_kTranslate.Z() );
                  }
-            	m_kVolumeViewer.addPolyline(akPolylines[i], count);
-            	count++;
+            	m_kVolumeViewer.addPolyline(akPolylines[i], polylineCounter);
+            	polylineCounter++;
             }
             
             for ( int i = 0; i < akPolylines.length; i++ )
@@ -360,9 +363,9 @@ public class JPanelSurface_WM
         if ( m_kVolumeViewer != null )
         {
             for (int i = 0; i < aiSelected.length; i++) {
-            	index = (Integer)(polyCounterList.elementAt(aiSelected[i]));
+            	index = (Integer)(polylineCounterList.elementAt(aiSelected[i]));
                 m_kVolumeViewer.removePolyline( index );
-                polyCounterList.remove(aiSelected[i]);
+                polylineCounterList.remove(aiSelected[i]);
             }
         }
         for (int i = 0; i < aiSelected.length; i++) {
