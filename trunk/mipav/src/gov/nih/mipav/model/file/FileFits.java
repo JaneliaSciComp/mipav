@@ -95,7 +95,7 @@ public class FileFits extends FileBase {
         // Fixed format is required for the values of the required keywords and strongly
         // recommended for the other keywords.  The required keywords are SIMPLE, BITPIX,
         // NAXIS, NAXISn, n=1,...,NAXIS(NAXIS = 0 -> NAXIS1 not present), and END.
-        int i;
+        int i, j;
         String s, firstS, subS;
         boolean readAgain;
         int count = 0;
@@ -112,6 +112,8 @@ public class FileFits extends FileBase {
         float minResol;
         float maxResol;
         int dimNumber;
+        int [] reducedExtents;
+        float [] reducedResols;
 
         try {
 
@@ -500,8 +502,6 @@ public class FileFits extends FileBase {
                 } // while (readAgain) looping for seventh required keyword of NAXIS4
             } // if (nDimensions == 4)
 
-            fileInfo.setExtents(imgExtents);
-
             do {
                 s = getString(80);
                 count++;
@@ -513,6 +513,7 @@ public class FileFits extends FileBase {
 
                     if (i != -1) {
                         subS = subS.substring(0, i);
+                        subS = subS.trim();
                     }
 
                     try {
@@ -533,6 +534,7 @@ public class FileFits extends FileBase {
 
                     if (i != -1) {
                         subS = subS.substring(0, i);
+                        subS = subS.trim();
                     }
 
                     try {
@@ -553,6 +555,7 @@ public class FileFits extends FileBase {
 
                     if (i != -1) {
                         subS = subS.substring(0, i);
+                        subS = subS.trim();
                     }
 
                     try {
@@ -574,6 +577,7 @@ public class FileFits extends FileBase {
 
                     if (i != -1) {
                         subS = subS.substring(0, i);
+                        subS = subS.trim();
                     }
 
                     try {
@@ -594,6 +598,7 @@ public class FileFits extends FileBase {
 
                     if (i != -1) {
                         subS = subS.substring(0, i);
+                        subS = subS.trim();
                     }
 
                     try {
@@ -614,6 +619,7 @@ public class FileFits extends FileBase {
 
                     if (i != -1) {
                         subS = subS.substring(0, i);
+                        subS = subS.trim();
                     }
 
                     try {
@@ -634,6 +640,7 @@ public class FileFits extends FileBase {
 
                     if (i != -1) {
                         subS = subS.substring(0, i);
+                        subS = subS.trim();
                     }
 
                     try {
@@ -741,6 +748,43 @@ public class FileFits extends FileBase {
                     Preferences.debug("REFERENC = " + subS + "\n");
                 } // else if (s.startsWith("REFERENC"))
             } while (!s.startsWith("END"));
+            
+            for (i = nDimensions - 1; i >= 0; i--) {
+                if (imgExtents[i] == 1) {
+                    imgResols[i] = 1.0f;
+                    reducedExtents = new int[nDimensions-1];
+                    reducedResols = new float[nDimensions-1];
+                    for (j = 0; j < i; j++) {
+                        reducedExtents[j] = imgExtents[j]; 
+                        reducedResols[j] = imgResols[j];
+                    }
+                    for (j = i+1; j < nDimensions; j++) {
+                        reducedExtents[j-1] = imgExtents[j];
+                        reducedResols[j-1] = imgResols[j];
+                        fileInfo.setUnitsOfMeasure(j-1, fileInfo.getUnitsOfMeasure(j));
+                    }
+                    nDimensions--;
+                    imgExtents = new int[nDimensions];
+                    for (j = 0; j < nDimensions; j++) {
+                        imgExtents[j] = reducedExtents[j];
+                        imgResols[j] = reducedResols[j];
+                    }
+                }
+            }
+            
+            if (nDimensions == 1) {
+                raFile.close();
+
+                MipavUtil.displayError("MIPAV cannot display an image with 1 dimension");
+                throw new IOException();
+            } else if (nDimensions == 0) {
+                raFile.close();
+
+                MipavUtil.displayError("NAXIS value of 0 indicates no binary data matrix is associated with the header");
+                throw new IOException();
+            }
+
+            fileInfo.setExtents(imgExtents);
 
             // Note that in these files the imgResols values may differ by orders of magnitude
             // If the maximum and minimum imgResols differ by more than 10,
