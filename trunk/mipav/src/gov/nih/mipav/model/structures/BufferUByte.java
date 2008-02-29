@@ -55,6 +55,9 @@ public class BufferUByte extends BufferBase {
         dataArray = null;
     }
 
+    /** Return byte.class */
+    protected final Class<?> getType() { return byte.class; }
+
     /**
      * Returns the length of the data array.
      *

@@ -63,6 +63,9 @@ public class BufferBoolean extends BufferBase {
     }
 
 
+    /** Return byte.class, type returned by get() */
+    protected final Class<?> getType() { return byte.class; }
+
     /**
      * Gets the data in byte format.
      *

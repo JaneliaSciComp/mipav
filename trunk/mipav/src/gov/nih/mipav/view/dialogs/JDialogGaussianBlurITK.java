@@ -2,7 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.itk.*;
+import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
@@ -38,34 +38,35 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Which color channels to filter */
     private JPanelColorChannels colorChannelPanel;
 
-    /** DOCUMENT ME! */
+    /** filter algorithm */
     private AlgorithmGaussianBlurITK gaussianBlurAlgo;
 
-    /** DOCUMENT ME! */
-    private ModelImage image; // source image
+    /** source image */
+    private ModelImage image;
 
-    /** false = apply algorithm only to VOI regions. */
-    private boolean image25D = false; // flag indicating if slices should be blurred independently
+    /* false = apply algorithm only to VOI regions. */
+    /** flag indicating if slices should be blurred independently */
+    private boolean image25D = false;  
 
-    /** DOCUMENT ME! */
+    /** gui for image25D */
     private JCheckBox image25DCheckbox;
 
-    /** DOCUMENT ME! */
+    /** new image or replace current */
     private JPanelAlgorithmOutputOptions outputOptionsPanel;
 
-    /** DOCUMENT ME! */
-    private ModelImage resultImage = null; // result image
+    /** result image */
+    private ModelImage resultImage = null;
 
-    /** DOCUMENT ME! */
+    /** sigmas of kernel */
     private JPanelSigmas sigmaPanel;
 
-    /** DOCUMENT ME! */
+    /** saved window titles */
     private String[] titles;
 
-    /** DOCUMENT ME! */
+    /** UI to hang from */
     private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------

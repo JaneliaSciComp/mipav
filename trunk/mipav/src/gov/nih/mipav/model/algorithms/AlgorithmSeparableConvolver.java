@@ -82,7 +82,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 
 		if(multiThreadingEnabled){
 			this.outputBuffer = new float[inputBuffer.length];
-		}else{
+		} else {
 			this.outputBuffer = this.inputBuffer;
 		}
 
@@ -113,7 +113,10 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 
 		if(multiThreadingEnabled){
 			this.outputBuffer = new float[inputBuffer.length];
+		} else {
+			this.outputBuffer = this.inputBuffer;
 		}
+
 
         this.imgExtents = iExtents;
         this.kernelBuffer = new float[kExtents.length][];
@@ -151,7 +154,10 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 
 		if(multiThreadingEnabled){
 			this.outputBuffer = new float[inputBuffer.length];
+		} else {
+			this.outputBuffer = this.inputBuffer;
 		}
+
 
         this.imgExtents = iExtents;
         this.kernelBuffer = kernBuffer;

@@ -3,6 +3,8 @@ package gov.nih.mipav.model.algorithms.filters;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.itk.autoItk.PItkImage2;
+import gov.nih.mipav.model.algorithms.itk.autoItk.PItkImage3;
 
 import InsightToolkit.*;
 
@@ -143,8 +145,9 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
             itkImageToImageFilterF2F2 kFilterIn = kFilterX.GetPointer();
             itkImageToImageFilterF2F2 kFilterOut = kFilterY.GetPointer();
 
-            kFilterX = null;
-            kFilterY = null;
+            // MUST keep these around until done using GetPointer result.
+            //kFilterX = null;
+            //kFilterY = null;
 
             // Color 2D
             if ((2 == srcImage.getNDims()) && srcImage.isColorImage()) {
@@ -161,19 +164,19 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
                     }
 
                     for (int iChannel = 0; iChannel < 4; iChannel++) {
-                        itkImageF2 kImageSrcITK = InsightToolkitSupport.itkCreateImageColor2D(srcImage, iChannel);
+                        PItkImage2 kImageSrcITK = InsightToolkitSupport.itkCreateImageColor2D(srcImage, iChannel);
 
                         // filter channel and write result to target image
                         if (abProcessChannel[iChannel]) {
-                            kFilterIn.SetInput(kImageSrcITK);
+                            kFilterIn.SetInput((itkImageF2)kImageSrcITK.img());
                             kFilterOut.Update();
 
-                            InsightToolkitSupport.itkTransferImageColor2D(kImageSrcITK, kFilterOut.GetOutput(), mask,
+                            InsightToolkitSupport.itkTransferImageColor2D(kImageSrcITK.img(), kFilterOut.GetOutput(), mask,
                                                                           destImage, iChannel);
                         }
                         // just copy channel from source to target image
                         else {
-                            InsightToolkitSupport.itkTransferImageColor2D(kImageSrcITK, kImageSrcITK, mask, destImage,
+                            InsightToolkitSupport.itkTransferImageColor2D(kImageSrcITK.img(), kImageSrcITK.img(), mask, destImage,
                                                                           iChannel);
                         }
                     }
@@ -188,11 +191,11 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
                     for (int iChannel = 0; iChannel < 4; iChannel++) {
 
                         if (abProcessChannel[iChannel]) {
-                            itkImageF2 kImageSrcITK = InsightToolkitSupport.itkCreateImageColor2D(srcImage, iChannel);
-                            kFilterIn.SetInput(kImageSrcITK);
+                            PItkImage2 kImageSrcITK = InsightToolkitSupport.itkCreateImageColor2D(srcImage, iChannel);
+                            kFilterIn.SetInput((itkImageF2)kImageSrcITK.img());
                             kFilterOut.Update();
 
-                            InsightToolkitSupport.itkTransferImageColor2D(kImageSrcITK, kFilterOut.GetOutput(), mask,
+                            InsightToolkitSupport.itkTransferImageColor2D(kImageSrcITK.img(), kFilterOut.GetOutput(), mask,
                                                                           srcImage, iChannel);
                         }
                     }
@@ -202,8 +205,8 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
 
             // Single channel 2D
             else if ((2 == srcImage.getNDims()) && !srcImage.isColorImage()) {
-                itkImageF2 kImageSrcITK = InsightToolkitSupport.itkCreateImageSingle2D(srcImage);
-                kFilterIn.SetInput(kImageSrcITK);
+                PItkImage2 kImageSrcITK = InsightToolkitSupport.itkCreateImageSingle2D(srcImage);
+                kFilterIn.SetInput((itkImageF2)kImageSrcITK.img());
                 kFilterOut.Update();
 
                 // store result in target image
@@ -217,7 +220,7 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
                         return;
                     }
 
-                    InsightToolkitSupport.itkTransferImageSingle2D(kImageSrcITK, kFilterOut.GetOutput(), mask,
+                    InsightToolkitSupport.itkTransferImageSingle2D(kImageSrcITK.img(), kFilterOut.GetOutput(), mask,
                                                                    destImage);
 
                     destImage.releaseLock();
@@ -225,7 +228,7 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
 
                 // store result back in source image
                 else {
-                    InsightToolkitSupport.itkTransferImageSingle2D(kImageSrcITK, kFilterOut.GetOutput(), mask,
+                    InsightToolkitSupport.itkTransferImageSingle2D(kImageSrcITK.img(), kFilterOut.GetOutput(), mask,
                                                                    srcImage);
                 }
             }
@@ -258,20 +261,20 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
                         }
 
                         for (int iChannel = 0; iChannel < 4; iChannel++) {
-                            itkImageF2 kImageSrcITK = InsightToolkitSupport.itkCreateImageColorSlice(srcImage, iSlice,
+                            PItkImage2 kImageSrcITK = InsightToolkitSupport.itkCreateImageColorSlice(srcImage, iSlice,
                                                                                                      iChannel);
 
                             // filter channel and write result to target image
                             if (abProcessChannel[iChannel]) {
-                                kFilterIn.SetInput(kImageSrcITK);
+                                kFilterIn.SetInput((itkImageF2)kImageSrcITK.img());
                                 kFilterOut.Update();
 
-                                InsightToolkitSupport.itkTransferImageColorSlice(kImageSrcITK, kFilterOut.GetOutput(),
+                                InsightToolkitSupport.itkTransferImageColorSlice(kImageSrcITK.img(), kFilterOut.GetOutput(),
                                                                                  mask, destImage, iSlice, iChannel);
                             }
                             // just copy channel from source to target image
                             else {
-                                InsightToolkitSupport.itkTransferImageColorSlice(kImageSrcITK, kImageSrcITK, mask,
+                                InsightToolkitSupport.itkTransferImageColorSlice(kImageSrcITK.img(), kImageSrcITK.img(), mask,
                                                                                  destImage, iSlice, iChannel);
                             }
                         }
@@ -298,13 +301,13 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
                         for (int iChannel = 0; iChannel < 4; iChannel++) {
 
                             if (abProcessChannel[iChannel]) {
-                                itkImageF2 kImageSrcITK = InsightToolkitSupport.itkCreateImageColorSlice(srcImage,
+                                PItkImage2 kImageSrcITK = InsightToolkitSupport.itkCreateImageColorSlice(srcImage,
                                                                                                          iSlice,
                                                                                                          iChannel);
-                                kFilterIn.SetInput(kImageSrcITK);
+                                kFilterIn.SetInput((itkImageF2)kImageSrcITK.img());
                                 kFilterOut.Update();
 
-                                InsightToolkitSupport.itkTransferImageColorSlice(kImageSrcITK, kFilterOut.GetOutput(),
+                                InsightToolkitSupport.itkTransferImageColorSlice(kImageSrcITK.img(), kFilterOut.GetOutput(),
                                                                                  mask, srcImage, iSlice, iChannel);
                             }
                         }
@@ -340,11 +343,11 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
                             return;
                         }
 
-                        itkImageF2 kImageSrcITK = InsightToolkitSupport.itkCreateImageSingleSlice(srcImage, iSlice);
-                        kFilterIn.SetInput(kImageSrcITK);
+                        PItkImage2 kImageSrcITK = InsightToolkitSupport.itkCreateImageSingleSlice(srcImage, iSlice);
+                        kFilterIn.SetInput((itkImageF2)kImageSrcITK.img());
                         kFilterOut.Update();
 
-                        InsightToolkitSupport.itkTransferImageSingleSlice(kImageSrcITK, kFilterOut.GetOutput(), mask,
+                        InsightToolkitSupport.itkTransferImageSingleSlice(kImageSrcITK.img(), kFilterOut.GetOutput(), mask,
                                                                           destImage, iSlice);
                     }
 
@@ -368,16 +371,19 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
                             return;
                         }
 
-                        itkImageF2 kImageSrcITK = InsightToolkitSupport.itkCreateImageSingleSlice(srcImage, iSlice);
-                        kFilterIn.SetInput(kImageSrcITK);
+                        PItkImage2 kImageSrcITK = InsightToolkitSupport.itkCreateImageSingleSlice(srcImage, iSlice);
+                        kFilterIn.SetInput((itkImageF2)kImageSrcITK.img());
                         kFilterOut.Update();
 
-                        InsightToolkitSupport.itkTransferImageSingleSlice(kImageSrcITK, kFilterOut.GetOutput(), mask,
+                        InsightToolkitSupport.itkTransferImageSingleSlice(kImageSrcITK.img(), kFilterOut.GetOutput(), mask,
                                                                           srcImage, iSlice);
                     }
 
                 }
             }
+            // now disposable.
+            kFilterX = null;
+            kFilterY = null;
         }
 
         // 3D
@@ -405,10 +411,6 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
             itkImageToImageFilterF3F3 kFilterIn = kFilterX.GetPointer();
             itkImageToImageFilterF3F3 kFilterOut = kFilterZ.GetPointer();
 
-            kFilterX = null;
-            kFilterY = null;
-            kFilterZ = null;
-
             // Color 3D
             if (srcImage.isColorImage()) {
 
@@ -424,19 +426,19 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
                     }
 
                     for (int iChannel = 0; iChannel < 4; iChannel++) {
-                        itkImageF3 kImageSrcITK = InsightToolkitSupport.itkCreateImageColor3D(srcImage, iChannel);
+                        PItkImage3 kImageSrcITK = InsightToolkitSupport.itkCreateImageColor3D(srcImage, iChannel);
 
                         // filter channel and write result to target image
                         if (abProcessChannel[iChannel]) {
-                            kFilterIn.SetInput(kImageSrcITK);
+                            kFilterIn.SetInput((itkImageF3)kImageSrcITK.img());
                             kFilterOut.Update();
 
-                            InsightToolkitSupport.itkTransferImageColor3D(kImageSrcITK, kFilterOut.GetOutput(), mask,
+                            InsightToolkitSupport.itkTransferImageColor3D(kImageSrcITK.img(), kFilterOut.GetOutput(), mask,
                                                                           destImage, iChannel);
                         }
                         // just copy channel from source to target image
                         else {
-                            InsightToolkitSupport.itkTransferImageColor3D(kImageSrcITK, kImageSrcITK, mask, destImage,
+                            InsightToolkitSupport.itkTransferImageColor3D(kImageSrcITK.img(), kImageSrcITK.img(), mask, destImage,
                                                                           iChannel);
                         }
                     }
@@ -451,21 +453,22 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
                     for (int iChannel = 0; iChannel < 4; iChannel++) {
 
                         if (abProcessChannel[iChannel]) {
-                            itkImageF3 kImageSrcITK = InsightToolkitSupport.itkCreateImageColor3D(srcImage, iChannel);
-                            kFilterIn.SetInput(kImageSrcITK);
+                            PItkImage3 kImageSrcITK = InsightToolkitSupport.itkCreateImageColor3D(srcImage, iChannel);
+                            kFilterIn.SetInput((itkImageF3)kImageSrcITK.img());
                             kFilterOut.Update();
 
-                            InsightToolkitSupport.itkTransferImageColor3D(kImageSrcITK, kFilterOut.GetOutput(), mask,
+                            InsightToolkitSupport.itkTransferImageColor3D(kImageSrcITK.img(), kFilterOut.GetOutput(), mask,
                                                                           srcImage, iChannel);
                         }
                     }
                 }
+
             }
 
             // Single channel 3D
             else {
-                itkImageF3 kImageSrcITK = InsightToolkitSupport.itkCreateImageSingle3D(srcImage);
-                kFilterIn.SetInput(kImageSrcITK);
+                PItkImage3 kImageSrcITK = InsightToolkitSupport.itkCreateImageSingle3D(srcImage);
+                kFilterIn.SetInput((itkImageF3)kImageSrcITK.img());
                 kFilterOut.Update();
 
                 // store result in target image
@@ -479,7 +482,7 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
                         return;
                     }
 
-                    InsightToolkitSupport.itkTransferImageSingle3D(kImageSrcITK, kFilterOut.GetOutput(), mask,
+                    InsightToolkitSupport.itkTransferImageSingle3D(kImageSrcITK.img(), kFilterOut.GetOutput(), mask,
                                                                    destImage);
 
                     destImage.releaseLock();
@@ -487,10 +490,15 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
 
                 // store result back in source image
                 else {
-                    InsightToolkitSupport.itkTransferImageSingle3D(kImageSrcITK, kFilterOut.GetOutput(), mask,
+                    InsightToolkitSupport.itkTransferImageSingle3D(kImageSrcITK.img(), kFilterOut.GetOutput(), mask,
                                                                    srcImage);
                 }
             }
+
+
+            kFilterX = null;
+            kFilterY = null;
+            kFilterZ = null;
         }
 
         // unsupported

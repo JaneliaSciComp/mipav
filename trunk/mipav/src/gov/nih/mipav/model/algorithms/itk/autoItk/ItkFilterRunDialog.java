@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.awt.event.*;
 import java.awt.*;
 import javax.swing.*;
+import java.text.DecimalFormat;
 import java.lang.reflect.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
@@ -47,6 +48,11 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
      */
     private List<MethodArgRecord> m_MethodList = null;
     
+    // I'd LOVE DecimalFormat to work, but it returns Long or Double, even if I feed it a Float. 
+    // I _need_ the type to be maintained. 
+    // Interestingly, 'null' seems to work better than the default Float/Double formatter. Weird.
+    // i.e. it switches to 'E' notation if the number is too big for the field. No ',' separator, either.
+    private static final DecimalFormat SCI_NOTATION = null; //new DecimalFormat("0.###E0");
 
     /**
      * Set up and show the dialog.  The first Component argument
@@ -140,18 +146,21 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
             // plus note about the type of numbers accepted. 
             getMethodArgSetter(m_FilterObj, ar, type_str);
 
-            String name = method_arr[i].getName();
-            // strip "Set" off the front.
-            JLabel lbl = new JLabel(name.substring(3) + "   " + type_str);
-            gbc_label.gridy = i;
-            m_ParamPanel.add(lbl, gbc_label);
-
-            gbc_field.gridy = i;
+            // if there's no component, don't show an interface for it.
             if (ar.m_Component != null) {
-                m_ParamPanel.add(ar.m_Component, gbc_field);
-            }
+                String name = method_arr[i].getName();
+                // strip "Set" off the front.
+                JLabel lbl = new JLabel(name.substring(3) + "   " + type_str);
+                gbc_label.gridy = i;
+                m_ParamPanel.add(lbl, gbc_label);
 
-            m_MethodList.add(ar);
+                gbc_field.gridy = i;
+                m_ParamPanel.add(ar.m_Component, gbc_field);
+
+                m_MethodList.add(ar);
+            } else {
+                ar = null;
+            }
         }
 
         JScrollPane listScroller = new JScrollPane(m_ParamPanel);
@@ -228,11 +237,15 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
             String param_name = param.getSimpleName();
             if (param == Double.TYPE 
                 || param == Float.TYPE) {
-                JFormattedTextField ftf = new JFormattedTextField();
+                JFormattedTextField ftf = new JFormattedTextField(SCI_NOTATION);
                 ftf.setColumns(10);
                 // Get default value object. 
                 ar.m_DefaultVal = AutoItkLoader.invokeMethod("Get" + mthd.getName().substring(3), obj);
-                if (ar.m_DefaultVal == null) ar.m_DefaultVal = new Float(0.0);
+                if (ar.m_DefaultVal == null || 
+                    !(ar.m_DefaultVal instanceof Float || 
+                      ar.m_DefaultVal instanceof Double) ) {
+                    ar.m_DefaultVal = new Float(0.0);
+                }
                 ftf.setValue(ar.m_DefaultVal);
                 ftf.addPropertyChangeListener("value", this);
                 type_str.append(FLT_LBL);
@@ -252,7 +265,12 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
                 ar.m_DefaultVal = AutoItkLoader.invokeMethod("Get" + mthd.getName().substring(3), obj);
                 // provide a default of the smallest type, so it can be converted 
                 // without loss to the other types.
-                if (ar.m_DefaultVal == null) ar.m_DefaultVal = new Short((short)0);
+                if (ar.m_DefaultVal == null || 
+                    !(ar.m_DefaultVal instanceof Long) ||  
+                    !(ar.m_DefaultVal instanceof Integer) ||  
+                    !(ar.m_DefaultVal instanceof Short) ) {
+                    ar.m_DefaultVal = new Short((short)0);
+                }
                 ftf.setValue(ar.m_DefaultVal);
                 ftf.addPropertyChangeListener("value", this);
                 type_str.append(INT_LBL);
@@ -267,7 +285,8 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
                 JPanel button_panel = new JPanel();
                 boolean on_default = true;
                 ar.m_DefaultVal = AutoItkLoader.invokeMethod("Get" + mthd.getName().substring(3), obj);
-                if (ar.m_DefaultVal != null) {
+                if (ar.m_DefaultVal != null && 
+                    ar.m_DefaultVal.getClass() == Boolean.class) {
                     on_default = ((Boolean)ar.m_DefaultVal).booleanValue();
                 }
                 JRadioButton rb_on = new JRadioButton("on");
@@ -289,140 +308,149 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
                 //type_str = "";
                 ar.m_Component = button_panel;
                 return;
-            } else if (param == itkImageRegion2.class) {
-                JPanel ctrl_panel = new JPanel(new GridBagLayout());
-                itkImageRegion2 def_value = (itkImageRegion2)AutoItkLoader.invokeMethod("Get" + mthd.getName().substring(3), obj);
-
-                itkSize2 def_size = null;
-                itkIndex2 def_index = null;
-                if (def_value != null) {
-                    def_size = def_value.GetSize();
-                    def_index = def_value.GetIndex();
-                } else {
-                    def_size = new itkSize2();
-                    def_size.Fill(100);
-                    def_index = new itkIndex2();
-                    def_index.Fill(0);
-                }                   
-                ar.m_DefaultVal = def_value;
-                // Index piece of region. 
-                addIndexSetter(ctrl_panel, gbc, def_index, 2);
-
-                // Size piece of region. 
-                gbc.gridx = 0;
-                gbc.gridy = 1;
-                addSizeSetter(ctrl_panel, gbc, def_size, 2);
-
-                type_str.append(INT_LBL);
-                ar.m_Component = ctrl_panel;
-                return;
-            } else if (param == itkSize2.class) {
-                JPanel ctrl_panel = new JPanel(new GridBagLayout());
-                itkSize2 def_size = (itkSize2)AutoItkLoader.invokeMethod("Get" + mthd.getName().substring(3), obj);
-                if (def_size == null) {
-                    def_size = new itkSize2();
-                    def_size.Fill(100);
-                }
-                ar.m_DefaultVal = def_size;
-                addSizeSetter(ctrl_panel, gbc, def_size, 2);
-                type_str.append(INT_LBL);
-                ar.m_Component = ctrl_panel;
-                return;
-            } else if (param == itkIndex2.class) {
-                JPanel ctrl_panel = new JPanel(new GridBagLayout());
-                itkIndex2 def_index = (itkIndex2)AutoItkLoader.invokeMethod("Get" + mthd.getName().substring(3), obj);
-                if (def_index == null) {
-                    def_index = new itkIndex2();
-                    def_index.Fill(0);
-                }
-                ar.m_DefaultVal = def_index;
-                addIndexSetter(ctrl_panel, gbc, def_index, 2);
-                type_str.append(INT_LBL);
-                ar.m_Component = ctrl_panel;
-                return;
-            } else if (param_name.contains("itkPoint") || 
-                       param_name.contains("itkVector") ||
-                       param_name.contains("itkFixedArray")) {
-                // either 2 or 3 dimensions, Point, Vector always Double data type.
-                // FixedArray D, B, UI data types.
+            } else {
+                // useful for most non-primitive types.
                 int last_char_i = param_name.length() -1;
                 String dim_str = param_name.substring(last_char_i);
-                String type_str1 = param_name.substring(last_char_i - 1, last_char_i);
-                String type_str2 = param_name.substring(last_char_i - 2, last_char_i);
                 int dim = 2;
                 try {
                     dim = Integer.parseInt(dim_str);
                 } catch (NumberFormatException nfe) {
                 }
-                JPanel ctrl_panel = new JPanel(new GridBagLayout());
-                Object def_val = AutoItkLoader.invokeMethod("Get" + mthd.getName().substring(3), obj);
-                if (def_val == null) {
-                    try {
-                        def_val = param.newInstance();
-                    } catch (InstantiationException ie) {
-                        // no default avail
-                    } catch (IllegalAccessException iae) {
-                        // no default avail
-                    }
-                    if (def_val != null) {
-                        // Didn't work until I retrieved primitive class Class for arg,
-                        // so I needed double.class instead of (new Double).getClass()
-                        AutoItkLoader.invokeMethod("Fill", def_val, null, new Double(0.0));
-                    } else {
-                        ar.m_Component = new JLabel("Unavailable (error)");
-                        return;
-                    }
-                }
-                ar.m_DefaultVal = def_val;
-                addIndexSetter(ctrl_panel, gbc, def_val, dim);
-                //for (Method mthd2 : param.getMethods()) {
-                //    System.out.println("itkPointD2  " + mthd2.getName());
-                //    for (Class<?> cls2 : mthd2.getParameterTypes() ) {
-                //        System.out.println("           " + cls2.getName());
-                //    }
-                //}
-                type_str.append(FLT_LBL);
-                ar.m_Component = ctrl_panel;
-                return;
-            } else if (param.getSimpleName().contains("itkBinaryBallStructuringElement")) {
-                JPanel ctrl_panel = new JPanel(new GridBagLayout());
-                Object def_kernel = AutoItkLoader.invokeMethod("Get" + mthd.getName().substring(3), obj);
-                Object def_val = null;
-                if (def_kernel != null) {
-                    def_val = AutoItkLoader.invokeMethod("Size", def_kernel);
-                }
-                if (def_val == null) {
-                    // default radius of 1.
-                    def_val = new Long(1);
-                }
-                ar.m_DefaultVal = def_kernel;
-                gbc.gridx = 0;
-                JLabel lbl = new JLabel("radius");
-                ctrl_panel.add(lbl, gbc);
-                JFormattedTextField ftf = new JFormattedTextField();
-                ftf.setColumns(5);
-                ftf.setValue(def_val);
-                ftf.addPropertyChangeListener("value", this);
-                gbc.gridx = 1; 
-                ctrl_panel.add(ftf, gbc);
+                if (param_name.startsWith("itkImageRegion")) {
+                    JPanel ctrl_panel = new JPanel(new GridBagLayout());
+                    // itkImageRegion2 or itkImageRegion3
+                    itkRegion def_value = (itkRegion)AutoItkLoader.invokeMethod("Get" + mthd.getName().substring(3), obj);
+                    if (def_value == null) return;
 
-                type_str.append(INT_LBL);
-                ar.m_Component = ctrl_panel;
-                return;
-            } else {
-                //InsightToolkit.itkNodeContainerUC2, itkImageF2/D2, etc
-                String pname = param.getSimpleName();
-                if (pname.startsWith("SWIGTYPE")) {
-                    ar.m_Component = new JLabel("Unavailable (Swig placeholder)");
+                    Object def_size = AutoItkLoader.invokeMethod("GetSize", def_value);
+                    Object def_index = AutoItkLoader.invokeMethod("GetIndex", def_value);;
+
+                    ar.m_DefaultVal = def_value;
+                    // Index piece of region. 
+                    addIndexSetter(ctrl_panel, gbc, def_index, dim);
+
+                    // Size piece of region. 
+                    gbc.gridx = 0;
+                    gbc.gridy = 1;
+                    addSizeSetter(ctrl_panel, gbc, def_size, dim);
+
+                    type_str.append(INT_LBL);
+                    ar.m_Component = ctrl_panel;
+                    return;
+                } else if (param_name.startsWith("itkSize")) {
+                    JPanel ctrl_panel = new JPanel(new GridBagLayout());
+                    Object def_size = AutoItkLoader.invokeMethod("Get" + mthd.getName().substring(3), obj);
+                    if (def_size == null) {
+                        if (dim == 2) {
+                            def_size = new itkSize2();
+                        } else if (dim == 3) {
+                            def_size = new itkSize3();
+                        } else {
+                            return;
+                        }
+                        AutoItkLoader.invokeMethod("Fill", def_size, null, 100);
+                    }
+                    ar.m_DefaultVal = def_size;
+                    addSizeSetter(ctrl_panel, gbc, def_size, dim);
+                    type_str.append(INT_LBL);
+                    ar.m_Component = ctrl_panel;
+                    return;
+                } else if (param_name.startsWith("itkIndex2")) {
+                    JPanel ctrl_panel = new JPanel(new GridBagLayout());
+                    Object def_index = AutoItkLoader.invokeMethod("Get" + mthd.getName().substring(3), obj);
+                    if (def_index == null) {
+                        if (dim == 2) {
+                            def_index = new itkIndex2();
+                        } else if (dim == 3) {
+                             def_index = new itkIndex3();
+                        } else {
+                            return;
+                        }
+                        AutoItkLoader.invokeMethod("Fill", def_index, null, 0);
+                    }
+                    ar.m_DefaultVal = def_index;
+                    addIndexSetter(ctrl_panel, gbc, def_index, dim);
+                    type_str.append(INT_LBL);
+                    ar.m_Component = ctrl_panel;
+                    return;
+                } else if (param_name.startsWith("itkPoint") || 
+                           param_name.startsWith("itkVector") ||
+                           param_name.startsWith("itkFixedArray")) {
+                    // either 2 or 3 dimensions, Point, Vector always Double data type.
+                    // FixedArray D, B, UI data types.
+                    String type_str1 = param_name.substring(last_char_i - 1, last_char_i);
+                    String type_str2 = param_name.substring(last_char_i - 2, last_char_i);
+                    JPanel ctrl_panel = new JPanel(new GridBagLayout());
+                    Object def_val = AutoItkLoader.invokeMethod("Get" + mthd.getName().substring(3), obj);
+                    if (def_val == null) {
+                        try {
+                            def_val = param.newInstance();
+                        } catch (InstantiationException ie) {
+                            // no default avail
+                        } catch (IllegalAccessException iae) {
+                            // no default avail
+                        }
+                        if (def_val != null) {
+                            // Didn't work until I retrieved primitive class Class for arg,
+                            // so I needed double.class instead of (new Double).getClass()
+                            AutoItkLoader.invokeMethod("Fill", def_val, null, new Double(0.0));
+                        } else {
+                            ar.m_Component = new JLabel("Unavailable (error)");
+                            return;
+                        }
+                    }
+                    ar.m_DefaultVal = def_val;
+                    addIndexSetter(ctrl_panel, gbc, def_val, dim);
+                    //for (Method mthd2 : param.getMethods()) {
+                    //    System.out.println("itkPointD2  " + mthd2.getName());
+                    //    for (Class<?> cls2 : mthd2.getParameterTypes() ) {
+                    //        System.out.println("           " + cls2.getName());
+                    //    }
+                    //}
+                    type_str.append(FLT_LBL);
+                    ar.m_Component = ctrl_panel;
+                    return;
+                } else if (param_name.startsWith("itkBinaryBallStructuringElement")) {
+                    JPanel ctrl_panel = new JPanel(new GridBagLayout());
+                    Object def_kernel = AutoItkLoader.invokeMethod("Get" + mthd.getName().substring(3), obj);
+                    Object def_radius = null;
+                    if (def_kernel != null) {
+                        def_radius = AutoItkLoader.invokeMethod("Size", def_kernel);
+                    }
+                    if (def_radius == null) {
+                        // default radius of 1.
+                        def_radius = new Long(1);
+                    }
+                    ar.m_DefaultVal = def_kernel;
+                    gbc.gridx = 0;
+                    JLabel lbl = new JLabel("radius");
+                    ctrl_panel.add(lbl, gbc);
+                    JFormattedTextField ftf = new JFormattedTextField();
+                    ftf.setColumns(5);
+                    ftf.setValue(def_radius);
+                    ftf.addPropertyChangeListener("value", this);
+                    gbc.gridx = 1; 
+                    ctrl_panel.add(ftf, gbc);
+
+                    type_str.append(INT_LBL);
+                    ar.m_Component = ctrl_panel;
                     return;
                 }
-                String lbl_text = (pname.length() < 30 ?
-                                   pname : 
-                                   pname.substring(0, 28) + "...");
-                JLabel lbl = new JLabel(lbl_text);
-                ar.m_Component = lbl;
+            }
+                
+            //InsightToolkit.itkNodeContainerUC2, itkImageF2/D2, etc
+            if (param_name.startsWith("SWIGTYPE")) {
+                // return null to leave out setter completely, or a label to see it.
+                ar.m_Component = null;//new JLabel("Unavailable (Swig placeholder)");
                 return;
             }
+            String lbl_text = (param_name.length() < 30 ?
+                               param_name : 
+                               param_name.substring(0, 28) + "...");
+            JLabel lbl = new JLabel(lbl_text);
+            ar.m_Component = lbl;
+            return;
         }
         ar.m_Component = null;
         return;
@@ -469,7 +497,12 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
             JLabel lbl = new JLabel(labels[i]);
             ctrl_panel.add(lbl, gbc);
             gbc.gridx++; 
-            JFormattedTextField ftf = new JFormattedTextField();
+            JFormattedTextField ftf = null;
+            if (elem_obj.getClass() == double.class || elem_obj.getClass() == float.class) {
+                ftf = new JFormattedTextField(SCI_NOTATION);
+            } else {
+                ftf = new JFormattedTextField();
+            }
             ftf.setColumns(5);
             ftf.setValue(elem_obj);
             ftf.addPropertyChangeListener("value", this);
@@ -505,6 +538,7 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
                 if (ar.m_Component instanceof JFormattedTextField) {
                     //Get value from tf and call set method.
                     Object val = ((JFormattedTextField)ar.m_Component).getValue();
+                    
                     AutoItkLoader.invokeMethod(m_FilterObj, ar.m_Method, val);
                 } else if (ar.m_Component instanceof JCheckBox) {
                     boolean do_invoke = ((JCheckBox)ar.m_Component).isSelected();
@@ -585,6 +619,9 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
         }
     }
 
+    /* (non-Javadoc)
+     * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+     */
     public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
         if ("Run".equals(cmd)) {
@@ -609,6 +646,9 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
             
     }
 
+    /* (non-Javadoc)
+     * @see java.beans.PropertyChangeListener#propertyChange(java.beans.PropertyChangeEvent)
+     */
     public void propertyChange(PropertyChangeEvent evt) {
         // Set the 'Changed' flag for any (formatted text field) component that changes.
         Object source = evt.getSource();
