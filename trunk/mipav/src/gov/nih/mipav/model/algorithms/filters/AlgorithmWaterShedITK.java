@@ -141,7 +141,7 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                     }
 
                     for (int iChannel = 0; iChannel < 4; iChannel++) {
-                        itkImageF2 kImageSrcITK = InsightToolkitSupport.itkCreateImageColor2D(srcImage, iChannel);
+                        itkImageF2 kImageSrcITK = (itkImageF2)InsightToolkitSupport.itkCreateImageColor2D(srcImage, iChannel).img();
                         
                         // filter channel and write result to target image
                         if (abProcessChannel[iChannel]) {
@@ -167,7 +167,7 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                     for (int iChannel = 0; iChannel < 4; iChannel++) {
 
                         if (abProcessChannel[iChannel]) {
-                            itkImageF2 kImageSrcITK = InsightToolkitSupport.itkCreateImageColor2D(srcImage, iChannel);
+                            itkImageF2 kImageSrcITK = (itkImageF2)InsightToolkitSupport.itkCreateImageColor2D(srcImage, iChannel).img();
                             itkImageUL2 resultImage = perform2DFiltering(kImageSrcITK);
                             InsightToolkitSupport.itkTransferImageColor2D(kImageSrcITK, resultImage, mask,
                                                                           srcImage, iChannel);
@@ -179,7 +179,7 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                 
             // Single channel 2D
             else if ((2 == srcImage.getNDims()) && !srcImage.isColorImage()) {
-                itkImageF2 kImageSrcITK = InsightToolkitSupport.itkCreateImageSingle2D(srcImage);
+                itkImageF2 kImageSrcITK = (itkImageF2)InsightToolkitSupport.itkCreateImageSingle2D(srcImage).img();
                 itkImageUL2 resultImage = perform2DFiltering(kImageSrcITK);
                 
                 // store result in target image
@@ -234,8 +234,8 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                         }
 
                         for (int iChannel = 0; iChannel < 4; iChannel++) {
-                            itkImageF2 kImageSrcITK = InsightToolkitSupport.itkCreateImageColorSlice(srcImage, iSlice,
-                                                                                                     iChannel);
+                            itkImageF2 kImageSrcITK = (itkImageF2)InsightToolkitSupport.itkCreateImageColorSlice(srcImage, iSlice,
+                                                                                                     iChannel).img();
 
                             // filter channel and write result to target image
                             if (abProcessChannel[iChannel]) {
@@ -274,9 +274,9 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                         for (int iChannel = 0; iChannel < 4; iChannel++) {
 
                             if (abProcessChannel[iChannel]) {
-                                itkImageF2 kImageSrcITK = InsightToolkitSupport.itkCreateImageColorSlice(srcImage,
+                                itkImageF2 kImageSrcITK = (itkImageF2)InsightToolkitSupport.itkCreateImageColorSlice(srcImage,
                                                                                                          iSlice,
-                                                                                                         iChannel);
+                                                                                                         iChannel).img();
                                 itkImageUL2 resultImage = perform2DFiltering(kImageSrcITK);
 
                                 InsightToolkitSupport.itkTransferImageColorSlice(kImageSrcITK, resultImage,
@@ -315,7 +315,7 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                             return;
                         }
 
-                        itkImageF2 kImageSrcITK = InsightToolkitSupport.itkCreateImageSingle2D(srcImage);
+                        itkImageF2 kImageSrcITK = (itkImageF2)InsightToolkitSupport.itkCreateImageSingle2D(srcImage).img();
                         itkImageUL2 resultImage = perform2DFiltering(kImageSrcITK);
                         InsightToolkitSupport.itkTransferImageSingleSlice(kImageSrcITK, resultImage, mask,
                                                                           destImage, iSlice);
@@ -341,7 +341,7 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                             return;
                         }
 
-                        itkImageF2 kImageSrcITK = InsightToolkitSupport.itkCreateImageSingle2D(srcImage);
+                        itkImageF2 kImageSrcITK = (itkImageF2)InsightToolkitSupport.itkCreateImageSingle2D(srcImage).img();
                         itkImageUL2 resultImage = perform2DFiltering(kImageSrcITK);
                         InsightToolkitSupport.itkTransferImageSingleSlice(kImageSrcITK, resultImage, mask,
                                                                           srcImage, iSlice);
@@ -371,7 +371,7 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                     }
 
                     for (int iChannel = 0; iChannel < 4; iChannel++) {
-                        itkImageF3 kImageSrcITK = InsightToolkitSupport.itkCreateImageColor3D(srcImage, iChannel);
+                        itkImageF3 kImageSrcITK = (itkImageF3)InsightToolkitSupport.itkCreateImageColor3D(srcImage, iChannel).img();
 
                         // filter channel and write result to target image
                         if (abProcessChannel[iChannel]) {
@@ -398,7 +398,7 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                     for (int iChannel = 0; iChannel < 4; iChannel++) {
 
                         if (abProcessChannel[iChannel]) {
-                            itkImageF3 kImageSrcITK = InsightToolkitSupport.itkCreateImageColor3D(srcImage, iChannel);
+                            itkImageF3 kImageSrcITK = (itkImageF3)InsightToolkitSupport.itkCreateImageColor3D(srcImage, iChannel).img();
                             itkImageUL3 resultImage = perform3DFiltering(kImageSrcITK);
                             InsightToolkitSupport.itkTransferImageColor3D(kImageSrcITK, resultImage, mask,
                                                                           srcImage, iChannel);
@@ -409,7 +409,7 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
 
             // Single channel 3D
             else {
-            	itkImageF3 kImageSrcITK = InsightToolkitSupport.itkCreateImageSingle3D(srcImage);
+            	itkImageF3 kImageSrcITK = (itkImageF3)InsightToolkitSupport.itkCreateImageSingle3D(srcImage).img();
             	itkImageUL3 resultImage = perform3DFiltering(kImageSrcITK);
                
                 // store result in target image

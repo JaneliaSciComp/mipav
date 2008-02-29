@@ -46,6 +46,9 @@ public class BufferLong extends BufferBase {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    /** Return long.class */
+    protected final Class<?> getType() { return long.class; }
+
     /**
      * Clean up memory.
      *

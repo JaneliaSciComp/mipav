@@ -51,6 +51,9 @@ public class BufferFloat extends BufferBase {
         dataArray = null;
     }
 
+    /** Return float.class */
+    protected final Class<?> getType() { return float.class; }
+
     /**
      * Returns the length of the data array.
      *

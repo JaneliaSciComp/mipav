@@ -54,6 +54,9 @@ public class BufferUShort extends BufferBase {
         dataArray = null;
     }
 
+    /** Return short.class */
+    protected final Class<?> getType() { return short.class; }
+
     /**
      * Returns the length of the data array.
      *

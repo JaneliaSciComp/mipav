@@ -36,6 +36,13 @@ public abstract class BufferBase implements Serializable {
     protected abstract void finalize() throws Throwable;
 
     /**
+     * Get the primitive type of the buffer.
+     *
+     * @return one of the primitive class objects, like float.class (== Float.TYPE)
+     */
+    protected abstract Class<?> getType();
+
+    /**
      * Gets a Number object at position in the data array.
      *
      * @param   position  index into the data array.

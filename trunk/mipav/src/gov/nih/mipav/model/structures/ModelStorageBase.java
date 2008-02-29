@@ -10,6 +10,7 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 
 import java.util.*;
+import java.lang.reflect.Array;
 
 import javax.vecmath.*;
 
@@ -1080,6 +1081,45 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
+     * Export data into values array, in the native type of the model image.
+     *
+     * @param   start   indicates starting position in data array
+     * @param   length  length of data to be copied from data array
+     * @return  Object, new array where data has been deposited
+     *
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     */
+    public final Object exportData(int start, int length) throws IOException {
+        int i, j;
+
+        Object value_array = null;
+
+        if ((start >= 0) && ((start + length) <= dataSize)) {
+
+            try {
+                setLock(W_LOCKED);
+                
+                Class<?> buffer_type = data.getType();
+                if (buffer_type == null) return null;
+
+                value_array = Array.newInstance(buffer_type, length);
+
+                for (i = start, j = 0; j < length; i++, j++) {
+                    Array.set(value_array, j, data.get(i));
+                }
+            } catch (IOException error) {
+                throw error;
+            } finally {
+                releaseLock();
+            }
+
+            return value_array;
+        }
+
+        throw new IOException("Export data error - bounds incorrect");
+    }
+
+    /**
      * Export data into values array.
      *
      * @param   start   indicates starting position in data array
@@ -1858,6 +1898,46 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   offset  correct offset for RED, GREEN, or BLUE component to be exported
      * @param   start   indicates starting position in data array
      * @param   length  length of data to be copied from data array
+     * @return  Object, new array where data has been deposited
+     *
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     */
+    public final synchronized Object exportRGBData(int offset, int start, int length) throws IOException {
+        int i, j;
+
+        Object value_array = null;
+
+        if ((start >= 0) && ((start + (4 * length)) <= dataSize)) {
+
+            try {
+                setLock(W_LOCKED);
+
+                Class<?> buffer_type = data.getType();
+                if (buffer_type == null) return null;
+
+                value_array = Array.newInstance(buffer_type, length);
+
+                for (i = start + offset, j = 0; j < length; i += 4, j++) {
+                    Array.set(value_array, j, data.get(i));
+                }
+            } catch (IOException error) {
+                throw error;
+            } finally {
+                releaseLock();
+            }
+
+            return value_array;
+        }
+
+        throw new IOException("Export RGB data error - bounds incorrect");
+    }
+
+    /**
+     * export data in values array.
+     *
+     * @param   offset  correct offset for RED, GREEN, or BLUE component to be exported
+     * @param   start   indicates starting position in data array
+     * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
      *
      * @throws  IOException  Throws an error when there is a locking or bounds error.
@@ -1882,7 +1962,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             return;
         }
 
-        throw new IOException("Export data error - bounds incorrect");
+        throw new IOException("Export RGB data error - bounds incorrect");
     }
 
     /**
@@ -1916,7 +1996,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             return;
         }
 
-        throw new IOException("Export data error - bounds incorrect");
+        throw new IOException("Export RGB data error - bounds incorrect");
     }
 
     /**
@@ -1949,7 +2029,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             return;
         }
 
-        throw new IOException("Export data error - bounds incorrect");
+        throw new IOException("Export RGB data error - bounds incorrect");
     }
 
     /**
@@ -1975,7 +2055,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             return;
         }
 
-        throw new IOException("Export data error - bounds incorrect");
+        throw new IOException("Export RGB data error - bounds incorrect");
     }
 
 
@@ -6981,13 +7061,14 @@ public class ModelStorageBase extends ModelSerialCloneable {
     protected void computeDataSize() {
         int i;
 
+        // base data size
+        for (this.dataSize = 1, i = 0; i < this.nDims; i++) {
+            this.dataSize *= dimExtents[i];
+        }
+
         switch (bufferType) {
 
             case BOOLEAN:
-                for (this.dataSize = 1, i = 0; i < this.nDims; i++) {
-                    this.dataSize *= dimExtents[i];
-                }
-
                 try {
 
                     // create a temporary buffer to get this dataSize)
@@ -7017,17 +7098,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case LONG:
             case FLOAT:
             case DOUBLE:
-                for (this.dataSize = 1, i = 0; i < this.nDims; i++) {
-                    this.dataSize *= dimExtents[i];
-                }
-
+                // use base data size unchanged.
                 break;
 
             case COMPLEX:
             case DCOMPLEX:
-                for (this.dataSize = 1, i = 0; i < this.nDims; i++) {
-                    this.dataSize *= dimExtents[i];
-                }
 
                 this.dataSize *= 2;
                 break;
@@ -7035,15 +7110,14 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case ARGB:
             case ARGB_USHORT:
             case ARGB_FLOAT:
-                for (this.dataSize = 1, i = 0; i < this.nDims; i++) {
-                    this.dataSize *= dimExtents[i];
-                }
 
                 this.dataSize *= 4;
                 break;
 
-            default: {
+            default: 
+            {
                 MipavUtil.displayError("ModelStorageArray: Unknown data type - dataSize not computed");
+                break;
             }
         } // end switch
 

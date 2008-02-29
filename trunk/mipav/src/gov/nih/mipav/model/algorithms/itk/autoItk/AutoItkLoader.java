@@ -112,9 +112,13 @@ public class AutoItkLoader implements ActionListener {
     // can't change the itk java output behavior yet:
     //private static ItkConsoleOutput ms_OutputWindow = null;
 
-    /** for each integer returned by getType(), what sequence matches itk i/o types. X says no match (complex) */
-    private static final String[] MODELIMAGE_TYPE_TABLE = { "B", "SC", "UC", "SS", "US", "SI", "SL", "F", "D", 
-                                                            "UC", "US", "F", "X", "X" , "UI" };
+    /** for each integer returned by getType(), what sequence matches itk i/o
+     * types. X says no match (complex numbers.) */
+    private static final String[] MODELIMAGE_TYPE_TABLE = { "B", "SC", "UC", 
+                                                            "SS", "US", "SI", "SL", 
+                                                            "F", "D", 
+                                                            "UC", "US", "F", 
+                                                            "X", "X" , "UI" };
 
 
     /**
@@ -164,12 +168,21 @@ public class AutoItkLoader implements ActionListener {
             int pixel_type = model_image.getType();
             String pixel_type_str = MODELIMAGE_TYPE_TABLE[pixel_type];	
             int model_dims = model_image.getNDims();
-            data_type = pixel_type_str + model_dims + pixel_type_str + model_dims;
-            if (fr != null && !fr.m_IOType.isEmpty()) {
-                //data_type = fr.m_IOType.get(0);
-            }
-                    
+            // A few filter use "F2" as shorthand for "F2F2"
+            String short_data_type = pixel_type_str + model_dims;
+            data_type = short_data_type + short_data_type;
             
+            //if (fr != null && !fr.m_IOType.isEmpty()) {
+                //data_type = fr.m_IOType.get(0);
+            //}
+            if (model_dims != 2 && model_dims != 3) {
+                JOptionPane.showMessageDialog(m_Frame,
+                                              "Itk filters only support images of 2 or 3 dimensions. Please convert the image first.", 
+                                              "Filter class input mismatch",
+                                              JOptionPane.PLAIN_MESSAGE);
+                return;
+                    
+            }
                 
             Class<?> cls = null;
             try {
@@ -177,28 +190,30 @@ public class AutoItkLoader implements ActionListener {
                 //msg = "Found "+ cls.getName() + "\n";
             }
             catch (ClassNotFoundException cnfe) {
-                // TODO user friendly available types.
-                msg = "The filter " + name + " does not accept input data of type: " + 
-                    ModelImage.getBufferTypeStr(pixel_type) + " " + model_dims + "D.\n"
-                    + "Please convert the image first to one of these types: \n" +
-                    fr.m_IOType;
-                JOptionPane.showMessageDialog(m_Frame,
-                                              msg, "Filter class input mismatch",
-                                              JOptionPane.PLAIN_MESSAGE);
-                return;
+                // long data type not found, try the shorter version.
             }
+            if (cls == null) {
+                try {
+                    cls = Class.forName("InsightToolkit.itk" + name + "Filter" + short_data_type);
+                }
+                catch (ClassNotFoundException cnfe) {
+                    // TODO user friendly available types.
+                    msg = "The filter " + name + " does not accept input/output data of type: " + 
+                        ModelImage.getBufferTypeStr(pixel_type) + " " + model_dims + "D.\n"
+                        + "Please convert the image first to one of these types: \n" +
+                        fr.m_IOType;
+                    JOptionPane.showMessageDialog(m_Frame,
+                                                  msg, "Filter class input mismatch",
+                                                  JOptionPane.PLAIN_MESSAGE);
+                    return;
+                }
+            }
+            
             // Create a filter object, matching input image type.
             Object filter_pointer_obj = createFilterObj(cls);
             if (filter_pointer_obj == null) return;
             Object filter_obj = invokeMethod("GetPointer", filter_pointer_obj);
 
-            itkImageF2 itk_input = null;
-            if (data_type.equals("F2F2")) {
-                itk_input = InsightToolkitSupport.itkCreateImageSingle2D(model_image);
-                if (itk_input != null) {
-                    invokeMethod("SetInput", filter_obj, null, itk_input);
-                }
-            }
 
             boolean do_set = ItkFilterRunDialog.showDialog(
                                         m_Frame,
@@ -206,22 +221,39 @@ public class AutoItkLoader implements ActionListener {
                                         "Set parameters for filter:",	
                                         name + " Filter",
                                         filter_obj);
-            System.out.println("Do set " + do_set);
-            if (do_set && itk_input != null) {
-                // execute filter
-                invokeMethod("Update", filter_obj);
-                itkImageF2 itk_output = (itkImageF2)invokeMethod("GetOutput", filter_obj);
-                if (itk_output != null) {
-                    //System.out.println("Success, maybe: " + itk_output.GetImageDimension());
-                    ModelImage model_image_result = (ModelImage) model_image.clone();
-                    model_image_result.setImageName(model_image.getImageName() + "_itkfilter");
+            //System.out.println("Do set " + do_set);
+            if (!do_set) return;
 
+            PItkImage2 itk_input2 = null;
+            PItkImage3 itk_input3 = null;
+            if (model_dims == 2) {
+                itk_input2 = InsightToolkitSupport.itkCreateImageSingle2D(model_image);
+                if (itk_input2 == null) return;
+                invokeMethod("SetInput", filter_obj, null, itk_input2.img());
+            } else if (model_dims == 3) {
+                itk_input3 = InsightToolkitSupport.itkCreateImageSingle3D(model_image);
+                if (itk_input3 == null) return;
+                invokeMethod("SetInput", filter_obj, null, itk_input3.img());
+            } else {
+                return;
+            }
+            // execute filter
+            invokeMethod("Update", filter_obj);
+            itkDataObject itk_output_do = (itkDataObject)invokeMethod("GetOutput", filter_obj);
+            if (itk_output_do != null) {
+                ModelImage model_image_result = (ModelImage) model_image.clone();
+                model_image_result.setImageName(model_image.getImageName() + "_" + name);
+
+                Class<?> output_cls = itk_output_do.getClass();
+                long output_dim = (Long)invokeMethod("GetImageDimension", (Object)null, output_cls);
+                if (output_dim == 2) {
                     //copy itk result into model image.
-                    InsightToolkitSupport.itkTransferImageSingle2D(null, itk_output, null, model_image_result);
-
-                    // show the results...
-                    new ViewJFrameImage(model_image_result, null, new Dimension(610, 200));
+                    InsightToolkitSupport.itkTransferImageSingle2D(null, (itkImageBase2)itk_output_do, null, model_image_result);
+                } else if (output_dim == 3) {
+                    InsightToolkitSupport.itkTransferImageSingle3D(null, (itkImageBase3)itk_output_do, null, model_image_result);
                 }
+                // show the results...
+                new ViewJFrameImage(model_image_result, null, new Dimension(610, 200));
             }
         }
     }
@@ -643,6 +675,29 @@ public class AutoItkLoader implements ActionListener {
         return invokeMethod(static_constructor_name, (Object)null, cls);
     }
 
+    /** Factory for itk image container, that keeps a smart pointer around
+     * so the image data doesn't get garbage collected.
+     * @param model_image_type ModelImage data type.
+     * @return null if type is not available
+     */
+    public static PItkImage2 createItkImage2(int model_image_type) 
+    {
+        PItkImage2 ret = new PItkImage2(model_image_type);
+        if (ret.img() != null) return ret;
+        return null;
+    }
+
+    /** @see createItkImage2
+     * @param model_image_type
+     * @return
+     */
+    public static PItkImage3 createItkImage3(int model_image_type) 
+    {
+        PItkImage3 ret = new PItkImage3(model_image_type);
+        if (ret.img() != null) return ret;
+        return null;
+    }
+
     /** Invoke a method on an object, without throwing exceptions. no arg method
      * @param method_name Name of the method
      * @param obj invoke this object's method
@@ -652,13 +707,6 @@ public class AutoItkLoader implements ActionListener {
     {
         return invokeMethod(method_name, obj, null, (Object[])null);
     }
-
-    // no arg method
-//     public static Object invokeMethod(String method_name, Object obj, 
-//                                       Class<?> cls) 
-//     {
-//         return invokeMethod(method_name, obj, cls, null);
-//     }
 
     /** Invoke a method by name without throwing exceptions.
      * @param method_name 

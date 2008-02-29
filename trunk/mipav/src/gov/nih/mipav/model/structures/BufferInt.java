@@ -55,6 +55,9 @@ public class BufferInt extends BufferBase {
         dataArray = null;
     }
 
+    /** Return int.class */
+    protected final Class<?> getType() { return int.class; }
+
     /**
      * Returns the length of the data array.
      *

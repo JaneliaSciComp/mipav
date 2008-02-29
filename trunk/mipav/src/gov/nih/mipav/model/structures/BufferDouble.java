@@ -52,6 +52,9 @@ public class BufferDouble extends BufferBase {
         dataArray = null;
     }
 
+    /** Return double.class */
+    protected final Class<?> getType() { return double.class; }
+
     /**
      * Returns the length of the data array.
      *
