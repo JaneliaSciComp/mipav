@@ -1725,7 +1725,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		
 		//private JList[] list;
 		
-		private JCheckBox[][] mirrorCheckArr;
+		private ColorButtonPanel[][] mirrorCheckArr;
 		
 		private JButton[][] mirrorButtonArr;
 		
@@ -1897,7 +1897,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        mainPanel.add(instructionPanel);
 	        
 	        //list = new JList[mirrorArr.length];
-	        mirrorCheckArr = new JCheckBox[mirrorArr.length][];
+	        mirrorCheckArr = new ColorButtonPanel[mirrorArr.length][];
 	        mirrorButtonArr = new JButton[mirrorArr.length][];
 	        
 	        for(int i=0; i<mirrorArr.length; i++) {
@@ -1957,7 +1957,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		private JScrollPane initSymmetricalObjects(int index, String title) {
 	         
 			//ButtonGroup mirrorGroup = new ButtonGroup();
-            mirrorCheckArr[index] = new JCheckBox[mirrorArr[index].length * 2];
+            mirrorCheckArr[index] = new ColorButtonPanel[mirrorArr[index].length * 2];
             mirrorButtonArr[index] = new JButton[mirrorArr[index].length * 2];
 			JPanel subPanel = new JPanel(new GridBagLayout());
             subPanel.setForeground(Color.black);
@@ -1988,9 +1988,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             
             for(int i=0; i<mirrorArr[index].length * 2; i++) {
                                
-                ColorButtonPanel ccP = new ColorButtonPanel(Color.BLACK, mirrorString[i]);
+            	mirrorCheckArr[index][i] = new ColorButtonPanel(Color.BLACK, mirrorString[i]);
                 
-                checkBoxLocationTree.put(mirrorString[i], ccP);
+                checkBoxLocationTree.put(mirrorString[i], mirrorCheckArr[index][i]);
                 
                 mirrorButtonArr[index][i] = new JButton(mirrorString[i]);
                 mirrorButtonArr[index][i].setEnabled(voiExists(mirrorString[i]));
@@ -2011,7 +2011,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 }
                 gbc.weightx = 0;
                 gbc.insets = new Insets(0, 10, 0, 0);
-                subPanel.add(ccP, gbc);
+                subPanel.add(mirrorCheckArr[index][i], gbc);
                 gbc.insets = new Insets(0, 0, 0, 0);
                 gbc.gridx++;
                 gbc.weightx = 1;
@@ -2939,7 +2939,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			if (name.endsWith(".xml")) {
 				name = name.substring(0, name.length() - 4);
 			}
-			DecimalFormat dec = new DecimalFormat("0.#");
+			DecimalFormat dec = new DecimalFormat("0.##");
 			
 			//name of area
 			aTable.addCell(new Paragraph( name, fontNormal) );
@@ -3013,6 +3013,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			add(colorButton);
 		}
 		
+		public boolean isSelected() {
+			if(cIcon.getColor() == Color.BLACK) 
+				return false;
+			else
+				return true;
+		}
+		
 		public String getVOIName() {
 			return voiName;
 		}
@@ -3024,7 +3031,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		 public void addedCurve(VOIEvent added) {
             /* not interested in adding curves */
         }
-
         /**
          * We are not interested in removing Curves, so this method is empty.
          *
