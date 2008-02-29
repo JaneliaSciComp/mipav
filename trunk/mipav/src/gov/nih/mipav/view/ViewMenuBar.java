@@ -140,8 +140,6 @@ public class ViewMenuBar {
                                                                                            "Midsagittal", 0, null,
                                                                                            false),
                                                              }),
-                                        menuBuilder.buildMenuItem("Center of mass", "COM", 0, null,
-                                                                   false),
                                         menuBuilder.buildMenuItem("Density based clustering", "DENCLUE", 0, null,
                                                                   false),
                                         menuBuilder.makeMenu("Edge detection", false,
@@ -906,6 +904,7 @@ public class ViewMenuBar {
                                                                  menuBuilder.buildMenuItem("Swap dims 3<->4", "Swap34",
                                                                                            0, null, false),
                                                              }),
+                                        menuBuilder.buildMenuItem("Center of mass", "COM", 0, null, false),
                                         menuBuilder.buildMenuItem("Clone (copy)", "Clone", 0, null, false),
                                         menuBuilder.makeMenu("Conversion tools", false,
                                                              new JMenuItem[] {
