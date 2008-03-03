@@ -1486,17 +1486,16 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         // then find the P such that the rotation matrix M=PQ is closest to the
         // identity, in the sense of M having the smallest total rotation angle
 
-        // Despite the formidable looking 6 nested loops, there are
-        // only 3*3*3*2*2*2 = 216 passes, which will run very quickly
+        
         vbest = -Double.MAX_VALUE;
         pbest = 1;
         qbest = 1;
         ibest = 1;
         jbest = 2;
 
-        for (i = 1; i <= 3; i++) { // i = column number to use for row #1
+        for (i = 1; i <= 2; i++) { // i = column number to use for row #1
 
-            for (j = 1; j <= 3; j++) { // j = column number to use for row #2
+            for (j = 1; j <= 2; j++) { // j = column number to use for row #2
 
                 if (i == j) {
                     continue;
