@@ -42,7 +42,9 @@ public class FileUtility {
     /** extension: .bmp. */
     public static final int BMP = 6;
 
-    /** Bruker file format. extension: .brk */
+    /** Bruker file format. 
+     * Reads a BRUKER file by first reading in the d3proc header file, second the reco header file, third the acqp file int the 
+     * same directory or up one or two two parent directories, and finally the 2dseq binary file. */
     public static final int BRUKER = 7;
 
     /** Cheshire file type (a kind of Analyze). extension: .imc */
@@ -51,7 +53,8 @@ public class FileUtility {
     /** Cheshire overlay file type. Contains VOIs. extension: .oly */
     public static final int CHESHIRE_OVERLAY = 9;
 
-    /** Used by FreeSurfer software. extension: .info */
+    /** Used by FreeSurfer software. extension: -.info or -.info~ for header file
+     *  -.nnn for slice data file where nnn is the slice number */
     public static final int COR = 10;
 
     /** extension: .cur. */
@@ -532,7 +535,7 @@ public class FileUtility {
                 break;
 
             case FileUtility.GIF:
-                suffix = ".gof";
+                suffix = ".gif";
                 break;
 
             case FileUtility.ICO:
