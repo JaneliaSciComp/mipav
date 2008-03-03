@@ -1729,7 +1729,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		
 		private JButton[][] mirrorButtonArr;
 		
-		private String name[] = {"thigh", "bone component", "muscle"};
+		private String name[] = {"thigh", "bone", "muscle"};
 		
 		private int colorChoice = 0;
 		
