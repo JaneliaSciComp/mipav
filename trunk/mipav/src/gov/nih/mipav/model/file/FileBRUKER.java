@@ -7,8 +7,8 @@ import java.io.*;
 
 
 /**
- * Reads a BRUKER file by first reading in the d3proc header file, second the reco header file, third the acqp file up
- * tow parent directories, and finally the 2dseq binary file.
+ * Reads a BRUKER file by first reading in the d3proc header file, second the reco header file, third the acqp file int the 
+ * same directory or up one or two two parent directories, and finally the 2dseq binary file.
  */
 
 public class FileBRUKER extends FileBase {
