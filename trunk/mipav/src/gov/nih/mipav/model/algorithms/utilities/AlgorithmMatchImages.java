@@ -2538,6 +2538,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         boolean newResA = false;
         boolean newResB = false;
         int i;
+        int units2D[] = null;
 
         for (i = 0; i < nDims; i++) {
             fovA = resA[i] * dimA[i]; // field of view in this dimension
@@ -2584,10 +2585,12 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                                   (float) resA[1] + " and dimensions: " + dimA[0] + ", " + dimA[1] + "\n");
 
                 // Call AlgorithmTransform with padding.
+                units2D = new int[2];
+                units2D[0] = sourceImgA.getUnitsOfMeasure(0);
+                units2D[1] = sourceImgA.getUnitsOfMeasure(1);
                 algoTransform = new AlgorithmTransform(resultImgA, identMatrix, AlgorithmTransform.BILINEAR,
                                                        (float) resA[0], (float) resA[1], dimA[0], dimA[1], 
-                                                       sourceImgA.getUnitsOfMeasure(0),
-                                                       sourceImgA.getUnitsOfMeasure(1),
+                                                       units2D,
                                                        false, false,
                                                        true);
             }
@@ -2650,10 +2653,12 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                                   (float) resB[1] + " and dimensions: " + dimB[0] + ", " + dimB[1] + "\n");
 
                 // Call AlgorithmTransform with padding.
+                units2D = new int[2];
+                units2D[0] = sourceImgB.getUnitsOfMeasure(0);
+                units2D[1] = sourceImgB.getUnitsOfMeasure(1);
                 algoTransform = new AlgorithmTransform(resultImgB, identMatrix, AlgorithmTransform.BILINEAR,
                                                        (float) resB[0], (float) resB[1], dimB[0], dimB[1], 
-                                                       sourceImgB.getUnitsOfMeasure(0),
-                                                       sourceImgB.getUnitsOfMeasure(1),
+                                                       units2D,
                                                        false, false,
                                                        true);
             } // else nDims == 2
