@@ -23,7 +23,7 @@ public class ItkFilterSelectorDialog extends JDialog implements ActionListener {
     /**
      * List of filters, which we modify the active state of.
      */
-    private List<FilterRecord> m_FilterRecord = null;
+    private List<FilterRecordItk> m_FilterRecordItk = null;
     
 
     /**
@@ -44,7 +44,7 @@ public class ItkFilterSelectorDialog extends JDialog implements ActionListener {
                                     Component locationComp,
                                     String labelText,
                                     String title,
-                                    List<FilterRecord> possibleValues) {
+                                    List<FilterRecordItk> possibleValues) {
         Frame frame = JOptionPane.getFrameForComponent(frameComp);
         dialog = new ItkFilterSelectorDialog(frame,
                                 locationComp,
@@ -74,9 +74,9 @@ public class ItkFilterSelectorDialog extends JDialog implements ActionListener {
                             Component locationComp,
                             String labelText,
                             String title,
-                            List<FilterRecord> data) {
+                            List<FilterRecordItk> data) {
         super(frame, title, true);
-        m_FilterRecord = data;
+        m_FilterRecordItk = data;
 
         //Create and initialize the buttons.
         JButton cancelButton = new JButton("Cancel");
@@ -91,11 +91,11 @@ public class ItkFilterSelectorDialog extends JDialog implements ActionListener {
         m_CheckBoxPanel = new JPanel();
         m_CheckBoxPanel.setLayout(new BoxLayout(m_CheckBoxPanel, BoxLayout.PAGE_AXIS));
         // add checkboxes.
-        for(Iterator<FilterRecord> it = data.iterator(); it.hasNext(); ) {
-            FilterRecord filter_rec = it.next();
+        for(Iterator<FilterRecordItk> it = data.iterator(); it.hasNext(); ) {
+            FilterRecordItk filter_rec = it.next();
             String name = filter_rec.m_Name + "     " + filter_rec.m_State.getName();
             JCheckBox cb = new JCheckBox(name, filter_rec.m_Active);
-            if (filter_rec.m_State == FilterRecord.FilterState.REMOVED) {
+            if (filter_rec.m_State == FilterRecordItk.FilterState.REMOVED) {
                 cb.setEnabled(false);
             }
             m_CheckBoxPanel.add(cb);
@@ -142,15 +142,15 @@ public class ItkFilterSelectorDialog extends JDialog implements ActionListener {
         if ("Set".equals(e.getActionCommand())) {
             System.out.println("Set: change filter file.");
             ItkFilterSelectorDialog.value = true;
-            Iterator<FilterRecord> it = m_FilterRecord.iterator(); 
+            Iterator<FilterRecordItk> it = m_FilterRecordItk.iterator(); 
             for (Component cmp : m_CheckBoxPanel.getComponents() ) {
                 JCheckBox cb = (JCheckBox)cmp;
                 System.out.println(cb.getText() + " " + cb.isSelected());
-                FilterRecord fr = it.next();
+                FilterRecordItk fr = it.next();
                 fr.m_Active = cb.isSelected();
                 // New filters have now been seen and accepted.
-                if (fr.m_State == FilterRecord.FilterState.NEW) {
-                	fr.m_State = FilterRecord.FilterState.NORMAL;
+                if (fr.m_State == FilterRecordItk.FilterState.NEW) {
+                	fr.m_State = FilterRecordItk.FilterState.NORMAL;
                 }
             }
         }

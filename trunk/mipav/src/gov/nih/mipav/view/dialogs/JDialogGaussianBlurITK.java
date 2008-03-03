@@ -327,8 +327,18 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
                         }
                     }
 
+                    ModelImage float_src_image = image;
+                    if (image.getType() != ModelImage.ARGB_FLOAT ||
+                        image.getType() != ModelImage.FLOAT) {
+                        float_src_image = (ModelImage) image.clone();
+                        try	{
+                        	float_src_image.convertToFloat();
+                        } catch (java.io.IOException ioe) {
+                        	return;
+                        }
+                    }
                     // Make algorithm
-                    gaussianBlurAlgo = new AlgorithmGaussianBlurITK(resultImage, image, sigmas, false);
+                    gaussianBlurAlgo = new AlgorithmGaussianBlurITK(resultImage, float_src_image, sigmas, false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -373,6 +383,12 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
 
                 try {
 
+                    if (image.getType() != ModelImage.ARGB_FLOAT ||
+                        image.getType() != ModelImage.FLOAT) {
+                        MipavUtil.displayError("Cannot replace original image unless pixels are of type Float. Please convert the input image first.");
+
+                        return;
+                    }
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
                     gaussianBlurAlgo = new AlgorithmGaussianBlurITK(image, sigmas, false);
@@ -454,8 +470,18 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
                         }
                     }
 
+                    ModelImage float_src_image = image;
+                    if (image.getType() != ModelImage.ARGB_FLOAT ||
+                        image.getType() != ModelImage.FLOAT) {
+                        float_src_image = (ModelImage) image.clone();
+                        try	{
+                        	float_src_image.convertToFloat();
+                        } catch (java.io.IOException ioe) {
+                        	return;
+                        }
+                    }
                     // Make algorithm
-                    gaussianBlurAlgo = new AlgorithmGaussianBlurITK(resultImage, image, sigmas, image25D);
+                    gaussianBlurAlgo = new AlgorithmGaussianBlurITK(resultImage, float_src_image, sigmas, image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -500,6 +526,12 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
 
                 try {
 
+                    if (image.getType() != ModelImage.ARGB_FLOAT ||
+                        image.getType() != ModelImage.FLOAT) {
+                        MipavUtil.displayError("Cannot replace original image unless pixels are of type Float. Please convert the input image first.");
+
+                        return;
+                    }
                     // Make algorithm
                     gaussianBlurAlgo = new AlgorithmGaussianBlurITK(image, sigmas, image25D);
 

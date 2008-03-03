@@ -14,77 +14,10 @@ import java.util.Enumeration;
 import InsightToolkit.*;
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmItkFilter;
 import gov.nih.mipav.view.*;
-
-/** Struct that holds public data about an itk filter.
- * @author Geometric Tools
- */
-class FilterRecord implements Serializable
-{
-    /**
-     * Normal filters appear in the jar and the saved record,
-     * New filters are only in the jar,
-     * Removed filters are obsolete: only in the saved record.
-     */
-    public enum FilterState {
-        NEW ("New"), 
-        REMOVED ("Removed"), 
-        NORMAL ("");
-
-        private final String m_Name;
-
-        FilterState(String name) {
-            this.m_Name = name;
-        }
-
-        /** Used to provide the user some info about the filter.
-         * @return a description for New or Removed filters.
-         */
-        String getName() { return m_Name; }
-
-    }
-
-    /**
-     * Avoid compiler warning. Change if class fields change.
-     */
-    static final long serialVersionUID = 4243L;
-    /**
-     * Name directly from the Itk class, InsightToolkit.itkBinaryDilateImageFilterF2F2 becomes BinaryDilateImage
-     */
-    public String m_Name;
-    /**
-     * Is this filter shown in the menu. Default yes, user can turn them off.
-     */
-    public boolean m_Active;
-    /**
-     * List of i/o types for the filter. F2F2 is a typical one. 
-     */
-    public ArrayList<String> m_IOType;
-    /**
-     * New/removed state. Not serialized. 
-     */
-    public transient FilterState m_State;
-
-    /**
-     * Default constructor, unused.
-     */
-    public FilterRecord() { 
-        m_Name = ""; m_Active = false; 
-        m_State = FilterState.NORMAL;
-        m_IOType = new ArrayList<String>();
-    }
-   
-    /** Create a record, NORMAL filter state.
-     * @param name Filter name
-     * @param active Show in menu
-     */
-    public FilterRecord(String name, boolean active) {
-        m_Name = name;
-        m_Active = active;
-        m_State = FilterState.NORMAL;
-        m_IOType = new ArrayList<String>();
-    }
-}
+import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.dialogs.JDialogItkFilter;
 
 
 /**
@@ -93,6 +26,8 @@ class FilterRecord implements Serializable
  * @author Geometric Tools
  */
 public class AutoItkLoader implements ActionListener {
+
+
     /**
      * Frame to parent dialogs, and to retrieve ModelImage data from.
      */
@@ -104,7 +39,7 @@ public class AutoItkLoader implements ActionListener {
     /**
      * List of filters, with active state and status.
      */
-    private List<FilterRecord> m_FilterList;
+    private List<FilterRecordItk> m_FilterList;
     /**
      * Name of the file we serialize the m_FilterList to.
      */
@@ -119,6 +54,11 @@ public class AutoItkLoader implements ActionListener {
                                                             "F", "D", 
                                                             "UC", "US", "F", 
                                                             "X", "X" , "UI" };
+
+    public static String getItkModelImageString(int model_image_type) {
+        if (model_image_type < 0 || model_image_type >= MODELIMAGE_TYPE_TABLE.length) return "";
+        return MODELIMAGE_TYPE_TABLE[model_image_type];
+    }
 
 
     /**
@@ -160,86 +100,69 @@ public class AutoItkLoader implements ActionListener {
                 }
             }
         } else {
-            String msg = new String();
             // all other actions are filters...
-            String data_type = "F2F2";
-            FilterRecord fr = matchListName(m_FilterList, name);
+            FilterRecordItk fr = matchListName(m_FilterList, name);
             ModelImage model_image = m_Frame.getActiveImage();
-            int pixel_type = model_image.getType();
-            String pixel_type_str = MODELIMAGE_TYPE_TABLE[pixel_type];	
-            int model_dims = model_image.getNDims();
-            // A few filter use "F2" as shorthand for "F2F2"
-            String short_data_type = pixel_type_str + model_dims;
-            data_type = short_data_type + short_data_type;
-            
-            //if (fr != null && !fr.m_IOType.isEmpty()) {
-                //data_type = fr.m_IOType.get(0);
-            //}
-            if (model_dims != 2 && model_dims != 3) {
-                JOptionPane.showMessageDialog(m_Frame,
-                                              "Itk filters only support images of 2 or 3 dimensions. Please convert the image first.", 
-                                              "Filter class input mismatch",
-                                              JOptionPane.PLAIN_MESSAGE);
-                return;
-                    
-            }
-                
-            Class<?> cls = null;
-            try {
-                cls = Class.forName("InsightToolkit.itk" + name + "Filter" + data_type);
-                //msg = "Found "+ cls.getName() + "\n";
-            }
-            catch (ClassNotFoundException cnfe) {
-                // long data type not found, try the shorter version.
-            }
-            if (cls == null) {
-                try {
-                    cls = Class.forName("InsightToolkit.itk" + name + "Filter" + short_data_type);
-                }
-                catch (ClassNotFoundException cnfe) {
-                    // TODO user friendly available types.
-                    msg = "The filter " + name + " does not accept input/output data of type: " + 
-                        ModelImage.getBufferTypeStr(pixel_type) + " " + model_dims + "D.\n"
-                        + "Please convert the image first to one of these types: \n" +
-                        fr.m_IOType;
-                    JOptionPane.showMessageDialog(m_Frame,
-                                                  msg, "Filter class input mismatch",
-                                                  JOptionPane.PLAIN_MESSAGE);
-                    return;
-                }
-            }
-            
-            // Create a filter object, matching input image type.
-            Object filter_pointer_obj = createFilterObj(cls);
-            if (filter_pointer_obj == null) return;
-            Object filter_obj = invokeMethod("GetPointer", filter_pointer_obj);
 
+            // create JDialogItkFilter, and forget, dialog is responsible
+            // for getting and displaying result, if any. 
+            if (fr != null && model_image != null) {
+                new JDialogItkFilter(m_Frame, model_image, fr);
+            }
 
+            /*
             boolean do_set = ItkFilterRunDialog.showDialog(
                                         m_Frame,
                                         m_Frame,	
                                         "Set parameters for filter:",	
                                         name + " Filter",
-                                        filter_obj);
+                                        filter_obj.filter());
             //System.out.println("Do set " + do_set);
             if (!do_set) return;
 
+            ModelImage model_image_result = (ModelImage) model_image.clone();
+            model_image_result.setImageName(model_image.getImageName() + "_" + name);
+            AlgorithmItkFilter itk_filter = new AlgorithmItkFilter(model_image_result, model_image, filter_obj);
+            itk_filter.run();
+            
+            // show the results...
+            model_image.clearMask();
+
+            if ((itk_filter.isCompleted() == true) && (model_image_result != null)) {
+
+                // The algorithm has completed and produced a new image to be displayed.
+                if (model_image_result.isColorImage()) {
+                    JDialogBase.updateFileInfo(model_image, model_image_result);
+                }
+                
+                model_image_result.clearMask();
+                
+                try {
+                    new ViewJFrameImage(model_image_result, null, new Dimension(610, 200));
+                } catch (OutOfMemoryError error) {
+                    System.gc();
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            }
+            */
+            /*
             PItkImage2 itk_input2 = null;
             PItkImage3 itk_input3 = null;
             if (model_dims == 2) {
+
                 itk_input2 = InsightToolkitSupport.itkCreateImageSingle2D(model_image);
                 if (itk_input2 == null) return;
-                invokeMethod("SetInput", filter_obj, null, itk_input2.img());
+                invokeMethod("SetInput", filter_obj.filter(), null, itk_input2.img());
             } else if (model_dims == 3) {
                 itk_input3 = InsightToolkitSupport.itkCreateImageSingle3D(model_image);
                 if (itk_input3 == null) return;
-                invokeMethod("SetInput", filter_obj, null, itk_input3.img());
+                invokeMethod("SetInput", filter_obj.filter(), null, itk_input3.img());
             } else {
                 return;
             }
             // execute filter
-            invokeMethod("Update", filter_obj);
-            itkDataObject itk_output_do = (itkDataObject)invokeMethod("GetOutput", filter_obj);
+            invokeMethod("Update", filter_obj.filter());
+            itkDataObject itk_output_do = (itkDataObject)invokeMethod("GetOutput", filter_obj.filter());
             if (itk_output_do != null) {
                 ModelImage model_image_result = (ModelImage) model_image.clone();
                 model_image_result.setImageName(model_image.getImageName() + "_" + name);
@@ -255,6 +178,7 @@ public class AutoItkLoader implements ActionListener {
                 // show the results...
                 new ViewJFrameImage(model_image_result, null, new Dimension(610, 200));
             }
+            */
         }
     }
 
@@ -343,9 +267,9 @@ public class AutoItkLoader implements ActionListener {
         JMenu more_menu = null;
         int added_count = 0;
         if (m_FilterList != null) {
-            for(Iterator<FilterRecord> it = m_FilterList.iterator(); it.hasNext(); ) {
-                FilterRecord filter_rec = it.next();
-                if (filter_rec.m_Active && filter_rec.m_State != FilterRecord.FilterState.REMOVED) {
+            for(Iterator<FilterRecordItk> it = m_FilterList.iterator(); it.hasNext(); ) {
+                FilterRecordItk filter_rec = it.next();
+                if (filter_rec.m_Active && filter_rec.m_State != FilterRecordItk.FilterState.REMOVED) {
                     item = new JMenuItem(filter_rec.m_Name);
                     item.setActionCommand(filter_rec.m_Name);
                     item.addActionListener(this);
@@ -375,27 +299,27 @@ public class AutoItkLoader implements ActionListener {
     }
     
     /**
-     * Utility method to change the m_State member of each item in a FilterRecord list.
+     * Utility method to change the m_State member of each item in a FilterRecordItk list.
      * @param fr_list
      * @param state new state value.
      */
-    private void setListState(List<FilterRecord> fr_list, FilterRecord.FilterState state)
+    private void setListState(List<FilterRecordItk> fr_list, FilterRecordItk.FilterState state)
     {
-        for(Iterator<FilterRecord> it = fr_list.iterator(); it.hasNext(); ) {
+        for(Iterator<FilterRecordItk> it = fr_list.iterator(); it.hasNext(); ) {
             it.next().m_State = state;
         }
     }
 
     /**
-     * Utility method to find a FilterRecord with a matching name in supplied list.
+     * Utility method to find a FilterRecordItk with a matching name in supplied list.
      * @param fr_list list to search.
      * @param name to match.
-     * @return matching FilterRecord.
+     * @return matching FilterRecordItk.
      */
-    private FilterRecord matchListName(List<FilterRecord> fr_list, String name)
+    private FilterRecordItk matchListName(List<FilterRecordItk> fr_list, String name)
     {
-        for(Iterator<FilterRecord> it = fr_list.iterator(); it.hasNext(); ) {
-            FilterRecord fr = it.next();
+        for(Iterator<FilterRecordItk> it = fr_list.iterator(); it.hasNext(); ) {
+            FilterRecordItk fr = it.next();
             if (fr.m_Name.equals(name)) return fr;
         }
         return null;
@@ -406,40 +330,40 @@ public class AutoItkLoader implements ActionListener {
      * NEW, NORMAL, REMOVED state.
      * @return list, or null if jar _and_ serialization file can't be read. 
      */
-    private List<FilterRecord> combineFileJarList() 
+    private List<FilterRecordItk> combineFileJarList() 
     {
-        List<FilterRecord> jar_list = listFromJar();
+        List<FilterRecordItk> jar_list = listFromJar();
         if (jar_list == null) {
             // what's the useful action here?
             return listFromFile();
         }
         
-        List<FilterRecord> file_list = listFromFile();
+        List<FilterRecordItk> file_list = listFromFile();
         if (file_list == null) {
-            setListState(jar_list, FilterRecord.FilterState.NEW);
+            setListState(jar_list, FilterRecordItk.FilterState.NEW);
             return jar_list;
         }
 
         // If a record is in the jar and not the file, it's new, and active.
         // In both, it's normal, and active is determined by the file.
         // If a record is in the file and not the jar, it's removed, and inactive. 
-        for(Iterator<FilterRecord> it = jar_list.iterator(); it.hasNext(); ) {
-            FilterRecord fr_jar = it.next();
-            FilterRecord fr_file = matchListName(file_list, fr_jar.m_Name);
+        for(Iterator<FilterRecordItk> it = jar_list.iterator(); it.hasNext(); ) {
+            FilterRecordItk fr_jar = it.next();
+            FilterRecordItk fr_file = matchListName(file_list, fr_jar.m_Name);
             if (fr_file != null) {
-                fr_jar.m_State = FilterRecord.FilterState.NORMAL;
+                fr_jar.m_State = FilterRecordItk.FilterState.NORMAL;
                 fr_jar.m_Active = fr_file.m_Active;
             } else {
-                fr_jar.m_State = FilterRecord.FilterState.NEW;
+                fr_jar.m_State = FilterRecordItk.FilterState.NEW;
                 fr_jar.m_Active = true;
             }
         }                
         // traverse file list, looking for ones that have been removed from jar
-        for(Iterator<FilterRecord> it = file_list.iterator(); it.hasNext(); ) {
-            FilterRecord fr_file = it.next();
-            FilterRecord fr_jar = matchListName(jar_list, fr_file.m_Name);
+        for(Iterator<FilterRecordItk> it = file_list.iterator(); it.hasNext(); ) {
+            FilterRecordItk fr_file = it.next();
+            FilterRecordItk fr_jar = matchListName(jar_list, fr_file.m_Name);
             if (fr_jar == null) {
-                fr_file.m_State = FilterRecord.FilterState.REMOVED;
+                fr_file.m_State = FilterRecordItk.FilterState.REMOVED;
                 fr_file.m_Active = false;
                 jar_list.add(fr_file);
             }
@@ -451,9 +375,9 @@ public class AutoItkLoader implements ActionListener {
     /**
      * Get the InsightToolkit.jar from the classpath, and search it for Filter
      * classes.
-     * @return FilterRecords stored in the jar, all active.
+     * @return FilterRecordItks stored in the jar, all active.
      */
-    private List<FilterRecord> listFromJar()
+    private List<FilterRecordItk> listFromJar()
     {
         JarFile jf = null;
         Manifest jf_manifest =null;
@@ -488,9 +412,9 @@ public class AutoItkLoader implements ActionListener {
 
         JarEntry je = null;
         //String last_filter_str = "";
-        FilterRecord last_filter = null;
+        FilterRecordItk last_filter = null;
         int count = 0;
-        List<FilterRecord> filter_list = new ArrayList<FilterRecord>();
+        List<FilterRecordItk> filter_list = new ArrayList<FilterRecordItk>();
         for (Enumeration<JarEntry> e = jf.entries(); e.hasMoreElements(); ) {
             je = e.nextElement();
             File jef = new File(je.getName());
@@ -544,7 +468,7 @@ public class AutoItkLoader implements ActionListener {
             if (last_filter == null || !short_jef_name.equals(last_filter.m_Name)) {
                 // test to see if this new class is a useful ImageToImage filter, 
                 if (!validFilterClass(cls)) continue;
-                last_filter = new FilterRecord(short_jef_name, true);
+                last_filter = new FilterRecordItk(short_jef_name, true);
                 filter_list.add(last_filter);
                 count++;
             }
@@ -562,14 +486,14 @@ public class AutoItkLoader implements ActionListener {
 
         }
     
-        System.out.println("Unique filters: " + count);
+        //System.out.println("Unique filters: " + count);
         return filter_list;
     }
 
-    /** Generate a list of FilterRecord from our default serialized file.
+    /** Generate a list of FilterRecordItk from our default serialized file.
      * @return list, or null if file doesn't yet exist or is not readable or compatible.
      */
-    private List<FilterRecord> listFromFile()
+    private List<FilterRecordItk> listFromFile()
     {
         List<?> in_list = null;
         ObjectInputStream in = null;
@@ -596,18 +520,18 @@ public class AutoItkLoader implements ActionListener {
         if (in_list == null) return null;
 
         // making another list of the correct type avoids compiler warnings.
-        ArrayList<FilterRecord> ret_list = new ArrayList<FilterRecord>();
+        ArrayList<FilterRecordItk> ret_list = new ArrayList<FilterRecordItk>();
 
         // Filter state is transient, so comes in un-initialized i.e. null !! 
         // Assume that all filters are normal.
         for(Iterator<?> it = in_list.iterator(); it.hasNext(); ) {
-            FilterRecord filter_name = (FilterRecord) it.next();
-            filter_name.m_State = FilterRecord.FilterState.NORMAL;
+            FilterRecordItk filter_name = (FilterRecordItk) it.next();
+            filter_name.m_State = FilterRecordItk.FilterState.NORMAL;
             ret_list.add(filter_name);
 
             // XXX Testing
             //if (ret_list.size() == 3) {
-            //    ret_list.add(new FilterRecord("RemoveTestImage", true));
+            //    ret_list.add(new FilterRecordItk("RemoveTestImage", true));
             //}
         }
         return ret_list;
@@ -619,8 +543,8 @@ public class AutoItkLoader implements ActionListener {
      */
     private boolean writeListToFile()
     {
-        for(Iterator<FilterRecord> it = m_FilterList.iterator(); it.hasNext(); ) {
-            if (it.next().m_State == FilterRecord.FilterState.REMOVED) {
+        for(Iterator<FilterRecordItk> it = m_FilterList.iterator(); it.hasNext(); ) {
+            if (it.next().m_State == FilterRecordItk.FilterState.REMOVED) {
                 it.remove();
             }
         }
@@ -661,10 +585,10 @@ public class AutoItkLoader implements ActionListener {
         Class<?> t_ptr_cls = null;
         try {
             t_ptr_cls = Class.forName(pointer_class_name);
-            System.out.println("Found " + t_ptr_cls.getName());
+            //System.out.println("Found " + t_ptr_cls.getName());
         }
         catch (ClassNotFoundException cnfe) {
-            System.out.println("No luck, " + pointer_class_name);
+            //System.out.println("No luck, " + pointer_class_name);
             return null;
         }
 

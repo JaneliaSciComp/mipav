@@ -1,4 +1,4 @@
-package gov.nih.mipav.model.algorithms.itk.autoItk;
+package gov.nih.mipav.view.components;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -12,13 +12,15 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
 import InsightToolkit.*;
 
+import gov.nih.mipav.model.algorithms.itk.autoItk.*;
+
 /**
- * Given an Itk filter object, generate a dialog that lets the user set 
+ * Given an Itk filter object, generate a panel that lets the user set 
  * the available parameters for the filter, then indicate that they 
  * want to run the filter. The filter execution is performed by AutoItkLoader.
  * @author Geometric Tools
  */
-public class ItkFilterRunDialog extends JDialog implements ActionListener, PropertyChangeListener{
+public class JPanelItkFilterParams extends JPanel implements ActionListener, PropertyChangeListener {
     /** Inner class to associate 'set' methods with an input widget and a changed flag */
     class MethodArgRecord {
         public Method m_Method = null;
@@ -28,25 +30,35 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
     }
 
     /**
-     * Modal dialog single instance.
+     * tabbed pane to choose 2D, 2.5D or 3D filter.
      */
-    private static ItkFilterRunDialog dialog;
+    private JTabbedPane m_DimensionTab = null;
     /**
-     * Modal dialog return value
+     * Main panel that contains input widgets for 2D filter.
      */
-    private static boolean value = false;
+    private JPanel m_ParamPanel2D = null;
     /**
-     * Main panel that contains input widgets.
+     * Main panel that contains input widgets for 3D filter.
      */
-    private JPanel m_ParamPanel = null;
+    private JPanel m_ParamPanel3D = null;
+
     /**
-     * Itk filter object to manipulate.
+     * 2D Itk filter object to manipulate.
      */
-    private Object m_FilterObj = null;
+    private Object m_FilterObj2D = null;
+    /**
+     * 3D Itk filter object to manipulate.
+     */
+    private Object m_FilterObj3D = null;
+
     /**
      * Discovered list of the filter's 'set' methods
      */
-    private List<MethodArgRecord> m_MethodList = null;
+    private List<MethodArgRecord> m_MethodList2D = null;
+    /**
+     * Discovered list of the filter's 'set' methods
+     */
+    private List<MethodArgRecord> m_MethodList3D = null;
     
     // I'd LOVE DecimalFormat to work, but it returns Long or Double, even if I feed it a Float. 
     // I _need_ the type to be maintained. 
@@ -54,74 +66,56 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
     // i.e. it switches to 'E' notation if the number is too big for the field. No ',' separator, either.
     private static final DecimalFormat SCI_NOTATION = null; //new DecimalFormat("0.###E0");
 
-    /**
-     * Set up and show the dialog.  The first Component argument
-     * determines which frame the dialog depends on; it should be
-     * a component in the dialog's controlling frame. The second
-     * Component argument should be null if you want the dialog
-     * to come up with its left corner in the center of the screen;
-     * otherwise, it should be the component on top of which the
-     * dialog should appear.
-     * @param frameComp
-     * @param locationComp
-     * @param labelText label at the top of the dialog
-     * @param title title bar text
-     * @param filter_obj itk filter object input
-     * @return true if the user didn't Cancel or close.
+    /** Constructor, 
+     * @param filter_obj_2D for filtering 2D images or slices of 3D
+     * @param filter_obj_3D for filtering 3D images
+     * @param select_25D    start with 2D filter selected when 3D is available.
      */
-    public static boolean showDialog(Component frameComp,
-                                    Component locationComp,
-                                    String labelText,
-                                    String title,
-                                    Object filter_obj) {
-        Frame frame = JOptionPane.getFrameForComponent(frameComp);
-        dialog = new ItkFilterRunDialog(frame,
-                                locationComp,
-                                labelText,
-                                title,
-                                filter_obj);
-        dialog.setVisible(true);
-        return value;
+    public JPanelItkFilterParams(Object filter_obj_2D, Object filter_obj_3D, boolean select_25D) 
+    {
+        m_FilterObj2D = filter_obj_2D;
+        m_FilterObj3D = filter_obj_3D;
+        m_MethodList2D = new ArrayList<MethodArgRecord>();
+        m_MethodList3D = new ArrayList<MethodArgRecord>();
+
+        PanelManager myPanelManager = new PanelManager(this);
+        setBorder(WidgetFactory.buildTitledBorder("Parameters"));
+
+        m_ParamPanel2D = getPanelFillMethods(m_FilterObj2D, m_MethodList2D);
+        m_ParamPanel3D = getPanelFillMethods(m_FilterObj3D, m_MethodList3D);
+        
+        m_DimensionTab = new JTabbedPane();
+        // always add 2D tab.
+        m_DimensionTab.addTab( (m_ParamPanel3D != null ? "2.5D filter slices" : "2D"), m_ParamPanel2D);
+        if (m_ParamPanel3D != null) {
+            m_DimensionTab.addTab("3D", m_ParamPanel3D);
+            if (!select_25D) {
+                m_DimensionTab.setSelectedIndex(1);
+            }
+        }
+        if (m_ParamPanel2D == null) {
+            // disable if not available. Don't think this ever happens...
+            m_DimensionTab.setEnabledAt(0, false);
+            m_DimensionTab.setSelectedIndex(1);
+        }
+        myPanelManager.add(m_DimensionTab);
     }
 
-    /** Modal dialog return value.
-     * @param newValue
-     */
-    private void setValue(boolean newValue) 
+    public boolean is2DActive() 
     {
-        value = newValue;
+        if (m_DimensionTab == null) return true;
+        return (m_DimensionTab.getSelectedIndex() == 0);
     }
 
-    /** Constructor, mirrors the showDialog call. 
-     * @param frame
-     * @param locationComp
-     * @param labelText
-     * @param title
-     * @param filter_obj
-     */
-    protected ItkFilterRunDialog(Frame frame,
-                       Component locationComp,
-                       String labelText,
-                       String title,
-                       Object filter_obj) 
+    private JPanel getPanelFillMethods(Object filter_obj, List<MethodArgRecord> method_list)
     {
-        super(frame, title, true);
+        if (filter_obj == null) return null;
+
         Class<?> filterClass = filter_obj.getClass();
-        m_FilterObj = filter_obj;
-        m_MethodList = new ArrayList<MethodArgRecord>();
-
-        //Create and initialize the buttons.
-        JButton cancelButton = new JButton("Cancel");
-        cancelButton.addActionListener(this);
-        //
-        final JButton runButton = new JButton("Run");
-        runButton.setActionCommand("Run");
-        runButton.addActionListener(this);
-        getRootPane().setDefaultButton(runButton);
 
         // Main content - list of set methods with values.
-        m_ParamPanel = new JPanel();
-        m_ParamPanel.setLayout(new GridBagLayout());
+        JPanel paramPanel = new JPanel();
+        paramPanel.setLayout(new GridBagLayout());
 
         GridBagConstraints gbc_label = new GridBagConstraints();
         gbc_label.gridx = 0;
@@ -144,60 +138,42 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
             StringBuffer type_str = new StringBuffer("");
             // Get an appropriate widget for setting the method's value, 
             // plus note about the type of numbers accepted. 
-            getMethodArgSetter(m_FilterObj, ar, type_str);
+            getMethodArgSetter(filter_obj, ar, type_str);
 
             // if there's no component, don't show an interface for it.
             if (ar.m_Component != null) {
                 String name = method_arr[i].getName();
                 // strip "Set" off the front.
-                JLabel lbl = new JLabel(name.substring(3) + "   " + type_str);
+                JLabel lbl = WidgetFactory.buildLabel(name.substring(3) + "   " + type_str);
                 gbc_label.gridy = i;
-                m_ParamPanel.add(lbl, gbc_label);
+                paramPanel.add(lbl, gbc_label);
 
                 gbc_field.gridy = i;
-                m_ParamPanel.add(ar.m_Component, gbc_field);
+                paramPanel.add(ar.m_Component, gbc_field);
 
-                m_MethodList.add(ar);
+                method_list.add(ar);
             } else {
                 ar = null;
             }
         }
+        return paramPanel;
 
-        JScrollPane listScroller = new JScrollPane(m_ParamPanel);
+        //JScrollPane listScroller = new JScrollPane(m_ParamPanel);
         //listScroller.setPreferredSize(new Dimension(250, 80));
-        listScroller.setAlignmentX(LEFT_ALIGNMENT);
+        //listScroller.setAlignmentX(LEFT_ALIGNMENT);
 
         //Create a container so that we can add a title around
         //the scroll pane.  Can't add a title directly to the
         //scroll pane because its background would be white.
         //Lay out the label and scroll pane from top to bottom.
-        JPanel listPane = new JPanel();
-        listPane.setLayout(new BoxLayout(listPane, BoxLayout.PAGE_AXIS));
-        JLabel label = new JLabel(labelText);
-        label.setLabelFor(m_ParamPanel);
-        listPane.add(label);
-        listPane.add(Box.createRigidArea(new Dimension(0,5)));
-        listPane.add(listScroller);
-        listPane.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        //this.setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+        //JLabel label = new JLabel(labelText);
+        //label.setLabelFor(m_ParamPanel);
+        //this.add(label);
+        //this.add(Box.createRigidArea(new Dimension(0,5)));
+        //this.add(listScroller);
+        //this.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
 
-        //Lay out the buttons from left to right.
-        JPanel buttonPane = new JPanel();
-        buttonPane.setLayout(new BoxLayout(buttonPane, BoxLayout.LINE_AXIS));
-        buttonPane.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
-        buttonPane.add(Box.createHorizontalGlue());
-        buttonPane.add(cancelButton);
-        buttonPane.add(Box.createRigidArea(new Dimension(10, 0)));
-        buttonPane.add(runButton);
-
-        //Put everything together, using the content pane's BorderLayout.
-        Container contentPane = getContentPane();
-        contentPane.add(listPane, BorderLayout.CENTER);
-        contentPane.add(buttonPane, BorderLayout.PAGE_END);
-
-        //Initialize values.
-        setValue(false);
-        pack();
-        
     }
 
     /** Create widgets that can set the param's value in the filter.
@@ -278,7 +254,7 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
                 return;
             } else if (param == Character.TYPE ||
                        param == Byte.TYPE) {
-                JLabel lbl = new JLabel(param.getSimpleName());
+                JLabel lbl = WidgetFactory.buildLabel(param.getSimpleName());
                 ar.m_Component = lbl;
                 return;
             } else if (param == Boolean.TYPE) {
@@ -396,7 +372,7 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
                             // so I needed double.class instead of (new Double).getClass()
                             AutoItkLoader.invokeMethod("Fill", def_val, null, new Double(0.0));
                         } else {
-                            ar.m_Component = new JLabel("Unavailable (error)");
+                            ar.m_Component = WidgetFactory.buildLabel("Unavailable (error)");
                             return;
                         }
                     }
@@ -424,7 +400,7 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
                     }
                     ar.m_DefaultVal = def_kernel;
                     gbc.gridx = 0;
-                    JLabel lbl = new JLabel("radius");
+                    JLabel lbl = WidgetFactory.buildLabel("radius");
                     ctrl_panel.add(lbl, gbc);
                     JFormattedTextField ftf = new JFormattedTextField();
                     ftf.setColumns(5);
@@ -442,13 +418,13 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
             //InsightToolkit.itkNodeContainerUC2, itkImageF2/D2, etc
             if (param_name.startsWith("SWIGTYPE")) {
                 // return null to leave out setter completely, or a label to see it.
-                ar.m_Component = null;//new JLabel("Unavailable (Swig placeholder)");
+                ar.m_Component = null;//WidgetFactory.buildLabel("Unavailable (Swig placeholder)");
                 return;
             }
             String lbl_text = (param_name.length() < 30 ?
                                param_name : 
                                param_name.substring(0, 28) + "...");
-            JLabel lbl = new JLabel(lbl_text);
+            JLabel lbl = WidgetFactory.buildLabel(lbl_text);
             ar.m_Component = lbl;
             return;
         }
@@ -494,7 +470,7 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
                 elem_obj = AutoItkLoader.invokeMethod("GetElement", def_index, null, new Integer(i));
             }
 
-            JLabel lbl = new JLabel(labels[i]);
+            JLabel lbl = WidgetFactory.buildLabel(labels[i]);
             ctrl_panel.add(lbl, gbc);
             gbc.gridx++; 
             JFormattedTextField ftf = null;
@@ -526,12 +502,22 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
     /**
      * When dialog is dismissed with 'run', call all the Set methods that had their
      * input widgets changed.
+     * @return false on error. None so far.
      */
-    private void runSetMethods() 
+    public boolean runSetMethods() 
     {
+        Object filterObj = null;
+        Iterator<MethodArgRecord> it = null;
+        if ( !is2DActive() && m_FilterObj3D != null ) {
+            filterObj = m_FilterObj3D;
+            it = m_MethodList3D.iterator() ;
+        } else {
+            filterObj = m_FilterObj2D;
+            it = m_MethodList2D.iterator();
+        }
         // Find out whether the user changed the filter params, and call
         // matching Set methods.
-        for(Iterator<MethodArgRecord> it = m_MethodList.iterator(); it.hasNext(); ) {
+        while(it.hasNext()) {
             MethodArgRecord ar = it.next();
             if (ar.m_Changed) {
                 System.out.println("Run: Changing " + ar.m_Method.getName());
@@ -539,11 +525,11 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
                     //Get value from tf and call set method.
                     Object val = ((JFormattedTextField)ar.m_Component).getValue();
                     
-                    AutoItkLoader.invokeMethod(m_FilterObj, ar.m_Method, val);
+                    AutoItkLoader.invokeMethod(filterObj, ar.m_Method, val);
                 } else if (ar.m_Component instanceof JCheckBox) {
                     boolean do_invoke = ((JCheckBox)ar.m_Component).isSelected();
                     if (do_invoke) {
-                        AutoItkLoader.invokeMethod(m_FilterObj, ar.m_Method);
+                        AutoItkLoader.invokeMethod(filterObj, ar.m_Method);
                     }
                 } else if (ar.m_Component instanceof JPanel) {
                     String def_class_name = (ar.m_DefaultVal == null ? "" : ar.m_DefaultVal.getClass().getSimpleName());
@@ -551,7 +537,7 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
                         // First radio button "on", says whether boolean is true.
                         JRadioButton rb = (JRadioButton)((JPanel)ar.m_Component).getComponent(0);
                         boolean on_selected = rb.isSelected();
-                        AutoItkLoader.invokeMethod(m_FilterObj, ar.m_Method, on_selected);
+                        AutoItkLoader.invokeMethod(filterObj, ar.m_Method, on_selected);
                     } else if (def_class_name.startsWith("itkBinaryBallStructuringElement")) {
                         // compound itk object, take action based on default value we saved.
                         // get text field.
@@ -563,7 +549,7 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
                                 // create the kernel
                                 AutoItkLoader.invokeMethod("CreateStructuringElement", ar.m_DefaultVal);
                                 // Set the kernel
-                                AutoItkLoader.invokeMethod(m_FilterObj, ar.m_Method, ar.m_DefaultVal);
+                                AutoItkLoader.invokeMethod(filterObj, ar.m_Method, ar.m_DefaultVal);
                                 
                                 //System.out.println("Run: kernel radius " + val);
                             }
@@ -584,7 +570,7 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
                             }
                         }
                         // set the param value.
-                        AutoItkLoader.invokeMethod(m_FilterObj, ar.m_Method, ar.m_DefaultVal);
+                        AutoItkLoader.invokeMethod(filterObj, ar.m_Method, ar.m_DefaultVal);
 
                     } else if (def_class_name.startsWith("itkSize") ||
                                def_class_name.startsWith("itkIndex") ) {
@@ -601,7 +587,7 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
                             }
                         }
                         // set the param value.
-                        AutoItkLoader.invokeMethod(m_FilterObj, ar.m_Method, ar.m_DefaultVal);
+                        AutoItkLoader.invokeMethod(filterObj, ar.m_Method, ar.m_DefaultVal);
 
                     } else if (def_class_name.startsWith("itkImageRegion") ) {
                         System.out.println("Run: TODO Jpanel component changed, " +
@@ -617,6 +603,7 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
                 }
             }
         }
+        return true;
     }
 
     /* (non-Javadoc)
@@ -624,26 +611,16 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
      */
     public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
-        if ("Run".equals(cmd)) {
-            System.out.println("Run: execute the filter.");
-            ItkFilterRunDialog.value = true;
-            if (m_FilterObj == null) {
-                System.out.println("Run: Unexpected null filter object. No action taken.");
-                return;
-            }
-            runSetMethods();
-            ItkFilterRunDialog.dialog.setVisible(false);
-        } else if ("Cancel".equals(cmd)){
-            ItkFilterRunDialog.dialog.setVisible(false);
-        } else {
-            for(Iterator<MethodArgRecord> it = m_MethodList.iterator(); it.hasNext(); ) {
-                MethodArgRecord ar = it.next();
-                if (ar.m_Method.getName().equals(cmd)) {
-                    ar.m_Changed = true;
-                }
+        // mark a 'changed' flag for this widget.
+        Iterator<MethodArgRecord> it = ( (!is2DActive() && m_FilterObj3D != null) ?
+                                         m_MethodList3D.iterator() :
+                                         m_MethodList2D.iterator() );
+        while(it.hasNext()) {
+            MethodArgRecord ar = it.next();
+            if (ar.m_Method.getName().equals(cmd)) {
+                ar.m_Changed = true;
             }
         }
-            
     }
 
     /* (non-Javadoc)
@@ -652,7 +629,10 @@ public class ItkFilterRunDialog extends JDialog implements ActionListener, Prope
     public void propertyChange(PropertyChangeEvent evt) {
         // Set the 'Changed' flag for any (formatted text field) component that changes.
         Object source = evt.getSource();
-        for(Iterator<MethodArgRecord> it = m_MethodList.iterator(); it.hasNext(); ) {
+        Iterator<MethodArgRecord> it = ( (!is2DActive() && m_FilterObj3D != null) ?
+                                         m_MethodList3D.iterator() :
+                                         m_MethodList2D.iterator() );
+        while(it.hasNext()) {
             MethodArgRecord ar = it.next();
             // for some Itk args, a JPanel contains the widgets that trigger
             // change events.

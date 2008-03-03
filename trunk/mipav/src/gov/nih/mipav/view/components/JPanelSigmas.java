@@ -18,35 +18,35 @@ import javax.swing.*;
  */
 public class JPanelSigmas extends JPanel implements FocusListener, ItemListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    //~ Static fields/initializers ---------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 4032897701053956108L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    //~ Instance fields --------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** gui */
     private JCheckBox correctionFactorCheckbox;
 
-    /** DOCUMENT ME! */
+    /** label */
     private JLabel correctionFactorLabel;
 
-    /** DOCUMENT ME! */
+    /** label */
     private JLabel labelGaussZ;
 
-    /** DOCUMENT ME! */
+    /** the input image which will be processed */
     private ModelImage srcImage;
 
-    /** DOCUMENT ME! */
+    /** gui, sigma value */
     private JTextField textGaussX;
 
-    /** DOCUMENT ME! */
+    /** gui, sigma value */
     private JTextField textGaussY;
 
-    /** DOCUMENT ME! */
+    /** gui, sigma value */
     private JTextField textGaussZ;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    //~ Constructors -----------------------------------------------------------------------------------
 
     /**
      * Construct the sigma panel.
@@ -59,7 +59,7 @@ public class JPanelSigmas extends JPanel implements FocusListener, ItemListener 
         initGUI();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    //~ Methods ----------------------------------------------------------------------------------------
 
     /**
      * Enables or disables the components in this panel which are 3D-related.

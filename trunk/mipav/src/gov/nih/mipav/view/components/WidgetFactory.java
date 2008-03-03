@@ -384,7 +384,7 @@ public class WidgetFactory {
         /** Use serialVersionUID for interoperability. */
         private static final long serialVersionUID = 3869765356771292936L;
 
-        /** DOCUMENT ME! */
+        /** accessible JTextArea */
         private JTextArea tArea = null;
 
         /**
@@ -402,9 +402,9 @@ public class WidgetFactory {
         }
 
         /**
-         * DOCUMENT ME!
+         * JTextArea accessor
          *
-         * @return  DOCUMENT ME!
+         * @return contained JTextArea
          */
         public JTextArea getTextArea() {
             return tArea;
