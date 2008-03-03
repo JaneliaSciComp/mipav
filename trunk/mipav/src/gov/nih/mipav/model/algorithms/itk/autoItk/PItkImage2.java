@@ -31,6 +31,7 @@ public class PItkImage2
             break;
         }
         case ModelImage.UBYTE:
+        case ModelImage.ARGB:
         {
             itkImageUC2_Pointer kImageITK_p = itkImageUC2.itkImageUC2_New();
             m_SmartPointer = kImageITK_p;
@@ -45,6 +46,7 @@ public class PItkImage2
             break;
         }
         case ModelImage.USHORT:
+        case ModelImage.ARGB_USHORT:
         {
             itkImageUS2_Pointer kImageITK_p = itkImageUS2.itkImageUS2_New();
             m_SmartPointer = kImageITK_p;
@@ -74,6 +76,7 @@ public class PItkImage2
             break;
         }
         case ModelImage.FLOAT:
+        case ModelImage.ARGB_FLOAT:
         {
             // Create instance of ITK 2D image of floating point values
             itkImageF2_Pointer kImageITK_p = itkImageF2.itkImageF2_New();
@@ -90,9 +93,6 @@ public class PItkImage2
             break;
         }
         case ModelImage.BOOLEAN:
-        case ModelImage.ARGB:
-        case ModelImage.ARGB_USHORT:
-        case ModelImage.ARGB_FLOAT:
         case ModelImage.COMPLEX:
         case ModelImage.DCOMPLEX:
             break;

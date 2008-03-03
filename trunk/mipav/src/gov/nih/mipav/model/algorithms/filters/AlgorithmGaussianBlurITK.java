@@ -12,28 +12,37 @@ import java.io.*;
 
 
 /**
- * Implementation of a Gaussian blur using functionality provided by the InsightToolkit library (www.itk.org).
+ * Implementation of a Gaussian blur using functionality provided by the
+ * InsightToolkit library (www.itk.org).
  *
- * <p>The application of this algorithm blurs an image or VOI region of the image with a Gaussian function at a user
- * defined scale (sigma - standard deviation). In essence, convolving a Gaussian function produces the same result as a
- * low-pass or smoothing filter. A low-pass filter attenuates high frequency components of the image (i.e. edges) and
- * passes low frequency components and thus results in the blurring of the image. Smoothing filters are typically used
- * for noise reduction and for blurring. The standard deviation (SD) of the Gaussian function controls the amount of
- * blurring:a large SD (i.e. > 2) significantly blurs while a small SD (i.e. 0.5) blurs less. If the objective is to
- * achieve noise reduction, a rank filter (median) might be more useful.</p>
+ * <p>The application of this algorithm blurs an image or VOI region of the
+ * image with a Gaussian function at a user defined scale (sigma - standard
+ * deviation). In essence, convolving a Gaussian function produces the same
+ * result as a low-pass or smoothing filter. A low-pass filter attenuates high
+ * frequency components of the image (i.e. edges) and passes low frequency
+ * components and thus results in the blurring of the image. Smoothing filters
+ * are typically used for noise reduction and for blurring. The standard
+ * deviation (SD) of the Gaussian function controls the amount of blurring:a
+ * large SD (i.e. > 2) significantly blurs while a small SD (i.e. 0.5) blurs
+ * less. If the objective is to achieve noise reduction, a rank filter
+ * (median) might be more useful.</p>
  *
  * <p>1D Gaussian = (1/sqrt(2*PI*sigma*sigma))*exp(-x*x/(2*sigma*sigma));</p>
  *
- * <p>Advantages to convolving the Gaussian function to blur an image include:</p>
+ * <p>Advantages to convolving the Gaussian function to blur an image
+ * include:</p>
  *
- * <p>1. Structure will not be added to the image. 2. Can be analytically calculated, as well as the Fourier Transform
- * of the Gaussian. 3. By varying the SD a Gaussian scale-space can easily be constructed.</p>
+ * <ol><li>Structure will not be added to the image.</li><li>Can be
+ * analytically calculated, as well as the Fourier Transform of the
+ * Gaussian.</li><li>By varying the SD a Gaussian scale-space can easily be
+ * constructed.</li> </ol>
  */
 public class AlgorithmGaussianBlurITK extends AlgorithmBase {
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    //~ Instance fields ----------------------------------------------------------------------------
 
-    /** Flags indicate which color channel to process. True indicates the channel should be processed. */
+    /** Flags indicate which color channel to process. True indicates the
+     * channel should be processed. */
     private boolean[] abProcessChannel = new boolean[] {
                                              false, // alpha
                                              true, // red
@@ -47,14 +56,15 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
     /** Standard deviations of the gaussian used to calculate the kernels. */
     private float[] sigmas;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    //~ Constructors -------------------------------------------------------------------------------
 
     /**
      * Creates a new AlgorithmGaussianBlurITK object.
      *
      * @param  srcImg  source image model
      * @param  sigmas  Gaussian's standard deviations in the each dimension
-     * @param  img25D  Flag, if true, indicates that each slice of the 3D volume should be processed independently. 2D
+     * @param  img25D  Flag, if true, indicates that each slice of the 3D
+     *                 volume should be processed independently. 2D
      *                 images disregard this flag.
      */
     public AlgorithmGaussianBlurITK(ModelImage srcImg, float[] sigmas, boolean img25D ) {
@@ -70,7 +80,8 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
      * @param  destImg  image model where result image is to stored
      * @param  srcImg   source image model
      * @param  sigmas   Gaussian's standard deviations in the each dimension
-     * @param  img25D   Flag, if true, indicates that each slice of the 3D volume should be processed independently. 2D
+     * @param  img25D   Flag, if true, indicates that each slice of the 3D 
+     *                  volume should be processed independently. 2D
      *                  images disregard this flag.
      */
     public AlgorithmGaussianBlurITK(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean img25D) {
@@ -80,7 +91,7 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
         image25D = img25D;
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    //~ Methods ------------------------------------------------------------------------------------
 
     /**
      * Prepares this class for destruction.

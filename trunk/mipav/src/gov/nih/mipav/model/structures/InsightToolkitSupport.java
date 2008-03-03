@@ -605,10 +605,12 @@ public class InsightToolkitSupport {
                     // Problem: unsigned types use next-higher signed type to set value.
                     switch (model_image_type) {
                     case ModelImage.UBYTE:
+                    case ModelImage.ARGB:
                     	((itkImageUC2)kImageITK.img()).SetPixel(iIndexITK, 
                                                         (short)(Array.getByte(aValues, iIndex++) & 0xff));
                         break;
                     case ModelImage.USHORT:
+                    case ModelImage.ARGB_USHORT:
                     	((itkImageUS2)kImageITK.img()).SetPixel(iIndexITK, 
                                                         (int)(Array.getShort(aValues, iIndex++) & 0xffff));
                         break;
@@ -707,10 +709,12 @@ public class InsightToolkitSupport {
                         // SEE 2D image version for explanation.
                         switch (model_image_type) {
                         case ModelImage.UBYTE:
+                        case ModelImage.ARGB:
                             ((itkImageUC3)kImageITK.img()).SetPixel(iIndexITK, 
                                                         (short)(Array.getByte(aValues, iIndex++) & 0xff));
                             break;
                         case ModelImage.USHORT:
+                        case ModelImage.ARGB_USHORT:
                             ((itkImageUS3)kImageITK.img()).SetPixel(iIndexITK, 
                                                         (int)(Array.getShort(aValues, iIndex++) & 0xffff));
                             break;
