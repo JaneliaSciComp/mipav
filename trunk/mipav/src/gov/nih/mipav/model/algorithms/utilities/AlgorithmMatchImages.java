@@ -1553,38 +1553,38 @@ public class AlgorithmMatchImages extends AlgorithmBase {
 
         switch (ibest * pbest) {
 
-            case -1:
+            case 1:
                 axisOrientation[0] = FileInfoBase.ORI_L2R_TYPE;
                 break;
 
-            case 1:
+            case -1:
                 axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
                 break;
 
-            case -2:
+            case 2:
                 axisOrientation[0] = FileInfoBase.ORI_P2A_TYPE;
                 break;
 
-            case 2:
+            case -2:
                 axisOrientation[0] = FileInfoBase.ORI_A2P_TYPE;
                 break;
         }
 
         switch (jbest * qbest) {
 
-            case -1:
+            case 1:
                 axisOrientation[1] = FileInfoBase.ORI_L2R_TYPE;
                 break;
 
-            case 1:
+            case -1:
                 axisOrientation[1] = FileInfoBase.ORI_R2L_TYPE;
                 break;
 
-            case -2:
+            case 2:
                 axisOrientation[1] = FileInfoBase.ORI_P2A_TYPE;
                 break;
 
-            case 2:
+            case -2:
                 axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
                 break;
         }
