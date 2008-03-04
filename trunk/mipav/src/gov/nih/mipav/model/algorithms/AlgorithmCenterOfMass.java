@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.Preferences;
 
 import java.io.*;
 import java.text.DecimalFormat;
@@ -158,7 +159,8 @@ public class AlgorithmCenterOfMass extends AlgorithmBase {
         xCOM = xMass * srcImage.getFileInfo()[0].getResolutions()[0]/valTot;
         yCOM = yMass * srcImage.getFileInfo()[0].getResolutions()[1]/valTot;
         comStr = nf.format(xCOM) + "\t" + nf.format(yCOM);
-        UI.setDataText("  Center of Mass               \t= " + comStr + "\n");
+        UI.setDataText(srcImage.getImageName() + "  Center of Mass               \t= " + comStr + "\n");
+        Preferences.debug(srcImage.getImageName() + "  Center of Mass               \t= " + comStr + "\n");
 
         setCompleted(true);
     }
@@ -253,7 +255,8 @@ public class AlgorithmCenterOfMass extends AlgorithmBase {
         yCOM = yMass * srcImage.getFileInfo()[0].getResolutions()[1]/valTot;
         zCOM = zMass * srcImage.getFileInfo()[0].getResolutions()[2]/valTot;
         comStr = nf.format(xCOM) + "\t" + nf.format(yCOM) + "\t" + nf.format(zCOM);
-        UI.setDataText("  Center of Mass               \t= " + comStr + "\n");
+        UI.setDataText(srcImage.getImageName() + "  Center of Mass               \t= " + comStr + "\n");
+        Preferences.debug(srcImage.getImageName() + "  Center of Mass               \t= " + comStr + "\n");
 
         setCompleted(true);
 
