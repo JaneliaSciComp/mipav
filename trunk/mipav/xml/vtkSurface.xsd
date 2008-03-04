@@ -61,14 +61,14 @@
 			<xs:attribute name="NumberOfPolys" use="required">
 				<xs:simpleType>
 					<xs:restriction base="xs:short">
-						<xs:enumeration value="13984"/>
+
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:attribute>
 			<xs:attribute name="NumberOfPoints" use="required">
 				<xs:simpleType>
 					<xs:restriction base="xs:short">
-						<xs:enumeration value="6994"/>
+			
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:attribute>
