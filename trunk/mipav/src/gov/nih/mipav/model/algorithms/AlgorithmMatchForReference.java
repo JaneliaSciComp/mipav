@@ -124,6 +124,7 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
      * algorithm's run function....
      */
     public void runAlgorithm() {
+        int units2D[] = new int[2];
 
         if (!correctDims) {
             return;
@@ -314,10 +315,11 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
                                                    res[2], newXDim, newYDim, newZDim, 
                                                    false, false, false);
                 } else {
+                    units2D[0] = adjImage.getUnitsOfMeasure(0);
+                    units2D[1] = adjImage.getUnitsOfMeasure(1);
                     trans = new AlgorithmTransform(adjImage, xfrmAdj, AlgorithmTransform.BILINEAR, res[0], res[1],
                                                    newXDim, newYDim, 
-                                                   adjImage.getUnitsOfMeasure(0),
-                                                   adjImage.getUnitsOfMeasure(1),
+                                                   units2D,
                                                    false, false, false);
                 }
 
@@ -339,10 +341,11 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
                                                    res[2], newXDim, newYDim, newZDim, 
                                                    false, false, false);
                 } else {
+                    units2D[0] = newAdjImage.getUnitsOfMeasure(0);
+                    units2D[1] = newAdjImage.getUnitsOfMeasure(1);
                     trans = new AlgorithmTransform(refImage, xfrmRef, AlgorithmTransform.BILINEAR, res[0], res[1],
                                                    newXDim, newYDim, 
-                                                   newAdjImage.getUnitsOfMeasure(0),
-                                                   newAdjImage.getUnitsOfMeasure(1),
+                                                   units2D,
                                                    false, false, false);
                 }
 
@@ -366,10 +369,11 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
                                                    res[2], newXDim, dims[1], newZDim, 
                                                    false, false, false);
                 } else {
+                    units2D[0] = newRefImage.getUnitsOfMeasure(0);
+                    units2D[1] = newRefImage.getUnitsOfMeasure(1);
                     trans = new AlgorithmTransform(adjImage, xfrmAdj, AlgorithmTransform.BILINEAR, res[0], res[1],
                                                    newXDim, dims[1], 
-                                                   newRefImage.getUnitsOfMeasure(0),
-                                                   newRefImage.getUnitsOfMeasure(1),
+                                                   units2D,
                                                    false, false, false);
                 }
 
@@ -391,9 +395,10 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
                                                    res[2], newXDim, dims[1], newZDim, 
                                                    false, false, false);
                 } else {
+                    units2D[0] = newAdjImage.getUnitsOfMeasure(0);
+                    units2D[1] = newAdjImage.getUnitsOfMeasure(1);
                     trans = new AlgorithmTransform(refImage, xfrmRef, AlgorithmTransform.BILINEAR, res[0], res[1],
-                                                   newXDim, dims[1],  newAdjImage.getUnitsOfMeasure(0),
-                                                   newAdjImage.getUnitsOfMeasure(1),
+                                                   newXDim, dims[1],  units2D,
                                                    false, false, false);
                 }
 
@@ -421,10 +426,11 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
                                                    res[2], dims[0], newYDim, newZDim, 
                                                    false, false, false);
                 } else {
+                    units2D[0] = adjImage.getUnitsOfMeasure(0);
+                    units2D[1] = adjImage.getUnitsOfMeasure(1);
                     trans = new AlgorithmTransform(adjImage, xfrmAdj, AlgorithmTransform.BILINEAR, res[0], res[1],
                                                    dims[0], newYDim, 
-                                                   adjImage.getUnitsOfMeasure(0),
-                                                   adjImage.getUnitsOfMeasure(1),
+                                                   units2D,
                                                    false, false, false);
                 }
 
@@ -447,10 +453,11 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
                                                    res[2], dims[0], newYDim, newXDim, 
                                                    false, false, false);
                 } else {
+                    units2D[0] = refImage.getUnitsOfMeasure(0);
+                    units2D[1] = refImage.getUnitsOfMeasure(1);
                     trans = new AlgorithmTransform(refImage, xfrmRef, AlgorithmTransform.BILINEAR, res[0], res[1],
                                                    dims[0], newYDim, 
-                                                   refImage.getUnitsOfMeasure(0),
-                                                   refImage.getUnitsOfMeasure(1),
+                                                   units2D,
                                                    false, false, false);
                 }
 
@@ -473,10 +480,11 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
                                                    res[2], dims[0], dims[1], newZDim, 
                                                    false, false, false);
                 } else {
+                    units2D[0] = adjImage.getUnitsOfMeasure(0);
+                    units2D[1] = adjImage.getUnitsOfMeasure(1);
                     trans = new AlgorithmTransform(adjImage, xfrmAdj, AlgorithmTransform.BILINEAR, res[0], res[1],
                                                    dims[0], dims[1], 
-                                                   adjImage.getUnitsOfMeasure(0),
-                                                   adjImage.getUnitsOfMeasure(1),
+                                                   units2D,
                                                    false, false, false);
                 }
 
