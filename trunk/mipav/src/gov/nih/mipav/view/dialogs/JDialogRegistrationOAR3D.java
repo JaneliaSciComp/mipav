@@ -233,6 +233,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
     /** DOCUMENT ME! */
     private boolean zSelected = false;
+    
+    private AlgorithmCenterOfMass comAlgo;
+    
+    private float threshold[] = new float[2];
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -479,6 +483,18 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                         transform.disposeLocal();
                         transform = null;
                     }
+                }
+                
+                if (!refImage.isColorImage()) {
+                    threshold[0] = -Float.MAX_VALUE;
+                    threshold[1] = Float.MAX_VALUE;
+                    comAlgo = new AlgorithmCenterOfMass(refImage, threshold, true);
+                    comAlgo.run();
+                    comAlgo = new AlgorithmCenterOfMass(matchImage, threshold, true);
+                    comAlgo.run();
+                    comAlgo = new AlgorithmCenterOfMass(resultImage, threshold, true);
+                    comAlgo.run();
+                    comAlgo.finalize();
                 }
 
                 finalMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
