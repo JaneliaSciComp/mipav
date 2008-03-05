@@ -288,8 +288,35 @@ public class ViewOpenImageSequence extends JFrame
             Dimension subsampleDimension = null;
 
             if (dimensionsSanityCheck() == false) {
-                MipavUtil.displayError("One or more Z-C-T dimensions values invalid.");
-
+            	String dimFormat = "";
+            	switch (getSelectedSequence()) {
+            	
+	                case ZCT:
+	                    dimFormat = radZCT.getText();
+	                    break;
+	
+	                case ZTC:
+	                    dimFormat = radZTC.getText();
+	                    break;
+	
+	                case TZC:
+	                    dimFormat = radTZC.getText();
+	                    break;
+	
+	                case TCZ:
+	                    dimFormat = radTCZ.getText();
+	                    break;
+	
+	                case CTZ:
+	                    dimFormat = radCTZ.getText();
+	                    break;
+	
+	                case CZT:
+	                    dimFormat = radCZT.getText();
+	                    break;
+                }
+            	
+                MipavUtil.displayError("One or more "+dimFormat+" dimensions values invalid.");
                 return;
             }
 
