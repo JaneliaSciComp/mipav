@@ -498,6 +498,10 @@ public class VOI extends ModelSerialCloneable {
         }
     }
 
+    /**
+     * Clone function that calls the super (modelserializable) clone and then manually copies references 
+     * to the transient VOIListeners (eventlistenerlist)
+     */
     public Object clone() {
     	Object obj = super.clone();
     	
