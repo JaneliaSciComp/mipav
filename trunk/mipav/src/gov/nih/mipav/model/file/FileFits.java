@@ -2,6 +2,7 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
 
 import gov.nih.mipav.view.*;
 
@@ -10,6 +11,11 @@ import java.io.*;
 
 /**
  * Some of this code is derived from FITS.java in ImageJ.
+ * In A User's Guide for the Flexible Image Transport System (FITS) Version 4.0, Section 4.1 Indexes and Physical
+ * Coordinates, the text says, "recommend that FITS writers order pixels starting in the lower left hand corner
+ * of the image, with the first axis increasing to the right, as in the rectangular coordinate x-axis, and the 
+ * second increasing upward (the y-axis)."  MIPAV uses the upper left hand corner as the origin and has the y axis
+ * going downward.  Therfore, the image is flipped after reading and flipped before writing.
  */
 public class FileFits extends FileBase {
 
@@ -53,6 +59,10 @@ public class FileFits extends FileBase {
 
     /** DOCUMENT ME! */
     private int numberSlices; // 1 for 2D, zDim for 3D, and zDim * tDim for 4D
+    
+    private boolean isColorPlanar2D = false;
+    
+    private AlgorithmFlip flipAlgo;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -655,42 +665,47 @@ public class FileFits extends FileBase {
                     Preferences.debug("CDELT4 = " + imgResols[3] + "\n");
                 } // else if (s.startsWith("CDELT4"))
                 else if (s.startsWith("CTYPE")) {
-                    subS = s.substring(10, 80);
-                    subS = subS.trim();
-                    subS = subS.substring(1, subS.length() - 1); // Remove beginning and ending '
-                    Preferences.debug("CTYPE" + s.substring(5, 6) + " = " + subS + "\n");
                     dimNumber = Integer.parseInt(s.substring(5, 6));
-
-                    if (subS.equals(FileInfoBase.INCHES_STRING)) {
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, dimNumber - 1);
-                    } else if (subS.equals(FileInfoBase.MILLIMETERS_STRING)) {
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, dimNumber - 1);
-                    } else if (subS.equals(FileInfoBase.CENTIMETERS_STRING)) {
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, dimNumber - 1);
-                    } else if (subS.equals(FileInfoBase.METERS_STRING)) {
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.METERS, dimNumber - 1);
-                    } else if (subS.equals(FileInfoBase.KILOMETERS_STRING)) {
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.KILOMETERS, dimNumber - 1);
-                    } else if (subS.equals(FileInfoBase.MILES_STRING)) {
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.MILES, dimNumber - 1);
-                    } else if (subS.equals(FileInfoBase.ANGSTROMS_STRING)) {
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.ANGSTROMS, dimNumber - 1);
-                    } else if (subS.equals(FileInfoBase.NANOMETERS_STRING)) {
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.NANOMETERS, dimNumber - 1);
-                    } else if (subS.equals(FileInfoBase.MICROMETERS_STRING)) {
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.MICROMETERS, dimNumber - 1);
-                    } else if (subS.equals(FileInfoBase.NANOSEC_STRING)) {
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.NANOSEC, dimNumber - 1);
-                    } else if (subS.equals(FileInfoBase.MICROSEC_STRING)) {
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.MICROSEC, dimNumber - 1);
-                    } else if (subS.equals(FileInfoBase.MILLISEC_STRING)) {
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, dimNumber - 1);
-                    } else if (subS.equals(FileInfoBase.SECONDS_STRING)) {
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.SECONDS, dimNumber - 1);
-                    } else if (subS.equals(FileInfoBase.MINUTES_STRING)) {
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.MINUTES, dimNumber - 1);
-                    } else if (subS.equals(FileInfoBase.HOURS_STRING)) {
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.HOURS, dimNumber - 1);
+                    i = s.indexOf("'");
+                    j = s.lastIndexOf("'");
+                    if ((i != -1) && (j != -1)) {
+                        subS = s.substring(i+1, j);
+                        subS = subS.trim();
+                        Preferences.debug("CTYPE" + s.substring(5, 6) + " = " + subS + "\n");
+                        if ((subS.equals("RGB")) && (dimNumber == 3) && (imgExtents[2] == 3) && (nDimensions == 3)) {
+                            isColorPlanar2D = true;    
+                        }
+                        else if (subS.equals(FileInfoBase.INCHES_STRING)) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, dimNumber - 1);
+                        } else if (subS.equals(FileInfoBase.MILLIMETERS_STRING)) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, dimNumber - 1);
+                        } else if (subS.equals(FileInfoBase.CENTIMETERS_STRING)) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, dimNumber - 1);
+                        } else if (subS.equals(FileInfoBase.METERS_STRING)) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.METERS, dimNumber - 1);
+                        } else if (subS.equals(FileInfoBase.KILOMETERS_STRING)) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.KILOMETERS, dimNumber - 1);
+                        } else if (subS.equals(FileInfoBase.MILES_STRING)) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.MILES, dimNumber - 1);
+                        } else if (subS.equals(FileInfoBase.ANGSTROMS_STRING)) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.ANGSTROMS, dimNumber - 1);
+                        } else if (subS.equals(FileInfoBase.NANOMETERS_STRING)) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.NANOMETERS, dimNumber - 1);
+                        } else if (subS.equals(FileInfoBase.MICROMETERS_STRING)) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.MICROMETERS, dimNumber - 1);
+                        } else if (subS.equals(FileInfoBase.NANOSEC_STRING)) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.NANOSEC, dimNumber - 1);
+                        } else if (subS.equals(FileInfoBase.MICROSEC_STRING)) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.MICROSEC, dimNumber - 1);
+                        } else if (subS.equals(FileInfoBase.MILLISEC_STRING)) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, dimNumber - 1);
+                        } else if (subS.equals(FileInfoBase.SECONDS_STRING)) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.SECONDS, dimNumber - 1);
+                        } else if (subS.equals(FileInfoBase.MINUTES_STRING)) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.MINUTES, dimNumber - 1);
+                        } else if (subS.equals(FileInfoBase.HOURS_STRING)) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.HOURS, dimNumber - 1);
+                        }
                     }
                 } // else if (s.startsWith("CTYPE"))
                 else if (s.startsWith("COMMENT")) {
@@ -772,6 +787,18 @@ public class FileFits extends FileBase {
                 }
             }
             
+            if (isColorPlanar2D) {
+                reducedExtents = new int[2];
+                for (j = 0; j < 2; j++) {
+                    reducedExtents[j] = imgExtents[j];
+                }
+                nDimensions = 2;
+                imgExtents = new int[2];
+                for (j = 0; j < 2; j++) {
+                    imgExtents[j] = reducedExtents[j];
+                }
+            }
+            
             if (nDimensions == 1) {
                 raFile.close();
 
@@ -820,6 +847,9 @@ public class FileFits extends FileBase {
                 }
 
                 fileInfo.setDataType(ModelStorageBase.FLOAT);
+            } else if ((isColorPlanar2D) && (sourceType == ModelStorageBase.UBYTE)) {
+                image = new ModelImage(ModelStorageBase.ARGB, imgExtents, fileInfo.getFileName());
+                fileInfo.setDataType(ModelStorageBase.ARGB);
             } else {
 
                 if (one) {
@@ -848,7 +878,7 @@ public class FileFits extends FileBase {
                     if ((sourceType == ModelStorageBase.SHORT) || (sourceType == ModelStorageBase.USHORT)) {
                         skip *= 2;
                     } else if ((sourceType == ModelStorageBase.FLOAT) || (sourceType == ModelStorageBase.INTEGER) ||
-                                   (sourceType == ModelStorageBase.UINTEGER)) {
+                               (sourceType == ModelStorageBase.UINTEGER) || (sourceType == ModelStorageBase.ARGB)) {
                         skip *= 4;
                     } else if (sourceType == ModelStorageBase.DOUBLE) {
                         skip *= 8;
@@ -860,6 +890,9 @@ public class FileFits extends FileBase {
 
             if (sourceType != ModelStorageBase.DOUBLE) {
                 bufferSize = imgExtents[0] * imgExtents[1];
+                if (image.isColorImage()) {
+                    bufferSize *= 4;
+                }
                 imgBuffer = new float[bufferSize];
 
                 for (i = 0; i < numberSlices; i++) {
@@ -882,7 +915,9 @@ public class FileFits extends FileBase {
             image.calcMinMax();
             raFile.close();
 
-
+            flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
+            flipAlgo.run();
+            flipAlgo.finalize();
             return image;
         } catch (Exception e) {
 
@@ -930,6 +965,10 @@ public class FileFits extends FileBase {
         int zDim;
         int tDim;
         int count;
+        
+        flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
+        flipAlgo.run();
+        flipAlgo.finalize();
 
         if (image.getNDims() >= 3) {
             sBegin = options.getBeginSlice();
@@ -981,6 +1020,7 @@ public class FileFits extends FileBase {
         switch (image.getType()) {
 
             case ModelStorageBase.UBYTE:
+            case ModelStorageBase.ARGB:
 
                 // store as 8-bit unsigned
                 cardImage[29] = 56; // 8
@@ -1042,7 +1082,12 @@ public class FileFits extends FileBase {
         switch (image.getNDims()) {
 
             case 2:
-                cardImage[29] = 50; // 2
+                if (image.getType() == ModelStorageBase.ARGB) {
+                    cardImage[29] = 51; // 3
+                }
+                else {
+                    cardImage[29] = 50; // 2
+                }
                 break;
 
             case 3:
@@ -1108,7 +1153,7 @@ public class FileFits extends FileBase {
             cardImage[i] = 32; // fill with ascii spaces
         }
 
-        if (image.getNDims() >= 3) {
+        if ((image.getNDims() >= 3) || ((image.getNDims() == 2) && (image.getType() == ModelStorageBase.ARGB))) {
             cardImage[0] = 78; // N
             cardImage[1] = 65; // A
             cardImage[2] = 88; // X
@@ -1116,14 +1161,19 @@ public class FileFits extends FileBase {
             cardImage[4] = 83; // S
             cardImage[5] = 51; // 3
             cardImage[8] = 61; // =
-
-            axisSize = Integer.toString(sEnd - sBegin + 1);
+            
+            if (image.getType() == ModelStorageBase.ARGB) {
+                axisSize = "3";
+            }
+            else {
+                axisSize = Integer.toString(sEnd - sBegin + 1);
+            }
             axisBytes = axisSize.getBytes();
 
             for (i = 0; i < axisSize.length(); i++) {
                 cardImage[30 + i - axisSize.length()] = axisBytes[i];
             }
-        } // if (image.getNDims() >= 3)
+        } // if ((image.getNDims() >= 3) || ((image.getNDims() == 2) && (image.getType() == ModelStorageBase.ARGB)))
 
         raFile.write(cardImage);
 
@@ -1196,7 +1246,7 @@ public class FileFits extends FileBase {
             cardImage[i] = 32; // fill with ascii spaces
         }
 
-        if (image.getNDims() >= 3) {
+        if ((image.getNDims() >= 3) || ((image.getNDims() == 2) && (image.getType() == ModelStorageBase.ARGB))) {
             cardImage[0] = 67; // C
             cardImage[1] = 68; // D
             cardImage[2] = 69; // E
@@ -1204,14 +1254,19 @@ public class FileFits extends FileBase {
             cardImage[4] = 84; // T
             cardImage[5] = 51; // 3
             cardImage[8] = 61; // =
-
-            resString = Float.toString(image.getFileInfo()[0].getResolutions()[2]);
+            
+            if (image.getType() == ModelStorageBase.ARGB) {
+                resString = "1.0";
+            }
+            else {
+                resString = Float.toString(image.getFileInfo()[0].getResolutions()[2]);
+            }
             resBytes = resString.getBytes();
 
             for (i = 0; i < resString.length(); i++) {
                 cardImage[30 + i - resString.length()] = resBytes[i];
             }
-        } // if (image.getNDims() >= 3)
+        } // if ((image.getNDims() >= 3) || ((image.getNDims() == 2) && (image.getType() == ModelStorageBase.ARGB)))
 
         raFile.write(cardImage);
 
@@ -1246,74 +1301,80 @@ public class FileFits extends FileBase {
                 cardImage[j] = 32; // fill with ascii spaces
             }
 
-            if ((image.getNDims() >= (i + 1)) && (image.getFileInfo()[0].getResolutions()[i] > 0.0)) {
+            if (((image.getNDims() >= (i + 1)) && (image.getFileInfo()[0].getResolutions()[i] > 0.0)) 
+                || ((i == 2) && (image.getType() == ModelStorageBase.ARGB) && (image.getNDims() == 2))) {
 
-                switch (measure[i]) {
-
-                    case FileInfoBase.INCHES:
-                        mString = FileInfoBase.INCHES_STRING;
-                        break;
-
-                    case FileInfoBase.MILLIMETERS:
-                        mString = FileInfoBase.MILLIMETERS_STRING;
-                        break;
-
-                    case FileInfoBase.CENTIMETERS:
-                        mString = FileInfoBase.CENTIMETERS_STRING;
-                        break;
-
-                    case FileInfoBase.METERS:
-                        mString = FileInfoBase.METERS_STRING;
-                        break;
-
-                    case FileInfoBase.KILOMETERS:
-                        mString = FileInfoBase.KILOMETERS_STRING;
-                        break;
-
-                    case FileInfoBase.MILES:
-                        mString = FileInfoBase.MILES_STRING;
-                        break;
-
-                    case FileInfoBase.ANGSTROMS:
-                        mString = FileInfoBase.ANGSTROMS_STRING;
-                        break;
-
-                    case FileInfoBase.NANOMETERS:
-                        mString = FileInfoBase.MICROMETERS_STRING;
-                        break;
-
-                    case FileInfoBase.MICROMETERS:
-                        mString = FileInfoBase.NANOMETERS_STRING;
-                        break;
-
-                    case FileInfoBase.NANOSEC:
-                        mString = FileInfoBase.NANOSEC_STRING;
-                        break;
-
-                    case FileInfoBase.MICROSEC:
-                        mString = FileInfoBase.MICROSEC_STRING;
-                        break;
-
-                    case FileInfoBase.MILLISEC:
-                        mString = FileInfoBase.MILLISEC_STRING;
-                        break;
-
-                    case FileInfoBase.SECONDS:
-                        mString = FileInfoBase.SECONDS_STRING;
-                        break;
-
-                    case FileInfoBase.MINUTES:
-                        mString = FileInfoBase.MINUTES_STRING;
-                        break;
-
-                    case FileInfoBase.HOURS:
-                        mString = FileInfoBase.HOURS_STRING;
-                        break;
-
-                    default:
-                        mString = "Unknown";
-                        break;
-                } // end of switch(measure[i])
+                if (image.getType() == ModelStorageBase.ARGB) {
+                    mString = "RGB";
+                }
+                else {
+                    switch (measure[i]) {
+    
+                        case FileInfoBase.INCHES:
+                            mString = FileInfoBase.INCHES_STRING;
+                            break;
+    
+                        case FileInfoBase.MILLIMETERS:
+                            mString = FileInfoBase.MILLIMETERS_STRING;
+                            break;
+    
+                        case FileInfoBase.CENTIMETERS:
+                            mString = FileInfoBase.CENTIMETERS_STRING;
+                            break;
+    
+                        case FileInfoBase.METERS:
+                            mString = FileInfoBase.METERS_STRING;
+                            break;
+    
+                        case FileInfoBase.KILOMETERS:
+                            mString = FileInfoBase.KILOMETERS_STRING;
+                            break;
+    
+                        case FileInfoBase.MILES:
+                            mString = FileInfoBase.MILES_STRING;
+                            break;
+    
+                        case FileInfoBase.ANGSTROMS:
+                            mString = FileInfoBase.ANGSTROMS_STRING;
+                            break;
+    
+                        case FileInfoBase.NANOMETERS:
+                            mString = FileInfoBase.MICROMETERS_STRING;
+                            break;
+    
+                        case FileInfoBase.MICROMETERS:
+                            mString = FileInfoBase.NANOMETERS_STRING;
+                            break;
+    
+                        case FileInfoBase.NANOSEC:
+                            mString = FileInfoBase.NANOSEC_STRING;
+                            break;
+    
+                        case FileInfoBase.MICROSEC:
+                            mString = FileInfoBase.MICROSEC_STRING;
+                            break;
+    
+                        case FileInfoBase.MILLISEC:
+                            mString = FileInfoBase.MILLISEC_STRING;
+                            break;
+    
+                        case FileInfoBase.SECONDS:
+                            mString = FileInfoBase.SECONDS_STRING;
+                            break;
+    
+                        case FileInfoBase.MINUTES:
+                            mString = FileInfoBase.MINUTES_STRING;
+                            break;
+    
+                        case FileInfoBase.HOURS:
+                            mString = FileInfoBase.HOURS_STRING;
+                            break;
+    
+                        default:
+                            mString = "Unknown";
+                            break;
+                    } // end of switch(measure[i])
+                }
 
                 cardImage[0] = 67; // C
                 cardImage[1] = 84; // T
@@ -1330,7 +1391,7 @@ public class FileFits extends FileBase {
                 }
 
                 cardImage[11 + mString.length()] = 39; // '
-            } // if ((image.getNDims() >= (i+1)) && (image.getFileInfo()[0].getResolutions()[i] > 0.0))
+            } // if (((image.getNDims() >= (i+1)) && (image.getFileInfo()[0].getResolutions()[i] > 0.0)) ||
 
             raFile.write(cardImage);
         } // for (i=0; i < 4; i++)
@@ -1497,6 +1558,22 @@ public class FileFits extends FileBase {
                 } // for (t = tBegin; t <= tEnd; t++)
 
                 break;
+                
+            case ModelStorageBase.ARGB:
+                byteBuffer = new byte[sliceSize];
+                for (t = tBegin; t <= tEnd; t++) {
+
+                    for (z = sBegin; z <= sEnd; z++, count++) {
+                        i = (t * zDim) + z;
+                        for (j = 1; j <= 3; j++) {
+                            fireProgressStateChanged((3*count+ (j-1)) * 100 / (3*numberSlices));
+                            image.exportRGBData(j, 4*i*sliceSize, sliceSize, byteBuffer);
+                            raFile.write(byteBuffer);
+                        }
+                    } // for (z = sBegin; z <= sEnd; z++,count++)
+                } // for (t = tBegin; t <= tEnd; t++)
+
+                break;
         } // switch(image.getType())
 
         raFile.close();
@@ -1522,7 +1599,7 @@ public class FileFits extends FileBase {
         int progress, progressLength, mod;
         int tmpInt;
 
-        switch (sourceType) {
+        switch (image.getType()) {
 
             case ModelStorageBase.UBYTE:
                 byteBuffer = new byte[buffer.length];
@@ -1616,6 +1693,45 @@ public class FileFits extends FileBase {
 
                 } // for (j =0; j < nBytes; j+=4, i++ )
 
+                break;
+                
+            case ModelStorageBase.ARGB:
+                if (isColorPlanar2D) {
+                    byteBuffer = new byte[ 3* buffer.length/4];
+                    nBytes = 3 * buffer.length/4;
+                    raFile.read(byteBuffer, 0, nBytes);
+                    progress = slice * buffer.length;
+                    progressLength = buffer.length * numberSlices;
+                    mod = progressLength / 100;
+
+                    for (j = 0; j < nBytes/3; j++, i+= 4) {
+
+                        if (((i + progress) % mod) == 0) {
+                            fireProgressStateChanged(Math.round((float) (i + progress) / (3*progressLength) * 100));
+                        }
+
+                        buffer[i] = 255;
+                        buffer[i+1] = byteBuffer[j] & 0xff;
+                    } 
+                    
+                    for (i = 0, j = nBytes/3; j < 2*nBytes/3; j++, i+= 4) {
+
+                        if (((i + progress) % mod) == 0) {
+                            fireProgressStateChanged(Math.round((float) (i + progress) / (3*progressLength) * 100 + 33.3f));
+                        }
+
+                        buffer[i+2] = byteBuffer[j] & 0xff;
+                    }  
+                    
+                    for (i = 0, j = 2*nBytes/3; j < nBytes; j++, i+= 4) {
+
+                        if (((i + progress) % mod) == 0) {
+                            fireProgressStateChanged(Math.round((float) (i + progress) / (3 * progressLength) * 100 + 66.7f));
+                        }
+
+                        buffer[i+3] = byteBuffer[j] & 0xff;
+                    }    
+                } // if (isColorPlanar2D)
                 break;
         } // switch(brikDataType)
 
