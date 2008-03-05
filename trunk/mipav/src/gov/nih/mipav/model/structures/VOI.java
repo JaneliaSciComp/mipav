@@ -124,7 +124,7 @@ public class VOI extends ModelSerialCloneable {
     private float level = NOT_A_LEVELSET;
 
     /** DOCUMENT ME! */
-    private EventListenerList listenerList;
+    private transient EventListenerList listenerList;
 
     /** Name of the VOI stored as a string. */
     private String name;
@@ -498,6 +498,21 @@ public class VOI extends ModelSerialCloneable {
         }
     }
 
+    public Object clone() {
+    	Object obj = super.clone();
+    	
+    	if (listenerList != null) {
+    		int listeners = listenerList.getListenerCount(VOIListener.class);
+    		VOIListener [] voiList = listenerList.getListeners(VOIListener.class);
+    		
+    		for (int i = 0; i < voiList.length; i++) {
+    			((VOI)obj).addVOIListener(voiList[i]);
+    		}
+    	}
+    	
+    	return obj;
+    }
+    
     /**
      * Finds convex hull of a specific contour.
      *
@@ -4015,7 +4030,7 @@ System.err.println("curves size: " );
 
         listenerList.remove(VOIListener.class, listener);
     }
-
+    
     /**
      * Draws a rubberband around the VOI (only contour).
      *

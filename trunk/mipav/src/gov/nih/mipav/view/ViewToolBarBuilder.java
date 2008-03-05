@@ -1543,7 +1543,6 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
             setSize(new Dimension(24, 24));
             setEnabled(true);
             setRolloverEnabled(false);
-            setInputMap(0, new InputMap());
             setBorder(BorderFactory.createEtchedBorder(Color.white, Color.black));
             
     	}
@@ -1569,7 +1568,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
          */
         public void setVOIColor(Color newColor) {
             setBackground(newColor);
-           setForeground(newColor);
+            setForeground(newColor);
         }
     }
 
