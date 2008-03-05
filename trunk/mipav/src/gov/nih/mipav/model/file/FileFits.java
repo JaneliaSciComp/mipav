@@ -15,7 +15,7 @@ import java.io.*;
  * Coordinates, the text says, "recommend that FITS writers order pixels starting in the lower left hand corner
  * of the image, with the first axis increasing to the right, as in the rectangular coordinate x-axis, and the 
  * second increasing upward (the y-axis)."  MIPAV uses the upper left hand corner as the origin and has the y axis
- * going downward.  Therfore, the image is flipped after reading and flipped before writing.
+ * going downward.  Therefore, the image is flipped after reading and flipped before writing.
  */
 public class FileFits extends FileBase {
 
