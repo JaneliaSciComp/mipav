@@ -44,7 +44,7 @@ public class PlugInMuscleSegmentation implements PlugInAlgorithm, PlugInGeneric 
     
     /**
      * Method for calling this from the command line (PlugInGeneric implementation)
-     *   user selects a file
+     *   user selects a file, no changes mecessary for 3D impl.
      */
     public void run() {
 //    	if run from the command line, can be self-contained
@@ -60,7 +60,6 @@ public class PlugInMuscleSegmentation implements PlugInAlgorithm, PlugInGeneric 
         int returnVal = chooser.showOpenDialog(null);
 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            
             File imageFile = chooser.getSelectedFile();
             ViewUserInterface.getReference().setDefaultDirectory(imageFile.getParent());
           
