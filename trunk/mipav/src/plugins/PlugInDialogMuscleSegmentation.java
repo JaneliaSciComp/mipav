@@ -1,4 +1,5 @@
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
@@ -9,6 +10,7 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -36,6 +38,8 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     
     private PlugInMuscleImageDisplay.ImageType imageType;
     
+    private File[] imageFile;
+    
     /** Result image. */
     private ModelImage resultImage = null;
 
@@ -44,6 +48,8 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     
     /** DOCUMENT ME! */
     private PlugInAlgorithmMuscleSegmentation muscleSegAlgo = null;
+    
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -63,6 +69,9 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
 
         image = im;
         imageType = detectImageType(im);
+        imageFile = detectImageSequence(im);
+        if(imageFile.length > 1) 
+        	image = createImage(imageFile);
         if(imageType == PlugInMuscleImageDisplay.ImageType.Unknown)
         	init();
         else
@@ -256,6 +265,16 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         }
         return true;
     }
+    
+    private ModelImage createImage(File[] fileAr) {
+    	FileIO fileIO = new FileIO();
+    	fileIO.setQuiet(true);
+    	
+    	ModelImage resultImage = fileIO.readOrderedGrayscale(fileAr, true, null, false);
+    	
+    	return resultImage;
+    }
+    
     /**
      * Detects what type of image is being dealt with.  Basically looks for two thighs; if
      * not found, look for abdomen; if not found, return ImageType.UNKNOWN_TYPE
@@ -361,5 +380,23 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
 		} 
 		
 		return PlugInMuscleImageDisplay.ImageType.Abdomen;
+    }
+    
+    private File[] detectImageSequence(ModelImage im) {
+    	File dir = new File(im.getFileInfo()[0].getFileDirectory());
+    	String name = im.getFileInfo()[0].getFileName().substring(0, im.getFileInfo()[0].getFileName().length()-2);
+    	File[] contain = dir.listFiles();
+    	int size = 0;
+    	ArrayList<File> fileList = new ArrayList();
+    	for(int i=0; i<contain.length; i++) {
+    		if(contain[i].getName().contains(name)) {
+    			size++;
+    			fileList.add(contain[i]);
+    		}
+    	}
+    	File[] fileArr = new File[size];
+    	for(int i=0; i<size; i++)
+    		fileArr[i] = fileList.get(i);
+    	return fileArr;
     }
 }

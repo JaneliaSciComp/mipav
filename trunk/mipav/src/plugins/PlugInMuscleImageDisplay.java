@@ -84,6 +84,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     private TreeMap zeroStatus;
     
+    private int numSlices;
+    
+    private int currentSlice;
+    
     private String[] titles; 
     
     private boolean displayChanged = false;

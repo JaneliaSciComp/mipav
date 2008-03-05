@@ -79,13 +79,7 @@ public class ViewOpenImageSequence extends JFrame
     protected JSlider contrastSlider;
 
     /** DOCUMENT ME! */
-    protected final int CTZ = 2;
-
-    /** DOCUMENT ME! */
     protected File currentPath;
-
-    /** DOCUMENT ME! */
-    protected final int CZT = 3;
 
     /** DOCUMENT ME! */
     protected JCheckBox enableCheckbox;
@@ -105,22 +99,22 @@ public class ViewOpenImageSequence extends JFrame
     /** DOCUMENT ME! */
     protected JPanel previewPanel;
 
-    /** DOCUMENT ME! */
+    /** Radio button for CTZ sequence */
     protected JRadioButton radCTZ = new JRadioButton("C-T-Z");
 
-    /** DOCUMENT ME! */
+    /** Radio button for CZT sequence */
     protected JRadioButton radCZT = new JRadioButton("C-Z-T");
 
-    /** DOCUMENT ME! */
+    /** Radio button for TCZ sequence */
     protected JRadioButton radTCZ = new JRadioButton("T-C-Z");
 
-    /** DOCUMENT ME! */
+    /** Radio button for TZC sequence */
     protected JRadioButton radTZC = new JRadioButton("T-Z-C");
 
-    /** DOCUMENT ME! */
+    /** Radio button for ZCT sequence */
     protected JRadioButton radZCT = new JRadioButton("Z-C-T");
 
-    /** DOCUMENT ME! */
+    /** Radio button for ZTC sequence */
     protected JRadioButton radZTC = new JRadioButton("Z-T-C");
 
     /** DOCUMENT ME! */
@@ -128,9 +122,6 @@ public class ViewOpenImageSequence extends JFrame
 
     /** DOCUMENT ME! */
     protected UneditableTableModel tableModel;
-
-    /** DOCUMENT ME! */
-    protected final int TCZ = 5;
 
     /** DOCUMENT ME! */
     protected JTextField txtChannels;
@@ -150,13 +141,22 @@ public class ViewOpenImageSequence extends JFrame
     /** DOCUMENT ME! */
     protected JTextField txtWidth;
 
-    /** DOCUMENT ME! */
+    /** Int denoting CZT sequence*/
+	protected final int CZT = 3;
+
+	/** Int denoting TCZ sequence*/
+	protected final int TCZ = 5;
+
+	/** Int denoting CTZ sequence*/
+	protected final int CTZ = 2;
+
+	/** Int denoting TZC sequence */
     protected final int TZC = 4;
 
-    /** DOCUMENT ME! */
+    /** Int denoting ZCT sequence */
     protected final int ZCT = 0;
 
-    /** DOCUMENT ME! */
+    /** Int denoting ZTC sequence */
     protected final int ZTC = 1;
 
     /** DOCUMENT ME! */
