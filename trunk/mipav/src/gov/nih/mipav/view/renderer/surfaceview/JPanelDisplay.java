@@ -445,6 +445,7 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
         contentBox.add(panel2);
         contentBox.add(cubePanel);
         contentBox.add(projectionTypePanel);
+        contentBox.add(viewTexturePanel);
 
         // Scroll panel that hold the control panel layout in order to use JScrollPane
         scrollPanel = new DrawingPanel();
