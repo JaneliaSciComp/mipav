@@ -686,9 +686,10 @@ public class JDialogItkFilter extends JDialogScriptableBase
             select_25D = m_srcImage.getFileInfo()[0].getIs2_5D();
         }
 
-        m_filterParamPanel = new JPanelItkFilterParams((m_itkFilter2D == null ? null : m_itkFilter2D.filter()), 
-                                                       (m_itkFilter3D == null ? null : m_itkFilter3D.filter()),
-                                                       select_25D);
+        m_filterParamPanel = new JPanelItkFilterParams(m_srcImage, 
+                                        (m_itkFilter2D == null ? null : m_itkFilter2D.filter()), 
+                                        (m_itkFilter3D == null ? null : m_itkFilter3D.filter()),
+                                        select_25D);
         m_colorChannelPanel = new JPanelColorChannels(m_srcImage);
         m_outputOptionsPanel = new JPanelAlgorithmOutputOptions(m_srcImage);
 
