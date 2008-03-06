@@ -7,6 +7,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.jama.*;
 
 import gov.nih.mipav.view.*;
 
@@ -15,6 +16,8 @@ import java.awt.event.*;
 
 import java.io.*;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.*;
 
 import javax.swing.*;
@@ -558,6 +561,28 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
         AlgorithmTransform transform = null;
+        double xOrig;
+        double yOrig;
+        double xCen;
+        double yCen;
+        double xCenNew;
+        double yCenNew;
+        float resX;
+        float resY;
+        TransMatrix xfrm = null;
+        double M[][];
+        String comStr;
+        DecimalFormat nf;
+        ViewUserInterface UI = ViewUserInterface.getReference();
+        
+        nf = new DecimalFormat();
+        nf.setMaximumFractionDigits(4);
+        nf.setMinimumFractionDigits(0);
+        nf.setGroupingUsed(false);
+
+        DecimalFormatSymbols dfs = nf.getDecimalFormatSymbols();
+        dfs.setDecimalSeparator('.');
+        nf.setDecimalFormatSymbols(dfs);
 
         if (algorithm instanceof AlgorithmRegOAR2D) {
 
@@ -570,8 +595,9 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                     float yresA = refImage.getFileInfo(0).getResolutions()[1];
 
                     String name = makeImageName(matchImage.getImageName(), "_register");
+                    xfrm  = reg2.getTransform();
 
-                    transform = new AlgorithmTransform(matchImage, reg2.getTransform(), interp2, xresA, yresA, xdimA,
+                    transform = new AlgorithmTransform(matchImage, xfrm, interp2, xresA, yresA, xdimA,
                                                        ydimA, true, false, false);
 
                     transform.setUpdateOriginFlag(true);
@@ -604,12 +630,29 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                     threshold[0] = -Float.MAX_VALUE;
                     threshold[1] = Float.MAX_VALUE;
                     comAlgo = new AlgorithmCenterOfMass(refImage, threshold, true);
+                    comAlgo.setAllowDataWindow(false);
                     comAlgo.run();
                     comAlgo = new AlgorithmCenterOfMass(matchImage, threshold, true);
+                    comAlgo.setAllowDataWindow(false);
                     comAlgo.run();
                     comAlgo = new AlgorithmCenterOfMass(resultImage, threshold, true);
+                    comAlgo.setAllowDataWindow(false);
                     comAlgo.run();
                     comAlgo.finalize();
+                    xOrig = (matchImage.getExtents()[0] - 1.0)/2.0;
+                    yOrig = (matchImage.getExtents()[1] - 1.0)/2.0;
+                    resX = matchImage.getFileInfo()[0].getResolutions()[0];
+                    resY = matchImage.getFileInfo()[0].getResolutions()[1];
+                    xCen = xOrig * resX;
+                    yCen = yOrig * resY;
+                    M = xfrm.inverse().getArray();
+                    xCenNew = xCen*M[0][0] + yCen*M[0][1] + M[0][2];
+                    yCenNew = xCen*M[1][0] + yCen*M[1][1] + M[1][2];
+                    Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" 
+                                       + xCen + ", " + yCen + ")\n");
+                    comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ") in " +
+                                     resultImage.getImageName() + ".\n";
+                    Preferences.debug(comStr);
                 }
 
                 TransMatrix resultMatrix = reg2.getTransform();
