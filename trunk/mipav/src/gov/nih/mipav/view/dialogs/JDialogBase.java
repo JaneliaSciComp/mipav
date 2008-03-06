@@ -344,10 +344,14 @@ public abstract class JDialogBase extends JDialog
     public String makeString(float number, int decPts) {
 
         int index = String.valueOf(number).indexOf(".");
+        int expPos = String.valueOf(number).indexOf("E");
         int length = String.valueOf(number).length();
 
-        if ((index + decPts) < length) {
+        if (((index + decPts) < length) && (expPos == -1)) {
             return (String.valueOf(number).substring(0, index + decPts + 1));
+        } else if (index + decPts < expPos) {
+            return (String.valueOf(number).substring(0, index + decPts + 1).
+                    concat(String.valueOf(number).substring(expPos)));   
         } else {
             return (String.valueOf(number));
         }
