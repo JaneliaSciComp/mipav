@@ -29,6 +29,9 @@ public class AlgorithmCenterOfMass extends AlgorithmBase {
 
     /** Array of two thresholds. threshold[0] = Minimum threshold, threshold[1] = Maximum threshold. */
     private float[] threshold;
+    
+    /** If true, allow data window output */
+    private boolean allowDataWindow = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -49,6 +52,10 @@ public class AlgorithmCenterOfMass extends AlgorithmBase {
         if (entireImage == false) {
             mask = srcImage.generateVOIMask();
         }
+    }
+    
+    public void setAllowDataWindow(boolean allowDataWindow) {
+        this.allowDataWindow = allowDataWindow;    
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -159,7 +166,9 @@ public class AlgorithmCenterOfMass extends AlgorithmBase {
         xCOM = xMass * srcImage.getFileInfo()[0].getResolutions()[0]/valTot;
         yCOM = yMass * srcImage.getFileInfo()[0].getResolutions()[1]/valTot;
         comStr = nf.format(xCOM) + "\t" + nf.format(yCOM);
-        UI.setDataText(srcImage.getImageName() + "  Center of Mass               \t= " + comStr + "\n");
+        if (allowDataWindow) {
+            UI.setDataText(srcImage.getImageName() + "  Center of Mass               \t= " + comStr + "\n");
+        }
         Preferences.debug(srcImage.getImageName() + "  Center of Mass               \t= " + comStr + "\n");
 
         setCompleted(true);
@@ -255,7 +264,9 @@ public class AlgorithmCenterOfMass extends AlgorithmBase {
         yCOM = yMass * srcImage.getFileInfo()[0].getResolutions()[1]/valTot;
         zCOM = zMass * srcImage.getFileInfo()[0].getResolutions()[2]/valTot;
         comStr = nf.format(xCOM) + "\t" + nf.format(yCOM) + "\t" + nf.format(zCOM);
-        UI.setDataText(srcImage.getImageName() + "  Center of Mass               \t= " + comStr + "\n");
+        if (allowDataWindow) {
+            UI.setDataText(srcImage.getImageName() + "  Center of Mass               \t= " + comStr + "\n");
+        }
         Preferences.debug(srcImage.getImageName() + "  Center of Mass               \t= " + comStr + "\n");
 
         setCompleted(true);
