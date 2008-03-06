@@ -105,8 +105,15 @@ public class FileFits extends FileBase {
         // Fixed format is required for the values of the required keywords and strongly
         // recommended for the other keywords.  The required keywords are SIMPLE, BITPIX,
         // NAXIS, NAXISn, n=1,...,NAXIS(NAXIS = 0 -> NAXIS1 not present), and END.
-        int i, j;
-        String s, firstS, subS;
+        int i = 0;
+        int j = 0;
+        String s, firstS, subS, subS2, subS3;
+        String dateString;
+        String jobNameString;
+        String timeString;
+        int numApos;
+        int aposLoc[];
+        boolean haveTime;
         boolean readAgain;
         int count = 0;
         int bitsPerPixel;
@@ -718,39 +725,145 @@ public class FileFits extends FileBase {
                     subS = subS.trim();
                     Preferences.debug("HISTORY = " + subS + "\n");
                 } // else if (s.startsWith("HISTORY"))
-                else if (s.startsWith("DATE")) {
-
-                    // Date file was written
-                    subS = s.substring(10, 80);
-                    subS = subS.trim();
-                    Preferences.debug("DATE file written = " + subS + "\n");
-                } // else if (s.startsWith("DATE"))
                 else if (s.startsWith("DATE-OBS")) {
 
                     // Date data was acquired
                     subS = s.substring(10, 80);
                     subS = subS.trim();
-                    Preferences.debug("DATE-OBS data acquired = " + subS + "\n");
+                    numApos = 0;
+                    aposLoc = new int[6];
+                    for (i = 0; i < subS.length(); i++) {
+                        if (subS.substring(i,i+1).indexOf("'") == 0) {
+                            aposLoc[numApos++] = i;   
+                        }
+                    }
+                    if (numApos == 0) {
+                        Preferences.debug("DATE-OBS, date data acquired = " + subS + "\n");
+                        fileInfo.setDateAcquired(subS);
+                    }
+                    else if (numApos == 2) {
+                        dateString = subS.substring(aposLoc[0]+1,aposLoc[1]).trim();
+                        haveTime = false;
+                        for (i = 0; i < subS.length(); i++) {
+                            if (subS.substring(i,i+1) == "T") {
+                                haveTime = true;
+                                j = i;
+                            }
+                        }
+                        if (haveTime) {
+                            timeString = dateString.substring(j+1);
+                            Preferences.debug("TIME data acquired = " + timeString + "\n");
+                            fileInfo.setTimeAcquired(timeString);
+                            dateString = dateString.substring(0,j);
+                        }
+                        Preferences.debug("DATE-OBS, date data acquired = " + dateString + "\n");
+                        fileInfo.setDateAcquired(dateString);
+                    }
+                    else if (numApos == 4) {
+                        dateString = subS.substring(aposLoc[0]+1,aposLoc[1]).trim();
+                        Preferences.debug("DATE-OBS, date data acquired = " + dateString + "\n");
+                        fileInfo.setDateAcquired(dateString);
+                        timeString = subS.substring(aposLoc[2]+1,aposLoc[3]).trim();
+                        Preferences.debug("TIME data acquired = " + timeString + "\n");
+                        fileInfo.setTimeAcquired(timeString);
+                    }
                 } // else if (s.startsWith("DATE-OBS"))
+                else if (s.startsWith("DATE")) {
+
+                    // Date file was written
+                    // Could have 'date' 'time' 'jobname'
+                    // Could have 'dateTtime' with a capitalT separating date and time
+                    subS = s.substring(10, 80);
+                    subS = subS.trim();
+                    numApos = 0;
+                    aposLoc = new int[6];
+                    for (i = 0; i < subS.length(); i++) {
+                        if (subS.substring(i,i+1).indexOf("'") == 0) {
+                            aposLoc[numApos++] = i;   
+                        }
+                    }
+                    if (numApos == 0) {
+                        Preferences.debug("DATE file written = " + subS + "\n");
+                        fileInfo.setDateWritten(subS);
+                    }
+                    else if (numApos == 2) {
+                        dateString = subS.substring(aposLoc[0]+1,aposLoc[1]).trim();
+                        haveTime = false;
+                        for (i = 0; i < subS.length(); i++) {
+                            if (subS.substring(i,i+1) == "T") {
+                                haveTime = true;
+                                j = i;
+                            }
+                        }
+                        if (haveTime) {
+                            timeString = dateString.substring(j+1);
+                            Preferences.debug("TIME file written = " + timeString + "\n");
+                            fileInfo.setTimeWritten(timeString);
+                            dateString = dateString.substring(0,j);
+                        }
+                        Preferences.debug("DATE file written = " + dateString + "\n");
+                        fileInfo.setDateWritten(dateString);
+                    }
+                    else if (numApos == 4) {
+                        dateString = subS.substring(aposLoc[0]+1,aposLoc[1]).trim();
+                        Preferences.debug("DATE file written = " + dateString + "\n");
+                        fileInfo.setDateWritten(dateString);
+                        timeString = subS.substring(aposLoc[2]+1,aposLoc[3]).trim();
+                        Preferences.debug("TIME file written = " + timeString + "\n");
+                        fileInfo.setTimeWritten(timeString);
+                    }
+                    else if (numApos == 6) {
+                        dateString = subS.substring(aposLoc[0]+1,aposLoc[1]).trim();
+                        Preferences.debug("DATE file written = " + dateString + "\n");
+                        fileInfo.setDateWritten(dateString);
+                        timeString = subS.substring(aposLoc[2]+1,aposLoc[3]).trim();
+                        Preferences.debug("TIME file written = " + timeString + "\n");
+                        fileInfo.setTimeWritten(timeString);
+                        jobNameString = subS.substring(aposLoc[4]+1,aposLoc[5]).trim();
+                        Preferences.debug("JOB NAME = " + jobNameString + "\n");
+                        fileInfo.setJobName(jobNameString);
+                    }
+                } // else if (s.startsWith("DATE"))
                 else if (s.startsWith("ORIGIN")) {
                     subS = s.substring(10, 80);
                     subS = subS.trim();
+                    i = subS.indexOf("'");
+                    j = subS.lastIndexOf("'");
+                    if ((i != -1) && (j != -1) && (i != j)) {
+                        subS = subS.substring(i+1, j);
+                        subS = subS.trim();
+                    }
                     Preferences.debug("ORIGIN, installation where file is written = " + "\n" + subS + "\n");
+                    fileInfo.setOrigin(subS);
                 } // else if (s.startsWith("ORIGIN"))
                 else if (s.startsWith("INSTRUMEN")) {
                     subS = s.substring(10, 80);
                     subS = subS.trim();
-                    Preferences.debug("INSTRUMEN, data acquisition instrument = " + subS + "\n");
+                    Preferences.debug("INSTRUMENT, data acquisition instrument = " + subS + "\n");
                 } // else if (s.startsWith("INSTRUMEN"))
                 else if (s.startsWith("OBSERVER")) {
                     subS = s.substring(10, 80);
                     subS = subS.trim();
+                    i = subS.indexOf("'");
+                    j = subS.lastIndexOf("'");
+                    if ((i != -1) && (j != -1) && (i != j)) {
+                        subS = subS.substring(i+1, j);
+                        subS = subS.trim();
+                    }
                     Preferences.debug("OBSERVER = " + subS + "\n");
+                    fileInfo.setObserver(subS);
                 } // else if (s.startsWith("OBSERVER"))
                 else if (s.startsWith("OBJECT")) {
                     subS = s.substring(10, 80);
                     subS = subS.trim();
+                    i = subS.indexOf("'");
+                    j = subS.lastIndexOf("'");
+                    if ((i != -1) && (j != -1) && (i != j)) {
+                        subS = subS.substring(i+1, j);
+                        subS = subS.trim();
+                    }
                     Preferences.debug("OBJECT observed = " + subS + "\n");
+                    fileInfo.setObject(subS);
                 } // else if (s.startsWith("OBJECT"))
                 else if (s.startsWith("AUTHOR")) {
                     subS = s.substring(10, 80);
@@ -1751,7 +1864,7 @@ public class FileFits extends FileBase {
                 }
             } // if (scaleOffset != 0.0f)
         } // if (!haveBlank)
-        else { // BLANK is used to indicated an undefined physical meaning in an integer array
+        else { // BLANK is used to indicate an undefined physical meaning in an integer array
                // BSCALE and BZERO are not applied to BLANK values
 
             if (scaleFact != 1.0f) {
