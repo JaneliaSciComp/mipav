@@ -15,6 +15,8 @@ import java.awt.event.*;
 
 import java.io.*;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.*;
 
 import javax.swing.*;
@@ -433,6 +435,31 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
         AlgorithmTransform transform = null;
+        double xOrig;
+        double yOrig;
+        double zOrig;
+        double xCen;
+        double yCen;
+        double zCen;
+        double xCenNew;
+        double yCenNew;
+        double zCenNew;
+        float resX;
+        float resY;
+        float resZ;
+        double M[][];
+        String comStr;
+        DecimalFormat nf;
+        ViewUserInterface UI = ViewUserInterface.getReference();
+        
+        nf = new DecimalFormat();
+        nf.setMaximumFractionDigits(4);
+        nf.setMinimumFractionDigits(0);
+        nf.setGroupingUsed(false);
+
+        DecimalFormatSymbols dfs = nf.getDecimalFormatSymbols();
+        dfs.setDecimalSeparator('.');
+        nf.setDecimalFormatSymbols(dfs);
 
         if (algorithm instanceof AlgorithmRegOAR3D) {
 
@@ -489,12 +516,33 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     threshold[0] = -Float.MAX_VALUE;
                     threshold[1] = Float.MAX_VALUE;
                     comAlgo = new AlgorithmCenterOfMass(refImage, threshold, true);
+                    comAlgo.setAllowDataWindow(false);
                     comAlgo.run();
                     comAlgo = new AlgorithmCenterOfMass(matchImage, threshold, true);
+                    comAlgo.setAllowDataWindow(false);
                     comAlgo.run();
                     comAlgo = new AlgorithmCenterOfMass(resultImage, threshold, true);
+                    comAlgo.setAllowDataWindow(false);
                     comAlgo.run();
                     comAlgo.finalize();
+                    xOrig = (matchImage.getExtents()[0] - 1.0)/2.0;
+                    yOrig = (matchImage.getExtents()[1] - 1.0)/2.0;
+                    zOrig = (matchImage.getExtents()[2] - 1.0)/2.0;
+                    resX = matchImage.getFileInfo()[0].getResolutions()[0];
+                    resY = matchImage.getFileInfo()[0].getResolutions()[1];
+                    resZ = matchImage.getFileInfo()[0].getResolutions()[2];
+                    xCen = xOrig * resX;
+                    yCen = yOrig * resY;
+                    zCen = zOrig * resZ;
+                    M = finalMatrix.inverse().getArray();
+                    xCenNew = xCen*M[0][0] + yCen*M[0][1] + zCen*M[0][2] + M[0][3];
+                    yCenNew = xCen*M[1][0] + yCen*M[1][1] + zCen*M[1][2] + M[1][3];
+                    zCenNew = xCen*M[2][0] + yCen*M[2][1] + zCen*M[2][2] + M[2][3];
+                    Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" 
+                                       + xCen + ", " + yCen + ", " + zCen + ")\n");
+                    comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + 
+                                     ", " + nf.format(zCenNew) + ") in " + resultImage.getImageName() + ".\n";
+                    Preferences.debug(comStr);
                 }
 
                 finalMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
