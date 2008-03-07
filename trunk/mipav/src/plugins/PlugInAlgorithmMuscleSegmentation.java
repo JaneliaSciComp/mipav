@@ -31,6 +31,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     
     /** the parent frame. */
     private Frame parentFrame;
+    
+    /**Whether multiple slices are contained in srcImg */
+    private boolean multipleSlices;
        
 	
     /**
@@ -39,10 +42,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
      * @param  resultImage  Result image model
      * @param  srcImg       Source image model.
      */
-    public PlugInAlgorithmMuscleSegmentation(ModelImage srcImg, PlugInMuscleImageDisplay.ImageType imageType, Frame parentFrame) {
+    public PlugInAlgorithmMuscleSegmentation(ModelImage srcImg, PlugInMuscleImageDisplay.ImageType imageType, 
+    											Frame parentFrame, boolean multipleSlices) {
         super(null, srcImg);
         this.imageType = imageType;
         this.parentFrame = parentFrame;
+        this.multipleSlices = multipleSlices;
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -133,12 +138,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
         			noMirrorArr, noMirrorZ, 
         			PlugInMuscleImageDisplay.ImageType.Abdomen, 
-        			PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT);
+        			PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT, multipleSlices);
         } else {
         	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
         			noMirrorArr, noMirrorZ, 
         			PlugInMuscleImageDisplay.ImageType.Abdomen, 
-        			PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT, true);
+        			PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT, true, multipleSlices);
         }
         
     }
@@ -208,11 +213,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    if (ViewUserInterface.getReference().isAppFrameVisible()) {
 	    	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
 	    			noMirrorArr, noMirrorZ, 
-	    			PlugInMuscleImageDisplay.ImageType.Thigh, symmetry);
+	    			PlugInMuscleImageDisplay.ImageType.Thigh, symmetry, multipleSlices);
 	    } else {
 	    	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
 	    			noMirrorArr, noMirrorZ, 
-	    			PlugInMuscleImageDisplay.ImageType.Thigh, symmetry, true);
+	    			PlugInMuscleImageDisplay.ImageType.Thigh, symmetry, true, multipleSlices);
 	    }
 	}
 	

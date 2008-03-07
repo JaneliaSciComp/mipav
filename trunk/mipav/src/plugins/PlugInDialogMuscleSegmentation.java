@@ -40,6 +40,8 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     
     private File[] imageFile;
     
+    private boolean multipleSlices = false;
+    
     /** Result image. */
     private ModelImage resultImage = null;
 
@@ -70,8 +72,10 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         image = im;
         imageType = detectImageType(im);
         imageFile = detectImageSequence(im);
-        if(imageFile.length > 1) 
+        if(imageFile.length > 1) {
         	image = createImage(imageFile);
+        	multipleSlices = true;
+        }
         if(imageType == PlugInMuscleImageDisplay.ImageType.Unknown)
         	init();
         else
@@ -146,7 +150,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
             //FileInfoBase[] info = image.getFileInfo();
             //info[0].displayAboutInfo(this); //expecting a 2D image
            
-            muscleSegAlgo = new PlugInAlgorithmMuscleSegmentation(image, imageType, parentFrame);
+            muscleSegAlgo = new PlugInAlgorithmMuscleSegmentation(image, imageType, parentFrame, multipleSlices);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -271,6 +275,12 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     	fileIO.setQuiet(true);
     	
     	ModelImage resultImage = fileIO.readOrderedGrayscale(fileAr, true, null, false);
+    	
+    	FileInfoBase[] fb = new FileInfoBase[fileAr.length];
+    	for(int i=0; i<fileAr.length; i++) {
+    		fb[i] = image.getFileInfo(0);
+    	}
+    	resultImage.setFileInfo(fb);
     	
     	return resultImage;
     }
