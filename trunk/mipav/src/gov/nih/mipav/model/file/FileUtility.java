@@ -4,6 +4,9 @@ package gov.nih.mipav.model.file;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
+import ncsa.hdf.object.*;
+import ncsa.hdf.object.h5.*;
+import ncsa.hdf.view.*;
 import java.io.*;
 
 import java.util.*;
@@ -211,6 +214,9 @@ public class FileUtility {
     /** MIPAV Surface XML file format. extension: .xml */
     public static final int SURFACEREF_XML = 60;
 
+    /** MINC 2.0 (HDF5) */
+    public static final int MINC_HDF = 61;
+    
     /** Arrary of strings describing the file formats. These are in synch with the above constants (same order) */
     private static String[] fileFormatStr = {
         "Undefined", "AFNI", "Analyze", "Analyze multifile", "Avi", "Bio-Rad", "BMP", "BRUKER", "Chesire",
@@ -218,7 +224,7 @@ public class FileUtility {
         "Interfile", "JIMI", "JPEG", "LSM", "LSM multifile", "Magnetom Vision", "Map", "Medvision", "MGH", "Micro CAT",
         "MINC", "MIPAV", "MRC", "NIFTI", "NIFTI multifile", "NRRD", "OSM", "PCX", "PIC", "PICT", "PNG", "Project",
         "PSD", "QT", "Raw", "Raw multifile", "SPM", "STK", "Surface XML", "TGA", "Tiff", "Tiff multifile", "TMG", "VOI",
-        "XBM", "XML", "XML multifile", "XPM", "Philips PARREC", "Surface Reference XML"
+        "XBM", "XML", "XML multifile", "XPM", "Philips PARREC", "Surface Reference XML", "MINC 2.0"
     };
 
     /**
@@ -400,6 +406,10 @@ public class FileUtility {
                 suffix = ".mnc";
                 break;
 
+            case FileUtility.MINC_HDF:
+            	suffix = ".mnc";
+            	break;
+                
             case FileUtility.AVI:
                 suffix = ".avi";
                 break;
@@ -919,6 +929,13 @@ public class FileUtility {
 
         fileType = FileUtility.getFileTypeFromSuffix(suffix);
 
+        //check here for minc 2.0 vs 1.0
+        if (fileType == FileUtility.MINC) {
+        	if (isMincHDF(fileName, fileDir, quiet) == FileUtility.MINC_HDF) {
+        		fileType = FileUtility.MINC_HDF;
+        	}
+        }
+        
         if (fileType == FileUtility.UNDEFINED) {
 
             if (suffix.equalsIgnoreCase(".pic")) {
@@ -1122,6 +1139,10 @@ public class FileUtility {
                 fileType = FileUtility.isMinc(fileName, fileDir, quiet);
             }
 
+            if (fileType == FileUtility.UNDEFINED) {
+                fileType = FileUtility.isMincHDF(fileName, fileDir, quiet);
+            }
+            
             if (fileType == FileUtility.UNDEFINED) {
 
                 fileType = FileUtility.isAnalyze(fileName, fileDir, quiet);
@@ -1783,6 +1804,19 @@ public class FileUtility {
         }
     }
 
+    public static final int isMincHDF(String fileName, String fileDir, boolean quiet) {
+    	
+    	FileFormat h5F = FileFormat.getFileFormat(FileFormat.FILE_TYPE_HDF5);
+    	
+    	boolean isMincHDF = h5F.isThisType(fileDir + File.separator + fileName);
+    	System.err.println("MINC 2.0: " + isMincHDF);
+    	if (isMincHDF) {
+    		return FileUtility.MINC_HDF;
+    	} else {
+    		return FileUtility.UNDEFINED;
+    	}
+    	
+    }
     /**
      * Tests if the unknown file is of type Nifti.
      *
