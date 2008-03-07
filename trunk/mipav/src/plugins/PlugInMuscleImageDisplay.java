@@ -84,6 +84,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     private TreeMap zeroStatus;
     
+    private boolean changeSlice = false;
+    
     /**Whether the algorithm is dealing with a 3D CT image. */
     private boolean multipleSlices;
     
@@ -399,7 +401,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	if(command.equals(DialogPrompt.CANCEL)) {
         		unlockToPanel(voiTabLoc);
         		initMuscleImage(activeTab);
-        	} else if(command.equals(DialogPrompt.CLEAR)) {
+        	} else if(command.equals(DialogPrompt.CLEAR_ALL)) {
         		getActiveImage().unregisterAllVOIs();
         		updateImages(true);
         	} else if(command.equals(DialogPrompt.OK) && 
@@ -712,14 +714,19 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     }
     
     /**Loads relevant VOIs for the particular slice. */
+    
     @Override
     public void setSlice(int slice, boolean updateLinkedImages) {
+    	
+    	if(slice != getViewableSlice())
+    		changeSlice = true;
     	super.setSlice(slice, updateLinkedImages);
-    	System.out.println(activeTab);
-    	if(activeTab < voiTabLoc) {
+    	if(changeSlice && activeTab < voiTabLoc) {
     		initMuscleImage(activeTab);
     		updateImages(true);
+    		changeSlice = false;
     	}
+    	
     }
     
     /**
@@ -1039,7 +1046,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	/** Possible buttons for dialog prompts. */
     	public static final String OK = "Ok";
     	public static final String CANCEL = "Cancel";
-    	public static final String CLEAR = "Clear";
+    	public static final String CLEAR_ALL = "Clear all";
     	public static final String EXIT = "Exit";
     	public static final String HELP = "Help";
     	public static final String CALCULATE = "Calculate";
@@ -1048,8 +1055,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	public static final String TOGGLE_LUT = "Toggle LUT";
     	public static final String OUTPUT = "Output";
     	public static final String BACK = "Back";
+    	public static final String REDRAW = "Redraw";
+    	public static final String CLEAR_ONE = "Clear except";
     	
-    	private String buttonStringList[] = {OK, CLEAR, HELP};
+    	private String buttonStringList[] = {OK, CLEAR_ALL, HELP};
     	
     	protected JButton buttonGroup[];
     	
@@ -1120,7 +1129,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             	}
             	buttonPanel.setLayout(new BorderLayout());
             	buttonPanel.add(topPanel, BorderLayout.NORTH);
-            	buttonPanel.add(bottomPanel, BorderLayout.SOUTH);
+            	buttonPanel.add(bottomPanel, BorderLayout.CENTER);
             	
             } else {
             
@@ -1171,7 +1180,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 
     private class VoiDialogPrompt extends DialogPrompt implements ActionListener {
 
-        private final String[] buttonStringList = {OK, CLEAR, CANCEL};
+        private final String[] buttonStringList = {OK, CLEAR_ALL, CANCEL, REDRAW, CLEAR_ONE};
     	
         private String objectName;
         
@@ -1208,7 +1217,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 
             String command = e.getActionCommand();
 
-            if(command.equals(CLEAR)) {
+            if(command.equals(CLEAR_ALL)) {
                 //clear all VOIs drawn
                 getActiveImage().unregisterAllVOIs();
                 updateImages(true);
@@ -1221,9 +1230,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                         getActiveImage().unregisterAllVOIs();
                         getActiveImage().registerVOI(goodVoi);
                         String dir;
-                        System.out.println(getImageA().getFileInfo(0).getFileDirectory());
-                        System.out.println(getActiveImage().getFileInfo(0).getFileDirectory());
-                        System.out.println(imageA.getFileInfo(0).getFileDirectory());
                         if(multipleSlices)
                         	dir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"_"+getViewableSlice()+"\\";
                         else
@@ -1246,9 +1252,23 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                     //dispose();
                 } else if (command.equals(HELP)) {
                     MipavUtil.showHelp("19014");
+                } else if (command.equals(REDRAW)) {
+                	getActiveImage().unregisterAllVOIs();
+                	initVoiImage(activeTab); //replacing current image and updating
+                	updateImages(true);
+                	
+                } else if (command.equals(CLEAR_ONE)) {
+                	VOIVector vec = getActiveImage().getVOIs();
+                	VOI goodVoi = null;
+                	for(int i=0; i<vec.size(); i++) {
+                		if(vec.get(i).getName().equals(objectName))
+                			goodVoi = vec.get(i);
+                	}
+                	//note: does unregister/register to for faster method execution
+                	getActiveImage().unregisterAllVOIs();
+                    getActiveImage().registerVOI(goodVoi);
                     
-                    
-                    
+                	updateImages(true);
                 }
             }
             
@@ -1264,6 +1284,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	this.numVoi = numVoi;
         	
         	voiExists = voiExists(objectName);
+        	
+        	for(int i=0; i<buttonGroup.length; i++) {
+	        	if(buttonGroup[i].getText().contains(CLEAR_ONE)) {
+	        		buttonGroup[i].setText(CLEAR_ONE+" "+name.toLowerCase());
+	        		buttonGroup[i].setPreferredSize(new Dimension(185, 30));
+	        	}
+	        }
             
             updateSelectionLabel();
         }
@@ -1487,6 +1514,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         public void actionPerformed(ActionEvent e) {
             System.err.println(e.getActionCommand());
+            System.out.println(e.getActionCommand());
         }
         
         public TreeMap getZeroStatus() {
@@ -2126,7 +2154,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    	System.out.println("Caught 2: "+e.getActionCommand());
 	    	String command = e.getActionCommand();
 	        displayChanged = false;
-	        if(command.equals(CLEAR)) {
+	        if(command.equals(CLEAR_ALL)) {
 	            //clear all VOIs drawn
 	        	muscleFrame.getImageA().unregisterAllVOIs();
 	        	muscleFrame.updateImages();
@@ -2566,8 +2594,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     }
     
     public boolean voiExists(String name) {
-    	String fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+(getViewableSlice()+1)+"\\";
-        String ext = name.contains(".xml") ? "" : ".xml";
+    	String fileDir;
+    	if(multipleSlices)
+    		fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"_"+getViewableSlice()+"\\";
+    	else
+    		fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
+    	String ext = name.contains(".xml") ? "" : ".xml";
         
         if(new File(fileDir+name+ext).exists())
         	return true;
@@ -2836,10 +2868,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	protected void createPDF() {		
 		String fileDir, fileName;
 		if(multipleSlices) {
-			fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"_"+getViewableSlice()+"\\";
-			fileName = fileDir + File.separator + "NIA_Report_" +(getViewableSlice()+1)+".pdf";
+			fileDir = getActiveImage().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"_"+getViewableSlice()+"\\";
+			fileName = fileDir + File.separator + "NIA_Report_" +getViewableSlice()+".pdf";
 		} else {
-			fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
+			fileDir = getActiveImage().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
 			fileName = fileDir + File.separator + "NIA_Report.pdf";
 		}
 		pdfFile = new File(fileName);
@@ -2891,7 +2923,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			mct2.setAlignment(Element.ALIGN_LEFT);
 			mct2.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
 			mct2.addElement(new Paragraph("Name:", fontBold));
-			mct2.addElement(new Paragraph(getActiveImage().getFileInfo()[0].getFileName(), fontNormal));
+			mct2.addElement(new Paragraph(getActiveImage().getFileInfo()[getViewableSlice()].getFileName(), fontNormal));
 			mct2.addElement(new Paragraph("Center:", fontBold));
 			mct2.addElement(new Paragraph("Hjartavernd", fontNormal));
 			FileInfoBase[] f = getActiveImage().getFileInfo();
@@ -2901,7 +2933,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			mct3.setAlignment(Element.ALIGN_LEFT);
 			mct3.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
 			mct3.addElement(new Paragraph("ID:", fontBold));
-			mct3.addElement(new Paragraph(getActiveImage().getFileInfo()[0].getFileName(), fontNormal));
+			mct3.addElement(new Paragraph("Slice "+getViewableSlice(), fontNormal));
 			mct3.addElement(new Paragraph("Scan Date:", fontBold));
 			mct3.addElement(new Paragraph("05/09/2003", fontNormal));
 			pdfDocument.add(mct3);
@@ -2919,7 +2951,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			spTable.addCell("Pixel Size:");
 			spTable.addCell(Double.toString(getActiveImage().getResolutions(0)[0]*.1));
 			spTable.addCell("Slice Thickness: (mm)");
-			spTable.addCell(Float.toString(getActiveImage().getFileInfo()[0].getSliceThickness()));
+			spTable.addCell(Float.toString(getActiveImage().getFileInfo()[getViewableSlice()].getSliceThickness()));
 			spTable.addCell("Table Height: (cm)");
 			spTable.addCell("143.00");
 			
@@ -3040,8 +3072,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		public boolean isSelected() {
 			if(colorButton.getColorIcon().getColor() == Color.BLACK) 
 				return false;
-			else
-				return true;
+			return true;
 		}
 		
 		public String getVOIName() {
