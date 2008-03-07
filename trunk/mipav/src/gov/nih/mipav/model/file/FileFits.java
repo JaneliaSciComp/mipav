@@ -131,6 +131,7 @@ public class FileFits extends FileBase {
         int dimNumber;
         int [] reducedExtents;
         float [] reducedResols;
+        float focalRatio;
 
         try {
 
@@ -712,6 +713,20 @@ public class FileFits extends FileBase {
                             fileInfo.setUnitsOfMeasure(FileInfoBase.MINUTES, dimNumber - 1);
                         } else if (subS.equals(FileInfoBase.HOURS_STRING)) {
                             fileInfo.setUnitsOfMeasure(FileInfoBase.HOURS, dimNumber - 1);
+                        } else {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, dimNumber - 1);
+                            if (dimNumber == 1) {
+                                fileInfo.setCTYPE1(subS);
+                            }
+                            else if (dimNumber == 2) {
+                                fileInfo.setCTYPE2(subS);
+                            }
+                            else if (dimNumber == 3) {
+                                fileInfo.setCTYPE3(subS);
+                            }
+                            else if (dimNumber == 4) {
+                                fileInfo.setCTYPE4(subS);
+                            }
                         }
                     }
                 } // else if (s.startsWith("CTYPE"))
@@ -768,6 +783,61 @@ public class FileFits extends FileBase {
                         fileInfo.setTimeAcquired(timeString);
                     }
                 } // else if (s.startsWith("DATE-OBS"))
+                else if (s.startsWith("TIME-OBS")) {
+                    subS = s.substring(10,80);
+                    subS = subS.trim();
+                    i = subS.indexOf("'");
+                    j = subS.lastIndexOf("'");
+                    if ((i != -1) && (j != -1) && (i != j)) {
+                        subS = subS.substring(i+1, j);
+                        subS = subS.trim();
+                    }
+                    Preferences.debug("TIME data acquired = " + subS + "\n");
+                    fileInfo.setTimeAcquired(subS);
+                } // else if (s.startsWith("TIME-OBS"))
+                else if (s.startsWith("DATE-MAP")) {
+
+                    // Date data was last processed
+                    subS = s.substring(10, 80);
+                    subS = subS.trim();
+                    numApos = 0;
+                    aposLoc = new int[6];
+                    for (i = 0; i < subS.length(); i++) {
+                        if (subS.substring(i,i+1).indexOf("'") == 0) {
+                            aposLoc[numApos++] = i;   
+                        }
+                    }
+                    if (numApos == 0) {
+                        Preferences.debug("DATE-MAP, date data last processed = " + subS + "\n");
+                        fileInfo.setDateProcessed(subS);
+                    }
+                    else if (numApos == 2) {
+                        dateString = subS.substring(aposLoc[0]+1,aposLoc[1]).trim();
+                        haveTime = false;
+                        for (i = 0; i < subS.length(); i++) {
+                            if (subS.substring(i,i+1) == "T") {
+                                haveTime = true;
+                                j = i;
+                            }
+                        }
+                        if (haveTime) {
+                            timeString = dateString.substring(j+1);
+                            Preferences.debug("TIME data last processed = " + timeString + "\n");
+                            fileInfo.setTimeProcessed(timeString);
+                            dateString = dateString.substring(0,j);
+                        }
+                        Preferences.debug("DATE-MAP, date data last processed = " + dateString + "\n");
+                        fileInfo.setDateProcessed(dateString);
+                    }
+                    else if (numApos == 4) {
+                        dateString = subS.substring(aposLoc[0]+1,aposLoc[1]).trim();
+                        Preferences.debug("DATE-OBS, date data last processed = " + dateString + "\n");
+                        fileInfo.setDateProcessed(dateString);
+                        timeString = subS.substring(aposLoc[2]+1,aposLoc[3]).trim();
+                        Preferences.debug("TIME data last processed = " + timeString + "\n");
+                        fileInfo.setTimeProcessed(timeString);
+                    }
+                } // else if (s.startsWith("DATE-MAP"))
                 else if (s.startsWith("DATE")) {
 
                     // Date file was written
@@ -836,10 +906,17 @@ public class FileFits extends FileBase {
                     Preferences.debug("ORIGIN, installation where file is written = " + "\n" + subS + "\n");
                     fileInfo.setOrigin(subS);
                 } // else if (s.startsWith("ORIGIN"))
-                else if (s.startsWith("INSTRUMEN")) {
+                else if (s.startsWith("INSTRUME")) {
                     subS = s.substring(10, 80);
                     subS = subS.trim();
+                    i = subS.indexOf("'");
+                    j = subS.lastIndexOf("'");
+                    if ((i != -1) && (j != -1) && (i != j)) {
+                        subS = subS.substring(i+1, j);
+                        subS = subS.trim();
+                    }
                     Preferences.debug("INSTRUMENT, data acquisition instrument = " + subS + "\n");
+                    fileInfo.setInstrument(subS);
                 } // else if (s.startsWith("INSTRUMEN"))
                 else if (s.startsWith("OBSERVER")) {
                     subS = s.substring(10, 80);
@@ -875,6 +952,37 @@ public class FileFits extends FileBase {
                     subS = subS.trim();
                     Preferences.debug("REFERENC = " + subS + "\n");
                 } // else if (s.startsWith("REFERENC"))
+                else if (s.startsWith("F_RATIO")) {
+                    subS = s.substring(10, 80);
+                    subS = subS.trim();  
+                    i = subS.indexOf("/");
+
+                    if (i != -1) {
+                        subS = subS.substring(0, i);
+                        subS = subS.trim();
+                    }
+
+                    try {
+                        focalRatio = Float.parseFloat(subS);
+                        Preferences.debug("Focal ratio = " + focalRatio + "\n");
+                        fileInfo.setFocalRatio(focalRatio);
+                    } catch (NumberFormatException e) {
+
+                        Preferences.debug("Instead of a float F_RATIO line had = " + subS);
+                    }
+                } // else if (s.startsWith("F_RATIO"))
+                else if (s.startsWith("BUNIT")) {
+                    subS = s.substring(10, 80);
+                    subS = subS.trim();
+                    i = subS.indexOf("'");
+                    j = subS.lastIndexOf("'");
+                    if ((i != -1) && (j != -1) && (i != j)) {
+                        subS = subS.substring(i+1, j);
+                        subS = subS.trim();
+                    }
+                    Preferences.debug("BUNIT = " + subS + "\n"); 
+                    fileInfo.setBUNIT(subS);
+                } // else if (s.startsWith("BUNIT))
             } while (!s.startsWith("END"));
             
             for (i = nDimensions - 1; i >= 0; i--) {
@@ -961,6 +1069,7 @@ public class FileFits extends FileBase {
 
                 fileInfo.setDataType(ModelStorageBase.FLOAT);
             } else if ((isColorPlanar2D) && (sourceType == ModelStorageBase.UBYTE)) {
+                sourceType = ModelStorageBase.ARGB;
                 image = new ModelImage(ModelStorageBase.ARGB, imgExtents, fileInfo.getFileName());
                 fileInfo.setDataType(ModelStorageBase.ARGB);
             } else {
@@ -1712,7 +1821,9 @@ public class FileFits extends FileBase {
         int progress, progressLength, mod;
         int tmpInt;
 
-        switch (image.getType()) {
+        // do not use image.getType() because the original type might be converted into float
+        // because of scaleFact multiplication and scaleOffset addition
+        switch (sourceType) {
 
             case ModelStorageBase.UBYTE:
                 byteBuffer = new byte[buffer.length];
