@@ -32,7 +32,12 @@ public class FileInfoFits extends FileInfoBase {
     private String CTYPE2 = null;
     private String CTYPE3 = null;
     private String CTYPE4 = null;
+    private String CUNIT1 = null;
+    private String CUNIT2 = null;
+    private String CUNIT3 = null;
+    private String CUNIT4 = null;
     private String BUNIT = null;
+    private String author = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -69,16 +74,32 @@ public class FileInfoFits extends FileInfoBase {
             dialog.append("CTYPE1, name along x-axis = " + CTYPE1 + "\n");
         }
         
+        if (CUNIT1 != null) {
+            dialog.append("CUNIT1, units along x-axis = " + CUNIT1 + "\n");
+        }
+        
         if (CTYPE2 != null) {
             dialog.append("CTYPE2, name along y-axis = " + CTYPE2 + "\n");
+        }
+        
+        if (CUNIT2 != null) {
+            dialog.append("CUNIT2, units along y-axis = " + CUNIT2 + "\n");
         }
         
         if (CTYPE3 != null) {
             dialog.append("CTYPE3, name along z-axis = " + CTYPE3 + "\n");
         }
         
+        if (CUNIT3 != null) {
+            dialog.append("CUNIT3, units along z-axis = " + CUNIT3 + "\n");
+        }
+        
         if (CTYPE4 != null) {
             dialog.append("CTYPE4, name along t-axis = " + CTYPE4 + "\n");
+        }
+        
+        if (CUNIT4 != null) {
+            dialog.append("CUNIT4, units along t-axis = " + CUNIT4 + "\n");
         }
         
         if (origin != null) {
@@ -111,6 +132,10 @@ public class FileInfoFits extends FileInfoBase {
         
         if (jobName != null) {
             dialog.append("JOB NAME = " + jobName + "\n");
+        }
+        
+        if (author != null) {
+            dialog.append("AUTHOR = " + author + "\n");
         }
         
         if (object != null) {
@@ -149,6 +174,22 @@ public class FileInfoFits extends FileInfoBase {
     
     public void setCTYPE4(String CTYPE4) {
         this.CTYPE4 = CTYPE4;
+    }
+    
+    public void setCUNIT1(String CUNIT1) {
+        this.CUNIT1 = CUNIT1;
+    }
+    
+    public void setCUNIT2(String CUNIT2) {
+        this.CUNIT2 = CUNIT2;
+    }
+    
+    public void setCUNIT3(String CUNIT3) {
+        this.CUNIT3 = CUNIT3;
+    }
+    
+    public void setCUNIT4(String CUNIT4) {
+        this.CUNIT4 = CUNIT4;
     }
     
     public void setDateAcquired(String dateAcquired) {
@@ -197,6 +238,10 @@ public class FileInfoFits extends FileInfoBase {
     
     public void setFocalRatio(float focalRatio) {
         this.focalRatio = focalRatio;
+    }
+    
+    public void setAuthor(String author) {
+        this.author = author;
     }
     
 }
