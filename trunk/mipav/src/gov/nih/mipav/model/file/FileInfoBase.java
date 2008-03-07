@@ -84,6 +84,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /** Radians per second. */
     public static final int RADS = 19;
+    
+    public static final int DEGREES = 20;
 
     /** String version of units of measurement - unknown. */
     public static final String UNKNOWN_STRING = "Unknown";
@@ -141,6 +143,9 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /** String version of units of measurement - radians per second. */
     public static final String RADS_STRING = "Radians_Per_Second";
+    
+    /** String version of units of measurement - degrees. */
+    public static final String DEGREES_STRING = "Degrees";
 
     /**
      * Array of all units --- the first value is unknown since all of the* static definitions start at 1 instead of 0.
@@ -149,7 +154,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         UNKNOWN_STRING, UNKNOWN_STRING, INCHES_STRING, CENTIMETERS_STRING, ANGSTROMS_STRING, NANOMETERS_STRING,
         MICROMETERS_STRING, MILLIMETERS_STRING, METERS_STRING, KILOMETERS_STRING, MILES_STRING, NANOSEC_STRING,
         MICROSEC_STRING, MILLISEC_STRING, SECONDS_STRING, MINUTES_STRING, HOURS_STRING, HZ_STRING, PPM_STRING,
-        RADS_STRING
+        RADS_STRING,DEGREES_STRING
     };
 
     /**
@@ -158,7 +163,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      */
     private static final String[] allAbbrevUnits = {
         "unk", "unk", "in", "cm", "A", "nm", "um", "mm", "m", "km", "mi", "nsec", "usec", "msec", "sec", "min", "hr",
-        "hz", "ppm", "rads"
+        "hz", "ppm", "rads", "deg"
     };
 
     /** Array of space units: inches, mm, etc. */
@@ -1251,6 +1256,22 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
                     case HOURS:
                         dialog.append("Hours \n");
+                        break;
+                        
+                    case HZ:
+                        dialog.append("Hertz \n");
+                        break;
+                        
+                    case PPM:
+                        dialog.append("Parts per million \n");
+                        break;
+                        
+                    case RADS:
+                        dialog.append("Radians per second \n");
+                        break;
+                        
+                    case DEGREES:
+                        dialog.append("Degrees \n");
                         break;
 
                     default:
