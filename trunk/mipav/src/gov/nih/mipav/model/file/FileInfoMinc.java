@@ -356,8 +356,8 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  Rescale intercept.
      */
-    public final double calculateIntercept(double min, double slope) {
-        return (min - (slope * vmin));
+    public static final double calculateIntercept(double min, double slope, double validMin) {
+        return (min - (slope * validMin));
     }
 
 
@@ -386,9 +386,10 @@ public class FileInfoMinc extends FileInfoBase {
 
             for (int i = 0; i < rescaleSlope.length; i++) {
                 rescaleSlope[i] = calculateSlope(((Double) varArray[max_index].values.elementAt(i)).doubleValue(),
-                                                 ((Double) varArray[min_index].values.elementAt(i)).doubleValue());
+                                                 ((Double) varArray[min_index].values.elementAt(i)).doubleValue(),
+                                                 vmax, vmin);
                 rescaleIntercept[i] = calculateIntercept(((Double) varArray[min_index].values.elementAt(i))
-                                                             .doubleValue(), rescaleSlope[i]);
+                                                             .doubleValue(), rescaleSlope[i], vmin);
             }
         } catch (ArrayIndexOutOfBoundsException error) {
 
@@ -407,10 +408,10 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  Rescale slope
      */
-    public final double calculateSlope(double max, double min) {
+    public static final double calculateSlope(double max, double min, double validMax, double validMin) {
 
-        if ((vmax - vmin) != 0) {
-            return (max - min) / (vmax - vmin);
+        if ((validMax - validMin) != 0) {
+            return (max - min) / (validMax - validMin);
         }
 
         return 1.0;
@@ -1336,7 +1337,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  DOCUMENT ME!
      */
-    private int[] getAxisOrientation(TransMatrix mat) {
+    public static int[] getAxisOrientation(TransMatrix mat) {
         int[] axisOrientation = new int[3];
         double[][] array;
         double xi, xj, xk, yi, yj, yk, zi, zj, zk, val;
@@ -1871,7 +1872,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  The proper axis orientation for that space.
      */
-    private int setOrientType(String space, boolean positive) {
+    public static int setOrientType(String space, boolean positive) {
 
         if (positive) {
 

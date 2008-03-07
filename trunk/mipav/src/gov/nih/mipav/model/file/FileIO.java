@@ -1502,7 +1502,9 @@ public class FileIO {
                 case FileUtility.MINC:
                     image = readMinc(fileName, fileDir, one);
                     break;
-
+                case FileUtility.MINC_HDF:
+                    image = readMincHDF(fileName, fileDir, one);
+                    break;
                 case FileUtility.AFNI:
                     image = readAfni(fileName, fileDir, loadB);
                     break;
@@ -5643,6 +5645,52 @@ public class FileIO {
         return image;
     }
 
+    private ModelImage readMincHDF(String fileName, String fileDir, boolean one) {
+        ModelImage image = null;
+        FileMincHDF imageFile;
+
+        try {
+            imageFile = new FileMincHDF(fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
+            image = imageFile.readImage(one);
+        } catch (Exception error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+                Preferences.debug(error + "\n", Preferences.DEBUG_FILEIO);
+
+                for (int i = 0; i < error.getStackTrace().length; i++) {
+                    Preferences.debug("\t" + error.getStackTrace()[i] + "\n", Preferences.DEBUG_FILEIO);
+                }
+            }
+
+            return null;
+        } catch (OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return null;
+        }
+
+        return image;
+    }
+    
     /**
      * Reads a MRC file by calling the read method of the file.
      *

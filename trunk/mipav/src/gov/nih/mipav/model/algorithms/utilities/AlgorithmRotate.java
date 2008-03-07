@@ -520,9 +520,11 @@ public class AlgorithmRotate extends AlgorithmBase {
                 }
 
                 if (newFileInfo[i].getFileFormat() == FileUtility.MINC) {
-                    newFileInfo[i].setRescaleSlope(((FileInfoMinc) newFileInfo[i]).calculateSlope(min, max));
-                    newFileInfo[i].setRescaleIntercept(((FileInfoMinc) newFileInfo[i]).calculateIntercept(min,
-                                                                                                          newFileInfo[i].getRescaleSlope()));
+                    newFileInfo[i].setRescaleSlope(FileInfoMinc.calculateSlope(min, max, 
+                    		newFileInfo[i].getMax(), newFileInfo[i].getMin()));
+                    
+                    newFileInfo[i].setRescaleIntercept(FileInfoMinc.calculateIntercept(min, newFileInfo[i].getRescaleSlope(),
+                    		newFileInfo[i].getMin()));
                 }
             }
 
