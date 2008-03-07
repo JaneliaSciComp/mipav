@@ -19,11 +19,20 @@ public class FileInfoFits extends FileInfoBase {
     private String origin = null;
     private String dateAcquired = null;
     private String timeAcquired = null;
+    private String dateProcessed = null;
+    private String timeProcessed = null;
     private String dateWritten = null;
     private String timeWritten = null;
     private String jobName = null;
     private String object = null;
     private String observer = null;
+    private String instrument = null;
+    private float focalRatio = -1.0f;
+    private String CTYPE1 = null;
+    private String CTYPE2 = null;
+    private String CTYPE3 = null;
+    private String CTYPE4 = null;
+    private String BUNIT = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -52,6 +61,26 @@ public class FileInfoFits extends FileInfoBase {
         
         dialog.append("\n\n                Other information\n\n");
         
+        if (BUNIT != null) {
+            dialog.append("Pixel value units = " + BUNIT + "\n");
+        }
+        
+        if (CTYPE1 != null) {
+            dialog.append("CTYPE1, name along x-axis = " + CTYPE1 + "\n");
+        }
+        
+        if (CTYPE2 != null) {
+            dialog.append("CTYPE2, name along y-axis = " + CTYPE2 + "\n");
+        }
+        
+        if (CTYPE3 != null) {
+            dialog.append("CTYPE3, name along z-axis = " + CTYPE3 + "\n");
+        }
+        
+        if (CTYPE4 != null) {
+            dialog.append("CTYPE4, name along t-axis = " + CTYPE4 + "\n");
+        }
+        
         if (origin != null) {
             dialog.append("ORIGIN, installation where file is written = " + origin + "\n");
         }
@@ -62,6 +91,14 @@ public class FileInfoFits extends FileInfoBase {
         
         if (timeAcquired != null) {
             dialog.append("TIME data acquired = " + timeAcquired + "\n");
+        }
+        
+        if (dateProcessed != null) {
+            dialog.append("DATE data last processed = " + dateProcessed + "\n");
+        }
+        
+        if (timeProcessed != null) {
+            dialog.append("TIME data last processed = " + timeProcessed + "\n");
         }
         
         if (dateWritten != null) {
@@ -84,6 +121,34 @@ public class FileInfoFits extends FileInfoBase {
             dialog.append("OBSERVER = " + observer + "\n");
         }
         
+        if (instrument != null) {
+            dialog.append("INSTRUMENT in use = " + instrument + "\n");
+        }
+        
+        if (focalRatio > 0.0f) {
+            dialog.append("FOCAL RATIO = " + focalRatio + "\n");
+        }
+        
+    }
+    
+    public void setBUNIT(String BUNIT) {
+        this.BUNIT = BUNIT;
+    }
+    
+    public void setCTYPE1(String CTYPE1) {
+        this.CTYPE1 = CTYPE1;
+    }
+    
+    public void setCTYPE2(String CTYPE2) {
+        this.CTYPE2 = CTYPE2;
+    }
+    
+    public void setCTYPE3(String CTYPE3) {
+        this.CTYPE3 = CTYPE3;
+    }
+    
+    public void setCTYPE4(String CTYPE4) {
+        this.CTYPE4 = CTYPE4;
     }
     
     public void setDateAcquired(String dateAcquired) {
@@ -92,6 +157,14 @@ public class FileInfoFits extends FileInfoBase {
     
     public void setTimeAcquired(String timeAcquired) {
         this.timeAcquired = timeAcquired;
+    }
+    
+    public void setDateProcessed(String dateProcessed) {
+        this.dateProcessed = dateProcessed;
+    }
+    
+    public void setTimeProcessed(String timeProcessed) {
+        this.timeProcessed = timeProcessed;
     }
     
     public void setDateWritten(String dateWritten) {
@@ -117,4 +190,13 @@ public class FileInfoFits extends FileInfoBase {
     public void setObserver(String observer) {
         this.observer = observer;
     }
+    
+    public void setInstrument(String instrument) {
+        this.instrument = instrument;
+    }
+    
+    public void setFocalRatio(float focalRatio) {
+        this.focalRatio = focalRatio;
+    }
+    
 }
