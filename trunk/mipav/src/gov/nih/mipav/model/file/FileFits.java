@@ -12,7 +12,13 @@ import java.io.*;
 /**
  * Some of this code is derived from FITS.java in ImageJ.
  * In A User's Guide for the Flexible Image Transport System (FITS) Version 4.0, Section 4.1 Indexes and Physical
- * Coordinates, the text says, "recommend that FITS writers order pixels starting in the lower left hand corner
+ * Coordinates, the text says, "Historically, astronomers have generally assumed that the index point in a
+ * FITS file represents the center of a pixel.  This interpretation is endorsed by GC.  It differs from the
+ * common practice in computer graphics of treating the center of a pixel as a half-integral point."
+ * For CRPIXn in FITS: The center of the first pixel is 1 and the center of the last pixel is NAXISn.
+ * In MIPAV the center of the first pixel is 0.5 and the center of the last pixel is NAXISn - 0.5.
+ * So subtract 0.5 to go from FITS to MIPAV.
+ * " ...recommend that FITS writers order pixels starting in the lower left hand corner
  * of the image, with the first axis increasing to the right, as in the rectangular coordinate x-axis, and the 
  * second increasing upward (the y-axis)."  MIPAV uses the upper left hand corner as the origin and has the y axis
  * going downward.  Therefore, the image is flipped after reading and flipped before writing.
@@ -126,12 +132,24 @@ public class FileFits extends FileBase {
         double[] imgDBuffer;
         int bufferSize;
         float[] imgResols = new float[] { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+        double[] scale = new double[] {1.0, 1.0, 1.0, 1.0, 1.0};
+        // reference pixel position along axis
+        double[] crpix = new double[5];
+        // coordinate of reference pixel
+        double[] crval = new double[5];
+        boolean[] haveCrpix = new boolean[5];
+        boolean[] haveCrval = new boolean[5];
         float minResol;
         float maxResol;
         int dimNumber;
         int [] reducedExtents;
-        float [] reducedResols;
+        double [] reducedScale;
+        double[] reducedCrpix;
+        double[] reducedCrval;
+        boolean[] reducedHaveCrpix;
+        boolean[] reducedHaveCrval;
         float focalRatio;
+        double origin[];
 
         try {
 
@@ -350,6 +368,7 @@ public class FileFits extends FileBase {
                         }
 
                         Preferences.debug("NAXIS1 = " + imgExtents[0] + "\n");
+                        fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, 0);
 
                         if (imgExtents[0] < 0) {
                             raFile.close();
@@ -400,6 +419,7 @@ public class FileFits extends FileBase {
                         }
 
                         Preferences.debug("NAXIS2 = " + imgExtents[1] + "\n");
+                        fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, 1);
 
                         if (imgExtents[1] < 0) {
                             raFile.close();
@@ -451,6 +471,7 @@ public class FileFits extends FileBase {
                             }
 
                             Preferences.debug("NAXIS3 = " + imgExtents[2] + "\n");
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, 2);
 
                             if (imgExtents[2] < 0) {
                                 raFile.close();
@@ -503,6 +524,7 @@ public class FileFits extends FileBase {
                             }
 
                             Preferences.debug("NAXIS4 = " + imgExtents[3] + "\n");
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, 3);
 
                             if (imgExtents[3] < 0) {
                                 raFile.close();
@@ -599,7 +621,7 @@ public class FileFits extends FileBase {
                     }
 
                     try {
-                        imgResols[0] = Math.abs(Float.parseFloat(subS));
+                        scale[0] = Double.parseDouble(subS);
                     } catch (NumberFormatException e) {
                         raFile.close();
 
@@ -607,7 +629,7 @@ public class FileFits extends FileBase {
                         throw new IOException();
                     }
 
-                    Preferences.debug("CDELT1 = " + imgResols[0] + "\n");
+                    Preferences.debug("CDELT1 = " + scale[0] + "\n");
                 } // else if (s.startsWith("CDELT1"))
                 else if (s.startsWith("CDELT2")) {
                     subS = s.substring(10, 80);
@@ -620,7 +642,7 @@ public class FileFits extends FileBase {
                     }
 
                     try {
-                        imgResols[1] = Math.abs(Float.parseFloat(subS));
+                        scale[1] = Double.parseDouble(subS);
                     } catch (NumberFormatException e) {
                         raFile.close();
 
@@ -628,7 +650,7 @@ public class FileFits extends FileBase {
                         throw new IOException();
                     }
 
-                    Preferences.debug("CDELT2 = " + imgResols[1] + "\n");
+                    Preferences.debug("CDELT2 = " + scale[1] + "\n");
                 } // else if (s.startsWith("CDELT2"))
                 else if (s.startsWith("CDELT3")) {
                     subS = s.substring(10, 80);
@@ -641,7 +663,7 @@ public class FileFits extends FileBase {
                     }
 
                     try {
-                        imgResols[2] = Math.abs(Float.parseFloat(subS));
+                        scale[2] = Double.parseDouble(subS);
                     } catch (NumberFormatException e) {
                         raFile.close();
 
@@ -649,7 +671,7 @@ public class FileFits extends FileBase {
                         throw new IOException();
                     }
 
-                    Preferences.debug("CDELT3 = " + imgResols[2] + "\n");
+                    Preferences.debug("CDELT3 = " + scale[2] + "\n");
                 } // else if (s.startsWith("CDELT3"))
                 else if (s.startsWith("CDELT4")) {
                     subS = s.substring(10, 80);
@@ -662,7 +684,7 @@ public class FileFits extends FileBase {
                     }
 
                     try {
-                        imgResols[3] = Math.abs(Float.parseFloat(subS));
+                        scale[3] = Double.parseDouble(subS);
                     } catch (NumberFormatException e) {
                         raFile.close();
 
@@ -670,8 +692,46 @@ public class FileFits extends FileBase {
                         throw new IOException();
                     }
 
-                    Preferences.debug("CDELT4 = " + imgResols[3] + "\n");
+                    Preferences.debug("CDELT4 = " + scale[3] + "\n");
                 } // else if (s.startsWith("CDELT4"))
+                else if (s.startsWith("CRPIX")) {
+                    dimNumber = Integer.parseInt(s.substring(5, 6));
+                    subS = s.substring(10, 80);
+                    subS = subS.trim();
+                    i = subS.indexOf("/");
+
+                    if (i != -1) {
+                        subS = subS.substring(0, i);
+                        subS = subS.trim();
+                    }
+
+                    try {
+                        crpix[dimNumber-1] = Double.parseDouble(subS);
+                        haveCrpix[dimNumber-1] = true;
+                    } catch (NumberFormatException e) {
+
+                        Preferences.debug("Instead of a float CRPIX" + s.substring(5,6)+ " line had = " + subS);
+                    }
+                } // else if (s.startsWith("CRPIX"))
+                else if (s.startsWith("CRVAL")) {
+                    dimNumber = Integer.parseInt(s.substring(5, 6));
+                    subS = s.substring(10, 80);
+                    subS = subS.trim();
+                    i = subS.indexOf("/");
+
+                    if (i != -1) {
+                        subS = subS.substring(0, i);
+                        subS = subS.trim();
+                    }
+
+                    try {
+                        crval[dimNumber-1] = Double.parseDouble(subS);
+                        haveCrval[dimNumber-1] = true;
+                    } catch (NumberFormatException e) {
+
+                        Preferences.debug("Instead of a float CRVAL" + s.substring(5,6)+ " line had = " + subS);
+                    }
+                } // else if (s.startsWith("CRVAL"))
                 else if (s.startsWith("CTYPE")) {
                     dimNumber = Integer.parseInt(s.substring(5, 6));
                     i = s.indexOf("'");
@@ -683,38 +743,39 @@ public class FileFits extends FileBase {
                         if ((subS.equals("RGB")) && (dimNumber == 3) && (imgExtents[2] == 3) && (nDimensions == 3)) {
                             isColorPlanar2D = true;    
                         }
-                        else if (subS.equals(FileInfoBase.INCHES_STRING)) {
+                        else if (subS.toUpperCase().equals(FileInfoBase.INCHES_STRING.toUpperCase())) {
                             fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, dimNumber - 1);
-                        } else if (subS.equals(FileInfoBase.MILLIMETERS_STRING)) {
+                        } else if (subS.toUpperCase().equals(FileInfoBase.MILLIMETERS_STRING.toUpperCase())) {
                             fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, dimNumber - 1);
-                        } else if (subS.equals(FileInfoBase.CENTIMETERS_STRING)) {
+                        } else if (subS.toUpperCase().equals(FileInfoBase.CENTIMETERS_STRING.toUpperCase())) {
                             fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, dimNumber - 1);
-                        } else if (subS.equals(FileInfoBase.METERS_STRING)) {
+                        } else if (subS.toUpperCase().equals(FileInfoBase.METERS_STRING.toUpperCase())) {
                             fileInfo.setUnitsOfMeasure(FileInfoBase.METERS, dimNumber - 1);
-                        } else if (subS.equals(FileInfoBase.KILOMETERS_STRING)) {
+                        } else if (subS.toUpperCase().equals(FileInfoBase.KILOMETERS_STRING.toUpperCase())) {
                             fileInfo.setUnitsOfMeasure(FileInfoBase.KILOMETERS, dimNumber - 1);
-                        } else if (subS.equals(FileInfoBase.MILES_STRING)) {
+                        } else if (subS.toUpperCase().equals(FileInfoBase.MILES_STRING.toUpperCase())) {
                             fileInfo.setUnitsOfMeasure(FileInfoBase.MILES, dimNumber - 1);
-                        } else if (subS.equals(FileInfoBase.ANGSTROMS_STRING)) {
+                        } else if (subS.toUpperCase().equals(FileInfoBase.ANGSTROMS_STRING.toUpperCase())) {
                             fileInfo.setUnitsOfMeasure(FileInfoBase.ANGSTROMS, dimNumber - 1);
-                        } else if (subS.equals(FileInfoBase.NANOMETERS_STRING)) {
+                        } else if (subS.toUpperCase().equals(FileInfoBase.NANOMETERS_STRING.toUpperCase())) {
                             fileInfo.setUnitsOfMeasure(FileInfoBase.NANOMETERS, dimNumber - 1);
-                        } else if (subS.equals(FileInfoBase.MICROMETERS_STRING)) {
+                        } else if (subS.toUpperCase().equals(FileInfoBase.MICROMETERS_STRING.toUpperCase())) {
                             fileInfo.setUnitsOfMeasure(FileInfoBase.MICROMETERS, dimNumber - 1);
-                        } else if (subS.equals(FileInfoBase.NANOSEC_STRING)) {
+                        } else if (subS.toUpperCase().equals(FileInfoBase.NANOSEC_STRING.toUpperCase())) {
                             fileInfo.setUnitsOfMeasure(FileInfoBase.NANOSEC, dimNumber - 1);
-                        } else if (subS.equals(FileInfoBase.MICROSEC_STRING)) {
+                        } else if (subS.toUpperCase().equals(FileInfoBase.MICROSEC_STRING.toUpperCase())) {
                             fileInfo.setUnitsOfMeasure(FileInfoBase.MICROSEC, dimNumber - 1);
-                        } else if (subS.equals(FileInfoBase.MILLISEC_STRING)) {
+                        } else if (subS.toUpperCase().equals(FileInfoBase.MILLISEC_STRING.toUpperCase())) {
                             fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, dimNumber - 1);
-                        } else if (subS.equals(FileInfoBase.SECONDS_STRING)) {
+                        } else if (subS.toUpperCase().equals(FileInfoBase.SECONDS_STRING.toUpperCase())) {
                             fileInfo.setUnitsOfMeasure(FileInfoBase.SECONDS, dimNumber - 1);
-                        } else if (subS.equals(FileInfoBase.MINUTES_STRING)) {
+                        } else if (subS.toUpperCase().equals(FileInfoBase.MINUTES_STRING.toUpperCase())) {
                             fileInfo.setUnitsOfMeasure(FileInfoBase.MINUTES, dimNumber - 1);
-                        } else if (subS.equals(FileInfoBase.HOURS_STRING)) {
+                        } else if (subS.toUpperCase().equals(FileInfoBase.HOURS_STRING.toUpperCase())) {
                             fileInfo.setUnitsOfMeasure(FileInfoBase.HOURS, dimNumber - 1);
+                        } else if (subS.toUpperCase().equals(FileInfoBase.DEGREES_STRING.toUpperCase())) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.DEGREES, dimNumber - 1);
                         } else {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, dimNumber - 1);
                             if (dimNumber == 1) {
                                 fileInfo.setCTYPE1(subS);
                             }
@@ -730,6 +791,63 @@ public class FileFits extends FileBase {
                         }
                     }
                 } // else if (s.startsWith("CTYPE"))
+                else if (s.startsWith("CUNIT")) {
+                    dimNumber = Integer.parseInt(s.substring(5, 6));
+                    i = s.indexOf("'");
+                    j = s.lastIndexOf("'");
+                    if ((i != -1) && (j != -1)) {
+                        subS = s.substring(i+1, j);
+                        subS = subS.trim();
+                        Preferences.debug("CUNIT" + s.substring(5, 6) + " = " + subS + "\n");
+                        
+                        if (subS.toUpperCase().equals(FileInfoBase.INCHES_STRING.toUpperCase())) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, dimNumber - 1);
+                        } else if (subS.toUpperCase().equals(FileInfoBase.MILLIMETERS_STRING.toUpperCase())) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, dimNumber - 1);
+                        } else if (subS.toUpperCase().equals(FileInfoBase.CENTIMETERS_STRING.toUpperCase())) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, dimNumber - 1);
+                        } else if (subS.toUpperCase().equals(FileInfoBase.METERS_STRING.toUpperCase())) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.METERS, dimNumber - 1);
+                        } else if (subS.toUpperCase().equals(FileInfoBase.KILOMETERS_STRING.toUpperCase())) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.KILOMETERS, dimNumber - 1);
+                        } else if (subS.toUpperCase().equals(FileInfoBase.MILES_STRING.toUpperCase())) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.MILES, dimNumber - 1);
+                        } else if (subS.toUpperCase().equals(FileInfoBase.ANGSTROMS_STRING.toUpperCase())) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.ANGSTROMS, dimNumber - 1);
+                        } else if (subS.toUpperCase().equals(FileInfoBase.NANOMETERS_STRING.toUpperCase())) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.NANOMETERS, dimNumber - 1);
+                        } else if (subS.toUpperCase().equals(FileInfoBase.MICROMETERS_STRING.toUpperCase())) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.MICROMETERS, dimNumber - 1);
+                        } else if (subS.toUpperCase().equals(FileInfoBase.NANOSEC_STRING.toUpperCase())) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.NANOSEC, dimNumber - 1);
+                        } else if (subS.toUpperCase().equals(FileInfoBase.MICROSEC_STRING.toUpperCase())) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.MICROSEC, dimNumber - 1);
+                        } else if (subS.toUpperCase().equals(FileInfoBase.MILLISEC_STRING.toUpperCase())) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, dimNumber - 1);
+                        } else if (subS.toUpperCase().equals(FileInfoBase.SECONDS_STRING.toUpperCase())) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.SECONDS, dimNumber - 1);
+                        } else if (subS.toUpperCase().equals(FileInfoBase.MINUTES_STRING.toUpperCase())) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.MINUTES, dimNumber - 1);
+                        } else if (subS.toUpperCase().equals(FileInfoBase.HOURS_STRING.toUpperCase())) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.HOURS, dimNumber - 1);
+                        } else if (subS.toUpperCase().equals(FileInfoBase.DEGREES_STRING.toUpperCase())) {
+                            fileInfo.setUnitsOfMeasure(FileInfoBase.DEGREES, dimNumber - 1);
+                        } else {
+                            if (dimNumber == 1) {
+                                fileInfo.setCUNIT1(subS);
+                            }
+                            else if (dimNumber == 2) {
+                                fileInfo.setCUNIT2(subS);
+                            }
+                            else if (dimNumber == 3) {
+                                fileInfo.setCUNIT3(subS);
+                            }
+                            else if (dimNumber == 4) {
+                                fileInfo.setCUNIT4(subS);
+                            }
+                        }
+                    }
+                } // else if (s.startsWith("CUNIT"))
                 else if (s.startsWith("COMMENT")) {
                     subS = s.substring(8, 80);
                     subS = subS.trim();
@@ -916,7 +1034,9 @@ public class FileFits extends FileBase {
                         subS = subS.trim();
                     }
                     Preferences.debug("INSTRUMENT, data acquisition instrument = " + subS + "\n");
-                    fileInfo.setInstrument(subS);
+                    if (subS.length() != 0) {
+                        fileInfo.setInstrument(subS);
+                    }
                 } // else if (s.startsWith("INSTRUMEN"))
                 else if (s.startsWith("OBSERVER")) {
                     subS = s.substring(10, 80);
@@ -945,7 +1065,14 @@ public class FileFits extends FileBase {
                 else if (s.startsWith("AUTHOR")) {
                     subS = s.substring(10, 80);
                     subS = subS.trim();
+                    i = subS.indexOf("'");
+                    j = subS.lastIndexOf("'");
+                    if ((i != -1) && (j != -1) && (i != j)) {
+                        subS = subS.substring(i+1, j);
+                        subS = subS.trim();
+                    }
                     Preferences.debug("AUTHOR = " + subS + "\n");
+                    fileInfo.setAuthor(subS);
                 } // else if (s.startsWith("AUTHOR")
                 else if (s.startsWith("REFERENC")) {
                     subS = s.substring(10, 80);
@@ -980,32 +1107,54 @@ public class FileFits extends FileBase {
                         subS = subS.substring(i+1, j);
                         subS = subS.trim();
                     }
-                    Preferences.debug("BUNIT = " + subS + "\n"); 
-                    fileInfo.setBUNIT(subS);
-                } // else if (s.startsWith("BUNIT))
+                    Preferences.debug("BUNIT = " + subS + "\n");
+                    if (subS.length() != 0) {
+                        fileInfo.setBUNIT(subS);
+                    }
+                } // else if (s.startsWith("BUNIT"))
             } while (!s.startsWith("END"));
             
             for (i = nDimensions - 1; i >= 0; i--) {
                 if (imgExtents[i] == 1) {
-                    imgResols[i] = 1.0f;
+                    scale[i] = 1.0;
                     reducedExtents = new int[nDimensions-1];
-                    reducedResols = new float[nDimensions-1];
+                    reducedScale = new double[nDimensions-1];
+                    reducedCrpix = new double[nDimensions-1];
+                    reducedHaveCrpix = new boolean[nDimensions-1];
+                    reducedCrval = new double[nDimensions-1];
+                    reducedHaveCrval = new boolean[nDimensions-1];
                     for (j = 0; j < i; j++) {
                         reducedExtents[j] = imgExtents[j]; 
-                        reducedResols[j] = imgResols[j];
+                        reducedScale[j] = scale[j];
+                        reducedCrpix[j] = crpix[j];
+                        reducedHaveCrpix[j] = haveCrpix[j];
+                        reducedCrval[j] = crval[j];
+                        reducedHaveCrval[j] = haveCrval[j];
                     }
                     for (j = i+1; j < nDimensions; j++) {
                         reducedExtents[j-1] = imgExtents[j];
-                        reducedResols[j-1] = imgResols[j];
+                        reducedScale[j-1] = scale[j];
+                        reducedCrpix[j-1] = crpix[j];
+                        reducedHaveCrpix[j-1] = haveCrpix[j];
+                        reducedCrval[j-1] = crval[j];
+                        reducedHaveCrval[j-1] = haveCrval[j];
                         fileInfo.setUnitsOfMeasure(j-1, fileInfo.getUnitsOfMeasure(j));
                     }
                     nDimensions--;
                     imgExtents = new int[nDimensions];
                     for (j = 0; j < nDimensions; j++) {
                         imgExtents[j] = reducedExtents[j];
-                        imgResols[j] = reducedResols[j];
+                        scale[j] = reducedScale[j];
+                        crpix[j] = reducedCrpix[j];
+                        haveCrpix[j] = reducedHaveCrpix[j];
+                        crval[j] = reducedCrval[j];
+                        haveCrval[j] = reducedHaveCrval[j];
                     }
                 }
+            }
+            
+            for (i = 0; i < nDimensions; i++) {
+                imgResols[i] = (float)Math.abs(scale[i]);
             }
             
             if (isColorPlanar2D) {
@@ -1052,6 +1201,13 @@ public class FileFits extends FileBase {
             } // for (i = 1; i < nDimensions; i++)
 
             fileInfo.setResolutions(imgResols);
+            
+            origin = new double[nDimensions];
+            for (i = 0; i < nDimensions; i++) {
+                if (haveCrpix[i] && haveCrval[i]) {
+                    origin[i] = crval[i] - (crpix[i] - 0.5)*scale[i];
+                }
+            }
 
             offset = 2880 + (2880 * ((count * 80) / 2880));
             raFile.seek(offset);
