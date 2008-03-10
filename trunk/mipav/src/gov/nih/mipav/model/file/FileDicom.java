@@ -2524,9 +2524,9 @@ public class FileDicom extends FileDicomBase {
         }
         // explicit VR with 32-bit length
         else if (((b1 == 79) && (b2 == 66)) || ((b1 == 79) && (b2 == 87)) || ((b1 == 83) && (b2 == 81)) ||
-                     ((b1 == 85) && (b2 == 78))) {
+                     ((b1 == 85) && (b2 == 78)) || ((b1 == 85) && (b2 == 84))) {
 
-            // VR =     'OB',       or       'OW'         or         'SQ'       or      'UN'
+            // VR =     'OB',       or       'OW'         or         'SQ'       or      'UN' or 'UT'
             vr[0] = (byte) b1;
             vr[1] = (byte) b2;
             fileInfo.isCurrentTagSQ = new String(vr).equals("SQ");
