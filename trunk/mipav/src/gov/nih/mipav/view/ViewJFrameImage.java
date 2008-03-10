@@ -1147,6 +1147,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             ProvenanceRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
 
             updateImages();
+        } else if (command.equals("PaintToUbyteMask")) {
+            ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(componentImage.commitPaintToUbyteMask());
+
+            ScriptRecorder.getReference().addLine(new ActionPaintToMask(getActiveImage(), maskImage,
+                                                                        ActionPaintToMask.MASK_UBYTE));
+            ProvenanceRecorder.getReference().addLine(new ActionPaintToMask(getActiveImage(), maskImage,
+                    ActionPaintToMask.MASK_UBYTE));
         } else if (command.equals("PaintToShortMask")) {
             ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(componentImage.commitPaintToMask());
 
