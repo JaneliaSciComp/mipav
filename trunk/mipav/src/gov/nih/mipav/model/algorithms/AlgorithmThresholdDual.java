@@ -29,10 +29,10 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
     public static final int ORIGINAL_TYPE = 0;
 
     /** DOCUMENT ME! */
-    public static final int SHORT_MASK_TYPE = 1;
-
+    public static final int BINARY_TYPE = 1;
+    
     /** DOCUMENT ME! */
-    public static final int BINARY_TYPE = 2;
+    public static final int UNSIGNED_BYTE_TYPE = 2;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
      */
     private boolean isInverse = false;
 
-    /** Type of output (normal, binary, or short mask). */
+    /** Type of output (same type, binary, or unsigned byte). */
     private int outputType;
 
     /** Array of two thresholds. threshold[0] = Minimum threshold, threshold[1] = Maximum threshold. */
@@ -66,8 +66,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
      * @param  srcImg       source image model
      * @param  threshold    array of two thresholds
      * @param  fillValue    all values outside the thresholds are set to this value
-     * @param  output_type  if true a binary image is produced, if false gray scale values between the thresholds are
-     *                      retained
+     * @param  output_type  same type, binary, or unsigned byte
      * @param  maskFlag     true indicates that the whole image should be processed
      * @param  isInverse    false means turn all pixels outside of the lower and upper thresholds to the given fill
      *                      value, true means turn all data within the lower and upper thresholds to the fill value
@@ -95,8 +94,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
      * @param  srcImg       source image model
      * @param  threshold    array of two thresholds
      * @param  fillValue    all values outside the thresholds are set to this value
-     * @param  output_type  if true a binary image is produced, if false gray scale values between the thresholds are
-     *                      retained
+     * @param  output_type  same type, binary, or unsigned byte
      * @param  maskFlag     true indicates that the whole image should be processed
      * @param  isInverse    false means turn all pixels outside of the lower and upper thresholds to the given fill
      *                      value, true means turn all data within the lower and upper thresholds to the fill value
@@ -147,8 +145,8 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
             if ((destImage.getType() != ModelImage.BOOLEAN) && (outputType == BINARY_TYPE)) {
                 destImage.reallocate(ModelStorageBase.BOOLEAN);
-            } else if ((destImage.getType() != ModelImage.SHORT) && (outputType == SHORT_MASK_TYPE)) {
-                destImage.reallocate(ModelStorageBase.SHORT);
+            } else if ((destImage.getType() != ModelImage.UBYTE) && (outputType == UNSIGNED_BYTE_TYPE)) {
+                destImage.reallocate(ModelStorageBase.UBYTE);
             }
 
             if (srcImage.getNDims() == 2) {
@@ -206,12 +204,12 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
                 if (((entireImage == true) || mask.get(i)) &&
                         ((buffer[i] >= threshold[0]) && (buffer[i] <= threshold[1]))) {
 
-                    if ((outputType == BINARY_TYPE) || (outputType == SHORT_MASK_TYPE)) {
+                    if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         buffer[i] = 1;
                     }
                 } else {
 
-                    if ((outputType == BINARY_TYPE) || (outputType == SHORT_MASK_TYPE)) {
+                    if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         buffer[i] = 0;
                     } else {
                         buffer[i] = fillValue;
@@ -222,12 +220,12 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
                 if (((entireImage == true) || mask.get(i)) &&
                         ((buffer[i] < threshold[0]) || (buffer[i] > threshold[1]))) {
 
-                    if ((outputType == BINARY_TYPE) || (outputType == SHORT_MASK_TYPE)) {
+                    if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         buffer[i] = 1;
                     }
                 } else {
 
-                    if ((outputType == BINARY_TYPE) || (outputType == SHORT_MASK_TYPE)) {
+                    if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         buffer[i] = 0;
                     } else {
                         buffer[i] = fillValue;
@@ -247,8 +245,8 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
             if ((outputType == BINARY_TYPE) && (srcImage.getType() != ModelImage.BOOLEAN)) {
                 srcImage.reallocate(ModelImage.BOOLEAN);
-            } else if ((outputType == SHORT_MASK_TYPE) && (srcImage.getType() != ModelImage.SHORT)) {
-                srcImage.reallocate(ModelImage.SHORT);
+            } else if ((outputType == UNSIGNED_BYTE_TYPE) && (srcImage.getType() != ModelImage.UBYTE)) {
+                srcImage.reallocate(ModelImage.UBYTE);
             }
 
             srcImage.importData(0, buffer, true);
@@ -307,12 +305,12 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
                 if (((entireImage == true) || mask.get(i)) &&
                         ((buffer[i] >= threshold[0]) && (buffer[i] <= threshold[1]))) {
 
-                    if ((outputType == BINARY_TYPE) || (outputType == SHORT_MASK_TYPE)) {
+                    if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         buffer[i] = 1;
                     }
                 } else {
 
-                    if ((outputType == BINARY_TYPE) || (outputType == SHORT_MASK_TYPE)) {
+                    if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         buffer[i] = 0;
                     } else {
                         buffer[i] = fillValue;
@@ -323,12 +321,12 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
                 if (((entireImage == true) || mask.get(i)) &&
                         ((buffer[i] < threshold[0]) || (buffer[i] > threshold[1]))) {
 
-                    if ((outputType == BINARY_TYPE) || (outputType == SHORT_MASK_TYPE)) {
+                    if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         buffer[i] = 1;
                     }
                 } else {
 
-                    if ((outputType == BINARY_TYPE) || (outputType == SHORT_MASK_TYPE)) {
+                    if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         buffer[i] = 0;
                     } else {
                         buffer[i] = fillValue;
@@ -348,8 +346,8 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
             if ((outputType == BINARY_TYPE) && (srcImage.getType() != ModelImage.BOOLEAN)) {
                 srcImage.reallocate(ModelImage.BOOLEAN);
-            } else if ((outputType == SHORT_MASK_TYPE) && (srcImage.getType() != ModelImage.SHORT)) {
-                srcImage.reallocate(ModelImage.SHORT);
+            } else if ((outputType == UNSIGNED_BYTE_TYPE) && (srcImage.getType() != ModelImage.UBYTE)) {
+                srcImage.reallocate(ModelImage.UBYTE);
             }
 
             srcImage.importData(0, buffer, true);
@@ -413,14 +411,14 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
                 if (((entireImage == true) || mask.get(i)) &&
                         ((buffer[i] >= threshold[0]) && (buffer[i] <= threshold[1]))) {
 
-                    if ((outputType == BINARY_TYPE) || (outputType == SHORT_MASK_TYPE)) {
+                    if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         destImage.set(i, 1);
                     } else {
                         destImage.set(i, buffer[i]);
                     }
                 } else {
 
-                    if ((outputType == BINARY_TYPE) || (outputType == SHORT_MASK_TYPE)) {
+                    if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         destImage.set(i, 0);
                     } else {
                         destImage.set(i, fillValue);
@@ -431,7 +429,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
                 if (((entireImage == true) || mask.get(i)) &&
                         ((buffer[i] < threshold[0]) || (buffer[i] > threshold[1]))) {
 
-                    if ((outputType == BINARY_TYPE) || (outputType == SHORT_MASK_TYPE)) {
+                    if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         destImage.set(i, 1);
                     } else {
                         destImage.set(i, buffer[i]);
@@ -514,14 +512,14 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
                 if (((entireImage == true) || mask.get(i)) &&
                         ((buffer[i] >= threshold[0]) && (buffer[i] <= threshold[1]))) {
 
-                    if ((outputType == BINARY_TYPE) || (outputType == SHORT_MASK_TYPE)) {
+                    if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         destImage.set(i, 1);
                     } else {
                         destImage.set(i, buffer[i]);
                     }
                 } else {
 
-                    if ((outputType == BINARY_TYPE) || (outputType == SHORT_MASK_TYPE)) {
+                    if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         destImage.set(i, 0);
                     } else {
                         destImage.set(i, fillValue);
@@ -532,14 +530,14 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
                 if (((entireImage == true) || mask.get(i)) &&
                         ((buffer[i] < threshold[0]) || (buffer[i] > threshold[1]))) {
 
-                    if ((outputType == BINARY_TYPE) || (outputType == SHORT_MASK_TYPE)) {
+                    if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         destImage.set(i, 1);
                     } else {
                         destImage.set(i, buffer[i]);
                     }
                 } else {
 
-                    if ((outputType == BINARY_TYPE) || (outputType == SHORT_MASK_TYPE)) {
+                    if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         destImage.set(i, 0);
                     } else {
                         destImage.set(i, fillValue);
