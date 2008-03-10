@@ -591,7 +591,7 @@ public class ViewJPanelLUT extends JPanel
                         } else if (outputType == 1) {
                             outputType = AlgorithmThresholdDual.BINARY_TYPE;
                         } else { // outputType == 2
-                            outputType = AlgorithmThresholdDual.SHORT_MASK_TYPE;
+                            outputType = AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE;
                         }
 
                         // run threshold algorithm
@@ -626,7 +626,7 @@ public class ViewJPanelLUT extends JPanel
                         } else if (outputType == 1) {
                             outputType = AlgorithmThresholdDual.BINARY_TYPE;
                         } else { // outputType == 2
-                            outputType = AlgorithmThresholdDual.SHORT_MASK_TYPE;
+                            outputType = AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE;
                         }
 
 
