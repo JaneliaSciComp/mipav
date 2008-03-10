@@ -1146,7 +1146,7 @@ public class ViewMenuBar {
                                                              new JMenuItem[] {
                                                                  menuBuilder.buildMenuItem("Paint -> VOI", "PaintToVOI",
                                                                                            0, null, false),
-                                                                 menuBuilder.buildMenuItem("Paint -> Ubyte mask",
+                                                                 menuBuilder.buildMenuItem("Paint -> Unsigned byte mask",
                                                                                            "PaintToUbyteMask", 0, null,
                                                                                            false),
                                                                  menuBuilder.buildMenuItem("Paint -> Short mask",
