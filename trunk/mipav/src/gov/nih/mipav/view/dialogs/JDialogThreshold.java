@@ -86,7 +86,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
     private JComboBox outputBox;
 
 
-    /** Same data-type, binary, or short mask. */
+    /** Same data-type, binary, or unsigned byte mask. */
     private int outputType = 0;
 
     /** or if the source image is to be replaced. */
@@ -196,7 +196,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
 
                 // The algorithm has completed and produced a new image to be displayed.
                 if ((outputType == AlgorithmThresholdDual.BINARY_TYPE) ||
-                        (outputType == AlgorithmThresholdDual.SHORT_MASK_TYPE)) {
+                        (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE)) {
                     updateFileInfoOtherModality(image, resultImage);
                 } else {
                     updateFileInfo(image, resultImage);
@@ -373,7 +373,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
      * @param  lowerThres   float lower threshold
      * @param  upperThres   float upper threshold
      * @param  fillV        float fill value
-     * @param  output_type  output type: same, binary, short mask
+     * @param  output_type  output type: same, binary, unsigned byte mask
      * @param  inverseFlag  normal or inverse threshold
      */
     public void runFromLUTFrame(ModelImage im, float lowerThres, float upperThres, float fillV, int output_type,
@@ -418,7 +418,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
     /**
      * Accessor that sets the output type.
      *
-     * @param  output_type  0 is normal, 1 is binary, 2 is short mask
+     * @param  output_type  0 is normal, 1 is binary, 2 is unsigned byte mask
      */
     public void setOutputType(int output_type) {
         outputType = output_type;
@@ -499,9 +499,9 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                     // resultImage      = new ModelImage(image.getType(), destExtents, " Threshold", userInterface);
                     resultImage = (ModelImage) image.clone();
 
-                    // reallocate to short type is doing a short mask
-                    if (outputType == AlgorithmThresholdDual.SHORT_MASK_TYPE) {
-                        resultImage.reallocate(ModelStorageBase.SHORT);
+                    // reallocate to UBYTE type is doing a unsigned byte mask
+                    if (outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE) {
+                        resultImage.reallocate(ModelStorageBase.UBYTE);
                     }
 
                     resultImage.setImageName(name);
@@ -514,7 +514,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                     }
                 }
 
-                if ((outputType == AlgorithmThresholdDual.SHORT_MASK_TYPE) ||
+                if ((outputType == AlgorithmThresholdDual.UNSIGNED_BYTE_TYPE) ||
                         (outputType == AlgorithmThresholdDual.BINARY_TYPE)) {
 
                     for (int i = 0; i < end; i++) {
@@ -790,7 +790,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         outputLabel.setForeground(Color.black);
         outputLabel.setFont(serif12);
 
-        String[] outputChoices = new String[] { image.getTypeString(), "Binary", "Short mask" };
+        String[] outputChoices = new String[] { image.getTypeString(), "Binary", "Unsigned Byte" };
 
         outputBox = new JComboBox(outputChoices);
         outputBox.setFont(MipavUtil.font12);
