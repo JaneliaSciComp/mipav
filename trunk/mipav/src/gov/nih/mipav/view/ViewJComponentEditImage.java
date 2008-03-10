@@ -952,6 +952,307 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     }
 
     /**
+     * Creates a new ubyte image from the paint mask.
+     *
+     * @return  the name of the new ubyte image
+     */
+    public String commitPaintToUbyteMask() {
+        AlgorithmMask maskAlgo = null;
+        Color fillColor = null;
+        ModelImage imageACopy = null, imageBCopy = null;
+        int length;
+        int colorFactor;
+        double[] buffer;
+        double[] bufferI;
+        int lengthUbyte;
+        byte[] bufferUbyte;
+        byte red, green, blue;
+        int i;
+        int end;
+
+        ViewJProgressBar progressBar = new ViewJProgressBar(imageActive.getImageName(), "Masking ...", 0, 100, true);
+        progressBar.setSeparateThread(false);
+
+
+        imageACopy = (ModelImage) imageA.clone();
+
+        if (imageA.getNDims() == 2) {
+            end = 1;
+        } else if (imageA.getNDims() == 3) {
+            end = imageA.getExtents()[2];
+        } else {
+            end = imageA.getExtents()[2] * imageA.getExtents()[3];
+        }
+
+        for (i = 0; i < end; i++) {
+            (imageACopy.getFileInfo(i)).setModality(FileInfoBase.OTHER);
+        }
+
+        if (imageB != null) {
+            imageBCopy = (ModelImage) imageB.clone();
+
+            if (imageB.getNDims() == 2) {
+                end = 1;
+            } else if (imageB.getNDims() == 3) {
+                end = imageB.getExtents()[2];
+            } else {
+                end = imageB.getExtents()[2] * imageB.getExtents()[3];
+            }
+
+            for (i = 0; i < end; i++) {
+                (imageBCopy.getFileInfo(i)).setModality(FileInfoBase.OTHER);
+            }
+        }
+
+        if (imageA.isColorImage() == true) {
+
+            if (frame.getControls() != null) {
+                fillColor = frame.getControls().getTools().getPaintColor();
+            } else if (frameControls != null) {
+                fillColor = frameControls.getTools().getPaintColor();
+            } else {
+                fillColor = new Color(128, 0, 0);
+            }
+
+            if (imageB == null) {
+                maskAlgo = new AlgorithmMask(imageACopy, fillColor, true, false);
+            } else {
+
+                if (imageActive == imageA) {
+
+                    // if( commitMode == IMAGE_A) {
+                    maskAlgo = new AlgorithmMask(imageACopy, fillColor, true, false);
+                } else {
+                    maskAlgo = new AlgorithmMask(imageBCopy, fillColor, true, false);
+                }
+            }
+
+            maskAlgo.setRunningInSeparateThread(false);
+            maskAlgo.addProgressChangeListener(progressBar);
+            progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
+            maskAlgo.calcInPlace25DCMask((BitSet) paintBitmap.clone(), fillColor, timeSlice);
+
+        } else { // not color
+
+            if (imageB == null) {
+                maskAlgo = new AlgorithmMask(imageACopy, intensityDropper, true, false);
+            } else {
+
+                if (imageActive == imageA) {
+
+                    // if( commitMode == IMAGE_A) {
+                    maskAlgo = new AlgorithmMask(imageACopy, intensityDropper, true, false);
+                } else {
+                    maskAlgo = new AlgorithmMask(imageBCopy, intensityDropper, true, false);
+                }
+            }
+
+            maskAlgo.setRunningInSeparateThread(false);
+            maskAlgo.addProgressChangeListener(progressBar);
+            progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
+            maskAlgo.calcInPlace25DMask((BitSet) paintBitmap.clone(), intensityDropper, timeSlice);
+        } // not color
+
+        if (imageACopy != null) {
+
+            if (imageACopy.getType() != ModelStorageBase.UBYTE) {
+
+                try {
+
+                    if (imageACopy.isColorImage()) {
+                        colorFactor = 4;
+                    } else {
+                        colorFactor = 1;
+                    }
+
+                    length = imageACopy.getSliceSize() * colorFactor;
+
+                    if (imageACopy.getNDims() >= 3) {
+                        length = length * imageACopy.getExtents()[2];
+                    }
+
+                    if (imageACopy.getNDims() == 4) {
+                        length = length * imageACopy.getExtents()[3];
+                    }
+
+                    buffer = new double[length];
+
+                    if ((imageACopy.getType() == ModelStorageBase.COMPLEX) ||
+                            (imageACopy.getType() == ModelStorageBase.DCOMPLEX)) {
+                        bufferI = new double[length];
+                        imageACopy.exportDComplexData(0, length, buffer, bufferI);
+                        imageACopy.reallocate(ModelStorageBase.UBYTE);
+
+                        for (i = 0; i < length; i++) {
+                            buffer[i] = Math.round(Math.sqrt((buffer[i] * buffer[i]) + (bufferI[i] * bufferI[i])));
+                        }
+
+                        imageACopy.importData(0, buffer, true);
+                    } else if (imageA.isColorImage()) {
+                        imageACopy.exportData(0, length, buffer); // locks and releases lock
+                        imageACopy.reallocate(ModelStorageBase.UBYTE);
+                        lengthUbyte = length / 4;
+                        bufferUbyte = new byte[lengthUbyte];
+                        red = (byte) Math.round(fillColor.getRed());
+                        green = (byte) Math.round(fillColor.getGreen());
+                        blue = (byte) Math.round(fillColor.getBlue());
+
+                        for (i = 0; i < lengthUbyte; i++) {
+
+                            if ((Math.round((byte) buffer[(4 * i) + 1]) == red) &&
+                                    (Math.round((byte) buffer[(4 * i) + 2]) == green) &&
+                                    (Math.round((byte) buffer[(4 * i) + 3]) == blue)) {
+                                bufferUbyte[i] = 1;
+                            }
+                        }
+
+                        imageACopy.importData(0, bufferUbyte, true);
+                    } else {
+                        imageACopy.exportData(0, length, buffer); // locks and releases lock
+                        imageACopy.reallocate(ModelStorageBase.UBYTE);
+                        imageACopy.importData(0, buffer, true);
+                    }
+                } catch (IOException error) {
+                    buffer = null;
+                    MipavUtil.displayError("IO Exception");
+
+                    if (imageACopy != null) {
+                        imageACopy.disposeLocal();
+                        imageACopy = null;
+                    }
+
+                    return null;
+                } catch (OutOfMemoryError e) {
+                    buffer = null;
+                    MipavUtil.displayError("Out of memory error");
+
+                    if (imageACopy != null) {
+                        imageACopy.disposeLocal();
+                        imageACopy = null;
+                    }
+
+                    return null;
+                }
+            } // if (imageACopy.getType != ModelStorageBase.UBYTE)
+        } else {
+
+            if (imageBCopy.getType() != ModelStorageBase.UBYTE) {
+
+                try {
+
+                    if (imageBCopy.isColorImage()) {
+                        colorFactor = 4;
+                    } else {
+                        colorFactor = 1;
+                    }
+
+                    length = imageBCopy.getSliceSize() * colorFactor;
+
+                    if (imageBCopy.getNDims() >= 3) {
+                        length = length * imageBCopy.getExtents()[2];
+                    }
+
+                    if (imageBCopy.getNDims() == 4) {
+                        length = length * imageBCopy.getExtents()[3];
+                    }
+
+                    buffer = new double[length];
+
+                    if ((imageBCopy.getType() == ModelStorageBase.COMPLEX) ||
+                            (imageBCopy.getType() == ModelStorageBase.DCOMPLEX)) {
+                        bufferI = new double[length];
+                        imageBCopy.exportDComplexData(0, length, buffer, bufferI);
+                        imageBCopy.reallocate(ModelStorageBase.UBYTE);
+                        imageBCopy.importData(0, buffer, true);
+                    } else if (imageB.isColorImage()) {
+                        imageBCopy.exportData(0, length, buffer); // locks and releases lock
+                        imageBCopy.reallocate(ModelStorageBase.UBYTE);
+                        lengthUbyte = length / 4;
+                        bufferUbyte = new byte[lengthUbyte];
+                        red = (byte) Math.round(fillColor.getRed());
+                        green = (byte) Math.round(fillColor.getGreen());
+                        blue = (byte) Math.round(fillColor.getBlue());
+
+                        for (i = 0; i < lengthUbyte; i++) {
+
+                            if ((Math.round((byte) buffer[(4 * i) + 1]) == red) &&
+                                    (Math.round((byte) buffer[(4 * i) + 2]) == green) &&
+                                    (Math.round((byte) buffer[(4 * i) + 3]) == blue)) {
+                                bufferUbyte[i] = 1;
+                            }
+                        }
+
+                        imageBCopy.importData(0, bufferUbyte, true);
+                    } else {
+                        imageBCopy.exportData(0, length, buffer); // locks and releases lock
+                        imageBCopy.reallocate(ModelStorageBase.UBYTE);
+                        imageBCopy.importData(0, buffer, true);
+                    }
+                } catch (IOException error) {
+                    buffer = null;
+                    MipavUtil.displayError("IO Exception");
+
+                    if (imageBCopy != null) {
+                        imageBCopy.disposeLocal();
+                        imageBCopy = null;
+                    }
+
+                    return null;
+                } catch (OutOfMemoryError e) {
+                    buffer = null;
+                    MipavUtil.displayError("Out of memory error");
+
+                    if (imageBCopy != null) {
+                        imageBCopy.disposeLocal();
+                        imageBCopy = null;
+                    }
+
+                    return null;
+                }
+            } // if (imageBCopy.getType != ModelStorageBase.UBYTE)
+        }
+
+        try {
+
+            if (imageBCopy == null) {
+
+                if (imageACopy != null) {
+                    imageACopy.setImageName("Mask image");
+                    imageACopy.clearMask();
+                    new ViewJFrameImage(imageACopy, null, new Dimension(610, 200), false);
+                }
+            } else {
+
+                if (imageBCopy != null) {
+                    imageBCopy.setImageName("Mask image");
+                    imageBCopy.clearMask();
+                    new ViewJFrameImage(imageBCopy, null, new Dimension(610, 200), false);
+                }
+            }
+        } catch (OutOfMemoryError error) {
+            MipavUtil.displayError("Out of memory: unable to open new frame");
+
+            if (imageACopy != null) {
+                imageACopy.disposeLocal();
+                imageACopy = null;
+            }
+
+            if (imageBCopy != null) {
+                imageBCopy.disposeLocal();
+                imageBCopy = null;
+            }
+
+            return null;
+        }
+
+        if (imageACopy != null) {
+            return imageACopy.getImageName();
+        } else {
+            return imageBCopy.getImageName();
+        }
+    }
+    
+    /**
      * Creates a new short image from the paint mask.
      *
      * @return  the name of the new short image
@@ -1030,7 +1331,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             maskAlgo.setRunningInSeparateThread(false);
             maskAlgo.addProgressChangeListener(progressBar);
             progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
-            maskAlgo.calcInPlace25DCShortMask((BitSet) paintBitmap.clone(), fillColor, timeSlice);
+            maskAlgo.calcInPlace25DCMask((BitSet) paintBitmap.clone(), fillColor, timeSlice);
 
         } else { // not color
 
@@ -1050,7 +1351,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             maskAlgo.setRunningInSeparateThread(false);
             maskAlgo.addProgressChangeListener(progressBar);
             progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
-            maskAlgo.calcInPlace25DShortMask((BitSet) paintBitmap.clone(), intensityDropper, timeSlice);
+            maskAlgo.calcInPlace25DMask((BitSet) paintBitmap.clone(), intensityDropper, timeSlice);
         } // not color
 
         if (imageACopy != null) {
