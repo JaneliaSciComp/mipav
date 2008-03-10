@@ -576,7 +576,7 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param  fillColor  color to be placed in the image where the mask is true
      * @param  tSlice     indicates which volume should be painted (tSlice = 4th dimension)
      */
-    public void calcInPlace25DCShortMask(BitSet mask, Color fillColor, int tSlice) {
+    public void calcInPlace25DCMask(BitSet mask, Color fillColor, int tSlice) {
 
         int i, j, z, end = 1;
         int imgLength, volLength = 0, offset;
@@ -691,8 +691,8 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param  fillValue  value to be placed in the image where the mask is true
      * @param  tSlice     indicates which volume should be painted (tSlice = 4th dimension)
      */
-    public void calcInPlace25DShortMask(BitSet mask, float fillValue, int tSlice) {
-        calcInPlace25DShortMask(mask, fillValue, tSlice, null);
+    public void calcInPlace25DMask(BitSet mask, float fillValue, int tSlice) {
+        calcInPlace25DMask(mask, fillValue, tSlice, null);
     }
 
 
@@ -704,7 +704,7 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param  tSlice               indicates which volume should be painted (tSlice = 4th dimension)
      * @param  intensityLockVector  DOCUMENT ME!
      */
-    public void calcInPlace25DShortMask(BitSet mask, float fillValue, int tSlice, Vector intensityLockVector) {
+    public void calcInPlace25DMask(BitSet mask, float fillValue, int tSlice, Vector intensityLockVector) {
 
         int i, z, end = 1;
         int imgLength, volLength = 0, offset;
