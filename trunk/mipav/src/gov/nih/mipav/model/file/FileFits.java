@@ -132,13 +132,13 @@ public class FileFits extends FileBase {
         double[] imgDBuffer;
         int bufferSize;
         float[] imgResols = new float[] { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-        double[] scale = new double[] {1.0, 1.0, 1.0, 1.0, 1.0};
+        double[] scale = new double[] {1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
         // reference pixel position along axis
-        double[] crpix = new double[5];
+        double[] crpix = new double[6];
         // coordinate of reference pixel
-        double[] crval = new double[5];
-        boolean[] haveCrpix = new boolean[5];
-        boolean[] haveCrval = new boolean[5];
+        double[] crval = new double[6];
+        boolean[] haveCrpix = new boolean[6];
+        boolean[] haveCrval = new boolean[6];
         float minResol;
         float maxResol;
         int dimNumber;
@@ -150,6 +150,7 @@ public class FileFits extends FileBase {
         boolean[] reducedHaveCrval;
         float focalRatio;
         double origin[];
+        TransMatrix matrix;
 
         try {
 
@@ -311,11 +312,6 @@ public class FileFits extends FileBase {
                             raFile.close();
 
                             MipavUtil.displayError("NAXIS exceeded maximum legal value of 999 with " + nDimensions);
-                            throw new IOException();
-                        } else if (nDimensions > 4) {
-                            raFile.close();
-
-                            MipavUtil.displayError("MIPAV cannot display an image with " + nDimensions + " dimensions");
                             throw new IOException();
                         } else if (nDimensions == 1) {
                             raFile.close();
@@ -610,7 +606,8 @@ public class FileFits extends FileBase {
                     Preferences.debug("BLANK = " + BLANK + "\n");
                     haveBlank = true;
                 } // else if (s.startsWith("BLANK"))
-                else if (s.startsWith("CDELT1")) {
+                else if (s.startsWith("CDELT")) {
+                    dimNumber = Integer.parseInt(s.substring(5, 6));
                     subS = s.substring(10, 80);
                     subS = subS.trim();
                     i = subS.indexOf("/");
@@ -621,79 +618,12 @@ public class FileFits extends FileBase {
                     }
 
                     try {
-                        scale[0] = Double.parseDouble(subS);
+                        scale[dimNumber-1] = Double.parseDouble(subS);
                     } catch (NumberFormatException e) {
-                        raFile.close();
 
-                        MipavUtil.displayError("Instead of a float CDELT1 line had = " + subS);
-                        throw new IOException();
-                    }
-
-                    Preferences.debug("CDELT1 = " + scale[0] + "\n");
-                } // else if (s.startsWith("CDELT1"))
-                else if (s.startsWith("CDELT2")) {
-                    subS = s.substring(10, 80);
-                    subS = subS.trim();
-                    i = subS.indexOf("/");
-
-                    if (i != -1) {
-                        subS = subS.substring(0, i);
-                        subS = subS.trim();
-                    }
-
-                    try {
-                        scale[1] = Double.parseDouble(subS);
-                    } catch (NumberFormatException e) {
-                        raFile.close();
-
-                        MipavUtil.displayError("Instead of a float CDELT2 line had = " + subS);
-                        throw new IOException();
-                    }
-
-                    Preferences.debug("CDELT2 = " + scale[1] + "\n");
-                } // else if (s.startsWith("CDELT2"))
-                else if (s.startsWith("CDELT3")) {
-                    subS = s.substring(10, 80);
-                    subS = subS.trim();
-                    i = subS.indexOf("/");
-
-                    if (i != -1) {
-                        subS = subS.substring(0, i);
-                        subS = subS.trim();
-                    }
-
-                    try {
-                        scale[2] = Double.parseDouble(subS);
-                    } catch (NumberFormatException e) {
-                        raFile.close();
-
-                        MipavUtil.displayError("Instead of a float CDELT3 line had = " + subS);
-                        throw new IOException();
-                    }
-
-                    Preferences.debug("CDELT3 = " + scale[2] + "\n");
-                } // else if (s.startsWith("CDELT3"))
-                else if (s.startsWith("CDELT4")) {
-                    subS = s.substring(10, 80);
-                    subS = subS.trim();
-                    i = subS.indexOf("/");
-
-                    if (i != -1) {
-                        subS = subS.substring(0, i);
-                        subS = subS.trim();
-                    }
-
-                    try {
-                        scale[3] = Double.parseDouble(subS);
-                    } catch (NumberFormatException e) {
-                        raFile.close();
-
-                        MipavUtil.displayError("Instead of a float CDELT4 line had = " + subS);
-                        throw new IOException();
-                    }
-
-                    Preferences.debug("CDELT4 = " + scale[3] + "\n");
-                } // else if (s.startsWith("CDELT4"))
+                        Preferences.debug("Instead of a float CDELT" + s.substring(5,6)+ " line had = " + subS);
+                    } 
+                } // else if (s.startsWith("CDELT"))
                 else if (s.startsWith("CRPIX")) {
                     dimNumber = Integer.parseInt(s.substring(5, 6));
                     subS = s.substring(10, 80);
@@ -1153,20 +1083,35 @@ public class FileFits extends FileBase {
                 }
             }
             
-            for (i = 0; i < nDimensions; i++) {
-                imgResols[i] = (float)Math.abs(scale[i]);
-            }
-            
-            if (isColorPlanar2D) {
+            if (isColorPlanar2D || one) {
                 reducedExtents = new int[2];
+                reducedScale = new double[2];
+                reducedCrpix = new double[2];
+                reducedHaveCrpix = new boolean[2];
+                reducedCrval = new double[2];
+                reducedHaveCrval = new boolean[2];
                 for (j = 0; j < 2; j++) {
                     reducedExtents[j] = imgExtents[j];
+                    reducedScale[j] = scale[j];
+                    reducedCrpix[j] = crpix[j];
+                    reducedHaveCrpix[j] = haveCrpix[j];
+                    reducedCrval[j] = crval[j];
+                    reducedHaveCrval[j] = haveCrval[j];
                 }
                 nDimensions = 2;
                 imgExtents = new int[2];
                 for (j = 0; j < 2; j++) {
                     imgExtents[j] = reducedExtents[j];
+                    scale[j] = reducedScale[j];
+                    crpix[j] = reducedCrpix[j];
+                    haveCrpix[j] = reducedHaveCrpix[j];
+                    crval[j] = reducedCrval[j];
+                    haveCrval[j] = reducedHaveCrval[j];
                 }
+            }
+            
+            for (i = 0; i < nDimensions; i++) {
+                imgResols[i] = (float)Math.abs(scale[i]);
             }
             
             if (nDimensions == 1) {
@@ -1206,8 +1151,17 @@ public class FileFits extends FileBase {
             for (i = 0; i < nDimensions; i++) {
                 if (haveCrpix[i] && haveCrval[i]) {
                     origin[i] = crval[i] - (crpix[i] - 0.5)*scale[i];
+                    fileInfo.setOrigin((float)origin[i], i);
                 }
             }
+            
+            
+            matrix = new TransMatrix(Math.min(4,nDimensions+1));
+            for (i = 0; i < Math.min(3, nDimensions); i++) {
+                matrix.setMatrix(scale[i], i, i);
+                matrix.setMatrix(origin[i], i, Math.min(nDimensions, 3));
+            }
+            matrix.setTransformID(TransMatrix.TRANSFORM_UNKNOWN);
 
             offset = 2880 + (2880 * ((count * 80) / 2880));
             raFile.seek(offset);
@@ -1239,6 +1193,7 @@ public class FileFits extends FileBase {
 
                 fileInfo.setDataType(sourceType);
             }
+            image.setMatrix(matrix);
 
             if ((nDimensions == 2) || one) {
                 numberSlices = 1;
@@ -1343,6 +1298,7 @@ public class FileFits extends FileBase {
         int zDim;
         int tDim;
         int count;
+        double array[][];
         
         flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
         flipAlgo.run();
@@ -1551,8 +1507,9 @@ public class FileFits extends FileBase {
             for (i = 0; i < axisSize.length(); i++) {
                 cardImage[30 + i - axisSize.length()] = axisBytes[i];
             }
-        } // if ((image.getNDims() >= 3) || ((image.getNDims() == 2) && (image.getType() == ModelStorageBase.ARGB)))
-
+            
+        } // if ((image.getNDims() >= 3) || ((image.getNDims() == 2) && (image.getType() == ModelStorageBase.ARGB)))  
+        
         raFile.write(cardImage);
 
         for (i = 0; i < 80; i++) {
@@ -1577,6 +1534,8 @@ public class FileFits extends FileBase {
         } // if (image.getNDims() == 4)
 
         raFile.write(cardImage);
+        
+        array = image.getMatrix().getArray();
 
         for (i = 0; i < 80; i++) {
             cardImage[i] = 32; // fill with ascii spaces
@@ -1590,7 +1549,49 @@ public class FileFits extends FileBase {
         cardImage[5] = 49; // 1
         cardImage[8] = 61; // =
 
-        resString = Float.toString(image.getFileInfo()[0].getResolutions()[0]);
+        resString = Double.toString(array[0][0]);
+        resBytes = resString.getBytes();
+
+        for (i = 0; i < resString.length(); i++) {
+            cardImage[30 + i - resString.length()] = resBytes[i];
+        }
+
+        raFile.write(cardImage);
+        
+        for (i = 0; i < 80; i++) {
+            cardImage[i] = 32; // fill with ascii spaces
+        }
+
+        cardImage[0] = 67; // C
+        cardImage[1] = 82; // R
+        cardImage[2] = 80; // P
+        cardImage[3] = 73; // I
+        cardImage[4] = 88; // X
+        cardImage[5] = 49; // 1
+        cardImage[8] = 61; // =
+
+        resString = Double.toString(0.5);
+        resBytes = resString.getBytes();
+
+        for (i = 0; i < resString.length(); i++) {
+            cardImage[30 + i - resString.length()] = resBytes[i];
+        }
+
+        raFile.write(cardImage);
+        
+        for (i = 0; i < 80; i++) {
+            cardImage[i] = 32; // fill with ascii spaces
+        }
+
+        cardImage[0] = 67; // C
+        cardImage[1] = 82; // R
+        cardImage[2] = 86; // V
+        cardImage[3] = 65; // A
+        cardImage[4] = 76; // L
+        cardImage[5] = 49; // 1
+        cardImage[8] = 61; // =
+
+        resString = Double.toString(array[0][Math.min(image.getNDims(),3)]);
         resBytes = resString.getBytes();
 
         for (i = 0; i < resString.length(); i++) {
@@ -1611,7 +1612,49 @@ public class FileFits extends FileBase {
         cardImage[5] = 50; // 2
         cardImage[8] = 61; // =
 
-        resString = Float.toString(image.getFileInfo()[0].getResolutions()[1]);
+        resString = Double.toString(array[1][1]);
+        resBytes = resString.getBytes();
+
+        for (i = 0; i < resString.length(); i++) {
+            cardImage[30 + i - resString.length()] = resBytes[i];
+        }
+
+        raFile.write(cardImage);
+        
+        for (i = 0; i < 80; i++) {
+            cardImage[i] = 32; // fill with ascii spaces
+        }
+
+        cardImage[0] = 67; // C
+        cardImage[1] = 82; // R
+        cardImage[2] = 80; // P
+        cardImage[3] = 73; // I
+        cardImage[4] = 88; // X
+        cardImage[5] = 50; // 2
+        cardImage[8] = 61; // =
+
+        resString = Double.toString(0.5);
+        resBytes = resString.getBytes();
+
+        for (i = 0; i < resString.length(); i++) {
+            cardImage[30 + i - resString.length()] = resBytes[i];
+        }
+
+        raFile.write(cardImage);
+        
+        for (i = 0; i < 80; i++) {
+            cardImage[i] = 32; // fill with ascii spaces
+        }
+
+        cardImage[0] = 67; // C
+        cardImage[1] = 82; // R
+        cardImage[2] = 86; // V
+        cardImage[3] = 65; // A
+        cardImage[4] = 76; // L
+        cardImage[5] = 50; // 2
+        cardImage[8] = 61; // =
+
+        resString = Double.toString(array[1][Math.min(image.getNDims(),3)]);
         resBytes = resString.getBytes();
 
         for (i = 0; i < resString.length(); i++) {
@@ -1620,11 +1663,12 @@ public class FileFits extends FileBase {
 
         raFile.write(cardImage);
 
+        
         for (i = 0; i < 80; i++) {
             cardImage[i] = 32; // fill with ascii spaces
         }
-
         if ((image.getNDims() >= 3) || ((image.getNDims() == 2) && (image.getType() == ModelStorageBase.ARGB))) {
+            
             cardImage[0] = 67; // C
             cardImage[1] = 68; // D
             cardImage[2] = 69; // E
@@ -1637,22 +1681,72 @@ public class FileFits extends FileBase {
                 resString = "1.0";
             }
             else {
-                resString = Float.toString(image.getFileInfo()[0].getResolutions()[2]);
+                resString = Double.toString(array[2][2]);
             }
             resBytes = resString.getBytes();
 
             for (i = 0; i < resString.length(); i++) {
                 cardImage[30 + i - resString.length()] = resBytes[i];
             }
-        } // if ((image.getNDims() >= 3) || ((image.getNDims() == 2) && (image.getType() == ModelStorageBase.ARGB)))
+        }
+            
+        raFile.write(cardImage);
+        
+        for (i = 0; i < 80; i++) {
+            cardImage[i] = 32; // fill with ascii spaces
+        }
+        
+        if (image.getNDims() >= 3) {
+                
+            cardImage[0] = 67; // C
+            cardImage[1] = 82; // R
+            cardImage[2] = 80; // P
+            cardImage[3] = 73; // I
+            cardImage[4] = 88; // X
+            cardImage[5] = 51; // 3
+            cardImage[8] = 61; // =
+
+            resString = Double.toString(0.5);
+            resBytes = resString.getBytes();
+
+            for (i = 0; i < resString.length(); i++) {
+                cardImage[30 + i - resString.length()] = resBytes[i];
+            }
+        }
 
         raFile.write(cardImage);
+                
+        for (i = 0; i < 80; i++) {
+            cardImage[i] = 32; // fill with ascii spaces
+        }
+        
+        if (image.getNDims() >= 3) {
 
+            cardImage[0] = 67; // C
+            cardImage[1] = 82; // R
+            cardImage[2] = 86; // V
+            cardImage[3] = 65; // A
+            cardImage[4] = 76; // L
+            cardImage[5] = 51; // 3
+            cardImage[8] = 61; // =
+
+            resString = Double.toString(array[2][Math.min(image.getNDims(),3)]);
+            resBytes = resString.getBytes();
+
+            for (i = 0; i < resString.length(); i++) {
+                cardImage[30 + i - resString.length()] = resBytes[i];
+            }
+  
+        } // if ((image.getNDims() >= 3)
+        
+        raFile.write(cardImage);
+        
         for (i = 0; i < 80; i++) {
             cardImage[i] = 32; // fill with ascii spaces
         }
 
         if (image.getNDims() == 4) {
+            
             cardImage[0] = 67; // C
             cardImage[1] = 68; // D
             cardImage[2] = 69; // E
@@ -1667,8 +1761,9 @@ public class FileFits extends FileBase {
             for (i = 0; i < resString.length(); i++) {
                 cardImage[30 + i - resString.length()] = resBytes[i];
             }
+            
         } // if (image.getNDims() == 4)
-
+        
         raFile.write(cardImage);
 
         measure = image.getFileInfo()[0].getUnitsOfMeasure();
@@ -1682,7 +1777,7 @@ public class FileFits extends FileBase {
             if (((image.getNDims() >= (i + 1)) && (image.getFileInfo()[0].getResolutions()[i] > 0.0)) 
                 || ((i == 2) && (image.getType() == ModelStorageBase.ARGB) && (image.getNDims() == 2))) {
 
-                if (image.getType() == ModelStorageBase.ARGB) {
+                if (image.getType() == ModelStorageBase.ARGB && (i == 2)) {
                     mString = "RGB";
                 }
                 else {
@@ -1747,6 +1842,21 @@ public class FileFits extends FileBase {
                         case FileInfoBase.HOURS:
                             mString = FileInfoBase.HOURS_STRING;
                             break;
+                            
+                        case FileInfoBase.HZ:
+                            mString = FileInfoBase.HZ_STRING;
+                            break;
+                            
+                        case FileInfoBase.PPM:
+                            mString = FileInfoBase.PPM_STRING;
+                            break;
+                            
+                        case FileInfoBase.RADS:
+                            mString = FileInfoBase.RADS_STRING;
+                            break;
+                            
+                        case FileInfoBase.DEGREES:
+                            mString = FileInfoBase.DEGREES_STRING;
     
                         default:
                             mString = "Unknown";
@@ -1754,11 +1864,20 @@ public class FileFits extends FileBase {
                     } // end of switch(measure[i])
                 }
 
-                cardImage[0] = 67; // C
-                cardImage[1] = 84; // T
-                cardImage[2] = 89; // Y
-                cardImage[3] = 80; // P
-                cardImage[4] = 69; // E
+                if ((image.getType() == ModelStorageBase.ARGB)&& (i == 2)) {
+                    cardImage[0] = 67; // C
+                    cardImage[1] = 84; // T
+                    cardImage[2] = 89; // Y
+                    cardImage[3] = 80; // P
+                    cardImage[4] = 69; // E    
+                }
+                else {
+                    cardImage[0] = 67; // C
+                    cardImage[1] = 85; // U
+                    cardImage[2] = 78; // N
+                    cardImage[3] = 73; // I
+                    cardImage[4] = 84; // T
+                }
                 cardImage[5] = (byte) (49 + i); // 1 = 49, 2 = 50, 3 = 51, 4 = 52
                 cardImage[8] = 61; // =
                 cardImage[10] = 39; // '
@@ -1769,9 +1888,11 @@ public class FileFits extends FileBase {
                 }
 
                 cardImage[11 + mString.length()] = 39; // '
+               
             } // if (((image.getNDims() >= (i+1)) && (image.getFileInfo()[0].getResolutions()[i] > 0.0)) ||
-
+            
             raFile.write(cardImage);
+
         } // for (i=0; i < 4; i++)
 
         for (i = 0; i < 80; i++) {
@@ -1784,13 +1905,13 @@ public class FileFits extends FileBase {
         raFile.write(cardImage);
 
         // The data starts at byte 2880 or after 36 80-byte lines have been written.
-        // 16 have been written, so write 20 more.
+        // 22 have been written, so write 14 more.
 
         cardImage[0] = 32;
         cardImage[1] = 32;
         cardImage[2] = 32;
 
-        for (i = 0; i < 20; i++) {
+        for (i = 0; i < 14; i++) {
             raFile.write(cardImage);
         }
 
