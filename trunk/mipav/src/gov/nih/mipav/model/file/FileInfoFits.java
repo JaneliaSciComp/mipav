@@ -32,10 +32,12 @@ public class FileInfoFits extends FileInfoBase {
     private String CTYPE2 = null;
     private String CTYPE3 = null;
     private String CTYPE4 = null;
+    private String CTYPE5 = null;
     private String CUNIT1 = null;
     private String CUNIT2 = null;
     private String CUNIT3 = null;
     private String CUNIT4 = null;
+    private String CUNIT5 = null;
     private String BUNIT = null;
     private String author = null;
 
@@ -100,6 +102,14 @@ public class FileInfoFits extends FileInfoBase {
         
         if (CUNIT4 != null) {
             dialog.append("CUNIT4, units along t-axis = " + CUNIT4 + "\n");
+        }
+        
+        if (CTYPE5 != null) {
+            dialog.append("CTYPE5, name along fifth-axis = " + CTYPE5 + "\n");
+        }
+        
+        if (CUNIT5 != null) {
+            dialog.append("CUNIT5, units along fifth-axis = " + CUNIT5 + "\n");
         }
         
         if (origin != null) {
@@ -176,6 +186,10 @@ public class FileInfoFits extends FileInfoBase {
         this.CTYPE4 = CTYPE4;
     }
     
+    public void setCTYPE5(String CTYPE5) {
+        this.CTYPE5 = CTYPE5;
+    }
+    
     public void setCUNIT1(String CUNIT1) {
         this.CUNIT1 = CUNIT1;
     }
@@ -190,6 +204,10 @@ public class FileInfoFits extends FileInfoBase {
     
     public void setCUNIT4(String CUNIT4) {
         this.CUNIT4 = CUNIT4;
+    }
+    
+    public void setCUNIT5(String CUNIT5) {
+        this.CUNIT5 = CUNIT5;
     }
     
     public void setDateAcquired(String dateAcquired) {
