@@ -113,7 +113,7 @@ public class FileFits extends FileBase {
         // NAXIS, NAXISn, n=1,...,NAXIS(NAXIS = 0 -> NAXIS1 not present), and END.
         int i = 0;
         int j = 0;
-        String s, firstS, subS, subS2, subS3;
+        String s, firstS, subS;
         String dateString;
         String jobNameString;
         String timeString;
@@ -131,7 +131,9 @@ public class FileFits extends FileBase {
         float[] imgBuffer;
         double[] imgDBuffer;
         int bufferSize;
-        float[] imgResols = new float[] { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+        // Be able to handle dimensions of length 1 in read in as long
+        // as no more than 4 dimensions greater than length 1 are present
+        float[] imgResols = new float[] { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
         double[] scale = new double[] {1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
         // reference pixel position along axis
         double[] crpix = new double[6];
@@ -151,6 +153,7 @@ public class FileFits extends FileBase {
         float focalRatio;
         double origin[];
         TransMatrix matrix;
+        char c;
 
         try {
 
@@ -181,18 +184,39 @@ public class FileFits extends FileBase {
                     subS = s.substring(8, 10);
 
                     if (!subS.equals("= ")) {
-                        MipavUtil.displayError("SIMPLE line does not have required =<sp> in cols 9 and 10");
-                    } else {
-                        subS = s.substring(29, 30);
+                        Preferences.debug("SIMPLE line does not have required =<sp> in cols 9 and 10\n");
+                    } 
+                    subS = s.substring(29, 30);
 
-                        if ((!subS.equals("T")) && (!subS.equals("F"))) {
-                            MipavUtil.displayError("SIMPLE line does not have required T or F in column 30");
-                        } else if (subS.equals("T")) {
-                            Preferences.debug("SIMPLE = T for file conformance to FITS standards\n");
-                        } else { // subs.equals("F")
-                            Preferences.debug("SIMPLE = F for departure from FITS standards in some significant way\n");
+                    if ((!subS.equals("T")) && (!subS.equals("F"))) {
+                        Preferences.debug("\nSIMPLE line does not have required T or F in column 30\n");
+                        if (subS.trim() != null) {
+                            if (subS.trim().length() != 0) {
+                                Preferences.debug("SIMPLE line has " + subS + " in column 30\n");
+                            }
                         }
-
+                        i = s.indexOf("/");
+                        if (i != -1) {
+                            subS = s.substring(10,i).trim();
+                        }
+                        else {
+                            subS = s.substring(10).trim();
+                        }
+                        i = subS.length();
+                        subS = subS.substring(i-1);
+                        if (subS.equals("T")) {
+                            Preferences.debug(
+                            "SIMPLE = T for file conformance to FITS standards in nonstandard column\n");
+                        }
+                        else if (subS.equals("F")) {
+                            Preferences.debug(
+                            "SIMPLE = F for departure from FITS standards in some significant way\n"+ 
+                            "in nonstandard column\n");
+                        }
+                    } else if (subS.equals("T")) {
+                        Preferences.debug("\nSIMPLE = T for file conformance to FITS standards\n");
+                    } else { // subs.equals("F")
+                        Preferences.debug("\nSIMPLE = F for departure from FITS standards in some significant way\n");
                     }
 
                 }
@@ -217,53 +241,54 @@ public class FileFits extends FileBase {
                     subS = s.substring(8, 10);
 
                     if (!subS.equals("= ")) {
-                        MipavUtil.displayError("BITPIX line does not have required =<sp> in cols 9 and 10");
+                        Preferences.debug("BITPIX line does not have required =<sp> in cols 9 and 10\n");
+                        subS = s.substring(8, 30);
                     } else {
                         subS = s.substring(10, 30);
-                        subS = subS.trim();
+                    }
+                    subS = subS.trim();
 
-                        try {
-                            bitsPerPixel = Integer.parseInt(subS);
-                        } catch (NumberFormatException e) {
+                    try {
+                        bitsPerPixel = Integer.parseInt(subS);
+                    } catch (NumberFormatException e) {
+                        raFile.close();
+
+                        MipavUtil.displayError("Instead of integer BITPIX line had " + subS);
+                        throw new IOException();
+                    }
+
+                    switch (bitsPerPixel) {
+
+                        case 8:
+                            sourceType = ModelStorageBase.UBYTE;
+                            Preferences.debug("sourceType = ModelStorageBase.UBYTE\n");
+                            break;
+
+                        case 16:
+                            sourceType = ModelStorageBase.SHORT;
+                            Preferences.debug("sourceType = ModelStorageBase.SHORT\n");
+                            break;
+
+                        case 32:
+                            sourceType = ModelStorageBase.INTEGER;
+                            Preferences.debug("sourceType = ModelStorageBase.INTEGER\n");
+                            break;
+
+                        case -32:
+                            sourceType = ModelStorageBase.FLOAT;
+                            Preferences.debug("sourceType = ModelStorageBase.FLOAT\n");
+                            break;
+
+                        case -64:
+                            sourceType = ModelStorageBase.DOUBLE;
+                            Preferences.debug("sourceType = ModelStorageBase.DOUBLE\n");
+                            break;
+
+                        default:
                             raFile.close();
 
-                            MipavUtil.displayError("Instead of integer BITPIX line had " + subS);
+                            MipavUtil.displayError("BITPIX keyword had illegal value of " + bitsPerPixel);
                             throw new IOException();
-                        }
-
-                        switch (bitsPerPixel) {
-
-                            case 8:
-                                sourceType = ModelStorageBase.UBYTE;
-                                Preferences.debug("sourceType = ModelStorageBase.UBYTE\n");
-                                break;
-
-                            case 16:
-                                sourceType = ModelStorageBase.SHORT;
-                                Preferences.debug("sourceType = ModelStorageBase.SHORT\n");
-                                break;
-
-                            case 32:
-                                sourceType = ModelStorageBase.INTEGER;
-                                Preferences.debug("sourceType = ModelStorageBase.INTEGER\n");
-                                break;
-
-                            case -32:
-                                sourceType = ModelStorageBase.FLOAT;
-                                Preferences.debug("sourceType = ModelStorageBase.FLOAT\n");
-                                break;
-
-                            case -64:
-                                sourceType = ModelStorageBase.DOUBLE;
-                                Preferences.debug("sourceType = ModelStorageBase.DOUBLE\n");
-                                break;
-
-                            default:
-                                raFile.close();
-
-                                MipavUtil.displayError("BITPIX keyword had illegal value of " + bitsPerPixel);
-                                throw new IOException();
-                        }
                     }
                 }
             } // while(readAgain) looping for second required keyword of BITPIX
@@ -287,43 +312,44 @@ public class FileFits extends FileBase {
                     subS = s.substring(8, 10);
 
                     if (!subS.equals("= ")) {
-                        MipavUtil.displayError("NAXIS line does not have required =<sp> in cols 9 and 10");
+                        Preferences.debug("NAXIS line does not have required =<sp> in cols 9 and 10\n");
+                        subS = s.substring(8, 30);
                     } else {
                         subS = s.substring(10, 30);
-                        subS = subS.trim();
+                    }
+                    subS = subS.trim();
 
-                        try {
-                            nDimensions = Integer.parseInt(subS);
-                        } catch (NumberFormatException e) {
-                            raFile.close();
+                    try {
+                        nDimensions = Integer.parseInt(subS);
+                    } catch (NumberFormatException e) {
+                        raFile.close();
 
-                            MipavUtil.displayError("Instead of integer NAXIS line had " + subS);
-                            throw new IOException();
-                        }
+                        MipavUtil.displayError("Instead of integer NAXIS line had " + subS);
+                        throw new IOException();
+                    }
 
-                        Preferences.debug("NAXIS = " + nDimensions + "\n");
+                    Preferences.debug("NAXIS = " + nDimensions + "\n");
 
-                        if (nDimensions < 0) {
-                            raFile.close();
+                    if (nDimensions < 0) {
+                        raFile.close();
 
-                            MipavUtil.displayError("NAXIS had an illegal negative value of " + nDimensions);
-                            throw new IOException();
-                        } else if (nDimensions > 999) {
-                            raFile.close();
+                        MipavUtil.displayError("NAXIS had an illegal negative value of " + nDimensions);
+                        throw new IOException();
+                    } else if (nDimensions > 999) {
+                        raFile.close();
 
-                            MipavUtil.displayError("NAXIS exceeded maximum legal value of 999 with " + nDimensions);
-                            throw new IOException();
-                        } else if (nDimensions == 1) {
-                            raFile.close();
+                        MipavUtil.displayError("NAXIS exceeded maximum legal value of 999 with " + nDimensions);
+                        throw new IOException();
+                    } else if (nDimensions == 1) {
+                        raFile.close();
 
-                            MipavUtil.displayError("MIPAV cannot display an image with 1 dimension");
-                            throw new IOException();
-                        } else if (nDimensions == 0) {
-                            raFile.close();
+                        MipavUtil.displayError("MIPAV cannot display an image with 1 dimension");
+                        throw new IOException();
+                    } else if (nDimensions == 0) {
+                        raFile.close();
 
-                            MipavUtil.displayError("NAXIS value of 0 indicates no binary data matrix is associated with the header");
-                            throw new IOException();
-                        }
+                        MipavUtil.displayError("NAXIS value of 0 indicates no binary data matrix is associated with the header");
+                        throw new IOException();
                     }
                 }
             } // while (readAgain) looping for third required keyword of NAXIS
@@ -349,34 +375,35 @@ public class FileFits extends FileBase {
                     subS = s.substring(8, 10);
 
                     if (!subS.equals("= ")) {
-                        MipavUtil.displayError("NAXIS1 line does not have required =<sp> in cols 9 and 10");
+                        Preferences.debug("NAXIS1 line does not have required =<sp> in cols 9 and 10\n");
+                        subS = s.substring(8, 30);
                     } else {
                         subS = s.substring(10, 30);
-                        subS = subS.trim();
+                    }
+                    subS = subS.trim();
 
-                        try {
-                            imgExtents[0] = Integer.parseInt(subS);
-                        } catch (NumberFormatException e) {
-                            raFile.close();
+                    try {
+                        imgExtents[0] = Integer.parseInt(subS);
+                    } catch (NumberFormatException e) {
+                        raFile.close();
 
-                            MipavUtil.displayError("Instead of integer NAXIS1 line had " + subS);
-                            throw new IOException();
-                        }
+                        MipavUtil.displayError("Instead of integer NAXIS1 line had " + subS);
+                        throw new IOException();
+                    }
 
-                        Preferences.debug("NAXIS1 = " + imgExtents[0] + "\n");
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, 0);
+                    Preferences.debug("NAXIS1 = " + imgExtents[0] + "\n");
+                    fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, 0);
 
-                        if (imgExtents[0] < 0) {
-                            raFile.close();
+                    if (imgExtents[0] < 0) {
+                        raFile.close();
 
-                            MipavUtil.displayError("NAXIS1 had an illegal negative value of " + imgExtents[0]);
-                            throw new IOException();
-                        } else if (imgExtents[0] == 0) {
-                            raFile.close();
+                        MipavUtil.displayError("NAXIS1 had an illegal negative value of " + imgExtents[0]);
+                        throw new IOException();
+                    } else if (imgExtents[0] == 0) {
+                        raFile.close();
 
-                            MipavUtil.displayError("NAXIS1 value of 0 indicates no data is associated with the header");
-                            throw new IOException();
-                        }
+                        MipavUtil.displayError("NAXIS1 value of 0 indicates no data is associated with the header");
+                        throw new IOException();
                     }
                 }
             } // while (readAgain) looping for fourth required keyword of NAXIS1
@@ -400,34 +427,35 @@ public class FileFits extends FileBase {
                     subS = s.substring(8, 10);
 
                     if (!subS.equals("= ")) {
-                        MipavUtil.displayError("NAXIS2 line does not have required =<sp> in cols 9 and 10");
+                        Preferences.debug("NAXIS2 line does not have required =<sp> in cols 9 and 10\n");
+                        subS = s.substring(8, 30);
                     } else {
                         subS = s.substring(10, 30);
-                        subS = subS.trim();
+                    }
+                    subS = subS.trim();
 
-                        try {
-                            imgExtents[1] = Integer.parseInt(subS);
-                        } catch (NumberFormatException e) {
-                            raFile.close();
+                    try {
+                        imgExtents[1] = Integer.parseInt(subS);
+                    } catch (NumberFormatException e) {
+                        raFile.close();
 
-                            MipavUtil.displayError("Instead of integer NAXIS2 line had " + subS);
-                            throw new IOException();
-                        }
+                        MipavUtil.displayError("Instead of integer NAXIS2 line had " + subS);
+                        throw new IOException();
+                    }
 
-                        Preferences.debug("NAXIS2 = " + imgExtents[1] + "\n");
-                        fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, 1);
+                    Preferences.debug("NAXIS2 = " + imgExtents[1] + "\n");
+                    fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, 1);
 
-                        if (imgExtents[1] < 0) {
-                            raFile.close();
+                    if (imgExtents[1] < 0) {
+                        raFile.close();
 
-                            MipavUtil.displayError("NAXIS2 had an illegal negative value of " + imgExtents[1]);
-                            throw new IOException();
-                        } else if (imgExtents[1] == 0) {
-                            raFile.close();
+                        MipavUtil.displayError("NAXIS2 had an illegal negative value of " + imgExtents[1]);
+                        throw new IOException();
+                    } else if (imgExtents[1] == 0) {
+                        raFile.close();
 
-                            MipavUtil.displayError("NAXIS2 value of 0 indicates no data is associated with the header");
-                            throw new IOException();
-                        }
+                        MipavUtil.displayError("NAXIS2 value of 0 indicates no data is associated with the header");
+                        throw new IOException();
                     }
                 }
             } // while (readAgain) looping for fifth required keyword of NAXIS2
@@ -452,40 +480,41 @@ public class FileFits extends FileBase {
                         subS = s.substring(8, 10);
 
                         if (!subS.equals("= ")) {
-                            MipavUtil.displayError("NAXIS3 line does not have required =<sp> in cols 9 and 10");
+                            Preferences.debug("NAXIS3 line does not have required =<sp> in cols 9 and 10\n");
+                            subS = s.substring(8, 30);
                         } else {
                             subS = s.substring(10, 30);
-                            subS = subS.trim();
+                        }
+                        subS = subS.trim();
 
-                            try {
-                                imgExtents[2] = Integer.parseInt(subS);
-                            } catch (NumberFormatException e) {
-                                raFile.close();
+                        try {
+                            imgExtents[2] = Integer.parseInt(subS);
+                        } catch (NumberFormatException e) {
+                            raFile.close();
 
-                                MipavUtil.displayError("Instead of integer NAXIS3 line had " + subS);
-                                throw new IOException();
-                            }
+                            MipavUtil.displayError("Instead of integer NAXIS3 line had " + subS);
+                            throw new IOException();
+                        }
 
-                            Preferences.debug("NAXIS3 = " + imgExtents[2] + "\n");
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, 2);
+                        Preferences.debug("NAXIS3 = " + imgExtents[2] + "\n");
+                        fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, 2);
 
-                            if (imgExtents[2] < 0) {
-                                raFile.close();
+                        if (imgExtents[2] < 0) {
+                            raFile.close();
 
-                                MipavUtil.displayError("NAXIS3 had an illegal negative value of " + imgExtents[2]);
-                                throw new IOException();
-                            } else if (imgExtents[2] == 0) {
-                                raFile.close();
+                            MipavUtil.displayError("NAXIS3 had an illegal negative value of " + imgExtents[2]);
+                            throw new IOException();
+                        } else if (imgExtents[2] == 0) {
+                            raFile.close();
 
-                                MipavUtil.displayError("NAXIS3 value of 0 indicates no data is associated with the header");
-                                throw new IOException();
-                            }
+                            MipavUtil.displayError("NAXIS3 value of 0 indicates no data is associated with the header");
+                            throw new IOException();
                         }
                     }
                 } // while (readAgain) looping for sixth required keyword of NAXIS3
             } // if (nDimensions >= 3)
 
-            if (nDimensions == 4) {
+            if (nDimensions >= 4) {
                 readAgain = true;
 
                 while (readAgain) { // looping for seventh required keyword of NAXIS4
@@ -505,38 +534,146 @@ public class FileFits extends FileBase {
                         subS = s.substring(8, 10);
 
                         if (!subS.equals("= ")) {
-                            MipavUtil.displayError("NAXIS4 line does not have required =<sp> in cols 9 and 10");
+                            Preferences.debug("NAXIS4 line does not have required =<sp> in cols 9 and 10\n");
+                            subS = s.substring(8, 30);
                         } else {
                             subS = s.substring(10, 30);
-                            subS = subS.trim();
+                        }
+                        subS = subS.trim();
 
-                            try {
-                                imgExtents[3] = Integer.parseInt(subS);
-                            } catch (NumberFormatException e) {
-                                raFile.close();
+                        try {
+                            imgExtents[3] = Integer.parseInt(subS);
+                        } catch (NumberFormatException e) {
+                            raFile.close();
 
-                                MipavUtil.displayError("Instead of integer NAXIS4 line had " + subS);
-                                throw new IOException();
-                            }
+                            MipavUtil.displayError("Instead of integer NAXIS4 line had " + subS);
+                            throw new IOException();
+                        }
 
-                            Preferences.debug("NAXIS4 = " + imgExtents[3] + "\n");
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, 3);
+                        Preferences.debug("NAXIS4 = " + imgExtents[3] + "\n");
+                        fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, 3);
 
-                            if (imgExtents[3] < 0) {
-                                raFile.close();
+                        if (imgExtents[3] < 0) {
+                            raFile.close();
 
-                                MipavUtil.displayError("NAXIS4 had an illegal negative value of " + imgExtents[3]);
-                                throw new IOException();
-                            } else if (imgExtents[3] == 0) {
-                                raFile.close();
+                            MipavUtil.displayError("NAXIS4 had an illegal negative value of " + imgExtents[3]);
+                            throw new IOException();
+                        } else if (imgExtents[3] == 0) {
+                            raFile.close();
 
-                                MipavUtil.displayError("NAXIS4 value of 0 indicates no data is associated with the header");
-                                throw new IOException();
-                            }
+                            MipavUtil.displayError("NAXIS4 value of 0 indicates no data is associated with the header");
+                            throw new IOException();
                         }
                     }
                 } // while (readAgain) looping for seventh required keyword of NAXIS4
-            } // if (nDimensions == 4)
+            } // if (nDimensions >= 4)
+            
+            if (nDimensions >= 5) {
+                readAgain = true;
+
+                while (readAgain) { // looping for eighth required keyword of NAXIS5
+                    s = getString(80);
+                    count++;
+                    firstS = s.substring(0, 1);
+
+                    if ((firstS.equals(" ")) || (firstS.equals("/"))) {
+                        ;
+                    } else if (!s.startsWith("NAXIS5")) {
+                        raFile.close();
+
+                        MipavUtil.displayError("Instead of NAXIS5 eighth keyword starts with " + s);
+                        throw new IOException();
+                    } else {
+                        readAgain = false;
+                        subS = s.substring(8, 10);
+
+                        if (!subS.equals("= ")) {
+                            Preferences.debug("NAXIS5 line does not have required =<sp> in cols 9 and 10\n");
+                            subS = s.substring(8, 30);
+                        } else {
+                            subS = s.substring(10, 30);
+                        }
+                        subS = subS.trim();
+
+                        try {
+                            imgExtents[4] = Integer.parseInt(subS);
+                        } catch (NumberFormatException e) {
+                            raFile.close();
+
+                            MipavUtil.displayError("Instead of integer NAXIS5 line had " + subS);
+                            throw new IOException();
+                        }
+
+                        Preferences.debug("NAXIS5 = " + imgExtents[4] + "\n");
+                        fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, 4);
+
+                        if (imgExtents[4] < 0) {
+                            raFile.close();
+
+                            MipavUtil.displayError("NAXIS4 had an illegal negative value of " + imgExtents[4]);
+                            throw new IOException();
+                        } else if (imgExtents[4] == 0) {
+                            raFile.close();
+
+                            MipavUtil.displayError("NAXIS4 value of 0 indicates no data is associated with the header");
+                            throw new IOException();
+                        }
+                    }
+                } // while (readAgain) looping for eighth required keyword of NAXIS5
+            } // if (nDimensions >= 5)
+            
+            if (nDimensions >= 6) {
+                readAgain = true;
+
+                while (readAgain) { // looping for ninth required keyword of NAXIS6
+                    s = getString(80);
+                    count++;
+                    firstS = s.substring(0, 1);
+
+                    if ((firstS.equals(" ")) || (firstS.equals("/"))) {
+                        ;
+                    } else if (!s.startsWith("NAXIS6")) {
+                        raFile.close();
+
+                        MipavUtil.displayError("Instead of NAXIS6 ninth keyword starts with " + s);
+                        throw new IOException();
+                    } else {
+                        readAgain = false;
+                        subS = s.substring(8, 10);
+
+                        if (!subS.equals("= ")) {
+                            Preferences.debug("NAXIS6 line does not have required =<sp> in cols 9 and 10\n");
+                            subS = s.substring(8, 30);
+                        } else {
+                            subS = s.substring(10, 30);
+                        }
+                        subS = subS.trim();
+
+                        try {
+                            imgExtents[5] = Integer.parseInt(subS);
+                        } catch (NumberFormatException e) {
+                            raFile.close();
+
+                            MipavUtil.displayError("Instead of integer NAXIS6 line had " + subS);
+                            throw new IOException();
+                        }
+
+                        Preferences.debug("NAXIS6 = " + imgExtents[5] + "\n");
+
+                        if (imgExtents[5] < 0) {
+                            raFile.close();
+
+                            MipavUtil.displayError("NAXIS5 had an illegal negative value of " + imgExtents[5]);
+                            throw new IOException();
+                        } else if (imgExtents[5] == 0) {
+                            raFile.close();
+
+                            MipavUtil.displayError("NAXIS5 value of 0 indicates no data is associated with the header");
+                            throw new IOException();
+                        }
+                    }
+                } // while (readAgain) looping for ninth required keyword of NAXIS6
+            } // if (nDimensions >= 6)
 
             do {
                 s = getString(80);
@@ -625,23 +762,27 @@ public class FileFits extends FileBase {
                     } 
                 } // else if (s.startsWith("CDELT"))
                 else if (s.startsWith("CRPIX")) {
-                    dimNumber = Integer.parseInt(s.substring(5, 6));
-                    subS = s.substring(10, 80);
-                    subS = subS.trim();
-                    i = subS.indexOf("/");
-
-                    if (i != -1) {
-                        subS = subS.substring(0, i);
+                    c = s.charAt(5);
+                    if ((c >= '0') && (c <= '9')) {
+                        dimNumber = Integer.parseInt(s.substring(5, 6));
+                        subS = s.substring(10, 80);
                         subS = subS.trim();
-                    }
-
-                    try {
-                        crpix[dimNumber-1] = Double.parseDouble(subS);
-                        haveCrpix[dimNumber-1] = true;
-                    } catch (NumberFormatException e) {
-
-                        Preferences.debug("Instead of a float CRPIX" + s.substring(5,6)+ " line had = " + subS);
-                    }
+                        i = subS.indexOf("/");
+    
+                        if (i != -1) {
+                            subS = subS.substring(0, i);
+                            subS = subS.trim();
+                        }
+    
+                        try {
+                            crpix[dimNumber-1] = Double.parseDouble(subS);
+                            haveCrpix[dimNumber-1] = true;
+                            Preferences.debug("crpix[" + (dimNumber-1) + "] = " + crpix[dimNumber-1] + "\n");
+                        } catch (NumberFormatException e) {
+    
+                            Preferences.debug("Instead of a float CRPIX" + s.substring(5,6)+ " line had = " + subS);
+                        }
+                    } // if ((c >= '0') && (c <= '9'))
                 } // else if (s.startsWith("CRPIX"))
                 else if (s.startsWith("CRVAL")) {
                     dimNumber = Integer.parseInt(s.substring(5, 6));
@@ -656,6 +797,7 @@ public class FileFits extends FileBase {
 
                     try {
                         crval[dimNumber-1] = Double.parseDouble(subS);
+                        Preferences.debug("crval[" + (dimNumber-1) + "] = " + crval[dimNumber-1] + "\n");
                         haveCrval[dimNumber-1] = true;
                     } catch (NumberFormatException e) {
 
@@ -664,119 +806,129 @@ public class FileFits extends FileBase {
                 } // else if (s.startsWith("CRVAL"))
                 else if (s.startsWith("CTYPE")) {
                     dimNumber = Integer.parseInt(s.substring(5, 6));
-                    i = s.indexOf("'");
-                    j = s.lastIndexOf("'");
-                    if ((i != -1) && (j != -1)) {
-                        subS = s.substring(i+1, j);
-                        subS = subS.trim();
-                        Preferences.debug("CTYPE" + s.substring(5, 6) + " = " + subS + "\n");
-                        if ((subS.equals("RGB")) && (dimNumber == 3) && (imgExtents[2] == 3) && (nDimensions == 3)) {
-                            isColorPlanar2D = true;    
+                    if (dimNumber <= 5) {
+                        i = s.indexOf("'");
+                        j = s.lastIndexOf("'");
+                        if ((i != -1) && (j != -1)) {
+                            subS = s.substring(i+1, j);
+                            subS = subS.trim();
+                            Preferences.debug("CTYPE" + s.substring(5, 6) + " = " + subS + "\n");
+                            if ((subS.equals("RGB")) && (dimNumber == 3) && (imgExtents[2] == 3) && (nDimensions == 3)) {
+                                isColorPlanar2D = true;    
+                            }
+                            else if (subS.toUpperCase().equals(FileInfoBase.INCHES_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.MILLIMETERS_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.CENTIMETERS_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.METERS_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.METERS, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.KILOMETERS_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.KILOMETERS, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.MILES_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.MILES, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.ANGSTROMS_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.ANGSTROMS, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.NANOMETERS_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.NANOMETERS, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.MICROMETERS_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.MICROMETERS, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.NANOSEC_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.NANOSEC, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.MICROSEC_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.MICROSEC, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.MILLISEC_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.SECONDS_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.SECONDS, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.MINUTES_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.MINUTES, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.HOURS_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.HOURS, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.DEGREES_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.DEGREES, dimNumber - 1);
+                            } else {
+                                if (dimNumber == 1) {
+                                    fileInfo.setCTYPE1(subS);
+                                }
+                                else if (dimNumber == 2) {
+                                    fileInfo.setCTYPE2(subS);
+                                }
+                                else if (dimNumber == 3) {
+                                    fileInfo.setCTYPE3(subS);
+                                }
+                                else if (dimNumber == 4) {
+                                    fileInfo.setCTYPE4(subS);
+                                }
+                                else if (dimNumber == 5) {
+                                    fileInfo.setCTYPE5(subS);
+                                }
+                            }
                         }
-                        else if (subS.toUpperCase().equals(FileInfoBase.INCHES_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.MILLIMETERS_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.CENTIMETERS_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.METERS_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.METERS, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.KILOMETERS_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.KILOMETERS, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.MILES_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.MILES, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.ANGSTROMS_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.ANGSTROMS, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.NANOMETERS_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.NANOMETERS, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.MICROMETERS_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.MICROMETERS, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.NANOSEC_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.NANOSEC, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.MICROSEC_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.MICROSEC, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.MILLISEC_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.SECONDS_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.SECONDS, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.MINUTES_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.MINUTES, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.HOURS_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.HOURS, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.DEGREES_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.DEGREES, dimNumber - 1);
-                        } else {
-                            if (dimNumber == 1) {
-                                fileInfo.setCTYPE1(subS);
-                            }
-                            else if (dimNumber == 2) {
-                                fileInfo.setCTYPE2(subS);
-                            }
-                            else if (dimNumber == 3) {
-                                fileInfo.setCTYPE3(subS);
-                            }
-                            else if (dimNumber == 4) {
-                                fileInfo.setCTYPE4(subS);
-                            }
-                        }
-                    }
+                    } // if (dimNumber <= 5)
                 } // else if (s.startsWith("CTYPE"))
                 else if (s.startsWith("CUNIT")) {
                     dimNumber = Integer.parseInt(s.substring(5, 6));
-                    i = s.indexOf("'");
-                    j = s.lastIndexOf("'");
-                    if ((i != -1) && (j != -1)) {
-                        subS = s.substring(i+1, j);
-                        subS = subS.trim();
-                        Preferences.debug("CUNIT" + s.substring(5, 6) + " = " + subS + "\n");
-                        
-                        if (subS.toUpperCase().equals(FileInfoBase.INCHES_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.MILLIMETERS_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.CENTIMETERS_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.METERS_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.METERS, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.KILOMETERS_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.KILOMETERS, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.MILES_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.MILES, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.ANGSTROMS_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.ANGSTROMS, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.NANOMETERS_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.NANOMETERS, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.MICROMETERS_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.MICROMETERS, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.NANOSEC_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.NANOSEC, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.MICROSEC_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.MICROSEC, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.MILLISEC_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.SECONDS_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.SECONDS, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.MINUTES_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.MINUTES, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.HOURS_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.HOURS, dimNumber - 1);
-                        } else if (subS.toUpperCase().equals(FileInfoBase.DEGREES_STRING.toUpperCase())) {
-                            fileInfo.setUnitsOfMeasure(FileInfoBase.DEGREES, dimNumber - 1);
-                        } else {
-                            if (dimNumber == 1) {
-                                fileInfo.setCUNIT1(subS);
-                            }
-                            else if (dimNumber == 2) {
-                                fileInfo.setCUNIT2(subS);
-                            }
-                            else if (dimNumber == 3) {
-                                fileInfo.setCUNIT3(subS);
-                            }
-                            else if (dimNumber == 4) {
-                                fileInfo.setCUNIT4(subS);
+                    if (dimNumber <= 5) {
+                        i = s.indexOf("'");
+                        j = s.lastIndexOf("'");
+                        if ((i != -1) && (j != -1)) {
+                            subS = s.substring(i+1, j);
+                            subS = subS.trim();
+                            Preferences.debug("CUNIT" + s.substring(5, 6) + " = " + subS + "\n");
+                            
+                            if (subS.toUpperCase().equals(FileInfoBase.INCHES_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.MILLIMETERS_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.CENTIMETERS_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.METERS_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.METERS, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.KILOMETERS_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.KILOMETERS, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.MILES_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.MILES, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.ANGSTROMS_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.ANGSTROMS, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.NANOMETERS_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.NANOMETERS, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.MICROMETERS_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.MICROMETERS, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.NANOSEC_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.NANOSEC, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.MICROSEC_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.MICROSEC, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.MILLISEC_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.SECONDS_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.SECONDS, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.MINUTES_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.MINUTES, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.HOURS_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.HOURS, dimNumber - 1);
+                            } else if (subS.toUpperCase().equals(FileInfoBase.DEGREES_STRING.toUpperCase())) {
+                                fileInfo.setUnitsOfMeasure(FileInfoBase.DEGREES, dimNumber - 1);
+                            } else {
+                                if (dimNumber == 1) {
+                                    fileInfo.setCUNIT1(subS);
+                                }
+                                else if (dimNumber == 2) {
+                                    fileInfo.setCUNIT2(subS);
+                                }
+                                else if (dimNumber == 3) {
+                                    fileInfo.setCUNIT3(subS);
+                                }
+                                else if (dimNumber == 4) {
+                                    fileInfo.setCUNIT4(subS);
+                                }
+                                else if (dimNumber == 5) {
+                                    fileInfo.setCUNIT5(subS);
+                                }
                             }
                         }
-                    }
+                    } // if (dimNumber <= 5)
                 } // else if (s.startsWith("CUNIT"))
                 else if (s.startsWith("COMMENT")) {
                     subS = s.substring(8, 80);
@@ -951,7 +1103,7 @@ public class FileFits extends FileBase {
                         subS = subS.substring(i+1, j);
                         subS = subS.trim();
                     }
-                    Preferences.debug("ORIGIN, installation where file is written = " + "\n" + subS + "\n");
+                    Preferences.debug("ORIGIN, installation where file is written = " + subS + "\n");
                     fileInfo.setOrigin(subS);
                 } // else if (s.startsWith("ORIGIN"))
                 else if (s.startsWith("INSTRUME")) {
@@ -1068,7 +1220,12 @@ public class FileFits extends FileBase {
                         reducedHaveCrpix[j-1] = haveCrpix[j];
                         reducedCrval[j-1] = crval[j];
                         reducedHaveCrval[j-1] = haveCrval[j];
-                        fileInfo.setUnitsOfMeasure(j-1, fileInfo.getUnitsOfMeasure(j));
+                        if (j <= 5) {
+                            fileInfo.setUnitsOfMeasure(j-1, fileInfo.getUnitsOfMeasure(j));
+                        }
+                        else {
+                            fileInfo.setUnitsOfMeasure(j-1,FileInfoBase.UNKNOWN_MEASURE);
+                        }
                     }
                     nDimensions--;
                     imgExtents = new int[nDimensions];
@@ -1110,11 +1267,13 @@ public class FileFits extends FileBase {
                 }
             }
             
-            for (i = 0; i < nDimensions; i++) {
-                imgResols[i] = (float)Math.abs(scale[i]);
+            if (nDimensions > 4) {
+                raFile.close();
+
+                MipavUtil.displayError("MIPAV cannot display an image with " + nDimensions + " dimensions");
+                throw new IOException();    
             }
-            
-            if (nDimensions == 1) {
+            else if (nDimensions == 1) {
                 raFile.close();
 
                 MipavUtil.displayError("MIPAV cannot display an image with 1 dimension");
@@ -1124,6 +1283,10 @@ public class FileFits extends FileBase {
 
                 MipavUtil.displayError("NAXIS value of 0 indicates no binary data matrix is associated with the header");
                 throw new IOException();
+            }
+            
+            for (i = 0; i < nDimensions; i++) {
+                imgResols[i] = (float)Math.abs(scale[i]);
             }
 
             fileInfo.setExtents(imgExtents);
