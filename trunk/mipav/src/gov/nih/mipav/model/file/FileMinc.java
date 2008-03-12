@@ -1204,7 +1204,7 @@ public class FileMinc extends FileBase {
      *
      * @return  The default volume maximum for a given fileInfo.
      */
-    private static double getDefaultMax(FileInfoBase fileInfo) {
+    public static double getDefaultMax(FileInfoBase fileInfo) {
 
         switch (fileInfo.getDataType()) {
 
@@ -1237,7 +1237,7 @@ public class FileMinc extends FileBase {
      *
      * @return  The default volume minimum for a given fileInfo.
      */
-    private static double getDefaultMin(FileInfoBase fileInfo) {
+    public static double getDefaultMin(FileInfoBase fileInfo) {
 
         switch (fileInfo.getDataType()) {
 
