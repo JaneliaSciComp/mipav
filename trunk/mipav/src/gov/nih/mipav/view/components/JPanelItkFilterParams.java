@@ -279,6 +279,13 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
                 ar.m_Component = lbl;
                 return;
             } else if (param == Boolean.TYPE) {
+                // One exception - we automatically invoke SetInPlace(true), since it 
+                // saves memory and is redundant with Mipav image's new/replace option.
+                if (mthd.getName().equals("SetInPlace")) {
+                    AutoItkLoader.invokeMethod(obj, mthd, true);
+                    ar.m_Component = null;
+                    return;
+                }
                 JPanel button_panel = new JPanel();
                 boolean on_default = true;
                 ar.m_DefaultVal = AutoItkLoader.invokeMethod("Get" + mthd.getName().substring(3), obj);
@@ -286,18 +293,13 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
                     ar.m_DefaultVal.getClass() == Boolean.class) {
                     on_default = ((Boolean)ar.m_DefaultVal).booleanValue();
                 }
-                JRadioButton rb_on = new JRadioButton("on");
-                if (on_default) rb_on.setSelected(true);
+                ButtonGroup group = new ButtonGroup();
+                JRadioButton rb_on = WidgetFactory.buildRadioButton("on", on_default, group);
                 rb_on.setActionCommand(mthd.getName());
                 rb_on.addActionListener(this);
-                JRadioButton rb_off = new JRadioButton("off");
-                if (!on_default) rb_off.setSelected(true);
+                JRadioButton rb_off = WidgetFactory.buildRadioButton("off", !on_default, group);
                 rb_off.setActionCommand(mthd.getName());
                 rb_off.addActionListener(this);
-
-                ButtonGroup group = new ButtonGroup();
-                group.add(rb_on);
-                group.add(rb_off);
 
                 button_panel.add(rb_on);
                 button_panel.add(rb_off);

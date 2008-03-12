@@ -675,7 +675,8 @@ public class AutoItkLoader implements ActionListener {
         }
         catch (NoSuchMethodException nsme) {
             // Expect some GetElement calls to fail, because of int/long as arg.
-            if (!method_name.equals("GetElement")) {
+            // Expect some GetX calls for finding default values to fail.
+            if (!method_name.startsWith("Get")) {
                 System.out.println("No luck, " + nsme.toString());
             }
             return null;
