@@ -633,7 +633,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
             halfHeight /= 2;
 
             float[] halfDual = getHalfDual2D(fullDual, fullWidth, fullHeight);
-            float[] halfCoefficient = halfCoefficient = getBasicFromCardinal2D(halfDual, halfWidth, halfHeight, 7);
+            float[] halfCoefficient = getBasicFromCardinal2D(halfDual, halfWidth, halfHeight, 7);
 
             switch (pyramidType) {
 

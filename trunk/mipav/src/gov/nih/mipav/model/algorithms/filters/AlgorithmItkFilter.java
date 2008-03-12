@@ -34,6 +34,9 @@ public class AlgorithmItkFilter extends AlgorithmBase {
     /** itk filter container */
     protected PItkFilter m_itkFilter = null;
 
+    private static final float PROG_PRE = 0.1f;
+    private static final float PROG_POST = 0.9f;
+
     //~ Constructors -------------------------------------------------------------------------------
 
     /**
@@ -149,8 +152,9 @@ public class AlgorithmItkFilter extends AlgorithmBase {
                             InsightToolkitSupport.itkTransferImageColor2D(kImageSrcITK.img(), kImageSrcITK.img(), mask, destImage,
                                                                           iChannel);
                         }
+                        fireProgressStateChanged((float)(iChannel + 1)/4, null, null);
                     }
-
+                    destImage.calcMinMax();
                     destImage.releaseLock();
 
                 }
@@ -169,14 +173,18 @@ public class AlgorithmItkFilter extends AlgorithmBase {
                                                                               srcImage, iChannel);
                             }
                         }
+                        fireProgressStateChanged((float)(iChannel + 1)/4, null, null);
                     }
+                    srcImage.calcMinMax();
                 }
             }
 
             // Single channel 2D
             else if ((2 == srcImage.getNDims()) && !srcImage.isColorImage()) {
                 PItkImage2 kImageSrcITK = InsightToolkitSupport.itkCreateImageSingle2D(srcImage);
+                fireProgressStateChanged(PROG_PRE, null, null);
                 itkImageBase2 kImageDestITK = filterInputOutput2D(kImageSrcITK);
+                fireProgressStateChanged(PROG_POST, null, null);
 
                 if (kImageDestITK != null) {
                     // store result in target image
@@ -194,6 +202,7 @@ public class AlgorithmItkFilter extends AlgorithmBase {
                                                                        kImageDestITK, mask,
                                                                        destImage);
 
+                        destImage.calcMinMax();
                         destImage.releaseLock();
                     }
 
@@ -202,6 +211,7 @@ public class AlgorithmItkFilter extends AlgorithmBase {
                         InsightToolkitSupport.itkTransferImageSingle2D(kImageSrcITK.img(), 
                                                                        kImageDestITK, mask,
                                                                        srcImage);
+                        srcImage.calcMinMax();
                     }
                 }
             }
@@ -255,6 +265,7 @@ public class AlgorithmItkFilter extends AlgorithmBase {
                         }
                     }
 
+                    destImage.calcMinMax();
                     destImage.releaseLock();
                 }
 
@@ -288,7 +299,8 @@ public class AlgorithmItkFilter extends AlgorithmBase {
                             }
                         }
                     }
-                }
+                    srcImage.calcMinMax();
+               }
             }
 
             // Single channel 2.5D
@@ -328,6 +340,7 @@ public class AlgorithmItkFilter extends AlgorithmBase {
                         }
                     }
 
+                    destImage.calcMinMax();
                     destImage.releaseLock();
                 }
 
@@ -357,7 +370,7 @@ public class AlgorithmItkFilter extends AlgorithmBase {
                                                                               srcImage, iSlice);
                         }
                     }
-
+                    srcImage.calcMinMax();
                 }
             }
         }
@@ -398,8 +411,10 @@ public class AlgorithmItkFilter extends AlgorithmBase {
                                                                           kImageSrcITK.img(), mask, destImage,
                                                                           iChannel);
                         }
+                        fireProgressStateChanged((float)(iChannel + 1)/4, null, null);
                     }
 
+                    destImage.calcMinMax();
                     destImage.releaseLock();
 
                 }
@@ -419,7 +434,9 @@ public class AlgorithmItkFilter extends AlgorithmBase {
                                                                               srcImage, iChannel);
                             }
                         }
+                        fireProgressStateChanged((float)(iChannel + 1)/4, null, null);
                     }
+                    srcImage.calcMinMax();
                 }
 
             }
@@ -427,7 +444,9 @@ public class AlgorithmItkFilter extends AlgorithmBase {
             // Single channel 3D
             else {
                 PItkImage3 kImageSrcITK = InsightToolkitSupport.itkCreateImageSingle3D(srcImage);
+                fireProgressStateChanged(PROG_PRE, null, null);
                 itkImageBase3 kImageDestITK = filterInputOutput3D(kImageSrcITK);
+                fireProgressStateChanged(PROG_POST, null, null);
                             
                 if (kImageDestITK != null) {
                     // store result in target image
@@ -444,7 +463,8 @@ public class AlgorithmItkFilter extends AlgorithmBase {
                         InsightToolkitSupport.itkTransferImageSingle3D(kImageSrcITK.img(), 
                                                                        kImageDestITK, mask,
                                                                        destImage);
-
+                        
+                        destImage.calcMinMax();
                         destImage.releaseLock();
                     }
 
@@ -453,6 +473,7 @@ public class AlgorithmItkFilter extends AlgorithmBase {
                         InsightToolkitSupport.itkTransferImageSingle3D(kImageSrcITK.img(),
                                                                        kImageDestITK, mask,
                                                                        srcImage);
+                        srcImage.calcMinMax();
                     }
                 }
             }

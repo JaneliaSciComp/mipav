@@ -157,7 +157,7 @@ public class JDialogItkFilter extends JDialogScriptableBase
             m_resultImage.clearMask();
 
             try {
-                new ViewJFrameImage(m_resultImage, null, new Dimension(610, 200));
+                openNewFrame(m_resultImage);
             } catch (OutOfMemoryError error) {
                 System.gc();
                 MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -608,7 +608,8 @@ public class JDialogItkFilter extends JDialogScriptableBase
         m_colorChannelPanel = new JPanelColorChannels(m_srcImage);
 
         scriptParameters.setOutputOptionsGUI(m_outputOptionsPanel);
-        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        setImage25D(scriptParameters.doProcess3DAs25D());
+        //setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
         //scriptParameters.setSigmasGUI(sigmaPanel);
         scriptParameters.setColorOptionsGUI(m_colorChannelPanel);
     }
