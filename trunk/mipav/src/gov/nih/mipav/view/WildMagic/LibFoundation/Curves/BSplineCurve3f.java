@@ -236,7 +236,7 @@ public class BSplineCurve3f extends SingleCurve3f {
 
 	    if (pkPos != null)
 	    {
-	        pkPos = Vector3f.ZERO;
+	        pkPos.SetData(Vector3f.ZERO);
 	        
 	        for (i = iMin[0]; i <= iMax[0]; i++)
 	        {
@@ -247,7 +247,7 @@ public class BSplineCurve3f extends SingleCurve3f {
 
 	    if (pkDer1 != null)
 	    {
-	        pkDer1 = Vector3f.ZERO;
+	        pkDer1.SetData(Vector3f.ZERO);
 	        for (i = iMin[0]; i <= iMax[0]; i++)
 	        {
 	            // *pkDer1 += m_kBasis.GetD1(i)*m_akCtrlPoint[i];
@@ -257,7 +257,7 @@ public class BSplineCurve3f extends SingleCurve3f {
 
 	    if (pkDer2 != null)
 	    {
-	        pkDer2 = Vector3f.ZERO;
+	        pkDer2.SetData(Vector3f.ZERO);
 	        for (i = iMin[0]; i <= iMax[0]; i++)
 	        {
 	            // *pkDer2 += m_kBasis.GetD2(i)*m_akCtrlPoint[i];
@@ -267,7 +267,7 @@ public class BSplineCurve3f extends SingleCurve3f {
 
 	    if (pkDer3 != null )
 	    {
-	        pkDer3 = Vector3f.ZERO;
+	        pkDer3.SetData(Vector3f.ZERO);
 	        for (i = iMin[0]; i <= iMax[0]; i++)
 	        {
 	            // *pkDer3 += m_kBasis.GetD3(i)*m_akCtrlPoint[i];

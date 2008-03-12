@@ -57,6 +57,11 @@ public class Rope extends JavaApplication3D
         m_pkSpline = null;
         m_fLastIdle = 0.0f;
        
+
+        ImageCatalog.SetActive( new ImageCatalog("Main", System.getProperties().getProperty("user.dir")) );      
+        VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", System.getProperties().getProperty("user.dir")));       
+        PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", System.getProperties().getProperty("user.dir")));
+        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
     }
 
 
@@ -94,31 +99,21 @@ public class Rope extends JavaApplication3D
 
         MeasureTime();
         
-        if (MoveCamera())
-        {
-            m_kCuller.ComputeVisibleSet(m_spkScene);
-        }        
-
+        MoveCamera();
         if (MoveObject())
         {
-            m_spkScene.UpdateGS();
-            m_kCuller.ComputeVisibleSet(m_spkScene);
+            m_spkScene.UpdateGS( 0.0f, true );
         }
         // float fTime = (m_bStopped ? m_fStopTime : GetTime());
         // m_spkEffect.SetTime(fTime);
 
+        DoPhysical();
+        m_kCuller.ComputeVisibleSet(m_spkScene);
+
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
         {
-        	for (int i = 0; i < 3; i++)
-            {
-                m_pkSpline.SetControlPoint(i,akCtrlPoint[i]);
-            }
-
-            
             m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-            m_spkRope.UpdateSurface();
-            m_spkRope.VBuffer.Release();
             DrawFrameRate(8,GetHeight()-8,ColorRGBA.WHITE);
             m_pkRenderer.EndScene();
         }
@@ -141,30 +136,24 @@ public class Rope extends JavaApplication3D
         ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         ((OpenGLRenderer)m_pkRenderer).InitializeState();
 
-        super.OnInitialize();
-
+        super.OnInitialize();     
         
-        
-        m_spkCamera.SetFrustum(-0.55f,0.55f,-0.4125f,0.4125f,1.0f,10000.0f);
-        Vector3f kCLoc = new Vector3f(0.0f,-600.0f,-100.0f);
-        Vector3f kCDir = new Vector3f(0.0f,-1.0f,0.0f);
-        // kCDir.Normalize();
-        Vector3f kCUp = new Vector3f(0.0f,0.0f,1.0f);
-        Vector3f kCRight = kCDir.Cross(kCUp);
-       
-        m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
-
         CreateScene();
         
-        m_spkScene.UpdateGS();
-        Vector3f transResult = new Vector3f();
-        transResult.neg(m_spkScene.WorldBound.GetCenter());
-        // m_spkTrnNode.Local.SetTranslate(-m_spkScene.WorldBound.GetCenter());
+        m_spkScene.UpdateGS(0.0f, true);;
+        Vector3f transResult = new Vector3f(m_spkScene.WorldBound.GetCenter());
+        transResult.negEquals();
         m_spkTrnNode.Local.SetTranslate(transResult);
         
+        m_spkCamera.SetFrustum(-0.55f,0.55f,-0.4125f,0.4125f,1.0f,100.0f);
+        Vector3f kCDir = new Vector3f(0.0f,-1.0f,0.0f);
+        Vector3f kCUp = new Vector3f(0.0f,0.0f,1.0f);
+        Vector3f kCRight = kCDir.Cross(kCUp);
+        Vector3f kCLoc = kCDir.scale(-3.0f*m_spkScene.WorldBound.GetRadius()).sub( kCUp.scale( 0.5f ) );
+        m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
        
         // initial update of objects
-        m_spkScene.UpdateGS();
+        m_spkScene.UpdateGS(0.0f, true);
         m_spkScene.UpdateRS();
 
         // initial culling of scene
@@ -210,19 +199,27 @@ public class Rope extends JavaApplication3D
         // int iNumCtrlPoints = m_pkModule.GetNumParticles();
         // Vector3f[] akCtrlPoint = m_pkModule.Positions();
         
-        int iNumCtrlPoints = 7;
-        akCtrlPoint = new Vector3f[7];
-        akCtrlPoint[0] = new Vector3f(0, 0, 0);
-        akCtrlPoint[1] = new Vector3f(0.1f, 0.1f, 0.1f);
-        akCtrlPoint[2] = new Vector3f(0.2f, 0.2f, 0.2f);
-        akCtrlPoint[3] = new Vector3f(0.3f, 0.3f, 0.3f);
-        akCtrlPoint[4] = new Vector3f(0.4f, 0.4f, 0.4f);
-        akCtrlPoint[5] = new Vector3f(0.5f, 0.5f, 0.5f);
-        akCtrlPoint[6] = new Vector3f(1.0f, 1.0f, 1.0f);
+        m_iNumCtrlPoints = 8;
+        m_akCtrlPoint = new Vector3f[8];
+        m_akCtrlPoint[0] = new Vector3f(0, 0, 1);
+        m_akCtrlPoint[1] = new Vector3f(0.14285679f, 0.0f, 0.99625003f);
+        m_akCtrlPoint[2] = new Vector3f(0.28571439f, 0.0f, 0.99624997f);
+        m_akCtrlPoint[3] = new Vector3f(0.42857146f, 0.0f, 0.99624997f);
+        m_akCtrlPoint[4] = new Vector3f(0.57142860f, 0.0f, 0.99624997f);
+        m_akCtrlPoint[5] = new Vector3f(0.71428573f, 0.0f, 0.99624997f);
+        m_akCtrlPoint[6] = new Vector3f(0.85714328f, 0.0f, 0.99624997f);
+        m_akCtrlPoint[7] = new Vector3f(1.0f, 0.0f, 1.0f);
+//         akCtrlPoint[0] = new Vector3f(0, 0, 0);
+//         akCtrlPoint[1] = new Vector3f(0.1f, 0.1f, 0.1f);
+//         akCtrlPoint[2] = new Vector3f(0.2f, 0.2f, 0.2f);
+//         akCtrlPoint[3] = new Vector3f(0.3f, 0.3f, 0.3f);
+//         akCtrlPoint[4] = new Vector3f(0.4f, 0.4f, 0.4f);
+//         akCtrlPoint[5] = new Vector3f(0.5f, 0.5f, 0.5f);
+//         akCtrlPoint[6] = new Vector3f(1.0f, 1.0f, 1.0f);
         
         
         int iDegree = 2;
-        m_pkSpline = new BSplineCurve3f(iNumCtrlPoints,akCtrlPoint,iDegree,
+        m_pkSpline = new BSplineCurve3f(m_iNumCtrlPoints,m_akCtrlPoint,iDegree,
             false,true);
 
         // generate a tube surface whose medial axis is the spline
@@ -231,7 +228,7 @@ public class Rope extends JavaApplication3D
         kAttr.SetTChannels(0,2);
         Vector2f kUVMin = new Vector2f(0.0f,0.0f);
         Vector2f kUVMax = new Vector2f(1.0f,1.0f);
-        m_spkRope = new TubeSurface(m_pkSpline,this.Radial(0),false,Vector3f.UNIT_Z,
+        m_spkRope = new TubeSurface(m_pkSpline,Rope.Radial(0),false,Vector3f.UNIT_Z,
             64,8,kAttr,false,false,kUVMin,kUVMax);
 
         // attach a texture for the rope
@@ -257,8 +254,6 @@ public class Rope extends JavaApplication3D
         m_spkScene.AttachGlobalState(m_spkWireframe);
         
         CreateRope();
-        
-        
     }
 
    
@@ -403,6 +398,18 @@ public class Rope extends JavaApplication3D
     	return 0.025f; 
     }
     
+    private void DoPhysical()
+    {
+        for (int i = 0; i < m_iNumCtrlPoints; i++)
+        {
+            m_pkSpline.SetControlPoint(i,m_akCtrlPoint[i]);
+        }
+        m_spkRope.UpdateSurface();
+        m_spkRope.VBuffer.Release();
+    }
+
+
+
     private Node m_spkScene;
     private Node m_spkTrnNode;
     private WireframeState m_spkWireframe;
@@ -416,7 +423,8 @@ public class Rope extends JavaApplication3D
     // control points are connected by a mass-spring system.
     private BSplineCurve3f m_pkSpline;
     
-    private Vector3f[] akCtrlPoint;
+    private int m_iNumCtrlPoints = 0;
+    private Vector3f[] m_akCtrlPoint;
     
     private TubeSurface m_spkRope;
   
