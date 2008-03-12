@@ -744,22 +744,25 @@ public class FileFits extends FileBase {
                     haveBlank = true;
                 } // else if (s.startsWith("BLANK"))
                 else if (s.startsWith("CDELT")) {
-                    dimNumber = Integer.parseInt(s.substring(5, 6));
-                    subS = s.substring(10, 80);
-                    subS = subS.trim();
-                    i = subS.indexOf("/");
-
-                    if (i != -1) {
-                        subS = subS.substring(0, i);
+                    c = s.charAt(5);
+                    if ((c >= '0') && (c <= '9')) {
+                        dimNumber = Integer.parseInt(s.substring(5, 6));
+                        subS = s.substring(10, 80);
                         subS = subS.trim();
-                    }
-
-                    try {
-                        scale[dimNumber-1] = Double.parseDouble(subS);
-                    } catch (NumberFormatException e) {
-
-                        Preferences.debug("Instead of a float CDELT" + s.substring(5,6)+ " line had = " + subS);
-                    } 
+                        i = subS.indexOf("/");
+    
+                        if (i != -1) {
+                            subS = subS.substring(0, i);
+                            subS = subS.trim();
+                        }
+    
+                        try {
+                            scale[dimNumber-1] = Double.parseDouble(subS);
+                        } catch (NumberFormatException e) {
+    
+                            Preferences.debug("Instead of a float CDELT" + s.substring(5,6)+ " line had = " + subS);
+                        } 
+                    } // if ((c >= '0') && (c <= '9'))
                 } // else if (s.startsWith("CDELT"))
                 else if (s.startsWith("CRPIX")) {
                     c = s.charAt(5);
@@ -785,150 +788,159 @@ public class FileFits extends FileBase {
                     } // if ((c >= '0') && (c <= '9'))
                 } // else if (s.startsWith("CRPIX"))
                 else if (s.startsWith("CRVAL")) {
-                    dimNumber = Integer.parseInt(s.substring(5, 6));
-                    subS = s.substring(10, 80);
-                    subS = subS.trim();
-                    i = subS.indexOf("/");
-
-                    if (i != -1) {
-                        subS = subS.substring(0, i);
+                    c = s.charAt(5);
+                    if ((c >= '0') && (c <= '9')) {
+                        dimNumber = Integer.parseInt(s.substring(5, 6));
+                        subS = s.substring(10, 80);
                         subS = subS.trim();
-                    }
-
-                    try {
-                        crval[dimNumber-1] = Double.parseDouble(subS);
-                        Preferences.debug("crval[" + (dimNumber-1) + "] = " + crval[dimNumber-1] + "\n");
-                        haveCrval[dimNumber-1] = true;
-                    } catch (NumberFormatException e) {
-
-                        Preferences.debug("Instead of a float CRVAL" + s.substring(5,6)+ " line had = " + subS);
-                    }
+                        i = subS.indexOf("/");
+    
+                        if (i != -1) {
+                            subS = subS.substring(0, i);
+                            subS = subS.trim();
+                        }
+    
+                        try {
+                            crval[dimNumber-1] = Double.parseDouble(subS);
+                            Preferences.debug("crval[" + (dimNumber-1) + "] = " + crval[dimNumber-1] + "\n");
+                            haveCrval[dimNumber-1] = true;
+                        } catch (NumberFormatException e) {
+    
+                            Preferences.debug("Instead of a float CRVAL" + s.substring(5,6)+ " line had = " + subS);
+                        }
+                    } // if ((c >= '0') && (c <= '9'))
                 } // else if (s.startsWith("CRVAL"))
                 else if (s.startsWith("CTYPE")) {
-                    dimNumber = Integer.parseInt(s.substring(5, 6));
-                    if (dimNumber <= 5) {
-                        i = s.indexOf("'");
-                        j = s.lastIndexOf("'");
-                        if ((i != -1) && (j != -1)) {
-                            subS = s.substring(i+1, j);
-                            subS = subS.trim();
-                            Preferences.debug("CTYPE" + s.substring(5, 6) + " = " + subS + "\n");
-                            if ((subS.equals("RGB")) && (dimNumber == 3) && (imgExtents[2] == 3) && (nDimensions == 3)) {
-                                isColorPlanar2D = true;    
+                    c = s.charAt(5);
+                    if ((c >= '0') && (c <= '9')) {
+                        dimNumber = Integer.parseInt(s.substring(5, 6));
+                        if (dimNumber <= 5) {
+                            i = s.indexOf("'");
+                            j = s.lastIndexOf("'");
+                            if ((i != -1) && (j != -1)) {
+                                subS = s.substring(i+1, j);
+                                subS = subS.trim();
+                                Preferences.debug("CTYPE" + s.substring(5, 6) + " = " + subS + "\n");
+                                if ((subS.equals("RGB")) && (dimNumber == 3) && (imgExtents[2] == 3) && (nDimensions == 3)) {
+                                    isColorPlanar2D = true;    
+                                }
+                                else if (subS.toUpperCase().equals(FileInfoBase.INCHES_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.MILLIMETERS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.CENTIMETERS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.METERS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.METERS, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.KILOMETERS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.KILOMETERS, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.MILES_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILES, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.ANGSTROMS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.ANGSTROMS, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.NANOMETERS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.NANOMETERS, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.MICROMETERS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MICROMETERS, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.NANOSEC_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.NANOSEC, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.MICROSEC_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MICROSEC, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.MILLISEC_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.SECONDS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.SECONDS, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.MINUTES_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MINUTES, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.HOURS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.HOURS, dimNumber - 1);
+                                } else if (subS.toUpperCase().substring(0,Math.min(subS.length(),3)).equals("DEG")) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.DEGREES, dimNumber - 1);
+                                } else {
+                                    if (dimNumber == 1) {
+                                        fileInfo.setCTYPE1(subS);
+                                    }
+                                    else if (dimNumber == 2) {
+                                        fileInfo.setCTYPE2(subS);
+                                    }
+                                    else if (dimNumber == 3) {
+                                        fileInfo.setCTYPE3(subS);
+                                    }
+                                    else if (dimNumber == 4) {
+                                        fileInfo.setCTYPE4(subS);
+                                    }
+                                    else if (dimNumber == 5) {
+                                        fileInfo.setCTYPE5(subS);
+                                    }
+                                }
                             }
-                            else if (subS.toUpperCase().equals(FileInfoBase.INCHES_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.MILLIMETERS_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.CENTIMETERS_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.METERS_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.METERS, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.KILOMETERS_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.KILOMETERS, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.MILES_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.MILES, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.ANGSTROMS_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.ANGSTROMS, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.NANOMETERS_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.NANOMETERS, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.MICROMETERS_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.MICROMETERS, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.NANOSEC_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.NANOSEC, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.MICROSEC_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.MICROSEC, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.MILLISEC_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.SECONDS_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.SECONDS, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.MINUTES_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.MINUTES, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.HOURS_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.HOURS, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.DEGREES_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.DEGREES, dimNumber - 1);
-                            } else {
-                                if (dimNumber == 1) {
-                                    fileInfo.setCTYPE1(subS);
-                                }
-                                else if (dimNumber == 2) {
-                                    fileInfo.setCTYPE2(subS);
-                                }
-                                else if (dimNumber == 3) {
-                                    fileInfo.setCTYPE3(subS);
-                                }
-                                else if (dimNumber == 4) {
-                                    fileInfo.setCTYPE4(subS);
-                                }
-                                else if (dimNumber == 5) {
-                                    fileInfo.setCTYPE5(subS);
-                                }
-                            }
-                        }
-                    } // if (dimNumber <= 5)
+                        } // if (dimNumber <= 5)
+                    } // if ((c >= '0') && (c <= '9'))
                 } // else if (s.startsWith("CTYPE"))
                 else if (s.startsWith("CUNIT")) {
-                    dimNumber = Integer.parseInt(s.substring(5, 6));
-                    if (dimNumber <= 5) {
-                        i = s.indexOf("'");
-                        j = s.lastIndexOf("'");
-                        if ((i != -1) && (j != -1)) {
-                            subS = s.substring(i+1, j);
-                            subS = subS.trim();
-                            Preferences.debug("CUNIT" + s.substring(5, 6) + " = " + subS + "\n");
-                            
-                            if (subS.toUpperCase().equals(FileInfoBase.INCHES_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.MILLIMETERS_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.CENTIMETERS_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.METERS_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.METERS, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.KILOMETERS_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.KILOMETERS, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.MILES_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.MILES, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.ANGSTROMS_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.ANGSTROMS, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.NANOMETERS_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.NANOMETERS, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.MICROMETERS_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.MICROMETERS, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.NANOSEC_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.NANOSEC, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.MICROSEC_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.MICROSEC, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.MILLISEC_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.SECONDS_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.SECONDS, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.MINUTES_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.MINUTES, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.HOURS_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.HOURS, dimNumber - 1);
-                            } else if (subS.toUpperCase().equals(FileInfoBase.DEGREES_STRING.toUpperCase())) {
-                                fileInfo.setUnitsOfMeasure(FileInfoBase.DEGREES, dimNumber - 1);
-                            } else {
-                                if (dimNumber == 1) {
-                                    fileInfo.setCUNIT1(subS);
-                                }
-                                else if (dimNumber == 2) {
-                                    fileInfo.setCUNIT2(subS);
-                                }
-                                else if (dimNumber == 3) {
-                                    fileInfo.setCUNIT3(subS);
-                                }
-                                else if (dimNumber == 4) {
-                                    fileInfo.setCUNIT4(subS);
-                                }
-                                else if (dimNumber == 5) {
-                                    fileInfo.setCUNIT5(subS);
+                    c = s.charAt(5);
+                    if ((c >= '0') && (c <= '9')) {
+                        dimNumber = Integer.parseInt(s.substring(5, 6));
+                        if (dimNumber <= 5) {
+                            i = s.indexOf("'");
+                            j = s.lastIndexOf("'");
+                            if ((i != -1) && (j != -1)) {
+                                subS = s.substring(i+1, j);
+                                subS = subS.trim();
+                                Preferences.debug("CUNIT" + s.substring(5, 6) + " = " + subS + "\n");
+                                
+                                if (subS.toUpperCase().equals(FileInfoBase.INCHES_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.MILLIMETERS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.CENTIMETERS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.METERS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.METERS, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.KILOMETERS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.KILOMETERS, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.MILES_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILES, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.ANGSTROMS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.ANGSTROMS, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.NANOMETERS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.NANOMETERS, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.MICROMETERS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MICROMETERS, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.NANOSEC_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.NANOSEC, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.MICROSEC_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MICROSEC, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.MILLISEC_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.SECONDS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.SECONDS, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.MINUTES_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MINUTES, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.HOURS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.HOURS, dimNumber - 1);
+                                } else if (subS.toUpperCase().substring(0,Math.min(subS.length(),3)).equals("DEG")) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.DEGREES, dimNumber - 1);
+                                } else {
+                                    if (dimNumber == 1) {
+                                        fileInfo.setCUNIT1(subS);
+                                    }
+                                    else if (dimNumber == 2) {
+                                        fileInfo.setCUNIT2(subS);
+                                    }
+                                    else if (dimNumber == 3) {
+                                        fileInfo.setCUNIT3(subS);
+                                    }
+                                    else if (dimNumber == 4) {
+                                        fileInfo.setCUNIT4(subS);
+                                    }
+                                    else if (dimNumber == 5) {
+                                        fileInfo.setCUNIT5(subS);
+                                    }
                                 }
                             }
-                        }
-                    } // if (dimNumber <= 5)
+                        } // if (dimNumber <= 5)
+                    } // if ((c >= '0') && (c <= '9'))
                 } // else if (s.startsWith("CUNIT"))
                 else if (s.startsWith("COMMENT")) {
                     subS = s.substring(8, 80);
