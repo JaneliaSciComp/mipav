@@ -103,23 +103,21 @@ public class PlugInCheshireVOI implements PlugInGeneric {
             for (int i = 0; i < cheshireFiles.size(); i++) {
                 File tempFile = ((File) cheshireFiles.get(i));
                 File tryFile = new File(tempFile.getAbsolutePath().substring(0,
-                                                                             tempFile.getAbsolutePath().lastIndexOf(".")) +
-                                        ".imc");
+                                              tempFile.getAbsolutePath().lastIndexOf(".")) +".imc");
                 File secondTry = new File(tempFile.getAbsolutePath().substring(0,
-                                                                               tempFile.getAbsolutePath().lastIndexOf(".")) +
-                                          ".img");
+                                               tempFile.getAbsolutePath().lastIndexOf(".")) +".img");
                 VOI[] voiListArr = null;
 
                 try {
 
                     if (tryFile.exists()) {
                         FileCheshire tempCheshire = new FileCheshire(tryFile.getName(),
-                                                                     tryFile.getParent() + tryFile.separatorChar,
+                                                                     tryFile.getParent() + File.separatorChar,
                                                                      false);
                         tempImage = tempCheshire.readImage();
                     } else if (secondTry.exists()) {
                         FileCheshire tempCheshire = new FileCheshire(secondTry.getName(),
-                                                                     secondTry.getParent() + secondTry.separatorChar,
+                                                                     secondTry.getParent() + File.separatorChar,
                                                                      false);
                         tempImage = tempCheshire.readImage();
                     } else {
@@ -172,7 +170,7 @@ public class PlugInCheshireVOI implements PlugInGeneric {
 
             for (int i = 0; i < voiListVec.size(); i++) {
                 VOI temp = new VOI((short) i, cheshireNames[i], (int) (highZ * 1.5));
-                VOI oldVOI = ((VOI) voiListVec.get(i));
+                VOI oldVOI = voiListVec.get(i);
                 Vector[] vec = oldVOI.getCurves();
 
                 for (int j = 0; j < vec.length; j++) {
