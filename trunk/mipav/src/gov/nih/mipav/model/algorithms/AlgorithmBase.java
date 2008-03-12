@@ -87,6 +87,8 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     
     protected float progressStep;
     
+    protected int progressModulus;
+    
     /** Indicates if multi-threading will be used to optimize the algorithm. */
     protected boolean multiThreadingEnabled;
     
