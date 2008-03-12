@@ -138,7 +138,7 @@ public class TubeSurface extends TriMesh
 	        }
 
 	        // float fRadius = m_oRadial(fT);   // ?????????
-	        float fRadius = fT;
+	        float fRadius = 0.025f;
 	        
 	        // compute frame (position P, tangent T, normal N, binormal B)
 	        Vector3f kP = new Vector3f();
@@ -169,13 +169,11 @@ public class TubeSurface extends TriMesh
 	        int iSave = iV;
 	        for (int i = 0; i < m_iSliceSamples; i++)
 	        {
-	        	kResult = new Vector3f();
-	        	
-	        	// VBuffer.Position3(iV) = kP + fRadius*(m_afCos[i]*kN + m_afSin[i]*kB);
-	        	kResult = kP.add(kN.scale(m_afCos[i]).add(kB.scale(m_afSin[i])));
-	        	VBuffer.SetPosition3(iV, kResult);
-	            
-	            iV++;
+                    kResult = kN.scale( m_afCos[i]).add(kB.scale(m_afSin[i]) );
+                    kResult.scaleEquals(fRadius);
+                    kResult.addEquals(kP);
+                    VBuffer.SetPosition3(iV, kResult);
+                    iV++;
 	        }
 	        VBuffer.SetPosition3(iV, VBuffer.GetPosition3(iSave));
 	        iV++;
