@@ -2237,6 +2237,10 @@ public class FileIO {
                 success = writeMinc(image, options);
                 break;
 
+            case FileUtility.MINC_HDF:
+            	success = writeMincHDF(image, options);
+            	break;
+                
             case FileUtility.INTERFILE:
                 success = writeInterfile(image, options);
                 break;
@@ -8446,6 +8450,48 @@ public class FileIO {
         }
     }
 
+    
+    private boolean writeMincHDF(ModelImage image, FileWriteOptions options) {
+    	FileMincHDF mincFile;
+        FileInfoBase fileInfo;
+
+        if (image.getNDims() != 3) {
+            MipavUtil.displayError("FileIO: MINC writer only writes 3D images.");
+
+            return false;
+        }
+
+        try { // Construct a new file object
+            
+            mincFile = new FileMincHDF(options.getFileName(), options.getFileDirectory());
+            createProgressBar(mincFile, options.getFileName(), FILE_READ);
+            mincFile.writeImage(image, options);
+
+            return true;
+
+        } catch (Exception error) {
+
+            if (!quiet) {
+               // MipavUtil.displayError("FileIO: " + error);
+                error.printStackTrace();
+                Preferences.debug(error.getMessage() + "\n", Preferences.DEBUG_FILEIO);
+
+                for (int i = 0; i < error.getStackTrace().length; i++) {
+                    Preferences.debug("\t" + error.getStackTrace()[i] + "\n", Preferences.DEBUG_FILEIO);
+                }
+            }
+
+            return false;
+        } catch (OutOfMemoryError error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return false;
+        }
+    }
+    
     /**
      * Writes a MRC file to store the image.
      *

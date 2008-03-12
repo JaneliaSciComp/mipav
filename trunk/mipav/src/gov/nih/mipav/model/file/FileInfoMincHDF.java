@@ -21,6 +21,8 @@ public class FileInfoMincHDF extends FileInfoBase {
 	
 	protected int[] axisOrientation = { ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE };
 	
+	private double [] validRange = null;
+	
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -67,10 +69,18 @@ public class FileInfoMincHDF extends FileInfoBase {
     	this.dimensionNode = dimNode;
     }
     
+    public DefaultMutableTreeNode getDimensionNode() {
+    	return this.dimensionNode;
+    }
+    
     public void setInfoNode(DefaultMutableTreeNode infoNode) {
     	this.informationNode = infoNode;
     }
 
+    public DefaultMutableTreeNode getInfoNode() {
+    	return this.informationNode;
+    }
+    
     /**
      * Sets the image modality based on the.
      */
@@ -96,7 +106,15 @@ public class FileInfoMincHDF extends FileInfoBase {
               setModality(FileInfoBase.DIGITAL_RADIOGRAPHY);
           }
     }
-   
+    
+    public void setValidRange(double[] valid_range) {
+    	this.validRange = valid_range;
+    }
+    
+    public double [] getValidRange() {
+    	return this.validRange;
+    }
+    
     public final double[] getConvertStartLocationsToDICOM(double[] step, double[][]cosines, 
     		boolean[]isCentered, int slice) {
         double x = 0;
@@ -170,8 +188,8 @@ public class FileInfoMincHDF extends FileInfoBase {
             }
         }
 
-       System.err.println("convert: result[" + slice + "]:\t" + transformedPt[0] + " " + transformedPt[1] + " " +
-        transformedPt[2]);
+      // System.err.println("convert: result[" + slice + "]:\t" + transformedPt[0] + " " + transformedPt[1] + " " +
+     //   transformedPt[2]);
 
         
         
@@ -212,13 +230,13 @@ public class FileInfoMincHDF extends FileInfoBase {
      */
     public static void calculateRescaleIntercept(double[] rescaleIntercept, double[] rescaleSlope, 
     		double[] imageMax, double [] imageMin,
-    		double validMax, double validMin) {
+    		double [] valid_range) {
 
         try {
 
             for (int i = 0; i < rescaleSlope.length; i++) {
-                rescaleSlope[i] = FileInfoMinc.calculateSlope(imageMax[i], imageMin[i], validMax, validMin);
-                rescaleIntercept[i] = FileInfoMinc.calculateIntercept(imageMin[i], rescaleSlope[i], validMin);
+                rescaleSlope[i] = FileInfoMinc.calculateSlope(imageMax[i], imageMin[i], valid_range[1], valid_range[0]);
+                rescaleIntercept[i] = FileInfoMinc.calculateIntercept(imageMin[i], rescaleSlope[i], valid_range[0]);
             }
         } catch (ArrayIndexOutOfBoundsException error) {
 
