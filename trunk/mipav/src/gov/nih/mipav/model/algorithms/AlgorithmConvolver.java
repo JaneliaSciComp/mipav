@@ -377,8 +377,12 @@ public class AlgorithmConvolver extends AlgorithmBase {
 
                             count++;
                         }
+                    }else{
+                    	count += kExtents[0];
                     }
                 }
+            }else{
+            	count += kExtents[0]*kExtents[1];
             }
         }
 
@@ -389,6 +393,71 @@ public class AlgorithmConvolver extends AlgorithmBase {
         }
     }
 
+    /**
+     * 
+     * @param start
+     * @param end
+     * @param lpp		length per voxel, for example 4 for RGB image. 
+     * @param iImage
+     * @param iExtents
+     * @param kExtents
+     * @param kernel
+     * @param oImage
+     */
+//    public final static void convolveBlock3D(int start, int end, int lpv, float[] iImage, 
+//    		int[] iExtents, int[] kExtents, float[] kernel, ModelImage oImage){
+//    	int sliceSize = iExtents[0]*iExtents[1]*lpv;
+//    	int volumeSize = sliceSize * iExtents[2];
+//    	int offset = iExtents[0]*lpv;
+//    	int kSliceSize = kExtents[0]*kExtents[1];
+//    	for(int pix = start; pix < end; pix++){
+//            if((lpv > 1) && ((pix % offset)%lpv) == 0){
+//            	oImage.set(pix, iImage[pix]);
+//            	continue;
+//            }
+//            int offsetZ = (pix / (sliceSize))-kExtents[2]/2;
+//            int offsetY = (pix % sliceSize)/offset - kExtents[1]/2;
+//            int offsetX = (pix % offset) - lpv*kExtents[0]/2;
+//            int startZ = offsetZ * sliceSize;
+//            int endZ = startZ + sliceSize*kExtents[2];
+//            int indexY = offsetY*offset;
+//            int stepY = kExtents[1]*offset;
+//            for(;ic < lpv; ic++){
+//            	int count = 0;
+//            	float sum = 0;
+//            	float norm = 0;
+//            	for(int ik = startZ; ik < endZ; ik+=sliceSize){
+//            		if(ik >= 0 && ik < volumeSize){
+//                    	int startY = ik + indexY;
+//                    	int endY = startY + stepY;
+//            			for(int ij = startY; ij < endY; ij+=offset){
+//            				if((ij-ik) >= 0 && (ij-ik) < sliceSize){
+//            					int startX = ij + offsetX;
+//            					int endX = startX + kExtents[0]*lpv;
+//            					for(int ii = startX; ii < endX; ii+=lpv){
+//            						if((ii-ij) >= 0 && (ii-ij) < offset){
+//            							sum += iImage[ii]*kernel[count];
+//            							norm += kernel[count];
+//            						}
+//            						count++;
+//            					}
+//            				}else{
+//            					count += kExtents[0];
+//            				}
+//            			}
+//            		}else{
+//            			count += kSliceSize;
+//            		}
+//            	}
+//            	if(norm != 0){
+//            		oImage.set(pix, sum/norm);
+//            	}else{
+//            		oImage.set(pix, 0);
+//            	}
+//            }
+//    	}
+//    }
+    
     /**
      * A static function that convolves a kernel with an image at a position.
      *
