@@ -595,8 +595,8 @@ public abstract class FileBase {
             b3 = ((buffer[1] & 0xff) << 8) | (buffer[0] & 0xff);
         }
 
-        if ((b3 & 0x0080) != 0) {
-            b3 = b3 | 0xff00;
+        if ((b3 & 0x8000) != 0) {
+            b3 = b3 | 0xffff0000;
         }
 
         return b3;
