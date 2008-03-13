@@ -2,7 +2,7 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.structures.*;
-
+import gov.nih.mipav.view.*;
 import java.io.*;
 
 
@@ -135,9 +135,15 @@ public class FileBioRad extends FileBase {
      */
     public ModelImage readImage(boolean one) throws IOException {
 
-        // The data types are Sun, hence the byte order is big-endian.
         int i;
-        int num; // image number within file
+        int num;
+        boolean moreNotes;
+        int noteNumber;
+        int displayLevel;
+        int lastNote;
+        int noteType;
+        byte buffer[];
+        String noteString;
 
         boolean endianess = LITTLE_ENDIAN;
 
@@ -146,12 +152,29 @@ public class FileBioRad extends FileBase {
             raFile = new RandomAccessFile(file, "r");
 
             xDim = getSignedShort(endianess); // 0
+            Preferences.debug("\nxDim = " + xDim + "\n");
             yDim = getSignedShort(endianess); // 2
+            Preferences.debug("yDim = " + yDim + "\n");
             zDim = getSignedShort(endianess); // 4
+            Preferences.debug("zDim = " + zDim + "\n");
             ramp1Min = (short) getSignedShort(endianess); // 6
             ramp1Max = (short) getSignedShort(endianess); // 8
             notes = getInt(endianess); // 10
+            if (notes == 0) {
+                Preferences.debug("No notes present in this file\n");
+            }
+            else {
+                Preferences.debug("This file has notes after the image data\n");
+            }
             byteFormat = (short) getSignedShort(endianess); // 14
+            if (byteFormat == 1) {
+                Preferences.debug("byteFormat = 1 indicates 1 byte data\n");
+            }
+            else {
+                Preferences.debug("byteFormat = " + byteFormat + " indicates 2 byte data\n");
+            }
+            
+            // num only used in COMOS/SOM when the file is loaded into memory
             num = (short) getSignedShort(endianess); // 16
 
 
@@ -171,21 +194,58 @@ public class FileBioRad extends FileBase {
             }
 
             fName = new String(name, 0, i - 1);
+            Preferences.debug("Name of the file = " + fName + "\n");
             raFile.seek(50);
             merged = (short) getSignedShort(endianess); // 50
+            switch (merged) {
+                case 0:
+                    Preferences.debug("Merge off\n");
+                    break;
+                case 1:
+                    Preferences.debug("4-bit merge\n");
+                    break;
+                case 2:
+                    Preferences.debug("Alternate 8-bit merge\n");
+                    break;
+                case 3:
+                    Preferences.debug("Alternate columns merge\n");
+                    break;
+                case 4:
+                    Preferences.debug("Alternate rows merge\n");
+                    break;
+                case 5:
+                    Preferences.debug("Maximum pixel intensity merge\n");
+                    break;
+                case 6:
+                    Preferences.debug("256 color optimized merge with RGB LUT\n" +
+                            "saved at the end of each merge\n");
+                    break;
+                case 7:
+                    Preferences.debug("256 color optimized merge with RGB LUT\n" +
+                            "saved after all the notes\n");
+                    break;
+                default:
+                    Preferences.debug("Merged has unrecognized value = " + merged + "\n");    
+            }
             color1 = getUnsignedShort(endianess); // 52
             fileID = getUnsignedShort(endianess); // 54
 
             if (fileID != 12345) {
                 throw new IOException("fileID is an illegal " + fileID);
             }
+            else {
+                Preferences.debug("file ID has legal value = " + fileID + "\n");
+            }
 
             ramp2Min = (short) getSignedShort(endianess); // 56
             ramp2Max = (short) getSignedShort(endianess); // 58
             color2 = getUnsignedShort(endianess); // 60
+            // edited not used in disk files
             edited = (short) getSignedShort(endianess); // 62
             lens = (short) getSignedShort(endianess); // 64
+            Preferences.debug("Integer part of objective lens used = " + lens + "\n");
             magFactor = getFloat(endianess); // 66
+            Preferences.debug("Magnification factor = " + magFactor + "\n");
 
             // Position to the start of the image data
             raFile.seek(76);
@@ -251,6 +311,47 @@ public class FileBioRad extends FileBase {
 
                 image.importData(i * bufferSize, imgBuffer, false);
             } // for (i = 0; i < imageSlice; i++)
+            
+            // Read notes if notes != 0
+            if (notes != 0) {
+                moreNotes = true;
+                noteNumber = 1;
+                while (moreNotes) {
+                    buffer = new byte[80];
+                    Preferences.debug("Note = " + noteNumber + "\n");
+                    displayLevel = getSignedShort(endianess);
+                    Preferences.debug("Display level = " + displayLevel + "\n");
+                    lastNote = getInt(endianess);
+                    if (lastNote == 0) {
+                        moreNotes = false;
+                        Preferences.debug("This is the last note\n");
+                    }
+                    else {
+                        Preferences.debug("Another note follows this note\n");
+                    }
+                    getInt(endianess);
+                    noteType = getSignedShort(endianess);
+                    switch(noteType) {
+                        case 1:
+                            Preferences.debug("Live collection note\n");
+                            break;
+                        case 2:
+                            Preferences.debug("Note includes file name\n");
+                            break;
+                        case 3:
+                            Preferences.debug("Note for multiplier file\n");
+                            break;
+                        default:
+                            Preferences.debug("Note type = " + noteType + " for additional descriptive note\n");
+                    }
+                    getInt(endianess);
+                    raFile.read(buffer);
+                    noteString = new String(buffer);
+                    noteString = noteString.trim();
+                    Preferences.debug("Note text = " + noteString + "\n");
+                    noteNumber++;
+                } // while (moreNotes)
+            } // if (notes != 0)
 
             raFile.close();
 
