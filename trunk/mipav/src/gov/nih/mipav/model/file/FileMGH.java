@@ -16,8 +16,8 @@ import java.util.zip.*;
  * coordinates where +x = Right, +y = Anterior, +z = Superior. In MIPAV the 4 by 4 matrix does not imply the axis
  * orientations.
  *
- * <p>The MGH definition is: [right] [xr yr zr] [ xsize * x] [rorigin] [anterior] = [xa ya za] [ ysize * y] + [aorigin]
- * [superior] [xs ys zs] [ zsize * z] [sorigin] Now in going to MIPAV a change must occur. MGH has L->R and P->A while
+ * <p>The MGH definition is: [right] = [xr yr zr] [ xsize * x] + [rorigin] [anterior] = [xa ya za] [ ysize * y] + [aorigin]
+ * [superior] = [xs ys zs] [ zsize * z] + [sorigin] Now in going to MIPAV a change must occur. MGH has L->R and P->A while
  * MIPAV uses R->L and A->P, so this would cause xr, yr, zr, rorigin, xa, ya, za, and aorigin to be multiplied by -1.
  * cr, ca, and cs refer to the center point of the scanner coordinate system.</p>
  *
