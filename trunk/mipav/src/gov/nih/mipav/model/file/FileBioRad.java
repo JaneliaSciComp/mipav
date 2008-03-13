@@ -185,7 +185,7 @@ public class FileBioRad extends FileBase {
             readAgain = true;
             i = 0;
 
-            while (readAgain) {
+            while (readAgain && (i < 32)) {
                 name[i++] = raFile.readByte(); // 18
 
                 if (name[i - 1] == 0) {
