@@ -2,8 +2,11 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.util.MipavUtil;
+import gov.nih.mipav.view.ViewJProgressBar;
 
 import java.io.*;
+import java.util.concurrent.CountDownLatch;
 
 
 /**
@@ -39,9 +42,47 @@ public class AlgorithmConvolver extends AlgorithmBase {
     /** The convolution kernel. */
     private ModelImage kernel;
 
+    private int[] kExtents;
+    
+    private float[] kernelBuffer;
+    
+    private boolean red, blue, green;
+    
+    private float[] outputBuffer;
+    
+    private boolean entireImage;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
-    /**
+    public boolean isRed() {
+		return red;
+	}
+
+	public void setRed(boolean red) {
+		this.red = red;
+	}
+
+	public boolean isBlue() {
+		return blue;
+	}
+
+	public void setBlue(boolean blue) {
+		this.blue = blue;
+	}
+
+	public boolean isGreen() {
+		return green;
+	}
+
+	public void setGreen(boolean green) {
+		this.green = green;
+	}
+
+	public void setColorChannels(boolean red, boolean green, boolean blue){
+		this.red = red;
+		this.green = green;
+		this.blue = blue;
+	}
+	/**
      * Sets the source and destination images and calls the appropriate method based on image dimensionality.
      *
      * @param  destImg  Destination image of result.
@@ -52,13 +93,16 @@ public class AlgorithmConvolver extends AlgorithmBase {
         super(destImg, srcImg);
         kernel = kern;
 
-        if (srcImage.getNDims() == 2) {
-            convolver2D();
-        } else if (srcImage.getNDims() > 2) {
-            convolver3D();
-        }
+        init();
     }
 
+    public AlgorithmConvolver(ModelImage destImage, ModelImage srcImage, float[] kernel, int[] kExtents, boolean entireImage, boolean image25D){
+    	super(destImage, srcImage);
+    	kernelBuffer = kernel;
+    	this.kExtents = kExtents;
+    	this.entireImage = entireImage;
+    	this.image25D = image25D;
+    }
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -404,59 +448,59 @@ public class AlgorithmConvolver extends AlgorithmBase {
      * @param kernel
      * @param oImage
      */
-//    public final static void convolveBlock3D(int start, int end, int lpv, float[] iImage, 
-//    		int[] iExtents, int[] kExtents, float[] kernel, ModelImage oImage){
-//    	int sliceSize = iExtents[0]*iExtents[1]*lpv;
-//    	int volumeSize = sliceSize * iExtents[2];
-//    	int offset = iExtents[0]*lpv;
-//    	int kSliceSize = kExtents[0]*kExtents[1];
-//    	for(int pix = start; pix < end; pix++){
-//            if((lpv > 1) && ((pix % offset)%lpv) == 0){
-//            	oImage.set(pix, iImage[pix]);
-//            	continue;
-//            }
-//            int offsetZ = (pix / (sliceSize))-kExtents[2]/2;
-//            int offsetY = (pix % sliceSize)/offset - kExtents[1]/2;
-//            int offsetX = (pix % offset) - lpv*kExtents[0]/2;
-//            int startZ = offsetZ * sliceSize;
-//            int endZ = startZ + sliceSize*kExtents[2];
-//            int indexY = offsetY*offset;
-//            int stepY = kExtents[1]*offset;
+    public final static void convolveBlock3D(int start, int end, int lpv, float[] iImage, 
+    		int[] iExtents, int[] kExtents, float[] kernel, ModelImage oImage){
+    	int sliceSize = iExtents[0]*iExtents[1]*lpv;
+    	int volumeSize = sliceSize * iExtents[2];
+    	int offset = iExtents[0]*lpv;
+    	int kSliceSize = kExtents[0]*kExtents[1];
+    	for(int pix = start; pix < end; pix++){
+            if((lpv > 1) && ((pix % offset)%lpv) == 0){
+            	oImage.set(pix, iImage[pix]);
+            	continue;
+            }
+            int offsetZ = (pix / (sliceSize))-kExtents[2]/2;
+            int offsetY = (pix % sliceSize)/offset - kExtents[1]/2;
+            int offsetX = (pix % offset) - lpv*kExtents[0]/2;
+            int startZ = offsetZ * sliceSize;
+            int endZ = startZ + sliceSize*kExtents[2];
+            int indexY = offsetY*offset;
+            int stepY = kExtents[1]*offset;
 //            for(;ic < lpv; ic++){
-//            	int count = 0;
-//            	float sum = 0;
-//            	float norm = 0;
-//            	for(int ik = startZ; ik < endZ; ik+=sliceSize){
-//            		if(ik >= 0 && ik < volumeSize){
-//                    	int startY = ik + indexY;
-//                    	int endY = startY + stepY;
-//            			for(int ij = startY; ij < endY; ij+=offset){
-//            				if((ij-ik) >= 0 && (ij-ik) < sliceSize){
-//            					int startX = ij + offsetX;
-//            					int endX = startX + kExtents[0]*lpv;
-//            					for(int ii = startX; ii < endX; ii+=lpv){
-//            						if((ii-ij) >= 0 && (ii-ij) < offset){
-//            							sum += iImage[ii]*kernel[count];
-//            							norm += kernel[count];
-//            						}
-//            						count++;
-//            					}
-//            				}else{
-//            					count += kExtents[0];
-//            				}
-//            			}
-//            		}else{
-//            			count += kSliceSize;
-//            		}
-//            	}
-//            	if(norm != 0){
-//            		oImage.set(pix, sum/norm);
-//            	}else{
-//            		oImage.set(pix, 0);
-//            	}
-//            }
+            	int count = 0;
+            	float sum = 0;
+            	float norm = 0;
+            	for(int ik = startZ; ik < endZ; ik+=sliceSize){
+            		if(ik >= 0 && ik < volumeSize){
+                    	int startY = ik + indexY;
+                    	int endY = startY + stepY;
+            			for(int ij = startY; ij < endY; ij+=offset){
+            				if((ij-ik) >= 0 && (ij-ik) < sliceSize){
+            					int startX = ij + offsetX;
+            					int endX = startX + kExtents[0]*lpv;
+            					for(int ii = startX; ii < endX; ii+=lpv){
+            						if((ii-ij) >= 0 && (ii-ij) < offset){
+            							sum += iImage[ii]*kernel[count];
+            							norm += kernel[count];
+            						}
+            						count++;
+            					}
+            				}else{
+            					count += kExtents[0];
+            				}
+            			}
+            		}else{
+            			count += kSliceSize;
+            		}
+            	}
+            	if(norm != 0){
+            		oImage.set(pix, sum/norm);
+            	}else{
+            		oImage.set(pix, 0);
+            	}
+            }
 //    	}
-//    }
+    }
     
     /**
      * A static function that convolves a kernel with an image at a position.
@@ -522,7 +566,6 @@ public class AlgorithmConvolver extends AlgorithmBase {
                             norm += -kernel[count];
                         }
                     }
-
                     count++;
                 }
             }
@@ -811,9 +854,154 @@ public class AlgorithmConvolver extends AlgorithmBase {
         }
     }
 
+    private final void convolve2D(int startSlice, int endSlice){
+    	boolean color = srcImage.isColorImage();
+    	int cFactor = (color)?4:1;
+    	int length = cFactor * srcImage.getSliceSize();
+    	for (int s = startSlice; s < endSlice; s++) {
+			int start = s * length;
+			float[] buffer = new float[length];
+			try {
+				srcImage.exportData(start, length, buffer); // locks and
+															// releases lock
+			} catch (IOException error) {
+				errorCleanUp("Algorithm Gaussian Blur: Image(s) locked", false);
+
+				return;
+			}
+
+			if (color == true) {
+
+				for (int i = 0, idx = start; (i < length) && !threadStopped; i += 4, idx += 4) {
+					progress++;
+					if ((progress % progressModulus) == 0) {
+						fireProgressStateChanged((int)(progress/progressModulus));
+					}
+
+					if ((entireImage == true) || mask.get(i / 4)) {
+						outputBuffer[idx] = buffer[i]; // alpha
+
+						if (red) {
+							outputBuffer[idx + 1] = AlgorithmConvolver
+									.convolve2DRGBPt(i + 1, srcImage
+											.getExtents(), buffer, kExtents,
+											kernelBuffer);
+						} else {
+							outputBuffer[idx + 1] = buffer[i + 1];
+						}
+
+						if (green) {
+							outputBuffer[idx + 2] = AlgorithmConvolver
+									.convolve2DRGBPt(i + 2, srcImage
+											.getExtents(), buffer, kExtents,
+											kernelBuffer);
+						} else {
+							outputBuffer[idx + 2] = buffer[i + 2];
+						}
+
+						if (blue) {
+							outputBuffer[idx + 3] = AlgorithmConvolver
+									.convolve2DRGBPt(i + 3, srcImage
+											.getExtents(), buffer, kExtents,
+											kernelBuffer);
+						} else {
+							outputBuffer[idx + 3] = buffer[i + 3];
+						}
+					} else {
+						outputBuffer[idx] = buffer[i];
+						outputBuffer[idx + 1] = buffer[i + 1];
+						outputBuffer[idx + 2] = buffer[i + 2];
+						outputBuffer[idx + 3] = buffer[i + 3];
+					}
+				}
+			} else {
+
+				for (int i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
+					progress++;
+					if ((progress % progressModulus) == 0) {
+						fireProgressStateChanged((int)(progress/progressModulus));
+					}
+
+					if ((entireImage == true) || mask.get(i)) {
+						outputBuffer[idx] = AlgorithmConvolver.convolve2DPt(i,
+								srcImage.getExtents(), buffer, kExtents,
+								kernelBuffer);
+					} else {
+						outputBuffer[idx] = buffer[i];
+					}
+				}
+			}
+		}
+    }
+    
+    private final void convolve3D(int start, int end, float[] iImage, int index){
+    	if(srcImage.isColorImage()){
+    		for (int i = start; (i < end) && !threadStopped; i += 4) {
+    			progress += 4;
+    			if ((progress % progressModulus) == 0) {
+    				fireProgressStateChanged((int)(progress/progressModulus));
+    			}
+
+    			if ((entireImage == true) || mask.get(i / 4)) {
+    				outputBuffer[i+index] = iImage[i]; // alpha
+
+    				if (red) {
+    					outputBuffer[i+index + 1] = AlgorithmConvolver
+    							.convolve3DRGBPt(i + 1, srcImage
+    									.getExtents(), iImage, kExtents,
+    									kernelBuffer);
+    				} else {
+    					outputBuffer[i+index + 1] = iImage[i + 1];
+    				}
+
+    				if (green) {
+    					outputBuffer[i+index + 2] = AlgorithmConvolver
+    							.convolve3DRGBPt(i + 2, srcImage
+    									.getExtents(), iImage, kExtents,
+    									kernelBuffer);
+    				} else {
+    					outputBuffer[i+index + 2] = iImage[i + 2];
+    				}
+
+    				if (blue) {
+    					outputBuffer[i+index + 3] = AlgorithmConvolver
+    							.convolve3DRGBPt(i + 3, srcImage
+    									.getExtents(), iImage, kExtents,
+    									kernelBuffer);
+    				} else {
+    					outputBuffer[i+index + 3] = iImage[i + 3];
+    				}
+    			} else {
+    				outputBuffer[i+index] = iImage[i];
+    				outputBuffer[i+index + 1] = iImage[i + 1];
+    				outputBuffer[i+index + 2] = iImage[i + 2];
+    				outputBuffer[i+index + 3] = iImage[i + 3];
+    			}
+    		}
+
+    	} else {
+			for (int i = start; (i < end) && !threadStopped; i++) {
+				progress++;
+				if ((progress % progressModulus) == 0) {
+					fireProgressStateChanged((int) (progress / progressModulus));
+					// System.out.println("Entire = " + entireImage);
+				}
+
+				if ((entireImage == true) || mask.get(i)) {
+					outputBuffer[i + index] = AlgorithmConvolver.convolve3DPt(i,
+							srcImage.getExtents(), iImage, kExtents,
+							kernelBuffer);
+				} else {
+					outputBuffer[i + index] = iImage[i];
+				}
+			}
+		}
+
+    }
+    
     /**
-     * Prepares this class for destruction.
-     */
+	 * Prepares this class for destruction.
+	 */
     public void finalize() {
 
         kernel = null;
@@ -827,132 +1015,42 @@ public class AlgorithmConvolver extends AlgorithmBase {
      * Begins the excution of the 2D convolver.
      */
     public void run2D() {
-        float[] kernelBuffer;
-
-        if (destImage == null) {
-            displayError("Destination Image is null");
-
-            return;
-        }
-
         if (srcImage == null) {
             displayError("Source Image is null");
 
             return;
         }
 
-        if (kernel == null) {
-            displayError("Kernel is null");
+        if (kExtents.length != 2) {
+            displayError("Kernel is not 2D");
 
             return;
         }
-
-        if (destImage.getNDims() != 2) {
-            displayError("Destination Image is not 2D");
-
-            return;
-        }
-
         if (srcImage.getNDims() != 2) {
             displayError("Source Image is not 2D");
 
             return;
         }
 
-        if (kernel.getNDims() != 2) {
-            displayError("Kernel is not 2D");
+        int cFactor = 1;
 
-            return;
+        if (srcImage.isColorImage()) {
+            cFactor = 4;
         }
 
-        try {
-            int length = srcImage.getSliceSize();
+        int length = cFactor * srcImage.getSliceSize();
+        outputBuffer = new float[length];
+        progress = minProgressValue;
+        progressModulus = length / (maxProgressValue-minProgressValue);
 
-            imgBuffer = new float[length];
-            srcImage.exportData(0, length, imgBuffer); // locks and releases lock
-        } catch (IOException error) {
-            errorCleanUp("Algorithm Convolver: Image (s) locked", false);
+        convolve2D(0, 1);
 
-            return;
-        } catch (OutOfMemoryError e) {
-            errorCleanUp("Algorithm Convolver: Out of memory", true);
+        fireProgressStateChanged(maxProgressValue);
 
-            return;
-        }
-
-        try {
-            int length = kernel.getSliceSize();
-
-            kernelBuffer = new float[length];
-            kernel.exportData(0, length, kernelBuffer); // locks and releases lock
-        } catch (IOException error) {
-            errorCleanUp("Algorithm Convolver: Kernel locked", false);
-
+        if (threadStopped) {
+            finalize();
             return;
         }
-
-        try {
-            destImage.setLock();
-        } catch (IOException error) {
-            errorCleanUp("Algorithm Convolver: Destination Image locked", false);
-
-            return;
-        }
-
-        float sum = 0;
-        float norm = 0;
-        int i, j, pix, count;
-
-        int offsetX, offsetY;
-        int startX, endX;
-        int startY, endY;
-
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-
-        int xKDim = kernel.getExtents()[0];
-        int yKDim = kernel.getExtents()[1];
-
-        int halfxKDim = xKDim / 2;
-        int halfyKDim = yKDim / 2;
-        int imageLength = xDim * yDim;
-        int stepY = yKDim * xDim;
-
-        for (pix = 0; pix < imageLength; pix++) {
-            offsetX = (pix % xDim) - halfxKDim;
-            offsetY = (pix / xDim) - halfyKDim;
-            sum = 0;
-            count = 0;
-            norm = 0;
-            startY = offsetY * xDim;
-            endY = startY + stepY;
-
-            for (j = startY; j < endY; j += xDim) {
-                startX = j + offsetX;
-                endX = startX + xKDim;
-
-                for (i = startX; i < endX; i++) {
-
-                    if ((j >= 0) && (j < imageLength) && ((i - j) >= 0) && ((i - j) < xDim)) {
-                        sum += kernelBuffer[count] * imgBuffer[i];
-
-                        if (kernelBuffer[count] >= 0) {
-                            norm += kernelBuffer[count];
-                        } else {
-                            norm += -kernelBuffer[count];
-                        }
-                    }
-
-                    count++;
-                }
-            }
-
-            destImage.set(pix, sum / norm);
-        }
-
-        destImage.calcMinMax();
-        destImage.releaseLock();
-        destImage.notifyImageDisplayListeners(null, true);
         setCompleted(true);
     }
 
@@ -960,164 +1058,240 @@ public class AlgorithmConvolver extends AlgorithmBase {
      * Begins the excution of the 3D convolver.
      */
     public void run3D() {
-
-        setStartTime();
-
-        float[] kernelBuffer;
-
-        if (destImage == null) {
-            displayError("Destination Image is null");
-
-            return;
-        }
-
         if (srcImage == null) {
             displayError("Source Image is null");
 
             return;
         }
-
-        if (kernel == null) {
-            displayError("Kernel is null");
-
-            return;
-        }
-
-        if (destImage.getNDims() != 3) {
-            displayError("Destination Image is not 3D");
-
-            return;
-        }
-
         if (srcImage.getNDims() != 3) {
             displayError("Source Image is not 3D");
 
             return;
         }
 
-        if (kernel.getNDims() != 3) {
-            displayError("Kernel is not 3D");
+        int cFactor = 1;
 
-            return;
+        if (srcImage.isColorImage()) {
+            cFactor = 4;
         }
+        progress = minProgressValue;
+        int length;
+        if(this.image25D){
+            if(kExtents.length != 2){
+                displayError("Kernel is not 2D");
+                return;
+            }
+            length = cFactor * srcImage.getSliceSize();
+            int nSlices = srcImage.getExtents()[2];
+            int totalLength = length * srcImage.getExtents()[2];
+            outputBuffer = new float[totalLength];
+            progressModulus = totalLength / 100;
+            fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
 
-        try {
-            int length = srcImage.getSliceSize() * srcImage.getExtents()[2];
+            if(this.multiThreadingEnabled){
+    			final CountDownLatch doneSignal = new CountDownLatch(nthreads);
+    			final float step = nSlices / nthreads;
+    			for (int j = 0; j < nthreads; j++) {
+    				final int fstart = (int)(j * step);
+    				final int fend = (j == (nthreads-1))?nSlices:(int)(step * (j + 1));
+    				Runnable task = new Runnable() {
+    					public void run() {
+    						convolve2D(fstart, fend);
+    						doneSignal.countDown();
+    					}
+    				};
+    				MipavUtil.mipavThreadPool.execute(task);
 
-            imgBuffer = new float[length];
-            srcImage.exportData(0, length, imgBuffer); // locks and releases lock
-        } catch (IOException error) {
-            errorCleanUp("Algorithm Convolver: Image (s) locked", false);
-
-            return;
-        } catch (OutOfMemoryError e) {
-            errorCleanUp("Algorithm Convolver: Out of memory", true);
-
-            return;
-        }
-
-        try {
-            int length = kernel.getSliceSize() * kernel.getExtents()[2];
-
-            kernelBuffer = new float[length];
-            kernel.exportData(0, length, kernelBuffer); // locks and releases lock
-        } catch (IOException error) {
-            errorCleanUp("Algorithm Convolver: Kernel locked", false);
-
-            return;
-        }
-
-        try {
-            destImage.setLock();
-        } catch (IOException error) {
-            errorCleanUp("Algorithm Convolver: Destination Image locked", false);
-
-            return;
-        }
-
-        int indexY;
-        float sum = 0;
-        float norm = 0;
-        int i, j, k, pix, count;
-        int offsetX, offsetY, offsetZ;
-        int startX, startY, startZ;
-        int endX, endY, endZ;
-
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int zDim = srcImage.getExtents()[2];
-        int volSize = xDim * yDim * zDim;
-
-        int xKDim = kernel.getExtents()[0];
-        int yKDim = kernel.getExtents()[1];
-        int zKDim = kernel.getExtents()[2];
-
-        int halfxKDim = xKDim / 2;
-        int halfyKDim = yKDim / 2;
-        int halfzKDim = zKDim / 2;
-
-        int size = srcImage.getSize();
-        int sliceSize = xDim * yDim;
-        int stepZ = zKDim * sliceSize;
-        int stepY = yKDim * xDim;
-
-        for (pix = 0; pix < size; pix++) {
-
-            offsetX = (pix % xDim) - halfxKDim;
-            offsetY = ((pix / xDim) % yDim) - halfyKDim;
-            offsetZ = (pix / (sliceSize)) - halfzKDim;
-
-            count = 0;
-            sum = 0;
-            norm = 0;
-            indexY = offsetY * xDim;
-            startZ = offsetZ * sliceSize;
-            endZ = startZ + stepZ;
-
-            for (k = startZ; k < endZ; k += sliceSize) {
-                startY = k + indexY;
-                endY = startY + stepY;
-
-                for (j = startY; j < endY; j += xDim) {
-                    startX = j + offsetX;
-                    endX = startX + xKDim;
-
-                    for (i = startX; i < endX; i++) {
-
-                        if ((k >= 0) && (k < volSize) && ((j - k) >= 0) && ((j - k) < sliceSize) && ((i - j) >= 0) &&
-                                ((i - j) < xDim)) {
-                            sum += kernelBuffer[count] * imgBuffer[i];
-
-                            if (kernelBuffer[count] >= 0) {
-                                norm += kernelBuffer[count];
-                            } else {
-                                norm += -kernelBuffer[count];
-                            }
-                        }
-
-                        count++;
-                    }
-                }
+    			}
+    			try {
+    				doneSignal.await();
+    			} catch (InterruptedException e) {
+    				e.printStackTrace();
+    			}
+            }else{
+            	convolve2D(0, nSlices);
             }
 
-            destImage.set(pix, sum / norm);
-        }
+            fireProgressStateChanged(maxProgressValue);
 
-        destImage.calcMinMax();
-        destImage.releaseLock();
-        destImage.notifyImageDisplayListeners(null, true);
+            if (threadStopped) {
+                finalize();
+
+                return;
+            }
+        	
+        }else{
+            if(kExtents.length != 3){
+                displayError("Kernel is not 3D");
+                return;
+            }
+        	float[] buffer = null;
+            try {
+                length = cFactor * srcImage.getSliceSize() * srcImage.getExtents()[2];
+
+                // System.out.println ("sliceSize = " + srcImage.getSliceSize() + "  Length = " + length);
+                buffer = new float[length];
+                outputBuffer = new float[length];
+                srcImage.exportData(0, length, buffer); // locks and releases lock
+            } catch (IOException error) {
+                buffer = null;
+                errorCleanUp("Algorithm Gaussian Blur: Image(s) locked", true);
+
+                return;
+            } catch (OutOfMemoryError e) {
+                buffer = null;
+                errorCleanUp("Algorithm Gaussian Blur: Out of memory", true);
+
+                return;
+            }
+
+            progressModulus = length / (maxProgressValue - minProgressValue);
+
+
+        	if(multiThreadingEnabled){
+				final CountDownLatch doneSignal = new CountDownLatch(nthreads);
+				final int step = (int)(length / (cFactor*nthreads))*cFactor;
+				for (int j = 0; j < nthreads; j++) {
+					final int start = j * step;
+					final int end = (j == (nthreads-1))?length:step * (j + 1);
+					final float[] iImage = buffer;
+					Runnable task = new Runnable() {
+						public void run() {
+							convolve3D(start, end, iImage, 0);
+							doneSignal.countDown();
+						}
+					};
+					MipavUtil.mipavThreadPool.execute(task);
+
+				}
+				try {
+					doneSignal.await();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+        		
+        	} else {
+        		convolve3D(0, length, buffer, 0);
+        	}
+        
+            fireProgressStateChanged(maxProgressValue);
+
+            if (threadStopped) {
+                finalize();
+                return;
+            }
+        }
         setCompleted(true);
     }
 
+    public void run4D(){
+        if (srcImage == null) {
+            displayError("Source Image is null");
+
+            return;
+        }
+        if (srcImage.getNDims() != 4) {
+            displayError("Source Image is not 4D");
+
+            return;
+        }
+        
+        if(kExtents.length != 3){
+            displayError("Kernel is not 3D");
+            return;
+        }
+        int length;
+        float[] buffer;
+        int cFactor = 1;
+
+        if (srcImage.isColorImage()) {
+            cFactor = 4;
+        }
+
+        try {
+            length = cFactor * srcImage.getSliceSize() * srcImage.getExtents()[2];
+            buffer = new float[length];
+            outputBuffer = new float[length*srcImage.getExtents()[3]];
+        } catch (OutOfMemoryError e) {
+            buffer = null;
+            errorCleanUp("Algorithm Gaussian Blur: Out of memory", true);
+
+            return;
+        }
+
+        fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
+
+        int index;
+        int end = srcImage.getExtents()[3];
+
+        progress = minProgressValue;
+        progressModulus = length * end / (maxProgressValue-minProgressValue);
+
+        for (int t = 0; (t < end) && !threadStopped; t++) {
+
+			try {
+				srcImage.exportData(t * length, length, buffer); 
+			} catch (IOException error) {
+				displayError("Algorithm Gaussian Blur: Image(s) locked");
+				setCompleted(false);
+				fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+				destImage.releaseLock();
+
+				return;
+			}
+
+			index = t * length;
+
+			if (this.multiThreadingEnabled) {
+				final CountDownLatch doneSignal = new CountDownLatch(nthreads);
+				final float step = ((float) length) / nthreads;
+				for (int j = 0; j < nthreads; j++) {
+					final int start = (int) (j * step);
+					final int fend = (int) (step * (j + 1));
+					final float[] iImage = buffer;
+					final int findex = index;
+					Runnable task = new Runnable() {
+						public void run() {
+							convolve3D(start, fend, iImage, findex);
+							doneSignal.countDown();
+						}
+					};
+					MipavUtil.mipavThreadPool.execute(task);
+
+				}
+				try {
+					doneSignal.await();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			} else {
+				convolve3D(0, length, buffer, index);
+			}
+
+		}
+
+        fireProgressStateChanged(100);
+
+        if (threadStopped) {
+            finalize();
+            return;
+        }
+
+        setCompleted(true);
+    
+    }
     /**
      * Begins execution of the convolver.
      */
     public void runAlgorithm() {
-
         if (srcImage.getNDims() == 2) {
             run2D();
-        } else if (srcImage.getNDims() > 2) {
+        } else if (srcImage.getNDims() == 3) {
             run3D();
+        }else if(srcImage.getNDims() == 4){
+        	run4D();
+        }else{
+            displayError("The dimension of image exceeds 4d, is not supported yet.");
         }
     }
 
@@ -1225,62 +1399,21 @@ public class AlgorithmConvolver extends AlgorithmBase {
     }
 
     /**
-     * Convolves kernel with a 2D image - only pixels where the kernel is completely contained in the image are
-     * convolved, otherwise they are set to zero.
+     * Initializes the convolver.
      */
-    private void convolver2D() {
+    private void init() {
 
         if (srcImage == null) {
             displayError("Source Image is null");
-
-            return;
-        }
-
-        if (srcImage.getNDims() != 2) {
-            displayError("Source Image is not 2D");
 
             return;
         }
 
         try {
             int length = srcImage.getSliceSize();
-
-            imgBuffer = new float[length];
-            srcImage.exportData(0, length, imgBuffer); // locks and releases lock
-        } catch (IOException error) {
-            displayError("Algorithm Convolver: Image(s) locked");
-            setCompleted(false);
-
-            return;
-        } catch (OutOfMemoryError e) {
-            displayError("Algorithm Convolver: Out of memory");
-            setCompleted(false);
-
-            return;
-        }
-
-    }
-
-    /**
-     * Convolving a kernel with a 3D image - only pixels where the kernel is completely contained in the image are
-     * convolved, otherwise they are set to zero.
-     */
-    private void convolver3D() {
-
-        if (srcImage == null) {
-            displayError("Source Image is null");
-
-            return;
-        }
-
-        if (srcImage.getNDims() != 3) {
-            displayError("Source Image is not 3D");
-
-            return;
-        }
-
-        try {
-            int length = srcImage.getSliceSize() * srcImage.getExtents()[2];
+            if(srcImage.getNDims() == 3){
+            	length *= srcImage.getExtents()[2];
+            }
 
             imgBuffer = new float[length];
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
@@ -1296,4 +1429,8 @@ public class AlgorithmConvolver extends AlgorithmBase {
             return;
         }
     }
+
+	public float[] getOutputBuffer() {
+		return outputBuffer;
+	}
 }

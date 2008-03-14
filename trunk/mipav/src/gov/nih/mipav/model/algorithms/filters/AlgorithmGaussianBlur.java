@@ -1,12 +1,19 @@
 package gov.nih.mipav.model.algorithms.filters;
 
 
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmConvolver;
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.AlgorithmSeparableConvolver;
+import gov.nih.mipav.model.algorithms.GenerateGaussian;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.util.MipavUtil;
 
-import gov.nih.mipav.view.*;
-
-import java.io.*;
+import java.lang.Runnable;
+import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import gov.nih.mipav.view.ViewJProgressBar;
 
 
 /**
@@ -30,7 +37,7 @@ import java.io.*;
  * @see      GenerateGaussian
  * @see      AlgorithmConvolver
  */
-public class AlgorithmGaussianBlur extends AlgorithmBase {
+public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInterface{
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -127,32 +134,26 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
 
             return;
         }
+        long startTime = System.nanoTime();
+        fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
 
-        
+        AlgorithmConvolver convolver = new AlgorithmConvolver(destImage, srcImage, GaussData, kExtents,entireImage, image25D);
+        convolver.setMinProgressValue(0);
+        convolver.setMaxProgressValue(100);
+		linkProgressToAlgorithm(convolver);
+		convolver.addListener(this);
+		if (!entireImage) {
+			convolver.setMask(mask);
+		}
 
-        if (destImage != null) {
+		if (srcImage.isColorImage()) {
+			convolver.setColorChannels(red, green, blue);
+		}
 
-            if (srcImage.getNDims() == 2) {
-                calcStoreInDest2D(1);
-            } else if ((srcImage.getNDims() == 3) && (image25D == false)) {
-                calcStoreInDest3D();
-            } else if ((srcImage.getNDims() == 3) && (image25D == true)) {
-                calcStoreInDest2D(srcImage.getExtents()[2]);
-            } else if (srcImage.getNDims() == 4) {
-                calcStoreInDest4D();
-            }
-        } else {
+        convolver.run();
 
-            if (srcImage.getNDims() == 2) {
-                calcInPlace2D(1);
-            } else if ((srcImage.getNDims() == 3) && (image25D == false)) {
-                calcInPlace3D();
-            } else if ((srcImage.getNDims() == 3) && (image25D == true)) {
-                calcInPlace2D(srcImage.getExtents()[2]);
-            } else if (srcImage.getNDims() == 4) {
-                calcInPlace4D();
-            }
-        }
+        setCompleted(true);
+        System.out.println("Time consumed: " + (System.nanoTime()-startTime));
     }
 
     /**
@@ -576,110 +577,50 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
      *                  processed independently then nImages equals the number of images in the volume.
      */
     private void calcStoreInDest2D(int nImages) {
-
-        int i, s, idx;
         int length, totalLength;
-        int start;
-        float[] buffer;
-        boolean color = false;
         int cFactor = 1;
 
         if (srcImage.isColorImage()) {
-            color = true;
             cFactor = 4;
         }
 
-        try {
-            destImage.setLock(ModelStorageBase.RW_LOCKED);
-        } catch (IOException error) {
-            errorCleanUp(" GaussianBlur: Image(s) locked", false);
+//        try {
+//            destImage.setLock(ModelStorageBase.RW_LOCKED);
+//        } catch (IOException error) {
+//            errorCleanUp(" GaussianBlur: Image(s) locked", false);
+//
+//            return;
+//        }
+//
+        length = cFactor * srcImage.getSliceSize();
+        totalLength = length * nImages;
 
-            return;
-        }
-
-        try {
-            length = cFactor * srcImage.getSliceSize();
-            totalLength = length * nImages;
-            buffer = new float[length];
-        } catch (OutOfMemoryError e) {
-            buffer = null;
-            errorCleanUp("Algorithm Gaussian Blur:  Out of memory", true);
-
-            return;
-        }
-
-        int mod = totalLength / 100; // mod is 1 percent of length
+        progress = 0;
+        progressModulus = totalLength / 100;
         fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
 
-        for (s = 0; s < nImages; s++) {
-            start = s * length;
+        if(this.multiThreadingEnabled){
+			final CountDownLatch doneSignal = new CountDownLatch(nthreads);
+			final float step = nImages / nthreads;
+			for (int j = 0; j < nthreads; j++) {
+				final int fstart = (int)(j * step);
+				final int fend = (j == (nthreads-1))?nImages:(int)(step * (j + 1));
+				Runnable task = new Runnable() {
+					public void run() {
+						convolve2D(fstart, fend);
+						doneSignal.countDown();
+					}
+				};
+				MipavUtil.mipavThreadPool.execute(task);
 
-            try {
-                srcImage.exportData(start, length, buffer); // locks and releases lock
-            } catch (IOException error) {
-                errorCleanUp("Algorithm Gaussian Blur: Image(s) locked", false);
-
-                return;
-            }
-
-            if (color == true) {
-
-                for (i = 0, idx = start; (i < length) && !threadStopped; i += 4, idx += 4) {
-
-                    if (((start + i) % mod) == 0) {
-                        fireProgressStateChanged(0 + Math.round((float) (start + i) / (totalLength - 1) * 100));
-                    }
-
-                    if ((entireImage == true) || mask.get(i / 4)) {
-                        destImage.set(idx, buffer[i]); // alpha
-
-                        if (red) {
-                            destImage.set(idx + 1,
-                                          AlgorithmConvolver.convolve2DRGBPt(i + 1, srcImage.getExtents(), buffer,
-                                                                             kExtents, GaussData));
-                        } else {
-                            destImage.set(idx + 1, buffer[i + 1]);
-                        }
-
-                        if (green) {
-                            destImage.set(idx + 2,
-                                          AlgorithmConvolver.convolve2DRGBPt(i + 2, srcImage.getExtents(), buffer,
-                                                                             kExtents, GaussData));
-                        } else {
-                            destImage.set(idx + 2, buffer[i + 2]);
-                        }
-
-                        if (blue) {
-                            destImage.set(idx + 3,
-                                          AlgorithmConvolver.convolve2DRGBPt(i + 3, srcImage.getExtents(), buffer,
-                                                                             kExtents, GaussData));
-                        } else {
-                            destImage.set(idx + 3, buffer[i + 3]);
-                        }
-                    } else {
-                        destImage.set(idx, buffer[i]);
-                        destImage.set(idx + 1, buffer[i + 1]);
-                        destImage.set(idx + 2, buffer[i + 2]);
-                        destImage.set(idx + 3, buffer[i + 3]);
-                    }
-                }
-            } else {
-
-                for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
-
-                    if (((start + i) % mod) == 0) {
-                        fireProgressStateChanged(0 + Math.round((float) (start + i) / (totalLength - 1) * 100));
-                    }
-
-                    if ((entireImage == true) || mask.get(i)) {
-                        destImage.set(idx,
-                                      AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents,
-                                                                      GaussData));
-                    } else {
-                        destImage.set(idx, buffer[i]);
-                    }
-                }
-            }
+			}
+			try {
+				doneSignal.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+        }else{
+        	convolve2D(0, nImages);
         }
 
         fireProgressStateChanged(100);
@@ -700,8 +641,6 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
      * Produces a new image that has been blurred.
      */
     private void calcStoreInDest3D() {
-
-        int i;
         int length;
         float[] buffer;
         boolean color = false;
@@ -712,13 +651,13 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
             cFactor = 4;
         }
 
-        try {
-            destImage.setLock(ModelStorageBase.RW_LOCKED);
-        } catch (IOException error) {
-            errorCleanUp("GaussianBlur: Image(s) locked", false);
-
-            return;
-        }
+//        try {
+//            destImage.setLock(ModelStorageBase.RW_LOCKED);
+//        } catch (IOException error) {
+//            errorCleanUp("GaussianBlur: Image(s) locked", false);
+//
+//            return;
+//        }
 
         try {
             length = cFactor * srcImage.getSliceSize() * srcImage.getExtents()[2];
@@ -738,68 +677,62 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
             return;
         }
 
-        int mod = length / 100; // mod is 1 percent of length
+        progress = 0;
+        progressModulus = length / 100; // mod is 1 percent of length
         fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
 
         if (color == true) {
+        	if(multiThreadingEnabled){
+				final CountDownLatch doneSignal = new CountDownLatch(nthreads);
+				final int step = (int)(length / (4*nthreads))*4;
+				for (int j = 0; j < nthreads; j++) {
+					final int start = j * step;
+					final int end = (j == (nthreads-1))?length:step * (j + 1);
+					final float[] iImage = buffer;
+					Runnable task = new Runnable() {
+						public void run() {
+							convolve3DRGB(start, end, iImage, 0);
+							doneSignal.countDown();
+						}
+					};
+					MipavUtil.mipavThreadPool.execute(task);
 
-            for (i = 0; (i < length) && !threadStopped; i += 4) {
-
-                if ((i % mod) == 0) {
-                    fireProgressStateChanged(0 + Math.round((float) (i) / (length - 1) * 100));
-                }
-
-                if ((entireImage == true) || mask.get(i / 4)) {
-                    destImage.set(i, buffer[i]); // alpha
-
-                    if (red) {
-                        destImage.set(i + 1,
-                                      AlgorithmConvolver.convolve3DRGBPt(i + 1, srcImage.getExtents(), buffer, kExtents,
-                                                                         GaussData));
-                    } else {
-                        destImage.set(i + 1, buffer[i + 1]);
-                    }
-
-                    if (green) {
-                        destImage.set(i + 2,
-                                      AlgorithmConvolver.convolve3DRGBPt(i + 2, srcImage.getExtents(), buffer, kExtents,
-                                                                         GaussData));
-                    } else {
-                        destImage.set(i + 2, buffer[i + 2]);
-                    }
-
-                    if (blue) {
-                        destImage.set(i + 3,
-                                      AlgorithmConvolver.convolve3DRGBPt(i + 3, srcImage.getExtents(), buffer, kExtents,
-                                                                         GaussData));
-                    } else {
-                        destImage.set(i + 3, buffer[i + 3]);
-                    }
-                } else {
-                    destImage.set(i, buffer[i]);
-                    destImage.set(i + 1, buffer[i + 1]);
-                    destImage.set(i + 2, buffer[i + 2]);
-                    destImage.set(i + 3, buffer[i + 3]);
-                }
-            }
+				}
+				try {
+					doneSignal.await();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+        		
+        	} else {
+        		convolve3DRGB(0, length, buffer, 0);
+        	}
         } else {
+			if (this.multiThreadingEnabled) {
+				final CountDownLatch doneSignal = new CountDownLatch(nthreads);
+				final float step = ((float) length) / nthreads;
+				for (int j = 0; j < nthreads; j++) {
+					final int start = (int) (j * step);
+					final int end = (int) (step * (j + 1));
+					final float[] iImage = buffer;
+					Runnable task = new Runnable() {
+						public void run() {
+							convolve3D(start, end, iImage, 0);
+							doneSignal.countDown();
+						}
+					};
+					MipavUtil.mipavThreadPool.execute(task);
 
-            for (i = 0; (i < length) && !threadStopped; i++) {
-
-                if ((i % mod) == 0) {
-                    fireProgressStateChanged(0 + Math.round((float) i / (length - 1) * 100));
-                    // System.out.println("Entire = " + entireImage);
-                }
-
-                if ((entireImage == true) || mask.get(i)) {
-                    destImage.set(i,
-                                  AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents,
-                                                                  GaussData));
-                } else {
-                    destImage.set(i, buffer[i]);
-                }
-            }
-        }
+				}
+				try {
+					doneSignal.await();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			} else {
+				convolve3D(0, length, buffer, 0);
+			}
+		}
 
         fireProgressStateChanged(100);
 
@@ -815,6 +748,149 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
         setCompleted(true);
     }
 
+    private final void convolve2D(int startSlice, int endSlice){
+    	boolean color = srcImage.isColorImage();
+    	int cFactor = (color)?4:1;
+    	int length = cFactor * srcImage.getSliceSize();
+    	for (int s = startSlice; s < endSlice; s++) {
+			int start = s * length;
+			float[] buffer = new float[length];
+			try {
+				srcImage.exportData(start, length, buffer); // locks and
+															// releases lock
+			} catch (IOException error) {
+				errorCleanUp("Algorithm Gaussian Blur: Image(s) locked", false);
+
+				return;
+			}
+
+			if (color == true) {
+
+				for (int i = 0, idx = start; (i < length) && !threadStopped; i += 4, idx += 4) {
+					progress++;
+					if ((progress % progressModulus) == 0) {
+						fireProgressStateChanged((int)(progress/progressModulus));
+					}
+
+					if ((entireImage == true) || mask.get(i / 4)) {
+						destImage.set(idx, buffer[i]); // alpha
+
+						if (red) {
+							destImage.set(idx + 1, AlgorithmConvolver
+									.convolve2DRGBPt(i + 1, srcImage
+											.getExtents(), buffer, kExtents,
+											GaussData));
+						} else {
+							destImage.set(idx + 1, buffer[i + 1]);
+						}
+
+						if (green) {
+							destImage.set(idx + 2, AlgorithmConvolver
+									.convolve2DRGBPt(i + 2, srcImage
+											.getExtents(), buffer, kExtents,
+											GaussData));
+						} else {
+							destImage.set(idx + 2, buffer[i + 2]);
+						}
+
+						if (blue) {
+							destImage.set(idx + 3, AlgorithmConvolver
+									.convolve2DRGBPt(i + 3, srcImage
+											.getExtents(), buffer, kExtents,
+											GaussData));
+						} else {
+							destImage.set(idx + 3, buffer[i + 3]);
+						}
+					} else {
+						destImage.set(idx, buffer[i]);
+						destImage.set(idx + 1, buffer[i + 1]);
+						destImage.set(idx + 2, buffer[i + 2]);
+						destImage.set(idx + 3, buffer[i + 3]);
+					}
+				}
+			} else {
+
+				for (int i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
+					progress++;
+					if ((progress % progressModulus) == 0) {
+						fireProgressStateChanged((int)(progress/progressModulus));
+					}
+
+					if ((entireImage == true) || mask.get(i)) {
+						destImage.set(idx, AlgorithmConvolver.convolve2DPt(i,
+								srcImage.getExtents(), buffer, kExtents,
+								GaussData));
+					} else {
+						destImage.set(idx, buffer[i]);
+					}
+				}
+			}
+		}
+    }
+    private final void convolve3DRGB(int start, int end, float[] iImage, int index){
+
+		for (int i = start; (i < end) && !threadStopped; i += 4) {
+			progress += 4;
+			if ((progress % progressModulus) == 0) {
+				fireProgressStateChanged((int)(progress/progressModulus));
+			}
+
+			if ((entireImage == true) || mask.get(i / 4)) {
+				destImage.set(i+index, iImage[i]); // alpha
+
+				if (red) {
+					destImage.set(i+index + 1, AlgorithmConvolver
+							.convolve3DRGBPt(i + 1, srcImage
+									.getExtents(), iImage, kExtents,
+									GaussData));
+				} else {
+					destImage.set(i+index + 1, iImage[i + 1]);
+				}
+
+				if (green) {
+					destImage.set(i+index + 2, AlgorithmConvolver
+							.convolve3DRGBPt(i + 2, srcImage
+									.getExtents(), iImage, kExtents,
+									GaussData));
+				} else {
+					destImage.set(i+index + 2, iImage[i + 2]);
+				}
+
+				if (blue) {
+					destImage.set(i+index + 3, AlgorithmConvolver
+							.convolve3DRGBPt(i + 3, srcImage
+									.getExtents(), iImage, kExtents,
+									GaussData));
+				} else {
+					destImage.set(i+index + 3, iImage[i + 3]);
+				}
+			} else {
+				destImage.set(i+index, iImage[i]);
+				destImage.set(i+index + 1, iImage[i + 1]);
+				destImage.set(i+index + 2, iImage[i + 2]);
+				destImage.set(i+index + 3, iImage[i + 3]);
+			}
+		}
+	
+    }
+    private final void convolve3D(int start, int end, float[] iImage, int index){
+        for (int i = start; (i < end) && !threadStopped; i++) {
+        	progress++;
+            if ((progress % progressModulus) == 0) {
+                fireProgressStateChanged((int)(progress/progressModulus));
+                // System.out.println("Entire = " + entireImage);
+            }
+
+            if ((entireImage == true) || mask.get(i)) {
+                destImage.set(i+index,
+                              AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), iImage, kExtents,
+                                                              GaussData));
+            } else {
+                destImage.set(i+index, iImage[i]);
+            }
+        }
+
+    }
     /**
      * Produces a new image that has been blurred.
      */
@@ -855,7 +931,8 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
         int index;
         int end = srcImage.getExtents()[3];
 
-        int mod = length * end / 100;
+        progress = 0;
+        progressModulus = length * end / 100;
 
         for (t = 0; (t < end) && !threadStopped; t++) {
 
@@ -875,63 +952,60 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
             index = t * length;
 
             if (color == true) {
+            	if(multiThreadingEnabled){
+    				final CountDownLatch doneSignal = new CountDownLatch(nthreads);
+    				final int step = (int)(length / (4*nthreads))*4;
+    				for (int j = 0; j < nthreads; j++) {
+    					final int start = j * step;
+    					final int fend = (j == (nthreads-1))?length:step * (j + 1);
+    					final float[] iImage = buffer;
+    					final int findex = index;
+    					Runnable task = new Runnable() {
+    						public void run() {
+    							convolve3DRGB(start, fend, iImage, findex);
+    							doneSignal.countDown();
+    						}
+    					};
+    					MipavUtil.mipavThreadPool.execute(task);
 
-                for (i = 0; (i < length) && !threadStopped; i += 4) {
-
-                    if ((i % mod) == 0) {
-                        fireProgressStateChanged(0 + Math.round(((t * length) + i) / mod));
-                    }
-
-                    if ((entireImage == true) || mask.get(i / 4)) {
-                        destImage.set(i + index, buffer[i]); // alpha
-
-                        if (red) {
-                            destImage.set(i + index + 1,
-                                          AlgorithmConvolver.convolve3DRGBPt(i + 1, srcImage.getExtents(), buffer,
-                                                                             kExtents, GaussData));
-                        } else {
-                            destImage.set(i + index + 1, buffer[i + 1]);
-                        }
-
-                        if (green) {
-                            destImage.set(i + index + 2,
-                                          AlgorithmConvolver.convolve3DRGBPt(i + 2, srcImage.getExtents(), buffer,
-                                                                             kExtents, GaussData));
-                        } else {
-                            destImage.set(i + index + 2, buffer[i + 2]);
-                        }
-
-                        if (blue) {
-                            destImage.set(i + index + 3,
-                                          AlgorithmConvolver.convolve3DRGBPt(i + 3, srcImage.getExtents(), buffer,
-                                                                             kExtents, GaussData));
-                        } else {
-                            destImage.set(i + index + 3, buffer[i + 3]);
-                        }
-                    } else {
-                        destImage.set(i + index, buffer[i]);
-                        destImage.set(i + index + 1, buffer[i + 1]);
-                        destImage.set(i + index + 2, buffer[i + 2]);
-                        destImage.set(i + index + 3, buffer[i + 3]);
-                    }
-                }
+    				}
+    				try {
+    					doneSignal.await();
+    				} catch (InterruptedException e) {
+    					e.printStackTrace();
+    				}
+            		
+            	} else {
+            		convolve3DRGB(0, length, buffer, 0);
+            	}
+            
             } else {
+    			if (this.multiThreadingEnabled) {
+    				final CountDownLatch doneSignal = new CountDownLatch(nthreads);
+    				final float step = ((float) length) / nthreads;
+    				for (int j = 0; j < nthreads; j++) {
+    					final int start = (int) (j * step);
+    					final int fend = (int) (step * (j + 1));
+    					final float[] iImage = buffer;
+    					final int findex = index;
+    					Runnable task = new Runnable() {
+    						public void run() {
+    							convolve3D(start, fend, iImage, findex);
+    							doneSignal.countDown();
+    						}
+    					};
+    					MipavUtil.mipavThreadPool.execute(task);
 
-                for (i = 0; (i < length) && !threadStopped; i++) {
-
-                    if ((i % mod) == 0) {
-                        fireProgressStateChanged(0 + Math.round(((t * length) + i) / mod));
-                    }
-
-                    if ((entireImage == true) || mask.get(i)) {
-                        destImage.set(index + i,
-                                      AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents,
-                                                                      GaussData));
-                    } else {
-                        destImage.set(index + i, buffer[i]);
-                    }
-                }
-            }
+    				}
+    				try {
+    					doneSignal.await();
+    				} catch (InterruptedException e) {
+    					e.printStackTrace();
+    				}
+    			} else {
+    				convolve3D(0, length, buffer, index);
+    			}
+           	}
         }
 
         fireProgressStateChanged(100);
@@ -1032,4 +1106,34 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
         Gauss = null;
     }
 
+    public void algorithmPerformed(AlgorithmBase algorithm){
+    	if(!algorithm.isCompleted()){
+    		finalize();
+    		return;
+    	}
+    	if (algorithm instanceof AlgorithmConvolver) {
+			AlgorithmConvolver convolver = (AlgorithmConvolver) algorithm;
+			if (destImage == null) {
+				try {
+					srcImage.importData(0, convolver.getOutputBuffer(), true);
+				} catch (IOException error) {
+					errorCleanUp("Algorithm Gaussian Blur: Image(s) locked",
+							false);
+
+					return;
+				}
+			} else {
+				try {
+					destImage.importData(0, convolver.getOutputBuffer(), true);
+				} catch (IOException error) {
+					errorCleanUp("Algorithm Gaussian Blur: Image(s) locked",
+							false);
+
+					return;
+				}
+			}
+			this.setCompleted(true);
+		}
+    }
 }
+
