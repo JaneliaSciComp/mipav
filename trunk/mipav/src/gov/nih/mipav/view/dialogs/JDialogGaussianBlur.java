@@ -432,6 +432,19 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
 													// kernel is separable
 
 			float[] sigmas = sigmaPanel.getNormalizedSigmas();
+            if(!displayInNewFrame){
+                Vector imageFrames = image.getImageFrameVector();
+
+                titles = new String[imageFrames.size()];
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                    ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                    userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                }
+
+            }
 			try {
 
 				// Make algorithm
