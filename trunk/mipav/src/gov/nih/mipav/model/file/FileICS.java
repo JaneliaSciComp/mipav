@@ -291,6 +291,8 @@ public class FileICS extends FileBase {
 
     /** DOCUMENT ME! */
     private int zPos = -1;
+    
+    private boolean hasRGB = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -772,7 +774,7 @@ public class FileICS extends FileBase {
         }
 
         if (image.isColorImage()) {
-            lineString = lineString + "\tch";
+            lineString = lineString + "\trgb";
         }
 
         lineString = lineString + "\r\n";
@@ -827,6 +829,7 @@ public class FileICS extends FileBase {
 
         if (image.isColorImage()) {
             image.calcMinMax();
+            numColors = 0;
 
             if (image.getMinR() != image.getMaxR()) {
                 haveRed = true;
@@ -1020,7 +1023,7 @@ public class FileICS extends FileBase {
         }
 
         if (image.isColorImage()) {
-            lineString = lineString + "\tch";
+            lineString = lineString + "\trgb";
         }
 
         lineString = lineString + "\r\n";
@@ -1447,10 +1450,10 @@ public class FileICS extends FileBase {
         int nBytes;
         int nShorts;
         int nFloats;
-        int b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12;
+        int b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15, b16;
         byte[] byteBuffer;
         int progress, progressLength, mod;
-        int tmpInt, tmpInt2, tmpInt3;
+        int tmpInt, tmpInt2, tmpInt3, tmpInt4;
         long savedPosition;
 
         switch (dataType) {
@@ -1872,10 +1875,10 @@ public class FileICS extends FileBase {
                         buffer[(4 * i) + 2] = byteBuffer[j] & 0xff;
                     }
 
-                    if (numColors == 3) {
+                    if (numColors >= 3) {
                         raFile.seek((((2 * numberSlices) - 1) * nBytes) + savedPosition);
                         raFile.read(byteBuffer, 0, nBytes);
-                        progress = (3 * slice * nBytes) + (2 * nBytes);
+                        progress = (numColors * slice * nBytes) + (2 * nBytes);
 
                         for (i = 0, j = 0; j < nBytes; j++, i++) {
 
@@ -1885,7 +1888,22 @@ public class FileICS extends FileBase {
 
                             buffer[(4 * i) + 3] = byteBuffer[j] & 0xff;
                         }
-                    } // if (numColors == 3)
+                    } // if (numColors >= 3)
+                    
+                    if (numColors == 4) {
+                        raFile.seek((((3 * numberSlices) - 1) * nBytes) + savedPosition);
+                        raFile.read(byteBuffer, 0, nBytes);
+                        progress = (numColors * slice * nBytes) + (3 * nBytes);
+
+                        for (i = 0, j = 0; j < nBytes; j++, i++) {
+
+                            if (((i + progress) % mod) == 0) {
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                            }
+
+                            buffer[(4 * i)] = byteBuffer[j] & 0xff;
+                        }    
+                    } // if (numColors == 4)
 
                     raFile.seek(savedPosition);
                 } // if (colorSpacing == RGB_LAST)
@@ -1911,7 +1929,7 @@ public class FileICS extends FileBase {
                             buffer[(4 * i) + 3] = 0;
                         }
                     } // if (numColors == 2)
-                    else { // numColors == 3
+                    else if (numColors == 3) {
                         nBytes = 3 * buffer.length / 4;
                         byteBuffer = new byte[nBytes];
                         raFile.read(byteBuffer, 0, nBytes);
@@ -1930,7 +1948,28 @@ public class FileICS extends FileBase {
                             buffer[(4 * i) + 2] = byteBuffer[j + 1] & 0xff;
                             buffer[(4 * i) + 3] = byteBuffer[j + 2] & 0xff;
                         }
-                    } // else numColors == 3
+                    } // else if (numColors == 3)
+                    else { // numColors == 4
+                        nBytes = buffer.length;
+                        byteBuffer = new byte[nBytes];
+                        raFile.read(byteBuffer, 0, nBytes);
+                        progress = slice * nBytes;
+                        progressLength = nBytes * numberSlices;
+                        mod = progressLength / 100;
+
+
+                        for (j = 0; j < nBytes; j += 4, i++) {
+
+                            if (((i + progress) % mod) == 0) {
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                            }
+
+                            buffer[(4 * i) + 1] = byteBuffer[j] & 0xff;
+                            buffer[(4 * i) + 2] = byteBuffer[j + 1] & 0xff;
+                            buffer[(4 * i) + 3] = byteBuffer[j + 2] & 0xff;
+                            buffer[4 * i] = byteBuffer[j + 3] & 0xff;
+                        }
+                    } // else numColors == 4
                 } // else if (colorSpacing == RGB_FIRST)
                 else { // colorSpacing == RGB_BETWEEN_SPACEANDTIME
                     nBytes = buffer.length / 4;
@@ -1964,10 +2003,10 @@ public class FileICS extends FileBase {
                         buffer[(4 * i) + 2] = byteBuffer[j] & 0xff;
                     }
 
-                    if (numColors == 3) {
+                    if (numColors >= 3) {
                         raFile.seek((((2 * numberSpaceSlices) - 1) * nBytes) + savedPosition);
                         raFile.read(byteBuffer, 0, nBytes);
-                        progress = (3 * slice * nBytes) + (2 * nBytes);
+                        progress = (numColors * slice * nBytes) + (2 * nBytes);
 
                         for (i = 0, j = 0; j < nBytes; j++, i++) {
 
@@ -1977,7 +2016,22 @@ public class FileICS extends FileBase {
 
                             buffer[(4 * i) + 3] = byteBuffer[j] & 0xff;
                         }
-                    } // if (numColors == 3)
+                    } // if (numColors >= 3)
+                    
+                    if (numColors == 4) {
+                        raFile.seek((((3 * numberSpaceSlices) - 1) * nBytes) + savedPosition);
+                        raFile.read(byteBuffer, 0, nBytes);
+                        progress = (numColors * slice * nBytes) + (3 * nBytes);
+
+                        for (i = 0, j = 0; j < nBytes; j++, i++) {
+
+                            if (((i + progress) % mod) == 0) {
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                            }
+
+                            buffer[(4 * i)] = byteBuffer[j] & 0xff;
+                        }
+                    } // if (numColors == 4)
 
                     if (((slice + 1) % numberSpaceSlices) == 0) { }
                     else {
@@ -2034,10 +2088,10 @@ public class FileICS extends FileBase {
                         }
                     }
 
-                    if (numColors == 3) {
+                    if (numColors >= 3) {
                         raFile.seek((((2 * numberSlices) - 1) * nBytes) + savedPosition);
                         raFile.read(byteBuffer, 0, nBytes);
-                        progress = (3 * slice * nBytes) + (2 * nBytes);
+                        progress = (numColors * slice * nBytes) + (2 * nBytes);
 
                         for (i = 0, j = 0; j < nBytes; j += 2, i++) {
 
@@ -2054,7 +2108,29 @@ public class FileICS extends FileBase {
                                 buffer[(4 * i) + 3] = ((b2 << 8) + b1);
                             }
                         }
-                    } // if (numColors == 3)
+                    } // if (numColors >= 3)
+                    
+                    if (numColors == 4) {
+                        raFile.seek((((3 * numberSlices) - 1) * nBytes) + savedPosition);
+                        raFile.read(byteBuffer, 0, nBytes);
+                        progress = (numColors * slice * nBytes) + (3 * nBytes);
+
+                        for (i = 0, j = 0; j < nBytes; j += 2, i++) {
+
+                            if (((j + progress) % mod) == 0) {
+                                fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
+                            }
+
+                            b1 = getUnsignedByte(byteBuffer, j);
+                            b2 = getUnsignedByte(byteBuffer, j + 1);
+
+                            if (endianess) {
+                                buffer[(4 * i)] = ((b1 << 8) + b2);
+                            } else {
+                                buffer[(4 * i)] = ((b2 << 8) + b1);
+                            }
+                        }
+                    } // if (numColors == 4)
 
                     raFile.seek(savedPosition);
                 } // if (colorSpacing == RGB_LAST)
@@ -2089,7 +2165,7 @@ public class FileICS extends FileBase {
                             }
                         }
                     } // if (numColors == 2)
-                    else { // numColors == 3
+                    else if (numColors == 3) {
                         nBytes = 3 * buffer.length / 2;
                         byteBuffer = new byte[nBytes];
                         raFile.read(byteBuffer, 0, nBytes);
@@ -2121,7 +2197,44 @@ public class FileICS extends FileBase {
                                 buffer[(4 * i) + 3] = ((b6 << 8) + b5);
                             }
                         }
-                    } // else numColors == 3
+                    } // else if (numColors == 3)
+                    else { // numColors == 4
+                        nBytes = 2 * buffer.length;
+                        byteBuffer = new byte[nBytes];
+                        raFile.read(byteBuffer, 0, nBytes);
+                        progress = slice * nBytes;
+                        progressLength = nBytes * numberSlices;
+                        mod = progressLength / 100;
+
+
+                        for (j = 0; j < nBytes; j += 8, i++) {
+
+                            if (((j + progress) % mod) == 0) {
+                                fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
+                            }
+
+                            b1 = getUnsignedByte(byteBuffer, j);
+                            b2 = getUnsignedByte(byteBuffer, j + 1);
+                            b3 = getUnsignedByte(byteBuffer, j + 2);
+                            b4 = getUnsignedByte(byteBuffer, j + 3);
+                            b5 = getUnsignedByte(byteBuffer, j + 4);
+                            b6 = getUnsignedByte(byteBuffer, j + 5);
+                            b7 = getUnsignedByte(byteBuffer, j + 6);
+                            b8 = getUnsignedByte(byteBuffer, j + 7);
+
+                            if (endianess) {
+                                buffer[(4 * i) + 1] = ((b1 << 8) + b2);
+                                buffer[(4 * i) + 2] = ((b3 << 8) + b4);
+                                buffer[(4 * i) + 3] = ((b5 << 8) + b6);
+                                buffer[(4 * i)] = ((b7 << 8) + b8);
+                            } else {
+                                buffer[(4 * i) + 1] = ((b2 << 8) + b1);
+                                buffer[(4 * i) + 2] = ((b4 << 8) + b3);
+                                buffer[(4 * i) + 3] = ((b6 << 8) + b5);
+                                buffer[(4 * i)] = ((b8 << 8) + b7);
+                            }
+                        }    
+                    } // else numColors == 4
                 } // else if (colorSpacing == RGB_FIRST)
                 else { // colorSpacing == RGB_BETWEEN_SPACEANDTIME
                     nBytes = buffer.length / 2;
@@ -2169,10 +2282,10 @@ public class FileICS extends FileBase {
                         }
                     }
 
-                    if (numColors == 3) {
+                    if (numColors >= 3) {
                         raFile.seek((((2 * numberSpaceSlices) - 1) * nBytes) + savedPosition);
                         raFile.read(byteBuffer, 0, nBytes);
-                        progress = (3 * slice * nBytes) + (2 * nBytes);
+                        progress = (numColors * slice * nBytes) + (2 * nBytes);
 
                         for (i = 0, j = 0; j < nBytes; j += 2, i++) {
 
@@ -2189,7 +2302,29 @@ public class FileICS extends FileBase {
                                 buffer[(4 * i) + 3] = ((b2 << 8) + b1);
                             }
                         }
-                    } // if (numColors == 3)
+                    } // if (numColors >= 3)
+                    
+                    if (numColors == 4) {
+                        raFile.seek((((3 * numberSpaceSlices) - 1) * nBytes) + savedPosition);
+                        raFile.read(byteBuffer, 0, nBytes);
+                        progress = (numColors * slice * nBytes) + (3 * nBytes);
+
+                        for (i = 0, j = 0; j < nBytes; j += 2, i++) {
+
+                            if (((j + progress) % mod) == 0) {
+                                fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
+                            }
+
+                            b1 = getUnsignedByte(byteBuffer, j);
+                            b2 = getUnsignedByte(byteBuffer, j + 1);
+
+                            if (endianess) {
+                                buffer[(4 * i)] = ((b1 << 8) + b2);
+                            } else {
+                                buffer[(4 * i)] = ((b2 << 8) + b1);
+                            }
+                        }    
+                    } // if (numColors == 4)
 
                     if (((slice + 1) % numberSpaceSlices) == 0) { }
                     else {
@@ -2254,10 +2389,10 @@ public class FileICS extends FileBase {
                         buffer[(4 * i) + 2] = Float.intBitsToFloat(tmpInt);
                     }
 
-                    if (numColors == 3) {
+                    if (numColors >= 3) {
                         raFile.seek((((2 * numberSlices) - 1) * nBytes) + savedPosition);
                         raFile.read(byteBuffer, 0, nBytes);
-                        progress = (3 * slice * nBytes) + (2 * nBytes);
+                        progress = (numColors * slice * nBytes) + (2 * nBytes);
 
                         for (i = 0, j = 0; j < nBytes; j += 4, i++) {
 
@@ -2278,7 +2413,33 @@ public class FileICS extends FileBase {
 
                             buffer[(4 * i) + 3] = Float.intBitsToFloat(tmpInt);
                         }
-                    } // if (numColors == 3)
+                    } // if (numColors >= 3)
+                    
+                    if (numColors == 4) {
+                        raFile.seek((((3 * numberSlices) - 1) * nBytes) + savedPosition);
+                        raFile.read(byteBuffer, 0, nBytes);
+                        progress = (numColors * slice * nBytes) + (3 * nBytes);
+
+                        for (i = 0, j = 0; j < nBytes; j += 4, i++) {
+
+                            if (((j + progress) % mod) == 0) {
+                                fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
+                            }
+
+                            b1 = getUnsignedByte(byteBuffer, j);
+                            b2 = getUnsignedByte(byteBuffer, j + 1);
+                            b3 = getUnsignedByte(byteBuffer, j + 2);
+                            b4 = getUnsignedByte(byteBuffer, j + 3);
+
+                            if (endianess) {
+                                tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
+                            } else {
+                                tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1); // Little Endian
+                            }
+
+                            buffer[(4 * i)] = Float.intBitsToFloat(tmpInt);
+                        }
+                    } // if (numColors == 4)
 
                     raFile.seek(savedPosition);
                 } // if (colorSpacing == RGB_LAST)
@@ -2320,7 +2481,7 @@ public class FileICS extends FileBase {
                             buffer[(4 * i) + 2] = Float.intBitsToFloat(tmpInt2);
                         }
                     } // if (numColors == 2)
-                    else { // numColors == 3
+                    else if (numColors == 3) {
                         nBytes = 3 * buffer.length;
                         byteBuffer = new byte[nBytes];
                         raFile.read(byteBuffer, 0, nBytes);
@@ -2362,7 +2523,57 @@ public class FileICS extends FileBase {
                             buffer[(4 * i) + 2] = Float.intBitsToFloat(tmpInt2);
                             buffer[(4 * i) + 3] = Float.intBitsToFloat(tmpInt3);
                         }
-                    } // else numColors == 3
+                    } // else if (numColors == 3)
+                    else { // numColors == 4
+                        nBytes = 4 * buffer.length;
+                        byteBuffer = new byte[nBytes];
+                        raFile.read(byteBuffer, 0, nBytes);
+                        progress = slice * nBytes;
+                        progressLength = nBytes * numberSlices;
+                        mod = progressLength / 100;
+
+
+                        for (j = 0; j < nBytes; j += 16, i++) {
+
+                            if (((j + progress) % mod) == 0) {
+                                fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
+                            }
+
+                            b1 = getUnsignedByte(byteBuffer, j);
+                            b2 = getUnsignedByte(byteBuffer, j + 1);
+                            b3 = getUnsignedByte(byteBuffer, j + 2);
+                            b4 = getUnsignedByte(byteBuffer, j + 3);
+                            b5 = getUnsignedByte(byteBuffer, j + 4);
+                            b6 = getUnsignedByte(byteBuffer, j + 5);
+                            b7 = getUnsignedByte(byteBuffer, j + 6);
+                            b8 = getUnsignedByte(byteBuffer, j + 7);
+                            b9 = getUnsignedByte(byteBuffer, j + 8);
+                            b10 = getUnsignedByte(byteBuffer, j + 9);
+                            b11 = getUnsignedByte(byteBuffer, j + 10);
+                            b12 = getUnsignedByte(byteBuffer, j + 11);
+                            b13 = getUnsignedByte(byteBuffer, j + 12);
+                            b14 = getUnsignedByte(byteBuffer, j + 13);
+                            b15 = getUnsignedByte(byteBuffer, j + 14);
+                            b16 = getUnsignedByte(byteBuffer, j + 15);
+
+                            if (endianess) {
+                                tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
+                                tmpInt2 = ((b5 << 24) | (b6 << 16) | (b7 << 8) | b8);
+                                tmpInt3 = ((b9 << 24) | (b10 << 16) | (b11 << 8) | b12);
+                                tmpInt4 = ((b13 << 24) | (b14 << 16) | (b15 << 8) | b16);
+                            } else {
+                                tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1); // Little Endian
+                                tmpInt2 = ((b8 << 24) | (b7 << 16) | (b6 << 8) | b5);
+                                tmpInt3 = ((b12 << 24) | (b11 << 16) | (b10 << 8) | b9);
+                                tmpInt4 = ((b16 << 24) | (b15 << 16) | (b14 << 8) | b13);
+                            }
+
+                            buffer[(4 * i) + 1] = Float.intBitsToFloat(tmpInt);
+                            buffer[(4 * i) + 2] = Float.intBitsToFloat(tmpInt2);
+                            buffer[(4 * i) + 3] = Float.intBitsToFloat(tmpInt3);
+                            buffer[(4 * i)] = Float.intBitsToFloat(tmpInt4);
+                        }    
+                    } // else numColors == 4
                 } // else if (colorSpacing == RGB_FIRST)
                 else { // colorSpacing == RGB_BETWEEN_SPACEANDTIME
                     nBytes = buffer.length;
@@ -2418,10 +2629,10 @@ public class FileICS extends FileBase {
                         buffer[(4 * i) + 2] = Float.intBitsToFloat(tmpInt);
                     }
 
-                    if (numColors == 3) {
+                    if (numColors >= 3) {
                         raFile.seek((((2 * numberSpaceSlices) - 1) * nBytes) + savedPosition);
                         raFile.read(byteBuffer, 0, nBytes);
-                        progress = (3 * slice * nBytes) + (2 * nBytes);
+                        progress = (numColors * slice * nBytes) + (2 * nBytes);
 
                         for (i = 0, j = 0; j < nBytes; j += 4, i++) {
 
@@ -2442,7 +2653,33 @@ public class FileICS extends FileBase {
 
                             buffer[(4 * i) + 3] = Float.intBitsToFloat(tmpInt);
                         }
-                    } // if (numColors == 3)
+                    } // if (numColors >= 3)
+                    
+                    if (numColors == 4) {
+                        raFile.seek((((3 * numberSpaceSlices) - 1) * nBytes) + savedPosition);
+                        raFile.read(byteBuffer, 0, nBytes);
+                        progress = (numColors * slice * nBytes) + (3 * nBytes);
+
+                        for (i = 0, j = 0; j < nBytes; j += 4, i++) {
+
+                            if (((j + progress) % mod) == 0) {
+                                fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
+                            }
+
+                            b1 = getUnsignedByte(byteBuffer, j);
+                            b2 = getUnsignedByte(byteBuffer, j + 1);
+                            b3 = getUnsignedByte(byteBuffer, j + 2);
+                            b4 = getUnsignedByte(byteBuffer, j + 3);
+
+                            if (endianess) {
+                                tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
+                            } else {
+                                tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1); // Little Endian
+                            }
+
+                            buffer[(4 * i)] = Float.intBitsToFloat(tmpInt);
+                        }    
+                    } // if (numColors == 4)
 
                     if (((slice + 1) % numberSpaceSlices) == 0) { }
                     else {
@@ -2782,29 +3019,32 @@ public class FileICS extends FileBase {
                         for (i = 0; i < numValues; i++) {
                             order[i] = values[i];
 
-                            if ((order[i].compareTo("x")) == 0) {
+                            if (order[i].compareTo("x") == 0) {
                                 xPos = i;
                                 nDims++;
                             }
 
-                            if ((order[i].compareTo("y")) == 0) {
+                            if (order[i].compareTo("y") == 0) {
                                 yPos = i;
                                 nDims++;
                             }
 
-                            if ((order[i].compareTo("z")) == 0) {
+                            if (order[i].compareTo("z") == 0) {
                                 zPos = i;
                                 nDims++;
                             }
 
-                            if ((order[i].compareTo("t")) == 0) {
+                            if (order[i].compareTo("t") == 0) {
                                 tPos = i;
                                 nDims++;
                             }
 
-                            if (((order[i].compareTo("rgb")) == 0) || ((order[i].compareTo("probe")) == 0) ||
-                                    ((order[i].compareTo("ch")) == 0)) {
+                            if ((order[i].compareTo("rgb") == 0) || (order[i].compareTo("probe") == 0) ||
+                                    (order[i].compareTo("ch") == 0)) {
                                 rgbPos = i;
+                                if (order[i].compareTo("rgb") == 0) {
+                                    hasRGB = true;
+                                }
                             }
                         }
 
@@ -3149,7 +3389,7 @@ public class FileICS extends FileBase {
         if (rgbPos != -1) {
             numColors = sizes[rgbPos];
 
-            if (numColors > 3) {
+            if ((numColors > 4) || (!hasRGB && (numColors > 3))) {
                 nDims++;
             }
 
@@ -3172,7 +3412,7 @@ public class FileICS extends FileBase {
         }
 
 
-        if ((numColors == 2) || (numColors == 3)) {
+        if ((hasRGB && (numColors >= 2) && (numColors <= 4)) || ((numColors == 2) || (numColors == 3))) {
 
             // 2 or 3 dyes or spectra so use color
             if (((sizes[0] == 8) && ((format.compareTo("integer")) == 0)) &&
@@ -3267,7 +3507,7 @@ public class FileICS extends FileBase {
             imgExtents[i++] = sizes[tPos];
         }
 
-        if (numColors > 3) {
+        if ((numColors > 4) || (!hasRGB && (numColors > 3))) {
             imgExtents[i] = sizes[rgbPos];
         }
 
@@ -3295,7 +3535,7 @@ public class FileICS extends FileBase {
                     startLocations[i++] = origin[tPos];
                 }
 
-                if (numColors > 3) {
+                if ((numColors > 4) || (!hasRGB && (numColors > 3))) {
                     startLocations[i] = 0.0f;
                 }
             }
@@ -3319,7 +3559,7 @@ public class FileICS extends FileBase {
                     startLocations[i++] = origin[tPos - 1];
                 }
 
-                if (numColors > 3) {
+                if ((numColors > 4) || (!hasRGB && (numColors > 3))) {
                     startLocations[i] = 0.0f;
                 }
             }
@@ -3408,12 +3648,13 @@ public class FileICS extends FileBase {
                     unitsStr[i++] = units[tPos];
                 }
 
-                if (numColors > 3) {
+                if ((numColors > 4) || (!hasRGB && (numColors > 3))) {
                     unitsStr[i] = units[rgbPos];
                 }
             }
 
-            if (((units.length == nDims) && (numColors <= 3)) || ((units.length == (nDims - 1)) && (numColors > 3))) {
+            if (((units.length == nDims) && ((hasRGB && (numColors <= 4)) || (numColors <= 3))) ||
+                 ((units.length == (nDims - 1)) && ((numColors > 4) || (!hasRGB && (numColors > 3))))) {
 
                 for (i = 0; i < units.length; i++) {
                     unitsStr[i] = units[i];
