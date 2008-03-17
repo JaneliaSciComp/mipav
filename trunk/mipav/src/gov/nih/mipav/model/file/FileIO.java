@@ -2131,6 +2131,7 @@ public class FileIO {
 
         if (options.isSaveAs()) { // if we're doing a save-as op, then try to get the filetype from the name
             fileType = FileUtility.getFileType(options.getFileName(), options.getFileDirectory(), true, quiet);
+            System.err.println("FileType: " + fileType);
             options.setDefault(true); // this would already be set....  hrmm....
         } else { // otherwise, get the file-type from the file-info.
             fileType = image.getFileInfo(0).getFileFormat();
@@ -2180,6 +2181,16 @@ public class FileIO {
 
                 options.setFileName(options.getFileName() + suffix); // append file extension
             }
+        } else if (fileType == FileUtility.MINC) {
+        	String [] mincOptionStr = new String[] { "MINC 1.0", "MINC 2.0 HDF5" };
+        	//create dialog to prompt for MINC 1.0 vs MINC 2.0 HDF
+        	Object selection  = JOptionPane.showInputDialog(ViewUserInterface.getReference().getMainFrame(), 
+        			"Choose MINC save type", "MINC Save Options", JOptionPane.YES_NO_OPTION, 
+        			null, mincOptionStr, "MINC 1.0"); 
+        	if (selection.equals(mincOptionStr[1])) {
+        		fileType = FileUtility.MINC_HDF;
+        	}
+        	
         }
 
         if (!options.isSet()) {
