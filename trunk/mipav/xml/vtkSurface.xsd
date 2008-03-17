@@ -60,15 +60,13 @@
 			</xs:sequence>
 			<xs:attribute name="NumberOfPolys" use="required">
 				<xs:simpleType>
-					<xs:restriction base="xs:short">
-
+					<xs:restriction base="xs:integer">
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:attribute>
 			<xs:attribute name="NumberOfPoints" use="required">
 				<xs:simpleType>
-					<xs:restriction base="xs:short">
-			
+					<xs:restriction base="xs:integer">
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:attribute>
