@@ -46,11 +46,21 @@ public class AlgorithmConvolver extends AlgorithmBase {
     
     private float[] kernelBuffer;
     
+    private float[] kernelBufferX;
+    
+    private float[] kernelBufferY;
+    
+    private float[] kernelBufferZ;
+    
     private boolean red, blue, green;
     
     private float[] outputBuffer;
     
     private boolean entireImage;
+    
+    private boolean sqrtXY = false;
+    
+    private boolean sqrtXYZ = false;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     public boolean isRed() {
@@ -82,6 +92,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
 		this.green = green;
 		this.blue = blue;
 	}
+    
 	/**
      * Sets the source and destination images and calls the appropriate method based on image dimensionality.
      *
@@ -102,6 +113,30 @@ public class AlgorithmConvolver extends AlgorithmBase {
     	this.kExtents = kExtents;
     	this.entireImage = entireImage;
     	this.image25D = image25D;
+    }
+    
+    public AlgorithmConvolver(ModelImage destImage, ModelImage srcImage, float[] kernelX, float[] kernelY,
+                              int[] kExtents, boolean entireImage){
+        super(destImage, srcImage);
+        kernelBufferX = kernelX;
+        kernelBufferY = kernelY;
+        this.kExtents = kExtents;
+        this.entireImage = entireImage;
+        image25D = true;
+        sqrtXY = true;
+    }
+    
+    
+    public AlgorithmConvolver(ModelImage destImage, ModelImage srcImage, float[] kernelX, float[] kernelY, float[] kernelZ,
+            int[] kExtents, boolean entireImage){
+        super(destImage, srcImage);
+        kernelBufferX = kernelX;
+        kernelBufferY = kernelY;
+        kernelBufferZ = kernelZ;
+        this.kExtents = kExtents;
+        this.entireImage = entireImage;
+        image25D = false;
+        sqrtXYZ = true;
     }
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -170,6 +205,91 @@ public class AlgorithmConvolver extends AlgorithmBase {
 
         if (norm > 0) {
             return (sum / norm);
+        } else {
+            return 0;
+        }
+    }
+    
+    /**
+     * A static function that convolves a kernel with an image at a position.
+     *
+     * @param   pix       index indicating location of convolution
+     * @param   iExtents  image dimensions
+     * @param   image     image data
+     * @param   kExtents  kernel dimensions
+     * @param   kernelX   kernel data
+     * @param   kernelY   kernel data
+     *
+     * @return  the value of the pixel after convolution with the kernel
+     */
+    public static final synchronized float convolve2DPtXY(int pix, int[] iExtents, float[] image, int[] kExtents,
+                                                        float[] kernelX, float[] kernelY) {
+
+        int i, j;
+        int offsetX, offsetY;
+        int xDim = iExtents[0];
+        int yDim = iExtents[1];
+        int xKDim = kExtents[0];
+        int yKDim = kExtents[1];
+        int yLimit = xDim * yDim;
+
+        int startX, startY;
+        int endX, endY;
+        int count;
+        float sumX;
+        float sumY;
+        float normX = 0;
+        float normY = 0;
+        double ptX;
+        double ptY;
+
+        offsetX = (pix % xDim) - (xKDim / 2);
+        offsetY = (pix / xDim) - (yKDim / 2);
+        sumX = 0;
+        sumY = 0;
+        count = 0;
+        startY = offsetY * xDim;
+        endY = startY + (yKDim * xDim);
+
+        for (j = startY; j < endY; j += xDim) {
+            startX = j + offsetX;
+            endX = startX + xKDim;
+
+            for (i = startX; i < endX; i++) {
+
+                if ((j >= 0) && (j < yLimit) && ((i - j) >= 0) && ((i - j) < xDim)) {
+
+                    // Needed for compiler bug
+                    // Run same image twice from AlgorithmLevelSetDiffusion and
+                    // array index out of bounds exception shows up
+                    if (count >= kernelX.length) {
+                        break;
+                    }
+
+                    sumX += kernelX[count] * image[i];
+                    sumY += kernelY[count] * image[i];
+
+                    if (kernelX[count] >= 0) {
+                        normX += kernelX[count];
+                    } else {
+                        normX += -kernelX[count];
+                    }
+                    
+                    if (kernelY[count] >= 0) {
+                        normY += kernelY[count];
+                    } else {
+                        normY += -kernelY[count];
+                    }
+                }
+
+                count++;
+            }
+        }
+
+        if ((normX > 0) && (normY > 0)) {
+            ptX = sumX/ normX;
+            ptY = sumY/ normY;
+            return (float)Math.sqrt(ptX*ptX + ptY*ptY);
         } else {
             return 0;
         }
@@ -351,6 +471,85 @@ public class AlgorithmConvolver extends AlgorithmBase {
 
         if (norm > 0) {
             return (sum / norm);
+        } else {
+            return 0;
+        }
+    }
+    
+    /**
+     * A static function that convolves a kernel with an RGB image at a position.
+     *
+     * @param   pix       index indicating location of convolution
+     * @param   iExtents  image dimensions
+     * @param   image     image data
+     * @param   kExtents  kernel dimensions
+     * @param   kernelX   kernel data
+     * @param   kernelY   kernel data
+     *
+     * @return  the value of the pixel after convolution with the kernel
+     */
+    public static final float convolve2DRGBPtXY(int pix, int[] iExtents, float[] image, int[] kExtents,
+                                                float[] kernelX, float[] kernelY) {
+
+        int i, j;
+        int offsetX, offsetY;
+        int xDim = iExtents[0];
+        int yDim = iExtents[1];
+        int yLimit = 4 * xDim * yDim;
+        int xKDim = kExtents[0];
+        int yKDim = kExtents[1];
+        int offset = 4 * xDim;
+
+        int startX, startY;
+        int endX, endY;
+        int count;
+        float sumX;
+        float normX = 0;
+        float sumY;
+        float normY = 0;
+        double xPt;
+        double yPt;
+
+        offsetX = (pix % (offset)) - ((xKDim) / 2 * 4);
+        offsetY = (pix / (offset)) - ((yKDim) / 2);
+
+        sumX = 0;
+        sumY = 0;
+        count = 0;
+        startY = offsetY * offset;
+        endY = startY + (yKDim * offset);
+
+        for (j = startY; j < endY; j += offset) {
+            startX = j + offsetX;
+            endX = startX + (xKDim * 4);
+
+            for (i = startX; i < endX; i += 4) {
+
+                if ((j >= 0) && (j < yLimit) && ((i - j) >= 0) && ((i - j) < offset)) {
+                    sumX += kernelX[count] * image[i];
+                    sumY += kernelY[count] * image[i];
+
+                    if (kernelX[count] >= 0) {
+                        normX += kernelX[count];
+                    } else {
+                        normX += -kernelX[count];
+                    }
+                    
+                    if (kernelY[count] >= 0) {
+                        normY += kernelY[count];
+                    } else {
+                        normY += -kernelY[count];
+                    }
+                }
+
+                count++;
+            }
+        }
+
+        if ((normX > 0) && (normY > 0)) {
+            xPt = sumX/ normX;
+            yPt = sumY/ normY;
+            return (float)Math.sqrt(xPt*xPt + yPt*yPt);
         } else {
             return 0;
         }
@@ -934,6 +1133,86 @@ public class AlgorithmConvolver extends AlgorithmBase {
 		}
     }
     
+    private final void convolve2DXY(int startSlice, int endSlice){
+        boolean color = srcImage.isColorImage();
+        int cFactor = (color)?4:1;
+        int length = cFactor * srcImage.getSliceSize();
+        for (int s = startSlice; s < endSlice; s++) {
+            int start = s * length;
+            float[] buffer = new float[length];
+            try {
+                srcImage.exportData(start, length, buffer); // locks and
+                                                            // releases lock
+            } catch (IOException error) {
+                errorCleanUp("Algorithm Gaussian Blur: Image(s) locked", false);
+
+                return;
+            }
+
+            if (color == true) {
+
+                for (int i = 0, idx = start; (i < length) && !threadStopped; i += 4, idx += 4) {
+                    progress++;
+                    if ((progress % progressModulus) == 0) {
+                        fireProgressStateChanged((int)(progress/progressModulus));
+                    }
+
+                    if ((entireImage == true) || mask.get(i / 4)) {
+                        outputBuffer[idx] = buffer[i]; // alpha
+
+                        if (red) {
+                            outputBuffer[idx + 1] = AlgorithmConvolver
+                                    .convolve2DRGBPtXY(i + 1, srcImage
+                                            .getExtents(), buffer, kExtents,
+                                            kernelBufferX, kernelBufferY);
+                        } else {
+                            outputBuffer[idx + 1] = buffer[i + 1];
+                        }
+
+                        if (green) {
+                            outputBuffer[idx + 2] = AlgorithmConvolver
+                                    .convolve2DRGBPtXY(i + 2, srcImage
+                                            .getExtents(), buffer, kExtents,
+                                            kernelBufferX, kernelBufferY);
+                        } else {
+                            outputBuffer[idx + 2] = buffer[i + 2];
+                        }
+
+                        if (blue) {
+                            outputBuffer[idx + 3] = AlgorithmConvolver
+                                    .convolve2DRGBPtXY(i + 3, srcImage
+                                            .getExtents(), buffer, kExtents,
+                                            kernelBufferX, kernelBufferY);
+                        } else {
+                            outputBuffer[idx + 3] = buffer[i + 3];
+                        }
+                    } else {
+                        outputBuffer[idx] = buffer[i];
+                        outputBuffer[idx + 1] = buffer[i + 1];
+                        outputBuffer[idx + 2] = buffer[i + 2];
+                        outputBuffer[idx + 3] = buffer[i + 3];
+                    }
+                }
+            } else {
+
+                for (int i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
+                    progress++;
+                    if ((progress % progressModulus) == 0) {
+                        fireProgressStateChanged((int)(progress/progressModulus));
+                    }
+
+                    if ((entireImage == true) || mask.get(i)) {
+                        outputBuffer[idx] = AlgorithmConvolver.convolve2DPtXY(i,
+                                srcImage.getExtents(), buffer, kExtents,
+                                kernelBufferX, kernelBufferY);
+                    } else {
+                        outputBuffer[idx] = buffer[i];
+                    }
+                }
+            }
+        }
+    }
+    
     private final void convolve3D(int start, int end, float[] iImage, int index){
     	if(srcImage.isColorImage()){
     		for (int i = start; (i < end) && !threadStopped; i += 4) {
@@ -1043,7 +1322,12 @@ public class AlgorithmConvolver extends AlgorithmBase {
         progress = minProgressValue;
         progressModulus = length / (maxProgressValue-minProgressValue);
 
-        convolve2D(0, 1);
+        if (sqrtXY) {
+            convolve2DXY(0, 1);
+        }
+        else {
+            convolve2D(0, 1);
+        }
 
         fireProgressStateChanged(maxProgressValue);
 
