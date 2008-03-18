@@ -108,12 +108,12 @@ public class HierarchicalTriMesh extends TriMesh
             // Compute intersections with the model-space triangles.
             int iTQuantity = kTree.GetTriangleQuantity();
             //System.err.println(iTQuantity);
-            int[] aiTriangles = kTree.GetTriangles();
+            Vector<Integer> kTriangles = kTree.GetTriangles();
             for (int i = 0; i < iTQuantity; i++)
             {
                 int iV0, iV1, iV2;
                 int[] aiTris = new int[3];
-                if (!pkMesh.GetTriangle(aiTriangles[i],aiTris) )
+                if (!pkMesh.GetTriangle(kTriangles.get(i),aiTris) )
                 {
                     continue;
                 }

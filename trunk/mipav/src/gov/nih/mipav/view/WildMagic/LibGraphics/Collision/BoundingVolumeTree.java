@@ -28,7 +28,7 @@ public abstract class BoundingVolumeTree implements Comparator<BoundingVolumeTre
     // abstract base class.
     public void disposeLocal ()
     {
-        m_aiTriangle = null;
+        m_kTriangles = null;
         m_pkLChild = null;
         m_pkRChild = null;
     }
@@ -74,11 +74,11 @@ public abstract class BoundingVolumeTree implements Comparator<BoundingVolumeTre
     }
     public int GetTriangle (int i)
     {
-        return m_aiTriangle[i];
+        return m_kTriangles.get(i);
     }
-    public final int[] GetTriangles ()
+    public final Vector<Integer> GetTriangles ()
     {
-        return m_aiTriangle;
+        return m_kTriangles;
     }
 
     public void UpdateWorldBound ()
@@ -93,7 +93,7 @@ public abstract class BoundingVolumeTree implements Comparator<BoundingVolumeTre
         m_pkLChild = null;
         m_pkRChild = null;
         m_iTriangleQuantity = 0;
-        m_aiTriangle = null;
+        m_kTriangles = null;
     }    
 
     protected BoundingVolumeTree (final TriMesh pkMesh)
@@ -102,7 +102,7 @@ public abstract class BoundingVolumeTree implements Comparator<BoundingVolumeTre
         m_pkLChild = null;
         m_pkRChild = null;
         m_iTriangleQuantity = 0;
-        m_aiTriangle = null;
+        m_kTriangles = null;
     }
 
     protected BoundingVolumeTree (BoundingVolume.BVType eBVType, final TriMesh pkMesh )
@@ -152,7 +152,7 @@ public abstract class BoundingVolumeTree implements Comparator<BoundingVolumeTre
         akCentroid = null;
         aiISplit = null;
         aiOSplit = null;
-
+/*
         if (bStoreInteriorTris)
         {
             float fEpsilon = 1e-05f;
@@ -162,6 +162,7 @@ public abstract class BoundingVolumeTree implements Comparator<BoundingVolumeTre
                 System.err.println("ContainsLeafData failed");
             }
         }
+        */
     }
 
 
@@ -193,10 +194,10 @@ public abstract class BoundingVolumeTree implements Comparator<BoundingVolumeTre
             {
                 // leaf node
                 m_iTriangleQuantity = i1 - i0 + 1;
-                m_aiTriangle = new int[m_iTriangleQuantity];
+                m_kTriangles = new Vector<Integer>();
                 for ( int i = 0; i < m_iTriangleQuantity; i++ )
                 {
-                    m_aiTriangle[i] = aiISplit[i0+i];
+                    m_kTriangles.add(i, aiISplit[i0+i]);
                 }
                 m_pkLChild = null;
                 m_pkRChild = null;
@@ -217,10 +218,10 @@ public abstract class BoundingVolumeTree implements Comparator<BoundingVolumeTre
                 if (bStoreInteriorTris)
                 {
                     m_iTriangleQuantity = i1 - i0 + 1;
-                    m_aiTriangle = new int[m_iTriangleQuantity];
+                    m_kTriangles = new Vector<Integer>();
                     for ( int i = 0; i < m_iTriangleQuantity; i++ )
                     {
-                        m_aiTriangle[i] = aiISplit[i0+i];
+                        m_kTriangles.add(i, aiISplit[i0+i]);
                     }
 
                     //System.err.println("Interior "  + (i1 - i0 + 1) + " " + aiISplit[i0] + " " + aiISplit[m_iTriangleQuantity-1] );
@@ -228,11 +229,9 @@ public abstract class BoundingVolumeTree implements Comparator<BoundingVolumeTre
                 else
                 {
                     m_iTriangleQuantity = 0;
-                    m_aiTriangle = null;
+                    m_kTriangles = null;
                 }
-
                 SplitTriangles(akCentroid,i0,i1,aiISplit,j01,aiOSplit,kLine);
-
                 if ( eBVType == BoundingVolume.BVType.BV_BOX )
                 {
                     m_pkLChild = new BoxBVTree(m_pkMesh);
@@ -342,7 +341,7 @@ public abstract class BoundingVolumeTree implements Comparator<BoundingVolumeTre
     // the triangle quantity and array of triangle indices for the mesh that
     // the node represents.
     protected int m_iTriangleQuantity;
-    protected int[] m_aiTriangle;
+    protected Vector<Integer> m_kTriangles;
 
     // Checks to see if the vertices corresponding to the triangle mesh at
     // at each tree node are contained by the model space bounding volume.
@@ -370,7 +369,7 @@ public abstract class BoundingVolumeTree implements Comparator<BoundingVolumeTre
         //System.err.println("Test Leaf " + m_iTriangleQuantity +  " " + m_aiTriangle[0] + " " + m_aiTriangle[m_iTriangleQuantity-1]);
         for (int iT = 0; iT < m_iTriangleQuantity; iT++)
         {
-            int j = 3*m_aiTriangle[iT];
+            int j = 3*m_kTriangles.get(iT);
             for (int i = 0; i < 3; i++)
             {
                 Vector3f kPoint = pkVBuffer.GetPosition3(aiIndex[j++]);

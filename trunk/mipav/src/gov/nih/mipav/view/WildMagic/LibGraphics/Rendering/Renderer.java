@@ -1194,6 +1194,8 @@ public abstract class Renderer
             }
         }
     }
+    
+    public abstract Attributes GetVBufferInputAttributes( Bindable pkVBuffer );
 
     /** Resource loading and releasing.
      * @param pkIBuffer, load all resources for the IndexBuffer.

@@ -90,8 +90,8 @@ public class BoxBV extends BoundingVolume
     {
         if (pkVertices != null)
         {
-            int iVQuantity = pkVertices.length;
-            m_kBox = ContBox3f.ContOrientedBox(iVQuantity,pkVertices);
+            //int iVQuantity = pkVertices.length;
+            //m_kBox = ContBox3f.ContOrientedBox(iVQuantity,pkVertices);
         }
     }
 

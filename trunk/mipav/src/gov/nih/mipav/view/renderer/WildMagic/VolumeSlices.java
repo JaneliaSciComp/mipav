@@ -150,6 +150,8 @@ public class VolumeSlices extends VolumeObject
         akOutlineSquare[2].SetPosition3( 2, 0, m_fY, fZ ) ;
         akOutlineSquare[2].SetPosition3( 3, m_fX, m_fY, fZ ) ;
 
+        System.err.println( "Bounding box " + m_fX + " " + m_fY + " " + m_fZ );
+        
         m_akBoundingBox = new Polyline[3];
         for ( int i = 0; i < 3; i++ )
         {

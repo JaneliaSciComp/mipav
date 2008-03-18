@@ -86,6 +86,17 @@ public class Vector4f
         }
         m_afTuple = null;
     }
+
+    /** copy construction
+     * @param rkV, vector to copy.
+     */
+    public void SetData ( Vector4f rkV)
+    {
+        m_afTuple[0] = rkV.m_afTuple[0];
+        m_afTuple[1] = rkV.m_afTuple[1];
+        m_afTuple[2] = rkV.m_afTuple[2];
+        m_afTuple[3] = rkV.m_afTuple[3];
+    }
     
     /** construction
      * @param fX, x-value

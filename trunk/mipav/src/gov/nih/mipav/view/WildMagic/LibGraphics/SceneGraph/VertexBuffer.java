@@ -109,6 +109,48 @@ public class VertexBuffer extends Bindable
         return m_iChannelQuantity;
     }
 
+    public void CopyData( float[] afChannel )
+    {
+        for ( int i = 0; i < m_iChannelQuantity; i++ )
+        {
+            m_afChannel[i] = afChannel[i];
+        }
+    }
+
+
+    public float[] GetData( )
+    {
+        return m_afChannel;
+    }
+    
+    /** 
+     */
+    public float[] GetVertex(int i)
+    {
+        assert(m_kAttributes.GetPChannels() == 3);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetPOffset();
+        float[] afVertexData = new float[m_iVertexSize];
+        for ( int j = 0; j < m_iVertexSize; j++ )
+        {
+            afVertexData[j] = m_afChannel[ iIndex + j ];
+        }
+        return afVertexData;
+    }
+    
+
+    /** 
+     */
+    public void SetVertex(int i, float[] afVertexData)
+    {
+        assert(m_kAttributes.GetPChannels() == 3);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetPOffset();
+        for ( int j = 0; j < m_iVertexSize; j++ )
+        {
+            m_afChannel[ iIndex + j ] = afVertexData[j];
+        }
+    }
+    
+    
     /** Get the position at the given index. Use these accessors for
      * convenience.  No range checking is performed, so you should be sure
      * that the attribute exists and that the number of channels is correct.
@@ -207,6 +249,22 @@ public class VertexBuffer extends Bindable
                              m_afChannel[ iIndex + 2 ] );
     }
     
+    
+    /** Get the normal at the given index. Use these accessors for
+     * convenience.  No range checking is performed, so you should be sure
+     * that the attribute exists and that the number of channels is correct.
+     * @param i, vertex index.
+     * @return normal.
+     */
+    public Vector3f GetNormal3 (int i)
+    {
+        assert(m_kAttributes.GetNChannels() == 3);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetNOffset();
+        return new Vector3f( m_afChannel[ iIndex + 0 ],
+                             m_afChannel[ iIndex + 1 ],
+                             m_afChannel[ iIndex + 2 ] );
+    }
+    
     public float GetNormal3fX (int i)
     {
         assert(m_kAttributes.GetNChannels() == 3);
@@ -286,7 +344,23 @@ public class VertexBuffer extends Bindable
                              m_afChannel[ iIndex + 2 ],
                              m_afChannel[ iIndex + 3 ] );
     }
-
+    
+    /** Get the color at the given index. Use these accessors for convenience.
+     * No range checking is performed, so you should be sure that the
+     * attribute exists and that the number of channels is correct.
+     * @param iUnit, color unit (1-4).
+     * @param i, vertex index.
+     * @return color.
+     */
+    public ColorRGBA GetColor4 (int iUnit, int i)
+    {
+        assert(m_kAttributes.GetCChannels(iUnit) == 4);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetCOffset(iUnit);
+        return new ColorRGBA( m_afChannel[ iIndex + 0 ], 
+                             m_afChannel[ iIndex + 1 ],
+                             m_afChannel[ iIndex + 2 ],
+                             m_afChannel[ iIndex + 3 ] );
+    }
     /** Set the color at the given index.
      * @param iUnit, color unit (1-4).
      * @param i, vertex index.
@@ -322,12 +396,18 @@ public class VertexBuffer extends Bindable
      */
     public void SetColor4 (int iUnit, int i, float fR, float fG, float fB, float fA)
     {
-        assert(m_kAttributes.GetCChannels(iUnit) == 4);
-        int iIndex = m_iVertexSize*i + m_kAttributes.GetCOffset(iUnit);
-        m_afChannel[ iIndex + 0 ] = fR; 
-        m_afChannel[ iIndex + 1 ] = fG;
-        m_afChannel[ iIndex + 2 ] = fB;
-        m_afChannel[ iIndex + 3 ] = fA;
+        if (m_kAttributes.GetCChannels(iUnit) == 4)
+        {
+            int iIndex = m_iVertexSize*i + m_kAttributes.GetCOffset(iUnit);
+            m_afChannel[ iIndex + 0 ] = fR; 
+            m_afChannel[ iIndex + 1 ] = fG;
+            m_afChannel[ iIndex + 2 ] = fB;
+            m_afChannel[ iIndex + 3 ] = fA;
+        }
+        else
+        {
+            System.err.println("NO COLOR4");
+        }
     }    
     
     /** Set the color at the given index.
@@ -449,6 +529,23 @@ public class VertexBuffer extends Bindable
         assert(m_kAttributes.GetTChannels(iUnit) == 2);
         int iIndex = m_iVertexSize*i + m_kAttributes.GetTOffset(iUnit);
         kResult.SetData( m_afChannel[ iIndex + 0 ],
+                             m_afChannel[ iIndex + 1 ],
+                             m_afChannel[ iIndex + 2 ] );
+    }
+    
+    
+    /** Get the texture coordinate (3D) at the given index. Use these
+     * accessors for convenience.  No range checking is performed, so you
+     * should be sure that the attribute exists and that the number of
+     * channels is correct.
+     * @param i, vertex index.
+     * @return texture coordinate.
+     */
+    public Vector3f GetTCoord3 (int iUnit, int i)
+    {
+        assert(m_kAttributes.GetTChannels(iUnit) == 2);
+        int iIndex = m_iVertexSize*i + m_kAttributes.GetTOffset(iUnit);
+        return new Vector3f( m_afChannel[ iIndex + 0 ],
                              m_afChannel[ iIndex + 1 ],
                              m_afChannel[ iIndex + 2 ] );
     }

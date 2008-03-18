@@ -15,6 +15,7 @@
 
 package gov.nih.mipav.view.WildMagic.LibFoundation.Containment;
 
+import java.util.Vector;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Approximation.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 
@@ -45,9 +46,9 @@ public class ContBox3f
     // Compute an oriented bounding box of the points.  The box center is the
     // average of the points.  The box axes are the eigenvectors of the covariance
     // matrix.
-    public static Box3f ContOrientedBox (int iQuantity, final Vector3f[] akPoint)
+    public static Box3f ContOrientedBox (int iQuantity, final Vector<Vector3f> kMeshVertices)
     {
-        Box3f kBox = ApprGaussPointsFit3f.GaussPointsFit3f(iQuantity,akPoint);
+        Box3f kBox = ApprGaussPointsFit3f.GaussPointsFit3f(iQuantity,kMeshVertices);
 
         // Let C be the box center and let U0, U1, and U2 be the box axes.  Each
         // input point is of the form X = C + y0*U0 + y1*U1 + y2*U2.  The
@@ -56,13 +57,13 @@ public class ContBox3f
         //   C' = C + 0.5*(min(y0)+max(y0))*U0 + 0.5*(min(y1)+max(y1))*U1 +
         //        0.5*(min(y2)+max(y2))*U2
 
-        Vector3f kDiff = akPoint[0].sub( kBox.Center );
+        Vector3f kDiff = kMeshVertices.get(0).sub( kBox.Center );
         Vector3f kMin = new Vector3f(kDiff.Dot(kBox.Axis[0]),kDiff.Dot(kBox.Axis[1]),
                                      kDiff.Dot(kBox.Axis[2]));
         Vector3f kMax = new Vector3f(kMin);
         for (int i = 1; i < iQuantity; i++)
         {
-            kDiff = akPoint[i].sub( kBox.Center);
+            kDiff = kMeshVertices.get(i).sub( kBox.Center);
             for (int j = 0; j < 3; j++)
             {
                 float fDot = kDiff.Dot(kBox.Axis[j]);

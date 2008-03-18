@@ -30,7 +30,10 @@ public class TriMesh extends Triangles
     {
         super(pkVBuffer,pkIBuffer);
         Type = GeometryType.GT_TRIMESH;
-        UpdateModelNormals();
+        if ( pkIBuffer != null )
+        {
+            UpdateModelNormals();
+        }
     }
 
     /** Construction.

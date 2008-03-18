@@ -37,7 +37,7 @@ public class BoxBVTree extends BoundingVolumeTree
         m_pkLChild = null;
         m_pkRChild = null;
         m_iTriangleQuantity = 0;
-        m_aiTriangle = null;
+        m_kTriangles = null;
     }
 
     public BoxBVTree (final TriMesh pkMesh, int iMaxTrisPerLeaf,
@@ -76,13 +76,9 @@ public class BoxBVTree extends BoundingVolumeTree
         abValid = null;
 
         BoxBV pkModelBound = new BoxBV();
-        Vector3f[] akVertices = new Vector3f[kMeshVertices.size()];
-        for (i = 0; i < kMeshVertices.size(); i++)
-        {
-            akVertices[i] = kMeshVertices.get(i);
-        }
         pkModelBound.SetBox( ContBox3f.ContOrientedBox((int)kMeshVertices.size(),
-                akVertices) );
+                kMeshVertices) );
+        /*
         for (i = 0; i < kMeshVertices.size(); i++)
         {
             if ( !ContBox3f.InBox(akVertices[i],pkModelBound.GetBox()) )
@@ -90,7 +86,7 @@ public class BoxBVTree extends BoundingVolumeTree
                 System.err.println( "ContOrientedBox incorrect" );
             }
         }
-        
+        */
         rkLine.Origin = new Vector3f(pkModelBound.GetBox().Center);
         rkLine.Direction = new Vector3f(pkModelBound.GetBox().Axis[2]);
         return pkModelBound;

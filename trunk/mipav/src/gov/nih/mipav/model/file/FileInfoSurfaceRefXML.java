@@ -6,6 +6,9 @@ import gov.nih.mipav.view.dialogs.*;
 import javax.media.j3d.*;
 import javax.vecmath.*;
 
+
+import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
+
 /**
  * This structure contains the information that describes how an XML surface (see surface.xsd and FileSurfaceXML.java)
  * is stored on disk.
@@ -98,6 +101,27 @@ public class FileInfoSurfaceRefXML extends FileInfoXML {
      */
     public Material getMaterial() {
         return m_kMaterial;
+    }
+    
+
+    /**
+     * Returns the material properties for the surface:
+     *
+     * @return  DOCUMENT ME!
+     */
+    public MaterialState getMaterialWM() {
+        MaterialState kMaterialState = new MaterialState();
+        Color3f kColor = new Color3f();
+        m_kMaterial.getAmbientColor(kColor);
+        kMaterialState.Ambient.SetData( kColor.x, kColor.y, kColor.z );
+        m_kMaterial.getDiffuseColor(kColor);
+        kMaterialState.Diffuse.SetData( kColor.x, kColor.y, kColor.z );
+        m_kMaterial.getEmissiveColor(kColor);
+        kMaterialState.Emissive.SetData( kColor.x, kColor.y, kColor.z );
+        m_kMaterial.getSpecularColor(kColor);
+        kMaterialState.Specular.SetData( kColor.x, kColor.y, kColor.z );
+        kMaterialState.Shininess = m_kMaterial.getShininess();        
+        return kMaterialState;
     }
 
     /**

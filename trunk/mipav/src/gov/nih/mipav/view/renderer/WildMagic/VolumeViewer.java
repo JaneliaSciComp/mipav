@@ -18,6 +18,7 @@ import gov.nih.mipav.view.renderer.surfaceview.rfaview.*;
 import gov.nih.mipav.view.renderer.volumeview.*;
 
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Collision.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
@@ -89,13 +90,14 @@ implements MouseListener, ItemListener, ChangeListener {
     private JPanelSlices sliceGUI;
     private JPanelSurface_WM surfaceGUI;
     private JPanelDisplay_WM displayGUI;
+    private JPanelGeodesic_WM geodesicGUI;
     private JPanelSculptor sculptGUI;
     private JPanelSurfaceTexture_WM surfaceTextureGUI;
 
     private JCheckBox m_kDisplayVolumeCheck;
     private JCheckBox m_kDisplaySlicesCheck;
     private JCheckBox m_kDisplaySurfaceCheck;
-
+    private JCheckBox m_kStereoCheck;
     /** Button to invoke all the six clipping planes. */
     private JButton clipButton;
 
@@ -283,6 +285,8 @@ implements MouseListener, ItemListener, ChangeListener {
 
     private JSlider m_kVolumeBlendSlider;
 
+    private JDialogStereoControls m_kStereoIPD = null;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
     /**
      * Specific constructor call from the VolumeViewerDTI.   
@@ -410,13 +414,16 @@ implements MouseListener, ItemListener, ChangeListener {
             updateRayTracingSteps();
             raycastRenderWM.DisplayVolumeRaycast( m_kDisplayVolumeCheck.isSelected() );
         } else if (command.equals("Stereo")) {
-
-            /* Launch the stereo viewer for the volumeTexture. Using the
-             * current viewing transofrm from the SurfaceRender: */
-//             Transform3D kTransform = new Transform3D();
-//             surRender.getSceneRootTG().getTransform(kTransform);
-//             new JStereoWindow(surRender.getVolumeTextureCopy(0), surRender.getVolumeTextureCopy(1), kTransform,
-//                               surRender);
+            if ( (m_kStereoIPD == null) && m_kStereoCheck.isSelected() )
+            {
+                m_kStereoIPD = new JDialogStereoControls( null, this, .02f );
+            }
+            else if ( (m_kStereoIPD != null) && !m_kStereoCheck.isSelected() )
+            {
+                m_kStereoIPD.close();
+                m_kStereoIPD = null;
+            }
+            raycastRenderWM.SetStereo( m_kStereoCheck.isSelected() );
         } else if (command.equals("ChangeLight")) {
             insertTab("Light", lightPanel);
         } else if (command.equals("Box")) {
@@ -623,7 +630,9 @@ implements MouseListener, ItemListener, ChangeListener {
      */
     public void buildGeodesic() {
         m_kGeodesicPanel = new JPanel();
-//         m_kGeodesicPanel.add(surRender.getGeodesicPanel().getMainPanel());
+        geodesicGUI = new JPanelGeodesic_WM(this);
+        geodesicGUI.setVisible(true);
+        m_kGeodesicPanel.add(geodesicGUI.getMainPanel());
         maxPanelWidth = Math.max(m_kGeodesicPanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -2545,8 +2554,15 @@ implements MouseListener, ItemListener, ChangeListener {
         m_kDisplaySurfaceCheck.setActionCommand( "Surface");
         m_kDisplaySurfaceCheck.addActionListener(this);
         viewToolBar.add(m_kDisplaySurfaceCheck);
-
-        viewToolBar.add(toolbarBuilder.buildButton("Stereo", "Stereo volume renderer", "stereo"));
+        
+        
+        m_kStereoCheck = new JCheckBox( "Stereo" );
+        m_kStereoCheck.setSelected(false);
+        m_kStereoCheck.setEnabled(true);
+        m_kStereoCheck.setActionCommand( "Stereo");
+        m_kStereoCheck.addActionListener(this);
+        viewToolBar.add(m_kStereoCheck);
+        
         viewToolBar.add(ViewToolBarBuilder.makeSeparator());
         viewToolBar.add(toolbarBuilder.buildButton("Sculpt", "Sculpt and Remove Volume Region", "sculpt"));
         viewToolBar.add(ViewToolBarBuilder.makeSeparator());
@@ -2674,6 +2690,7 @@ implements MouseListener, ItemListener, ChangeListener {
         surfaceGUI.resizePanel(maxPanelWidth, height);
         surfaceTextureGUI.resizePanel(maxPanelWidth, height);
         displayGUI.resizePanel(maxPanelWidth, height);
+        geodesicGUI.resizePanel(maxPanelWidth, height);
         m_kLightsPanel.resizePanel(maxPanelWidth, height);
         ((JPanelClip_WM)clipBox).resizePanel(maxPanelWidth, height);
     }
@@ -2805,17 +2822,22 @@ implements MouseListener, ItemListener, ChangeListener {
         }
     }
     
-    public void addSurface(TriMesh[] akSurfaces)
+    public void addSurface(TriMesh[] akSurfaces, boolean bReplace)
     {
         if ( raycastRenderWM != null )
         {
-            raycastRenderWM.addSurface(akSurfaces);
+            raycastRenderWM.addSurface(akSurfaces, bReplace);
             insertTab("Light", lightPanel);
             m_kLightsPanel.enableLight(0, true);
             insertTab("Surface", surfacePanel);
             m_kDisplaySurfaceCheck.setSelected(true);
             m_kDisplaySurfaceCheck.setEnabled(true);
             raycastRenderWM.DisplaySurface(true);
+        }
+        if ( geodesicGUI != null )
+        {
+            geodesicGUI.setEnabled(true);
+            geodesicGUI.setSurfacePanel(surfaceGUI);
         }
     }    
 
@@ -2983,5 +3005,97 @@ implements MouseListener, ItemListener, ChangeListener {
             raycastRenderWM.SetImageNew(kSurfaceName, kImage);
         }
     }
+    
+    
+    public void enableGeodesic( boolean bEnable )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.enableGeodesic(bEnable);
+        }
+    }
+    
+    public void setGeodesic( TriMesh kMesh, PickRecord kPickPoint )
+    {
+        if ( geodesicGUI != null )
+        {
+            geodesicGUI.setPickedPoint( kPickPoint, kMesh );
+        }
+    }
+    
+    public void addGeodesic( TriMesh kSurface, Geometry kNew, int iGroup )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.addGeodesic(kSurface, kNew, iGroup);
+        }
+    }   
+    
+    public void removeGeodesic( TriMesh kSurface, int iNode, int iGroup )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.removeGeodesic(kSurface, iNode, iGroup);
+        }
+    }    
+    
+    public void removeAllGeodesic( TriMesh kSurface )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.removeAllGeodesic(kSurface);
+        }
+    }
+    
+    public void replaceGeodesic(TriMesh kOld, TriMesh kNew) {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.replaceGeodesic(kOld, kNew);
+        }
+    }
+
+    public void toggleGeodesicPathDisplay(String kSurfaceName, int iWhich)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.toggleGeodesicPathDisplay(kSurfaceName, iWhich);
+        }
+    }
+    
+    public void smoothMesh( String kSurfaceName, int iteration, float alpha, boolean volumeLimit, float volumePercent)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.smoothMesh(kSurfaceName, iteration, alpha, volumeLimit, volumePercent);
+        }
+    }
+    
+    
+    public void smoothTwo( String kSurfaceName, int iteration, float fStiffness, boolean volumeLimit, float volumePercent)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.smoothTwo(kSurfaceName, iteration, fStiffness, volumeLimit, volumePercent);
+        }
+    }
+    
+    
+    
+    public void smoothThree( String kSurfaceName, int iteration, float lambda, float mu)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.smoothThree(kSurfaceName, iteration, lambda, mu);
+        }
+    }
+
+    public void setIPD( float fIPD )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.setIPD(fIPD);
+        }
+    }
+
     
 }
