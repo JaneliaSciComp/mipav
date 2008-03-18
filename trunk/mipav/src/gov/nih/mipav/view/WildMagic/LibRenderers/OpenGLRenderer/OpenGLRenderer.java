@@ -1763,13 +1763,13 @@ public class OpenGLRenderer extends Renderer
         pkResource.ID = m_aiParams[0];
         gl.glBindTexture(eTarget,pkResource.ID);
 
-        System.err.print( "     LoadTexture  " + pkTexture.GetImage().GetName() + " " + pkResource.ID + " SI "
-                + pkSI.GetName() + " " + pkSI.GetTextureUnit() + " " + pkSI.GetBaseRegister() );
-        for ( int i = 0; i < pkTexture.GetImage().GetDimension(); i++ )
-        {
-            System.err.print( " " + pkTexture.GetImage().GetBound(i) );
-        }
-        System.err.println();
+//         System.err.print( "     LoadTexture  " + pkTexture.GetImage().GetName() + " " + pkResource.ID + " SI "
+//                 + pkSI.GetName() + " " + pkSI.GetTextureUnit() + " " + pkSI.GetBaseRegister() );
+//         for ( int i = 0; i < pkTexture.GetImage().GetDimension(); i++ )
+//         {
+//             System.err.print( " " + pkTexture.GetImage().GetBound(i) );
+//         }
+//         System.err.println();
 
         // Set the filter mode.
         Texture.FilterType eFType = pkTexture.GetFilterType();

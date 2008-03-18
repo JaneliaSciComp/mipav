@@ -954,7 +954,7 @@ public class Geodesic_WM {
             kGeodesic_Separate.add(kNewClosedPath);
         }
 
-        System.err.println( "Cut calling creatNewMesh 1 " + iVertexCount + " " + iOldVertexCount );
+        //System.err.println( "Cut calling creatNewMesh 1 " + iVertexCount + " " + iOldVertexCount );
         TriMesh kCutMesh = createNewMesh(m_kModified, iVertexCount, iOldVertexCount);
 
         if (!createEdgeLists(kCutMesh)) {
@@ -978,12 +978,12 @@ public class Geodesic_WM {
 
             int iNumVertsRemoved = findNewMeshes(kCutMesh, kGeodesic_Separate);
 
-            System.err.println( "Cut mesh num verts: " + kCutMesh.VBuffer.GetVertexQuantity() +
-                                " num removed " + iNumVertsRemoved );
+//             System.err.println( "Cut mesh num verts: " + kCutMesh.VBuffer.GetVertexQuantity() +
+//                                 " num removed " + iNumVertsRemoved );
                                 
             if (iNumVertsRemoved < m_iVertexCount) {
                 iVertexCount -= iNumVertsRemoved;
-                System.err.println( "Cut calling creatNewMesh 2 " + iVertexCount + " " + iOldVertexCount );
+//                 System.err.println( "Cut calling creatNewMesh 2 " + iVertexCount + " " + iOldVertexCount );
                 kCutMesh = createNewMesh(kCutMesh, iVertexCount, iOldVertexCount);
             } else {
                 MipavUtil.displayError("Mesh Cut failed 3, clearing cut");
@@ -1876,22 +1876,22 @@ public class Geodesic_WM {
     public void setPickedPoint( PickRecord kPickPoint, TriMesh kMesh )
     {               
         
-        System.err.println( kPickPoint.B0 + " " + kPickPoint.B1 + " " + kPickPoint.B2 );
-        System.err.println( kMesh.VBuffer.GetPosition3fX( kPickPoint.iV0 ) + " " + 
-                kMesh.VBuffer.GetPosition3fY( kPickPoint.iV0 ) + " " +
-                kMesh.VBuffer.GetPosition3fZ( kPickPoint.iV0 ) );
-        System.err.println( kMesh.VBuffer.GetPosition3fX( kPickPoint.iV1 ) + " " + 
-                kMesh.VBuffer.GetPosition3fY( kPickPoint.iV1 ) + " " +
-                kMesh.VBuffer.GetPosition3fZ( kPickPoint.iV1 ) );
-        System.err.println( kMesh.VBuffer.GetPosition3fX( kPickPoint.iV2 ) + " " + 
-                kMesh.VBuffer.GetPosition3fY( kPickPoint.iV2 ) + " " +
-                kMesh.VBuffer.GetPosition3fZ( kPickPoint.iV2 ) );
+//         System.err.println( kPickPoint.B0 + " " + kPickPoint.B1 + " " + kPickPoint.B2 );
+//         System.err.println( kMesh.VBuffer.GetPosition3fX( kPickPoint.iV0 ) + " " + 
+//                 kMesh.VBuffer.GetPosition3fY( kPickPoint.iV0 ) + " " +
+//                 kMesh.VBuffer.GetPosition3fZ( kPickPoint.iV0 ) );
+//         System.err.println( kMesh.VBuffer.GetPosition3fX( kPickPoint.iV1 ) + " " + 
+//                 kMesh.VBuffer.GetPosition3fY( kPickPoint.iV1 ) + " " +
+//                 kMesh.VBuffer.GetPosition3fZ( kPickPoint.iV1 ) );
+//         System.err.println( kMesh.VBuffer.GetPosition3fX( kPickPoint.iV2 ) + " " + 
+//                 kMesh.VBuffer.GetPosition3fY( kPickPoint.iV2 ) + " " +
+//                 kMesh.VBuffer.GetPosition3fZ( kPickPoint.iV2 ) );
                 
         Vector3f kP0 = kMesh.VBuffer.GetPosition3( kPickPoint.iV0 );
         Vector3f kP1 = kMesh.VBuffer.GetPosition3( kPickPoint.iV1 );
         Vector3f kP2 = kMesh.VBuffer.GetPosition3( kPickPoint.iV2 );
         Vector3f kPoint = kP0.scale(kPickPoint.B0).add( kP1.scale( kPickPoint.B1) ).add( kP2.scale( kPickPoint.B2 ) );
-        System.err.println( kPoint.X() + " " + kPoint.Y() + " " + kPoint.Z() );        
+//         System.err.println( kPoint.X() + " " + kPoint.Y() + " " + kPoint.Z() );        
         
         /* Increment the number of picked points. */
         m_iNumPicked++;
@@ -1924,7 +1924,7 @@ public class Geodesic_WM {
             /* Set first wire to be true and last wire to be false: */
             m_bFirstWire = true;
             m_bLastWire = false;
-            System.err.println( "first picked" );
+//             System.err.println( "first picked" );
         }
         /* If this is the second point in the sequence, then draw the
          * point and calculate the geodesic curve connecting the two
@@ -1975,7 +1975,7 @@ public class Geodesic_WM {
                 int[] aiStartIndex = new int[]{ kPickPoint.iV0, kPickPoint.iV1, kPickPoint.iV2 };
                 setStartIndices(aiStartIndex, false);
 
-                System.err.println( "second picked" );
+//                 System.err.println( "second picked" );
                 
                 /* Check that the two end points are not the
                  * same: */
@@ -1983,23 +1983,23 @@ public class Geodesic_WM {
 
                     if (!m_bLivewire) {
 
-                        System.err.println( "computing geodesic" );
+//                         System.err.println( "computing geodesic" );
                         
                         /* Compute the Geodesic curve. The 0.99
                          * parameter is an optimization to the
                          * Dijkstra search. */
                         if (computeGeodesic(0.99f, true)) {
 
-                            System.err.println( "computing geodesic done" );
+//                             System.err.println( "computing geodesic done" );
                             
                             /* Draw the geodesic path */
                             drawPath(kMesh, m_iStart, m_iEnd);
 
-                            System.err.println( "triangulate mesh path" );
+//                             System.err.println( "triangulate mesh path" );
                             /* Triangulate path and export new mesh: */
                             triangulateMeshPath();
 
-                            System.err.println( "triangulate mesh path done" );
+//                             System.err.println( "triangulate mesh path done" );
                             m_bFinished = false;
 
                             drawPoint(kMesh, m_kStartPoint, m_kPickColors[m_iNumPicked % 2]);
@@ -2390,11 +2390,11 @@ public class Geodesic_WM {
             int i1 = m_aiIndex[(iTri * 3) + 1];
             int i2 = m_aiIndex[(iTri * 3) + 2];
 
-            if ( (i0 == i1) || (i0 == i2) || (i1 == i2) )
-            {
-                System.err.println( "Bad tri: " + i0 + " " + i1 + " " + i2 );
-                System.exit(0);
-            }
+//             if ( (i0 == i1) || (i0 == i2) || (i1 == i2) )
+//             {
+//                 System.err.println( "Bad tri: " + i0 + " " + i1 + " " + i2 );
+//                 System.exit(0);
+//             }
             
             addEdge(i0, i1);
             addEdge(i0, i2);
@@ -2484,15 +2484,15 @@ public class Geodesic_WM {
         int iNumAdded = 0;
         int iNumRemoved = 0;
 
-        System.err.println("CreateNewMesh 4: " + iNumTris + " " + m_kRemoveTriangles.size() + " " + m_iNumRemoved + " " + (m_abRemoveTris != null));
-        if (m_abRemoveTris == null)
-        {
-            System.err.println( iNumTris - m_kRemoveTriangles.size() );
-        }
-        else
-        {
-            System.err.println( iNumTris - m_iNumRemoved );
-        }
+//         System.err.println("CreateNewMesh 4: " + iNumTris + " " + m_kRemoveTriangles.size() + " " + m_iNumRemoved + " " + (m_abRemoveTris != null));
+//         if (m_abRemoveTris == null)
+//         {
+//             System.err.println( iNumTris - m_kRemoveTriangles.size() );
+//         }
+//         else
+//         {
+//             System.err.println( iNumTris - m_iNumRemoved );
+//         }
         boolean[] abAdd = new boolean[iNumTris];
         for (int iTri = 0; iTri < iNumTris; iTri++) {
             boolean bAdd = true;
@@ -2525,7 +2525,7 @@ public class Geodesic_WM {
             }
         }
 
-        System.err.println("CreateNewMesh 5: " + iNumAdded + " new size = " + (iNumAdded + m_kNewTriangles.size()));
+//         System.err.println("CreateNewMesh 5: " + iNumAdded + " new size = " + (iNumAdded + m_kNewTriangles.size()));
         int[] aiConnect = new int[(iNumAdded + m_kNewTriangles.size()) *3];
         iNumAdded = 0;
         for (int iTri = 0; iTri < iNumTris; iTri++)
@@ -2551,7 +2551,7 @@ public class Geodesic_WM {
             }
         }
 
-        System.err.println("CreateNewMesh 6: " + iNumAdded);
+//         System.err.println("CreateNewMesh 6: " + iNumAdded);
         /* Add new triangles to the mesh: */
         Vector3f aiAddTri = new Vector3f();
         for (int iTri = 0; iTri < m_kNewTriangles.size(); iTri++) {
@@ -2563,7 +2563,7 @@ public class Geodesic_WM {
             iNumAdded++;
         }
 
-        System.err.println("CreateNewMesh 7: " + iNumAdded );
+//         System.err.println("CreateNewMesh 7: " + iNumAdded );
         /* Delete local variables: */
         //aiIndex = null;
 
@@ -4691,11 +4691,11 @@ public class Geodesic_WM {
         iVertexCount += triangulate(m_kModified, kOpenPath, kOpenPathLeft, kOpenPathRight, iVertexCount);
         //System.err.println("Triangulate done");
         
-        System.err.println( "triangulateMeshPath calling creatNewMesh " + iVertexCount + " " + iOldVertexCount );
+//         System.err.println( "triangulateMeshPath calling creatNewMesh " + iVertexCount + " " + iOldVertexCount );
         TriMesh kCutMesh = createNewMesh(m_kModified, iVertexCount, iOldVertexCount);
         kCutMesh.SetName( m_kModified.GetName() );
 
-        System.err.println("CreateNewMesh done");
+//         System.err.println("CreateNewMesh done");
         /* Delete m_kModified, and set to kCutMesh: */
         m_kModified = null;
         m_kModified = kCutMesh;
