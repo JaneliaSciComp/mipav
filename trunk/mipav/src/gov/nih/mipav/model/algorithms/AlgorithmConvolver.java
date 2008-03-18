@@ -165,8 +165,8 @@ public class AlgorithmConvolver extends AlgorithmBase {
         int startX, startY;
         int endX, endY;
         int count;
-        float sum;
-        float norm = 0;
+        double sum;
+        double norm = 0;
 
         offsetX = (pix % xDim) - (xKDim / 2);
         offsetY = (pix / xDim) - (yKDim / 2);
@@ -204,7 +204,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
         }
 
         if (norm > 0) {
-            return (sum / norm);
+            return (float)(sum / norm);
         } else {
             return 0;
         }
@@ -236,10 +236,10 @@ public class AlgorithmConvolver extends AlgorithmBase {
         int startX, startY;
         int endX, endY;
         int count;
-        float sumX;
-        float sumY;
-        float normX = 0;
-        float normY = 0;
+        double sumX;
+        double sumY;
+        double normX = 0;
+        double normY = 0;
         double ptX;
         double ptY;
 
@@ -320,8 +320,8 @@ public class AlgorithmConvolver extends AlgorithmBase {
         int startX, startY;
         int endX, endY;
         int count;
-        float sum;
-        float norm = 0;
+        double sum;
+        double norm = 0;
 
         dx = pt.x - (int) pt.x;
         dy = pt.y - (int) pt.y;
@@ -353,7 +353,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
         }
 
         if (norm > 0) {
-            return (sum / norm);
+            return (float)(sum / norm);
         } else {
             return 0;
         }
@@ -386,7 +386,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
         int startX, startY;
         int endX, endY;
         int count;
-        float sum;
+        double sum;
 
         offsetX = (pix % xDim) - (xKDim / 2);
         offsetY = (pix / xDim) - (yKDim / 2);
@@ -410,7 +410,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
             }
         }
 
-        return sum;
+        return (float)sum;
     }
 
     /**
@@ -438,8 +438,8 @@ public class AlgorithmConvolver extends AlgorithmBase {
         int startX, startY;
         int endX, endY;
         int count;
-        float sum;
-        float norm = 0;
+        double sum;
+        double norm = 0;
 
         offsetX = (pix % (offset)) - ((xKDim) / 2 * 4);
         offsetY = (pix / (offset)) - ((yKDim) / 2);
@@ -470,7 +470,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
         }
 
         if (norm > 0) {
-            return (sum / norm);
+            return (float)(sum / norm);
         } else {
             return 0;
         }
@@ -503,10 +503,10 @@ public class AlgorithmConvolver extends AlgorithmBase {
         int startX, startY;
         int endX, endY;
         int count;
-        float sumX;
-        float normX = 0;
-        float sumY;
-        float normY = 0;
+        double sumX;
+        double normX = 0;
+        double sumY;
+        double normY = 0;
         double xPt;
         double yPt;
 
@@ -579,8 +579,8 @@ public class AlgorithmConvolver extends AlgorithmBase {
         int startX, startY, startZ;
         int endX, endY, endZ;
         int count;
-        float sum;
-        float norm = 0;
+        double sum;
+        double norm = 0;
 
         offsetX = (pix % xDim) - (kExtents[0] / 2);
         offsetY = ((pix % sliceSize) / xDim) - (kExtents[1] / 2);
@@ -630,7 +630,117 @@ public class AlgorithmConvolver extends AlgorithmBase {
         }
 
         if (norm > 0) {
-            return (sum / norm);
+            return (float)(sum / norm);
+        } else {
+            return 0;
+        }
+    }
+    
+    /**
+     * A static function that convolves a kernel with an image at a position.
+     *
+     * @param   pix       index indicating location of convolution
+     * @param   iExtents  image dimensions
+     * @param   image     image data
+     * @param   kExtents  kernel dimensions
+     * @param   kernelX   kernel data
+     * @param   kernelY   kernel data
+     * @param   kernelZ   kernel data
+     *
+     * @return  the value of the pixel after convolution with the kernel
+     */
+    public static final float convolve3DPtXYZ(int pix, int[] iExtents, float[] image, int[] kExtents,
+                                              float[] kernelX, float[] kernelY, float[] kernelZ) {
+
+        int i, j, k;
+        int offsetX, offsetY, offsetZ;
+        int sliceSize = iExtents[0] * iExtents[1];
+        int volSize = sliceSize * iExtents[2];
+        int xDim = iExtents[0];
+        int xKDim = kExtents[0];
+        int indexY;
+        int stepY, stepZ;
+        int startX, startY, startZ;
+        int endX, endY, endZ;
+        int count;
+        double sumX;
+        double sumY;
+        double sumZ;
+        double normX = 0;
+        double normY = 0;
+        double normZ = 0;
+        double ptX;
+        double ptY;
+        double ptZ;
+
+        offsetX = (pix % xDim) - (kExtents[0] / 2);
+        offsetY = ((pix % sliceSize) / xDim) - (kExtents[1] / 2);
+        offsetZ = (pix / (sliceSize)) - (kExtents[2] / 2);
+
+        count = 0;
+        sumX = 0;
+        sumY = 0;
+        sumZ = 0;
+        indexY = offsetY * xDim;
+        stepY = kExtents[1] * xDim;
+        stepZ = kExtents[2] * sliceSize;
+        startZ = offsetZ * sliceSize;
+        endZ = startZ + stepZ;
+
+        for (k = startZ; k < endZ; k += sliceSize) {
+
+            if ((k >= 0) && (k < volSize)) {
+                startY = k + indexY;
+                endY = startY + stepY;
+
+                for (j = startY; j < endY; j += xDim) {
+
+                    if (((j - k) >= 0) && ((j - k) < sliceSize)) {
+                        startX = j + offsetX;
+                        endX = startX + xKDim;
+
+                        for (i = startX; i < endX; i++) {
+
+                            if (((i - j) >= 0) && ((i - j) < xDim)) {
+                                sumX += kernelX[count] * image[i];
+                                sumY += kernelY[count] * image[i];
+                                sumZ += kernelZ[count] * image[i];
+
+                                if (kernelX[count] >= 0) {
+                                    normX += kernelX[count];
+                                } else {
+                                    normX += -kernelX[count];
+                                }
+                                
+                                if (kernelY[count] >= 0) {
+                                    normY += kernelY[count];
+                                } else {
+                                    normY += -kernelY[count];
+                                }
+                                
+                                if (kernelZ[count] >= 0) {
+                                    normZ += kernelZ[count];
+                                } else {
+                                    normZ += -kernelZ[count];
+                                }
+                            }
+
+                            count++;
+                        }
+                    }else{
+                        count += kExtents[0];
+                    }
+                }
+            }else{
+                count += kExtents[0]*kExtents[1];
+            }
+        }
+
+        if ((normX > 0) && (normY > 0) && (normZ > 0)) {
+            ptX = sumX/normX;
+            ptY = sumY/normY;
+            ptZ = sumZ/normZ;
+            return (float)Math.sqrt(ptX*ptX + ptY*ptY + ptZ*ptZ);
         } else {
             return 0;
         }
@@ -667,8 +777,8 @@ public class AlgorithmConvolver extends AlgorithmBase {
             int stepY = kExtents[1]*offset;
 //            for(;ic < lpv; ic++){
             	int count = 0;
-            	float sum = 0;
-            	float norm = 0;
+            	double sum = 0;
+            	double norm = 0;
             	for(int ik = startZ; ik < endZ; ik+=sliceSize){
             		if(ik >= 0 && ik < volumeSize){
                     	int startY = ik + indexY;
@@ -726,8 +836,8 @@ public class AlgorithmConvolver extends AlgorithmBase {
         int startX, startY, startZ;
         int endX, endY, endZ;
         int count;
-        float sum;
-        float norm = 0;
+        double sum;
+        double norm = 0;
 
         dx = pt[0] - (int) pt[0];
         dy = pt[1] - (int) pt[1];
@@ -771,7 +881,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
         }
 
         if (norm > 0) {
-            return (sum / norm);
+            return (float)(sum / norm);
         } else {
             return 0;
         }
@@ -807,7 +917,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
         int startX, startY, startZ;
         int endX, endY, endZ;
         int count;
-        float sum;
+        double sum;
         int remainder;
 
         remainder = pix % sliceSize;
@@ -840,7 +950,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
             }
         }
 
-        return sum;
+        return (float)sum;
     }
 
     /**
@@ -868,8 +978,8 @@ public class AlgorithmConvolver extends AlgorithmBase {
         int startX, startY, startZ;
         int endX, endY, endZ;
         int count;
-        float sum;
-        float norm = 0;
+        double sum;
+        double norm = 0;
         int offset = 4 * xDim;
 
         offsetX = (pix % offset) - (kExtents[0] / 2 * 4);
@@ -911,7 +1021,110 @@ public class AlgorithmConvolver extends AlgorithmBase {
         }
 
         if (norm > 0) {
-            return (sum / norm);
+            return (float)(sum / norm);
+        } else {
+            return 0;
+        }
+    }
+    
+    /**
+     * A static function that convolves a kernel with an RGB image at a position.
+     *
+     * @param   pix       index indicating location of convolution
+     * @param   iExtents  image dimensions
+     * @param   image     image data
+     * @param   kExtents  kernel dimensions
+     * @param   kernelX   kernel data
+     * @param   kernelY   kernel data
+     * @param   kernelZ   kernel data
+     *
+     * @return  the value of the pixel after convolution with the kernel
+     */
+    public static final float convolve3DRGBPtXYZ(int pix, int[] iExtents, float[] image, int[] kExtents,
+                                                 float[] kernelX, float[] kernelY, float[] kernelZ) {
+
+        int i, j, k;
+        int offsetX, offsetY, offsetZ;
+
+        int sliceSize = iExtents[0] * iExtents[1] * 4;
+        int volSize = iExtents[2] * sliceSize;
+        int xDim = iExtents[0];
+        int xKDim = kExtents[0];
+        int indexY;
+        int stepY, stepZ;
+        int startX, startY, startZ;
+        int endX, endY, endZ;
+        int count;
+        double sumX;
+        double sumY;
+        double sumZ;
+        double normX = 0;
+        double normY = 0;
+        double normZ = 0;
+        double ptX;
+        double ptY;
+        double ptZ;
+        int offset = 4 * xDim;
+
+        offsetX = (pix % offset) - (kExtents[0] / 2 * 4);
+        offsetY = ((pix % sliceSize) / offset) - (kExtents[1] / 2);
+        offsetZ = (pix / (sliceSize)) - (kExtents[2] / 2);
+
+        count = 0;
+        sumX = 0;
+        sumY = 0;
+        sumZ = 0;
+        indexY = offsetY * offset;
+        stepY = kExtents[1] * offset;
+        stepZ = kExtents[2] * sliceSize;
+        startZ = offsetZ * sliceSize;
+        endZ = startZ + stepZ;
+
+        for (k = startZ; k < endZ; k += sliceSize) {
+            startY = k + indexY;
+            endY = startY + stepY;
+
+            for (j = startY; j < endY; j += offset) {
+                startX = j + offsetX;
+                endX = startX + (xKDim * 4);
+
+                for (i = startX; i < endX; i += 4) {
+
+                    if ((k >= 0) && (k < volSize) && ((j - k) >= 0) && ((j - k) < sliceSize) && ((i - j) >= 0) &&
+                            ((i - j) < offset)) {
+                        sumX += kernelX[count] * image[i];
+                        sumY += kernelY[count] * image[i];
+                        sumZ += kernelZ[count] * image[i];
+
+                        if (kernelX[count] >= 0) {
+                            normX += kernelX[count];
+                        } else {
+                            normX += -kernelX[count];
+                        }
+                        
+                        if (kernelY[count] >= 0) {
+                            normY += kernelY[count];
+                        } else {
+                            normY += -kernelY[count];
+                        }
+                        
+                        if (kernelZ[count] >= 0) {
+                            normZ += kernelZ[count];
+                        } else {
+                            normZ += -kernelZ[count];
+                        }
+                    }
+
+                    count++;
+                }
+            }
+        }
+
+        if ((normX > 0) && (normY > 0) && (normZ > 0)) {
+            ptX = sumX/normX;
+            ptY = sumY/normY;
+            ptZ = sumZ/normZ;
+            return (float)Math.sqrt(ptX*ptX + ptY*ptY + ptZ*ptZ);
         } else {
             return 0;
         }
@@ -943,8 +1156,8 @@ public class AlgorithmConvolver extends AlgorithmBase {
         int startX, startY;
         int endX, endY;
         int count;
-        float sum;
-        float norm = 0;
+        double sum;
+        double norm = 0;
 
         offsetX = (pix % xDim) - (xKDim / 2);
         offsetY = (pix / xDim) - (yKDim / 2);
@@ -970,7 +1183,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
             }
 
             if (norm > 0) {
-                return (sum / norm);
+                return (float)(sum / norm);
             } else {
                 return 0;
             }
@@ -1008,8 +1221,8 @@ public class AlgorithmConvolver extends AlgorithmBase {
         int startX, startY, startZ;
         int endX, endY, endZ;
         int count;
-        float sum;
-        float norm = 0;
+        double sum;
+        double norm = 0;
         int remainder;
 
         remainder = pix % sliceSize;
@@ -1044,7 +1257,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
             }
 
             if (norm > 0) {
-                return (sum / norm);
+                return (float)(sum / norm);
             } else {
                 return 0;
             }
@@ -1074,7 +1287,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
 				for (int i = 0, idx = start; (i < length) && !threadStopped; i += 4, idx += 4) {
 					progress++;
 					if ((progress % progressModulus) == 0) {
-						fireProgressStateChanged((int)(progress/progressModulus));
+						fireProgressStateChanged(minProgressValue + (int)(progress/progressModulus));
 					}
 
 					if ((entireImage == true) || mask.get(i / 4)) {
@@ -1118,7 +1331,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
 				for (int i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 					progress++;
 					if ((progress % progressModulus) == 0) {
-						fireProgressStateChanged((int)(progress/progressModulus));
+						fireProgressStateChanged(minProgressValue + (int)(progress/progressModulus));
 					}
 
 					if ((entireImage == true) || mask.get(i)) {
@@ -1154,7 +1367,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
                 for (int i = 0, idx = start; (i < length) && !threadStopped; i += 4, idx += 4) {
                     progress++;
                     if ((progress % progressModulus) == 0) {
-                        fireProgressStateChanged((int)(progress/progressModulus));
+                        fireProgressStateChanged(minProgressValue + (int)(progress/progressModulus));
                     }
 
                     if ((entireImage == true) || mask.get(i / 4)) {
@@ -1198,7 +1411,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
                 for (int i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
                     progress++;
                     if ((progress % progressModulus) == 0) {
-                        fireProgressStateChanged((int)(progress/progressModulus));
+                        fireProgressStateChanged(minProgressValue + (int)(progress/progressModulus));
                     }
 
                     if ((entireImage == true) || mask.get(i)) {
@@ -1218,7 +1431,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
     		for (int i = start; (i < end) && !threadStopped; i += 4) {
     			progress += 4;
     			if ((progress % progressModulus) == 0) {
-    				fireProgressStateChanged((int)(progress/progressModulus));
+    				fireProgressStateChanged(minProgressValue + (int)(progress/progressModulus));
     			}
 
     			if ((entireImage == true) || mask.get(i / 4)) {
@@ -1262,7 +1475,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
 			for (int i = start; (i < end) && !threadStopped; i++) {
 				progress++;
 				if ((progress % progressModulus) == 0) {
-					fireProgressStateChanged((int) (progress / progressModulus));
+					fireProgressStateChanged(minProgressValue + (int) (progress / progressModulus));
 					// System.out.println("Entire = " + entireImage);
 				}
 
@@ -1275,6 +1488,72 @@ public class AlgorithmConvolver extends AlgorithmBase {
 				}
 			}
 		}
+
+    }
+    
+    
+    private final void convolve3DXYZ(int start, int end, float[] iImage, int index){
+        if(srcImage.isColorImage()){
+            for (int i = start; (i < end) && !threadStopped; i += 4) {
+                progress += 4;
+                if ((progress % progressModulus) == 0) {
+                    fireProgressStateChanged(minProgressValue + (int)(progress/progressModulus));
+                }
+
+                if ((entireImage == true) || mask.get(i / 4)) {
+                    outputBuffer[i+index] = iImage[i]; // alpha
+
+                    if (red) {
+                        outputBuffer[i+index + 1] = AlgorithmConvolver
+                                .convolve3DRGBPtXYZ(i + 1, srcImage
+                                        .getExtents(), iImage, kExtents,
+                                        kernelBufferX, kernelBufferY, kernelBufferZ);
+                    } else {
+                        outputBuffer[i+index + 1] = iImage[i + 1];
+                    }
+
+                    if (green) {
+                        outputBuffer[i+index + 2] = AlgorithmConvolver
+                                .convolve3DRGBPtXYZ(i + 2, srcImage
+                                        .getExtents(), iImage, kExtents,
+                                        kernelBufferX, kernelBufferY, kernelBufferZ);
+                    } else {
+                        outputBuffer[i+index + 2] = iImage[i + 2];
+                    }
+
+                    if (blue) {
+                        outputBuffer[i+index + 3] = AlgorithmConvolver
+                                .convolve3DRGBPtXYZ(i + 3, srcImage
+                                        .getExtents(), iImage, kExtents,
+                                        kernelBufferX, kernelBufferY, kernelBufferZ);
+                    } else {
+                        outputBuffer[i+index + 3] = iImage[i + 3];
+                    }
+                } else {
+                    outputBuffer[i+index] = iImage[i];
+                    outputBuffer[i+index + 1] = iImage[i + 1];
+                    outputBuffer[i+index + 2] = iImage[i + 2];
+                    outputBuffer[i+index + 3] = iImage[i + 3];
+                }
+            }
+
+        } else {
+            for (int i = start; (i < end) && !threadStopped; i++) {
+                progress++;
+                if ((progress % progressModulus) == 0) {
+                    fireProgressStateChanged(minProgressValue + (int) (progress / progressModulus));
+                    // System.out.println("Entire = " + entireImage);
+                }
+
+                if ((entireImage == true) || mask.get(i)) {
+                    outputBuffer[i + index] = AlgorithmConvolver.convolve3DPtXYZ(i,
+                            srcImage.getExtents(), iImage, kExtents,
+                            kernelBufferX, kernelBufferY, kernelBufferZ);
+                } else {
+                    outputBuffer[i + index] = iImage[i];
+                }
+            }
+        }
 
     }
     
@@ -1319,7 +1598,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
 
         int length = cFactor * srcImage.getSliceSize();
         outputBuffer = new float[length];
-        progress = minProgressValue;
+        progress = 0;
         progressModulus = length / (maxProgressValue-minProgressValue);
 
         if (sqrtXY) {
@@ -1358,7 +1637,8 @@ public class AlgorithmConvolver extends AlgorithmBase {
         if (srcImage.isColorImage()) {
             cFactor = 4;
         }
-        progress = minProgressValue;
+       
+        progress = 0;
         int length;
         if(this.image25D){
             if(kExtents.length != 2){
@@ -1369,8 +1649,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
             int nSlices = srcImage.getExtents()[2];
             int totalLength = length * srcImage.getExtents()[2];
             outputBuffer = new float[totalLength];
-            progressModulus = totalLength / 100;
-            fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
+            progressModulus = totalLength / (maxProgressValue-minProgressValue);
 
             if(this.multiThreadingEnabled){
     			final CountDownLatch doneSignal = new CountDownLatch(nthreads);
@@ -1380,7 +1659,12 @@ public class AlgorithmConvolver extends AlgorithmBase {
     				final int fend = (j == (nthreads-1))?nSlices:(int)(step * (j + 1));
     				Runnable task = new Runnable() {
     					public void run() {
-    						convolve2D(fstart, fend);
+                            if (sqrtXY) {
+                                convolve2DXY(fstart, fend);    
+                            }
+                            else {
+    						    convolve2D(fstart, fend);
+                            }
     						doneSignal.countDown();
     					}
     				};
@@ -1393,7 +1677,12 @@ public class AlgorithmConvolver extends AlgorithmBase {
     				e.printStackTrace();
     			}
             }else{
-            	convolve2D(0, nSlices);
+                if (sqrtXY) {
+                    convolve2DXY(0, nSlices);
+                }
+                else {
+            	    convolve2D(0, nSlices);
+                }
             }
 
             fireProgressStateChanged(maxProgressValue);
@@ -1441,7 +1730,12 @@ public class AlgorithmConvolver extends AlgorithmBase {
 					final float[] iImage = buffer;
 					Runnable task = new Runnable() {
 						public void run() {
-							convolve3D(start, end, iImage, 0);
+                            if (sqrtXYZ) {
+                                convolve3DXYZ(start, end, iImage, 0);    
+                            }
+                            else {
+							    convolve3D(start, end, iImage, 0);
+                            }
 							doneSignal.countDown();
 						}
 					};
@@ -1455,7 +1749,12 @@ public class AlgorithmConvolver extends AlgorithmBase {
 				}
         		
         	} else {
-        		convolve3D(0, length, buffer, 0);
+                if (sqrtXYZ) {
+                    convolve3DXYZ(0, length, buffer, 0);
+                }
+                else {
+        		    convolve3D(0, length, buffer, 0);
+                }
         	}
         
             fireProgressStateChanged(maxProgressValue);
@@ -1503,12 +1802,10 @@ public class AlgorithmConvolver extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
-
         int index;
         int end = srcImage.getExtents()[3];
 
-        progress = minProgressValue;
+        progress = 0;
         progressModulus = length * end / (maxProgressValue-minProgressValue);
 
         for (int t = 0; (t < end) && !threadStopped; t++) {
@@ -1536,7 +1833,12 @@ public class AlgorithmConvolver extends AlgorithmBase {
 					final int findex = index;
 					Runnable task = new Runnable() {
 						public void run() {
-							convolve3D(start, fend, iImage, findex);
+                            if (sqrtXYZ) {
+                                convolve3DXYZ(start, fend, iImage, findex);
+                            }
+                            else {
+							    convolve3D(start, fend, iImage, findex);
+                            }
 							doneSignal.countDown();
 						}
 					};
@@ -1549,12 +1851,17 @@ public class AlgorithmConvolver extends AlgorithmBase {
 					e.printStackTrace();
 				}
 			} else {
-				convolve3D(0, length, buffer, index);
+                if (sqrtXYZ) {
+                    convolve3DXYZ(0, length, buffer, index);    
+                }
+                else {
+				    convolve3D(0, length, buffer, index);
+                }
 			}
 
 		}
 
-        fireProgressStateChanged(100);
+        fireProgressStateChanged(maxProgressValue);
 
         if (threadStopped) {
             finalize();
