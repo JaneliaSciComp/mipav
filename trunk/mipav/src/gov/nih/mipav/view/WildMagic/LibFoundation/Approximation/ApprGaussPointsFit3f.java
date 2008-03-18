@@ -15,6 +15,7 @@
 
 package gov.nih.mipav.view.WildMagic.LibFoundation.Approximation;
 
+import java.util.Vector;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.NumericalAnalysis.*;
 
@@ -26,18 +27,18 @@ public class ApprGaussPointsFit3f
     // extents are the eigenvalues of the covariance matrix and are returned in
     // increasing order.  The quantites are stored in a Box3<Real> just to have a
     // single container.
-    public static Box3f GaussPointsFit3f (int iQuantity, final Vector3f[] akPoint)
+    public static Box3f GaussPointsFit3f (int iQuantity, final Vector<Vector3f> kMeshVertices)
     {
         Box3f kBox = new Box3f(Vector3f.ZERO,Vector3f.UNIT_X,
                         Vector3f.UNIT_Y,Vector3f.UNIT_Z,1.0f,1.0f,
                         1.0f);
 
         // compute the mean of the points
-        kBox.Center.SetData(akPoint[0]);
+        kBox.Center.SetData(kMeshVertices.get(0));
         int i;
         for (i = 1; i < iQuantity; i++)
         {
-            kBox.Center.addEquals(akPoint[i]);
+            kBox.Center.addEquals(kMeshVertices.get(i));
         }
         float fInvQuantity = (1.0f)/(float)iQuantity;
         kBox.Center.scaleEquals(fInvQuantity);
@@ -47,7 +48,7 @@ public class ApprGaussPointsFit3f
         float fSumYY = 0.0f, fSumYZ = 0.0f, fSumZZ = 0.0f;
         for (i = 0; i < iQuantity; i++)
         {
-            Vector3f kDiff = akPoint[i].sub(kBox.Center);
+            Vector3f kDiff = kMeshVertices.get(i).sub(kBox.Center);
             fSumXX += kDiff.X()*kDiff.X();
             fSumXY += kDiff.X()*kDiff.Y();
             fSumXZ += kDiff.X()*kDiff.Z();

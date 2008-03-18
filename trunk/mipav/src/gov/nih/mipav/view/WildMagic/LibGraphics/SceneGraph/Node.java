@@ -88,6 +88,7 @@ public class Node extends Spatial
 
         // attach child in first available slot (if any)
         int iQuantity = (int)m_kChild.size();
+        /*
         for (int i = 0; i < iQuantity; i++)
         {
             if (m_kChild.get(i) == null)
@@ -96,7 +97,7 @@ public class Node extends Spatial
                 return i;
             }
         }
-
+*/
         // all slots used, increase array size
         m_kChild.add(pkChild);
         return iQuantity;
@@ -117,7 +118,7 @@ public class Node extends Spatial
                 {
                     // child found, detach it
                     pkChild.SetParent(null);
-                    m_kChild.set(i, null);
+                    m_kChild.remove(i);
                     return i;
                 }
             }
@@ -139,13 +140,23 @@ public class Node extends Spatial
             {
                 // child exists in slot, detach it
                 spkChild.SetParent(null);
-                m_kChild.set(i, null);
+                m_kChild.remove(i);
             }
             return spkChild;
         }
         return null;
     }
 
+
+    /** Delete memory. */
+    public void DetachAllChildren ()
+    {
+        for (int i = 0; i < (int)m_kChild.size(); i++)
+        {
+            DetachChildAt(i);
+        }
+    }
+    
     /** children
      * @param i, position of child node to set.
      * @param pkChild, child node.

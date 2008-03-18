@@ -90,19 +90,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_kParent = kParent;
         
         m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
-        
-        
-        String class_path_key = "java.class.path";
-        String class_path = System.getProperty(class_path_key);
-        //System.out.println(class_path);
-                   String jar_filename = null;
-        for (String fn : class_path.split(";") ) {
-            if (fn.endsWith("InsightToolkit.jar")) {
-                jar_filename = fn;
-                System.out.println("Found itk jar: " + jar_filename);
-                break;
-            }
-        } 
     }
     
     
@@ -251,6 +238,56 @@ implements GLEventListener, KeyListener, MouseMotionListener
         //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         MeasureTime();
 
+        Move();
+        Pick();
+
+        // Draw the scene to the back buffer/
+        if (m_pkRenderer.BeginScene())
+        {
+            m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
+            m_pkRenderer.ClearBuffers();
+
+            
+            if ( m_kVolumeRayCast.GetDisplay() )
+            {
+                RenderVolume();
+            }
+            else
+            {
+                RenderNoVolume();
+            }
+            RenderFrameRate();
+            RenderSculpt();
+            m_pkRenderer.EndScene();
+        }
+        m_pkRenderer.DisplayBackBuffer();
+
+        UpdateFrameCount();
+
+        if ( m_bFirstRender )
+        {
+            m_bFirstRender = false;
+            m_kVolumeRayCast.SetDisplay(false);   
+            m_kSlices.SetDisplay(true);   
+            VolumeImageViewer.main(m_kVolumeImageA);
+            CMPMode();
+        }
+        if ( m_bSurfaceAdded )
+        {
+            m_bSurfaceAdded = false;
+            updateLighting( m_akLights );
+            for ( int i = 0; i < m_kDisplayList.size(); i++ )
+            {
+                if ( m_kDisplayList.get(i) instanceof VolumeSurface )
+                {
+                    ((VolumeSurface)m_kDisplayList.get(i)).InitClip(new float[] { 0, 1, 0, 1, 0, 1 });
+                }
+            }
+        }
+    }
+
+    private void Move()
+    {
         if (MoveCamera())
         {
             m_kCuller.ComputeVisibleSet(m_spkScene);
@@ -279,111 +316,116 @@ implements GLEventListener, KeyListener, MouseMotionListener
                 m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
             }
         }
+    }
 
-        // Draw the scene to the back buffer/
-        if (m_pkRenderer.BeginScene())
+    private void Pick()
+    {
+        Vector3f kPos = new Vector3f(0,0,10);
+        Vector3f kDir = new Vector3f(0,0,1);  // the pick ray
+
+        if (m_bPickPending)
         {
-            Vector3f kPos = new Vector3f(0,0,10);
-            Vector3f kDir = new Vector3f(0,0,1);  // the pick ray
-
-            if (m_bPickPending)
+            if (m_spkCamera.GetPickRay(m_iXPick,m_iYPick,GetWidth(),
+                                       GetHeight(),kPos,kDir))
             {
-                if (m_spkCamera.GetPickRay(m_iXPick,m_iYPick,GetWidth(),
-                        GetHeight(),kPos,kDir))
+                m_bPickPending = false;
+                for ( int i = 0; i < m_kDisplayList.size(); i++ )
                 {
-                    m_bPickPending = false;
-                    for ( int i = 0; i < m_kDisplayList.size(); i++ )
+                    if ( m_kDisplayList.get(i).GetPickable() )
                     {
-                        if ( m_kDisplayList.get(i).GetPickable() )
+                        m_kPicker.Execute(m_kDisplayList.get(i).GetScene(),kPos,kDir,0.0f,
+                                          Float.MAX_VALUE);
+                        if (m_kPicker.Records.size() > 0)
                         {
-                            m_kPicker.Execute(m_kDisplayList.get(i).GetScene(),kPos,kDir,0.0f,
-                                    Float.MAX_VALUE);
-                            if (m_kPicker.Records.size() > 0)
+                            //System.err.println( kPos.X() + " " + kPos.Y() + " " + kPos.Z() );
+                            //System.err.println( kDir.X() + " " + kDir.Y() + " " + kDir.Z() );
+                            if ( m_bPaintEnabled )
                             {
-                                //System.err.println( kPos.X() + " " + kPos.Y() + " " + kPos.Z() );
-                                //System.err.println( kDir.X() + " " + kDir.Y() + " " + kDir.Z() );
-                                if ( m_bPaintEnabled )
+                                //System.err.println("Picked " + m_kDisplayList.get(i).getClass().getName());
+                                if ( m_bPaint )
                                 {
-                                    //System.err.println("Picked " + m_kDisplayList.get(i).getClass().getName());
-                                    if ( m_bPaint )
-                                    {
-                                        m_kDisplayList.get(i).Paint( m_pkRenderer, m_kPicker.GetClosestNonnegative(), m_kPaintColor, m_iBrushSize );
-                                    }
-                                    else if ( m_bDropper || m_bPaintCan )
-                                    {
-                                        ColorRGBA kDropperColor = new ColorRGBA();
-                                        Vector3f kPickPoint = new Vector3f();
-                                        m_kDisplayList.get(i).Dropper( m_kPicker.GetClosestNonnegative(), kDropperColor, kPickPoint );
-                                        m_kParent.setDropperColor( kDropperColor, kPickPoint );
-                                    } 
-                                    else if ( m_bErase )
-                                    {
-                                        m_kDisplayList.get(i).Erase( m_pkRenderer, m_kPicker.GetClosestNonnegative(), m_iBrushSize );
-                                    }
+                                    m_kDisplayList.get(i).Paint( m_pkRenderer, m_kPicker.GetClosestNonnegative(), m_kPaintColor, m_iBrushSize );
                                 }
+                                else if ( m_bDropper || m_bPaintCan )
+                                {
+                                    ColorRGBA kDropperColor = new ColorRGBA();
+                                    Vector3f kPickPoint = new Vector3f();
+                                    m_kDisplayList.get(i).Dropper( m_kPicker.GetClosestNonnegative(), kDropperColor, kPickPoint );
+                                    m_kParent.setDropperColor( kDropperColor, kPickPoint );
+                                } 
+                                else if ( m_bErase )
+                                {
+                                    m_kDisplayList.get(i).Erase( m_pkRenderer, m_kPicker.GetClosestNonnegative(), m_iBrushSize );
+                                }
+                            }
+                            if ( m_bGeodesicEnabled )
+                            {
+                                m_kParent.setGeodesic( m_kDisplayList.get(i).GetMesh(), m_kPicker.GetClosestNonnegative() );
                             }
                         }
                     }
                 }
             }
+        }
+    }
 
+    private void RenderVolume()
+    {
+        if ( !m_bDisplaySecond )
+        {
+            for ( int i = 0; i < m_kDisplayList.size(); i++ )
+            {
+                m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller );
+            }
+        }
+        else
+        {
+            for ( int i = 0; i < m_kDisplayList.size(); i++ )
+            {
+                m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller );
+            }
+            m_kVolumeRayCast.PostPreRender();
 
-            
-            
-            
-            m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
+            m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
             m_pkRenderer.ClearBuffers();
 
-            if ( m_kVolumeRayCast.GetDisplay() )
+            for ( int i = 1; i < m_kDisplayList.size(); i++ )
             {
-                if ( !m_bDisplaySecond )
-                {
-                    for ( int i = 0; i < m_kDisplayList.size(); i++ )
-                    {
-                        m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller );
-                    }
-                }
-                else
-                {
-                    for ( int i = 0; i < m_kDisplayList.size(); i++ )
-                    {
-                        m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller );
-                    }
-                    m_kVolumeRayCast.PostPreRender();
-
-                    m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
-                    m_pkRenderer.ClearBuffers();
-
-                    for ( int i = 1; i < m_kDisplayList.size(); i++ )
-                    {
-                        m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
-                    }
-                    m_kDisplayList.get(0).Render( m_pkRenderer, m_kCuller );
-
-                    for ( int i = 1; i < m_kDisplayList.size(); i++ )
-                    {
-                        m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
-                    }
-
-                    //Draw frame rate:
-                    m_pkRenderer.SetCamera(m_spkCamera);
-                    if ( m_bTestFrameRate )
-                    {
-                       DrawFrameRate(8,16,ColorRGBA.WHITE);
-                    }
-
-
-                    if ( (m_kSculptor != null) && m_kSculptor.IsSculptDrawn() )
-                    {
-                        m_pkRenderer.Draw( m_kSculptor.getSculptImage() );
-                    }
-                }
+                m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
             }
-            else
+            m_kDisplayList.get(0).Render( m_pkRenderer, m_kCuller );
+
+            for ( int i = 1; i < m_kDisplayList.size(); i++ )
             {
-                m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
-                m_pkRenderer.ClearBuffers();
-                    
+                m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
+            }
+        }
+    }
+
+
+    private void RenderNoVolume()
+    {
+        m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
+        m_pkRenderer.ClearBuffers();
+
+        if ( !m_bStereo )
+        {
+            for ( int i = 1; i < m_kDisplayList.size(); i++ )
+            {
+                m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
+            }
+            for ( int i = 1; i < m_kDisplayList.size(); i++ )
+            {
+                m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
+            }
+        }
+        else
+        {          
+            MoveRight();
+            if ( m_bRight )
+            {
+                m_kCuller.ComputeVisibleSet(m_spkScene);
+                m_pkRenderer.SetColorMask( false, false, true, true );
                 for ( int i = 1; i < m_kDisplayList.size(); i++ )
                 {
                     m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
@@ -392,44 +434,43 @@ implements GLEventListener, KeyListener, MouseMotionListener
                 {
                     m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
                 }
-
-                //Draw frame rate:
-                m_pkRenderer.SetCamera(m_spkCamera);
-                if ( m_bTestFrameRate )
-                {
-                    DrawFrameRate(8,16,ColorRGBA.WHITE);
-                }
-
-                if ( (m_kSculptor != null) && m_kSculptor.IsSculptDrawn() )
-                {
-                    m_pkRenderer.Draw( m_kSculptor.getSculptImage() );
-                }
             }
-            m_pkRenderer.EndScene();
-        }
-        m_pkRenderer.DisplayBackBuffer();
-
-        UpdateFrameCount();
-
-        if ( m_bFirstRender )
-        {
-            m_bFirstRender = false;
-            m_kVolumeRayCast.SetDisplay(false);   
-            m_kSlices.SetDisplay(true);   
-            VolumeImageViewer.main(m_kVolumeImageA);
-            CMPMode();
-        }
-        if ( m_bSurfaceAdded )
-        {
-            m_bSurfaceAdded = false;
-            updateLighting( m_akLights );
-            for ( int i = 0; i < m_kDisplayList.size(); i++ )
+            m_pkRenderer.ClearZBuffer();
+            MoveLeft();
+            MoveLeft();
+            if ( m_bLeft )
             {
-                if ( m_kDisplayList.get(i) instanceof VolumeSurface )
+                m_kCuller.ComputeVisibleSet(m_spkScene);
+                m_pkRenderer.SetColorMask( true, false, false, true );
+                for ( int i = 1; i < m_kDisplayList.size(); i++ )
                 {
-                    ((VolumeSurface)m_kDisplayList.get(i)).InitClip(new float[] { 0, 1, 0, 1, 0, 1 });
+                    m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
+                }
+                for ( int i = 1; i < m_kDisplayList.size(); i++ )
+                {
+                    m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
                 }
             }
+            MoveRight();
+            m_pkRenderer.SetColorMask( true, true, true, true );
+        }
+    }
+
+    private void RenderFrameRate()
+    {
+        //Draw frame rate:
+        m_pkRenderer.SetCamera(m_spkCamera);
+        if ( m_bTestFrameRate )
+        {
+            DrawFrameRate(8,16,ColorRGBA.WHITE);
+        }
+    }
+
+    private void RenderSculpt()
+    {
+        if ( (m_kSculptor != null) && m_kSculptor.IsSculptDrawn() )
+        {
+            m_pkRenderer.Draw( m_kSculptor.getSculptImage() );
         }
     }
 
@@ -676,6 +717,23 @@ implements GLEventListener, KeyListener, MouseMotionListener
         case 'Q':
             setPerspectiveProjection();
             return;
+
+        case '1':
+            m_bStereo = false;
+            break;
+        case '2':
+            m_bStereo = true;
+            m_bLeft = true;
+            m_bRight = true;
+            break;
+        case 'l':
+            m_bLeft = true;
+            m_bRight = false;
+            break;
+        case 'r':
+            m_bLeft = false;
+            m_bRight = true;
+            break;
             /*
 
 
@@ -1347,6 +1405,12 @@ implements GLEventListener, KeyListener, MouseMotionListener
             m_iYPick = e.getY();
             m_bPickPending = true;
         }
+        if ( e.isControlDown() && m_bGeodesicEnabled )
+        {
+            m_iXPick = e.getX();
+            m_iYPick = e.getY();
+            m_bPickPending = true;
+        }
     }
 
 
@@ -1849,14 +1913,14 @@ implements GLEventListener, KeyListener, MouseMotionListener
         }
     }
     
-    public void addSurface(TriMesh[] akSurfaces)
+    public void addSurface(TriMesh[] akSurfaces, boolean bReplace)
     {
         for ( int i = 0; i < akSurfaces.length; i++ )
         {
             VolumeSurface kSurface = new VolumeSurface( m_pkRenderer, m_kVolumeImageA,
                     m_kTranslate,
                     m_fX, m_fY, m_fZ,
-                    akSurfaces[i] );
+                    akSurfaces[i], bReplace );
             kSurface.SetPerPixelLighting( m_pkRenderer, true );
             m_kDisplayList.add( kSurface );
         }
@@ -2146,6 +2210,140 @@ implements GLEventListener, KeyListener, MouseMotionListener
         }
     }
     
+    
+    public void enableGeodesic( boolean bEnable )
+    {
+        m_bGeodesicEnabled = bEnable;
+    }
+    
+    
+    public void addGeodesic( TriMesh kSurface, Geometry kNew, int iGroup )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetMesh() != null )
+            {
+                if ( m_kDisplayList.get(i).GetMesh() == kSurface)
+                {
+                    ((VolumeSurface)(m_kDisplayList.get(i))).AddGeodesic(kNew, iGroup);
+                }
+            }
+        }
+    }
+    
+    
+    public void removeGeodesic( TriMesh kSurface, int iNode, int iGroup )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetMesh() != null )
+            {
+                if ( m_kDisplayList.get(i).GetMesh() == kSurface)
+                {
+                    ((VolumeSurface)(m_kDisplayList.get(i))).RemoveGeodesic(iNode, iGroup);
+                }
+            }
+        }
+    }    
+    
+    public void removeAllGeodesic( TriMesh kSurface )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetMesh() != null )
+            {
+                if ( m_kDisplayList.get(i).GetMesh() == kSurface)
+                {
+                    ((VolumeSurface)(m_kDisplayList.get(i))).RemoveAllGeodesic();
+                }
+            }
+        }
+    }
+
+    
+    public void replaceGeodesic(TriMesh kOld, TriMesh kNew)
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetMesh() != null )
+            {
+                if ( m_kDisplayList.get(i).GetMesh() == kOld)
+                {
+                    ((VolumeSurface)(m_kDisplayList.get(i))).ReplaceGeodesic(kNew);
+                }
+            }
+        }
+    }
+    
+    public void toggleGeodesicPathDisplay(String kSurfaceName, int iWhich)
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    ((VolumeSurface)(m_kDisplayList.get(i))).ToggleGeodesicPathDisplay(iWhich);
+                }
+            }
+        }
+    }
+    
+    
+    public void smoothMesh( String kSurfaceName, int iteration, float alpha, boolean volumeLimit, float volumePercent)
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    ((VolumeSurface)(m_kDisplayList.get(i))).smoothMesh(iteration, alpha, volumeLimit, volumePercent);
+                }
+            }
+        }
+    }
+    
+    
+    
+    public void smoothTwo( String kSurfaceName, int iteration, float fStiffness, boolean volumeLimit, float volumePercent)
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    ((VolumeSurface)(m_kDisplayList.get(i))).smoothTwo(iteration, fStiffness, volumeLimit, volumePercent);
+                }
+            }
+        }
+    }    
+    
+    public void smoothThree( String kSurfaceName, int iteration, float lambda, float mu)
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    ((VolumeSurface)(m_kDisplayList.get(i))).smoothThree(iteration, lambda, mu);
+                }
+            }
+        }
+    }
+    
+    public void SetStereo( boolean bEnable )
+    {
+        m_bStereo = bEnable;
+    }
+
+    public void setIPD( float fIPD )
+    {
+        m_fTrnSpeed = fIPD;        
+    }
+    
     private VolumeImage m_kVolumeImageA;
     private VolumeImage m_kVolumeImageB;
     
@@ -2237,4 +2435,11 @@ implements GLEventListener, KeyListener, MouseMotionListener
     private boolean m_bPaintCan = false;
     private ColorRGBA m_kPaintColor = null;
     private int m_iBrushSize = 1;
+    
+    private boolean m_bGeodesicEnabled = false;
+
+
+    private boolean m_bStereo = false;
+    private boolean m_bLeft = true;
+    private boolean m_bRight = true;
 }

@@ -899,7 +899,7 @@ public class OpenGLRenderer extends Renderer
         {
             if (ms_aeFillTypes[ pkState.Fill.Value() ] == GL.GL_FILL )
             {
-                gl.glPolygonMode(GL.GL_FRONT,GL.GL_FILL);
+                gl.glPolygonMode(GL.GL_FRONT_AND_BACK,GL.GL_FILL);
             }
             else
             {
@@ -909,8 +909,8 @@ public class OpenGLRenderer extends Renderer
         }
         else
         {
-            //gl.glPolygonMode(GL.GL_FRONT_AND_BACK,GL.GL_FILL);
-            gl.glPolygonMode(GL.GL_FRONT,GL.GL_FILL);
+            gl.glPolygonMode(GL.GL_FRONT_AND_BACK,GL.GL_FILL);
+            //gl.glPolygonMode(GL.GL_FRONT,GL.GL_FILL);
         }
     }
 
@@ -2117,6 +2117,19 @@ public class OpenGLRenderer extends Renderer
         gl.glBufferData(GL.GL_ARRAY_BUFFER,iChannels*BufferUtil.SIZEOF_FLOAT,akData,
                         GL.GL_STATIC_DRAW);
         return rpkID;
+    }
+    
+
+    public Attributes GetVBufferInputAttributes( Bindable pkVBuffer )
+    {
+        Attributes kIAttr = null;
+        for (int i = 0; i < pkVBuffer.GetInfoQuantity(); i++)
+        {
+            ResourceIdentifier pkID = pkVBuffer.GetIdentifier(i,this);
+            VBufferID kResource = (VBufferID)pkID;
+            kIAttr = kResource.IAttr;
+        }
+        return kIAttr;
     }
 
     /**

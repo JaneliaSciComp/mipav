@@ -70,6 +70,7 @@ public class ColorRGBA
         m_afTuple[0] = rkC.m_afTuple[0];
         m_afTuple[1] = rkC.m_afTuple[1];
         m_afTuple[2] = rkC.m_afTuple[2];
+        m_afTuple[3] = rkC.m_afTuple[3];
     }
 
     /**

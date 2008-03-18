@@ -6,7 +6,10 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.*;
+import gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture;
+import gov.nih.mipav.view.renderer.surfaceview.SurfaceAttributes;
 import gov.nih.mipav.view.renderer.surfaceview.SurfaceRender;
+import gov.nih.mipav.view.renderer.surfaceview.JDialogSmoothMesh;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -15,11 +18,13 @@ import java.io.*;
 
 import java.util.*;
 
+import javax.media.j3d.BranchGroup;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
 
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Detail.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 
@@ -32,16 +37,16 @@ public class JPanelSurface_WM
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -4600563188022683359L;
 
-    /** The colors for the first six surfaces are fixed.
-    private static Color3f[] fixedColor = {
-        new Color3f(0.0f, 0.0f, 0.5f), // blue
-        new Color3f(0.0f, 0.5f, 0.0f), // green
-        new Color3f(0.5f, 0.0f, 0.0f), // red
-        new Color3f(0.0f, 0.5f, 0.5f), // cyan
-        new Color3f(0.5f, 0.0f, 0.5f), // violet
-        new Color3f(0.5f, 0.5f, 0.0f) // yellow
+    /** The colors for the first six surfaces are fixed. */
+    private static ColorRGB[] fixedColor = {
+        new ColorRGB(0.0f, 0.0f, 0.5f), // blue
+        new ColorRGB(0.0f, 0.5f, 0.0f), // green
+        new ColorRGB(0.5f, 0.0f, 0.0f), // red
+        new ColorRGB(0.0f, 0.5f, 0.5f), // cyan
+        new ColorRGB(0.5f, 0.0f, 0.5f), // violet
+        new ColorRGB(0.5f, 0.5f, 0.0f) // yellow
     };
- */
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** The area label. */
@@ -95,9 +100,6 @@ public class JPanelSurface_WM
 
     /** The material options button, which launches the material editor window. */
     private JButton m_kAdvancedMaterialOptionsButton;
-
-    /** Stereo render button, launches the JStereoWindow for viewing the ModelTriangleMesh in stereo:. */
-    private JButton m_kStereoButton;
 
     /** Opens SurfaceTexture dialog:. */
     private JButton m_kSurfaceTextureButton;
@@ -217,30 +219,28 @@ public class JPanelSurface_WM
      * @param   index  the number of the new surface
      *
      * @return  Color4f, the default surface color for the new surface.
-
-    public static Color4f getNewSurfaceColor(int index) {
-        Color4f surfaceColor = new Color4f();
-        surfaceColor.w = 1.0f;
+     */
+    public static ColorRGB getNewSurfaceColor(int index) {
+        ColorRGB surfaceColor = new ColorRGB();
 
         if (index < fixedColor.length) {
-
             // Use the fixed colors for the first six surfaces.
-            surfaceColor.x = fixedColor[index].x;
-            surfaceColor.y = fixedColor[index].y;
-            surfaceColor.z = fixedColor[index].z;
-        } else {
+            surfaceColor.SetData( fixedColor[index] );
+        }
+        else
+        {
             Random randomGen = new Random();
 
             // Use randomly generated colors for the seventh and
             // later surfaces.
-            surfaceColor.x = 0.5f * (1.0f + randomGen.nextFloat());
-            surfaceColor.y = 0.5f * (1.0f + randomGen.nextFloat());
-            surfaceColor.z = 0.5f * (1.0f + randomGen.nextFloat());
+            surfaceColor.SetData( 0.5f * (1.0f + randomGen.nextFloat()),
+                                  0.5f * (1.0f + randomGen.nextFloat()),
+                                  0.5f * (1.0f + randomGen.nextFloat()) );
         }
 
         return surfaceColor;
     }
-     */
+
     /**
      * The override necessary to be an ActionListener. This callback is executed whenever the Add or Remove buttons are
      * clicked, or when the color button or light button is clicked, or when the combo box changes. If the Add button is
@@ -268,9 +268,7 @@ public class JPanelSurface_WM
             colorChooser = new ViewJColorChooser(new Frame(), "Pick surface color", new OkColorListener(),
                                                  new CancelListener());
         } /* 
-        else if (command.equals("Stereo")) {
-            displayStereo(getSelectedSurfaces(surfaceList.getSelectedIndices()));
-        } else if (command.equals("ImageAsTexture")) {
+         else if (command.equals("ImageAsTexture")) {
             displayImageAsTexture(getSelectedSurfaces(surfaceList.getSelectedIndices()));
         } */ 
         else if (command.equals("AdvancedMaterialOptions")) {
@@ -298,22 +296,22 @@ public class JPanelSurface_WM
         }
         else if (command.equals("ChangePolyMode")) {
             changePolyMode(polygonIndexToMode(polygonModeCB.getSelectedIndex()));
-        }
-            /*
         } else if (command.equals("LevelXML") || command.equals("LevelW") || command.equals("LevelS") ||
-                       command.equals("LevelV")) {
-            FileSurface.saveSurfaces(parentScene.getImageA(), getSelectedSurfaces(surfaceList.getSelectedIndices()),
-                                     command);
-        } else if (command.equals("Smooth")) {
-            smoothSurface(getSelectedSurfaces(surfaceList.getSelectedIndices()), JDialogSmoothMesh.SMOOTH1);
+                   command.equals("LevelV"))
+        {
+            saveSurfaces( surfaceList.getSelectedIndices(), command );
+        } 
+        else if (command.equals("Smooth")) {
+            smoothSurface(surfaceList.getSelectedIndices(), JDialogSmoothMesh.SMOOTH1);
         } else if (command.equals("Smooth2")) {
-            smoothSurface(getSelectedSurfaces(surfaceList.getSelectedIndices()), JDialogSmoothMesh.SMOOTH2);
+            smoothSurface(surfaceList.getSelectedIndices(), JDialogSmoothMesh.SMOOTH2);
         } else if (command.equals("Smooth3")) {
-            smoothSurface(getSelectedSurfaces(surfaceList.getSelectedIndices()), JDialogSmoothMesh.SMOOTH3);
-        } else if (command.equals("Decimate")) {
-            decimate(getSelectedSurfaces(surfaceList.getSelectedIndices()));
+            smoothSurface(surfaceList.getSelectedIndices(), JDialogSmoothMesh.SMOOTH3);
+        } 
+        else if (command.equals("Decimate")) {
+            decimate(surfaceList.getSelectedIndices());
         }
-        */
+
     }
     
     
@@ -405,6 +403,38 @@ public class JPanelSurface_WM
         if (event.getSource() == opacitySlider)
         {
             setTransparency(surfaceList.getSelectedIndices());
+        }
+
+        if (event.getSource() == detailSlider) {
+
+            if (detailSlider.getValueIsAdjusting()) {
+                // Too many LOD changes occur if you always get the slider
+                // value.  Wait until the user stops dragging the slider.
+
+                // Maybe not. Comment out the next line to have the surface update quickly.
+                // If the CLOD mesh holds a surface over time one could view the surface evolution !!!!
+                return;
+            }
+
+            // value in [0,100], corresponds to percent of maximum LOD
+            float fValue = 1.0f - (float)detailSlider.getValue() / (float)detailSlider.getMaximum();
+
+            int numTriangles = 0;
+            // construct the lists of items whose LODs need to be changed
+            int[] aiSelected = surfaceList.getSelectedIndices();
+            for (int i = 0; i < aiSelected.length; i++) {
+                if ( m_kMeshes.get(aiSelected[i]) instanceof ClodMesh )
+                {
+                    ClodMesh kClod = ((ClodMesh)(m_kMeshes.get(aiSelected[i])));
+                    int iValue = (int)(fValue * kClod.GetMaximumLOD());
+                    kClod.TargetRecord(iValue);
+                    numTriangles += kClod.IBuffer.GetIndexQuantity();
+                    System.err.println( "SetTarget " + iValue );
+                }
+            }
+
+            numTriangles /= 3;
+            triangleText.setText("" + numTriangles);
         }
     }
 
@@ -668,13 +698,6 @@ public class JPanelSurface_WM
         m_kAdvancedMaterialOptionsButton.setEnabled(false);
         colorPanel.add(m_kAdvancedMaterialOptionsButton);
 
-        m_kStereoButton = new JButton("Stereo");
-        m_kStereoButton.setToolTipText("Display stereo pair");
-        m_kStereoButton.addActionListener(this);
-        m_kStereoButton.setActionCommand("Stereo");
-        m_kStereoButton.setEnabled(false);
-        colorPanel.add(m_kStereoButton);
-
         // Slider for changing opacity; not currently enabled.
         opacityLabel = new JLabel("Opacity");
         opacityLabel.setFont(serif12B);
@@ -912,19 +935,23 @@ public class JPanelSurface_WM
         TriMesh[] akSurfaces = FileSurface_WM.openSurfaces(m_kVolumeViewer.getImageA(), surfaceVector.size());
         if ( akSurfaces != null )
         {
-            m_kVolumeViewer.addSurface(akSurfaces);
-
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-            int iSize = kList.getSize();
-            for ( int i = 0; i < akSurfaces.length; i++ )
-            {
-                kList.add( iSize + i, akSurfaces[i].GetName() );
-                m_kMeshes.add(akSurfaces[i]);
-            }
-            surfaceList.setSelectedIndex(iSize);
-            setElementsEnabled(true);
-            //addSurfaces(surface, false);
+            addSurfaces(akSurfaces, false);
         }
+    }
+    
+    public void addSurfaces( TriMesh[] akSurfaces, boolean bReplace )
+    {
+        m_kVolumeViewer.addSurface(akSurfaces, bReplace);
+
+        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+        int iSize = kList.getSize();
+        for ( int i = 0; i < akSurfaces.length; i++ )
+        {
+            kList.add( iSize + i, akSurfaces[i].GetName() );
+            m_kMeshes.add(akSurfaces[i]);
+        }
+        surfaceList.setSelectedIndex(iSize);
+        setElementsEnabled(true);
     }
 
 
@@ -987,7 +1014,6 @@ public class JPanelSurface_WM
         colorLabel.setEnabled(flag);
         m_kAdvancedMaterialOptionsButton.setEnabled(flag);
         m_kSurfaceTextureButton.setEnabled(flag);
-        m_kStereoButton.setEnabled(flag);
         //detailLabel.setEnabled(flag);
         //detailSlider.setEnabled(flag);
         opacityLabel.setEnabled(flag);
@@ -1048,7 +1074,7 @@ public class JPanelSurface_WM
      *
      * @param  mode  The new polygon mode to set.
      */
-    private void changePolyMode(WireframeState.FillMode mode) {
+    public void changePolyMode(WireframeState.FillMode mode) {
         int[] aiSelected = surfaceList.getSelectedIndices();
 
         if ( m_kVolumeViewer != null )
@@ -1306,6 +1332,160 @@ public class JPanelSurface_WM
         if ( m_kSurfacePaint != null )
         {
             m_kSurfacePaint.setDropperColor(kDropperColor, kPickPoint);
+        }
+    }
+    
+    public void toggleGeodesicPathDisplay(int iWhich) {
+        int[] aiSelected = surfaceList.getSelectedIndices();
+        if ( m_kVolumeViewer != null )
+        {
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                m_kVolumeViewer.toggleGeodesicPathDisplay( (String)kList.elementAt(aiSelected[i]),
+                        iWhich);
+            }
+        }
+    }
+    
+    /**
+     * Decimate the surface.
+     *
+     * @param  surfaces  DOCUMENT ME!
+     */
+    private void decimate(int[] aiSelected) {
+        
+        if ( m_kVolumeViewer != null )
+        {
+            TriMesh[] akSurfaces = new TriMesh[ aiSelected.length ];
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                TriMesh kMesh = m_kMeshes.get(aiSelected[i]);
+                VertexBuffer kVBuffer = new VertexBuffer(kMesh.VBuffer);
+                IndexBuffer kIBuffer = new IndexBuffer( kMesh.IBuffer);
+                CreateClodMesh kDecimator = new CreateClodMesh(kVBuffer, kIBuffer);
+
+                kDecimator.decimate();
+                ClodMesh kClod = new ClodMesh(kVBuffer, kIBuffer, kDecimator.getRecords());
+                kClod.SetName( kMesh.GetName() );
+                akSurfaces[i] = kClod;
+
+                m_kVolumeViewer.removeSurface( (String)kList.elementAt(aiSelected[i]) );
+
+                m_kMeshes.set(aiSelected[i], kClod);
+            }
+
+
+            m_kVolumeViewer.addSurface(akSurfaces, false);
+
+
+            decimateButton.setEnabled(false);
+            detailSlider.setEnabled(true);
+            detailLabel.setEnabled(true);
+
+            for (int j = 0; j < detailSliderLabels.length; j++) {
+                detailSliderLabels[j].setEnabled(true);
+            }
+        }
+    }
+    
+    /**
+     * Smoothes the selected surfaces. One dialog per group of selected surfaces is displayed (not a different dialog
+     * per-serface).
+     *
+     * @param  surfaces    the list of selected surfaces (SurfaceAttributes)
+     * @param  smoothType  the level of smoothing JDialogSmoothMesh.SMOOTH1, JDialogSmoothMesh.SMOOTH2, or
+     *                     JDialogSmoothMesh.SMOOTH3
+     */
+    private void smoothSurface(int[] aiSelected, int iSmoothType )
+    {
+
+        if (aiSelected == null) {
+            MipavUtil.displayError("Select a surface to smooth.");
+            return;
+        }
+
+        JDialogSmoothMesh dialog = new JDialogSmoothMesh(null, true, iSmoothType);
+
+        if (dialog.isCancelled()) {
+            return;
+        }
+
+        if ( m_kVolumeViewer != null )
+        {
+            TriMesh[] akSurfaces = new TriMesh[ aiSelected.length ];
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            
+            int numTriangles = 0;
+            float volume = 0;
+            float area = 0;
+
+            
+            for (int i = 0; i < aiSelected.length; i++) {
+
+                TriMesh kMesh = m_kMeshes.get(aiSelected[i]);
+                int iTarget = 0;
+                if (kMesh instanceof ClodMesh) {
+                    iTarget = ((ClodMesh)kMesh).TargetRecord();
+                    ((ClodMesh)kMesh).TargetRecord(0);
+                    ((ClodMesh)kMesh).SelectLevelOfDetail();
+                }
+                
+                if (iSmoothType == JDialogSmoothMesh.SMOOTH1) {
+                    m_kVolumeViewer.smoothMesh((String)kList.elementAt(aiSelected[i]),
+                            dialog.getIterations(),
+                            dialog.getAlpha(),
+                            dialog.getVolumeLimit(),
+                            dialog.getVolumePercent());
+                }
+                else if (iSmoothType == JDialogSmoothMesh.SMOOTH2) {
+                    m_kVolumeViewer.smoothTwo((String)kList.elementAt(aiSelected[i]),
+                            dialog.getIterations(), dialog.getStiffness(), dialog.getVolumeLimit(),
+                                        dialog.getVolumePercent());
+                }
+
+                else {
+                    m_kVolumeViewer.smoothThree((String)kList.elementAt(aiSelected[i]),
+                            dialog.getIterations(), dialog.getLambda(), dialog.getMu());
+                }
+
+/*
+                numTriangles += meshes[j].getIndexCount();
+                volume += meshes[j].volume();
+                area += meshes[j].area();
+                */
+                
+                if ((kMesh instanceof ClodMesh) && (iTarget != 0 )) {
+                    ((ClodMesh)kMesh).TargetRecord(iTarget);
+                    ((ClodMesh)kMesh).SelectLevelOfDetail();
+                }
+            }
+
+            triangleText.setText(String.valueOf(numTriangles / 3));
+
+            // One length across the extracted surface changes from -1 to 1
+            // while one length across the actual volume changes by ((dim-1)*res)max
+            volumeText.setText("" + volume);
+            areaText.setText("" + area);
+        }
+    }
+
+
+    private void saveSurfaces( int[] aiSelected, String kCommand )
+    {
+
+        if (aiSelected == null) {
+            MipavUtil.displayError("Select a surface to save.");
+            return;
+        }
+
+        if ( m_kVolumeViewer != null )
+        {
+            TriMesh[] akSurfaces = new TriMesh[ aiSelected.length ];
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                akSurfaces[i] = m_kMeshes.get(aiSelected[i]);
+            }
+            FileSurface_WM.saveSurfaces(m_kVolumeViewer.getImageA(), akSurfaces, kCommand );
         }
     }
     

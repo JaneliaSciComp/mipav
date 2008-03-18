@@ -27,6 +27,7 @@ import java.awt.event.*;
 import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 import gov.nih.mipav.view.WildMagic.LibRenderers.OpenGLRenderer.*;
@@ -111,12 +112,48 @@ public class Iridescence extends JavaApplication3D
             m_spkScene.UpdateGS();
             m_kCuller.ComputeVisibleSet(m_spkScene);
         }
-        m_pkRenderer.ClearBuffers();
-        if (m_pkRenderer.BeginScene())
+        if ( !m_bStereo )
         {
-            m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-            DrawFrameRate(8,GetHeight()-8,ColorRGBA.WHITE);
-            m_pkRenderer.EndScene();
+            m_pkRenderer.ClearBuffers();
+            if (m_pkRenderer.BeginScene())
+            {
+                m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+                DrawFrameRate(8,GetHeight()-8,ColorRGBA.WHITE);
+                m_pkRenderer.EndScene();
+            }
+        }
+        else
+        {          
+            m_pkRenderer.ClearBuffers();
+            if (m_pkRenderer.BeginScene())
+            {
+                MoveRight();
+                if ( m_bRight )
+                {
+                    m_kCuller.ComputeVisibleSet(m_spkScene);
+                    m_pkRenderer.SetColorMask( false, false, true, true );
+                    m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+                    DrawFrameRate(8,GetHeight()-8,ColorRGBA.WHITE);
+                    m_pkRenderer.EndScene();
+                }
+            }
+            m_pkRenderer.ClearZBuffer();
+            if (m_pkRenderer.BeginScene())
+            {
+                MoveLeft();
+                MoveLeft();
+                if ( m_bLeft )
+                {
+                    m_kCuller.ComputeVisibleSet(m_spkScene);
+                    m_pkRenderer.SetColorMask( true, false, false, true );
+                    m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+                    DrawFrameRate(8,GetHeight()-8,ColorRGBA.WHITE);
+                    m_pkRenderer.EndScene();
+                }
+
+                MoveRight();
+                m_pkRenderer.SetColorMask( true, true, true, true );
+            }
         }
         m_pkRenderer.DisplayBackBuffer();
         UpdateFrameCount();
@@ -224,7 +261,8 @@ public class Iridescence extends JavaApplication3D
                     m_pkRenderer.GetMaxVShaderImages(),m_pkRenderer.GetMaxPShaderImages());
         }
 
-        pkMesh.AttachEffect(m_spkEffect);
+        pkMesh.AttachEffect(m_spkEffect);        
+        m_pkRenderer.SetColorMask( m_abColorMask[0], m_abColorMask[1], m_abColorMask[2], m_abColorMask[3] );
     }
 
     /**
@@ -260,6 +298,7 @@ public class Iridescence extends JavaApplication3D
             }
             m_spkEffect.SetInterpolateFactor(fInterpolateFactor);
             return;
+            /*
         case 'l':
         case 'L':
             ApplicationGUI kShaderParamsWindow = new ApplicationGUI();
@@ -268,10 +307,27 @@ public class Iridescence extends JavaApplication3D
             kShaderParamsWindow.AddUserVariables(m_spkEffect.GetPProgram(0));
             kShaderParamsWindow.Display();
             return;
+            */
         case 's':
         case 'S':
             TestStreaming(m_spkScene,"Iridescence.wmof");
             return;
+        case '1':
+            m_bStereo = false;
+            break;
+        case '2':
+            m_bStereo = true;
+            m_bLeft = true;
+            m_bRight = true;
+            break;
+        case 'l':
+            m_bLeft = true;
+            m_bRight = false;
+            break;
+        case 'r':
+            m_bLeft = false;
+            m_bRight = true;
+            break;
        }
         return;
     }
@@ -282,4 +338,9 @@ public class Iridescence extends JavaApplication3D
 
     /** Window with the shader paramter interface: */
     private ApplicationGUI m_kShaderParamsWindow = null;
+    
+    private boolean[] m_abColorMask = new boolean[] {true, true, true, true };
+    private boolean m_bStereo = false;
+    private boolean m_bLeft = true;
+    private boolean m_bRight = true;
 }

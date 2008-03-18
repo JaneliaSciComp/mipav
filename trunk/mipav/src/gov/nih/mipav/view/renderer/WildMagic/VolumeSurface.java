@@ -1,11 +1,13 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 
-import java.util.Vector;
+import java.util.*;
 import java.nio.*;
 import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
+import gov.nih.mipav.view.WildMagic.LibFoundation.System.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Collision.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Detail.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
@@ -29,88 +31,59 @@ public class VolumeSurface extends VolumeObject
      */
     public VolumeSurface ( Renderer kRenderer, VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ, TriMesh kMesh )
     {
+        this(kRenderer,kImageA, kTranslate, fX, fY, fZ, kMesh, false );
+    }
+    
+    public VolumeSurface ( Renderer kRenderer, VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ, TriMesh kMesh, boolean bReplace )
+    {
         super(kImageA,kTranslate,fX,fY,fZ);
 
         CreateScene();
-        m_kMesh = new HierarchicalTriMesh(kMesh);
-        m_kMesh.SetName( new String( kMesh.GetName() ) );
-
-        m_kMaterial = new MaterialState();
-        m_kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
-        m_kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
-        m_kMaterial.Diffuse = new ColorRGB(ColorRGB.WHITE);
-        m_kMaterial.Specular = new ColorRGB(ColorRGB.WHITE);
-        m_kMaterial.Shininess = 32f;
-        
-        if ( m_kMesh.VBuffer.GetAttributes().GetCChannels(1) != 0 )
+        if ( bReplace )
         {
-            m_bHasPerVertexColor = true;
+            StandardMesh kSM = new StandardMesh( kMesh.VBuffer.GetAttributes() );
+            TriMesh kLocal = kSM.Sphere( 10, 10, .5f );
+            m_kMesh = new TriMesh(kLocal);
+            //m_kMesh = new HierarchicalTriMesh(kLocal);
+        }
+        else
+        {
+            //m_kMesh = new HierarchicalTriMesh(kMesh);
+            m_kMesh = kMesh;
+        }
+        m_kMesh.SetName( new String( kMesh.GetName() ) );
+        
+        boolean bHasMaterial = true;
+        m_kMaterial = (MaterialState)m_kMesh.GetGlobalState( GlobalState.StateType.MATERIAL );
+        if ( m_kMaterial == null )
+        {
+            bHasMaterial = false;
+            m_kMaterial = new MaterialState();
+            m_kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+            m_kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
+            m_kMaterial.Diffuse = new ColorRGB(ColorRGB.WHITE);
+            m_kMaterial.Specular = new ColorRGB(ColorRGB.WHITE);
+            m_kMaterial.Shininess = 32f;
         }
         m_akBackupColor = new ColorRGBA[m_kMesh.VBuffer.GetVertexQuantity()];
 
-        float xMin = Float.MAX_VALUE;
-        float xMax = -Float.MAX_VALUE;
-        float yMin = Float.MAX_VALUE;
-        float yMax = -Float.MAX_VALUE;
-        float zMin = Float.MAX_VALUE;
-        float zMax = -Float.MAX_VALUE;
         for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
         {
-
-            m_kMesh.VBuffer.SetPosition3(i, m_kMesh.VBuffer.GetPosition3fX(i) - kTranslate.X(),
-                    m_kMesh.VBuffer.GetPosition3fY(i) - kTranslate.Y(), 
-                    m_kMesh.VBuffer.GetPosition3fZ(i) - kTranslate.Z() );
-            
-            if ( xMin > m_kMesh.VBuffer.GetPosition3fX(i) )
-            {
-                xMin = m_kMesh.VBuffer.GetPosition3fX(i);
-            }
-            if ( xMax < m_kMesh.VBuffer.GetPosition3fX(i) )
-            {
-                xMax = m_kMesh.VBuffer.GetPosition3fX(i);
-            }
-            
-            if ( yMin > m_kMesh.VBuffer.GetPosition3fY(i) )
-            {
-                yMin = m_kMesh.VBuffer.GetPosition3fY(i);
-            }
-            if ( yMax < m_kMesh.VBuffer.GetPosition3fY(i) )
-            {
-                yMax = m_kMesh.VBuffer.GetPosition3fY(i);
-            }
-            if ( zMin > m_kMesh.VBuffer.GetPosition3fZ(i) )
-            {
-                zMin = m_kMesh.VBuffer.GetPosition3fZ(i);
-            }
-            if ( zMax < m_kMesh.VBuffer.GetPosition3fZ(i) )
-            {
-                zMax = m_kMesh.VBuffer.GetPosition3fZ(i);
-            }
-
-            
             m_kMesh.VBuffer.SetTCoord3( 0, i, 
-                    m_kMesh.VBuffer.GetPosition3fX(i) * 1.0f/m_fX,
-                    m_kMesh.VBuffer.GetPosition3fY(i) * 1.0f/m_fY,
-                    m_kMesh.VBuffer.GetPosition3fZ(i) * 1.0f/m_fZ);
-            if ( !m_bHasPerVertexColor )
-            {
-                m_kMesh.VBuffer.SetColor4( 0, i,
-                        m_kMaterial.Diffuse.R(),
-                        m_kMaterial.Diffuse.G(),
-                        m_kMaterial.Diffuse.B(), 1.0f );
-            }
+                                        (m_kMesh.VBuffer.GetPosition3fX(i)  - kTranslate.X()) * 1.0f/m_fX,
+                                        (m_kMesh.VBuffer.GetPosition3fY(i)  - kTranslate.Y()) * 1.0f/m_fY,
+                                        (m_kMesh.VBuffer.GetPosition3fZ(i)  - kTranslate.Z()) * 1.0f/m_fZ);
             m_akBackupColor[i] = new ColorRGBA();
             m_kMesh.VBuffer.GetColor4( 0, i, m_akBackupColor[i]);
         }
-        System.err.println( xMin + " " + yMin + " " + zMin + " -> " + xMax + " " + yMax + " " + zMax );
-        
-        
-        m_kMesh.Local.SetTranslate(m_kTranslate);
         m_kMesh.UpdateMS();
 
         m_kLightShader = new SurfaceLightingEffect( kImageA );
 
-        m_kMesh.AttachGlobalState(m_kMaterial);
+        if ( !bHasMaterial )
+        {
+            m_kMesh.AttachGlobalState(m_kMaterial);
+        }
         m_kMesh.AttachEffect(m_kLightShader);
         m_kMesh.UpdateRS();
         
@@ -118,8 +91,14 @@ public class VolumeSurface extends VolumeObject
         m_kScene.UpdateGS();
         m_kScene.UpdateRS();
         
-        BoxBVTree kBoxBV = new BoxBVTree(m_kMesh, 4000, true);
-        m_kMesh.SetBoundingVolumeTree(kBoxBV);
+//         Date kDate = new Date();
+//         long lStart = kDate.getTime();
+//         System.err.println("Start build tree " );
+//         BoxBVTree kBoxBV = new BoxBVTree(m_kMesh, 4000, true);
+//         m_kMesh.SetBoundingVolumeTree(kBoxBV);
+//         kDate = new Date();
+//         long lEnd = kDate.getTime();
+//         System.err.println("End build tree " + (float)(lEnd - lStart)/1000.0f);
     }
 
     /**
@@ -133,11 +112,12 @@ public class VolumeSurface extends VolumeObject
         {
             return;
         }    
-        for ( int i = 0; i < 3; i++ )
+        for ( int i = 0; i < m_kScene.GetQuantity(); i++ )
         {
-            m_kMesh.DetachAllEffects();
-            m_kMesh.AttachEffect( m_kVertexColor3Shader );
+            m_kScene.GetChild(i).DetachAllEffects();
+            m_kScene.GetChild(i).AttachEffect( m_kVertexColor3Shader );
         }
+
         m_kScene.UpdateGS();
         kCuller.ComputeVisibleSet(m_kScene);
         kRenderer.DrawScene(kCuller.GetVisibleSet());
@@ -154,10 +134,10 @@ public class VolumeSurface extends VolumeObject
         {
             return;
         }
-        for ( int i = 0; i < 3; i++ )
+        for ( int i = 0; i < m_kScene.GetQuantity(); i++ )
         {
-            m_kMesh.DetachAllEffects();
-            m_kMesh.AttachEffect( m_kLightShader );
+            m_kScene.GetChild(i).DetachAllEffects();
+            m_kScene.GetChild(i).AttachEffect( m_kLightShader );
         }
         m_kScene.UpdateGS();
         kCuller.ComputeVisibleSet(m_kScene);
@@ -284,6 +264,13 @@ public class VolumeSurface extends VolumeObject
         m_kMesh.VBuffer.SetColor4(0, kRecord.iV1, kPaintColor.R(), kPaintColor.G(), kPaintColor.B(), kPaintColor.A() );
         m_kMesh.VBuffer.SetColor4(0, kRecord.iV2, kPaintColor.R(), kPaintColor.G(), kPaintColor.B(), kPaintColor.A() );
 
+
+        Attributes kIAttr = kRenderer.GetVBufferInputAttributes( m_kMesh.VBuffer );
+        if ( kIAttr == null )
+        {
+            kIAttr = m_kMesh.VBuffer.GetAttributes();
+            System.err.println("Attributes NULL");
+        }
         if ( iBrushSize > 1 )
         {
             Vector3f kDiff = new Vector3f();
@@ -310,7 +297,7 @@ public class VolumeSurface extends VolumeObject
                 }
             }
             
-            float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(),
+            float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(kIAttr,
                                                                            iMin, iMax );
             FloatBuffer kData = FloatBuffer.wrap(afCompatible);
             kData.rewind();
@@ -318,19 +305,19 @@ public class VolumeSurface extends VolumeObject
         }
         else
         {
-            float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(), kRecord.iV0,
+            float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(kIAttr, kRecord.iV0,
                                                                            kRecord.iV0);
             FloatBuffer kData = FloatBuffer.wrap(afCompatible);
             kData.rewind();
             kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, kRecord.iV0*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
 
-            afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(), kRecord.iV1,
+            afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(kIAttr, kRecord.iV1,
                                                                    kRecord.iV1);
             kData = FloatBuffer.wrap(afCompatible);
             kData.rewind();
             kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, kRecord.iV1*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
 
-            afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(), kRecord.iV2,
+            afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(kIAttr, kRecord.iV2,
                                                                    kRecord.iV2);
             kData = FloatBuffer.wrap(afCompatible);
             kData.rewind();
@@ -452,7 +439,96 @@ public class VolumeSurface extends VolumeObject
         m_kLightShader.SetImageNew(kImage);
     }
 
+    public TriMesh GetMesh()
+    {
+        return m_kMesh; 
+    }
+    
+    
+    public void AddGeodesic( Geometry kMesh, int iGroup )
+    {
+        //kMesh.Local.SetTranslate(m_kTranslate.add(kMesh.Local.GetTranslate()));
+        kMesh.AttachEffect( m_kLightShader );
+        if ( m_akGeodesicNodes[iGroup] == null )
+        {
+            m_akGeodesicNodes[iGroup] = new Node();
+            if ( iGroup == m_iCurrentGeodesic )
+            {
+                m_kScene.AttachChild( m_akGeodesicNodes[iGroup] );
+            }
+        }
+        m_akGeodesicNodes[iGroup].AttachChild( kMesh );
+    }  
+    
+    
+    
+    public void RemoveGeodesic( int iNode, int iGroup )
+    {
+        if ( iGroup == -1 )
+        {
+            for ( int i = 0; i < 3; i++ )
+            {
+                if ( m_akGeodesicNodes[i] != null )
+                {
+                    m_akGeodesicNodes[i].DetachChildAt(iNode);
+                }
+            }    
+        }
+        else
+        {
+            if ( m_akGeodesicNodes[iGroup] != null )
+            {
+                m_akGeodesicNodes[iGroup].DetachChildAt(iNode);
+            }
+        }
+    } 
+    
+    public void RemoveAllGeodesic()
+    {
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ( m_akGeodesicNodes[i] != null )
+            {
+                m_akGeodesicNodes[i].DetachAllChildren();
+                m_kScene.DetachChild( m_akGeodesicNodes[m_iCurrentGeodesic] );
+                m_akGeodesicNodes[i] = null;
+            }
+        }    
+    }
+    
+    public void ReplaceGeodesic( TriMesh kMesh )
+    {       
+        //kMesh.Local.SetTranslate(m_kTranslate);
+        kMesh.UpdateMS();
 
+        kMesh.AttachGlobalState(m_kMaterial);
+        kMesh.AttachEffect(m_kLightShader);
+        kMesh.UpdateRS();
+        
+        m_kScene.SetChild(0, kMesh);
+        m_kScene.UpdateGS();
+        m_kScene.UpdateRS();
+        
+        m_kMesh = null;
+        m_kMesh = kMesh;
+    }
+    
+    public void ToggleGeodesicPathDisplay( int iWhich )
+    {
+        if ( m_iCurrentGeodesic == iWhich )
+        {
+            return;
+        }
+        if ( m_akGeodesicNodes[m_iCurrentGeodesic] == null )
+        {
+            return;
+        }
+        
+        m_kScene.DetachChild( m_akGeodesicNodes[m_iCurrentGeodesic] );
+        m_iCurrentGeodesic = iWhich;
+        m_kScene.AttachChild( m_akGeodesicNodes[m_iCurrentGeodesic] );
+    }
+    
     public float GetVolume()
     {
         if ( m_fVolume == 0 )
@@ -675,6 +751,509 @@ public class VolumeSurface extends VolumeObject
     }
 
     
+    /**
+     * Smooth mesh. The formula can be found in "The Visualization Toolkit" by Will Schoeder, Ken Martin, and Bill
+     * Lorensen, p. 389. Mesh smoothing moves the verticies of the mesh closer to an average of the points. Each point
+     * is moved so that it is the average of the points around it. The formula is:
+     *
+     * <pre>
+            xi+1 = xi + (alpha * (Sum from j=0 to n of {xj - xi}))
+     *  </pre>
+     *
+     * where xi+1 is the new point, xi is the orginal point, and the xjs are points that are connected to xi. Alpha is
+     * some smoothing factor between .01 and .10. This formula is run for a number of iterations to obtain a smooth
+     * mesh. Usually the iterations will be between 50 and 100.
+     *
+     * @param  iteration      Number of times to run smoothing formula on data set.
+     * @param  alpha          Smoothing factor.
+     * @param  volumeLimit    if true stop iterations when the present volume is volumePercent or more different from
+     *                        the initial
+     * @param  volumePercent  percentage from initial volume for stopping iterations
+     */
+    public void smoothMesh(int iteration, float alpha, boolean volumeLimit, float volumePercent)
+    {
+   
+        int i;
+        int num;
+        float initialVolume = 0.0f;
+        float presentVolume;
+        boolean noVolumeLimit = true;
+        float presentPercent;
+
+        HashSet[] connections = buildConnections();
+        
+        if (volumeLimit) {
+            initialVolume = GetVolume();
+        }
+
+        // repeat for however many iterations
+        for (int k = 0; (k < iteration) && noVolumeLimit; k++) {
+            scaleMesh( alpha, connections );
+            if (volumeLimit) {
+                presentVolume = ComputeVolume();
+
+                // System.out.println("ModelTriangleMesh.smoothMesh -- present volume " + presentVolume);
+                presentPercent = Math.abs(100.0f * (presentVolume - initialVolume) / initialVolume);
+
+                if (presentPercent >= volumePercent) {
+                    noVolumeLimit = false;
+                }
+            } // if (doVolumeLimit)
+        }
+
+        m_kMesh.UpdateMS();
+        m_kMesh.VBuffer.Release();
+    }
+    /**
+     * Derived from the first 2 of the 3 components of AlgorithmBrainExtraction Note that m_fStiffness does not increase
+     * and then decrease as in AlgorithmBrainExtraction but instead remains constant. This is because the change in
+     * m_fStiffness only applies to the third component of AlgorithmBrainExtraction which uses image intensities.
+     *
+     * @param  iterations     DOCUMENT ME!
+     * @param  m_fStiffness   DOCUMENT ME!
+     * @param  volumeLimit    if true stop iterations when the present volume is volumePercent or more different from
+     *                        the initial
+     * @param  volumePercent  percentage from initial volume for stopping iterations
+     */
+    public void smoothTwo(int iterations,
+                          float fStiffness,
+                          boolean volumeLimit,
+                          float volumePercent)
+    {
+        float initialVolume = 0.0f;
+        float presentVolume;
+        boolean noVolumeLimit = true;
+        float presentPercent;
+
+        int iVertexQuantity = m_kMesh.VBuffer.GetVertexQuantity();
+        Vector3f[] akVMean = new Vector3f[iVertexQuantity];
+        Vector3f[] akVNormal = new Vector3f[iVertexQuantity];
+        Vector3f[] akSNormal = new Vector3f[iVertexQuantity];
+        Vector3f[] akSTangent = new Vector3f[iVertexQuantity];
+        float[] afCurvature = new float[iVertexQuantity];
+        UnorderedSetInt[] akAdjacent = new UnorderedSetInt[iVertexQuantity];
+
+        // System.out.println("I am entering smoothTwo");
+        for (int i = 0; i < iVertexQuantity; i++) {
+            akVMean[i] = new Vector3f();
+            akVNormal[i] = new Vector3f();
+            akSNormal[i] = new Vector3f();
+            akSTangent[i] = new Vector3f();
+            akAdjacent[i] = new UnorderedSetInt(6, 1);
+        }
+
+        HashMap kEMap = new HashMap();
+        Integer kInvalid = new Integer(-1);
+
+        int iTQuantity = m_kMesh.GetTriangleQuantity();
+        for (int i = 0; i < iTQuantity; i++)
+        {
+            int iV0, iV1, iV2;
+            int[] aiTris = new int[3];
+            if (!m_kMesh.GetTriangle(i, aiTris) )
+            {
+                continue;
+            }
+            iV0 = aiTris[0];            iV1 = aiTris[1];            iV2 = aiTris[2];
+
+            kEMap.put(new Edge(iV0, iV1), kInvalid);
+            kEMap.put(new Edge(iV1, iV2), kInvalid);
+            kEMap.put(new Edge(iV2, iV0), kInvalid);
+
+            akAdjacent[iV0].insert(iV1);
+            akAdjacent[iV0].insert(iV2);
+            akAdjacent[iV1].insert(iV0);
+            akAdjacent[iV1].insert(iV2);
+            akAdjacent[iV2].insert(iV0);
+            akAdjacent[iV2].insert(iV1);
+        }
+
+        if (volumeLimit) {
+            initialVolume = GetVolume();
+        }
+
+        for (int i = 1; (i <= iterations) && noVolumeLimit; i++) {
+
+            updateMesh( kEMap, akVNormal, akVMean, akAdjacent, akSTangent, akSNormal, afCurvature, fStiffness );
+
+            if (volumeLimit) {
+                presentVolume = ComputeVolume();
+                presentPercent = Math.abs(100.0f * (presentVolume - initialVolume) / initialVolume);
+
+                if (presentPercent >= volumePercent) {
+                    noVolumeLimit = false;
+                }
+            } // if (doVolumeLimit)
+        }
+        
+
+        m_kMesh.UpdateMS();
+        m_kMesh.VBuffer.Release();
+    }
+
+
+    /**
+     * Smooth mesh. This method smoothes without shrinking by 2 Gaussian smoothing steps. First, a Gaussian smoothing is
+     * performed with a positive scale factor lambda. Second, a Gaussian smoothing is performed with a negative scale
+     * factor mu, which is greater in magnitude than lambda. To produce a significant smoothing, these steps must be
+     * repeated a number of times. 3 references for this smoothing: 1.) Curve and Surface Smoothing Without Shrinkage by
+     * Gabriel Taubin, Technical Report RC-19536, IBM Research, April, 1994. (also in Proceedings, Fifth International
+     * Conference on Computer Vision, pages 852-857, June, 1995). 2.) A Signal Processing Approach to Fair Surface
+     * Design by Gabriel Taubin, Computer Graphics, pages 351-358, August, 1995 (Proceedings SIGGRAPH '95). 3.) Optimal
+     * Surface Smoothing as Filter Design by Gabriel Taubin, Tong Zhang, and Gene Golub, IBM Research Report RC-20404
+     * (#90237). Usually the iterations will be between 30 and 100.
+     *
+     * @param  iteration  Number of times to run smoothing formula on data set.
+     * @param  lambda     positive scale factor
+     * @param  mu         negative scale factor
+     * @param  pVisible   if true display progress bar Require: 0 < lambda < -mu (1/lambda) + (1/mu) < 2
+     * */
+    public void smoothThree(int iteration, float lambda, float mu) {
+
+        HashSet[] connections = buildConnections();
+
+        scaleMesh( lambda, connections );
+        scaleMesh( mu, connections );
+
+        m_kMesh.UpdateMS();
+        m_kMesh.VBuffer.Release();
+    }
+
+
+    private void scaleMesh( float fValue, HashSet[] connections )
+    {
+        int iVQuantity = m_kMesh.VBuffer.GetVertexQuantity();
+        VertexBuffer kVBuffer = new VertexBuffer( m_kMesh.VBuffer );
+
+        int num;
+        Vector3f kSum = new Vector3f();
+        Vector3f kOriginalPos = new Vector3f();
+        Vector3f kConnectionPos = new Vector3f();
+
+        // for each coordinate vertex
+        for (int i = 0; i < iVQuantity; i++) {
+
+            kSum.SetData(0f,0f,0f);
+            num = 0;
+            m_kMesh.VBuffer.GetPosition3(i, kOriginalPos);
+
+            // get all the verticies that are connected to this one (at i)
+            for (Iterator iter = connections[i].iterator(); iter.hasNext();) {
+                int index = ((Integer) iter.next()).intValue();
+
+                m_kMesh.VBuffer.GetPosition3(index, kConnectionPos);
+
+                // Sum of (xj - xi) where j ranges over all the points connected to xi
+                // xj = m_kV2; xi = m_kV3
+                kSum.addEquals( kConnectionPos.sub( kOriginalPos ) );
+                num++;
+            }
+            // xi+1 = xi + (alpha)*(sum of(points xi is connected to - xi))
+
+            if (num > 1) {
+                kSum.scaleEquals( 1.0f / (float)num );
+            }
+
+            kSum.scaleEquals( fValue );
+            kOriginalPos.addEquals( kSum );
+            kVBuffer.SetPosition3(i, kOriginalPos);
+        }
+
+        for (int i = 0; i < iVQuantity; i++) {
+            m_kMesh.VBuffer.SetPosition3(i, kVBuffer.GetPosition3(i) );
+        }
+
+        kVBuffer.dispose();
+        kVBuffer = null;
+    }
+
+
+    /**
+     * Builds a list of cross-references, so that connections[i] contains all the verticies that are connected to vertex
+     * at i.
+     */
+    private HashSet[] buildConnections() {
+        Iterator iter;
+        int index;
+        boolean addT1, addT2, addT3;
+
+        int iVQuantity = m_kMesh.VBuffer.GetVertexQuantity();
+        HashSet[] connections = new HashSet[iVQuantity];
+
+        int iTQuantity = m_kMesh.GetTriangleQuantity();
+        for (int i = 0; i < iTQuantity; i++)
+        {
+            int iV0, iV1, iV2;
+            int[] aiTris = new int[3];
+            if (!m_kMesh.GetTriangle(i, aiTris) )
+            {
+                continue;
+            }
+            iV0 = aiTris[0];            iV1 = aiTris[1];            iV2 = aiTris[2];
+
+            if (connections[iV0] == null) {
+                connections[iV0] = new HashSet();
+            }
+
+            addT2 = true;
+            addT3 = true;
+
+            for (iter = connections[iV0].iterator(); iter.hasNext();) {
+                index = ((Integer) iter.next()).intValue();
+
+                if (index == iV1) {
+                    addT2 = false;
+                } else if (index == iV2) {
+                    addT3 = false;
+                }
+            }
+
+            if (addT2) {
+                connections[iV0].add(new Integer(iV1));
+            }
+
+            if (addT3) {
+                connections[iV0].add(new Integer(iV2));
+            }
+
+            if (connections[iV1] == null) {
+                connections[iV1] = new HashSet();
+            }
+
+            addT1 = true;
+            addT3 = true;
+
+            for (iter = connections[iV1].iterator(); iter.hasNext();) {
+                index = ((Integer) iter.next()).intValue();
+
+                if (index == iV0) {
+                    addT1 = false;
+                } else if (index == iV2) {
+                    addT3 = false;
+                }
+            }
+
+            if (addT1) {
+                connections[iV1].add(new Integer(iV0));
+            }
+
+            if (addT3) {
+                connections[iV1].add(new Integer(iV2));
+            }
+
+            if (connections[iV2] == null) {
+                connections[iV2] = new HashSet();
+            }
+
+            addT1 = true;
+            addT2 = true;
+
+            for (iter = connections[iV2].iterator(); iter.hasNext();) {
+                index = ((Integer) iter.next()).intValue();
+
+                if (index == iV0) {
+                    addT1 = false;
+                } else if (index == iV1) {
+                    addT2 = false;
+                }
+            }
+
+            if (addT1) {
+                connections[iV2].add(new Integer(iV0));
+            }
+
+            if (addT2) {
+                connections[iV2].add(new Integer(iV1));
+            }
+        }
+        return connections;
+    }
+
+    /**
+     * Compute the average length of all the edges in the triangle mesh.
+     */
+    private float computeMeanEdgeLength( HashMap kEMap )
+    {
+        float fMeanEdgeLength = 0.0f;
+
+        Iterator kEIter = kEMap.entrySet().iterator();
+        Map.Entry kEntry = null;
+        while (kEIter.hasNext()) {
+            kEntry = (Map.Entry) kEIter.next();
+
+            Edge kE = (Edge) kEntry.getKey();
+
+            Vector3f kV0 = m_kMesh.VBuffer.GetPosition3(kE.m_iV0);
+            Vector3f kV1 = m_kMesh.VBuffer.GetPosition3(kE.m_iV1);
+            Vector3f kEdge = kV1.sub(kV0);
+            fMeanEdgeLength += kEdge.Length();
+        }
+
+        fMeanEdgeLength /= (float)kEMap.size();
+        return fMeanEdgeLength;
+    }
+
+    /**
+     * Let V[i] be a vertex in the triangle mesh. This function computes VMean[i], the average of the immediate
+     * neighbors of V[i]. Define S[i] = VMean[i] - V[i]. The function also computes a surface normal SNormal[i], the
+     * component of S[i] in the vertex normal direction. STangent[i] = S[i] - SNormal[i] is computed as an approximation
+     * to a tangent to the surface. Finally, Curvature[i] is an approximation of the surface curvature at V[i].
+     */
+    private void computeVertexInformation( float[] afParams, float fMeanEdgeLength, 
+            Vector3f[] akVNormal,
+            Vector3f[] akVMean, UnorderedSetInt[] akAdjacent,
+            Vector3f[] akSTangent, Vector3f[] akSNormal, float[] afCurvature )
+    {
+        float fMinCurvature = Float.POSITIVE_INFINITY;
+        float fMaxCurvature = Float.NEGATIVE_INFINITY;
+        float fInvMeanLength = 1.0f / fMeanEdgeLength;
+
+        int iVertexQuantitaty = m_kMesh.VBuffer.GetVertexQuantity();
+        for (int i = 0; i < iVertexQuantitaty; i++) {
+            akVMean[i].SetData(0.0f, 0.0f, 0.0f);
+        }
+
+        Vector3f kS = new Vector3f();
+        
+        for (int i = 0; i < iVertexQuantitaty; i++) {
+
+            // compute the mean of the vertex neighbors
+            // Point3f kMean = m_akVMean[i];
+            UnorderedSetInt kAdj = akAdjacent[i];
+
+            for (int j = 0; j < kAdj.getQuantity(); j++) {
+                Vector3f kV0 = m_kMesh.VBuffer.GetPosition3(kAdj.get(j));
+                akVMean[i].addEquals(kV0);
+            }
+
+            akVMean[i].scaleEquals(1.0f / (float)kAdj.getQuantity());
+
+            // compute the normal and tangential components of mean-vertex
+            Vector3f kV0 = m_kMesh.VBuffer.GetPosition3(i);
+            akVMean[i].sub( kV0, kS );
+            akSNormal[i].SetData( akVNormal[i].scale(kS.Dot(akVNormal[i])));
+            kS.sub(akSNormal[i], akSTangent[i]);
+
+            // compute the curvature
+            float fLength = akSNormal[i].Length();
+
+            afCurvature[i] = ((2.0f * fLength) * fInvMeanLength) * fInvMeanLength;
+
+            if (afCurvature[i] < fMinCurvature) {
+                fMinCurvature = afCurvature[i];
+            }
+
+            if (afCurvature[i] > fMaxCurvature) {
+                fMaxCurvature = afCurvature[i];
+            }
+        }
+
+        // compute the fractional function parameters for update2()
+        afParams[0] = 0.5f * (fMinCurvature + fMaxCurvature);
+        afParams[1] = 6.0f / (fMaxCurvature - fMinCurvature);
+    }
+
+    /**
+     * Compute the vertex normals of the triangle mesh. Each vertex normal is the unitized average of the non-unit
+     * triangle normals for those triangles sharing the vertex.
+     */
+    private void computeVertexNormals( Vector3f[] akVNormal )
+    {
+        int iVertexQuantity = m_kMesh.VBuffer.GetVertexQuantity();
+        // maintain a running sum of triangle normals at each vertex
+        for (int i = 0; i < iVertexQuantity; i++) {
+            akVNormal[i].SetData(0.0f, 0.0f, 0.0f);
+        }
+
+        Vector3f kEdge1 = new Vector3f();
+        Vector3f kEdge2 = new Vector3f();
+        Vector3f kNormal = new Vector3f();
+
+        int iTQuantity = m_kMesh.GetTriangleQuantity();
+        for (int i = 0; i < iTQuantity; i++)
+        {
+            int iV0, iV1, iV2;
+            int[] aiTris = new int[3];
+            if (!m_kMesh.GetTriangle(i, aiTris) )
+            {
+                continue;
+            }
+            iV0 = aiTris[0];            iV1 = aiTris[1];            iV2 = aiTris[2];
+
+            Vector3f kV0 = m_kMesh.VBuffer.GetPosition3(iV0);
+            Vector3f kV1 = m_kMesh.VBuffer.GetPosition3(iV1);
+            Vector3f kV2 = m_kMesh.VBuffer.GetPosition3(iV2);
+
+            // compute the triangle normal
+            kV1.sub( kV0, kEdge1 );
+            kV2.sub( kV0, kEdge2 );
+            kEdge1.Cross( kEdge2, kNormal );
+
+            // the triangle normal partially contributes to each vertex normal
+            akVNormal[iV0].addEquals(kNormal);
+            akVNormal[iV1].addEquals(kNormal);
+            akVNormal[iV2].addEquals(kNormal);
+        }
+
+        for (int i = 0; i < iVertexQuantity; i++) {
+            akVNormal[i].Normalize();
+        }
+    }
+
+    /**
+     * Compute the coefficient of the surface normal for the update of the mesh vertex V[i] in the SNormal[i] direction.
+     * See BrainExtraction.pdf for a description of the update.
+     *
+     * @param   i  the index of the vertex to update
+     *
+     * @return  the coefficient of SNormal[i] for the update
+     */
+    private float update2(int i, float[] afCurvature, float fStiffness, float[] afParam )
+    {
+        float fArg = afParam[1] * (afCurvature[i] - afParam[0]);
+        float fExpP = (float) Math.exp(fArg);
+        float fExpN = (float) Math.exp(-fArg);
+        float fTanh = (fExpP - fExpN) / (fExpP + fExpN);
+        float fUpdate2 = 0.5f * fStiffness * (1.0f + fTanh);
+
+        return fUpdate2;
+    }
+
+    /**
+     * The heart of the segmentation. This function is responsible for the evolution of the triangle mesh that
+     * approximates the brain surface. The update has a tangential component, a surface normal component, and a vertex
+     * normal component for each vertex in the mesh. The first two components control the geometry of the mesh. The last
+     * component is based on the MRI data itself. See BrainExtraction.pdf for a detailed description of the update
+     * terms.
+     */
+    private void updateMesh(HashMap kEMap, Vector3f[] akVNormal, Vector3f[] akVMean, UnorderedSetInt[] akAdjacent, Vector3f[] akSTangent, Vector3f[] akSNormal, float[] afCurvature, float fStiffness )
+    {
+        float fMeanLength = computeMeanEdgeLength(kEMap);
+        computeVertexNormals(akVNormal);
+        float[] afParams = new float[2];
+        computeVertexInformation(afParams, fMeanLength, 
+                akVNormal,
+                akVMean, akAdjacent,
+                akSTangent, akSNormal, afCurvature);
+
+        int iVertexQuantity = m_kMesh.VBuffer.GetVertexQuantity();
+        // update the vertices
+        for (int i = 0; i < iVertexQuantity; i++) {
+            Vector3f kV = m_kMesh.VBuffer.GetPosition3(i);
+
+            // tangential update
+            Vector3f kT = akSTangent[i].scale( 0.5f );
+            kV.addEquals( kT );
+
+            // normal update
+            float fUpdate2 = update2(i, afCurvature, fStiffness, afParams);
+
+            Vector3f kS = akSNormal[i].scale(fUpdate2);
+            kV.addEquals( kS );
+            m_kMesh.VBuffer.SetPosition3(i, kV);
+        }
+    }
+    
     /** Creates the scene graph. */
     private void CreateScene ( )
     {
@@ -705,7 +1284,8 @@ public class VolumeSurface extends VolumeObject
 
     /** ShaderEffect for the plane bounding-boxes. */
     private VolumePreRenderEffect m_kVertexColor3Shader;
-    private HierarchicalTriMesh m_kMesh = null;
+    //private HierarchicalTriMesh m_kMesh = null;
+    private TriMesh m_kMesh = null;
     private MaterialState m_kMaterial = null;
     private SurfaceLightingEffect m_kLightShader;
 
@@ -718,4 +1298,7 @@ public class VolumeSurface extends VolumeObject
     private ColorRGBA[] m_akBackupColor = null;
     private boolean m_bPainted = false;
     private boolean m_bTextureOn = false;
+    
+    private Node[] m_akGeodesicNodes = new Node[3];
+    private int m_iCurrentGeodesic = 0;   
 }

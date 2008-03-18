@@ -14,6 +14,10 @@ import javax.media.j3d.*;
 
 import javax.vecmath.*;
 
+import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
+
 
 /**
  * Inherits from FileXML, reads SurfaceRef.XML files based on the "surfaceref.xsd" file. Defines specific variables for
@@ -269,6 +273,88 @@ public class FileSurfaceRefXML extends FileXML {
         return true;
     }    
 
+    /**
+     * Writes the XML file information, including the ModelTriangleMesh surface out to the given filename and path:
+     *
+     * @param   fileName   file name to write to
+     * @param   kMaterial    surface material
+     * @param   opacity      surface opacity
+     * @param   levelDetail  surface level of detail
+     * @return  if header write was successful
+     *
+     * @throws  IOException  if a file I/O problem is encoutered while writing the header
+     */
+    public boolean writeXMLsurface_WM(String fileName, MaterialState kMaterial,
+                                      float opacity, int levelDetail)
+        throws IOException
+    {
+
+    	int dotIndex = fileName.lastIndexOf('.');
+    	int slashIndex = fileName.lastIndexOf('\\');
+    	int nDims = 3;
+    	String headerName, headerDir;
+    	headerDir = fileName.substring(0, slashIndex);
+    	headerName = fileName.substring(slashIndex+1, dotIndex);
+    	
+        /* Create the SurfaceXMLHandler which processes the vertex, normal,
+         * connectivity arrays and colors for writing in the xml format: */
+        SurfaceRefXMLHandler kSurfaceXMLHandler = new SurfaceRefXMLHandler((FileInfoSurfaceRefXML) fileInfo);
+
+        /* Output file: */
+        FileWriter fw;
+        File headerFile;
+
+        headerFile = new File(fileName);
+        fw = new FileWriter(headerFile);
+        bw = new BufferedWriter(fw);
+
+        bw.write(XML_HEADER);
+        bw.newLine();
+        bw.write(MIPAV_HEADER);
+        bw.newLine();
+
+        /* Open the surface tag: */
+        openTag("Surface xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
+
+        /***************************************************************************************/
+        /* Write the Unique-ID: */
+        closedTag(m_kSurfaceStr[0], new String("22"));
+
+        /* Open the Material tag and write the material values (ambient,
+         * diffuse, emissive, specular, shininess: */
+        openTag(m_kSurfaceStr[1], true);
+        closedTag(m_kMaterialStr[0], kSurfaceXMLHandler.getColorString(kMaterial.Ambient));
+        closedTag(m_kMaterialStr[1], kSurfaceXMLHandler.getColorString(kMaterial.Diffuse));
+        closedTag(m_kMaterialStr[2], kSurfaceXMLHandler.getColorString(kMaterial.Emissive));
+        closedTag(m_kMaterialStr[3], kSurfaceXMLHandler.getColorString(kMaterial.Specular));
+        closedTag(m_kMaterialStr[4], new String(" " + kMaterial.Shininess + " "));
+        openTag(m_kSurfaceStr[1], false);
+        
+        /* Write the type of Mesh (TMesh) */
+        closedTag(m_kSurfaceStr[2], "TMesh");
+
+        /* Write the surface opacity */
+        closedTag(m_kSurfaceStr[3], new String(" " + opacity + " "));
+
+        /* Write the surface level of detial */
+        closedTag(m_kSurfaceStr[4], new String(" " + levelDetail + " "));
+        
+        /* Write the .sur surface file name */ 
+        closedTag(m_kSurfaceStr[5], headerName + ".sur");
+            
+        /********************************************************************************/
+        /* Close the surface tag: */
+        openTag("Surface", false);
+
+        bw.close();
+
+        kSurfaceXMLHandler = null;
+
+        return true;
+    }    
+
+
+
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
@@ -370,7 +456,7 @@ public class FileSurfaceRefXML extends FileXML {
          *
          * @throws  SAXException  if a problem is encountered during parsing
          */
-        public void startElement(String namespaceURI, String localName, String qName, Attributes atts)
+        public void startElement(String namespaceURI, String localName, String qName, org.xml.sax.Attributes atts)
                 throws SAXException {
             elementBuffer = "";
         }
@@ -387,6 +473,20 @@ public class FileSurfaceRefXML extends FileXML {
 
             return kColorString;
         }
+
+        /**
+         * Called when writing the surface.xml file: Converts the input Color3f to a String for writing:
+         *
+         * @param   kColor  color object
+         *
+         * @return  the color in string format
+         */
+        public String getColorString(ColorRGB kColor) {
+            String kColorString = new String(kColor.R() + " " + kColor.G() + " " + kColor.B());
+
+            return kColorString;
+        }
+
 
         /**
          * Called when reading the input surface.xml file: Parses the input string into a Color3f variable:

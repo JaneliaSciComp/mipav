@@ -3081,7 +3081,7 @@ implements MouseListener, ItemListener, ChangeListener {
     {
         if ( raycastRenderWM != null )
         {
-            raycastRenderWM.addSurface(akSurfaces);
+            raycastRenderWM.addSurface(akSurfaces, false);
             insertTab("Light", lightPanel);
             m_kLightsPanel.enableLight(0, true);
             insertTab("Surface", surfacePanel);

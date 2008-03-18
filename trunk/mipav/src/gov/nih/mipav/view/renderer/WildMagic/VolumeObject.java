@@ -199,6 +199,7 @@ public abstract class VolumeObject
     public void Paint(Renderer kRenderer, PickRecord kRecord, ColorRGBA kPaintColor, int iBrushSize ) {}
     public void Dropper(PickRecord kRecord, ColorRGBA rkDropperColor, Vector3f rkPickPoint ) {}
     public void Erase(Renderer kRenderer, PickRecord kRecord, int iBrushSize ) {}
+    public TriMesh GetMesh() { return null; }
 
     /** boolean to turn rendering on/off for this object. */
     protected boolean m_bDisplay = false;
@@ -215,7 +216,7 @@ public abstract class VolumeObject
     /** Alpha blending for this object. */
     protected AlphaState m_kAlpha;
     /** Wireframe for this object. */
-    protected WireframeState m_kWireframe;
+    protected WireframeState m_kWireframe = null;
     
     /** Volume coordinates of the data (extents * resolutions): */
     protected float m_fX, m_fY, m_fZ;

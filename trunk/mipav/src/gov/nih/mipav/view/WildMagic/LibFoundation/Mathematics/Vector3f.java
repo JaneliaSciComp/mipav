@@ -307,6 +307,10 @@ public class Vector3f
      */
     public boolean isEqual (Vector3f rkV)
     {
+        if ( rkV == null )
+        {
+            return false;
+        }
         return ( (Math.abs(m_afTuple[0] - rkV.m_afTuple[0]) < Mathf.ZERO_TOLERANCE) &&
                  (Math.abs(m_afTuple[1] - rkV.m_afTuple[1]) < Mathf.ZERO_TOLERANCE) &&
                  (Math.abs(m_afTuple[2] - rkV.m_afTuple[2]) < Mathf.ZERO_TOLERANCE) );
