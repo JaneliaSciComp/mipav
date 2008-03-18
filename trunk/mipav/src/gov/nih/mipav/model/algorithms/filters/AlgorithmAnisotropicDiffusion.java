@@ -29,7 +29,7 @@ import java.io.*;
  */
 
 
-public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
+public class AlgorithmAnisotropicDiffusion extends AlgorithmBase implements AlgorithmInterface {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -70,6 +70,8 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
     /** Standard deviations of the gaussian used to calculate the kernels. */
     private float[] sigmas;
+    
+    private float[] outputBuffer = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -203,17 +205,14 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
      */
     private void calcInPlace2D(int nImages) {
 
-        int i, n, s;
+        int i, s;
         int length, totalLength;
         int start;
         float[] imgBuffer;
-        float[] tempBuffer;
-        float[] resultBuffer;
         float[] finalBuffer;
-        float[] gmBuffer;
         float gmMax, gmMin;
         float val;
-        float ix, iy, mag;
+        float mag;
         float finalMin;
         float finalMax;
         double typeMin;
@@ -225,14 +224,10 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
             length = srcImage.getSliceSize();
             totalLength = length * nImages;
             imgBuffer = new float[length];
-            resultBuffer = new float[length];
             finalBuffer = new float[totalLength];
-            gmBuffer = new float[length];
         } catch (OutOfMemoryError e) {
             imgBuffer = null;
-            resultBuffer = null;
             finalBuffer = null;
-            gmBuffer = null;
             errorCleanUp("Anisotropic Diffusion: Out of Memory", true);
 
             return;
@@ -240,6 +235,53 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
 
         fireProgressStateChanged(0, srcImage.getImageName(), "Diffusing image ...");
+        AlgorithmConvolver convolver = new AlgorithmConvolver(null, srcImage, GxData, GyData, kExtents,entireImage);
+        convolver.setMinProgressValue(0);
+        convolver.setMaxProgressValue(50);
+        linkProgressToAlgorithm(convolver);
+        convolver.addListener(this);
+        if (!entireImage) {
+            convolver.setMask(mask);
+        }
+
+        convolver.run();
+        convolver.finalize();
+        
+        for (s = 0; s < nImages; s++) {
+            start = s * length;
+            for (i = 0, gmMax = 0, gmMin = Float.MAX_VALUE; i < length; i++) {
+                if ((entireImage == true) || mask.get(i)) {
+
+                    if (outputBuffer[start + i] > gmMax) {
+                        gmMax = outputBuffer[start+i];
+                    } 
+                    if (outputBuffer[start+i] < gmMin) {
+                        gmMin = outputBuffer[start+i];
+                    }
+                }    
+            }
+            
+            for (i = 0; (i < length) && !threadStopped; i++) {
+
+                if ((entireImage == true) || mask.get(i)) {
+
+                    mag = ((outputBuffer[start+i] - gmMin) / (gmMax - gmMin)) * 100; // normalized between 0 - 100
+                    finalBuffer[start+i] = (float) (1 / (1 + (mag / konsnt * mag / konsnt)));
+                }
+            }
+        } // for (s = 0; s < nImages; s++)
+        
+        convolver = new AlgorithmConvolver(null, srcImage, lapData, klapExtents,entireImage, image25D);
+        convolver.setMinProgressValue(51);
+        convolver.setMaxProgressValue(99);
+        linkProgressToAlgorithm(convolver);
+        convolver.addListener(this);
+        if (!entireImage) {
+            convolver.setMask(mask);
+        }
+
+        convolver.run();
+        convolver.finalize();
         
         for (s = 0; s < nImages; s++) {
             start = s * length;
@@ -248,67 +290,24 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
                 srcImage.exportData(start, length, imgBuffer); // locks and releases lock
             } catch (IOException error) {
                 imgBuffer = null;
-                resultBuffer = null;
                 finalBuffer = null;
-                gmBuffer = null;
                 errorCleanUp("Algorithm Anisotropic Diffusion: Image(s) locked", true);
 
                 return;
             }
+            
+            for (i = 0; (i < length) && !threadStopped; i++) {
 
-            for (n = 0; (n < iterations) && !threadStopped; n++) {
+                if ((entireImage == true) || mask.get(i)) {
 
-                fireProgressStateChanged(((float) ((s * iterations) + n) / ((nImages * iterations) - 1)), 
-                        srcImage.getImageName(), "Diffusing image ...");
-                
-
-                // Normalize GM !!
-                for (i = 0, gmMax = 0, gmMin = Float.MAX_VALUE; i < length; i++) {
-
-                    if ((entireImage == true) || mask.get(i)) {
-                        ix = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), imgBuffer, kExtents, GxData);
-                        iy = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), imgBuffer, kExtents, GyData);
-
-                        gmBuffer[i] = (float) Math.sqrt((ix * ix) + (iy * iy));
-
-                        if (gmBuffer[i] > gmMax) {
-                            gmMax = gmBuffer[i];
-                        } 
-                        if (gmBuffer[i] < gmMin) {
-                            gmMin = gmBuffer[i];
-                        }
-                    }
+                    
+                    val = outputBuffer[start+i] * finalBuffer[start+i] * 0.25f;
+                    finalBuffer[start+i] = val + imgBuffer[i];
+                } else {
+                    finalBuffer[start+i] = imgBuffer[i];
                 }
-
-                for (i = 0; (i < length) && !threadStopped; i++) {
-
-                    if ((entireImage == true) || mask.get(i)) {
-
-                        mag = ((gmBuffer[i] - gmMin) / (gmMax - gmMin)) * 100; // normalized between 0 - 100
-                        mag = (float) (1 / (1 + (mag / konsnt * mag / konsnt)));
-                        val = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), imgBuffer, klapExtents,
-                                                              lapData);
-
-                        val = val * mag * 0.25f;
-                        resultBuffer[i] = val + imgBuffer[i];
-                    } else {
-                        resultBuffer[i] = imgBuffer[i];
-                    }
-                }
-
-                tempBuffer = imgBuffer;
-                imgBuffer = resultBuffer;
-                resultBuffer = tempBuffer;
-            }
-
-            for (i = 0; i < length; i++) {
-                finalBuffer[start + i] = imgBuffer[i];
             }
         }
-
-        resultBuffer = null;
-        tempBuffer = null;
-        System.gc();
 
         if (threadStopped) {
             finalize();
@@ -387,9 +386,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
             srcImage.importData(0, finalBuffer, true);
         } catch (IOException error) {
             imgBuffer = null;
-            resultBuffer = null;
             finalBuffer = null;
-            gmBuffer = null;
             errorCleanUp(error + "AnisotropicDiffusion: Image(s) locked", true);
 
             return;
@@ -405,39 +402,34 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
     private void calcInPlace3D() {
 
         int i, n;
-        int length, offset;
+        int length;
         float[] imgBuffer;
-        float[] tempBuffer;
         float[] resultBuffer;
-        float[] gmBuffer;
         float gmMax, gmMin;
         float val, edgeFunct;
-        float ix, iy, iz, mag;
+        float mag;
         float imageMin;
         float imageMax;
         double typeMin;
         double typeMax;
         double a;
         double b;
+        AlgorithmConvolver convolver;
 
         try {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
-            offset = srcImage.getSliceSize();
             imgBuffer = new float[length];
             resultBuffer = new float[length];
-            gmBuffer = new float[length];
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
         } catch (IOException error) {
             imgBuffer = null;
             resultBuffer = null;
-            gmBuffer = null;
             errorCleanUp("Anisotropic Diffusion: Image(s) locked", true);
 
             return;
         } catch (OutOfMemoryError e) {
             imgBuffer = null;
             resultBuffer = null;
-            gmBuffer = null;
             errorCleanUp("Anisotropic Diffusion: Out of memory", true);
 
             return;
@@ -448,79 +440,77 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
         fireProgressStateChanged(0, srcImage.getImageName(), "Diffusing image ...");
         
         for (n = 0; (n < iterations) && !threadStopped; n++) {
+            convolver = new AlgorithmConvolver(null, srcImage, GxData, GyData, GzData, kExtents,entireImage);
+            convolver.setMinProgressValue((100 * n)/iterations);
+            convolver.setMaxProgressValue(Math.min((int)Math.round((100 * (n+0.5))/iterations),99));
+            linkProgressToAlgorithm(convolver);
+            convolver.addListener(this);
+            if (!entireImage) {
+                convolver.setMask(mask);
+            }
 
+            convolver.run();
+            convolver.finalize();
             // Normalize GM !!
             for (i = 0, gmMax = 0, gmMin = Float.MAX_VALUE; i < length; i++) {
 
-                    int s = i / offset;
-                    
-                    if ((i % offset) == 0) {
-                        fireProgressStateChanged((Math.round((float) (50.0 * s) / (iterations * srcImage.getExtents()[2])) +
-                                Math.round(100 * ((float) (n)) / iterations)), 
-                                srcImage.getImageName(), "Diffusing image ...");
-                    }
-
-
-                if ((entireImage == true) || mask.get(i)) {
-                    ix = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), imgBuffer, kExtents, GxData);
-                    iy = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), imgBuffer, kExtents, GyData);
-                    iz = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), imgBuffer, kExtents, GzData);
-
-                    gmBuffer[i] = (float) Math.sqrt((ix * ix) + (iy * iy) + (iz * iz));
-
-                    if (gmBuffer[i] > gmMax) {
-                        gmMax = gmBuffer[i];
+                    if (outputBuffer[i] > gmMax) {
+                        gmMax = outputBuffer[i];
                     } 
-                    if (gmBuffer[i] < gmMin) {
-                        gmMin = gmBuffer[i];
+                    if (outputBuffer[i] < gmMin) {
+                        gmMin = outputBuffer[i];
                     }
-                }
+                    resultBuffer[i] = outputBuffer[i];
             }
 
             // two speed ups
             // mult by 1/konsnt
             float invK = 1 / konsnt;
             float normMag = 100 / (gmMax - gmMin);
+            
+            convolver = new AlgorithmConvolver(null, srcImage, lapData, klapExtents,entireImage, image25D);
+            convolver.setMinProgressValue(Math.min((int)Math.round((100 * (n + 0.5))/iterations),99));
+            convolver.setMaxProgressValue(Math.min((100 * (n+1))/iterations,99));
+            linkProgressToAlgorithm(convolver);
+            convolver.addListener(this);
+            if (!entireImage) {
+                convolver.setMask(mask);
+            }
+
+            convolver.run();
+            convolver.finalize();
 
             for (i = 0; (i < length) && !threadStopped; i++) {
-
-                    int s = i / offset;
-
-                    if ((i % offset) == 0) {
-                        
-                        fireProgressStateChanged((Math.round((float) (50.0 * s) / (iterations * srcImage.getExtents()[2])) +
-                                Math.round(100 * ((float) (n)) / iterations) +
-                                Math.round((float) (50.0) / (iterations))), 
-                                srcImage.getImageName(), "Diffusing image ...");
-                        
-                    }
-
                
 
                 if ((entireImage == true) || mask.get(i)) {
 
                     // mag = ((gmBuffer[i]-gmMin)/(gmMax-gmMin)) * 100;
-                    mag = (gmBuffer[i] - gmMin) * normMag;
+                    mag = (resultBuffer[i] - gmMin) * normMag;
 
                     // edgeFunct = (float)( 1/(1 + mag/konsnt * mag/konsnt));
                     edgeFunct = (float) (1 / (1 + (mag * invK * mag * invK)));
 
-                    val = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), imgBuffer, klapExtents, lapData);
-
-                    val = val * edgeFunct * 0.25f;
-                    resultBuffer[i] = val + imgBuffer[i];
-                } else {
-                    resultBuffer[i] = imgBuffer[i];
-                }
+                    val = outputBuffer[i] * edgeFunct * 0.25f;
+                    imgBuffer[i] = val + imgBuffer[i];
+                } 
             }
 
-            tempBuffer = imgBuffer;
-            imgBuffer = resultBuffer;
-            resultBuffer = tempBuffer;
-        }
+            if (n != (iterations - 1)) {
+                try {
+                    srcImage.importData(0, imgBuffer, true);
+                }
+                catch (IOException error) {
+                    imgBuffer = null;
+                    resultBuffer = null;
+                    errorCleanUp("Anisotropic Diffusion: Image(s) locked", true);
+    
+                    return;
+                }
+            }
+        } // for (n = 0; (n < iterations) && !threadStopped; n++) {
 
         resultBuffer = null;
-        tempBuffer = null;
         System.gc();
 
         if (threadStopped) {
@@ -605,7 +595,6 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
         } catch (IOException error) {
             imgBuffer = null;
             resultBuffer = null;
-            gmBuffer = null;
             errorCleanUp("AnisotropicDiffusion: Image(s) locked", true);
 
             return;
@@ -1156,5 +1145,16 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
         lapData[24] = 0.58f;
         lapData[25] = 0.71f;
         lapData[26] = 0.58f;
+    }
+    
+    public void algorithmPerformed(AlgorithmBase algorithm){
+        if(!algorithm.isCompleted()){
+            finalize();
+            return;
+        }
+        if (algorithm instanceof AlgorithmConvolver) {
+            AlgorithmConvolver convolver = (AlgorithmConvolver) algorithm;
+            outputBuffer = convolver.getOutputBuffer();
+        }
     }
 }
