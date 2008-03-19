@@ -16,7 +16,7 @@ import java.util.*;
  * @version  0.1 Feb 11, 1998
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class AlgorithmLaplacian extends AlgorithmBase {
+public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterface {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -56,6 +56,9 @@ public class AlgorithmLaplacian extends AlgorithmBase {
      * in the mask image is background.
      */
     private ModelImage zXMask;
+    
+    // Buffer to receive result of convolution operation
+    private float[] outputBuffer;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -247,7 +250,15 @@ public class AlgorithmLaplacian extends AlgorithmBase {
 
         fireProgressStateChanged(0, null, "Calculation the laplacian ...");
 
-        
+        AlgorithmConvolver convolver = new AlgorithmConvolver(srcImage, GxxData, kExtents,entireImage, image25D);
+        convolver.setMinProgressValue(0);
+        convolver.setMaxProgressValue(10);
+        linkProgressToAlgorithm(convolver);
+        convolver.addListener(this);
+        if (!entireImage) {
+            convolver.setMask(mask);
+        }
+        convolver.run();
 
         if (destImage != null) {
 
@@ -316,7 +327,7 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             return;
         }
 
-        int mod = totalLength / 100; // mod is 1 percent of length
+        int mod = totalLength / 90; // since progress bar is already at 10
 
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
@@ -361,12 +372,12 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             for (i = 0; (i < length) && !threadStopped; i++) {
 
                 if ((((start + i) % mod) == 0)) {
-                    fireProgressStateChanged(((float) (start + i) / (totalLength - 1)), null, null);
+                    fireProgressStateChanged(10 + (90 * (start + i)) / (totalLength - 1), null, null);
 
                 }
 
                 if ((entireImage == true) || mask.get(start + i)) {
-                    lap = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, GxxData);
+                    lap = outputBuffer[start + i];
                     if (entireImage == false) {
                         if (lap > maxL) {
                             maxL = lap;
@@ -518,7 +529,7 @@ public class AlgorithmLaplacian extends AlgorithmBase {
         }
 
 
-        int mod = length / 100; // mod is 1 percent of length
+        int mod = length / 90; // since progress bar is already at 10
         
         float min, max;
         min = Float.MAX_VALUE;
@@ -547,11 +558,11 @@ public class AlgorithmLaplacian extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0)) {
-                fireProgressStateChanged(((float) i / (length - 1)), null, null);
+                fireProgressStateChanged(10 + (90 *  i) / (length - 1), null, null);
             }
 
             if ((entireImage == true) || mask.get(i)) {
-                lap = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GxxData);
+                lap = outputBuffer[i];
                 if (entireImage == false) {
                     if (lap > maxL) {
                         maxL = lap;
@@ -699,7 +710,7 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             return;
         }
 
-        int mod = totalLength / 100; // mod is 1 percent of length
+        int mod = totalLength / 90; // since progress bar is already at 10
 
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
@@ -742,12 +753,12 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
                 if ((((start + i) % mod) == 0)) {
-                    fireProgressStateChanged(((float) (start + i) / (totalLength - 1)), null, null);
+                    fireProgressStateChanged(10 + 90 * (start + i)/(totalLength - 1), null, null);
                 }
 
                 if ((entireImage == true) || mask.get(start + i)) {
 
-                    lap = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, GxxData);
+                    lap = outputBuffer[start + i];
 
                     if (entireImage == false) {
                         if (lap > maxL) {
@@ -844,7 +855,7 @@ public class AlgorithmLaplacian extends AlgorithmBase {
         }
 
 
-        int mod = length / 100; // mod is 1 percent of length
+        int mod = length / 90; // since progress bar is already at 10
 
         float min, max;
         min = Float.MAX_VALUE;
@@ -873,11 +884,11 @@ public class AlgorithmLaplacian extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0)) {
-                fireProgressStateChanged(((float) i / (length - 1)), null, null);
+                fireProgressStateChanged(10 + (90 * i)/(length - 1), null, null);
             }
 
             if ((entireImage == true) || mask.get(i)) {
-                lap = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GxxData);
+                lap = outputBuffer[i];
 
                 if (entireImage == false) {
                     if (lap > maxL) {
@@ -1146,6 +1157,17 @@ public class AlgorithmLaplacian extends AlgorithmBase {
         // for (int i = 0; i < GyyData.length; i++){
         // GxxData[i] = -(GxxData[i]+GyyData[i]+GzzData[i]*scaleFactor);
         // }
+    }
+    
+    public void algorithmPerformed(AlgorithmBase algorithm){
+        if(!algorithm.isCompleted()){
+            finalize();
+            return;
+        }
+        if (algorithm instanceof AlgorithmConvolver) {
+            AlgorithmConvolver convolver = (AlgorithmConvolver) algorithm;
+            outputBuffer = convolver.getOutputBuffer();
+        }
     }
 
 }
