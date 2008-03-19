@@ -49,15 +49,46 @@ public class AlgorithmConvolver extends AlgorithmBase {
     
     private float[] kernelBufferZ;
     
+    private float[] kernelBufferXX;
+    
+    private float[] kernelBufferXY;
+    
+    private float[] kernelBufferYY;
+    
+    private float[] kernelBufferXZ;
+    
+    private float[] kernelBufferYZ;
+    
+    private float[] kernelBufferZZ;
+    
+    private float[] kernelBufferXXX;
+    
+    private float[] kernelBufferXXY;
+    
+    private float[] kernelBufferXYY;
+    
+    private float[] kernelBufferYYY;
+    
     private boolean red, blue, green;
     
     private float[] outputBuffer;
     
     private boolean entireImage;
     
+    // Used with 2D AlgorithmAnistropicDiffusion
     private boolean sqrtXY = false;
     
+    // used with 3D AlgorithmAnistropicDiffusion
     private boolean sqrtXYZ = false;
+    
+    // Used with 2D AlgorithmNMSuppression
+    private boolean nms2 = false;
+    
+    // Used with 2D AlgorithmNMSuppression
+    private boolean nms22 = false;
+    
+    // Used with 3D AlgorithmNMSuppression
+    private boolean nms3 = false;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     public boolean isRed() {
@@ -133,6 +164,59 @@ public class AlgorithmConvolver extends AlgorithmBase {
         this.entireImage = entireImage;
         image25D = false;
         sqrtXYZ = true;
+    }
+    
+    public AlgorithmConvolver(ModelImage srcImage, float[] kernelX, float[] kernelY, float[] kernelXX,
+                              float[] kernelXY, float[] kernelYY, int[] kExtents, boolean entireImage) {
+        super(null, srcImage);
+        kernelBufferX = kernelX;
+        kernelBufferY = kernelY;
+        kernelBufferXX = kernelXX;
+        kernelBufferXY = kernelXY;
+        kernelBufferYY = kernelYY;
+        this.kExtents = kExtents;
+        this.entireImage = entireImage;
+        image25D = true;
+        nms2 = true;
+    }
+    
+    public AlgorithmConvolver(ModelImage srcImage, float[] kernelX, float[] kernelY, float[] kernelXX,
+            float[] kernelXY, float[] kernelYY, float[] kernelXXX, float[] kernelXXY,
+            float[] kernelXYY, float[] kernelYYY, int[] kExtents, boolean entireImage) {
+        super(null, srcImage);
+        kernelBufferX = kernelX;
+        kernelBufferY = kernelY;
+        kernelBufferXX = kernelXX;
+        kernelBufferXY = kernelXY;
+        kernelBufferYY = kernelYY;
+        kernelBufferXXX = kernelXXX;
+        kernelBufferXXY = kernelXXY;
+        kernelBufferXYY = kernelXYY;
+        kernelBufferYYY = kernelYYY;
+        this.kExtents = kExtents;
+        this.entireImage = entireImage;
+        image25D = true;
+        nms22 = true;
+    }
+    
+    public AlgorithmConvolver(ModelImage srcImage, float[] kernelX, float[] kernelY, float[] kernelZ, float[] kernelXX,
+            float[] kernelXY, float[] kernelYY, float[] kernelXZ, float[] kernelYZ, float[] kernelZZ,
+            boolean entireImage, int[] kExtents) {
+        // Note that last 2 arguments are reversed from previous order to distinguish constructors
+        super(null, srcImage);
+        kernelBufferX = kernelX;
+        kernelBufferY = kernelY;
+        kernelBufferZ = kernelZ;
+        kernelBufferXX = kernelXX;
+        kernelBufferXY = kernelXY;
+        kernelBufferYY = kernelYY;
+        kernelBufferXZ = kernelXZ;
+        kernelBufferYZ = kernelYZ;
+        kernelBufferZZ = kernelZZ;
+        this.kExtents = kExtents;
+        this.entireImage = entireImage;
+        image25D = false;
+        nms3 = true;
     }
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -286,6 +370,270 @@ public class AlgorithmConvolver extends AlgorithmBase {
             ptX = sumX/ normX;
             ptY = sumY/ normY;
             return (float)Math.sqrt(ptX*ptX + ptY*ptY);
+        } else {
+            return 0;
+        }
+    }
+    
+    /**
+     * A static function that convolves a kernel with an image at a position.
+     *
+     * @param   pix       index indicating location of convolution
+     * @param   iExtents  image dimensions
+     * @param   image     image data
+     * @param   kExtents  kernel dimensions
+     * @param   kernelX   kernel data
+     * @param   kernelY   kernel data
+     * @param   kernelXX  kernel data
+     * @param   kernelXY  kernel data
+     * @param   kernelYY  kernel data
+     *
+     * @return  the value of the pixel after convolution with the kernel
+     */
+    public static final synchronized float convolve2DPtNMS(int pix, int[] iExtents, float[] image, int[] kExtents,
+                                                        float[] kernelX, float[] kernelY, float[] kernelXX,
+                                                        float[] kernelXY, float[] kernelYY) {
+
+        int i, j;
+        int offsetX, offsetY;
+        int xDim = iExtents[0];
+        int yDim = iExtents[1];
+        int xKDim = kExtents[0];
+        int yKDim = kExtents[1];
+        int yLimit = xDim * yDim;
+
+        int startX, startY;
+        int endX, endY;
+        int count;
+        double sumX;
+        double sumY;
+        double sumXX;
+        double sumXY;
+        double sumYY;
+        double normX = 0;
+        double normY = 0;
+        double normXX = 0;
+        double normXY = 0;
+        double normYY = 0;
+        double ptX;
+        double ptY;
+        double ptXX;
+        double ptXY;
+        double ptYY;
+
+        offsetX = (pix % xDim) - (xKDim / 2);
+        offsetY = (pix / xDim) - (yKDim / 2);
+        sumX = 0;
+        sumY = 0;
+        sumXX = 0;
+        sumXY = 0;
+        sumYY = 0;
+        count = 0;
+        startY = offsetY * xDim;
+        endY = startY + (yKDim * xDim);
+
+        for (j = startY; j < endY; j += xDim) {
+            startX = j + offsetX;
+            endX = startX + xKDim;
+
+            for (i = startX; i < endX; i++) {
+
+                if ((j >= 0) && (j < yLimit) && ((i - j) >= 0) && ((i - j) < xDim)) {
+
+                    // Needed for compiler bug
+                    // Run same image twice from AlgorithmLevelSetDiffusion and
+                    // array index out of bounds exception shows up
+                    if (count >= kernelX.length) {
+                        break;
+                    }
+
+                    sumX += kernelX[count] * image[i];
+                    sumY += kernelY[count] * image[i];
+                    sumXX += kernelXX[count] * image[i];
+                    sumXY += kernelXY[count] * image[i];
+                    sumYY += kernelYY[count] * image[i];
+
+                    if (kernelX[count] >= 0) {
+                        normX += kernelX[count];
+                    } else {
+                        normX += -kernelX[count];
+                    }
+                    
+                    if (kernelY[count] >= 0) {
+                        normY += kernelY[count];
+                    } else {
+                        normY += -kernelY[count];
+                    }
+                    
+                    if (kernelXX[count] >= 0) {
+                        normXX += kernelXX[count];
+                    } else {
+                        normXX += -kernelXX[count];
+                    }
+                    
+                    if (kernelXY[count] >= 0) {
+                        normXY += kernelXY[count];
+                    } else {
+                        normXY += -kernelXY[count];
+                    }
+                    
+                    if (kernelYY[count] >= 0) {
+                        normYY += kernelYY[count];
+                    } else {
+                        normYY += -kernelYY[count];
+                    }
+                }
+
+                count++;
+            }
+        }
+
+        if ((normX > 0) && (normY > 0) && (normXX > 0) && (normXY > 0) && (normYY > 0)) {
+            ptX = sumX/ normX;
+            ptY = sumY/ normY;
+            ptXX = sumXX/ normXX;
+            ptXY = sumXY/ normXY;
+            ptYY = sumYY/ normYY;
+            return (float)((ptX * ptX * ptXX) + (2.0 * ptX * ptY * ptXY) + (ptY * ptY * ptYY));
+        } else {
+            return 0;
+        }
+    }
+    
+    /**
+     * A static function that convolves a kernel with an image at a position.
+     *
+     * @param   pix       index indicating location of convolution
+     * @param   iExtents  image dimensions
+     * @param   image     image data
+     * @param   kExtents  kernel dimensions
+     * @param   kernelX   kernel data
+     * @param   kernelY   kernel data
+     * @param   kernelXXX  kernel data
+     * @param   kernelXXY  kernel data
+     * @param   kernelXYY  kernel data
+     * @param   kernelYYY  kernel data
+     *
+     * @return  the value of the pixel after convolution with the kernel
+     */
+    public static final synchronized float convolve2DPtNMS2(int pix, int[] iExtents, float[] image, int[] kExtents,
+                                                        float[] kernelX, float[] kernelY, float[] kernelXXX,
+                                                        float[] kernelXXY, float[] kernelXYY, float[] kernelYYY) {
+
+        int i, j;
+        int offsetX, offsetY;
+        int xDim = iExtents[0];
+        int yDim = iExtents[1];
+        int xKDim = kExtents[0];
+        int yKDim = kExtents[1];
+        int yLimit = xDim * yDim;
+
+        int startX, startY;
+        int endX, endY;
+        int count;
+        double sumX;
+        double sumY;
+        double sumXXX;
+        double sumXXY;
+        double sumXYY;
+        double sumYYY;
+        double normX = 0;
+        double normY = 0;
+        double normXXX = 0;
+        double normXXY = 0;
+        double normXYY = 0;
+        double normYYY = 0;
+        double ptX;
+        double ptY;
+        double ptXXX;
+        double ptXXY;
+        double ptXYY;
+        double ptYYY;
+
+        offsetX = (pix % xDim) - (xKDim / 2);
+        offsetY = (pix / xDim) - (yKDim / 2);
+        sumX = 0;
+        sumY = 0;
+        sumXXX = 0;
+        sumXXY = 0;
+        sumXYY = 0;
+        sumYYY = 0;
+        count = 0;
+        startY = offsetY * xDim;
+        endY = startY + (yKDim * xDim);
+
+        for (j = startY; j < endY; j += xDim) {
+            startX = j + offsetX;
+            endX = startX + xKDim;
+
+            for (i = startX; i < endX; i++) {
+
+                if ((j >= 0) && (j < yLimit) && ((i - j) >= 0) && ((i - j) < xDim)) {
+
+                    // Needed for compiler bug
+                    // Run same image twice from AlgorithmLevelSetDiffusion and
+                    // array index out of bounds exception shows up
+                    if (count >= kernelX.length) {
+                        break;
+                    }
+
+                    sumX += kernelX[count] * image[i];
+                    sumY += kernelY[count] * image[i];
+                    sumXXX += kernelXXX[count] * image[i];
+                    sumXXY += kernelXXY[count] * image[i];
+                    sumXYY += kernelXYY[count] * image[i];
+                    sumYYY += kernelYYY[count] * image[i];
+
+                    if (kernelX[count] >= 0) {
+                        normX += kernelX[count];
+                    } else {
+                        normX += -kernelX[count];
+                    }
+                    
+                    if (kernelY[count] >= 0) {
+                        normY += kernelY[count];
+                    } else {
+                        normY += -kernelY[count];
+                    }
+                    
+                    if (kernelXXX[count] >= 0) {
+                        normXXX += kernelXXX[count];
+                    } else {
+                        normXXX += -kernelXXX[count];
+                    }
+                    
+                    if (kernelXXY[count] >= 0) {
+                        normXXY += kernelXXY[count];
+                    } else {
+                        normXXY += -kernelXXY[count];
+                    }
+                    
+                    if (kernelXYY[count] >= 0) {
+                        normXYY += kernelXYY[count];
+                    } else {
+                        normXYY += -kernelXYY[count];
+                    }
+                    
+                    if (kernelYYY[count] >= 0) {
+                        normYYY += kernelYYY[count];
+                    } else {
+                        normYYY += -kernelYYY[count];
+                    }
+                }
+
+                count++;
+            }
+        }
+
+        if ((normX > 0) && (normY > 0) && (normXXX > 0) && (normXXY > 0) && (normXYY > 0) && (normYYY > 0)) {
+            ptX = sumX/ normX;
+            ptY = sumY/ normY;
+            ptXXX = sumXXX/ normXXX;
+            ptXXY = sumXXY/ normXXY;
+            ptXYY = sumXYY/ normXYY;
+            ptYYY = sumYYY/ normYYY;
+            return (float)((ptX * ptX * ptX * ptXXX) + (3.0 * ptX * ptX * ptY * ptXXY) +
+                    (3.0 * ptX * ptY * ptY * ptXYY) + (ptY * ptY * ptY * ptYYY));
         } else {
             return 0;
         }
@@ -737,6 +1085,198 @@ public class AlgorithmConvolver extends AlgorithmBase {
             ptY = sumY/normY;
             ptZ = sumZ/normZ;
             return (float)Math.sqrt(ptX*ptX + ptY*ptY + ptZ*ptZ);
+        } else {
+            return 0;
+        }
+    }
+    
+    /**
+     * A static function that convolves a kernel with an image at a position.
+     *
+     * @param   pix       index indicating location of convolution
+     * @param   iExtents  image dimensions
+     * @param   image     image data
+     * @param   kExtents  kernel dimensions
+     * @param   kernelX   kernel data
+     * @param   kernelY   kernel data
+     * @param   kernelZ   kernel data
+     * @param   kernelXX  kernel data
+     * @param   kernelXY  kernel data
+     * @param   kernelYY  kernel data
+     * @param   kernelXZ  kernel data
+     * @param   kernelYZ  kernel data
+     * @param   kernelZZ  kernel data
+     *
+     * @return  the value of the pixel after convolution with the kernel
+     */
+    public static final float convolve3DPtNMS(int pix, int[] iExtents, float[] image, int[] kExtents,
+                                              float[] kernelX, float[] kernelY, float[] kernelZ,
+                                              float[] kernelXX, float[] kernelXY, float[] kernelYY,
+                                              float[] kernelXZ, float[] kernelYZ, float[] kernelZZ) {
+
+        int i, j, k;
+        int offsetX, offsetY, offsetZ;
+        int sliceSize = iExtents[0] * iExtents[1];
+        int volSize = sliceSize * iExtents[2];
+        int xDim = iExtents[0];
+        int xKDim = kExtents[0];
+        int indexY;
+        int stepY, stepZ;
+        int startX, startY, startZ;
+        int endX, endY, endZ;
+        int count;
+        double sumX;
+        double sumY;
+        double sumZ;
+        double sumXX;
+        double sumXY;
+        double sumYY;
+        double sumXZ;
+        double sumYZ;
+        double sumZZ;
+        double normX = 0;
+        double normY = 0;
+        double normZ = 0;
+        double normXX = 0;
+        double normXY = 0;
+        double normYY = 0;
+        double normXZ = 0;
+        double normYZ = 0;
+        double normZZ = 0;
+        double ptX;
+        double ptY;
+        double ptZ;
+        double ptXX;
+        double ptXY;
+        double ptYY;
+        double ptXZ;
+        double ptYZ;
+        double ptZZ;
+
+        offsetX = (pix % xDim) - (kExtents[0] / 2);
+        offsetY = ((pix % sliceSize) / xDim) - (kExtents[1] / 2);
+        offsetZ = (pix / (sliceSize)) - (kExtents[2] / 2);
+
+        count = 0;
+        sumX = 0;
+        sumY = 0;
+        sumZ = 0;
+        sumXX = 0;
+        sumXY = 0;
+        sumYY = 0;
+        sumXZ = 0;
+        sumYZ = 0;
+        sumZZ = 0;
+        indexY = offsetY * xDim;
+        stepY = kExtents[1] * xDim;
+        stepZ = kExtents[2] * sliceSize;
+        startZ = offsetZ * sliceSize;
+        endZ = startZ + stepZ;
+
+        for (k = startZ; k < endZ; k += sliceSize) {
+
+            if ((k >= 0) && (k < volSize)) {
+                startY = k + indexY;
+                endY = startY + stepY;
+
+                for (j = startY; j < endY; j += xDim) {
+
+                    if (((j - k) >= 0) && ((j - k) < sliceSize)) {
+                        startX = j + offsetX;
+                        endX = startX + xKDim;
+
+                        for (i = startX; i < endX; i++) {
+
+                            if (((i - j) >= 0) && ((i - j) < xDim)) {
+                                sumX += kernelX[count] * image[i];
+                                sumY += kernelY[count] * image[i];
+                                sumZ += kernelZ[count] * image[i];
+                                sumXX += kernelXX[count] * image[i];
+                                sumXY += kernelXY[count] * image[i];
+                                sumYY += kernelYY[count] * image[i];
+                                sumXZ += kernelXZ[count] * image[i];
+                                sumYZ += kernelYZ[count] * image[i];
+                                sumZZ += kernelZZ[count] * image[i];
+
+                                if (kernelX[count] >= 0) {
+                                    normX += kernelX[count];
+                                } else {
+                                    normX += -kernelX[count];
+                                }
+                                
+                                if (kernelY[count] >= 0) {
+                                    normY += kernelY[count];
+                                } else {
+                                    normY += -kernelY[count];
+                                }
+                                
+                                if (kernelZ[count] >= 0) {
+                                    normZ += kernelZ[count];
+                                } else {
+                                    normZ += -kernelZ[count];
+                                }
+                                
+                                if (kernelXX[count] >= 0) {
+                                    normXX += kernelXX[count];
+                                } else {
+                                    normXX += -kernelXX[count];
+                                }
+                                
+                                if (kernelXY[count] >= 0) {
+                                    normXY += kernelXY[count];
+                                } else {
+                                    normXY += -kernelXY[count];
+                                }
+                                
+                                if (kernelYY[count] >= 0) {
+                                    normYY += kernelYY[count];
+                                } else {
+                                    normYY += -kernelYY[count];
+                                }
+                                
+                                if (kernelXZ[count] >= 0) {
+                                    normXZ += kernelXZ[count];
+                                } else {
+                                    normXZ += -kernelXZ[count];
+                                }
+                                
+                                if (kernelYZ[count] >= 0) {
+                                    normYZ += kernelYZ[count];
+                                } else {
+                                    normYZ += -kernelYZ[count];
+                                }
+                                
+                                if (kernelZZ[count] >= 0) {
+                                    normZZ += kernelZZ[count];
+                                } else {
+                                    normZZ += -kernelZZ[count];
+                                }
+                            }
+
+                            count++;
+                        }
+                    }else{
+                        count += kExtents[0];
+                    }
+                }
+            }else{
+                count += kExtents[0]*kExtents[1];
+            }
+        }
+
+        if ((normX > 0) && (normY > 0) && (normZ > 0) && (normXX > 0) && (normXY > 0) && (normYY > 0) &&
+            (normXZ > 0) && (normYZ > 0) && (normZZ > 0)) {
+            ptX = sumX/normX;
+            ptY = sumY/normY;
+            ptZ = sumZ/normZ;
+            ptXX = sumXX/normXX;
+            ptXY = sumXY/normXY;
+            ptYY = sumYY/normYY;
+            ptXZ = sumXZ/normXZ;
+            ptYZ = sumYZ/normYZ;
+            ptZZ = sumZZ/normZZ;
+            return (float)((ptX * ptX * ptXX) + (2.0 * ptX * ptY * ptXY) + (ptY * ptY * ptYY) +
+                    (2.0 * ptX * ptZ * ptXZ) + (2.0 * ptY * ptZ * ptYZ) + (ptZ * ptZ * ptZZ));
         } else {
             return 0;
         }
@@ -1273,7 +1813,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
 				srcImage.exportData(start, length, buffer); // locks and
 															// releases lock
 			} catch (IOException error) {
-				errorCleanUp("Algorithm Gaussian Blur: Image(s) locked", false);
+				errorCleanUp("Algorithm Convolver: Image(s) locked", false);
 
 				return;
 			}
@@ -1353,7 +1893,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
                 srcImage.exportData(start, length, buffer); // locks and
                                                             // releases lock
             } catch (IOException error) {
-                errorCleanUp("Algorithm Gaussian Blur: Image(s) locked", false);
+                errorCleanUp("Algorithm Convolver: Image(s) locked", false);
 
                 return;
             }
@@ -1417,6 +1957,75 @@ public class AlgorithmConvolver extends AlgorithmBase {
                     } else {
                         outputBuffer[idx] = buffer[i];
                     }
+                }
+            }
+        }
+    }
+    
+    private final void convolve2DNMS(int startSlice, int endSlice){
+        int length = srcImage.getSliceSize();
+        for (int s = startSlice; s < endSlice; s++) {
+            int start = s * length;
+            float[] buffer = new float[length];
+            try {
+                srcImage.exportData(start, length, buffer); // locks and
+                                                            // releases lock
+            } catch (IOException error) {
+                errorCleanUp("Algorithm Convolver: Image(s) locked", false);
+
+                return;
+            }
+
+            for (int i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
+                progress++;
+                if ((progress % progressModulus) == 0) {
+                    fireProgressStateChanged(minProgressValue + (int)(progress/progressModulus));
+                }
+
+                if ((entireImage == true) || mask.get(i)) {
+                    outputBuffer[idx] = AlgorithmConvolver.convolve2DPtNMS(i,
+                            srcImage.getExtents(), buffer, kExtents,
+                            kernelBufferX, kernelBufferY, kernelBufferXX,
+                            kernelBufferXY, kernelBufferYY);
+                } else {
+                    outputBuffer[idx] = buffer[i];
+                }
+            }
+        }
+    }
+    
+    private final void convolve2DNMS2(int startSlice, int endSlice){
+        int length = srcImage.getSliceSize();
+        for (int s = startSlice; s < endSlice; s++) {
+            int start = s * length;
+            float[] buffer = new float[length];
+            try {
+                srcImage.exportData(start, length, buffer); // locks and
+                                                            // releases lock
+            } catch (IOException error) {
+                errorCleanUp("Algorithm Convolver: Image(s) locked", false);
+
+                return;
+            }
+
+            for (int i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
+                progress++;
+                if ((progress % progressModulus) == 0) {
+                    fireProgressStateChanged(minProgressValue + (int)(progress/progressModulus));
+                }
+
+                if ((entireImage == true) || mask.get(i)) {
+                    outputBuffer[2*idx] = AlgorithmConvolver.convolve2DPtNMS(i,
+                            srcImage.getExtents(), buffer, kExtents,
+                            kernelBufferX, kernelBufferY, kernelBufferXX,
+                            kernelBufferXY, kernelBufferYY);
+                    outputBuffer[2*idx+1] = AlgorithmConvolver.convolve2DPtNMS2(i,
+                            srcImage.getExtents(), buffer, kExtents,
+                            kernelBufferX, kernelBufferY, kernelBufferXXX,
+                            kernelBufferXXY, kernelBufferXYY, kernelBufferYYY);
+                } else {
+                    outputBuffer[2*idx] = buffer[i];
+                    outputBuffer[2*idx+1] = buffer[i];
                 }
             }
         }
@@ -1553,6 +2162,25 @@ public class AlgorithmConvolver extends AlgorithmBase {
 
     }
     
+    private final void convolve3DNMS(int start, int end, float[] iImage, int index){
+        for (int i = start; (i < end) && !threadStopped; i++) {
+            progress++;
+            if ((progress % progressModulus) == 0) {
+                fireProgressStateChanged(minProgressValue + (int) (progress / progressModulus));
+                // System.out.println("Entire = " + entireImage);
+            }
+
+            if ((entireImage == true) || mask.get(i)) {
+                outputBuffer[i + index] = AlgorithmConvolver.convolve3DPtNMS(i,
+                        srcImage.getExtents(), iImage, kExtents,
+                        kernelBufferX, kernelBufferY, kernelBufferZ, kernelBufferXX, kernelBufferXY,
+                        kernelBufferYY, kernelBufferXZ, kernelBufferYZ, kernelBufferZZ);
+            } else {
+                outputBuffer[i + index] = iImage[i];
+            }
+        }
+    }
+    
     /**
 	 * Prepares this class for destruction.
 	 */
@@ -1590,6 +2218,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
         if (srcImage.isColorImage()) {
             cFactor = 4;
         }
+        if (nms22) {
+            cFactor = 2;
+        }
 
         int length = cFactor * srcImage.getSliceSize();
         outputBuffer = new float[length];
@@ -1598,6 +2229,12 @@ public class AlgorithmConvolver extends AlgorithmBase {
 
         if (sqrtXY) {
             convolve2DXY(0, 1);
+        }
+        else if (nms2) {
+            convolve2DNMS(0,1);
+        }
+        else if (nms22) {
+            convolve2DNMS2(0,1);
         }
         else {
             convolve2D(0, 1);
@@ -1632,6 +2269,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
         if (srcImage.isColorImage()) {
             cFactor = 4;
         }
+        if (nms22) {
+            cFactor = 2;
+        }
        
         progress = 0;
         int length;
@@ -1657,6 +2297,12 @@ public class AlgorithmConvolver extends AlgorithmBase {
                             if (sqrtXY) {
                                 convolve2DXY(fstart, fend);    
                             }
+                            else if (nms2) {
+                                convolve2DNMS(fstart, fend);
+                            }
+                            else if (nms22) {
+                                convolve2DNMS2(fstart, fend);
+                            }
                             else {
     						    convolve2D(fstart, fend);
                             }
@@ -1674,6 +2320,12 @@ public class AlgorithmConvolver extends AlgorithmBase {
             }else{
                 if (sqrtXY) {
                     convolve2DXY(0, nSlices);
+                }
+                else if (nms2) {
+                    convolve2DNMS(0, nSlices);
+                }
+                else if (nms22) {
+                    convolve2DNMS2(0, nSlices);
                 }
                 else {
             	    convolve2D(0, nSlices);
@@ -1728,6 +2380,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
                             if (sqrtXYZ) {
                                 convolve3DXYZ(start, end, iImage, 0);    
                             }
+                            else if (nms3) {
+                                convolve3DNMS(start, end, iImage, 0);
+                            }
                             else {
 							    convolve3D(start, end, iImage, 0);
                             }
@@ -1746,6 +2401,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
         	} else {
                 if (sqrtXYZ) {
                     convolve3DXYZ(0, length, buffer, 0);
+                }
+                else if (nms3) {
+                    convolve3DNMS(0, length, buffer, 0);
                 }
                 else {
         		    convolve3D(0, length, buffer, 0);
