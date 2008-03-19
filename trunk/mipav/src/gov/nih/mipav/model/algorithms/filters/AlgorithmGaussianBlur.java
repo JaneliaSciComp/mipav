@@ -137,7 +137,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
         long startTime = System.nanoTime();
         fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
 
-        AlgorithmConvolver convolver = new AlgorithmConvolver(destImage, srcImage, GaussData, kExtents,entireImage, image25D);
+        AlgorithmConvolver convolver = new AlgorithmConvolver(srcImage, GaussData, kExtents,entireImage, image25D);
         convolver.setMinProgressValue(0);
         convolver.setMaxProgressValue(100);
 		linkProgressToAlgorithm(convolver);
