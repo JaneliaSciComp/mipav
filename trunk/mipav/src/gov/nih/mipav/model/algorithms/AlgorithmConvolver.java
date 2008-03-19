@@ -13,8 +13,7 @@ import java.util.concurrent.CountDownLatch;
  * Convolves kernel with a 2D or 3D image - only pixels where the kernel is completely contained in the image are
  * convolved, otherwise they are set to zero. This is reasonable since data at the edges of images is rarely used and
  * large kernels should not be used since it is much faster to perform FFT, filter, and IFFT. The break even point is
- * probably around a kernel size of 11 or so. To replace the image model with a convolved version simply construct this
- * object with the source image as both the srcImg and the destImg.
+ * probably around a kernel size of 11 or so.
  *
  * <p>Since this class extends the AlgorithmBase class that extends the Thread class it can be run in its own thread by
  * invoking algoConvolver3DObj.start(); It can also be invoked without a new thread by calling the the run() method
@@ -23,9 +22,7 @@ import java.util.concurrent.CountDownLatch;
  * <ol>
  *   <li>Source image is exported (locked and unlocked by export)</li>
  *   <li>Kernel is exported</li>
- *   <li>Destination image is locked</li>
  *   <li>Image is convolved with kernel</li>
- *   <li>Destination image is unlocked</li>
  *   <li>Return</li>
  * </ol>
  *
@@ -94,30 +91,29 @@ public class AlgorithmConvolver extends AlgorithmBase {
 	}
     
 	/**
-     * Sets the source and destination images and calls the appropriate method based on image dimensionality.
+     * Sets the source and kernel images and calls the appropriate method based on image dimensionality.
      *
-     * @param  destImg  Destination image of result.
      * @param  srcImg   Source image to be convolved with kernel.
      * @param  kern     Kernel image.
      */
-    public AlgorithmConvolver(ModelImage destImg, ModelImage srcImg, ModelImage kern) {
-        super(destImg, srcImg);
+    public AlgorithmConvolver(ModelImage srcImg, ModelImage kern) {
+        super(null, srcImg);
         kernel = kern;
 
         init();
     }
 
-    public AlgorithmConvolver(ModelImage destImage, ModelImage srcImage, float[] kernel, int[] kExtents, boolean entireImage, boolean image25D){
-    	super(destImage, srcImage);
+    public AlgorithmConvolver(ModelImage srcImage, float[] kernel, int[] kExtents, boolean entireImage, boolean image25D){
+    	super(null, srcImage);
     	kernelBuffer = kernel;
     	this.kExtents = kExtents;
     	this.entireImage = entireImage;
     	this.image25D = image25D;
     }
     
-    public AlgorithmConvolver(ModelImage destImage, ModelImage srcImage, float[] kernelX, float[] kernelY,
+    public AlgorithmConvolver(ModelImage srcImage, float[] kernelX, float[] kernelY,
                               int[] kExtents, boolean entireImage){
-        super(destImage, srcImage);
+        super(null, srcImage);
         kernelBufferX = kernelX;
         kernelBufferY = kernelY;
         this.kExtents = kExtents;
@@ -127,9 +123,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
     }
     
     
-    public AlgorithmConvolver(ModelImage destImage, ModelImage srcImage, float[] kernelX, float[] kernelY, float[] kernelZ,
+    public AlgorithmConvolver(ModelImage srcImage, float[] kernelX, float[] kernelY, float[] kernelZ,
             int[] kExtents, boolean entireImage){
-        super(destImage, srcImage);
+        super(null, srcImage);
         kernelBufferX = kernelX;
         kernelBufferY = kernelY;
         kernelBufferZ = kernelZ;
@@ -1563,7 +1559,6 @@ public class AlgorithmConvolver extends AlgorithmBase {
     public void finalize() {
 
         kernel = null;
-        destImage = null;
         srcImage = null;
         imgBuffer = null;
         super.finalize();
@@ -1816,7 +1811,6 @@ public class AlgorithmConvolver extends AlgorithmBase {
 				displayError("Algorithm Gaussian Blur: Image(s) locked");
 				setCompleted(false);
 				fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-				destImage.releaseLock();
 
 				return;
 			}
@@ -1887,13 +1881,11 @@ public class AlgorithmConvolver extends AlgorithmBase {
     }
 
     /**
-     * Accessor that sets the destination and kernel images.
+     * Accessor that sets the and kernel image.
      *
-     * @param  destImg  Destination image.
      * @param  kern     Kernel image.
      */
-    public void setImages(ModelImage destImg, ModelImage kern) {
-        destImage = destImg;
+    public void setKernelImage(ModelImage kern) {
         kernel = kern;
     }
 
