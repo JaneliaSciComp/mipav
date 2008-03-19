@@ -18,7 +18,7 @@ import javax.swing.*;
 
 
 /**
- * Dialog to select DICOM files to convert to MIPAV XML format.
+ * Dialog to select DICOM files to convert to MIPAV XML or Minc 2.0 HDF format.
  *
  * @author  parsonsd
  */
@@ -36,6 +36,7 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
      */
     private boolean wasOkay = true;
     
+    private String destFormatStr = "XML";
     
     /**
      * FileInfoDicom for source image
@@ -47,10 +48,15 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
     /**
      * Creates a new instance of JDialogDicom2XMLSelection.
      */
-    public JDialogDicom2XMLSelection(FileInfoDicom sourceInfo) {
+    public JDialogDicom2XMLSelection(FileInfoDicom sourceInfo, boolean isXML) {
         super();
         this.sourceInfo = sourceInfo;
-        setTitle("Select DICOM tags to convert to XML");
+
+        if (!isXML) {
+        	destFormatStr = "Minc 2.0 HDF";
+        }
+        
+        setTitle("Select DICOM tags to convert to " + destFormatStr);
         populateLists();
         addSortButtons();
         setPreferredSize(new Dimension(1200, 800));
@@ -179,10 +185,10 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
      * @return  this JPanelFileSelector
      */
     protected JComponent createFileSelectorComponent() {
-
+    	
         // build List to save to:
         selectFileB = new JPanelFileSelection(new File( /*start directory */Preferences.getDICOMSaveDictionary()),
-            /*title */ "DICOM Tags Dictionary File for saving to XML");
+            /*title */ "DICOM Tags Dictionary File for saving to " + destFormatStr);
 
         return selectFileB;
     }
@@ -316,7 +322,7 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
                     if (getSelectedList().getModel().getSize() > 0) {
                         DicomDictionary.writeFile(getSaveTagFilePanel().getSelectedFile(), getSaveTable(),
                                                   "These tags were saved while converting a DICOM " +
-                                                  "image into MIPAV's XML format.");
+                                                  "image into MIPAV's " + destFormatStr + " format.");
                     }
                 }
             }

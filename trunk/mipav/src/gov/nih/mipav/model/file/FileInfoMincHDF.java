@@ -11,6 +11,9 @@ import java.util.*;
 
 import javax.swing.tree.*;
 
+import ncsa.hdf.object.Attribute;
+import ncsa.hdf.object.HObject;
+
 public class FileInfoMincHDF extends FileInfoBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -22,6 +25,8 @@ public class FileInfoMincHDF extends FileInfoBase {
 	protected int[] axisOrientation = { ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE };
 	
 	private double [] validRange = null;
+	
+	private Hashtable dicomTable = null;
 	
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -60,23 +65,118 @@ public class FileInfoMincHDF extends FileInfoBase {
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
         JDialogText dialog = (JDialogText) dlog;
         displayPrimaryInfo(dialog, matrix);
-        dialog.append("\n\n                Other information\n\n");
-        dialog.append("Dimension information:\n");
+        
+        if (informationNode != null) {
+        	try {
+        		parseNodes(informationNode, dialog);
+        	} catch (Exception e) {
+        		e.printStackTrace();
+        	}
+        }
+        
     }
 
+    /**
+     * Recursively parse and display (to JDialogText) the nodes
+     * @param node HDF tree node
+     * @param dialog dialog to display the information
+     * @throws Exception
+     */
+    private void parseNodes(DefaultMutableTreeNode node, JDialogText dialog) throws Exception {
+    	long [] dataDims;
+    	boolean isDicom = false;
+    	if (node.isLeaf()) {
+    		dialog.append("\n");
+    		HObject userObject = (HObject)node.getUserObject();
+    		
+    		String nodeName = userObject.toString();
+    		String dicomGroup = null;
+    	//	dicom_0x0008
+    		if (nodeName.startsWith("dicom_")) {
+    			isDicom = true;
+    			dicomGroup = nodeName.substring(8);
+    		} else {
+    			dialog.append(userObject + "\n");
+    		}
+    		List metaData = userObject.getMetadata();
+    		Iterator it = metaData.iterator();
+    		while(it.hasNext()) {
+    			Attribute currentAttribute = (Attribute)it.next();
+    			dataDims = currentAttribute.getDataDims();
+    			String name = currentAttribute.getName();
+    			if (!name.equals("varid") && !name.equals("vartype") &&
+    					!name.equals("version")) {
+    				
+    				if (!isDicom) {
+    					dialog.append("\t" + currentAttribute.getName());
+    				} else {
+    					dialog.append("(" + dicomGroup + "," + name.substring(5) + ") - ");
+    				}
+    				Object value = currentAttribute.getValue();
+    				for (int i = 0; i < dataDims.length; i++) {
+    					//System.err.print(", " + dataDims[i]);
+    					if (value instanceof String[]) {
+    						if (isDicom) {
+    							FileDicomKey tagKey = new FileDicomKey(dicomGroup + "," + name.substring(5));
+
+                                FileDicomTagInfo info = DicomDictionary.getInfo(tagKey);
+                                dialog.append(info.getName() + " :\t");
+    						}
+    						
+    						dialog.append("\t" + ((String[])value)[i]);
+    					} else if (value instanceof float[]) {
+    						dialog.append("\t" + ((float[])value)[i]);
+    					} else if (value instanceof double[]) {
+    						dialog.append("\t" + ((double[])value)[i]);
+    					} else if (value instanceof int[]) {
+    						dialog.append("\t" + ((int[])value)[i]);
+    					} else if (value instanceof short[]) {
+    						dialog.append("\t" + ((short[])value)[i]);
+    					}
+    				}
+    				dialog.append("\n");
+    			//System.err.println("");
+    			//System.err.println(currentAttribute.getValue());
+    			}
+    		}
+    		
+    	} else {
+    	
+    		//recursively calls parseHDFHeader to reach every non-leaf
+    		for (int i = 0; i < node.getChildCount(); i++) {
+    			parseNodes((DefaultMutableTreeNode)node.getChildAt(i), dialog);
+    		}
+    	}
+    }
   
+    /**
+     * Sets the dimension node (xspace, yspace and optional zspace nodes)
+     * @param dimNode the dimension node
+     */
     public void setDimensionNode(DefaultMutableTreeNode dimNode) {
     	this.dimensionNode = dimNode;
     }
     
+    /**
+     * Returns the dimension node (only 1 exists at fileinfo[0] position
+     * @return the dimension node
+     */
     public DefaultMutableTreeNode getDimensionNode() {
     	return this.dimensionNode;
     }
     
+    /**
+     * Sets the information node (includes dicom tags and patient info
+     * @param infoNode the information node
+     */
     public void setInfoNode(DefaultMutableTreeNode infoNode) {
     	this.informationNode = infoNode;
     }
 
+    /**
+     * Returns the information node with dicom/patient info
+     * @return the information node
+     */
     public DefaultMutableTreeNode getInfoNode() {
     	return this.informationNode;
     }
@@ -113,6 +213,14 @@ public class FileInfoMincHDF extends FileInfoBase {
     
     public double [] getValidRange() {
     	return this.validRange;
+    }
+    
+    public void setDicomTable(Hashtable dTable) {
+    	this.dicomTable = dTable;
+    }
+    
+    public Hashtable getDicomTable() {
+    	return this.dicomTable;
     }
     
     public final double[] getConvertStartLocationsToDICOM(double[] step, double[][]cosines, 
