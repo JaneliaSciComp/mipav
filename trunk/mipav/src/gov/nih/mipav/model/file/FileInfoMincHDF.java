@@ -26,7 +26,7 @@ public class FileInfoMincHDF extends FileInfoBase {
 	
 	private double [] validRange = null;
 	
-	private Hashtable dicomTable = null;
+	private transient Hashtable dicomTable = null;
 	
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -213,6 +213,10 @@ public class FileInfoMincHDF extends FileInfoBase {
     
     public double [] getValidRange() {
     	return this.validRange;
+    }
+    
+    public void createDicomTable() {
+    	this.dicomTable = new Hashtable();
     }
     
     public void setDicomTable(Hashtable dTable) {

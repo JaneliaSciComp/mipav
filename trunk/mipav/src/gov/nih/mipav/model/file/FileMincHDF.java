@@ -47,6 +47,9 @@ public class FileMincHDF extends FileBase {
 	
 	public static final String ATTR_INFO_STUDY_MODALITY = "modality";
 	
+	public static String DICOM_GROUP_PREFIX = new String("dicom_0x");
+	public static String DICOM_ELEMENT_PREFIX = new String("el_0x");
+	
 	
     //~ Instance fields ------------------------------------------------------------------------------------------------
   
@@ -97,9 +100,6 @@ public class FileMincHDF extends FileBase {
   
     public void readHeader(DefaultMutableTreeNode rootNode) throws Exception {
        
-    	
-    
-    	System.err.println("about to parse Header");
     	//for now just traverse the tree, see what's there
     	parseHDFHeader(rootNode);
     }    
@@ -274,6 +274,23 @@ public class FileMincHDF extends FileBase {
         				fileInfo.setModality(modality);
         			}
     			}
+    		} else if (currentInfoNode.getUserObject().toString().startsWith(DICOM_GROUP_PREFIX)) {
+    			String dicomGroup = currentInfoNode.getUserObject().toString();
+    			dicomGroup = dicomGroup.substring(DICOM_GROUP_PREFIX.length());
+    			if (fileInfo.getDicomTable() == null) {
+    				fileInfo.createDicomTable();
+    			}
+    			Iterator it = ((HObject)currentInfoNode.getUserObject()).getMetadata().iterator();
+    			while(it.hasNext()) {
+    				Attribute attr = (Attribute)it.next();
+    				String dicomElement = attr.getName();
+    				dicomElement = dicomElement.substring(DICOM_ELEMENT_PREFIX.length());
+    				
+    				FileDicomKey key = new FileDicomKey(Integer.parseInt(dicomGroup), Integer.parseInt(dicomElement));
+    				FileDicomTag tag = new FileDicomTag(new FileDicomTagInfo(key.getGroupNumber(), key.getElementNumber(), 
+    						((String[])attr.getValue())[0],0, null, DicomDictionary.getName(key)));
+    				fileInfo.getDicomTable().put(key, tag);
+    			}
     		}
     		
     		
@@ -288,7 +305,7 @@ public class FileMincHDF extends FileBase {
      * @throws Exception
      */
     private ModelImage parseImage(DefaultMutableTreeNode iNode) throws Exception {
-    	
+    	System.err.println("parseImage");
     	if (iNode.getChildCount() > 1) {
     		MipavUtil.displayError("Does not support MINC 2.0 with more than one child below \"image\" node");
     		return null;
@@ -459,6 +476,10 @@ public class FileMincHDF extends FileBase {
     		fileInfos[0].setValidRange(fileInfo.getValidRange());
     	}
     	
+    	//set the dicom tag hashtable in the first file info
+    	if (fileInfo.getDicomTable() != null) {
+    		fileInfos[0].setDicomTable(fileInfo.getDicomTable());
+    	}
     	
     	for (int i = 1; i < numImages; i++) {
     		fileInfos[i] = (FileInfoMincHDF)fileInfo.clone();
@@ -499,10 +520,9 @@ public class FileMincHDF extends FileBase {
     	}
     	
     	fileRoot = (DefaultMutableTreeNode)h5File.getRootNode();
-    	
+    	readHeader(fileRoot);
     	fireProgressStateChanged(5);
     	if (imageNode != null) {
-    		System.err.println("about to parse image");
     		image = parseImage(imageNode);
     	}
     	
@@ -799,8 +819,6 @@ public class FileMincHDF extends FileBase {
     	if (fileInfo.getDicomTable() == null) {
     		return;
     	}
-    	String groupPrefix = new String("dicom_0x");
-    	String elementPrefix = new String("el_0x");
     	
     	HDFNode infoNode = null;
     	Group infoGroup = format.createGroup("info", (Group)mincNode.getUserObject());
@@ -823,7 +841,7 @@ public class FileMincHDF extends FileBase {
     		FileDicomKey tagKey = (FileDicomKey) e.nextElement();
     		FileDicomTag dicomTag = (FileDicomTag) dTable.get(tagKey);
     		if (groupTable.get(tagKey.getGroup()) == null) {
-    			H5ScalarDS dicomGroupObject = (H5ScalarDS)fileFormat.createScalarDS(groupPrefix + tagKey.getGroup(), 
+    			H5ScalarDS dicomGroupObject = (H5ScalarDS)fileFormat.createScalarDS(DICOM_GROUP_PREFIX + tagKey.getGroup(), 
     					infoGroup, datatype,
     					dims, maxdims, null, 0, null);
     			groupTable.put(tagKey.getGroup(), dicomGroupObject);
@@ -836,7 +854,7 @@ public class FileMincHDF extends FileBase {
             Datatype dType = fileFormat.createDatatype(Datatype.CLASS_STRING, elementStr[0].length() + 1,
             		Datatype.NATIVE, -1);
             long[] attrDims = { 1 };
-            Attribute elementAttr = new Attribute(elementPrefix + tagKey.getElement(), dType, attrDims);
+            Attribute elementAttr = new Attribute(DICOM_ELEMENT_PREFIX + tagKey.getElement(), dType, attrDims);
             elementAttr.setValue(elementStr);
             dGroupObj.writeMetadata(elementAttr);
     		

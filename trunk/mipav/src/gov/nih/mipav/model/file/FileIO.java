@@ -2455,14 +2455,20 @@ public class FileIO {
      * @param  sourceInfo  The FileInfoDicom which is the source for user-selectable tags
      * @param  destInfo    The FileInfoBase that holds the image information to be stored in XML (or MincHDF)format.
      */
-    protected boolean dataConversion(FileInfoDicom sourceInfo, FileInfoBase destInfo) {
+    protected boolean dataConversion(FileInfoBase sourceInfo, FileInfoBase destInfo) {
 
         // when the original image is a DICOM image, we want to save this as
         // XML, so look, or ask, for a dicom dictionary list of tags to save
         // into the XML
         // load the tags to keep:
-        Hashtable tags2save = getDicomSaveList(sourceInfo, destInfo instanceof FileInfoImageXML);
-
+    	
+    	Hashtable tags2save = null;
+    	if (sourceInfo instanceof FileInfoDicom) {
+    		tags2save = getDicomSaveList((FileInfoDicom)sourceInfo, destInfo instanceof FileInfoImageXML);
+    	} else if (sourceInfo instanceof FileInfoMincHDF) {
+    		tags2save = ((FileInfoMincHDF)sourceInfo).getDicomTable();
+    	}
+    	
         if (tags2save == null) {
             return false;
         }
@@ -8493,8 +8499,6 @@ public class FileIO {
                 if (!dataConversion(((FileInfoDicom) image.getFileInfo()[0]), mincFile.getFileInfo())) {
                     //do nothing
                 }
-
-              //  xmlFile.setAdditionalSets(xmlFile.getFileInfo().getPSetHashtable().elements());
             }
             
             mincFile.writeImage(image, options);
@@ -8761,7 +8765,7 @@ public class FileIO {
 
             if (image.getFileInfo()[0] instanceof FileInfoDicom) {
 
-                if (!dataConversion(((FileInfoDicom) image.getFileInfo()[0]), xmlFile.getFileInfo())) {
+                if (!dataConversion(( image.getFileInfo()[0]), xmlFile.getFileInfo())) {
                     return false;
                 }
 
@@ -8769,6 +8773,10 @@ public class FileIO {
             } else if (image.getFileInfo()[0] instanceof FileInfoLSM) {
                 LSMDataConversion(((FileInfoLSM) image.getFileInfo()[0]), xmlFile.getFileInfo());
                 xmlFile.setAdditionalSets(xmlFile.getFileInfo().getPSetHashtable().elements());
+            } else if (image.getFileInfo()[0] instanceof FileInfoMincHDF) {
+            	 if (!dataConversion(( image.getFileInfo()[0]), xmlFile.getFileInfo())) {
+                     return false;
+                 }
             }
 
             xmlFile.writeImage(image, options);
