@@ -2453,90 +2453,97 @@ public class FileIO {
      * @see    JDialogDicom2XMLSelection
      *
      * @param  sourceInfo  The FileInfoDicom which is the source for user-selectable tags
-     * @param  destInfo    The FileInfoImageXML that holds the image information to be stored in XML format.
+     * @param  destInfo    The FileInfoBase that holds the image information to be stored in XML (or MincHDF)format.
      */
-    protected boolean dataConversion(FileInfoDicom sourceInfo, FileInfoImageXML destInfo) {
+    protected boolean dataConversion(FileInfoDicom sourceInfo, FileInfoBase destInfo) {
 
         // when the original image is a DICOM image, we want to save this as
         // XML, so look, or ask, for a dicom dictionary list of tags to save
         // into the XML
         // load the tags to keep:
-        Hashtable tags2save = getDicomSaveList(sourceInfo);
+        Hashtable tags2save = getDicomSaveList(sourceInfo, destInfo instanceof FileInfoImageXML);
 
         if (tags2save == null) {
             return false;
         }
 
-        // now convert that DICOM tags list into an XML tags List:
-        Enumeration e = tags2save.keys();
+       
+        if (destInfo instanceof FileInfoImageXML) {
+        	 // now convert that DICOM tags list into an XML tags List:
+            Enumeration e = tags2save.keys();
 
-        while (e.hasMoreElements()) {
-            FileDicomKey tagKey = (FileDicomKey) e.nextElement();
-            FileDicomTag dicomTag = (FileDicomTag) tags2save.get(tagKey);
+        	FileInfoImageXML dInfo = (FileInfoImageXML)destInfo;
+        	while (e.hasMoreElements()) {
+                FileDicomKey tagKey = (FileDicomKey) e.nextElement();
+                FileDicomTag dicomTag = (FileDicomTag) tags2save.get(tagKey);
 
-            destInfo.createPSet(dicomTag.getName());
+                dInfo.createPSet(dicomTag.getName());
 
-            Object[] tagValues = new Object[0];
-
-            try {
-                tagValues = dicomTag.getValueList();
-            } catch (NullPointerException npe) {
-                tagValues[0] = null;
-            }
-
-            // set the parameter values for as many values as the tag holds:
-            for (int q = 0; q < tagValues.length; q++) {
-
-                if (tagValues[0] == null) {
-                    continue;
-                }
-
-                // write the DICOM tags & their values into the XML file.
-                destInfo.getCurrentPSet().addParameter(dicomTag.getName() + "[" + q + "]");
-                destInfo.getCurrentPSet().getCurrentParameter().setDescription("(" + tagKey + ") [" + q + "]");
-                destInfo.getCurrentPSet().getCurrentParameter().setValueType("string");
+                Object[] tagValues = new Object[0];
 
                 try {
+                    tagValues = dicomTag.getValueList();
+                } catch (NullPointerException npe) {
+                    tagValues[0] = null;
+                }
 
-                    if (tagValues[q].toString().indexOf(0) != -1) {
+                // set the parameter values for as many values as the tag holds:
+                for (int q = 0; q < tagValues.length; q++) {
 
-                        // if there are NULL characters, remove them
-                        // before saving the value
-                        StringBuffer noNulls = new StringBuffer(tagValues[q].toString());
+                    if (tagValues[0] == null) {
+                        continue;
+                    }
 
-                        try {
+                    // write the DICOM tags & their values into the XML file.
+                    dInfo.getCurrentPSet().addParameter(dicomTag.getName() + "[" + q + "]");
+                    dInfo.getCurrentPSet().getCurrentParameter().setDescription("(" + tagKey + ") [" + q + "]");
+                    dInfo.getCurrentPSet().getCurrentParameter().setValueType("string");
 
-                            while (noNulls.indexOf("\u0000") != -1) { // removing NULL
-                                noNulls.deleteCharAt(noNulls.indexOf("\u0000"));
-                            }
+                    try {
 
-                            destInfo.getCurrentPSet().getCurrentParameter().setValue(noNulls.toString());
-                        } catch (StringIndexOutOfBoundsException nullNotThere) {
-                            destInfo.getCurrentPSet().getCurrentParameter().setValue("");
-                            System.err.println("(" + tagKey + ") Trying to output " + "current string bounded by " +
-                                               "colons, nulls and all:");
+                        if (tagValues[q].toString().indexOf(0) != -1) {
+
+                            // if there are NULL characters, remove them
+                            // before saving the value
+                            StringBuffer noNulls = new StringBuffer(tagValues[q].toString());
 
                             try {
-                                System.err.println(":" + noNulls.toString() + ":");
-                            } catch (Exception couldnt) {
-                                System.err.println("...Couldn't output noNulls string.");
-                            }
 
-                            Preferences.debug("Error converting DICOM to XML.", Preferences.DEBUG_FILEIO);
-                            Preferences.debug("  Empty string written for :", Preferences.DEBUG_FILEIO);
-                            Preferences.debug(" (" + tagKey + ")\n", Preferences.DEBUG_FILEIO);
+                                while (noNulls.indexOf("\u0000") != -1) { // removing NULL
+                                    noNulls.deleteCharAt(noNulls.indexOf("\u0000"));
+                                }
+
+                                dInfo.getCurrentPSet().getCurrentParameter().setValue(noNulls.toString());
+                            } catch (StringIndexOutOfBoundsException nullNotThere) {
+                                dInfo.getCurrentPSet().getCurrentParameter().setValue("");
+                                System.err.println("(" + tagKey + ") Trying to output " + "current string bounded by " +
+                                                   "colons, nulls and all:");
+
+                                try {
+                                    System.err.println(":" + noNulls.toString() + ":");
+                                } catch (Exception couldnt) {
+                                    System.err.println("...Couldn't output noNulls string.");
+                                }
+
+                                Preferences.debug("Error converting DICOM to XML.", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("  Empty string written for :", Preferences.DEBUG_FILEIO);
+                                Preferences.debug(" (" + tagKey + ")\n", Preferences.DEBUG_FILEIO);
+                            }
+                        } else {
+                            dInfo.getCurrentPSet().getCurrentParameter().setValue(tagValues[q].toString());
                         }
-                    } else {
-                        destInfo.getCurrentPSet().getCurrentParameter().setValue(tagValues[q].toString());
+                    } catch (NullPointerException npe) {
+                        Preferences.debug("Error converting DICOM to XML.", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("  Empty string written for:", Preferences.DEBUG_FILEIO);
+                        Preferences.debug(" (" + tagKey + ")\n", Preferences.DEBUG_FILEIO);
+                        dInfo.getCurrentPSet().getCurrentParameter().setValue("");
                     }
-                } catch (NullPointerException npe) {
-                    Preferences.debug("Error converting DICOM to XML.", Preferences.DEBUG_FILEIO);
-                    Preferences.debug("  Empty string written for:", Preferences.DEBUG_FILEIO);
-                    Preferences.debug(" (" + tagKey + ")\n", Preferences.DEBUG_FILEIO);
-                    destInfo.getCurrentPSet().getCurrentParameter().setValue("");
                 }
             }
+        } else if (destInfo instanceof FileInfoMincHDF){
+        	((FileInfoMincHDF)destInfo).setDicomTable(tags2save);
         }
+        
 
         return true;
     }
@@ -2549,7 +2556,7 @@ public class FileIO {
      *
      * @return  The Hashtable filled as an XML
      */
-    protected Hashtable getDicomSaveList(FileInfoDicom sourceInfo) {
+    protected Hashtable getDicomSaveList(FileInfoDicom sourceInfo, boolean isXML) {
         Hashtable tags2save;
 
         if (quiet) { // don't bother asking user when running a macro.
@@ -2559,7 +2566,7 @@ public class FileIO {
                 System.out.println("tags2save is null");
             }
         } else {
-            JDialogDicom2XMLSelection jdl = new JDialogDicom2XMLSelection(sourceInfo);
+            JDialogDicom2XMLSelection jdl = new JDialogDicom2XMLSelection(sourceInfo, isXML);
             jdl.setVisible(true);
 
             if (jdl.wasOkay()) {
@@ -8461,10 +8468,14 @@ public class FileIO {
         }
     }
 
-    
+    /**
+     * Writes out a MINC 2.0 HDF5 formatted file
+     * @param image
+     * @param options
+     * @return
+     */
     private boolean writeMincHDF(ModelImage image, FileWriteOptions options) {
     	FileMincHDF mincFile;
-        FileInfoBase fileInfo;
 
         if (image.getNDims() != 3) {
             MipavUtil.displayError("FileIO: MINC writer only writes 3D images.");
@@ -8476,6 +8487,16 @@ public class FileIO {
             
             mincFile = new FileMincHDF(options.getFileName(), options.getFileDirectory());
             createProgressBar(mincFile, options.getFileName(), FILE_READ);
+            
+            if (image.getFileInfo()[0] instanceof FileInfoDicom) {
+
+                if (!dataConversion(((FileInfoDicom) image.getFileInfo()[0]), mincFile.getFileInfo())) {
+                    //do nothing
+                }
+
+              //  xmlFile.setAdditionalSets(xmlFile.getFileInfo().getPSetHashtable().elements());
+            }
+            
             mincFile.writeImage(image, options);
 
             return true;
