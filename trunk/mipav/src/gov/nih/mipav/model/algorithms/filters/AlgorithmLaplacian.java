@@ -252,7 +252,7 @@ public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterf
 
         AlgorithmConvolver convolver = new AlgorithmConvolver(srcImage, GxxData, kExtents,entireImage, image25D);
         convolver.setMinProgressValue(0);
-        convolver.setMaxProgressValue(10);
+        convolver.setMaxProgressValue(80);
         linkProgressToAlgorithm(convolver);
         convolver.addListener(this);
         if (!entireImage) {
@@ -327,7 +327,7 @@ public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterf
             return;
         }
 
-        int mod = totalLength / 90; // since progress bar is already at 10
+        int mod = totalLength / 20; // since progress bar is already at 80
 
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
@@ -372,7 +372,7 @@ public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterf
             for (i = 0; (i < length) && !threadStopped; i++) {
 
                 if ((((start + i) % mod) == 0)) {
-                    fireProgressStateChanged(10 + (90 * (start + i)) / (totalLength - 1), null, null);
+                    fireProgressStateChanged(80 + (20 * (start + i)) / (totalLength - 1), null, null);
 
                 }
 
@@ -529,7 +529,7 @@ public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterf
         }
 
 
-        int mod = length / 90; // since progress bar is already at 10
+        int mod = length / 20; // since progress bar is already at 80
         
         float min, max;
         min = Float.MAX_VALUE;
@@ -558,7 +558,7 @@ public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterf
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0)) {
-                fireProgressStateChanged(10 + (90 *  i) / (length - 1), null, null);
+                fireProgressStateChanged(80 + (20 *  i) / (length - 1), null, null);
             }
 
             if ((entireImage == true) || mask.get(i)) {
@@ -710,7 +710,7 @@ public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterf
             return;
         }
 
-        int mod = totalLength / 90; // since progress bar is already at 10
+        int mod = totalLength / 20; // since progress bar is already at 80
 
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
@@ -753,7 +753,7 @@ public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterf
             for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
                 if ((((start + i) % mod) == 0)) {
-                    fireProgressStateChanged(10 + 90 * (start + i)/(totalLength - 1), null, null);
+                    fireProgressStateChanged(80 + 20 * (start + i)/(totalLength - 1), null, null);
                 }
 
                 if ((entireImage == true) || mask.get(start + i)) {
@@ -855,7 +855,7 @@ public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterf
         }
 
 
-        int mod = length / 90; // since progress bar is already at 10
+        int mod = length / 20; // since progress bar is already at 80
 
         float min, max;
         min = Float.MAX_VALUE;
@@ -884,7 +884,7 @@ public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterf
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0)) {
-                fireProgressStateChanged(10 + (90 * i)/(length - 1), null, null);
+                fireProgressStateChanged(80 + (20 * i)/(length - 1), null, null);
             }
 
             if ((entireImage == true) || mask.get(i)) {
