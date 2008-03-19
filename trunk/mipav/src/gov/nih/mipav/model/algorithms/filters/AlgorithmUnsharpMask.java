@@ -14,7 +14,7 @@ import java.io.*;
  * @version  1.0 Feb 11, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class AlgorithmUnsharpMask extends AlgorithmBase {
+public class AlgorithmUnsharpMask extends AlgorithmBase implements AlgorithmInterface {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -32,6 +32,9 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private float weightA = 0.75f;
+    
+    //  Buffer to receive result of convolution operation
+    private float[] outputBuffer;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -125,7 +128,17 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             return;
         }
 
-        
+        fireProgressStateChanged(0, null, "Unsharp mask image ...");
+
+        AlgorithmConvolver convolver = new AlgorithmConvolver(srcImage, gaussData, kExtents,entireImage, image25D);
+        convolver.setMinProgressValue(0);
+        convolver.setMaxProgressValue(80);
+        linkProgressToAlgorithm(convolver);
+        convolver.addListener(this);
+        if (!entireImage) {
+            convolver.setMask(mask);
+        }
+        convolver.run();
 
         if (destImage != null) {
 
@@ -169,7 +182,6 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             totalLength = length * nImages;
             buffer = new float[length];
             resultBuffer = new float[totalLength];
-            fireProgressStateChanged(srcImage.getImageName(), "Unsharp mask image ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             resultBuffer = null;
@@ -178,7 +190,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             return;
         }
 
-        int mod = totalLength / 100; // mod is 1 percent of length
+        int mod = totalLength / 20; // since progress bar is already at 80
         
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
@@ -197,11 +209,11 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             for (i = 0; (i < length) && !threadStopped; i++) {
 
                 if ((((start + i) % mod) == 0)) {
-                    fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
+                    fireProgressStateChanged(80 + (20 * (start + i)) / (totalLength - 1));
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
-                    blur = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, gaussData);
+                    blur = outputBuffer[start + i];
                     resultBuffer[start + i] = buffer[i] - (weightA * blur);
                 } else {
                     resultBuffer[start + i] = buffer[i];
@@ -253,7 +265,6 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             buffer = new float[length];
             resultBuffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            fireProgressStateChanged(srcImage.getImageName(), "UnsharpMasking ...");
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
@@ -270,16 +281,16 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
 
         
 
-        int mod = length / 100; // mod is 1 percent of length
+        int mod = length / 20; // since progress bar is already at 80
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0)) {
-                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
+                fireProgressStateChanged(80 + (20 * i) / (length - 1));
             }
 
             if ((entireImage == true) || mask.get(i)) {
-                blur = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, gaussData);
+                blur = outputBuffer[i];
                 resultBuffer[i] = buffer[i] - (weightA * blur);
 
             } else {
@@ -343,7 +354,6 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             length = srcImage.getSliceSize();
             totalLength = length * nImages;
             buffer = new float[length];
-            fireProgressStateChanged(srcImage.getImageName(), "Unsharp image ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Unsharp Mask:  Out of memory", true);
@@ -351,7 +361,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             return;
         }
 
-        int mod = totalLength / 100; // mod is 1 percent of length
+        int mod = totalLength / 20; // since progress bar is already at 80
         
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
@@ -369,11 +379,11 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
                 if ((((start + i) % mod) == 0)) {
-                    fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
+                    fireProgressStateChanged(80 + (20 * (start + i))/ (totalLength - 1));
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
-                    blur = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, gaussData);
+                    blur = outputBuffer[start + i];
 
                     destImage.set(idx, buffer[i] - (weightA * blur));
                 } else {
@@ -418,7 +428,6 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            fireProgressStateChanged(srcImage.getImageName(), "UnsharpMasking ...");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm UnsharpMask exportData: Image(s) locked", true);
@@ -433,16 +442,16 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
 
         
 
-        int mod = length / 100; // mod is 1 percent of length
+        int mod = length / 20; // since progress bar is already at 80
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0)) {
-                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
+                fireProgressStateChanged(80 + (20 * i) / (length - 1));
             }
 
             if ((entireImage == true) || mask.get(i)) {
-                blur = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, gaussData);
+                blur = outputBuffer[i];
                 destImage.set(i, buffer[i] - (weightA * blur));
             } else {
                 destImage.set(i, buffer[i]);
@@ -534,6 +543,17 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
 
         GenerateGaussian Gauss = new GenerateGaussian(gaussData, kExtents, sigmas, derivOrder);
         Gauss.calc(false);
+    }
+    
+    public void algorithmPerformed(AlgorithmBase algorithm){
+        if(!algorithm.isCompleted()){
+            finalize();
+            return;
+        }
+        if (algorithm instanceof AlgorithmConvolver) {
+            AlgorithmConvolver convolver = (AlgorithmConvolver) algorithm;
+            outputBuffer = convolver.getOutputBuffer();
+        }
     }
 
 }
