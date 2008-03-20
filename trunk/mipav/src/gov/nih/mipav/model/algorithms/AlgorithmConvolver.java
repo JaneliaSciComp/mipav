@@ -69,6 +69,18 @@ public class AlgorithmConvolver extends AlgorithmBase {
     
     private float[] kernelBufferYYY;
     
+    private float[] kernelBufferXXZ;
+    
+    private float[] kernelBufferXZZ;
+    
+    private float[] kernelBufferXYZ;
+    
+    private float[] kernelBufferYYZ;
+    
+    private float[] kernelBufferYZZ;
+    
+    private float[] kernelBufferZZZ;
+    
     private boolean red, blue, green;
     
     private float[] outputBuffer;
@@ -84,11 +96,14 @@ public class AlgorithmConvolver extends AlgorithmBase {
     // Used with 2D AlgorithmNMSuppression
     private boolean nms2 = false;
     
-    // Used with 2D AlgorithmNMSuppression
-    private boolean nms22 = false;
+    // Used with 2D AlgorithmEdgeNMSuppression
+    private boolean nms2e = false;
     
     // Used with 3D AlgorithmNMSuppression
     private boolean nms3 = false;
+    
+    // Used with 3D AlgorithmEdgeNMSuppression
+    private boolean nms3e = false;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     public boolean isRed() {
@@ -196,7 +211,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
         this.kExtents = kExtents;
         this.entireImage = entireImage;
         image25D = true;
-        nms22 = true;
+        nms2e = true;
     }
     
     public AlgorithmConvolver(ModelImage srcImage, float[] kernelX, float[] kernelY, float[] kernelZ, float[] kernelXX,
@@ -217,6 +232,37 @@ public class AlgorithmConvolver extends AlgorithmBase {
         this.entireImage = entireImage;
         image25D = false;
         nms3 = true;
+    }
+    
+    public AlgorithmConvolver(ModelImage srcImage, float[] kernelX, float[] kernelY, float[] kernelZ, float[] kernelXX,
+            float[] kernelXY, float[] kernelYY, float[] kernelXZ, float[] kernelYZ, float[] kernelZZ,
+            float[] kernelXXX, float[] kernelXXY, float[] kernelXYY, float[] kernelYYY, float[] kernelXXZ,
+            float[] kernelXZZ, float[] kernelXYZ, float[] kernelYYZ, float[] kernelYZZ, float[] kernelZZZ,
+            int[] kExtents, boolean entireImage) {
+        super(null, srcImage);
+        kernelBufferX = kernelX;
+        kernelBufferY = kernelY;
+        kernelBufferZ = kernelZ;
+        kernelBufferXX = kernelXX;
+        kernelBufferXY = kernelXY;
+        kernelBufferYY = kernelYY;
+        kernelBufferXZ = kernelXZ;
+        kernelBufferYZ = kernelYZ;
+        kernelBufferZZ = kernelZZ;
+        kernelBufferXXX = kernelXXX;
+        kernelBufferXXY = kernelXXY;
+        kernelBufferXYY = kernelXYY;
+        kernelBufferYYY = kernelYYY;
+        kernelBufferXXZ = kernelXXZ;
+        kernelBufferXZZ = kernelXZZ;
+        kernelBufferXYZ = kernelXYZ;
+        kernelBufferYYZ = kernelYYZ;
+        kernelBufferYZZ = kernelYZZ;
+        kernelBufferZZZ = kernelZZZ;
+        this.kExtents = kExtents;
+        this.entireImage = entireImage;
+        image25D = false;
+        nms3e = true;
     }
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -516,7 +562,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
      *
      * @return  the value of the pixel after convolution with the kernel
      */
-    public static final synchronized float convolve2DPtNMS2(int pix, int[] iExtents, float[] image, int[] kExtents,
+    public static final synchronized float convolve2DPtNMSE(int pix, int[] iExtents, float[] image, int[] kExtents,
                                                         float[] kernelX, float[] kernelY, float[] kernelXXX,
                                                         float[] kernelXXY, float[] kernelXYY, float[] kernelYYY) {
 
@@ -1281,6 +1327,256 @@ public class AlgorithmConvolver extends AlgorithmBase {
             return 0;
         }
     }
+    
+    /**
+     * A static function that convolves a kernel with an image at a position.
+     *
+     * @param   pix       index indicating location of convolution
+     * @param   iExtents  image dimensions
+     * @param   image     image data
+     * @param   kExtents  kernel dimensions
+     * @param   kernelX   kernel data
+     * @param   kernelY   kernel data
+     * @param   kernelZ   kernel data
+     * @param   kernelXXX kernel data
+     * @param   kernelXXY kernel data
+     * @param   kernelXYY kernel data
+     * @param   kernelYYY kernel data
+     * @param   kernelXXZ kernel data
+     * @param   kernelXZZ kernel data
+     * @param   kernelXYZ kernel data
+     * @parma   kernelYYZ kernel data
+     * @param   kernelYZZ kernel data
+     * @param   kernelZZZ kernel data
+     *
+     * @return  the value of the pixel after convolution with the kernel
+     */
+    public static final float convolve3DPtNMSE(int pix, int[] iExtents, float[] image, int[] kExtents,
+                                              float[] kernelX, float[] kernelY, float[] kernelZ,
+                                              float[] kernelXXX, float[] kernelXXY, float[] kernelXYY,
+                                              float[] kernelYYY, float[] kernelXXZ, float[] kernelXZZ,
+                                              float[] kernelXYZ, float[] kernelYYZ, float[] kernelYZZ,
+                                              float[] kernelZZZ) {
+
+        int i, j, k;
+        int offsetX, offsetY, offsetZ;
+        int sliceSize = iExtents[0] * iExtents[1];
+        int volSize = sliceSize * iExtents[2];
+        int xDim = iExtents[0];
+        int xKDim = kExtents[0];
+        int indexY;
+        int stepY, stepZ;
+        int startX, startY, startZ;
+        int endX, endY, endZ;
+        int count;
+        double sumX;
+        double sumY;
+        double sumZ;
+        double sumXXX;
+        double sumXXY;
+        double sumXYY;
+        double sumYYY;
+        double sumXXZ;
+        double sumXZZ;
+        double sumXYZ;
+        double sumYYZ;
+        double sumYZZ;
+        double sumZZZ;
+        double normX = 0;
+        double normY = 0;
+        double normZ = 0;
+        double normXXX = 0;
+        double normXXY = 0;
+        double normXYY = 0;
+        double normYYY = 0;
+        double normXXZ = 0;
+        double normXZZ = 0;
+        double normXYZ = 0;
+        double normYYZ = 0;
+        double normYZZ = 0;
+        double normZZZ = 0;
+        double ptX;
+        double ptY;
+        double ptZ;
+        double ptXXX;
+        double ptXXY;
+        double ptXYY;
+        double ptYYY;
+        double ptXXZ;
+        double ptXZZ;
+        double ptXYZ;
+        double ptYYZ;
+        double ptYZZ;
+        double ptZZZ;
+
+        offsetX = (pix % xDim) - (kExtents[0] / 2);
+        offsetY = ((pix % sliceSize) / xDim) - (kExtents[1] / 2);
+        offsetZ = (pix / (sliceSize)) - (kExtents[2] / 2);
+
+        count = 0;
+        sumX = 0;
+        sumY = 0;
+        sumZ = 0;
+        sumXXX = 0;
+        sumXXY = 0;
+        sumXYY = 0;
+        sumYYY = 0;
+        sumXXZ = 0;
+        sumXZZ = 0;
+        sumXYZ = 0;
+        sumYYZ = 0;
+        sumYZZ = 0;
+        sumZZZ = 0;
+        indexY = offsetY * xDim;
+        stepY = kExtents[1] * xDim;
+        stepZ = kExtents[2] * sliceSize;
+        startZ = offsetZ * sliceSize;
+        endZ = startZ + stepZ;
+
+        for (k = startZ; k < endZ; k += sliceSize) {
+
+            if ((k >= 0) && (k < volSize)) {
+                startY = k + indexY;
+                endY = startY + stepY;
+
+                for (j = startY; j < endY; j += xDim) {
+
+                    if (((j - k) >= 0) && ((j - k) < sliceSize)) {
+                        startX = j + offsetX;
+                        endX = startX + xKDim;
+
+                        for (i = startX; i < endX; i++) {
+
+                            if (((i - j) >= 0) && ((i - j) < xDim)) {
+                                sumX += kernelX[count] * image[i];
+                                sumY += kernelY[count] * image[i];
+                                sumZ += kernelZ[count] * image[i];
+                                sumXXX += kernelXXX[count] * image[i];
+                                sumXXY += kernelXXY[count] * image[i];
+                                sumXYY += kernelXYY[count] * image[i];
+                                sumYYY += kernelYYY[count] * image[i];
+                                sumXXZ += kernelXXZ[count] * image[i];
+                                sumXZZ += kernelXZZ[count] * image[i];
+                                sumXYZ += kernelXYZ[count] * image[i];
+                                sumYYZ += kernelYYZ[count] * image[i];
+                                sumYZZ += kernelYZZ[count] * image[i];
+                                sumZZZ += kernelZZZ[count] * image[i];
+
+                                if (kernelX[count] >= 0) {
+                                    normX += kernelX[count];
+                                } else {
+                                    normX += -kernelX[count];
+                                }
+                                
+                                if (kernelY[count] >= 0) {
+                                    normY += kernelY[count];
+                                } else {
+                                    normY += -kernelY[count];
+                                }
+                                
+                                if (kernelZ[count] >= 0) {
+                                    normZ += kernelZ[count];
+                                } else {
+                                    normZ += -kernelZ[count];
+                                }
+                                
+                                if (kernelXXX[count] >= 0) {
+                                    normXXX += kernelXXX[count];
+                                } else {
+                                    normXXX += -kernelXXX[count];
+                                }
+                                
+                                if (kernelXXY[count] >= 0) {
+                                    normXXY += kernelXXY[count];
+                                } else {
+                                    normXXY += -kernelXXY[count];
+                                }
+                                
+                                if (kernelXYY[count] >= 0) {
+                                    normXYY += kernelXYY[count];
+                                } else {
+                                    normXYY += -kernelXYY[count];
+                                }
+                                
+                                if (kernelYYY[count] >= 0) {
+                                    normYYY += kernelYYY[count];
+                                } else {
+                                    normYYY += -kernelYYY[count];
+                                }
+                                
+                                if (kernelXXZ[count] >= 0) {
+                                    normXXZ += kernelXXZ[count];
+                                } else {
+                                    normXXZ += -kernelXXZ[count];
+                                }
+                                
+                                if (kernelXZZ[count] >= 0) {
+                                    normXZZ += kernelXZZ[count];
+                                } else {
+                                    normXZZ += -kernelXZZ[count];
+                                }
+                                
+                                if (kernelXYZ[count] >= 0) {
+                                    normXYZ += kernelXYZ[count];
+                                } else {
+                                    normXYZ += -kernelXYZ[count];
+                                }
+                                
+                                if (kernelYYZ[count] >= 0) {
+                                    normYYZ += kernelYYZ[count];
+                                } else {
+                                    normYYZ += -kernelYYZ[count];
+                                }
+                                
+                                if (kernelYZZ[count] >= 0) {
+                                    normYZZ += kernelYZZ[count];
+                                } else {
+                                    normYZZ += -kernelYZZ[count];
+                                }
+                                
+                                if (kernelZZZ[count] >= 0) {
+                                    normZZZ += kernelZZZ[count];
+                                } else {
+                                    normZZZ += -kernelZZZ[count];
+                                }
+                            }
+
+                            count++;
+                        }
+                    }else{
+                        count += kExtents[0];
+                    }
+                }
+            }else{
+                count += kExtents[0]*kExtents[1];
+            }
+        }
+
+        if ((normX > 0) && (normY > 0) && (normZ > 0) && (normXXX > 0) && (normXXY > 0) && (normXYY > 0) &&
+            (normYYY > 0) && (normXXZ > 0) && (normXZZ > 0) && (normXYZ > 0) && (normYYZ > 0) && (normYZZ > 0) &&
+            (normZZZ > 0)) {
+            ptX = sumX/normX;
+            ptY = sumY/normY;
+            ptZ = sumZ/normZ;
+            ptXXX = sumXXX/normXXX;
+            ptXXY = sumXXY/normXXY;
+            ptXYY = sumXYY/normXYY;
+            ptYYY = sumYYY/normYYY;
+            ptXXZ = sumXXZ/normXXZ;
+            ptXZZ = sumXZZ/normXZZ;
+            ptXYZ = sumXYZ/normXYZ;
+            ptYYZ = sumYYZ/normYYZ;
+            ptYZZ = sumYZZ/normYZZ;
+            ptZZZ = sumZZZ/normZZZ;
+            return (float)((ptX * ptX * ptX * ptXXX) + (3.0 * ptX * ptX * ptY * ptXXY) +
+                    (3.0 * ptX * ptY * ptY * ptXYY) + (ptY * ptY * ptY * ptYYY) +
+                    (3.0 * ptX * ptX * ptZ * ptXXZ) + (3.0 * ptX * ptZ * ptZ * ptXZZ) +
+                    (6.0 * ptX * ptY * ptZ * ptXYZ) + (3.0 * ptY * ptY * ptZ * ptYYZ) +
+                    (3.0 * ptY * ptZ * ptZ * ptYZZ) + (ptZ * ptZ * ptZ * ptZZZ));
+        } else {
+            return 0;
+        }
+    }
 
     /**
      * 
@@ -1994,7 +2290,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
         }
     }
     
-    private final void convolve2DNMS2(int startSlice, int endSlice){
+    private final void convolve2DNMSE(int startSlice, int endSlice){
         int length = srcImage.getSliceSize();
         for (int s = startSlice; s < endSlice; s++) {
             int start = s * length;
@@ -2019,7 +2315,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
                             srcImage.getExtents(), buffer, kExtents,
                             kernelBufferX, kernelBufferY, kernelBufferXX,
                             kernelBufferXY, kernelBufferYY);
-                    outputBuffer[2*idx+1] = AlgorithmConvolver.convolve2DPtNMS2(i,
+                    outputBuffer[2*idx+1] = AlgorithmConvolver.convolve2DPtNMSE(i,
                             srcImage.getExtents(), buffer, kExtents,
                             kernelBufferX, kernelBufferY, kernelBufferXXX,
                             kernelBufferXXY, kernelBufferXYY, kernelBufferYYY);
@@ -2181,6 +2477,31 @@ public class AlgorithmConvolver extends AlgorithmBase {
         }
     }
     
+    private final void convolve3DNMSE(int start, int end, float[] iImage, int index){
+        for (int i = start; (i < end) && !threadStopped; i++) {
+            progress++;
+            if ((progress % progressModulus) == 0) {
+                fireProgressStateChanged(minProgressValue + (int) (progress / progressModulus));
+                // System.out.println("Entire = " + entireImage);
+            }
+
+            if ((entireImage == true) || mask.get(i)) {
+                outputBuffer[2*(i + index)] = AlgorithmConvolver.convolve3DPtNMS(i,
+                        srcImage.getExtents(), iImage, kExtents,
+                        kernelBufferX, kernelBufferY, kernelBufferZ, kernelBufferXX, kernelBufferXY,
+                        kernelBufferYY, kernelBufferXZ, kernelBufferYZ, kernelBufferZZ);
+                outputBuffer[2*(i + index)+1] = AlgorithmConvolver.convolve3DPtNMSE(i,
+                        srcImage.getExtents(), iImage, kExtents,
+                        kernelBufferX, kernelBufferY, kernelBufferZ, kernelBufferXXX, kernelBufferXXY,
+                        kernelBufferXYY, kernelBufferYYY, kernelBufferXXZ, kernelBufferXZZ, kernelBufferXYZ,
+                        kernelBufferYYZ, kernelBufferYZZ, kernelBufferZZZ);
+            } else {
+                outputBuffer[2*(i + index)] = iImage[i];
+                outputBuffer[2*(i + index)+1] = iImage[i];
+            }
+        }
+    }
+    
     /**
 	 * Prepares this class for destruction.
 	 */
@@ -2218,12 +2539,14 @@ public class AlgorithmConvolver extends AlgorithmBase {
         if (srcImage.isColorImage()) {
             cFactor = 4;
         }
-        if (nms22) {
-            cFactor = 2;
-        }
 
         int length = cFactor * srcImage.getSliceSize();
-        outputBuffer = new float[length];
+        if (nms2e) {
+            outputBuffer = new float[2*length];
+        }
+        else {
+            outputBuffer = new float[length];
+        }
         progress = 0;
         progressModulus = length / (maxProgressValue-minProgressValue);
 
@@ -2233,8 +2556,8 @@ public class AlgorithmConvolver extends AlgorithmBase {
         else if (nms2) {
             convolve2DNMS(0,1);
         }
-        else if (nms22) {
-            convolve2DNMS2(0,1);
+        else if (nms2e) {
+            convolve2DNMSE(0,1);
         }
         else {
             convolve2D(0, 1);
@@ -2269,9 +2592,6 @@ public class AlgorithmConvolver extends AlgorithmBase {
         if (srcImage.isColorImage()) {
             cFactor = 4;
         }
-        if (nms22) {
-            cFactor = 2;
-        }
        
         progress = 0;
         int length;
@@ -2283,7 +2603,12 @@ public class AlgorithmConvolver extends AlgorithmBase {
             length = cFactor * srcImage.getSliceSize();
             int nSlices = srcImage.getExtents()[2];
             int totalLength = length * srcImage.getExtents()[2];
-            outputBuffer = new float[totalLength];
+            if (nms2e) {
+                outputBuffer = new float[2*totalLength];
+            }
+            else {
+                outputBuffer = new float[totalLength];
+            }
             progressModulus = totalLength / (maxProgressValue-minProgressValue);
 
             if(this.multiThreadingEnabled){
@@ -2300,8 +2625,8 @@ public class AlgorithmConvolver extends AlgorithmBase {
                             else if (nms2) {
                                 convolve2DNMS(fstart, fend);
                             }
-                            else if (nms22) {
-                                convolve2DNMS2(fstart, fend);
+                            else if (nms2e) {
+                                convolve2DNMSE(fstart, fend);
                             }
                             else {
     						    convolve2D(fstart, fend);
@@ -2324,8 +2649,8 @@ public class AlgorithmConvolver extends AlgorithmBase {
                 else if (nms2) {
                     convolve2DNMS(0, nSlices);
                 }
-                else if (nms22) {
-                    convolve2DNMS2(0, nSlices);
+                else if (nms2e) {
+                    convolve2DNMSE(0, nSlices);
                 }
                 else {
             	    convolve2D(0, nSlices);
@@ -2351,16 +2676,21 @@ public class AlgorithmConvolver extends AlgorithmBase {
 
                 // System.out.println ("sliceSize = " + srcImage.getSliceSize() + "  Length = " + length);
                 buffer = new float[length];
-                outputBuffer = new float[length];
+                if (nms3e) {
+                    outputBuffer = new float[2*length];
+                }
+                else {
+                    outputBuffer = new float[length];
+                }
                 srcImage.exportData(0, length, buffer); // locks and releases lock
             } catch (IOException error) {
                 buffer = null;
-                errorCleanUp("Algorithm Gaussian Blur: Image(s) locked", true);
+                errorCleanUp("Algorithm Convolver: Image(s) locked", true);
 
                 return;
             } catch (OutOfMemoryError e) {
                 buffer = null;
-                errorCleanUp("Algorithm Gaussian Blur: Out of memory", true);
+                errorCleanUp("Algorithm Convolver: Out of memory", true);
 
                 return;
             }
@@ -2383,6 +2713,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
                             else if (nms3) {
                                 convolve3DNMS(start, end, iImage, 0);
                             }
+                            else if (nms3e) {
+                                convolve3DNMSE(start, end, iImage, 0);
+                            }
                             else {
 							    convolve3D(start, end, iImage, 0);
                             }
@@ -2404,6 +2737,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
                 }
                 else if (nms3) {
                     convolve3DNMS(0, length, buffer, 0);
+                }
+                else if (nms3e) {
+                    convolve3DNMSE(0, length, buffer, 0);
                 }
                 else {
         		    convolve3D(0, length, buffer, 0);
@@ -2450,7 +2786,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
             outputBuffer = new float[length*srcImage.getExtents()[3]];
         } catch (OutOfMemoryError e) {
             buffer = null;
-            errorCleanUp("Algorithm Gaussian Blur: Out of memory", true);
+            errorCleanUp("Algorithm Convolver: Out of memory", true);
 
             return;
         }
@@ -2466,7 +2802,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
 			try {
 				srcImage.exportData(t * length, length, buffer); 
 			} catch (IOException error) {
-				displayError("Algorithm Gaussian Blur: Image(s) locked");
+				displayError("Algorithm Convolver: Image(s) locked");
 				setCompleted(false);
 				fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
 
