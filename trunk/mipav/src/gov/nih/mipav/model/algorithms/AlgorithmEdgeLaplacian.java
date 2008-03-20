@@ -15,7 +15,7 @@ import java.util.BitSet;
  * @version  0.1 Feb 11, 1998
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class AlgorithmEdgeLaplacian extends AlgorithmBase {
+public class AlgorithmEdgeLaplacian extends AlgorithmBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -62,6 +62,9 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
      * in the mask image is background.
      */
     private ModelImage zXMask;
+    
+    // Buffer to receive result of convolution operation
+    private float[] outputBuffer;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -446,6 +449,8 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
 
             return;
         }
+        
+        fireProgressStateChanged(0, srcImage.getImageName(), "Calculating the Edge ...");
 
         if (srcImage.getNDims() == 2) {
             makeKernels2D();
@@ -454,6 +459,16 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
         } else if ((srcImage.getNDims() == 3) && (image25D == true)) {
             makeKernels2D();
         }
+        
+        AlgorithmConvolver convolver = new AlgorithmConvolver(srcImage, GxxData, kExtents,entireImage, image25D);
+        convolver.setMinProgressValue(0);
+        convolver.setMaxProgressValue(80);
+        linkProgressToAlgorithm(convolver);
+        convolver.addListener(this);
+        if (!entireImage) {
+            convolver.setMask(mask);
+        }
+        convolver.run();
 
         try {
 
@@ -520,7 +535,6 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
         int length, totalLength;
         int start;
         float[] buffer;
-        float lap;
 
         try {
             destImage.setLock();
@@ -542,10 +556,7 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
             return;
         }
 
-        int mod = totalLength / 100; // mod is 1 percent of length
-
-        // initProgressBar();
-        fireProgressStateChanged(0, srcImage.getImageName(), "Calculating the Edge ...");
+        int mod = totalLength / 20; // since progress bar is at 80
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -561,12 +572,11 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
             for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
                 if (((start + i) % mod) == 0) {
-                    fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
+                    fireProgressStateChanged(80 + (20 * (start + i)) / (totalLength - 1));
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
-                    lap = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, GxxData);
-                    destImage.set(idx, lap);
+                    destImage.set(idx, outputBuffer[idx]);
                 } else {
                     destImage.set(idx, buffer[i]);
                 }
@@ -607,7 +617,6 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
         float[] buffer;
         int start;
         float[] sliceBuffer;
-        float lap;
 
         try {
             destImage.setLock();
@@ -624,8 +633,6 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
             buffer = new float[totalLength];
             sliceBuffer = new float[length];
             srcImage.exportData(0, totalLength, buffer); // locks and releases lock
-
-            // fireProgressStateChanged(srcImage.getImageName(), "Calculating Zero X-ings ...");
         } catch (IOException error) {
             buffer = null;
             sliceBuffer = null;
@@ -640,10 +647,7 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
             return;
         }
 
-        // initProgressBar();
-        fireProgressStateChanged(0, srcImage.getImageName(), "Calculating Zero X-ings ...");
-
-        int mod = totalLength / 100; // mod is 1 percent of length
+        int mod = totalLength / 20; // since progress bar is at 80
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -651,12 +655,11 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
             for (i = start; (i < (start + length)) && !threadStopped; i++) {
 
                 if ((i % mod) == 0) {
-                    fireProgressStateChanged(Math.round((float) i / (totalLength - 1) * 100));
+                    fireProgressStateChanged(80 + (20 * i) / (totalLength - 1));
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
-                    lap = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GxxData);
-                    destImage.set(i, lap);
+                    destImage.set(i, outputBuffer[i]);
                 } else {
                     destImage.set(i, buffer[i]);
                 }
@@ -826,6 +829,17 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
 
         for (int i = 0; i < GyyData.length; i++) {
             GxxData[i] = -(GxxData[i] + GyyData[i] + GzzData[i]);
+        }
+    }
+    
+    public void algorithmPerformed(AlgorithmBase algorithm){
+        if(!algorithm.isCompleted()){
+            finalize();
+            return;
+        }
+        if (algorithm instanceof AlgorithmConvolver) {
+            AlgorithmConvolver convolver = (AlgorithmConvolver) algorithm;
+            outputBuffer = convolver.getOutputBuffer();
         }
     }
 }
