@@ -138,7 +138,9 @@ public class TubeSurface extends TriMesh
 	        }
 
 	        // float fRadius = m_oRadial(fT);   // ?????????
-	        float fRadius = 0.025f;
+	        // float fRadius = 0.025f;
+	        float fRadius = 0.003f;
+	       
 	        
 	        // compute frame (position P, tangent T, normal N, binormal B)
 	        Vector3f kP = new Vector3f();
