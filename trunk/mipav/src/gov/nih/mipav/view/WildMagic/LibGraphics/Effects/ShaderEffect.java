@@ -603,6 +603,7 @@ public class ShaderEffect extends Effect
             bLoadedVProgram = true;
         }
         
+        
         if ( !pkVProgram.IsCompiled() || !pkPProgram.IsCompiled() )
         {
             kCompiledProgram = kRenderer.CompilePrograms(pkVProgram, pkPProgram);
@@ -610,6 +611,7 @@ public class ShaderEffect extends Effect
                                                        pkVProgram.GetShaderID(),
                                                        pkPProgram.GetShaderID() );
         }
+        
         
         // Ensure that the output of the vertex program and the input of the
         // pixel program are compatible.  Each vertex program always has a clip

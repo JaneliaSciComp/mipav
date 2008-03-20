@@ -182,6 +182,7 @@ public class Polyline extends Geometry
                 }
             }
             Type = GeometryType.GT_POLYLINE_SEGMENTS;
+           
         }
     }
 
