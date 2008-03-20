@@ -34,6 +34,13 @@ public class FilePolylineVOIXML extends FileXML {
 
     /** File name of the VOI. */
     private String fileName;
+    
+    float[] box = new float[3];
+    int[] direction = new int[3];
+    float[] origin = new float[3];
+    double[][] inverseDicomArray = new double[4][4];
+    boolean flip;
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -67,6 +74,26 @@ public class FilePolylineVOIXML extends FileXML {
 
     }
 
+    public float[] getBox() { 
+    	return box;
+    }
+              
+    public int[] getDirection() {
+    	return direction;
+    }
+    
+    public float[] getOrigin() {
+       return origin;
+    }
+    
+    public double[][] getInverseDicomArray() {
+    	return inverseDicomArray;
+    }
+    
+    public boolean getFlip() {
+    	return flip;
+    }
+    
     private boolean readXML(Vector<Point3Df> coordVector) {
 
         SAXParserFactory spf = SAXParserFactory.newInstance();
@@ -82,7 +109,7 @@ public class FilePolylineVOIXML extends FileXML {
             // Validation part 2a: set the schema language if necessary
             saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_LANGUAGE, W3C_XML_SCHEMA);
 
-            URL xsdURL = getClass().getClassLoader().getResource("voi_coord.xsd");
+            URL xsdURL = getClass().getClassLoader().getResource("voi_polyline.xsd");
 
             if (xsdURL == null) {
                 MipavUtil.displayError("Unable to find VOI XML schema.");
@@ -189,7 +216,58 @@ public class FilePolylineVOIXML extends FileXML {
                     Preferences.debug("Error reading pt: " + nfex.toString() + "\n", Preferences.DEBUG_FILEIO);
                 }
                 */
-            } 
+            } else if (currentKey.equals("Direction")) {
+            	int x = 0, y = 0, z = 0;
+                StringTokenizer st = new StringTokenizer(elementBuffer, ",");
+                    x = Integer.parseInt(st.nextToken());
+                    y = Integer.parseInt(st.nextToken());
+                    z = Integer.parseInt(st.nextToken());
+                    direction[0] = x;
+                    direction[1] = y;
+                    direction[2] = z;
+            } else if (currentKey.equals("Origin")) {
+            	float x = 0, y = 0, z = 0;
+                StringTokenizer st = new StringTokenizer(elementBuffer, ",");
+                    x = Float.parseFloat(st.nextToken());
+                    y = Float.parseFloat(st.nextToken());
+                    z = Float.parseFloat(st.nextToken());
+                    origin[0] = x;
+                    origin[1] = y;
+                    origin[2] = z;
+            } else if (currentKey.equals("Box")) {
+            	float x = 0, y = 0, z = 0;
+                StringTokenizer st = new StringTokenizer(elementBuffer, ",");
+                    x = Float.parseFloat(st.nextToken());
+                    y = Float.parseFloat(st.nextToken());
+                    z = Float.parseFloat(st.nextToken());
+                    box[0] = x;
+                    box[1] = y;
+                    box[2] = z;
+            } else if (currentKey.equals("Flip")) {
+            	 StringTokenizer st = new StringTokenizer(elementBuffer, ",");
+            	 flip = Boolean.parseBoolean(st.nextToken());
+            } else if (currentKey.equals("InverseDicomArray")) {
+            	StringTokenizer st = new StringTokenizer(elementBuffer, ",");
+            	inverseDicomArray[0][0] = Double.parseDouble(st.nextToken());
+            	inverseDicomArray[0][1] = Double.parseDouble(st.nextToken());
+            	inverseDicomArray[0][2] = Double.parseDouble(st.nextToken());
+            	inverseDicomArray[0][3] = Double.parseDouble(st.nextToken());
+            	
+            	inverseDicomArray[1][0] = Double.parseDouble(st.nextToken());
+            	inverseDicomArray[1][1] = Double.parseDouble(st.nextToken());
+            	inverseDicomArray[1][2] = Double.parseDouble(st.nextToken());
+            	inverseDicomArray[1][3] = Double.parseDouble(st.nextToken());
+            	
+            	inverseDicomArray[2][0] = Double.parseDouble(st.nextToken());
+            	inverseDicomArray[2][1] = Double.parseDouble(st.nextToken());
+            	inverseDicomArray[2][2] = Double.parseDouble(st.nextToken());
+            	inverseDicomArray[2][3] = Double.parseDouble(st.nextToken());
+            	
+            	inverseDicomArray[3][0] = Double.parseDouble(st.nextToken());
+            	inverseDicomArray[3][1] = Double.parseDouble(st.nextToken());
+            	inverseDicomArray[3][2] = Double.parseDouble(st.nextToken());
+            	inverseDicomArray[3][3] = Double.parseDouble(st.nextToken());
+            }
         }
 
         /**
