@@ -60,7 +60,7 @@ import java.util.*;
  *
  * @see  GenerateGaussian
  */
-public class AlgorithmAGVF extends AlgorithmBase {
+public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -144,6 +144,9 @@ public class AlgorithmAGVF extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private float[] wVal;
+    
+    // Storage for result of AlgorithmConvolver
+    private float[] outputBuffer = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -228,12 +231,40 @@ public class AlgorithmAGVF extends AlgorithmBase {
      * starts the snake algorithm.
      */
     public void runAlgorithm() {
+        AlgorithmConvolver convolver;
 
         if (srcImage == null) {
             displayError("Source Image is null");
 
             return;
         } else {
+            fireProgressStateChanged(srcImage.getImageName(), "Evolving boundary ...");
+            if (((srcImage.getNDims() == 2) || do25D) && ((sigmas[0] != 0.0) || (sigmas[1] != 0.0))) {
+                if ((sigmas[0] != 0.0) && (sigmas[1] != 0.0)) {
+                    convolver = new AlgorithmConvolver(srcImage, GxData, GyData, kExtents, true);
+                }
+                else if (sigmas[0] != 0.0) {
+                    convolver = new AlgorithmConvolver(srcImage, GxData, kExtents, true, true);
+                }
+                else { // sigmas[1] != 0.0
+                    convolver = new AlgorithmConvolver(srcImage, GyData, kExtents, true, true);
+                }
+                convolver.setMinProgressValue(0);
+                convolver.setMaxProgressValue(10);
+                linkProgressToAlgorithm(convolver);
+                convolver.addListener(this);
+                convolver.run();
+                convolver.finalize();    
+            } // if (((srcImage.getNDims() == 2) || do25D) && ((sigmas[0] != 0.0) || (sigmas[1] != 0.0)))
+            else if ((srcImage.getNDims() == 3) && (sigmas[0] != 0.0) && (sigmas[1] != 0.0) && (sigmas[2] != 0.0)) {
+                convolver = new AlgorithmConvolver(srcImage, GxData, GyData, GzData, kExtents, true); 
+                convolver.setMinProgressValue(0);
+                convolver.setMaxProgressValue(10);
+                linkProgressToAlgorithm(convolver);
+                convolver.addListener(this);
+                convolver.run();
+                convolver.finalize();    
+            } // else if ((srcImage.getNDims() == 3) && (sigmas[0] != 0.0) && (sigmas[1] != 0.0) && (sigmas[2] != 0.0))
 
             if (srcImage.getNDims() == 2) {
                 calc2D();
@@ -522,7 +553,6 @@ public class AlgorithmAGVF extends AlgorithmBase {
             uVal = new float[(xDim + 2) * (yDim + 2)];
             vVal = new float[(xDim + 2) * (yDim + 2)];
             gVal = new float[(xDim + 2) * (yDim + 2)];
-            fireProgressStateChanged(srcImage.getImageName(), "Evolving boundary ...");
         } catch (OutOfMemoryError e) {
             cleanup();
 
@@ -553,7 +583,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
                 return;
             }
 
-            calcGVF(imgBuffer);
+            calcGVF(slice, imgBuffer);
 
             if (destFlag == true) {
 
@@ -640,7 +670,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
                     return;
                 }
 
-                calcGVF(imgBuffer);
+                calcGVF(slice, imgBuffer);
 
                 if (destFlag == true) {
 
@@ -718,7 +748,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
                     return;
                 }
 
-                calcGVF(imgBuffer);
+                calcGVF(slice, imgBuffer);
 
                 if (destFlag == true) {
 
@@ -814,7 +844,6 @@ public class AlgorithmAGVF extends AlgorithmBase {
             vVal = new float[(xDim + 2) * (yDim + 2)];
             gVal = new float[(xDim + 2) * (yDim + 2)];
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
-            this.fireProgressStateChanged(srcImage.getImageName(), "Evolving boundary ...");
         } catch (IOException error) {
             cleanup();
 
@@ -835,7 +864,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
         //
         fireProgressStateChanged(25);
 
-        calcGVF(imgBuffer);
+        calcGVF(0, imgBuffer);
         expGvfBuffer = null;
         fx = null;
         fy = null;
@@ -936,7 +965,6 @@ public class AlgorithmAGVF extends AlgorithmBase {
             wVal = new float[(xDim + 2) * (yDim + 2) * (zDim + 2)];
             gVal = new float[(xDim + 2) * (yDim + 2) * (zDim + 2)];
 
-            this.fireProgressStateChanged(srcImage.getImageName(), "Evolving boundary ...");
         } catch (OutOfMemoryError e) {
             cleanup();
 
@@ -1081,12 +1109,14 @@ public class AlgorithmAGVF extends AlgorithmBase {
      *
      * @param  imgBuffer  DOCUMENT ME!
      */
-    private void calcGVF(float[] imgBuffer) {
+    private void calcGVF(int sliceNum, float[] imgBuffer) {
         float ix, iy;
         float gvfMin, gvfMax;
         int x, y;
         float del2;
         int iteration;
+        int sliceSize = xDim * yDim;
+        int offset = sliceSize *sliceNum;
 
         // float       k = 0.15f;
         int i;
@@ -1095,30 +1125,17 @@ public class AlgorithmAGVF extends AlgorithmBase {
         vVal = new float[(xDim + 2) * (yDim + 2)];
 
         // Edge map = |grad(Gsigma(x,y)*I(x,y))|
-        for (y = 0; y < yDim; y++) {
+        if ((sigmas[0] != 0.0) && (sigmas[1] != 0.0)) {
+            for (i = 0; i < sliceSize; i++) {
+                gvfBuffer[i] = outputBuffer[offset + i];
+            }
+        } // if ((sigmas[0] != 0.0) && (sigmas[1] != 0.0))
+        else if (sigmas[0] != 0.0) {
+            for (y = 0; y < yDim; y++) {
 
-            for (x = 0; x < xDim; x++) {
-                i = x + (xDim * y);
-
-                if (sigmas[0] != 0.0f) {
-                    ix = AlgorithmConvolver.convolveWhole2DPt(i, extents, imgBuffer, kExtents, GxData);
-                } // if (sigmas[0] != 0.0f)
-                else { // (sigmas[0] == 0.0f)
-
-                    if (x == 0) {
-                        ix = imgBuffer[1 + (y * xDim)] - imgBuffer[i];
-                    } else if (x == (xDim - 1)) {
-                        ix = imgBuffer[i] - imgBuffer[(xDim - 2) + (y * xDim)];
-                    } else {
-                        ix = (imgBuffer[(x + 1) + (y * xDim)] - imgBuffer[(x - 1) + (y * xDim)]) / 2.0f;
-                    }
-                } // else (sigmas[0] == 0.0f)
-
-                if (sigmas[1] != 0.0f) {
-                    iy = AlgorithmConvolver.convolveWhole2DPt(i, extents, imgBuffer, kExtents, GyData);
-                } // if (sigmas[1] != 0.0f)
-                else { // sigmas[1] == 0.0f
-
+                for (x = 0; x < xDim; x++) {
+                    i = x + (xDim * y);
+                    ix = outputBuffer[offset + i];
                     if (y == 0) {
                         iy = imgBuffer[x + xDim] - imgBuffer[i];
                     } else if (y == (yDim - 1)) {
@@ -1126,11 +1143,50 @@ public class AlgorithmAGVF extends AlgorithmBase {
                     } else {
                         iy = (imgBuffer[x + ((y + 1) * xDim)] - imgBuffer[x + ((y - 1) * xDim)]) / 2.0f;
                     }
-                } // else sigmas[1] == 0.0f
+                    gvfBuffer[i] = (float) Math.sqrt((ix * ix) + (iy * iy));
+                }
+            }
+        } // else if (sigmas[0] != 0.0)
+        else if (sigmas[1] != 0.0) {
+            for (y = 0; y < yDim; y++) {
 
-                gvfBuffer[i] = (float) Math.sqrt((ix * ix) + (iy * iy));
-            } // for (x = 0; x < xDim; x++)
-        } // for (y = 0; y < yDim; y++)
+                for (x = 0; x < xDim; x++) {
+                    i = x + (xDim * y); 
+                    if (x == 0) {
+                        ix = imgBuffer[1 + (y * xDim)] - imgBuffer[i];
+                    } else if (x == (xDim - 1)) {
+                        ix = imgBuffer[i] - imgBuffer[(xDim - 2) + (y * xDim)];
+                    } else {
+                        ix = (imgBuffer[(x + 1) + (y * xDim)] - imgBuffer[(x - 1) + (y * xDim)]) / 2.0f;
+                    }
+                    iy = outputBuffer[offset + i];
+                    gvfBuffer[i] = (float) Math.sqrt((ix * ix) + (iy * iy));
+                }
+            }
+        } // else if (sigmas[1] != 0.0)
+        else { // ((sigmas[0] == 0.0) && (sigmas[1] == 0.0))
+            for (y = 0; y < yDim; y++) {
+
+                for (x = 0; x < xDim; x++) {
+                    i = x + (xDim * y); 
+                    if (x == 0) {
+                        ix = imgBuffer[1 + (y * xDim)] - imgBuffer[i];
+                    } else if (x == (xDim - 1)) {
+                        ix = imgBuffer[i] - imgBuffer[(xDim - 2) + (y * xDim)];
+                    } else {
+                        ix = (imgBuffer[(x + 1) + (y * xDim)] - imgBuffer[(x - 1) + (y * xDim)]) / 2.0f;
+                    }
+                    if (y == 0) {
+                        iy = imgBuffer[x + xDim] - imgBuffer[i];
+                    } else if (y == (yDim - 1)) {
+                        iy = imgBuffer[i] - imgBuffer[x + ((yDim - 2) * xDim)];
+                    } else {
+                        iy = (imgBuffer[x + ((y + 1) * xDim)] - imgBuffer[x + ((y - 1) * xDim)]) / 2.0f;
+                    }
+                    gvfBuffer[i] = (float) Math.sqrt((ix * ix) + (iy * iy));
+                }
+            }
+        }
 
         // Compute the gradient vector flow of the edge map
         // Normalize to the range [0,1]
@@ -1344,6 +1400,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
         int x, y, z;
         float del2;
         int iteration;
+        int totalLength = xDim * yDim * zDim;
 
         // float       k = 0.15f;
         int i, i1, i2;
@@ -1351,66 +1408,73 @@ public class AlgorithmAGVF extends AlgorithmBase {
         int expSliceSize = (xDim + 2) * (yDim + 2);
 
         // Edge map = |grad(Gsigma(x,y,z)*I(x,y,z))|
-        for (z = 0; z < zDim; z++) {
-            i1 = z * sliceSize;
-
-            for (y = 0; y < yDim; y++) {
-                i2 = i1 + (xDim * y);
-
-                for (x = 0; x < xDim; x++) {
-                    i = i2 + x;
-                    ;
-
-                    if (sigmas[0] != 0.0f) {
-                        ix = AlgorithmConvolver.convolveWhole3DPt(i, extents, imgBuffer, kExtents, GxData);
-                    } // if (sigmas[0] != 0.0f)
-                    else { // (sigmas[0] == 0.0f)
-
-                        if (x == 0) {
-                            ix = imgBuffer[1 + (y * xDim) + (z * sliceSize)] - imgBuffer[i];
-                        } else if (x == (xDim - 1)) {
-                            ix = imgBuffer[i] - imgBuffer[(xDim - 2) + (y * xDim) + (z * sliceSize)];
-                        } else {
-                            ix = (imgBuffer[(x + 1) + (y * xDim) + (z * sliceSize)] -
-                                  imgBuffer[(x - 1) + (y * xDim) + (z * sliceSize)]) / 2.0f;
-                        }
-                    } // else (sigmas[0] == 0.0f)
-
-                    if (sigmas[1] != 0.0f) {
-                        iy = AlgorithmConvolver.convolveWhole3DPt(i, extents, imgBuffer, kExtents, GyData);
-                    } // if (sigmas[1] != 0.0f)
-                    else { // sigmas[1] == 0.0f
-
-                        if (y == 0) {
-                            iy = imgBuffer[x + xDim + (z * sliceSize)] - imgBuffer[i];
-                        } else if (y == (yDim - 1)) {
-                            iy = imgBuffer[i] - imgBuffer[x + ((yDim - 2) * xDim) + (z * sliceSize)];
-                        } else {
-                            iy = (imgBuffer[x + ((y + 1) * xDim) + (z * sliceSize)] -
-                                  imgBuffer[x + ((y - 1) * xDim) + (z * sliceSize)]) / 2.0f;
-                        }
-                    } // else sigmas[1] == 0.0f
-
-                    if (sigmas[2] != 0.0) {
-                        iz = AlgorithmConvolver.convolveWhole3DPt(i, extents, imgBuffer, kExtents, GzData);
-                    } // if (sigmas[2] != 0.0f)
-                    else { // sigmas[2] == 0.0f
-
-                        if (z == 0) {
-                            iz = imgBuffer[x + (y * xDim) + sliceSize] - imgBuffer[x + (y * xDim)];
-                        } else if (z == (zDim - 1)) {
-                            iz = imgBuffer[x + (y * xDim) + ((zDim - 1) * sliceSize)] -
-                                 imgBuffer[x + (y * xDim) + ((zDim - 2) * sliceSize)];
-                        } else {
-                            iz = (imgBuffer[x + (y * xDim) + ((z + 1) * sliceSize)] -
-                                  imgBuffer[x + (y * xDim) + ((z - 1) * sliceSize)]) / 2.0f;
-                        }
-                    } // else sigmas[2] == 0.0f
-
-                    gvfBuffer[i] = (float) Math.sqrt((ix * ix) + (iy * iy) + (iz * iz));
-                } // for (x = 0; x < xDim; x++)
-            } // for (y = 0; y < yDim; y++)
-        } // for (z = 0; z < zDim; z++)
+        if ((sigmas[0] != 0.0) && (sigmas[1] != 0.0) && (sigmas[2] != 0.0)) {
+            for (i = 0; i < totalLength; i++) {
+                gvfBuffer[i] = outputBuffer[i];
+            }
+        } // if ((sigmas[0] != 0.0) && (sigmas[1] != 0.0) && (sigmas[2] != 0.0))
+        else {
+            for (z = 0; z < zDim; z++) {
+                i1 = z * sliceSize;
+    
+                for (y = 0; y < yDim; y++) {
+                    i2 = i1 + (xDim * y);
+    
+                    for (x = 0; x < xDim; x++) {
+                        i = i2 + x;
+                        ;
+    
+                        if (sigmas[0] != 0.0f) {
+                            ix = AlgorithmConvolver.convolveWhole3DPt(i, extents, imgBuffer, kExtents, GxData);
+                        } // if (sigmas[0] != 0.0f)
+                        else { // (sigmas[0] == 0.0f)
+    
+                            if (x == 0) {
+                                ix = imgBuffer[1 + (y * xDim) + (z * sliceSize)] - imgBuffer[i];
+                            } else if (x == (xDim - 1)) {
+                                ix = imgBuffer[i] - imgBuffer[(xDim - 2) + (y * xDim) + (z * sliceSize)];
+                            } else {
+                                ix = (imgBuffer[(x + 1) + (y * xDim) + (z * sliceSize)] -
+                                      imgBuffer[(x - 1) + (y * xDim) + (z * sliceSize)]) / 2.0f;
+                            }
+                        } // else (sigmas[0] == 0.0f)
+    
+                        if (sigmas[1] != 0.0f) {
+                            iy = AlgorithmConvolver.convolveWhole3DPt(i, extents, imgBuffer, kExtents, GyData);
+                        } // if (sigmas[1] != 0.0f)
+                        else { // sigmas[1] == 0.0f
+    
+                            if (y == 0) {
+                                iy = imgBuffer[x + xDim + (z * sliceSize)] - imgBuffer[i];
+                            } else if (y == (yDim - 1)) {
+                                iy = imgBuffer[i] - imgBuffer[x + ((yDim - 2) * xDim) + (z * sliceSize)];
+                            } else {
+                                iy = (imgBuffer[x + ((y + 1) * xDim) + (z * sliceSize)] -
+                                      imgBuffer[x + ((y - 1) * xDim) + (z * sliceSize)]) / 2.0f;
+                            }
+                        } // else sigmas[1] == 0.0f
+    
+                        if (sigmas[2] != 0.0) {
+                            iz = AlgorithmConvolver.convolveWhole3DPt(i, extents, imgBuffer, kExtents, GzData);
+                        } // if (sigmas[2] != 0.0f)
+                        else { // sigmas[2] == 0.0f
+    
+                            if (z == 0) {
+                                iz = imgBuffer[x + (y * xDim) + sliceSize] - imgBuffer[x + (y * xDim)];
+                            } else if (z == (zDim - 1)) {
+                                iz = imgBuffer[x + (y * xDim) + ((zDim - 1) * sliceSize)] -
+                                     imgBuffer[x + (y * xDim) + ((zDim - 2) * sliceSize)];
+                            } else {
+                                iz = (imgBuffer[x + (y * xDim) + ((z + 1) * sliceSize)] -
+                                      imgBuffer[x + (y * xDim) + ((z - 1) * sliceSize)]) / 2.0f;
+                            }
+                        } // else sigmas[2] == 0.0f
+    
+                        gvfBuffer[i] = (float) Math.sqrt((ix * ix) + (iy * iy) + (iz * iz));
+                    } // for (x = 0; x < xDim; x++)
+                } // for (y = 0; y < yDim; y++)
+            } // for (z = 0; z < zDim; z++)
+        } // else
 
         // Compute the gradient vector flow of the edge map
         // Normalize to the range [0,1]
@@ -2245,5 +2309,14 @@ public class AlgorithmAGVF extends AlgorithmBase {
         yPoints[gon.npoints + 1] = gon.ypoints[0];
     }
 
-
+    public void algorithmPerformed(AlgorithmBase algorithm){
+        if(!algorithm.isCompleted()){
+            finalize();
+            return;
+        }
+        if (algorithm instanceof AlgorithmConvolver) {
+            AlgorithmConvolver convolver = (AlgorithmConvolver) algorithm;
+            outputBuffer = convolver.getOutputBuffer();
+        }
+    }
 }
