@@ -322,6 +322,22 @@ public class JPanelSurface_WM
     	Polyline[] akPolylines = FilePolyline_WM.openPolylines(m_kVolumeViewer.getImageA(), surfaceVector.size());
     	Vector3f m_kTranslate = m_kVolumeViewer.getVolumeGPU().getTranslate();
     	
+    	 float m_fMax, m_fX, m_fY, m_fZ;
+    	 float fMaxX = (float) (m_kVolumeViewer.getImageA().getExtents()[0] - 1) * m_kVolumeViewer.getImageA().getFileInfo(0).getResolutions()[0];
+         float fMaxY = (float) (m_kVolumeViewer.getImageA().getExtents()[1] - 1) * m_kVolumeViewer.getImageA().getFileInfo(0).getResolutions()[1];
+         float fMaxZ = (float) (m_kVolumeViewer.getImageA().getExtents()[2] - 1) * m_kVolumeViewer.getImageA().getFileInfo(0).getResolutions()[2];
+
+         m_fMax = fMaxX;
+         if (fMaxY > m_fMax) {
+             m_fMax = fMaxY;
+         }
+         if (fMaxZ > m_fMax) {
+             m_fMax = fMaxZ;
+         }
+         m_fX = fMaxX/m_fMax;
+         m_fY = fMaxY/m_fMax;
+         m_fZ = fMaxZ/m_fMax;
+    	
     	if ( akPolylines != null )
         {
         	DefaultListModel kList = (DefaultListModel)polylineList.getModel();
@@ -330,14 +346,22 @@ public class JPanelSurface_WM
             for ( int i = 0; i < akPolylines.length ; i++ ) {
             	polylineCounterList.add(iSize + i, polylineCounter);
             	
+            	 
             	 for ( int j = 0; j < akPolylines[i].VBuffer.GetVertexQuantity(); j++ )
                  {
 
            		  akPolylines[i].VBuffer.SetPosition3(j, akPolylines[i].VBuffer.GetPosition3fX(j) - m_kTranslate.X(),
            				  akPolylines[i].VBuffer.GetPosition3fY(j) - m_kTranslate.Y(), 
            				  akPolylines[i].VBuffer.GetPosition3fZ(j) - m_kTranslate.Z() );
-                 }
+           		   akPolylines[i].VBuffer.SetPosition3(j, 
+           				akPolylines[i].VBuffer.GetPosition3fX(j) * 1.0f/m_fX,
+           				akPolylines[i].VBuffer.GetPosition3fY(j) * 1.0f/m_fY,
+           				akPolylines[i].VBuffer.GetPosition3fZ(j) * 1.0f/m_fZ);
+                 } 
+                
+                akPolylines[i].Local.SetTranslate(new Vector3f(m_kTranslate.X(), m_kTranslate.Y(), m_kTranslate.Z()));
             	m_kVolumeViewer.addPolyline(akPolylines[i], polylineCounter);
+            	
             	polylineCounter++;
             }
             

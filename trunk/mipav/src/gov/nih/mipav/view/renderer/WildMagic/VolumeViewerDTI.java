@@ -729,6 +729,10 @@ implements MouseListener, ItemListener, ChangeListener {
     	insertTab("Parameters", DTIParametersPanel);
     }
     
+    public JPanelDTIParametersPanel getParamPanel() {
+    	return DTIparamsPanel;
+    }
+    
     public void buildDTIParametersPanel() {
     	DTIParametersPanel = new JPanel();
     	
@@ -2457,7 +2461,7 @@ implements MouseListener, ItemListener, ChangeListener {
         buildDTIFiberTrackPanel();
         buildDTIParametersPanel();
 
-        /*
+        
         buildLightPanel();
         buildClipPanel();
         buildSlicePanel();
@@ -2467,7 +2471,7 @@ implements MouseListener, ItemListener, ChangeListener {
         buildMousePanel();
         buildGeodesic();
         buildSculpt();
-       */
+       
 
         panelAxial = new JPanel(new BorderLayout());
         panelAxial.add(m_akPlaneRender[0].GetCanvas(), BorderLayout.CENTER);
@@ -2895,7 +2899,12 @@ implements MouseListener, ItemListener, ChangeListener {
         if (panelHistoRGB != null) {
             panelHistoRGB.resizePanel(maxPanelWidth, height);
         }
+        
+        if (DTIimageLoadPanel != null) {
+        	DTIimageLoadPanel.resizePanel(maxPanelWidth, height);
+        }
 
+        
 //         if (isSurfaceRenderEnable) {
 
 //             if (surRender.getSurfaceDialog() != null) {

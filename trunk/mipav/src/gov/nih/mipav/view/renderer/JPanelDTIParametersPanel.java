@@ -7,6 +7,8 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.ColorRGB;
+import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.Matrix3f;
+import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.Attributes;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.Polyline;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.VertexBuffer;
@@ -55,6 +57,12 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
     private JCheckBox m_kUseEllipsoids;
     /** Checkbox for displaying all tensors as ellipsoids. */
     private JCheckBox m_kAllEllipsoids;
+    /** Checkbox for switching between polylines and ellipsoids and cylinders. */
+    private JCheckBox m_kUseCylinders;
+    /** Checkbox for switching between polylines and ellipsoids and cylinders, Tubes */
+    private JCheckBox m_kTubes;
+    /** Checkbox for displaying all tensors as ellipsoids. */
+    private JCheckBox m_kAllCylinders;
     /** User-control over the number of ellipsoids displayed in GPUVolumeRender */
     private JSlider m_kDisplaySlider;
  
@@ -94,6 +102,28 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 	/** Fiber bundle tract file input path name text box. */
 	private JTextField m_kTractPath;
 	
+    /** Which tensor nodes are already on the fiber bundle tract */
+    private boolean[] m_abVisited = null;
+    
+    /** Check boxe enable the slice pickable or not */
+    public JCheckBox slicePickableCheckBox;
+	
+    private JRadioButton radioLines;
+    private JRadioButton radioEllipzoids;
+    private JRadioButton radioCylinders;
+    private JRadioButton radioTubes;
+    private JRadioButton radioArrows;
+    private JCheckBox displayAllCheckBox;
+    private int displayMode;
+    private static int Polylines = 0;
+    private static int Ellipzoids = 1;
+    private static int Tubes = 2;
+    private static int Cylinders = 3;
+    private static int Arrows = 4;
+    private boolean displayAll;
+    private int centerIndex;
+    private boolean loadingTrack = false;
+    
 	public JPanelDTIParametersPanel(VolumeViewerDTI _parentFrame, GPUVolumeRender_WM _m_kVolumeDisplay) {
 		parentFrame = _parentFrame;
 		m_kVolumeDisplay = _m_kVolumeDisplay;
@@ -140,20 +170,32 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 			} else {
 				setColor(m_kColorButton.getBackground());
 			}
-		} else if (command.equals("UseEllipsoids")) {
-			parentFrame.getLightControl().refreshLighting();
-			m_kVolumeDisplay.setDisplayEllipsoids(m_kUseEllipsoids.isSelected());
-		} else if (command.equals("AllEllipsoids")) {
-			parentFrame.getLightControl().refreshLighting();
-			Color color = m_kColorButton.getBackground();
-			m_kVolumeDisplay.setDisplayAllEllipsoids(m_kAllEllipsoids.isSelected());
+		} else if ( command.equals("DisplayAll") ) {
+			displayAll = displayAllCheckBox.isSelected();
+			invokeDisplayFunction();
 		} else if (command.equals("Add")) {
-			// new JDialogDTIInput(TRACTS_DIALOG, this);
-			
-			loadTractFile();			
-			
+			loadingTrack = true;
+			loadTractFile();
+			loadingTrack = false;
+			slicePickableCheckBox.setEnabled(true);
 		} else if (command.equals("Remove")) {
 			removePolyline();
+		} else if( command.equals("Pickable")) {
+			m_kVolumeDisplay.enableSlicePickable(slicePickableCheckBox.isSelected());	
+        }
+        
+	}
+	
+	public void updateCounter() {
+		if ( slicePickableCheckBox.isSelected() ) {
+			updateTractCount();
+		} 
+	}
+	
+	
+	public void addFiberTract() {
+		if ( slicePickableCheckBox.isSelected() ) {
+			addTract();
 		} 
 	}
 	
@@ -331,6 +373,7 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 			return iMin;
 		}
 		boolean bFound = false;
+		/*
 		for (int i = 0; i < kBundleList.size(); i++) {
 			iMin = i;
 			bFound = false;
@@ -342,6 +385,10 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 			if (!bFound) {
 				return iMin;
 			}
+		}
+		*/
+		for (int i = 0; i < kBundleList.size(); i++) {
+			iMin = kBundleList.get(i).intValue();
 		}
 		iMin++;
 		return iMin;
@@ -412,15 +459,13 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 				Vector<Integer> kTract = inputTract(kFileReader);
 				iBufferNext += kTract.size() * 4 + 4;
 				int iVQuantity = kTract.size();
-				// System.err.println("kTract iVQuantity = " + iVQuantity);
 				if (contains(kVOIImage, kTract)) {
 					if ((iVQuantity > iTractMinLength)
 							&& (iVQuantity < iTractMaxLength)) {
 						if (iNumTracts < iNumTractsLimit) {
 							iNumTracts++;
 							bTractsAdded = true;
-							addTract(kTract, iVQuantity, iDimX,
-									iDimY, iDimZ);
+							addTract(kTract, iVQuantity, iDimX, iDimY, iDimZ);
 						}
 					}
 				}
@@ -435,7 +480,7 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 	
 	
 	/** Updates the tract list user-interface. */
-	protected void addTract() {
+	public void addTract() {
 		m_kBundleList.add(new Integer(m_iBundleCount));
 
 		DefaultListModel kList = (DefaultListModel) m_kTractList.getModel();
@@ -480,9 +525,9 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
         VertexBuffer pkVBuffer = new VertexBuffer(kAttr,iVQuantity);                        
 
         int iTractCount = 0;
+        try {
         LineArray kLine = new LineArray(2 * (iVQuantity - 1),
                                         GeometryArray.COORDINATES | GeometryArray.COLOR_3);
-
         float fR = 0, fG = 0, fB = 0;
 
         for (int i = 0; i < iVQuantity; i++)
@@ -500,6 +545,10 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
             int iZ = iIndex;
                                 
             iIndex = kTract.get(i);
+            
+            if ( loadingTrack == true && i == (int)(iVQuantity/2) ) {
+            	centerIndex = iIndex;
+            }
             ColorRGB kColor1;
             if ( m_kImage.isColorImage() )
             {
@@ -513,7 +562,7 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
                 fR = m_kImage.getFloat( iIndex );
                 kColor1 = new ColorRGB(fR, fR, fR);
             }
-
+            
             float fX = (float)(iX)/(float)(iDimX);
             float fY = (float)(iY)/(float)(iDimY);
             float fZ = (float)(iZ)/(float)(iDimZ);
@@ -545,11 +594,17 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
             iTractCount++;
 
         }
+        } catch ( Exception e ) {
+        	return;
+        }
         boolean bClosed = false;
         boolean bContiguous = true;
         // addPolyline( new Polyline(pkVBuffer,bClosed,bContiguous) );
      // apply B-spline filter to smooth the track
-        addPolyline(new Polyline(smoothTrack(pkVBuffer, kTract,iVQuantity, iDimX, iDimY, iDimZ), bClosed, bContiguous ));
+        if ( iVQuantity >= 7 ) {
+          addPolyline(new Polyline(smoothTrack(pkVBuffer, kTract,iVQuantity, iDimX, iDimY, iDimZ), bClosed, bContiguous ));
+          m_iBundleCount++;
+        }
         // addLineArray(kLine);
     }
 	
@@ -571,7 +626,7 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 		float fX_3, fY_3, fZ_3;
 		
 		// curve sub-division number, default to 10.  
-		int curveSubD = 10;
+		int curveSubD = 1;
 		float u, u_2, u_3;
 		
 		Attributes attr = new Attributes();
@@ -689,32 +744,44 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 	 *            the Polyline to add.
 	 */
 	protected void addPolyline(Polyline kLine) {
-		m_kVolumeDisplay.addPolyline(kLine, m_iBundleCount);
+		m_kVolumeDisplay.addTract(kLine, m_iBundleCount, centerIndex);
 	}
 	
 	/** Removes the fiber bundle from the GPUVolumeRender and JPanelSurface. */
 	private void removePolyline() {
+		int start = 0;
 		int[] aiSelected = m_kTractList.getSelectedIndices();
 
 		DefaultListModel kList = (DefaultListModel) m_kTractList.getModel();
 		int iHeaderLength = (new String("FiberBundle")).length();
-
+        
 		for (int i = 0; i < aiSelected.length; i++) {
 			if (m_kVolumeDisplay != null) {
 				String kName = ((String) (kList.elementAt(aiSelected[i])));
 				int iLength = kName.length();
 				int iGroup = (new Integer(kName.substring(iHeaderLength,
 						iLength))).intValue();
-				m_kVolumeDisplay.removePolyline(iGroup);
+				if ( (aiSelected[i] - 1) != -1 ) {
+				   kName = ((String) (kList.elementAt((aiSelected[i] - 1))));
+				   iLength = kName.length();
+				   start = (new Integer(kName.substring(iHeaderLength,
+							iLength))).intValue();
+				}
+				for ( int j = start; j < iGroup; j++ ) {
+					m_kVolumeDisplay.removePolyline(j);	
+				}
 				m_kBundleList.remove(new Integer(iGroup));
 			}
 			kList.remove(aiSelected[i]);
 		}
+		
 		if (kList.size() == 0) {
+			/*
 			if (m_kDTIImage != null) {
 				m_kDTIImage.disposeLocal();
 			}
 			m_kDTIImage = null;
+			*/
 		} else {
 			m_kTractList.setSelectedIndex(kList.size());
 		}
@@ -820,13 +887,6 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
         colorPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         colorPanel.setAlignmentY(Component.TOP_ALIGNMENT);
 
-        JPanel ellipsePanel = new JPanel();
-        ellipsePanel.setLayout(new BorderLayout());
-        ellipsePanel.add(m_kUseEllipsoids, BorderLayout.WEST);
-        ellipsePanel.add(m_kAllEllipsoids, BorderLayout.CENTER);
-        ellipsePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        ellipsePanel.setAlignmentY(Component.TOP_ALIGNMENT);
-
         JPanel sliderPanel = new JPanel();
         sliderPanel.setLayout(new BorderLayout());
         sliderPanel.add(kSliderLabel, BorderLayout.WEST);
@@ -834,11 +894,67 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
         sliderPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         sliderPanel.setAlignmentY(Component.TOP_ALIGNMENT);
 
+        slicePickableCheckBox = new JCheckBox("Slice Pickable");
+        slicePickableCheckBox.setSelected(false);
+        slicePickableCheckBox.addActionListener(this);
+        slicePickableCheckBox.setActionCommand("Pickable");
+        slicePickableCheckBox.setEnabled(false);
+        
+        JPanel slicePanel = new JPanel();
+        slicePanel.setLayout(new BorderLayout());
+        slicePanel.add(slicePickableCheckBox, BorderLayout.WEST);
+        slicePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        slicePanel.setAlignmentY(Component.TOP_ALIGNMENT);
+
+        ButtonGroup group1 = new ButtonGroup();
+        
+        radioLines = new JRadioButton("Lines", true);
+        radioLines.setFont(serif12);
+        radioLines.addItemListener(this);
+        group1.add(radioLines);
+        
+        radioEllipzoids = new JRadioButton("Ellipzoids", false);
+        radioEllipzoids.setFont(serif12);
+        radioEllipzoids.addItemListener(this);
+        group1.add(radioEllipzoids);
+        
+        radioCylinders = new JRadioButton("Cylinders", false);
+        radioCylinders.setFont(serif12);
+        radioCylinders.addItemListener(this);
+        group1.add(radioCylinders);
+        
+        radioTubes = new JRadioButton("Tubes", false);
+        radioTubes.setFont(serif12);
+        radioTubes.addItemListener(this);
+        group1.add(radioTubes);
+        
+        radioArrows = new JRadioButton("Arrows", false);
+        radioArrows.setFont(serif12);
+        radioArrows.addItemListener(this);
+        radioArrows.setEnabled(false);
+        group1.add(radioArrows);
+        
+        displayAllCheckBox = new JCheckBox("Display All");
+        displayAllCheckBox.setSelected(false);
+        displayAllCheckBox.addActionListener(this);
+        displayAllCheckBox.setActionCommand("DisplayAll");
+        displayAllCheckBox.setEnabled(true);
+        
+        JPanel glyphsPanel = new JPanel();
+        glyphsPanel.setLayout(new BoxLayout(glyphsPanel, BoxLayout.X_AXIS));
+        glyphsPanel.add(radioLines);
+        glyphsPanel.add(radioEllipzoids);
+        glyphsPanel.add(radioCylinders);
+        glyphsPanel.add(radioTubes);
+        glyphsPanel.add(radioArrows);
+        glyphsPanel.add(displayAllCheckBox, BorderLayout.CENTER);
+        glyphsPanel.setBorder(buildTitledBorder("Glyphs & Streamlines"));
+
         JPanel optionsPanel = new JPanel();
         optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
         optionsPanel.add(colorPanel);
-        optionsPanel.add(ellipsePanel);
         optionsPanel.add(sliderPanel);
+        optionsPanel.add(slicePanel);
         optionsPanel.setBorder(buildTitledBorder("Fiber bundle options"));
 
         JPanel rightPanel = new JPanel();
@@ -851,6 +967,7 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
         contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         contentBox.add(listPanel);
         contentBox.add(rightPanel);
+        contentBox.add(glyphsPanel);
 
         mainScrollPanel.add(contentBox, BorderLayout.NORTH);
 
@@ -1013,5 +1130,224 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
 	}
 	
 	
+    /** Constructs the Fiber Bundle Tracts from the dtiImage and the
+     * eigenImage parameters. The fiber bundles are output to a file
+     * sepecified by the user.
+     * @param dtiImage, Diffusion Tensor Image.
+     * @param eigenImage, EigenVector Image.
+     */
+    public void diplayTract(int iX, int iY, int iZ)
+    {
+    	m_kDTIImage = parentFrame.getDTIimage();
+        int iDimX = m_kDTIImage.getExtents()[0];
+        int iDimY = m_kDTIImage.getExtents()[1];
+        int iDimZ = m_kDTIImage.getExtents()[2];
+        int iLen = m_kDTIImage.getExtents()[0] *
+            m_kDTIImage.getExtents()[1] * m_kDTIImage.getExtents()[2];
+
+        float[] afVectorData = new float[3];
+        
+        m_abVisited  = new boolean[iLen];
+        for ( int i = 0; i < iLen; i++ )
+        {
+            m_abVisited[i] = false;
+        }
+
+        Vector<Integer> kTract = new Vector<Integer>();
+        Vector3f kPos = new Vector3f();
+        Vector3f kV1 = new Vector3f();
+        Vector3f kV2 = new Vector3f();
+        
+        int i = iZ * (iDimY*iDimX) + iY * iDimX + iX;
+        centerIndex = i;
+
+        boolean bAllZero = true;
+        for ( int j = 0; j < 3; j++ )
+        {
+            afVectorData[j] = parentFrame.getEVimage().getFloat(i + j*iLen);
+            if ( afVectorData[j] != 0 )
+            {
+                bAllZero = false;
+            }
+        }
+        if ( !bAllZero )
+        {        
+            kPos.SetData( iX, iY, iZ );
+            kTract.add(i);
+
+            kV1.SetData( afVectorData[0], afVectorData[1], afVectorData[2] );
+            kV2.SetData(kV1);
+            kV2.negEquals();
+
+            kV1.Normalize();
+            kV2.Normalize();
+
+            traceTract( kTract, kPos, kV1, m_kDTIImage, true );
+            m_abVisited[i] = true;
+            traceTract( kTract, kPos, kV2, m_kDTIImage, false );
+            int iVQuantity = kTract.size();
+            addTract(kTract, iVQuantity, iDimX, iDimY, iDimZ);
+        }
+    }
+    
+    /** Traces a single fiber bundle tract starting at the input
+     * position and following the input direction.
+     * @param kTract, fiber bundle tract, new positions are stored in this tract as the fiber is traced.
+     * @param kStart, starting positon of the tract.
+     * @param kDir, direction from the position.
+     * @param dtiImage, Diffusion Tensor image used to calculate next direction of tract.
+     * @param bDir, boolean when true the positions are added to the
+     * end of the tract (positive direction). When false the positions
+     * are added to the beginning of the tract (negative direction).
+     */
+    private void traceTract( Vector<Integer> kTract, Vector3f kStart, Vector3f kDir,
+                             ModelImage dtiImage, boolean bDir )
+    {
+        int iDimX = dtiImage.getExtents()[0];
+        int iDimY = dtiImage.getExtents()[1];
+        int iDimZ = dtiImage.getExtents()[2];
+        int iLen = dtiImage.getExtents()[0] * dtiImage.getExtents()[1] * dtiImage.getExtents()[2];
+
+        float[] afTensorData = new float[6];
+
+        boolean bDone = false;
+        Matrix3f kMatrix = new Matrix3f();
+        Vector3f kOut = new Vector3f();
+        Vector3f kNext = new Vector3f();
+        int iX;
+        int iY;
+        int iZ;
+        int i;
+        boolean bAllZero = true;
+
+        while ( !bDone )
+        {
+            kStart.add( kDir, kNext );
+            iX = Math.round(kNext.X());
+            iY = Math.round(kNext.Y());
+            iZ = Math.round(kNext.Z());
+            i = iZ * (iDimY*iDimX) + iY * iDimX + iX;
+            
+            if ( (iZ < 0) || (iZ >= iDimZ) ||
+                 (iY < 0) || (iY >= iDimY) ||
+                 (iX < 0) || (iX >= iDimX)  )
+            {
+                bDone = true;
+                break;
+            }
+
+            bAllZero = true;
+            for ( int j = 0; j < 6; j++ )
+            {
+                afTensorData[j] = dtiImage.getFloat(i + j*iLen);
+                if ( afTensorData[j] != 0 )
+                {
+                    bAllZero = false;
+                }
+            }
+            if ( !bAllZero )
+            {
+                kMatrix.SetData( afTensorData[0], afTensorData[3], afTensorData[4],
+                                 afTensorData[3], afTensorData[1], afTensorData[5], 
+                                 afTensorData[4], afTensorData[5], afTensorData[2] );
+                
+                kMatrix.mult(kDir, kOut);
+                kOut.Normalize();
+                
+                if ( m_abVisited[i] )
+                {
+                    bDone = true;
+                    break;
+                }
+                m_abVisited[i] = true;
+                
+                if ( bDir )
+                {
+                    kTract.add( i );
+                }
+                else
+                {
+                    kTract.add( 0, i );
+                }
+
+                kStart = kNext;
+                kDir = kOut;
+            }
+            else
+            {
+                bDone = true;
+            }
+        }
+        kNext = null;
+    }    
+    
+    /**
+     * Sets the flags for the checkboxes.
+     *
+     * @param  event  event that triggered this function
+     */
+    public synchronized void itemStateChanged(ItemEvent event) {
+        if (radioLines.isSelected()) {
+            displayMode = Polylines;
+        } else if ( radioEllipzoids.isSelected()) {
+        	displayMode = Ellipzoids;
+        } else if ( radioTubes.isSelected()) {
+            displayMode = Tubes;
+        } else if ( radioCylinders.isSelected() ) {
+        	displayMode = Cylinders;
+        } else if ( radioArrows.isSelected()) {
+        	displayMode = Arrows;
+        }
+        invokeDisplayFunction();
+    }
+    
+    public void invokeDisplayFunction() {
+    	 if ( displayMode == Ellipzoids && displayAll == false) {
+ 			parentFrame.getLightControl().refreshLighting();
+ 			m_kVolumeDisplay.setDisplayEllipsoids(true);
+ 			m_kVolumeDisplay.setDisplayAllEllipsoids(false);
+ 			m_kVolumeDisplay.setDisplayCylinders(false);
+ 			m_kVolumeDisplay.setDisplayAllCylinders(false);
+ 			m_kVolumeDisplay.setDisplayTubes(false);
+ 		} else if (displayMode == Ellipzoids && displayAll == true) {
+ 			parentFrame.getLightControl().refreshLighting();
+ 			Color color = m_kColorButton.getBackground();
+ 			m_kVolumeDisplay.setDisplayAllEllipsoids(true);
+ 			m_kVolumeDisplay.setDisplayEllipsoids(false);
+ 			m_kVolumeDisplay.setDisplayCylinders(false);
+ 			m_kVolumeDisplay.setDisplayAllCylinders(false);
+ 			m_kVolumeDisplay.setDisplayTubes(false);
+ 		} else if (displayMode == Cylinders && displayAll == false) {
+ 			parentFrame.getLightControl().refreshLighting();
+ 			m_kVolumeDisplay.setDisplayCylinders(true);
+ 			m_kVolumeDisplay.setDisplayAllEllipsoids(false);
+ 			m_kVolumeDisplay.setDisplayEllipsoids(false);
+ 			m_kVolumeDisplay.setDisplayAllCylinders(false);
+ 			m_kVolumeDisplay.setDisplayTubes(false);
+ 		} else if (displayMode == Cylinders && displayAll == true) {
+ 			parentFrame.getLightControl().refreshLighting();
+ 			Color color = m_kColorButton.getBackground();
+ 			m_kVolumeDisplay.setDisplayAllCylinders(true);
+ 			m_kVolumeDisplay.setDisplayCylinders(false);
+ 			m_kVolumeDisplay.setDisplayAllEllipsoids(false);
+ 			m_kVolumeDisplay.setDisplayEllipsoids(false);
+ 			m_kVolumeDisplay.setDisplayTubes(false);
+ 		}  else if (displayMode == Tubes /* && displayAll == false */) {
+ 			parentFrame.getLightControl().refreshLighting();
+ 			Color color = m_kColorButton.getBackground();
+ 			m_kVolumeDisplay.setDisplayTubes(true);
+ 			m_kVolumeDisplay.setDisplayAllCylinders(false);
+ 			m_kVolumeDisplay.setDisplayCylinders(false);
+ 			m_kVolumeDisplay.setDisplayAllEllipsoids(false);
+ 			m_kVolumeDisplay.setDisplayEllipsoids(false);
+ 		}  else if (displayMode == Polylines ) {
+ 			m_kVolumeDisplay.setDisplayEllipsoids(false);
+ 			m_kVolumeDisplay.setDisplayAllEllipsoids(false);
+ 			m_kVolumeDisplay.setDisplayCylinders(false);
+ 			m_kVolumeDisplay.setDisplayAllCylinders(false);
+ 			m_kVolumeDisplay.setDisplayTubes(false);
+ 		}
+    }
 	
+    
 }

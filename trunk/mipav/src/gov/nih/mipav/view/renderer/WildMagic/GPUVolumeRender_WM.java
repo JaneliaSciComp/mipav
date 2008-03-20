@@ -52,7 +52,7 @@ import gov.nih.mipav.view.renderer.GeneralLight;
  * volume in texture coordinates to trace.
  */
 public class GPUVolumeRender_WM extends JavaApplication3D
-implements GLEventListener, KeyListener, MouseMotionListener
+implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 {
     /**
      * Constructs a new GPUVolumeRender object.
@@ -367,6 +367,44 @@ implements GLEventListener, KeyListener, MouseMotionListener
                 }
             }
         }
+        else if ( m_bSlicePickPending  && ( m_kParent instanceof VolumeViewerDTI )) {
+        	
+       	 if (m_spkCamera.GetPickRay(m_iXPick,m_iYPick,GetWidth(),
+                    GetHeight(),kPos,kDir))
+            {
+       		 m_bSlicePickPending = false;
+                
+                for ( int i = 0; i < m_kDisplayList.size(); i++ )
+                {
+                    if ( m_kDisplayList.get(i).GetPickable() )
+                    {
+                    	
+                        m_kPicker.Execute(m_kDisplayList.get(i).GetScene(),kPos,kDir,0.0f, Float.MAX_VALUE);
+                        if (m_kPicker.Records.size() > 0)
+                        {
+                        	PickRecord pick = m_kPicker.GetClosestToZero();
+                        	TriMesh kMesh = (TriMesh)(pick.Intersected);
+                        	
+                        	Vector3f kP0 = kMesh.VBuffer.GetPosition3( pick.iV0 ); 
+                        	Vector3f kP1 = kMesh.VBuffer.GetPosition3( pick.iV1 ); 
+                        	Vector3f kP2 = kMesh.VBuffer.GetPosition3( pick.iV2 );
+
+                        	Vector3f pickPoint = kP0.scale(pick.B0).add( kP1.scale(
+                        			pick.B1) ).add( kP2.scale( pick.B2 ) );
+                        	
+                        	pickPoint.multEquals( new Vector3f( 1.0f/m_fX, 1.0f/m_fY, 1.0f/m_fZ ));
+                           int[] iExtents = m_kVolumeImageA.GetImage().getExtents();
+                           pickPoint.multEquals( new Vector3f( iExtents[0], iExtents[1], iExtents[2] ));
+                           
+                           ((VolumeViewerDTI) m_kParent).getParamPanel().diplayTract( (int)pickPoint.X(), (int)pickPoint.Y(), (int)pickPoint.Z());
+                            
+                        }
+                        
+                        
+                    }
+                }
+            }
+       }
     }
 
     private void RenderVolume()
@@ -1411,8 +1449,35 @@ implements GLEventListener, KeyListener, MouseMotionListener
             m_iYPick = e.getY();
             m_bPickPending = true;
         }
+        if ( e.isControlDown() && m_bSlicePickEnabled )
+        {
+            m_iXPick = e.getX();
+            m_iYPick = e.getY();
+            m_bSlicePickPending = true;
+            if ( m_kParent instanceof VolumeViewerDTI ) {
+             updatingFiberTrack = true;
+             ((VolumeViewerDTI) m_kParent).getParamPanel().updateCounter();
+            }
+        }
     }
-
+    
+    /** Rotates the object with a virtual trackball:
+     * @param e, the MouseEvent
+     */
+    public void mouseReleased(MouseEvent e)
+    {
+    	super.mouseReleased(e);
+    	if ( updatingFiberTrack && m_bSlicePickEnabled ) {
+    		if (  m_kParent instanceof VolumeViewerDTI ) {
+            	((VolumeViewerDTI) m_kParent).getParamPanel().addFiberTract();
+            }	
+    		updatingFiberTrack = false;
+    	}
+    }
+    
+    /** Rotates the object with a virtual trackball:
+     * @param e, the MouseEvent
+     */
 
     /** Rotates the object with a virtual trackball:
      * @param e, the MouseEvent
@@ -1437,6 +1502,12 @@ implements GLEventListener, KeyListener, MouseMotionListener
                 m_iXPick = e.getX();
                 m_iYPick = e.getY();
                 m_bPickPending = true;
+            }
+            else if ( e.isControlDown() && m_bSlicePickEnabled )
+            {
+                m_iXPick = e.getX();
+                m_iYPick = e.getY();
+                m_bSlicePickPending = true;
             }
         }
     }
@@ -1718,6 +1789,25 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_kDTIDisplay.SetDisplay( true );
     }
 
+    /**
+     * Add tract into the DTI display
+     * @param kLine   polyline
+     * @param iGroup  counter number
+     * @param centerIndex  center index color
+     */
+    public void addTract( Polyline kLine, int iGroup, int centerIndex )
+    {
+        if ( m_kDTIDisplay == null )
+        {
+            m_kDTIDisplay = new VolumeDTI( m_kVolumeImageA, m_kTranslate, m_fX, m_fY, m_fZ );
+            m_kDisplayList.add(m_kDisplayList.size(), m_kDTIDisplay);
+        }
+        m_kDTIDisplay.setCenterIndex(centerIndex);
+        m_kDTIDisplay.addPolyline( kLine, iGroup );
+        m_kDTIDisplay.SetDisplay( true );
+       
+    }
+    
     /** 
      * Removes the specified polyline tract group.
      * @param iGroup, the group of polylines to remove.
@@ -1803,6 +1893,39 @@ implements GLEventListener, KeyListener, MouseMotionListener
         }
     }
 
+    /** Turns on/off displaying the fiber bundle tracts with ellipsoids.
+     * @param bDisplay, when true display the tracts with Cylinders.
+     */
+    public void setDisplayCylinders( boolean bDisplay )
+    {
+        if ( m_kDTIDisplay != null )
+        {
+            m_kDTIDisplay.setDisplayCylinders( bDisplay );
+        }
+    }
+
+    /** Turns on/off displaying all the ellipsoids.
+     * @param bDisplay, when true display all the cylinders in the volume.
+     */
+    public void setDisplayAllCylinders( boolean bDisplay )
+    {
+        if ( m_kDTIDisplay != null )
+        {
+            m_kDTIDisplay.setDisplayAllCylinders(bDisplay);
+        }
+    }
+    
+    /** Turns on/off displaying the fiber bundle tracts with ellipsoids.
+     * @param bDisplay, when true display the tracts with Cylinders.
+     */
+    public void setDisplayTubes( boolean bDisplay )
+    {
+        if ( m_kDTIDisplay != null )
+        {
+            m_kDTIDisplay.setDisplayTubes( bDisplay );
+        }
+    }
+    
     public void SetCenter( Vector3f kCenter )
     {
         if ( m_kSlices != null )
@@ -2156,6 +2279,21 @@ implements GLEventListener, KeyListener, MouseMotionListener
         return m_akLights;
     }
     
+    /**
+     * Enable the tri-planar slice pickable. 
+     * @param bEnabled   pickable or not
+     */
+    public void enableSlicePickable(boolean bEnabled) {
+    	m_bSlicePickEnabled = bEnabled;
+    	
+    	for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i) instanceof VolumeSlices )
+            {
+                    m_kDisplayList.get(i).SetPickable( bEnabled );
+            }
+        }
+    }
     
     public void enablePaint( ColorRGBA kPaintColor, int iBrushSize, boolean bEnabled, boolean bPaint, boolean bDropper, boolean bPaintCan, boolean bErase )
     {
@@ -2438,8 +2576,11 @@ implements GLEventListener, KeyListener, MouseMotionListener
     
     private boolean m_bGeodesicEnabled = false;
 
-
     private boolean m_bStereo = false;
     private boolean m_bLeft = true;
     private boolean m_bRight = true;
+    
+    private boolean m_bSlicePickPending = false;
+    private boolean m_bSlicePickEnabled = false;
+    private boolean updatingFiberTrack = false;
 }

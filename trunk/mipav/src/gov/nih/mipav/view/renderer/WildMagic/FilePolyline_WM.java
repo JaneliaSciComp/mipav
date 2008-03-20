@@ -32,6 +32,11 @@ public class FilePolyline_WM {
 
     /** DOCUMENT ME! */
     private static float[] box = new float[3];
+    
+    private static boolean flip;
+    
+    private static double[][] inverseDicomArray = new double[4][4];
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -61,6 +66,12 @@ public class FilePolyline_WM {
 	           	try {
             	   FilePolylineVOIXML polylineXML = new FilePolylineVOIXML(kName, akFiles[i].getParent());
             	   coordVector = polylineXML.readVOI(false);
+                   flip = polylineXML.getFlip();
+                   direction = polylineXML.getDirection();
+                   startLocation = polylineXML.getOrigin();
+                   box = polylineXML.getBox();
+                   inverseDicomArray = polylineXML.getInverseDicomArray();
+                   
                    kPolyline[i] = createPolyline(kImage, coordVector);
                    kPolyline[i].SetName(kName);
                
@@ -87,10 +98,8 @@ public class FilePolyline_WM {
 		ColorRGB kColor1;
 		float fX, fY, fZ;
 		boolean isSur = true;
-	
-		TransMatrix dicomMatrix = null;
-	    TransMatrix inverseDicomMatrix = null;
-	    double[][] inverseDicomArray = null;
+
+	    TransMatrix inverseDicomMatrix = new TransMatrix(4);
 		
 		int[] extents = kImage.getExtents();
 		int xDim = extents[0];
@@ -104,15 +113,8 @@ public class FilePolyline_WM {
 		float maxBox = Math.max(xBox, Math.max(yBox, zBox));
 	
 		
-		box[0] = xBox;
-		box[1] = yBox;
-		box[2] = zBox;
-		
-		startLocation = kImage.getFileInfo(0).getOrigin();
-		direction = MipavCoordinateSystems.getModelDirections(kImage);
-		
 		boolean dicom = false;
-		boolean flip = true;
+		// boolean flip = true;
 		
 		float[] tCoord = new float[3];
         float[] coord = new float[3];
@@ -121,18 +123,12 @@ public class FilePolyline_WM {
         
         if (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
 
-            // Get the DICOM transform that describes the transformation from
-            // axial to this image orientation
-            dicomMatrix = (TransMatrix) (kImage.getMatrix().clone());
-            inverseDicomMatrix = (TransMatrix) (kImage.getMatrix().clone());
-            inverseDicomMatrix.invert();
-            inverseDicomArray = inverseDicomMatrix.getMatrix();
-            // inverseDicomMatrix = null;
             dicom = true;
+            
             inverseDicomMatrix.setMatrix(inverseDicomArray);
         }
 		
-        if (inverseDicomArray == null) {
+        if (dicom == false) {
 
             if (flip) {
                 actions = 1;
@@ -188,21 +184,36 @@ public class FilePolyline_WM {
              	System.err.println("flip");
 //               Flip (kVertex.y - startLocation[1], but
 //               don't flip startLocation[1]
+             	 
                  fY = ( (2 * startLocation[1]) + (box[1] * direction[1]) - fY );
                  fZ = ( (2 * startLocation[2]) + (box[2] * direction[2]) - fZ );
              }
-			
+            
+           
 		    fX =  ((2.0f * (fX - startLocation[0]) / direction[0]) -
                      ((xDim - 1) * resols[0])) / (2.0f*maxBox);
             fY =  ((2.0f * (fY - startLocation[1]) / direction[1]) -
                   ((yDim - 1) * resols[1])) / (2.0f*maxBox);
             fZ =  ((2.0f * (fZ - startLocation[2]) / direction[2]) -
                      ((zDim - 1) * resols[2])) / (2.0f*maxBox) ;
-
-			
-			pkVBuffer.SetPosition3(i, (float) (fX - .5f), (float) (fY - .5f),
-					(float) (fZ - .5f));
-			pkVBuffer.SetColor3(0, i, new ColorRGB(fX, fY, fZ));
+              
+             /*
+             fX = fX * resols[0];
+             fY = fY * resols[1];
+             fZ = fZ * resols[2];
+            
+             fX =  ((2.0f * (fX) / direction[0]) -
+                     ((xDim - 1) * resols[0])) / (2.0f*maxBox);
+            fY =  ((2.0f * (fY) / direction[1]) -
+                  ((yDim - 1) * resols[1])) / (2.0f*maxBox);
+            fZ =  ((2.0f * (fZ) / direction[2]) -
+                     ((zDim - 1) * resols[2])) / (2.0f*maxBox) ;
+                     */
+        
+            
+			pkVBuffer.SetPosition3(i, (float) (fX), (float) (fY), (float) (fZ));
+			// pkVBuffer.SetColor3(0, i, new ColorRGB(fX, fY, fZ));
+			pkVBuffer.SetColor3(0, i, kColor1);
 			pkVBuffer.SetColor3(1, i, kColor1);
 
 		}
