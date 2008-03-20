@@ -71,6 +71,91 @@ public class AlgorithmDTITract extends AlgorithmBase
      * @param dtiImage, Diffusion Tensor Image.
      * @param eigenImage, EigenVector Image.
      */
+    private void reconstructTract(int iX, int iY, int iZ)
+    {
+        // save the file version to disk
+        File kFile = new File( m_kOutputFile ); 
+        FileOutputStream kFileWriter = null;
+        try {
+            kFileWriter = new FileOutputStream(kFile);
+        } catch ( FileNotFoundException e1 ) {
+            kFileWriter = null;
+        }
+
+        int iDimX = m_kDTIImage.getExtents()[0];
+        int iDimY = m_kDTIImage.getExtents()[1];
+        int iDimZ = m_kDTIImage.getExtents()[2];
+        int iLen = m_kDTIImage.getExtents()[0] *
+            m_kDTIImage.getExtents()[1] * m_kDTIImage.getExtents()[2];
+
+        float[] afVectorData = new float[3];
+
+        int iCount = 0;
+        int iTractSize = 0;
+
+        
+        m_abVisited  = new boolean[iLen];
+        for ( int i = 0; i < iLen; i++ )
+        {
+            m_abVisited[i] = false;
+        }
+
+        Vector<Integer> kTract = new Vector<Integer>();
+        Vector3f kPos = new Vector3f();
+        Vector3f kV1 = new Vector3f();
+        Vector3f kV2 = new Vector3f();
+        // int iX = 41, iY = 51, iZ = 16;
+        int i = iZ * (iDimY*iDimX) + iY * iDimX + iX;
+
+        boolean bAllZero = true;
+        for ( int j = 0; j < 3; j++ )
+        {
+            afVectorData[j] = m_kEigenImage.getFloat(i + j*iLen);
+            if ( afVectorData[j] != 0 )
+            {
+                bAllZero = false;
+            }
+
+        }
+        if ( !bAllZero )
+        {
+        
+            kPos.SetData( iX, iY, iZ );
+            kTract.add(i);
+
+            kV1.SetData( afVectorData[0], afVectorData[1], afVectorData[2] );
+            kV2.SetData(kV1);
+            kV2.negEquals();
+
+            kV1.Normalize();
+            kV2.Normalize();
+
+            traceTract( kTract, kPos, kV1, m_kDTIImage, true );
+            m_abVisited[i] = true;
+            traceTract( kTract, kPos, kV2, m_kDTIImage, false );
+            if ( kTract.size() > 50 )
+            {
+            	
+            	iCount++;
+                iTractSize += kTract.size();
+                outputTract( kTract, iDimX, iDimY, iDimZ, kFileWriter );
+                
+            }
+            kTract.clear();
+           
+        }
+
+        try {
+            kFileWriter.close();
+        } catch ( IOException e2 ) {}
+    }
+    
+    /** Constructs the Fiber Bundle Tracts from the dtiImage and the
+     * eigenImage parameters. The fiber bundles are output to a file
+     * sepecified by the user.
+     * @param dtiImage, Diffusion Tensor Image.
+     * @param eigenImage, EigenVector Image.
+     */
     private void reconstructTracts()
     {
         // save the file version to disk
@@ -107,7 +192,7 @@ public class AlgorithmDTITract extends AlgorithmBase
         Vector3f kPos = new Vector3f();
         Vector3f kV1 = new Vector3f();
         Vector3f kV2 = new Vector3f();
-
+        
         for ( int iZ = 0; iZ < iDimZ; iZ++ )
         {
             for ( int iY = 0; iY < iDimY; iY++ )
@@ -128,6 +213,7 @@ public class AlgorithmDTITract extends AlgorithmBase
                     }
                     if ( !bAllZero )
                     {
+                    	// System.out.println("point: iX = " + iX +  " iY = " + iY + " iZ = " + iZ  );
                         kPos.SetData( iX, iY, iZ );
                         kTract.add(i);
 
@@ -142,12 +228,10 @@ public class AlgorithmDTITract extends AlgorithmBase
                         m_abVisited[i] = true;
                         traceTract( kTract, kPos, kV2, m_kDTIImage, false );
 
-                        if ( kTract.size() > 1 )
-                        {
-                            iCount++;
-                            iTractSize += kTract.size();
-                            outputTract( kTract, iDimX, iDimY, iDimZ, kFileWriter );
-                        }
+                    	iCount++;
+                        iTractSize += kTract.size();
+                        outputTract( kTract, iDimX, iDimY, iDimZ, kFileWriter );
+                        
                         kTract.clear();
                     }
                 }
