@@ -264,7 +264,7 @@ public class VolumeDTI extends VolumeObject
         
         Vector2f kUVMin = new Vector2f(0.0f,0.0f);
         Vector2f kUVMax = new Vector2f(1.0f,1.0f);
-        kTube = new TubeSurface(m_pkSpline,0.025f, true,Vector3f.UNIT_Z,
+        kTube = new TubeSurface(m_pkSpline,0.025f, false,Vector3f.UNIT_Z,
         		iNumCtrlPoints,8,kAttr,false,false,kUVMin,kUVMax);
         return kTube;
     }
