@@ -89,8 +89,11 @@ public class ColorRGB
      * @return  the color red value
      */
     public final float R ()
-    {
-        return m_afTuple[0];
+    { 
+    	if ( m_afTuple != null ) {
+         return m_afTuple[0];
+    	}
+    	return 0f;
     }
 
     /** Returns the color green value
@@ -98,7 +101,10 @@ public class ColorRGB
      */
     public final float G ()
     {
-        return m_afTuple[1];
+    	if ( m_afTuple != null ) {
+          return m_afTuple[1];
+        }
+    	return 0f;
     }
 
     /** Returns the color blue value
@@ -106,7 +112,10 @@ public class ColorRGB
      */
     public final float B ()
     {
-        return m_afTuple[2];
+        if ( m_afTuple != null ) {
+    	   return m_afTuple[2];
+        }
+        return 0f;
     }
 
     /** Sets the color red value
@@ -114,6 +123,7 @@ public class ColorRGB
      */
     public final void R (float fValue)
     {
+    	if ( m_afTuple != null ) 
         m_afTuple[0] = fValue;
     }
 
@@ -122,6 +132,7 @@ public class ColorRGB
      */
     public final void G (float fValue)
     {
+    	if ( m_afTuple != null )
         m_afTuple[1] = fValue;
     }
 
@@ -130,6 +141,7 @@ public class ColorRGB
      */
     public final void B (float fValue)
     {
+    	if ( m_afTuple != null )
         m_afTuple[2] = fValue;
     }
 

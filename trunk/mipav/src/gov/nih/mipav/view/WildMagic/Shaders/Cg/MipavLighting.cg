@@ -13,7 +13,10 @@ void GetDirectionalLightFactors
 {
     float fDiff = 0;
     float fSpec = 0;
-
+    float cos_theta = 0;
+    float cos_alpha = 0;
+    
+    /*
     fDiff = -dot(kModelNormal,kLightDirection);
     if (fDiff > 0.0f)
     {
@@ -22,7 +25,7 @@ void GetDirectionalLightFactors
         fSpec = dot(kModelNormal,kHalfVector);
         if (fSpec > 0.0f)
         {
-            fSpec = pow(fSpec,fSpecularExponent);
+            fSpec = pow(1.03f * fSpec,32f);
         }
         else
         {
@@ -33,6 +36,28 @@ void GetDirectionalLightFactors
     {
         fDiff = 0.0f;
         fSpec = 0.0f;
+    }
+    */
+    float3 V = normalize(kCameraPosition - kModelPosition);
+    float3 N = normalize(kModelNormal);
+    
+    float3 L = float3(kLightDirection.x, kLightDirection.y, kLightDirection.z);
+    L = -L;
+    L = normalize(L);
+    
+    float3 R = float3(N.x, N.y, N.z);
+    R = R * ( 2 * dot(L, N));
+    R = R - L;
+    R = normalize(R);
+    
+    cos_theta = dot(L, N);
+    cos_alpha = dot(R, V);
+    
+    if ( cos_theta > 0 ) {
+       fDiff = 1.0f * cos_theta;
+    }
+    if ( cos_alpha > 0 ) {
+       fSpec = pow(cos_alpha, 5f);
     }
     
     fDiffuseFactor = fDiff;
@@ -49,8 +74,12 @@ void GetPointLightFactors
  out float fDiffuseFactor,
  out float fSpecularFactor)
 {
-    float fDiff, fSpec;
+    float fDiff = 0;
+    float fSpec = 0;
+    float cos_theta = 0;
+    float cos_alpha = 0;
 
+    
     float3 kVertexDirection = normalize(kModelPosition - kLightPosition);
     fDiff = -dot(kModelNormal,kVertexDirection);
     if (fDiff > 0.0f)
@@ -60,7 +89,7 @@ void GetPointLightFactors
         fSpec = dot(kModelNormal,kHalfVector);
         if (fSpec > 0.0f)
         {
-            fSpec = pow(fSpec,fSpecularExponent);
+            fSpec = pow(fSpec,32f);
         }
         else
         {
@@ -72,7 +101,31 @@ void GetPointLightFactors
         fDiff = 0.0f;
         fSpec = 0.0f;
     }
-
+    
+    /*
+    float3 V = normalize(kCameraPosition - kModelPosition);
+    float3 N = normalize(kModelNormal);
+    
+    float3 lightDirection = normalize(kLightPosition - kModelPosition);
+    float3 L = float3(lightDirection.x, lightDirection.y, lightDirection.z);
+    L = -L;
+    L = normalize(L);
+    
+    float3 R = float3(N.x, N.y, N.z);
+    R = R * ( 2 * dot(L, N));
+    R = R - L;
+    R = normalize(R);
+    
+    cos_theta = dot(L, N);
+    cos_alpha = dot(R, V);
+    
+    if ( cos_theta > 0 ) {
+       fDiff = 1.0f * cos_theta;
+    }
+    if ( cos_alpha > 0 ) {
+       fSpec = pow(cos_alpha, 32f);
+    }
+    */
     fDiffuseFactor = fDiff;
     fSpecularFactor = fSpec;
 }

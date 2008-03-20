@@ -160,7 +160,7 @@ public abstract class JavaApplication extends Application
     public boolean OnInitialize ()
     {
         m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
-
+/*
         // Notify the catalogs that the renderer has been created.
         assert(VertexProgramCatalog.GetActive() != null);
         VertexProgramCatalog.GetActive().
@@ -171,6 +171,7 @@ public abstract class JavaApplication extends Application
         PixelProgramCatalog.GetActive().
             SetInformation(m_pkRenderer, m_pkRenderer.GetExtension(),
                            m_pkRenderer.GetCommentCharacter());
+  */
         return true;
     }
 

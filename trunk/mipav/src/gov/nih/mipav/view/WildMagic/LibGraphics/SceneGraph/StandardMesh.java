@@ -369,16 +369,175 @@ public class StandardMesh
         return pkMesh;
     }
 
-    /** Standard meshes.  Each mesh is centered at (0,0,0) and has an up-axis
-     * of (0,0,1).  The other axes forming the coordinate system are (1,0,0)
-     * and (0,1,0).  An application may transform the meshes as necessary.
-     * @param iAxisSamples, number of axis samples.
-     * @param iRadialSamples, number of radial samples.
-     * @param fRadius, cylinder radius.
-     * @param fHeight, cylinder height.
-     * @param bOpen, true = open cylinder, false = closed cylinder.
-     * @return Cylinder TriMesh.
-     */
+    public TriMesh Tube(int iAxisSamples, int iRadialSamples, float fRadius,
+			float fHeight, Polyline polyline) {
+    	 TriMesh pkMesh;
+    	 
+    	 iAxisSamples = polyline.GetActiveQuantity();
+    	 fHeight = polyline.GetActiveQuantity();
+    	 
+         int iVQuantity = iAxisSamples*(iRadialSamples+1);
+         int iTQuantity = 2*(iAxisSamples-1)*iRadialSamples;
+         VertexBuffer pkVB = new VertexBuffer(m_kAttr,iVQuantity);
+         IndexBuffer pkIB = new IndexBuffer(3*iTQuantity);
+
+         // generate geometry
+         float fInvRS = 1.0f/(float)iRadialSamples;
+         float fInvASm1 = 1.0f/(float)(iAxisSamples-1);
+         float fHalfHeight = 0.5f*fHeight;
+         int iR, iA, iAStart, i, iUnit;
+         //Vector2f kTCoord;
+
+         // Generate points on the unit circle to be used in computing the
+         // mesh points on a cylinder slice.
+         float[] afSin = new float[iRadialSamples+1];
+         float[] afCos = new float[iRadialSamples+1];
+         for (iR = 0; iR < iRadialSamples; iR++)
+         {
+             float fAngle = Mathf.TWO_PI*fInvRS*iR;
+             afCos[iR] = (float)Math.cos(fAngle);
+             afSin[iR] = (float)Math.sin(fAngle);
+         }
+         afSin[iRadialSamples] = afSin[0];
+         afCos[iRadialSamples] = afCos[0];
+
+         // System.err.println("iAxisSamples = " + iAxisSamples);
+         // generate the cylinder itself
+         for (iA = 0, i = 0; iA < iAxisSamples; iA++)
+         { 
+             float fAxisFraction = iA*fInvASm1;  // in [0,1]
+             float fZ = -fHalfHeight + fHeight*fAxisFraction;
+           
+             // System.err.println("iA = " + iA);
+             // compute center of slice
+             Vector3f kSliceCenter = new Vector3f(0.0f,0.0f,fZ);
+             
+             /*
+             Vector3f kSliceCenter = new Vector3f(polyline.VBuffer.GetPosition3fX(iA),
+            		 polyline.VBuffer.GetPosition3fY(iA),
+            		 polyline.VBuffer.GetPosition3fZ(iA)+ fZ);
+             */
+             
+
+             // compute slice vertices with duplication at end point
+             int iSave = i;
+             for (iR = 0; iR < iRadialSamples; iR++)
+             {
+                 float fRadialFraction = iR*fInvRS;  // in [0,1)
+                 Vector3f kNormal = new Vector3f(afCos[iR],afSin[iR],0.0f);
+                 Vector3f kPos = new Vector3f(kNormal);
+                 kPos.scaleEquals(fRadius);
+                 kPos.addEquals(kSliceCenter);
+                 pkVB.SetPosition3(i, kPos);
+                 kPos = null;
+                 if (m_kAttr.HasNormal())
+                 {
+                     if (m_bInside)
+                     {
+                         kNormal.negEquals();
+                     }
+                     pkVB.SetNormal3(i, kNormal);
+                 }
+
+                 if (m_kAttr.GetMaxTCoords() > 0)
+                 {
+                     for (iUnit = 0; iUnit < m_kAttr.GetMaxTCoords(); iUnit++)
+                     {
+                         if (m_kAttr.HasTCoord(iUnit))
+                         {
+                             pkVB.SetTCoord2(iUnit,i,fRadialFraction,fAxisFraction);
+                         }
+                     }
+                 }
+
+                 i++;
+             }
+
+             pkVB.SetPosition3(i, pkVB.GetPosition3fX(iSave),pkVB.GetPosition3fY(iSave),pkVB.GetPosition3fZ(iSave));
+             if (m_kAttr.HasNormal())
+             {
+                 pkVB.SetNormal3(i, pkVB.GetNormal3fX(iSave), pkVB.GetNormal3fY(iSave), pkVB.GetNormal3fZ(iSave));
+             }
+
+             if (m_kAttr.GetMaxTCoords() > 0)
+             {
+                 for (iUnit = 0; iUnit < m_kAttr.GetMaxTCoords(); iUnit++)
+                 {
+                     if (m_kAttr.HasTCoord(iUnit))
+                     {
+                         pkVB.SetTCoord2(iUnit,i, 1.0f,fAxisFraction);
+                     }
+                 }
+             }
+
+             i++;
+         }
+
+         // generate connectivity
+         int[] aiLocalIndex = pkIB.GetData();
+         int iIndex = 0;
+         for (iA = 0, iAStart = 0; iA < iAxisSamples-1; iA++)
+         {
+             int i0 = iAStart;
+             int i1 = i0 + 1;
+             iAStart += iRadialSamples + 1;
+             int i2 = iAStart;
+             int i3 = i2 + 1;
+             for (i = 0; i < iRadialSamples; i++)
+             {
+                 if (m_bInside)
+                 {
+                     aiLocalIndex[iIndex++] = i0++;
+                     aiLocalIndex[iIndex++] = i2;
+                     aiLocalIndex[iIndex++] = i1;
+                     aiLocalIndex[iIndex++] = i1++;
+                     aiLocalIndex[iIndex++] = i2++;
+                     aiLocalIndex[iIndex++] = i3++;
+                 }
+                 else // outside view
+                 {
+                     aiLocalIndex[iIndex++] = i0++;
+                     aiLocalIndex[iIndex++] = i1;
+                     aiLocalIndex[iIndex++] = i2;
+                     aiLocalIndex[iIndex++] = i1++;
+                     aiLocalIndex[iIndex++] = i3++;
+                     aiLocalIndex[iIndex++] = i2++;
+                 }
+             }
+         }
+
+         afCos = null;
+         afSin = null;
+
+         TransformData(pkVB);
+         pkMesh = new TriMesh(pkVB,pkIB);
+        
+		// The duplication of vertices at the seam cause the automatically
+		// generated bounding volume to be slightly off center. Reset the bound
+		// to use the true information.
+		float fMaxDist = (float) Math.sqrt(fRadius * fRadius + fHeight * fHeight);
+		pkMesh.ModelBound.SetCenter(Vector3f.ZERO);
+		pkMesh.ModelBound.SetRadius(fMaxDist);
+		return pkMesh;
+	}
+    
+    /**
+	 * Standard meshes. Each mesh is centered at (0,0,0) and has an up-axis of
+	 * (0,0,1). The other axes forming the coordinate system are (1,0,0) and
+	 * (0,1,0). An application may transform the meshes as necessary.
+	 * 
+	 * @param iAxisSamples,
+	 *            number of axis samples.
+	 * @param iRadialSamples,
+	 *            number of radial samples.
+	 * @param fRadius,
+	 *            cylinder radius.
+	 * @param fHeight,
+	 *            cylinder height.
+	 * @param bOpen,
+	 *            true = open cylinder, false = closed cylinder.
+	 * @return Cylinder TriMesh.
+	 */
     public TriMesh Cylinder (int iAxisSamples, int iRadialSamples, float fRadius,
                              float fHeight, boolean bOpen)
     {

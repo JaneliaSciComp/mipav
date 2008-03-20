@@ -855,6 +855,7 @@ public abstract class JavaApplication3D extends JavaApplication
             m_iTimer = m_iMaxTimer;
             m_dFrameRate = m_iAccumulatedFrameCount/m_dAccumulatedTime;      
             //System.err.println( "FPS: " + m_dFrameRate );
+            
             ResetTime();
         }
         kDate = null;
