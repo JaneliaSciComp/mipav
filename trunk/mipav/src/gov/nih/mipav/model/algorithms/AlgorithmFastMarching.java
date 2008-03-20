@@ -39,7 +39,7 @@ import java.util.*;
  *           Diffusion by Pietro Perona, Takahiro Shiota, and Jitendra Malik, pages 73-92, Kluwer Academic Publishers,
  *           1994.</p>
  */
-public class AlgorithmFastMarching extends AlgorithmBase {
+public class AlgorithmFastMarching extends AlgorithmBase implements AlgorithmInterface {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -72,6 +72,9 @@ public class AlgorithmFastMarching extends AlgorithmBase {
 
     /** Standard deviations of the gaussian used to calculate the kernels. */
     private float[] sigmas;
+    
+    /** Stores result of AlgorithmConvolver */
+    private float[] outputBuffer = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -153,11 +156,12 @@ public class AlgorithmFastMarching extends AlgorithmBase {
         float[] imgBuffer;
         float[] tempBuffer;
         float[] resultBuffer;
-        float ix, iy, mag;
+        float mag;
         double grad;
         int nVOI;
         ViewVOIVector VOIs;
         short voiID;
+        AlgorithmConvolver convolver;
 
         try {
             length = srcImage.getSliceSize();
@@ -192,17 +196,20 @@ public class AlgorithmFastMarching extends AlgorithmBase {
             }
         }
 
-        
+        convolver = new AlgorithmConvolver(srcImage, GxData, GyData, kExtents,true);
+        convolver.setMinProgressValue(0);
+        convolver.setMaxProgressValue(10);
+        linkProgressToAlgorithm(convolver);
+        convolver.addListener(this);
 
-        int[] imageExtents = srcImage.getExtents();
+        convolver.run();
+        convolver.finalize();
+
         float min = Float.MAX_VALUE;
         float max = 0.0f;
 
         for (i = 0; i < length; i++) { // calculate gradient magnitude
-            ix = AlgorithmConvolver.convolve2DPt(i, imageExtents, imgBuffer, kExtents, GxData);
-            iy = AlgorithmConvolver.convolve2DPt(i, imageExtents, imgBuffer, kExtents, GyData);
-
-            mag = (float) Math.sqrt((ix * ix) + (iy * iy));
+            mag = outputBuffer[i];
             edgeImage[i] = mag;
 
             if (mag > max) {
@@ -243,7 +250,7 @@ public class AlgorithmFastMarching extends AlgorithmBase {
         int zDim = 1;
 
         for (n = 0; (n < iterations) && !threadStopped; n++) {
-            fireProgressStateChanged(Math.round((float) n / (iterations - 1) * 100));
+            fireProgressStateChanged(10 + (90 * n) / (iterations - 1));
 
             for (i = xDim + 1; (i < (length - xDim - 1)) && !threadStopped; i++) {
                 resultBuffer[i] = 0;
@@ -341,11 +348,12 @@ public class AlgorithmFastMarching extends AlgorithmBase {
         float[] imgBuffer;
         float[] tempBuffer;
         float[] resultBuffer;
-        float ix, iy, iz, mag;
+        float mag;
         double grad;
         int nVOI;
         ViewVOIVector VOIs;
         short voiID;
+        AlgorithmConvolver convolver;
 
         try {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
@@ -384,18 +392,21 @@ public class AlgorithmFastMarching extends AlgorithmBase {
                 levelImage[i] = 0;
             }
         }
-
         
+        convolver = new AlgorithmConvolver(srcImage, GxData, GyData, GzData, kExtents,true);
+        convolver.setMinProgressValue(0);
+        convolver.setMaxProgressValue(10);
+        linkProgressToAlgorithm(convolver);
+        convolver.addListener(this);
 
-        int[] imageExtents = srcImage.getExtents();
+        convolver.run();
+        convolver.finalize();
+
         float min = Float.MAX_VALUE;
         float max = 0.0f;
 
         for (i = 0; i < length; i++) { // calculate gradient magnitude
-            ix = AlgorithmConvolver.convolve3DPt(i, imageExtents, imgBuffer, kExtents, GxData);
-            iy = AlgorithmConvolver.convolve3DPt(i, imageExtents, imgBuffer, kExtents, GyData);
-            iz = AlgorithmConvolver.convolve3DPt(i, imageExtents, imgBuffer, kExtents, GzData);
-            mag = (float) Math.sqrt((ix * ix) + (iy * iy) + (iz * iz));
+            mag = outputBuffer[i];
             edgeImage[i] = mag;
 
             if (mag > max) {
@@ -436,7 +447,7 @@ public class AlgorithmFastMarching extends AlgorithmBase {
         int zDim = srcImage.getExtents()[2];
 
         for (n = 0; (n < iterations) && !threadStopped; n++) {
-            fireProgressStateChanged(Math.round((float) n / (iterations - 1) * 100));
+            fireProgressStateChanged(10 + (90 * n) / (iterations - 1));
             
             for (i = imageSliceSize + xDim + 1; (i < (length - imageSliceSize - xDim - 1)) && !threadStopped; i++) {
                 resultBuffer[i] = 0;
@@ -735,6 +746,17 @@ public class AlgorithmFastMarching extends AlgorithmBase {
         GenerateGaussian Gz = new GenerateGaussian(GzData, kExtents, sigmas, derivOrder);
 
         Gz.calc(true);
+    }
+    
+    public void algorithmPerformed(AlgorithmBase algorithm){
+        if(!algorithm.isCompleted()){
+            finalize();
+            return;
+        }
+        if (algorithm instanceof AlgorithmConvolver) {
+            AlgorithmConvolver convolver = (AlgorithmConvolver) algorithm;
+            outputBuffer = convolver.getOutputBuffer();
+        }
     }
 
 }
