@@ -2811,6 +2811,7 @@ implements MouseListener, ItemListener, ChangeListener {
         if ( raycastRenderWM != null )
         {
             raycastRenderWM.addPolyline(akPolyline, groupIndex);
+            raycastRenderWM.setPolylineColor(groupIndex, null);
         }
     }    
     

@@ -113,7 +113,8 @@ public class JPanelSlices extends JPanelRendererBase
 
     /** Probe x, y, z position. */
     private int xProbe, yProbe, zProbe;
-
+    
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -310,6 +311,19 @@ public class JPanelSlices extends JPanelRendererBase
 
     }
 
+    /**
+     * Build the slice pickable panel 
+     */
+    public void buildSlicePickPanel() {
+    	GridBagLayout cpGBL = new GridBagLayout();
+        GridBagConstraints cpGBC = new GridBagConstraints();
+
+        cpGBC.fill = GridBagConstraints.NONE;
+        cpGBC.weightx = 50;
+        cpGBC.weighty = 50;
+        
+    }
+    
     /**
      * Builds panel that has 3 sliders for the 3 planes shown, 3 checkboxes
      * for showing the planes, 3 text boxes for the current values of the
@@ -1039,6 +1053,7 @@ public class JPanelSlices extends JPanelRendererBase
         buildBoundingBox();
         buildControlPanel();
         buildOpacityPanel();
+        buildSlicePickPanel();
 
         Box contentBox = new Box(BoxLayout.Y_AXIS);
 
@@ -1535,7 +1550,7 @@ public class JPanelSlices extends JPanelRendererBase
             }
         }
     }
-
+    
     /**
      * Helper method that adds components to the control panel for the grid
      * bag layout.

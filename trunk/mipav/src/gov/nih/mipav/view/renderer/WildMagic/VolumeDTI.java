@@ -6,11 +6,14 @@ import java.util.Vector;
 
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.WildMagic.ApplicationDemos.Rope;
+import gov.nih.mipav.view.WildMagic.LibFoundation.Curves.BSplineCurve3f;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Surfaces.TubeSurface;
 
 /** Displays the Diffusion Tensor tracts in the VolumeViewer.
  * @see VolumeObject.java
@@ -88,6 +91,17 @@ public class VolumeDTI extends VolumeObject
         {
             DisplayEllipsoids( m_kVolumeImageA.GetImage(), kRenderer );
         }
+        else if ( m_bDisplayAllCylinders )
+        {
+            DisplayAllCylinders( m_kVolumeImageA.GetImage(), kRenderer);
+        }
+        else if ( m_bDisplayCylinders )
+        {
+            DisplayCylinders( m_kVolumeImageA.GetImage(), kRenderer );
+        }
+        else if ( m_bDisplayTubes ) {
+        	DisplayTubes(m_kVolumeImageA.GetImage(), kRenderer);
+        }
         else 
         {
             DisplayTract(null, kRenderer );
@@ -106,6 +120,10 @@ public class VolumeDTI extends VolumeObject
         {
             m_kAllEllipsoidsShader.SetLight(kLightType, afType);
         }
+        if ( m_kLightShader != null )
+        {
+            m_kLightShader.SetLight(kLightType, afType);
+        }
     }
 
 
@@ -123,15 +141,21 @@ public class VolumeDTI extends VolumeObject
         {
             m_kTracts = new HashMap<Integer,Node>();
             m_kEllipsoids = new HashMap<Integer,Vector<int[]>>();
+            m_kCylinders = new HashMap<Integer,Vector<int[]>>();
             m_kShaders = new HashMap<Integer,ShaderEffect>();
             m_kEllipseConstantColor = new HashMap<Integer,ColorRGB>();
         }
+        if ( m_kTubes == null ) {
+            m_kTubes = new HashMap<Integer,Node>();
+            m_kTubeColors = new HashMap<Integer, Integer>();
+        }        
         if ( m_iMaxGroups < iGroup )
         {
             m_iMaxGroups = iGroup;
         }
 
         int[] aiEllipsoids = new int[kLine.VBuffer.GetVertexQuantity()];
+        int[] aiCylinders = new int[kLine.VBuffer.GetVertexQuantity()];
 
         for ( int i = 0; i < kLine.VBuffer.GetVertexQuantity(); i++ )
         {
@@ -145,10 +169,12 @@ public class VolumeDTI extends VolumeObject
                 if (  m_kEigenVectors.get( new Integer(iIndex) ) != null )
                 {
                     aiEllipsoids[i] = iIndex;
+                    aiCylinders[i] = iIndex;
                 }
                 else
                 {
                     aiEllipsoids[i] = -1;
+                    aiCylinders[i] = -1;
                 }
             }
         }
@@ -156,6 +182,9 @@ public class VolumeDTI extends VolumeObject
         kLine.Local.SetScale( new Vector3f( m_fX, m_fY, m_fZ ) );
 
         Node kTractNode = null;
+        Node kTubeNode = null;
+        Integer kCenterIndex;
+        
         Integer iIGroup = new Integer(iGroup);
         if ( m_kTracts.containsKey( iIGroup ) )
         {
@@ -166,7 +195,19 @@ public class VolumeDTI extends VolumeObject
 
             Vector<int[]> kEllipseVector = m_kEllipsoids.get(iIGroup);
             kEllipseVector.add(aiEllipsoids);
+            Vector<int[]> kCylinderVector = m_kCylinders.get(iIGroup);
+            kCylinderVector.add(aiCylinders);
         }
+        
+        if ( m_kTubes.containsKey( iIGroup ) )
+        {
+        	kTubeNode = m_kTubes.get(iIGroup);
+            kTubeNode.AttachChild(createTube(kLine));
+            kTubeNode.UpdateGS();
+            kTubeNode.UpdateRS();
+            m_kTubeColors.put(new Integer(iIGroup), new Integer(centerIndex));
+        }
+        
         if ( kTractNode == null )
         {
             kTractNode = new Node();
@@ -174,17 +215,60 @@ public class VolumeDTI extends VolumeObject
             kTractNode.UpdateGS();
             kTractNode.UpdateRS();
             m_kTracts.put( new Integer(iIGroup), kTractNode );
-
+ 
             Vector<int[]> kEllipseVector = new Vector<int[]>();
             kEllipseVector.add(aiEllipsoids);
             m_kEllipsoids.put( new Integer(iIGroup), kEllipseVector );
+            
+            Vector<int[]> kCylinderVector = new Vector<int[]>();
+            kCylinderVector.add(aiCylinders);
+            m_kCylinders.put( new Integer(iIGroup), kCylinderVector );
 
             String kShaderName = new String( "ConstantColor" );
             VertexColor3Effect kPolylineShader = new VertexColor3Effect( kShaderName, true );
             m_kShaders.put( new Integer(iIGroup), kPolylineShader );
         }
+        
+        if ( kTubeNode == null ) {
+        	 kTubeNode = new Node();
+             kTubeNode.AttachChild(createTube(kLine));
+             kTubeNode.UpdateGS();
+             kTubeNode.UpdateRS();
+             m_kTubes.put( new Integer(iIGroup), kTubeNode );
+             m_kTubeColors.put(new Integer(iIGroup), new Integer(centerIndex));
+        }
     }
 
+    /**
+     * Generate the tube streamline from the given polyline.
+     * @param kTract  polyline of the medial path.
+     * @return  kTube Tube surface generated. 
+     */
+    public TubeSurface createTube(Polyline kTract) {
+    	TubeSurface kTube;
+    	int iNumCtrlPoints = kTract.VBuffer.GetVertexQuantity();
+        Vector3f[] akCtrlPoint = new Vector3f[iNumCtrlPoints];
+        for ( int idx =0; idx < iNumCtrlPoints; idx++ ) {
+        	akCtrlPoint[idx] = kTract.VBuffer.GetPosition3(idx);
+        }
+       
+        int iDegree = 2;
+        BSplineCurve3f m_pkSpline = new BSplineCurve3f(iNumCtrlPoints,akCtrlPoint,iDegree,
+            false,true);
+        
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetNChannels(3);
+        kAttr.SetTChannels(0,3);
+        kAttr.SetCChannels(0,4);
+        
+        Vector2f kUVMin = new Vector2f(0.0f,0.0f);
+        Vector2f kUVMax = new Vector2f(1.0f,1.0f);
+        kTube = new TubeSurface(m_pkSpline,0.025f, true,Vector3f.UNIT_Z,
+        		iNumCtrlPoints,8,kAttr,false,false,kUVMin,kUVMax);
+        return kTube;
+    }
+    
     /** 
      * Removes the specified polyline tract group.
      * @param iGroup, the group of polylines to remove.
@@ -192,7 +276,7 @@ public class VolumeDTI extends VolumeObject
     public void removePolyline( int iGroup )
     {
         Integer kGroup = new Integer(iGroup);
-        if ( !m_kTracts.containsKey(iGroup) )
+        if ( m_kTracts == null || !m_kTracts.containsKey(iGroup) )
         {
             return;
         }
@@ -205,7 +289,7 @@ public class VolumeDTI extends VolumeObject
         {
             Polyline kTract = (Polyline)kTractNode.DetachChildAt(i);
             if ( kTract != null )
-            {
+            { 
                 kTract.DetachAllEffects();
                 kTract.dispose();
             }
@@ -219,10 +303,45 @@ public class VolumeDTI extends VolumeObject
             m_kTracts = null;
         }
 
+        if ( m_kTubes == null ||  !m_kTubes.containsKey(iGroup) )
+        {
+            return;
+        }
+        Node kTubeNode = m_kTubes.remove(kGroup);
+        m_kTubeColors.remove(kGroup);
+        if ( kTubeNode == null )
+        {
+            return;
+        }
+        for ( int i = 0; i < kTubeNode.GetQuantity(); i++ )
+        {
+        	TubeSurface kTube = (TubeSurface)kTubeNode.DetachChildAt(i);
+            if ( kTube != null )
+            { 
+            	kTube.DetachAllEffects();
+            	kTube.dispose();
+            }
+        }
+        kTubeNode.UpdateGS();
+        kTubeNode.UpdateRS();
+        kTubeNode.dispose();
+        kTubeNode = null;
+        if ( m_kTubes.size() == 0 )
+        {
+            m_kTubes = null;
+            m_kTubeColors = null;
+        }
+        
         Vector<int[]> kEllipseVector = m_kEllipsoids.remove(kGroup);
         if ( kEllipseVector != null )
         {
             kEllipseVector.clear();
+        }
+        
+        Vector<int[]> kCylinderVector = m_kCylinders.remove(kGroup);
+        if ( kCylinderVector != null )
+        {
+            kCylinderVector.clear();
         }
 
         ShaderEffect kShader = m_kShaders.remove(kGroup);
@@ -431,19 +550,49 @@ public class VolumeDTI extends VolumeObject
         StandardMesh kSM = new StandardMesh(kAttr);
         kSM.SetInside(true);
         m_kSphere = kSM.Sphere(64,64,1f);
+        m_kCylinder = kSM.Cylinder(128,64,0.5f,3,false);
 
         m_kAllEllipsoidsShader = new MipavLightingEffect( );
+        
+        m_kLightShader = new SurfaceLightingEffect( m_kVolumeImageA );
+        m_kLightShader.SetSurfaceTexture(true, false, false);
+        
+        
+        textureEffect = new TextureEffect("Water");
+        Texture pkTexture = textureEffect.GetPTexture(0,0);
+        pkTexture.SetFilterType(Texture.FilterType.LINEAR_LINEAR);
+        pkTexture.SetWrapType(0,Texture.WrapType.REPEAT);
+        pkTexture.SetWrapType(1,Texture.WrapType.REPEAT);
+        
         m_kEllipseMaterial = new MaterialState();
         m_kEllipseMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
         m_kEllipseMaterial.Ambient = new ColorRGB(0.24725f,0.2245f,0.0645f);
         m_kEllipseMaterial.Diffuse = new ColorRGB(0.34615f,0.3143f,0.0903f);
         m_kEllipseMaterial.Specular = new ColorRGB(1f,1f,1f);
         m_kEllipseMaterial.Shininess = 32f;
+        m_kEllipseMaterial.Alpha = 1f;
         m_kColorEllipse = new ColorRGB(ColorRGB.BLACK);
 
+        m_kTubesMaterial = new MaterialState();
+        m_kTubesMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+        m_kTubesMaterial.Ambient = new ColorRGB(0.24725f,0.2245f,0.0645f);
+        m_kTubesMaterial.Diffuse = new ColorRGB(0.34615f,0.3143f,0.0903f);
+        m_kTubesMaterial.Specular = new ColorRGB(1f,1f,1f);
+        m_kTubesMaterial.Alpha = 1f;
+        m_kTubesMaterial.Shininess = 500f;
+        
+        
         m_kSphere.AttachGlobalState(m_kEllipseMaterial);
-        m_kSphere.AttachEffect(m_kAllEllipsoidsShader);
+        // m_kSphere.AttachEffect(m_kAllEllipsoidsShader);
+        m_kSphere.AttachEffect(textureEffect);
+        m_kSphere.AttachEffect(m_kLightShader);
         m_kSphere.UpdateRS();
+        
+        m_kCylinder.AttachGlobalState(m_kEllipseMaterial);
+        // m_kCylinder.AttachEffect(m_kAllEllipsoidsShader);
+        m_kCylinder.AttachEffect(textureEffect);
+        m_kCylinder.AttachEffect(m_kLightShader);
+        m_kCylinder.UpdateRS();
     }
 
     /** Turns on/off displaying the fiber bundle tracts with ellipsoids.
@@ -462,13 +611,30 @@ public class VolumeDTI extends VolumeObject
         m_bDisplayAllEllipsoids = bDisplay;
     }
 
-    /** Turns on/off displaying all the ellipsoids.
-     * @param bDisplay, when true display all the ellipsods in the volume.
+    /** Turns on/off displaying the fiber bundle tracts with cylinders.
+     * @param bDisplay, when true display the tracts with cylinders.
      */
-    public boolean getDisplayAllEllipsoids( )
+    public void setDisplayCylinders( boolean bDisplay )
     {
-        return m_bDisplayAllEllipsoids;
+        m_bDisplayCylinders = bDisplay;
     }
+
+    /** Turns on/off displaying all the cylinders.
+     * @param bDisplay, when true display all the cylinders in the volume.
+     */
+    public void setDisplayAllCylinders( boolean bDisplay )
+    {
+        m_bDisplayAllCylinders = bDisplay;
+    }
+    
+    /** Turns on/off displaying the fiber bundle tracts with cylinders.
+     * @param bDisplay, when true display the tracts with cylinders.
+     */
+    public void setDisplayTubes( boolean bDisplay )
+    {
+        m_bDisplayTubes = bDisplay;
+    }
+    
 
     /** Set the m_iEllipsoidMod value. 
      * @param iMod, new m_iEllipsoidMod value.
@@ -573,6 +739,7 @@ public class VolumeDTI extends VolumeObject
                         iIndex = aiEllipsoids[j];
                         Integer kIndex = new Integer(iIndex);
                         kColor = m_kEllipseConstantColor.get(kIndex);
+                       
                         if ( kColor != null )
                         {
                             m_kColorEllipse = kColor;
@@ -611,6 +778,221 @@ public class VolumeDTI extends VolumeObject
                     }
                 }
             }
+        }
+    }
+    
+    /** Display the DTI volume with ellipsoids at each voxel. The m_iEllipsMod
+     * value is used to limit the number of ellipsoids displayed.
+     */    
+    public void DisplayAllCylinders( ModelImage kImage, Renderer kRenderer/*, AlphaState kAlpha */)
+    {
+        if ( m_kEigenVectors == null )
+        {
+            return;
+        }
+        
+        //kAlpha.BlendEnabled = true;
+        Node kScaleNode = new Node();
+        kScaleNode.Local.SetScale( m_fX, m_fY, m_fZ );
+        int iCount = 0;
+        int iIndex;
+        Integer kKey;
+        float fR, fG, fB;
+        TriMesh kCylinder;
+        int iDisplayed = 0;
+        Iterator kIterator = m_kEigenVectors.keySet().iterator();
+        while ( kIterator.hasNext() )
+        {
+            kKey = (Integer)kIterator.next();
+            if ( (iCount%m_iEllipsoidMod) == 0 )
+            {                           
+                iIndex = kKey.intValue();                          
+                if ( kImage.isColorImage() )
+                {
+                    fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
+                    fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
+                    fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
+                    m_kColorEllipse.R(fR);
+                    m_kColorEllipse.G(fG);
+                    m_kColorEllipse.B(fB);
+                }
+                else
+                {
+                    fR = kImage.getFloat( iIndex );
+                    m_kColorEllipse.R(fR);
+                    m_kColorEllipse.G(fR);
+                    m_kColorEllipse.B(fR);
+                }
+
+                kCylinder = m_kCylinder;
+                kCylinder.Local = m_kEigenVectors.get(kKey);
+                
+                m_kEllipseMaterial.Ambient = m_kColorEllipse;
+                m_kEllipseMaterial.Diffuse = m_kColorEllipse;
+
+                kScaleNode.SetChild(0, kCylinder);
+                m_kScene.SetChild(0,kScaleNode);
+                m_kScene.UpdateGS();
+                m_kScene.DetachChild(kScaleNode);
+                kScaleNode.DetachChild(kCylinder);
+                
+                kRenderer.Draw(kCylinder);
+                iDisplayed++;
+            }
+            iCount++;
+        }
+    }
+
+    
+    /** Display a fiber bundle tract with cylinders at each voxel.
+     */    
+    private void DisplayCylinders( ModelImage kImage, Renderer kRenderer )
+    {
+        if ( m_kCylinders == null )
+        {
+            return;
+        }
+        //kAlpha.BlendEnabled = true;
+        Node kScaleNode = new Node();
+        kScaleNode.Local.SetScale( m_fX, m_fY, m_fZ );
+        Integer kKey;
+        Vector<int[]> kCylinderVector;
+        int[] aiCylinders;
+        int iIndex;
+        ColorRGB kColor;
+        float fR,fG,fB;
+        TriMesh kCylinder;        
+        Iterator kIterator = m_kCylinders.keySet().iterator();
+        while ( kIterator.hasNext() )
+        {
+            kKey = (Integer)kIterator.next();
+            kCylinderVector = m_kCylinders.get(kKey);
+            for ( int i = 0; i < kCylinderVector.size(); i++ )
+            {
+                aiCylinders = kCylinderVector.get(i);
+                for ( int j = 0; j < aiCylinders.length; j++ )
+                {
+                    if ( aiCylinders[j] != -1 )
+                    {
+                        iIndex = aiCylinders[j];
+                        Integer kIndex = new Integer(iIndex);
+                        kColor = m_kEllipseConstantColor.get(kIndex);
+                       
+                        if ( kColor != null )
+                        {
+                            m_kColorEllipse = kColor;
+                        }
+                        else
+                        {
+                            if ( kImage.isColorImage() )
+                            {
+                                fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
+                                fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
+                                fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
+                                m_kColorEllipse.R(fR);
+                                m_kColorEllipse.G(fG);
+                                m_kColorEllipse.B(fB);
+                            }
+                            else
+                            {
+                                fR = kImage.getFloat( iIndex );
+                                m_kColorEllipse.R(fR);
+                                m_kColorEllipse.G(fR);
+                                m_kColorEllipse.B(fR);
+                            }
+                        }
+                        
+                        kCylinder = m_kCylinder;
+                        kCylinder.Local = m_kEigenVectors.get(kIndex);
+                
+                        m_kEllipseMaterial.Ambient = m_kColorEllipse;
+                        m_kEllipseMaterial.Diffuse = m_kColorEllipse;
+                        kScaleNode.SetChild(0, kCylinder);
+                        m_kScene.SetChild(0,kScaleNode);
+                        m_kScene.UpdateGS();
+                        m_kScene.DetachChild(kScaleNode);
+                        kScaleNode.DetachChild(kCylinder);
+                        kRenderer.Draw(kCylinder);
+                    }
+                }
+            }
+        }
+    }   
+ 
+    
+    public void setCenterIndex(int index) {
+    	centerIndex = index;
+    }
+    
+    /** Displays a tube fiber bundle tract with the given shader attached.
+     * @param kInputStader, shader to apply to the tube.
+     */    
+    private void DisplayTubes( ModelImage kImage, Renderer kRenderer )
+    {
+        Node kScaleNode = new Node();
+        Node kTubeNode;
+        kScaleNode.Local.SetScale( m_fX, m_fY, m_fZ );
+        Integer iKey;
+        int iIndex;
+        ColorRGB kColor;
+        float fR,fG,fB;        
+        Iterator iIterator = m_kTubes.keySet().iterator();
+        Integer kIndex = 0;
+
+        TubeSurface kTube;
+        
+        while ( iIterator.hasNext() )
+        {
+            iKey = (Integer)iIterator.next();
+            
+            kTubeNode = m_kTubes.get(iKey);
+            
+                
+                kTube = (TubeSurface)kTubeNode.GetChild(0);
+                           
+                
+                iIndex = m_kTubeColors.get(iKey);
+                ColorRGB kColor1;
+                if ( kImage.isColorImage() )
+                {
+                    fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
+                    fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
+                    fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
+                    kColor1 = new ColorRGB(fR, fG, fB);
+                }
+                else
+                {
+                    fR = kImage.getFloat( iIndex );
+                    kColor1 = new ColorRGB(fR, fR, fR);
+                }                
+                
+                
+                
+                kTube.AttachGlobalState(m_kTubesMaterial);
+                
+                kTube.AttachEffect(textureEffect);
+                kTube.AttachEffect(m_kLightShader);
+                
+                kTube.UpdateRS();
+                
+                kTube.UpdateSurface();
+                kTube.VBuffer.Release();
+                
+                m_kTubesMaterial.Ambient = kColor1;
+                m_kTubesMaterial.Diffuse = kColor1;
+                m_kTubesMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+                m_kTubesMaterial.Specular = new ColorRGB(ColorRGB.WHITE); 
+                m_kTubesMaterial.Alpha = 1.0f;
+                m_kTubesMaterial.Shininess = 100f;
+               
+                
+                kScaleNode.SetChild(0, kTube);
+                m_kScene.SetChild(0,kScaleNode);
+                m_kScene.UpdateGS();
+                m_kScene.DetachChild(kScaleNode);
+                kScaleNode.DetachChild(kTube);
+                kRenderer.Draw(kTube);
+            
         }
     }
     
@@ -693,6 +1075,10 @@ public class VolumeDTI extends VolumeObject
 
     /** Hashmap for multiple fiber bundles: */
     private HashMap<Integer,Node>  m_kTracts = null;
+    
+    /** Hashmap for multiple tube type fiber bundles: */
+    private HashMap<Integer,Node>  m_kTubes = null;
+    private HashMap<Integer,Integer>  m_kTubeColors = null;
 
     /** Hashmap for multiple fiber bundles: */
     private HashMap<Integer,ShaderEffect>  m_kShaders = null;
@@ -707,18 +1093,37 @@ public class VolumeDTI extends VolumeObject
     /** In the display all ellipsoids mode the ellipsoids are displayed every
      * m_iEllipsoidMod steps. */
     private int m_iEllipsoidMod = 10;
-
+    
+    /** Hashmap for multiple fiber bundles: */
+    private HashMap<Integer,Vector<int[]>> m_kCylinders = null;
+    /** When true display the fiber tracts with cylinders instead of lines: */
+    private boolean m_bDisplayCylinders = false;
+    /** When true display the DTI volume with cylinders: */
+    private boolean m_bDisplayAllCylinders = false;
+    /** When true display the fiber tracts with cylinders instead of lines: */
+    private boolean m_bDisplayTubes = false;
+    
     /** Shader for displaying the ellipsoids with the Mipav lights. */
     private MipavLightingEffect m_kAllEllipsoidsShader = null;
+    
+    private SurfaceLightingEffect m_kLightShader;
+    
+    private TextureEffect textureEffect;
+    
     /** Keeps track of the color assigned the polylines. */
     private HashMap<Integer,ColorRGB> m_kEllipseConstantColor;
     /** Material properties of the ellipsoids. */
     private MaterialState m_kEllipseMaterial;
+    /** Material properties of the Tubes. */
+    private MaterialState m_kTubesMaterial;
     /** EigenVector values for displaying ellipsoids. */
     private HashMap<Integer,Transformation>  m_kEigenVectors = null;
     /** Ellipsoids is a sphere with a non-uniform scale based on the eigen
      * vectors and values. */
     private TriMesh m_kSphere;
+    /** Cylinders is a sphere with a non-uniform scale based on the eigen
+     * vectors and values. */
+    private TriMesh m_kCylinder;
     /** The DTI volume extents: */
     private int m_iDimX, m_iDimY, m_iDimZ;
     /** Ellispods scale factor, based on the DTI volume: */
@@ -732,4 +1137,6 @@ public class VolumeDTI extends VolumeObject
     
     /** Color Shader for rendering the tracts. */
     private ShaderEffect m_kVertexColor3Shader;
+    
+    private int centerIndex;
 }

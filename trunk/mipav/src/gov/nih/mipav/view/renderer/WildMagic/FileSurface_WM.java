@@ -448,6 +448,8 @@ public class FileSurface_WM {
 
             startLocation[2] = Float.intBitsToFloat(tmpInt);
 
+            System.err.println("Surface: startLocation[0] = " + startLocation[0] + "  startLocation[1] = " +  startLocation[1] + "  startLocation[2] = " +  startLocation[2]);
+            
             b1 = buffer[index++] & 0xff;
             b2 = buffer[index++] & 0xff;
             b3 = buffer[index++] & 0xff;
@@ -475,6 +477,8 @@ public class FileSurface_WM {
 
             box[2] = Float.intBitsToFloat(tmpInt);
 
+            System.err.println("Surface: box[0] = " + box[0] + "  box[1] = " +  box[1] + "  box[2] = " +  box[2]);
+            
             if (dicom) {
                 buffer = new byte[128];
                 kIn.read(buffer);
