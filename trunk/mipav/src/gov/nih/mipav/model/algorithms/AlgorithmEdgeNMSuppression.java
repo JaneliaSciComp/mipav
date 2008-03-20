@@ -53,7 +53,7 @@ import java.util.*;
  * Iz*Iz*Iz*Izzz</p>
  */
 
-public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
+public class AlgorithmEdgeNMSuppression extends AlgorithmBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -136,6 +136,9 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private ModelImage zXMask;
+    
+    // Buffer to receive result of convolution operation
+    private float[] outputBuffer;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -589,12 +592,11 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
         int i, s, idx;
         int length, totalLength;
         int start;
-        float ix, iy, ixx, ixy, iyy, ixxx, ixxy, ixyy, iyyy;
         float[] buffer;
         float[] buffer2;
         float bufferMin, bufferMax;
         float a;
-        float nms;
+        AlgorithmConvolver convolver;
 
         try {
             destImage.setLock();
@@ -622,9 +624,19 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
 
             return;
         }
-
-        int mod = totalLength / 100; // mod is 1 percent of length
-
+        
+        convolver = new AlgorithmConvolver(srcImage, GxData, GyData, GxxData, GxyData, GyyData,
+                GxxxData, GxxyData, GxyyData, GyyyData, kExtents,entireImage);
+        convolver.setMinProgressValue(0);
+        convolver.setMaxProgressValue(80);
+        linkProgressToAlgorithm(convolver);
+        convolver.addListener(this);
+        if (!entireImage) {
+            convolver.setMask(mask);
+        }
+        convolver.run();
+        
+        int mod = totalLength / 20; // since progress bar is at 80
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -645,23 +657,12 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
             for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
                 if ((((start + i) % mod) == 0)) {
-                    fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
+                    fireProgressStateChanged(80 + (20 * (start + i)) / (totalLength - 1));
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
-                    ix = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, GxData);
-                    iy = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, GyData);
-                    ixx = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, GxxData);
-                    ixy = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, GxyData);
-                    iyy = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, GyyData);
-                    nms = (ix * ix * ixx) + (2.0f * ix * iy * ixy) + (iy * iy * iyy);
-                    destImage.set(idx, nms);
-                    ixxx = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, GxxxData);
-                    ixxy = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, GxxyData);
-                    ixyy = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, GxyyData);
-                    iyyy = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, GyyyData);
-                    buffer2[i] = (ix * ix * ix * ixxx) + (3.0f * ix * ix * iy * ixxy) + (3.0f * ix * iy * iy * ixyy) +
-                                 (iy * iy * iy * iyyy);
+                    destImage.set(idx, outputBuffer[2*idx]);
+                    buffer2[i] = outputBuffer[2*idx+1];
                 } // if (entireImage == true || mask.get(i))
                 else {
                     destImage.set(idx, buffer[i]);
@@ -735,6 +736,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
         float bufferMin, bufferMax;
         float a;
         float nms;
+        AlgorithmConvolver convolver;
 
         try {
             destImage.setLock();
@@ -775,7 +777,19 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
         }
 
 
-        int mod = totalLength / 100; // mod is 1 percent of length
+        convolver = new AlgorithmConvolver(srcImage, GxData, GyData, GzData, GxxData, GxyData, GyyData,
+                            GxzData, GyzData, GzzData, GxxxData, GxxyData, GxyyData, GyyyData, GxxzData,
+                            GxzzData, GxyzData, GyyzData, GyzzData, GzzzData, kExtents,entireImage);
+        convolver.setMinProgressValue(0);
+        convolver.setMaxProgressValue(80);
+        linkProgressToAlgorithm(convolver);
+        convolver.addListener(this);
+        if (!entireImage) {
+            convolver.setMask(mask);
+        }
+        convolver.run();
+        
+        int mod = totalLength / 20; // since progress bar is at 80
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -787,33 +801,8 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
-                    ix = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GxData);
-                    iy = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GyData);
-                    iz = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GzData);
-                    ixx = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GxxData);
-                    ixy = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GxyData);
-                    iyy = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GyyData);
-                    ixz = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GxzData);
-                    iyz = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GyzData);
-                    izz = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GzzData);
-                    nms = (ix * ix * ixx) + (2.0f * ix * iy * ixy) + (iy * iy * iyy) + (2.0f * ix * iz * ixz) +
-                          (2.0f * iy * iz * iyz) + (iz * iz * izz);
-                    destImage.set(i, nms);
-                    ixxx = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GxxxData);
-                    ixxy = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GxxyData);
-                    ixyy = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GxyyData);
-                    iyyy = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GyyyData);
-                    ixxz = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GxxzData);
-                    ixzz = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GxzzData);
-                    ixyz = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GxyzData);
-                    iyyz = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GyyzData);
-                    iyzz = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GyzzData);
-                    izzz = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GzzzData);
-                    sliceBuffer2[i - start] = (ix * ix * ix * ixxx) + (3.0f * ix * ix * iy * ixxy) +
-                                              (3.0f * ix * iy * iy * ixyy) + (iy * iy * iy * iyyy) +
-                                              (3.0f * ix * ix * iz * ixxz) + (3.0f * ix * iz * iz * ixzz) +
-                                              (6.0f * ix * iy * iz * ixyz) + (3.0f * iy * iy * iz * iyyz) +
-                                              (3.0f * iy * iz * iz * iyzz) + (iz * iz * iz * izzz);
+                    destImage.set(i, outputBuffer[2*i]);
+                    sliceBuffer2[i - start] = outputBuffer[2*i+1];
                 } // if (entireImage == true || mask.get(i))
                 else {
                     destImage.set(i, buffer[i]);
@@ -1192,5 +1181,16 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
         GenerateGaussian Gzzz = new GenerateGaussian(GzzzData, kExtents, sigmas, derivOrder);
 
         Gzzz.calc(false);
+    }
+    
+    public void algorithmPerformed(AlgorithmBase algorithm){
+        if(!algorithm.isCompleted()){
+            finalize();
+            return;
+        }
+        if (algorithm instanceof AlgorithmConvolver) {
+            AlgorithmConvolver convolver = (AlgorithmConvolver) algorithm;
+            outputBuffer = convolver.getOutputBuffer();
+        }
     }
 }
