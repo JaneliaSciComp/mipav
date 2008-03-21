@@ -185,8 +185,9 @@ public class FileSurface_WM {
             // meshes are type TriangleMesh
             for (int i = 0; i < iQuantity; i++) {
                 
-                float[] startLocation = new float[]{0f,0f,0f};
-                float[] direction = new float[]{0f,0f,0f}; 
+                float[] startLocation = kImage.getFileInfo(0).getOrigin();
+                int[] aiModelDirection = MipavCoordinateSystems.getModelDirections(kImage);
+                float[] direction = new float[] { (int)aiModelDirection[0], (int)aiModelDirection[1], (int)aiModelDirection[2]}; 
                 float[] box = new float[]{0f,0f,0f};
                 if (iType == 0) {
 
@@ -195,6 +196,11 @@ public class FileSurface_WM {
                                                    true, kColor, fOpacity, kMaterial, iLOD,
                                                    startLocation, direction, box );
                         akComponent[i].SetName( file.getName() );
+                        System.err.println( "box " + box[0] + " " +  box[1] + " " +  box[2] );
+                        xBox = box[0];
+                        yBox = box[1];
+                        zBox = box[2];
+                        maxBox = Math.max(xBox, Math.max(yBox, zBox));
                     }
                     else {
                     	if ( file.getName().endsWith("wrl") ) {
@@ -202,11 +208,11 @@ public class FileSurface_WM {
                                                           (i == 0),
                                                           startLocation, direction, box );
                             akComponent[i].SetName( file.getName() );
+                            System.err.println( "box " + box[0] + " " +  box[1] + " " +  box[2] );
                     	}
                         else if (file.getName().endsWith("vtk")){
                             //vtk legacy
-                            akComponent[i] = loadVTKLegacyMesh(in, progress, i * 100 / iQuantity, iQuantity, (i == 0), file.getName(),
-                                    startLocation, direction, box );
+                            akComponent[i] = loadVTKLegacyMesh(in, progress, i * 100 / iQuantity, iQuantity, (i == 0), file.getName());
                             if ( akComponent[i] != null)
                             {
                                 akComponent[i].SetName( file.getName() );
@@ -214,7 +220,7 @@ public class FileSurface_WM {
                         }
                     	else if(file.getName().endsWith("vtp")) {
                             //vtk xml
-                            akComponent[i] = loadVTKXMLMesh(file.getAbsolutePath(), file.getName(), file.getParent(), direction);
+                            akComponent[i] = loadVTKXMLMesh( file.getAbsolutePath(), file.getName(), file.getParent());
                             if ( akComponent[i] != null)
                             {
                                 akComponent[i].SetName( file.getName() );
@@ -242,6 +248,7 @@ public class FileSurface_WM {
                 }
                 System.err.println( "StartLocation " + startLocation[0] + " " + startLocation[1] + " " + startLocation[2] );
                 System.err.println( "Direction " + direction[0] + " " + direction[1] + " " + direction[2] );
+                System.err.println( "xBox " + xBox + " " + yBox + " " + zBox );
                 for (int j = 0; j < akComponent[i].VBuffer.GetVertexQuantity(); j++) {
 
                     // The mesh files save the verticies as
@@ -995,16 +1002,10 @@ public class FileSurface_WM {
      * @throws IOException
      */
     public static TriMesh loadVTKLegacyMesh(RandomAccessFile kIn, ViewJProgressBar progress, int added, int total,
-                                            boolean flag, String fileName,
-                                            float[] startLocation, float[] direction, float[] box) throws IOException {
+                                            boolean flag, String fileName) throws IOException {
     	TriMesh kMesh;
     	
     	System.out.println(fileName);
-    	
-    	// When reading VTK surface file format, set the default direction to (1, 1, 1).  
-    	direction[0] = 1;
-        direction[1] = -1;
-        direction[2] = -1;
         
     	StringBuffer buff = new StringBuffer();
     	try {
@@ -1665,15 +1666,10 @@ public class FileSurface_WM {
         kOut.write(bufferColor);
     }
 
-    public static TriMesh loadVTKXMLMesh(String absPath, String fileName, String dir, float[] direction)
+    public static TriMesh loadVTKXMLMesh(String absPath, String fileName, String dir)
         throws IOException
     {
     	TriMesh kMesh = null;
-
-    	// When reading VTK surface file format, set the default direction to (1, 1, 1).  
-    	direction[0] = 1;
-        direction[1] = -1;
-        direction[2] = -1;
         
         FileSurfaceVTKXML surfaceVTKXML = new FileSurfaceVTKXML(fileName, dir);
     	kMesh = surfaceVTKXML.readXMLSurface_WM(absPath);
