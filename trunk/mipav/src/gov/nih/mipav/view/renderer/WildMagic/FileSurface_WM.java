@@ -66,7 +66,9 @@ public class FileSurface_WM {
             
             ColorRGB kColor = JPanelSurface_WM.getNewSurfaceColor(iListSize + i);
 
-            if ((kName.indexOf(".sur") != -1) || (kName.indexOf(".wrl") != -1) || (kName.indexOf(".vtk") != -1) || (kName.indexOf(".vtp") != -1)) {
+            if ((kName.indexOf(".sur") != -1) || (kName.indexOf(".wrl") != -1) || 
+            	(kName.indexOf(".vtk") != -1) || (kName.indexOf(".vtp") != -1) || 
+            	(kName.indexOf(".stl") != -1) ) {
                 kSurface[i] = readSurface(kImage, akFiles[i], kColor, 1.0f, null, 0 );
             } else if (kName.indexOf(".xml") != -1) {
                 FileSurfaceRefXML kSurfaceXML = new FileSurfaceRefXML(kName, akFiles[i].getParent());
@@ -160,6 +162,10 @@ public class FileSurface_WM {
             } catch (IOException e) {
                 return null;
             }
+        } else if ( file.getName().endsWith("stl") ) {
+        	iType = 0;
+			iQuantity = 1;
+			isSur = false;
         } else {
             //has to be vtk legacy or vtk xml
             try {
@@ -221,6 +227,13 @@ public class FileSurface_WM {
                     	else if(file.getName().endsWith("vtp")) {
                             //vtk xml
                             akComponent[i] = loadVTKXMLMesh( file.getAbsolutePath(), file.getName(), file.getParent());
+                            if ( akComponent[i] != null)
+                            {
+                                akComponent[i].SetName( file.getName() );
+                            }
+                    	}
+                    	else if (file.getName().endsWith("stl")) {
+                    		akComponent[i] = loadSTLMesh( file );
                             if ( akComponent[i] != null)
                             {
                                 akComponent[i].SetName( file.getName() );
@@ -836,7 +849,7 @@ public class FileSurface_WM {
             float transparency = 0f;
             if (stoken.nextToken().equals("appearance")) {
                 kMaterial = new MaterialState();
-
+                
                 str = kIn.readLine(); // material Material {
                 str = kIn.readLine().trim(); // emissive Color
                 stoken = new StringTokenizer(str);  stoken.nextToken();
@@ -1676,6 +1689,131 @@ public class FileSurface_WM {
 
         return kMesh;
     }
+
+    
+	public static TriMesh loadSTLMesh(File file) {
+
+		TriMesh mesh; 
+		try {
+			BufferedReader reader;
+			reader = new BufferedReader(new FileReader(file));
+			StreamTokenizer tokenizer = new StreamTokenizer(reader);
+			tokenizer.resetSyntax();
+			tokenizer.whitespaceChars(0, 0x20);
+			tokenizer.wordChars(0x21, 0xff);
+			mesh = readSTL(tokenizer);
+			reader.close();
+			return mesh;
+		} catch (FileNotFoundException e) {
+			System.err.println("ERROR: Can't find file " + file);
+			return null;
+		} catch (IOException e) {
+			return null;
+		}
+	}
+
+	private static TriMesh readSTL(StreamTokenizer tokenizer) throws IOException {
+		Vector3f vertex1 = new Vector3f();
+		Vector3f vertex2 = new Vector3f();
+		Vector3f vertex3 = new Vector3f();
+		Vector3f temp = new Vector3f();
+		Vector3f normal = new Vector3f(); 
+		Vector3f side1 = new Vector3f();
+		Vector3f side2 = new Vector3f();
+		Vector3f surfaceNormal = new Vector3f();
+        Vector normalArray = new Vector();
+        Vector vertexArray = new Vector();
+        VertexBuffer kVBuffer;
+        int[] aiConnect;
+        int i;
+        TriMesh kMesh = null;
+        
+		try {
+			while (true) {
+				if ((temp = readPoint(tokenizer, "normal")) == null)
+					break;
+				normal = new Vector3f(temp);
+				
+				vertexArray.add(readPoint(tokenizer, "vertex"));
+				vertexArray.add(readPoint(tokenizer, "vertex"));
+				vertexArray.add(readPoint(tokenizer, "vertex"));
+				
+				// System.err.println("vertex1.x = " + vertex1.X() + " vertex1.y = " + vertex1.Y() + " vertex1.z = " + vertex1.Z());
+
+                 /*
+				// Check that the normal is in the correct direction
+				side1.SetData(vertex2);
+				side1.sub(vertex1);
+				side2.SetData(vertex3);
+				side2.sub(vertex2);
+				// surfaceNormal.Cross(side1, side2);
+                side1.Cross(side2, surfaceNormal);
+				if (normal.Dot(surfaceNormal) < 0 ) {
+					// vertices were specified in the wrong order, so reverse two of them
+					temp.SetData(vertex2);
+					vertex2.SetData(vertex3);
+					vertex3.SetData(temp);
+				}
+				*/
+			}
+			
+			int vertexCount = vertexArray.size();
+			Vector3f vertex;
+			Attributes kAttr = new Attributes();
+            kAttr.SetPChannels(3);
+            kAttr.SetNChannels(3);
+            kAttr.SetTChannels(0,3);
+            kAttr.SetCChannels(0,4);
+            kVBuffer = new VertexBuffer( kAttr, vertexCount );
+            for(i=0;i<vertexCount;i++){
+                kVBuffer.SetPosition3( i, ((Vector3f)vertexArray.elementAt(i)).X(),
+                		((Vector3f)vertexArray.elementAt(i)).Y(), 
+                		((Vector3f)vertexArray.elementAt(i)).Z());
+                kVBuffer.SetColor4( 0, i, 1.0f, 1.0f, 1.0f, 1.0f );
+            }
+            int iTriangleCount = vertexCount / 3;
+            aiConnect = new int[vertexCount];
+            for (i = 0; i < vertexCount; i++) {
+            	aiConnect[i] = i;
+            }
+			
+		} catch (IOException e) {
+			throw e;
+		}
+		IndexBuffer kIBuffer = new IndexBuffer( aiConnect.length, aiConnect );
+        kMesh = new TriMesh(kVBuffer, kIBuffer);
+        MaterialState kMaterial = new MaterialState();
+        kMaterial.Emissive = new ColorRGB(1.0f, 1.0f, 1.0f);
+        kMaterial.Diffuse = new ColorRGB(1.0f, 1.0f, 1.0f);
+        kMaterial.Specular = new ColorRGB(1.0f, 1.0f, 1.0f);
+        kMesh.AttachGlobalState( kMaterial );
+        return kMesh;
+	}
+
+	// Find the given label in the tokenizer stream and then return the next
+	//   three numbers as a point.
+	// Return null if end of stream
+	private static Vector3f readPoint(StreamTokenizer tokenizer, String label)
+			throws IOException {
+		while (true) {
+			if (tokenizer.nextToken() == StreamTokenizer.TT_EOF)
+				return null;
+			if (tokenizer.sval.equals(label))
+				break;
+		}
+
+		if (tokenizer.nextToken() == StreamTokenizer.TT_EOF)
+			return null;
+		float x = Float.valueOf(tokenizer.sval).floatValue();
+		if (tokenizer.nextToken() == StreamTokenizer.TT_EOF)
+			return null;
+		float y = Float.valueOf(tokenizer.sval).floatValue();
+		if (tokenizer.nextToken() == StreamTokenizer.TT_EOF)
+			return null;
+		float z = Float.valueOf(tokenizer.sval).floatValue();
+
+		return new Vector3f(x, y, z);
+	}
 
     /**
      * Writes a ModelTriangleMesh and Material to disk in the xml format, based on surface.xsd.
