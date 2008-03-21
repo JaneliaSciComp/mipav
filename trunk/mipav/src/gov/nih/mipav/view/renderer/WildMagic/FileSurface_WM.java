@@ -1713,15 +1713,12 @@ public class FileSurface_WM {
 	}
 
 	private static TriMesh readSTL(StreamTokenizer tokenizer) throws IOException {
-		Vector3f vertex1 = new Vector3f();
-		Vector3f vertex2 = new Vector3f();
-		Vector3f vertex3 = new Vector3f();
+		
 		Vector3f temp = new Vector3f();
 		Vector3f normal = new Vector3f(); 
 		Vector3f side1 = new Vector3f();
 		Vector3f side2 = new Vector3f();
 		Vector3f surfaceNormal = new Vector3f();
-        Vector normalArray = new Vector();
         Vector vertexArray = new Vector();
         VertexBuffer kVBuffer;
         int[] aiConnect;
@@ -1738,8 +1735,7 @@ public class FileSurface_WM {
 				vertexArray.add(readPoint(tokenizer, "vertex"));
 				vertexArray.add(readPoint(tokenizer, "vertex"));
 				
-				// System.err.println("vertex1.x = " + vertex1.X() + " vertex1.y = " + vertex1.Y() + " vertex1.z = " + vertex1.Z());
-
+			
                  /*
 				// Check that the normal is in the correct direction
 				side1.SetData(vertex2);
