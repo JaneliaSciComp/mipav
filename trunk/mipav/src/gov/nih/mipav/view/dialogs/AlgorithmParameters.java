@@ -66,6 +66,9 @@ public class AlgorithmParameters {
 
     /** Label used for the parameter indicating the number of iterations to perform in a script action. */
     public static final String NUM_ITERATIONS = "num_iterations";
+ 
+    /** Label used for itk filters */
+    public static final String ITK_FILTER_NAME = "itk_filter_name";
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -203,6 +206,15 @@ public class AlgorithmParameters {
     }
 
     /**
+     * Retrieve the Itk filter's name.
+     * @return name The filter's base name.
+     *
+     */
+    public String getItkFilterName() {    
+        return params.getString(ITK_FILTER_NAME);
+    }
+
+    /**
      * Retrieves the list of parameters to either be used to run the script or store settings for future executions of
      * the algorithm in a script.
      *
@@ -307,6 +319,14 @@ public class AlgorithmParameters {
         waterShedPanel.setTimeStep(waterShedParams[4]);
     }
     
+    /** Call set method for Itk filter based on values in params table.
+     * 
+     * @param itkPanel panel to set up.
+     */
+    public void setItkFilterParamGUI(JPanelItkFilterParams itkPanel) {
+    	itkPanel.runFromScript(params);
+    }
+    
     /**
      * Stores the values from the color channel panel in the parameter table. This function is used when recording a
      * script. This is a helper function used to handle parameters common to many algorithms.
@@ -409,11 +429,11 @@ public class AlgorithmParameters {
     }
 
     /**
-     * DOCUMENT ME!
+     * @see storeProcessingOptions
      *
-     * @param   doProcess3DAs25D  DOCUMENT ME!
+     * @param   doProcess3DAs25D  Whether to process 3D images in 2.5D mode (slice by slice).
      *
-     * @throws  ParserException  DOCUMENT ME!
+     * @throws  ParserException  If there is a problem creating one of the new parameters.
      */
     public void storeProcess3DAs25D(boolean doProcess3DAs25D) throws ParserException {
         params.put(ParameterFactory.newParameter(DO_PROCESS_3D_AS_25D, doProcess3DAs25D));
@@ -434,11 +454,11 @@ public class AlgorithmParameters {
     }
 
     /**
-     * DOCUMENT ME!
+     * Stores options for an algorithm using a kernel that can process dimensions separately. 
      *
-     * @param   doProcessSep  DOCUMENT ME!
+     * @param   doProcessSep  Whether to use a separable filter kernel.
      *
-     * @throws  ParserException  DOCUMENT ME!
+     * @throws  ParserException  If there is a problem creating one of the new parameters.
      */
     public void storeProcessSeparable(boolean doProcessSep) throws ParserException {
         params.put(ParameterFactory.newParameter(DO_PROCESS_SEPARABLE, doProcessSep));
@@ -447,6 +467,7 @@ public class AlgorithmParameters {
     /**
      * Stores whether the whole image or just VOI regions should be processed in the parameter table. This function is
      * used when recording a script. This is a helper function used to handle parameters common to many algorithms.
+     * @see storeProcessingOptions
      *
      * @param   doWholeImage  Whether to process the whole image or just VOI regions.
      *
@@ -469,8 +490,8 @@ public class AlgorithmParameters {
     }
     
     /**
-     * Stores an algorithm's paramters in the parameter table. This function is used when recording a script. This is a
-     * helper function used to handle parameters common to many algorithms.
+     * Stores an algorithm's parameters in the parameter table. This function is used when recording a script. This is
+     * for the WaterShed algorithm.
      *
      * @param   waterShedPanel  The WaterShed ITK panel to extract the parameters from.
      *
@@ -497,7 +518,7 @@ public class AlgorithmParameters {
 
     /**
      * Stores an algorithm's sigmas in the parameter table. This function is used when recording a script. This is a
-     * helper function used to handle parameters common to many algorithms.
+     * for the WaterShed algorithm.
      *
      * @param   sigmas                The unnormalized sigmas (must be a 3D array).
      * @param   isZCorrectionEnabled  Whether adjustment of the Z sigma should be performed based on the ratio of x
@@ -509,7 +530,29 @@ public class AlgorithmParameters {
         params.put(ParameterFactory.newParameter(SIGMAS, sigmas));
         params.put(ParameterFactory.newBoolean(SIGMA_DO_Z_RES_CORRECTION, isZCorrectionEnabled));
     }
-    
+
+    /**
+     * Stores an Itk filter's name.
+     * @param name The filter's base name.
+     *
+     * @throws  ParserException  If there is a problem creating one of the new parameters.
+     */
+    public void storeItkFilterName(String name) throws ParserException {    
+        params.put(ParameterFactory.newParameter(ITK_FILTER_NAME, name));
+    }
+
+    /**
+     * Stores an algorithm's parameters in the parameter table. This function
+     * is used when recording a script. This is for ITK filter algorithms.
+     *
+     * @param  itkFilterPanel  The panel to extract the parameters from.
+     *
+     * @throws  ParserException  If there is a problem creating one of the new parameters.
+     */
+    public void storeItkMethods(JPanelItkFilterParams itkFilterPanel) throws ParserException {
+    	itkFilterPanel.putScriptParams(params);
+    }
+
     /**
      * DOCUMENT ME!
      *

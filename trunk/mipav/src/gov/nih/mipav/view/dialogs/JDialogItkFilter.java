@@ -220,10 +220,6 @@ public class JDialogItkFilter extends JDialogScriptableBase
         String str = new String();
         str += m_outputOptionsPanel.isProcessWholeImageSet() + delim;
         str += m_image25D + delim;
-//         str += sigmaPanel.getUnnormalized3DSigmas()[0] + delim;
-//         str += sigmaPanel.getUnnormalized3DSigmas()[1] + delim;
-//         str += sigmaPanel.getUnnormalized3DSigmas()[2] + delim;
-//         str += sigmaPanel.isResolutionCorrectionEnabled() + delim;
         str += m_colorChannelPanel.isRedProcessingRequested() + delim;
         str += m_colorChannelPanel.isGreenProcessingRequested() + delim;
         str += m_colorChannelPanel.isBlueProcessingRequested();
@@ -245,19 +241,6 @@ public class JDialogItkFilter extends JDialogScriptableBase
     // *******************************************************************
 
     /**
-     * Changes labels based on whether or not check box is checked.
-     *
-     * @param  event  event that cause the method to fire
-     */
-    public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
-
-//         if (source == image25DCheckbox) {
-//             sigmaPanel.enable3DComponents(!image25DCheckbox.isSelected());
-//         }
-    }
-
-    /**
      * Loads the default settings from Preferences to set up the dialog.
      */
     public void loadDefaults() {
@@ -271,12 +254,6 @@ public class JDialogItkFilter extends JDialogScriptableBase
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
 
                 m_outputOptionsPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
-
-                //image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
-                //sigmaPanel.setSigmaX(MipavUtil.getFloat(st));
-                //sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
-                //sigmaPanel.setSigmaZ(MipavUtil.getFloat(st));
-                //sigmaPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
 
                 m_colorChannelPanel.setRedProcessingRequested(MipavUtil.getBoolean(st));
                 m_colorChannelPanel.setGreenProcessingRequested(MipavUtil.getBoolean(st));
@@ -299,8 +276,6 @@ public class JDialogItkFilter extends JDialogScriptableBase
         String defaultsString = new String(getParameterString(",") + "," 
                                            + m_outputOptionsPanel.isOutputNewImageSet());
 
-//         String defaultsString = new String(getParameterString(",") + "," + sigmaPanel.isResolutionCorrectionEnabled() +
-//                                           "," + m_outputOptionsPanel.isOutputNewImageSet());
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
@@ -322,8 +297,6 @@ public class JDialogItkFilter extends JDialogScriptableBase
         String result_name = makeImageName(m_srcImage.getImageName(), "_itk_filter");
 
         if (m_srcImage.getNDims() == 2) { // source image is 2D and kernel not separable
-
-            //float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
             if (m_outputOptionsPanel.isOutputNewImageSet()) {
 
@@ -446,8 +419,6 @@ public class JDialogItkFilter extends JDialogScriptableBase
                 }
             }
         } else if (m_srcImage.getNDims() >= 3) { 
-
-            //float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
             if (m_outputOptionsPanel.isOutputNewImageSet()) {
 
@@ -595,8 +566,24 @@ public class JDialogItkFilter extends JDialogScriptableBase
     }
 
     /**
-     * Set up the dialog GUI based on the parameters before running the
-     * algorithm as part of a script.
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(m_srcImage);
+        // First stores which filter to run:
+        String name = (m_itkFilter2D != null ? m_itkFilter2D.getName() : m_itkFilter3D.getName());
+        scriptParameters.storeItkFilterName(name);
+
+        scriptParameters.storeOutputImageParams(m_resultImage, m_outputOptionsPanel.isOutputNewImageSet());
+
+        scriptParameters.storeProcessingOptions(m_outputOptionsPanel.isProcessWholeImageSet(), m_image25D);
+        scriptParameters.storeColorOptions(m_colorChannelPanel);
+        // Store these, which might be edited, last.
+        scriptParameters.storeItkMethods(m_filterParamPanel);
+    }
+
+    /**
+     * {@inheritDoc}
      */
     protected void setGUIFromParams() {
         m_srcImage = scriptParameters.retrieveInputImage();
@@ -604,31 +591,37 @@ public class JDialogItkFilter extends JDialogScriptableBase
         parentFrame = m_srcImage.getParentFrame();
 
         m_outputOptionsPanel = new JPanelAlgorithmOutputOptions(m_srcImage);
-        //sigmaPanel = new JPanelSigmas(image);
+
         m_colorChannelPanel = new JPanelColorChannels(m_srcImage);
 
         scriptParameters.setOutputOptionsGUI(m_outputOptionsPanel);
         setImage25D(scriptParameters.doProcess3DAs25D());
-        //setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
-        //scriptParameters.setSigmasGUI(sigmaPanel);
+
         scriptParameters.setColorOptionsGUI(m_colorChannelPanel);
+
+        // construct the input filter.
+        String base_name = scriptParameters.getItkFilterName();
+        if (base_name == null) return;
+
+        int pixel_type = m_srcImage.getType();
+        String pixel_type_str = AutoItkLoader.getItkModelImageString(pixel_type);
+        String data_type_2D = pixel_type_str + "2";
+        String data_type_3D = pixel_type_str + "3";
+
+        // only one filter created.
+        if (m_image25D) {
+            m_itkFilter2D = new PItkFilter(base_name, data_type_2D, data_type_2D);
+        } else {
+            m_itkFilter3D = new PItkFilter(base_name, data_type_3D, data_type_3D);
+        }
+        m_filterParamPanel = new JPanelItkFilterParams(m_srcImage, 
+                                        (m_itkFilter2D == null ? null : m_itkFilter2D.filter()), 
+                                        (m_itkFilter3D == null ? null : m_itkFilter3D.filter()),
+                                                       m_image25D);
+        
+        scriptParameters.setItkFilterParamGUI(m_filterParamPanel);
     }
 
-    /**
-     * Store the parameters from the dialog to record the execution of this
-     * algorithm.
-     *
-     * @throws ParserException If there is a problem creating one of the new
-     * parameters.
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(m_srcImage);
-        scriptParameters.storeOutputImageParams(m_resultImage, m_outputOptionsPanel.isOutputNewImageSet());
-
-        scriptParameters.storeProcessingOptions(m_outputOptionsPanel.isProcessWholeImageSet(), m_image25D);
-        //scriptParameters.storeSigmas(sigmaPanel);
-        scriptParameters.storeColorOptions(m_colorChannelPanel);
-    }
 
     /**
      * Set up the Itk filters, if successful then

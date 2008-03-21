@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Enumeration;
+import java.util.Vector;
 import java.awt.event.*;
 import java.awt.*;
 import javax.swing.*;
@@ -14,8 +15,9 @@ import java.beans.PropertyChangeEvent;
 import InsightToolkit.*;
 
 import gov.nih.mipav.model.algorithms.itk.autoItk.*;
-import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 
 import gov.nih.mipav.view.*;
 
@@ -64,6 +66,8 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
      * Discovered list of the filter's 'set' methods
      */
     private List<MethodArgRecord> m_MethodList3D = null;
+
+    private List<Parameter> m_ParamList = null;
     
     // I'd LOVE DecimalFormat to work, but it returns Long or Double, even if
     // I feed it a Float. I _need_ the type to be maintained, when I call
@@ -89,6 +93,7 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
         m_FilterObj3D = filter_obj_3D;
         m_MethodList2D = new ArrayList<MethodArgRecord>();
         m_MethodList3D = new ArrayList<MethodArgRecord>();
+        m_ParamList = new ArrayList<Parameter>();
 
         PanelManager myPanelManager = new PanelManager(this);
         setBorder(WidgetFactory.buildTitledBorder("Parameters"));
@@ -322,8 +327,8 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
                     itkRegion def_value = (itkRegion)AutoItkLoader.invokeMethod("Get" + mthd.getName().substring(3), obj);
                     if (def_value == null) return;
 
-                    Object def_size = AutoItkLoader.invokeMethod("GetSize", def_value);
                     Object def_index = AutoItkLoader.invokeMethod("GetIndex", def_value);;
+                    Object def_size = AutoItkLoader.invokeMethod("GetSize", def_value);
 
                     ar.m_DefaultVal = def_value;
                     // Index piece of region. 
@@ -607,6 +612,8 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
 
         ViewUserInterface UI = ViewUserInterface.getReference();
 
+        m_ParamList.clear();
+
         int filter_dim = 2;
         if ( !is2DActive() && m_FilterObj3D != null ) {
             filterObj = m_FilterObj3D;
@@ -618,111 +625,256 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
         }
         // Find out whether the user changed the filter params, and call
         // matching Set methods.
+        // NOTE: ar.m_DefaultVal should be filled with value used so scripting
+        // can record which methods were invoked.
         while(it.hasNext()) {
             MethodArgRecord ar = it.next();
             if (ar.m_Changed) {
-                System.out.println("Run: Changing " + ar.m_Method.getName());
-                if (ar.m_Component instanceof JFormattedTextField) {
-                    //Get value from tf and call set method.
-                    Object val = ((JFormattedTextField)ar.m_Component).getValue();
+                try {
+                    Parameter script_param = null;
+                    System.out.println("Run: Changing " + ar.m_Method.getName());
+                    if (ar.m_Component instanceof JFormattedTextField) {
+                        //Get value from tf and call set method.
+                        ar.m_DefaultVal = ((JFormattedTextField)ar.m_Component).getValue();
                     
-                    AutoItkLoader.invokeMethod(filterObj, ar.m_Method, val);
+                        AutoItkLoader.invokeMethod(filterObj, ar.m_Method, ar.m_DefaultVal);
+                        script_param = ParameterFactory.newParameter(ar.m_Method.getName(), ar.m_DefaultVal);
+                    } else if (ar.m_Component instanceof JCheckBox) {
+                        boolean do_invoke = ((JCheckBox)ar.m_Component).isSelected();
+                        if (do_invoke) {
+                            AutoItkLoader.invokeMethod(filterObj, ar.m_Method);
+                            script_param = ParameterFactory.newParameter(ar.m_Method.getName(), "invoke");
+                        } else {
+                            // unmark Changed flag - and scripting won't record it.
+                            ar.m_Changed = false;
+                        }
+                    } else if (ar.m_Component instanceof JComboBox) {
+                        //} else if (def_class_name.startsWith("PItkImage")) {
+                        // ModelImage input via combo box.
+                        String sel_name = (String) ((JComboBox)ar.m_Component).getSelectedItem();
+                        if (!sel_name.equals(IMG_NONE)) {
+                            ModelImage image_param = UI.getRegisteredImageByName(sel_name);
+                            if (image_param == null) {
+                                System.out.println("Run: Can't retrieve " + sel_name);
+                                continue;
+                            }
+                            if (filter_dim == 2) {
+                                PItkImage2 itk_image = InsightToolkitSupport.itkCreateImageSingle2D(image_param);
+                                if (itk_image == null) {
+                                    System.out.println("Run: Can't convert " + sel_name + " to itk input.");
+                                    continue;
+                                }
+                                // set the param value.
+                                AutoItkLoader.invokeMethod(filterObj, ar.m_Method, itk_image.img());
+                                script_param = ParameterFactory.newImage(ar.m_Method.getName(), sel_name, false);
+
+                            } else if (filter_dim == 3) {                         
+                                PItkImage3 itk_image = InsightToolkitSupport.itkCreateImageSingle3D(image_param);
+                                if (itk_image == null) {
+                                    System.out.println("Run: Can't convert " + sel_name + " to itk input.");
+                                    continue;
+                                }
+                                // set the param value.
+                                AutoItkLoader.invokeMethod(filterObj, ar.m_Method, itk_image.img());
+                                script_param = ParameterFactory.newImage(ar.m_Method.getName(), sel_name, false);
+                            }
+                        }
+                    } else if (ar.m_Component instanceof JPanel) {
+                        String def_class_name = (ar.m_DefaultVal == null ? "" : ar.m_DefaultVal.getClass().getSimpleName());
+                        if (ar.m_DefaultVal instanceof Boolean) {
+                            // First radio button "on", says whether boolean is true.
+                            JRadioButton rb = (JRadioButton)((JPanel)ar.m_Component).getComponent(0);
+                            boolean on_selected = rb.isSelected();
+                            ar.m_DefaultVal = on_selected;
+                            AutoItkLoader.invokeMethod(filterObj, ar.m_Method, on_selected);
+                            script_param = ParameterFactory.newParameter(ar.m_Method.getName(), ar.m_DefaultVal);
+                        } else if (def_class_name.startsWith("itkBinaryBallStructuringElement")) {
+                            // compound itk object, take action based on default value we saved.
+                            // get text field.
+                            for (Component cmp : ar.m_Component.getComponents()) {
+                                if (cmp instanceof JFormattedTextField) {
+                                    Object val = ((JFormattedTextField)cmp).getValue();
+                                    // call SetRadius on BallStructuringElement
+                                    AutoItkLoader.invokeMethod("SetRadius", ar.m_DefaultVal, null, val);
+                                    // create the kernel
+                                    AutoItkLoader.invokeMethod("CreateStructuringElement", ar.m_DefaultVal);
+                                    // Set the kernel
+                                    AutoItkLoader.invokeMethod(filterObj, ar.m_Method, ar.m_DefaultVal);
+                                
+                                    script_param = ParameterFactory.newParameter(ar.m_Method.getName(), val);
+                                    //System.out.println("Run: kernel radius " + val);
+                                }
+                            }
+                        } else if (def_class_name.startsWith("itkPoint") ||
+                                   def_class_name.startsWith("itkVector") ||
+                                   def_class_name.startsWith("itkFixedArray") ) {
+                            // reset the default val, 2 or 3 dimensions.
+                            // vs itkSize, only difference is 'int' vs 'long' for first SetElement arg.
+                            int tf_count = 0;
+                            ArrayList<Object> param_vals = new ArrayList<Object>();
+                            for (Component cmp : ar.m_Component.getComponents()) {
+                                if (cmp instanceof JFormattedTextField) {
+                                    AutoItkLoader.invokeMethod("SetElement", ar.m_DefaultVal, null, 
+                                                               tf_count, 
+                                                               ((JFormattedTextField)cmp).getValue());
+                                    param_vals.add(((JFormattedTextField)cmp).getValue());
+                                    tf_count++;
+                                }
+                            }
+                            // set the param value.
+                            AutoItkLoader.invokeMethod(filterObj, ar.m_Method, ar.m_DefaultVal);
+                            script_param = ParameterFactory.newParameter(ar.m_Method.getName(), param_vals.toArray());
+                        } else if (def_class_name.startsWith("itkSize") ||
+                                   def_class_name.startsWith("itkIndex") ) {
+                            // reset the default val, 2 or 3 dimensions.
+                            // vs itkPoint, only difference is 'int' vs 'long' for first SetElement arg.
+                            long tf_count = 0;
+                            ArrayList<Object> param_vals = new ArrayList<Object>();
+                            for (Component cmp : ar.m_Component.getComponents()) {
+                                if (cmp instanceof JFormattedTextField) {
+                                    AutoItkLoader.invokeMethod("SetElement", ar.m_DefaultVal, null, 
+                                                               tf_count, 
+                                                               ((JFormattedTextField)cmp).getValue());
+                                    param_vals.add(((JFormattedTextField)cmp).getValue());
+
+                                    tf_count++;
+                                }
+                            }
+                            // set the param value.
+                            AutoItkLoader.invokeMethod(filterObj, ar.m_Method, ar.m_DefaultVal);
+                            script_param = ParameterFactory.newParameter(ar.m_Method.getName(), param_vals.toArray());
+                        
+                        } else if (def_class_name.startsWith("itkImageRegion") ) {
+                            // contains an index, then a size
+                            long tf_count = 0;
+                            ArrayList<Object> param_vals = new ArrayList<Object>();
+                            Object val_index = AutoItkLoader.invokeMethod("GetIndex", ar.m_DefaultVal);;
+                            Object val_size = AutoItkLoader.invokeMethod("GetSize", ar.m_DefaultVal);
+
+                            for (Component cmp : ar.m_Component.getComponents()) {
+                                if (cmp instanceof JFormattedTextField) {
+                                    AutoItkLoader.invokeMethod("SetElement", 
+                                                       tf_count < filter_dim ? val_index : val_size, 
+                                                               null, 
+                                                               tf_count % filter_dim, 
+                                                               ((JFormattedTextField)cmp).getValue());
+                                    param_vals.add(((Number)((JFormattedTextField)cmp).getValue()).intValue());
+
+                                    tf_count++;
+                                }
+                            }
+                            // set the parts of the region
+                            AutoItkLoader.invokeMethod("SetIndex", ar.m_DefaultVal, null, val_index);
+                            AutoItkLoader.invokeMethod("SetSize", ar.m_DefaultVal, null, val_size);
+                            // set the param value.
+                            AutoItkLoader.invokeMethod(filterObj, ar.m_Method, ar.m_DefaultVal);
+                            script_param = ParameterFactory.newParameter(ar.m_Method.getName(), param_vals.toArray());
+                            System.out.println("Run: called " + ar.m_Method.getName() + "  with " 
+                                               + param_vals);
+                        
+                        } else {
+                            System.out.println("Run: TODO Jpanel component changed, " +
+                                               "not calling " + ar.m_Method.getName());
+                        }
+                    } else {
+                        System.out.println("Run: Unknown component changed value, " +
+                                           "not calling " + ar.m_Method.getName());
+                    }
+                    if (script_param != null) {
+                        m_ParamList.add(script_param);
+                    }
+                } catch (ParserException pe) {
+                    System.out.println("Run: script parser " + pe);   
+                }
+            }
+        }
+        return true;
+    }
+
+    /** After algorithm has run, if script is recording, add an entry for each
+     * 'set' method which was called with the correct arg value.
+     * 
+     * @param params table of parameters to modify.
+     */
+    public void putScriptParams(ParameterTable params) throws ParserException 
+    {
+        Iterator<Parameter> it = m_ParamList.iterator();
+        while(it.hasNext()) {
+            Parameter param = it.next();
+            params.put(param);
+        }
+    }
+
+    /** Call 'set' methods for the Itk filter based on values in params table.
+     * 
+     * @param params table of parameters to read from.
+     */
+    public void runFromScript(ParameterTable params) 
+    {
+        Object filterObj = null;
+        Iterator<MethodArgRecord> it = null;
+        int filter_dim = 2;
+        if ( !is2DActive() && m_FilterObj3D != null ) {
+            filterObj = m_FilterObj3D;
+            it = m_MethodList3D.iterator() ;
+            filter_dim = 3;
+        } else {
+            filterObj = m_FilterObj2D;
+            it = m_MethodList2D.iterator();
+        }
+        while(it.hasNext()) {
+            MethodArgRecord ar = it.next();
+            Parameter param = params.getParameter(ar.m_Method.getName());
+            // Same goal as runSetMethods, above - call filter's methods with stored values.
+            // so keep the same structure.
+            if (param != null) {
+                if (ar.m_Component instanceof JFormattedTextField) {
+                    Object value = AutoItkLoader.invokeMethod("getValue", param);
+                    //System.out.println("call " + ar.m_Method.getName() + " with " + value);
+                    AutoItkLoader.invokeMethod(filterObj, ar.m_Method, value);
                 } else if (ar.m_Component instanceof JCheckBox) {
-                    boolean do_invoke = ((JCheckBox)ar.m_Component).isSelected();
-                    if (do_invoke) {
-                        AutoItkLoader.invokeMethod(filterObj, ar.m_Method);
-                    }
+                    // if this was recorded, we invoke with no args.
+                    AutoItkLoader.invokeMethod(filterObj, ar.m_Method);
                 } else if (ar.m_Component instanceof JComboBox) {
-                    //} else if (def_class_name.startsWith("PItkImage")) {
-                    // ModelImage input via combo box.
-                    String sel_name = (String) ((JComboBox)ar.m_Component).getSelectedItem();
-                    if (!sel_name.equals(IMG_NONE)) {
-                        ModelImage image_param = UI.getRegisteredImageByName(sel_name);
-                        if (image_param == null) {
-                            System.out.println("Run: Can't retrieve " + sel_name);
-                            continue;
-                        }
-                        if (filter_dim == 2) {
-                            PItkImage2 itk_image = InsightToolkitSupport.itkCreateImageSingle2D(image_param);
-                            if (itk_image == null) {
-                                System.out.println("Run: Can't convert " + sel_name + " to itk input.");
-                                continue;
-                            }
-                            // set the param value.
-                            AutoItkLoader.invokeMethod(filterObj, ar.m_Method, itk_image.img());
-                        } else if (filter_dim == 3) {                         
-                            PItkImage3 itk_image = InsightToolkitSupport.itkCreateImageSingle3D(image_param);
-                            if (itk_image == null) {
-                                System.out.println("Run: Can't convert " + sel_name + " to itk input.");
-                                continue;
-                            }
-                            // set the param value.
-                            AutoItkLoader.invokeMethod(filterObj, ar.m_Method, itk_image.img());
-                        }
-                    }
+                    // TODO image
                 } else if (ar.m_Component instanceof JPanel) {
                     String def_class_name = (ar.m_DefaultVal == null ? "" : ar.m_DefaultVal.getClass().getSimpleName());
                     if (ar.m_DefaultVal instanceof Boolean) {
-                        // First radio button "on", says whether boolean is true.
-                        JRadioButton rb = (JRadioButton)((JPanel)ar.m_Component).getComponent(0);
-                        boolean on_selected = rb.isSelected();
-                        AutoItkLoader.invokeMethod(filterObj, ar.m_Method, on_selected);
+                        Object value = AutoItkLoader.invokeMethod("getValue", param);
+                        //System.out.println("call " + ar.m_Method.getName() + " with " + value);
+                        AutoItkLoader.invokeMethod(filterObj, ar.m_Method, value);
                     } else if (def_class_name.startsWith("itkBinaryBallStructuringElement")) {
-                        // compound itk object, take action based on default value we saved.
-                        // get text field.
-                        for (Component cmp : ar.m_Component.getComponents()) {
-                            if (cmp instanceof JFormattedTextField) {
-                                Object val = ((JFormattedTextField)cmp).getValue();
-                                // call SetRadius on BallStructuringElement
-                                AutoItkLoader.invokeMethod("SetRadius", ar.m_DefaultVal, null, val);
-                                // create the kernel
-                                AutoItkLoader.invokeMethod("CreateStructuringElement", ar.m_DefaultVal);
-                                // Set the kernel
-                                AutoItkLoader.invokeMethod(filterObj, ar.m_Method, ar.m_DefaultVal);
-                                
-                                //System.out.println("Run: kernel radius " + val);
-                            }
-                        }
+                        Object value = AutoItkLoader.invokeMethod("getValue", param);
+                        //System.out.println("call " + ar.m_Method.getName() + " with " + value);
+                        AutoItkLoader.invokeMethod("SetRadius", ar.m_DefaultVal, null, value);
+                        // create the kernel
+                        AutoItkLoader.invokeMethod("CreateStructuringElement", ar.m_DefaultVal);
+                        // Set the kernel
+                        AutoItkLoader.invokeMethod(filterObj, ar.m_Method, ar.m_DefaultVal);
                     } else if (def_class_name.startsWith("itkPoint") ||
                                def_class_name.startsWith("itkVector") ||
                                def_class_name.startsWith("itkFixedArray") ) {
-                        // reset the default val, 2 or 3 dimensions.
-                        // vs itkSize, only difference is 'int' vs 'long' for first SetElement arg.
-                        int tf_count = 0;
-                        for (Component cmp : ar.m_Component.getComponents()) {
-                            if (cmp instanceof JFormattedTextField) {
-                                AutoItkLoader.invokeMethod("SetElement", ar.m_DefaultVal, null, 
-                                                           tf_count, 
-                                                           ((JFormattedTextField)cmp).getValue());
-
-                                tf_count++;
-                            }
+                        // Param must be a list.
+                        Vector<?> value_vec = ((ParameterList)param).getList();
+                        for (int tf_count = 0; tf_count < value_vec.size(); tf_count++) {
+                            Object value = AutoItkLoader.invokeMethod("getValue", value_vec.get(tf_count));
+                            AutoItkLoader.invokeMethod("SetElement", ar.m_DefaultVal, null, 
+                                                       tf_count, value );
                         }
-                        // set the param value.
                         AutoItkLoader.invokeMethod(filterObj, ar.m_Method, ar.m_DefaultVal);
-
                     } else if (def_class_name.startsWith("itkSize") ||
                                def_class_name.startsWith("itkIndex") ) {
-                        // reset the default val, 2 or 3 dimensions.
-                        // vs itkPoint, only difference is 'int' vs 'long' for first SetElement arg.
-                        long tf_count = 0;
-                        for (Component cmp : ar.m_Component.getComponents()) {
-                            if (cmp instanceof JFormattedTextField) {
-                                AutoItkLoader.invokeMethod("SetElement", ar.m_DefaultVal, null, 
-                                                           tf_count, 
-                                                           ((JFormattedTextField)cmp).getValue());
-
-                                tf_count++;
-                            }
+                        // Param must be a list.
+                        Vector<?> value_vec = ((ParameterList)param).getList();
+                        for (long tf_count = 0; tf_count < value_vec.size(); tf_count++) {
+                            Object value = AutoItkLoader.invokeMethod("getValue", value_vec.get((int)tf_count));
+                            AutoItkLoader.invokeMethod("SetElement", ar.m_DefaultVal, null, 
+                                                       tf_count, value );
                         }
-                        // set the param value.
                         AutoItkLoader.invokeMethod(filterObj, ar.m_Method, ar.m_DefaultVal);
-
-                        
                     } else if (def_class_name.startsWith("itkImageRegion") ) {
                         System.out.println("Run: TODO Jpanel component changed, " +
-                                "not calling " + ar.m_Method.getName());
-                        
+                                           "not calling " + ar.m_Method.getName());
                     } else {
                         System.out.println("Run: TODO Jpanel component changed, " +
                                            "not calling " + ar.m_Method.getName());
@@ -733,7 +885,6 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
                 }
             }
         }
-        return true;
     }
 
     /* (non-Javadoc)
