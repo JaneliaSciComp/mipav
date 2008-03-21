@@ -104,6 +104,17 @@ public class PItkImage3
         
     }
 
+    /** Create wrapper of existing itkImage.
+     * Wrapper around itk smart pointer and the more useful image pointer. 
+     * @param smart_pointer existing Itk smart pointer to Itk image.
+     */
+    public PItkImage3(Object smart_pointer) {
+        m_itkImageBase3 = (itkImageBase3)AutoItkLoader.invokeMethod("GetPointer", smart_pointer);
+        if (m_itkImageBase3 != null) {
+            m_SmartPointer = smart_pointer;
+        }
+    }
+
     /** Access the 3D image 
      * @return 3D Itk image. null if Mipav type doesn't have corresponding itk type.
      */

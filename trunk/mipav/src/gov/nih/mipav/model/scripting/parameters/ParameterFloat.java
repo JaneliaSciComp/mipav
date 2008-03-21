@@ -21,7 +21,7 @@ public class ParameterFloat extends Parameter {
      *
      * @param   paramLabel       The label/name to give to this parameter.
      * @param   paramTypeString  The type of this parameter, in string form.
-     * @param   paramValue       The new prameter value.
+     * @param   paramValue       The new parameter value.
      *
      * @throws  ParserException  If there is a problem creating the parameter.
      */
@@ -35,7 +35,7 @@ public class ParameterFloat extends Parameter {
      *
      * @param   paramLabel        The label/name to give to this parameter.
      * @param   paramTypeString   The type of this parameter, in string form.
-     * @param   paramValueString  The new prameter value in string form.
+     * @param   paramValueString  The new parameter value in string form.
      *
      * @throws  ParserException  If there is a problem creating the parameter.
      */
@@ -49,7 +49,7 @@ public class ParameterFloat extends Parameter {
      *
      * @param   paramLabel  The label/name to give to this parameter.
      * @param   paramType   The type of this parameter (should be PARAM_FLOAT).
-     * @param   paramValue  The new prameter value.
+     * @param   paramValue  The new parameter value.
      *
      * @throws  ParserException  If there is a problem creating the parameter.
      */
@@ -63,7 +63,7 @@ public class ParameterFloat extends Parameter {
      *
      * @param   paramLabel        The label/name to give to this parameter.
      * @param   paramType         The type of this parameter (should be PARAM_FLOAT).
-     * @param   paramValueString  The new prameter value in string form.
+     * @param   paramValueString  The new parameter value in string form.
      *
      * @throws  ParserException  If there is a problem creating the parameter.
      */

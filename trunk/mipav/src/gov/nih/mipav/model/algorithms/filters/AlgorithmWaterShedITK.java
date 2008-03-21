@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms.filters;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.itk.autoItk.*;
 import gov.nih.mipav.model.structures.*;
 
 import InsightToolkit.*;
@@ -141,22 +142,23 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                     }
 
                     for (int iChannel = 0; iChannel < 4; iChannel++) {
-                        itkImageF2 kImageSrcITK = (itkImageF2)InsightToolkitSupport.itkCreateImageColor2D(srcImage, iChannel).img();
+                        PItkImage2 kImageSrcITK = InsightToolkitSupport.itkCreateImageColor2D(srcImage, iChannel);
                         
                         // filter channel and write result to target image
                         if (abProcessChannel[iChannel]) {
-                        	  itkImageUL2 resultImage = perform2DFiltering(kImageSrcITK);
-                              InsightToolkitSupport.itkTransferImageColor2D(kImageSrcITK, resultImage, mask,
-                                      srcImage, iChannel);
+                            PItkImage2 resultImage = perform2DFiltering(kImageSrcITK);
+                            InsightToolkitSupport.itkTransferImageColor2D(kImageSrcITK.img(), resultImage.img(), mask,
+                                                                          srcImage, iChannel);
                         }
                         // just copy channel from source to target image
                         else {
-                        	itkImageUL2 resultImage = perform2DFiltering(kImageSrcITK);
-                        	InsightToolkitSupport.itkTransferImageColor2D(kImageSrcITK, resultImage, mask,
+                        	PItkImage2 resultImage = perform2DFiltering(kImageSrcITK);
+                        	InsightToolkitSupport.itkTransferImageColor2D(kImageSrcITK.img(), resultImage.img(), mask,
                                       srcImage, iChannel);
                         }
                     }
 
+                    destImage.calcMinMax();
                     destImage.releaseLock();
 
                 }
@@ -167,20 +169,21 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                     for (int iChannel = 0; iChannel < 4; iChannel++) {
 
                         if (abProcessChannel[iChannel]) {
-                            itkImageF2 kImageSrcITK = (itkImageF2)InsightToolkitSupport.itkCreateImageColor2D(srcImage, iChannel).img();
-                            itkImageUL2 resultImage = perform2DFiltering(kImageSrcITK);
-                            InsightToolkitSupport.itkTransferImageColor2D(kImageSrcITK, resultImage, mask,
+                            PItkImage2 kImageSrcITK = InsightToolkitSupport.itkCreateImageColor2D(srcImage, iChannel);
+                            PItkImage2 resultImage = perform2DFiltering(kImageSrcITK);
+                            InsightToolkitSupport.itkTransferImageColor2D(kImageSrcITK.img(), resultImage.img(), mask,
                                                                           srcImage, iChannel);
                         }
                     }
+                    srcImage.calcMinMax();
                 } 
             }
              
                 
             // Single channel 2D
             else if ((2 == srcImage.getNDims()) && !srcImage.isColorImage()) {
-                itkImageF2 kImageSrcITK = (itkImageF2)InsightToolkitSupport.itkCreateImageSingle2D(srcImage).img();
-                itkImageUL2 resultImage = perform2DFiltering(kImageSrcITK);
+                PItkImage2 kImageSrcITK = InsightToolkitSupport.itkCreateImageSingle2D(srcImage);
+                PItkImage2 resultImage = perform2DFiltering(kImageSrcITK);
                 
                 // store result in target image
                 if (null != destImage) {
@@ -193,16 +196,18 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                         return;
                     }
 
-                    InsightToolkitSupport.itkTransferImageSingle2D(kImageSrcITK, resultImage, mask,
+                    InsightToolkitSupport.itkTransferImageSingle2D(kImageSrcITK.img(), resultImage.img(), mask,
                                                                    destImage);
 
+                    destImage.calcMinMax();
                     destImage.releaseLock();
                 }
 
                 // store result back in source image
                 else {
-                    InsightToolkitSupport.itkTransferImageSingle2D(kImageSrcITK, resultImage, mask,
+                    InsightToolkitSupport.itkTransferImageSingle2D(kImageSrcITK.img(), resultImage.img(), mask,
                                                                    srcImage);
+                    srcImage.calcMinMax();
                 }
             }
 
@@ -234,25 +239,26 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                         }
 
                         for (int iChannel = 0; iChannel < 4; iChannel++) {
-                            itkImageF2 kImageSrcITK = (itkImageF2)InsightToolkitSupport.itkCreateImageColorSlice(srcImage, iSlice,
-                                                                                                     iChannel).img();
+                            PItkImage2 kImageSrcITK = InsightToolkitSupport.itkCreateImageColorSlice(srcImage, iSlice,
+                                                                                                     iChannel);
 
                             // filter channel and write result to target image
                             if (abProcessChannel[iChannel]) {
-                            	itkImageUL2 resultImage = perform2DFiltering(kImageSrcITK);
+                            	PItkImage2 resultImage = perform2DFiltering(kImageSrcITK);
 
-                                InsightToolkitSupport.itkTransferImageColorSlice(kImageSrcITK, resultImage,
+                                InsightToolkitSupport.itkTransferImageColorSlice(kImageSrcITK.img(), resultImage.img(),
                                                                                  mask, destImage, iSlice, iChannel);
                             }
                             // just copy channel from source to target image
                             else {
-                            	itkImageUL2 resultImage = perform2DFiltering(kImageSrcITK);
-                                InsightToolkitSupport.itkTransferImageColorSlice(kImageSrcITK, resultImage, mask,
+                            	PItkImage2 resultImage = perform2DFiltering(kImageSrcITK);
+                                InsightToolkitSupport.itkTransferImageColorSlice(kImageSrcITK.img(), resultImage.img(), mask,
                                                                                  destImage, iSlice, iChannel);
                             }
                         }
                     }
 
+                    destImage.calcMinMax();
                     destImage.releaseLock();
                 }
 
@@ -274,16 +280,17 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                         for (int iChannel = 0; iChannel < 4; iChannel++) {
 
                             if (abProcessChannel[iChannel]) {
-                                itkImageF2 kImageSrcITK = (itkImageF2)InsightToolkitSupport.itkCreateImageColorSlice(srcImage,
+                                PItkImage2 kImageSrcITK = InsightToolkitSupport.itkCreateImageColorSlice(srcImage,
                                                                                                          iSlice,
-                                                                                                         iChannel).img();
-                                itkImageUL2 resultImage = perform2DFiltering(kImageSrcITK);
+                                                                                                         iChannel);
+                                PItkImage2 resultImage = perform2DFiltering(kImageSrcITK);
 
-                                InsightToolkitSupport.itkTransferImageColorSlice(kImageSrcITK, resultImage,
+                                InsightToolkitSupport.itkTransferImageColorSlice(kImageSrcITK.img(), resultImage.img(),
                                                                                  mask, srcImage, iSlice, iChannel);
                             }
                         }
                     }
+                    srcImage.calcMinMax();
                 } 
             }
 
@@ -315,12 +322,13 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                             return;
                         }
 
-                        itkImageF2 kImageSrcITK = (itkImageF2)InsightToolkitSupport.itkCreateImageSingle2D(srcImage).img();
-                        itkImageUL2 resultImage = perform2DFiltering(kImageSrcITK);
-                        InsightToolkitSupport.itkTransferImageSingleSlice(kImageSrcITK, resultImage, mask,
+                        PItkImage2 kImageSrcITK = InsightToolkitSupport.itkCreateImageSingle2D(srcImage);
+                        PItkImage2 resultImage = perform2DFiltering(kImageSrcITK);
+                        InsightToolkitSupport.itkTransferImageSingleSlice(kImageSrcITK.img(), resultImage.img(), mask,
                                                                           destImage, iSlice);
                     }
 
+                    destImage.calcMinMax();
                     destImage.releaseLock();
                 }
 
@@ -341,11 +349,12 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                             return;
                         }
 
-                        itkImageF2 kImageSrcITK = (itkImageF2)InsightToolkitSupport.itkCreateImageSingle2D(srcImage).img();
-                        itkImageUL2 resultImage = perform2DFiltering(kImageSrcITK);
-                        InsightToolkitSupport.itkTransferImageSingleSlice(kImageSrcITK, resultImage, mask,
+                        PItkImage2 kImageSrcITK = InsightToolkitSupport.itkCreateImageSingle2D(srcImage);
+                        PItkImage2 resultImage = perform2DFiltering(kImageSrcITK);
+                        InsightToolkitSupport.itkTransferImageSingleSlice(kImageSrcITK.img(), resultImage.img(), mask,
                                                                           srcImage, iSlice);
                     }
+                    srcImage.calcMinMax();
 
                 }
             }
@@ -371,23 +380,24 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                     }
 
                     for (int iChannel = 0; iChannel < 4; iChannel++) {
-                        itkImageF3 kImageSrcITK = (itkImageF3)InsightToolkitSupport.itkCreateImageColor3D(srcImage, iChannel).img();
+                        PItkImage3 kImageSrcITK = InsightToolkitSupport.itkCreateImageColor3D(srcImage, iChannel);
 
                         // filter channel and write result to target image
                         if (abProcessChannel[iChannel]) {
-                        	itkImageUL3 resultImage = perform3DFiltering(kImageSrcITK);
+                        	PItkImage3 resultImage = perform3DFiltering(kImageSrcITK);
 
-                            InsightToolkitSupport.itkTransferImageColor3D(kImageSrcITK, resultImage, mask,
+                            InsightToolkitSupport.itkTransferImageColor3D(kImageSrcITK.img(), resultImage.img(), mask,
                                                                           destImage, iChannel);
                         }
                         // just copy channel from source to target image
                         else {
-                        	itkImageUL3 resultImage = perform3DFiltering(kImageSrcITK);
-                            InsightToolkitSupport.itkTransferImageColor3D(kImageSrcITK, resultImage, mask, destImage,
+                        	PItkImage3 resultImage = perform3DFiltering(kImageSrcITK);
+                            InsightToolkitSupport.itkTransferImageColor3D(kImageSrcITK.img(), resultImage.img(), mask, destImage,
                                                                           iChannel);
                         }
                     }
 
+                    destImage.calcMinMax();
                     destImage.releaseLock();
                    
                 }
@@ -398,19 +408,20 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                     for (int iChannel = 0; iChannel < 4; iChannel++) {
 
                         if (abProcessChannel[iChannel]) {
-                            itkImageF3 kImageSrcITK = (itkImageF3)InsightToolkitSupport.itkCreateImageColor3D(srcImage, iChannel).img();
-                            itkImageUL3 resultImage = perform3DFiltering(kImageSrcITK);
-                            InsightToolkitSupport.itkTransferImageColor3D(kImageSrcITK, resultImage, mask,
+                            PItkImage3 kImageSrcITK = InsightToolkitSupport.itkCreateImageColor3D(srcImage, iChannel);
+                            PItkImage3 resultImage = perform3DFiltering(kImageSrcITK);
+                            InsightToolkitSupport.itkTransferImageColor3D(kImageSrcITK.img(), resultImage.img(), mask,
                                                                           srcImage, iChannel);
                         }
                     }
+                    srcImage.calcMinMax();
                 }           
             }
 
             // Single channel 3D
             else {
-            	itkImageF3 kImageSrcITK = (itkImageF3)InsightToolkitSupport.itkCreateImageSingle3D(srcImage).img();
-            	itkImageUL3 resultImage = perform3DFiltering(kImageSrcITK);
+            	PItkImage3 kImageSrcITK = InsightToolkitSupport.itkCreateImageSingle3D(srcImage);
+            	PItkImage3 resultImage = perform3DFiltering(kImageSrcITK);
                
                 // store result in target image
                 if (null != destImage) {
@@ -423,16 +434,18 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
                         return;
                     }
 
-                    InsightToolkitSupport.itkTransferImageSingle3D(kImageSrcITK, resultImage, mask,
+                    InsightToolkitSupport.itkTransferImageSingle3D(kImageSrcITK.img(), resultImage.img(), mask,
                                                                    destImage);
 
+                    destImage.calcMinMax();
                     destImage.releaseLock();
                 }
 
                 // store result back in source image
                 else {
-                    InsightToolkitSupport.itkTransferImageSingle3D(kImageSrcITK, resultImage, mask,
+                    InsightToolkitSupport.itkTransferImageSingle3D(kImageSrcITK.img(), resultImage.img(), mask,
                                                                    srcImage);
+                    srcImage.calcMinMax();
                 }
             }
         }
@@ -452,42 +465,43 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
     /**
      * Apply the watershed segmentation algorithm with 3D image.
      * @param kImageSrcITK  itk image source file
-     * @return watershed.GetOutput()   watershed algorithm output image file. 
+     * @return watershed.GetOutput()   wrapped watershed algorithm output image file. 
      */
-    public itkImageUL3 perform3DFiltering(itkImageF3 kImageSrcITK ) {
-    	  itkGradientAnisotropicDiffusionImageFilterF3F3_Pointer diffusion = 
-              itkGradientAnisotropicDiffusionImageFilterF3F3.itkGradientAnisotropicDiffusionImageFilterF3F3_New();
+    public PItkImage3 perform3DFiltering(PItkImage3 kImageSrcITK ) {
+        itkGradientAnisotropicDiffusionImageFilterF3F3_Pointer diffusion = 
+            itkGradientAnisotropicDiffusionImageFilterF3F3.itkGradientAnisotropicDiffusionImageFilterF3F3_New();
 
-            diffusion.SetInput( kImageSrcITK );
-            diffusion.SetTimeStep( timeStep );
-            diffusion.SetConductanceParameter( conductance );
-            diffusion.SetNumberOfIterations(  iterations );
+        diffusion.SetInput( (itkImageF3)kImageSrcITK.img() );
+        diffusion.SetTimeStep( timeStep );
+        diffusion.SetConductanceParameter( conductance );
+        diffusion.SetNumberOfIterations(  iterations );
 
-            itkGradientMagnitudeImageFilterF3F3_Pointer gradient = 
-              itkGradientMagnitudeImageFilterF3F3.itkGradientMagnitudeImageFilterF3F3_New();
+        itkGradientMagnitudeImageFilterF3F3_Pointer gradient = 
+            itkGradientMagnitudeImageFilterF3F3.itkGradientMagnitudeImageFilterF3F3_New();
 
-            gradient.SetInput(diffusion.GetOutput());
+        gradient.SetInput(diffusion.GetOutput());
 
-            itkWatershedImageFilterF3_Pointer watershed = 
-              itkWatershedImageFilterF3.itkWatershedImageFilterF3_New();
+        itkWatershedImageFilterF3_Pointer watershed = 
+            itkWatershedImageFilterF3.itkWatershedImageFilterF3_New();
 
-            watershed.SetInput( gradient.GetOutput() );
-            watershed.SetThreshold( threshold );
-            watershed.SetLevel( level );
-            watershed.Update();
-    	return watershed.GetOutput();
+        watershed.SetInput( gradient.GetOutput() );
+        watershed.SetThreshold( threshold );
+        watershed.SetLevel( level );
+        watershed.Update();
+        itkImageUL3_Pointer output_ptr = new itkImageUL3_Pointer(watershed.GetOutput());
+        return new PItkImage3(output_ptr);
     }
 
     /**
      * Apply the watershed segmentation algorithm with 2D image.
      * @param kImageSrcITK  itk image source file
-     * @return watershed.GetOutput()   watershed algorithm output image file. 
+     * @return watershed.GetOutput()  wrapped watershed algorithm output image file. 
      */    
-    public itkImageUL2 perform2DFiltering(itkImageF2 kImageSrcITK ) {
+    public PItkImage2 perform2DFiltering(PItkImage2 kImageSrcITK ) {
     	 itkGradientAnisotropicDiffusionImageFilterF2F2_Pointer diffusion = 
              itkGradientAnisotropicDiffusionImageFilterF2F2.itkGradientAnisotropicDiffusionImageFilterF2F2_New();
 
-           diffusion.SetInput( kImageSrcITK );
+           diffusion.SetInput( (itkImageF2)kImageSrcITK.img() );
            diffusion.SetTimeStep( timeStep );
            diffusion.SetConductanceParameter( conductance );
            diffusion.SetNumberOfIterations(  iterations );
@@ -504,7 +518,8 @@ public class AlgorithmWaterShedITK extends AlgorithmBase {
            watershed.SetThreshold( threshold );
            watershed.SetLevel( level );
            watershed.Update();
-           return watershed.GetOutput();
+           itkImageUL2_Pointer output_ptr = new itkImageUL2_Pointer(watershed.GetOutput());
+           return new PItkImage2(output_ptr);
     }
     
     /**

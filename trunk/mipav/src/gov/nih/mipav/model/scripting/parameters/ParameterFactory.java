@@ -5,6 +5,7 @@ import gov.nih.mipav.model.scripting.*;
 
 import gov.nih.mipav.view.*;
 
+import java.lang.reflect.Array;
 
 /**
  * Factory methods for the creation of various types of Parameters.
@@ -62,7 +63,7 @@ public class ParameterFactory {
      *
      * @param   label            The label/name of the new parameter.
      * @param   value            The value to assign to the new parameter (e.g., '$image1').
-     * @param   isExternalImage  Whether the new image needs to be externally-specified (as oppossed to generated from
+     * @param   isExternalImage  Whether the new image needs to be externally-specified (as opposed to generated from
      *                           within the script).
      *
      * @return  A new image placeholder variable parameter.
@@ -183,7 +184,7 @@ public class ParameterFactory {
     }
 
     /**
-     * Creates a new double prescision parameter with a given label and value.
+     * Creates a new double precision parameter with a given label and value.
      *
      * @param   label  The label/name of the new parameter.
      * @param   value  The value to assign to the new parameter.
@@ -365,8 +366,42 @@ public class ParameterFactory {
      * passed in.
      *
      * @param   label  The label/name of the new parameter.
+     * @param   value_arr  The array of values to assign to the new parameter. 
+     *                     Must be an array of boxed primitive types or Strings
+     *
+     * @return  A new parameter.
+     *
+     * @throws  ParserException  If there is a problem creating the new parameter.
+     */
+    public static final Parameter newParameter(String label, Object[] value_arr) throws ParserException {
+        if (value_arr.length <= 0) {
+            throw new ParserException("Zero length array passed into parameter creation.");
+        }
+        Object first_val = value_arr[0];
+        int param_type = -1;
+        if (first_val instanceof Integer) param_type = Parameter.PARAM_INT;
+        else if (first_val instanceof Float) param_type = Parameter.PARAM_FLOAT;
+        else if (first_val instanceof Double) param_type = Parameter.PARAM_DOUBLE;
+        else if (first_val instanceof Boolean) param_type = Parameter.PARAM_BOOLEAN;
+        else {
+            throw new ParserException("Unhandled list type passed into Object[] parameter creation.");
+        }
+        ParameterList list = new ParameterList(label, param_type );
+
+        for (int i = 0; i < value_arr.length; i++) {
+            list.addToList(ParameterFactory.newParameter("" + i, value_arr[i]));
+        }
+
+        return list;
+       
+    }
+    /**
+     * Creates a new parameter with a given label and value. The parameter type is determined by the type of the value
+     * passed in.
+     *
+     * @param   label  The label/name of the new parameter.
      * @param   value  The value to assign to the new parameter. Should be the of the type object associated with a
-     *                 primative type, or String.
+     *                 primitive type, or String.
      *
      * @return  A new parameter.
      *
@@ -375,20 +410,21 @@ public class ParameterFactory {
     public static final Parameter newParameter(String label, Object value) throws ParserException {
         Parameter param = null;
 
+        // rely on auto-unboxing to convert a Double to a double, etc.
         if (value instanceof Double) {
-            param = new ParameterDouble(label, Parameter.PARAM_DOUBLE, value.toString());
+            param = new ParameterDouble(label, Parameter.PARAM_DOUBLE, (Double)value);
         } else if (value instanceof Boolean) {
-            param = new ParameterBoolean(label, Parameter.PARAM_BOOLEAN, value.toString());
+            param = new ParameterBoolean(label, Parameter.PARAM_BOOLEAN, (Boolean)value);
         } else if (value instanceof Float) {
-            param = new ParameterFloat(label, Parameter.PARAM_FLOAT, value.toString());
+            param = new ParameterFloat(label, Parameter.PARAM_FLOAT, (Float)value);
         } else if (value instanceof Integer) {
-            param = new ParameterInt(label, Parameter.PARAM_INT, value.toString());
+            param = new ParameterInt(label, Parameter.PARAM_INT, (Integer)value);
         } else if (value instanceof Long) {
-            param = new ParameterLong(label, Parameter.PARAM_LONG, value.toString());
+            param = new ParameterLong(label, Parameter.PARAM_LONG, (Long)value);
         } else if (value instanceof String) {
-            param = new ParameterString(label, Parameter.PARAM_STRING, value.toString());
+            param = new ParameterString(label, Parameter.PARAM_STRING, (String)value);
         } else if (value instanceof Short) {
-            param = new ParameterShort(label, Parameter.PARAM_SHORT, value.toString());
+            param = new ParameterShort(label, Parameter.PARAM_SHORT, (Short)value);
         } else {
             throw new ParserException("Unsupported value type passed into parameter creation.");
         }

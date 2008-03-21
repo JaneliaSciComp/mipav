@@ -258,6 +258,28 @@ public class ParameterTable {
     }
 
     /**
+     * Return the Object value of one of the parameters from the table.
+     *
+     * @param   paramLabel  The label/name of the long parameter to retrieve.
+     *
+     * @return  The requested parameter.
+     *
+     * @throws  ParameterException  DOCUMENT ME!
+     */
+    public Parameter getParameter(String paramLabel) {
+
+        //try {
+            Parameter param = getWithOverride(paramLabel, -1);
+
+            return param;
+//         } catch (NullPointerException npe) {
+//             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
+//         } catch (ClassCastException cce) {
+//             throw new ParameterException(paramLabel, cce.getLocalizedMessage());
+//         }
+    }
+
+    /**
      * Get an array containing all of the parameters in the parameter table. No command line overriding is performed.
      *
      * @return  The parameters in the table, in no particular order.
@@ -376,7 +398,7 @@ public class ParameterTable {
      * Returns a parameter from the table, possibly overriding it with a value stored in the global VariableTable.
      *
      * @param   paramLabel  The label of the parameter to return.
-     * @param   paramType   The type of the parameter we want returned.
+     * @param   paramType   The type of the parameter we want returned, or -1 to use type from table.
      *
      * @return  The requested parameter from the table.
      *
@@ -384,6 +406,11 @@ public class ParameterTable {
      */
     protected Parameter getWithOverride(String paramLabel, int paramType) {
         Parameter param = (Parameter) paramTable.get(paramLabel);
+
+        if (paramType == -1) {
+            if (param == null) return null;
+            paramType = param.getType();
+        }
 
         if (!(param instanceof ParameterImage)) {
             VariableTable varTable = VariableTable.getReference();

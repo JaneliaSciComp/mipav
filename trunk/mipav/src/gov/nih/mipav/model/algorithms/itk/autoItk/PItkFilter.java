@@ -15,7 +15,10 @@ public class PItkFilter
      */
     private itkProcessObject m_itkFilter = null;
 
+    /** number of dimensions for this filter's i/o */
     private int m_nDims = 2;
+
+    private String m_baseName = null;
 
     protected void finalize() {
         m_itkFilter = null;
@@ -28,6 +31,7 @@ public class PItkFilter
      */
     public PItkFilter(String base_name, String input_type, String output_type)
     {
+        m_baseName = base_name;
         // get last char and try to parse as int.
         try {
             m_nDims = Integer.parseInt(input_type.substring(input_type.length() - 1));
@@ -71,5 +75,9 @@ public class PItkFilter
 
     public int getNDims() {
         return m_nDims;
+    }
+
+    public String getName() {
+        return m_baseName;
     }
 }
