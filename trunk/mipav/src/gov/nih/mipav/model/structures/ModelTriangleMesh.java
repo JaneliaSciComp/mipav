@@ -1057,6 +1057,72 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
     }
 
     /**
+	 * Save an array of triangle meshes to a binary file. The format for the file is
+	 *
+	 * <pre>
+	   int type;  // 0 = ModelTriangleMesh, 1 = ModelClodMesh
+	   int aCount;  // number of array elements
+	   array of 'aCount' meshes, each of the form:
+	   int vCount;  // number of vertices
+	   Point3f vertices[vCount];
+	   Point3f normals[vCount];
+	   int iCount;  // number of indices in the connectivity array
+	   int indices[iCount];
+	 * </pre>
+	 *
+	 * with 4-byte quantities stored in Big Endian format.
+	 *
+	 * @param      kName              the name of the file to which the components are saved
+	 * @param      akComponent        the array of mesh components to be saved
+	 * @param      flip               if the y and z axes should be flipped - true in extract and in save of
+	 *                                JDialogSurface To have proper orientations in surface file if flip is true flip y
+	 *                                and z on reading.
+	 * @param      direction          either 1 or -1 for each axis
+	 * @param      startLocation      DOCUMENT ME!
+	 * @param      box                (dim-1)*res
+	 * @param      inverseDicomArray  DOCUMENT ME!
+	 * @param 	   perVertexColorArray  color per vertex array.
+	 *
+	 * @exception  IOException  if there is an error writing to the file
+	 */
+	public static void save(String kName, ModelTriangleMesh[] akComponent, boolean flip, int[] direction,
+	                        float[] startLocation, float[] box, double[][] inverseDicomArray, Color4f[][] perVertexColorArray) throws IOException {
+	
+	    if (akComponent.length == 0) {
+	        return;
+	    }
+	
+	    int i = kName.lastIndexOf('.');
+	    Color3f color = new Color3f(Color.blue);
+	    String extension;
+	
+	    if ((i > 0) && (i < (kName.length() - 1))) {
+	        extension = kName.substring(i + 1).toLowerCase();
+	
+	        if (extension.equals("txt")) {
+	            saveAsTextFile(kName, akComponent);
+	        } else if (extension.equals("wrl")) {
+	            PrintWriter kOut = new PrintWriter(new FileWriter(kName));
+	            saveAsPortableVRML(kOut, akComponent, flip, direction, startLocation, box, color);
+	            kOut.close();
+	        } else if (extension.equals("sur")) {
+	            RandomAccessFile kOut = new RandomAccessFile(new File(kName), "rw");
+	            kOut.writeInt(0); // objects are ModelTriangleMesh
+	            kOut.writeInt(akComponent.length);
+	
+	            for (i = 0; i < akComponent.length; i++) {
+	            	if (perVertexColorArray != null)
+	            		akComponent[i].save(kOut, flip, direction, startLocation, box, inverseDicomArray, perVertexColorArray[i]);
+	            	else
+	            		akComponent[i].save(kOut, flip, direction, startLocation, box, inverseDicomArray, null);
+	            }
+	        }
+	    }
+	    /*
+	     * if ( Preferences.isDebug() ) { print( JDialogBase.makeImageName( kName, "_sur.txt" ), akComponent );} */
+	}
+
+	/**
      * Load the triangle mesh from a VRML file specifically written by MIPAV!. The caller must have already opened the
      * file. Must be made more robust to better parse the file. It only reads VRML 2.0 that MIPAV has written.
      *
@@ -1535,72 +1601,6 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         token.nextToken();
 
         return Integer.valueOf(token.nextToken()).intValue();
-    }
-
-    /**
-     * Save an array of triangle meshes to a binary file. The format for the file is
-     *
-     * <pre>
-       int type;  // 0 = ModelTriangleMesh, 1 = ModelClodMesh
-       int aCount;  // number of array elements
-       array of 'aCount' meshes, each of the form:
-       int vCount;  // number of vertices
-       Point3f vertices[vCount];
-       Point3f normals[vCount];
-       int iCount;  // number of indices in the connectivity array
-       int indices[iCount];
-     * </pre>
-     *
-     * with 4-byte quantities stored in Big Endian format.
-     *
-     * @param      kName              the name of the file to which the components are saved
-     * @param      akComponent        the array of mesh components to be saved
-     * @param      flip               if the y and z axes should be flipped - true in extract and in save of
-     *                                JDialogSurface To have proper orientations in surface file if flip is true flip y
-     *                                and z on reading.
-     * @param      direction          either 1 or -1 for each axis
-     * @param      startLocation      DOCUMENT ME!
-     * @param      box                (dim-1)*res
-     * @param      inverseDicomArray  DOCUMENT ME!
-     * @param 	   perVertexColorArray  color per vertex array.
-     *
-     * @exception  IOException  if there is an error writing to the file
-     */
-    public static void save(String kName, ModelTriangleMesh[] akComponent, boolean flip, int[] direction,
-                            float[] startLocation, float[] box, double[][] inverseDicomArray, Color4f[][] perVertexColorArray) throws IOException {
-
-        if (akComponent.length == 0) {
-            return;
-        }
-
-        int i = kName.lastIndexOf('.');
-        Color3f color = new Color3f(Color.blue);
-        String extension;
-
-        if ((i > 0) && (i < (kName.length() - 1))) {
-            extension = kName.substring(i + 1).toLowerCase();
-
-            if (extension.equals("txt")) {
-                saveAsTextFile(kName, akComponent);
-            } else if (extension.equals("wrl")) {
-                PrintWriter kOut = new PrintWriter(new FileWriter(kName));
-                saveAsPortableVRML(kOut, akComponent, flip, direction, startLocation, box, color);
-                kOut.close();
-            } else if (extension.equals("sur")) {
-                RandomAccessFile kOut = new RandomAccessFile(new File(kName), "rw");
-                kOut.writeInt(0); // objects are ModelTriangleMesh
-                kOut.writeInt(akComponent.length);
-
-                for (i = 0; i < akComponent.length; i++) {
-                	if (perVertexColorArray != null)
-                		akComponent[i].save(kOut, flip, direction, startLocation, box, inverseDicomArray, perVertexColorArray[i]);
-                	else
-                		akComponent[i].save(kOut, flip, direction, startLocation, box, inverseDicomArray, null);
-                }
-            }
-        }
-        /*
-         * if ( Preferences.isDebug() ) { print( JDialogBase.makeImageName( kName, "_sur.txt" ), akComponent );} */
     }
 
     /**
@@ -2289,7 +2289,9 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         	surfaceFileName = kName.substring(0, i);
             extension = kName.substring(i + 1).toLowerCase();
 
-            if (extension.equals("txt")) {
+            if ( extension.equals("stl")) {
+            	saveAsSTLFile(kName);
+            } else if (extension.equals("txt")) {
                 saveAsTextFile(kName);
             } else if(extension.equals("vtk")) {
             	saveAsVTKLegacy(kName);
@@ -2457,7 +2459,12 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         print(kOut);
         kOut.close();
     }
-
+    
+    public void saveAsSTLFile(String kName) throws IOException {
+        PrintWriter kOut = new PrintWriter(new FileWriter(kName));
+        printSTL(kOut);
+        kOut.close();
+    }
     /**
      * Saves the triangle mesh in VRML97 (VRML 2.0) format (text format).
      *
@@ -3026,6 +3033,118 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             kOut.println(getCoordinateIndex((3 * i) + 2));
         }
     }
+    
+    protected void printSTL(PrintWriter kOut) throws IOException {
+        int i;
+        int index1, index2, index3;
+        int iTriangleCount = getIndexCount() / 3;
+    	Point3f kVertex = new Point3f();
+        Vector3f kNormal = new Vector3f();
+        Vector3f kNormal1 = new Vector3f();
+        Vector3f kNormal2 = new Vector3f();
+        Vector3f kNormal3 = new Vector3f();
+
+        kOut.println("solid");
+        
+        for (i = 0; i < iTriangleCount; i++) {
+        	index1 = getCoordinateIndex(3 * i);    
+            index2 = getCoordinateIndex((3 * i) + 1);
+            index3 = getCoordinateIndex((3 * i) + 2);
+            
+            getNormal(index1, kNormal1);
+            getNormal(index2, kNormal2);
+            getNormal(index3, kNormal3);
+            
+            // Compute facet normal
+            kNormal.set(0f, 0f, 0f);
+            kNormal.add(kNormal1);
+            kNormal.add(kNormal2);
+            kNormal.add(kNormal3);
+            kNormal.scale(1f/3f);
+            
+            kOut.print(" facet normal  ");
+            kOut.print(kNormal.x);
+            kOut.print(' ');
+            kOut.print(kNormal.y);
+            kOut.print(' ');
+            kOut.println(kNormal.z);
+            
+            kOut.println("   outer loop");
+            // index 1
+            getCoordinate(index1, kVertex);;
+            kOut.print("     vertex ");
+            kOut.print(kVertex.x);
+            kOut.print(' ');
+            kOut.print(kVertex.y);
+            kOut.print(' ');
+            kOut.println(kVertex.z);
+            // index 2
+            getCoordinate(index2, kVertex);;
+            kOut.print("     vertex ");
+            kOut.print(kVertex.x);
+            kOut.print(' ');
+            kOut.print(kVertex.y);
+            kOut.print(' ');
+            kOut.println(kVertex.z);
+            // index 3
+            getCoordinate(index3, kVertex);;
+            kOut.print("     vertex ");
+            kOut.print(kVertex.x);
+            kOut.print(' ');
+            kOut.print(kVertex.y);
+            kOut.print(' ');
+            kOut.println(kVertex.z);
+            
+            kOut.println("   endloop");
+            kOut.println(" endfacet");
+        }
+        
+        kOut.println("endsolid");
+        
+        /******************************************/
+        /*
+        // write vertices
+        kOut.println(getVertexCount());
+        kOut.println("Vertices");
+
+        for (i = 0; i < getVertexCount(); i++) {
+            getCoordinate(i, kVertex);
+            kOut.print(kVertex.x);
+            kOut.print(' ');
+            kOut.print(kVertex.y);
+            kOut.print(' ');
+            kOut.println(kVertex.z);
+        }
+
+        kOut.println("Normals");
+
+        // write normals
+        for (i = 0; i < getVertexCount(); i++) {
+            getNormal(i, kNormal);
+            kOut.print(kNormal.x);
+            kOut.print(' ');
+            kOut.print(kNormal.y);
+            kOut.print(' ');
+            kOut.println(kNormal.z);
+        }
+
+        kOut.println("Connectivity");
+
+        // write connectivity
+        
+
+        kOut.println(iTriangleCount);
+
+        for (i = 0; i < iTriangleCount; i++) {
+            kOut.print(getCoordinateIndex(3 * i));
+            kOut.print(' ');
+            kOut.print(getCoordinateIndex((3 * i) + 1));
+            kOut.print(' ');
+            kOut.println(getCoordinateIndex((3 * i) + 2));
+        }
+        */
+    }
+
 
     /**
      * Internal support for 'void save (String)' and 'void save (String, ModelTriangleMesh[])'. ModelTriangleMesh uses
@@ -3093,6 +3212,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         Point3f kVertex = new Point3f();
         Vector3f kNormal = new Vector3f();
 
+        
         if (inverseDicomArray == null) {
 
             if (flip) {
