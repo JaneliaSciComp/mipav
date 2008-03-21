@@ -87,7 +87,7 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
     private JComboBox fileTypeList;
 
     /** surface file formats. */
-    private String[] fileTypes = { "Text files (*.txt)", "Surface files (*.sur)", "VRML files (*.wrl)", "XML files (*.xml)", "VTK Legacy files (*.vtk)", "VTK XML files (*.vtp)" };
+    private String[] fileTypes = { "Text files (*.txt)", "Surface files (*.sur)", "VRML files (*.wrl)", "XML files (*.xml)", "VTK Legacy files (*.vtk)", "VTK XML files (*.vtp)", "STL Binary files (*.stl)" };
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -222,7 +222,12 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
                 fileName = makeImageName(fileTF.getText(), ".vtp");
                 decimateSurfaceCB.setSelected(false);
                 decimateSurfaceCB.setEnabled(false);  
+            } else if (pos == 6) {
+                fileName = makeImageName(fileTF.getText(), ".stl");
+                decimateSurfaceCB.setSelected(false);
+                decimateSurfaceCB.setEnabled(false);  
             }
+
 
             fileTF.setText(fileName);
 
@@ -672,6 +677,8 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
                 fileName = makeImageName(fileTF.getText(), ".vtk");
             } else if (pos == 5) {
                 fileName = makeImageName(fileTF.getText(), ".vtp");
+            } else if (pos == 6) {
+                fileName = makeImageName(fileTF.getText(), ".stl");
             }
         }
 
