@@ -718,10 +718,10 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         }
 
         // adjust value based on minProgress and maxProgress
-//        if ((value != ViewJProgressBar.PROGRESS_VALUE_UNCHANGED) &&
-//                (value != ViewJProgressBar.PROGRESS_WINDOW_CLOSING)) {
-//            value = ViewJProgressBar.getProgressFromInt(minProgressValue, maxProgressValue, value);
-//        }
+        if ((value != ViewJProgressBar.PROGRESS_VALUE_UNCHANGED) &&
+                (value != ViewJProgressBar.PROGRESS_WINDOW_CLOSING)) {
+            value = ViewJProgressBar.getProgressFromInt(minProgressValue, maxProgressValue, value);
+        }
 
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
 
@@ -767,6 +767,12 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         }
     }
 
+    /**
+     * Disconnect this algorithm with the progress bar which holds a reference
+     * to this algorithm. In order to release the memory of this algorithm,
+     * this function should be called after the algorithm was finished.
+     * @param baseAlgo
+     */
     protected void delinkProgressToAlgorithm(AlgorithmBase baseAlgo){
         ProgressChangeListener[] listeners = this.getProgressChangeListeners();
 
