@@ -1392,7 +1392,9 @@ public class FileIO {
         if (fileType == FileUtility.UNDEFINED) { // if image type not defined by extension, popup
             fileType = getFileType(); // dialog to get user to define image type
             userDefinedFileType = fileType;
-            userDefinedSuffix = "." + fileName.split("\\.")[1];
+            if (fileName.indexOf(".") != -1) {
+                userDefinedSuffix = "." + fileName.split("\\.")[1];
+            }
         }
 
         fileType = chkMultiFile(fileType, multiFile); // for multifile support...
