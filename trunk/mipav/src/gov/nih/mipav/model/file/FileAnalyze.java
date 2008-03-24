@@ -319,7 +319,8 @@ public class FileAnalyze extends FileBase {
             File file = new File(completeFileNames[i]);
 
             if (!file.exists()) {
-                throw new FileNotFoundException("The file can not be found: " + completeFileNames[i] + "!");
+                Preferences.debug("FileAnalyze: The file can not be found: " + completeFileNames[i] + "!");
+                return false;
             }
         }
 
