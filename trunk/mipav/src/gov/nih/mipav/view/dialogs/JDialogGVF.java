@@ -357,15 +357,10 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
                     sigmas[2] = scaleZ;
                 }
 
-                if (propagationFlag == false) {
-                    extents = new int[2];
-                } else {
-                    extents = new int[3];
-                    extents[2] = image.getExtents()[2];
-                }
-
+                extents = new int[3];
                 extents[0] = image.getExtents()[0];
                 extents[1] = image.getExtents()[1];
+                extents[2] = image.getExtents()[2];
 
                 try {
 
