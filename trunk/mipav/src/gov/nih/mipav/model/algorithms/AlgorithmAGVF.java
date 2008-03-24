@@ -1107,6 +1107,7 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
     /**
      * Calculate GVF from image buffer.
      *
+     * @param sliceNum
      * @param  imgBuffer  DOCUMENT ME!
      */
     private void calcGVF(int sliceNum, float[] imgBuffer) {
