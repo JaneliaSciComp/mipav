@@ -638,6 +638,25 @@ public class Matrix3f
                             fScalar*m_afEntry[7],
                             fScalar*m_afEntry[8]);
     }
+    
+    
+    /** Multiply this matrix by the scalar input, this matrix is unchanged. 
+     * @param fScalar, scalar value
+     * @return this*fScalar
+     */
+    public void scaleEquals (float fScalar)
+    {
+        SetData(
+                            fScalar*m_afEntry[0],
+                            fScalar*m_afEntry[1],
+                            fScalar*m_afEntry[2],
+                            fScalar*m_afEntry[3],
+                            fScalar*m_afEntry[4],
+                            fScalar*m_afEntry[5],
+                            fScalar*m_afEntry[6],
+                            fScalar*m_afEntry[7],
+                            fScalar*m_afEntry[8]);
+    }
 
     /** matrix times vector
      * v^T * M
@@ -1468,6 +1487,13 @@ public class Matrix3f
         return false;
     }
 
+    public String ToString()
+    {
+        return new String( m_afEntry[0] + " " + m_afEntry[1] + " " + m_afEntry[2] + " " +
+                m_afEntry[3] + " " + m_afEntry[4] + " " + m_afEntry[5] + " " +
+                m_afEntry[6] + " " + m_afEntry[7] + " " + m_afEntry[8] );
+    }
+    
     /** Matrix data: */
     private float[] m_afEntry = new float[9];
 }

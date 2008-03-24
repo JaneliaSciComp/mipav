@@ -40,7 +40,6 @@ public class MeshCurvature {
         for (int i = 0; i < iVQuantity; i++) {
 
             // construct and initialize to all zeroes
-            akDNormal[i] = new Matrix3f();
             akWWTrn[i] = new Matrix3f();
             akDWTrn[i] = new Matrix3f();
         }
@@ -127,6 +126,11 @@ public class MeshCurvature {
                 akDWTrn[iV0].SetData( 2, 0, akDWTrn[iV0].GetData(2, 0) + kD.Z() * kW.X());
                 akDWTrn[iV0].SetData( 2, 1, akDWTrn[iV0].GetData(2, 1) + kD.Z() * kW.Y());
                 akDWTrn[iV0].SetData( 2, 2, akDWTrn[iV0].GetData(2, 2) + kD.Z() * kW.Z());
+                
+
+
+                
+                System.err.println( akWWTrn[iV0].ToString() );
             }
         }
 
@@ -137,8 +141,10 @@ public class MeshCurvature {
 
         for (int i = 0; i < iVQuantity; i++) {
             kMesh.VBuffer.GetNormal3( i, kNormal0 );
+            
+            //System.err.println( kNormal0.ToString() );
 
-            akWWTrn[i].scale(0.5f);
+            akWWTrn[i].scaleEquals(0.5f);
             akWWTrn[i].SetData( 0, 0, akWWTrn[i].GetData(0, 0) + kNormal0.X() * kNormal0.X());
             akWWTrn[i].SetData( 0, 1, akWWTrn[i].GetData(0, 1) + kNormal0.X() * kNormal0.Y());
             akWWTrn[i].SetData( 0, 2, akWWTrn[i].GetData(0, 2) + kNormal0.X() * kNormal0.Z());
@@ -148,11 +154,12 @@ public class MeshCurvature {
             akWWTrn[i].SetData( 2, 0, akWWTrn[i].GetData(2, 0) + kNormal0.Z() * kNormal0.X());
             akWWTrn[i].SetData( 2, 1, akWWTrn[i].GetData(2, 1) + kNormal0.Z() * kNormal0.Y());
             akWWTrn[i].SetData( 2, 2, akWWTrn[i].GetData(2, 2) + kNormal0.Z() * kNormal0.Z());
-            akDWTrn[i].scale(0.5f);
-
+            akDWTrn[i].scaleEquals(0.5f);
+            
             kInverse = akWWTrn[i].Inverse();
             akDNormal[i] = akDWTrn[i].mult(kInverse);
         }
+        System.err.println("Done normals");
 
         // If N is a unit-length normal at a vertex, let U and V be unit-length
         // tangents so that {U, V, N} is an orthonormal set.  Define the matrix
@@ -208,6 +215,7 @@ public class MeshCurvature {
             m_afMinCurvature[i] = 0.5f * (fTrace - fRootDiscr);
             m_afMaxCurvature[i] = 0.5f * (fTrace + fRootDiscr);
 
+            //System.err.println( fTrace + " " + fRootDiscr + " " + m_afMinCurvature[i] + " " + m_afMaxCurvature[i]);
             // compute the eigenvectors of S
             Vector2f kW0 = new Vector2f(aS[0][1], m_afMinCurvature[i] - aS[0][0]);
             Vector2f kW1 = new Vector2f(m_afMinCurvature[i] - aS[1][1], aS[1][0]);

@@ -637,6 +637,10 @@ public class Vector3f
         }
     }
 
+    public String ToString()
+    {
+        return new String( m_afTuple[0] + " " + m_afTuple[1] + " " + m_afTuple[2] );
+    }
 
     /** Vector data: */
     private float[] m_afTuple = new float[]{0,0,0};

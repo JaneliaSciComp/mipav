@@ -87,7 +87,7 @@ implements MouseListener, ItemListener, ChangeListener {
     /** Control panels for the Brainsurface Flattener:. */
     protected JPanel m_kBrainsurfaceFlattenerPanel = null;
     /** Rendering the brainsurfaceFlattener objects. */
-    protected gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.MjCorticalAnalysis brainsurfaceFlattenerRender = null;
+    protected gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.MjCorticalAnalysis_WM brainsurfaceFlattenerRender = null;
     
     /** DOCUMENT ME! */
     protected JPanelClip_WM clipBox;
@@ -506,7 +506,7 @@ implements MouseListener, ItemListener, ChangeListener {
             if ( m_kBrainsurfaceFlattenerPanel == null )
             {
                 brainsurfaceFlattenerRender = 
-                    new gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.MjCorticalAnalysis(this, 
+                    new gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.MjCorticalAnalysis_WM(this, 
                             m_kAnimator, m_kVolumeImageA, imageA, LUTa, RGBTA,
                         m_kVolumeImageB, imageB, LUTb, RGBTB);
                 m_kBrainsurfaceFlattenerPanel = new JPanel();
@@ -514,6 +514,9 @@ implements MouseListener, ItemListener, ChangeListener {
                 maxPanelWidth = Math.max(m_kBrainsurfaceFlattenerPanel.getPreferredSize().width, maxPanelWidth);
                 bf_flyPanel.add( brainsurfaceFlattenerRender.GetCanvas(), BorderLayout.CENTER );
                 dualPane.setDividerLocation( 0.5f );
+                
+                TriMesh kSurface = raycastRenderWM.getSurface( surfaceGUI.getSelectedSurface() );
+                brainsurfaceFlattenerRender.getPanel().displayCorticalAnalysis(kSurface);            
             }
             insertTab("BrainSurface", m_kBrainsurfaceFlattenerPanel );
             resizePanel();
@@ -588,33 +591,6 @@ implements MouseListener, ItemListener, ChangeListener {
 
 //         if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
 //             surRender.getSurfaceDialog().addAttachedSurfaces();
-//         }
-    }
-
-    /**
-     * Updates the surRender -- adds a BranchGroup to the main Display.
-     *
-     * @param  kBranch  BranchGroup branch group
-     * @param  kMesh    ModelTriangleMesh surface mesh
-     * @param  kCenter  Point3f center of mass
-     */
-//    public void addBranch(BranchGroup kBranch, ModelTriangleMesh kMesh, Point3f kCenter) {
-
-//         if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
-//             surRender.getSurfaceDialog().addBranch(kBranch, kMesh, kCenter);
-//         }
-//    }
-
-    /**
-     * Adding surface to the 3D texuture volume.
-     *
-     * @param  dir   surface file direcotry
-     * @param  file  surface file name
-     */
-    public void addSurface(String dir, File file) {
-
-//         if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
-//             surRender.getSurfaceDialog().addSurfaces(dir, file);
 //         }
     }
 
@@ -1574,19 +1550,6 @@ implements MouseListener, ItemListener, ChangeListener {
      * @param  e  MouseEvent
      */
     public void mouseReleased(MouseEvent e) { }
-
-    /**
-     * Updates the surRender -- removes a BranchGroup to the main Display.
-     *
-     * @param  kBranch      BranchGroup surface branch group reference.
-     * @param  bRemoveMesh  boolean flag to remove the surface mesh or not
-     */
-//    public void removeBranch(BranchGroup kBranch, boolean bRemoveMesh) {
-
-//         if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
-//             surRender.getSurfaceDialog().removeBranch(kBranch, bRemoveMesh);
-//         }
-//    }
 
     /**
      * Required by the parent super class, do nothing.
@@ -2882,6 +2845,8 @@ implements MouseListener, ItemListener, ChangeListener {
             m_kDisplaySurfaceCheck.setSelected(true);
             m_kDisplaySurfaceCheck.setEnabled(true);
             raycastRenderWM.DisplaySurface(true);
+            
+            //menuObj.setMenuItemEnabled("Open BrainSurface Flattener view", true);
         }
         if ( geodesicGUI != null )
         {
