@@ -2208,6 +2208,7 @@ implements MouseListener, ItemListener, ChangeListener {
                                          separator,
                                          menuObj.buildMenuItem("Open DTI Tract file", "DTI", 0, null, false),
                                          menuObj.buildMenuItem("Open BrainSurface Flattener view", "BrainSurface", 0, null, false),
+                                         menuObj.buildMenuItem("Open Fly Through view", "FlyThru", 0, null, false),
                                          menuObj.buildMenuItem("Close frame", "CloseFrame", 0, null, false)
                                      }));
         menuBar.add(menuObj.makeMenu("Options", false,
@@ -2220,6 +2221,9 @@ implements MouseListener, ItemListener, ChangeListener {
                                          menuObj.buildCheckBoxMenuItem("RFA toolbar", "RFAToolbar", true)
                                      }));
 
+        menuObj.setMenuItemEnabled("Open BrainSurface Flattener view", false);
+        menuObj.setMenuItemEnabled("Open Fly Through view", false);
+        
         return menuBar;
     }
 
