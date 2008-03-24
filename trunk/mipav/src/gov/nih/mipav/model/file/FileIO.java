@@ -2324,9 +2324,15 @@ public class FileIO {
         	ProvenanceRecorder.getReference().addLine(action);
                 
         	if (Preferences.is(Preferences.PREF_IMAGE_LEVEL_DATA_PROVENANCE)) {
-        		FileDataProvenance fdp = 
+                FileDataProvenance fdp;
+                if (options.getFileName().lastIndexOf(".") != -1) {
+        		fdp = 
         			new FileDataProvenance(options.getFileName().substring(0, options.getFileName().lastIndexOf(".")) + ".xmp", 
         				options.getFileDirectory(), image.getProvenanceHolder());
+                }
+                else {
+                    fdp = new FileDataProvenance(options.getFileName() + ".xmp", options.getFileDirectory(), image.getProvenanceHolder());
+                }
         		try {
         			fdp.writeXML();
         		} catch (Exception e) {}
