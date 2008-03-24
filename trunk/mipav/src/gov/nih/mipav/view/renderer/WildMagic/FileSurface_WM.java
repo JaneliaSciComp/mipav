@@ -1779,9 +1779,11 @@ public class FileSurface_WM {
 		IndexBuffer kIBuffer = new IndexBuffer( aiConnect.length, aiConnect );
         kMesh = new TriMesh(kVBuffer, kIBuffer);
         MaterialState kMaterial = new MaterialState();
+        /*
         kMaterial.Emissive = new ColorRGB(1.0f, 1.0f, 1.0f);
         kMaterial.Diffuse = new ColorRGB(1.0f, 1.0f, 1.0f);
         kMaterial.Specular = new ColorRGB(1.0f, 1.0f, 1.0f);
+        */
         kMesh.AttachGlobalState( kMaterial );
         return kMesh;
 	}
