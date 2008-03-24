@@ -19,13 +19,21 @@ public class FileInfoMincHDF extends FileInfoBase {
     //~ Static fields/initializers -------------------------------------------------------------------------------------
    
 	
+	/**
+	 * The dimension tree node that holds xspace, yspace, and (optionally) zspace nodes
+	 */
 	private transient DefaultMutableTreeNode dimensionNode;
+	
+	
 	private transient DefaultMutableTreeNode informationNode;
 	
 	protected int[] axisOrientation = { ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE };
 	
 	private double [] validRange = null;
 	
+	/**
+	 * Hashtable to hold the tags for conversion to->from dicom and to-> mipav XML format
+	 */
 	private transient Hashtable dicomTable = null;
 	
     //~ Constructors ---------------------------------------------------------------------------------------------------
