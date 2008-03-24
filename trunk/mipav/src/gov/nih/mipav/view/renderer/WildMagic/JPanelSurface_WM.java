@@ -1351,6 +1351,18 @@ public class JPanelSurface_WM
         return false;
     }
     
+    public String getSelectedSurface()
+    {
+        int[] aiSelected = surfaceList.getSelectedIndices();
+        if ( aiSelected.length == 0 )
+        {
+            return null;
+        }               
+        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+        return (String)kList.elementAt(aiSelected[aiSelected.length - 1]);
+    }
+    
+    
     public void setDropperColor( ColorRGBA kDropperColor, Vector3f kPickPoint )
     {
         if ( m_kSurfacePaint != null )

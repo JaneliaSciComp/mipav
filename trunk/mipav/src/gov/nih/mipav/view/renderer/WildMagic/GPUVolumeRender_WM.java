@@ -2066,6 +2066,23 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
+    
+    
+    
+    public TriMesh getSurface( String kSurfaceName )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    return m_kDisplayList.get(i).GetMesh();
+                }
+            }
+        }
+        return null;
+    }
 
     public void setPolygonMode(String kSurfaceName, WireframeState.FillMode eMode)
     {
