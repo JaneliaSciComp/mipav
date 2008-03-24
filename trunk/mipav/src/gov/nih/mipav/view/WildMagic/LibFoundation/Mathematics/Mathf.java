@@ -70,4 +70,5 @@ public final class Mathf
     public static final float INV_PI = (float)(1.0f/Math.PI);
     public static final float DEG_TO_RAD = (float)Math.PI/180.0f;
     public static final float SQRT2 = (float)Math.sqrt(2);
+    public static final float EPSILON = 1.192092896e-07F;
 }

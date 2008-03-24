@@ -45,10 +45,10 @@ implements MouseListener, ItemListener, ChangeListener {
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
-    private static final long serialVersionUID = 1898957906984534260L;
+    protected static final long serialVersionUID = 1898957906984534260L;
 
     /** The small bar on the top right corner the volume view frame. */
-    private static JProgressBar rendererProgressBar;
+    protected static JProgressBar rendererProgressBar;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -83,210 +83,219 @@ implements MouseListener, ItemListener, ChangeListener {
     JPanel panelLabels = new JPanel();
 
     /** DOCUMENT ME! */
-    private JPanel cameraPanel;
-
+    protected JPanel cameraPanel;
+    /** Control panels for the Brainsurface Flattener:. */
+    protected JPanel m_kBrainsurfaceFlattenerPanel = null;
+    /** Rendering the brainsurfaceFlattener objects. */
+    protected gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.MjCorticalAnalysis brainsurfaceFlattenerRender = null;
+    
     /** DOCUMENT ME! */
-    private JPanelClip_WM clipBox;
-    private JPanelSlices sliceGUI;
-    private JPanelSurface_WM surfaceGUI;
-    private JPanelDisplay_WM displayGUI;
-    private JPanelGeodesic_WM geodesicGUI;
-    private JPanelSculptor sculptGUI;
-    private JPanelSurfaceTexture_WM surfaceTextureGUI;
+    protected JPanelClip_WM clipBox;
+    protected JPanelSlices sliceGUI;
+    protected JPanelSurface_WM surfaceGUI;
+    protected JPanelDisplay_WM displayGUI;
+    protected JPanelGeodesic_WM geodesicGUI;
+    protected JPanelSculptor sculptGUI;
+    protected JPanelSurfaceTexture_WM surfaceTextureGUI;
 
-    private JCheckBox m_kDisplayVolumeCheck;
-    private JCheckBox m_kDisplaySlicesCheck;
-    private JCheckBox m_kDisplaySurfaceCheck;
-    private JCheckBox m_kStereoCheck;
+    protected JCheckBox m_kDisplayVolumeCheck;
+    protected JCheckBox m_kDisplaySlicesCheck;
+    protected JCheckBox m_kDisplaySurfaceCheck;
+    protected JCheckBox m_kStereoCheck;
     /** Button to invoke all the six clipping planes. */
-    private JButton clipButton;
+    protected JButton clipButton;
 
     /** Button to disable all the six clipping planes. */
-    private JButton clipDisableButton;
+    protected JButton clipDisableButton;
 
     /** Button to crop the clip volume. */
-    private JButton clipMaskButton;
+    protected JButton clipMaskButton;
 
     /** Button to undo crop the clip volume. */
-    private JButton clipMaskUndoButton;
+    protected JButton clipMaskUndoButton;
 
     /** DOCUMENT ME! */
-    private JPanel clipPanel;
+    protected JPanel clipPanel;
 
     /** Button to invoke clipping planes. */
-    private JButton clipPlaneButton;
+    protected JButton clipPlaneButton;
 
     /** Button to save clipped region. */
-    private JButton clipSaveButton;
+    protected JButton clipSaveButton;
 
     /** DOCUMENT ME! */
-    private JPanel displayPanel;
+    protected JPanel displayPanel;
 
     /** Control panel for the surface renderer. */
-    private JPanel histoLUTPanel;
+    protected JPanel histoLUTPanel;
 
     /** Reference to the imageA original copy. */
-    private ModelImage imageAOriginal;
+    protected ModelImage imageAOriginal;
 
     /** Image orientation: coronal, sagittal, axial, unknown. */
-    private int imageOrientation;
+    protected int imageOrientation;
 
     /** The image panel to hold one Canvas3D. */
-    private JPanel imagePanel;
-    private JPanel surfaceRenderPanel;
-    private JPanel gpuPanel;
+    protected JPanel gpuPanel;
+    protected JPanel bf_flyPanel;
 
     /** DOCUMENT ME! */
-    private JDialogIntensityPaint intensityDialog;
+    protected JDialogIntensityPaint intensityDialog;
 
     /** DOCUMENT ME! */
-    private JPanel lightPanel;
+    protected JPanel lightPanel;
 
-    private JPanelLights m_kLightsPanel;
+    protected JPanelLights m_kLightsPanel;
 
     /** The three slice views displayed as texture-mapped polygons:. */
-    private PlaneRender_WM[] m_akPlaneRender;
+    protected PlaneRender_WM[] m_akPlaneRender;
 
     /** Control panel for drawing geodesic curves. */
-    private JPanel m_kGeodesicPanel;
+    protected JPanel m_kGeodesicPanel;
 
     /** Control panel for volume sculpting. */
-    private JPanel m_kSculptPanel;
+    protected JPanel m_kSculptPanel;
 
     /** The max width of the control panels. */
-    private int maxPanelWidth = -1;
+    protected int maxPanelWidth = -1;
 
     /** Menu bar. */
-    private JMenuBar menuBar;
+    protected JMenuBar menuBar;
 
     /** DOCUMENT ME! */
-    private JPanel mousePanel;
+    protected JPanel mousePanel;
 
     /** DOCUMENT ME! */
-    private JDialogOpacityControls opacityDialog;
+    protected JDialogOpacityControls opacityDialog;
 
     /** DOCUMENT ME! */
-    private JPanel opacityPanel = null;
+    protected JPanel opacityPanel = null;
 
     /** Padding imageA with blank images feeding. */
-    private ModelImage paddingImageA;
+    protected ModelImage paddingImageA;
 
     /** Padding imageB with blank images feeding. */
-    private ModelImage paddingImageB;
+    protected ModelImage paddingImageB;
 
     /** Control panels of the triplanar view. */
-    private JDialogPaintGrow paintGrowDialog;
+    protected JDialogPaintGrow paintGrowDialog;
 
     /** LUT control panel of the gray scale image. */
-    private JPanelHistoLUT panelHistoLUT;
+    protected JPanelHistoLUT panelHistoLUT;
 
     /** RGB control panel of the color image. */
-    private JPanelHistoRGB panelHistoRGB;
+    protected JPanelHistoRGB panelHistoRGB;
 
     /** DOCUMENT ME! */
-    private JPanel probePanel;
+    protected JPanel probePanel;
 
     /** Radio button of the COMPOSITE mode option. */
-    private JRadioButton radioCOMPOSITE;
+    protected JRadioButton radioCOMPOSITE;
 
     /** Radio button of the MIP mode option. */
-    private JRadioButton radioMIP;
+    protected JRadioButton radioMIP;
 
     /** Radio button of the SURFACE mode option. */
-    private JRadioButton radioSURFACE;
+    protected JRadioButton radioSURFACE;
 
     /** Radio button of the SURFACE mode option. */
-    private JRadioButton radioSURFACEFAST;
+    protected JRadioButton radioSURFACEFAST;
 
     /** Radio button of the surface render composite mode. */
-    private JRadioButton radioSurrenderCOMPOSITE;
+    protected JRadioButton radioSurrenderCOMPOSITE;
 
     //** Check box to enable/disable surface self-shadowing */
     JCheckBox kSelfShadow;
 
     /** Radio button of the surface render lighting mode. */
-    private JRadioButton radioSurrenderLIGHT;
+    protected JRadioButton radioSurrenderLIGHT;
 
     /** Radio button of the XRAY mode option. */
-    private JRadioButton radioXRAY;
+    protected JRadioButton radioXRAY;
 
     /** Panel Border view. */
-    private Border raisedbevel, loweredbevel, compound, redBorder, etchedBorder, pressedBorder;
+    protected Border raisedbevel, loweredbevel, compound, redBorder, etchedBorder, pressedBorder;
 
     /** DOCUMENT ME! */
-    private JPanel raycastCameraPanel;
+    protected JPanel raycastCameraPanel;
 
-    private VolumeImage m_kVolumeImageA;
-    private VolumeImage m_kVolumeImageB;
+    protected VolumeImage m_kVolumeImageA;
+    protected VolumeImage m_kVolumeImageB;
 
-    private Animator m_kAnimator;
-
-    /** DOCUMENT ME! */
-    private GPUVolumeRender_WM raycastRenderWM;
+    protected Animator m_kAnimator;
 
     /** DOCUMENT ME! */
-    private Vector raycastTabVector = new Vector();
+    protected GPUVolumeRender_WM raycastRenderWM;
+
+    /** DOCUMENT ME! */
+    protected Vector raycastTabVector = new Vector();
 
     /** Reference to resample dialog, use to null out the resample dialog in this frame. */
-    private JDialogVolViewResample resampleDialog;
+    protected JDialogVolViewResample resampleDialog;
 
     /** Button for RFA. */
-    private JButton rfaButton;
+    protected JButton rfaButton;
 
     /** RFA separator. */
-    private JButton rfaSeparator;
+    protected JButton rfaSeparator;
 
     /** The view pane that contains the image view and tri-planar view panels. */
-    private JSplitPane rightPane;
+    protected JSplitPane rightPane;
+
+    protected JSplitPane dualPane;
 
     /** Screen width, screen height. */
-    private int screenWidth, screenHeight;
+    protected int screenWidth, screenHeight;
 
     /** Sculpt region height. */
-    private int sculptHeight;
+    protected int sculptHeight;
 
     /** Sculpt region width. */
-    private int sculptWidth;
+    protected int sculptWidth;
 
     /** DOCUMENT ME! */
-    private JPanel slicePanel;
+    protected JPanel slicePanel;
     
     /** DOCUMENT ME! */
-    private JPanel surfaceTexturePanel;
+    protected JPanel surfaceTexturePanel;
 
     /** Previoius tab index recorder. */
-    private int storeTabbedPaneIndex = 0;
+    protected int storeTabbedPaneIndex = 0;
 
     /** DOCUMENT ME! */
-    private JPanel surfacePanel;
+    protected JPanel surfacePanel;
 
     /** For each render, use the vector to store the currently active tabs. */
-    private Vector surTabVector = new Vector();
+    protected Vector surTabVector = new Vector();
 
     /** Toolbar builder reference. */
-    private ViewToolBarBuilder toolbarBuilder;
+    protected ViewToolBarBuilder toolbarBuilder;
 
     /** Tri image planar render panels. */
-    private JPanel triImagePanel;
+    protected JPanel triImagePanel;
 
     /** DOCUMENT ME! */
-    private JPanel viewPanel;
+    protected JPanel viewPanel;
 
     /** The top one render view switch toolbar. */
-    private JToolBar viewToolBar;
+    protected JToolBar viewToolBar;
 
     /** Surface Render toolbar. */
-    private JToolBar surfaceToolBar;
+    protected JToolBar surfaceToolBar;
 
-    private boolean m_bSurfaceVisible = true;
+    protected boolean m_bSurfaceVisible = true;
 
 
-    private JPanelVolOpacityBase m_kVolOpacityPanel;
+    protected JPanelVolOpacityBase m_kVolOpacityPanel;
 
-    private JSlider m_kVolumeBlendSlider;
+    protected JSlider m_kVolumeBlendSlider;
 
-    private JDialogStereoControls m_kStereoIPD = null;
-
+    protected JDialogStereoControls m_kStereoIPD = null;
+    
+    protected JPanel panelAxial;
+    protected JPanel panelSagittal;
+    protected JPanel panelCoronal;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
     /**
      * Specific constructor call from the VolumeViewerDTI.   
@@ -493,6 +502,21 @@ implements MouseListener, ItemListener, ChangeListener {
              JDialogDTIInput kDTIIn = new JDialogDTIInput( JDialogDTIInput.TRACTS_PANEL,
                                                            raycastRenderWM, imageA);
              insertTab("DTI", kDTIIn.getMainPanel() );
+        } else if (command.equals("BrainSurface")) {
+            if ( m_kBrainsurfaceFlattenerPanel == null )
+            {
+                brainsurfaceFlattenerRender = 
+                    new gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.MjCorticalAnalysis(this, 
+                            m_kAnimator, m_kVolumeImageA, imageA, LUTa, RGBTA,
+                        m_kVolumeImageB, imageB, LUTb, RGBTB);
+                m_kBrainsurfaceFlattenerPanel = new JPanel();
+                m_kBrainsurfaceFlattenerPanel.add(brainsurfaceFlattenerRender.getMainPanel());
+                maxPanelWidth = Math.max(m_kBrainsurfaceFlattenerPanel.getPreferredSize().width, maxPanelWidth);
+                bf_flyPanel.add( brainsurfaceFlattenerRender.GetCanvas(), BorderLayout.CENTER );
+                dualPane.setDividerLocation( 0.5f );
+            }
+            insertTab("BrainSurface", m_kBrainsurfaceFlattenerPanel );
+            resizePanel();
         } else if (command.equals("Capture")) {
             insertTab("Camera", cameraPanel);
         } else if (command.equals("Mouse")) {
@@ -769,9 +793,38 @@ implements MouseListener, ItemListener, ChangeListener {
         maxPanelWidth = Math.max(mousePanel.getPreferredSize().width, maxPanelWidth);
     }
 
+    
     /**
      * Build the volume opacity control panel for the surface render.
      */
+    public void buildOpacityPanel() {
+        opacityPanel = new JPanel();
+
+
+        if (imageA.isColorImage()) {
+            m_kVolOpacityPanel = new JPanelVolOpacityRGB(this, imageA, imageB);
+        } else {
+            m_kVolOpacityPanel = new JPanelVolOpacity(this, imageA, imageB);
+        }
+        
+       
+        GridBagLayout gbLayout = new GridBagLayout();
+        GridBagConstraints gbConstraints = new GridBagConstraints();
+
+        opacityPanel.setLayout(gbLayout);
+        gbConstraints.weightx = 1;
+        gbConstraints.weighty = 1;
+        gbConstraints.fill = GridBagConstraints.BOTH;
+        gbConstraints.anchor = GridBagConstraints.NORTH;
+        
+        gbLayout.setConstraints(m_kVolOpacityPanel.getMainPanel(), gbConstraints);
+        opacityPanel.add(m_kVolOpacityPanel.getMainPanel());
+        maxPanelWidth = Math.max(opacityPanel.getPreferredSize().width, maxPanelWidth);
+    }
+    
+    /**
+     * Build the volume opacity control panel for the surface render.
+
     public void buildOpacityPanel() {
         opacityPanel = new JPanel();
 
@@ -788,7 +841,7 @@ implements MouseListener, ItemListener, ChangeListener {
         opacityPanel.add(m_kVolOpacityPanel.getMainPanel());
         maxPanelWidth = Math.max(opacityPanel.getPreferredSize().width, maxPanelWidth);
     }
-
+     */
     /**
      * Build the adding surface control panel for the surface render.
      */
@@ -2154,6 +2207,7 @@ implements MouseListener, ItemListener, ChangeListener {
                                      new JComponent[] {
                                          separator,
                                          menuObj.buildMenuItem("Open DTI Tract file", "DTI", 0, null, false),
+                                         menuObj.buildMenuItem("Open BrainSurface Flattener view", "BrainSurface", 0, null, false),
                                          menuObj.buildMenuItem("Close frame", "CloseFrame", 0, null, false)
                                      }));
         menuBar.add(menuObj.makeMenu("Options", false,
@@ -2228,8 +2282,8 @@ implements MouseListener, ItemListener, ChangeListener {
         redBorder = BorderFactory.createCompoundBorder(redline, compound);
 
         buildLabelPanel();
-        buildHistoLUTPanel();
-        buildOpacityPanel();
+        //buildHistoLUTPanel();
+        //buildOpacityPanel();
 
 
             buildDisplayPanel();
@@ -2246,13 +2300,13 @@ implements MouseListener, ItemListener, ChangeListener {
             buildSculpt();
 
 
-        JPanel panelAxial = new JPanel(new BorderLayout());
+        panelAxial = new JPanel(new BorderLayout());
         panelAxial.add(m_akPlaneRender[0].GetCanvas(), BorderLayout.CENTER);
 
-        JPanel panelSagittal = new JPanel(new BorderLayout());
+        panelSagittal = new JPanel(new BorderLayout());
         panelSagittal.add(m_akPlaneRender[1].GetCanvas(), BorderLayout.CENTER);
 
-        JPanel panelCoronal = new JPanel(new BorderLayout());
+        panelCoronal = new JPanel(new BorderLayout());
         panelCoronal.add(m_akPlaneRender[2].GetCanvas(), BorderLayout.CENTER);
 
         setTitle();
@@ -2284,8 +2338,7 @@ implements MouseListener, ItemListener, ChangeListener {
         gbc2.ipadx = 5;
         gbc2.insets = new Insets(0, 5, 0, 5);
 
-        imagePanel = new JPanel(new BorderLayout());
-        surfaceRenderPanel = new JPanel(new BorderLayout());
+        //imagePanel = new JPanel(new BorderLayout());
         gpuPanel = new JPanel(new BorderLayout());
 
         setLocation(100, 100);
@@ -2295,7 +2348,7 @@ implements MouseListener, ItemListener, ChangeListener {
         gpuPanel.add(raycastRenderWM.GetCanvas(), BorderLayout.CENTER);
 //             imagePanel.add(surfaceRenderPanel, BorderLayout.EAST);
 //             surfaceRenderPanel.setVisible(true);
-        imagePanel.add(gpuPanel, BorderLayout.WEST);
+        //imagePanel.add(gpuPanel, BorderLayout.WEST);
         gpuPanel.setVisible(true);
         raycastRenderWM.setVisible(false);
 //         }
@@ -2303,19 +2356,23 @@ implements MouseListener, ItemListener, ChangeListener {
         int imagePanelWidth = (int) (screenWidth * 0.51f);
         int imagePanelHeight = (int) (screenHeight * 0.43f);
 
-        imagePanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
-        imagePanel.setMinimumSize(new Dimension(500, 500));
-        imagePanel.setBorder(compound);
-
-        surfaceRenderPanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
-        surfaceRenderPanel.setMinimumSize(new Dimension(500, 500));
+        //imagePanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
+        //imagePanel.setMinimumSize(new Dimension(500, 500));
+        //imagePanel.setBorder(compound);
 
         gpuPanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
-        gpuPanel.setMinimumSize(new Dimension(500, 500));
-
-
-        rightPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, imagePanel, triImagePanel);
-
+        //gpuPanel.setMinimumSize(new Dimension(500, 500));
+        
+        bf_flyPanel = new JPanel(new BorderLayout());
+        bf_flyPanel.setBorder(compound);
+        
+        dualPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, gpuPanel, bf_flyPanel);
+        dualPane.setOneTouchExpandable(false);
+        dualPane.setDividerSize(6);
+        dualPane.setContinuousLayout(true);
+        //dualPane.setResizeWeight(1);
+        
+        rightPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, dualPane, triImagePanel);
         rightPane.setOneTouchExpandable(true);
         rightPane.setDividerSize(6);
         rightPane.setContinuousLayout(true);
@@ -2411,7 +2468,7 @@ implements MouseListener, ItemListener, ChangeListener {
     /**
      * Add surface volume renderer control buttons.
      */
-    private void addToolbar() {
+    protected void addToolbar() {
         etchedBorder = BorderFactory.createEtchedBorder();
         toolbarBuilder = new ViewToolBarBuilder(this);
         buildViewToolbar();
@@ -2439,7 +2496,7 @@ implements MouseListener, ItemListener, ChangeListener {
     /**
      * Build the surface render toolbar.
      */
-    private void buildSurRenderToolbar() {
+    protected void buildSurRenderToolbar() {
         surfaceToolBar = new JToolBar();
         surfaceToolBar.setBorder(etchedBorder);
         surfaceToolBar.setBorderPainted(true);
@@ -2518,7 +2575,7 @@ implements MouseListener, ItemListener, ChangeListener {
     /**
      * The the top one volume view toolbar.
      */
-    private void buildViewToolbar() {
+    protected void buildViewToolbar() {
         viewToolBar = new JToolBar();
         viewToolBar.setBorder(etchedBorder);
         viewToolBar.setBorderPainted(true);
@@ -2617,28 +2674,11 @@ implements MouseListener, ItemListener, ChangeListener {
     }
 
     /**
-     * Enable surface render.
-     */
-    private void enableSurfaceRender()
-    {
-        if ( !m_bSurfaceVisible )
-        {
-            //switchTabList("SurRender");
-            gpuPanel.setVisible(false);
-            raycastRenderWM.setVisible(false);
-            surfaceRenderPanel.setVisible(true);
-            m_bSurfaceVisible = true;
-        }
-    }
-
-    /**
      * Enable volume render.
      */
-    private void enableVolumeRender() {
+    protected void enableVolumeRender() {
         if ( m_bSurfaceVisible )
         {
-            //switchTabList("VolRender");
-            surfaceRenderPanel.setVisible(false);
             gpuPanel.setVisible(true);
             raycastRenderWM.setVisible(true);
             m_bSurfaceVisible = false;
@@ -2651,7 +2691,7 @@ implements MouseListener, ItemListener, ChangeListener {
      * @param  image  ModelImage reference
      * @param  lut    ModelLUT reference
      */
-    private void resetLUTMinMax(ModelImage image, ModelLUT lut) {
+    protected void resetLUTMinMax(ModelImage image, ModelLUT lut) {
         int nPts = lut.getTransferFunction().size();
         float[] x = new float[nPts];
         float[] y = new float[nPts];
@@ -2673,7 +2713,7 @@ implements MouseListener, ItemListener, ChangeListener {
     /**
      * Method that resizes the frame and adjusts the rows, columns as needed.
      */
-    private void resizePanel() {
+    protected void resizePanel() {
         int height;
 
         height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
@@ -2693,6 +2733,11 @@ implements MouseListener, ItemListener, ChangeListener {
         geodesicGUI.resizePanel(maxPanelWidth, height);
         m_kLightsPanel.resizePanel(maxPanelWidth, height);
         ((JPanelClip_WM)clipBox).resizePanel(maxPanelWidth, height);
+        
+        if ( brainsurfaceFlattenerRender != null )
+        {
+            brainsurfaceFlattenerRender.resizePanel(maxPanelWidth, height);
+        }
     }
 
     /**
@@ -2700,7 +2745,7 @@ implements MouseListener, ItemListener, ChangeListener {
      *
      * @param  position  DOCUMENT ME!
      */
-    private void set3DModelPosition(Point3Df position) {
+    protected void set3DModelPosition(Point3Df position) {
 
         float fMaxX = (m_kVolumeImageA.GetImage().getExtents()[0] - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[0];
         float fMaxY = (float) (m_kVolumeImageA.GetImage().getExtents()[1] - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[1];
@@ -2732,7 +2777,7 @@ implements MouseListener, ItemListener, ChangeListener {
      *
      * @param  position  DOCUMENT ME!
      */
-    private void setPatientSlicePosition(Point3Df position) {
+    protected void setPatientSlicePosition(Point3Df position) {
         Point3Df axial = new Point3Df();
         MipavCoordinateSystems.fileToPatient(position, axial, imageA, FileInfoBase.AXIAL);
 
@@ -2752,7 +2797,7 @@ implements MouseListener, ItemListener, ChangeListener {
      *
      * @param  flag  Set the RFA button visible or not
      */
-    private void setRFAToolbarVisible(boolean flag) {
+    protected void setRFAToolbarVisible(boolean flag) {
         rfaButton.setVisible(flag);
         rfaSeparator.setVisible(flag);
         viewToolBar.validate();
@@ -2839,7 +2884,13 @@ implements MouseListener, ItemListener, ChangeListener {
             geodesicGUI.setEnabled(true);
             geodesicGUI.setSurfacePanel(surfaceGUI);
         }
-    }    
+    }  
+    
+    public void updateLighting()
+    {
+        insertTab("Light", lightPanel);
+        m_kLightsPanel.enableLight(0, true);
+    }
 
     public void removeSurface(String kSurfaceName)
     {
@@ -3097,5 +3148,15 @@ implements MouseListener, ItemListener, ChangeListener {
         }
     }
 
-    
+    public void updateLighting(GeneralLight[] akGLights )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.updateLighting(akGLights);
+        }
+        if ( brainsurfaceFlattenerRender != null )
+        {
+            brainsurfaceFlattenerRender.updateLighting(akGLights);
+        }
+    }
 }

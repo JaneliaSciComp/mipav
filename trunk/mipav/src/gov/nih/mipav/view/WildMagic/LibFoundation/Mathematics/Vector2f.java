@@ -116,6 +116,12 @@ public class Vector2f
         m_afTuple[1] = fY;
     }
     
+    public final void SetData (final Vector2f rkV)
+    {
+        m_afTuple[0] = rkV.m_afTuple[0];
+        m_afTuple[1] = rkV.m_afTuple[1];
+    }
+    
     /** Add the input vector to this, return result, this vector is
      * unchanged:
      * @param rkV, input vector to add to this
@@ -126,6 +132,14 @@ public class Vector2f
         return new Vector2f(
                            m_afTuple[0]+rkV.m_afTuple[0],
                            m_afTuple[1]+rkV.m_afTuple[1]);
+    }
+    
+    
+
+    public void addEquals( final Vector2f rkV )
+    {
+        m_afTuple[0] += rkV.m_afTuple[0];
+        m_afTuple[1] += rkV.m_afTuple[1];
     }
 
     /** Subtract the input vector from this, return result, this vector is
@@ -139,6 +153,18 @@ public class Vector2f
                            m_afTuple[0]-rkV.m_afTuple[0],
                            m_afTuple[1]-rkV.m_afTuple[1]);
     }
+    
+    public void sub( final Vector2f rkV, Vector2f kResult )
+    {
+        kResult.SetData(m_afTuple[0]-rkV.m_afTuple[0],
+                m_afTuple[1]-rkV.m_afTuple[1]);
+    }
+    
+    public void subEquals( final Vector2f rkV )
+    {
+        m_afTuple[0] -= rkV.m_afTuple[0];
+        m_afTuple[1] -= rkV.m_afTuple[1];
+    }
 
     /** Scale this vector by input, return result, this vector is unchanged:
      * @param fScalar, scale value
@@ -150,6 +176,13 @@ public class Vector2f
                             fScalar*m_afTuple[0],
                             fScalar*m_afTuple[1]);
     }
+    
+    public void scaleEquals( float fScalar )
+    {
+        m_afTuple[0] *= fScalar;
+        m_afTuple[1] *= fScalar;
+    }
+
 
     /** Compute length this vector:
      * @return length this vector
@@ -203,7 +236,28 @@ public class Vector2f
 
         return fLength;
     }
+    
 
+    /**
+     * Returns Cross((x,y,0),(V.x,V.y,0)) = x*V.y - y*V.x.
+     *
+     * @param   kV  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public float Cross(Vector2f kV) {
+        return (m_afTuple[0] * kV.m_afTuple[1]) - (m_afTuple[1] * kV.m_afTuple[0]);
+    }
+    
+    /**
+     * Set this vector to the 'perp' of the specified vector.
+     *
+     * @param  kVector  DOCUMENT ME!
+     */
+    public void Perp(Vector2f kVector) {
+        SetData(kVector.m_afTuple[1], -kVector.m_afTuple[0]);
+    }
+    
     /** Vector data: */
     private float[] m_afTuple = new float[2];
 }

@@ -11,7 +11,7 @@ public class Edge extends Object {
 
     /** DOCUMENT ME! */
     public int m_iV0, m_iV1;
-
+    
     /**
      * Constructs an edge in the table.
      *

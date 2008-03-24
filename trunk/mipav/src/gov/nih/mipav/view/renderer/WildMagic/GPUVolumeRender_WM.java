@@ -229,6 +229,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         	return;
         }
         
+        if ( !m_bInit )
+        {
+            init(arg0);
+        }
+        
         if ( m_bFirstRender )
         {
             m_kVolumeRayCast.SetDisplay(true);   

@@ -775,8 +775,8 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
         if (rayBasedRender != null) {
             rayBasedRender.updateLighting();
         }
-        if (m_kGPUVolumeRender != null) {
-            m_kGPUVolumeRender.updateLighting(m_akLights);
+        if (m_kVolumeViewer != null) {
+            m_kVolumeViewer.updateLighting(m_akLights);
         }
     }
 
