@@ -39,7 +39,7 @@ import java.util.*;
  *           Diffusion by Pietro Perona, Takahiro Shiota, and Jitendra Malik, pages 73-92, Kluwer Academic Publishers,
  *           1994.</p>
  */
-public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
+public class AlgorithmLevelSetDiffusion extends AlgorithmBase implements AlgorithmInterface {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -75,6 +75,9 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
     
     /** If true in 3D images, process each slice separately */
     private boolean image25D = false;
+    
+    /** Stores output of AlgorithmConvolver */
+    private float[] outputBuffer = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -132,12 +135,23 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
      * starts the algorithm.
      */
     public void runAlgorithm() {
+        AlgorithmConvolver convolver;
 
         if (srcImage == null) {
             displayError("Source Image is null");
 
             return;
         }
+        
+        if ((srcImage.getNDims() == 2) || image25D) {
+            convolver = new AlgorithmConvolver(srcImage, GxData, GyData, kExtents, true);
+        }
+        else {
+            convolver = new AlgorithmConvolver(srcImage, GxData, GyData, GzData, kExtents, true);
+        }
+        convolver.addListener(this);
+        convolver.run();
+        convolver.finalize();    
 
         if (srcImage.getNDims() == 2) {
             calc2D();
@@ -158,10 +172,9 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
 
         int i, n;
         int length;
-        float[] imgBuffer;
         float[] tempBuffer;
         float[] resultBuffer;
-        float ix, iy, mag;
+        float mag;
         double grad;
         int nVOI;
         ViewVOIVector VOIs;
@@ -169,19 +182,9 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
 
         try {
             length = srcImage.getSliceSize();
-            imgBuffer = new float[length];
             resultBuffer = new float[length];
-            edgeImage = new float[length];
             levelImage = new float[length];
-            srcImage.exportData(0, length, imgBuffer); // locks and releases lock
             fireProgressStateChanged(srcImage.getImageName(), "Evolving the level set ...");
-        } catch (IOException error) {
-            cleanUp();
-            System.gc();
-            displayError("Level set: Image(s) locked");
-            setCompleted(false);
-
-            return;
         } catch (OutOfMemoryError e) {
             cleanUp();
             System.gc();
@@ -200,25 +203,17 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
             }
         }
 
-        
-
-        int[] imageExtents = srcImage.getExtents();
         float min = Float.MAX_VALUE;
         float max = 0.0f;
 
         for (i = 0; i < length; i++) { // calculate gradient magnitude
-            ix = AlgorithmConvolver.convolve2DPt(i, imageExtents, imgBuffer, kExtents, GxData);
-            iy = AlgorithmConvolver.convolve2DPt(i, imageExtents, imgBuffer, kExtents, GyData);
 
-            mag = (float) Math.sqrt((ix * ix) + (iy * iy));
-            edgeImage[i] = mag;
-
-            if (mag > max) {
-                max = mag;
+            if (outputBuffer[i] > max) {
+                max = outputBuffer[i];
             }
 
-            if (mag < min) {
-                min = mag;
+            if (outputBuffer[i] < min) {
+                min = outputBuffer[i];
             }
         }
 
@@ -229,18 +224,17 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
         }
 
         for (i = 0; i < length; i++) { // normalize the data between 0 and 100
-            mag = ((edgeImage[i] - min) / divisor) * 100;
+            mag = ((outputBuffer[i] - min) / divisor) * 100;
 
             // edgeImage[i] = (float)( 1/(1 + mag/k * mag/k)); // Use k = 5 and iterations = 20
             if (Math.abs(mag) <= kValue) {
-                edgeImage[i] = 1 - (mag / kValue * mag / kValue);
-                edgeImage[i] = 0.5f * edgeImage[i] * edgeImage[i];
+                outputBuffer[i] = 1 - (mag / kValue * mag / kValue);
+                outputBuffer[i] = 0.5f * outputBuffer[i] * outputBuffer[i];
             } else {
-                edgeImage[i] = 0.0f;
+                outputBuffer[i] = 0.0f;
             }
         }
 
-        imgBuffer = null;
         System.gc();
 
         double gradX, gradY;
@@ -280,7 +274,7 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
 
                         // possible speedup remove function
                         temp = getBiLinear(levelImage, xDim, x, y);
-                        temp = (temp - levelImage[i]) * 0.25f * edgeImage[i];
+                        temp = (temp - levelImage[i]) * 0.25f * outputBuffer[i];
 
                         if ((temp + levelImage[i]) <= 100) {
                             resultBuffer[i] = temp + levelImage[i];
@@ -349,10 +343,9 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
 
         int i, n;
         int length;
-        float[] imgBuffer;
         float[] tempBuffer;
         float[] resultBuffer;
-        float ix, iy, mag;
+        float mag;
         double grad;
         int nVOI;
         ViewVOIVector VOIs;
@@ -365,10 +358,10 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
         int extents2D[];
         BitSet mask2;
         boolean haveCurve;
+        int offset;
 
         try {
             length = srcImage.getSliceSize();
-            imgBuffer = new float[length];
             resultBuffer = new float[length];
             edgeImage = new float[length];
             levelImage = new float[length];
@@ -393,10 +386,11 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
         
         for (z = 0; z < zDim; z++) {
             fireProgressStateChanged(z * 100/ zDim);
+            offset = z*length;
             haveCurve = false;
             for (i = 0; i < length; i++) {
 
-                if (mask.get(z*length + i)) {
+                if (mask.get(offset + i)) {
                     levelImage[i] = 100;
                     haveCurve = true;
                 } else {
@@ -407,25 +401,12 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
                 // If no curve is present in this slice, don't process this slice
                 continue;
             }
-            try {
-                srcImage.exportData(z*length, length, imgBuffer); // locks and releases lock
-            } catch (IOException error) {
-                cleanUp();
-                System.gc();
-                displayError("Level set: Image(s) locked");
-                setCompleted(false);
-
-                return;
-            }
             
             float min = Float.MAX_VALUE;
             float max = 0.0f;
     
             for (i = 0; i < length; i++) { // calculate gradient magnitude
-                ix = AlgorithmConvolver.convolve2DPt(i, extents2D, imgBuffer, kExtents, GxData);
-                iy = AlgorithmConvolver.convolve2DPt(i, extents2D, imgBuffer, kExtents, GyData);
-    
-                mag = (float) Math.sqrt((ix * ix) + (iy * iy));
+                mag = outputBuffer[offset+i];
                 edgeImage[i] = mag;
     
                 if (mag > max) {
@@ -555,10 +536,9 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
 
         int i, n;
         int length;
-        float[] imgBuffer;
         float[] tempBuffer;
         float[] resultBuffer;
-        float ix, iy, iz, mag;
+        float mag;
         double grad;
         int nVOI;
         ViewVOIVector VOIs;
@@ -566,19 +546,9 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
 
         try {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
-            imgBuffer = new float[length];
             resultBuffer = new float[length];
             levelImage = new float[length];
-            edgeImage = new float[length];
-            srcImage.exportData(0, length, imgBuffer); // locks and releases lock
             fireProgressStateChanged(srcImage.getImageName(), "Evolving the level set ...");
-        } catch (IOException error) {
-            cleanUp();
-            System.gc();
-            displayError("Anisotropic Diffusion: Image(s) locked");
-            setCompleted(false);
-
-            return;
         } catch (OutOfMemoryError e) {
             cleanUp();
             System.gc();
@@ -602,25 +572,17 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
             }
         }
 
-        
-
-        int[] imageExtents = srcImage.getExtents();
         float min = Float.MAX_VALUE;
         float max = 0.0f;
 
         for (i = 0; i < length; i++) { // calculate gradient magnitude
-            ix = AlgorithmConvolver.convolve3DPt(i, imageExtents, imgBuffer, kExtents, GxData);
-            iy = AlgorithmConvolver.convolve3DPt(i, imageExtents, imgBuffer, kExtents, GyData);
-            iz = AlgorithmConvolver.convolve3DPt(i, imageExtents, imgBuffer, kExtents, GzData);
-            mag = (float) Math.sqrt((ix * ix) + (iy * iy) + (iz * iz));
-            edgeImage[i] = mag;
 
-            if (mag > max) {
-                max = mag;
+            if (outputBuffer[i] > max) {
+                max = outputBuffer[i];
             }
 
-            if (mag < min) {
-                min = mag;
+            if (outputBuffer[i] < min) {
+                min = outputBuffer[i];
             }
         }
 
@@ -631,17 +593,16 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
         }
 
         for (i = 0; i < length; i++) { // normalize the data between 0 and 100
-            mag = ((edgeImage[i] - min) / divisor) * 100;
+            mag = ((outputBuffer[i] - min) / divisor) * 100;
 
             if (Math.abs(mag) <= kValue) {
-                edgeImage[i] = 1 - (mag / kValue * mag / kValue);
-                edgeImage[i] = 0.5f * edgeImage[i] * edgeImage[i];
+                outputBuffer[i] = 1 - (mag / kValue * mag / kValue);
+                outputBuffer[i] = 0.5f * outputBuffer[i] * outputBuffer[i];
             } else {
-                edgeImage[i] = 0.0f;
+                outputBuffer[i] = 0.0f;
             }
         }
 
-        imgBuffer = null;
         System.gc();
 
         double gradX, gradY, gradZ;
@@ -682,7 +643,7 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
                             z = (float) ((i / imageSliceSize) + gradZ);
 
                             temp = getTriLinear(levelImage, xDim, imageSliceSize, x, y, z);
-                            temp = (temp - levelImage[i]) * 0.25f * edgeImage[i];
+                            temp = (temp - levelImage[i]) * 0.25f * outputBuffer[i];
                         } else {
                             temp = 0;
                         }
@@ -952,6 +913,17 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
         GenerateGaussian Gz = new GenerateGaussian(GzData, kExtents, sigmas, derivOrder);
 
         Gz.calc(true);
+    }
+    
+    public void algorithmPerformed(AlgorithmBase algorithm){
+        if(!algorithm.isCompleted()){
+            finalize();
+            return;
+        }
+        if (algorithm instanceof AlgorithmConvolver) {
+            AlgorithmConvolver convolver = (AlgorithmConvolver) algorithm;
+            outputBuffer = convolver.getOutputBuffer();
+        }
     }
 
 }
