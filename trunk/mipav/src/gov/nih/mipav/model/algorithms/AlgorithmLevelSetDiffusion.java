@@ -5,8 +5,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.io.*;
-
 import java.util.*;
 
 
@@ -42,9 +40,6 @@ import java.util.*;
 public class AlgorithmLevelSetDiffusion extends AlgorithmBase implements AlgorithmInterface {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    private float[] edgeImage;
 
     /** Storage location of the first derivative of the Gaussian in the X direction. */
     private float[] GxData;
@@ -119,8 +114,8 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase implements Algorit
         GyData = null;
         GzData = null;
         srcImage = null;
-        edgeImage = null;
         levelImage = null;
+        outputBuffer = null;
     }
 
     /**
@@ -226,7 +221,7 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase implements Algorit
         for (i = 0; i < length; i++) { // normalize the data between 0 and 100
             mag = ((outputBuffer[i] - min) / divisor) * 100;
 
-            // edgeImage[i] = (float)( 1/(1 + mag/k * mag/k)); // Use k = 5 and iterations = 20
+            // outputBuffer[i] = (float)( 1/(1 + mag/k * mag/k)); // Use k = 5 and iterations = 20
             if (Math.abs(mag) <= kValue) {
                 outputBuffer[i] = 1 - (mag / kValue * mag / kValue);
                 outputBuffer[i] = 0.5f * outputBuffer[i] * outputBuffer[i];
@@ -363,7 +358,6 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase implements Algorit
         try {
             length = srcImage.getSliceSize();
             resultBuffer = new float[length];
-            edgeImage = new float[length];
             levelImage = new float[length];
             
             fireProgressStateChanged(srcImage.getImageName(), "Evolving the level set ...");
@@ -406,15 +400,13 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase implements Algorit
             float max = 0.0f;
     
             for (i = 0; i < length; i++) { // calculate gradient magnitude
-                mag = outputBuffer[offset+i];
-                edgeImage[i] = mag;
     
-                if (mag > max) {
-                    max = mag;
+                if (outputBuffer[offset+i] > max) {
+                    max = outputBuffer[offset+i];
                 }
     
-                if (mag < min) {
-                    min = mag;
+                if (outputBuffer[offset+i] < min) {
+                    min = outputBuffer[offset+i];
                 }
             }
     
@@ -425,14 +417,14 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase implements Algorit
             }
     
             for (i = 0; i < length; i++) { // normalize the data between 0 and 100
-                mag = ((edgeImage[i] - min) / divisor) * 100;
+                mag = ((outputBuffer[offset+i] - min) / divisor) * 100;
     
-                // edgeImage[i] = (float)( 1/(1 + mag/k * mag/k)); // Use k = 5 and iterations = 20
+                // outputBuffer[offset+i] = (float)( 1/(1 + mag/k * mag/k)); // Use k = 5 and iterations = 20
                 if (Math.abs(mag) <= kValue) {
-                    edgeImage[i] = 1 - (mag / kValue * mag / kValue);
-                    edgeImage[i] = 0.5f * edgeImage[i] * edgeImage[i];
+                    outputBuffer[offset+i] = 1 - (mag / kValue * mag / kValue);
+                    outputBuffer[offset+i] = 0.5f * outputBuffer[offset+i] * outputBuffer[offset+i];
                 } else {
-                    edgeImage[i] = 0.0f;
+                    outputBuffer[offset+i] = 0.0f;
                 }
             }
     
@@ -469,7 +461,7 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase implements Algorit
     
                             // possible speedup remove function
                             temp = getBiLinear(levelImage, xDim, x, y);
-                            temp = (temp - levelImage[i]) * 0.25f * edgeImage[i];
+                            temp = (temp - levelImage[i]) * 0.25f * outputBuffer[offset+i];
     
                             if ((temp + levelImage[i]) <= 100) {
                                 resultBuffer[i] = temp + levelImage[i];
