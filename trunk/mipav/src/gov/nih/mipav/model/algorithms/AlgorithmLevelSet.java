@@ -286,15 +286,7 @@ public class AlgorithmLevelSet extends AlgorithmBase implements AlgorithmInterfa
             active = new boolean[length];
             boundaryX = new int[length];
             boundaryY = new int[length];
-            srcImage.exportData(0, length, gBuffer); // locks and releases lock
             fireProgressStateChanged(srcImage.getImageName(), "Evolving the level set ...");
-        } catch (IOException error) {
-            cleanUp();
-            System.gc();
-            displayError("Level set: Image(s) locked");
-            setCompleted(false);
-
-            return;
         } catch (OutOfMemoryError e) {
             cleanUp();
             System.gc();
@@ -862,16 +854,6 @@ public class AlgorithmLevelSet extends AlgorithmBase implements AlgorithmInterfa
                 // If  no curves are present in this slice, don't process this slice
                 continue;
             }
-            try {
-                srcImage.exportData(offset, length, gBuffer); // locks and releases lock
-            } catch (IOException error) {
-                cleanUp();
-                System.gc();
-                displayError("Level set: Image(s) locked");
-                setCompleted(false);
-
-                return;
-            }
             
             maxGrad = 0.0f;
             minGrad = Float.MAX_VALUE;
@@ -1364,15 +1346,7 @@ public class AlgorithmLevelSet extends AlgorithmBase implements AlgorithmInterfa
             boundaryX = new int[length];
             boundaryY = new int[length];
             boundaryZ = new int[length];
-            srcImage.exportData(0, length, gBuffer); // locks and releases lock
             fireProgressStateChanged(srcImage.getImageName(), "Evolving the level set ...");
-        } catch (IOException error) {
-            cleanUp();
-            System.gc();
-            displayError("Level set: Image(s) locked");
-            setCompleted(false);
-
-            return;
         } catch (OutOfMemoryError e) {
             cleanUp();
             System.gc();
