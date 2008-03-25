@@ -68,7 +68,7 @@ public class FileSurface_WM {
 
             if ((kName.indexOf(".sur") != -1) || (kName.indexOf(".wrl") != -1) || 
             	(kName.indexOf(".vtk") != -1) || (kName.indexOf(".vtp") != -1) || 
-            	(kName.indexOf(".stl") != -1) ) {
+            	(kName.indexOf(".stla") != -1) || (kName.indexOf(".stlb") != -1) ) {
                 kSurface[i] = readSurface(kImage, akFiles[i], kColor, 1.0f, null, 0 );
             } else if (kName.indexOf(".xml") != -1) {
                 FileSurfaceRefXML kSurfaceXML = new FileSurfaceRefXML(kName, akFiles[i].getParent());
@@ -162,10 +162,19 @@ public class FileSurface_WM {
             } catch (IOException e) {
                 return null;
             }
-        } else if ( file.getName().endsWith("stl") ) {
+        } else if ( file.getName().endsWith("stla") ) {
         	iType = 0;
 			iQuantity = 1;
 			isSur = false;
+        } else if ( file.getName().endsWith("stlb") ) {
+			try {
+                in = new RandomAccessFile(file, "r");
+                iType = 0;
+    			iQuantity = 1;
+    			isSur = false;
+            } catch (IOException e) {
+                return null;
+            }
         } else {
             //has to be vtk legacy or vtk xml
             try {
@@ -232,8 +241,15 @@ public class FileSurface_WM {
                                 akComponent[i].SetName( file.getName() );
                             }
                     	}
-                    	else if (file.getName().endsWith("stl")) {
-                    		akComponent[i] = loadSTLMesh( file );
+                    	else if (file.getName().endsWith("stla")) {
+                    		akComponent[i] = loadSTLAsciiMesh( file );
+                            if ( akComponent[i] != null)
+                            {
+                                akComponent[i].SetName( file.getName() );
+                            }
+                    	}
+                    	else if (file.getName().endsWith("stlb")) {
+                    		akComponent[i] = loadSTLBinaryMesh( in );
                             if ( akComponent[i] != null)
                             {
                                 akComponent[i].SetName( file.getName() );
@@ -1689,9 +1705,104 @@ public class FileSurface_WM {
 
         return kMesh;
     }
-
+   
+    /**
+     * Load the STL Binary file. 
+     * @param file STL surface file reference
+     * @return  Triangle mesh
+     */
+	public static TriMesh loadSTLBinaryMesh(RandomAccessFile kIn) throws IOException  {
+		int iTriangleCount;
+		Vector vertexArray = new Vector();
+		float x, y, z;
+		byte[] value = new byte[4];
+		byte[] header = new byte[80];
+		byte[] attribute = new byte[2];
+		VertexBuffer kVBuffer;
+        int[] aiConnect;
+        TriMesh kMesh = null;
+        
+		try { 
+		 // nothing header
+		 kIn.read(header);
+		 
+		 // number of facets
+		 kIn.read(value);
+		 iTriangleCount = FileBase.bytesToInt(false, 0, value);
+		 
+		 for ( int i = 0; i < iTriangleCount; i++ ) {  
+			 // read normal.x, normal.y, normal.z
+			 kIn.read(value);
+			 kIn.read(value);
+			 kIn.read(value);
+			 
+			 // index 1
+			 kIn.read(value);
+			 x = FileBase.bytesToFloat(false, 0, value);
+			 kIn.read(value);
+			 y = FileBase.bytesToFloat(false, 0, value);
+			 kIn.read(value);
+			 z = FileBase.bytesToFloat(false, 0, value);
+			 vertexArray.add(new Vector3f(x, y, z));
+			 
+			 // index 2
+			 kIn.read(value);
+			 x = FileBase.bytesToFloat(false, 0, value);
+			 kIn.read(value);
+			 y = FileBase.bytesToFloat(false, 0, value);
+			 kIn.read(value);
+			 z = FileBase.bytesToFloat(false, 0, value);
+			 vertexArray.add(new Vector3f(x, y, z));
+			 
+			// index 3
+			 kIn.read(value);
+			 x = FileBase.bytesToFloat(false, 0, value);
+			 kIn.read(value);
+			 y = FileBase.bytesToFloat(false, 0, value);
+			 kIn.read(value);
+			 z = FileBase.bytesToFloat(false, 0, value);
+			 vertexArray.add(new Vector3f(x, y, z));
+			 
+			 // attribute
+			 kIn.read(attribute);
+		 }
+		 
+		 int vertexCount = vertexArray.size();
+			Attributes kAttr = new Attributes();
+         kAttr.SetPChannels(3);
+         kAttr.SetNChannels(3);
+         kAttr.SetTChannels(0,3);
+         kAttr.SetCChannels(0,4);
+         kVBuffer = new VertexBuffer( kAttr, vertexCount );
+         for(int i=0;i<vertexCount;i++){
+             kVBuffer.SetPosition3( i, ((Vector3f)vertexArray.elementAt(i)).X(),
+             		((Vector3f)vertexArray.elementAt(i)).Y(), 
+             		((Vector3f)vertexArray.elementAt(i)).Z());
+             kVBuffer.SetColor4( 0, i, 1.0f, 1.0f, 1.0f, 1.0f );
+         }
+         
+         aiConnect = new int[vertexCount];
+         for (int i = 0; i < vertexCount; i++) {
+         	aiConnect[i] = i;
+         }
+		 
+     } catch (IOException e) {
+         return null;
+     }
+     IndexBuffer kIBuffer = new IndexBuffer( aiConnect.length, aiConnect );
+     kMesh = new TriMesh(kVBuffer, kIBuffer);
+     MaterialState kMaterial = new MaterialState();
+     kMesh.AttachGlobalState( kMaterial );
+     return kMesh;
+	
+	}
     
-	public static TriMesh loadSTLMesh(File file) {
+    /**
+     * Load the STL ASCII file. 
+     * @param file STL surface file reference
+     * @return  Triangle mesh
+     */
+	public static TriMesh loadSTLAsciiMesh(File file) {
 
 		TriMesh mesh; 
 		try {
@@ -1701,7 +1812,7 @@ public class FileSurface_WM {
 			tokenizer.resetSyntax();
 			tokenizer.whitespaceChars(0, 0x20);
 			tokenizer.wordChars(0x21, 0xff);
-			mesh = readSTL(tokenizer);
+			mesh = readSTLAscii(tokenizer);
 			reader.close();
 			return mesh;
 		} catch (FileNotFoundException e) {
@@ -1712,7 +1823,13 @@ public class FileSurface_WM {
 		}
 	}
 
-	private static TriMesh readSTL(StreamTokenizer tokenizer) throws IOException {
+	/**
+	 * Read the STL ASCII file as a single stream tokenizer.
+	 * @param tokenizer  stream in
+	 * @return  Triangle mesh
+	 * @throws IOException
+	 */
+	private static TriMesh readSTLAscii(StreamTokenizer tokenizer) throws IOException {
 		
 		Vector3f temp = new Vector3f();
 		Vector3f normal = new Vector3f(); 
@@ -1754,7 +1871,6 @@ public class FileSurface_WM {
 			}
 			
 			int vertexCount = vertexArray.size();
-			Vector3f vertex;
 			Attributes kAttr = new Attributes();
             kAttr.SetPChannels(3);
             kAttr.SetNChannels(3);
@@ -1767,7 +1883,7 @@ public class FileSurface_WM {
                 		((Vector3f)vertexArray.elementAt(i)).Z());
                 kVBuffer.SetColor4( 0, i, 1.0f, 1.0f, 1.0f, 1.0f );
             }
-            int iTriangleCount = vertexCount / 3;
+            
             aiConnect = new int[vertexCount];
             for (i = 0; i < vertexCount; i++) {
             	aiConnect[i] = i;
@@ -1779,18 +1895,18 @@ public class FileSurface_WM {
 		IndexBuffer kIBuffer = new IndexBuffer( aiConnect.length, aiConnect );
         kMesh = new TriMesh(kVBuffer, kIBuffer);
         MaterialState kMaterial = new MaterialState();
-        /*
-        kMaterial.Emissive = new ColorRGB(1.0f, 1.0f, 1.0f);
-        kMaterial.Diffuse = new ColorRGB(1.0f, 1.0f, 1.0f);
-        kMaterial.Specular = new ColorRGB(1.0f, 1.0f, 1.0f);
-        */
         kMesh.AttachGlobalState( kMaterial );
         return kMesh;
 	}
 
-	// Find the given label in the tokenizer stream and then return the next
-	//   three numbers as a point.
-	// Return null if end of stream
+	/**
+	 * Find the given label in the tokenizer stream and then return the next
+	 * three numbers as a point.  Return null if end of stream
+	 * @param tokenizer  stream in
+	 * @param label  string label (vertex, normal ) in the STL ASCII file. 
+	 * @return  Vector3f point coordinate.
+	 * @throws IOException
+	 */
 	private static Vector3f readPoint(StreamTokenizer tokenizer, String label)
 			throws IOException {
 		while (true) {

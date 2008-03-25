@@ -87,7 +87,10 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
     private JComboBox fileTypeList;
 
     /** surface file formats. */
-    private String[] fileTypes = { "Text files (*.txt)", "Surface files (*.sur)", "VRML files (*.wrl)", "XML files (*.xml)", "VTK Legacy files (*.vtk)", "VTK XML files (*.vtp)", "STL Binary files (*.stl)" };
+    private String[] fileTypes = { "Text files (*.txt)", "Surface files (*.sur)", "VRML files (*.wrl)", 
+    		                       "XML files (*.xml)",  "VTK Legacy files (*.vtk)",  "VTK XML files (*.vtp)", 
+    		                       "STereoLithography(STL) ASCII files (*.stla)",
+    		                       "STereoLithography(STL) Binary files (*.stlb)" };
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -223,7 +226,11 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
                 decimateSurfaceCB.setSelected(false);
                 decimateSurfaceCB.setEnabled(false);  
             } else if (pos == 6) {
-                fileName = makeImageName(fileTF.getText(), ".stl");
+                fileName = makeImageName(fileTF.getText(), ".stla");
+                decimateSurfaceCB.setSelected(false);
+                decimateSurfaceCB.setEnabled(false);  
+            } else if (pos == 7) {
+                fileName = makeImageName(fileTF.getText(), ".stlb");
                 decimateSurfaceCB.setSelected(false);
                 decimateSurfaceCB.setEnabled(false);  
             }
@@ -678,7 +685,9 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
             } else if (pos == 5) {
                 fileName = makeImageName(fileTF.getText(), ".vtp");
             } else if (pos == 6) {
-                fileName = makeImageName(fileTF.getText(), ".stl");
+                fileName = makeImageName(fileTF.getText(), ".stla");
+            } else if (pos == 7) {
+                fileName = makeImageName(fileTF.getText(), ".stlb");
             }
         }
 
