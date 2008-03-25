@@ -2288,9 +2288,10 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         if ((i > 0) && (i < (kName.length() - 1))) {
         	surfaceFileName = kName.substring(0, i);
             extension = kName.substring(i + 1).toLowerCase();
-
-            if ( extension.equals("stl")) {
-            	saveAsSTLFile(kName);
+            if ( extension.equals("stlb")) {
+            	saveAsSTLBinaryFile(kName);
+            } else if ( extension.equals("stla")) {
+            	saveAsSTLAsciiFile(kName);
             } else if (extension.equals("txt")) {
                 saveAsTextFile(kName);
             } else if(extension.equals("vtk")) {
@@ -2460,11 +2461,28 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         kOut.close();
     }
     
-    public void saveAsSTLFile(String kName) throws IOException {
+    /**
+     * Sate the STIL ACII file format. 
+     * @param kName  file name
+     * @throws IOException
+     */
+    public void saveAsSTLAsciiFile(String kName) throws IOException {
         PrintWriter kOut = new PrintWriter(new FileWriter(kName));
-        printSTL(kOut);
+        printSTLAscii(kOut);
         kOut.close();
     }
+    
+    /**
+     * Sate the STIL Binary file format. 
+     * @param kName  file name
+     * @throws IOException
+     */
+    public void saveAsSTLBinaryFile(String kName) throws IOException {
+    	RandomAccessFile kOut = new RandomAccessFile(new File(kName), "rw");;
+        printSTLBinary(kOut);
+        kOut.close();
+    }
+    
     /**
      * Saves the triangle mesh in VRML97 (VRML 2.0) format (text format).
      *
@@ -3034,7 +3052,31 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         }
     }
     
-    protected void printSTL(PrintWriter kOut) throws IOException {
+    /**
+	 * Print the STL file format in ASCII. 
+	 * STLA Examples:
+	 * 
+	 * solid MYSOLID 
+	 * facet normal 0.4 0.4 0.2 
+	 * outerloop 
+	 * vertex 1.0 2.1 3.2
+	 * vertex 2.1 3.7 4.5 
+	 * vertex 3.1 4.5 6.7 
+	 * endloop endfacet 
+	 * ... 
+	 * facet normal 0.2 0.2 0.4 
+	 * outerloop 
+	 * vertex 2.0 2.3 3.4 
+	 * vertex 3.1 3.2 6.5 
+	 * vertex 4.1 5.5 9.0 
+	 * endloop 
+	 * endfacet 
+	 * endsolid MYSOLID
+	 * 
+	 * @param kOut
+	 * @throws IOException
+	 */
+    protected void printSTLAscii(PrintWriter kOut) throws IOException {
         int i;
         int index1, index2, index3;
         int iTriangleCount = getIndexCount() / 3;
@@ -3098,51 +3140,89 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             kOut.println("   endloop");
             kOut.println(" endfacet");
         }
-        
         kOut.println("endsolid");
+    }
+    
+    /**
+     * Print the STL file format in binary ( little endian ). 
+     * STLB Example:
+     *
+	 * 80 byte string = header containing nothing in particular
+     *
+     * 4 byte int = number of faces
+     *
+     * For each face:
+     *
+	 * 3 4-byte floats = components of normal vector to face;
+     * 3 4-byte floats = coordinates of first node;
+     * 3 4-byte floats = coordinates of second node;
+     * 3 4-byte floats = coordinates of third and final node;
+     * 2-byte int = attribute, whose value is 0.
+     * @param kOut  binary file output 
+     * @throws IOException
+     */
+    protected void printSTLBinary(RandomAccessFile kOut) throws IOException {
+        int i;
+        int index1, index2, index3;
+        byte[] attribute = new byte[2];
+        int iTriangleCount = getIndexCount() / 3;
+    	Point3f kVertex = new Point3f();
+        Vector3f kNormal = new Vector3f();
+        Vector3f kNormal1 = new Vector3f();
+        Vector3f kNormal2 = new Vector3f();
+        Vector3f kNormal3 = new Vector3f();
         
-        /******************************************/
-        /*
-        // write vertices
-        kOut.println(getVertexCount());
-        kOut.println("Vertices");
-
-        for (i = 0; i < getVertexCount(); i++) {
-            getCoordinate(i, kVertex);
-            kOut.print(kVertex.x);
-            kOut.print(' ');
-            kOut.print(kVertex.y);
-            kOut.print(' ');
-            kOut.println(kVertex.z);
-        }
-
-        kOut.println("Normals");
-
-        // write normals
-        for (i = 0; i < getVertexCount(); i++) {
-            getNormal(i, kNormal);
-            kOut.print(kNormal.x);
-            kOut.print(' ');
-            kOut.print(kNormal.y);
-            kOut.print(' ');
-            kOut.println(kNormal.z);
-        }
-
-        kOut.println("Connectivity");
-
-        // write connectivity
+        // nothing header
+        byte[] header = new byte[80];
+        kOut.write(header);
+       
+        // number of facets
+        kOut.write(FileBase.intToBytes(iTriangleCount, false));
         
-
-        kOut.println(iTriangleCount);
-
         for (i = 0; i < iTriangleCount; i++) {
-            kOut.print(getCoordinateIndex(3 * i));
-            kOut.print(' ');
-            kOut.print(getCoordinateIndex((3 * i) + 1));
-            kOut.print(' ');
-            kOut.println(getCoordinateIndex((3 * i) + 2));
+        	index1 = getCoordinateIndex(3 * i);    
+            index2 = getCoordinateIndex((3 * i) + 1);
+            index3 = getCoordinateIndex((3 * i) + 2);
+            
+            getNormal(index1, kNormal1);
+            getNormal(index2, kNormal2);
+            getNormal(index3, kNormal3);
+            
+            // Compute facet normal
+            kNormal.set(0f, 0f, 0f);
+            kNormal.add(kNormal1);
+            kNormal.add(kNormal2);
+            kNormal.add(kNormal3);
+            kNormal.scale(1f/3f);
+        
+            // facet normal
+            kOut.write(FileBase.floatToBytes(kNormal.x, false));
+            kOut.write(FileBase.floatToBytes(kNormal.y, false));
+            kOut.write(FileBase.floatToBytes(kNormal.z, false));
+            
+            // index 1
+            getCoordinate(index1, kVertex);;            
+            kOut.write(FileBase.floatToBytes(kVertex.x, false));
+            kOut.write(FileBase.floatToBytes(kVertex.y, false));
+            kOut.write(FileBase.floatToBytes(kVertex.z, false));
+                       
+            // index 2
+            getCoordinate(index2, kVertex);;
+            kOut.write(FileBase.floatToBytes(kVertex.x, false));
+            kOut.write(FileBase.floatToBytes(kVertex.y, false));
+            kOut.write(FileBase.floatToBytes(kVertex.z, false));
+
+            // index 3
+            getCoordinate(index3, kVertex);
+            kOut.write(FileBase.floatToBytes(kVertex.x, false));
+            kOut.write(FileBase.floatToBytes(kVertex.y, false));
+            kOut.write(FileBase.floatToBytes(kVertex.z, false));
+            
+            // 2 byte attribute == 0
+            kOut.write(attribute);
+            
         }
-        */
+        // kOut.close();
     }
 
 
