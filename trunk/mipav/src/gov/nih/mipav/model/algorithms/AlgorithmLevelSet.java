@@ -78,7 +78,7 @@ import java.util.*;
  * used: mean curvature = ((phiyy + phizz)phix**2 + (phixx + phizz)phiy**2 + (phixx + phiyy)phiz**2 -
  * 2(phix)(phiy)(phixy) - 2(phix)(phiz)(phixz) -2(phiy)(phiz)(phiyz))/ (phix**2 + phiy**2 + phiz**2)**1.5</p>
  */
-public class AlgorithmLevelSet extends AlgorithmBase {
+public class AlgorithmLevelSet extends AlgorithmBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -134,6 +134,9 @@ public class AlgorithmLevelSet extends AlgorithmBase {
     
     /** If image25D is true in 3D images, process each slice separately */
     private boolean image25D = false;
+    
+    /** Stores output of AlgorithmConvolver */
+    private float[] outputBuffer = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -198,12 +201,23 @@ public class AlgorithmLevelSet extends AlgorithmBase {
      * starts the algorithm.
      */
     public void runAlgorithm() {
+        AlgorithmConvolver convolver;
 
         if (srcImage == null) {
             displayError("Source Image is null");
 
             return;
         }
+        
+        if ((srcImage.getNDims() == 2) || image25D) {
+            convolver = new AlgorithmConvolver(srcImage, GxData, GyData, kExtents, true);
+        }
+        else {
+            convolver = new AlgorithmConvolver(srcImage, GxData, GyData, GzData, kExtents, true);
+        }
+        convolver.addListener(this);
+        convolver.run();
+        convolver.finalize();    
 
         if (srcImage.getNDims() == 2) {
             calc2D();
@@ -226,14 +240,12 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         int i, j, n;
         int length;
         float[] gBuffer;
-        float[] pBuffer;
         float[] uComp;
         float[] vComp;
         double[] phiImage;
         double[] phiNext;
         double[] originalPhi;
         double[] tempBuffer;
-        float ix, iy;
         int nVOI;
         ViewVOIVector VOIs;
         VOI contourVOI;
@@ -266,7 +278,6 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         try {
             length = srcImage.getSliceSize();
             gBuffer = new float[length];
-            pBuffer = new float[length];
             uComp = new float[length];
             vComp = new float[length];
             phiImage = new double[length];
@@ -305,24 +316,17 @@ public class AlgorithmLevelSet extends AlgorithmBase {
 
         contourVOI = VOIs.VOIAt(i);
 
-        
-
-        int[] imageExtents = srcImage.getExtents();
-
         maxGrad = 0.0f;
         minGrad = Float.MAX_VALUE;
 
         for (i = 0; i < length; i++) { // calculate gradient magnitude
-            ix = AlgorithmConvolver.convolve2DPt(i, imageExtents, gBuffer, kExtents, GxData);
-            iy = AlgorithmConvolver.convolve2DPt(i, imageExtents, gBuffer, kExtents, GyData);
-            pBuffer[i] = (float) Math.sqrt((ix * ix) + (iy * iy));
 
-            if (pBuffer[i] > maxGrad) {
-                maxGrad = pBuffer[i];
+            if (outputBuffer[i] > maxGrad) {
+                maxGrad = outputBuffer[i];
             }
 
-            if (pBuffer[i] < minGrad) {
-                minGrad = pBuffer[i];
+            if (outputBuffer[i] < minGrad) {
+                minGrad = outputBuffer[i];
             }
 
             // Normalize the gradient magnitude to go from 0 to 100
@@ -335,11 +339,11 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         }
 
         for (i = 0; i < length; i++) {
-            pBuffer[i] = (pBuffer[i] - minGrad) * 100.0f / divisor;
+            outputBuffer[i] = (outputBuffer[i] - minGrad) * 100.0f / divisor;
         }
 
         for (i = 0; i < length; i++) {
-            gBuffer[i] = 1 / (1 + pBuffer[i]);
+            gBuffer[i] = 1 / (1 + outputBuffer[i]);
         }
 
         fireProgressStateChanged(2);
@@ -351,12 +355,12 @@ public class AlgorithmLevelSet extends AlgorithmBase {
             xPos = i % xDim;
 
             if ((xPos >= 1) && (xPos < (xDim - 1))) {
-                uComp[i] = beta * (pBuffer[i + 1] - pBuffer[i - 1]) / 2.0f;
-                vComp[i] = beta * (pBuffer[i + xDim] - pBuffer[i - xDim]) / 2.0f;
+                uComp[i] = beta * (outputBuffer[i + 1] - outputBuffer[i - 1]) / 2.0f;
+                vComp[i] = beta * (outputBuffer[i + xDim] - outputBuffer[i - xDim]) / 2.0f;
             }
         }
 
-        pBuffer = null;
+        outputBuffer = null;
         System.gc();
 
         fireProgressStateChanged(4);
@@ -770,7 +774,6 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         double[] phiNext;
         double[] originalPhi;
         double[] tempBuffer;
-        float ix, iy;
         int nVOI;
         ViewVOIVector VOIs;
         VOI contourVOI;
@@ -803,6 +806,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         Vector[] curves;
         int extents2D[];
         int totalLength;
+        int offset;
 
         try {
             length = srcImage.getSliceSize();
@@ -853,12 +857,13 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         
         for (z = 0; z < zDim; z++) {
             fireProgressStateChanged(z * 100/ zDim);
+            offset = z*length;
             if (curves[z].size() == 0) {
                 // If  no curves are present in this slice, don't process this slice
                 continue;
             }
             try {
-                srcImage.exportData(z*length, length, gBuffer); // locks and releases lock
+                srcImage.exportData(offset, length, gBuffer); // locks and releases lock
             } catch (IOException error) {
                 cleanUp();
                 System.gc();
@@ -872,9 +877,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
             minGrad = Float.MAX_VALUE;
 
             for (i = 0; i < length; i++) { // calculate gradient magnitude
-                ix = AlgorithmConvolver.convolve2DPt(i, extents2D, gBuffer, kExtents, GxData);
-                iy = AlgorithmConvolver.convolve2DPt(i, extents2D, gBuffer, kExtents, GyData);
-                pBuffer[i] = (float) Math.sqrt((ix * ix) + (iy * iy));
+                pBuffer[i] = outputBuffer[offset + i];
 
                 if (pBuffer[i] > maxGrad) {
                     maxGrad = pBuffer[i];
@@ -1254,9 +1257,9 @@ public class AlgorithmLevelSet extends AlgorithmBase {
             for (i = 0; i < length; i++) {
 
                 if (phiImage[i] < 0.0) {
-                    mask.set(z*length+i);
+                    mask.set(offset+i);
                 } else {
-                    mask.clear(z*length+i);
+                    mask.clear(offset+i);
                 }
             }
     
@@ -1309,7 +1312,6 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         int i, j, n;
         int length;
         float[] gBuffer;
-        float[] pBuffer;
         float[] uComp;
         float[] vComp;
         float[] wComp;
@@ -1317,7 +1319,6 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         double[] phiNext;
         double[] originalPhi;
         double[] tempBuffer;
-        float ix, iy, iz;
         int nVOI;
         ViewVOIVector VOIs;
         VOI contourVOI;
@@ -1353,7 +1354,6 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         try {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
             gBuffer = new float[length];
-            pBuffer = new float[length];
             uComp = new float[length];
             vComp = new float[length];
             wComp = new float[length];
@@ -1394,25 +1394,17 @@ public class AlgorithmLevelSet extends AlgorithmBase {
 
         contourVOI = VOIs.VOIAt(i);
 
-        
-
-        int[] imageExtents = srcImage.getExtents();
-
         maxGrad = 0.0f;
         minGrad = Float.MAX_VALUE;
 
         for (i = 0; i < length; i++) { // calculate gradient magnitude
-            ix = AlgorithmConvolver.convolve3DPt(i, imageExtents, gBuffer, kExtents, GxData);
-            iy = AlgorithmConvolver.convolve3DPt(i, imageExtents, gBuffer, kExtents, GyData);
-            iz = AlgorithmConvolver.convolve3DPt(i, imageExtents, gBuffer, kExtents, GzData);
-            pBuffer[i] = (float) Math.sqrt((ix * ix) + (iy * iy) + (iz * iz));
 
-            if (pBuffer[i] > maxGrad) {
-                maxGrad = pBuffer[i];
+            if (outputBuffer[i] > maxGrad) {
+                maxGrad = outputBuffer[i];
             }
 
-            if (pBuffer[i] < minGrad) {
-                minGrad = pBuffer[i];
+            if (outputBuffer[i] < minGrad) {
+                minGrad = outputBuffer[i];
             }
         }
 
@@ -1424,11 +1416,11 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         }
 
         for (i = 0; i < length; i++) {
-            pBuffer[i] = (pBuffer[i] - minGrad) * 100.0f / divisor;
+            outputBuffer[i] = (outputBuffer[i] - minGrad) * 100.0f / divisor;
         }
 
         for (i = 0; i < length; i++) {
-            gBuffer[i] = 1 / (1 + pBuffer[i]);
+            gBuffer[i] = 1 / (1 + outputBuffer[i]);
         }
         
         fireProgressStateChanged(2);
@@ -1441,13 +1433,13 @@ public class AlgorithmLevelSet extends AlgorithmBase {
             yPos = (i % sliceSize) / xDim;
 
             if ((xPos >= 1) && (xPos < (xDim - 1)) && (yPos >= 1) && (yPos < (yDim - 1))) {
-                uComp[i] = beta * (pBuffer[i + 1] - pBuffer[i - 1]) * 0.5f;
-                vComp[i] = beta * (pBuffer[i + xDim] - pBuffer[i - xDim]) * 0.5f;
-                wComp[i] = beta * (pBuffer[i + sliceSize] - pBuffer[i - sliceSize]) * 0.5f;
+                uComp[i] = beta * (outputBuffer[i + 1] - outputBuffer[i - 1]) * 0.5f;
+                vComp[i] = beta * (outputBuffer[i + xDim] - outputBuffer[i - xDim]) * 0.5f;
+                wComp[i] = beta * (outputBuffer[i + sliceSize] - outputBuffer[i - sliceSize]) * 0.5f;
             }
         }
 
-        pBuffer = null;
+        outputBuffer = null;
         System.gc();
 
         fireProgressStateChanged(4);
@@ -1999,5 +1991,16 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         GenerateGaussian Gz = new GenerateGaussian(GzData, kExtents, sigmas, derivOrder);
 
         Gz.calc(true);
+    }
+    
+    public void algorithmPerformed(AlgorithmBase algorithm){
+        if(!algorithm.isCompleted()){
+            finalize();
+            return;
+        }
+        if (algorithm instanceof AlgorithmConvolver) {
+            AlgorithmConvolver convolver = (AlgorithmConvolver) algorithm;
+            outputBuffer = convolver.getOutputBuffer();
+        }
     }
 }
