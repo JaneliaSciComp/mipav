@@ -759,7 +759,6 @@ public class AlgorithmLevelSet extends AlgorithmBase implements AlgorithmInterfa
         int i, j, n;
         int length;
         float[] gBuffer;
-        float[] pBuffer;
         float[] uComp;
         float[] vComp;
         double[] phiImage;
@@ -803,7 +802,6 @@ public class AlgorithmLevelSet extends AlgorithmBase implements AlgorithmInterfa
         try {
             length = srcImage.getSliceSize();
             gBuffer = new float[length];
-            pBuffer = new float[length];
             uComp = new float[length];
             vComp = new float[length];
             phiImage = new double[length];
@@ -859,14 +857,13 @@ public class AlgorithmLevelSet extends AlgorithmBase implements AlgorithmInterfa
             minGrad = Float.MAX_VALUE;
 
             for (i = 0; i < length; i++) { // calculate gradient magnitude
-                pBuffer[i] = outputBuffer[offset + i];
 
-                if (pBuffer[i] > maxGrad) {
-                    maxGrad = pBuffer[i];
+                if (outputBuffer[offset + i] > maxGrad) {
+                    maxGrad = outputBuffer[offset + i];
                 }
 
-                if (pBuffer[i] < minGrad) {
-                    minGrad = pBuffer[i];
+                if (outputBuffer[offset + i] < minGrad) {
+                    minGrad = outputBuffer[offset + i];
                 }
 
                 // Normalize the gradient magnitude to go from 0 to 100
@@ -879,11 +876,11 @@ public class AlgorithmLevelSet extends AlgorithmBase implements AlgorithmInterfa
             }
 
             for (i = 0; i < length; i++) {
-                pBuffer[i] = (pBuffer[i] - minGrad) * 100.0f / divisor;
+                outputBuffer[offset + i] = (outputBuffer[offset + i] - minGrad) * 100.0f / divisor;
             }
 
             for (i = 0; i < length; i++) {
-                gBuffer[i] = 1 / (1 + pBuffer[i]);
+                gBuffer[i] = 1 / (1 + outputBuffer[offset + i]);
             }
     
             
@@ -895,8 +892,8 @@ public class AlgorithmLevelSet extends AlgorithmBase implements AlgorithmInterfa
                 xPos = i % xDim;
     
                 if ((xPos >= 1) && (xPos < (xDim - 1))) {
-                    uComp[i] = beta * (pBuffer[i + 1] - pBuffer[i - 1]) / 2.0f;
-                    vComp[i] = beta * (pBuffer[i + xDim] - pBuffer[i - xDim]) / 2.0f;
+                    uComp[i] = beta * (outputBuffer[offset + i + 1] - outputBuffer[offset + i - 1]) / 2.0f;
+                    vComp[i] = beta * (outputBuffer[offset + i + xDim] - outputBuffer[offset + i - xDim]) / 2.0f;
                 }
             }
     
