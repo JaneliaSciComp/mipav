@@ -1,4 +1,4 @@
-package gov.nih.mipav.model.algorithms.itk.autoItk;
+package gov.nih.mipav.model.algorithms.itk;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -529,10 +529,6 @@ public class AutoItkLoader implements ActionListener {
             filter_name.m_State = FilterRecordItk.FilterState.NORMAL;
             ret_list.add(filter_name);
 
-            // XXX Testing
-            //if (ret_list.size() == 3) {
-            //    ret_list.add(new FilterRecordItk("RemoveTestImage", true));
-            //}
         }
         return ret_list;
     }

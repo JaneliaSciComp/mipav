@@ -3,8 +3,8 @@ package gov.nih.mipav.model.algorithms.filters;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.algorithms.itk.autoItk.PItkImage2;
-import gov.nih.mipav.model.algorithms.itk.autoItk.PItkImage3;
+import gov.nih.mipav.model.algorithms.itk.PItkImage2;
+import gov.nih.mipav.model.algorithms.itk.PItkImage3;
 
 import InsightToolkit.*;
 

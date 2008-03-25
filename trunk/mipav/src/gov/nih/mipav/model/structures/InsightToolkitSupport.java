@@ -4,9 +4,9 @@ package gov.nih.mipav.model.structures;
 import gov.nih.mipav.view.*;
 
 import InsightToolkit.*;
-import gov.nih.mipav.model.algorithms.itk.autoItk.AutoItkLoader;
-import gov.nih.mipav.model.algorithms.itk.autoItk.PItkImage2;
-import gov.nih.mipav.model.algorithms.itk.autoItk.PItkImage3;
+import gov.nih.mipav.model.algorithms.itk.AutoItkLoader;
+import gov.nih.mipav.model.algorithms.itk.PItkImage2;
+import gov.nih.mipav.model.algorithms.itk.PItkImage3;
 
 import java.io.*;
 import java.lang.reflect.Array;
