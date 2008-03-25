@@ -325,8 +325,18 @@ public class JDialogWaterShedITK extends JDialogScriptableBase
                         }
                     }
 
+                    ModelImage float_src_image = image;
+                    if (image.getType() != ModelImage.ARGB_FLOAT ||
+                        image.getType() != ModelImage.FLOAT) {
+                        float_src_image = (ModelImage) image.clone();
+                        try {
+                            float_src_image.convertToFloat();
+                        } catch (java.io.IOException ioe) {
+                            return;
+                        }
+                    }
                     // Make algorithm
-                    waterShedlAlgo = new AlgorithmWaterShedITK(resultImage, image, waterShedPanel.getParameters(), false);
+                    waterShedlAlgo = new AlgorithmWaterShedITK(resultImage, float_src_image, waterShedPanel.getParameters(), false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -371,14 +381,20 @@ public class JDialogWaterShedITK extends JDialogScriptableBase
 
                 try {
 
+                    if (image.getType() != ModelImage.ARGB_FLOAT ||
+                        image.getType() != ModelImage.FLOAT) {
+                        MipavUtil.displayError("Cannot replace original image unless pixels are of type Float. Please convert the input image first.");
+
+                        return;
+                    }
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                	waterShedlAlgo = new AlgorithmWaterShedITK(image, waterShedPanel.getParameters(), false);
+                    waterShedlAlgo = new AlgorithmWaterShedITK(image, waterShedPanel.getParameters(), false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
-                	waterShedlAlgo.addListener(this);
+                    waterShedlAlgo.addListener(this);
                     createProgressBar(image.getImageName(), waterShedlAlgo);
 
                     waterShedlAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
@@ -450,8 +466,18 @@ public class JDialogWaterShedITK extends JDialogScriptableBase
                         }
                     }
 
+                    ModelImage float_src_image = image;
+                    if (image.getType() != ModelImage.ARGB_FLOAT ||
+                        image.getType() != ModelImage.FLOAT) {
+                        float_src_image = (ModelImage) image.clone();
+                        try {
+                            float_src_image.convertToFloat();
+                        } catch (java.io.IOException ioe) {
+                            return;
+                        }
+                    }
                     // Make algorithm
-                    waterShedlAlgo = new AlgorithmWaterShedITK(resultImage, image, waterShedPanel.getParameters(), image25D);
+                    waterShedlAlgo = new AlgorithmWaterShedITK(resultImage, float_src_image, waterShedPanel.getParameters(), image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -496,13 +522,19 @@ public class JDialogWaterShedITK extends JDialogScriptableBase
 
                 try {
 
+                    if (image.getType() != ModelImage.ARGB_FLOAT ||
+                        image.getType() != ModelImage.FLOAT) {
+                        MipavUtil.displayError("Cannot replace original image unless pixels are of type Float. Please convert the input image first.");
+
+                        return;
+                    }
                     // Make algorithm
-                	waterShedlAlgo = new AlgorithmWaterShedITK(image, waterShedPanel.getParameters(), image25D);
+                    waterShedlAlgo = new AlgorithmWaterShedITK(image, waterShedPanel.getParameters(), image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
-                	waterShedlAlgo.addListener(this);
+                    waterShedlAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), waterShedlAlgo);
 

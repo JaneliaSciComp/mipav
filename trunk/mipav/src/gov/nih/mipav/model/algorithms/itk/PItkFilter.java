@@ -1,4 +1,4 @@
-package gov.nih.mipav.model.algorithms.itk.autoItk;
+package gov.nih.mipav.model.algorithms.itk;
 
 import InsightToolkit.*;
 

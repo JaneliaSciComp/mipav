@@ -1,22 +1,8 @@
-package gov.nih.mipav.model.algorithms.itk.autoItk;
+package gov.nih.mipav.model.algorithms.itk;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.Component;
-import java.awt.Dimension;
-import javax.swing.*;
 
-import java.util.jar.*;
 import java.util.*;
-import java.lang.reflect.*;
 import java.io.*;
-import java.util.Enumeration;
-import InsightToolkit.*;
-
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmItkFilter;
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.JDialogBase;
 
 /** Struct that holds public data about an itk filter.
  * @author Geometric Tools
@@ -49,7 +35,7 @@ public class FilterRecordItk implements Serializable
     /**
      * Avoid compiler warning. Change if class fields change.
      */
-    static final long serialVersionUID = 4243L;
+    static final long serialVersionUID = 4244L;
     /**
      * Name directly from the Itk class, InsightToolkit.itkBinaryDilateImageFilterF2F2 becomes BinaryDilateImage
      */

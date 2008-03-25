@@ -331,10 +331,10 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
                     if (image.getType() != ModelImage.ARGB_FLOAT ||
                         image.getType() != ModelImage.FLOAT) {
                         float_src_image = (ModelImage) image.clone();
-                        try	{
-                        	float_src_image.convertToFloat();
+                        try {
+                            float_src_image.convertToFloat();
                         } catch (java.io.IOException ioe) {
-                        	return;
+                            return;
                         }
                     }
                     // Make algorithm
@@ -474,10 +474,10 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
                     if (image.getType() != ModelImage.ARGB_FLOAT ||
                         image.getType() != ModelImage.FLOAT) {
                         float_src_image = (ModelImage) image.clone();
-                        try	{
-                        	float_src_image.convertToFloat();
+                        try {
+                            float_src_image.convertToFloat();
                         } catch (java.io.IOException ioe) {
-                        	return;
+                            return;
                         }
                     }
                     // Make algorithm

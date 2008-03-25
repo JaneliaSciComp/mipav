@@ -14,7 +14,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
 import InsightToolkit.*;
 
-import gov.nih.mipav.model.algorithms.itk.autoItk.*;
+import gov.nih.mipav.model.algorithms.itk.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;

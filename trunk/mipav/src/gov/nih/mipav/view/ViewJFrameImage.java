@@ -3,7 +3,7 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.algorithms.itk.autoItk.*;
+import gov.nih.mipav.model.algorithms.itk.*;
 import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;

@@ -3,7 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.algorithms.itk.autoItk.*;
+import gov.nih.mipav.model.algorithms.itk.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
@@ -688,9 +688,17 @@ public class JDialogItkFilter extends JDialogScriptableBase
         m_outputOptionsPanel = new JPanelAlgorithmOutputOptions(m_srcImage);
 
         PanelManager paramPanelManager = new PanelManager();
-        
-        paramPanelManager.add(m_filterParamPanel);
-        //paramPanelManager.addOnNextLine(kernelOptionsPanelManager.getPanel());
+        JScrollPane jsp = new JScrollPane(m_filterParamPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        // some adjustments so filter params expand to available space:
+        GridBagConstraints constraints = paramPanelManager.getConstraints();
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.weighty = 1;
+        paramPanelManager.add(jsp);
+        // reset:
+        constraints.weighty = 0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+
         paramPanelManager.addOnNextLine(m_colorChannelPanel);
         paramPanelManager.addOnNextLine(m_outputOptionsPanel);
 
