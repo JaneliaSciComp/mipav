@@ -5905,6 +5905,20 @@ public class FileTiff extends FileBase {
         boolean zero;
         fileInfo.setEndianess(endianess);
         nDirEntries = getUnsignedShort(endianess);
+        int bytesExamined;
+        byte blockSignature[];
+        int imageResourceID;
+        int pascalStringLength;
+        byte pascalString[];
+        int maxLength;
+        long resourceDataSize;
+        long hResFixed;
+        double hRes;
+        long vResFixed;
+        double vRes;
+        int quality;
+        int format;
+        int progressiveScans;
 
         if (nDirEntries <= 0) {
             throw new IOException("First 2 IFD bytes are an illegal " + nDirEntries);
@@ -9126,8 +9140,354 @@ public class FileTiff extends FileBase {
                     }
                     
                     if (debuggingFileIO) {
-                        Preferences.debug("FileTiff.openIFD: PHOTOSHOP 'Image Resource Block' is above\n");
-                    }
+                        Preferences.debug("FileTiff.openIFD: Collection of PHOTOSHOP 'Image Resource Blocks' is above\n");
+                        Preferences.debug("The Image Resource Blocks have " + count + " bytes\n");
+                        bytesExamined = 0;
+                        blockSignature = new byte[4];
+                        maxLength = Math.min(count, MAX_IFD_LENGTH);
+                        while ((maxLength - bytesExamined + 1) >= 7) {
+                            for (i1 = 0; i1 < 4; i1++) {
+                                blockSignature[i1] = (byte)valueArray[bytesExamined+i1];
+                            }
+                            bytesExamined += 4;
+                            str = new String(blockSignature);
+                            if (str.equals("8BIM")) {
+                                Preferences.debug("Image Resource Block Signature is expected 8BIM\n");
+                            }
+                            else {
+                                Preferences.debug("Image Resource Block Signature is an unexpected " + str + "\n");
+                                break;
+                            }
+                            if ((bytesExamined+1) >= maxLength) {
+                                break;
+                            }
+                            imageResourceID = ((((int)valueArray[bytesExamined]) << 8) | ((int)valueArray[bytesExamined+1]));
+                            bytesExamined += 2;
+                            Preferences.debug("Image Resource ID = " + imageResourceID + "\n");
+                            switch(imageResourceID) {
+                                case 1000:
+                                    Preferences.debug("Image Resource ID for channels, rows, columns, depth, and mode\n");
+                                    break;
+                                case 1001:
+                                    Preferences.debug("Image Resource ID for optional Macintosh print manager information\n");
+                                    break;
+                                case 1003:
+                                    Preferences.debug("Image Resource ID for indexed color table\n");
+                                    break;
+                                case 1005:
+                                    Preferences.debug("Image Resource ID for resolution information\n");
+                                    break;
+                                case 1006:
+                                    Preferences.debug("Image Resource ID for alpha channel names in Pascal-format strings\n");
+                                    break;
+                                case 1007:
+                                    Preferences.debug("Image Resource ID for display information for each channel\n");
+                                    break;
+                                case 1008:
+                                    Preferences.debug("Image Resource ID for optional Pascal-format caption string\n");
+                                    break;
+                                case 1009:
+                                    Preferences.debug("Image Resource ID for fixed-point border width, border units\n");
+                                    break;
+                                case 1010:
+                                    Preferences.debug("Image Resource ID for background color\n");
+                                    break;
+                                case 1011:
+                                    Preferences.debug("Image Resource ID for print flags\n");
+                                    break;
+                                case 1012:
+                                    Preferences.debug("Image Resource ID for gray-scale and halftoning information\n");
+                                    break;
+                                case 1013:
+                                    Preferences.debug("Image Resource ID for color halftoning information\n");
+                                    break;
+                                case 1014:
+                                    Preferences.debug("Image Resource ID for duotone halftoning information\n");
+                                    break;
+                                case 1015:
+                                    Preferences.debug("Image Resource ID for gray-scale and multichannel transfer function\n");
+                                    break;
+                                case 1016:
+                                    Preferences.debug("Image Resource ID for color transfer functions\n");
+                                    break;
+                                case 1017:
+                                    Preferences.debug("Image Resource ID for duotone transfer functions\n");
+                                    break;
+                                case 1018:
+                                    Preferences.debug("Image Resource ID for duotone image information\n");
+                                    break;
+                                case 1019:
+                                    Preferences.debug("Image Resource ID for effective black and white value for dot range\n");
+                                    break;
+                                case 1021:
+                                    Preferences.debug("Image Resource ID for EPS options\n");
+                                    break;
+                                case 1022:
+                                    Preferences.debug("Image Resource ID for quick mask channel ID, flag for mask initially empty\n");
+                                    break;
+                                case 1024:
+                                    Preferences.debug("Image Resource ID for index of target layer (0 = bottom)\n");
+                                    break;
+                                case 1025:
+                                    Preferences.debug("Image Resource ID for working path\n");
+                                    break;
+                                case 1026:
+                                    Preferences.debug("Image Resource ID for layers group info, group ID for dragging groups\n");
+                                    break;
+                                case 1028:
+                                    Preferences.debug("Image Resource ID for IPTC-NAA record\n");
+                                    break;
+                                case 1029:
+                                    Preferences.debug("Image Resource ID for raw format files\n");
+                                    break;
+                                case 1030:
+                                    Preferences.debug("Image Resource ID for JPEG quality (Adobe internal)\n");
+                                    break;
+                                case 1033:
+                                    Preferences.debug("Image Resource ID for thumbnail written by PhotoShop 4.0\n");
+                                    break;
+                                case 1034:
+                                    Preferences.debug("Image Resource ID for copyright flag\n");
+                                    break;
+                                case 1035:
+                                    Preferences.debug("Image Resource ID for URL\n");
+                                    break;
+                                case 1036:
+                                    Preferences.debug("Image Resource ID for thumbnail written by PhotoShop 5.0 and upward\n");
+                                    break;
+                                case 1037:
+                                    Preferences.debug("Image Resource ID for global angle\n");
+                                    break;
+                                case 1038:
+                                    Preferences.debug("Image Resource ID for Color Samplers Resource\n");
+                                    break;
+                                case 1039:
+                                    Preferences.debug("Image Resource ID for ICC_Profile\n");
+                                    break;
+                                case 1040:
+                                    Preferences.debug("Image Resource ID for watermark\n");
+                                    break;
+                                case 1041:
+                                    Preferences.debug("Image Resource ID for ICC_Untagged\n");
+                                    break;
+                                case 1042:
+                                    Preferences.debug("Image Resource ID for Effects Visible\n");
+                                    break;
+                                case 1043:
+                                    Preferences.debug("Image Resource ID for Spot Half Tone\n");
+                                    break;
+                                case 1044:
+                                    Preferences.debug("Image Resource ID for ID's base value\n");
+                                    break;
+                                case 1045:
+                                    Preferences.debug("Image Resource ID for Unicode Alpha Names\n");
+                                    break;
+                                case 1046:
+                                    Preferences.debug("Image Resource ID for Indexed Color Table Count\n");
+                                    break;
+                                case 1047:
+                                    Preferences.debug("Image Resource ID for Transparent Index\n");
+                                    break;
+                                case 1049:
+                                    Preferences.debug("Image Resource ID for Global Altitude\n");
+                                    break;
+                                case 1050:
+                                    Preferences.debug("Image Resource ID for slices\n");
+                                    break;
+                                case 1051:
+                                    Preferences.debug("Image Resource ID for Workflow URL\n");
+                                    break;
+                                case 1052:
+                                    Preferences.debug("Image Resource ID for Jump To XPEP\n");
+                                    break;
+                                case 1053:
+                                    Preferences.debug("Image Resource ID for Alpha Identifiers\n");
+                                    break;
+                                case 1054:
+                                    Preferences.debug("Image Resource ID for URL_List\n");
+                                    break;
+                                case 1057:
+                                    Preferences.debug("Image Resource ID for version info\n");
+                                    break;
+                                case 1058:
+                                    Preferences.debug("Image Resource ID for EXIF Info, #PH (found in EPS and PSD files)\n");
+                                    break;
+                                case 1060:
+                                    Preferences.debug("Image Resource ID for XMP\n");
+                                    break;
+                                case 2999:
+                                    Preferences.debug("Image Resource ID for clipping pathname\n");
+                                    break;
+                                case 10000:
+                                    Preferences.debug("Image Resource ID for print flags information\n");
+                                    break;
+                            } // switch(imageResourceID)
+                            if (bytesExamined >= maxLength) {
+                                break;
+                            }
+                            pascalStringLength = (int)valueArray[bytesExamined];
+                            bytesExamined +=1;
+                            if (bytesExamined >= maxLength) {
+                                break;
+                            }
+                            if (pascalStringLength == 0) {
+                                // should have 2 bytes of 0 for the null string
+                                if (valueArray[bytesExamined] == 0) {
+                                    bytesExamined += 1;
+                                    Preferences.debug("The Pascal string is null\n");
+                                }
+                                else {
+                                    Preferences.debug("Zero for Pascal String length is followed by an unexpected " + valueArray[bytesExamined] + "\n");
+                                    bytesExamined += 1;
+                                    break;
+                                }
+                                if (bytesExamined >= maxLength) {
+                                    break;
+                                }
+                            } // if (pascalStringLength == 0)
+                            else { // pascalStringLength > 0
+                                pascalString = new byte[pascalStringLength];
+                                for (i1 = 0; (i1 < pascalStringLength) && ((bytesExamined + i1) < maxLength); i1++) {
+                                    pascalString[i1] = (byte)valueArray[bytesExamined+i1];
+                                }
+                                str = new String(pascalString);
+                                Preferences.debug("Pascal string = " + str.trim() + "\n");
+                                bytesExamined += pascalStringLength;
+                                // If the length is even, and thus the total oof the length byte and the ASCII sequence isn't,
+                                // a padding byte is appended
+                                if ((pascalStringLength % 2) == 0) {
+                                    bytesExamined += 1;
+                                }
+                                if (bytesExamined >= maxLength) {
+                                    break;
+                                }
+                            } // else pascalStringLength > 0
+                            if ((maxLength - bytesExamined + 1) < 4) {
+                                break;
+                            }
+                            resourceDataSize = ((valueArray[bytesExamined] << 24) | (valueArray[bytesExamined+1] << 16) |
+                                    (valueArray[bytesExamined+2] << 8) | valueArray[bytesExamined+3]);
+                            Preferences.debug("Size of resource data = " + resourceDataSize + "\n");
+                            bytesExamined += 4;
+                            if ((maxLength - bytesExamined + 1) < resourceDataSize) {
+                                break;    
+                            }
+                            // Code for reading Resource data
+                            switch(imageResourceID) {
+                                case 1005: // Resolution information
+                                    hResFixed = ((valueArray[bytesExamined] << 24) | (valueArray[bytesExamined+1] << 16) |
+                                            (valueArray[bytesExamined+2] << 8) | valueArray[bytesExamined+3]);
+                                    hRes = hResFixed/65536.0;
+                                    Preferences.debug("Horizontal resolution is " + hRes + " pixels per inch\n");
+                                    vResFixed = ((valueArray[bytesExamined+8] << 24) | (valueArray[bytesExamined+9] << 16) |
+                                            (valueArray[bytesExamined+10] << 8) | valueArray[bytesExamined+11]);
+                                    vRes = vResFixed/65536.0;
+                                    Preferences.debug("Vertical resolution is " + vRes + " pixels per inch\n");
+                                    break;
+                                case 1030: // JPEG quality
+                                    quality = ((((int)valueArray[bytesExamined]) << 8) | ((int)valueArray[bytesExamined+1]));
+                                    switch(quality) {
+                                        case 0xFFFD:
+                                            Preferences.debug("JPEG Quality 1 (Low)\n");
+                                            break;
+                                        case 0xFFFE:
+                                            Preferences.debug("JPEG Quality 2 (Low)\n");
+                                            break;
+                                        case 0xFFFF:
+                                            Preferences.debug("JPEG Quality 3 (Low)\n");
+                                            break;
+                                        case 0x0000:
+                                            Preferences.debug("JPEG Quality 4 (Low)\n");
+                                            break;
+                                        case 0x0001:
+                                            Preferences.debug("JPEG Quality 5 (Medium)\n");
+                                            break;
+                                        case 0x0002:
+                                            Preferences.debug("JPEG Quality 6 (Medium)\n");
+                                            break;
+                                        case 0x0003:
+                                            Preferences.debug("JPEG Quality 7 (Medium)\n");
+                                            break;
+                                        case 0x0004:
+                                            Preferences.debug("JPEG Quality 8 (High)\n");
+                                            break;
+                                        case 0x0005:
+                                            Preferences.debug("JPEG Quality 9 (High)\n");
+                                            break;
+                                        case 0x0006:
+                                            Preferences.debug("JPEG Quality 10 (Maximum)\n");
+                                            break;
+                                        case 0x0007:
+                                            Preferences.debug("JPEG Quality 11 (Maximum)\n");
+                                            break;
+                                        case 0x0008:
+                                            Preferences.debug("JPEG Quality 12 (Maximum)\n");
+                                            break;
+                                    }
+                                    format = ((((int)valueArray[bytesExamined+2]) << 8) | ((int)valueArray[bytesExamined+3]));
+                                    switch (format) {
+                                        case 0:
+                                            Preferences.debug("Standard format\n");
+                                            break;
+                                        case 1:
+                                            Preferences.debug("Optimized format\n");
+                                            break;
+                                        case 5:
+                                            Preferences.debug("Progressive format\n");
+                                            break;
+                                    }
+                                    progressiveScans = ((((int)valueArray[bytesExamined+4]) << 8) | ((int)valueArray[bytesExamined+5]));
+                                    switch (progressiveScans) {
+                                        case 1:
+                                            Preferences.debug("3 scans\n");
+                                            break;
+                                        case 2:
+                                            Preferences.debug("4 scans\n");
+                                            break;
+                                        case 3:
+                                            Preferences.debug("5 scans\n");
+                                            break;
+                                    }
+                                    break;
+                                case 1033: // Thumbnail resource with PhotoShop 4.0
+                                case 1036: // Thumbnail resource with PhotoShop 5.0 and upward
+                                    long thumbnailFormat = ((valueArray[bytesExamined] << 24) | (valueArray[bytesExamined+1] << 16) |
+                                            (valueArray[bytesExamined+2] << 8) | valueArray[bytesExamined+3]);
+                                    // Appears to always equal 1, although could also equal 0
+                                    Preferences.debug("Thumbnail format = " + thumbnailFormat + "\n");
+                                    long thumbnailWidth = ((valueArray[bytesExamined+4] << 24) | (valueArray[bytesExamined+5] << 16) |
+                                            (valueArray[bytesExamined+6] << 8) | valueArray[bytesExamined+7]);
+                                    Preferences.debug("Thumbnail width = " + thumbnailWidth + "\n");
+                                    long thumbnailHeight = ((valueArray[bytesExamined+8] << 24) | (valueArray[bytesExamined+9] << 16) |
+                                            (valueArray[bytesExamined+10] << 8) | valueArray[bytesExamined+11]);
+                                    Preferences.debug("Thumbnail height = " + thumbnailHeight + "\n");
+                                    long scanlineSize = ((valueArray[bytesExamined+12] << 24) | (valueArray[bytesExamined+13] << 16) |
+                                            (valueArray[bytesExamined+14] << 8) | valueArray[bytesExamined+15]);
+                                    // Scanlline size = thumbnail width * 3, padded to nearest multiple of 4
+                                    Preferences.debug("Thumbnail scanline size = " + scanlineSize + "\n");
+                                    long memorySize = ((valueArray[bytesExamined+16] << 24) | (valueArray[bytesExamined+17] << 16) |
+                                            (valueArray[bytesExamined+18] << 8) | valueArray[bytesExamined+19]);
+                                    // Total decompressed thumbnail memory size = scanline size * thumbnail height
+                                    Preferences.debug("Total decompressed thumbnail memory size = " + memorySize + "\n");
+                                    long JFIFDataSize = ((valueArray[bytesExamined+20] << 24) | (valueArray[bytesExamined+21] << 16) |
+                                            (valueArray[bytesExamined+22] << 8) | valueArray[bytesExamined+23]);
+                                    // Size of JFIF data (= size of resource data - 28)
+                                    Preferences.debug("Size of thumbnail JFIF data = " + JFIFDataSize + "\n");
+                                    int thumbnailBitsPerPixel = ((((int)valueArray[bytesExamined+24]) << 8) | ((int)valueArray[bytesExamined+25]));
+                                    // Number of bits per pixel - appears to always equal 24
+                                    Preferences.debug("Thumbnail bits per pixel = " + thumbnailBitsPerPixel + "\n");
+                                    int thumbnailPlanes = ((((int)valueArray[bytesExamined+26]) << 8) | ((int)valueArray[bytesExamined+27]));
+                                    // Appears to always equal 1
+                                    Preferences.debug("Thumbnail number of planes = " + thumbnailPlanes + "\n");
+                                    // JFIF data
+                                    break;
+                            } // switch(imageResourceID)
+                            bytesExamined += resourceDataSize;
+                            if ((resourceDataSize % 2) == 1) {
+                                bytesExamined += 1;
+                            }
+                        } // while ((maxLength - bytesExamined + 1) >= 7)
+                    } // if (debuggingFileIO)
                     break;
                     
                 case ICC_PROFILE:
