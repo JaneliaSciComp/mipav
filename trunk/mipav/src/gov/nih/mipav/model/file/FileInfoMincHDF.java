@@ -25,10 +25,19 @@ public class FileInfoMincHDF extends FileInfoBase {
 	private transient DefaultMutableTreeNode dimensionNode;
 	
 	
+	/**
+	 * The information node that holds acquisition information, dicom tags, and more
+	 */
 	private transient DefaultMutableTreeNode informationNode;
 	
-	protected int[] axisOrientation = { ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE };
+	/**
+	 * The axis orientation static types
+	 */
+	protected static int[] axisOrientation = { ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE };
 	
+	/**
+	 * The valid range for image pixel values
+	 */
 	private double [] validRange = null;
 	
 	/**
@@ -57,11 +66,34 @@ public class FileInfoMincHDF extends FileInfoBase {
      * @return  a tag-value hashtable
      */
     public Hashtable convertTagsToTable() {
-    	Hashtable table = new Hashtable();
-    	
-    	
-    	
-    	return table;
+    	//reset the dicom table so that it has <String><String>
+    	createDicomTable();
+
+    	if (informationNode != null) {
+    		DefaultMutableTreeNode currentNode;
+    		String group;
+    		String element;
+    		for (int i = 0; i < informationNode.getChildCount(); i++) {
+    			currentNode = (DefaultMutableTreeNode)informationNode.getChildAt(i);
+    			if (currentNode.getUserObject().toString().startsWith(FileMincHDF.DICOM_GROUP_PREFIX)) {
+    				group = currentNode.getUserObject().toString().substring(FileMincHDF.DICOM_GROUP_PREFIX.length());
+    				try {
+    					Iterator it = ((HObject)currentNode.getUserObject()).getMetadata().iterator();
+    					while(it.hasNext()) {
+    						Attribute attr = (Attribute)it.next();
+    						element = attr.getName().substring(FileMincHDF.DICOM_ELEMENT_PREFIX.length());
+        				
+    						dicomTable.put("(" + group.toUpperCase() + "," + element.toUpperCase() + ")", 
+    								((String[])attr.getValue())[0].trim());
+    					}
+    				} catch (Exception e) {
+    						continue;
+    				}
+    			}
+    		}
+    	}
+
+    	return dicomTable;
     }
     
     /**
@@ -74,6 +106,14 @@ public class FileInfoMincHDF extends FileInfoBase {
         JDialogText dialog = (JDialogText) dlog;
         displayPrimaryInfo(dialog, matrix);
         
+        dialog.append("\n");
+        if (dimensionNode != null) {
+        	try {
+        		parseNodes(dimensionNode, dialog);
+        	} catch (Exception e) {
+        		e.printStackTrace();
+        	}
+        }
         if (informationNode != null) {
         	try {
         		parseNodes(informationNode, dialog);
@@ -190,7 +230,7 @@ public class FileInfoMincHDF extends FileInfoBase {
     }
     
     /**
-     * Sets the image modality based on the.
+     * Sets the image modality based on the string
      */
     public void setModality(String modality) {
 
@@ -215,46 +255,68 @@ public class FileInfoMincHDF extends FileInfoBase {
           }
     }
     
+    /**
+     * Sets the valid range for the image data
+     * @param valid_range double valid range of image data values
+     */
     public void setValidRange(double[] valid_range) {
     	this.validRange = valid_range;
     }
     
+    /**
+     * Gets the valid range for image data values
+     * @return the valid range (min to max) array
+     */
     public double [] getValidRange() {
     	return this.validRange;
     }
     
+    /**
+     * Creates a new hashtable for use in converting dicom tags
+     *
+     */
     public void createDicomTable() {
     	this.dicomTable = new Hashtable();
     }
     
+    /**
+     * Sets the dicom converted tag hashtable
+     * @param dTable hashtable holding dicom keys and tags
+     */
     public void setDicomTable(Hashtable dTable) {
     	this.dicomTable = dTable;
     }
     
+    /**
+     * Retrieves the dicom converted tag hashtable
+     * @return the dicom hashtable
+     */
     public Hashtable getDicomTable() {
     	return this.dicomTable;
     }
     
+    /**
+     * Converts from the minc start location to the dicom start locations 
+     * @param step the resolutions (step, can be negative)
+     * @param cosines the directional matrix
+     * @param isCentered is the axis centered
+     * @param slice the slice number
+     * @param mincStartLoc the original minc start location [x,y, opt z]
+     * @return
+     */
     public final double[] getConvertStartLocationsToDICOM(double[] step, double[][]cosines, 
-    		boolean[]isCentered, int slice) {
-        double x = 0;
-        double y = 0;
-        double z = 0;;
-
-        // System.out.println("convert: begin res:\t" + xRes + " " + yRes + " " + zRes);
-
+    		boolean[]isCentered, int slice, double [] mincStartLoc) {
+       
         double[] startLocs = new double[getExtents().length];
 
         if (startLocs.length == 2) {
-            startLocs[0] = x;
-            startLocs[1] = y;
+            startLocs[0] = mincStartLoc[0];
+            startLocs[1] = mincStartLoc[1];
         } else {
-            startLocs[0] = x;
-            startLocs[1] = y;
-            startLocs[2] = z + (step[2] * slice);
+            startLocs[0] = mincStartLoc[0];
+            startLocs[1] = mincStartLoc[1];
+            startLocs[2] = mincStartLoc[2] + (step[2] * slice);
         }
-
-        // System.out.println("convert: locs:\t" + startLocs[0] + " " + startLocs[1] + " " + startLocs[2]);
 
         TransMatrix matrix = new TransMatrix(getExtents().length + 1);
         matrix.identity();
@@ -265,12 +327,8 @@ public class FileInfoMincHDF extends FileInfoBase {
         	}
         	
         }
-       
-        // System.out.println("convert: matrix:\t" + matrix.matrixToString(24, 16));
 
         matrix.invert();
-
-        // System.out.println("convert: invmat:\t" + matrix.matrixToString(24, 16));
 
         double[] transformedPt = new double[getExtents().length];
 
@@ -291,8 +349,6 @@ public class FileInfoMincHDF extends FileInfoBase {
         } else if (getExtents().length == 3) {
             matrix.transform(startLocs[0], startLocs[1], startLocs[2], transformedPt);
         }
-
-        // System.out.println("convert: trans:\t" + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2]);
 
         if (startLocs.length == 3) {
 
