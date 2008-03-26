@@ -133,6 +133,8 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
             if (algorithm != null) {
                 algorithm.finalize();
                 algorithm = null;
+            } else {
+            	System.out.println("Unexpected null occured.");
             }
 
             dispose();
@@ -210,7 +212,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
         mainPanel.setBorder(buildTitledBorder("What kind of image?"));
-
+        
         twoThighRadio = new JRadioButton("Two thighs");
         twoThighRadio.setFont(MipavUtil.font12);
 

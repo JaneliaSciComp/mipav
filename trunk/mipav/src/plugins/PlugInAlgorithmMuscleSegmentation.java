@@ -84,50 +84,52 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     private void performAbdomenDialog() {
         
     	String[][] mirrorArr = new String[3][];
-        mirrorArr[0] = new String[1];
-        mirrorArr[0][0] = "fascial area";
+        mirrorArr[0] = null;
         
-        mirrorArr[1] = new String[3];
-        mirrorArr[1][0] = "psoas";
-        mirrorArr[1][1] = "lateral";
-        mirrorArr[1][2] = "paraspinous";
+        mirrorArr[1] = null;
         
-        mirrorArr[2] = new String[2];
-        mirrorArr[2][0] = "aortic calcium";
-        mirrorArr[2][1] = "rectus abdominus";
-        
+        mirrorArr[2] = new String[4];
+        mirrorArr[2][0] = "psoas";
+        mirrorArr[2][1] = "lateral obliques";
+        mirrorArr[2][2] = "paraspinous";
+        mirrorArr[2][3] = "rectus abdominus";
+
         boolean[][] mirrorZ = new boolean[3][];
-        mirrorZ[0] = new boolean[1];
-        mirrorZ[0][0] = false;
+        mirrorZ[0] = null;
         
-        mirrorZ[1] = new boolean[3];
-        mirrorZ[1][0] = false;
-        mirrorZ[1][1] = false;
-        mirrorZ[1][2] = false;
+        mirrorZ[1] = null;
         
-        mirrorZ[2] = new boolean[2];
-        mirrorZ[2][0] = false;
+        mirrorZ[2] = new boolean[4];
+        mirrorZ[2][0] = true;
         mirrorZ[2][1] = true;
+        mirrorZ[2][2] = true;
+        mirrorZ[2][3] = true;
         
         String[][] noMirrorArr = new String[3][];
-        noMirrorArr[0] = new String[1];
-        noMirrorArr[0][0] = "Phantom";
+        noMirrorArr[0] = new String[2];
+        noMirrorArr[0][0] = "Abdomen";
+        noMirrorArr[0][1] = "Phantom";
         
         noMirrorArr[1] = new String[1];
+        noMirrorArr[1][0] = "Visceral cavity";
         noMirrorArr[1][0] = "Bone sample";
         
-        noMirrorArr[2] = new String[1];
-        noMirrorArr[2][0] = "Water sample";
+        noMirrorArr[2] = new String[2];
+        noMirrorArr[2][0] = "Aorta";
+        noMirrorArr[2][1] = "Water sample";
         
         boolean[][] noMirrorZ = new boolean[3][];
-        noMirrorZ[0] = new boolean[1];
+        noMirrorZ[0] = new boolean[2];
         noMirrorZ[0][0] = false;
+        noMirrorZ[0][1] = false;
         
-        noMirrorZ[1] = new boolean[1];
+        noMirrorZ[1] = new boolean[2];
         noMirrorZ[1][0] = false;
+        noMirrorZ[0][1] = false;
         
-        noMirrorZ[2] = new boolean[1];
+        noMirrorZ[2] = new boolean[2];
         noMirrorZ[2][0] = false;
+        noMirrorZ[2][1] = false;
         
         String[] titles = new String[3];
         titles[0] = "Abdomen";
