@@ -414,7 +414,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	} else if(command.equals(DialogPrompt.EXIT)) {
             	close();
         	} else if(command.equals(DialogPrompt.HELP)) {
-        		MipavUtil.showHelp("MS00010"); //20, and 30 also available
+        		PlugInMuscleSegmentation.showHelp("MS00010"); //20, and 30 also available
         	} else {
         		super.actionPerformed(e);
         	}
@@ -1253,7 +1253,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                     notifyListeners(CANCEL);
                     //dispose();
                 } else if (command.equals(HELP)) {
-                    MipavUtil.showHelp("MS00001");
+                    PlugInMuscleSegmentation.showHelp("MS00001");
                 } else if (command.equals(REDRAW)) {
                 	getActiveImage().unregisterAllVOIs();
                 	initVoiImage(activeTab); //replacing current image and updating
@@ -2207,7 +2207,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	            		((JButton)e.getSource()).setText("Show LUT");
 	            	}
 	            } else if (command.equals(HELP)) {
-	                MipavUtil.showHelp("MS00040");
+	                PlugInMuscleSegmentation.showHelp("MS00040");
 	            } else if (command.equals(LOAD_VOI)) {
 	            	String text = ((JButton)e.getSource()).getText();
 	            	VOIVector vec = getActiveImage().getVOIs();
