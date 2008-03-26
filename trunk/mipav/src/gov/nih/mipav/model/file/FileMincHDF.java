@@ -65,6 +65,8 @@ public class FileMincHDF extends FileBase {
     /** whether each axis is centered */
     private boolean [] isCentered = null;
     
+    private double [] mincStartLoc = null;
+    
     /** The directory containing the minc file being written out or read in. */
     private String fileDir;
 
@@ -186,7 +188,7 @@ public class FileMincHDF extends FileBase {
     	int totalDims = dimensionNode.getChildCount();
     	int [] extents = new int[totalDims];
     	int [] units = new int[totalDims];
-    	double [] startLoc = new double[totalDims];
+    	mincStartLoc = new double[totalDims];
     	step = new double[totalDims];
     	isCentered = new boolean[totalDims];
     	
@@ -211,7 +213,7 @@ public class FileMincHDF extends FileBase {
     			if (attrName.equals(ATTR_DIM_UNITS)) {
     				units[currentDim] = FileInfoBase.getUnitsOfMeasureFromStr(((String[])attr.getValue())[0]);
     			} else if (attrName.equals(ATTR_DIM_START)) {
-    				startLoc[currentDim] = ((double[])attr.getValue())[0];
+    				mincStartLoc[currentDim] = ((double[])attr.getValue())[0];
     			} else if (attrName.equals(ATTR_DIM_LENGTH)) {
     				extents[currentDim] = ((int[])attr.getValue())[0];
     			} else if (attrName.equals(ATTR_DIM_DIRECTION_COSINES)) {
@@ -409,7 +411,7 @@ public class FileMincHDF extends FileBase {
     	        
     	        int w = imageData.getWidth();
     	        int h = imageData.getHeight();
-    	        System.err.println("dataset width: " + w + ", height: " + h);
+    	      //  System.err.println("dataset width: " + w + ", height: " + h);
     			
     			//System.err.println("datarange: " + dataRange[0] + " to " + dataRange[1]);
     			image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileName);
@@ -428,20 +430,23 @@ public class FileMincHDF extends FileBase {
     	        int sliceSize = w * h;
     			for (int j = 0; j < numImages; j++) {
     				start[0] = j;
-    				//System.err.println(imageData.getStartDims()[0]);
     				data = imageData.read();
     				
-    				if (data instanceof short[]) {
+    				if (fileInfo.getDataType() == ModelStorageBase.SHORT ||
+    						fileInfo.getDataType() == ModelStorageBase.USHORT) {
     					image.importData(j * sliceSize, (short[])data, true);
-    				} else if (data instanceof int[]) {
+    				} else if (fileInfo.getDataType() == ModelStorageBase.INTEGER ||
+    						fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
     					image.importData(j * sliceSize, (int[])data, true);
-    				} else if (data instanceof byte[]) {
+    				} else if (fileInfo.getDataType() == ModelStorageBase.BYTE ||
+    						fileInfo.getDataType() == ModelStorageBase.UBYTE) {
     					image.importData(j * sliceSize, (byte[])data, true);
-    				} else if (data instanceof float[]) {
+    				} else if (fileInfo.getDataType() == ModelStorageBase.FLOAT) {
     					image.importData(j * sliceSize, (float[])data, true);
-    				} else if (data instanceof double[]) {
+    				} else if (fileInfo.getDataType() == ModelStorageBase.DOUBLE) {
     					image.importData(j * sliceSize, (double[])data, true);
-    				} 
+    				}
+    				
     				fireProgressStateChanged(Math.round(5 + ((float)j/numImages) * 95 ));
     			}
     			
@@ -459,6 +464,7 @@ public class FileMincHDF extends FileBase {
     				
     	}
     	
+    	//create the array of fileinfos for the model image
     	FileInfoMincHDF [] fileInfos = new FileInfoMincHDF[numImages];
     	fileInfos[0] = fileInfo;
     	
@@ -481,6 +487,11 @@ public class FileMincHDF extends FileBase {
     		fileInfos[0].setDicomTable(fileInfo.getDicomTable());
     	}
     	
+    	//set the origin on the first slice
+    	if (step != null && dirCosines != null && isCentered != null) {
+			fileInfos[0].setStartLocations(fileInfos[0].getConvertStartLocationsToDICOM(step, dirCosines, isCentered, 0, mincStartLoc));
+		}
+    	
     	for (int i = 1; i < numImages; i++) {
     		fileInfos[i] = (FileInfoMincHDF)fileInfo.clone();
     		fileInfos[i].setValidRange(fileInfo.getValidRange());
@@ -492,7 +503,7 @@ public class FileMincHDF extends FileBase {
     		
     		//set start locations (convert to dicom)
     		if (step != null && dirCosines != null && isCentered != null) {
-    			fileInfos[i].setStartLocations(fileInfos[i].getConvertStartLocationsToDICOM(step, dirCosines, isCentered, i));
+    			fileInfos[i].setStartLocations(fileInfos[i].getConvertStartLocationsToDICOM(step, dirCosines, isCentered, i, mincStartLoc));
     		}
     		
     	}

@@ -318,6 +318,30 @@ public class JDialogSaveDicom extends JDialogBase {
                     tagsImportedFromNonDicomImage.remove(tag);
                 }
             }
+        } else if (fileInfo.getFileFormat() == FileUtility.MINC_HDF) {
+            tagsImportedFromNonDicomImage = ((FileInfoMincHDF) fileInfo).convertTagsToTable();
+            fillDataFromTable(tagsImportedFromNonDicomImage);
+
+            // remove tags which were used to fill the GUI in fillDataFromTable().  the rest will be blindly imported
+            // into the dicom fileinfo later..
+            Enumeration keys = tagsImportedFromNonDicomImage.keys();
+            String tag;
+
+            while (keys.hasMoreElements()) {
+                tag = (String) keys.nextElement();
+
+                // handle chooser fields differently
+                if (tag.equals("(0008,0060)") || tag.equals("(0010,0040)") || tag.equals("(0018,0015)") ||
+                        tag.equals("(0018,5100)")) {
+
+                    // don't blindly import tags which are in the GUI
+                    tagsImportedFromNonDicomImage.remove(tag);
+                } else if (tagsList.get(tag) != null) {
+
+                    // don't blindly import tags which are in the GUI
+                    tagsImportedFromNonDicomImage.remove(tag);
+                }
+            }
         }
 
         // if we are running a script, auto-fill the required tags and skip the dialog
