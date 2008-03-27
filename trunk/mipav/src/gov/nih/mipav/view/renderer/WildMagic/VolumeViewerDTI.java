@@ -173,7 +173,7 @@ implements MouseListener, ItemListener, ChangeListener {
     	
     	maxPanelWidth = Math.max(DTIimagePanel.getPreferredSize().width, maxPanelWidth);
     	
-    	tabbedPane.addTab("DTI Images", null, DTIimagePanel);
+    	tabbedPane.addTab("DWI / DTI", null, DTIimagePanel);
     }
     
     public void buildDTIFiberTrackPanel() {
@@ -193,7 +193,7 @@ implements MouseListener, ItemListener, ChangeListener {
     }
     
     public void setDTIParamsActive() {
-    	insertTab("Parameters", DTIParametersPanel);
+    	insertTab("Fibers", DTIParametersPanel);
     }
     
     public JPanelDTIParametersPanel getParamPanel() {
@@ -209,7 +209,7 @@ implements MouseListener, ItemListener, ChangeListener {
     	
     	maxPanelWidth = Math.max(DTIParametersPanel.getPreferredSize().width, maxPanelWidth);
     	
-    	tabbedPane.addTab("Parameters", null, DTIParametersPanel);
+    	tabbedPane.addTab("Fibers", null, DTIParametersPanel);
     }
 
     /**
@@ -390,7 +390,7 @@ implements MouseListener, ItemListener, ChangeListener {
 
             
             buildDTIimageLoadPanel();
-            buildDTIFiberTrackPanel();
+            //buildDTIFiberTrackPanel();
             buildDTIParametersPanel();
             
             
@@ -442,7 +442,7 @@ implements MouseListener, ItemListener, ChangeListener {
     protected void configureFrame() {
         super.configureFrame();
         buildDTIimageLoadPanel();
-        buildDTIFiberTrackPanel();
+        //buildDTIFiberTrackPanel();
         buildDTIParametersPanel();
     }
 
