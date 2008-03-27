@@ -4,9 +4,9 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.provenance.*;
+//import gov.nih.mipav.model.provenance.*;
 
-import gov.nih.mipav.view.MipavUtil;
+//import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.components.*;
 
 
@@ -324,7 +324,7 @@ public class AlgorithmParameters {
      * @param itkPanel panel to set up.
      */
     public void setItkFilterParamGUI(JPanelItkFilterParams itkPanel) {
-    	itkPanel.runFromScript(params);
+    	itkPanel.runFromScript(this);
     }
     
     /**
@@ -550,7 +550,7 @@ public class AlgorithmParameters {
      * @throws  ParserException  If there is a problem creating one of the new parameters.
      */
     public void storeItkMethods(JPanelItkFilterParams itkFilterPanel) throws ParserException {
-    	itkFilterPanel.putScriptParams(params);
+    	itkFilterPanel.putScriptParams(this);
     }
 
     /**

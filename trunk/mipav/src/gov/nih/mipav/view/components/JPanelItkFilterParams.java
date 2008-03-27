@@ -20,12 +20,17 @@ import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 
 /**
  * Given an Itk filter object, generate a panel that lets the user set 
  * the available parameters for the filter, then indicate that they 
  * want to run the filter. The filter execution is performed by AutoItkLoader.
  * @author Geometric Tools
+ */
+/**
+ * @author helser
+ *
  */
 public class JPanelItkFilterParams extends JPanel implements ActionListener, PropertyChangeListener {
     /** Inner class to associate 'set' methods with an input widget and a changed flag */
@@ -67,6 +72,9 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
      */
     private List<MethodArgRecord> m_MethodList3D = null;
 
+    /**
+     * Parameters to send to the script recorder, if active.
+     */
     private List<Parameter> m_ParamList = null;
     
     // I'd LOVE DecimalFormat to work, but it returns Long or Double, even if
@@ -75,6 +83,7 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
     // than the default Float/Double formatter. Weird.  i.e. it switches to
     // 'E' notation if the number is too big for the field. No ',' separator,
     // either.
+    /** text field format for floats and doubles */
     private static final DecimalFormat SCI_NOTATION = null; //new DecimalFormat("0.###E0");
 
     /** User string for empty image filter input */
@@ -118,6 +127,9 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
         myPanelManager.add(m_DimensionTab);
     }
 
+    /**
+     * @return if 2D parameter tab is on top - user wants 2D or 2.5D filter.
+     */
     public boolean is2DActive() 
     {
         if (m_DimensionTab == null) return true;
@@ -471,6 +483,9 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
         return;
     }
 
+    /**
+     * Labels for index input.
+     */
     private static final String [] INDEX_LABELS = new String [] { "x", "y", "z" };
 
     /** Set widgets for x,y,z object, with SetElement, GetElement methods
@@ -526,7 +541,11 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
         }
     }
 
+    /**
+     * Label for size input.
+     */
     private static final String [] SIZE_LABELS = new String [] { "w", "h", "d" };
+    
     /** Set widgets for width,height,depth object, with SetElement, GetElement methods
      * @param ctrl_panel add widgets here
      * @param gbc gridded with this constraint object
@@ -545,7 +564,7 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
      * @param   image  to test for compatibility.
      * @param  check_dim number of dimensions to check for equivalence.
      *
-     * @return  Newly created combo box.
+     * @return  Newly created combo box listing image names.
      */
     private JComboBox buildComboBox(ModelImage image, int check_dim, String mthd_name) {
         ViewUserInterface UI;
@@ -794,23 +813,31 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
     /** After algorithm has run, if script is recording, add an entry for each
      * 'set' method which was called with the correct arg value.
      * 
-     * @param params table of parameters to modify.
+     * @param alg_params set of parameters to modify.
      */
-    public void putScriptParams(ParameterTable params) throws ParserException 
+    public void putScriptParams(AlgorithmParameters alg_params) throws ParserException 
     {
+        ViewUserInterface UI = ViewUserInterface.getReference();
         Iterator<Parameter> it = m_ParamList.iterator();
         while(it.hasNext()) {
             Parameter param = it.next();
-            params.put(param);
+            // separate, higher-level handling for image params.
+            if (param instanceof ParameterImage || param instanceof ParameterExternalImage) {
+                ModelImage image_param = UI.getRegisteredImageByName(((ParameterString)param).getValue());
+                alg_params.storeImage(image_param, param.getLabel());
+            } else {
+                alg_params.getParams().put(param);
+            }
         }
     }
 
     /** Call 'set' methods for the Itk filter based on values in params table.
      * 
-     * @param params table of parameters to read from.
+     * @param alg_params set of parameters to read from.
      */
-    public void runFromScript(ParameterTable params) 
+    public void runFromScript(AlgorithmParameters alg_params) 
     {
+        ParameterTable params = alg_params.getParams();
         Object filterObj = null;
         Iterator<MethodArgRecord> it = null;
         int filter_dim = 2;
@@ -836,7 +863,24 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
                     // if this was recorded, we invoke with no args.
                     AutoItkLoader.invokeMethod(filterObj, ar.m_Method);
                 } else if (ar.m_Component instanceof JComboBox) {
-                    // TODO image
+                    ModelImage image_param = alg_params.retrieveImage(param.getLabel());
+                    if (filter_dim == 2) {
+                        PItkImage2 itk_image = InsightToolkitSupport.itkCreateImageSingle2D(image_param);
+                        if (itk_image == null) {
+                            //System.out.println("Run: Can't convert " + sel_name + " to itk input.");
+                            continue;
+                        }
+                        // set the param value.
+                        AutoItkLoader.invokeMethod(filterObj, ar.m_Method, itk_image.img());
+                    } else if (filter_dim == 3) {                         
+                        PItkImage3 itk_image = InsightToolkitSupport.itkCreateImageSingle3D(image_param);
+                        if (itk_image == null) {
+                            //System.out.println("Run: Can't convert " + sel_name + " to itk input.");
+                            continue;
+                        }
+                        // set the param value.
+                        AutoItkLoader.invokeMethod(filterObj, ar.m_Method, itk_image.img());
+                    }
                 } else if (ar.m_Component instanceof JPanel) {
                     String def_class_name = (ar.m_DefaultVal == null ? "" : ar.m_DefaultVal.getClass().getSimpleName());
                     if (ar.m_DefaultVal instanceof Boolean) {
