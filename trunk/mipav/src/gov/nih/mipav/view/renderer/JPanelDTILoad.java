@@ -7,6 +7,7 @@ import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDTI2EGFA;
 import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDTIColorDisplay;
 import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDTITract;
+import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDWI2DTI;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoImageXML;
@@ -49,9 +50,9 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
 
 	private JTextField textDTIimage;
 
-	private JButton openDTIimageListFile;
+	private JButton openDTIimageListFile,openDTIMaskImage;
 
-	private JTextField textDTIimageListFile;
+	private JTextField textDTIimageListFile,textDTIListFile,textDTIMaskImage;
 
 	private JButton openDWIimageBT;
 
@@ -115,27 +116,55 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
     /** result image **/
     private ModelImage resultImage;
     
+    /** mask image **/
+    private ModelImage m_kDWIMaskImage;
+    
+    private GridBagConstraints mainPanelGBC;
+    
+    private ButtonGroup loadDataRadioGroup;
+    
+    private JRadioButton listRadio, dtiRadio;
+    
+    private JLabel dtiFileLabel,maskImageLabel,listFileLabel;
+    
+    private JCheckBox tractCheckBox;
+    
+    private AlgorithmDWI2DTI kAlgorithm;
+    
+    
+    
     
 	public JPanelDTILoad(VolumeViewerDTI _parentFrame) {
 		parentFrame = _parentFrame;
 		mainPanel = new JPanel();
-		mainPanel.setLayout(new BorderLayout());
-
-		contentBox = new Box(BoxLayout.Y_AXIS);
-
-		buildDTILoadPanel();
+		init();
+	}
+	
+	
+	public void init() {
+		mainPanelGBC = new GridBagConstraints();
+		mainPanel.setLayout(new GridBagLayout());
+		loadDataRadioGroup = new ButtonGroup();
+		
 		buildDWIListLoadPanel();
 
-
-		computeButton = new JButton("Compute Image");
-		computeButton.setToolTipText("Compute Diffusion Tensor Image");
+		buildDTILoadPanel();
+		
+		buildOptionsPanel();
+		
+		computeButton = new JButton("Compute");
+		computeButton.setToolTipText("Compute");
 		computeButton.addActionListener(this);
-		computeButton.setActionCommand("computeImage");
-		computeButton.setEnabled(false);
-		contentBox.add(computeButton);
+		computeButton.setActionCommand("compute");
+		
+		 mainPanelGBC.gridx = 0;
+		 mainPanelGBC.gridy = 3;
+		 mainPanelGBC.insets = new Insets(20,0,0,0);
+		 mainPanelGBC.fill = GridBagConstraints.NONE;
+		 mainPanel.add(computeButton,mainPanelGBC);
 
-		mainPanel.add(contentBox);
-
+		
+		
 	}
 
 	public void setDTIimage() {
@@ -161,39 +190,123 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
 	public void actionPerformed(ActionEvent event) {
 		Object source = event.getSource();
 		String command = event.getActionCommand();
-		if (command.equalsIgnoreCase("openDTIimage")) {
-			openDTIimageListFile.setEnabled(false);
-			textDTIimageListFile.setEnabled(false);
+		if (command.equalsIgnoreCase("browseDTIFile")) {
+			//openDTIimageListFile.setEnabled(false);
+			//textDTIimageListFile.setEnabled(false);
 			loadDTIFile();
-		} else if (command.equalsIgnoreCase("openDTIimageList")) {
-			openDTIimageButton.setEnabled(false);
-			textDTIimage.setEnabled(false);
+		} else if (command.equalsIgnoreCase("browseListFile")) {
+			//openDTIimageButton.setEnabled(false);
+			//textDTIimage.setEnabled(false);
 			loadDWIListFile();
-		} else if ( command.equalsIgnoreCase("computeImage")) {
-			processDTI();
-			setParentDir();
-			setDTIimage();
-			setEVimage();
-			setFAimage();
-			setDTIColorImage();
+		} else if(command.equalsIgnoreCase("browseMaskImage")) {
+			loadDWIMaskFile();
+		}
+		else if ( command.equalsIgnoreCase("compute")) {
+			if(dtiRadio.isSelected()) {
+				processDTI();
+				setDTIimage();
+				setEVimage();
+				setFAimage();
+				setDTIColorImage();
+				
+				//if tract reconstruction checkbox is selectd, do the fiber calculation
+				if(tractCheckBox.isSelected()) {
+					AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(
+							parentFrame.getDTIimage(), parentFrame.getEVimage(), 
+							parentFrame.getParentDir() + "DTIImage.xml_tract");
+					kTractAlgorithm.run();
+					kTractAlgorithm.disposeLocal();
+					kTractAlgorithm = null;
+					parentFrame.setDTIParamsActive();
+				}
+			}else {
+				 if ( m_kBMatrix == null || m_aakDWIList == null )
+	                {
+	                    MipavUtil.displayError("Both BMatrix and .path files are needed.");
+	                    return;
+	                }
+	                processDWI();
+			}
 			
-			parentFrame.setFiberTrackActive();
-			openDTIimageListFile.setEnabled(true);
-			textDTIimageListFile.setEnabled(true);
-			openDTIimageListFile.setEnabled(true);
-			textDTIimageListFile.setEnabled(true);
+
+		}
+		else if(command.equals("dtiRadio")) {
+			openDTIimageButton.setEnabled(true);
+			textDTIimage.setBackground(Color.white);
+			dtiFileLabel.setEnabled(true);
 			
-	
+			openDTIimageListFile.setEnabled(false);
+			openDTIMaskImage.setEnabled(false);
+			textDTIListFile.setBackground(Color.lightGray);
+			textDTIMaskImage.setBackground(Color.lightGray);
+			maskImageLabel.setEnabled(false);
+			listFileLabel.setEnabled(false);
+			
+		}
+		else if(command.equals("listRadio")) {
+			openDTIimageListFile.setEnabled(true);
+			openDTIMaskImage.setEnabled(true);
+			textDTIListFile.setBackground(Color.white);
+			textDTIMaskImage.setBackground(Color.white);
+			maskImageLabel.setEnabled(true);
+			listFileLabel.setEnabled(true);
+			
+			openDTIimageButton.setEnabled(false);
+			textDTIimage.setBackground(Color.lightGray);
+			dtiFileLabel.setEnabled(false);
 		}
 
 	}
 	
 	
 	 public void algorithmPerformed(AlgorithmBase algorithm) {
-	        if(alg.isCompleted()) {
-		        resultImage = alg.getResultImage();
-		        new ViewJFrameImage(resultImage);
-	        }
+		 //this is for the DWItoDTI algorithm
+		 if(kAlgorithm.isCompleted()) {
+			 	m_kDTIImage = ((AlgorithmDWI2DTI)kAlgorithm).getDTIImage();
+			 	((AlgorithmDWI2DTI)kAlgorithm).disposeLocal();
+			 	processDTI();
+			    setParentDir();
+				setDTIimage();
+				setEVimage();
+				setFAimage();
+				setDTIColorImage();
+				
+				//if tract reconstruction checkbox is selectd, do the fiber calculation
+				if(tractCheckBox.isSelected()) {
+					AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(
+							parentFrame.getDTIimage(), parentFrame.getEVimage(), 
+							parentFrame.getParentDir() + "DTIImage.xml_tract");
+					kTractAlgorithm.run();
+					kTractAlgorithm.disposeLocal();
+					kTractAlgorithm = null;
+					parentFrame.setDTIParamsActive();
+				}
+		 }
+		 
+	 }
+	 
+	 public void buildOptionsPanel() {
+		 JPanel optionsPanel = new JPanel();
+		 optionsPanel.setLayout(new GridBagLayout());
+		 optionsPanel.setBorder(buildTitledBorder(" Options "));
+		 
+		 GridBagConstraints gbc = new GridBagConstraints();
+		 
+		 tractCheckBox = new JCheckBox("Tract Reconstruction");
+		 tractCheckBox.setSelected(true);
+		 
+		 gbc.gridx = 0;
+		 gbc.gridy = 0;
+		 gbc.weightx = 1;
+		 gbc.insets = new Insets(0,0,10,0);
+		 gbc.fill = GridBagConstraints.HORIZONTAL;
+		 optionsPanel.add(tractCheckBox, gbc);
+		 
+		 mainPanelGBC.gridx = 0;
+		 mainPanelGBC.gridy = 2;
+		 mainPanelGBC.insets = new Insets(10,0,0,0);
+		 mainPanelGBC.fill = GridBagConstraints.HORIZONTAL;
+		 mainPanel.add(optionsPanel,mainPanelGBC);
 	 }
 	 
 
@@ -202,7 +315,7 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
 
 		JPanel DTIloadPanel = new JPanel();
 		DTIloadPanel.setLayout(new GridBagLayout());
-		DTIloadPanel.setBorder(buildTitledBorder("DTI image"));
+		DTIloadPanel.setBorder(buildTitledBorder(""));
 
 		GridBagConstraints gbc = new GridBagConstraints();
 
@@ -215,28 +328,60 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
 		gbc.anchor = GridBagConstraints.WEST;
 
 		openDTIimageButton = new JButton("Browse");
-		openDTIimageButton.setToolTipText("Open Diffusion Tensor Image");
+		openDTIimageButton.setToolTipText("Browse Diffusion Tensor file");
 		openDTIimageButton.addActionListener(this);
-		openDTIimageButton.setActionCommand("openDTIimage");
+		openDTIimageButton.setActionCommand("browseDTIFile");
+		openDTIimageButton.setEnabled(false);
 
-		textDTIimage = new JTextField("Open DTI image...");
+		textDTIimage = new JTextField();
 		textDTIimage.setPreferredSize(new Dimension(275, 21));
 		textDTIimage.setEditable(false);
 		textDTIimage.setFont(MipavUtil.font12);
-		textDTIimage.setBackground(Color.white);
+		textDTIimage.setBackground(Color.lightGray);
+		
+		dtiFileLabel = new JLabel("DTI File: ");
+		dtiFileLabel.setEnabled(false);
+		
+		dtiRadio = new JRadioButton("Load DTI File");
+		dtiRadio.setSelected(false);
+		dtiRadio.addActionListener(this);
+		dtiRadio.setActionCommand("dtiRadio");
+		loadDataRadioGroup.add(dtiRadio);
+		
+		
+		
 		
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.weightx = 0;
+		gbc.insets = new Insets(0,0,10,0);
 		gbc.fill = GridBagConstraints.NONE;
-		DTIloadPanel.add(openDTIimageButton, gbc);
+		DTIloadPanel.add(dtiRadio, gbc);
+		
+		
+		
+		gbc.gridx = 0;
+		gbc.gridy = 1;
+		gbc.weightx = 0;
+		gbc.fill = GridBagConstraints.NONE;
+		DTIloadPanel.add(dtiFileLabel, gbc);
 		gbc.gridx = 1;
-		gbc.gridy = 0;
-		gbc.weightx = 1;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.gridy = 1;
+		gbc.weightx = 0;
+		gbc.fill = GridBagConstraints.NONE;
 		DTIloadPanel.add(textDTIimage, gbc);
+		gbc.gridx = 2;
+		gbc.gridy = 1;
+		gbc.weightx = 1;
+		gbc.insets = new Insets(0,10,10,0);
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		DTIloadPanel.add(openDTIimageButton, gbc);
+		
+		
+		mainPanelGBC.gridx = 0;
+		mainPanelGBC.gridy = 1;
+		mainPanel.add(DTIloadPanel,mainPanelGBC);
 
-		contentBox.add(DTIloadPanel);
 
 	}
 
@@ -244,7 +389,7 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
 
 		JPanel DWIlistPanel = new JPanel();
 		DWIlistPanel.setLayout(new GridBagLayout());
-		DWIlistPanel.setBorder(buildTitledBorder("DWI image (.list)"));
+		DWIlistPanel.setBorder(buildTitledBorder(""));
 
 		GridBagConstraints gbc = new GridBagConstraints();
 
@@ -256,32 +401,93 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
 		gbc.fill = GridBagConstraints.NONE;
 		gbc.anchor = GridBagConstraints.WEST;
 
-		openDTIimageListFile = new JButton("Browse");
-		openDTIimageListFile.setToolTipText("Open DTI image (.list)");
-		openDTIimageListFile.addActionListener(this);
-		openDTIimageListFile.setActionCommand("openDTIimageList");
-
-		textDTIimageListFile = new JTextField("Open DWI image (.list)");
-		textDTIimageListFile.setPreferredSize(new Dimension(275, 21));
-		textDTIimageListFile.setEditable(false);
-		textDTIimageListFile.setFont(MipavUtil.font12);
-		textDTIimageListFile.setBackground(Color.white);
-
 		
+		listFileLabel = new JLabel("List File: ");
+		
+		openDTIimageListFile = new JButton("Browse");
+		openDTIimageListFile.setToolTipText("Browse list file");
+		openDTIimageListFile.addActionListener(this);
+		openDTIimageListFile.setActionCommand("browseListFile");
+
+		textDTIListFile = new JTextField();
+		textDTIListFile.setPreferredSize(new Dimension(275, 21));
+		textDTIListFile.setEditable(false);
+		textDTIListFile.setFont(MipavUtil.font12);
+		textDTIListFile.setBackground(Color.white);
+		
+		listRadio = new JRadioButton("Load List File");
+		listRadio.setSelected(true);
+		listRadio.addActionListener(this);
+		listRadio.setActionCommand("listRadio");
+		loadDataRadioGroup.add(listRadio);
+		
+		
+		maskImageLabel = new JLabel("Mask Image: ");
+		
+		openDTIMaskImage = new JButton("Browse");
+		openDTIMaskImage.setToolTipText("Browse mask image");
+		openDTIMaskImage.addActionListener(this);
+		openDTIMaskImage.setActionCommand("browseMaskImage");
+
+		textDTIMaskImage = new JTextField();
+		textDTIMaskImage.setPreferredSize(new Dimension(275, 21));
+		textDTIMaskImage.setEditable(false);
+		textDTIMaskImage.setFont(MipavUtil.font12);
+		textDTIMaskImage.setBackground(Color.white);
+
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.weightx = 0;
+		gbc.insets = new Insets(0,0,10,0);
 		gbc.fill = GridBagConstraints.NONE;
-		DWIlistPanel.add(openDTIimageListFile, gbc);
+		DWIlistPanel.add(listRadio, gbc);
+		
+		gbc.gridx = 0;
+		gbc.gridy = 1;
+		gbc.weightx = 0;
+		gbc.fill = GridBagConstraints.NONE;
+		DWIlistPanel.add(listFileLabel, gbc);
 		gbc.gridx = 1;
-		gbc.gridy = 0;
+		gbc.gridy = 1;
+		gbc.weightx = 0;
+		gbc.fill = GridBagConstraints.NONE;
+		DWIlistPanel.add(textDTIListFile, gbc);
+		gbc.gridx = 2;
+		gbc.gridy = 1;
 		gbc.weightx = 1;
+		gbc.insets = new Insets(0,10,10,0);
 		gbc.fill = GridBagConstraints.HORIZONTAL;
-		DWIlistPanel.add(textDTIimageListFile, gbc);
+		DWIlistPanel.add(openDTIimageListFile, gbc);
+		
+		
+		gbc.gridx = 0;
+		gbc.gridy = 2;
+		gbc.weightx = 0;
+		gbc.insets = new Insets(0,0,10,0);
+		gbc.fill = GridBagConstraints.NONE;
+		DWIlistPanel.add(maskImageLabel, gbc);
+		gbc.gridx = 1;
+		gbc.gridy = 2;
+		gbc.weightx = 0;
+		gbc.fill = GridBagConstraints.NONE;
+		DWIlistPanel.add(textDTIMaskImage, gbc);
+		gbc.gridx = 2;
+		gbc.gridy = 2;
+		gbc.weightx = 1;
+		gbc.insets = new Insets(0,10,10,0);
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		DWIlistPanel.add(openDTIMaskImage, gbc);
 
-		contentBox.add(DWIlistPanel);
+		mainPanelGBC.gridx = 0;
+		mainPanelGBC.gridy = 0;
+		mainPanel.add(DWIlistPanel,mainPanelGBC);
+		
 
 	}
+	
+	
+	
+	
 
 	public void builDWILoadPanel() {
 		openDWIimageBT = new JButton("Open DWI image");
@@ -342,6 +548,29 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
 			computeButton.setEnabled(true);
 		}
 	}
+	
+	
+	/**
+     * Launches the JFileChooser for the user to select the Diffusion Weighted Images .path file. Loads the .path file.
+     */
+    public void loadDWIMaskFile()
+    {
+        JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
+        chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+        chooser.setDialogTitle("Choose Mask Image");
+        int returnValue = chooser.showOpenDialog(this);
+        if (returnValue == JFileChooser.APPROVE_OPTION) { 	
+            FileIO fileIO = new FileIO();
+            if( m_kDWIMaskImage != null )
+            {
+            	m_kDWIMaskImage.disposeLocal();
+            	m_kDWIMaskImage = null;
+            }
+            m_kDWIMaskImage = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator);
+            textDTIMaskImage.setText(chooser.getSelectedFile().getAbsolutePath());
+        }
+    }
+	
 
 	/**
 	 * Launches the JFileChooser for the user to select the Diffusion Weighted
@@ -364,7 +593,7 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
 			if (iLength <= 0) {
 				return;
 			}
-			textDTIimageListFile.setText(chooser.getSelectedFile()
+			textDTIListFile.setText(chooser.getSelectedFile()
 					.getAbsolutePath());
 			Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser
 					.getCurrentDirectory().toString());
@@ -598,6 +827,36 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
         
         setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
     }
+    
+    
+    
+    /** Calls AlgorithmDWI2DTI to create the diffusion tensor image. */
+    private void processDWI()
+    {
+        if ( m_kBMatrix == null )
+        {
+            MipavUtil.displayError("BMatrix file must be set to create tensor data.");
+            return;
+        }
+        if ( m_aakDWIList == null )
+        {
+            MipavUtil.displayError("Path file must be set to create tensor data.");
+            return;
+        }
+        
+        setCursor(new Cursor(Cursor.WAIT_CURSOR));
+
+        kAlgorithm = new AlgorithmDWI2DTI( m_kDWIMaskImage, false,
+                                                            m_iSlices, m_iDimX, m_iDimY,
+                                                            m_iBOrig, m_iWeights,
+                                                            m_fMeanNoise, m_aakDWIList,
+                                                            m_aiMatrixEntries, m_kBMatrix, m_kRawFormat);
+        kAlgorithm.addListener(this);
+        kAlgorithm.run();
+        
+    }
+    
+    
     
 	/**
 	 * test code for creating rgb image based on eigvev and anisot
