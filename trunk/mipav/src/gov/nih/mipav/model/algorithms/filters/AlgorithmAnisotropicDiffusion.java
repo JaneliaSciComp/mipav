@@ -71,6 +71,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase implements Algo
     /** Standard deviations of the gaussian used to calculate the kernels. */
     private float[] sigmas;
     
+    /** Receives output of AlgorithmConvolver */
     private float[] outputBuffer = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
