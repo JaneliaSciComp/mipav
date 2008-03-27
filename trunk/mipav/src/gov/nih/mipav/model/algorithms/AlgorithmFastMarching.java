@@ -196,7 +196,9 @@ public class AlgorithmFastMarching extends AlgorithmBase implements AlgorithmInt
             }
         }
 
-        convolver = new AlgorithmConvolver(srcImage, GxData, GyData, kExtents,true);
+        boolean entireImage = true;
+        boolean sqrtXY = true;
+        convolver = new AlgorithmConvolver(srcImage, GxData, GyData, kExtents, entireImage, sqrtXY);
         convolver.setMinProgressValue(0);
         convolver.setMaxProgressValue(10);
         linkProgressToAlgorithm(convolver);
