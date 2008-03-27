@@ -237,7 +237,9 @@ public class AlgorithmGVF extends AlgorithmBase implements AlgorithmInterface {
             fireProgressStateChanged(srcImage.getImageName(), "GVF: Evolving boundary ...");
             if (((srcImage.getNDims() == 2) || do25D) && ((sigmas[0] != 0.0) || (sigmas[1] != 0.0))) {
                 if ((sigmas[0] != 0.0) && (sigmas[1] != 0.0)) {
-                    convolver = new AlgorithmConvolver(srcImage, GxData, GyData, kExtents, true);
+                    boolean entireImage = true;
+                    boolean sqrtXY = true;
+                    convolver = new AlgorithmConvolver(srcImage, GxData, GyData, kExtents, entireImage, sqrtXY);
                 }
                 else if (sigmas[0] != 0.0) {
                     convolver = new AlgorithmConvolver(srcImage, GxData, kExtents, true, true);
