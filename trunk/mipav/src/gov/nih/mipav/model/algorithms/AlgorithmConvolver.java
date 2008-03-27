@@ -87,6 +87,8 @@ public class AlgorithmConvolver extends AlgorithmBase {
     
     private boolean entireImage;
     
+    private boolean doXY = false;
+    
     // Used with 2D AlgorithmAnistropicDiffusion
     private boolean sqrtXY = false;
     
@@ -158,14 +160,15 @@ public class AlgorithmConvolver extends AlgorithmBase {
     }
     
     public AlgorithmConvolver(ModelImage srcImage, float[] kernelX, float[] kernelY,
-                              int[] kExtents, boolean entireImage){
+                              int[] kExtents, boolean entireImage, boolean sqrtXY){
         super(null, srcImage);
         kernelBufferX = kernelX;
         kernelBufferY = kernelY;
         this.kExtents = kExtents;
         this.entireImage = entireImage;
         image25D = true;
-        sqrtXY = true;
+        this.sqrtXY = sqrtXY;
+        doXY = true;
     }
     
     
