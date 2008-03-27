@@ -31,10 +31,18 @@ public class AlgorithmItkFilter extends AlgorithmBase {
                                              true // blue
                                          };
 
-    /** itk filter container */
+    /** 
+     * itk filter container 
+     */
     protected PItkFilter m_itkFilter = null;
 
+    /**
+     * Progress window constant
+     */
     private static final float PROG_PRE = 0.1f;
+    /**
+     * Progress window constant
+     */
     private static final float PROG_POST = 0.9f;
 
     //~ Constructors -------------------------------------------------------------------------------
