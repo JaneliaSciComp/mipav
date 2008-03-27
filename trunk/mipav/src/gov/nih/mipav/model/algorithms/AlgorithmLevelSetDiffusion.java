@@ -139,7 +139,9 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase implements Algorit
         }
         
         if ((srcImage.getNDims() == 2) || image25D) {
-            convolver = new AlgorithmConvolver(srcImage, GxData, GyData, kExtents, true);
+            boolean entireImage = true;
+            boolean sqrtXY = true;
+            convolver = new AlgorithmConvolver(srcImage, GxData, GyData, kExtents, entireImage, sqrtXY);
         }
         else {
             convolver = new AlgorithmConvolver(srcImage, GxData, GyData, GzData, kExtents, true);
