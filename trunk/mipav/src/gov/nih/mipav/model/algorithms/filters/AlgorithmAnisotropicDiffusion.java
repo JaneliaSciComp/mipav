@@ -220,6 +220,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase implements Algo
         double a;
         double b;
         AlgorithmConvolver convolver;
+        boolean sqrtXY = true;
 
         try {
             length = srcImage.getSliceSize();
@@ -237,7 +238,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase implements Algo
 
         fireProgressStateChanged(0, srcImage.getImageName(), "Diffusing image ...");
         for (n = 0; (n < iterations) && !threadStopped; n++) {
-            convolver = new AlgorithmConvolver(srcImage, GxData, GyData, kExtents,entireImage);
+            convolver = new AlgorithmConvolver(srcImage, GxData, GyData, kExtents,entireImage, sqrtXY);
             convolver.setMinProgressValue((100 * n)/iterations);
             convolver.setMaxProgressValue(Math.min((int)Math.round((100 * (n+0.5))/iterations),99));
             linkProgressToAlgorithm(convolver);
@@ -642,6 +643,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase implements Algo
         double a;
         double b;
         AlgorithmConvolver convolver;
+        boolean sqrtXY = true;
 
         try {
             length = srcImage.getSliceSize();
@@ -680,7 +682,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase implements Algo
        
        
         for (n = 0; (n < iterations) && !threadStopped; n++) {
-            convolver = new AlgorithmConvolver(destImage, GxData, GyData, kExtents,entireImage);
+            convolver = new AlgorithmConvolver(destImage, GxData, GyData, kExtents,entireImage, sqrtXY);
             convolver.setMinProgressValue((100 * n)/iterations);
             convolver.setMaxProgressValue(Math.min((int)Math.round((100 * (n+0.5))/iterations),99));
             linkProgressToAlgorithm(convolver);
