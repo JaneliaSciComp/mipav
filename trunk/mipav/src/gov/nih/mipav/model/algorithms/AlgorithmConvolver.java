@@ -351,7 +351,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
      *
      * @return  the value of the pixel after convolution with the kernel
      */
-    public static final synchronized float convolve2DPtXY(int pix, int[] iExtents, float[] image, int[] kExtents,
+    public static final synchronized float convolve2DPtSqrtXY(int pix, int[] iExtents, float[] image, int[] kExtents,
                                                         float[] kernelX, float[] kernelY) {
 
         int i, j;
@@ -881,7 +881,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
      *
      * @return  the value of the pixel after convolution with the kernel
      */
-    public static final float convolve2DRGBPtXY(int pix, int[] iExtents, float[] image, int[] kExtents,
+    public static final float convolve2DRGBPtSqrtXY(int pix, int[] iExtents, float[] image, int[] kExtents,
                                                 float[] kernelX, float[] kernelY) {
 
         int i, j;
@@ -2182,6 +2182,111 @@ public class AlgorithmConvolver extends AlgorithmBase {
     }
     
     private final void convolve2DXY(int startSlice, int endSlice){
+        // Does x and y kernels separately
+        boolean color = srcImage.isColorImage();
+        int cFactor = (color)?4:1;
+        int length = cFactor * srcImage.getSliceSize();
+        for (int s = startSlice; s < endSlice; s++) {
+            int start = s * length;
+            float[] buffer = new float[length];
+            try {
+                srcImage.exportData(start, length, buffer); // locks and
+                                                            // releases lock
+            } catch (IOException error) {
+                errorCleanUp("Algorithm Convolver: Image(s) locked", false);
+
+                return;
+            }
+
+            if (color == true) {
+
+                for (int i = 0, idx = start; (i < length) && !threadStopped; i += 4, idx += 4) {
+                    progress++;
+                    if ((progress % progressModulus) == 0) {
+                        fireProgressStateChanged(minProgressValue + (int)(progress/progressModulus));
+                    }
+
+                    if ((entireImage == true) || mask.get(i / 4)) {
+                        outputBuffer[2*idx] = buffer[i]; // alpha
+                        outputBuffer[2*idx+1] = buffer[i];
+
+                        if (red) {
+                            outputBuffer[2*idx + 2] = AlgorithmConvolver
+                                    .convolve2DRGBPt(i + 1, srcImage
+                                            .getExtents(), buffer, kExtents,
+                                            kernelBufferX);
+                            outputBuffer[2*idx + 3] = AlgorithmConvolver
+                            .convolve2DRGBPt(i + 1, srcImage
+                                    .getExtents(), buffer, kExtents,
+                                    kernelBufferY);
+                        } else {
+                            outputBuffer[2*idx + 2] = buffer[i + 1];
+                            outputBuffer[2*idx + 3] = buffer[i + 1];
+                        }
+
+                        if (green) {
+                            outputBuffer[2*idx + 4] = AlgorithmConvolver
+                                    .convolve2DRGBPt(i + 2, srcImage
+                                            .getExtents(), buffer, kExtents,
+                                            kernelBufferX);
+                            outputBuffer[2*idx + 5] = AlgorithmConvolver
+                            .convolve2DRGBPt(i + 2, srcImage
+                                    .getExtents(), buffer, kExtents,
+                                    kernelBufferY);
+                        } else {
+                            outputBuffer[2*idx + 4] = buffer[i + 2];
+                            outputBuffer[2*idx + 5] = buffer[i + 2];
+                        }
+
+                        if (blue) {
+                            outputBuffer[2*idx + 6] = AlgorithmConvolver
+                                    .convolve2DRGBPt(i + 3, srcImage
+                                            .getExtents(), buffer, kExtents,
+                                            kernelBufferX);
+                            outputBuffer[2*idx + 7] = AlgorithmConvolver
+                            .convolve2DRGBPt(i + 3, srcImage
+                                    .getExtents(), buffer, kExtents,
+                                    kernelBufferY);
+                        } else {
+                            outputBuffer[2*idx + 6] = buffer[i + 3];
+                            outputBuffer[2*idx + 7] = buffer[i + 3];
+                        }
+                    } else {
+                        outputBuffer[2*idx] = buffer[i];
+                        outputBuffer[2*idx+1] = buffer[i];
+                        outputBuffer[2*idx + 2] = buffer[i + 1];
+                        outputBuffer[2*idx + 3] = buffer[i + 1];
+                        outputBuffer[2*idx + 4] = buffer[i + 2];
+                        outputBuffer[2*idx + 5] = buffer[i + 2];
+                        outputBuffer[2*idx + 6] = buffer[i + 3];
+                        outputBuffer[2*idx + 7] = buffer[i + 3];
+                    }
+                }
+            } else {
+
+                for (int i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
+                    progress++;
+                    if ((progress % progressModulus) == 0) {
+                        fireProgressStateChanged(minProgressValue + (int)(progress/progressModulus));
+                    }
+
+                    if ((entireImage == true) || mask.get(i)) {
+                        outputBuffer[2*idx] = AlgorithmConvolver.convolve2DPt(i,
+                                srcImage.getExtents(), buffer, kExtents,
+                                kernelBufferX);
+                        outputBuffer[2*idx+1] = AlgorithmConvolver.convolve2DPt(i,
+                                srcImage.getExtents(), buffer, kExtents,
+                                kernelBufferY);
+                    } else {
+                        outputBuffer[2*idx] = buffer[i];
+                        outputBuffer[2*idx+1] = buffer[i];
+                    }
+                }
+            }
+        }
+    }
+    
+    private final void convolve2DSqrtXY(int startSlice, int endSlice){
         boolean color = srcImage.isColorImage();
         int cFactor = (color)?4:1;
         int length = cFactor * srcImage.getSliceSize();
@@ -2210,7 +2315,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
 
                         if (red) {
                             outputBuffer[idx + 1] = AlgorithmConvolver
-                                    .convolve2DRGBPtXY(i + 1, srcImage
+                                    .convolve2DRGBPtSqrtXY(i + 1, srcImage
                                             .getExtents(), buffer, kExtents,
                                             kernelBufferX, kernelBufferY);
                         } else {
@@ -2219,7 +2324,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
 
                         if (green) {
                             outputBuffer[idx + 2] = AlgorithmConvolver
-                                    .convolve2DRGBPtXY(i + 2, srcImage
+                                    .convolve2DRGBPtSqrtXY(i + 2, srcImage
                                             .getExtents(), buffer, kExtents,
                                             kernelBufferX, kernelBufferY);
                         } else {
@@ -2228,7 +2333,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
 
                         if (blue) {
                             outputBuffer[idx + 3] = AlgorithmConvolver
-                                    .convolve2DRGBPtXY(i + 3, srcImage
+                                    .convolve2DRGBPtSqrtXY(i + 3, srcImage
                                             .getExtents(), buffer, kExtents,
                                             kernelBufferX, kernelBufferY);
                         } else {
@@ -2250,7 +2355,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
                     }
 
                     if ((entireImage == true) || mask.get(i)) {
-                        outputBuffer[idx] = AlgorithmConvolver.convolve2DPtXY(i,
+                        outputBuffer[idx] = AlgorithmConvolver.convolve2DPtSqrtXY(i,
                                 srcImage.getExtents(), buffer, kExtents,
                                 kernelBufferX, kernelBufferY);
                     } else {
@@ -2547,6 +2652,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
         if (nms2e) {
             outputBuffer = new float[2*length];
         }
+        else if (doXY && (!sqrtXY)) {
+            outputBuffer = new float[2*length];
+        }
         else {
             outputBuffer = new float[length];
         }
@@ -2554,6 +2662,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
         progressModulus = length / (maxProgressValue-minProgressValue);
 
         if (sqrtXY) {
+            convolve2DSqrtXY(0, 1);
+        }
+        else if (doXY && (!sqrtXY)) {
             convolve2DXY(0, 1);
         }
         else if (nms2) {
@@ -2609,6 +2720,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
             if (nms2e) {
                 outputBuffer = new float[2*totalLength];
             }
+            else if (doXY && (!sqrtXY)) {
+                outputBuffer = new float[2*totalLength];
+            }
             else {
                 outputBuffer = new float[totalLength];
             }
@@ -2623,7 +2737,10 @@ public class AlgorithmConvolver extends AlgorithmBase {
     				Runnable task = new Runnable() {
     					public void run() {
                             if (sqrtXY) {
-                                convolve2DXY(fstart, fend);    
+                                convolve2DSqrtXY(fstart, fend);    
+                            }
+                            else if (doXY && (!sqrtXY)) {
+                                convolve2DXY(fstart, fend);
                             }
                             else if (nms2) {
                                 convolve2DNMS(fstart, fend);
@@ -2647,6 +2764,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
     			}
             }else{
                 if (sqrtXY) {
+                    convolve2DSqrtXY(0, nSlices);
+                }
+                else if (doXY && (!sqrtXY)) {
                     convolve2DXY(0, nSlices);
                 }
                 else if (nms2) {
