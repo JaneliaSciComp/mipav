@@ -557,7 +557,9 @@ public class FileDM3 extends FileBase {
 
             image.calcMinMax();
             raFile.close();
-
+            if (progressBar != null) {
+                progressBar.dispose();
+            }
 
             return image;
         } catch (Exception e) {
