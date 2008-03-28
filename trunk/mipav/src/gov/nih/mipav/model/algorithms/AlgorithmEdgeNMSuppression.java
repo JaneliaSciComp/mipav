@@ -641,19 +641,6 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase implements Algorit
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
 
-            try {
-                srcImage.exportData(start, length, buffer); // locks and releases lock
-            } catch (IOException error) {
-                buffer = null;
-                buffer2 = null;
-                System.gc();
-                displayError("Algorithm EdgeNMSup: Image(s) locked");
-                setCompleted(false);
-
-
-                return;
-            }
-
             for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
                 if ((((start + i) % mod) == 0)) {
@@ -665,7 +652,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase implements Algorit
                     buffer2[i] = outputBuffer[2*idx+1];
                 } // if (entireImage == true || mask.get(i))
                 else {
-                    destImage.set(idx, buffer[i]);
+                    destImage.set(idx, outputBuffer[2*idx]);
                     buffer2[i] = 1.0f; // > 0 so not interpreted as edge
                 }
             }
@@ -728,14 +715,11 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase implements Algorit
     private void calcStoreInDest3D(int detectionType) {
         int i, nImages, s;
         int length, totalLength;
-        float ix, iy, iz, ixx, ixy, iyy, ixz, iyz, izz, ixxx, ixxy, ixyy, iyyy, ixxz, ixzz, ixyz, iyyz, iyzz, izzz;
-        float[] buffer;
         int start;
         float[] sliceBuffer;
         float[] sliceBuffer2;
         float bufferMin, bufferMax;
         float a;
-        float nms;
         AlgorithmConvolver convolver;
 
         try {
@@ -750,7 +734,6 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase implements Algorit
             length = srcImage.getSliceSize();
             totalLength = srcImage.getSliceSize() * srcImage.getExtents()[2];
             nImages = srcImage.getExtents()[2];
-            buffer = new float[totalLength];
             sliceBuffer = new float[length];
             sliceBuffer2 = new float[length];
 
@@ -758,17 +741,8 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase implements Algorit
                 sliceBuffer2[i] = 1.0f;
             }
 
-            srcImage.exportData(0, totalLength, buffer); // locks and releases lock
             fireProgressStateChanged(srcImage.getImageName(), "Calculating Zero X-ings ...");
-        } catch (IOException error) {
-            buffer = null;
-            sliceBuffer = null;
-            sliceBuffer2 = null;
-            errorCleanUp("Algorithm EdgeNMSup exportData: Image(s) locked", true);
-
-            return;
         } catch (OutOfMemoryError e) {
-            buffer = null;
             sliceBuffer = null;
             sliceBuffer2 = null;
             errorCleanUp("Algorithm EdgeNMSup exportData: Out of memory", true);
@@ -805,7 +779,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase implements Algorit
                     sliceBuffer2[i - start] = outputBuffer[2*i+1];
                 } // if (entireImage == true || mask.get(i))
                 else {
-                    destImage.set(i, buffer[i]);
+                    destImage.set(i, outputBuffer[2*i]);
                     sliceBuffer2[i - start] = 1.0f; // > 0 so not interpreted as edge
                 }
             }
