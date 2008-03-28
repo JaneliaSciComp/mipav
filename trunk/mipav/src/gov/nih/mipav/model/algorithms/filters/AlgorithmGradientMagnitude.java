@@ -13,7 +13,7 @@ import java.io.*;
  * @version  0.1 Feb 11, 1998
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class AlgorithmGradientMagnitude extends AlgorithmBase {
+public class AlgorithmGradientMagnitude extends AlgorithmBase implements AlgorithmInterface {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -54,6 +54,9 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
     /** Standard deviations of the gaussian used to calculate the kernels. */
     private float[] sigmas;
+    
+    /** Receives output of AlgorithmConvolver */
+    private float[] outputBuffer = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -160,6 +163,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
+        AlgorithmConvolver convolver;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -188,6 +192,23 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
         
 
         fireProgressStateChanged(0, null, "Calculating gradient magnitude ...");
+        
+        if ((srcImage.getNDims() == 2) || image25D) {
+            boolean sqrtXY = false;
+            convolver = new AlgorithmConvolver(srcImage, Gx2Data, Gy2Data, kExtents, entireImage, sqrtXY);
+            convolver.setMinProgressValue(0);
+            convolver.setMaxProgressValue(20);
+            linkProgressToAlgorithm(convolver);
+            convolver.addListener(this);
+            if (!entireImage) {
+                convolver.setMask(mask);
+            }
+            if (srcImage.isColorImage()) {
+                convolver.setColorChannels(red, green, blue);
+            }
+            convolver.run();
+            convolver.finalize();    
+        }
         
         if (destImage != null) {
 
@@ -313,7 +334,6 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
             if (buffer == null) {
                 length = cFactor * srcImage.getSliceSize();
-                buffer = new float[length];
             } else {
                 length = buffer.length;
             }
@@ -332,134 +352,234 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             return null;
         }
 
-        fireProgressStateChanged(0, null, null);
-
-        
-        int mod = totalLength / 100; // mod is 1 percent of length
-        //fireProgressStateChanged(0, null, null);
-
-        for (s = 0; s < nImages; s++) {
-            start = s * length;
-
-            try {
-
-                if (srcImage != null) {
-                    srcImage.exportData(start, length, buffer); // locks and releases lock
-                }
-            } catch (IOException error) {
-                errorCleanUp("Algorithm Gradient Magnitude: " + error, false);
-
-                return null;
-            }
-
-            if (color == true) {
-
-                for (i = 0; (i < length) && !threadStopped; i += 4) {
-
-                    if ((((start + i) % mod) == 0)) {
-                        //fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
-                        fireProgressStateChanged( ((float) (start + i) / (totalLength - 1) ), null, null);
-                    }
-
-                    if (entireImage || mask.get(i / 4)) {
-                        resultBuffer[start + i] = buffer[i];
-
-                        if (red) {
-                            ix = AlgorithmConvolver.convolve2DRGBPt(i + 1, extents, buffer, kExtents, Gx2Data);
-                            iy = AlgorithmConvolver.convolve2DRGBPt(i + 1, extents, buffer, kExtents, Gy2Data);
-                            resultBuffer[start + i + 1] = (float) Math.sqrt((ix * ix) + (iy * iy));
-
-                            if (xDirections != null) {
-                                xDirections[start + i + 1] = ix / resultBuffer[start + i + 1];
-                                yDirections[start + i + 1] = iy / resultBuffer[start + i + 1];
-                            }
-                        } else {
-                            resultBuffer[start + i + 1] = buffer[i + 1];
+        if (buffer != null) {
+            fireProgressStateChanged(0, null, null);
+            int mod = totalLength / 100; // mod is 1 percent of length
+            for (s = 0; s < nImages; s++) {
+                start = s * length;
+    
+                if (color == true) {
+    
+                    for (i = 0; (i < length) && !threadStopped; i += 4) {
+    
+                        if ((((start + i) % mod) == 0)) {
+                            //fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
+                            fireProgressStateChanged( ((float) (start + i) / (totalLength - 1) ), null, null);
                         }
-
-                        if (green) {
-                            ix = AlgorithmConvolver.convolve2DRGBPt(i + 2, extents, buffer, kExtents, Gx2Data);
-                            iy = AlgorithmConvolver.convolve2DRGBPt(i + 2, extents, buffer, kExtents, Gy2Data);
-                            resultBuffer[start + i + 2] = (float) Math.sqrt((ix * ix) + (iy * iy));
-
-                            if (xDirections != null) {
-                                xDirections[start + i + 2] = ix / resultBuffer[start + i + 2];
-                                yDirections[start + i + 2] = iy / resultBuffer[start + i + 2];
-                            }
-                        } else {
-                            resultBuffer[start + i + 2] = buffer[i + 2];
-                        }
-
-                        if (blue) {
-                            ix = AlgorithmConvolver.convolve2DRGBPt(i + 3, extents, buffer, kExtents, Gx2Data);
-                            iy = AlgorithmConvolver.convolve2DRGBPt(i + 3, extents, buffer, kExtents, Gy2Data);
-                            resultBuffer[start + i + 3] = (float) Math.sqrt((ix * ix) + (iy * iy));
-
-                            if (xDirections != null) {
-                                xDirections[start + i + 3] = ix / resultBuffer[start + i + 3];
-                                yDirections[start + i + 3] = iy / resultBuffer[start + i + 3];
-                            }
-                        } else {
-                            resultBuffer[start + i + 3] = buffer[i + 3];
-                        }
-                    } else {
-                        resultBuffer[start + i] = buffer[i];
-                        resultBuffer[start + i + 1] = buffer[i + 1];
-                        resultBuffer[start + i + 2] = buffer[i + 2];
-                        resultBuffer[start + i + 3] = buffer[i + 3];
-
-                        if (xDirections != null) {
-                            xDirections[start + i] = 0;
-                            yDirections[start + i] = 0;
-                            xDirections[start + i + 1] = 0;
-                            yDirections[start + i + 1] = 0;
-                            xDirections[start + i + 2] = 0;
-                            yDirections[start + i + 2] = 0;
-                            xDirections[start + i + 3] = 0;
-                            yDirections[start + i + 3] = 0;
-                        }
-                    }
-                }
-            } else {
-
-                for (i = 0; (i < length) && !threadStopped; i++) {
-
-                    if ((((start + i) % mod) == 0)) {
-                        fireProgressStateChanged(((float) (start + i) / (totalLength - 1)) , null, null);
-                     //   fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
-                    }
-
-                    if (entireImage || mask.get(i)) {
-                        // System.out.println("buffer length = " + buffer.length + " Gx2Data length = " +
-                        // Gx2Data.length); System.out.println("buffer length = " + "buffer length = " + " Gx2Data
-                        // length = " + "buffer length = " + "buffer length = "); System.out.println("buffer length = "
-                        // + "buffer length = " + " Gx2Data length = " + "buffer length = " + "buffer length = ");
-
-                        ix = AlgorithmConvolver.convolve2DPt(i, extents, buffer, kExtents, Gx2Data);
-                        iy = AlgorithmConvolver.convolve2DPt(i, extents, buffer, kExtents, Gy2Data);
-                        resultBuffer[start + i] = (float) Math.sqrt((ix * ix) + (iy * iy));
-
-                        if (xDirections != null) {
-
-                            if (resultBuffer[start + i] == 0) {
-                                xDirections[start + i] = ix;
-                                yDirections[start + i] = iy;
+    
+                        if (entireImage || mask.get(i / 4)) {
+                            resultBuffer[start + i] = buffer[i];
+    
+                            if (red) {
+                                ix = AlgorithmConvolver.convolve2DRGBPt(i + 1, extents, buffer, kExtents, Gx2Data);
+                                iy = AlgorithmConvolver.convolve2DRGBPt(i + 1, extents, buffer, kExtents, Gy2Data);
+                                resultBuffer[start + i + 1] = (float) Math.sqrt((ix * ix) + (iy * iy));
+    
+                                if (xDirections != null) {
+                                    xDirections[start + i + 1] = ix / resultBuffer[start + i + 1];
+                                    yDirections[start + i + 1] = iy / resultBuffer[start + i + 1];
+                                }
                             } else {
-                                xDirections[start + i] = ix / resultBuffer[start + i];
-                                yDirections[start + i] = iy / resultBuffer[start + i];
+                                resultBuffer[start + i + 1] = buffer[i + 1];
+                            }
+    
+                            if (green) {
+                                ix = AlgorithmConvolver.convolve2DRGBPt(i + 2, extents, buffer, kExtents, Gx2Data);
+                                iy = AlgorithmConvolver.convolve2DRGBPt(i + 2, extents, buffer, kExtents, Gy2Data);
+                                resultBuffer[start + i + 2] = (float) Math.sqrt((ix * ix) + (iy * iy));
+    
+                                if (xDirections != null) {
+                                    xDirections[start + i + 2] = ix / resultBuffer[start + i + 2];
+                                    yDirections[start + i + 2] = iy / resultBuffer[start + i + 2];
+                                }
+                            } else {
+                                resultBuffer[start + i + 2] = buffer[i + 2];
+                            }
+    
+                            if (blue) {
+                                ix = AlgorithmConvolver.convolve2DRGBPt(i + 3, extents, buffer, kExtents, Gx2Data);
+                                iy = AlgorithmConvolver.convolve2DRGBPt(i + 3, extents, buffer, kExtents, Gy2Data);
+                                resultBuffer[start + i + 3] = (float) Math.sqrt((ix * ix) + (iy * iy));
+    
+                                if (xDirections != null) {
+                                    xDirections[start + i + 3] = ix / resultBuffer[start + i + 3];
+                                    yDirections[start + i + 3] = iy / resultBuffer[start + i + 3];
+                                }
+                            } else {
+                                resultBuffer[start + i + 3] = buffer[i + 3];
+                            }
+                        } else {
+                            resultBuffer[start + i] = buffer[i];
+                            resultBuffer[start + i + 1] = buffer[i + 1];
+                            resultBuffer[start + i + 2] = buffer[i + 2];
+                            resultBuffer[start + i + 3] = buffer[i + 3];
+    
+                            if (xDirections != null) {
+                                xDirections[start + i] = 0;
+                                yDirections[start + i] = 0;
+                                xDirections[start + i + 1] = 0;
+                                yDirections[start + i + 1] = 0;
+                                xDirections[start + i + 2] = 0;
+                                yDirections[start + i + 2] = 0;
+                                xDirections[start + i + 3] = 0;
+                                yDirections[start + i + 3] = 0;
                             }
                         }
-                    } else {
-                        resultBuffer[start + i] = buffer[i];
-
-                        if (xDirections != null) {
-                            xDirections[start + i] = 0;
-                            yDirections[start + i] = 0;
+                    }
+                } else {
+    
+                    for (i = 0; (i < length) && !threadStopped; i++) {
+    
+                        if ((((start + i) % mod) == 0)) {
+                            fireProgressStateChanged(((float) (start + i) / (totalLength - 1)) , null, null);
+                         //   fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
+                        }
+    
+                        if (entireImage || mask.get(i)) {
+                            // System.out.println("buffer length = " + buffer.length + " Gx2Data length = " +
+                            // Gx2Data.length); System.out.println("buffer length = " + "buffer length = " + " Gx2Data
+                            // length = " + "buffer length = " + "buffer length = "); System.out.println("buffer length = "
+                            // + "buffer length = " + " Gx2Data length = " + "buffer length = " + "buffer length = ");
+    
+                            ix = AlgorithmConvolver.convolve2DPt(i, extents, buffer, kExtents, Gx2Data);
+                            iy = AlgorithmConvolver.convolve2DPt(i, extents, buffer, kExtents, Gy2Data);
+                            resultBuffer[start + i] = (float) Math.sqrt((ix * ix) + (iy * iy));
+    
+                            if (xDirections != null) {
+    
+                                if (resultBuffer[start + i] == 0) {
+                                    xDirections[start + i] = ix;
+                                    yDirections[start + i] = iy;
+                                } else {
+                                    xDirections[start + i] = ix / resultBuffer[start + i];
+                                    yDirections[start + i] = iy / resultBuffer[start + i];
+                                }
+                            }
+                        } else {
+                            resultBuffer[start + i] = buffer[i];
+    
+                            if (xDirections != null) {
+                                xDirections[start + i] = 0;
+                                yDirections[start + i] = 0;
+                            }
                         }
                     }
                 }
             }
-        }
+        } // if (buffer != null)
+        else { // buffer == null
+            fireProgressStateChanged(20, null, null);
+            int mod = totalLength / 80; // mod is 1 percent of length
+            for (s = 0; s < nImages; s++) {
+                start = s * length;
+    
+                if (color == true) {
+    
+                    for (i = 0; (i < length) && !threadStopped; i += 4) {
+    
+                        if ((((start + i) % mod) == 0)) {
+                            fireProgressStateChanged(20 + (80 * (start + i))/(totalLength - 1), null, null);
+                        }
+    
+                        if (entireImage || mask.get(i / 4)) {
+                            resultBuffer[start + i] = outputBuffer[2*start + 2*i];
+    
+                            if (red) {
+                                ix = outputBuffer[2*start + 2*i + 2];
+                                iy = outputBuffer[2*start + 2*i + 3];
+                                resultBuffer[start + i + 1] = (float) Math.sqrt((ix * ix) + (iy * iy));
+    
+                                if (xDirections != null) {
+                                    xDirections[start + i + 1] = ix / resultBuffer[start + i + 1];
+                                    yDirections[start + i + 1] = iy / resultBuffer[start + i + 1];
+                                }
+                            } else {
+                                resultBuffer[start + i + 1] = outputBuffer[2*start + 2*i + 2];
+                            }
+    
+                            if (green) {
+                                ix = outputBuffer[2*start + 2*i + 4];
+                                iy = outputBuffer[2*start + 2*i + 5];
+                                resultBuffer[start + i + 2] = (float) Math.sqrt((ix * ix) + (iy * iy));
+    
+                                if (xDirections != null) {
+                                    xDirections[start + i + 2] = ix / resultBuffer[start + i + 2];
+                                    yDirections[start + i + 2] = iy / resultBuffer[start + i + 2];
+                                }
+                            } else {
+                                resultBuffer[start + i + 2] = outputBuffer[2*start + 2*i + 4];
+                            }
+    
+                            if (blue) {
+                                ix = outputBuffer[2*start + 2*i + 6];
+                                iy = outputBuffer[2*start + 2*i + 7];
+                                resultBuffer[start + i + 3] = (float) Math.sqrt((ix * ix) + (iy * iy));
+    
+                                if (xDirections != null) {
+                                    xDirections[start + i + 3] = ix / resultBuffer[start + i + 3];
+                                    yDirections[start + i + 3] = iy / resultBuffer[start + i + 3];
+                                }
+                            } else {
+                                resultBuffer[start + i + 3] = outputBuffer[2*start + 2*i + 6];
+                            }
+                        } else {
+                            resultBuffer[start + i] = outputBuffer[2*start + 2*i];
+                            resultBuffer[start + i + 1] = outputBuffer[2*start + 2*i + 2];
+                            resultBuffer[start + i + 2] = outputBuffer[2*start + 2*i + 4];
+                            resultBuffer[start + i + 3] = outputBuffer[2*start + 2*i + 6];
+    
+                            if (xDirections != null) {
+                                xDirections[start + i] = 0;
+                                yDirections[start + i] = 0;
+                                xDirections[start + i + 1] = 0;
+                                yDirections[start + i + 1] = 0;
+                                xDirections[start + i + 2] = 0;
+                                yDirections[start + i + 2] = 0;
+                                xDirections[start + i + 3] = 0;
+                                yDirections[start + i + 3] = 0;
+                            }
+                        }
+                    }
+                } else {
+    
+                    for (i = 0; (i < length) && !threadStopped; i++) {
+    
+                        if ((((start + i) % mod) == 0)) {
+                            fireProgressStateChanged(20 + (80 * (start + i))/(totalLength - 1), null, null);
+                        }
+    
+                        if (entireImage || mask.get(i)) {
+                            // System.out.println("buffer length = " + buffer.length + " Gx2Data length = " +
+                            // Gx2Data.length); System.out.println("buffer length = " + "buffer length = " + " Gx2Data
+                            // length = " + "buffer length = " + "buffer length = "); System.out.println("buffer length = "
+                            // + "buffer length = " + " Gx2Data length = " + "buffer length = " + "buffer length = ");
+    
+                            ix = outputBuffer[2*start + 2*i];
+                            iy = outputBuffer[2*start + 2*i + 1];
+                            resultBuffer[start + i] = (float) Math.sqrt((ix * ix) + (iy * iy));
+    
+                            if (xDirections != null) {
+    
+                                if (resultBuffer[start + i] == 0) {
+                                    xDirections[start + i] = ix;
+                                    yDirections[start + i] = iy;
+                                } else {
+                                    xDirections[start + i] = ix / resultBuffer[start + i];
+                                    yDirections[start + i] = iy / resultBuffer[start + i];
+                                }
+                            }
+                        } else {
+                            resultBuffer[start + i] = outputBuffer[2*start + 2*i];
+    
+                            if (xDirections != null) {
+                                xDirections[start + i] = 0;
+                                yDirections[start + i] = 0;
+                            }
+                        }
+                    }
+                }
+            }    
+        } // else buffer == null
 
         return resultBuffer;
     }
@@ -498,7 +618,6 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
             if (buffer == null) {
                 length = cFactor * srcImage.getSliceSize();
-                buffer = new float[length];
             } else {
                 length = buffer.length;
             }
@@ -520,123 +639,222 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
         int mod = totalLength / 100; // mod is 1 percent of length
         fireProgressStateChanged(0, null, null);
 
-        for (s = 0; s < nImages; s++) {
-            start = s * length;
-
-            try {
-
-                if (srcImage != null) {
-                    srcImage.exportData(start, length, buffer); // locks and releases lock
-                }
-            } catch (IOException error) {
-                errorCleanUp("Algorithm Gradient Magnitude: " + error, false);
-
-                return null;
-            }
-
-            if (color == true) {
-
-                for (i = 0; (i < length) && !threadStopped; i += 4) {
-
-                    if ((((start + i) % mod) == 0)) {
-                        fireProgressStateChanged( ((float) (start + i) / (totalLength - 1)), null, null);
-                        //fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
-                    }
-
-                    if ((entireImage == true) || mask.get(i / 4)) {
-                        resultBuffer[start + i] = buffer[i];
-
-                        if (red) {
-                            ix = AlgorithmConvolver.convolve2DRGBPt(i + 1, extents, buffer, kExtents, Gx2Data);
-                            iy = AlgorithmConvolver.convolve2DRGBPt(i + 1, extents, buffer, kExtents, Gy2Data);
-                            resultBuffer[start + i + 1] = (float) Math.sqrt((ix * ix) + (iy * iy));
-
-                            if (xDirections != null) {
-                                xDirections[start + i + 1] = ix;
-                                yDirections[start + i + 1] = iy;
-                            }
-                        } else {
-                            resultBuffer[start + i + 1] = buffer[i + 1];
+        if (buffer != null) {
+            for (s = 0; s < nImages; s++) {
+                start = s * length;
+    
+                if (color == true) {
+    
+                    for (i = 0; (i < length) && !threadStopped; i += 4) {
+    
+                        if ((((start + i) % mod) == 0)) {
+                            fireProgressStateChanged( ((float) (start + i) / (totalLength - 1)), null, null);
+                            //fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
                         }
-
-                        if (green) {
-                            ix = AlgorithmConvolver.convolve2DRGBPt(i + 2, extents, buffer, kExtents, Gx2Data);
-                            iy = AlgorithmConvolver.convolve2DRGBPt(i + 2, extents, buffer, kExtents, Gy2Data);
-                            resultBuffer[start + i + 2] = (float) Math.sqrt((ix * ix) + (iy * iy));
-
-                            if (xDirections != null) {
-                                xDirections[start + i + 2] = ix;
-                                yDirections[start + i + 2] = iy;
-                            }
-                        } else {
-                            resultBuffer[start + i + 2] = buffer[i + 2];
-                        }
-
-                        if (blue) {
-                            ix = AlgorithmConvolver.convolve2DRGBPt(i + 3, extents, buffer, kExtents, Gx2Data);
-                            iy = AlgorithmConvolver.convolve2DRGBPt(i + 3, extents, buffer, kExtents, Gy2Data);
-                            resultBuffer[start + i + 3] = (float) Math.sqrt((ix * ix) + (iy * iy));
-
-                            if (xDirections != null) {
-                                xDirections[start + i + 3] = ix;
-                                yDirections[start + i + 3] = iy;
-                            }
-                        } else {
-                            resultBuffer[start + i + 3] = buffer[i + 3];
-                        }
-                    } else {
-                        resultBuffer[start + i] = buffer[i];
-                        resultBuffer[start + i + 1] = buffer[i + 1];
-                        resultBuffer[start + i + 2] = buffer[i + 2];
-                        resultBuffer[start + i + 3] = buffer[i + 3];
-
-                        if (xDirections != null) {
-                            xDirections[start + i] = 0;
-                            yDirections[start + i] = 0;
-                            xDirections[start + i + 1] = 0;
-                            yDirections[start + i + 1] = 0;
-                            xDirections[start + i + 2] = 0;
-                            yDirections[start + i + 2] = 0;
-                            xDirections[start + i + 3] = 0;
-                            yDirections[start + i + 3] = 0;
-                        }
-                    }
-                }
-            } else {
-
-                for (i = 0; (i < length) && !threadStopped; i++) {
-
-                    if ((((start + i) % mod) == 0)) {
-                        fireProgressStateChanged( ((float) (start + i) / (totalLength - 1)), null, null);
-                      //  fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
-                    }
-
-                    if ((entireImage == true) || mask.get(i)) {
-                        ix = AlgorithmConvolver.convolve2DPt(i, extents, buffer, kExtents, Gx2Data);
-                        iy = AlgorithmConvolver.convolve2DPt(i, extents, buffer, kExtents, Gy2Data);
-                        resultBuffer[start + i] = (float) Math.sqrt((ix * ix) + (iy * iy));
-
-                        if (xDirections != null) {
-
-                            if (resultBuffer[start + i] == 0) {
-                                xDirections[start + i] = ix;
-                                yDirections[start + i] = iy;
+    
+                        if ((entireImage == true) || mask.get(i / 4)) {
+                            resultBuffer[start + i] = buffer[i];
+    
+                            if (red) {
+                                ix = AlgorithmConvolver.convolve2DRGBPt(i + 1, extents, buffer, kExtents, Gx2Data);
+                                iy = AlgorithmConvolver.convolve2DRGBPt(i + 1, extents, buffer, kExtents, Gy2Data);
+                                resultBuffer[start + i + 1] = (float) Math.sqrt((ix * ix) + (iy * iy));
+    
+                                if (xDirections != null) {
+                                    xDirections[start + i + 1] = ix;
+                                    yDirections[start + i + 1] = iy;
+                                }
                             } else {
-                                xDirections[start + i] = ix;
-                                yDirections[start + i] = iy;
+                                resultBuffer[start + i + 1] = buffer[i + 1];
+                            }
+    
+                            if (green) {
+                                ix = AlgorithmConvolver.convolve2DRGBPt(i + 2, extents, buffer, kExtents, Gx2Data);
+                                iy = AlgorithmConvolver.convolve2DRGBPt(i + 2, extents, buffer, kExtents, Gy2Data);
+                                resultBuffer[start + i + 2] = (float) Math.sqrt((ix * ix) + (iy * iy));
+    
+                                if (xDirections != null) {
+                                    xDirections[start + i + 2] = ix;
+                                    yDirections[start + i + 2] = iy;
+                                }
+                            } else {
+                                resultBuffer[start + i + 2] = buffer[i + 2];
+                            }
+    
+                            if (blue) {
+                                ix = AlgorithmConvolver.convolve2DRGBPt(i + 3, extents, buffer, kExtents, Gx2Data);
+                                iy = AlgorithmConvolver.convolve2DRGBPt(i + 3, extents, buffer, kExtents, Gy2Data);
+                                resultBuffer[start + i + 3] = (float) Math.sqrt((ix * ix) + (iy * iy));
+    
+                                if (xDirections != null) {
+                                    xDirections[start + i + 3] = ix;
+                                    yDirections[start + i + 3] = iy;
+                                }
+                            } else {
+                                resultBuffer[start + i + 3] = buffer[i + 3];
+                            }
+                        } else {
+                            resultBuffer[start + i] = buffer[i];
+                            resultBuffer[start + i + 1] = buffer[i + 1];
+                            resultBuffer[start + i + 2] = buffer[i + 2];
+                            resultBuffer[start + i + 3] = buffer[i + 3];
+    
+                            if (xDirections != null) {
+                                xDirections[start + i] = 0;
+                                yDirections[start + i] = 0;
+                                xDirections[start + i + 1] = 0;
+                                yDirections[start + i + 1] = 0;
+                                xDirections[start + i + 2] = 0;
+                                yDirections[start + i + 2] = 0;
+                                xDirections[start + i + 3] = 0;
+                                yDirections[start + i + 3] = 0;
                             }
                         }
-                    } else {
-                        resultBuffer[start + i] = buffer[i];
-
-                        if (xDirections != null) {
-                            xDirections[start + i] = 0;
-                            yDirections[start + i] = 0;
+                    }
+                } else {
+    
+                    for (i = 0; (i < length) && !threadStopped; i++) {
+    
+                        if ((((start + i) % mod) == 0)) {
+                            fireProgressStateChanged( ((float) (start + i) / (totalLength - 1)), null, null);
+                          //  fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
+                        }
+    
+                        if ((entireImage == true) || mask.get(i)) {
+                            ix = AlgorithmConvolver.convolve2DPt(i, extents, buffer, kExtents, Gx2Data);
+                            iy = AlgorithmConvolver.convolve2DPt(i, extents, buffer, kExtents, Gy2Data);
+                            resultBuffer[start + i] = (float) Math.sqrt((ix * ix) + (iy * iy));
+    
+                            if (xDirections != null) {
+    
+                                if (resultBuffer[start + i] == 0) {
+                                    xDirections[start + i] = ix;
+                                    yDirections[start + i] = iy;
+                                } else {
+                                    xDirections[start + i] = ix;
+                                    yDirections[start + i] = iy;
+                                }
+                            }
+                        } else {
+                            resultBuffer[start + i] = buffer[i];
+    
+                            if (xDirections != null) {
+                                xDirections[start + i] = 0;
+                                yDirections[start + i] = 0;
+                            }
                         }
                     }
                 }
             }
-        }
+        } // if (buffer != null)
+        else { // buffer == null
+            for (s = 0; s < nImages; s++) {
+                start = s * length;
+                
+                if (color == true) {
+    
+                    for (i = 0; (i < length) && !threadStopped; i += 4) {
+    
+                        if ((((start + i) % mod) == 0)) {
+                            fireProgressStateChanged( ((float) (start + i) / (totalLength - 1)), null, null);
+                            //fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
+                        }
+    
+                        if ((entireImage == true) || mask.get(i / 4)) {
+                            resultBuffer[start + i] = outputBuffer[2*start + 2*i];
+    
+                            if (red) {
+                                ix = outputBuffer[2*start + 2*i + 2];
+                                iy = outputBuffer[2*start + 2*i + 3];
+                                resultBuffer[start + i + 1] = (float) Math.sqrt((ix * ix) + (iy * iy));
+    
+                                if (xDirections != null) {
+                                    xDirections[start + i + 1] = ix;
+                                    yDirections[start + i + 1] = iy;
+                                }
+                            } else {
+                                resultBuffer[start + i + 1] = outputBuffer[2*start + 2*i + 2];
+                            }
+    
+                            if (green) {
+                                ix = outputBuffer[2*start + 2*i + 4];
+                                iy = outputBuffer[2*start + 2*i + 5];
+                                resultBuffer[start + i + 2] = (float) Math.sqrt((ix * ix) + (iy * iy));
+    
+                                if (xDirections != null) {
+                                    xDirections[start + i + 2] = ix;
+                                    yDirections[start + i + 2] = iy;
+                                }
+                            } else {
+                                resultBuffer[start + i + 2] = outputBuffer[2*start + 2*i + 4];
+                            }
+    
+                            if (blue) {
+                                ix = outputBuffer[2*start + 2*i + 6];
+                                iy = outputBuffer[2*start + 2*i + 7];
+                                resultBuffer[start + i + 3] = (float) Math.sqrt((ix * ix) + (iy * iy));
+    
+                                if (xDirections != null) {
+                                    xDirections[start + i + 3] = ix;
+                                    yDirections[start + i + 3] = iy;
+                                }
+                            } else {
+                                resultBuffer[start + i + 3] = outputBuffer[2*start + 2*i + 6];
+                            }
+                        } else {
+                            resultBuffer[start + i] = outputBuffer[2*start + 2*i];
+                            resultBuffer[start + i + 1] = outputBuffer[2*start + 2*i + 2];
+                            resultBuffer[start + i + 2] = outputBuffer[2*start + 2*i + 4];
+                            resultBuffer[start + i + 3] = outputBuffer[2*start + 2*i + 6];
+    
+                            if (xDirections != null) {
+                                xDirections[start + i] = 0;
+                                yDirections[start + i] = 0;
+                                xDirections[start + i + 1] = 0;
+                                yDirections[start + i + 1] = 0;
+                                xDirections[start + i + 2] = 0;
+                                yDirections[start + i + 2] = 0;
+                                xDirections[start + i + 3] = 0;
+                                yDirections[start + i + 3] = 0;
+                            }
+                        }
+                    }
+                } else {
+    
+                    for (i = 0; (i < length) && !threadStopped; i++) {
+    
+                        if ((((start + i) % mod) == 0)) {
+                            fireProgressStateChanged( ((float) (start + i) / (totalLength - 1)), null, null);
+                          //  fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
+                        }
+    
+                        if ((entireImage == true) || mask.get(i)) {
+                            ix = outputBuffer[2*start + 2*i];
+                            iy = outputBuffer[2*start + 2*i + 1];
+                            resultBuffer[start + i] = (float) Math.sqrt((ix * ix) + (iy * iy));
+    
+                            if (xDirections != null) {
+    
+                                if (resultBuffer[start + i] == 0) {
+                                    xDirections[start + i] = ix;
+                                    yDirections[start + i] = iy;
+                                } else {
+                                    xDirections[start + i] = ix;
+                                    yDirections[start + i] = iy;
+                                }
+                            }
+                        } else {
+                            resultBuffer[start + i] = outputBuffer[2*start + 2*i];
+    
+                            if (xDirections != null) {
+                                xDirections[start + i] = 0;
+                                yDirections[start + i] = 0;
+                            }
+                        }
+                    }
+                }
+            }
+        } // else buffer == null
 
         return resultBuffer;
     }
@@ -1074,7 +1292,6 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
         int i, s, idx;
         int length, totalLength;
         int start;
-        float[] buffer;
         float ix, iy;
         boolean color = false;
         int cFactor = 1;
@@ -1095,10 +1312,8 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
         try {
             length = cFactor * srcImage.getSliceSize();
             totalLength = length * nImages;
-            buffer = new float[length];
             fireProgressStateChanged(srcImage.getImageName(), "Calculating the gradient magnitude ...");
         } catch (OutOfMemoryError e) {
-            buffer = null;
             System.gc();
             displayError("Algorithm Gradient Magnitude: Out of memory");
             setCompleted(false);
@@ -1108,67 +1323,51 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             return;
         }
 
-        int mod = totalLength / 100; // mod is 1 percent of length
-        fireProgressStateChanged(0, null, null);
+        int mod = totalLength / 80; // mod is 1 percent of length
+        fireProgressStateChanged(20, null, null);
 
         for (s = 0; s < nImages; s++) {
             start = s * length;
-
-            try {
-                srcImage.exportData(start, length, buffer); // locks and releases lock
-            } catch (IOException error) {
-                buffer = null;
-                errorCleanUp("Algorithm Gradient Magnitude: Image(s) locked", true);
-
-                return;
-            }
 
             if (color == true) {
 
                 for (i = 0, idx = start; (i < length) && !threadStopped; i += 4, idx += 4) {
 
                     if ((((start + i) % mod) == 0)) {
-                        fireProgressStateChanged( ((float) (start + i) / (totalLength - 1)), null, null);
-                      //  fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
+                        fireProgressStateChanged(20 + (80 * (start + i))/ (totalLength - 1), null, null);
                     }
 
                     if ((entireImage == true) || mask.get(i / 4)) {
-                        destImage.set(idx, buffer[i]); // alpha
+                        destImage.set(idx, outputBuffer[2*idx]); // alpha
 
                         if (red) {
-                            ix = AlgorithmConvolver.convolve2DRGBPt(i + 1, srcImage.getExtents(), buffer, kExtents,
-                                                                    Gx2Data);
-                            iy = AlgorithmConvolver.convolve2DRGBPt(i + 1, srcImage.getExtents(), buffer, kExtents,
-                                                                    Gy2Data);
+                            ix = outputBuffer[2*idx + 2];
+                            iy = outputBuffer[2*idx + 3];
                             destImage.set(idx + 1, (float) Math.sqrt((ix * ix) + (iy * iy)));
                         } else {
-                            destImage.set(idx + 1, buffer[i + 1]);
+                            destImage.set(idx + 1, outputBuffer[2*idx + 2]);
                         }
 
                         if (green) {
-                            ix = AlgorithmConvolver.convolve2DRGBPt(i + 2, srcImage.getExtents(), buffer, kExtents,
-                                                                    Gx2Data);
-                            iy = AlgorithmConvolver.convolve2DRGBPt(i + 2, srcImage.getExtents(), buffer, kExtents,
-                                                                    Gy2Data);
+                            ix = outputBuffer[2*idx + 4];
+                            iy = outputBuffer[2*idx + 5];
                             destImage.set(idx + 2, (float) Math.sqrt((ix * ix) + (iy * iy)));
                         } else {
-                            destImage.set(idx + 2, buffer[i + 2]);
+                            destImage.set(idx + 2, outputBuffer[2*idx + 4]);
                         }
 
                         if (blue) {
-                            ix = AlgorithmConvolver.convolve2DRGBPt(i + 3, srcImage.getExtents(), buffer, kExtents,
-                                                                    Gx2Data);
-                            iy = AlgorithmConvolver.convolve2DRGBPt(i + 3, srcImage.getExtents(), buffer, kExtents,
-                                                                    Gy2Data);
+                            ix = outputBuffer[2*idx + 6];
+                            iy = outputBuffer[2*idx + 7];
                             destImage.set(idx + 3, (float) Math.sqrt((ix * ix) + (iy * iy)));
                         } else {
-                            destImage.set(idx + 3, buffer[i + 3]);
+                            destImage.set(idx + 3, outputBuffer[2*idx + 6]);
                         }
                     } else {
-                        destImage.set(idx, buffer[i]);
-                        destImage.set(idx + 1, buffer[i + 1]);
-                        destImage.set(idx + 2, buffer[i + 2]);
-                        destImage.set(idx + 3, buffer[i + 3]);
+                        destImage.set(idx, outputBuffer[2*idx]);
+                        destImage.set(idx + 1, outputBuffer[2*idx + 2]);
+                        destImage.set(idx + 2, outputBuffer[2*idx + 4]);
+                        destImage.set(idx + 3, outputBuffer[2*idx + 6]);
                     }
                 }
             } else {
@@ -1176,17 +1375,16 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
                 for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
                     if ((((start + i) % mod) == 0)) {
-                        fireProgressStateChanged( ((float) (start + i) / (totalLength - 1)), null, null);
-                       // fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
+                        fireProgressStateChanged(20 + (80 * (start + i))/ (totalLength - 1), null, null);
                     }
 
                     if ((entireImage == true) || mask.get(i)) {
-                        ix = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, Gx2Data);
-                        iy = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, Gy2Data);
+                        ix = outputBuffer[2*idx];
+                        iy = outputBuffer[2*idx+1];
                         destImage.set(idx, (float) Math.sqrt((ix * ix) + (iy * iy)));
                         // destImage.set(idx, ix + iy);
                     } else {
-                        destImage.set(idx, buffer[i]);
+                        destImage.set(idx, outputBuffer[2*idx]);
                     }
                 }
             }
@@ -1739,6 +1937,17 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
         GenerateGaussian Gz = new GenerateGaussian(GzData, kExtents, sigmas, derivOrder);
         Gz.calc(true);
+    }
+    
+    public void algorithmPerformed(AlgorithmBase algorithm){
+        if(!algorithm.isCompleted()){
+            finalize();
+            return;
+        }
+        if (algorithm instanceof AlgorithmConvolver) {
+            AlgorithmConvolver convolver = (AlgorithmConvolver) algorithm;
+            outputBuffer = convolver.getOutputBuffer();
+        }
     }
 
 }
