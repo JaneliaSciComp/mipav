@@ -168,42 +168,7 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
         Object source = event.getSource();
         String command = event.getActionCommand();
 
-        /* Launch the file chooser and set the new filename for the ModelImage
-         * data: */
-        if (command.equals("Select Surface ...")) {
-            loadingSurface();
-        }
-        /* Launch the file chooser and set the new filename for the .sur
-         * file: */
-        else if (command.equals("Select Image ...")) {
-            JFileChooser chooser = new JFileChooser();
-
-            chooser.setMultiSelectionEnabled(true);
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
-
-            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-            } else {
-                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
-            }
-
-            if (JFileChooser.APPROVE_OPTION != chooser.showOpenDialog(null)) {
-                return;
-            }
-
-            m_kImageFile = chooser.getSelectedFile().getName();
-            m_kImageDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-            m_kLabelFileNameImage.setText(m_kImageFile);
-            chooser.setVisible(false);
-            loadingImage();
-        }
-        /* If no file is loaded, then the remaining interface options are not
-         * defined: */
-        else if (!m_bFileLoaded) {
-            return;
-        }
-        /* Toggle the latitude/longitude lines On/Off: */
-        else if (command.equals("LatLonLines")) {
+        if (command.equals("LatLonLines")) {
             m_kView.toggleLatLonLines();
         }
         /* Toggle the enable picking On/Off: */
@@ -462,9 +427,9 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
     /**
      * Resets the Mesh Display, when the file is reloaded:
      */
-    public void displayCorticalAnalysis( TriMesh kMesh ) {
+    public void displayCorticalAnalysis( TriMesh kMesh, Vector3f kCenter ) {
         m_kTriangleMesh = kMesh;
-        m_kView.setup(m_kTriangleMesh);
+        m_kView.setup(m_kTriangleMesh, kCenter);
 
         int iNumLat = Integer.parseInt(m_kNumLatText.getText());
         int iNumLon = Integer.parseInt(m_kNumLonText.getText());
@@ -482,18 +447,7 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
              * m_kLUTa ); m_kPanelBrainsurfaceFlattenerLUT.selectLUTa( );mainPanel.updateUI(); */
             m_kView.setLUTCurvature(m_kLUTa);
         }
-
-        /* Display mesh in the surfaceRender: */
-        //m_kParentFrame.addBranch(m_kView.getMesh(), m_kView.getTMesh(), m_kCenter);
-        //m_kParentFrame.addBranch(m_kView.getMeshLines(), null, null);
-
         m_bFileLoaded = true;
-
-        /* Reset the defaults: */
-        /* Display plane in right-hand view: */
-        m_kView.displayPlane();
-        m_kDisplaySphere.setSelected(false);
-        m_kDisplayPlane.setSelected(true);
 
         /* Display the latitude/longitude lines: */
         m_kLatLonLines.setSelected(true);
@@ -772,47 +726,5 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
     public static TitledBorder buildTitledBorder(String title) {
         return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
                                 Color.black);
-    }
-
-    /**
-     * Load a new ModelImage for the brainsurface flattener scene:
-     */
-    private void loadingImage() {
-
-        /* If the ModelImage m_kImage is not defined (null) or the name
-         * doesn't equal the name set in m_kImageFile, then load the new
-         * ModelImage: */
-        if ((m_kImage == null) || ((m_kImage != null) && (!m_kImageFile.equals(m_kImage.getImageName())))) {
-            FileIO fileIO = new FileIO();
-            fileIO.setQuiet(true);
-            m_kImage = fileIO.readImage(m_kImageFile, m_kImageDir, false, null);
-        }
-    }
-
-    /**
-     * Load a new surface file for the brainsurface flattener scene:
-     */
-    private void loadingSurface() {
-
-        if (m_bFileLoaded) {
-            //m_kParentFrame.removeBranch(m_kView.getMesh(), true);
-            //m_kParentFrame.removeBranch(m_kView.getMeshLines(), false);
-        }
-
-        /* Load the selected surface file and extract the mesh. */
-        TriMesh[] akSurfaces = FileSurface_WM.openSurfaces(m_kVolumeViewer.getImageA(), 0);
-        if ( akSurfaces == null )
-        {
-            return;
-        }
-
-        //m_kVolumeViewer.addSurface(akSurfaces, false);
-        m_kVolumeViewer.updateLighting();
-        
-        m_kTriangleMesh = akSurfaces[0];
-        /* Display the mesh: */
-        displayCorticalAnalysis(m_kTriangleMesh);
-
-        m_kLabelFileName.setText(m_kTriangleMesh.GetName());
     }
 }

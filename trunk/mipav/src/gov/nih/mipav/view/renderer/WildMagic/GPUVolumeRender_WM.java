@@ -2229,6 +2229,23 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     /**
      */
+    public Vector3f GetCenter( String kSurfaceName )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    return ((VolumeSurface)(m_kDisplayList.get(i))).GetCenter();
+                }
+            }
+        }
+        return new Vector3f( Vector3f.ZERO );
+    }
+    
+    /**
+     */
     public float GetVolume( String kSurfaceName )
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )

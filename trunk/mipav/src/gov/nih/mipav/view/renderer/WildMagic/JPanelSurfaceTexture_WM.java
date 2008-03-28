@@ -317,7 +317,10 @@ public class JPanelSurfaceTexture_WM extends JPanelRendererBase implements ViewI
 
         if (RGBTa != null) {
             mRGBSeparate = RGBTa;
-            m_kSurfacePanel.SetLUTNew( mLUTSeparate, mRGBSeparate );
+            if ( m_kSurfacePanel != null )
+            {
+                m_kSurfacePanel.SetLUTNew( mLUTSeparate, mRGBSeparate );
+            }
         }
     }
 

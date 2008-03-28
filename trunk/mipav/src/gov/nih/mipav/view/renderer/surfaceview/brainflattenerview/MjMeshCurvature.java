@@ -117,6 +117,9 @@ public class MjMeshCurvature {
                 int iV1 = aiV[(j + 1) % 3];
                 int iV2 = aiV[(j + 2) % 3];
 
+                //System.err.println(m_akVertex[iV0].x + " " + m_akVertex[iV0].y + " " + m_akVertex[iV0].z );
+                //System.err.println(m_akVertex[iV1].x + " " + m_akVertex[iV1].y + " " + m_akVertex[iV1].z );
+                
                 // Compute edge from V0 to V1, project to tangent plane of vertex,
                 // and compute difference of adjacent normals.
                 kE.sub(m_akVertex[iV1], m_akVertex[iV0]);

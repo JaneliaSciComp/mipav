@@ -440,7 +440,7 @@ implements MouseListener, ItemListener, ChangeListener {
      * Constructs main frame structures for image canvas.
      */
     protected void configureFrame() {
-        super.configureFrame();
+        super.configureFrame( false );
         buildDTIimageLoadPanel();
         //buildDTIFiberTrackPanel();
         buildDTIParametersPanel();

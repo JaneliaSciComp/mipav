@@ -2,6 +2,7 @@ package gov.nih.mipav.view.WildMagic.LibFoundation.Meshes;
 
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
+import gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.MjVector3f;
 
 /**
  * DOCUMENT ME!
@@ -28,9 +29,50 @@ public class MeshCurvature {
      * The caller is responsible for deleting the input arrays.
      *
      */
-    public MeshCurvature( TriMesh kMesh )
+    public MeshCurvature( TriMesh kMesh, Vector3f kCenter )
     {
         int iVQuantity = kMesh.VBuffer.GetVertexQuantity();
+        int iTQuantity = kMesh.GetTriangleQuantity();
+        int[] aiConnect = kMesh.IBuffer.GetData();
+        
+        // compute normal vectors
+        Vector3f[] akNormal = new Vector3f[iVQuantity];
+
+        for (int i = 0; i < iVQuantity; i++) {
+            akNormal[i] = new Vector3f(0.0f, 0.0f, 0.0f);
+        }
+
+        Vector3f kPos0 = new Vector3f();
+        Vector3f kPos1 = new Vector3f();
+        Vector3f kPos2 = new Vector3f();
+        Vector3f kEdge1 = new Vector3f();
+        Vector3f kEdge2 = new Vector3f();
+        Vector3f kNormal = new Vector3f();
+
+        for (int i = 0; i < iTQuantity; i++) {
+
+            // get vertex indices
+            int iV0 = aiConnect[(3 * i) + 0];
+            int iV1 = aiConnect[(3 * i) + 1];
+            int iV2 = aiConnect[(3 * i) + 2];
+
+            kMesh.VBuffer.GetPosition3( iV0, kPos0 );
+            kMesh.VBuffer.GetPosition3( iV1, kPos1 );
+            kMesh.VBuffer.GetPosition3( iV2, kPos2 );
+            
+            // compute the normal (length provides a weighted sum)
+            kPos1.sub( kPos0, kEdge1 );
+            kPos2.sub( kPos0, kEdge2 );
+            kEdge1.Cross( kEdge2, kNormal );
+
+            akNormal[iV0].addEquals(kNormal);
+            akNormal[iV1].addEquals(kNormal);
+            akNormal[iV2].addEquals(kNormal);
+        }
+
+        for (int i = 0; i < iVQuantity; i++) {
+            akNormal[i].Normalize();
+        }
 
         // compute the matrix of normal derivatives
         Matrix3f[] akDNormal = new Matrix3f[iVQuantity];
@@ -46,14 +88,6 @@ public class MeshCurvature {
 
         int[] aiV = new int[3];
 
-        int[] aiConnect = kMesh.IBuffer.GetData();
-        int iTQuantity = kMesh.GetTriangleQuantity();
-        Vector3f kPos0 = new Vector3f();
-        Vector3f kPos1 = new Vector3f();
-        Vector3f kPos2= new Vector3f();
-        Vector3f kNormal0 = new Vector3f();
-        Vector3f kNormal1 = new Vector3f();
-        Vector3f kNormal2 = new Vector3f();
         for (int i = 0; i < iTQuantity; i++) {
 
             // get vertex indices
@@ -75,62 +109,54 @@ public class MeshCurvature {
                 kMesh.VBuffer.GetPosition3( iV0, kPos0 );
                 kMesh.VBuffer.GetPosition3( iV1, kPos1 );
                 kMesh.VBuffer.GetPosition3( iV2, kPos2 );
-                kMesh.VBuffer.GetNormal3( iV0, kNormal0 );
-                kMesh.VBuffer.GetNormal3( iV1, kNormal1 );
-                kMesh.VBuffer.GetNormal3( iV2, kNormal2 );
 
                 kPos1.sub( kPos0, kE);
-                kW = kNormal0.scale(-kE.Dot(kNormal0));
+                kW = akNormal[iV0].scale(-kE.Dot(akNormal[iV0]));
                 kW.addEquals(kE);
-                kNormal1.sub(kNormal0, kD);
-                akWWTrn[iV0].SetData( 0, 0, akWWTrn[iV0].GetData(0, 0) + kW.X() * kW.X());
-                akWWTrn[iV0].SetData( 0, 1, akWWTrn[iV0].GetData(0, 1) + kW.X() * kW.Y());
-                akWWTrn[iV0].SetData( 0, 2, akWWTrn[iV0].GetData(0, 2) + kW.X() * kW.Z());
-                akWWTrn[iV0].SetData( 1, 0, akWWTrn[iV0].GetData(1, 0) + kW.Y() * kW.X());
-                akWWTrn[iV0].SetData( 1, 1, akWWTrn[iV0].GetData(1, 1) + kW.Y() * kW.Y());
-                akWWTrn[iV0].SetData( 1, 2, akWWTrn[iV0].GetData(1, 2) + kW.Y() * kW.Z());
-                akWWTrn[iV0].SetData( 2, 0, akWWTrn[iV0].GetData(2, 0) + kW.Z() * kW.X());
-                akWWTrn[iV0].SetData( 2, 1, akWWTrn[iV0].GetData(2, 1) + kW.Z() * kW.Y());
-                akWWTrn[iV0].SetData( 2, 2, akWWTrn[iV0].GetData(2, 2) + kW.Z() * kW.Z());
-                akDWTrn[iV0].SetData( 0, 0, akDWTrn[iV0].GetData(0, 0) + kD.X() * kW.X());
-                akDWTrn[iV0].SetData( 0, 1, akDWTrn[iV0].GetData(0, 1) + kD.X() * kW.Y());
-                akDWTrn[iV0].SetData( 0, 2, akDWTrn[iV0].GetData(0, 2) + kD.X() * kW.Z());
-                akDWTrn[iV0].SetData( 1, 0, akDWTrn[iV0].GetData(1, 0) + kD.Y() * kW.X());
-                akDWTrn[iV0].SetData( 1, 1, akDWTrn[iV0].GetData(1, 1) + kD.Y() * kW.Y());
-                akDWTrn[iV0].SetData( 1, 2, akDWTrn[iV0].GetData(1, 2) + kD.Y() * kW.Z());
-                akDWTrn[iV0].SetData( 2, 0, akDWTrn[iV0].GetData(2, 0) + kD.Z() * kW.X());
-                akDWTrn[iV0].SetData( 2, 1, akDWTrn[iV0].GetData(2, 1) + kD.Z() * kW.Y());
-                akDWTrn[iV0].SetData( 2, 2, akDWTrn[iV0].GetData(2, 2) + kD.Z() * kW.Z());
+                akNormal[iV1].sub(akNormal[iV0], kD);
+                akWWTrn[iV0].addEquals( kW.X() * kW.X(),
+                        kW.X() * kW.Y(),
+                        kW.X() * kW.Z(),
+                        kW.Y() * kW.X(),
+                        kW.Y() * kW.Y(),
+                        kW.Y() * kW.Z(),
+                        kW.Z() * kW.X(),
+                        kW.Z() * kW.Y(),
+                        kW.Z() * kW.Z());
+                akDWTrn[iV0].addEquals( kD.X() * kW.X(),
+                        kD.X() * kW.Y(),
+                        kD.X() * kW.Z(),
+                        kD.Y() * kW.X(),
+                        kD.Y() * kW.Y(),
+                        kD.Y() * kW.Z(),
+                        kD.Z() * kW.X(),
+                        kD.Z() * kW.Y(),
+                        kD.Z() * kW.Z());
 
                 // Compute edge from V0 to V2, project to tangent plane of vertex,
                 // and compute difference of adjacent normals.
                 kPos2.sub(kPos0, kE);
-                kW = kNormal0.scale(-kE.Dot(kNormal0));
+                kW = akNormal[iV0].scale(-kE.Dot(akNormal[iV0]));
                 kW.addEquals(kE);
-                kNormal2.sub(kNormal0, kD);
-                akWWTrn[iV0].SetData( 0, 0, akWWTrn[iV0].GetData(0, 0) + kW.X() * kW.X());
-                akWWTrn[iV0].SetData( 0, 1, akWWTrn[iV0].GetData(0, 1) + kW.X() * kW.Y());
-                akWWTrn[iV0].SetData( 0, 2, akWWTrn[iV0].GetData(0, 2) + kW.X() * kW.Z());
-                akWWTrn[iV0].SetData( 1, 0, akWWTrn[iV0].GetData(1, 0) + kW.Y() * kW.X());
-                akWWTrn[iV0].SetData( 1, 1, akWWTrn[iV0].GetData(1, 1) + kW.Y() * kW.Y());
-                akWWTrn[iV0].SetData( 1, 2, akWWTrn[iV0].GetData(1, 2) + kW.Y() * kW.Z());
-                akWWTrn[iV0].SetData( 2, 0, akWWTrn[iV0].GetData(2, 0) + kW.Z() * kW.X());
-                akWWTrn[iV0].SetData( 2, 1, akWWTrn[iV0].GetData(2, 1) + kW.Z() * kW.Y());
-                akWWTrn[iV0].SetData( 2, 2, akWWTrn[iV0].GetData(2, 2) + kW.Z() * kW.Z());
-                akDWTrn[iV0].SetData( 0, 0, akDWTrn[iV0].GetData(0, 0) + kD.X() * kW.X());
-                akDWTrn[iV0].SetData( 0, 1, akDWTrn[iV0].GetData(0, 1) + kD.X() * kW.Y());
-                akDWTrn[iV0].SetData( 0, 2, akDWTrn[iV0].GetData(0, 2) + kD.X() * kW.Z());
-                akDWTrn[iV0].SetData( 1, 0, akDWTrn[iV0].GetData(1, 0) + kD.Y() * kW.X());
-                akDWTrn[iV0].SetData( 1, 1, akDWTrn[iV0].GetData(1, 1) + kD.Y() * kW.Y());
-                akDWTrn[iV0].SetData( 1, 2, akDWTrn[iV0].GetData(1, 2) + kD.Y() * kW.Z());
-                akDWTrn[iV0].SetData( 2, 0, akDWTrn[iV0].GetData(2, 0) + kD.Z() * kW.X());
-                akDWTrn[iV0].SetData( 2, 1, akDWTrn[iV0].GetData(2, 1) + kD.Z() * kW.Y());
-                akDWTrn[iV0].SetData( 2, 2, akDWTrn[iV0].GetData(2, 2) + kD.Z() * kW.Z());
-                
-
-
-                
-                System.err.println( akWWTrn[iV0].ToString() );
+                akNormal[iV2].sub(akNormal[iV0], kD);
+                akWWTrn[iV0].addEquals( kW.X() * kW.X(),
+                        kW.X() * kW.Y(),
+                        kW.X() * kW.Z(),
+                        kW.Y() * kW.X(),
+                        kW.Y() * kW.Y(),
+                        kW.Y() * kW.Z(),
+                        kW.Z() * kW.X(),
+                        kW.Z() * kW.Y(),
+                        kW.Z() * kW.Z());
+                akDWTrn[iV0].addEquals( kD.X() * kW.X(),
+                        kD.X() * kW.Y(),
+                        kD.X() * kW.Z(),
+                        kD.Y() * kW.X(),
+                        kD.Y() * kW.Y(),
+                        kD.Y() * kW.Z(),
+                        kD.Z() * kW.X(),
+                        kD.Z() * kW.Y(),
+                        kD.Z() * kW.Z());
             }
         }
 
@@ -139,24 +165,22 @@ public class MeshCurvature {
         // Compute the matrix of normal derivatives.
         Matrix3f kInverse = new Matrix3f();
 
-        for (int i = 0; i < iVQuantity; i++) {
-            kMesh.VBuffer.GetNormal3( i, kNormal0 );
-            
+        for (int i = 0; i < iVQuantity; i++) {            
             //System.err.println( kNormal0.ToString() );
 
             akWWTrn[i].scaleEquals(0.5f);
-            akWWTrn[i].SetData( 0, 0, akWWTrn[i].GetData(0, 0) + kNormal0.X() * kNormal0.X());
-            akWWTrn[i].SetData( 0, 1, akWWTrn[i].GetData(0, 1) + kNormal0.X() * kNormal0.Y());
-            akWWTrn[i].SetData( 0, 2, akWWTrn[i].GetData(0, 2) + kNormal0.X() * kNormal0.Z());
-            akWWTrn[i].SetData( 1, 0, akWWTrn[i].GetData(1, 0) + kNormal0.Y() * kNormal0.X());
-            akWWTrn[i].SetData( 1, 1, akWWTrn[i].GetData(1, 1) + kNormal0.Y() * kNormal0.Y());
-            akWWTrn[i].SetData( 1, 2, akWWTrn[i].GetData(1, 2) + kNormal0.Y() * kNormal0.Z());
-            akWWTrn[i].SetData( 2, 0, akWWTrn[i].GetData(2, 0) + kNormal0.Z() * kNormal0.X());
-            akWWTrn[i].SetData( 2, 1, akWWTrn[i].GetData(2, 1) + kNormal0.Z() * kNormal0.Y());
-            akWWTrn[i].SetData( 2, 2, akWWTrn[i].GetData(2, 2) + kNormal0.Z() * kNormal0.Z());
+            akWWTrn[i].addEquals( akNormal[i].X() * akNormal[i].X(),
+                    akNormal[i].X() * akNormal[i].Y(),
+                    akNormal[i].X() * akNormal[i].Z(),
+                    akNormal[i].Y() * akNormal[i].X(),
+                    akNormal[i].Y() * akNormal[i].Y(),
+                    akNormal[i].Y() * akNormal[i].Z(),
+                    akNormal[i].Z() * akNormal[i].X(),
+                    akNormal[i].Z() * akNormal[i].Y(),
+                    akNormal[i].Z() * akNormal[i].Z());
             akDWTrn[i].scaleEquals(0.5f);
             
-            kInverse = akWWTrn[i].Inverse();
+            akWWTrn[i].Inverse(kInverse);
             akDNormal[i] = akDWTrn[i].mult(kInverse);
         }
         System.err.println("Done normals");
@@ -187,11 +211,8 @@ public class MeshCurvature {
 
         
         for (int i = 0; i < iVQuantity; i++) {
-
-            kMesh.VBuffer.GetNormal3( i, kNormal0 );
-
             // compute U and V given N
-            Vector3f.GenerateOrthonormalBasis(kU, kV, kNormal0);
+            Vector3f.GenerateOrthonormalBasis(kU, kV, akNormal[i]);
 
             // Compute S = J^T * dN/dX * J.  In theory S is symmetric, but
             // because we have estimated dN/dX, we must slightly adjust our

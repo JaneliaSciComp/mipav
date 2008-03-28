@@ -69,10 +69,13 @@ public class VolumeSurface extends VolumeObject
 
         for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
         {
-            m_kMesh.VBuffer.SetTCoord3( 0, i, 
-                                        (m_kMesh.VBuffer.GetPosition3fX(i)  - kTranslate.X()) * 1.0f/m_fX,
-                                        (m_kMesh.VBuffer.GetPosition3fY(i)  - kTranslate.Y()) * 1.0f/m_fY,
-                                        (m_kMesh.VBuffer.GetPosition3fZ(i)  - kTranslate.Z()) * 1.0f/m_fZ);
+            if ( m_kMesh.VBuffer.GetAttributes().HasTCoord(0) )
+            {
+                m_kMesh.VBuffer.SetTCoord3( 0, i, 
+                        (m_kMesh.VBuffer.GetPosition3fX(i)  - kTranslate.X()) * 1.0f/m_fX,
+                        (m_kMesh.VBuffer.GetPosition3fY(i)  - kTranslate.Y()) * 1.0f/m_fY,
+                        (m_kMesh.VBuffer.GetPosition3fZ(i)  - kTranslate.Z()) * 1.0f/m_fZ);
+            }
             m_akBackupColor[i] = new ColorRGBA();
             m_kMesh.VBuffer.GetColor4( 0, i, m_akBackupColor[i]);
         }
@@ -546,7 +549,30 @@ public class VolumeSurface extends VolumeObject
         }
         return m_fSurfaceArea;
     }
+    
 
+    public Vector3f GetCenter()
+    {
+        if ( m_kCenter == null )
+        {
+            ComputeCenter();
+        }
+        return m_kCenter;
+    }
+
+    private void ComputeCenter()
+    {
+        m_kCenter = new Vector3f();
+        Vector3f kPos = new Vector3f();
+        for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
+        {
+            m_kMesh.VBuffer.GetPosition3( i, kPos );
+            m_kCenter.addEquals( kPos );
+        }
+        m_kCenter.scaleEquals( 1.0f / (float)m_kMesh.VBuffer.GetVertexQuantity() );
+    }
+    
+    
     /**
      * Calculates volume of triangle mesh. The mesh consists of triangle faces and encloses a bounded region. Face j, 0
      * <= j <= n-1 has verticies P0, P1, and P2. The order of the verticies is counterclockwise as you view the face
@@ -1293,6 +1319,7 @@ public class VolumeSurface extends VolumeObject
 
     private float m_fVolume = 0;
     private float m_fSurfaceArea = 0;
+    private Vector3f m_kCenter = null;
     
     private boolean m_bHasPerVertexColor = false;
     private ColorRGBA[] m_akBackupColor = null;
