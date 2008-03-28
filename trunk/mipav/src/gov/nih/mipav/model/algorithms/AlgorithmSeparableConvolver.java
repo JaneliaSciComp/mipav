@@ -394,8 +394,8 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         int xDim = imgExtents[0];
         int yDim = imgExtents[1];
 
-    	int offset = xDim;
-    	int sliceSize = xDim * yDim;
+    	int offset = xDim * cFactor;
+    	int sliceSize = xDim * yDim * cFactor;
     	int offsetX, offsetY, offsetZ;
         int kDim = kernelBuffer[0].length;
         int halfKDim = kDim / 2;
@@ -424,7 +424,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 				end = start + ((kDim - 1) * cFactor);
 
 				if (start < 0) {
-					count = count - ((offsetX - (cFactor - 1)) / cFactor);
+					count =  -((offsetX - (cFactor - 1))/ cFactor);
 					if (cFactor > 1) {
 						start = (pix % cFactor);
 					} else {
@@ -464,8 +464,8 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         int xDim = imgExtents[0];
         int yDim = imgExtents[1];
 
-    	int offset = xDim;
-    	int sliceSize = xDim * yDim;
+    	int offset = xDim * cFactor;
+    	int sliceSize = xDim * yDim * cFactor;
     	int offsetX, offsetY, offsetZ;
         int kDim = kernelBuffer[1].length;
         int halfKDim = kDim / 2;
@@ -494,7 +494,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                 end = start + step;
 
                 if (start < 0) {
-                    count = count - offsetY;
+                    count = -offsetY;
                     start = 0;
                 }
 
@@ -532,8 +532,8 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         int yDim = imgExtents[1];
         int zDim = imgExtents[2];
 
-    	int offset = xDim;
-    	int sliceSize = xDim * yDim;
+    	int offset = xDim * cFactor;
+    	int sliceSize = xDim * yDim * cFactor;
     	int offsetX, offsetY, offsetZ;
         int kDim = kernelBuffer[2].length;
         int halfKDim = kDim / 2;
@@ -563,7 +563,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                 end = start + step;
 
                 if (start < 0) {
-                    count = count - offsetZ;
+                    count = -offsetZ;
                     start = 0;
                 }
 
