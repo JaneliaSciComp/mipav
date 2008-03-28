@@ -2821,8 +2821,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        Robot robot = new Robot();
 	
 	        return robot.createScreenCapture(currentRectangle);
-	    } catch (OutOfMemoryError error) {
-	    } catch (AWTException error) {
+	    } catch (OutOfMemoryError error) { //Results in no picture taken for PDF
+	    } catch (AWTException error) { //Results in no picture taken for PDF
 	    }
 	    return null;
 	}
@@ -3129,8 +3129,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	this.repaint();
         }
         
-        /** ignored */
         public void selectedVOI(VOIEvent selection) {
+        	/* not interested in having the ColorButon select VOIs */
         }
 	}
 }

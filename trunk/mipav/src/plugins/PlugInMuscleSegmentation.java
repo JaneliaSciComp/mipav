@@ -170,8 +170,8 @@ public class PlugInMuscleSegmentation implements PlugInAlgorithm, PlugInGeneric 
                 MipavUtil.displayError("Unable to find helpset.");
             }
         } catch (NullPointerException npe) {
-            Preferences.debug("MIPAV Help cannot be found." + "\n", 2);
-            MipavUtil.displayError("MIPAV Help cannot be found.");
+            Preferences.debug("Muscle segmentation help cannot be found." + "\n", 2);
+            MipavUtil.displayError("Muscle segmentation help cannot be found.");
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory error opening help.");
         } catch (HelpSetException error) {
@@ -195,7 +195,7 @@ public class PlugInMuscleSegmentation implements PlugInAlgorithm, PlugInGeneric 
 
             jarFullPath = URLDecoder.decode(urlToHelpJar.getPath(), "UTF-8");
         } catch (Exception error) {
-            Preferences.debug("Problems finding help.jar file.");
+            Preferences.debug("Problems finding "+jarFile+" jar file.");
 
             return null;
         }
@@ -219,7 +219,7 @@ public class PlugInMuscleSegmentation implements PlugInAlgorithm, PlugInGeneric 
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory error opening help.");
         } catch (IOException ee) {
-            Preferences.debug("Problems opening help.jar file.");
+            Preferences.debug("Problems opening "+jarFile+" jar file.");
         }
 
         // System.out.println("Help set file name in jar = " + hsName);
