@@ -548,7 +548,6 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase implements AlgorithmIn
             length = srcImage.getSliceSize();
             totalLength = length * nImages;
             buffer = new float[length];
-            // fireProgressStateChanged(srcImage.getImageName(), "Calculating the Edge ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Edge Lap: Out of memory", true);
@@ -561,25 +560,13 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase implements AlgorithmIn
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
 
-            try {
-                srcImage.exportData(start, length, buffer); // locks and releases lock
-            } catch (IOException error) {
-                errorCleanUp("Algorithm EdgeLaplacian: Image(s) locked", false);
-
-                return;
-            }
-
             for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
                 if (((start + i) % mod) == 0) {
                     fireProgressStateChanged(80 + (20 * (start + i)) / (totalLength - 1));
                 }
 
-                if ((entireImage == true) || mask.get(i)) {
-                    destImage.set(idx, outputBuffer[idx]);
-                } else {
-                    destImage.set(idx, buffer[i]);
-                }
+                destImage.set(idx, outputBuffer[idx]);
             }
 
             try {
@@ -614,7 +601,6 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase implements AlgorithmIn
     private void calcStoreInDest3D(int detectionType) {
         int i, nImages, s;
         int length, totalLength;
-        float[] buffer;
         int start;
         float[] sliceBuffer;
 
@@ -630,17 +616,8 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase implements AlgorithmIn
             length = srcImage.getSliceSize();
             totalLength = srcImage.getSliceSize() * srcImage.getExtents()[2];
             nImages = srcImage.getExtents()[2];
-            buffer = new float[totalLength];
             sliceBuffer = new float[length];
-            srcImage.exportData(0, totalLength, buffer); // locks and releases lock
-        } catch (IOException error) {
-            buffer = null;
-            sliceBuffer = null;
-            errorCleanUp("Algorithm EdgeLaplacian exportData: Image(s) locked", true);
-
-            return;
         } catch (OutOfMemoryError e) {
-            buffer = null;
             sliceBuffer = null;
             errorCleanUp("Algorithm EdgeLaplacian exportData: Out of memory", true);
 
@@ -658,17 +635,12 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase implements AlgorithmIn
                     fireProgressStateChanged(80 + (20 * i) / (totalLength - 1));
                 }
 
-                if ((entireImage == true) || mask.get(i)) {
-                    destImage.set(i, outputBuffer[i]);
-                } else {
-                    destImage.set(i, buffer[i]);
-                }
+                destImage.set(i, outputBuffer[i]);
             }
 
             try {
                 destImage.exportDataNoLock(start, length, sliceBuffer);
             } catch (IOException error) {
-                buffer = null;
                 sliceBuffer = null;
                 errorCleanUp("Algorithm EdgeLaplacian exportData: " + error, true);
 
