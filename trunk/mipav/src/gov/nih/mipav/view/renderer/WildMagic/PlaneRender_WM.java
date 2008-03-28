@@ -291,39 +291,12 @@ public class PlaneRender_WM extends JavaApplication3D
             m_spkScene.UpdateGS();
             m_kCuller.ComputeVisibleSet(m_spkScene);
         }
-
-        ColorRGBA kXSliceHairColor =
-            new ColorRGBA( m_aakColors[m_iPlaneOrientation][0].R(),
-                           m_aakColors[m_iPlaneOrientation][0].G(),
-                           m_aakColors[m_iPlaneOrientation][0].B(), 1.0f );
-
-        ColorRGBA kYSliceHairColor =
-            new ColorRGBA( m_aakColors[m_iPlaneOrientation][1].R(),
-                           m_aakColors[m_iPlaneOrientation][1].G(),
-                           m_aakColors[m_iPlaneOrientation][1].B(), 1.0f );
-        
+       
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
         {
             m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-
-            if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
-            {
-                m_pkRenderer.Draw( m_iLabelX_SpacingX, m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
-                m_pkRenderer.Draw( m_iLabelY_SpacingX, m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY.toCharArray());
-            }
-            else
-            {
-                m_pkRenderer.Draw( m_iLabelX_SpacingX, m_iHeight - m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
-                m_pkRenderer.Draw( m_iLabelY_SpacingX, m_iHeight - m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY.toCharArray());               
-            }
-            m_pkRenderer.SetCamera(m_spkScreenCamera);  
-            m_pkRenderer.Draw(m_kXArrow[0]);
-            m_pkRenderer.Draw(m_kXArrow[1]);
-            m_pkRenderer.Draw(m_kYArrow[0]);
-            m_pkRenderer.Draw(m_kYArrow[1]);
-            m_pkRenderer.SetCamera(m_spkCamera);
-
+            drawAxes();
             m_pkRenderer.EndScene();
 
         }
@@ -414,6 +387,62 @@ public class PlaneRender_WM extends JavaApplication3D
         return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
     }
 
+    private void drawAxes()
+    {
+        if ( m_bDrawAxes )
+        {     
+
+            ColorRGBA kXSliceHairColor =
+                new ColorRGBA( m_aakColors[m_iPlaneOrientation][0].R(),
+                               m_aakColors[m_iPlaneOrientation][0].G(),
+                               m_aakColors[m_iPlaneOrientation][0].B(), 1.0f );
+
+            ColorRGBA kYSliceHairColor =
+                new ColorRGBA( m_aakColors[m_iPlaneOrientation][1].R(),
+                               m_aakColors[m_iPlaneOrientation][1].G(),
+                               m_aakColors[m_iPlaneOrientation][1].B(), 1.0f );
+            
+            if ( !m_kImageA.getRadiologicalView() && (m_iPlaneOrientation != FileInfoBase.SAGITTAL) )
+            {
+                if ( !m_bPatientOrientation )
+                {
+                    m_kLabelXDisplay = new String( "-X" );
+                }
+                else
+                {
+                    m_kLabelXDisplay = new String( "R" );
+                }
+            }
+            else if ( m_iPlaneOrientation != FileInfoBase.SAGITTAL )
+            {
+                if ( !m_bPatientOrientation )
+                {
+                    m_kLabelXDisplay = new String( "X" );
+                }
+                else
+                {
+                    m_kLabelXDisplay = new String( "L" );
+                }
+            }
+            if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
+            {
+                m_pkRenderer.Draw( m_iLabelX_SpacingX, m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
+                m_pkRenderer.Draw( m_iLabelY_SpacingX, m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY.toCharArray());
+            }
+            else
+            {
+                m_pkRenderer.Draw( m_iLabelX_SpacingX, m_iHeight - m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
+                m_pkRenderer.Draw( m_iLabelY_SpacingX, m_iHeight - m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY.toCharArray());               
+            }
+            m_pkRenderer.SetCamera(m_spkScreenCamera);  
+            m_pkRenderer.Draw(m_kXArrow[0]);
+            m_pkRenderer.Draw(m_kXArrow[1]);
+            m_pkRenderer.Draw(m_kYArrow[0]);
+            m_pkRenderer.Draw(m_kYArrow[1]);
+            m_pkRenderer.SetCamera(m_spkCamera);
+        }
+    }
+    
     private void CreateScene ()
     {
         m_spkScene = new Node();
@@ -467,6 +496,7 @@ public class PlaneRender_WM extends JavaApplication3D
     private VolumePlaneEffect m_spkEffect;
     private TriMesh m_pkPlane = null;
     private boolean m_bModified = true;
+    private boolean m_bRadiological = true;
 
     /**
      * Closes the frame.
@@ -783,10 +813,7 @@ public class PlaneRender_WM extends JavaApplication3D
      * axis labels
      */
     public void showAxes(boolean bShow) {
-//         if (m_bDrawAxes != bShow) {
-//             m_bDrawAxes = bShow;
-//             initAxes();
-//         }
+        m_bDrawAxes = bShow;
     }
 
     /**
@@ -795,7 +822,25 @@ public class PlaneRender_WM extends JavaApplication3D
      * @param  bShow when true show the cross-hairs when false hide the cross-hairs
      */
     public void showXHairs(boolean bShow) {
-//         m_bDrawXHairs = bShow;
+        if ( m_bDrawXHairs != bShow )
+        {
+            m_bDrawXHairs = bShow;
+            for ( int i = 0; i < 2; i++ )
+            {
+                if ( m_bDrawXHairs )
+                {
+                    m_spkScene.AttachChild(m_akXBar[i]);
+                    m_spkScene.AttachChild(m_akYBar[i]);
+                }
+                else
+                {
+                    m_spkScene.DetachChild(m_akXBar[i]);
+                    m_spkScene.DetachChild(m_akYBar[i]);                    
+                }
+            }
+            m_spkScene.UpdateGS();
+            m_kCuller.ComputeVisibleSet(m_spkScene);
+        }
     }
 
 
@@ -1160,11 +1205,8 @@ public class PlaneRender_WM extends JavaApplication3D
             getPatientTextureCoordinates( center,
                                           m_kImageA, m_iPlaneOrientation, true);
         m_pkPlane.VBuffer.SetTCoord3(0, 2, tc[0][0], tc[0][1], tc[0][2] );
-
         m_pkPlane.VBuffer.SetTCoord3(0, 3, tc[1][0], tc[1][1], tc[1][2] );
-
         m_pkPlane.VBuffer.SetTCoord3(0, 0, tc[2][0], tc[2][1], tc[2][2] );
-
         m_pkPlane.VBuffer.SetTCoord3(0, 1, tc[3][0], tc[3][1], tc[3][2] );
 
         m_pkPlane.VBuffer.Release();
@@ -1364,4 +1406,11 @@ public class PlaneRender_WM extends JavaApplication3D
     {
         m_bModified = bModified;
     }
+
+    public void SetRadiological ( boolean bOn )
+    {
+        m_bRadiological = bOn;
+    }
+    
+    
 }

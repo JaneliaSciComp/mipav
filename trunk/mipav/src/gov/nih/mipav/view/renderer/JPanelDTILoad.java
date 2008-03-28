@@ -946,7 +946,8 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
        	 	fileInfoBases[i] = new FileInfoImageXML(resultImage.getImageName(), null, FileUtility.XML);	
        	 	fileInfoBases[i].setEndianess(m_kEigenVectorImage.getFileInfo()[0].getEndianess());
 	       	fileInfoBases[i].setUnitsOfMeasure(m_kEigenVectorImage.getFileInfo()[0].getUnitsOfMeasure());
-	       	fileInfoBases[i].setResolutions(m_kEigenVectorImage.getFileInfo()[0].getResolutions());
+            //fileInfoBases[i].setResolutions(m_kEigenVectorImage.getFileInfo()[0].getResolutions());
+            fileInfoBases[i].setResolutions(m_kDTIImage.getFileInfo()[0].getResolutions());
 	       	fileInfoBases[i].setExtents(resultImage.getExtents());
 	       	fileInfoBases[i].setImageOrientation(m_kEigenVectorImage.getFileInfo()[0].getImageOrientation());
 	       	fileInfoBases[i].setAxisOrientation(m_kEigenVectorImage.getFileInfo()[0].getAxisOrientation());
@@ -1028,13 +1029,20 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
     private void calcEigenVectorImage()
     {
         int[] extents = m_kDTIImage.getExtents();
-        float[] res = m_kDTIImage.getFileInfo(0).getResolutions();
-        if ( (m_fResX != 0) && (m_fResY != 0) && (m_fResZ != 0) )
+        float[] res = new float[m_kDTIImage.getFileInfo(0).getResolutions().length];
+        if ( (m_fResX == 0) || (m_fResY == 0) || (m_fResZ == 0) )
         {
-            res[0] = m_fResX;
+            for ( int i = 0; i < m_kDTIImage.getFileInfo(0).getResolutions().length; i++ )
+            {
+                res[i] = m_kDTIImage.getFileInfo(0).getResolutions()[i];
+            }
+        }
+        else
+        {
+            res[0] = m_fResX; 
             res[1] = m_fResY;
             res[2] = m_fResZ;
-            res[3] = 1f;
+            res[3] = 1.0f;
         }
         
         float[] newRes = new float[extents.length];

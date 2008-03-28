@@ -620,6 +620,21 @@ public class Matrix3f
                             m_afEntry[8]*rkM.m_afEntry[8]);
     }
     
+    public final void addEquals (float fM00, float fM01, float fM02,
+            float fM10, float fM11, float fM12,
+            float fM20, float fM21, float fM22)
+    {
+        m_afEntry[0] += fM00;
+        m_afEntry[1] += fM01;
+        m_afEntry[2] += fM02;
+        m_afEntry[3] += fM10;
+        m_afEntry[4] += fM11;
+        m_afEntry[5] += fM12;
+        m_afEntry[6] += fM20;
+        m_afEntry[7] += fM21;
+        m_afEntry[8] += fM22;
+    }
+    
     /** Multiply this matrix by the scalar input, this matrix is unchanged. 
      * @param fScalar, scalar value
      * @return this*fScalar
@@ -878,6 +893,56 @@ public class Matrix3f
         return kInverse;
     }
 
+    
+
+    /** Invert a 3x3 using cofactors.  This is faster than using a generic
+     * Gaussian elimination because of the loop overhead of such a method.
+     * @return resulting matrix
+     */
+    public void Inverse ( Matrix3f kInverse )
+    {
+        kInverse.m_afEntry[0] =
+            m_afEntry[4]*m_afEntry[8] - m_afEntry[5]*m_afEntry[7];
+        kInverse.m_afEntry[1] =
+            m_afEntry[2]*m_afEntry[7] - m_afEntry[1]*m_afEntry[8];
+        kInverse.m_afEntry[2] =
+            m_afEntry[1]*m_afEntry[5] - m_afEntry[2]*m_afEntry[4];
+        kInverse.m_afEntry[3] =
+            m_afEntry[5]*m_afEntry[6] - m_afEntry[3]*m_afEntry[8];
+        kInverse.m_afEntry[4] =
+            m_afEntry[0]*m_afEntry[8] - m_afEntry[2]*m_afEntry[6];
+        kInverse.m_afEntry[5] =
+            m_afEntry[2]*m_afEntry[3] - m_afEntry[0]*m_afEntry[5];
+        kInverse.m_afEntry[6] =
+            m_afEntry[3]*m_afEntry[7] - m_afEntry[4]*m_afEntry[6];
+        kInverse.m_afEntry[7] =
+            m_afEntry[1]*m_afEntry[6] - m_afEntry[0]*m_afEntry[7];
+        kInverse.m_afEntry[8] =
+            m_afEntry[0]*m_afEntry[4] - m_afEntry[1]*m_afEntry[3];
+
+        float fDet =
+            m_afEntry[0]*kInverse.m_afEntry[0] +
+            m_afEntry[1]*kInverse.m_afEntry[3] +
+            m_afEntry[2]*kInverse.m_afEntry[6];
+/*
+        if (Math.abs(fDet) <= Mathf.ZERO_TOLERANCE)
+        {
+            System.err.println("Matrix3f: inverse 2");
+            kInverse.MakeZero();
+        }
+*/
+        float fInvDet = ((float)1.0)/fDet;
+        kInverse.m_afEntry[0] *= fInvDet;
+        kInverse.m_afEntry[1] *= fInvDet;
+        kInverse.m_afEntry[2] *= fInvDet;
+        kInverse.m_afEntry[3] *= fInvDet;
+        kInverse.m_afEntry[4] *= fInvDet;
+        kInverse.m_afEntry[5] *= fInvDet;
+        kInverse.m_afEntry[6] *= fInvDet;
+        kInverse.m_afEntry[7] *= fInvDet;
+        kInverse.m_afEntry[8] *= fInvDet;
+    }
+    
     /** Return adjoint of this matrix, this is unchanged.
      * @return adjoint of this matrix, this is unchanged.
      */

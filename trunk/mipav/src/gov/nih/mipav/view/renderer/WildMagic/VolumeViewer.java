@@ -514,9 +514,12 @@ implements MouseListener, ItemListener, ChangeListener {
                 maxPanelWidth = Math.max(m_kBrainsurfaceFlattenerPanel.getPreferredSize().width, maxPanelWidth);
                 bf_flyPanel.add( brainsurfaceFlattenerRender.GetCanvas(), BorderLayout.CENTER );
                 dualPane.setDividerLocation( 0.5f );
-                
+
                 TriMesh kSurface = raycastRenderWM.getSurface( surfaceGUI.getSelectedSurface() );
-                brainsurfaceFlattenerRender.getPanel().displayCorticalAnalysis(kSurface);            
+                Vector3f kCenter = raycastRenderWM.GetCenter( surfaceGUI.getSelectedSurface() );
+                brainsurfaceFlattenerRender.getPanel().displayCorticalAnalysis(kSurface, kCenter);       
+
+                m_kLightsPanel.enableLight(0, true);
             }
             insertTab("BrainSurface", m_kBrainsurfaceFlattenerPanel );
             resizePanel();
@@ -536,18 +539,16 @@ implements MouseListener, ItemListener, ChangeListener {
             windowClosing(null);
         } else if (command.equals("ShowAxes")) {
             boolean showAxes = menuObj.isMenuItemSelected("Show axes");
-
-//             for (int iPlane = 0; iPlane < 3; iPlane++) {
-//                 m_akPlaneRender[iPlane].showAxes(showAxes);
-//                 m_akPlaneRender[iPlane].update();
-//             }
+            for (int iPlane = 0; iPlane < 3; iPlane++) {
+                m_akPlaneRender[iPlane].showAxes(showAxes);
+                m_akPlaneRender[iPlane].SetModified(true);
+            }
         } else if (command.equals("ShowXHairs")) {
             boolean showXHairs = menuObj.isMenuItemSelected("Show crosshairs");
-
-//             for (int iPlane = 0; iPlane < 3; iPlane++) {
-//                 m_akPlaneRender[iPlane].showXHairs(showXHairs);
-//                 m_akPlaneRender[iPlane].update();
-//             }
+            for (int iPlane = 0; iPlane < 3; iPlane++) {
+                m_akPlaneRender[iPlane].showXHairs(showXHairs);
+                m_akPlaneRender[iPlane].SetModified(true);
+            }
         } else if (command.equals("RFAToolbar")) {
             boolean showRFA = menuObj.isMenuItemSelected("RFA toolbar");
 
@@ -556,25 +557,10 @@ implements MouseListener, ItemListener, ChangeListener {
             enableTargetPointPicking();
         } else if (command.equals("traverse")) {
             disableTargetPointPicking();
-        } else if (command.equals("RadiologicalView")) {
-//             imageA.setRadiologicalView(true);
-
-//             if (imageB != null) {
-//                 imageB.setRadiologicalView(true);
-//             }
-//             surRender.setCenter(m_akPlaneRender[0].getCenter());
-//             setPositionLabels(surRender.getSlicePanel().getCenter());
-//             updateImages(true);
+        } else if (command.equals("RadiologicalView")) {          
+            setRadiological(true);
         } else if (command.equals("NeurologicalView")) {
-//             imageA.setRadiologicalView(false);
-
-//             if (imageB != null) {
-//                 imageB.setRadiologicalView(false);
-//             }
-
-//             surRender.setCenter(m_akPlaneRender[0].getCenter());
-//             setPositionLabels(surRender.getSlicePanel().getCenter());
-//             updateImages(true);
+            setRadiological(false);
         } else if (command.equals("ShaderParameters") ) {
             if ( raycastRenderWM != null )
             {
@@ -966,7 +952,7 @@ implements MouseListener, ItemListener, ChangeListener {
 
             progressBar.updateValueImmed(100);
 
-            this.configureFrame();
+            this.configureFrame( true );
         } finally {
             progressBar.dispose();
         }
@@ -2154,6 +2140,22 @@ implements MouseListener, ItemListener, ChangeListener {
         setModified();
     }
     
+
+    public void setRadiological( boolean bOn )
+    {
+        imageA.setRadiologicalView(bOn);
+
+        if (imageB != null) {
+            imageB.setRadiologicalView(bOn);
+        }
+        Point3Df center = sliceGUI.getCenter();
+        raycastRenderWM.SetCenter( new Vector3f( center.x, center.y, center.z ) );    
+        for (int i = 0; i < 3; i++) {
+            m_akPlaneRender[i].setCenter(center);
+        }
+        setPositionLabels(center);
+    }
+    
     /**
      * Builds menus for the tri-planar view.
      *
@@ -2203,7 +2205,7 @@ implements MouseListener, ItemListener, ChangeListener {
     /**
      * Constructs main frame structures for image canvas.
      */
-    protected void configureFrame() {
+    protected void configureFrame( boolean bBuildLUTOpacity ) {
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(MipavUtil.font12B);
         tabbedPane.setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
@@ -2249,9 +2251,11 @@ implements MouseListener, ItemListener, ChangeListener {
         redBorder = BorderFactory.createCompoundBorder(redline, compound);
 
         buildLabelPanel();
-        //buildHistoLUTPanel();
-        //buildOpacityPanel();
-
+        if ( bBuildLUTOpacity )
+        {
+            buildHistoLUTPanel();
+            buildOpacityPanel();
+        }
 
             buildDisplayPanel();
             buildViewPanel();

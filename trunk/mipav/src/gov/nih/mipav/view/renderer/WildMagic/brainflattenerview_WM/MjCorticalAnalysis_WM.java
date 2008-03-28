@@ -153,7 +153,11 @@ public class MjCorticalAnalysis_WM extends JavaApplication3D implements GLEventL
     /** Animator object, displays scene in rendering loop (similar to GLUTMainLoop() */
     private Animator m_kAnimator;
 
+    private boolean m_bInit = false;
     private VolumeViewer m_kParent = null;
+    private VolumeSurface m_kSphere = null;
+    private VolumeSurface m_kCylinder = null;
+    
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -208,7 +212,12 @@ public class MjCorticalAnalysis_WM extends JavaApplication3D implements GLEventL
         return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
     }
 
-    public void display(GLAutoDrawable arg0) {
+    public void display(GLAutoDrawable arg0)
+    {
+        if ( !m_bInit )
+        {
+            init(arg0);
+        }
         MeasureTime();
 
         Move();
@@ -230,14 +239,19 @@ public class MjCorticalAnalysis_WM extends JavaApplication3D implements GLEventL
         if ( m_bSurfaceAdded )
         {
             m_bSurfaceAdded = false;
-            //updateLighting( m_akLights );
+
+            UpdateSceneRotation();
+            
+            updateLighting( m_akLights );
             for ( int i = 0; i < m_kDisplayList.size(); i++ )
             {
                 if ( m_kDisplayList.get(i) instanceof VolumeSurface )
                 {
                     ((VolumeSurface)m_kDisplayList.get(i)).InitClip(new float[] { 0, 1, 0, 1, 0, 1 });
+                    ((VolumeSurface)m_kDisplayList.get(i)).SetPerPixelLighting( m_pkRenderer, true );
                 }
             }
+            displayPlane();
         }
     }
 
@@ -305,6 +319,7 @@ public class MjCorticalAnalysis_WM extends JavaApplication3D implements GLEventL
         //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
 
         m_kAnimator.add( GetCanvas() );      
+        m_bInit = true;
     }
 
     public void reshape(GLAutoDrawable arg0, int arg1, int arg2, int arg3, int arg4) {
@@ -361,12 +376,10 @@ public class MjCorticalAnalysis_WM extends JavaApplication3D implements GLEventL
         m_kCortical.computeConformalMapping();
 
         /* Setup for sphere nodes. */
-        //createGeometry(m_kCortical.getSphereCoordinates(), akColor, aiConnect);
+        m_kSphere = addSurface( m_kCortical.getSphere(), false );
 
         /* Setup for plane nodes. */
-        //createGeometry(m_kCortical.getCylinderCoordinates(), akColor, aiConnect);
-
-        setupLight();
+        m_kCylinder = addSurface( m_kCortical.getCylinder(), false );
 
         m_iNumPicked = 0;
         m_iRunningNumPicked = 0;
@@ -405,15 +418,19 @@ public class MjCorticalAnalysis_WM extends JavaApplication3D implements GLEventL
     /**
      * Switch to displaying the plane:
      */
-    public void displayPlane() {
-        //m_kSwitchDisplay.setWhichChild(PLANE);
+    public void displayPlane()
+    {
+        m_kSphere.SetDisplay(false);
+        m_kCylinder.SetDisplay(true);
     }
 
     /**
      * Switch to displaying the sphere:
      */
-    public void displaySphere() {
-        //m_kSwitchDisplay.setWhichChild(SPHERE);
+    public void displaySphere()
+    {
+        m_kSphere.SetDisplay(true);
+        m_kCylinder.SetDisplay(false);
     }
 
     /**
@@ -810,23 +827,21 @@ public class MjCorticalAnalysis_WM extends JavaApplication3D implements GLEventL
      *
      * @param  kTriangleMesh  DOCUMENT ME!
      */
-    public void setup(TriMesh kMesh) {
+    public void setup(TriMesh kMesh, Vector3f kCenter ) {
 
         /* reset inflation initialization: */
         m_bInflationInitialized = false;
 
         System.err.println( "MjAnalysis setup creating MjCorticalMesh ");
-       
+
         m_kCortical = new MjCorticalMesh_WM(kMesh);
 
         System.err.println( "DONE creating MjCorticalMesh ");
         System.err.println( "Start computeMeanCurvature ");
         /* cortical mesh initializations */
-        m_kCortical.computeMeanCurvature();
+        m_kCortical.computeMeanCurvature(kCenter);
 
         System.err.println( "DONE computeMeanCurvature ");
-        /* Setup for mesh: */
-        //addSurface(kMesh, false);
 
         /* calculate the conformal mapping of mesh to the flattened plane and
          * sphere maps, and setup the display for the plane and sphere: */
@@ -836,18 +851,16 @@ public class MjCorticalAnalysis_WM extends JavaApplication3D implements GLEventL
     }
 
     
-    public void addSurface(TriMesh kSurfaces, boolean bReplace)
+    public VolumeSurface addSurface(TriMesh kSurfaces, boolean bReplace)
     {
         VolumeSurface kSurface = new VolumeSurface( m_pkRenderer, m_kVolumeImageA,
                 m_kTranslate,
                 m_fX, m_fY, m_fZ,
                 kSurfaces, bReplace );
-        kSurface.SetPerPixelLighting( m_pkRenderer, true );
         kSurface.SetDisplay(true);
         m_kDisplayList.add( kSurface );
-
-        UpdateSceneRotation();
         m_bSurfaceAdded = true;
+        return kSurface;
     } 
     
 
@@ -869,11 +882,15 @@ public class MjCorticalAnalysis_WM extends JavaApplication3D implements GLEventL
      */
     public void updateLighting(GeneralLight[] akGLights )
     {
+        m_akLights = akGLights;
+        if ( !m_bInit )
+        {
+            return;
+        }
         if ( akGLights == null )
         {
             return;
         }
-        m_akLights = akGLights;
         for ( int i = 0; i < akGLights.length; i++ )
         {
             String kLightType = new String("Light"+(i)+"Type");
@@ -1301,7 +1318,7 @@ public class MjCorticalAnalysis_WM extends JavaApplication3D implements GLEventL
                     }
 
                     iPixColor = (int) (afYLUTa[iLut] + (fSlope * (fValue - afXLUTa[iLut])) + 0.5);
-
+                    //System.err.println( iLut + " " + fSlope + " " + iPixColor );
                     break;
                 }
             }
@@ -1310,28 +1327,16 @@ public class MjCorticalAnalysis_WM extends JavaApplication3D implements GLEventL
             float fRed = (iValue & 0x00ff0000) >> 16;
             float fGreen = (iValue & 0x0000ff00) >> 8;
             float fBlue = (iValue & 0x000000ff);
+            fRed /= 255.0f;
+            fGreen /= 255.0f;
+            fBlue /= 255.0f;
             
-            m_kCortical.setColor( i, fRed / 255.0f, fGreen / 255.0f, fBlue / 255.0f );
+            m_kCortical.setColor( i, fRed, fGreen, fBlue );
+            m_kSphere.GetMesh().VBuffer.SetColor3( 0, i, fRed, fGreen, fBlue );
+            m_kCylinder.GetMesh().VBuffer.SetColor3( 0, i, fRed, fGreen, fBlue );
         }
-
-        //m_kGeometryArraySphere.setColors(0, akColor);
-        //m_kTriangleMesh.setColors(0, akColor);
-        //m_kGeometryArrayPlane.setColors(0, akColor);
-
-    }
-
-    /**
-     * Sets up a direction lightsource for the scene.
-     */
-    private void setupLight() {
-        /*
-        DirectionalLight kLightDr = new DirectionalLight(true, new ColorRGB(1f, 1f, 1f), new Vector3f(0f, 0f, -1f));
-        kLightDr.setInfluencingBounds(bounds);
-
-        BranchGroup kLightBG = new BranchGroup();
-        kLightBG.setCapability(BranchGroup.ALLOW_DETACH);
-        kLightBG.addChild(kLightDr);
-        sceneRootTG.addChild(kLightBG);
-        */
+        m_kCortical.updateMesh();
+        m_kSphere.GetMesh().VBuffer.Release();
+        m_kCylinder.GetMesh().VBuffer.Release();
     }
 }

@@ -751,7 +751,10 @@ public class JDialogDTIInput extends JDialogBase
         calcEigenVectorImage();
         setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 
-        m_kDTIImage.saveImage( m_kParentDir, "DTIImage.xml", FileUtility.XML, false );
+        if ( m_iType == DWI )
+        {
+            m_kDTIImage.saveImage( m_kParentDir, "DTIImage.xml", FileUtility.XML, false );
+        }
         m_kEigenVectorImage.saveImage( m_kParentDir, "EigenVectorImage.xml", FileUtility.XML, false );
         m_kAnisotropyImage.saveImage( m_kParentDir, "AnisotropyImage.xml", FileUtility.XML, false );
 
@@ -768,13 +771,20 @@ public class JDialogDTIInput extends JDialogBase
     private void calcEigenVectorImage()
     {
         int[] extents = m_kDTIImage.getExtents();
-        float[] res = m_kDTIImage.getFileInfo(0).getResolutions();
-        if ( (m_fResX != 0) && (m_fResY != 0) && (m_fResZ != 0) )
+        float[] res = new float[m_kDTIImage.getFileInfo(0).getResolutions().length];
+        if ( (m_fResX == 0) || (m_fResY == 0) || (m_fResZ == 0) )
         {
-            res[0] = m_fResX;
+            for ( int i = 0; i < m_kDTIImage.getFileInfo(0).getResolutions().length; i++ )
+            {
+                res[i] = m_kDTIImage.getFileInfo(0).getResolutions()[i];
+            }
+        }
+        else
+        {
+            res[0] = m_fResX; 
             res[1] = m_fResY;
             res[2] = m_fResZ;
-            res[3] = 1f;
+            res[3] = 1.0f;
         }
         
         float[] newRes = new float[extents.length];
@@ -817,8 +827,6 @@ public class JDialogDTIInput extends JDialogBase
             m_kDTIImage.disposeLocal();
             m_kDTIImage = null;
             m_kDTIImage = kDTIImageScaled;
-
-            res = m_kDTIImage.getFileInfo(0).getResolutions();
         }
 
         AlgorithmDTI2EGFA kAlgorithm = new AlgorithmDTI2EGFA(m_kDTIImage);

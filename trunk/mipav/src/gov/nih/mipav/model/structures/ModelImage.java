@@ -2120,10 +2120,23 @@ public class ModelImage extends ModelStorageBase {
                     }
                 } /* LUT update of a non-ModelImage data strucuture: */
                 else if ((frameList.elementAt(i) instanceof
-                              gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)) {
+                        gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)) {
                     ModelImage imgA = ((gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)
-                                           frameList.elementAt(i)).getImageA();
+                            frameList.elementAt(i)).getImageA();
                     ModelImage imgB = ((gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)
+                            frameList.elementAt(i)).getImageB();
+
+                    if (this == imgA) {
+                        ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(LUT, null, forceShow, -1);
+                    } else if (this == imgB) {
+                        ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(null, LUT, forceShow, -1);
+                    }
+                } 
+                else if ((frameList.elementAt(i) instanceof
+                              gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.JPanelBrainSurfaceFlattener_WM)) {
+                    ModelImage imgA = ((gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.JPanelBrainSurfaceFlattener_WM)
+                                           frameList.elementAt(i)).getImageA();
+                    ModelImage imgB = ((gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.JPanelBrainSurfaceFlattener_WM)
                                            frameList.elementAt(i)).getImageB();
 
                     if (this == imgA) {

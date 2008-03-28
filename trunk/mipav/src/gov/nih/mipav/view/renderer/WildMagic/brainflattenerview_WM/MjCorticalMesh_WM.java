@@ -1,7 +1,9 @@
 package gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM;
 
 
+import gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.*;
 import java.util.*;
+import javax.vecmath.Point3f;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Meshes.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Intersection.*;
@@ -81,6 +83,8 @@ public class MjCorticalMesh_WM {
     private Vector2f m_kPlaneMin;
 
     private TriMesh m_kMesh;
+    private TriMesh m_kSphereMesh = null;
+    private TriMesh m_kCylinderMesh = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -495,11 +499,26 @@ public class MjCorticalMesh_WM {
     /**
      * mean curvature.
      */
-    public void computeMeanCurvature() {
+    public void computeMeanCurvature( Vector3f kCenter ) {
         int iVQuantity = m_kMesh.VBuffer.GetVertexQuantity();
         m_afMeanCurvature = new float[iVQuantity];
 
-        MeshCurvature kMG = new MeshCurvature(m_kMesh);
+
+        Point3f[] akPoint = new Point3f[iVQuantity]; 
+        for ( int i = 0; i < iVQuantity; i++ )
+        {
+            akPoint[i] = new Point3f( m_kMesh.VBuffer.GetPosition3fX(i),
+                    m_kMesh.VBuffer.GetPosition3fY(i),
+                    m_kMesh.VBuffer.GetPosition3fZ(i) );
+                    
+        }
+        int iTQuantity = m_kMesh.GetTriangleQuantity(); 
+        int[] aiConnect = m_kMesh.IBuffer.GetData();
+        
+
+        MjMeshCurvature kMG = new MjMeshCurvature(iVQuantity, akPoint, iTQuantity, aiConnect);
+
+        //MeshCurvature kMG = new MeshCurvature(m_kMesh, kCenter);
         float[] afMinCurv = kMG.getMinCurvatures();
         float[] afMaxCurv = kMG.getMaxCurvatures();
         m_fMinMeanCurvature = afMinCurv[0] + afMaxCurv[0];
@@ -669,6 +688,33 @@ public class MjCorticalMesh_WM {
     public float[] getAvrConvexity() {
         return m_afAvrConvexity;
     }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public TriMesh getCylinder() {
+        if ( m_kCylinderMesh == null )
+        {
+            Attributes kAttr = new Attributes();
+            kAttr.SetPChannels( 3 );
+            kAttr.SetCChannels( 0, 4 );
+            kAttr.SetNChannels( 3 );
+            int iVQuantity = m_akCylinder.length;
+            VertexBuffer kVBuffer = new VertexBuffer( kAttr, iVQuantity );
+            for ( int i = 0; i < iVQuantity; i++ )
+            {
+                kVBuffer.SetPosition3( i, m_akCylinder[i] );
+                kVBuffer.SetColor4( 0, i, m_kMesh.VBuffer.GetColor4(0, i) );
+            }
+            IndexBuffer kIBuffer = new IndexBuffer( m_kMesh.IBuffer );
+            m_kCylinderMesh = new TriMesh( kVBuffer, kIBuffer );
+            m_kCylinderMesh.SetName( m_kMesh.GetName() + "Cylinder" );
+        }
+        return m_kCylinderMesh;
+    }
+    
 
     /**
      * DOCUMENT ME!
@@ -1189,8 +1235,25 @@ public class MjCorticalMesh_WM {
      *
      * @return  DOCUMENT ME!
      */
-    public Vector3f[] getSphereCoordinates() {
-        return m_akSphere;
+    public TriMesh getSphere() {
+        if ( m_kSphereMesh == null )
+        {
+            Attributes kAttr = new Attributes();
+            kAttr.SetPChannels( 3 );
+            kAttr.SetCChannels( 0, 4 );
+            kAttr.SetNChannels( 3 );
+            int iVQuantity = m_akSphere.length;
+            VertexBuffer kVBuffer = new VertexBuffer( kAttr, iVQuantity );
+            for ( int i = 0; i < iVQuantity; i++ )
+            {
+                kVBuffer.SetPosition3( i, m_akSphere[i] );
+                kVBuffer.SetColor4( 0, i, m_kMesh.VBuffer.GetColor4(0, i) );
+            }
+            IndexBuffer kIBuffer = new IndexBuffer( m_kMesh.IBuffer );
+            m_kSphereMesh = new TriMesh( kVBuffer, kIBuffer );
+            m_kSphereMesh.SetName( m_kMesh.GetName() + "Sphere" );
+        }
+        return m_kSphereMesh;
     }
 
     /**
@@ -1310,6 +1373,11 @@ public class MjCorticalMesh_WM {
         }
     }
 
+    public void updateMesh()
+    {
+        m_kMesh.VBuffer.Release();
+    }
+    
     /**
      * DOCUMENT ME!
      *
