@@ -110,75 +110,6 @@ public class AutoItkLoader implements ActionListener {
                 new JDialogItkFilter(m_Frame, model_image, fr);
             }
 
-            /*
-            boolean do_set = ItkFilterRunDialog.showDialog(
-                                        m_Frame,
-                                        m_Frame,	
-                                        "Set parameters for filter:",	
-                                        name + " Filter",
-                                        filter_obj.filter());
-            //System.out.println("Do set " + do_set);
-            if (!do_set) return;
-
-            ModelImage model_image_result = (ModelImage) model_image.clone();
-            model_image_result.setImageName(model_image.getImageName() + "_" + name);
-            AlgorithmItkFilter itk_filter = new AlgorithmItkFilter(model_image_result, model_image, filter_obj);
-            itk_filter.run();
-            
-            // show the results...
-            model_image.clearMask();
-
-            if ((itk_filter.isCompleted() == true) && (model_image_result != null)) {
-
-                // The algorithm has completed and produced a new image to be displayed.
-                if (model_image_result.isColorImage()) {
-                    JDialogBase.updateFileInfo(model_image, model_image_result);
-                }
-                
-                model_image_result.clearMask();
-                
-                try {
-                    new ViewJFrameImage(model_image_result, null, new Dimension(610, 200));
-                } catch (OutOfMemoryError error) {
-                    System.gc();
-                    MipavUtil.displayError("Out of memory: unable to open new frame");
-                }
-            }
-            */
-            /*
-            PItkImage2 itk_input2 = null;
-            PItkImage3 itk_input3 = null;
-            if (model_dims == 2) {
-
-                itk_input2 = InsightToolkitSupport.itkCreateImageSingle2D(model_image);
-                if (itk_input2 == null) return;
-                invokeMethod("SetInput", filter_obj.filter(), null, itk_input2.img());
-            } else if (model_dims == 3) {
-                itk_input3 = InsightToolkitSupport.itkCreateImageSingle3D(model_image);
-                if (itk_input3 == null) return;
-                invokeMethod("SetInput", filter_obj.filter(), null, itk_input3.img());
-            } else {
-                return;
-            }
-            // execute filter
-            invokeMethod("Update", filter_obj.filter());
-            itkDataObject itk_output_do = (itkDataObject)invokeMethod("GetOutput", filter_obj.filter());
-            if (itk_output_do != null) {
-                ModelImage model_image_result = (ModelImage) model_image.clone();
-                model_image_result.setImageName(model_image.getImageName() + "_" + name);
-
-                Class<?> output_cls = itk_output_do.getClass();
-                long output_dim = (Long)invokeMethod("GetImageDimension", (Object)null, output_cls);
-                if (output_dim == 2) {
-                    //copy itk result into model image.
-                    InsightToolkitSupport.itkTransferImageSingle2D(null, (itkImageBase2)itk_output_do, null, model_image_result);
-                } else if (output_dim == 3) {
-                    InsightToolkitSupport.itkTransferImageSingle3D(null, (itkImageBase3)itk_output_do, null, model_image_result);
-                }
-                // show the results...
-                new ViewJFrameImage(model_image_result, null, new Dimension(610, 200));
-            }
-            */
         }
     }
 
@@ -471,17 +402,17 @@ public class AutoItkLoader implements ActionListener {
                 last_filter = new FilterRecordItk(short_jef_name, true);
                 filter_list.add(last_filter);
                 count++;
+                //System.out.println(short_jef_name);
             }
             // add type string.
             last_filter.m_IOType.add(type_str);
 
-            // try setting up an complete filter call, for this filter:
+            // Some debugging info to print, for a specific filter:
             //if (jef_name.indexOf("MedianImageFilter") < 0) continue;
        
             //printAncestors(cls);
             //printSetMethods(cls);
-            //invokeClass(cls, argv[0], argv[1]);
-            // one filter.
+            // stop after one filter.
             //break;
 
         }
@@ -535,7 +466,7 @@ public class AutoItkLoader implements ActionListener {
 
 
     /** Remove all REMOVED filter records, then write the list to a file.
-     * @return
+     * @return true on success
      */
     private boolean writeListToFile()
     {
@@ -572,9 +503,9 @@ public class AutoItkLoader implements ActionListener {
     public static Object createFilterObj(Class<?> cls)
     {
         // Each filter class in ITK has a corresponding Pointer type,
-        // so filter T is created:
+        // obstained from a static factory method. So filter T is created:
         // T_Pointer = T.T_New();
-        // T is passed in as the template arg to our arg cls, so we need to 
+        // The type T is passed in as the arg cls, so we need to 
         // construct T_Pointer, and the New method.
       
         String pointer_class_name = cls.getName() + "_Pointer";
@@ -633,7 +564,7 @@ public class AutoItkLoader implements ActionListener {
      * @param obj If non-null, invoke this object's method. If null, static class method.
      * @param cls If obj is non-null, ignored. Otherwise the class for static method.
      * @param obj_arg Variable number of args, passed as objects.
-     * @return
+     * @return result of the method, might be null (including for void return).
      */
     public static Object invokeMethod(String method_name, Object obj, 
                                       Class<?> cls, Object... obj_arg)
