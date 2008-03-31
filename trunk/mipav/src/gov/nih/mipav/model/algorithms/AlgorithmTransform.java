@@ -679,7 +679,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         } // end of DIM == 4
 
         destImage = new ModelImage(type, extents, name);
-        // updateFileInfo(srcImage, destImage, destResolutions);
     }
     
     /**
@@ -844,7 +843,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         } // end of DIM == 4
 
         destImage = new ModelImage(type, extents, name);
-        // updateFileInfo(srcImage, destImage, destResolutions);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -4134,14 +4132,21 @@ public class AlgorithmTransform extends AlgorithmBase {
         if (resultImage.getNDims() == 2) {
             fileInfo[0] = (FileInfoBase) image.getFileInfo(0).clone();
             fileInfo[0].setDataType(resultImage.getType());
-            fileInfo[0].setResolutions(resolutions);
+            fileInfo[0].setModality(image.getFileInfo()[0].getModality());
+            fileInfo[0].setFileDirectory(image.getFileInfo()[0].getFileDirectory());
+            fileInfo[0].setEndianess(image.getFileInfo()[0].getEndianess());
+            fileInfo[0].setUnitsOfMeasure(image.getFileInfo()[0].getUnitsOfMeasure());
+            fileInfo[0].setResolutions(image.getFileInfo()[0].getResolutions());
             fileInfo[0].setExtents(resultImage.getExtents());
             fileInfo[0].setMax(resultImage.getMax());
             fileInfo[0].setMin(resultImage.getMin());
-            fileInfo[0].setImageOrientation(imgOrient);
-            fileInfo[0].setAxisOrientation(axisOrient);
-            fileInfo[0].setOrigin(imgOrigin);
+            fileInfo[0].setImageOrientation(image.getImageOrientation());
+            fileInfo[0].setAxisOrientation(image.getFileInfo()[0].getAxisOrientation());
+            fileInfo[0].setOrigin(image.getFileInfo()[0].getOrigin());
+            fileInfo[0].setPixelPadValue(image.getFileInfo()[0].getPixelPadValue());
+            fileInfo[0].setPhotometric(image.getFileInfo()[0].getPhotometric());
             fileInfo[0].setUnitsOfMeasure(units);
+                  
         } else if (resultImage.getNDims() == 3) {
             float[] coord = new float[3];
             float[] tempPos = new float[3];
