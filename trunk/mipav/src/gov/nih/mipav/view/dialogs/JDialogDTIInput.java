@@ -187,6 +187,12 @@ public class JDialogDTIInput extends JDialogBase
 
     /** Slice thickness read from .list file */
     private float m_fResX = 1f, m_fResY = 1f, m_fResZ = 1f;
+    /** Set to true if the slice resolution is read from the .list file: (xRes) */
+    private boolean m_bUseXRes = false;
+    /** Set to true if the slice resolution is read from the .list file: (yRes) */
+    private boolean m_bUseYRes = false;
+    /** Set to true if the slice resolution is read from the .list file: (zRes) */
+    private boolean m_bUseZRes = false;
     /** Mean noise vale read from the .list file */
     private float m_fMeanNoise = 0f;
 
@@ -617,41 +623,44 @@ public class JDialogDTIInput extends JDialogBase
                 String lineString = null;
                 while((lineString = kReader.readLine()) != null) {
                     if(lineString.startsWith("<original_columns>")) {
-            		String columnsStr = lineString.substring(lineString.indexOf("<original_columns>") + 18, lineString.indexOf("</original_columns>")).trim();
-            		m_iDimX = Integer.parseInt(columnsStr);
+                        String columnsStr = lineString.substring(lineString.indexOf("<original_columns>") + 18, lineString.indexOf("</original_columns>")).trim();
+                        m_iDimX = Integer.parseInt(columnsStr);
                     }else if(lineString.startsWith("<original_rows>")) {
-            		String rowsStr = lineString.substring(lineString.indexOf("<original_rows>") + 15, lineString.indexOf("</original_rows>")).trim();
-            		m_iDimY = Integer.parseInt(rowsStr);
+                        String rowsStr = lineString.substring(lineString.indexOf("<original_rows>") + 15, lineString.indexOf("</original_rows>")).trim();
+                        m_iDimY = Integer.parseInt(rowsStr);
                     }else if(lineString.startsWith("<slice>")) {
-            		String sliceStr = lineString.substring(lineString.indexOf("<slice>") + 7, lineString.indexOf("</slice>")).trim();
-            		m_iSlices = Integer.parseInt(sliceStr);
+                        String sliceStr = lineString.substring(lineString.indexOf("<slice>") + 7, lineString.indexOf("</slice>")).trim();
+                        m_iSlices = Integer.parseInt(sliceStr);
                     }else if(lineString.startsWith("<nim>")) {
-            		String nimStr = lineString.substring(lineString.indexOf("<nim>") + 5, lineString.indexOf("</nim>")).trim();
-            		m_iWeights = Integer.parseInt(nimStr);
+                        String nimStr = lineString.substring(lineString.indexOf("<nim>") + 5, lineString.indexOf("</nim>")).trim();
+                        m_iWeights = Integer.parseInt(nimStr);
                     }else if(lineString.startsWith("<rawimageformat>")) {
-            		m_kRawFormat = lineString.substring(lineString.indexOf("<rawimageformat>") + 16, lineString.indexOf("</rawimageformat>")).trim();
+                        m_kRawFormat = lineString.substring(lineString.indexOf("<rawimageformat>") + 16, lineString.indexOf("</rawimageformat>")).trim();
                     }else if(lineString.startsWith("<raw_image_path_filename>")) {
-            		pathFilename = lineString.substring(lineString.indexOf("<raw_image_path_filename>") + 25, lineString.indexOf("</raw_image_path_filename>")).trim();
-            		pathFileAbsPath = m_kParentDir + File.separator + pathFilename;
-            		//studyName = pathFilename.substring(0, pathFilename.indexOf(".path"));
+                        pathFilename = lineString.substring(lineString.indexOf("<raw_image_path_filename>") + 25, lineString.indexOf("</raw_image_path_filename>")).trim();
+                        pathFileAbsPath = m_kParentDir + File.separator + pathFilename;
+                        //studyName = pathFilename.substring(0, pathFilename.indexOf(".path"));
                     }else if(lineString.startsWith("<bmatrixfile>")) {
-            		bMatrixFilename = lineString.substring(lineString.indexOf("<bmatrixfile>") + 13, lineString.indexOf("</bmatrixfile>")).trim();
-            		bMatrixFileAbsPath = m_kParentDir + File.separator + bMatrixFilename;
-            		//studyName = pathFilename.substring(0, pathFilename.indexOf(".path"));
+                        bMatrixFilename = lineString.substring(lineString.indexOf("<bmatrixfile>") + 13, lineString.indexOf("</bmatrixfile>")).trim();
+                        bMatrixFileAbsPath = m_kParentDir + File.separator + bMatrixFilename;
+                        //studyName = pathFilename.substring(0, pathFilename.indexOf(".path"));
                     }else if(lineString.startsWith("<x_field_of_view>")) {
-            		String xFOVStr = lineString.substring(lineString.indexOf("<x_field_of_view>") + 17, lineString.indexOf("</x_field_of_view>")).trim(); 
-            		float xFOV = Float.parseFloat(xFOVStr);
-            		m_fResX = xFOV;
+                        String xFOVStr = lineString.substring(lineString.indexOf("<x_field_of_view>") + 17, lineString.indexOf("</x_field_of_view>")).trim(); 
+                        float xFOV = Float.parseFloat(xFOVStr);
+                        m_fResX = xFOV;
+                        m_bUseXRes = true;
                     }else if(lineString.startsWith("<y_field_of_view>")) {
-            		String yFOVStr = lineString.substring(lineString.indexOf("<y_field_of_view>") + 17, lineString.indexOf("</y_field_of_view>")).trim(); 
-            		float yFOV = Float.parseFloat(yFOVStr);
-            		m_fResY = yFOV;
+                        String yFOVStr = lineString.substring(lineString.indexOf("<y_field_of_view>") + 17, lineString.indexOf("</y_field_of_view>")).trim(); 
+                        float yFOV = Float.parseFloat(yFOVStr);
+                        m_fResY = yFOV;
+                        m_bUseYRes = true;
                     }else if(lineString.startsWith("<slice_thickness>")) {
-            		String zResStr = lineString.substring(lineString.indexOf("<slice_thickness>") + 17, lineString.indexOf("</slice_thickness>")).trim(); 
-            		m_fResZ = Float.parseFloat(zResStr);
+                        String zResStr = lineString.substring(lineString.indexOf("<slice_thickness>") + 17, lineString.indexOf("</slice_thickness>")).trim(); 
+                        m_fResZ = Float.parseFloat(zResStr);
+                        m_bUseZRes = true;
                     }else if(lineString.startsWith("<noise_mean_ori>")) {
-            		String noiseStr = lineString.substring(lineString.indexOf("<noise_mean_ori>") + 16, lineString.indexOf("</noise_mean_ori>")).trim(); 
-            		m_fMeanNoise = Float.parseFloat(noiseStr);
+                        String noiseStr = lineString.substring(lineString.indexOf("<noise_mean_ori>") + 16, lineString.indexOf("</noise_mean_ori>")).trim(); 
+                        m_fMeanNoise = Float.parseFloat(noiseStr);
                     }
                 }
                 kReader.close();
@@ -758,12 +767,12 @@ public class JDialogDTIInput extends JDialogBase
         m_kEigenVectorImage.saveImage( m_kParentDir, "EigenVectorImage.xml", FileUtility.XML, false );
         m_kAnisotropyImage.saveImage( m_kParentDir, "AnisotropyImage.xml", FileUtility.XML, false );
 
-	DialogDTIColorDisplay kColorDisplay =
+        DialogDTIColorDisplay kColorDisplay =
             new DialogDTIColorDisplay(m_kEigenVectorImage, m_kAnisotropyImage, m_kLUTa, false);
 
-        kColorDisplay.setScreenImageResolutions( m_kDTIImage.getFileInfo(0).getResolutions(), m_fResZ );
+        kColorDisplay.setScreenImageResolutions( m_kDTIImage.getFileInfo(0).getResolutions(), m_kDTIImage.getFileInfo(0).getSliceThickness() );
 
-	disposeLocal();
+        disposeLocal();
     }
 
 
@@ -771,22 +780,23 @@ public class JDialogDTIInput extends JDialogBase
     private void calcEigenVectorImage()
     {
         int[] extents = m_kDTIImage.getExtents();
-        float[] res = new float[m_kDTIImage.getFileInfo(0).getResolutions().length];
-        if ( (m_fResX == 0) || (m_fResY == 0) || (m_fResZ == 0) )
+        float[] res = m_kDTIImage.getFileInfo(0).getResolutions();
+        float[] saveRes = new float[]{res[0], res[1], res[2], res[3]};
+        if ( m_iType == DWI )
         {
-            for ( int i = 0; i < m_kDTIImage.getFileInfo(0).getResolutions().length; i++ )
+            if ( m_bUseXRes )
             {
-                res[i] = m_kDTIImage.getFileInfo(0).getResolutions()[i];
+                saveRes[0] = m_fResX;
             }
-        }
-        else
-        {
-            res[0] = m_fResX; 
-            res[1] = m_fResY;
-            res[2] = m_fResZ;
-            res[3] = 1.0f;
-        }
-        
+            if ( m_bUseYRes )
+            {
+                saveRes[1] = m_fResY;
+            }
+            if ( m_bUseZRes )
+            {
+                saveRes[2] = m_fResZ;
+            }
+        }        
         float[] newRes = new float[extents.length];
         int[] volExtents = new int[extents.length];
         boolean originalVolPowerOfTwo = true;
@@ -799,10 +809,11 @@ public class JDialogDTIInput extends JDialogBase
                 originalVolPowerOfTwo = false;
             }
             newRes[i] = (res[i] * (extents[i])) / (volExtents[i]);
+            saveRes[i] = (saveRes[i] * (extents[i])) / (volExtents[i]);
         }
 
         if ( !originalVolPowerOfTwo )
-        {
+        {        
             AlgorithmTransform transformFunct = new AlgorithmTransform(m_kDTIImage, new TransMatrix(4),
                                                                        AlgorithmTransform.TRILINEAR,
                                                                        newRes[0], newRes[1], newRes[2],
@@ -827,8 +838,8 @@ public class JDialogDTIInput extends JDialogBase
             m_kDTIImage.disposeLocal();
             m_kDTIImage = null;
             m_kDTIImage = kDTIImageScaled;
+            
         }
-
         AlgorithmDTI2EGFA kAlgorithm = new AlgorithmDTI2EGFA(m_kDTIImage);
         kAlgorithm.run();
         m_kEigenVectorImage = kAlgorithm.getEigenImage();
@@ -843,7 +854,15 @@ public class JDialogDTIInput extends JDialogBase
             kTractAlgorithm.run();
             kTractAlgorithm.disposeLocal();
             kTractAlgorithm = null;
- 	}
+        }
+        if ( m_iType == DWI )
+        {
+            for ( int i = 0; i < m_kDTIImage.getFileInfo().length; i++ )
+            {
+                m_kDTIImage.getFileInfo(i).setResolutions(saveRes);
+                m_kDTIImage.getFileInfo(i).setSliceThickness(saveRes[2]);
+            }
+        }
     }
 
 

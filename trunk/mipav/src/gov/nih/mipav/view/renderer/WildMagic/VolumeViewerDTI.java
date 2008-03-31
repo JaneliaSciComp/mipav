@@ -404,12 +404,27 @@ implements MouseListener, ItemListener, ChangeListener {
             buildGeodesic();
             buildSculpt();
             
+            panelAxial = new JPanel(new BorderLayout());
+            panelAxial.add(m_akPlaneRender[0].GetCanvas(), BorderLayout.CENTER);
+
+            panelSagittal = new JPanel(new BorderLayout());
+            panelSagittal.add(m_akPlaneRender[1].GetCanvas(), BorderLayout.CENTER);
+
+            panelCoronal = new JPanel(new BorderLayout());
+            panelCoronal.add(m_akPlaneRender[2].GetCanvas(), BorderLayout.CENTER);
             
             triImagePanel.removeAll();
             triImagePanel.add(panelAxial);
             triImagePanel.add(panelSagittal);
             triImagePanel.add(panelCoronal);
            
+
+            int triImagePanelWidth = (int) (screenWidth * 0.51f);
+            int triImagePanelHeight = (int) (screenHeight * 0.25f);
+
+            triImagePanel.setPreferredSize(new Dimension(triImagePanelWidth, triImagePanelHeight));
+            triImagePanel.setMinimumSize(new Dimension(150, 50));
+            
             //imagePanel.removeAll();
             //imagePanel.add(gpuPanel);
             

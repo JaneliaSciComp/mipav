@@ -1208,7 +1208,7 @@ public class PlaneRender_WM extends JavaApplication3D
         m_pkPlane.VBuffer.SetTCoord3(0, 3, tc[1][0], tc[1][1], tc[1][2] );
         m_pkPlane.VBuffer.SetTCoord3(0, 0, tc[2][0], tc[2][1], tc[2][2] );
         m_pkPlane.VBuffer.SetTCoord3(0, 1, tc[3][0], tc[3][1], tc[3][2] );
-
+        
         m_pkPlane.VBuffer.Release();
 
         Point3Df patientPt = new Point3Df();

@@ -2205,7 +2205,7 @@ implements MouseListener, ItemListener, ChangeListener {
     /**
      * Constructs main frame structures for image canvas.
      */
-    protected void configureFrame( boolean bBuildLUTOpacity ) {
+    protected void configureFrame( boolean bVolumeViewer ) {
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(MipavUtil.font12B);
         tabbedPane.setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
@@ -2251,42 +2251,45 @@ implements MouseListener, ItemListener, ChangeListener {
         redBorder = BorderFactory.createCompoundBorder(redline, compound);
 
         buildLabelPanel();
-        if ( bBuildLUTOpacity )
+        if ( bVolumeViewer )
         {
             buildHistoLUTPanel();
             buildOpacityPanel();
         }
 
-            buildDisplayPanel();
-            buildViewPanel();
-            buildLightPanel();
-            buildClipPanel();
-            buildSlicePanel();
-            buildSurfacePanel();
-            buildSurfaceTexturePanel();
-            buildProbePanel();
-            buildCameraPanel();
-            buildMousePanel();
-            buildGeodesic();
-            buildSculpt();
-
-
-        panelAxial = new JPanel(new BorderLayout());
-        panelAxial.add(m_akPlaneRender[0].GetCanvas(), BorderLayout.CENTER);
-
-        panelSagittal = new JPanel(new BorderLayout());
-        panelSagittal.add(m_akPlaneRender[1].GetCanvas(), BorderLayout.CENTER);
-
-        panelCoronal = new JPanel(new BorderLayout());
-        panelCoronal.add(m_akPlaneRender[2].GetCanvas(), BorderLayout.CENTER);
+        buildDisplayPanel();
+        buildViewPanel();
+        buildLightPanel();
+        buildClipPanel();
+        buildSlicePanel();
+        buildSurfacePanel();
+        buildSurfaceTexturePanel();
+        buildProbePanel();
+        buildCameraPanel();
+        buildMousePanel();
+        buildGeodesic();
+        buildSculpt();
 
         setTitle();
 
         triImagePanel = new JPanel();
         triImagePanel.setLayout(new GridLayout(1, 3, 10, 10));
-        triImagePanel.add(panelAxial);
-        triImagePanel.add(panelSagittal);
-        triImagePanel.add(panelCoronal);
+
+        if ( bVolumeViewer )
+        {
+            panelAxial = new JPanel(new BorderLayout());
+            panelAxial.add(m_akPlaneRender[0].GetCanvas(), BorderLayout.CENTER);
+
+            panelSagittal = new JPanel(new BorderLayout());
+            panelSagittal.add(m_akPlaneRender[1].GetCanvas(), BorderLayout.CENTER);
+
+            panelCoronal = new JPanel(new BorderLayout());
+            panelCoronal.add(m_akPlaneRender[2].GetCanvas(), BorderLayout.CENTER);
+            
+            triImagePanel.add(panelAxial);
+            triImagePanel.add(panelSagittal);
+            triImagePanel.add(panelCoronal);
+        }
         triImagePanel.setBorder(raisedbevel);
 
         int triImagePanelWidth = (int) (screenWidth * 0.51f);

@@ -19,7 +19,6 @@
 package gov.nih.mipav.view.WildMagic.LibRenderers.OpenGLRenderer;
 
 import java.util.Vector;
-import java.awt.*;
 
 import javax.media.opengl.*;
 import javax.media.opengl.glu.*;
@@ -98,7 +97,6 @@ public class OpenGLRenderer extends Renderer
                     ms_kContext, GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice() );
             //m_kCanvas.createContext(ms_kContext);
         }
-        m_kCanvas.setBackground(Color.black);
     }
 
 

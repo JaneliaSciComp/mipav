@@ -74,7 +74,13 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
 
 	/** Slice thickness read from .list file */
 	private float m_fResX = 1f, m_fResY = 1f, m_fResZ = 1f;
-
+    /** Set to true if the slice resolution is read from the .list file: (xRes) */
+    private boolean m_bUseXRes = false;
+    /** Set to true if the slice resolution is read from the .list file: (yRes) */
+    private boolean m_bUseYRes = false;
+    /** Set to true if the slice resolution is read from the .list file: (zRes) */
+    private boolean m_bUseZRes = false;
+    
 	/** Mean noise vale read from the .list file */
 	private float m_fMeanNoise = 0f;
 
@@ -664,6 +670,7 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
 								.trim();
 						float xFOV = Float.parseFloat(xFOVStr);
 						m_fResX = xFOV;
+                        m_bUseXRes = true;
 					} else if (lineString.startsWith("<y_field_of_view>")) {
 						String yFOVStr = lineString.substring(
 								lineString.indexOf("<y_field_of_view>") + 17,
@@ -671,12 +678,14 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
 								.trim();
 						float yFOV = Float.parseFloat(yFOVStr);
 						m_fResY = yFOV;
+                        m_bUseYRes = true;
 					} else if (lineString.startsWith("<slice_thickness>")) {
 						String zResStr = lineString.substring(
 								lineString.indexOf("<slice_thickness>") + 17,
 								lineString.indexOf("</slice_thickness>"))
 								.trim();
 						m_fResZ = Float.parseFloat(zResStr);
+                        m_bUseZRes = true;
 					} else if (lineString.startsWith("<noise_mean_ori>")) {
 						String noiseStr = lineString.substring(
 								lineString.indexOf("<noise_mean_ori>") + 16,
@@ -1029,20 +1038,19 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
     private void calcEigenVectorImage()
     {
         int[] extents = m_kDTIImage.getExtents();
-        float[] res = new float[m_kDTIImage.getFileInfo(0).getResolutions().length];
-        if ( (m_fResX == 0) || (m_fResY == 0) || (m_fResZ == 0) )
+        float[] res = m_kDTIImage.getFileInfo(0).getResolutions();
+        float[] saveRes = new float[]{res[0], res[1], res[2], res[3]};
+        if ( m_bUseXRes )
         {
-            for ( int i = 0; i < m_kDTIImage.getFileInfo(0).getResolutions().length; i++ )
-            {
-                res[i] = m_kDTIImage.getFileInfo(0).getResolutions()[i];
-            }
+            saveRes[0] = m_fResX;
         }
-        else
+        if ( m_bUseYRes )
         {
-            res[0] = m_fResX; 
-            res[1] = m_fResY;
-            res[2] = m_fResZ;
-            res[3] = 1.0f;
+            saveRes[1] = m_fResY;
+        }
+        if ( m_bUseZRes )
+        {
+            saveRes[2] = m_fResZ;
         }
         
         float[] newRes = new float[extents.length];
@@ -1057,6 +1065,7 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
                 originalVolPowerOfTwo = false;
             }
             newRes[i] = (res[i] * (extents[i])) / (volExtents[i]);
+            saveRes[i] = (saveRes[i] * (extents[i])) / (volExtents[i]);
         }
 
         if ( !originalVolPowerOfTwo )
@@ -1096,6 +1105,15 @@ public class JPanelDTILoad extends JPanelRendererBase implements AlgorithmInterf
         kAlgorithm.disposeLocal();
         kAlgorithm = null;
         
+        // The resolutions should be reset after the FiberTracts are calculated (See JDialogDTIInput.java)
+        if ( m_bUseXRes || m_bUseYRes || m_bUseZRes )
+        {
+            for ( int i = 0; i < m_kDTIImage.getFileInfo().length; i++ )
+            {
+                m_kDTIImage.getFileInfo(i).setResolutions(saveRes);
+                m_kDTIImage.getFileInfo(i).setSliceThickness(saveRes[2]);
+            }
+        }
     }    
     
 
