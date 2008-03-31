@@ -49,6 +49,10 @@ public class AlgorithmConvolver extends AlgorithmBase {
     
     private float[] kernelBufferZ;
     
+    private float[] kernelBufferX2;
+    
+    private float[] kernelBufferY2;
+    
     private float[] kernelBufferXX;
     
     private float[] kernelBufferXY;
@@ -106,6 +110,10 @@ public class AlgorithmConvolver extends AlgorithmBase {
     
     // Used with 3D AlgorithmEdgeNMSuppression
     private boolean nms3e = false;
+    
+    // Used with 3D and 4D AlgorithmGradientMagnitude
+    // 3D kernels used on slices where whole kernels fit, 2D kernels used on other slices
+    private boolean combined2D3D = false;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     public boolean isRed() {
@@ -266,6 +274,19 @@ public class AlgorithmConvolver extends AlgorithmBase {
         this.entireImage = entireImage;
         image25D = false;
         nms3e = true;
+    }
+    
+    public AlgorithmConvolver(ModelImage srcImage, float kernelX[], float kernelY[], float kernelZ[], float kernelX2[],
+                              float kernelY2[], int kExtents[], boolean entireImage, boolean combined2D3D) {
+        super(null, srcImage);
+        kernelBufferX = kernelX;
+        kernelBufferY = kernelY;
+        kernelBufferZ = kernelZ;
+        kernelBufferX2 = kernelX2;
+        kernelBufferY2 = kernelY2;
+        this.kExtents = kExtents;
+        this.entireImage = entireImage;
+        this.combined2D3D = combined2D3D;
     }
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -2500,6 +2521,132 @@ public class AlgorithmConvolver extends AlgorithmBase {
 
     }
     
+    private final void convolve2D3D(int start, int end, float[] iImage, int index,
+                                    int min3DLength, int max3DLength){
+        int sliceMod;
+        int i1, i2, i3 = 0;
+        if (srcImage.isColorImage()) {
+            sliceMod = 4 * srcImage.getExtents()[0] * srcImage.getExtents()[1];
+        }
+        else {
+            sliceMod = srcImage.getExtents()[0] * srcImage.getExtents()[1];    
+        }
+        float[] iImage2 = new float[sliceMod];
+        if(srcImage.isColorImage()){
+            for (int i = start; (i < end) && !threadStopped; i += 4) {
+                progress += 4;
+                if ((progress % progressModulus) == 0) {
+                    fireProgressStateChanged(minProgressValue + (int)(progress/progressModulus));
+                }
+
+                if ((entireImage == true) || mask.get(i / 4)) {
+                    outputBuffer[i+index] = iImage[i]; // alpha
+                    if ((i >= min3DLength) && (i < max3DLength)) {
+                        // 3D convolution
+                        if (red) {
+                            outputBuffer[i+index + 1] = AlgorithmConvolver
+                                    .convolve3DRGBPtXYZ(i + 1, srcImage
+                                            .getExtents(), iImage, kExtents,
+                                            kernelBufferX, kernelBufferY, kernelBufferZ);
+                        } else {
+                            outputBuffer[i+index + 1] = iImage[i + 1];
+                        }
+
+                        if (green) {
+                            outputBuffer[i+index + 2] = AlgorithmConvolver
+                                    .convolve3DRGBPtXYZ(i + 2, srcImage
+                                            .getExtents(), iImage, kExtents,
+                                            kernelBufferX, kernelBufferY, kernelBufferZ);
+                        } else {
+                            outputBuffer[i+index + 2] = iImage[i + 2];
+                        }
+
+                        if (blue) {
+                            outputBuffer[i+index + 3] = AlgorithmConvolver
+                                    .convolve3DRGBPtXYZ(i + 3, srcImage
+                                            .getExtents(), iImage, kExtents,
+                                            kernelBufferX, kernelBufferY, kernelBufferZ);
+                        } else {
+                            outputBuffer[i+index + 3] = iImage[i + 3];
+                        }    
+                    }
+                    else { // cannot fit full 3D kernel on this slice - do 2D convolution
+                        if ((i % sliceMod) == 0) {
+                            for (i1 = 0, i2 = i, i3 = i; i1 < sliceMod; i1++, i2++) {
+                                iImage2[i1] = iImage[i2];
+                            }
+                        }
+                        if (red) {
+                            outputBuffer[i+index + 1] = AlgorithmConvolver
+                                    .convolve2DRGBPtSqrtXY(i + 1 - i3, srcImage
+                                            .getExtents(), iImage2, kExtents,
+                                            kernelBufferX2, kernelBufferY2);
+                        } else {
+                            outputBuffer[i+index + 1] = iImage[i + 1];
+                        }
+
+                        if (green) {
+                            outputBuffer[i+index + 2] = AlgorithmConvolver
+                                    .convolve2DRGBPtSqrtXY(i + 2 - i3, srcImage
+                                            .getExtents(), iImage2, kExtents,
+                                            kernelBufferX2, kernelBufferY2);
+                        } else {
+                            outputBuffer[i+index + 2] = iImage[i + 2];
+                        }
+
+                        if (blue) {
+                            outputBuffer[i+index + 3] = AlgorithmConvolver
+                                    .convolve2DRGBPtSqrtXY(i + 3 - i3, srcImage
+                                            .getExtents(), iImage2, kExtents,
+                                            kernelBufferX2, kernelBufferY2);
+                        } else {
+                            outputBuffer[i+index + 3] = iImage[i + 3];
+                        }    
+                    }
+                } else {
+                    outputBuffer[i+index] = iImage[i];
+                    outputBuffer[i+index+1] = iImage[i + 1];
+                    outputBuffer[i+index+2] = iImage[i + 2];
+                    outputBuffer[i+index+3] = iImage[i + 3];
+                }
+            }
+
+        } else {
+            for (int i = start; (i < end) && !threadStopped; i++) {
+                progress++;
+                if ((progress % progressModulus) == 0) {
+                    fireProgressStateChanged(minProgressValue + (int) (progress / progressModulus));
+                    // System.out.println("Entire = " + entireImage);
+                }
+
+                if ((i >= min3DLength) && (i < max3DLength)) {
+                    if ((entireImage == true) || mask.get(i)) {
+                        outputBuffer[i + index] = AlgorithmConvolver.convolve3DPtXYZ(i,
+                                srcImage.getExtents(), iImage, kExtents,
+                                kernelBufferX, kernelBufferY, kernelBufferZ);
+                    } else {
+                        outputBuffer[i + index] = iImage[i];
+                    }    
+                } // if ((i >= min3DLength) && (i < max3DLength))
+                else { // cannot fit full 3D kernel on this slice - do 2D convolution
+                    if ((i % sliceMod) == 0) {
+                        for (i1 = 0, i2 = i, i3 = i; i1 < sliceMod; i1++, i2++) {
+                            iImage2[i1] = iImage[i2];
+                        }
+                    }
+                    if ((entireImage == true) || mask.get(i)) {
+                        outputBuffer[i+index] = AlgorithmConvolver.convolve2DPtSqrtXY(i - i3,
+                                srcImage.getExtents(), iImage2, kExtents,
+                                kernelBufferX2, kernelBufferY2);
+                    } else {
+                        outputBuffer[i + index] = iImage[i];
+                    }    
+                }
+            }
+        }
+
+    }
+    
     
     private final void convolve3DXYZ(int start, int end, float[] iImage, int index){
         if(srcImage.isColorImage()){
@@ -2789,6 +2936,10 @@ public class AlgorithmConvolver extends AlgorithmBase {
             }
         	
         }else{
+            // Start of slice at which full 3D kernels fit  
+            final int min3DLength = cFactor * (kExtents[2]/2)* srcImage.getSliceSize();
+            // Start of slice at which full 3D kernels no longer fit
+            final int max3DLength = cFactor * (srcImage.getExtents()[2] - kExtents[2] + kExtents[2]/2 + 1) * srcImage.getSliceSize();
             if(kExtents.length != 3){
                 displayError("Kernel is not 3D");
                 return;
@@ -2839,6 +2990,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
                             else if (nms3e) {
                                 convolve3DNMSE(start, end, iImage, 0);
                             }
+                            else if (combined2D3D) {
+                                convolve2D3D(start, end, iImage, 0, min3DLength, max3DLength);
+                            }
                             else {
 							    convolve3D(start, end, iImage, 0);
                             }
@@ -2864,6 +3018,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
                 else if (nms3e) {
                     convolve3DNMSE(0, length, buffer, 0);
                 }
+                else if (combined2D3D) {
+                    convolve2D3D(0, length, buffer, 0, min3DLength, max3DLength);
+                }
                 else {
         		    convolve3D(0, length, buffer, 0);
                 }
@@ -2880,6 +3037,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
     }
 
     public void run4D(){
+        
         if (srcImage == null) {
             displayError("Source Image is null");
 
@@ -2902,6 +3060,11 @@ public class AlgorithmConvolver extends AlgorithmBase {
         if (srcImage.isColorImage()) {
             cFactor = 4;
         }
+        
+        // Start of slice at which full 3D kernels fit  
+        final int min3DLength = cFactor * (kExtents[2]/2)* srcImage.getSliceSize();
+        // Start of slice at which full 3D kernels no longer fit
+        final int max3DLength = cFactor * (srcImage.getExtents()[2] - kExtents[2] + kExtents[2]/2 + 1) * srcImage.getSliceSize();
 
         try {
             length = cFactor * srcImage.getSliceSize() * srcImage.getExtents()[2];
@@ -2947,6 +3110,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
                             if (sqrtXYZ) {
                                 convolve3DXYZ(start, fend, iImage, findex);
                             }
+                            else if (combined2D3D) {
+                                convolve2D3D(start, fend, iImage, findex, min3DLength, max3DLength);
+                            }
                             else {
 							    convolve3D(start, fend, iImage, findex);
                             }
@@ -2964,6 +3130,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
 			} else {
                 if (sqrtXYZ) {
                     convolve3DXYZ(0, length, buffer, index);    
+                }
+                else if (combined2D3D) {
+                    convolve2D3D(0, length, buffer, index, min3DLength, max3DLength);
                 }
                 else {
 				    convolve3D(0, length, buffer, index);
