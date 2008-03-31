@@ -2,7 +2,7 @@ package gov.nih.mipav.model.algorithms.itk;
 
 import InsightToolkit.*;
 
-import gov.nih.mipav.model.structures.*;
+//import gov.nih.mipav.model.structures.*;
 
 public class PItkFilter
 {
@@ -50,6 +50,15 @@ public class PItkFilter
         if (cls == null && input_type.equals(output_type)) {
             try {
                 cls = Class.forName("InsightToolkit.itk" + base_name + "Filter" + input_type);
+            }
+            catch (ClassNotFoundException cnfe) {
+            }
+        }
+        if (cls == null) {
+            // One more try - sometimes the input type is doubled, so you see F2F2F2
+            try {
+                cls = Class.forName("InsightToolkit.itk" + base_name + "Filter" + 
+                                    input_type + input_type + output_type);
             }
             catch (ClassNotFoundException cnfe) {
             }

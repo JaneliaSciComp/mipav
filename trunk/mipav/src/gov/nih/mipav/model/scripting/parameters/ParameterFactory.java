@@ -5,8 +5,6 @@ import gov.nih.mipav.model.scripting.*;
 
 import gov.nih.mipav.view.*;
 
-import java.lang.reflect.Array;
-
 /**
  * Factory methods for the creation of various types of Parameters.
  *
@@ -364,6 +362,8 @@ public class ParameterFactory {
     /**
      * Creates a new parameter with a given label and value. The parameter type is determined by the type of the value
      * passed in.
+     * @note Long type is handled here, even though ParameterList doesn't 
+     * provide an accessor for it.
      *
      * @param   label  The label/name of the new parameter.
      * @param   value_arr  The array of values to assign to the new parameter. 
@@ -380,6 +380,7 @@ public class ParameterFactory {
         Object first_val = value_arr[0];
         int param_type = -1;
         if (first_val instanceof Integer) param_type = Parameter.PARAM_INT;
+        else if (first_val instanceof Long) param_type = Parameter.PARAM_LONG;
         else if (first_val instanceof Float) param_type = Parameter.PARAM_FLOAT;
         else if (first_val instanceof Double) param_type = Parameter.PARAM_DOUBLE;
         else if (first_val instanceof Boolean) param_type = Parameter.PARAM_BOOLEAN;

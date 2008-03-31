@@ -2,8 +2,6 @@ package gov.nih.mipav.model.algorithms.itk;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.Component;
-import java.awt.Dimension;
 import javax.swing.*;
 
 import java.util.jar.*;
@@ -11,12 +9,10 @@ import java.util.*;
 import java.lang.reflect.*;
 import java.io.*;
 import java.util.Enumeration;
-import InsightToolkit.*;
+//import InsightToolkit.*;
 
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmItkFilter;
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogItkFilter;
 
 
@@ -40,6 +36,11 @@ public class AutoItkLoader implements ActionListener {
      * List of filters, with active state and status.
      */
     private List<FilterRecordItk> m_FilterList;
+    /**
+     * Full path of InsightToolkit.jar, if we locate it.
+     */
+    private String m_ItkJarFilename = new String("");
+
     /**
      * Name of the file we serialize the m_FilterList to.
      */
@@ -93,7 +94,7 @@ public class AutoItkLoader implements ActionListener {
                                         "Choose filters to appear:",	
                                         "Complete ITK Filter List",
                                         m_FilterList);
-                System.out.println("Do set " + do_set);
+                //System.out.println("Do set " + do_set);
                 if (do_set) {
                     setMenu();
                     writeListToFile();
@@ -312,16 +313,16 @@ public class AutoItkLoader implements ActionListener {
     {
         JarFile jf = null;
         Manifest jf_manifest =null;
+        String jar_filename = "";
         try {
             String class_path_key = "java.class.path";
             String class_path = System.getProperty(class_path_key);
             //System.out.println(class_path);
             
-            String jar_filename = null;
             for (String fn : class_path.split(";") ) {
                 if (fn.endsWith("InsightToolkit.jar")) {
                     jar_filename = fn;
-                    System.out.println("Found itk jar: " + jar_filename);
+                    Preferences.debug("\nFound itk jar: " + jar_filename + "\n");
                     break;
                 }
             }
@@ -340,6 +341,8 @@ public class AutoItkLoader implements ActionListener {
         }
 
         if (jf_manifest == null || jf == null ) return null;
+
+        m_ItkJarFilename = jar_filename;
 
         JarEntry je = null;
         //String last_filter_str = "";
@@ -383,6 +386,8 @@ public class AutoItkLoader implements ActionListener {
             if (type_str.indexOf("JNI") >= 0) continue;
             // ignore types with _, probably D2D2_Superclass, or similar.
             if (type_str.indexOf("_") >= 0) continue;
+            // ignore types that start with base or Base, superclass.
+            if (type_str.startsWith("base") || type_str.startsWith("Base")) continue;
 
             // don't add a filter record until we get a type. 
             
@@ -428,9 +433,10 @@ public class AutoItkLoader implements ActionListener {
     {
         List<?> in_list = null;
         ObjectInputStream in = null;
+        String list_ser_file = m_ItkJarFilename == null ? LIST_SERIALIZE_FILE : new File(new File(m_ItkJarFilename).getParent(), LIST_SERIALIZE_FILE).getPath();
         try {
             in = new ObjectInputStream(new
-                                       BufferedInputStream(new FileInputStream(LIST_SERIALIZE_FILE)));
+                                       BufferedInputStream(new FileInputStream(list_ser_file)));
             in_list = (ArrayList<?>)in.readObject();
         }
         catch (FileNotFoundException fnfe) {
@@ -478,9 +484,10 @@ public class AutoItkLoader implements ActionListener {
 
         boolean ret = true;
         ObjectOutputStream out = null;
+        String list_ser_file = m_ItkJarFilename == null ? LIST_SERIALIZE_FILE : new File(new File(m_ItkJarFilename).getParent(), LIST_SERIALIZE_FILE).getPath();
         try {
             out = new ObjectOutputStream(new
-                                         BufferedOutputStream(new FileOutputStream(LIST_SERIALIZE_FILE)));
+                                         BufferedOutputStream(new FileOutputStream(list_ser_file)));
 
             out.writeObject(m_FilterList);
         }

@@ -742,35 +742,71 @@ public class InsightToolkitSupport {
     /**
      * Transfers the pixels values from either of two 2D ITK single channel
      * images into either a 2D model image or the specified slice of a 3D
-     * model image. Pixels are tranferred selected from either ITK image
+     * model image. Pixels are transferred selected from either ITK image
      * depending on the specification of the mask image. The dimensions of the
      * two ITK images, the model image, and the mask image (if defined) must
      * be compatible.
      *
-     * @param  kImageITK0   itkImageBase2 2D ITK single channel image with values to copy for pixels defined in the input
-     *                      mask image if that mask value for the corresponding pixel is not set. This image is ignored
-     *                      if the input mask image is not defined.
-     * @param  kImageITK1   itkImageBase2 2D ITK single channel image with values to copy for pixels defined in the input
-     *                      mask if that mask value for the corresponding pixel is set. Pixels are tranferred from this
-     *                      image only if the input mask image is not defined.
-     * @param  kMask        BitSet Boolean image which contains set values indicating pixels to be transferred from
-     *                      input kImageITK1; otherwise unset values indicate pixels to be transferred from input
-     *                      kImageITK0. This image does not have to be defined (i.e., set to null) which means all
-     *                      pixels are tranferred from input kImageITK1.
+     * @param kImageITK0 itkImageBase2 2D ITK single channel image with values
+     * to copy for pixels defined in the input mask image if that mask value
+     * for the corresponding pixel is not set. This image is ignored if the
+     * input mask image is not defined.
+     * @param kImageITK1 itkImageBase2 2D ITK single channel image with values
+     * to copy for pixels defined in the input mask if that mask value for the
+     * corresponding pixel is set. Pixels are transferred from this image only
+     * if the input mask image is not defined.
+     * @param kMask BitSet Boolean image which contains set values indicating
+     * pixels to be transferred from input kImageITK1; otherwise unset values
+     * indicate pixels to be transferred from input kImageITK0. This image
+     * does not have to be defined (i.e., set to null) which means all pixels
+     * are transferred from input kImageITK1.
      * @param  kModelImage  ModelImage Image into which values will be transferred.
-     * @param  iStart       int Starting index into the model image linear array of values for the corresponding pixel
-     *                      at the start of the ITK image.
-     * @param  iStride      int Increment to advance to the next pixel for the same channel in the model image. The
-     *                      integral-truncated result of the starting index (iStart) divided by this increment is the
-     *                      starting index into the mask image (if defined) for the corresponding pixel at the start of
-     *                      the ITK image.
+     * @param iStart int Starting index into the model image linear array of
+     * values for the corresponding pixel at the start of the ITK image.
+     * @param iStride int Increment to advance to the next pixel for the same
+     * channel in the model image. The integral-truncated result of the
+     * starting index (iStart) divided by this increment is the starting index
+     * into the mask image (if defined) for the corresponding pixel at the
+     * start of the ITK image.
      */
     private static void itkTransferImage2D(itkImageBase2 kImageITK0, itkImageBase2 kImageITK1, BitSet kMask,
                                            ModelImage kModelImage, int iStart, int iStride) {
 
         // Note the dimensions of each axis.
-        int iSizeX = kModelImage.getExtents()[0];
-        int iSizeY = kModelImage.getExtents()[1];
+        int iImageSizeX = kModelImage.getExtents()[0];
+        int iImageSizeY = kModelImage.getExtents()[1];
+
+        // check to see if kImageITK1 has changed size from model image,
+        // reallocate as needed.
+        itkImageRegion2 kImgReg = kImageITK1.GetLargestPossibleRegion();
+        int iSizeX = (int)kImgReg.GetSize(0);
+        int iSizeY = (int)kImgReg.GetSize(1);
+        if (iSizeX != iImageSizeX ||
+            iSizeY != iImageSizeY) {
+            // if mask exists, we need to ignore it because of size change.
+            if (kMask != null) kMask = null;
+
+            // leave Z dimension alone, if there is any.
+            int [] prev_extents = kModelImage.getExtents();
+            prev_extents[0] = iSizeX;
+            prev_extents[1] = iSizeY;
+            
+            kModelImage.changeExtents( prev_extents );
+            // need to unlock before reallocate.
+            boolean locked = false;
+            if (kModelImage.getLockStatus() != ModelImage.UNLOCKED) {
+            	locked = true;
+            	kModelImage.releaseLock();
+            }
+            kModelImage.reallocate(kModelImage.getType());
+            if (locked) {
+                try {
+                    kModelImage.setLock(ModelStorageBase.RW_LOCKED);
+                } catch (IOException error) {
+                }
+            }
+       }
+
 
         // Copy pixel values from the ModelImage to the ITK image.
         itkIndex2 iIndexITK = new itkIndex2();
@@ -798,36 +834,69 @@ public class InsightToolkitSupport {
     
     /**
      * Transfers the pixels values from either of two 3D ITK single channel
-     * images into the specified 3D model image.  Pixels are tranferred
+     * images into the specified 3D model image.  Pixels are transferred
      * selected from either ITK image depending on the specification of the
      * mask image. The dimensions of the two ITK images, the model image, and
      * the mask image (if defined) must be compatible.
      *
-     * @param  kImageITK0   itkImageBase3 3D ITK single channel image with values to copy for pixels defined in the input
-     *                      mask image if that mask value for the corresponding pixel is not set. This image is ignored
-     *                      if the input mask image is not defined.
-     * @param  kImageITK1   itkImageBase3 3D ITK single channel image with values to copy for pixels defined in the input
-     *                      mask if that mask value for the corresponding pixel is set. Pixels are tranferred from this
-     *                      image only if the input mask image is not defined.
-     * @param  kMask        BitSet Boolean image which contains set values indicating pixels to be transferred from
-     *                      input kImageITK1; otherwise unset values indicate pixels to be transferred from input
-     *                      kImageITK0. This image does not have to be defined (i.e., set to null) which means all
-     *                      pixels are tranferred from input kImageITK1.
-     * @param  kModelImage  ModelImage Image into which values will be transferred.
-     * @param  iStart       int Starting index into the model image linear array of values for the corresponding pixel
-     *                      at the start of the ITK image.
-     * @param  iStride      int Increment to advance to the next pixel for the same channel in the model image. The
-     *                      integral-truncated result of the starting index (iStart) divided by this increment is the
-     *                      starting index into the mask image (if defined) for the corresponding pixel at the start of
-     *                      the ITK image.
+     * @param kImageITK0 itkImageBase3 3D ITK single channel image with values
+     * to copy for pixels defined in the input mask image if that mask value
+     * for the corresponding pixel is not set. This image is ignored if the
+     * input mask image is not defined.
+     * @param kImageITK1 itkImageBase3 3D ITK single channel image with values
+     * to copy for pixels defined in the input mask if that mask value for the
+     * corresponding pixel is set. Pixels are transferred from this image only
+     * if the input mask image is not defined.
+     * @param kMask BitSet Boolean image which contains set values indicating
+     * pixels to be transferred from input kImageITK1; otherwise unset values
+     * indicate pixels to be transferred from input kImageITK0. This image
+     * does not have to be defined (i.e., set to null) which means all pixels
+     * are transferred from input kImageITK1.
+     * @param kModelImage ModelImage Image into which values will be
+     * transferred.
+     * @param iStart int Starting index into the model image linear array of
+     * values for the corresponding pixel at the start of the ITK image.
+     * @param iStride int Increment to advance to the next pixel for the same
+     * channel in the model image. The integral-truncated result of the
+     * starting index (iStart) divided by this increment is the starting index
+     * into the mask image (if defined) for the corresponding pixel at the
+     * start of the ITK image.
      */
     private static void itkTransferImage3D(itkImageBase3 kImageITK0, itkImageBase3 kImageITK1, BitSet kMask,
                                            ModelImage kModelImage, int iStart, int iStride) {
 
         // Note the dimensions of each axis.
-        int iSizeX = kModelImage.getExtents()[0];
-        int iSizeY = kModelImage.getExtents()[1];
-        int iSizeZ = kModelImage.getExtents()[2];
+        int iImageSizeX = kModelImage.getExtents()[0];
+        int iImageSizeY = kModelImage.getExtents()[1];
+        int iImageSizeZ = kModelImage.getExtents()[2];
+
+        // check to see if kImageITK1 has changed size from model image,
+        // reallocate as needed.
+        itkImageRegion3 kImgReg = kImageITK1.GetLargestPossibleRegion();
+        int iSizeX = (int)kImgReg.GetSize(0);
+        int iSizeY = (int)kImgReg.GetSize(1);
+        int iSizeZ = (int)kImgReg.GetSize(2);
+        if (iSizeX != iImageSizeX ||
+            iSizeY != iImageSizeY ||
+            iSizeZ != iImageSizeZ) {
+            // if mask exists, we need to ignore it because of size change.
+            if (kMask != null) kMask = null;
+
+            kModelImage.changeExtents(new int[] { iSizeX, iSizeY, iSizeZ } );
+            // need to unlock before reallocate.
+            boolean locked = false;
+            if (kModelImage.getLockStatus() != ModelImage.UNLOCKED) {
+            	locked = true;
+            	kModelImage.releaseLock();
+            }
+            kModelImage.reallocate(kModelImage.getType());
+            if (locked) {
+                try {
+                    kModelImage.setLock(ModelStorageBase.RW_LOCKED);
+                } catch (IOException error) {
+                }
+            }
+       }
 
         // Copy pixel values from the ModelImage to the ITK image.
         itkIndex3 iIndexITK = new itkIndex3();

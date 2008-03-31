@@ -140,12 +140,12 @@ public class ItkFilterSelectorDialog extends JDialog implements ActionListener {
 
     public void actionPerformed(ActionEvent e) {
         if ("Set".equals(e.getActionCommand())) {
-            System.out.println("Set: change filter file.");
+            //System.out.println("Set: change filter file.");
             ItkFilterSelectorDialog.value = true;
             Iterator<FilterRecordItk> it = m_FilterRecordItk.iterator(); 
             for (Component cmp : m_CheckBoxPanel.getComponents() ) {
                 JCheckBox cb = (JCheckBox)cmp;
-                System.out.println(cb.getText() + " " + cb.isSelected());
+                //System.out.println(cb.getText() + " " + cb.isSelected());
                 FilterRecordItk fr = it.next();
                 fr.m_Active = cb.isSelected();
                 // New filters have now been seen and accepted.
