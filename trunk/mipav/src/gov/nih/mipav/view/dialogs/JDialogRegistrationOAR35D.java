@@ -1142,7 +1142,7 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
         JPanel refPanel = new JPanel(new GridBagLayout());
         refPanel.setBorder(buildTitledBorder("Reference image"));
 
-        JLabel labelInternal = new JLabel("Reference volume (1-" + String.valueOf(matchImage.getExtents()[3]) + ")");
+        JLabel labelInternal = new JLabel("Reference volume (0-" + String.valueOf(matchImage.getExtents()[3]-1) + ")");
         labelInternal.setForeground(Color.black);
         labelInternal.setFont(serif12);
         gbc.gridx = 0;
@@ -1662,7 +1662,7 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
             }
         }
 
-        if (!testParameter(refImageNumText.getText(), 1, matchImage.getExtents()[3])) {
+        if (!testParameter(refImageNumText.getText(), 0, matchImage.getExtents()[3]-1)) {
             refImageNumText.requestFocus();
             refImageNumText.selectAll();
 
