@@ -3143,8 +3143,5 @@ public class DialogDTIColorDisplay extends ViewJFrameBase
     {
         m_afScreenResolutions = afResolutions;
         m_fSliceThickness = fSlice;
-
     }
-
-
 }

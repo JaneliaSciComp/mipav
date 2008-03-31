@@ -902,23 +902,32 @@ public class MjCorticalMesh_WM {
                 }
             }
         }
-
+        
         Polylines kPolylines = new Polylines();
         assert (kIntrMesh.size() > 0);
-        kPolylines.akMVertex = new Vector3f[kIntrMesh.size()];
-        kPolylines.akSVertex = new Vector3f[kIntrSphere.size()];
+        
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetCChannels(0, 3);
+        kPolylines.kMVertex = new VertexBuffer( kAttr, kIntrMesh.size());
+        kPolylines.kSVertex = new VertexBuffer( kAttr, kIntrSphere.size());
 
         Iterator kIM = kIntrMesh.entrySet().iterator();
         Iterator kIS = kIntrSphere.entrySet().iterator();
 
         for (int i = 0; kIM.hasNext(); i++) {
-            kPolylines.akMVertex[i] = (Vector3f) (((Map.Entry) kIM.next()).getValue());
-            kPolylines.akSVertex[i] = (Vector3f) (((Map.Entry) kIS.next()).getValue());
+            kPolylines.kMVertex.SetPosition3( i, (Vector3f) (((Map.Entry) kIM.next()).getValue()) );
+            kPolylines.kMVertex.SetColor3( 0, i, 1.0f, 0.0f, 0.0f );
+            
+            kPolylines.kSVertex.SetPosition3( i, (Vector3f) (((Map.Entry) kIS.next()).getValue()) );
+            kPolylines.kSVertex.SetColor3( 0, i, 1.0f, 0.0f, 0.0f );
         }
 
-        kPolylines.akPVertex = new Vector3f[2];
-        kPolylines.akPVertex[0] = new Vector3f(+(float) Math.PI, fZNormal, -fPBias);
-        kPolylines.akPVertex[1] = new Vector3f(-(float) Math.PI, fZNormal, -fPBias);
+        kPolylines.kPVertex = new VertexBuffer( kAttr, 2);
+        kPolylines.kPVertex.SetPosition3( 0, new Vector3f(+(float) Math.PI, fZNormal, -fPBias) );
+        kPolylines.kPVertex.SetColor3( 0, 0, 1.0f, 0.0f, 0.0f );
+        kPolylines.kPVertex.SetPosition3( 1, new Vector3f(-(float) Math.PI, fZNormal, -fPBias) );
+        kPolylines.kPVertex.SetColor3( 0, 1, 1.0f, 0.0f, 0.0f );
 
         return kPolylines;
     }
@@ -1121,21 +1130,30 @@ public class MjCorticalMesh_WM {
 
         Polylines kPolylines = new Polylines();
         assert (kIntrMesh.size() > 0);
-        kPolylines.akMVertex = new Vector3f[kIntrMesh.size()];
-        kPolylines.akSVertex = new Vector3f[kIntrSphere.size()];
+        
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetCChannels(0, 3);
+        kPolylines.kMVertex = new VertexBuffer( kAttr, kIntrMesh.size());
+        kPolylines.kSVertex = new VertexBuffer( kAttr, kIntrSphere.size());
 
         Iterator kIM = kIntrMesh.entrySet().iterator();
         Iterator kIS = kIntrSphere.entrySet().iterator();
 
         for (int i = 0; kIM.hasNext(); i++) {
-            kPolylines.akMVertex[i] = (Vector3f) (((Map.Entry) kIM.next()).getValue());
-            kPolylines.akSVertex[i] = (Vector3f) (((Map.Entry) kIS.next()).getValue());
+            kPolylines.kMVertex.SetPosition3( i, (Vector3f) (((Map.Entry) kIM.next()).getValue()) );
+            kPolylines.kMVertex.SetColor3( 0, i, 1.0f, 0.0f, 0.0f );
+            
+            kPolylines.kSVertex.SetPosition3( i, (Vector3f) (((Map.Entry) kIS.next()).getValue()) );
+            kPolylines.kSVertex.SetColor3( 0, i, 1.0f, 0.0f, 0.0f );
         }
 
         fAngle -= Math.PI;
-        kPolylines.akPVertex = new Vector3f[2];
-        kPolylines.akPVertex[0] = new Vector3f(fAngle, -1.0f, -fPBias);
-        kPolylines.akPVertex[1] = new Vector3f(fAngle, +1.0f, -fPBias);
+        kPolylines.kPVertex = new VertexBuffer( kAttr, 2);
+        kPolylines.kPVertex.SetPosition3( 0, new Vector3f(fAngle, -1.0f, -fPBias) );
+        kPolylines.kPVertex.SetColor3( 0, 0, 1.0f, 0.0f, 0.0f );
+        kPolylines.kPVertex.SetPosition3( 1, new Vector3f(fAngle, +1.0f, -fPBias) );
+        kPolylines.kPVertex.SetColor3( 0, 1, 1.0f, 0.0f, 0.0f );
 
         return kPolylines;
     }
@@ -1919,13 +1937,13 @@ public class MjCorticalMesh_WM {
     public static class Polylines {
 
         /** Array of mesh points. */
-        Vector3f[] akMVertex;
+        VertexBuffer kMVertex;
 
         /** Array of plane points. */
-        Vector3f[] akPVertex;
+        VertexBuffer kPVertex;
 
         /** Array of sphere points. */
-        Vector3f[] akSVertex;
+        VertexBuffer kSVertex;
     }
 
     /**

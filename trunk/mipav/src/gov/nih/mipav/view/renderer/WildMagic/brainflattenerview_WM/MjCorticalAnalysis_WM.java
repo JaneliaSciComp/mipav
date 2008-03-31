@@ -22,6 +22,7 @@ import com.sun.opengl.util.Animator;
 
 import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.CullState;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Light;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
@@ -157,6 +158,8 @@ public class MjCorticalAnalysis_WM extends JavaApplication3D implements GLEventL
     private VolumeViewer m_kParent = null;
     private VolumeSurface m_kSphere = null;
     private VolumeSurface m_kCylinder = null;
+    private Node m_kLatLonLines = null;
+    private VertexColor3Effect m_kPolylineShader;
     
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -274,6 +277,7 @@ public class MjCorticalAnalysis_WM extends JavaApplication3D implements GLEventL
     }
     private void Render()
     {
+        m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
             m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
@@ -358,6 +362,11 @@ public class MjCorticalAnalysis_WM extends JavaApplication3D implements GLEventL
         for ( int i = 0; i < m_pkRenderer.GetMaxLights(); i++ )
         {
             m_pkRenderer.SetLight( i, new Light() );
+        }
+
+        if ( m_kLatLonLines != null )
+        {
+            m_spkScene.AttachChild( m_kLatLonLines );
         }
     }
     
@@ -949,39 +958,38 @@ public class MjCorticalAnalysis_WM extends JavaApplication3D implements GLEventL
      */
     public void setupLatLon(int iNumLat, int iNumLon) {
 
-        /* Remove existing meshes from the scene: */
-
+        if ( m_kLatLonLines == null )
+        {
+            m_kLatLonLines = new Node();
+        }
+        m_kLatLonLines.DetachAllChildren();
+        
+        if ( m_kPolylineShader == null )
+        {
+            m_kPolylineShader = new VertexColor3Effect( "ConstantColor", true );
+        }
+        
         /* bias for latitude/longitude to handle z-buffer fighting */
         float fMBias = 0.01f;
         float fSBias = 0.01f;
         float fPBias = 0.01f;
-
-        /* iNumLat latitute and iNumLon longitude per object */
-        Vector3f[] akPolylinePointsMesh = new Vector3f[0];
-        Vector3f[] akPolylinePointsSphere = new Vector3f[0];
-        Vector3f[] akPolylinePointsPlane = new Vector3f[0];
-        int iNumPoints = 1 + (2 * (int) (iNumLat / 2)) + iNumLon;
-        int[] aiPointsMesh = new int[iNumPoints];
-        int[] aiPointsSphere = new int[iNumPoints];
-        int[] aiPointsPlane = new int[iNumPoints];
-        int iPolyline = 0;
 
         /* compute draw latitude lines */
         for (int i = -(int) (iNumLat / 2); i <= (int) (iNumLat / 2); i++) {
             float fZNormal = i / (float) (1 + (iNumLat / 2));
 
             MjCorticalMesh_WM.Polylines kPolylines = m_kCortical.getLatitude(fZNormal, fMBias, fSBias, fPBias);
-
-            /* how many points for this latitude? */
-            aiPointsMesh[iPolyline] = kPolylines.akMVertex.length;
-            aiPointsSphere[iPolyline] = kPolylines.akSVertex.length;
-            aiPointsPlane[iPolyline] = kPolylines.akPVertex.length;
-            ++iPolyline;
-
-            /* append the vertices */
-            akPolylinePointsMesh = combine(akPolylinePointsMesh, kPolylines.akMVertex);
-            akPolylinePointsSphere = combine(akPolylinePointsSphere, kPolylines.akSVertex);
-            akPolylinePointsPlane = combine(akPolylinePointsPlane, kPolylines.akPVertex);
+            Polyline kMeshLat = new Polyline( kPolylines.kMVertex, false, true );  
+            kMeshLat.AttachEffect( m_kPolylineShader );
+            m_kLatLonLines.AttachChild( kMeshLat );
+            
+            Polyline kSphereLat = new Polyline( kPolylines.kSVertex, false, true );  
+            kSphereLat.AttachEffect( m_kPolylineShader );
+            m_kLatLonLines.AttachChild( kSphereLat );
+            
+            Polyline kPlaneLat = new Polyline( kPolylines.kPVertex, false, true );  
+            kPlaneLat.AttachEffect( m_kPolylineShader );
+            m_kLatLonLines.AttachChild( kPlaneLat );
         }
 
         /* compute longitude lines */
@@ -989,19 +997,18 @@ public class MjCorticalAnalysis_WM extends JavaApplication3D implements GLEventL
             float fAngle = i * 2.0f * (float) Math.PI / (float) (iNumLon - 1);
 
             MjCorticalMesh_WM.Polylines kPolylines = m_kCortical.getLongitude(fAngle, fMBias, fSBias, fPBias);
-
-            /* how many points for this latitude? */
-            aiPointsMesh[iPolyline] = kPolylines.akMVertex.length;
-            aiPointsSphere[iPolyline] = kPolylines.akSVertex.length;
-            aiPointsPlane[iPolyline] = kPolylines.akPVertex.length;
-            ++iPolyline;
-
-            /* append the vertices */
-            akPolylinePointsMesh = combine(akPolylinePointsMesh, kPolylines.akMVertex);
-            akPolylinePointsSphere = combine(akPolylinePointsSphere, kPolylines.akSVertex);
-            akPolylinePointsPlane = combine(akPolylinePointsPlane, kPolylines.akPVertex);
+            Polyline kMeshLon = new Polyline( kPolylines.kMVertex, false, true );  
+            kMeshLon.AttachEffect( m_kPolylineShader );
+            m_kLatLonLines.AttachChild( kMeshLon );
+            
+            Polyline kSphereLon = new Polyline( kPolylines.kSVertex, false, true );  
+            kSphereLon.AttachEffect( m_kPolylineShader );
+            m_kLatLonLines.AttachChild( kSphereLon );
+            
+            Polyline kPlaneLon = new Polyline( kPolylines.kPVertex, false, true );  
+            kPlaneLon.AttachEffect( m_kPolylineShader );
+            m_kLatLonLines.AttachChild( kPlaneLon );
         }
-
     }
 
     /**
