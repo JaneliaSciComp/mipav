@@ -16,7 +16,7 @@ public class ParameterList extends Parameter {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** The list of parameters. */
-    private Vector list;
+    private Vector<Parameter> list;
 
     /** The data type of the elements in this parameter list. */
     private int listType;
@@ -34,7 +34,7 @@ public class ParameterList extends Parameter {
     public ParameterList(String paramLabel, int listContentsType) throws ParserException {
         super(paramLabel, Parameter.PARAM_LIST);
         setListType(listContentsType);
-        list = new Vector();
+        list = new Vector<Parameter>();
     }
     
     /**
@@ -230,7 +230,7 @@ public class ParameterList extends Parameter {
      *
      * @param  paramValue  The new parameter list elements.
      */
-    public void setValue(Vector paramValue) {
+    public void setValue(Vector<Parameter> paramValue) {
         list = paramValue;
     }
 
@@ -285,8 +285,8 @@ public class ParameterList extends Parameter {
      *
      * @throws  ParserException  If there is a problem encountered parsing the list element values.
      */
-    private Vector parseList(String listString, int listContentsType) throws ParserException {
-        Vector strList = new Vector();
+    private Vector<Parameter> parseList(String listString, int listContentsType) throws ParserException {
+        Vector<String> strList = new Vector<String>();
 
         int lastCommaIndex = -1;
 
@@ -309,7 +309,7 @@ public class ParameterList extends Parameter {
             strList.add(remainingListStr);
         }
 
-        Vector newList = new Vector();
+        Vector<Parameter> newList = new Vector<Parameter>();
 
         for (int i = 0; i < strList.size(); i++) {
             String str = ParameterList.replaceEscapedSpecialCharacters((String) strList.elementAt(i));

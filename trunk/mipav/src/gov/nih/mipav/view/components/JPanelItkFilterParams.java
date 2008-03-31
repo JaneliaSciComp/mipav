@@ -296,10 +296,14 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
                 ar.m_Component = lbl;
                 return;
             } else if (param == Boolean.TYPE) {
-                // One exception - we automatically invoke SetInPlace(true), since it 
-                // saves memory and is redundant with Mipav image's new/replace option.
+                // One exception - we ignore SetInPlace(), since it is
+                // redundant with Mipav image's new/replace option.  Seems it
+                // would be nice to call it with 'true' to save memory, but it
+                // causes a crash when using a VOI mask, because it tries to
+                // read the source image. SetInPlace(true) makes the source
+                // image invalid - GetPixel crashes the JRE
                 if (mthd.getName().equals("SetInPlace")) {
-                    AutoItkLoader.invokeMethod(obj, mthd, true);
+                    //AutoItkLoader.invokeMethod(obj, mthd, true);
                     ar.m_Component = null;
                     return;
                 }
@@ -651,7 +655,7 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
             if (ar.m_Changed) {
                 try {
                     Parameter script_param = null;
-                    System.out.println("Run: Changing " + ar.m_Method.getName());
+                    Preferences.debug("Run: Changing " + ar.m_Method.getName() + "\n");
                     if (ar.m_Component instanceof JFormattedTextField) {
                         //Get value from tf and call set method.
                         ar.m_DefaultVal = ((JFormattedTextField)ar.m_Component).getValue();
@@ -788,8 +792,8 @@ public class JPanelItkFilterParams extends JPanel implements ActionListener, Pro
                             // set the param value.
                             AutoItkLoader.invokeMethod(filterObj, ar.m_Method, ar.m_DefaultVal);
                             script_param = ParameterFactory.newParameter(ar.m_Method.getName(), param_vals.toArray());
-                            System.out.println("Run: called " + ar.m_Method.getName() + "  with " 
-                                               + param_vals);
+                            //System.out.println("Run: called " + ar.m_Method.getName() + "  with " 
+                            //                   + param_vals);
                         
                         } else {
                             System.out.println("Run: TODO Jpanel component changed, " +
