@@ -159,7 +159,12 @@ public class VolumeSurface extends VolumeObject
             m_kMesh.VBuffer.SetColor3( 0, i, kColor );
         }
         m_kMesh.VBuffer.Release();
-        m_kMaterial.Diffuse.SetData(kColor);;
+        m_kMaterial.Diffuse.SetData(kColor);
+        m_kMaterial.Ambient.SetData( new ColorRGB(ColorRGB.BLACK) );
+        m_kMaterial.Specular.SetData( new ColorRGB(0.5f,0.5f,0.5f) );
+        m_kMaterial.Emissive.SetData( new ColorRGB(ColorRGB.BLACK) );
+        m_kMaterial.Shininess = 5f;
+        
     }
     
     public void Blend( float fValue )
