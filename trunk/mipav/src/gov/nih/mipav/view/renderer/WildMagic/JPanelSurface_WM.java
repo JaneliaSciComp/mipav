@@ -1275,7 +1275,7 @@ public class JPanelSurface_WM
         {
             DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
-                new JFrameSurfaceMaterialProperties_WM(this, i, m_kVolumeViewer.GetLights(),
+                new JFrameSurfaceMaterialProperties_WM(this, aiSelected[i], m_kVolumeViewer.GetLights(),
                         m_kVolumeViewer.getMaterial( (String)kList.elementAt(aiSelected[i]) ),
                         m_kVolumeViewer.GetAnimator() );
             }
