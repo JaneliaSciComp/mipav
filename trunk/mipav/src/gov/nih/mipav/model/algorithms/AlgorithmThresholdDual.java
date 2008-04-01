@@ -2,6 +2,8 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.model.file.FileInfoBase;
 
 import java.io.*;
 
@@ -57,6 +59,9 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
     /** Array of two thresholds. threshold[0] = Minimum threshold, threshold[1] = Maximum threshold. */
     private float[] threshold;
+    
+    /** Variable that will store the total number of pixels in thresholding range */
+    private int pixelsInRange = 0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -203,6 +208,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
                 if (((entireImage == true) || mask.get(i)) &&
                         ((buffer[i] >= threshold[0]) && (buffer[i] <= threshold[1]))) {
+                    pixelsInRange++;
 
                     if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         buffer[i] = 1;
@@ -219,6 +225,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
                 if (((entireImage == true) || mask.get(i)) &&
                         ((buffer[i] < threshold[0]) || (buffer[i] > threshold[1]))) {
+                    pixelsInRange++;
 
                     if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         buffer[i] = 1;
@@ -256,6 +263,8 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
             return;
         }
+        
+        setThresholdStatistics();
 
         setCompleted(true);
     }
@@ -304,7 +313,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
                 if (((entireImage == true) || mask.get(i)) &&
                         ((buffer[i] >= threshold[0]) && (buffer[i] <= threshold[1]))) {
-
+                    pixelsInRange++;
                     if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         buffer[i] = 1;
                     }
@@ -320,7 +329,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
                 if (((entireImage == true) || mask.get(i)) &&
                         ((buffer[i] < threshold[0]) || (buffer[i] > threshold[1]))) {
-
+                    pixelsInRange++;
                     if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         buffer[i] = 1;
                     }
@@ -358,6 +367,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
             return;
         }
 
+        setThresholdStatistics();
         setCompleted(true);
 
     }
@@ -410,7 +420,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
                 if (((entireImage == true) || mask.get(i)) &&
                         ((buffer[i] >= threshold[0]) && (buffer[i] <= threshold[1]))) {
-
+                    pixelsInRange++;
                     if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         destImage.set(i, 1);
                     } else {
@@ -428,7 +438,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
                 if (((entireImage == true) || mask.get(i)) &&
                         ((buffer[i] < threshold[0]) || (buffer[i] > threshold[1]))) {
-
+                    pixelsInRange++;
                     if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         destImage.set(i, 1);
                     } else {
@@ -454,6 +464,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
+        setThresholdStatistics();
 
         setCompleted(true);
     }
@@ -511,7 +522,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
                 if (((entireImage == true) || mask.get(i)) &&
                         ((buffer[i] >= threshold[0]) && (buffer[i] <= threshold[1]))) {
-
+                    pixelsInRange++;
                     if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         destImage.set(i, 1);
                     } else {
@@ -529,7 +540,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
                 if (((entireImage == true) || mask.get(i)) &&
                         ((buffer[i] < threshold[0]) || (buffer[i] > threshold[1]))) {
-
+                    pixelsInRange++;
                     if ((outputType == BINARY_TYPE) || (outputType == UNSIGNED_BYTE_TYPE)) {
                         destImage.set(i, 1);
                     } else {
@@ -555,7 +566,88 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
+        setThresholdStatistics();
 
         setCompleted(true);
+    }
+    
+    private void setThresholdStatistics() {
+        float xRes, yRes, zRes;
+        float area;
+        float volume = 0.0f;
+        int xUnits, yUnits;
+        int zUnits = FileInfoBase.UNKNOWN_MEASURE;
+        ViewUserInterface UI = ViewUserInterface.getReference();
+        String units = "    ";
+        xRes = srcImage.getFileInfo(0).getResolutions()[0];
+        yRes = srcImage.getFileInfo(0).getResolutions()[1];
+        area = pixelsInRange * xRes * yRes;
+        xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
+        yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
+        if (srcImage.getNDims() > 2) {
+            zRes = srcImage.getFileInfo(0).getResolutions()[2];
+            volume = area * zRes;
+            zUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[2];
+        }
+        UI.setDataText("            Image name:            " + srcImage.getImageName() + "\n");
+        UI.setDataText("            Inverse Threshold:     " + isInverse + "\n");
+        UI.setDataText("            Thresholded range:     " + threshold[0] + " - " + threshold[1] + "\n");
+        UI.setDataText("            Number of pixels:     " + pixelsInRange + "\n");
+        if (srcImage.getNDims() == 2) {
+            if (xUnits == yUnits) {
+                switch (xUnits) {
+                    case FileInfoBase.INCHES:
+                        units = "  in^2";
+                        break;
+                    case FileInfoBase.CENTIMETERS:
+                        units = "  cm^2";
+                        break;
+                    case FileInfoBase.ANGSTROMS:
+                        units = "  A^2";
+                        break;
+                    case FileInfoBase.NANOMETERS:
+                        units = "  nm^2";
+                        break;
+                    case FileInfoBase.MICROMETERS:
+                        units = "  um^2";
+                        break;
+                    case FileInfoBase.MILLIMETERS:
+                        units = "  mm^2";
+                        break;
+                    case FileInfoBase.METERS:
+                        units = "  m^2";
+                        break;
+                } // switch (xUnits)
+            } // if (xUnits == yUnits)
+            UI.setDataText("            Area:     " + area + units + "\n");
+        }
+        else if (srcImage.getNDims() == 3) {
+            if ((xUnits == yUnits) && (xUnits == zUnits)){
+                switch (xUnits) {
+                    case FileInfoBase.INCHES:
+                        units = "  in^3";
+                        break;
+                    case FileInfoBase.CENTIMETERS:
+                        units = "  cm^3";
+                        break;
+                    case FileInfoBase.ANGSTROMS:
+                        units = "  A^3";
+                        break;
+                    case FileInfoBase.NANOMETERS:
+                        units = "  nm^3";
+                        break;
+                    case FileInfoBase.MICROMETERS:
+                        units = "  um^3";
+                        break;
+                    case FileInfoBase.MILLIMETERS:
+                        units = "  mm^3";
+                        break;
+                    case FileInfoBase.METERS:
+                        units = "  m^3";
+                        break;
+                } // switch (xUnits)
+            } // if ((xUnits == yUnits) && (xUnits == zUnits))
+            UI.setDataText("            Volume:     " + volume + units + "\n");    
+        }
     }
 }
