@@ -1443,7 +1443,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
     
     
 //  --------------------INNER CLASSES -------------------------------------------------------------------------------  
-	class CheckBoxRenderer extends DefaultTableCellRenderer {
+	private class CheckBoxRenderer extends DefaultTableCellRenderer {
   	  JCheckBox checkBox = new JCheckBox();
   	  public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
   		  	if (value instanceof Boolean) { // Boolean
@@ -1456,7 +1456,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
     }
 
     
-    class CheckBoxEditor implements TableCellEditor {
+    private class CheckBoxEditor implements TableCellEditor {
   	  private final static int BOOLEAN = 1;
   	  DefaultCellEditor cellEditor;
   	  int flg;

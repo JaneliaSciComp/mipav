@@ -291,7 +291,8 @@ public abstract class ViewJFrameBase extends JFrame
         boolean spm = false;
         boolean xml = false; // special handling for XML files
         boolean minc = false;
-
+        boolean mincHDF = false;
+        
         if (imageA.getFileInfo()[0] != null) {
 
             if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) && (displayMode == IMAGE_A)) {
@@ -320,6 +321,8 @@ public abstract class ViewJFrameBase extends JFrame
                 geSigna4x = true;
             } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.MINC) && (displayMode == IMAGE_A)) {
                 minc = true;
+            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.MINC_HDF) && (displayMode == IMAGE_A)) {
+                mincHDF = true;
             } else if ((imageB != null) && (imageB.getFileInfo()[0] != null)) {
 
                 if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) && (displayMode == IMAGE_B)) {
@@ -431,6 +434,8 @@ public abstract class ViewJFrameBase extends JFrame
                 }
             } else if (minc) {
                 aboutDialog = new JDialogFileInfoMinc(this, "Image Information");
+            } else if (mincHDF) {
+                aboutDialog = new JDialogFileInfoMincHDF(this, "Image Information");
             } else {
                 aboutDialog = new JDialogText(this, "Image information");
             }

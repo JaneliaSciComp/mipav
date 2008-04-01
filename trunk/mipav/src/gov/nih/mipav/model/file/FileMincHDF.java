@@ -17,6 +17,11 @@ import ncsa.hdf.view.Tools;
 
 
 
+/**
+ * HDF5 based reader/writer for MINC 2.0
+ * @author linkb
+ *
+ */
 public class FileMincHDF extends FileBase {
 
 	//static final variables
@@ -288,7 +293,8 @@ public class FileMincHDF extends FileBase {
     				String dicomElement = attr.getName();
     				dicomElement = dicomElement.substring(DICOM_ELEMENT_PREFIX.length());
     				
-    				FileDicomKey key = new FileDicomKey(Integer.parseInt(dicomGroup), Integer.parseInt(dicomElement));
+    				FileDicomKey key = new FileDicomKey(Integer.parseInt(dicomGroup, 16), 
+    						Integer.parseInt(dicomElement, 16));
     				FileDicomTag tag = new FileDicomTag(new FileDicomTagInfo(key.getGroupNumber(), key.getElementNumber(), 
     						((String[])attr.getValue())[0],0, null, DicomDictionary.getName(key)));
     				fileInfo.getDicomTable().put(key, tag);
