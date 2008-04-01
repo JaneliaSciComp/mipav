@@ -4,6 +4,9 @@ import java.util.Iterator;
 import java.util.HashMap;
 import java.util.Vector;
 
+import javax.media.j3d.Transform3D;
+import javax.vecmath.Matrix4d;
+
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.WildMagic.ApplicationDemos.Rope;
@@ -550,7 +553,21 @@ public class VolumeDTI extends VolumeObject
         StandardMesh kSM = new StandardMesh(kAttr);
         kSM.SetInside(true);
         m_kSphere = kSM.Sphere(64,64,1f);
-        m_kCylinder = kSM.Cylinder(128,64,0.5f,3,false);
+        
+        Transformation trans = new Transformation();
+        float rotationRedian = 0.5f * (float) Math.PI;
+
+        Matrix3f matrix = new Matrix3f((float)Math.cos(rotationRedian),0.0f,(float)Math.sin(rotationRedian),
+                					   0.0f,1.0f,0.0f,
+                					   (float)-Math.sin(rotationRedian),0.0f,(float)Math.cos(rotationRedian));
+
+        trans.SetRotate(matrix);
+  
+        StandardMesh cylinder = new StandardMesh(kAttr);
+        kSM.SetInside(true);
+        cylinder.SetTransformation(trans);
+        m_kCylinder = cylinder.Cylinder(64,64,1.0f,2f,false);
+        
 
         m_kAllEllipsoidsShader = new MipavLightingEffect( );
         
