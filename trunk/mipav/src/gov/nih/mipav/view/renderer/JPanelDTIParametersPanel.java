@@ -913,7 +913,7 @@ public class JPanelDTIParametersPanel extends JPanelRendererBase implements List
         radioLines.addItemListener(this);
         group1.add(radioLines);
         
-        radioEllipzoids = new JRadioButton("Ellipzoids", false);
+        radioEllipzoids = new JRadioButton("Ellipzoid", false);
         radioEllipzoids.setFont(serif12);
         radioEllipzoids.addItemListener(this);
         group1.add(radioEllipzoids);
