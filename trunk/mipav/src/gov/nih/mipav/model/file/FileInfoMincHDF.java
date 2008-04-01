@@ -103,24 +103,7 @@ public class FileInfoMincHDF extends FileInfoBase {
      * @param  matrix  the transformation matrix
      */
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
-        JDialogText dialog = (JDialogText) dlog;
-        displayPrimaryInfo(dialog, matrix);
-        
-        dialog.append("\n");
-        if (dimensionNode != null) {
-        	try {
-        		parseNodes(dimensionNode, dialog);
-        	} catch (Exception e) {
-        		e.printStackTrace();
-        	}
-        }
-        if (informationNode != null) {
-        	try {
-        		parseNodes(informationNode, dialog);
-        	} catch (Exception e) {
-        		e.printStackTrace();
-        	}
-        }
+    	//never called
         
     }
 
