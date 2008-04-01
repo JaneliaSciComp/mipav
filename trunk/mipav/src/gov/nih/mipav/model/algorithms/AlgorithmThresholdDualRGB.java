@@ -1,7 +1,9 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.ViewUserInterface;
 
 import java.io.*;
 
@@ -40,6 +42,15 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
 
     /** Which channels to use (0 = red, 1 = green, 2 = blue). */
     private boolean[] useChannels;
+    
+    /** Variable that will store the total number of red pixel values in thresholding range */
+    private int pixelsInRangeR = 0;
+    
+    /** Variable that will store the total number of green pixel values in thresholding range */
+    private int pixelsInRangeG = 0;
+    
+    /** Variable that will store the total number of blue pixel values in thresholding range */
+    private int pixelsInRangeB = 0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -188,14 +199,18 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
                     if (isInverse) {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
-                                ((buffer[i] >= thresholdR[0]) && (buffer[i] <= thresholdR[1]))) { }
+                                ((buffer[i] >= thresholdR[0]) && (buffer[i] <= thresholdR[1]))) {
+                            pixelsInRangeR++;
+                        }
                         else {
                             buffer[i] = fillValues[0];
                         }
                     } else {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
-                                ((buffer[i] < thresholdR[0]) || (buffer[i] > thresholdR[1]))) { }
+                                ((buffer[i] < thresholdR[0]) || (buffer[i] > thresholdR[1]))) {
+                            pixelsInRangeR++;
+                        }
                         else {
                             buffer[i] = fillValues[0];
                         }
@@ -208,14 +223,18 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
                     if (isInverse) {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
-                                ((buffer[i] >= thresholdG[0]) && (buffer[i] <= thresholdG[1]))) { }
+                                ((buffer[i] >= thresholdG[0]) && (buffer[i] <= thresholdG[1]))) {
+                            pixelsInRangeG++;
+                        }
                         else {
                             buffer[i] = fillValues[1];
                         }
                     } else {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
-                                ((buffer[i] < thresholdG[0]) || (buffer[i] > thresholdG[1]))) { }
+                                ((buffer[i] < thresholdG[0]) || (buffer[i] > thresholdG[1]))) {
+                            pixelsInRangeG++;
+                        }
                         else {
                             buffer[i] = fillValues[1];
                         }
@@ -228,14 +247,18 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
                     if (isInverse) {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
-                                ((buffer[i] >= thresholdB[0]) && (buffer[i] <= thresholdB[1]))) { }
+                                ((buffer[i] >= thresholdB[0]) && (buffer[i] <= thresholdB[1]))) {
+                            pixelsInRangeB++;
+                        }
                         else {
                             buffer[i] = fillValues[2];
                         }
                     } else {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
-                                ((buffer[i] < thresholdB[0]) || (buffer[i] > thresholdB[1]))) { }
+                                ((buffer[i] < thresholdB[0]) || (buffer[i] > thresholdB[1]))) {
+                            pixelsInRangeB++;
+                        }
                         else {
                             buffer[i] = fillValues[2];
                         }
@@ -259,7 +282,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
             return;
         }
 
-        
+        setThresholdStatistics();
         setCompleted(true);
     }
 
@@ -313,14 +336,18 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
                     if (isInverse) {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
-                                ((buffer[i] >= thresholdR[0]) && (buffer[i] <= thresholdR[1]))) { }
+                                ((buffer[i] >= thresholdR[0]) && (buffer[i] <= thresholdR[1]))) {
+                            pixelsInRangeR++;
+                        }
                         else {
                             buffer[i] = fillValues[0];
                         }
                     } else {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
-                                ((buffer[i] < thresholdR[0]) || (buffer[i] > thresholdR[1]))) { }
+                                ((buffer[i] < thresholdR[0]) || (buffer[i] > thresholdR[1]))) {
+                            pixelsInRangeR++;
+                        }
                         else {
                             buffer[i] = fillValues[0];
                         }
@@ -334,14 +361,18 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
                     if (isInverse) {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
-                                ((buffer[i] >= thresholdG[0]) && (buffer[i] <= thresholdG[1]))) { }
+                                ((buffer[i] >= thresholdG[0]) && (buffer[i] <= thresholdG[1]))) {
+                            pixelsInRangeG++;
+                        }
                         else {
                             buffer[i] = fillValues[1];
                         }
                     } else {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
-                                ((buffer[i] < thresholdG[0]) || (buffer[i] > thresholdG[1]))) { }
+                                ((buffer[i] < thresholdG[0]) || (buffer[i] > thresholdG[1]))) {
+                            pixelsInRangeG++;
+                        }
                         else {
                             buffer[i] = fillValues[1];
                         }
@@ -355,14 +386,18 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
                     if (isInverse) {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
-                                ((buffer[i] >= thresholdB[0]) && (buffer[i] <= thresholdB[1]))) { }
+                                ((buffer[i] >= thresholdB[0]) && (buffer[i] <= thresholdB[1]))) {
+                            pixelsInRangeB++;
+                        }
                         else {
                             buffer[i] = fillValues[2];
                         }
                     } else {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
-                                ((buffer[i] < thresholdB[0]) || (buffer[i] > thresholdB[1]))) { }
+                                ((buffer[i] < thresholdB[0]) || (buffer[i] > thresholdB[1]))) {
+                            pixelsInRangeB++;
+                        }
                         else {
                             buffer[i] = fillValues[2];
                         }
@@ -387,7 +422,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
             return;
         }
 
-        
+        setThresholdStatistics();
         setCompleted(true);
 
     }
@@ -450,6 +485,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
                                 ((buffer[i] >= thresholdR[0]) && (buffer[i] <= thresholdR[1]))) {
+                            pixelsInRangeR++;
                             destImage.set(i, buffer[i]);
                         } else {
                             destImage.set(i, fillValues[0]);
@@ -458,6 +494,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
                                 ((buffer[i] < thresholdR[0]) || (buffer[i] > thresholdR[1]))) {
+                            pixelsInRangeR++;
                             destImage.set(i, buffer[i]);
                         } else {
                             destImage.set(i, fillValues[0]);
@@ -474,6 +511,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
                                 ((buffer[i] >= thresholdG[0]) && (buffer[i] <= thresholdG[1]))) {
+                            pixelsInRangeG++;
                             destImage.set(i, buffer[i]);
                         } else {
                             destImage.set(i, fillValues[1]);
@@ -482,6 +520,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
                                 ((buffer[i] < thresholdG[0]) || (buffer[i] > thresholdG[1]))) {
+                            pixelsInRangeG++;
                             destImage.set(i, buffer[i]);
                         } else {
                             destImage.set(i, fillValues[1]);
@@ -498,6 +537,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
                                 ((buffer[i] >= thresholdB[0]) && (buffer[i] <= thresholdB[1]))) {
+                            pixelsInRangeB++;
                             destImage.set(i, buffer[i]);
                         } else {
                             destImage.set(i, fillValues[2]);
@@ -506,6 +546,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
                                 ((buffer[i] < thresholdB[0]) || (buffer[i] > thresholdB[1]))) {
+                            pixelsInRangeB++;
                             destImage.set(i, buffer[i]);
                         } else {
                             destImage.set(i, fillValues[2]);
@@ -526,6 +567,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
         destImage.calcMinMax();
         destImage.releaseLock();
         
+        setThresholdStatistics();
         setCompleted(true);
     }
 
@@ -589,6 +631,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
                                 ((buffer[i] >= thresholdR[0]) && (buffer[i] <= thresholdR[1]))) {
+                            pixelsInRangeR++;
                             destImage.set(i, buffer[i]);
                         } else {
                             destImage.set(i, fillValues[0]);
@@ -597,6 +640,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
                                 ((buffer[i] < thresholdR[0]) || (buffer[i] > thresholdR[1]))) {
+                            pixelsInRangeR++;
                             destImage.set(i, buffer[i]);
                         } else {
                             destImage.set(i, fillValues[0]);
@@ -613,6 +657,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
                                 ((buffer[i] >= thresholdG[0]) && (buffer[i] <= thresholdG[1]))) {
+                            pixelsInRangeG++;
                             destImage.set(i, buffer[i]);
                         } else {
                             destImage.set(i, fillValues[1]);
@@ -621,6 +666,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
                                 ((buffer[i] < thresholdG[0]) || (buffer[i] > thresholdG[1]))) {
+                            pixelsInRangeG++;
                             destImage.set(i, buffer[i]);
                         } else {
                             destImage.set(i, fillValues[1]);
@@ -637,6 +683,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
                                 ((buffer[i] >= thresholdB[0]) && (buffer[i] <= thresholdB[1]))) {
+                            pixelsInRangeB++;
                             destImage.set(i, buffer[i]);
                         } else {
                             destImage.set(i, fillValues[2]);
@@ -645,6 +692,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
 
                         if (((entireImage == true) || mask.get(i / 4)) &&
                                 ((buffer[i] < thresholdB[0]) || (buffer[i] > thresholdB[1]))) {
+                            pixelsInRangeB++;
                             destImage.set(i, buffer[i]);
                         } else {
                             destImage.set(i, fillValues[2]);
@@ -666,7 +714,125 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
+        setThresholdStatistics();
         
         setCompleted(true);
+    }
+    
+    private void setThresholdStatistics() {
+        float xRes, yRes, zRes;
+        float areaR;
+        float volumeR = 0.0f;
+        float areaG;
+        float volumeG = 0.0f;
+        float areaB;
+        float volumeB = 0.0f;
+        int xUnits, yUnits;
+        int zUnits = FileInfoBase.UNKNOWN_MEASURE;
+        ViewUserInterface UI = ViewUserInterface.getReference();
+        String units = "    ";
+        xRes = srcImage.getFileInfo(0).getResolutions()[0];
+        yRes = srcImage.getFileInfo(0).getResolutions()[1];
+        areaR = pixelsInRangeR * xRes * yRes;
+        areaG = pixelsInRangeG * xRes * yRes;
+        areaB = pixelsInRangeB * xRes * yRes;
+        xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
+        yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
+        if (srcImage.getNDims() > 2) {
+            zRes = srcImage.getFileInfo(0).getResolutions()[2];
+            volumeR = areaR * zRes;
+            volumeG = areaG * zRes;
+            volumeB = areaB * zRes;
+            zUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[2];
+        }
+        UI.setDataText("            Image name:            " + srcImage.getImageName() + "\n");
+        UI.setDataText("            Inverse Threshold:     " + isInverse + "\n");
+        if (srcImage.getNDims() == 2) {
+            if (xUnits == yUnits) {
+                switch (xUnits) {
+                    case FileInfoBase.INCHES:
+                        units = "  in^2";
+                        break;
+                    case FileInfoBase.CENTIMETERS:
+                        units = "  cm^2";
+                        break;
+                    case FileInfoBase.ANGSTROMS:
+                        units = "  A^2";
+                        break;
+                    case FileInfoBase.NANOMETERS:
+                        units = "  nm^2";
+                        break;
+                    case FileInfoBase.MICROMETERS:
+                        units = "  um^2";
+                        break;
+                    case FileInfoBase.MILLIMETERS:
+                        units = "  mm^2";
+                        break;
+                    case FileInfoBase.METERS:
+                        units = "  m^2";
+                        break;
+                } // switch (xUnits)
+            } // if (xUnits == yUnits)
+        } // if (srcImage.getNDims() == 2)
+        else if (srcImage.getNDims() == 3) {
+            if ((xUnits == yUnits) && (xUnits == zUnits)){
+                switch (xUnits) {
+                    case FileInfoBase.INCHES:
+                        units = "  in^3";
+                        break;
+                    case FileInfoBase.CENTIMETERS:
+                        units = "  cm^3";
+                        break;
+                    case FileInfoBase.ANGSTROMS:
+                        units = "  A^3";
+                        break;
+                    case FileInfoBase.NANOMETERS:
+                        units = "  nm^3";
+                        break;
+                    case FileInfoBase.MICROMETERS:
+                        units = "  um^3";
+                        break;
+                    case FileInfoBase.MILLIMETERS:
+                        units = "  mm^3";
+                        break;
+                    case FileInfoBase.METERS:
+                        units = "  m^3";
+                        break;
+                } // switch (xUnits)
+            } // if ((xUnits == yUnits) && (xUnits == zUnits))
+        } // else if (srcImage.getNDims() == 3)
+        if (useChannels[0]) {
+            UI.setDataText("            Red thresholded range:     " + thresholdR[0] + " - " + thresholdR[1] + "\n");
+            UI.setDataText("            Red number of pixels:     " + pixelsInRangeR + "\n");
+            if (srcImage.getNDims() == 2) {
+                UI.setDataText("            Red area:     " + areaR + units + "\n");    
+            }
+            else if (srcImage.getNDims() == 3) {
+                UI.setDataText("            Red volume:     " + volumeR + units + "\n");     
+            }
+        } // if (useChannels[0])
+        
+        
+        if (useChannels[1]) {
+            UI.setDataText("            Green thresholded range:     " + thresholdG[0] + " - " + thresholdG[1] + "\n");
+            UI.setDataText("            Green number of pixels:     " + pixelsInRangeG + "\n");
+            if (srcImage.getNDims() == 2) {
+                UI.setDataText("            Green area:     " + areaG + units + "\n");    
+            }
+            else if (srcImage.getNDims() == 3) {
+                UI.setDataText("            Green volume:     " + volumeG + units + "\n");         
+            }
+        } // if (useChannels[1])
+        
+        if (useChannels[2]) {
+            UI.setDataText("            Blue thresholded range:     " + thresholdB[0] + " - " + thresholdB[1] + "\n");
+            UI.setDataText("            Blue number of pixels:     " + pixelsInRangeB + "\n");
+            if (srcImage.getNDims() == 2) {
+                UI.setDataText("            Blue area:     " + areaB + units + "\n");    
+            }
+            else if (srcImage.getNDims() == 3) {
+                UI.setDataText("            Blue volume:     " + volumeB + units + "\n");     
+            }
+        } // if (useChannels[2])
     }
 }
