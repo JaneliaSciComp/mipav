@@ -62,10 +62,10 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
-    private float scaleX;
+    private float scaleX = 1.0f;
 
     /** DOCUMENT ME! */
-    private float scaleY;
+    private float scaleY = 1.0f;
 
     /** DOCUMENT ME! */
     private JTextField textGaussX, textGaussY, textStep;
