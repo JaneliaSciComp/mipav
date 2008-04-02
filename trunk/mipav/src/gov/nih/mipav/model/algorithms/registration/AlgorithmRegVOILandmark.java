@@ -111,6 +111,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
         this.maxTy = maxTy;
         this.minRz = minRz;
         this.maxRz = maxRz;
+        this.sigmas = sigmas;
         xdim = volume.getExtents()[0];
         ydim = volume.getExtents()[1];
         tdim = volume.getExtents()[2];
