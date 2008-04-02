@@ -436,7 +436,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             if(nDims == 2){
                 minLoc = new Point3i(imin%dimExtents[0], imin%dimExtents[1], 0);
                 maxLoc = new Point3i(imax%dimExtents[0], imax%dimExtents[1], 0);               
-            }else{
+            }else if (nDims == 3 || nDims == 4){
                 minLoc = new Point3i(imin%dimExtents[0], imin%dimExtents[1], imin%dimExtents[2]);
                 maxLoc = new Point3i(imax%dimExtents[0], imax%dimExtents[1], imax%dimExtents[2]);
             }
