@@ -37,6 +37,8 @@ public class FileAvi extends FileBase {
 
     /** globals needed for read - set in readHeader, used in readImage. */
     private boolean AVIF_MUSTUSEINDEX;
+    
+    private boolean AVIF_HASINDEX;
 
     /** DOCUMENT ME! */
     private short bitCount;
@@ -130,6 +132,10 @@ public class FileAvi extends FileBase {
 
     /** DOCUMENT ME! */
     private int microSecPerFrame = (int) ((1.0f / Preferences.getDefaultFrameRate()) * 1000000);
+    
+    private int scale;
+    
+    private int rate;
 
     /** DOCUMENT ME! */
     private long moviPosition;
@@ -187,6 +193,12 @@ public class FileAvi extends FileBase {
 
     /** DOCUMENT ME! */
     private int xPad;
+    
+    private String outputFileName;
+    
+    private int framesToCapture;
+    
+    private int framesToSkip;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -203,6 +215,39 @@ public class FileAvi extends FileBase {
         UI = ViewUserInterface.getReference();
         this.fileName = fileName;
         this.fileDir = fileDir;
+    }
+    
+    public void setFramesToCapture(int framesToCapture) {
+        this.framesToCapture = framesToCapture;
+    }
+    
+    public void setFramesToSkip(int framesToSkip) {
+        this.framesToSkip = framesToSkip;
+    }
+    
+    public void setOutputFileName(String outputFileName) {
+        this.outputFileName = outputFileName;
+    }
+    
+    public int getMicroSecPerFrame() {
+        return microSecPerFrame;
+    }
+    
+    // Rate/scale = samples/second
+    public int getScale() {
+        return scale;
+    }
+    
+    public int getRate() {
+        return rate;
+    }
+    
+    public boolean getHasIndex() {
+        return AVIF_HASINDEX;
+    }
+    
+    public boolean getMustUseIndex() {
+        return AVIF_MUSTUSEINDEX;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -3627,7 +3672,7 @@ public class FileAvi extends FileBase {
      *
      * @throws  IOException  DOCUMENT ME!
      */
-    private int readHeader() throws IOException {
+    public int readHeader() throws IOException {
         long LIST1Marker, LISTsubchunkMarker, marker;
         int loop;
 
@@ -3701,7 +3746,7 @@ public class FileAvi extends FileBase {
                 throw new IOException("AVI read header error avih sub-CHUNK length = " + avihLength);
             }
 
-            int microSecPerFrame = getInt(endianess);
+            microSecPerFrame = getInt(endianess);
 
             // System.err.println("Microsec per frame: " + microSecPerFrame);
             Preferences.debug("microSecPerFrame = " + microSecPerFrame + "\n");
@@ -3713,7 +3758,6 @@ public class FileAvi extends FileBase {
             getInt(endianess);
 
             int flags = getInt(endianess);
-            boolean AVIF_HASINDEX;
 
             if ((flags & 0x10) != 0) {
                 AVIF_HASINDEX = true;
@@ -3939,11 +3983,11 @@ public class FileAvi extends FileBase {
                     throw new IOException("initialFrames should be 0 for noninterleaved files");
                 }
 
-                int scale = getInt(endianess);
+                scale = getInt(endianess);
                 Preferences.debug("scale = " + scale + "\n");
 
                 // System.err.println("Scale is: " + scale);
-                int rate = getInt(endianess);
+                rate = getInt(endianess);
 
                 // System.err.println("Rate is: " + rate);
                 Preferences.debug("rate = " + rate + "\n");
@@ -5184,5 +5228,9 @@ public class FileAvi extends FileBase {
         }
 
         raFile.write(bufferWrite);
+    }
+    
+    public boolean readWriteImage() throws IOException {
+        return true;    
     }
 }
