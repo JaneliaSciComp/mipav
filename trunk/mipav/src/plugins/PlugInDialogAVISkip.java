@@ -1,7 +1,5 @@
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.parameters.*;
-import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -9,16 +7,14 @@ import gov.nih.mipav.view.dialogs.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.util.Vector;
 import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
 
 
 
 
 /**
- * @version  February 22, 2007
- * @see      JDialogBase
+ * @version  April 2, 2008
+ * @see      PlugInAVISkip
  * @see      AlgorithmInterface
  *
  *           
@@ -32,14 +28,20 @@ public class PlugInDialogAVISkip extends JDialogScriptableBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
     
     
-    /** Text field for directory of chesire overlay files. */
-    private JTextField textName;
+    /** Text field for input avi file. */
+    private JTextField inText;
     
-    /** Button to browse for directory of cheshire overlay files. */
+    /** Button to browse for avi file. */
     private JButton browseButton;
     
-    /** handle to ViewUserInterface */
-    private ViewUserInterface UI;
+    /** Text field for output avi file. */
+    private JTextField outText;
+    
+    /** Text field for capture time */
+    private JTextField captureText;
+    
+    /** Text field for skip time */
+    private JTextField skipText;
     
     /** Whether the dialog exited successfully. */
     private boolean successfulExit = false;
@@ -47,9 +49,15 @@ public class PlugInDialogAVISkip extends JDialogScriptableBase {
     /** The AVI skip plugin. */
     private PlugInAVISkip aviSkipPlugin;
     
-    private String fileName = null;
+    private String inputFileName = null;
     
     private String directory = null;
+    
+    private String outputFileName = null;
+    
+    private float captureTime;
+    
+    private float skipTime;
     
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -60,7 +68,7 @@ public class PlugInDialogAVISkip extends JDialogScriptableBase {
     public PlugInDialogAVISkip() { }
 
     /**
-     * Creates new dialog for converting a cheshire overlay file to VOIs.
+     * Creates new dialog selecting an avi file on which only some frames will be read.
      *
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
@@ -68,7 +76,6 @@ public class PlugInDialogAVISkip extends JDialogScriptableBase {
     public PlugInDialogAVISkip(boolean modal, PlugInAVISkip aviSkipPlugin) {
         super(modal);
         this.aviSkipPlugin = aviSkipPlugin;
-        UI = ViewUserInterface.getReference();
         init();
     }
 
@@ -99,9 +106,9 @@ public class PlugInDialogAVISkip extends JDialogScriptableBase {
                 int returnValue = chooser.showOpenDialog(this);
 
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
-                    textName.setText(chooser.getSelectedFile().getAbsolutePath());
-                    textName.setToolTipText(null);
-                    fileName = chooser.getSelectedFile().getName();
+                    inText.setText(chooser.getSelectedFile().getAbsolutePath());
+                    inText.setToolTipText(null);
+                    inputFileName = chooser.getSelectedFile().getName();
                     directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
 
                     Preferences.setImageDirectory(chooser.getCurrentDirectory());
@@ -128,31 +135,26 @@ public class PlugInDialogAVISkip extends JDialogScriptableBase {
     }
 
 
-    /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += textName.getName();    //necessry parameter?
-
-        return str;
-    }
     
-    public String getFileName() {
-        return fileName;
+    
+    public String getInputFileName() {
+        return inputFileName;
     }
     
     public String getDirectory() {
         return directory;
+    }
+    
+    public String getOutputFileName() {
+        return outputFileName;
+    }
+    
+    public float getCaptureTime() {
+        return captureTime;
+    }
+    
+    public float getSkipTime() {
+        return skipTime;
     }
 
     /**
@@ -209,18 +211,14 @@ public class PlugInDialogAVISkip extends JDialogScriptableBase {
         addNotify();
         setTitle("AVI skipped frame file");
 
-        JPanel mainPanel = new JPanel(new GridBagLayout());
-        mainPanel.setForeground(Color.black);
-        mainPanel.setBorder(buildTitledBorder("Select AVI file"));
+        JPanel inputPanel = new JPanel(new GridBagLayout());
+        inputPanel.setForeground(Color.black);
+        inputPanel.setBorder(buildTitledBorder("Select AVI input file"));
 
-        JLabel labelType = new JLabel("AVI file");
-        labelType.setForeground(Color.black);
-        labelType.setFont(serif12);
-
-        textName = new JTextField(30);
-        textName.setText("AVI file name");
-        textName.setFont(serif12);
-        textName.setEnabled(false);
+        inText = new JTextField(30);
+        inText.setText("Input AVI file name");
+        inText.setFont(serif12);
+        inText.setEnabled(false);
 
         browseButton = new JButton("Browse");
         browseButton.setPreferredSize(MipavUtil.defaultButtonSize);
@@ -241,13 +239,61 @@ public class PlugInDialogAVISkip extends JDialogScriptableBase {
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.WEST;
 
-        mainPanel.add(browseButton, gbc);
+        inputPanel.add(browseButton, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        mainPanel.add(textName, gbc);
+        inputPanel.add(inText, gbc);
+        
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        JPanel mainPanel = new JPanel(new GridBagLayout());
+        mainPanel.setForeground(Color.black);
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        gbc2.gridwidth = 2;
+        gbc2.gridheight = 1;
+        gbc2.weightx = 0;
+        gbc2.fill = GridBagConstraints.NONE;
+        gbc2.anchor = GridBagConstraints.WEST;
+        mainPanel.add(inputPanel, gbc2);
+        
+        JLabel outLabel = new JLabel("AVI ouput file name");
+        outLabel.setForeground(Color.black);
+        outLabel.setFont(serif12);
+        gbc2.gridx = 0;
+        gbc2.gridy = 1;
+        gbc2.gridwidth = 1;
+        mainPanel.add(outLabel, gbc2);
+        
+        outText = new JTextField(30);
+        outText.setFont(serif12);
+        gbc2.gridx = 1;
+        mainPanel.add(outText, gbc2);
 
+        JLabel captureLabel = new JLabel("Capture time (sec)");
+        captureLabel.setForeground(Color.black);
+        captureLabel.setFont(serif12);
+        gbc2.gridx = 0;
+        gbc2.gridy = 2;
+        mainPanel.add(captureLabel, gbc2);
+        
+        captureText = new JTextField(10);
+        captureText.setFont(serif12);
+        gbc2.gridx = 1;
+        mainPanel.add(captureText, gbc2);
+        
+        JLabel skipLabel = new JLabel("Skip time (sec)");
+        skipLabel.setForeground(Color.black);
+        skipLabel.setFont(serif12);
+        gbc2.gridx = 0;
+        gbc2.gridy = 3;
+        mainPanel.add(skipLabel, gbc2);
+        
+        skipText = new JTextField(10);
+        skipText.setFont(serif12);
+        gbc2.gridx = 1;
+        mainPanel.add(skipText, gbc2);
         
         getContentPane().add(mainPanel, BorderLayout.CENTER);
 
@@ -276,11 +322,48 @@ public class PlugInDialogAVISkip extends JDialogScriptableBase {
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
-        if (fileName == null) {
+        int index;
+        String tmpStr;
+        if (inputFileName == null) {
             return false;
         }
         
         if (directory == null) {
+            return false;
+        }
+        
+        outputFileName = outText.getText();
+        if (outputFileName == null) {
+            return false;
+        }
+        index = outputFileName.lastIndexOf(".");
+        if (index == -1) {
+            outputFileName = outputFileName + ".avi";
+        }
+        
+        tmpStr = captureText.getText();
+        if (tmpStr == null) {
+            return false;
+        }
+        if (testParameter(tmpStr, 0.01, 100000.0)) {
+            captureTime = Float.valueOf(tmpStr).floatValue();
+        } else {
+            MipavUtil.displayError("capture time must be between 0.01 and 100000.0");
+            captureText.requestFocus();
+            captureText.selectAll();
+            return false;
+        }
+        
+        tmpStr = skipText.getText();
+        if (tmpStr == null) {
+            return false;
+        }
+        if (testParameter(tmpStr, 0.00, 100000.0)) {
+            skipTime = Float.valueOf(tmpStr).floatValue();
+        } else {
+            MipavUtil.displayError("skip time must be between 0.00 and 100000.0");
+            skipText.requestFocus();
+            skipText.selectAll();
             return false;
         }
 
