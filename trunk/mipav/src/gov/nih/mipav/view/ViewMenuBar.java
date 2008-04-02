@@ -583,6 +583,7 @@ public class ViewMenuBar {
     public JMenu makeDiffusionTensorMenu() {
         return menuBuilder.makeMenu("Diffusion Tensor Imaging", true,
                                     new JComponent[] {
+        		menuBuilder.buildMenuItem("Create List File", "createListFile", 0, "open.gif", true),
         		                        menuBuilder.buildMenuItem("Open DTI Framework", "loadDTIFrame", 0, "open.gif", true),
                                         menuBuilder.buildMenuItem("Open Diffusion Weighted Images", "loadDWI", 0, "open.gif", true),
                                         menuBuilder.buildMenuItem("Open Diffusion Tensor Image", "loadDTI", 0, "open.gif", true),
