@@ -182,6 +182,7 @@ public class JDialogFileInfoMincHDF extends JDialogScriptableBase implements Act
         					}
         					rowData[2] = val;
         					model.addRow(rowData);
+        					rowData[0] = "";
         					index++;
         				}
         			}
