@@ -199,6 +199,9 @@ public class FileAvi extends FileBase {
     private int framesToCapture;
     
     private int framesToSkip;
+    
+    private File fileW;
+    private RandomAccessFile raFileW;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -3074,7 +3077,7 @@ public class FileAvi extends FileBase {
         raFile.write(handler);
         writeInt(0, endianess); // dwFlags
 
-        // 0x00000001 AVISF_DISABLED The stram data should be rendered only when
+        // 0x00000001 AVISF_DISABLED The stream data should be rendered only when
         // explicitly enabled.
         // 0x00010000 AVISF_VIDEO_PALCHANGES Indicates that a palette change is included
         // in the AVI file.  This flag warns the playback software that it
@@ -5231,6 +5234,941 @@ public class FileAvi extends FileBase {
     }
     
     public boolean readWriteImage() throws IOException {
+        long LIST1Marker, LISTsubchunkMarker, marker;
+        int loop;
+        long saveLIST1Size;
+        int totalFramesW;
+        long saveLIST1subSize;
+        byte handlerW[];
+        int lengthW;
+        long savestrfSize;
+
+        try {
+            file = new File(fileDir + fileName);
+            raFile = new RandomAccessFile(file, "r");
+            
+            fileW = new File(fileDir + outputFileName);
+            raFileW = new RandomAccessFile(fileW, "rw");
+            // Necessary so that if this is an overwritten file there isn't any
+            // junk at the end
+            raFileW.setLength(0);
+
+            endianess = FileBase.LITTLE_ENDIAN; // false
+            fileInfo = new FileInfoAvi(fileName, fileDir, FileUtility.AVI);
+            fileInfo.setEndianess(endianess);
+
+            int signature = getInt(endianess);
+
+            if (signature == 0x46464952) {
+                // have read RIFF
+            } else {
+                raFile.close();
+                throw new IOException("AVI read header error first 4 bytes = " + signature);
+            }
+            
+            writeIntW(signature, endianess);
+
+            getInt(endianess); // the file size excluding the first 8 bytes
+            
+            saveFileSize = raFileW.getFilePointer();
+            // Bytes 4 thru 7 contain the length of the file.  The length does
+            // not include bytes 0 to 7.
+            writeIntW(0, endianess); // For now write 0 in the file size location
+
+            int RIFFtype = getInt(endianess);
+
+            if (RIFFtype == 0x20495641) {
+                // have read AVI<sp>
+            } else {
+                raFile.close();
+                throw new IOException("AVI read header error bytes 8-11 = " + RIFFtype);
+            }
+            
+            writeIntW(RIFFtype, endianess);
+
+            int CHUNKsignature = getInt(endianess);
+
+            if (CHUNKsignature == 0x5453494C) {
+                // have read LIST for first LIST CHUNK with information on data decoding
+            } else {
+                raFile.close();
+                throw new IOException("AVI read header error bytes 12-15 = " + CHUNKsignature);
+            }
+            
+            // Write the first LIST chunk, which contains information on data decoding
+            writeIntW(CHUNKsignature, endianess);
+
+            int LIST1Size = getInt(endianess); // size of first LIST CHUNK excluding first 8 bytes
+            
+            // Write the length of the LIST CHUNK not including the first 8 bytes with LIST and 
+            // size.  Note that the end of the LIST CHUNK is followed by JUNK.
+            saveLIST1Size = raFileW.getFilePointer();
+            writeIntW(0, endianess); // For now write 0 in the avih sub-chunk size location
+
+            // with CHUNKsignature and LIST1Size
+            LIST1Marker = raFile.getFilePointer();
+
+            int CHUNKtype = getInt(endianess);
+
+            if (CHUNKtype == 0x6C726468) {
+                // have read hdrl
+            } else {
+                raFile.close();
+                throw new IOException("AVI read header error bytes 16-19 = " + CHUNKtype);
+            }
+            
+            // Write the chunk type
+            writeIntW(CHUNKtype, endianess);
+
+            int avihSignature = getInt(endianess); // signature of avih sub-CHUNK
+
+            if (avihSignature == 0x68697661) {
+                // have read avih
+            } else {
+                raFile.close();
+                throw new IOException("AVI read header error bytes 2-23 = " + avihSignature);
+            }
+            
+            // Write the avih sub-CHUNK
+            writeIntW(avihSignature, endianess);
+
+            int avihLength = getInt(endianess); // read the size of the avih sub-CHUNK not
+
+            // including the first 8 bytes for the signature and length
+            if (avihLength == 56) {
+                // avih sub-CHUNK has expected length
+            } else {
+                raFile.close();
+                throw new IOException("AVI read header error avih sub-CHUNK length = " + avihLength);
+            }
+            
+            // Write the length of the avih sub-CHUNK (56) not including
+            // the first 8 bytes for the avihSignature and length
+            writeIntW(56, endianess);
+
+            microSecPerFrame = getInt(endianess);
+
+            // System.err.println("Microsec per frame: " + microSecPerFrame);
+            Preferences.debug("microSecPerFrame = " + microSecPerFrame + "\n");
+            writeIntW(microSecPerFrame, endianess);
+
+            int maxBytesPerSecond = getInt(endianess);
+            Preferences.debug("maxBytesPerSecond = " + maxBytesPerSecond + "\n");
+            writeIntW(maxBytesPerSecond, endianess);
+
+            // System.err.println("Unknown int: " + getInt(endianess));
+            getInt(endianess);
+            writeIntW(0, endianess); // dwReserved1 - Reserved 1 field set to zero
+
+            int flags = getInt(endianess);
+
+            if ((flags & 0x10) != 0) {
+                AVIF_HASINDEX = true;
+            } else {
+                AVIF_HASINDEX = false;
+            }
+
+            if ((flags & 0x20) != 0) {
+                AVIF_MUSTUSEINDEX = true;
+            } else {
+                AVIF_MUSTUSEINDEX = false;
+            }
+
+            if ((flags & 0x100) != 0) {
+                AVIF_ISINTERLEAVED = true;
+                Preferences.debug("AVIF_ISINTERLEAVED = true\n");
+            } else {
+                AVIF_ISINTERLEAVED = false;
+                Preferences.debug("AVIF_ISINTERLEAVED = false\n");
+            }
+
+            if (AVIF_HASINDEX) {
+                Preferences.debug("AVIF_HASINDEX = true\n");
+            } else {
+                Preferences.debug("AVIF_HASINDEX = false\n");
+            }
+
+            if (AVIF_MUSTUSEINDEX) {
+                Preferences.debug("AVIF_MUSTUSEINDEX = true\n");
+            } else {
+                Preferences.debug("AVIF_MUSTUSEINDEX = false\n");
+            }
+
+            if ((flags & 0x800) != 0) {
+                Preferences.debug("AVIF_TRUSTCKTYPE = true\n");
+            } else {
+                Preferences.debug("AVIF_TRUSTCKTYPE = false\n");
+            }
+
+            if ((flags & 0x10000) != 0) {
+                Preferences.debug("AVIF_WASCAPTUREFILE = true\n");
+            } else {
+                Preferences.debug("AVIF_WASCAPTUREFILE = false\n");
+            }
+
+            if ((flags & 0x20000) != 0) {
+                Preferences.debug("AVIF_COPYRIGHTED = true\n");
+            } else {
+                Preferences.debug("AVIF_COPYRIGHTED = false\n");
+            }
+            
+            writeIntW(0x10, endianess); // dwFlags - just set the bit for AVIF_HASINDEX
+
+            int totalFrames = getInt(endianess);
+            fileInfo.setTotalFrames(totalFrames);
+
+            // System.err.println("total frames: " + totalFrames);
+            Preferences.debug("totalFrames = " + totalFrames + "\n");
+            totalFramesW = (totalFrames * framesToCapture)/(framesToCapture + framesToSkip);
+            int remainderFrames = totalFrames % (framesToCapture + framesToSkip);
+            if (remainderFrames > framesToCapture) {
+                remainderFrames = framesToCapture;
+            }
+            totalFramesW += remainderFrames;
+            writeIntW(totalFramesW, endianess);
+
+            // However, many AVI frames will have no data and will just be used to repeat the
+            // previous frames.  So we will need to read thru the data to get the actual number
+            // of frames used in MIPAV before the image is created.  Then a second read thru will
+            // take place to import the data into the image.
+            int initialFrames = getInt(endianess);
+            Preferences.debug("initialFrames = " + initialFrames + "\n");
+            // dwInitinalFrames - Initial frame for interleaved files
+            // Noninterleaved files should specify 0.
+            writeIntW(0, endianess);
+            
+            streams = getInt(endianess);
+            Preferences.debug("Number of streams: " + streams + "\n");
+            // dwStreams - number of streams in the file - here 1 video and zero audio.
+            writeInt(1, endianess);
+
+            int suggestedBufferSize = getInt(endianess);
+            Preferences.debug("suggestedBufferSize = " + suggestedBufferSize + "\n");
+            writeIntW(suggestedBufferSize, endianess);
+            width = getInt(endianess); // xDim
+            Preferences.debug("width = " + width + "\n");
+            writeIntW(width, endianess);
+            height = getInt(endianess); // yDim
+            Preferences.debug("height = " + height + "\n");
+            writeIntW(height, endianess);
+
+            // read 4 reserved integers
+            for (int i = 0; i < 4; i++) {
+                getInt(endianess);
+            }
+            // dwreserved[4] - Microsoft says to set the following 4 values to 0.
+            for (int i = 0; i < 4; i++) {
+                writeIntW(0, endianess);
+            }
+
+            for (loop = 0; loop < streams; loop++) {
+
+                // read the LIST subCHUNK
+                CHUNKsignature = getInt(endianess);
+                
+                if (CHUNKsignature == 0x6E727473) {
+                    // read strn instead of CHUNK
+                    int strnLength = getInt(endianess);
+                    if ((strnLength % 2) == 1) {
+                        strnLength++;
+                    }
+                    byte[] text = new byte[strnLength];
+                    raFile.read(text);
+
+                    if (text[strnLength - 1] != 0) {
+                        raFile.close();
+                        throw new IOException("strn string ends with illegal temination at loop start = " + text[strnLength - 1]);
+                    }
+                    CHUNKsignature = getInt(endianess);
+                } // if (CHUNKSignature == 0x6E727473)
+
+                if (CHUNKsignature == 0x5453494C) {
+                    // have read LIST for LIST subCHUNK with information on data decoding
+                } else {
+                    raFile.close();
+                    throw new IOException("AVI read header error signature first LIST subCHUNK = " + CHUNKsignature);
+                }
+                
+                // Write the Stram line header chunk
+                // Write LIST to the file
+                writeIntW(CHUNKsignature, endianess);
+
+                int LISTsubchunkSize = getInt(endianess); // size of the first LIST subCHUNK not including
+                LISTsubchunkMarker = raFile.getFilePointer();
+                
+                // Write the size of the first LIST subCHUNK not including the first 8 bytes with
+                // LIST and size.  Note that saveLIST1subSize = saveLIST1Size + 76, and that
+                // the length written to saveLIST1subSize is 76 less than the length written to saveLIST1Size.
+                // The end of the first LIST subCHUNK is followed by JUNK.
+                saveLIST1subSize = raFileW.getFilePointer();
+                // For now write 0 in CHUNK size location
+                writeIntW(0, endianess);
+
+                // the first 8 signature and length bytes
+                CHUNKtype = getInt(endianess);
+
+                if (CHUNKtype == 0x6C727473) {
+                    // have read strl
+                } else {
+                    raFile.close();
+                    throw new IOException("AVI read header error no strl in first LIST subCHUNK but = " + CHUNKtype);
+                }
+                
+                // Write the chunk type
+                writeIntW(CHUNKtype, endianess);
+
+                // read the strh subCHUNK
+                int strhSignature = getInt(endianess);
+
+                if (strhSignature == 0x68727473) {
+                    // have read strh
+                } else {
+                    raFile.close();
+                    throw new IOException("AVI read header error no strhSignature found but = " + strhSignature);
+                }
+                writeIntW(strhSignature, endianess);
+
+                int strhLength = getInt(endianess); // length of strh subCHUNK not including first 8
+
+                // signature and length bytes
+                // AVI standard documentation mentioned a minimum length of 56,
+                // but the Windows Media player was observed to play 5 mjpeg
+                // files with strhLength = 48.
+                if (strhLength < 48) {
+                    raFile.close();
+                    throw new IOException("AVI read header error with strhLength = " + strhLength);
+                }
+                
+                // Write the length of the strh sub-CHUNK
+                writeInt(56, endianess);
+
+                int fccType = getInt(endianess);
+
+                if (fccType == 0x73646976) {
+                    // vids read for video stream
+                } else if (streams > 1) {
+                    raFile.seek(LISTsubchunkSize + LISTsubchunkMarker);
+
+                    continue;
+                } else {
+                    raFile.close();
+                    throw new IOException("AVI read header error with fccType = " + fccType);
+                }
+                
+                // fccType - Write the type of data stream - here vids for video stream
+                writeIntW(fccType, endianess);
+
+                int handler = getInt(endianess);
+
+                byte[] handlerByte = new byte[5];
+                handlerByte[0] = (byte) (handler & 0xFF);
+                handlerByte[1] = (byte) ((handler >> 8) & 0xFF);
+                handlerByte[2] = (byte) ((handler >> 16) & 0xFF);
+                handlerByte[3] = (byte) ((handler >> 24) & 0xFF);
+                handlerByte[4] = (byte) 0;
+
+                String handlerString = new String(handlerByte);
+
+                System.err.println("Handler String is: " + handlerString);
+                
+                handlerW = new byte[4];
+
+                if ((handler == 0x20424944 /* DIB<sp> */) || (handler == 0x20424752 /* RGB<sp> */) ||
+                        (handler == 0x20574152 /* RAW<sp> */) || (handler == 0x00000000) ||
+                        (handlerString.startsWith("00dc"))) {
+                    // uncompressed data
+                    handlerW[0] = 68; // D
+                    handlerW[1] = 73; // I
+                    handlerW[2] = 66; // B
+                    handlerW[3] = 32; // space
+                    Preferences.debug("Uncompressed data\n");
+                    compression = 0;
+                } else if (handlerString.toUpperCase().startsWith("MRLE") ||
+                               handlerString.toUpperCase().startsWith("RLE")) {
+                    Preferences.debug("Microsoft run length encoding\n");
+                    /* mrle microsoft run length encoding */
+                    handlerW[0] = 0x6D; // m
+                    handlerW[1] = 0x72; // r
+                    handlerW[2] = 0x6c; // l
+                    handlerW[3] = 0x65; // e
+                    compression = 1;
+                } else if (handlerString.toUpperCase().startsWith("MSVC")) {
+                    Preferences.debug("Microsoft video 1 compression\n");
+                    // Microsoft video 1 compression
+                    doMSVC = true;
+                    // Read in the MSVC, but write out as uncompressed 24 bit color
+                    handlerW[0] = 68; // D
+                    handlerW[1] = 73; // I
+                    handlerW[2] = 66; // B
+                    handlerW[3] = 32; // space
+                    compression = 0;
+                } else {
+                    raFile.close();
+                    throw new IOException("Unrecognized compression handler is " + handlerString);
+                    // tscc is the TechSmith Screen Capture Codec put out by the Techsmith Corporation for use with
+                    // their Camtasia Screen "Camcorder" application.  Camtasia is a Microsoft windows application only.
+                    //  The company has no plans to develop a version for the apple. Could the program be designed to
+                    // use the tscc.exe codec provided by Techsmith?
+                }
+                raFileW.write(handlerW);
+
+                flags = getInt(endianess);
+
+                if ((flags & 0x00000001) != 0) {
+                    raFile.close();
+                    throw new IOException("Cannot presently handle AVISF_DISABLED");
+                }
+
+                if ((flags & 0x00010000) != 0) {
+                    raFile.close();
+                    throw new IOException("Cannot presently handle AVISF_VIDEO_PALCHANGES");
+                }
+                
+                // 0x00000001 AVISF_DISABLED The stream data sould be rendered only when
+                // explicitly enabled.
+                // 0x00010000 AVISF_VIDEO_PALCHANGES Indicates that a palette change is included
+                // in the AVI file.  The flag warns the playback software that it
+                // will need to animate the palette.
+                writeIntW(0, endianess); // dwFlags
+
+                int priority = getInt(endianess);
+                Preferences.debug("priority = " + priority + "\n");
+                // dwPriority - priority of a stream type.  For example, in a file with
+                // multiple audio streams, the one with the highest priority might be the
+                // default one.
+                writeIntW(0, endianess);
+                
+                initialFrames = getInt(endianess);
+
+                if (initialFrames != 0) {
+                    raFile.close();
+                    throw new IOException("initialFrames should be 0 for noninterleaved files");
+                }
+                
+                // dwInitialFrames - Specifies how far audio data is skewed ahead of video
+                // frames in interleaved files.  Typically, this is about 0.75 seconds.  In
+                // interleaved files specify the number of frames in the file prior
+                // to the initial frame of the AVI sequence.
+                // Noninterleaved files should used zero.
+                writeIntW(0, endianess);
+
+                // rate/scale = samples/second
+                scale = getInt(endianess);
+                Preferences.debug("scale = " + scale + "\n");
+
+                // System.err.println("Scale is: " + scale);
+                writeIntW(scale, endianess);
+                rate = getInt(endianess);
+
+                // System.err.println("Rate is: " + rate);
+                Preferences.debug("rate = " + rate + "\n");
+                writeIntW(rate, endianess);
+
+                int start = getInt(endianess);
+                Preferences.debug("start = " + start + "\n");
+                // dwStart - this field is usually set to zero
+                writeIntW(0, endianess);
+
+                int length = getInt(endianess);
+                Preferences.debug("length = " + length + "\n");
+                lengthW = (length * framesToCapture)/(framesToCapture + framesToSkip);
+                remainderFrames = length % (framesToCapture + framesToSkip);
+                if (remainderFrames > framesToCapture) {
+                    remainderFrames = framesToCapture;
+                }
+                lengthW += remainderFrames;
+                // dwLength - set equal to the number of frames
+                writeIntW(lengthW, endianess);
+
+                // System.err.println("DWLength: " + length);
+                suggestedBufferSize = getInt(endianess);
+                Preferences.debug("suggestedBufferSize = " + suggestedBufferSize + "\n");
+                // dwSuggestedBufferSize - suggested buffer size for reading the stream
+                writeIntW(suggestedBufferSize, endianess);
+
+                int quality = getInt(endianess);
+
+                if ((quality > 10000) || (quality < -1)) {
+                    raFile.close();
+                    throw new IOException("quality = " + quality);
+                }
+
+                Preferences.debug("quality = " + quality + "\n");
+                // dwQuality - encoding quality given by an integer between
+                // 0 and 10,000.  If set to -1, drivers use the default
+                // quality value.
+                writeIntW(quality, endianess);
+
+                int sampleSize = getInt(endianess);
+                Preferences.debug("sampleSize = " + sampleSize + "\n");
+                if (compression == 0) {
+                    writeInt(3 * width * height, endianess);
+                }
+                else if (compression == 1) {
+                    writeInt(width * height, endianess);
+                }
+
+                // read destination rectangle within movie rectangle
+                short left = (short) getSignedShort(endianess);
+                Preferences.debug("left = " + left + "\n");
+
+                short top = (short) getSignedShort(endianess);
+                Preferences.debug("top = " + top + "\n");
+
+                short right = (short) getSignedShort(endianess);
+                Preferences.debug("right = " + right + "\n");
+
+                short bottom = (short) getSignedShort(endianess);
+                Preferences.debug("bottom = " + bottom + "\n");
+                // rcFrame - Specifies the destination rectangle for a text or video stream within the movie
+                // rectangle specified by the dwWidth and dwHeight members of the AVI main header structure.
+                // The rcFrame member is typically used in support of multiple video streams.  Set this
+                // rectangle to the coordinates corresponding to the movie rectangle to update the whole
+                // movie rectangle.  Units for this member are pixels.  The upper-left corner of the destination
+                // rectangle is relative to the upper-left corner of the movie rectangle.
+                writeShortW(left, endianess);
+                writeShortW(top, endianess);
+                writeShortW(right, endianess);
+                writeShortW(bottom, endianess);
+
+                if (strhLength > 56) {
+                    byte[] extra = new byte[strhLength - 56];
+                    raFile.read(extra);
+                }
+
+                // read the stream format CHUNK
+                int strfSignature = getInt(endianess);
+
+                if (strfSignature == 0x66727473) {
+                    // read strf
+                } else {
+                    raFile.close();
+                    throw new IOException("strf signature incorrectly read as = " + strfSignature);
+                }
+                
+                // Write the stream formt chunk
+                writeIntW(strfSignature, endianess);
+
+                int strfSize = getInt(endianess);
+                // Write the size of the stream format CHUNK not including the first 8 bytes for
+                // strf and the size.  Note that the end of the stream format CHUNK is followed by
+                // strn.
+                savestrfSize = raFileW.getFilePointer();
+                // For now write 0 in the strf CHUNK size location
+                writeIntW(0, endianess);
+                int BITMAPINFOsize = getInt(endianess);
+
+                if (BITMAPINFOsize > strfSize) {
+                    BITMAPINFOsize = strfSize;
+                }
+
+                if (BITMAPINFOsize < 40) {
+                    raFile.close();
+                    throw new IOException("Cannot handle BITMAPINFO size = " + BITMAPINFOsize);
+                }
+                
+                // biSize - write header size of BITMAPINFO header structure
+                writeIntW(40, endianess);
+
+                width = getInt(endianess);
+                Preferences.debug("width = " + width + "\n");
+                // biWidth - image width in pixels
+                writeIntW(width, endianess);
+                height = getInt(endianess);
+                Preferences.debug("height = " + height + "\n");
+                // biHeight - image height in pixels.  If height is positive,
+                // the bitmap is a bottom up DIB and its origin is in the lower left corner.  If
+                // height is negative, the bitmap is a top-down DIB and its origin is the upper
+                // left corner.  This negative sign feature is supported by the 
+                // Windows Media Player, but it is not
+                // supported by PowerPoint
+                writeIntW(height, endianess);
+
+                short planes = (short) getSignedShort(endianess);
+
+                if (planes != 1) {
+                    raFile.close();
+                    throw new IOException("planes has an incorrect value = " + planes);
+                }
+                // biPlanes - number of color planes in whcih the data is stored
+                writeShortW((short)1, endianess);
+
+                bitCount = (short) getSignedShort(endianess);
+                Preferences.debug("bitCount = " + bitCount + "\n");
+                // biBitCount - number of bits per pixel
+                if (compression == 0) {
+                    writeShortW((short)24, endianess);
+                }
+                else if (compression == 1) {
+                    writeShortW((short)8, endianess);
+                }
+
+                compression = getInt(endianess);
+
+                if (compression == 0) {
+                    Preferences.debug("Compression is BI_RGB\n");
+                    // BI_RGB uncompressed
+                } else if (compression == 1) {
+                    Preferences.debug("Compression is BI_RLE8\n");
+                    // BI_RLE8
+                } else if (compression == 2) {
+
+                    // BI_RLE4
+                    raFile.close();
+                    throw new IOException("Cannot currently handle 4 bit run length encoding");
+                } else if (compression == 3) {
+                    // BI_BITFIELDS
+                    // To allow for arbitrarily packed RGB samples, BI_BITFIELDS specifies a
+                    // mask field for each of the red, green, and blue pixel components.
+                    // These masks indicate the bit positions occupied by each color
+                    // component in a pixel.  In general, the masks are passed to a driver
+                    // or video API using means other than a basic BITMAPINFOHEADER(such
+                    // as using the appropriate fields in a DirectDraw DDPIXELFORMAT
+                    // structure) but it might be valid to append the masks to the end of
+                    // the BITMAPINFOHEADER in much the same way that a palette is appended
+                    // for palettised formats.
+                    //
+                    // For example, 16 bit RGB 5:6:5 can be described using BI_BITFIELDS
+                    // and the following bitmasks:
+
+                    // Red  0xF800 (5 bits of red)
+                    // Green 0x07E0 (6 bits of green)
+                    // Blue  0x001F (5 bits of blue)
+
+                    // In this case, if used with a BITMAPINFOHEADER, the bitmasks are
+                    // u_int16s (16 bit) since the biBitFields field is set to 16.  For
+                    // a 32bpp version, the bitmasks are each u_int32s.
+                    raFile.close();
+                    throw new IOException("Cannot currently handle BI_BITFIELDS compresion");
+                } else if (compression == 1296126531) {
+                    Preferences.debug("compression is Microsoft video 1\n");
+                    doMSVC = true;
+                } else {
+                    raFile.close();
+                    throw new IOException("Unknown compression with value = " + compression);
+                }
+
+                Preferences.debug("compression = " + compression + "\n");
+
+                if (((compression == 0) &&
+                         ((bitCount == 4) || (bitCount == 8) || (bitCount == 16) || (bitCount == 24) || (bitCount == 32))) ||
+                        ((compression == 1) && (bitCount == 8)) || (doMSVC && (bitCount == 8)) ||
+                        (doMSVC && (bitCount == 16))) {
+                    // OK
+                } else {
+                    raFile.close();
+                    throw new IOException("Cannot currently handle bit count = " + bitCount);
+                }
+                
+                // biCompression - type of compression used
+                // 0L for BI_RGB, uncompressed data as bitmap
+                // 1L for BI_RLE8, a run-length encoded(RLE) format for bitmaps
+                // with 8 bits per pixel.  The compression format is a 2-byte
+                // format consisting of a byte count followed by a byte containing
+                // a color index.  In addition, the first byte of the pair can be
+                // set to zero to indicate an escape character that denotes the end
+                // of a line, the end of a bitmap, a delta, or the number of bytes
+                // which follow, each of which contains the color index of a single
+                // pixel, depending on the
+                // value of the second byte of the pair, which can be one of the
+                // following values:
+                // value             meaning
+                // 0                 End of line.
+                // 1                 End of bitmap.
+                // 2                 Delta.  The two bytes following the
+                // escape contain unsigned values indicating
+                // the horizontal and vertical offsets
+                // of the next pixel from the current
+                // position.
+                // 3-255             number of bytes that folow, each of which
+                // contains the color index of a single pixel
+                // Must be padded if an odd value so that it
+                // ends on a word boundary.
+                // 2L for BI_RLE4, a RLE format for bits with 4 bits per pixel.
+                // The compression format is a 2-byte format consisting of a count
+                // byte followed by two word-length color indexes.
+                // 3L for BI_BITFIELDS, specifies that the bitmap is not compressed
+                // and that the color table consists of three DWORD color masks
+                // that specify the red, green, and blue components, respectively,
+                // of each pixel.  This is valid when used with 16- and 32-bit-
+                // per-pixel bitmaps.
+                writeIntW(compression, endianess);
+
+                int imageSize = getInt(endianess);
+                Preferences.debug("imageSize = " + imageSize + "\n");
+                // biSizeImage - specifies the size in bytes of the image frame.  This can be
+                // set to zero for uncompressed RGB bitmaps.
+                if (compression == 0) {
+                    writeIntW(3 * width * height, endianess);
+                }
+                else if (compression == 1) {
+                    writeIntW(width * height, endianess);
+                }
+
+                float[] imgResols = new float[5];
+                imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = 1.0f;
+
+                int xPixelsPerMeter = getInt(endianess);
+                Preferences.debug("xPixelsPerMeter = " + xPixelsPerMeter + "\n");
+
+                // System.err.println("xPixelsPerMeter = " + xPixelsPerMeter);
+                if (xPixelsPerMeter > 0) {
+                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
+                    imgResols[0] = (1.0f / xPixelsPerMeter) * 1000.0f;
+                }
+
+                int yPixelsPerMeter = getInt(endianess);
+                Preferences.debug("yPixelsPerMeter = " + yPixelsPerMeter + "\n");
+
+                // System.err.println("yPixelsPerMeter = " + yPixelsPerMeter);
+                if (yPixelsPerMeter > 0) {
+                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
+                    imgResols[1] = (1.0f / yPixelsPerMeter) * 1000.0f;
+                }
+
+                imgResols[2] = microSecPerFrame;
+
+                // System.err.println("Microseconds per frame (on read): " + microSecPerFrame);
+                fileInfo.setUnitsOfMeasure(FileInfoBase.MICROSEC, 2);
+                fileInfo.setResolutions(imgResols);
+
+                int colorsUsed = getInt(endianess);
+                Preferences.debug("colorsUsed = " + colorsUsed + "\n");
+
+                if ((compression == 0) && ((bitCount == 24) || (bitCount == 32)) && (colorsUsed != 0)) {
+                    raFile.close();
+                    throw new IOException("For 24 and 32 bit uncompressed data software does not currently support colorsUsed = " +
+                                          colorsUsed);
+                }
+
+                if ((bitCount == 8) && (colorsUsed == 0)) {
+                    colorsUsed = 8;
+                }
+
+                int colorsImportant = getInt(endianess);
+                Preferences.debug("colorsImportant = " + colorsImportant + "\n");
+
+                if (BITMAPINFOsize > 40) {
+                    byte[] extra = new byte[BITMAPINFOsize - 40];
+                    raFile.read(extra);
+                }
+
+                if (bitCount == 4) {
+
+                    // read the color table into a LUT
+                    int[] dimExtentsLUT = new int[2];
+                    dimExtentsLUT[0] = 4;
+                    dimExtentsLUT[1] = 256;
+
+                    // FileIO obtains via getModelLUT.
+                    // Then, ViewOpenFileUI obtains from FileIO via getModelLUT.
+                    LUTa = new ModelLUT(ModelLUT.GRAY, colorsUsed, dimExtentsLUT);
+                    lutBuffer = new byte[4 * colorsUsed];
+                    raFile.read(lutBuffer);
+
+                    for (int i = 0; i < colorsUsed; i++) {
+                        LUTa.set(0, i, 1.0f); // alpha
+                        LUTa.set(1, i, (lutBuffer[(4 * i) + 2] & 0x000000ff)); // red
+                        LUTa.set(2, i, (lutBuffer[(4 * i) + 1] & 0x000000ff)); // green
+                        LUTa.set(3, i, (lutBuffer[4 * i] & 0x000000ff)); // blue
+                    } // for (i = 0; i < colorsUsed; i++)
+
+                    for (int i = colorsUsed; i < 256; i++) {
+                        LUTa.set(0, i, 1.0f);
+                        LUTa.set(1, i, 0);
+                        LUTa.set(2, i, 0);
+                        LUTa.set(3, i, 0);
+                    } // for (i = colorsUsed; i < 256; i++)
+
+                    LUTa.makeIndexedLUT(null);
+                } // if (bitCount == 4)
+                else if (bitCount == 8) {
+
+                    // read the color table into a LUT
+                    int[] dimExtentsLUT = new int[2];
+                    dimExtentsLUT[0] = 4;
+                    dimExtentsLUT[1] = 256;
+
+                    // FileIO obtains via getModelLUT.
+                    // Then, ViewOpenFileUI obtains from FileIO via getModelLUT.
+                    LUTa = new ModelLUT(ModelLUT.GRAY, colorsUsed, dimExtentsLUT);
+                    lutBuffer = new byte[4 * colorsUsed];
+                    raFile.read(lutBuffer);
+
+                    for (int i = 0; i < colorsUsed; i++) {
+                        LUTa.set(0, i, 1.0f); // alpha
+                        LUTa.set(1, i, (lutBuffer[(4 * i) + 2] & 0x000000ff)); // red
+                        LUTa.set(2, i, (lutBuffer[(4 * i) + 1] & 0x000000ff)); // green
+                        LUTa.set(3, i, (lutBuffer[4 * i] & 0x000000ff)); // blue
+                    } // for (i = 0; i < colorsUsed; i++)
+
+                    for (int i = colorsUsed; i < 256; i++) {
+                        LUTa.set(0, i, 1.0f);
+                        LUTa.set(1, i, 0);
+                        LUTa.set(2, i, 0);
+                        LUTa.set(3, i, 0);
+                    } // for (i = colorsUsed; i < 256; i++)
+
+                    LUTa.makeIndexedLUT(null);
+                } // else if (bitCount == 8)
+
+                // Calculate the number of strf CHUNK bytes after the end of BITMAPINFO
+                int strfEndBytes = strfSize - BITMAPINFOsize;
+
+                if ((bitCount == 4) ||(bitCount == 8)) {
+                    strfEndBytes = strfEndBytes - (4 * colorsUsed);
+                }
+
+                for (int i = 0; i < strfEndBytes; i++) {
+                    raFile.readUnsignedByte();
+                }
+            } // for (loop = 0; loop < streams; loop++)
+
+            marker = raFile.getFilePointer();
+
+            if (marker < (LIST1Marker + LIST1Size)) {
+
+                // read strn subCHUNK
+                int strnSignature = getInt(endianess);
+
+                if (strnSignature == 0x6E727473) {
+                    int strnLength = getInt(endianess);
+                    if ((strnLength % 2) == 1) {
+                        strnLength++;
+                    }
+                    byte[] text = new byte[strnLength];
+                    raFile.read(text);
+
+                    if (text[strnLength - 1] != 0) {
+                        raFile.close();
+                        throw new IOException("strn string ends with illegal temination = " + text[strnLength - 1]);
+                    }
+                } // if (strnSignature == 0x6E727473)
+                else if (strnSignature == 0x4B4E554A) {
+
+                    // have read JUNK for a JUNK padding CHUNK
+                    int JUNKlength = getInt(endianess);
+                    marker = raFile.getFilePointer();
+                    raFile.seek(marker + JUNKlength);
+                    CHUNKsignature = getInt(endianess);
+
+                    if (CHUNKsignature != 0x5453494C) {
+                        raFile.close();
+                        throw new IOException("After JUNK CHUNK unexpected signature = " + CHUNKsignature);
+                    }
+                } // else if (strnSignature == 0x4B4E554A)
+                else if (strnSignature == 0x54465349) {
+
+                    // have read ISFT
+                    int ISFTlength = getInt(endianess);
+                    if ((ISFTlength % 2) == 1) {
+                        ISFTlength++;
+                    }
+                    marker = raFile.getFilePointer();
+                    raFile.seek(marker + ISFTlength);
+                } // else if (strnSignature == 0x54465349)
+                else if (strnSignature == 0x74646576) {
+
+                    // have read vedt
+                    int vedtLength = getInt(endianess);
+                    byte[] vedt = new byte[vedtLength];
+                    raFile.read(vedt);
+                } else {
+                    raFile.close();
+                    throw new IOException("strn signature is an erroneous = " + strnSignature);
+                }
+            }
+
+            raFile.seek(LIST1Marker + LIST1Size);
+            signature = getInt(endianess);
+
+            if (signature == 0x4B4E554A) {
+
+                // have read JUNK for a JUNK padding CHUNK
+                int JUNKlength = getInt(endianess);
+                marker = raFile.getFilePointer();
+                raFile.seek(marker + JUNKlength);
+                CHUNKsignature = getInt(endianess);
+
+                if (CHUNKsignature != 0x5453494C) {
+                    raFile.close();
+                    throw new IOException("After JUNK CHUNK unexpected signature = " + CHUNKsignature);
+                }
+            } else if (signature != 0x5453494C) {
+                raFile.close();
+                throw new IOException("After first LIST CHUNK unexpected signature = " + signature);
+            }
+
+            // At this point have read LIST for the second LIST CHUNK which contains the actual data.
+            LIST2Size = getInt(endianess);
+            moviPosition = raFile.getFilePointer();
+            idx1Position = moviPosition + LIST2Size;
+            raFile.seek(idx1Position + 4);
+            indexSize = getInt(endianess);
+            raFile.seek(moviPosition);
+            indexPointer = idx1Position + 8;
+            CHUNKtype = getInt(endianess);
+
+            if (CHUNKtype != 0x69766F6D) {
+
+                // have not read movi
+                raFile.close();
+                throw new IOException("CHUNK type in second LIST CHUNK is an illegal = " + CHUNKtype);
+            }
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            throw error;
+        }
         return true;    
+    }
+    
+    /**
+     * Writes an int as four bytes to a file.
+     *
+     * @param      data       Data to be written to file.
+     * @param      bigEndian  <code>true</code> indicates big endian byte order, <code>false</code> indicates little
+     *                        endian.
+     *
+     * @exception  IOException  if there is an error writing the file
+     */
+    public final void writeIntW(int data, boolean bigEndian) throws IOException {
+        byte[] buffer = new byte[4];
+
+        if (bigEndian) {
+            buffer[0] = (byte) (data >>> 24);
+            buffer[1] = (byte) (data >>> 16);
+            buffer[2] = (byte) (data >>> 8);
+            buffer[3] = (byte) (data & 0xff);
+        } else {
+            buffer[0] = (byte) (data & 0xff);
+            buffer[1] = (byte) (data >>> 8);
+            buffer[2] = (byte) (data >>> 16);
+            buffer[3] = (byte) (data >>> 24);
+        }
+
+        raFileW.write(buffer);
+    }
+    
+    /**
+     * Writes a short as two bytes to a file.
+     *
+     * @param      data       Data to be written to file.
+     * @param      bigEndian  <code>true</code> indicates big endian byte order, <code>false</code> indicates little
+     *                        endian.
+     *
+     * @exception  IOException  if there is an error writing the file
+     */
+    public final void writeShortW(short data, boolean bigEndian) throws IOException {
+        byte[] buffer = new byte[2];
+
+        if (bigEndian) {
+            buffer[0] = (byte) (data >>> 8);
+            buffer[1] = (byte) (data & 0xff);
+        } else {
+            buffer[0] = (byte) (data & 0xff);
+            buffer[1] = (byte) (data >>> 8);
+        }
+
+        raFileW.write(buffer);
     }
 }
