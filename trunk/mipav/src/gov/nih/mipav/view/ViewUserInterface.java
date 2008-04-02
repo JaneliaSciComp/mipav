@@ -717,6 +717,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             new JDialogDTIInput( JDialogDTIInput.EG_FA );
         } else if (command.equals("loadDTIFrame")) {
         	invokeDTIframe();
+        } else if (command.equals("createListFile")) {
+            new JDialogDTICreateListFile();
         }
 
     }
