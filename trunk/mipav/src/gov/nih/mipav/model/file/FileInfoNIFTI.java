@@ -1,12 +1,15 @@
 package gov.nih.mipav.model.file;
 
 
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.dialogs.JDialogEditor;
+import gov.nih.mipav.view.dialogs.JDialogFileInfo;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
-
-import java.util.*;
+import java.util.Vector;
 
 
 /**
@@ -522,8 +525,8 @@ public class FileInfoNIFTI extends FileInfoBase {
             dialog.appendPrimaryData("Max blue", Double.toString(getMaxB()));
 
         } else {
-            dialog.appendPrimaryData("Min", Double.toString(getMin()));
-            dialog.appendPrimaryData("Max", Double.toString(getMax()));
+            dialog.appendPrimaryData("Min", Double.toString(getMin()) + ":" + getMinLoc().toString());
+            dialog.appendPrimaryData("Max", Double.toString(getMax()) + ":" + getMaxLoc().toString());
         }
 
         dialog.appendPrimaryData("Modality", FileInfoBase.getModalityStr(getModality()));
