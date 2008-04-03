@@ -196,12 +196,16 @@ public class FileAvi extends FileBase {
     
     private String outputFileName;
     
-    private int framesToCapture;
+    private float captureTime;
     
-    private int framesToSkip;
+    private float skipTime;
     
     private File fileW;
     private RandomAccessFile raFileW;
+    
+    private int framesToCapture;
+    
+    private int framesToSkip;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -220,12 +224,12 @@ public class FileAvi extends FileBase {
         this.fileDir = fileDir;
     }
     
-    public void setFramesToCapture(int framesToCapture) {
-        this.framesToCapture = framesToCapture;
+    public void setCaptureTime(float captureTime) {
+        this.captureTime = captureTime;
     }
     
-    public void setFramesToSkip(int framesToSkip) {
-        this.framesToSkip = framesToSkip;
+    public void setSkipTime(float skipTime) {
+        this.skipTime = skipTime;
     }
     
     public void setOutputFileName(String outputFileName) {
@@ -3675,7 +3679,7 @@ public class FileAvi extends FileBase {
      *
      * @throws  IOException  DOCUMENT ME!
      */
-    public int readHeader() throws IOException {
+    private int readHeader() throws IOException {
         long LIST1Marker, LISTsubchunkMarker, marker;
         int loop;
 
@@ -5242,6 +5246,7 @@ public class FileAvi extends FileBase {
         byte handlerW[];
         int lengthW;
         long savestrfSize;
+        float secPerFrame;
 
         try {
             file = new File(fileDir + fileName);
@@ -5351,6 +5356,12 @@ public class FileAvi extends FileBase {
             // System.err.println("Microsec per frame: " + microSecPerFrame);
             Preferences.debug("microSecPerFrame = " + microSecPerFrame + "\n");
             writeIntW(microSecPerFrame, endianess);
+            
+            secPerFrame = 1.0E-6F * microSecPerFrame;
+            framesToCapture = Math.max(1, Math.round(captureTime/secPerFrame));
+            Preferences.debug("Frames to capture = " + framesToCapture + "\n");
+            framesToSkip = Math.round(skipTime/secPerFrame);
+            Preferences.debug("Frames to skip = " + framesToSkip + "\n");
 
             int maxBytesPerSecond = getInt(endianess);
             Preferences.debug("maxBytesPerSecond = " + maxBytesPerSecond + "\n");
@@ -5392,6 +5403,11 @@ public class FileAvi extends FileBase {
                 Preferences.debug("AVIF_MUSTUSEINDEX = true\n");
             } else {
                 Preferences.debug("AVIF_MUSTUSEINDEX = false\n");
+            }
+            
+            if (AVIF_HASINDEX && (!AVIF_MUSTUSEINDEX)) {
+                AVIF_MUSTUSEINDEX = true;
+                Preferences.debug("Changing AVIF_MUSTUSEINDEX from false to true for fast skipping\n");
             }
 
             if ((flags & 0x800) != 0) {
@@ -5663,6 +5679,15 @@ public class FileAvi extends FileBase {
                 // System.err.println("Rate is: " + rate);
                 Preferences.debug("rate = " + rate + "\n");
                 writeIntW(rate, endianess);
+                
+                float samplesPerSecond = (float)rate/(float)scale;
+                Preferences.debug("Samples per second = " + samplesPerSecond + "\n");
+                if (Math.abs(((1.0/samplesPerSecond) - secPerFrame)/secPerFrame) < 0.01) {
+                    Preferences.debug("Frame times from 1.0E-6*microSecPerFrame and scale/rate match\n");
+                }
+                else {
+                    Preferences.debug("Frame times from 1.0E-6*microSecPerFrame and scale/rate don't match");
+                }
 
                 int start = getInt(endianess);
                 Preferences.debug("start = " + start + "\n");
