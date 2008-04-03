@@ -15,9 +15,6 @@ import java.io.*;
 import java.util.*;
 
 
-/**
- * DOCUMENT ME!
- */
 public class SRBUtility {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -29,13 +26,13 @@ public class SRBUtility {
      *
      * @return  the list of the file names.
      */
-    public static List converToFileNameList(String fileNames) {
+    public static List<String> converToFileNameList(String fileNames) {
 
         if ((fileNames == null) || (fileNames.length() == 0)) {
             return null;
         }
 
-        Vector newFileNameList = null;
+        Vector<String> newFileNameList = null;
 
         if (fileNames.indexOf(",") >= 0) {
             String[] fns = fileNames.split(",");
@@ -44,14 +41,14 @@ public class SRBUtility {
                 return null;
             }
 
-            newFileNameList = new Vector(fns.length);
+            newFileNameList = new Vector<String>(fns.length);
 
             for (int i = 0; i < fns.length; i++) {
                 newFileNameList.add(fns[i]);
             }
 
         } else {
-            newFileNameList = new Vector(1);
+            newFileNameList = new Vector<String>(1);
             newFileNameList.add(fileNames);
         }
 
@@ -169,7 +166,7 @@ public class SRBUtility {
             return null;
         }
 
-        Vector completeFileList = new Vector(sourceFiles.length);
+        Vector<GeneralFile> completeFileList = new Vector<GeneralFile>(sourceFiles.length);
 
         for (int i = 0; i < sourceFiles.length; i++) {
             completeFileList.add(sourceFiles[i]);
@@ -198,7 +195,7 @@ public class SRBUtility {
      *
      * @return  an array of the GeneralFile.
      */
-    public static GeneralFile[] createFiles(GeneralFileSystem fileSystem, Vector fileNameList) {
+    public static GeneralFile[] createFiles(GeneralFileSystem fileSystem, Vector<String> fileNameList) {
 
         if ((fileSystem == null) || (fileNameList == null)) {
             return null;
@@ -208,7 +205,7 @@ public class SRBUtility {
         GeneralFile[] newFiles = new GeneralFile[n];
 
         for (int i = 0; i < n; i++) {
-            newFiles[i] = FileFactory.newFile(fileSystem, (String) fileNameList.get(i));
+            newFiles[i] = FileFactory.newFile(fileSystem, fileNameList.get(i));
         }
 
         return newFiles;
@@ -394,12 +391,12 @@ public class SRBUtility {
         /**
          * Creates the local temporary file list.
          */
-        List fileNameList = getFileNameList(image);
+        List<String> fileNameList = getFileNameList(image);
 
-        Vector sourceFileList = new Vector();
+        Vector<GeneralFile> sourceFileList = new Vector<GeneralFile>();
 
         for (int i = 0; i < fileNameList.size(); i++) {
-            sourceFileList.add(FileFactory.newFile(localTempDir, (String) fileNameList.get(i)));
+            sourceFileList.add(FileFactory.newFile(localTempDir, FileUtility.getFileName(fileNameList.get(i))));
         }
 
         /**
@@ -446,7 +443,7 @@ public class SRBUtility {
      *
      * @return  the actual file name list.
      */
-    public static List getFileNameList(ModelImage image) {
+    public static List<String> getFileNameList(ModelImage image) {
 
         if (image == null) {
             return null;
@@ -460,105 +457,140 @@ public class SRBUtility {
 
         FileInfoBase fileInfo = fileInfoList[0];
         int fileFormat = fileInfo.getFileFormat();
-        Vector fileNameList = null;
+        Vector<String> fileNameList = null;
 
         switch (fileFormat) {
 
-            /** Ill defined file type.              */
+            /* Ill defined file type.              */
             case FileUtility.ERROR:
                 return null;
 
-            /** Undefined file type.                */
+            /* Undefined file type.                */
             case FileUtility.UNDEFINED:
                 return null;
 
-            /** Not presently implemented.          */
+            /* Not presently implemented.          */
             case FileUtility.MIPAV:
                 return null;
 
-            /** RAW image data, no header.          */
+            /* RAW image data, no header.          */
             case FileUtility.RAW:
-                return null;
-
-            /** TIFF file; tagged header            */
-            case FileUtility.TIFF:
-                return null;
-
-            /** VOI file, used to read VOIs.        */
-            case FileUtility.VOI_FILE:
-                return null;
-
-            /** Analyze format (Mayo).              */
-            case FileUtility.ANALYZE:
-
-            /** NIFTI format */
-            case FileUtility.NIFTI:
-                fileNameList = new Vector();
-
-                String imgFileName = fileInfo.getFileName();
-                String hdrFileName = imgFileName.replaceFirst(".img", ".hdr");
-                fileNameList.add(fileInfo.getFileDirectory() + File.separator + hdrFileName);
-                fileNameList.add(fileInfo.getFileDirectory() + File.separator + imgFileName);
-
+        	fileNameList = new Vector<String>();
+                fileNameList.add(fileInfo.getFileDirectory() + File.separator + fileInfo.getFileName());
                 return fileNameList;
 
-            /** Digital Imaging and COmmunications in Medicine file type.
-             * Fully implemented versions 2 & 3.   */
-            case FileUtility.DICOM:
-                fileNameList = new Vector();
+            /* TIFF file; tagged header            */
+            case FileUtility.TIFF:
+        	fileNameList = new Vector<String>();
                 for (int i = 0; i < fileInfoList.length; i++) {
                     fileNameList.add(fileInfo.getFileDirectory() + File.separator + fileInfoList[i].getFileName());
                 }
 
                 return fileNameList;
 
-            /** Medvision file type.                */
+            /* VOI file, used to read VOIs.        */
+            case FileUtility.VOI_FILE:
+                return null;
+
+            /* Analyze format (Mayo).              */
+            case FileUtility.ANALYZE:
+
+            /* NIFTI format */
+            case FileUtility.NIFTI:
+                fileNameList = new Vector<String>();
+
+                if (fileInfo.getFileName().toLowerCase().endsWith(".nii")) {
+                    fileNameList.add(fileInfo.getFileDirectory() + File.separator + fileInfo.getFileName());
+                } else {
+                    String imgFileName = fileInfo.getFileName();
+                    String hdrFileName = imgFileName.replaceFirst(".img", ".hdr");
+                    fileNameList.add(fileInfo.getFileDirectory() + File.separator + hdrFileName);
+                    fileNameList.add(fileInfo.getFileDirectory() + File.separator + imgFileName);
+                }
+
+                return fileNameList;
+
+            /* Digital Imaging and COmmunications in Medicine file type.
+             * Fully implemented versions 2 & 3.   */
+            case FileUtility.DICOM:
+                fileNameList = new Vector<String>();
+                for (int i = 0; i < fileInfoList.length; i++) {
+                    fileNameList.add(fileInfo.getFileDirectory() + File.separator + fileInfoList[i].getFileName());
+                }
+
+                return fileNameList;
+
+            /* Medvision file type.                */
             case FileUtility.MEDIVISION:
                 return null;
 
-            /** Benes Trus special file type.       */
+            /* Benes Trus special file type.       */
             case FileUtility.MAP:
                 return null;
 
-            /** Java Image Manangement Interface file type. */
+            /* Java Image Manangement Interface file type. */
             case FileUtility.JIMI:
                 return null;
 
-            /** Multiple files of TIFF images.      */
+            /* Multiple files of TIFF images.      */
             case FileUtility.TIFF_MULTIFILE:
-                return null;
+        	fileNameList = new Vector<String>();
+                for (int i = 0; i < fileInfoList.length; i++) {
+                    fileNameList.add(fileInfo.getFileDirectory() + File.separator + fileInfoList[i].getFileName());
+                }
 
-            /** MINC file type.  MINC is a medical imaging oriented extension
+                return fileNameList;
+
+            /* MINC file type.  MINC is a medical imaging oriented extension
              * of the NetCDF file format. NetCDF stands for `Network Common Data Form'.  */
             case FileUtility.MINC:
-                fileNameList = new Vector();
+                fileNameList = new Vector<String>();
                 fileNameList.add(fileInfo.getFileDirectory() + File.separator + fileInfo.getFileName());
 
                 return fileNameList;
 
-            /** AVI file type.  Windows Media.*/
+            /* AVI file type.  Windows Media.*/
             case FileUtility.AVI:
                 return null;
 
-            /** Multiple files of type analyze.     */
+            /* Multiple files of type analyze.     */
             case FileUtility.ANALYZE_MULTIFILE:
-                return null;
+        	
+            /* NIFTI multi-file format */
+            case FileUtility.NIFTI_MULTIFILE:
+        	fileNameList = new Vector<String>();
+        	
+        	if (fileInfoList[0].getFileName().toLowerCase().endsWith(".nii")) {
+        	    for (int i = 0; i < fileInfoList.length; i++) {
+        		fileNameList.add(fileInfo.getFileDirectory() + File.separator + fileInfoList[i].getFileName());
+        	    }
+                } else {
+                    for (int i = 0; i < fileInfoList.length; i++) {
+                	String imgFileName = fileInfoList[i].getFileName();
+                	String hdrFileName = imgFileName.replaceFirst(".img", ".hdr");
+                	
+                	fileNameList.add(fileInfo.getFileDirectory() + File.separator + hdrFileName);
+                	fileNameList.add(fileInfo.getFileDirectory() + File.separator + imgFileName);
+                    }
+                }
 
-            /** Quicktime file type.            */
+                return fileNameList;
+
+            /* Quicktime file type.            */
             case FileUtility.QT:
                 return null;
 
-            /** Cheshire file type (a kind of Analyze).*/
+            /* Cheshire file type (a kind of Analyze).*/
             case FileUtility.CHESHIRE:
                 return null;
 
-            /** Cheshire overlay file type.  Contains VOIs. */
+            /* Cheshire overlay file type.  Contains VOIs. */
             case FileUtility.CHESHIRE_OVERLAY:
                 return null;
 
-            /** AFNI file type. */
+            /* AFNI file type. */
             case FileUtility.AFNI:
-                fileNameList = new Vector();
+                fileNameList = new Vector<String>();
 
                 String headFileName = fileInfo.getFileName();
                 String brikFileName = headFileName.replaceFirst(".HEAD", ".BRIK");
@@ -567,61 +599,76 @@ public class SRBUtility {
 
                 return fileNameList;
 
-            /** FITS file type. */
+            /* FITS file type. */
             case FileUtility.FITS:
                 return null;
 
-            /** MetaMorph Stack (STK) file type. */
+            /* MetaMorph Stack (STK) file type. */
             case FileUtility.STK:
                 return null;
 
-            /** Siemens MAGNETOM VISION */
+            /* Siemens MAGNETOM VISION */
             case FileUtility.MAGNETOM_VISION:
-                return null;
+        	fileNameList = new Vector<String>();
+                for (int i = 0; i < fileInfoList.length; i++) {
+                    fileNameList.add(fileInfo.getFileDirectory() + File.separator + fileInfoList[i].getFileName());
+                }
 
-            /** GE Genesis 5X and LX */
+                return fileNameList;
+
+            /* GE Genesis 5X and LX */
             case FileUtility.GE_GENESIS:
-                return null;
+        	fileNameList = new Vector<String>();
+                for (int i = 0; i < fileInfoList.length; i++) {
+                    fileNameList.add(fileInfo.getFileDirectory() + File.separator + fileInfoList[i].getFileName());
+                }
 
-            /** MRC file format used by IMOD */
+                return fileNameList;
+
+            /* MRC file format used by IMOD */
             case FileUtility.MRC:
                 return null;
 
-            /** Interfile file format used in Nuclear Medicine */
+            /* Interfile file format used in Nuclear Medicine */
             case FileUtility.INTERFILE:
                 return null;
 
-            /** Micro CT format for small animal imaging */
+            /* Micro CT format for small animal imaging */
             case FileUtility.MICRO_CAT:
                 return null;
 
-            /** RAW MULTIFLE image data, no header. */
+            /* RAW MULTIFLE image data, no header. */
             case FileUtility.RAW_MULTIFILE:
-                return null;
+        	fileNameList = new Vector<String>();
+                for (int i = 0; i < fileInfoList.length; i++) {
+                    fileNameList.add(fileInfo.getFileDirectory() + File.separator + fileInfoList[i].getFileName());
+                }
 
-            /** Used by the Zeiss LSM 510 Dataserver */
+                return fileNameList;
+
+            /* Used by the Zeiss LSM 510 Dataserver */
             case FileUtility.LSM:
                 return null;
 
-            /** Used by the Zeiss LSM 510 Dataserver */
+            /* Used by the Zeiss LSM 510 Dataserver */
             case FileUtility.LSM_MULTIFILE:
                 return null;
 
-            /** Used by the Bio-Rad Pic format */
+            /* Used by the Bio-Rad Pic format */
             case FileUtility.BIORAD:
                 return null;
 
-            /** Used by FreeSurfer software */
+            /* Used by FreeSurfer software */
             case FileUtility.COR:
                 return null;
 
-            /** Bruker file format */
+            /* Bruker file format */
             case FileUtility.BRUKER:
                 return null;
 
-            /** MIPAV XML file format */
+            /* MIPAV XML file format */
             case FileUtility.XML:
-                fileNameList = new Vector();
+                fileNameList = new Vector<String>();
 
                 String xmlFileName = fileInfo.getFileName();
                 String rawFileName = ((FileInfoXML) fileInfo).getImageDataFileName();
@@ -630,20 +677,26 @@ public class SRBUtility {
 
                 return fileNameList;
 
-            /** MIPAV XML file format */
+            /* MIPAV XML file format */
             case FileUtility.XML_MULTIFILE:
-                return null;
+        	fileNameList = new Vector<String>();
+        	
+        	for (int i = 0; i < fileInfoList.length; i++) {
+        	    xmlFileName = fileInfoList[i].getFileName();
+        	    rawFileName = ((FileInfoXML) fileInfoList[i]).getImageDataFileName();
+        	    
+                    fileNameList.add(fileInfo.getFileDirectory() + File.separator + xmlFileName);
+                    fileNameList.add(fileInfo.getFileDirectory() + File.separator + rawFileName);
+                }
 
-            /** SPM file format */
+                return fileNameList;
+
+            /* SPM file format */
             case FileUtility.SPM:
                 return null;
 
-            /** MIPAV project format */
+            /* MIPAV project format */
             case FileUtility.PROJECT:
-                return null;
-
-            /** NIFTI multi-file format */
-            case FileUtility.NIFTI_MULTIFILE:
                 return null;
 
             /* Image Cytometry Standard */
@@ -658,12 +711,12 @@ public class SRBUtility {
             case FileUtility.OSM:
                 return null;
 
-            /** MIPAV Surface XML file format */
+            /* MIPAV Surface XML file format */
             case FileUtility.SURFACE_XML:
                 return null;
 
-            /** Gatan's Digital Micrograph version 3 file format */
-            case FileUtility.DM3: /** Image modality unknown. */
+            /* Gatan's Digital Micrograph version 3 file format */
+            case FileUtility.DM3: /* Image modality unknown. */
                 return null;
         }
 
@@ -715,12 +768,12 @@ public class SRBUtility {
             return null;
         }
 
-        /**
+        /*
          * Gets the extension of the selected file.
          */
         String extension = getExtension(sourceFile.getName());
 
-        /**
+        /*
          * According to the file type, determines what other files should be added into the file list.
          */
         GeneralFile partnerFile = null;
@@ -811,7 +864,7 @@ public class SRBUtility {
             return null;
         }
 
-        Vector primaryFileList = new Vector();
+        Vector<GeneralFile> primaryFileList = new Vector<GeneralFile>();
         boolean dicomAdded = false;
 
         for (int i = 0; i < sourceFiles.length; i++) {
@@ -823,7 +876,7 @@ public class SRBUtility {
             } else if (extension.equals("dcm") && !dicomAdded) {
                 primaryFileList.add(sourceFiles[i]);
                 dicomAdded = true;
-            }else{
+            } else {
                 primaryFileList.add(sourceFiles[i]);
             }
         }
@@ -831,7 +884,7 @@ public class SRBUtility {
         GeneralFile[] primaryFiles = new GeneralFile[primaryFileList.size()];
 
         for (int i = 0; i < primaryFiles.length; i++) {
-            primaryFiles[i] = (GeneralFile) primaryFileList.get(i);
+            primaryFiles[i] = primaryFileList.get(i);
         }
 
         return primaryFiles;
@@ -844,7 +897,7 @@ public class SRBUtility {
      *
      * @return  the GeneralFile array.
      */
-    public static GeneralFile[] list2Array(List fileList) {
+    public static GeneralFile[] list2Array(List<GeneralFile> fileList) {
 
         if (fileList == null) {
             return null;
@@ -853,7 +906,7 @@ public class SRBUtility {
         GeneralFile[] files = new GeneralFile[fileList.size()];
 
         for (int i = 0; i < fileList.size(); i++) {
-            files[i] = (GeneralFile) fileList.get(i);
+            files[i] = fileList.get(i);
         }
 
         return files;
@@ -951,7 +1004,7 @@ public class SRBUtility {
      * @param  file      the given file or directory.
      * @param  fileList  the file list which stores all files included in the <code>file</code> and its subdirectory.
      */
-    public static void retrieveFileList(GeneralFile file, List fileList) {
+    public static void retrieveFileList(GeneralFile file, List<GeneralFile> fileList) {
 
         if ((file == null) || (fileList == null)) {
             return;

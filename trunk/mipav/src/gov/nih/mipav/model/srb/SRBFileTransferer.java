@@ -56,7 +56,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
     private boolean progressBarVisible = true;
 
     /** The list of the source file names. */
-    private List sourceFileNameList;
+    private List<String> sourceFileNameList;
 
     /** DOCUMENT ME! */
     private GeneralFile[] sourceFiles;
@@ -146,7 +146,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
      *
      * @return  the source file name list which was selected by user.
      */
-    public List getSourceFileNameList() {
+    public List<String> getSourceFileNameList() {
         return sourceFileNameList;
     }
 
@@ -171,9 +171,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
     /**
      * Returns the temporary directory created randomly under the temporary base directory.
      *
-     * @return     DOCUMENT ME!
-     *
-     * @returnthe  temporary directory created randomly under the temporary base directory.
+     * @return  the temporary directory created randomly under the temporary base directory.
      */
     public File getTempDir() {
         return tempDir;
@@ -181,7 +179,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
 
     /**
      * Returns the temporary base directory which will be used to hold memory images. if the temporary base directory
-     * has been setted up, then this temporary base directory will be used. Otherwise the default temporary base directy
+     * has been set up, then this temporary base directory will be used. Otherwise the default temporary base directy
      * will be used.
      *
      * @return  the temporary base directory.
