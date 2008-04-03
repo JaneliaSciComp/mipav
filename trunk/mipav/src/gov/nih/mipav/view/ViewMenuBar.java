@@ -831,7 +831,7 @@ public class ViewMenuBar {
         JMenuItem saveImageToSRBItem = menuBuilder.buildMenuItem("Save image to SRB", "SaveSRBFile", 0, "save.gif",
                                                                  true);
 
-        menuBuilder.setMenuItemEnabled("Save XCEDE schema", imageOpened);
+        //menuBuilder.setMenuItemEnabled("Save XCEDE schema", imageOpened);
         menuBuilder.setMenuItemEnabled("Save image to SRB", imageOpened);
 
         return menuBuilder.makeMenu("SRB-BIRN", true,
