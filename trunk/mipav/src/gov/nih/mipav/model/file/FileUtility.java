@@ -1804,12 +1804,18 @@ public class FileUtility {
         }
     }
 
+    /**
+     * Determines whether the file on disk is of type MINC 2.0
+     * @param fileName name of the file
+     * @param fileDir directory
+     * @param quiet
+     * @return whether the file is HDF5 type
+     */
     public static final int isMincHDF(String fileName, String fileDir, boolean quiet) {
     	
     	FileFormat h5F = FileFormat.getFileFormat(FileFormat.FILE_TYPE_HDF5);
     	
     	boolean isMincHDF = h5F.isThisType(fileDir + File.separator + fileName);
-    	System.err.println("MINC 2.0: " + isMincHDF);
     	if (isMincHDF) {
     		return FileUtility.MINC_HDF;
     	} else {

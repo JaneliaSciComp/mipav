@@ -2465,7 +2465,7 @@ public class FileIO {
      */
     protected boolean dataConversion(FileInfoBase sourceInfo, FileInfoBase destInfo) {
 
-        // when the original image is a DICOM image, we want to save this as
+        // when the original image is a DICOM or MINCimage, we want to save this as
         // XML, so look, or ask, for a dicom dictionary list of tags to save
         // into the XML
         // load the tags to keep:
@@ -2483,10 +2483,14 @@ public class FileIO {
 
        
         if (destInfo instanceof FileInfoImageXML) {
-        	 // now convert that DICOM tags list into an XML tags List:
-            Enumeration e = tags2save.keys();
-
         	FileInfoImageXML dInfo = (FileInfoImageXML)destInfo;
+        	
+        	if (sourceInfo instanceof FileInfoMincHDF) {
+        		//look for patient data here to convert
+        	}
+        	
+        	//now convert that DICOM tags list into an XML tags List:
+        	Enumeration e = tags2save.keys();
         	while (e.hasMoreElements()) {
                 FileDicomKey tagKey = (FileDicomKey) e.nextElement();
                 FileDicomTag dicomTag = (FileDicomTag) tags2save.get(tagKey);
@@ -8501,6 +8505,17 @@ public class FileIO {
             
             mincFile = new FileMincHDF(options.getFileName(), options.getFileDirectory());
             createProgressBar(mincFile, options.getFileName(), FILE_READ);
+            
+            if (!(image.getFileInfo()[0] instanceof FileInfoMincHDF)) {
+            	JDialogSaveMinc dialog = new JDialogSaveMinc(UI.getMainFrame(), image.getFileInfo()[0], options);
+            	dialog.setVisible(true);
+
+                if (dialog.isCancelled()) {
+                    return false;
+                }
+
+                options = dialog.getOptions();
+            }
             
             if (image.getFileInfo()[0] instanceof FileInfoDicom) {
 
