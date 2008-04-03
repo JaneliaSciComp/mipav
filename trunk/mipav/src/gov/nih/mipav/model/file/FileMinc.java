@@ -39,7 +39,7 @@ public class FileMinc extends FileBase {
      * Table of tags extracted from a dicom file info to be written to the minc file. Generated in writeHeader(), then
      * used again later in writeImage() to output placeholder values outside of the header.
      */
-    private Hashtable dicomConvertedTagTable;
+    private Hashtable<String,Hashtable<String,String>> dicomConvertedTagTable;
 
     /**
      * The endianess of the image being written or read.
@@ -1124,7 +1124,7 @@ public class FileMinc extends FileBase {
                 }
 
                 // write out placeholders values pointed to by NC_VARIABLEs of extracted dicom tag groups (if any)
-                Enumeration groupEnum = dicomConvertedTagTable.keys();
+                Enumeration<String> groupEnum = dicomConvertedTagTable.keys();
 
                 while (groupEnum.hasMoreElements()) {
                     groupEnum.nextElement();
@@ -1163,17 +1163,17 @@ public class FileMinc extends FileBase {
      * @return  Hashtable keyed on tag group, containing Hashtables keyed on tag element, containing the tag values.
      *          Returns an empty Hashtable if the file info is not dicom.
      */
-    private static Hashtable extractDicomTags(FileInfoBase fileInfo) {
-        Hashtable tagTable = new Hashtable();
+    private static Hashtable<String,Hashtable<String,String>> extractDicomTags(FileInfoBase fileInfo) {
+        Hashtable<String,Hashtable<String,String>> tagTable = new Hashtable<String,Hashtable<String,String>>();
 
         if (fileInfo instanceof FileInfoDicom) {
             FileInfoDicom dicomInfo = (FileInfoDicom) fileInfo;
-            Hashtable dicomTags = dicomInfo.getTagTable().getTagList();
-            Enumeration tagKeyEnum = dicomTags.keys();
+            Hashtable<FileDicomKey,FileDicomTag> dicomTags = dicomInfo.getTagTable().getTagList();
+            Enumeration<FileDicomKey> tagKeyEnum = dicomTags.keys();
 
             while (tagKeyEnum.hasMoreElements()) {
-                FileDicomKey key = (FileDicomKey) tagKeyEnum.nextElement();
-                FileDicomTag tag = (FileDicomTag) dicomTags.get(key);
+                FileDicomKey key = tagKeyEnum.nextElement();
+                FileDicomTag tag = dicomTags.get(key);
 
                 String group = key.getGroup();
                 String element = key.getElement();
@@ -1185,10 +1185,10 @@ public class FileMinc extends FileBase {
                                       Preferences.DEBUG_FILEIO);
 
                     if (!tagTable.containsKey(group)) {
-                        tagTable.put(group, new Hashtable());
+                        tagTable.put(group, new Hashtable<String,String>());
                     }
 
-                    ((Hashtable) tagTable.get(group)).put(element, valueStr);
+                    tagTable.get(group).put(element, valueStr);
                 }
             }
         }
@@ -1952,16 +1952,54 @@ public class FileMinc extends FileBase {
             currentNonHeaderStartLocation += studyVarSize;
         }
 
-        if (mincModality == null) {
+        // add in acquisition information (basically just slice_theickness) if present in the file info
+        float sliceThickness = fileInfo.getSliceThickness();
 
-            // the number of NC_VARIABLE entries (7 for basic image info hardcoded below + any dicom-exported tag
-            // groups)
-            writeInt(7 + dicomConvertedTagTable.size(), endianess);
-        } else {
+        if (sliceThickness != 0) {
+            int acquisitionVarSize = 0;
 
+            acquisitionVarSize += getSizeOfWrittenName("acquisition", 0);
+            acquisitionVarSize += 4;
+            acquisitionVarSize += 4;
+            acquisitionVarSize += 4;
+            acquisitionVarSize += 4;
+
+            acquisitionVarSize += getSizeOfWrittenName("varid", 0);
+            acquisitionVarSize += 4;
+            acquisitionVarSize += getSizeOfWrittenName("MINC standard variable", 1);
+            acquisitionVarSize += getSizeOfWrittenName("vartype", 0);
+            acquisitionVarSize += 4;
+            acquisitionVarSize += getSizeOfWrittenName("group________", 1);
+            acquisitionVarSize += getSizeOfWrittenName("version", 0);
+            acquisitionVarSize += 4;
+            acquisitionVarSize += getSizeOfWrittenName("MINC Version    1.0", 1);
+            acquisitionVarSize += getSizeOfWrittenName("parent", 0);
+            acquisitionVarSize += 4;
+            acquisitionVarSize += getSizeOfWrittenName("rootvariable", 1);
+            acquisitionVarSize += getSizeOfWrittenName("slice_thickness", 0);
+            acquisitionVarSize += 4;
+            acquisitionVarSize += 4;
+            acquisitionVarSize += 8;
+
+            acquisitionVarSize += 4;
+            acquisitionVarSize += 4;
+            acquisitionVarSize += 4;
+
+            currentNonHeaderStartLocation += acquisitionVarSize;
+        }
+
+        if (mincModality != null && sliceThickness != 0) {
             // the number of NC_VARIABLE entries (7 for basic image info hardcoded below + any dicom-exported tag
-            // groups + the study tag)
+            // groups + the study tag + the acquisition tag)
+            writeInt(9 + dicomConvertedTagTable.size(), endianess);
+        } else if (mincModality != null || sliceThickness != 0) {
+            // the number of NC_VARIABLE entries (7 for basic image info hardcoded below + any dicom-exported tag
+            // groups + (either the the study tag OR the acquisition tag))
             writeInt(8 + dicomConvertedTagTable.size(), endianess);
+        } else {
+            // the number of NC_VARIABLE entries (7 for basic image info hardcoded below + any dicom-exported tag
+            // groups) -- neither the study or acquisition tags
+            writeInt(7 + dicomConvertedTagTable.size(), endianess);
         }
 
         writeName("rootvariable", 0, endianess); // always in MINC files (not sure what it means)
@@ -1986,12 +2024,16 @@ public class FileMinc extends FileBase {
         writeName("children", 0, endianess); // attribute 5
         writeInt(FileInfoMinc.NC_CHAR, endianess);
 
-        if (mincModality == null) {
-            writeName("image", 1, endianess);
-        } else {
-            writeName("image\nstudy", 1, endianess);
-            currentNonHeaderStartLocation += getSizeOfWrittenName("image\nstudy", 1) - getSizeOfWrittenName("image", 1);
+        String childrenString = "image";
+        if (mincModality != null) {
+            childrenString += "\nstudy";
         }
+        if (sliceThickness != 0) {
+            childrenString += "\nacquisition";
+        }
+        
+        writeName(childrenString, 1, endianess);
+        currentNonHeaderStartLocation += getSizeOfWrittenName(childrenString, 1) - getSizeOfWrittenName("image", 1);
 
         writeInt(FileInfoMinc.NC_INT, endianess); // type of variable
         writeInt(4, endianess); // size of variable
@@ -2290,6 +2332,38 @@ public class FileMinc extends FileBase {
             writeName("modality", 0, endianess);
             writeInt(FileInfoMinc.NC_CHAR, endianess);
             writeName(mincModality, 1, endianess);
+
+            writeInt(FileInfoMinc.NC_INT, endianess);
+            writeInt(4, endianess);
+            writeInt(nextDataPortionLocation, endianess);
+
+            nextDataPortionLocation += 4;
+        }
+        
+        // write the image slice thickness to the minc header
+        if (sliceThickness != 0) {
+            writeName("acquisition", 0, endianess);
+            writeInt(1, endianess);
+            writeInt(0, endianess);
+            writeInt(FileInfoMinc.NC_ATTRIBUTE, endianess);
+            writeInt(5, endianess);
+
+            writeName("varid", 0, endianess);
+            writeInt(FileInfoMinc.NC_CHAR, endianess);
+            writeName("MINC standard variable", 1, endianess);
+            writeName("vartype", 0, endianess);
+            writeInt(FileInfoMinc.NC_CHAR, endianess);
+            writeName("group________", 1, endianess);
+            writeName("version", 0, endianess);
+            writeInt(FileInfoMinc.NC_CHAR, endianess);
+            writeName("MINC Version    1.0", 1, endianess);
+            writeName("parent", 0, endianess);
+            writeInt(FileInfoMinc.NC_CHAR, endianess);
+            writeName("rootvariable", 1, endianess);
+            writeName("slice_thickness", 0, endianess);
+            writeInt(FileInfoMinc.NC_DOUBLE, endianess);
+            writeInt(1, endianess);
+            writeDouble(sliceThickness, endianess);
 
             writeInt(FileInfoMinc.NC_INT, endianess);
             writeInt(4, endianess);

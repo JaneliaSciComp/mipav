@@ -40,7 +40,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
     private FileDicomTagTable referenceTagTable;
 
     /** Tags unique to this slice, or all of the tags for this slice if this is a reference tag table. */
-    private Hashtable tagTable;
+    private Hashtable<FileDicomKey,FileDicomTag> tagTable;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -50,7 +50,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      * @param  parent  The dicom file info that this tag table belongs to.
      */
     public FileDicomTagTable(FileInfoDicom parent) {
-        tagTable = new Hashtable();
+        tagTable = new Hashtable<FileDicomKey,FileDicomTag>();
 
         referenceTagTable = null;
         isReferenceTagTable = true;
@@ -66,7 +66,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      * @param  firstSliceTags  A reference to the tag table for the first slice of the image volume
      */
     public FileDicomTagTable(FileInfoDicom parent, FileDicomTagTable firstSliceTags) {
-        tagTable = new Hashtable();
+        tagTable = new Hashtable<FileDicomKey,FileDicomTag>();
 
         referenceTagTable = firstSliceTags;
         isReferenceTagTable = false;
@@ -83,14 +83,14 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      *
      * @return  The sorted list.
      */
-    public static final FileDicomTag[] sortTagsList(Dictionary tagList) {
-        Enumeration e;
+    public static final FileDicomTag[] sortTagsList(Dictionary<FileDicomKey,FileDicomTag> tagList) {
+        Enumeration<FileDicomKey> e;
         int count = 0;
         FileDicomTag[] dicomTags;
 
         for (e = tagList.keys(); e.hasMoreElements();) {
 
-            if (((FileDicomTag) (tagList.get((FileDicomKey) e.nextElement()))).getValue(true) != null) {
+            if (tagList.get(e.nextElement()).getValue(true) != null) {
                 count++;
             }
         }
@@ -106,7 +106,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         int i = 0;
 
         for (e = tagList.keys(); e.hasMoreElements();) {
-            FileDicomTag tag = (FileDicomTag) tagList.get((FileDicomKey) e.nextElement());
+            FileDicomTag tag = tagList.get(e.nextElement());
 
             if (tag.getValue(true) != null) {
                 dicomTags[i] = tag;
@@ -169,7 +169,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
             newTable = new FileDicomTagTable(this.parentFileInfo, this.referenceTagTable);
         }
 
-        newTable.tagTable = (Hashtable) this.tagTable.clone();
+        newTable.tagTable = (Hashtable<FileDicomKey,FileDicomTag>) this.tagTable.clone();
 
         return newTable;
     }
@@ -232,21 +232,21 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      *
      * @return  A new copy of all of the dicom tags.
      */
-    public final Hashtable getTagList() {
-        Hashtable tagList;
+    public final Hashtable<FileDicomKey,FileDicomTag> getTagList() {
+	Hashtable<FileDicomKey,FileDicomTag> tagList;
 
         if (!isReferenceTagTable) {
-            tagList = (Hashtable) referenceTagTable.getTagList();
+            tagList = referenceTagTable.getTagList();
 
             // merge (tags in this table take precidence)
-            Enumeration keys = this.tagTable.keys();
+            Enumeration<FileDicomKey> keys = this.tagTable.keys();
 
             while (keys.hasMoreElements()) {
-                FileDicomKey key = (FileDicomKey) keys.nextElement();
+                FileDicomKey key = keys.nextElement();
                 tagList.put(key, get(key));
             }
         } else {
-            tagList = (Hashtable) this.tagTable.clone();
+            tagList = (Hashtable<FileDicomKey,FileDicomTag>) this.tagTable.clone();
         }
 
         return tagList;
@@ -310,11 +310,11 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
             // returns a deep copy of the tag Hashtable
             tagTable = srcDicomInfo.getTagTable().getTagList();
         } else {
-            Hashtable srcTagList = srcDicomInfo.getTagTable().getTagList();
-            Enumeration srcTagKeys = srcTagList.keys();
+            Hashtable<FileDicomKey,FileDicomTag> srcTagList = srcDicomInfo.getTagTable().getTagList();
+            Enumeration<FileDicomKey> srcTagKeys = srcTagList.keys();
 
             while (srcTagKeys.hasMoreElements()) {
-                put((FileDicomTag) srcTagList.get(srcTagKeys.nextElement()));
+                put(srcTagList.get(srcTagKeys.nextElement()));
             }
         }
     }
@@ -353,7 +353,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      * Remove all of the tags from this table (does not affect reference table, if this is a non-reference table).
      */
     public final void reset() {
-        Enumeration keys = tagTable.keys();
+        Enumeration<FileDicomKey> keys = tagTable.keys();
 
         while (keys.hasMoreElements()) {
             tagTable.remove(keys.nextElement());
