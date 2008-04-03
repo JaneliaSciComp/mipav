@@ -100,51 +100,9 @@ public class PlugInAVISkip implements PlugInGeneric {
                 MipavUtil.displayError("IOException on aviFile = new FileAvi(inputFileName, directory");
                 return;
             }
-            try {
-                aviFile.readHeader();
-            }
-            catch(IOException e) {
-                MipavUtil.displayError("IOException on aviFile.readHeader()");
-                return;
-            }
-            
-            microSecPerFrame = aviFile.getMicroSecPerFrame();
-            Preferences.debug("PlugInAVISkip: microseconds per frame = " + microSecPerFrame + "\n");
-            secPerFrame = 1.0E-6F * microSecPerFrame;
-            rate = aviFile.getRate();
-            scale = aviFile.getScale();
-            samplesPerSecond = (float)rate/(float)scale;
-            Preferences.debug("Samples per second = " + samplesPerSecond + "\n");
-            if (Math.abs(((1.0/samplesPerSecond) - secPerFrame)/secPerFrame) < 0.01) {
-                Preferences.debug("Frame times from 1.0E-6*microSecPerFrame and scale/rate match\n");
-            }
-            else {
-                MipavUtil.displayError("Frame times from 1.0E-6*microSecPerFrame and scale/rate don't match");
-                return;
-            }
-            framesToCapture = Math.max(1, Math.round(captureTime/secPerFrame));
-            Preferences.debug("Frames to capture = " + framesToCapture + "\n");
-            framesToSkip = Math.round(skipTime/secPerFrame);
-            Preferences.debug("Frames to skip = " + framesToSkip + "\n");
-            AVIF_HASINDEX = aviFile.getHasIndex();
-            if (AVIF_HASINDEX) {
-                Preferences.debug("The avi file has an index file that will allow quick skipping\n");
-                AVIF_MUSTUSEINDEX = aviFile.getMustUseIndex();
-                if (AVIF_MUSTUSEINDEX) {
-                    Preferences.debug("The avi file index must be used for any file read\n");
-                }
-                else {
-                    Preferences.debug("AVIF_MUSTUSEINDEX = false so the avi fle index need not be used for file reads\n");
-                    Preferences.debug("AVIF_MUSTUSEINDEX will be changed from false to true so that the\n" +
-                                      "index is used for quick skipping\n");
-                }
-            }
-            else {
-                Preferences.debug("The avi file has no index file so skipping will be slower\n");
-            }
             aviFile.setOutputFileName(outputFileName);
-            aviFile.setFramesToCapture(framesToCapture);
-            aviFile.setFramesToSkip(framesToSkip);
+            aviFile.setCaptureTime(captureTime);
+            aviFile.setSkipTime(skipTime);
             try {
                 aviFile.readWriteImage();
             }
