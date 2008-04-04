@@ -80,10 +80,6 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
     /** Button for selecting window mode. */
     private JRadioButton windowButton;
     
-    /** The parent image frame. */
-    private ViewJFrameImage imageFrame;
-    
-    
     /** Active frame **/
     private ViewJFrameImage activeFrame;
 
@@ -97,7 +93,6 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
      */
     public JDialogCaptureScreen(ViewJFrameImage parent) {
         super(parent, false);
-        this.imageFrame = parent;
         userInterface = ViewUserInterface.getReference();
         save = true;
         mode = NONE;
@@ -517,6 +512,8 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
 
                 return false;
             }
+            
+            testImage.disposeLocal();
         } else {
             new ViewJFrameImage(testImage, null, new Dimension(610, 200));
         }
