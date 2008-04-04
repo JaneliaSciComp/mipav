@@ -391,7 +391,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
 			return PlugInMuscleImageDisplay.ImageType.Thigh;
 		} 
 		
-		return PlugInMuscleImageDisplay.ImageType.Abdomen;
+		return PlugInMuscleImageDisplay.ImageType.Unknown;
     }
     
     private File[] detectImageSequence(ModelImage im) {
