@@ -1,9 +1,12 @@
 package gov.nih.mipav.model.algorithms.DiffusionTensorImaging;
 
 import java.io.*;
+import java.util.BitSet;
 import java.awt.*;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmBrainSurfaceExtractor;
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -24,7 +27,7 @@ import gov.nih.mipav.view.dialogs.JDialogBrainSurfaceExtractor;
  * See: Introduction to Diffusion Tensor Imaging, by Susumu Mori
  */
 public class AlgorithmDWI2DTI extends AlgorithmBase
-    implements ViewImageUpdateInterface
+    implements ViewImageUpdateInterface, AlgorithmInterface
 {
     /** Mask Image for masking brain regions during tensor calculation: */
     private ModelImage m_kMaskImage = null;
@@ -56,6 +59,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     private String m_kRawImageFormat = null;
     /** Output DTI Image:*/
     private ModelImage m_kDTIImage = null;
+    /** handle to BSE Algorithm **/
+    private AlgorithmBrainSurfaceExtractor alg;
 
 
     /** Create a new AlgorithmDWI2DTI 
@@ -90,6 +95,11 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
         
         m_bDisplayB0 = bDisplayB0;
     }
+    
+    
+    public void algorithmPerformed(AlgorithmBase algorithm) {
+    	
+    }
 
     public void disposeLocal()
     {
@@ -108,6 +118,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
         if ( m_kMaskImage == null )
         {
             createMaskImage();
+            createDWIImage();
         }
         else
         {
@@ -290,10 +301,39 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
             return;
         }
 
-        JDialogBrainSurfaceExtractor kExtractBrain = new JDialogBrainSurfaceExtractor( m_kB0Frame, m_kB0Image );
-        kExtractBrain.setFillHoles(false);
-        kExtractBrain.setExtractPaint(true);
-        kExtractBrain.callAlgorithm();
+
+
+        try {
+        	//call the algorithm
+	        float closeKernelSize = (Math.max(m_kB0Image.getFileInfo(0).getResolutions()[0], m_kB0Image.getFileInfo(0).getResolutions()[1]) *
+	                6) + 1;
+	        alg = new AlgorithmBrainSurfaceExtractor(m_kB0Image, 3, 0.5f, .62f, false, 1, closeKernelSize, 1, false, false, true, true);
+	        alg.setRunningInSeparateThread(isRunningInSeparateThread());
+            alg.addListener(this);
+            alg.run();
+	        
+	        
+	        //now need to handle the stuff from algorithm performed
+	    	BitSet paintMask = alg.getComputedPaintMask();
+	        ((ViewJFrameImage) m_kB0Frame).getImageA().setMask(paintMask);
+	        ((ViewJFrameImage) m_kB0Frame).setActiveImage(ViewJFrameImage.IMAGE_A);
+
+	        alg.finalize();
+	         
+	         //necessary for paint to appear when using 'extract to paint' option
+	         if (m_kB0Frame != null) {
+	             ((ViewJFrameImage) m_kB0Frame).getComponentImage().setPaintMask(m_kB0Image.getMask());
+	         }
+	
+	         m_kB0Image.notifyImageDisplayListeners(null, true);
+	         alg = null;
+        }catch (OutOfMemoryError x) {
+            System.gc();
+            MipavUtil.displayError("Unable to allocate enough memory");
+
+            return;
+        }
+        
 
     }
 
@@ -478,7 +518,10 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
         m_kDTIImage = new ModelImage( ModelStorageBase.FLOAT, extents, new String( "DiffusionTensorImage" ) );
         try {
             m_kDTIImage.importData(0, afTensorData, true );
-        } catch (IOException e) {}
+        } catch (IOException e) {
+        	e.printStackTrace();
+        }
+
         setCompleted(true);
     }
 
@@ -534,7 +577,6 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
             m_kMaskImage = ViewUserInterface.getReference().getRegisteredImageByName(m_kB0Frame.getComponentImage().commitPaintToMask());
             m_kB0Image.removeImageDisplayListener(this);
             m_kB0Image = null;
-            run();
         }
         return false;
     }
