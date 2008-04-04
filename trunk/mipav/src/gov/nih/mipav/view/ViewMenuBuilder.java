@@ -937,8 +937,6 @@ public class ViewMenuBuilder {
     public void setMenuItemSelected(String name, boolean val) {
         JMenuItem menuItem = getMenuItem(name);
         JCheckBoxMenuItem checkItem;
-        MipavMenuItem mipavItem = null;
-
 
         if (menuItem == null) {
             Preferences.debug("called setSelected on " + name + " which does not exist.\n",
