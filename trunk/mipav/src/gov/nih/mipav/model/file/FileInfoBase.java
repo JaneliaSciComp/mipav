@@ -434,8 +434,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /** If the image is 2.5D. */
     private boolean is2_5D = false;
-
-    protected Point3i maxLoc;
     
     /** Image maximum intensity for single channel image. */
     private double max;
@@ -449,8 +447,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /** Image maximum intensity for the red channel of an RGB image. */
     private double maxR;
 
-    protected Point3i minLoc;
-    
     /** Image minimum intensity for single channel image. */
     private double min;
 
@@ -2364,22 +2360,4 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         return s;
     }
-
-    public Point3i getMaxLoc() {
-        return maxLoc;
-    }
-
-    public void setMaxLoc(Point3i maxLoc) {
-        this.maxLoc = maxLoc;
-    }
-
-    public Point3i getMinLoc() {
-        return minLoc;
-    }
-
-    public void setMinLoc(Point3i minLoc) {
-        this.minLoc = minLoc;
-    }
-
-
 }

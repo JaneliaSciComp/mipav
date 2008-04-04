@@ -251,15 +251,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /** Minimum and maximum image intensity. */
     private double min, max;
 
-    /**
-     * The location of the minimum voxel
-     */
-    private Point3i minLoc;
-    
-    /**
-     * The location of the maximum voxel
-     */
-    private Point3i maxLoc;
     /** Minimum and maximum for a color image. */
     private double minR, maxR, minG, maxG, minB, maxB;
 
@@ -417,7 +408,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         int i;
         double value;
 
-        int imin = 0, imax = 0;
         if ((bufferType != ARGB) && (bufferType != ARGB_USHORT) && (bufferType != ARGB_FLOAT)) {
 
             for (i = 0; i < dataSize; i++) {
@@ -425,20 +415,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
                 if (value > max) {
                     max = value;
-                    imax = i;
                 }
 
                 if (value < min) {
                     min = value;
-                    imin = i;
                 }
-            }
-            if(nDims == 2){
-                minLoc = new Point3i(imin%dimExtents[0], imin/dimExtents[0], 0);
-                maxLoc = new Point3i(imax%dimExtents[0], imax/dimExtents[0], 0);               
-            }else{
-                minLoc = new Point3i(imin%dimExtents[0], (imin%(dimExtents[0]*dimExtents[1]))/dimExtents[0], imin/(dimExtents[0]*dimExtents[1]));
-                maxLoc = new Point3i(imax%dimExtents[0], (imax%(dimExtents[0]*dimExtents[1]))/dimExtents[0], imax/(dimExtents[0]*dimExtents[1]));
             }
         } else { // color
             minR = Double.POSITIVE_INFINITY;
@@ -7175,14 +7156,4 @@ public class ModelStorageBase extends ModelSerialCloneable {
         disposeLocal();
         super.finalize();
     }
-
-    public Point3i getMinLoc() {
-        return minLoc;
-    }
-
-    public Point3i getMaxLoc() {
-        return maxLoc;
-    }
-
-
 }
