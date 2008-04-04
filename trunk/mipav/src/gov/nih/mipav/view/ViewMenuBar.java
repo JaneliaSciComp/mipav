@@ -1237,7 +1237,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Edge detection", false);
             menuBuilder.setMenuItemEnabled("Evaluate segmentation", false); // vois
             menuBuilder.setMenuItemEnabled("Entropy minimization", false);
-            menuBuilder.setMenuItemEnabled("Evolve surface", false);
             menuBuilder.setMenuItemEnabled("Extract surface (marching cubes)", false);
             menuBuilder.setMenuItemEnabled("FFT", false);
             menuBuilder.setMenuItemEnabled("Filters (wavelet)", false);
@@ -1293,7 +1292,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Surface plotter", false);
             menuBuilder.setMenuItemEnabled("Evolve boundary 2D", false);
             menuBuilder.setMenuItemEnabled("Convert 3D to 4D", false);
-            menuBuilder.setMenuItemEnabled("Capture images to new frame", false);
+            menuBuilder.setMenuItemEnabled("Capture image slices to new frame", false);
             menuBuilder.setMenuItemEnabled("Haralick texture", false);
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
             menuBuilder.setMenuItemEnabled("Pad slices to power of 2", false);
@@ -1329,21 +1328,18 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Nearly circle to circle", false);
             menuBuilder.setMenuItemEnabled("Hough transform", false);
         } else if (numberOfDimensions == 2) {
-            menuBuilder.setMenuItemEnabled("3D rectangle", false);
+            menuBuilder.setMenuItemEnabled("Draw 3D rectangle VOI", false);
             menuBuilder.setMenuItemEnabled("Animate", false);
             menuBuilder.setMenuItemEnabled("Boundary attenuation", false);
             menuBuilder.setMenuItemEnabled("Cine (movie)", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to 3D", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
-            menuBuilder.setMenuItemEnabled("Evolve surface", false);
             menuBuilder.setMenuItemEnabled("Brain tools", false);
             menuBuilder.setMenuItemEnabled("Extract slices / volumes", false);
             menuBuilder.setMenuItemEnabled("Replace slice", false);
             menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", false);
             menuBuilder.setMenuItemEnabled("Extract surface (marching cubes)", false);
-            menuBuilder.setMenuItemEnabled("Extract brain", false);
             menuBuilder.setMenuItemEnabled("FRAP", false);
-            menuBuilder.setMenuItemEnabled("Inverse slice order", false);
             menuBuilder.setMenuItemEnabled("Light box", false);
             menuBuilder.setMenuItemEnabled("Maximum intensity projection (MIP)", false);
             menuBuilder.setMenuItemEnabled("Propagate", false);
@@ -1353,8 +1349,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Remove slices", false);
             menuBuilder.setMenuItemEnabled("Pad slices to power of 2", false);
             menuBuilder.setMenuItemEnabled("Remove time volumes", false);
-            menuBuilder.setMenuItemEnabled("2.5D total intensity", false);
-            menuBuilder.setMenuItemEnabled("2.5D average intensity", false);
             menuBuilder.setMenuItemEnabled("Manual 2D series", true);
             menuBuilder.setMenuItemEnabled("Constrained optimized automatic registration", false);
             menuBuilder.setMenuItemEnabled("Optimized automatic registration 2.5D", false);
@@ -1375,8 +1369,8 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Link to another image", false);
             menuBuilder.setMenuItemEnabled("Point area average intensities", false);
             menuBuilder.setMenuItemEnabled("Correct image spacing", false);
-            menuBuilder.setMenuItemEnabled("Capture images to new frame", false);
-            menuBuilder.setMenuItemSelected("ShowSliceNum", false);
+            menuBuilder.setMenuItemEnabled("Capture image slices to new frame", false);
+            menuBuilder.setMenuItemSelected("Show slice number overlay", false);
             menuBuilder.setMenuItemEnabled("Show slice number overlay", false);
             menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", false);
             menuBuilder.setMenuItemEnabled("Replace blanks with averages", false);
@@ -1390,8 +1384,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Boundary attenuation", false);
             menuBuilder.setMenuItemEnabled("Density based clustering", false);
             menuBuilder.setMenuItemEnabled("Edge detection", false);
-            menuBuilder.setMenuItemEnabled("Evolve surface", false);
-            menuBuilder.setMenuItemEnabled("Extract brain", false);
+            menuBuilder.setMenuItemEnabled("Brain tools", false);
             menuBuilder.setMenuItemEnabled("FFT", false);
             menuBuilder.setMenuItemEnabled("Filters (frequency)", false);
             menuBuilder.setMenuItemEnabled("Filters (Gabor)", false);
@@ -1455,7 +1448,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Edge detection", true);
             menuBuilder.setMenuItemEnabled("Evaluate segmentation", true); // vois
             menuBuilder.setMenuItemEnabled("Entropy minimization", true);
-            menuBuilder.setMenuItemEnabled("Evolve surface", true);
             menuBuilder.setMenuItemEnabled("Extract surface (marching cubes)", true);
             menuBuilder.setMenuItemEnabled("FFT", true);
             menuBuilder.setMenuItemEnabled("Filters (wavelet)", true);
@@ -1514,7 +1506,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Surface plotter", true);
             menuBuilder.setMenuItemEnabled("Evolve boundary 2D", true);
             menuBuilder.setMenuItemEnabled("Convert 3D to 4D", true);
-            menuBuilder.setMenuItemEnabled("Capture images to new frame", true);
+            menuBuilder.setMenuItemEnabled("Capture image slices to new frame", true);
             menuBuilder.setMenuItemEnabled("Haralick texture", true);
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", true);
             menuBuilder.setMenuItemEnabled("Pad slices to power of 2", true);
@@ -1540,16 +1532,13 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Cine (movie)", true);
             menuBuilder.setMenuItemEnabled("Extract slices / volumes", true);
             menuBuilder.setMenuItemEnabled("Replace slice", true);
-            menuBuilder.setMenuItemEnabled("Extract brain", true);
-            menuBuilder.setMenuItemEnabled("Inverse slice order", true);
+            menuBuilder.setMenuItemEnabled("Brain tools", true);
             menuBuilder.setMenuItemEnabled("Light box", true);
             menuBuilder.setMenuItemEnabled("Propagate", true);
             menuBuilder.setMenuItemEnabled("Triplanar", true);
             menuBuilder.setMenuItemEnabled("Volume renderers", true);
             menuBuilder.setMenuItemEnabled("Insert slice", true);
             menuBuilder.setMenuItemEnabled("Remove slices", true);
-            menuBuilder.setMenuItemEnabled("2.5D total intensity", true);
-            menuBuilder.setMenuItemEnabled("2.5D average intensity", true);
             menuBuilder.setMenuItemEnabled("X axis 180", true);
             menuBuilder.setMenuItemEnabled("X axis +90", true);
             menuBuilder.setMenuItemEnabled("X axis -90", true);
