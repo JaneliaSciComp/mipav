@@ -340,9 +340,7 @@ public class ModelImage extends ModelStorageBase {
 
             if (!isColorImage()) {
                 fileInfo[i].setMin(getMin());
-                fileInfo[i].setMinLoc(getMinLoc());
                 fileInfo[i].setMax(getMax());
-                fileInfo[i].setMaxLoc(getMaxLoc());
             } else {
                 fileInfo[i].setMinR(getMinR());
                 fileInfo[i].setMaxR(getMaxR());
