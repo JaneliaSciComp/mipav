@@ -91,11 +91,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     private String[] titles; 
     
+    private String imageDir;
+    
     private boolean displayChanged = false;
     
     private TreeMap locationStatus;
     
     private TreeMap<String, Color> voiColor;
+    
+    private TreeMap<String, Boolean> calcTree;
         
     public enum ImageType{
         
@@ -120,12 +124,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         /** Indicates the image has top-bottom symmetry. */
         TOP_BOTTOM
     }
-    
-    private String imageDir;
    
     public PlugInMuscleImageDisplay(ModelImage image, String[] titles,
             String[][] mirrorArr, boolean[][] mirrorZ, 
-            String[][] noMirrorArr, boolean[][] noMirrorZ,  
+            String[][] noMirrorArr, boolean[][] noMirrorZ, TreeMap calcTree, 
             ImageType imageType, Symmetry symmetry, boolean multipleSlices) {
     	//calls the super that will invoke ViewJFrameImage's init() function
     	super(image);
@@ -144,6 +146,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.imageType = imageType;
         this.symmetry = symmetry;
         this.multipleSlices = multipleSlices;
+        this.calcTree = calcTree;
         
         voiColor = new TreeMap();
         locationStatus = new TreeMap();
@@ -172,7 +175,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      */
     public PlugInMuscleImageDisplay(ModelImage image, String[] titles,
             String[][] mirrorArr, boolean[][] mirrorZ, 
-            String[][] noMirrorArr, boolean[][] noMirrorZ,  
+            String[][] noMirrorArr, boolean[][] noMirrorZ, TreeMap calcTree, 
             ImageType imageType, Symmetry symmetry, 
             boolean standAlone, boolean multipleSlices) {
     	// calls the super that will not call ViewJFrameImage's init() function
@@ -187,6 +190,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.imageType = imageType;
         this.symmetry = symmetry;
         this.multipleSlices = multipleSlices;
+        this.calcTree = calcTree;
         
         voiColor = new TreeMap();
         locationStatus = new TreeMap();
@@ -2854,7 +2858,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			pdfDocument.close();
 			
 			MipavUtil.displayInfo("PDF saved to: " + pdfFile);
-			ViewUserInterface.getReference().getMessageFrame().append("PDF saved to: " + pdfFile, ViewJFrameMessage.DATA);
+			ViewUserInterface.getReference().getMessageFrame().append("PDF saved to: " + pdfFile + "\n", ViewJFrameMessage.DATA);
 			
 			} catch (Exception e) {
 				e.printStackTrace();

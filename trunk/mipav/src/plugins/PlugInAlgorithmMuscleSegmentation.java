@@ -4,6 +4,7 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
+import java.util.TreeMap;
 
 /**
  * Creates an interface for working with Iceland CT images.
@@ -83,6 +84,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     
     private void performAbdomenDialog() {
         
+    	TreeMap calcTree = new TreeMap();
+    	
     	String[][] mirrorArr = new String[3][];
         mirrorArr[0] = null;
         
@@ -94,6 +97,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         mirrorArr[2][2] = "paraspinous";
         mirrorArr[2][3] = "rectus abdominus";
 
+        for(int i=0; i<mirrorArr.length; i++)  {
+        	if(mirrorArr[i] != null) {
+        		for(int j=0; j<mirrorArr[i].length; j++)
+        			calcTree.put(mirrorArr[i][j], true);
+        	}
+        }
+        
         boolean[][] mirrorZ = new boolean[3][];
         mirrorZ[0] = null;
         
@@ -118,6 +128,15 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         noMirrorArr[2][0] = "Aorta";
         noMirrorArr[2][1] = "Water sample";
         
+        for(int i=0; i<noMirrorArr.length; i++) {
+        	for(int j=0; j<noMirrorArr[i].length; j++) {
+        		if(mirrorArr[i][j].equals("Phantom") || mirrorArr[i][j].contains("sample"))
+        			calcTree.put(mirrorArr[i][j], false);
+        		else
+        			calcTree.put(mirrorArr[i][j], true);
+        	}
+        }
+        
         boolean[][] noMirrorZ = new boolean[3][];
         noMirrorZ[0] = new boolean[2];
         noMirrorZ[0][0] = false;
@@ -138,12 +157,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         if (ViewUserInterface.getReference().isAppFrameVisible()) {
         	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
-        			noMirrorArr, noMirrorZ, 
+        			noMirrorArr, noMirrorZ, calcTree, 
         			PlugInMuscleImageDisplay.ImageType.Abdomen, 
         			PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT, multipleSlices);
         } else {
         	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
-        			noMirrorArr, noMirrorZ, 
+        			noMirrorArr, noMirrorZ, calcTree, 
         			PlugInMuscleImageDisplay.ImageType.Abdomen, 
         			PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT, true, multipleSlices);
         }
@@ -155,7 +174,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	 */
 	private void performThighDialog() {
 	    
-	    String[][] mirrorArr = new String[3][];
+	    TreeMap calcTree = new TreeMap();
+	    
+		String[][] mirrorArr = new String[3][];
 	    mirrorArr[0] = new String[1];
 	    mirrorArr[0][0] = "Thigh";
 	    
@@ -169,6 +190,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    mirrorArr[2][2] = "Hamstrings";
 	    mirrorArr[2][3] = "Sartorius";
 	    mirrorArr[2][4] = "Adductors";
+	    
+	    for(int i=0; i<mirrorArr.length; i++) 
+	    	for(int j=0; j<mirrorArr[i].length; j++)
+	    		calcTree.put(mirrorArr[i][j], true);
+	    
 	    
 	    boolean[][] mirrorZ = new boolean[3][];
 	    mirrorZ[0] = new boolean[1];
@@ -195,6 +221,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    noMirrorArr[2] = new String[1];
 	    noMirrorArr[2][0] = "Water sample";
 	    
+	    for(int i=0; i<noMirrorArr.length; i++) 
+	    	for(int j=0; j<noMirrorArr[i].length; j++)
+	    		calcTree.put(noMirrorArr[i][j], false);
+	    
 	    boolean[][] noMirrorZ = new boolean[3][];
 	    noMirrorZ[0] = new boolean[1];
 	    noMirrorZ[0][0] = false;
@@ -214,11 +244,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    
 	    if (ViewUserInterface.getReference().isAppFrameVisible()) {
 	    	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
-	    			noMirrorArr, noMirrorZ, 
+	    			noMirrorArr, noMirrorZ, calcTree, 
 	    			PlugInMuscleImageDisplay.ImageType.Thigh, symmetry, multipleSlices);
 	    } else {
 	    	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
-	    			noMirrorArr, noMirrorZ, 
+	    			noMirrorArr, noMirrorZ, calcTree, 
 	    			PlugInMuscleImageDisplay.ImageType.Thigh, symmetry, true, multipleSlices);
 	    }
 	}
