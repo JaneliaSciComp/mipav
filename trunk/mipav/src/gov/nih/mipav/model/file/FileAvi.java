@@ -206,10 +206,6 @@ public class FileAvi extends FileBase {
     private int framesToCapture;
     
     private int framesToSkip;
-    
-    private int compressionW;
-    
-    private int bitCountW;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -3725,6 +3721,7 @@ public class FileAvi extends FileBase {
             }
 
             int LIST1Size = getInt(endianess); // size of first LIST CHUNK excluding first 8 bytes
+            Preferences.debug("LIST1Size = " + LIST1Size + "\n");
 
             // with CHUNKsignature and LIST1Size
             LIST1Marker = raFile.getFilePointer();
@@ -4054,7 +4051,9 @@ public class FileAvi extends FileBase {
                 }
 
                 int strfSize = getInt(endianess);
+                Preferences.debug("strfSize = " + strfSize + "\n");
                 int BITMAPINFOsize = getInt(endianess);
+                Preferences.debug("BITMAPINFOsize = " + BITMAPINFOsize + "\n");
 
                 if (BITMAPINFOsize > strfSize) {
                     BITMAPINFOsize = strfSize;
@@ -5276,18 +5275,21 @@ public class FileAvi extends FileBase {
         int actualFrames = 0; // number of frames with data found on first read thru.
         int indexBytesRead = 0;
         int actualFramesW = 0;
-        long[] savedcLength;
+        long savedibPos[];
         boolean doWrite[];
         boolean isColor = true;
         int bufferFactor;
-        byte dataSignatureW[];
-        byte[] pixStore;
-        byte[] lastStore;
-        // largest possible size for RLE8
-        // 1 count for every index and an end of line or end of bitmap ends every row
-        byte[] encodeStore; 
+        byte dataSignatureW[]; 
+        long idx1Pos;
+        int zw;
+        long saveidx1Length;
+        long endPos;
+        long saveTotalFramesW;
+        long saveLengthW = 0L;
+        long saveHere;
 
         try {
+            System.out.println("Started " + outputFileName + " creation");
             file = new File(fileDir + fileName);
             raFile = new RandomAccessFile(file, "r");
             
@@ -5298,8 +5300,6 @@ public class FileAvi extends FileBase {
             raFileW.setLength(0);
 
             endianess = FileBase.LITTLE_ENDIAN; // false
-            fileInfo = new FileInfoAvi(fileName, fileDir, FileUtility.AVI);
-            fileInfo.setEndianess(endianess);
 
             signature = getInt(endianess);
 
@@ -5470,7 +5470,6 @@ public class FileAvi extends FileBase {
             writeIntW(0x10, endianess); // dwFlags - just set the bit for AVIF_HASINDEX
 
             int totalFrames = getInt(endianess);
-            fileInfo.setTotalFrames(totalFrames);
 
             // System.err.println("total frames: " + totalFrames);
             Preferences.debug("totalFrames = " + totalFrames + "\n");
@@ -5480,6 +5479,7 @@ public class FileAvi extends FileBase {
                 remainderFrames = framesToCapture;
             }
             totalFramesW += remainderFrames;
+            saveTotalFramesW = raFileW.getFilePointer();
             writeIntW(totalFramesW, endianess);
 
             // However, many AVI frames will have no data and will just be used to repeat the
@@ -5638,8 +5638,8 @@ public class FileAvi extends FileBase {
                     handlerW[1] = 73; // I
                     handlerW[2] = 66; // B
                     handlerW[3] = 32; // space
+                    compression = 0;
                     Preferences.debug("Uncompressed data\n");
-                    compressionW = 0;
                 } else if (handlerString.toUpperCase().startsWith("MRLE") ||
                                handlerString.toUpperCase().startsWith("RLE")) {
                     Preferences.debug("Microsoft run length encoding\n");
@@ -5648,17 +5648,16 @@ public class FileAvi extends FileBase {
                     handlerW[1] = 0x72; // r
                     handlerW[2] = 0x6c; // l
                     handlerW[3] = 0x65; // e
-                    compressionW = 1;
+                    compression = 1;
                 } else if (handlerString.toUpperCase().startsWith("MSVC")) {
                     Preferences.debug("Microsoft video 1 compression\n");
                     // Microsoft video 1 compression
                     doMSVC = true;
-                    // Read in the MSVC, but write out as uncompressed 24 bit color
-                    handlerW[0] = 68; // D
-                    handlerW[1] = 73; // I
-                    handlerW[2] = 66; // B
-                    handlerW[3] = 32; // space
-                    compressionW = 0;
+                    handlerW[0] = 109; // m
+                    handlerW[1] = 115; // s
+                    handlerW[2] = 118; // v
+                    handlerW[3] =  99; // c
+                    compression = 1296126531;
                 } else {
                     raFile.close();
                     throw new IOException("Unrecognized compression handler is " + handlerString);
@@ -5743,6 +5742,7 @@ public class FileAvi extends FileBase {
                     remainderFrames = framesToCapture;
                 }
                 lengthW += remainderFrames;
+                saveLengthW = raFileW.getFilePointer();
                 // dwLength - set equal to the number of frames
                 writeIntW(lengthW, endianess);
 
@@ -5767,10 +5767,10 @@ public class FileAvi extends FileBase {
 
                 int sampleSize = getInt(endianess);
                 Preferences.debug("sampleSize = " + sampleSize + "\n");
-                if (compressionW == 0) {
+                if ((compression == 0) || (compression == 1296126531)) {
                     writeIntW(3 * width * height, endianess);
                 }
-                else if (compressionW == 1) {
+                else if (compression == 1) {
                     writeIntW(width * height, endianess);
                 }
 
@@ -5807,13 +5807,14 @@ public class FileAvi extends FileBase {
                 int strfSignature = getInt(endianess);
 
                 if (strfSignature == 0x66727473) {
+                    Preferences.debug("Read strf\n");
                     // read strf
                 } else {
                     raFile.close();
                     throw new IOException("strf signature incorrectly read as = " + strfSignature);
                 }
                 
-                // Write the stream formt chunk
+                // Write the stream format chunk
                 writeIntW(strfSignature, endianess);
 
                 int strfSize = getInt(endianess);
@@ -5863,14 +5864,7 @@ public class FileAvi extends FileBase {
                 bitCount = (short) getSignedShort(endianess);
                 Preferences.debug("bitCount = " + bitCount + "\n");
                 // biBitCount - number of bits per pixel
-                if (compressionW == 0) {
-                    bitCountW = 24;
-                    writeShortW((short)24, endianess);
-                }
-                else if (compressionW == 1) {
-                    bitCountW = 8;
-                    writeShortW((short)8, endianess);
-                }
+                writeShortW(bitCount, endianess);
 
                 compression = getInt(endianess);
 
@@ -5961,16 +5955,16 @@ public class FileAvi extends FileBase {
                 // that specify the red, green, and blue components, respectively,
                 // of each pixel.  This is valid when used with 16- and 32-bit-
                 // per-pixel bitmaps.
-                writeIntW(compressionW, endianess);
+                writeIntW(compression, endianess);
 
                 int imageSize = getInt(endianess);
                 Preferences.debug("imageSize = " + imageSize + "\n");
                 // biSizeImage - specifies the size in bytes of the image frame.  This can be
                 // set to zero for uncompressed RGB bitmaps.
-                if (compressionW == 0) {
+                if ((compression == 0) || (compression == 1296126531)) {
                     writeIntW(3 * width * height, endianess);
                 }
-                else if (compressionW == 1) {
+                else if (compression == 1) {
                     writeIntW(width * height, endianess);
                 }
 
@@ -5984,7 +5978,6 @@ public class FileAvi extends FileBase {
 
                 // System.err.println("xPixelsPerMeter = " + xPixelsPerMeter);
                 if (xPixelsPerMeter > 0) {
-                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
                     imgResols[0] = (1.0f / xPixelsPerMeter) * 1000.0f;
                 }
 
@@ -5995,15 +5988,12 @@ public class FileAvi extends FileBase {
 
                 // System.err.println("yPixelsPerMeter = " + yPixelsPerMeter);
                 if (yPixelsPerMeter > 0) {
-                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
                     imgResols[1] = (1.0f / yPixelsPerMeter) * 1000.0f;
                 }
 
                 imgResols[2] = microSecPerFrame;
 
                 // System.err.println("Microseconds per frame (on read): " + microSecPerFrame);
-                fileInfo.setUnitsOfMeasure(FileInfoBase.MICROSEC, 2);
-                fileInfo.setResolutions(imgResols);
 
                 int colorsUsed = getInt(endianess);
                 Preferences.debug("colorsUsed = " + colorsUsed + "\n");
@@ -6026,7 +6016,7 @@ public class FileAvi extends FileBase {
                 // to be defined in the table, and biClrUsed is set to 17.  If nonzero
                 // for a 24-bit DIB, it indicates the existence of a color table that the
                 // application can use for color reference.
-                if (compressionW == 0) {
+                if ((compression == 0) && (bitCount > 8)) {
                     writeIntW(0, endianess);
                 }
                 else {
@@ -6040,7 +6030,7 @@ public class FileAvi extends FileBase {
                 // the image still retains its meaning in an acceptable manner.  When this
                 // field is set to zero, all the colors are important, or, rather, their
                 // relative importance has not been computed.
-                if (compressionW == 0) {
+                if (compression == 0) {
                     writeIntW(0, endianess);
                 }
                 else {
@@ -6127,14 +6117,15 @@ public class FileAvi extends FileBase {
             } // for (loop = 0; loop < streams; loop++)
 
             marker = raFile.getFilePointer();
+            
+            savestrnPos = raFileW.getFilePointer();
+            raFileW.seek(savestrfSize);
+            writeIntW((int)(savestrnPos - (savestrfSize + 4)), endianess);
+            raFileW.seek(savestrnPos);
 
             if (marker < (LIST1Marker + LIST1Size)) {
-
                 // read strn subCHUNK
-                savestrnPos = raFileW.getFilePointer();
-                raFileW.seek(savestrfSize);
-                writeIntW((int)(savestrnPos - (savestrfSize + 4)), endianess);
-                raFileW.seek(savestrnPos);
+                
                 int strnSignature = getInt(endianess);
                 writeIntW(strnSignature, endianess);
 
@@ -6421,13 +6412,19 @@ public class FileAvi extends FileBase {
                 remainderFrames = framesToCapture;   
             }
             actualFramesW += remainderFrames;
-            savedbLength = new long[actualFramesW];
-            savedcLength = new long[actualFramesW];
+            saveHere = raFileW.getFilePointer();
+            raFileW.seek(saveTotalFramesW);
+            writeIntW(actualFramesW, endianess);
+            raFileW.seek(saveLengthW);
+            writeIntW(actualFramesW, endianess);
+            raFileW.seek(saveHere);
+            savedibPos = new long[actualFramesW];
             dcLength = new int[actualFramesW];
-            doWrite = new boolean[actualFramesW];
+            doWrite = new boolean[actualFrames];
+            zw = 0;
             int captureCount = 0;
             int skipCount = 0;
-            for (int i = 0; i < actualFramesW; i++) {
+            for (int i = 0; i < actualFrames; i++) {
                 if (captureCount < framesToCapture) {
                     doWrite[i] = true;
                     captureCount++;
@@ -6440,28 +6437,18 @@ public class FileAvi extends FileBase {
                     captureCount = 0;
                     skipCount = 0;
                 }
-            } // for (int i = 0; i < actualFramesW; i++)
+            } // for (int i = 0; i < actualFrames; i++)
 
-            fileInfo.setNumFrames(actualFrames);
             imgExtents[0] = width;
             imgExtents[1] = height;
-            fileInfo.setExtents(imgExtents);
-
-            int[] moreExtents;
-
-            moreExtents = imgExtents;
 
             if ((bitCount == 16) || (bitCount == 24) || (bitCount == 32) || doMSVC) {
-                fileInfo.setDataType(ModelStorageBase.ARGB);
-                imageA = new ModelImage(ModelStorageBase.ARGB, moreExtents, fileName);
                 isColor = true;
             } else if ((bitCount == 4) || (bitCount == 8)) {
-                fileInfo.setDataType(ModelStorageBase.UBYTE);
-                imageA = new ModelImage(ModelStorageBase.UBYTE, moreExtents, fileName);
                 isColor = false;
             }
             
-            if (compressionW == 0) {
+            if (compression == 0) {
                 bufferFactor = 1;
                 if (isColor) {
                     bufferFactor = 4;    
@@ -6481,12 +6468,9 @@ public class FileAvi extends FileBase {
                 // of blue, green, and red, respectively, for a pixel.  The color bytes are
                 // in reverse order from the Windows convention.
                 bufferWrite = new byte[3 * xDim * yDim];
-            } // if (compressionW == 0)
-            else { // compressionW == 1
+            } // if (compression == 0)
+            else { // compression == 1
                 imageBufferA = new float[xDim * yDim];
-                pixStore = new byte[xDim * yDim];
-                lastStore = new byte[xDim * yDim];
-                encodeStore = new byte[(2 * xDim * yDim) + xDim];
                 // Write the data record signature '00dc' where dc means that DIB bitmap data (compressed)
                 // follows.  The characters 00 azre used to identify the stream.
                 dataSignatureW = new byte[4];
@@ -6494,7 +6478,7 @@ public class FileAvi extends FileBase {
                 dataSignatureW[1] = 48; // 0
                 dataSignatureW[2] = 100; // d
                 dataSignatureW[3] = 99; // c
-            } // else compressionW == 1
+            } // else compression == 1
 
             // Now that the image is created this second read thru actually imports the data into the image.
             raFile.seek(startPosition);
@@ -6553,8 +6537,8 @@ public class FileAvi extends FileBase {
                 z = 0;
                 chunkRead = true;
 
-                while (((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
-                           (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) {
+                while ((((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
+                           (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) && (zw < actualFramesW)) {
 
                     if (AVIF_MUSTUSEINDEX) {
                         raFile.seek(indexPointer);
@@ -6568,8 +6552,14 @@ public class FileAvi extends FileBase {
                                 indexPointer = indexPointer + 16;
                                 indexBytesRead += 16;
                                 raFile.seek(indexPointer);
-                            } else {
+                            } else if (doWrite[z]) {
+                                z++;
                                 dataFound = true;
+                            } else {
+                                z++;
+                                indexPointer = indexPointer + 16;
+                                indexBytesRead += 16;
+                                raFile.seek(indexPointer);
                             }
                         } // while (!dataFound)
 
@@ -6611,170 +6601,15 @@ public class FileAvi extends FileBase {
                         subchunkBytesRead += 4;
 
                         if ((totalBytesRead + dataLength) <= totalDataArea) {
+                            raFileW.write(dataSignature);
+                            savedibPos[zw] = raFileW.getFilePointer();
+                            dcLength[zw++] = dataLength;
+                            writeIntW(dataLength, endianess);
                             fileBuffer = new byte[dataLength];
                             raFile.read(fileBuffer);
+                            raFileW.write(fileBuffer);
                             totalBytesRead = totalBytesRead + dataLength;
                             subchunkBytesRead += dataLength;
-
-                            if (bitCount == 24) {
-
-                                for (int j = 0; j < dataLength; j = j + 3) {
-                                    k = 4 * (x + (imgExtents[0] * y));
-                                    imgBuffer[k] = (byte) 255;
-                                    imgBuffer[k + 1] = fileBuffer[j + 2];
-                                    imgBuffer[k + 2] = fileBuffer[j + 1];
-                                    imgBuffer[k + 3] = fileBuffer[j];
-                                    x++;
-
-                                    if ((x == imgExtents[0]) && (y > 0)) {
-                                        x = 0;
-                                        y--;
-                                    } else if ((x == imgExtents[0]) && (y == 0)) {
-                                        x = 0;
-                                        y = imgExtents[1] - 1;
-
-                                        imageA.importData(z * bufferSize, imgBuffer, false);
-
-                                        fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
-                                        z++;
-                                    } // else if ((x == imgExtents[0] && (y == 0))
-                                } // for (j = 0; j < datalength;j=j+3)
-                            } // if (bitCount == 24)
-                            else if (bitCount == 32) {
-
-                                for (int j = 0; j < dataLength; j = j + 4) {
-                                    k = 4 * (x + (imgExtents[0] * y));
-                                    imgBuffer[k] = (byte) 255;
-                                    imgBuffer[k + 1] = fileBuffer[j + 2];
-                                    imgBuffer[k + 2] = fileBuffer[j + 1];
-                                    imgBuffer[k + 3] = fileBuffer[j];
-                                    x++;
-
-                                    if ((x == imgExtents[0]) && (y > 0)) {
-                                        x = 0;
-                                        y--;
-                                    } else if ((x == imgExtents[0]) && (y == 0)) {
-                                        x = 0;
-                                        y = imgExtents[1] - 1;
-
-                                        imageA.importData(z * bufferSize, imgBuffer, false);
-
-                                        fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
-                                        z++;
-                                    } // else if ((x == imgExtents[0] && (y == 0))
-                                } // for (j = 0; j < datalength;j=j+4)
-                            } // else if (bitCount == 32)
-                            else if (bitCount == 16) {
-
-                                for (int j = 0; j < dataLength;) {
-                                    k = 4 * (x + (imgExtents[0] * y));
-                                    col1 = fileBuffer[j++] & 0xff;
-                                    col2 = fileBuffer[j++] & 0xff;
-                                    totalC = (col2 << 8) | col1;
-                                    imgBuffer[k] = (byte) 255;
-                                    imgBuffer[k + 1] = (byte) ((totalC >> 7) & 0xF8);
-                                    imgBuffer[k + 2] = (byte) ((totalC >> 2) & 0xF8);
-                                    imgBuffer[k + 3] = (byte) ((totalC << 3) & 0xF8);
-                                    x++;
-
-                                    if ((x == imgExtents[0]) && (y > 0)) {
-                                        x = 0;
-                                        y--;
-                                    } else if ((x == imgExtents[0]) && (y == 0)) {
-                                        x = 0;
-                                        y = imgExtents[1] - 1;
-
-                                        imageA.importData(z * bufferSize, imgBuffer, false);
-
-                                        fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
-                                        z++;
-                                    } // else if ((x == imgExtents[0] && (y == 0))
-                                } // for (int j = 0; j < dataLength;)
-                            } // else if (bitCount == 16)
-                            else if (bitCount == 8) {
-
-                                // Rows are stored in multiples of 4
-                                // so extra bytes may appear at the end
-                                int xPad = 0;
-                                int xMod = imgExtents[0] % 4;
-
-                                if (xMod != 0) {
-                                    xPad = 4 - xMod;
-                                }
-
-                                for (int j = 0; j < dataLength; j++) {
-                                    k = x + (imgExtents[0] * y);
-                                    imgBuffer[k] = fileBuffer[j];
-                                    x++;
-
-                                    if ((x == imgExtents[0]) && (y > 0)) {
-                                        j = j + xPad;
-                                        x = 0;
-                                        y--;
-                                    } else if ((x == imgExtents[0]) && (y == 0)) {
-                                        j = j + xPad;
-                                        x = 0;
-                                        y = imgExtents[1] - 1;
-
-                                        imageA.importData(z * bufferSize, imgBuffer, false);
-
-                                        fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
-                                        z++;
-                                    } // else if ((x == imgExtents[0]) && (y == 0))
-                                } // for (j = 0; j < dataLength; j++)
-                            } // else if (bitCount == 8)
-                            else if (bitCount == 4) {
-
-                                // Rows are stored in multiples of 4
-                                // so extra bytes may appear at the end
-                                int xPad = 0;
-                                int rowBytes = imgExtents[0]/2 + imgExtents[0]%2;
-                                int xMod = rowBytes % 4;
-
-                                if (xMod != 0) {
-                                    xPad = 4 - xMod;
-                                }
-
-                                for (int j = 0; j < dataLength; j++) {
-                                    k = x + (imgExtents[0] * y);
-                                    imgBuffer[k] = (byte)(fileBuffer[j] & 0x0f);
-                                    x++;
-
-                                    if ((x == imgExtents[0]) && (y > 0)) {
-                                        j = j + xPad;
-                                        x = 0;
-                                        y--;
-                                    } else if ((x == imgExtents[0]) && (y == 0)) {
-                                        j = j + xPad;
-                                        x = 0;
-                                        y = imgExtents[1] - 1;
-
-                                        imageA.importData(z * bufferSize, imgBuffer, false);
-
-                                        fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
-                                        z++;
-                                    } // else if ((x == imgExtents[0]) && (y == 0))
-                                    else {
-                                        imgBuffer[k+1] = (byte)((fileBuffer[j] >> 4) & 0x0f);
-                                        x++;
-
-                                        if ((x == imgExtents[0]) && (y > 0)) {
-                                            j = j + xPad;
-                                            x = 0;
-                                            y--;
-                                        } else if ((x == imgExtents[0]) && (y == 0)) {
-                                            j = j + xPad;
-                                            x = 0;
-                                            y = imgExtents[1] - 1;
-
-                                            imageA.importData(z * bufferSize, imgBuffer, false);
-
-                                            fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
-                                            z++;
-                                        } // else if ((x == imgExtents[0]) && (y == 0))
-                                    } // else
-                                } // for (j = 0; j < dataLength; j++)
-                            } // else if (bitCount == 4)
                         } // if ((totalBytesRead + dataLength) <= totalDataArea)
                     } // else
 
@@ -6959,8 +6794,6 @@ public class FileAvi extends FileBase {
                                 x = 0;
                                 y = imgExtents[1] - 1;
 
-                                imageA.importData(z * bufferSize, imgBuffer, false);
-
                                 if (actualFrames > 1) {
                                     fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
                                 }
@@ -7059,35 +6892,10 @@ public class FileAvi extends FileBase {
                 x = 0;
                 y = imgExtents[1] - 1;
                 z = 0;
-
-                int blocksWide = imgExtents[0] / 4;
-                int blocksHigh = imgExtents[1] / 4;
-                int bytesPerPixel = 4;
-                int blockInc = 4 * bytesPerPixel;
-                int rowDec = (imgExtents[0] + 4) * bytesPerPixel;
-                int blockIndex = 0;
-                int pixelIndex = 0;
-                int skipBlocks = 0;
-                int blockX;
-                int blockY;
-                byte byteA;
-                byte byteB;
-                boolean bufferFinished = false;
-                int[][] c1 = new int[2][2];
-                int[][] c2 = new int[2][2];
-                byte[][] c1r = new byte[2][2];
-                byte[][] c1g = new byte[2][2];
-                byte[][] c1b = new byte[2][2];
-                byte[][] c2r = new byte[2][2];
-                byte[][] c2g = new byte[2][2];
-                byte[][] c2b = new byte[2][2];
-                int pixelY;
-                int pixelX;
-
                 chunkRead = true;
 
-                while (((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
-                           (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) {
+                while ((((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
+                           (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) && (zw < actualFramesW)) {
 
                     if (AVIF_MUSTUSEINDEX) {
                         raFile.seek(indexPointer);
@@ -7102,7 +6910,13 @@ public class FileAvi extends FileBase {
                                 indexBytesRead += 16;
                                 raFile.seek(indexPointer);
                             } else if (doWrite[z]) {
+                                z++;
                                 dataFound = true;
+                            } else {
+                                z++;
+                                indexPointer = indexPointer + 16;
+                                indexBytesRead += 16;
+                                raFile.seek(indexPointer);
                             }
                         } // while (!dataFound)
 
@@ -7120,7 +6934,11 @@ public class FileAvi extends FileBase {
 
                     if ((dataSignature[2] == 0x64 /* d */) &&
                             ((dataSignature[3] == 0x63 /* c */) || (dataSignature[3] == 0x62 /* b */))) {
+                        raFileW.write(dataSignature);
+                        savedibPos[zw] = raFileW.getFilePointer();
                         dataLength = getInt(endianess);
+                        dcLength[zw++] = dataLength;
+                        writeIntW(dataLength, endianess);
 
                         if ((dataLength % 2) == 1) {
                             dataLength++;
@@ -7130,175 +6948,10 @@ public class FileAvi extends FileBase {
                         subchunkBytesRead += 4;
                         fileBuffer = new byte[dataLength];
                         raFile.read(fileBuffer);
+                        raFileW.write(fileBuffer);
                         totalBytesRead = totalBytesRead + dataLength;
                         subchunkBytesRead += dataLength;
-                        bufferFinished = false;
-                        blockIndex = 0;
-                        pixelIndex = 0;
-                        skipBlocks = 0;
-
-                        for (int j = 0; (j < dataLength) && (!bufferFinished);) {
-
-                            for (blockY = blocksHigh; (blockY > 0) && (!bufferFinished); blockY--) {
-                                blockIndex = ((4 * blockY) - 1) * (imgExtents[0] * bytesPerPixel);
-
-                                for (blockX = blocksWide; (blockX > 0) && (!bufferFinished); blockX--) {
-
-                                    // Check if this block should be skipped
-                                    if (skipBlocks > 0) {
-                                        blockIndex += blockInc;
-                                        skipBlocks--;
-
-                                        continue;
-                                    }
-
-                                    pixelIndex = blockIndex;
-
-                                    // get the next two bytes in the encoded data stream
-                                    byteA = fileBuffer[j++];
-                                    byteB = fileBuffer[j++];
-
-                                    // Check if decode is finished
-                                    if ((byteA == 0) && (byteB == 0)) {
-                                        bufferFinished = true;
-
-                                        imageA.importData(z * bufferSize, imgBuffer, false);
-
-                                        if (actualFrames > 1) {
-                                            fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
-                                        }
-
-                                        z++;
-                                    }
-
-                                    // Check if this is a skip code
-                                    else if ((byteB & 0xFC) == 0x84) {
-
-                                        // but don't count the current block
-                                        skipBlocks = (((byteB & 0xff) - 0x84) << 8) + (byteA & 0xff) - 1;
-                                    }
-
-                                    // Check if this is a 2-color block
-                                    else if ((byteB & 0xff) < 0x80) {
-                                        flags = ((byteB & 0xff) << 8) | (byteA & 0xff);
-                                        c1[0][0] = fileBuffer[j++] & 0xff;
-                                        c2[0][0] = fileBuffer[j++] & 0xff;
-                                        c1r[0][0] = lutBuffer[(4 * c1[0][0]) + 2];
-                                        c1g[0][0] = lutBuffer[(4 * c1[0][0]) + 1];
-                                        c1b[0][0] = lutBuffer[4 * c1[0][0]];
-                                        c2r[0][0] = lutBuffer[(4 * c2[0][0]) + 2];
-                                        c2g[0][0] = lutBuffer[(4 * c2[0][0]) + 1];
-                                        c2b[0][0] = lutBuffer[4 * c2[0][0]];
-
-                                        // 2-color encoding
-                                        for (pixelY = 0; pixelY < 4; pixelY++) {
-
-                                            for (pixelX = 0; pixelX < 4; pixelX++) {
-
-                                                if ((flags & 1) > 0) {
-                                                    imgBuffer[pixelIndex++] = (byte) 255;
-                                                    imgBuffer[pixelIndex++] = c1r[0][0];
-                                                    imgBuffer[pixelIndex++] = c1g[0][0];
-                                                    imgBuffer[pixelIndex++] = c1b[0][0];
-                                                } else {
-                                                    imgBuffer[pixelIndex++] = (byte) 255;
-                                                    imgBuffer[pixelIndex++] = c2r[0][0];
-                                                    imgBuffer[pixelIndex++] = c2g[0][0];
-                                                    imgBuffer[pixelIndex++] = c2b[0][0];
-                                                }
-
-                                                // get the next flag ready to go
-                                                flags >>= 1;
-                                            } // for (pixelX = 0; pixelX < 4; pixelX++)
-
-                                            pixelIndex -= rowDec;
-                                        } // for (pixelY = 0; pixelY < 4; pixelY++)
-                                    } // else if ((byteB & 0xff) < 0x80)
-
-                                    // check if it's an 8-color block
-                                    else if ((byteB & 0xff) >= 0x90) {
-
-                                        // 8-color encoding
-                                        flags = ((byteB & 0xff) << 8) | (byteA & 0xff);
-                                        c1[0][0] = fileBuffer[j++] & 0xff;
-                                        c2[0][0] = fileBuffer[j++] & 0xff;
-                                        c1[1][0] = fileBuffer[j++] & 0xff;
-                                        c2[1][0] = fileBuffer[j++] & 0xff;
-                                        c1[0][1] = fileBuffer[j++] & 0xff;
-                                        c2[0][1] = fileBuffer[j++] & 0xff;
-                                        c1[1][1] = fileBuffer[j++] & 0xff;
-                                        c2[1][1] = fileBuffer[j++] & 0xff;
-                                        c1r[0][0] = lutBuffer[(4 * c1[0][0]) + 2];
-                                        c1g[0][0] = lutBuffer[(4 * c1[0][0]) + 1];
-                                        c1b[0][0] = lutBuffer[4 * c1[0][0]];
-                                        c2r[0][0] = lutBuffer[(4 * c2[0][0]) + 2];
-                                        c2g[0][0] = lutBuffer[(4 * c2[0][0]) + 1];
-                                        c2b[0][0] = lutBuffer[4 * c2[0][0]];
-                                        c1r[1][0] = lutBuffer[(4 * c1[1][0]) + 2];
-                                        c1g[1][0] = lutBuffer[(4 * c1[1][0]) + 1];
-                                        c1b[1][0] = lutBuffer[4 * c1[1][0]];
-                                        c2r[1][0] = lutBuffer[(4 * c2[1][0]) + 2];
-                                        c2g[1][0] = lutBuffer[(4 * c2[1][0]) + 1];
-                                        c2b[1][0] = lutBuffer[4 * c2[1][0]];
-                                        c1r[0][1] = lutBuffer[(4 * c1[0][1]) + 2];
-                                        c1g[0][1] = lutBuffer[(4 * c1[0][1]) + 1];
-                                        c1b[0][1] = lutBuffer[4 * c1[0][1]];
-                                        c2r[0][1] = lutBuffer[(4 * c2[0][1]) + 2];
-                                        c2g[0][1] = lutBuffer[(4 * c2[0][1]) + 1];
-                                        c2b[0][1] = lutBuffer[4 * c2[0][1]];
-                                        c1r[1][1] = lutBuffer[(4 * c1[1][1]) + 2];
-                                        c1g[1][1] = lutBuffer[(4 * c1[1][1]) + 1];
-                                        c1b[1][1] = lutBuffer[4 * c1[1][1]];
-                                        c2r[1][1] = lutBuffer[(4 * c2[1][1]) + 2];
-                                        c2g[1][1] = lutBuffer[(4 * c2[1][1]) + 1];
-                                        c2b[1][1] = lutBuffer[4 * c2[1][1]];
-
-                                        for (pixelY = 0; pixelY < 4; pixelY++) {
-
-                                            for (pixelX = 0; pixelX < 4; pixelX++) {
-
-                                                if ((flags & 1) > 0) {
-                                                    imgBuffer[pixelIndex++] = (byte) 255;
-                                                    imgBuffer[pixelIndex++] = c1r[pixelX >> 1][pixelY >> 1];
-                                                    imgBuffer[pixelIndex++] = c1g[pixelX >> 1][pixelY >> 1];
-                                                    imgBuffer[pixelIndex++] = c1b[pixelX >> 1][pixelY >> 1];
-                                                } else {
-                                                    imgBuffer[pixelIndex++] = (byte) 255;
-                                                    imgBuffer[pixelIndex++] = c2r[pixelX >> 1][pixelY >> 1];
-                                                    imgBuffer[pixelIndex++] = c2g[pixelX >> 1][pixelY >> 1];
-                                                    imgBuffer[pixelIndex++] = c2b[pixelX >> 1][pixelY >> 1];
-                                                }
-
-                                                // get the next flag ready to go
-                                                flags >>= 1;
-                                            } // for (pixelX = 0; pixelX < 4; pixelX++)
-
-                                            pixelIndex -= rowDec;
-                                        } // for (pixelY = 0; pixelY < 4; pixelY++) {
-                                    } // else if ((byteB & 0xff) >= 0x90)
-                                    else { // 1-color block
-                                        c1[0][0] = byteA & 0xff;
-                                        c1r[0][0] = lutBuffer[(4 * c1[0][0]) + 2];
-                                        c1g[0][0] = lutBuffer[(4 * c1[0][0]) + 1];
-                                        c1b[0][0] = lutBuffer[4 * c1[0][0]];
-
-                                        for (pixelY = 0; pixelY < 4; pixelY++) {
-
-                                            for (pixelX = 0; pixelX < 4; pixelX++) {
-                                                imgBuffer[pixelIndex++] = (byte) 255;
-                                                imgBuffer[pixelIndex++] = c1r[0][0];
-                                                imgBuffer[pixelIndex++] = c1g[0][0];
-                                                imgBuffer[pixelIndex++] = c1b[0][0];
-                                            } // for (pixelX = 0; pixelX < 4; pixelX++)
-
-                                            pixelIndex -= rowDec;
-                                        } // for (pixelY = 0; pixelY < 4; pixelY++)
-                                    } // else 1-color block
-
-                                    blockIndex += blockInc;
-                                } // for (blockX = blocksWide; (blockX > 0) && (!bufferFinished); blockX--)
-                            } // for (blockY = blocksHigh; (blockY > 0) && (!bufferFinished); blockY--)
-                        } // for (int j = 0; (j < dataLength) && (!bufferFinished); )
+                        
                     } // else if ((dataSignature[2] == 0x64 /* d */) && (dataSignature[3] == 0x63 /* c */))
                     else {
                         dataLength = getInt(endianess);
@@ -7389,42 +7042,17 @@ public class FileAvi extends FileBase {
                 y = imgExtents[1] - 1;
                 z = 0;
 
-                int blocksWide = imgExtents[0] / 4;
-                int blocksHigh = imgExtents[1] / 4;
-                int bytesPerPixel = 4;
-                int blockInc = 4 * bytesPerPixel;
-                int rowDec = (imgExtents[0] + 4) * bytesPerPixel;
-                int blockIndex = 0;
-                int pixelIndex = 0;
-                int skipBlocks = 0;
-                int blockX;
-                int blockY;
-                byte byteA = 0;
-                byte byteB = 0;
-                int lowC;
-                int highC;
-                boolean bufferFinished = false;
-                int[][] c1 = new int[2][2];
-                int[][] c2 = new int[2][2];
-                byte[][] c1r = new byte[2][2];
-                byte[][] c1g = new byte[2][2];
-                byte[][] c1b = new byte[2][2];
-                byte[][] c2r = new byte[2][2];
-                byte[][] c2g = new byte[2][2];
-                byte[][] c2b = new byte[2][2];
-                int pixelY;
-                int pixelX;
-
                 chunkRead = true;
 
-                while (((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
-                           (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) {
+                while ((((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
+                           (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) && (zw < actualFramesW)) {
 
                     if (AVIF_MUSTUSEINDEX) {
                         raFile.seek(indexPointer);
                         dataFound = false;
 
                         while (!dataFound) {
+                            
                             raFile.read(dataSignature);
 
                             if ((dataSignature[2] != 0x64 /*d */) || (dataSignature[3] < 0x62 /* b */) ||
@@ -7432,11 +7060,16 @@ public class FileAvi extends FileBase {
                                 indexPointer = indexPointer + 16;
                                 indexBytesRead += 16;
                                 raFile.seek(indexPointer);
-                            } else {
+                            } else if (doWrite[z]) {
+                                z++;
                                 dataFound = true;
+                            } else {
+                                z++;
+                                indexPointer = indexPointer + 16;
+                                indexBytesRead += 16;
+                                raFile.seek(indexPointer);
                             }
                         } // while (!dataFound)
-
                         indexPointer = indexPointer + 8;
                         raFile.seek(indexPointer);
                         moviOffset = getInt(endianess);
@@ -7451,7 +7084,11 @@ public class FileAvi extends FileBase {
 
                     if ((dataSignature[2] == 0x64 /* d */) &&
                             ((dataSignature[3] == 0x63 /* c */) || (dataSignature[3] == 0x62 /* b */))) {
+                        raFileW.write(dataSignature);
+                        savedibPos[zw] = raFileW.getFilePointer();
                         dataLength = getInt(endianess);
+                        dcLength[zw++] = dataLength;
+                        writeIntW(dataLength, endianess);
 
                         if ((dataLength % 2) == 1) {
                             dataLength++;
@@ -7461,198 +7098,9 @@ public class FileAvi extends FileBase {
                         subchunkBytesRead += 4;
                         fileBuffer = new byte[dataLength];
                         raFile.read(fileBuffer);
+                        raFileW.write(fileBuffer);
                         totalBytesRead = totalBytesRead + dataLength;
                         subchunkBytesRead += dataLength;
-                        bufferFinished = false;
-                        blockIndex = 0;
-                        pixelIndex = 0;
-                        skipBlocks = 0;
-
-                        for (int j = 0; (j < dataLength) && (!bufferFinished);) {
-
-                            for (blockY = blocksHigh; (blockY > 0) && (!bufferFinished); blockY--) {
-                                blockIndex = ((4 * blockY) - 1) * (imgExtents[0] * bytesPerPixel);
-
-                                for (blockX = blocksWide; (blockX > 0) && (!bufferFinished); blockX--) {
-
-                                    // Check if this block should be skipped
-                                    if (skipBlocks > 0) {
-                                        blockIndex += blockInc;
-                                        skipBlocks--;
-
-                                        continue;
-                                    }
-
-                                    pixelIndex = blockIndex;
-
-                                    // get the next two bytes in the encoded data stream
-                                    if (j < dataLength) {
-                                        byteA = fileBuffer[j++];
-                                    }
-
-                                    if (j < dataLength) {
-                                        byteB = fileBuffer[j++];
-                                    }
-
-                                    // Check if decode is finished
-                                    // if ((byteA == 0) && (byteB == 0)) {
-                                    if ((pixelIndex == bufferSize) || (j == dataLength)) {
-
-                                        bufferFinished = true;
-
-                                        
-                                        imageA.importData(z * bufferSize, imgBuffer, false);
-
-                                        if (actualFrames > 1) {
-                                            fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
-                                        }
-
-                                        z++;
-                                    }
-
-                                    // Check if this is a skip code
-                                    else if ((byteB & 0xFC) == 0x84) {
-
-                                        // but don't count the current block
-                                        skipBlocks = (((byteB & 0xff) - 0x84) << 8) + (byteA & 0xff) - 1;
-                                    }
-
-                                    // Check if this is in the 2- or 8-color classes
-                                    else if ((byteB & 0xff) < 0x80) {
-                                        flags = ((byteB & 0xff) << 8) | (byteA & 0xff);
-
-                                        lowC = fileBuffer[j++] & 0xff;
-                                        highC = fileBuffer[j++] & 0xff;
-                                        c1[0][0] = (highC << 8) | lowC;
-                                        lowC = fileBuffer[j++] & 0xff;
-                                        highC = fileBuffer[j++] & 0xff;
-                                        c2[0][0] = (highC << 8) | lowC;
-
-
-                                        c1r[0][0] = (byte) ((c1[0][0] >> 7) & 0xF8);
-                                        c1g[0][0] = (byte) ((c1[0][0] >> 2) & 0xF8);
-                                        c1b[0][0] = (byte) ((c1[0][0] << 3) & 0xF8);
-                                        c2r[0][0] = (byte) ((c2[0][0] >> 7) & 0xF8);
-                                        c2g[0][0] = (byte) ((c2[0][0] >> 2) & 0xF8);
-                                        c2b[0][0] = (byte) ((c2[0][0] << 3) & 0xF8);
-
-                                        if ((c1[0][0] & 0x8000) != 0) {
-
-                                            // 8-color encoding
-                                            lowC = fileBuffer[j++] & 0xff;
-                                            highC = fileBuffer[j++] & 0xff;
-                                            c1[1][0] = (highC << 8) | lowC;
-                                            lowC = fileBuffer[j++] & 0xff;
-                                            highC = fileBuffer[j++] & 0xff;
-                                            c2[1][0] = (highC << 8) | lowC;
-
-                                            lowC = fileBuffer[j++] & 0xff;
-                                            highC = fileBuffer[j++] & 0xff;
-                                            c1[0][1] = (highC << 8) | lowC;
-                                            lowC = fileBuffer[j++] & 0xff;
-                                            highC = fileBuffer[j++] & 0xff;
-                                            c2[0][1] = (highC << 8) | lowC;
-
-                                            lowC = fileBuffer[j++] & 0xff;
-                                            highC = fileBuffer[j++] & 0xff;
-                                            c1[1][1] = (highC << 8) | lowC;
-                                            lowC = fileBuffer[j++] & 0xff;
-                                            highC = fileBuffer[j++] & 0xff;
-                                            c2[1][1] = (highC << 8) | lowC;
-
-                                            c1r[0][1] = (byte) ((c1[0][1] >> 7) & 0xF8);
-                                            c1g[0][1] = (byte) ((c1[0][1] >> 2) & 0xF8);
-                                            c1b[0][1] = (byte) ((c1[0][1] << 3) & 0xF8);
-                                            c2r[0][1] = (byte) ((c2[0][1] >> 7) & 0xF8);
-                                            c2g[0][1] = (byte) ((c2[0][1] >> 2) & 0xF8);
-                                            c2b[0][1] = (byte) ((c2[0][1] << 3) & 0xF8);
-
-                                            c1r[1][0] = (byte) ((c1[1][0] >> 7) & 0xF8);
-                                            c1g[1][0] = (byte) ((c1[1][0] >> 2) & 0xF8);
-                                            c1b[1][0] = (byte) ((c1[1][0] << 3) & 0xF8);
-                                            c2r[1][0] = (byte) ((c2[1][0] >> 7) & 0xF8);
-                                            c2g[1][0] = (byte) ((c2[1][0] >> 2) & 0xF8);
-                                            c2b[1][0] = (byte) ((c2[1][0] << 3) & 0xF8);
-
-                                            c1r[1][1] = (byte) ((c1[1][1] >> 7) & 0xF8);
-                                            c1g[1][1] = (byte) ((c1[1][1] >> 2) & 0xF8);
-                                            c1b[1][1] = (byte) ((c1[1][1] << 3) & 0xF8);
-                                            c2r[1][1] = (byte) ((c2[1][1] >> 7) & 0xF8);
-                                            c2g[1][1] = (byte) ((c2[1][1] >> 2) & 0xF8);
-                                            c2b[1][1] = (byte) ((c2[1][1] << 3) & 0xF8);
-
-                                            for (pixelY = 0; pixelY < 4; pixelY++) {
-
-                                                for (pixelX = 0; pixelX < 4; pixelX++) {
-
-                                                    if ((flags & 1) > 0) {
-                                                        imgBuffer[pixelIndex++] = (byte) 255;
-                                                        imgBuffer[pixelIndex++] = c1r[pixelX >> 1][pixelY >> 1];
-                                                        imgBuffer[pixelIndex++] = c1g[pixelX >> 1][pixelY >> 1];
-                                                        imgBuffer[pixelIndex++] = c1b[pixelX >> 1][pixelY >> 1];
-                                                    } else {
-                                                        imgBuffer[pixelIndex++] = (byte) 255;
-                                                        imgBuffer[pixelIndex++] = c2r[pixelX >> 1][pixelY >> 1];
-                                                        imgBuffer[pixelIndex++] = c2g[pixelX >> 1][pixelY >> 1];
-                                                        imgBuffer[pixelIndex++] = c2b[pixelX >> 1][pixelY >> 1];
-                                                    }
-
-                                                    // get the next flag ready to go
-                                                    flags >>= 1;
-                                                } // for (pixelX = 0; pixelX < 4; pixelX++)
-
-                                                pixelIndex -= rowDec;
-                                            } // for (pixelY = 0; pixelY < 4; pixelY++) {
-                                        } // if ((c1[0][0] & 0x8000) != 0)
-                                        else { // 2-color encoding
-
-                                            for (pixelY = 0; pixelY < 4; pixelY++) {
-
-                                                for (pixelX = 0; pixelX < 4; pixelX++) {
-
-                                                    if ((flags & 1) > 0) {
-                                                        imgBuffer[pixelIndex++] = (byte) 255;
-                                                        imgBuffer[pixelIndex++] = c1r[0][0];
-                                                        imgBuffer[pixelIndex++] = c1g[0][0];
-                                                        imgBuffer[pixelIndex++] = c1b[0][0];
-                                                    } else {
-                                                        imgBuffer[pixelIndex++] = (byte) 255;
-                                                        imgBuffer[pixelIndex++] = c2r[0][0];
-                                                        imgBuffer[pixelIndex++] = c2g[0][0];
-                                                        imgBuffer[pixelIndex++] = c2b[0][0];
-                                                    }
-
-                                                    // get the next flag ready to go
-                                                    flags >>= 1;
-                                                } // for (pixelX = 0; pixelX < 4; pixelX++)
-
-                                                pixelIndex -= rowDec;
-                                            } // for (pixelY = 0; pixelY < 4; pixelY++)
-                                        } // else 2-color encoding
-                                    } // else if ((byteB & 0xff) < 0x80)
-                                    else { // 1-color block
-                                        c1[0][0] = ((byteB & 0xff) << 8) | (byteA & 0xff);
-                                        c1r[0][0] = (byte) ((c1[0][0] >> 7) & 0xF8);
-                                        c1g[0][0] = (byte) ((c1[0][0] >> 2) & 0xF8);
-                                        c1b[0][0] = (byte) ((c1[0][0] << 3) & 0xF8);
-
-                                        for (pixelY = 0; pixelY < 4; pixelY++) {
-
-                                            for (pixelX = 0; pixelX < 4; pixelX++) {
-                                                imgBuffer[pixelIndex++] = (byte) 255;
-                                                imgBuffer[pixelIndex++] = c1r[0][0];
-                                                imgBuffer[pixelIndex++] = c1g[0][0];
-                                                imgBuffer[pixelIndex++] = c1b[0][0];
-                                            } // for (pixelX = 0; pixelX < 4; pixelX++)
-
-                                            pixelIndex -= rowDec;
-                                        } // for (pixelY = 0; pixelY < 4; pixelY++)
-                                    } // else 1-color block
-
-                                    blockIndex += blockInc;
-                                } // for (blockX = blocksWide; (blockX > 0) && (!bufferFinished); blockX--)
-                            } // for (blockY = blocksHigh; (blockY > 0) && (!bufferFinished); blockY--)
-                        } // for (int j = 0; (j < dataLength) && (!bufferFinished); )
                     } // else if ((dataSignature[2] == 0x64 /* d */) && (dataSignature[3] == 0x63 /* c */))
                     else {
                         dataLength = getInt(endianess);
@@ -7707,7 +7155,49 @@ public class FileAvi extends FileBase {
             } // else for doMSVC && (bitCount == 16)
 
             raFile.close();
-
+            
+            // Write the idx1 CHUNK
+            // Write the 'idx1' signature
+            idx1Pos = raFileW.getFilePointer();
+            raFileW.seek(saveLIST2Size);
+            writeIntW((int) (idx1Pos - (saveLIST2Size + 4)), endianess);
+            raFileW.seek(idx1Pos);
+            
+            byte[] idx1Signature = new byte[4];
+            idx1Signature[0] = 105; // i
+            idx1Signature[1] = 100; // d
+            idx1Signature[2] = 120; // x
+            idx1Signature[3] = 49; // 1
+            raFileW.write(idx1Signature);
+            
+            // Write the length of the idx1 CHUNK not including the idx1 signature and the 4 length
+            // bytes.  Write 0 for now.
+            saveidx1Length = raFileW.getFilePointer();
+            writeIntW(0, endianess);
+            for (z = 0; z < actualFramesW; z++) {
+                if (z == 0) {
+                    // Write the flags - select AVIIF_KEYFRAME
+                    writeIntW(0x10, endianess);
+                }
+                else {
+                    writeIntW(0x00, endianess);
+                }
+                writeIntW((int)(savedibPos[z] - 4 - savemovi), endianess);
+                if (compression == 0) {
+                    writeIntW(3 * xDim * yDim, endianess);    
+                }
+                else {
+                    writeIntW(dcLength[z], endianess);
+                }
+            }
+            
+            endPos = raFileW.getFilePointer();
+            raFileW.seek(saveFileSize);
+            writeIntW((int)(endPos - (saveFileSize + 4)), endianess);
+            raFileW.seek(saveidx1Length);
+            writeIntW((int)(endPos - (saveidx1Length + 4)), endianess);
+            raFileW.close();
+            System.out.println("Finished " + outputFileName + " creation");
         } catch (OutOfMemoryError error) {
             System.gc();
             throw error;
