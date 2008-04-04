@@ -218,12 +218,17 @@ public class MipavUtil {
      * @param srcDist   the distance between two pixels of source data in x, y or z direction.
      * @param destDist  the distance between two pixels of destination data in x, y or z direction.
      */
-    public static void rowCopy(float[] src, int srcPos, float[] dest, int destPos, int length, int srcDist, int destDist){
+    public static void rowCopy(double[] src, int srcPos, double[] dest, int destPos, int length, int srcDist, int destDist){
         for(int i = 0; i < length; i++){
             dest[destPos + i * destDist] = src[srcPos + i * srcDist];
         }
     }
 
+    /**
+     * Calculate the size of the image.
+     * @param dims
+     * @return
+     */
     public static int calculateImageSize(int[] dims){
         int size = 1;
         for(int i = 0; i < dims.length; i++){
@@ -232,4 +237,37 @@ public class MipavUtil {
         return size;
     }
 
+    public static void arrayCopy(float[] src, int srcPos, double[] dest, int destPos, int length){
+        if(src == null || dest == null){
+            return;
+        }
+        
+        if(srcPos < 0 || srcPos >= src.length|| destPos < 0 || destPos >= dest.length){
+            return;
+        }
+        
+        if((srcPos+length) > src.length || (destPos+length) > dest.length){
+            return;
+        }
+        for(int i = 0; i < length; i++){
+            dest[destPos+i] = src[i+srcPos];
+        }
+    }
+
+    public static void arrayCopy(double[] src, int srcPos, float[] dest, int destPos, int length){
+        if(src == null || dest == null){
+            return;
+        }
+        
+        if(srcPos < 0 || srcPos >= src.length|| destPos < 0 || destPos >= dest.length){
+            return;
+        }
+        
+        if((srcPos+length) > src.length || (destPos+length) > dest.length){
+            return;
+        }
+        for(int i = 0; i < length; i++){
+            dest[destPos+i] = (float)src[i+srcPos];
+        }
+    }
 }
