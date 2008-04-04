@@ -37,13 +37,13 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
     
     int incIndex;
     /** Holds the result image data. */
-    private float[] outputBuffer;
+    private double[] outputBuffer;
 
     /** Whether to convolve the whole image or just pixels inside a mask. */
     private boolean entireImage = true;
 
     /** Holds the original image data. */
-    private float[] inputBuffer;
+    private double[] inputBuffer;
 
     /** The dimensions of the both source and destination images. */
     private int[] imgExtents;
@@ -69,28 +69,23 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
      * @param  maxProgressValue the maximum progress value.
      */
     public AlgorithmSeparableConvolver(float[] srcBuffer, int[] iExtents, float[][] kernBuffer, 
-    		boolean colorImage, boolean multiThreadingEnabled, boolean inputBufferChangeable) {
+            boolean colorImage, boolean multiThreadingEnabled) {
         super(null, null);
-        this.inputBufferChangeable = inputBufferChangeable;
         this.multiThreadingEnabled = multiThreadingEnabled;
-		if (!inputBufferChangeable) {
-			this.inputBuffer = new float[srcBuffer.length];
-			System.arraycopy(srcBuffer, 0, inputBuffer, 0, srcBuffer.length);
-		}else{
-			this.inputBuffer = srcBuffer;
-		}
+        this.inputBuffer = new double[srcBuffer.length];
+        MipavUtil.arrayCopy(srcBuffer, 0, inputBuffer, 0, srcBuffer.length);
 
-		if(multiThreadingEnabled){
-			this.outputBuffer = new float[inputBuffer.length];
-		} else {
-			this.outputBuffer = this.inputBuffer;
-		}
+        if(multiThreadingEnabled){
+            this.outputBuffer = new double[inputBuffer.length];
+        } else {
+            this.outputBuffer = this.inputBuffer;
+        }
 
         this.imgExtents = iExtents;
         this.kernelBuffer = kernBuffer;
         kernelExtents = new int[kernBuffer.length];
         for(int i = 0; i < kernelBuffer.length; i++){
-        	kernelExtents[i] = kernelBuffer[i].length;
+            kernelExtents[i] = kernelBuffer[i].length;
         }
         this.colorImage = colorImage;
 
@@ -99,20 +94,16 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         }
     }
 
+
     public AlgorithmSeparableConvolver(float[] srcBuffer, int[] iExtents, float[] kernBuffers, int[] kExtents, 
-    		boolean colorImage, boolean multiThreadingEnabled, boolean inputBufferChangeable) {
+    		boolean colorImage, boolean multiThreadingEnabled) {
         super(null, null);
-        this.inputBufferChangeable = inputBufferChangeable;
         this.multiThreadingEnabled = multiThreadingEnabled;
-		if (!inputBufferChangeable) {
-			this.inputBuffer = new float[srcBuffer.length];
+			this.inputBuffer = new double[srcBuffer.length];
 			System.arraycopy(srcBuffer, 0, inputBuffer, 0, srcBuffer.length);
-		}else{
-			this.inputBuffer = srcBuffer;
-		}
 
 		if(multiThreadingEnabled){
-			this.outputBuffer = new float[inputBuffer.length];
+			this.outputBuffer = new double[inputBuffer.length];
 		} else {
 			this.outputBuffer = this.inputBuffer;
 		}
@@ -137,40 +128,6 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         }
     }
 
-    public AlgorithmSeparableConvolver(float[] srcBuffer, int[] iExtents, float[][] kernBuffer, 
-    		boolean colorImage, boolean inputBufferChangeable) {
-    	this(srcBuffer, iExtents, kernBuffer, colorImage, MipavUtil.getAvailableCores()>1, inputBufferChangeable);
-    }
-    
-    public AlgorithmSeparableConvolver(float[] srcBuffer, int[] iExtents, float[][] kernBuffer, 
-    		boolean colorImage) {
-    	super(null, null);
-		if (!inputBufferChangeable) {
-			this.inputBuffer = new float[srcBuffer.length];
-			System.arraycopy(srcBuffer, 0, inputBuffer, 0, srcBuffer.length);
-		}else{
-			this.inputBuffer = srcBuffer;
-		}
-
-		if(multiThreadingEnabled){
-			this.outputBuffer = new float[inputBuffer.length];
-		} else {
-			this.outputBuffer = this.inputBuffer;
-		}
-
-
-        this.imgExtents = iExtents;
-        this.kernelBuffer = kernBuffer;
-        kernelExtents = new int[kernBuffer.length];
-        for(int i = 0; i < kernelBuffer.length; i++){
-        	kernelExtents[i] = kernelBuffer[i].length;
-        }
-        this.colorImage = colorImage;
-
-        if (colorImage) {
-            cFactor = 4;
-        }   
-    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -193,7 +150,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
      * @param kernelBuffer
      * @param resultBuffer
      */
-    private void convolve(float[] imageBuffer, float[] kernelBuffer, float[] resultBuffer){
+    private void convolve(double[] imageBuffer, float[] kernelBuffer, double[] resultBuffer){
         boolean skipRed = false;
         boolean skipGreen = false;
         boolean skipBlue = false;
@@ -223,7 +180,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 				double sum = 0;
 				double norm = 0;
 				int start = i - halfKernelDimTimesCFactor;
-				int end = start + (kernelDim - 1) * cFactor;
+				int end = start + kernelDim * cFactor;
 				if (start < 0) {
 					count = count - ((start - (cFactor - 1)) / cFactor);
 					if (cFactor > 1) {
@@ -232,10 +189,10 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 						start = 0;
 					}
 				}
-				if (end >= imageBuffer.length) {
-					end = imageBuffer.length - cFactor;
+				if (end > imageBuffer.length) {
+					end = imageBuffer.length;
 				}
-				for (int j = start; j <= end; j += cFactor) {
+				for (int j = start; j < end; j += cFactor) {
 					sum += kernelBuffer[count] * imageBuffer[j];
 					if (kernelBuffer[count] > 0) {
 						norm += kernelBuffer[count];
@@ -244,7 +201,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 					}
 					count++;
 				}
-				resultBuffer[i] = (float)(sum / norm);
+				resultBuffer[i] = sum / norm;
 			}else{
 				resultBuffer[i] = imageBuffer[i];
 			}
@@ -346,8 +303,8 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         }
 
         progress = minProgressValue;
-        float[] xrowBuffer = new float[xoffset];
-        float[] xresultBuffer = new float[xoffset];
+        double[] xrowBuffer = new double[xoffset];
+        double[] xresultBuffer = new double[xoffset];
         // Convolve the image with the X dimension kernel
         for (int row = 0; (row < yDim*zDim) && !threadStopped; row++) {
 
@@ -360,8 +317,8 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         }
 
         // Convolve the result image from above with the Y dimension kernel
-        float[] yrowBuffer = new float[yoffset];
-        float[] yresultBuffer = new float[yoffset];
+        double[] yrowBuffer = new double[yoffset];
+        double[] yresultBuffer = new double[yoffset];
         for (int z = 0; (z < zDim) && !threadStopped; z++) {
         	for (int x = 0; (x < xDim) && !threadStopped; x++) {
 				if ((z*xDim +x) % progressStep == 0) {
@@ -374,9 +331,9 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         }
 
         // Convolve the result image from above with the Z dimension kernel
-        if (zDim > 1 || kernelBuffer.length > 2) {
-			float[] zrowBuffer = new float[zoffset];
-			float[] zresultBuffer = new float[zoffset];
+        if (zDim > 1 && kernelBuffer.length > 2) {
+            double[] zrowBuffer = new double[zoffset];
+            double[] zresultBuffer = new double[zoffset];
 			for (int row = 0; (row < xDim * yDim) && !threadStopped; row++) {
 				if (row % progressStep == 0) {
 					fireProgressStateChanged((int)progress++);
@@ -421,7 +378,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 				sum = 0;
 				norm = 0;
 				start = offsetX;
-				end = start + ((kDim - 1) * cFactor);
+				end = start + (kDim * cFactor);
 
 				if (start < 0) {
 					count =  -((offsetX - (cFactor - 1))/ cFactor);
@@ -432,11 +389,11 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 					}
 				}
 
-				if (end >= offset) {
-					end = offset - 1;
+				if (end > offset) {
+					end = offset;
 				}
 
-				for (int i = start; i <= end; i += cFactor) {
+				for (int i = start; i < end; i += cFactor) {
 					sum += kernelBuffer[0][count] * inputBuffer[i + combined];
 
 					if (kernelBuffer[0][count] >= 0) {
@@ -470,7 +427,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         int kDim = kernelBuffer[1].length;
         int halfKDim = kDim / 2;
         int combined, start, end;
-        int step = (kDim - 1) * offset;
+        int step = kDim * offset;
 		float sum, norm;
 		int index = 0;
         for (int pix = from; (pix < to) && !threadStopped; pix++) {
@@ -498,11 +455,11 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                     start = 0;
                 }
 
-                if (end > (offset * (yDim - 1))) {
-                    end = offset * (yDim - 1);
+                if (end > (offset * yDim )) {
+                    end = offset * yDim;
                 }
 
-                for (int i = start; i <= end; i += offset) {
+                for (int i = start; i < end; i += offset) {
                     sum += kernelBuffer[1][count] * outputBuffer[i + combined];
 
                     if (kernelBuffer[1][count] >= 0) {
@@ -539,7 +496,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         int halfKDim = kDim / 2;
         int combined, start, end;
 		float sum, norm;
-		int step = (kDim - 1) * sliceSize;
+		int step = kDim * sliceSize;
 		int index = 0;
 
         for (int pix = from; (pix < to) && !threadStopped; pix++) {
@@ -567,11 +524,11 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                     start = 0;
                 }
 
-                if (end > (sliceSize * (zDim - 1))) {
-                    end = sliceSize * (zDim - 1);
+                if (end > (sliceSize * zDim)) {
+                    end = sliceSize * zDim;
                 }
 
-                for (int i = start; i <= end; i += sliceSize) {
+                for (int i = start; i < end; i += sliceSize) {
 
                     // imgBuffer now holds the result of convolving with X and Y kernels
                     sum += kernelBuffer[2][count] * inputBuffer[i + combined];
@@ -650,6 +607,8 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
     }
  
     public float[] getOutputBuffer(){
-            return outputBuffer;
+        float[] buffer = new float[outputBuffer.length];
+        MipavUtil.arrayCopy(outputBuffer, 0, buffer, 0, outputBuffer.length);
+        return buffer;
     }
 }

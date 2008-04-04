@@ -1,16 +1,35 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.AlgorithmArcLength;
+import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
+import gov.nih.mipav.model.algorithms.AlgorithmEdgeLaplacian;
+import gov.nih.mipav.model.algorithms.AlgorithmEdgeLaplacianSep;
+import gov.nih.mipav.model.algorithms.AlgorithmLapMedianess;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientMagnitudeSep;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.Point3Df;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIContour;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Graphics;
+import java.awt.Point;
+import java.awt.Polygon;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.io.IOException;
+import java.util.BitSet;
+import java.util.Vector;
 
-import java.util.*;
-
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 
 
 /**
@@ -198,10 +217,18 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
             // AlgorithmGradientMagnitude magnitude = new AlgorithmGradientMagnitude(null, new float[] {1.75f, 1.75f},
             // true, false);
-            AlgorithmGradientMagnitudeSep magnitude = new AlgorithmGradientMagnitudeSep(((ViewJComponentEditImage) component).getActiveImage(),
+            ModelImage mi = new ModelImage(ModelStorageBase.FLOAT, new int[]{xDim, yDim}, ((ViewJComponentEditImage) component).getActiveImage().getImageName());
+            try{
+                mi.importData(0, ((ViewJComponentEditImage) component).getActiveImageSliceBuffer(), true);
+            }catch(IOException e){
+                MipavUtil.displayError("RubberbandLiveWire: IOException on extracting active slice" + ".importData(0, ((ViewJComponentEditImage) component).getActiveImageSliceBuffer(), true)" + e);
+
+            }
+            AlgorithmGradientMagnitudeSep magnitude = new AlgorithmGradientMagnitudeSep(mi,
                                                                                         new float[] { 1.75f, 1.75f },
                                                                                         true, true);
         	magnitude.setDirectionNeeded(true);
+        	magnitude.setNormalized(true);
             progressBar.updateValueImmed(10);
 
             if (((ViewJComponentEditImage) component).getActiveImage().isColorImage()) {

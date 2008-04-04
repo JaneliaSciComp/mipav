@@ -144,7 +144,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase implements Algorithm
 		}
 
 		AlgorithmSeparableConvolver convolver = new AlgorithmSeparableConvolver(
-				inputBuffer, srcImage.getExtents(), gaussianKernel.getData(), color);
+				inputBuffer, srcImage.getExtents(), gaussianKernel.getData(), color, multiThreadingEnabled);
 
 		convolver.setProgressValues(generateProgressValues(
 				getMinProgressValue(), getMinProgressValue()

@@ -97,11 +97,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      */
     protected int nthreads;
     
-    /**
-     * Indicates if the source image buffer can not be changed.
-     */
-    protected boolean inputBufferChangeable;
-    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -117,7 +112,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         if( nthreads > 1){
         	multiThreadingEnabled = true;
         }
-        inputBufferChangeable = true;
     }
 
 
@@ -142,7 +136,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         if( nthreads > 1){
         	multiThreadingEnabled = true;
         }
-        inputBufferChangeable = true;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -823,14 +816,4 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     public void setNumberOfThreads(int nthreads) {
         this.nthreads = nthreads;
     }
-
-
-	public boolean isInputImageBufferChangeable() {
-		return inputBufferChangeable;
-	}
-
-
-	public void setInputImageBufferChangeable(boolean inputImageBufferChangeable) {
-		this.inputBufferChangeable = inputImageBufferChangeable;
-	}
 }
