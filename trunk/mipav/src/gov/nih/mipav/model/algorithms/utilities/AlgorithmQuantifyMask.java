@@ -6,12 +6,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-
-import java.io.*;
-
-import java.util.*;
-
 
 /**
  * Algorithm that does basic calculations on Mask images (boolean/ubyte/short)
@@ -167,9 +161,9 @@ public class AlgorithmQuantifyMask extends AlgorithmBase {
     	String outputString = "\nOutput from QuantifyMasks: " + srcImage.getImageName() + "\n";
         String consoleString = "\nOutput from QuantifyMasks: " + srcImage.getImageName() + "\n";
     	
-    	outputString += "Object\t# of voxels\tArea(" + srcImage.getFileInfo(0).getVolumeUnitsOfMeasureStr() + ")"
+    	outputString += "Object\t# of voxels\tVolume(" + srcImage.getFileInfo(0).getVolumeUnitsOfMeasureStr() + ")"
     		+ "\t\tCenter of mass\n";
-        consoleString += "Object\t# of voxels\tArea(" + srcImage.getFileInfo(0).getVolumeUnitsOfMeasureStr() + ")"
+        consoleString += "Object\t# of voxels\tVolume(" + srcImage.getFileInfo(0).getVolumeUnitsOfMeasureStr() + ")"
         + "\tCenter of mass\n";
     	for (int i = 0; i < dif; i++) {
     		if (volume[i] != 0) {

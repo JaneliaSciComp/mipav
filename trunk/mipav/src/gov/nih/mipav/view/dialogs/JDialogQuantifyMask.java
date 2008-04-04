@@ -12,8 +12,6 @@ import gov.nih.mipav.view.MipavUtil;
 import java.awt.*;
 import java.awt.event.*;
 
-import javax.swing.*;
-
 
 /**
  * Simple dialog to change the number of colors in the histogram LUT.
