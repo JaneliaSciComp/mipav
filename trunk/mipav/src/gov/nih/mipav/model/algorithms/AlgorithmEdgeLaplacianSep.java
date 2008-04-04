@@ -289,7 +289,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
         float[] xResultBuffer;
         float[] yResultBuffer;
         AlgorithmSeparableConvolver xConvolver = new AlgorithmSeparableConvolver(buffer, extents,
-                                                                                 GxxData, kExtents, false, Preferences.isMultiThreadingEnabled(), false); // assume not color
+                                                                                 GxxData, kExtents, false, Preferences.isMultiThreadingEnabled()); // assume not color
 
         xConvolver.run();
         xResultBuffer = xConvolver.getOutputBuffer();
@@ -297,7 +297,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
         xConvolver = null;
 
         AlgorithmSeparableConvolver yConvolver = new AlgorithmSeparableConvolver(buffer, extents,
-                                                                                 GyyData, kExtents, false, Preferences.isMultiThreadingEnabled(), false); // assume not color
+                                                                                 GyyData, kExtents, false, Preferences.isMultiThreadingEnabled()); // assume not color
 
         yConvolver.run();
         yResultBuffer = yConvolver.getOutputBuffer();
@@ -618,7 +618,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
                 xConvolver = new AlgorithmSeparableConvolver(buffer,
                                                              new int[] {
                                                                  srcImage.getExtents()[0], srcImage.getExtents()[1]
-                                                             }, GxxData, kExtents, false, Preferences.isMultiThreadingEnabled(), false);
+                                                             }, GxxData, kExtents, false, Preferences.isMultiThreadingEnabled());
 
                 xConvolver.setProgressValues(generateProgressValues(min, max));
                 linkProgressToAlgorithm(xConvolver);
@@ -627,7 +627,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
                 xConvolver = new AlgorithmSeparableConvolver(buffer,
                                                              new int[] {
                                                                  srcImage.getExtents()[0], srcImage.getExtents()[1]
-                                                             }, GxxData, kExtents, false, Preferences.isMultiThreadingEnabled(), false); // assume not color
+                                                             }, GxxData, kExtents, false, Preferences.isMultiThreadingEnabled()); // assume not color
             }
 
             if (!entireImage) {
@@ -648,7 +648,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
                 yConvolver = new AlgorithmSeparableConvolver(buffer,
                                                              new int[] {
                                                                  srcImage.getExtents()[0], srcImage.getExtents()[1]
-                                                             }, GyyData, kExtents, false, Preferences.isMultiThreadingEnabled(), false);
+                                                             }, GyyData, kExtents, false, Preferences.isMultiThreadingEnabled());
 
                 yConvolver.setProgressValues(generateProgressValues(min, max));
                 linkProgressToAlgorithm(yConvolver);
@@ -657,7 +657,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
                 yConvolver = new AlgorithmSeparableConvolver(buffer,
                                                              new int[] {
                                                                  srcImage.getExtents()[0], srcImage.getExtents()[1]
-                                                             }, GyyData, kExtents, false, Preferences.isMultiThreadingEnabled(), false); // assume not color
+                                                             }, GyyData, kExtents, false, Preferences.isMultiThreadingEnabled()); // assume not color
             }
 
             if (!entireImage) {
@@ -762,13 +762,13 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
 
         if (Math.round(stepPerDimension) > 1) {
             xConvolver = new AlgorithmSeparableConvolver(buffer, srcImage.getExtents(), GxxData,
-                                                         kExtents, false, Preferences.isMultiThreadingEnabled(), false); // assume not color
+                                                         kExtents, false, Preferences.isMultiThreadingEnabled()); // assume not color
 
             xConvolver.setProgressValues(generateProgressValues(min, min + Math.round(stepPerDimension)));
             linkProgressToAlgorithm(xConvolver);
         } else {
             xConvolver = new AlgorithmSeparableConvolver(buffer, srcImage.getExtents(), GxxData,
-                                                         kExtents, false, Preferences.isMultiThreadingEnabled(), false); // assume not color
+                                                         kExtents, false, Preferences.isMultiThreadingEnabled()); // assume not color
         }
 
         if (!entireImage) {
@@ -787,7 +787,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
 
         if ((Math.round(stepPerDimension * 2) - Math.round(stepPerDimension)) > 1) {
             yConvolver = new AlgorithmSeparableConvolver(buffer, srcImage.getExtents(), GyyData,
-                                                         kExtents, false, Preferences.isMultiThreadingEnabled(), false); // assume not color
+                                                         kExtents, false, Preferences.isMultiThreadingEnabled()); // assume not color
 
             yConvolver.setProgressValues(generateProgressValues(min + Math.round(stepPerDimension),
                                                                 min + Math.round(stepPerDimension * 2)));
@@ -795,7 +795,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
             linkProgressToAlgorithm(yConvolver);
         } else {
             yConvolver = new AlgorithmSeparableConvolver(buffer, srcImage.getExtents(), GyyData,
-                                                         kExtents, false, Preferences.isMultiThreadingEnabled(), false); // assume not color
+                                                         kExtents, false, Preferences.isMultiThreadingEnabled()); // assume not color
         }
 
         if (!entireImage) {
@@ -814,14 +814,14 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
 
         if ((Math.round(stepPerDimension * 3) - Math.round(stepPerDimension * 2)) > 1) {
             zConvolver = new AlgorithmSeparableConvolver(buffer, srcImage.getExtents(), GzzData,
-                                                         kExtents, false, Preferences.isMultiThreadingEnabled(), false); // assume not color
+                                                         kExtents, false, Preferences.isMultiThreadingEnabled()); // assume not color
 
             zConvolver.setProgressValues(generateProgressValues(min + Math.round(stepPerDimension * 2), max));
 
             linkProgressToAlgorithm(zConvolver);
         } else {
             zConvolver = new AlgorithmSeparableConvolver(buffer, srcImage.getExtents(), GzzData,
-                                                         kExtents, false, Preferences.isMultiThreadingEnabled(), false); // assume not color
+                                                         kExtents, false, Preferences.isMultiThreadingEnabled()); // assume not color
         }
 
         if (!entireImage) {

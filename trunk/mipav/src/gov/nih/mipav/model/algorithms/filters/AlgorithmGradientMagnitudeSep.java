@@ -132,7 +132,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 		gaussianKernel = gkf.createKernel();
 
 		float[] xDerivativeBuffer = calculateDerivativeImage(buffer, color,
-				gaussianKernel.getData(), progressFrom, progressTo, false);
+				gaussianKernel.getData(), progressFrom, progressTo);
 
 		if(threadStopped){
 			return;
@@ -148,7 +148,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 		gkf.setKernelType(GaussianKernelFactory.Y_DERIVATIVE_KERNEL);
 		gaussianKernel = gkf.createKernel();
 		float[] yDerivativeBuffer = calculateDerivativeImage(buffer, color,
-				gaussianKernel.getData(), progressFrom, progressTo, false);
+				gaussianKernel.getData(), progressFrom, progressTo);
 
 		if(threadStopped){
 			return;
@@ -163,7 +163,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 			gaussianKernel = gkf.createKernel();
 
 			float[] zDerivativeBuffer = calculateDerivativeImage(buffer, color,
-					gaussianKernel.getData(), progressFrom, progressTo, true);
+					gaussianKernel.getData(), progressFrom, progressTo);
 
 			if (threadStopped) {
 				return;
@@ -196,10 +196,9 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 	}
 
 	private float[] calculateDerivativeImage(float[] imgData, boolean color,
-			float[][] kernelData, int progressFrom, int progressTo, boolean sourcBufferChangeable) {
+			float[][] kernelData, int progressFrom, int progressTo) {
 		AlgorithmSeparableConvolver convolver = new AlgorithmSeparableConvolver(
-				imgData, srcImage.getExtents(), kernelData, color, Preferences.isMultiThreadingEnabled(),
-				sourcBufferChangeable);
+				imgData, srcImage.getExtents(), kernelData, color,false);
 		convolver.setNumberOfThreads(Preferences.getNumberOfThreads());
 		convolver.setProgressValues(generateProgressValues(progressFrom,
 				progressTo));
@@ -222,20 +221,14 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 	}
 
 	private float[] magnitude(float[] buffer, int cFactor,
-			float[] xDerivatives, float[] yDerivatives, float[] zDerivatives,
+	        float[] xDerivatives, float[] yDerivatives, float[] zDerivatives,
 			int progressFrom, int progressTo) {
-		float[] resultBuffer = null;
+	    float[] resultBuffer = new float[xDerivatives.length];
+
 		if(directionNeeded){
 			xDerivativeDirections = xDerivatives;
 			yDerivativeDirections = yDerivatives;
 			
-			if(zDerivatives != null){
-				resultBuffer = zDerivatives;
-			}else{
-				resultBuffer = new float[xDerivatives.length];
-			}
-		}else{
-			resultBuffer = xDerivatives;
 		}
 		int start = calculateValidStartZIndex() * srcImage.getSliceSize() * cFactor;
 		int end = calculateValidEndZIndex() * srcImage.getSliceSize() * cFactor;
@@ -260,14 +253,16 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 							.sqrt((xDerivatives[i + 1] * xDerivatives[i + 1])
 									+ (yDerivatives[i + 1] * yDerivatives[i + 1]));
 						}else{
-						resultBuffer[i + 1] = (float) Math
+						    resultBuffer[i + 1] = (float) Math
 								.sqrt((xDerivatives[i + 1] * xDerivatives[i + 1])
 										+ (yDerivatives[i + 1] * yDerivatives[i + 1])
 										+ (zDerivatives[i + 1] * zDerivatives[i + 1]));
 						}
 						if(directionNeeded && normalized){
-							xDerivatives[i+1] /= resultBuffer[i+1];
-							yDerivatives[i+1] /= resultBuffer[i+1];
+						    if(resultBuffer[i+1] != 0){
+						        xDerivatives[i+1] /= resultBuffer[i+1];
+						        yDerivatives[i+1] /= resultBuffer[i+1];
+						    }
 						}
 					} else {
 						resultBuffer[i + 1] = buffer[i + 1];
@@ -285,8 +280,10 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 										+ (zDerivatives[i + 2] * zDerivatives[i + 2]));
 						}
 						if(directionNeeded && normalized){
-							xDerivatives[i+2] /= resultBuffer[i+2];
-							yDerivatives[i+2] /= resultBuffer[i+2];
+                            if(resultBuffer[i+2] != 0){
+                                xDerivatives[i+2] /= resultBuffer[i+2];
+                                yDerivatives[i+2] /= resultBuffer[i+2];
+                            }
 						}
 					} else {
 						resultBuffer[i + 2] = buffer[i + 2];
@@ -302,8 +299,10 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 									+ (zDerivatives[i + 3] * zDerivatives[i + 3]));
 						}
 						if(directionNeeded && normalized){
-							xDerivatives[i+3] /= resultBuffer[i+3];
-							yDerivatives[i+3] /= resultBuffer[i+3];
+                            if(resultBuffer[i+3] != 0){
+                                xDerivatives[i+3] /= resultBuffer[i+3];
+                                yDerivatives[i+3] /= resultBuffer[i+3];
+                            }
 						}
 					} else {
 						resultBuffer[i + 3] = buffer[i + 3];
@@ -318,8 +317,10 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 									+ (zDerivatives[i] * zDerivatives[i]));
 					}
 					if(directionNeeded && normalized){
-						xDerivatives[i] /= resultBuffer[i];
-						yDerivatives[i] /= resultBuffer[i];
+					    if(resultBuffer[i] != 0){
+					        xDerivatives[i] /= resultBuffer[i];
+					        yDerivatives[i] /= resultBuffer[i];
+					    }
 					}
 				}
 			}

@@ -444,7 +444,7 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
 
             // make the magnitude of the gradient image of the gaussian smoothed source image
             algoSepConvolver = new AlgorithmSeparableConvolver(sourceBuffer, extents, new float[][]{xDataRound,
-                                                               yDataRound}, srcImage.isColorImage(), Preferences.isMultiThreadingEnabled(), false);
+                                                               yDataRound}, srcImage.isColorImage(), multiThreadingEnabled);
 
             for (int iterNum = 0; iterNum < numIterations; iterNum++) {
                 fireProgressStateChanged(0 + Math.round(stepProgressValue * computationCount));
@@ -635,17 +635,17 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
             // make the magnitude of the gradient image of the gaussian smoothed source image
             if (useRed) {
                 algoSepConvolverR = new AlgorithmSeparableConvolver(sourceBufferR, extents, new float[][]{xDataRound,
-                                                                    yDataRound}, false, Preferences.isMultiThreadingEnabled(), false);
+                                                                    yDataRound}, srcImage.isColorImage(), multiThreadingEnabled);
             }
 
             if (useGreen) {
                 algoSepConvolverG = new AlgorithmSeparableConvolver(sourceBufferG, extents, new float[][]{xDataRound,
-                                                                    yDataRound}, false, Preferences.isMultiThreadingEnabled(), false);
+                                                                    yDataRound}, srcImage.isColorImage(), multiThreadingEnabled);
             }
 
             if (useBlue) {
                 algoSepConvolverB = new AlgorithmSeparableConvolver(sourceBufferB, extents, new float[][]{xDataRound,
-                                                                    yDataRound}, false, Preferences.isMultiThreadingEnabled(), false);
+                                                                    yDataRound}, srcImage.isColorImage(), multiThreadingEnabled);
             }
 
             for (int iterNum = 0; iterNum < numIterations; iterNum++) {
@@ -871,7 +871,7 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
         // make the magnitude of the gradient image of the gaussian smoothed
         // source image
         algoSepConvolver = new AlgorithmSeparableConvolver(sourceBuffer, extents, new float[][]{xDataRound, 
-        		yDataRound, zDataRound}, srcImage.isColorImage(), Preferences.isMultiThreadingEnabled(), false);
+        		yDataRound, zDataRound}, srcImage.isColorImage(), multiThreadingEnabled);
         linkProgressToAlgorithm(algoSepConvolver);
 
         for (int iterNum = 0; iterNum < numIterations; iterNum++) {
@@ -1046,17 +1046,17 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
         // make the magnitude of the gradient image of the gaussian smoothed source image
         if (useRed) {
             algoSepConvolverR = new AlgorithmSeparableConvolver(sourceBufferR, extents, new float[][]{xDataRound,
-                                                                yDataRound, zDataRound}, false, Preferences.isMultiThreadingEnabled(), false);
+                                                                yDataRound, zDataRound}, srcImage.isColorImage(), multiThreadingEnabled);
         }
 
         if (useGreen) {
             algoSepConvolverG = new AlgorithmSeparableConvolver(sourceBufferG, extents, new float[][]{xDataRound,
-                                                                yDataRound, zDataRound}, false, Preferences.isMultiThreadingEnabled(), false);
+                                                                yDataRound, zDataRound}, srcImage.isColorImage(), multiThreadingEnabled);
         }
 
         if (useBlue) {
             algoSepConvolverB = new AlgorithmSeparableConvolver(sourceBufferB, extents, new float[][]{xDataRound,
-                                                                yDataRound, zDataRound}, false, Preferences.isMultiThreadingEnabled(), false);
+                                                                yDataRound, zDataRound}, srcImage.isColorImage(), multiThreadingEnabled);
         }
 
         for (int iterNum = 0; iterNum < numIterations; iterNum++) {
