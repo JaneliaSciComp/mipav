@@ -124,6 +124,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         /** Indicates the image has top-bottom symmetry. */
         TOP_BOTTOM
     }
+    
+    private boolean oldPrefCloseFrameCheckValue = Preferences.is(Preferences.PREF_CLOSE_FRAME_CHECK);
    
     public PlugInMuscleImageDisplay(ModelImage image, String[] titles,
             String[][] mirrorArr, boolean[][] mirrorZ, 
@@ -134,7 +136,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	
     	this.setVisible(true);
         
-        Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, "yes");
+        Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(true));
         
         this.setImageA(image);
         this.setActiveImage(IMAGE_A);
@@ -195,7 +197,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         voiColor = new TreeMap();
         locationStatus = new TreeMap();
         
-        Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, "yes");
+        Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(true));
                 
     	initStandAlone();
     	this.setActiveImage(IMAGE_A);
@@ -450,6 +452,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         } catch (Throwable t) {
             MipavUtil.displayError("Error encountered cleaning up image frame: " + t);
         }
+        
+        Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(oldPrefCloseFrameCheckValue));
         
         //next step would normally be to finalize, but we don't want the controls removed since the original image
         //may still be worked on
