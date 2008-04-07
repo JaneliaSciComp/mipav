@@ -525,8 +525,8 @@ public class FileInfoNIFTI extends FileInfoBase {
             dialog.appendPrimaryData("Max blue", Double.toString(getMaxB()));
 
         } else {
-            dialog.appendPrimaryData("Min", Double.toString(getMin()) + ":" + getMinLoc().toString());
-            dialog.appendPrimaryData("Max", Double.toString(getMax()) + ":" + getMaxLoc().toString());
+            dialog.appendPrimaryData("Min", Double.toString(getMin()));
+            dialog.appendPrimaryData("Max", Double.toString(getMax()));
         }
 
         dialog.appendPrimaryData("Modality", FileInfoBase.getModalityStr(getModality()));
