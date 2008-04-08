@@ -1577,7 +1577,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         }
 
         for (int m = 0; m < endIndex; m++) {
-            fireProgressStateChanged("Registering image " + (iNumber + 1));
+            fireProgressStateChanged("Registering image " + (iNumber));
             fireProgressStateChanged((int) (m / (float) (endIndex) * 100));
 
             Preferences.debug(" ***********************Starting Image " + iNumber + "  **************************\n");
