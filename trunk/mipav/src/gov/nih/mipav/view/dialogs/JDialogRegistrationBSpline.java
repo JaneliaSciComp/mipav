@@ -640,7 +640,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             m_kComboBoxTargetSlice.setBackground(Color.white);
 
             for (int i = 0; i < m_kImageSrc.getExtents()[2]; i++) {
-                m_kComboBoxTargetSlice.addItem(String.valueOf(i + 1));
+                m_kComboBoxTargetSlice.addItem(String.valueOf(i));
             }
 
             m_kComboBoxTargetSlice.addItemListener(this);

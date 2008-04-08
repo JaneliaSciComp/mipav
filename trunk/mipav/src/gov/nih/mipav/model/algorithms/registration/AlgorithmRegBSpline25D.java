@@ -100,7 +100,7 @@ iteration:
         for (int iSlice = 0; iSlice < iNumSlices; iSlice++) {
 
             // Show the slice number in the progress.
-            String kStringSlice = new String("Slice: " + String.valueOf(iSlice + 1) + "/" + String.valueOf(iNumSlices) +
+            String kStringSlice = new String("Slice: " + String.valueOf(iSlice) + "/" + String.valueOf(iNumSlices-1) +
                                              "  ");
 
             // Update the progress bar.
