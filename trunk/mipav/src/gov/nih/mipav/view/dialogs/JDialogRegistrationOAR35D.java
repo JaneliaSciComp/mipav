@@ -1151,7 +1151,7 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
         gbc.weightx = 0;
         refPanel.add(labelInternal, gbc);
 
-        refImageNumText = new JTextField(String.valueOf((matchImage.getExtents()[3] / 2) + 1), 3);
+        refImageNumText = new JTextField(String.valueOf((matchImage.getExtents()[3] / 2)), 3);
         refImageNumText.setEnabled(true);
         gbc.gridx = 1;
         gbc.gridy = 0;
@@ -1668,7 +1668,7 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
 
             return false;
         } else {
-            refImageNum = Integer.valueOf(refImageNumText.getText()).intValue() - 1;
+            refImageNum = Integer.valueOf(refImageNumText.getText()).intValue();
         }
 
         if (adjacentImageRButton.isSelected()) {
