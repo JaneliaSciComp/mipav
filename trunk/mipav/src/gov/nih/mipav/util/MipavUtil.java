@@ -237,6 +237,14 @@ public class MipavUtil {
         return size;
     }
 
+    /**
+     * Copy a float array to a double array 
+     * @param src       a float array
+     * @param srcPos    the start position of the source array
+     * @param dest      a double array
+     * @param destPos   the start position of the destination array
+     * @param length    the length of data to be copied
+     */
     public static void arrayCopy(float[] src, int srcPos, double[] dest, int destPos, int length){
         if(src == null || dest == null){
             return;
@@ -254,6 +262,14 @@ public class MipavUtil {
         }
     }
 
+    /**
+     * Copy a double array to a float array.
+     * @param src       a float array
+     * @param srcPos    the start position of the source array
+     * @param dest      a double array
+     * @param destPos   the start position of the destination array
+     * @param length    the length of data to be copied
+     */
     public static void arrayCopy(double[] src, int srcPos, float[] dest, int destPos, int length){
         if(src == null || dest == null){
             return;
@@ -269,5 +285,21 @@ public class MipavUtil {
         for(int i = 0; i < length; i++){
             dest[destPos+i] = (float)src[i+srcPos];
         }
+    }
+    
+    /**
+     * A utility function to print out a double array.
+     * @param data  a double array.
+     */
+    public static void print(double[] data){
+        if(data == null)
+            return;
+        StringBuffer sb = new StringBuffer("");
+        for(int i = 0; i < (data.length - 1); i++){
+            sb.append(data[i]);
+            sb.append(", ");
+        }
+        sb.append(data[data.length-1]);
+        System.out.println(sb.toString());
     }
 }
