@@ -561,12 +561,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.setResizable(true);
     }
     
+    private boolean voiChangeState = false;
+    
     @Override
 	public void componentShown(ComponentEvent event) {
     	Component c = event.getComponent();
 	    if(c instanceof MuscleDialogPrompt) {
 	    	for(int i=0; i<voiTabLoc; i++) {
-	    		if(tabs[i].equals(c)) {
+	    		if(tabs[i].equals(c) && !voiChangeState) {
 	    			initMuscleImage(i);
 	    			activeTab = i;
 	    			displayChanged = true;
@@ -820,7 +822,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         for(int i=0; i<voiTabLoc; i++) 
             imagePane.setEnabledAt(i, true);
         imagePane.setSelectedIndex(activeTab);
-        updateImages(true);
+        voiChangeState = false;
     }
     
     /**
@@ -1235,7 +1237,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                     VOI goodVoi = checkVoi();
                     //check that VOI conforms to requirements, returns the VOI being modified/created
                     if ( goodVoi != null ) { 
-                        
+                        voiChangeState = true;
                         //save modified/created VOI to file
                         getActiveImage().unregisterAllVOIs();
                         getActiveImage().registerVOI(goodVoi);
@@ -1258,6 +1260,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                     	completed = false;
                     }
                 } else if (command.equals(CANCEL)) {
+                	voiChangeState = true;
                     notifyListeners(CANCEL);
                     //dispose();
                 } else if (command.equals(HELP)) {
@@ -1811,8 +1814,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		
 		private JButton[][] noMirrorButtonArr;
 		
-		private String name[];
-		
 		private int colorChoice = 0;
 		
 		private MuscleCalculation muscleCalc = new MuscleCalculation();
@@ -1850,16 +1851,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			meanTotalHTree = Collections.synchronizedMap(new TreeMap<String,Double>());
 	        
 	        setButtons(buttonStringList);
-	        
-	        name = new String[3];
-	        if(imageType == ImageType.Abdomen)
-	        	name[0] = "abdomen";
-	        else
-	        	name[0] = "thigh";
-        	name[1] = "tissue";
-        	name[2] = "muscle";
-	      
-	        
+
 	        //by looking at calculations up here, this process can be done independent
 	        //of the multiple symmetries that may exist within a given body.
 	        this.noMirrorArr = getCalcItems(noMirrorArr);
@@ -2022,7 +2014,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        //guaranteed (for now) that mirrorArr.length = noMirrorArr.length
 	        for(int i=0; i<mirrorArr.length; i++) {
 	        	
-	        	JPanel subPanel = initSymmetricalObjects(i, title = name[i]);
+	        	JPanel subPanel = initSymmetricalObjects(i, title = titles[i]);
 	        	initNonSymmetricalObjects(subPanel, i);
 	        	
 	        	mirrorPanel[i] = new JScrollPane(subPanel, 
