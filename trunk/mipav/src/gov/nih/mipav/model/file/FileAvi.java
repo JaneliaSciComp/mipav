@@ -442,6 +442,7 @@ public class FileAvi extends FileBase {
 
             chunkRead = true;
 
+            loop1:
             while (((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
                        (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) {
 
@@ -456,6 +457,9 @@ public class FileAvi extends FileBase {
                                 (dataSignature[3] > 0x63 /* c */)) {
                             indexPointer = indexPointer + 16;
                             indexBytesRead += 16;
+                            if (indexBytesRead >= indexSize) {
+                                break loop1;
+                            }
                             raFile.seek(indexPointer);
                         } else {
                             dataFound = true;
@@ -505,6 +509,7 @@ public class FileAvi extends FileBase {
                     subchunkBytesRead += 4;
 
                     long ptr = raFile.getFilePointer();
+                    // dataLength = -2080013696
                     raFile.seek(ptr + dataLength);
                     totalBytesRead = totalBytesRead + dataLength;
                     subchunkBytesRead += dataLength;
@@ -643,6 +648,7 @@ public class FileAvi extends FileBase {
                 z = 0;
                 chunkRead = true;
 
+                loop2:
                 while (((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
                            (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) {
 
@@ -657,6 +663,9 @@ public class FileAvi extends FileBase {
                                     (dataSignature[3] > 0x63 /* c */)) {
                                 indexPointer = indexPointer + 16;
                                 indexBytesRead += 16;
+                                if (indexBytesRead >= indexSize) {
+                                    break loop2;
+                                }
                                 raFile.seek(indexPointer);
                             } else {
                                 dataFound = true;
@@ -975,6 +984,7 @@ public class FileAvi extends FileBase {
                 z = 0;
                 chunkRead = true;
 
+                loop3:
                 while (((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
                            (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) {
 
@@ -989,6 +999,9 @@ public class FileAvi extends FileBase {
                                     (dataSignature[3] > 0x63 /* c */)) {
                                 indexPointer = indexPointer + 16;
                                 indexBytesRead += 16;
+                                if (indexBytesRead >= indexSize) {
+                                    break loop3;
+                                }
                                 raFile.seek(indexPointer);
                             } else {
                                 dataFound = true;
@@ -1223,6 +1236,7 @@ public class FileAvi extends FileBase {
 
                 chunkRead = true;
 
+                loop4:
                 while (((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
                            (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) {
 
@@ -1237,6 +1251,9 @@ public class FileAvi extends FileBase {
                                     (dataSignature[3] > 0x63 /* c */)) {
                                 indexPointer = indexPointer + 16;
                                 indexBytesRead += 16;
+                                if (indexBytesRead >= indexSize) {
+                                    break loop4;
+                                }
                                 raFile.seek(indexPointer);
                             } else {
                                 dataFound = true;
@@ -1568,6 +1585,7 @@ public class FileAvi extends FileBase {
 
                 chunkRead = true;
 
+                loop5:
                 while (((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
                            (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) {
 
@@ -1582,6 +1600,9 @@ public class FileAvi extends FileBase {
                                     (dataSignature[3] > 0x63 /* c */)) {
                                 indexPointer = indexPointer + 16;
                                 indexBytesRead += 16;
+                                if (indexBytesRead >= indexSize) {
+                                    break loop5;
+                                }
                                 raFile.seek(indexPointer);
                             } else {
                                 dataFound = true;
@@ -3798,6 +3819,7 @@ public class FileAvi extends FileBase {
             } else {
                 Preferences.debug("AVIF_MUSTUSEINDEX = false\n");
             }
+            //AVIF_MUSTUSEINDEX = true;
 
             if ((flags & 0x800) != 0) {
                 Preferences.debug("AVIF_TRUSTCKTYPE = true\n");
@@ -5287,6 +5309,8 @@ public class FileAvi extends FileBase {
         long saveTotalFramesW;
         long saveLengthW = 0L;
         long saveHere;
+        long streamPositionW;
+        boolean vidsRead = false;
 
         try {
             System.out.println("Started " + outputFileName + " creation");
@@ -5401,6 +5425,8 @@ public class FileAvi extends FileBase {
             Preferences.debug("Frames to capture = " + framesToCapture + "\n");
             framesToSkip = Math.round(skipTime/secPerFrame);
             Preferences.debug("Frames to skip = " + framesToSkip + "\n");
+            //framesToCapture = 1;
+            //framesToSkip = 1;
 
             int maxBytesPerSecond = getInt(endianess);
             Preferences.debug("maxBytesPerSecond = " + maxBytesPerSecond + "\n");
@@ -5517,30 +5543,40 @@ public class FileAvi extends FileBase {
             for (int i = 0; i < 4; i++) {
                 writeIntW(0, endianess);
             }
+            
+            streamPositionW = raFileW.getFilePointer();
 
-            for (loop = 0; loop < streams; loop++) {
+            for (loop = 0; (loop < streams); loop++) {
 
                 // read the LIST subCHUNK
                 CHUNKsignature = getInt(endianess);
-                writeIntW(CHUNKsignature, endianess);
+                if (!vidsRead) {
+                    writeIntW(CHUNKsignature, endianess);
+                }
                 
                 if (CHUNKsignature == 0x6E727473) {
                     // read strn instead of CHUNK
                     int strnLength = getInt(endianess);
-                    writeIntW(strnLength, endianess);
+                    if (!vidsRead) {
+                        writeIntW(strnLength, endianess);
+                    }
                     if ((strnLength % 2) == 1) {
                         strnLength++;
                     }
                     byte[] text = new byte[strnLength];
                     raFile.read(text);
-                    raFileW.write(text);
+                    if (!vidsRead) {
+                        raFileW.write(text);
+                    }
 
                     if (text[strnLength - 1] != 0) {
                         raFile.close();
                         throw new IOException("strn string ends with illegal temination at loop start = " + text[strnLength - 1]);
                     }
                     CHUNKsignature = getInt(endianess);
-                    writeIntW(CHUNKsignature, endianess);
+                    if (!vidsRead) {
+                        writeIntW(CHUNKsignature, endianess);
+                    }
                 } // if (CHUNKSignature == 0x6E727473)
 
                 if (CHUNKsignature == 0x5453494C) {
@@ -5559,7 +5595,9 @@ public class FileAvi extends FileBase {
                 // The end of the first LIST subCHUNK is followed by JUNK.
                 saveLIST1subSize = raFileW.getFilePointer();
                 // For now write 0 in CHUNK size location
-                writeIntW(0, endianess);
+                if (!vidsRead) {
+                    writeIntW(0, endianess);
+                }
 
                 // the first 8 signature and length bytes
                 CHUNKtype = getInt(endianess);
@@ -5572,7 +5610,9 @@ public class FileAvi extends FileBase {
                 }
                 
                 // Write the chunk type
-                writeIntW(CHUNKtype, endianess);
+                if (!vidsRead) {
+                    writeIntW(CHUNKtype, endianess);
+                }
 
                 // read the strh subCHUNK
                 int strhSignature = getInt(endianess);
@@ -5583,7 +5623,9 @@ public class FileAvi extends FileBase {
                     raFile.close();
                     throw new IOException("AVI read header error no strhSignature found but = " + strhSignature);
                 }
-                writeIntW(strhSignature, endianess);
+                if (!vidsRead) {
+                    writeIntW(strhSignature, endianess);
+                }
 
                 int strhLength = getInt(endianess); // length of strh subCHUNK not including first 8
 
@@ -5597,14 +5639,20 @@ public class FileAvi extends FileBase {
                 }
                 
                 // Write the length of the strh sub-CHUNK
-                writeIntW(strhLength, endianess);
+                if (!vidsRead) {
+                    writeIntW(strhLength, endianess);
+                }
 
                 int fccType = getInt(endianess);
 
                 if (fccType == 0x73646976) {
                     // vids read for video stream
+                    vidsRead = true;
                 } else if (streams > 1) {
                     raFile.seek(LISTsubchunkSize + LISTsubchunkMarker);
+                    if (!vidsRead) {
+                        raFileW.seek(streamPositionW);
+                    }
 
                     continue;
                 } else {
@@ -6292,6 +6340,7 @@ public class FileAvi extends FileBase {
 
             chunkRead = true;
 
+            loop1:
             while (((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
                        (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) {
 
@@ -6306,6 +6355,9 @@ public class FileAvi extends FileBase {
                                 (dataSignature[3] > 0x63 /* c */)) {
                             indexPointer = indexPointer + 16;
                             indexBytesRead += 16;
+                            if (indexBytesRead >= indexSize) {
+                                break loop1;
+                            }
                             raFile.seek(indexPointer);
                         } else {
                             dataFound = true;
@@ -6687,8 +6739,8 @@ public class FileAvi extends FileBase {
                 z = 0;
                 chunkRead = true;
 
-                while (((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
-                           (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) {
+                while ((((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
+                           (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) && (zw < actualFramesW)) {
 
                     if (AVIF_MUSTUSEINDEX) {
                         raFile.seek(indexPointer);
@@ -6702,8 +6754,14 @@ public class FileAvi extends FileBase {
                                 indexPointer = indexPointer + 16;
                                 indexBytesRead += 16;
                                 raFile.seek(indexPointer);
-                            } else {
+                            } else if (doWrite[z]) {
+                                z++;
                                 dataFound = true;
+                            } else {
+                                z++;
+                                indexPointer = indexPointer + 16;
+                                indexBytesRead += 16;
+                                raFile.seek(indexPointer);
                             }
                         } // while (!dataFound)
 
@@ -6721,87 +6779,21 @@ public class FileAvi extends FileBase {
 
                     if ((dataSignature[2] == 0x64 /* d */) &&
                             ((dataSignature[3] == 0x63 /* c */) || (dataSignature[3] == 0x62 /* b */))) {
+                       
                         dataLength = getInt(endianess);
                         totalBytesRead = totalBytesRead + 4;
                         subchunkBytesRead += 4;
+                        raFileW.write(dataSignature);
+                        savedibPos[zw]= raFileW.getFilePointer();
+                        dcLength[zw++] = dataLength;
+                        writeIntW(dataLength, endianess);
                         fileBuffer = new byte[dataLength];
                         raFile.read(fileBuffer);
+                        raFileW.write(fileBuffer);
                         totalBytesRead = totalBytesRead + dataLength;
                         subchunkBytesRead += dataLength;
 
-                        for (int j = 0; j < dataLength;) {
-
-                            if (fileBuffer[j] != 0) {
-
-                                for (k = 0; k < (fileBuffer[j] & 0x000000ff); k++) {
-                                    imgBuffer[x + (imgExtents[0] * y)] = fileBuffer[j + 1];
-                                    x++;
-
-                                    if ((x == imgExtents[0]) && (y > 0)) {
-                                        x = 0;
-                                        y--;
-                                    } // if ((x == imgExtents[0]) && (y > 0))
-                                    else if ((x == imgExtents[0]) && (y == 0)) {
-                                        x = 0;
-                                        y = imgExtents[1] - 1;
-                                    } // else if ((x == imgExtents[0]) && (y == 0))
-                                } // for (k = 0; k < (fileBuffer[j] & 0x000000ff); k++)
-
-                                j = j + 2;
-                            } // if (fileBuffer[j] != 0)
-                            else if ((fileBuffer[j] == 0) && ((fileBuffer[j + 1] & 0x000000ff) > 2)) {
-
-                                for (k = 0; k < (fileBuffer[j + 1] & 0x000000ff); k++) {
-                                    imgBuffer[x + (imgExtents[0] * y)] = fileBuffer[j + k + 2];
-                                    x++;
-
-                                    if ((x == imgExtents[0]) && (y > 0)) {
-                                        x = 0;
-                                        y--;
-                                    } // if ((x == imgExtents[0]) && (y > 0))
-                                    else if ((x == imgExtents[0]) && (y == 0)) {
-                                        x = 0;
-                                        y = imgExtents[1] - 1;
-                                    } // else if ((x == imgExtents[0]) && (y == 0))
-                                } // for (k = 0; k < (fileBuffer[j+1] & 0x000000ff); k++)
-
-                                j = j + 2 + (fileBuffer[j + 1] & 0x000000ff) +
-                                    ((fileBuffer[j + 1] & 0x000000ff) % 2);
-                            } // else if ((fileBuffer[j] == 0) && ((fileBuffer[j+1] & 0x000000ff) > 2))
-                            else if ((fileBuffer[j] == 0) && (fileBuffer[j + 1] == 2)) {
-                                x = x + (fileBuffer[j + 2] & 0x000000ff);
-                                y = y - (fileBuffer[j + 3] & 0x000000ff);
-                                j = j + 4;
-                            } // else if ((fileBuffer[j] == 0) && (fileBuffer[j+1] == 2))
-                            else if ((fileBuffer[j] == 0) && (fileBuffer[j + 1] == 0)) {
-
-                                // end of a line
-                                if (x != 0) {
-                                    x = 0;
-
-                                    if (y > 0) {
-                                        y = y - 1;
-                                    } else {
-                                        y = imgExtents[1] - 1;
-                                    }
-                                } // if (x != 0)
-
-                                j = j + 2;
-                            } // else if ((fileBuffer[j] == 0) && (fileBuffer[j+1] == 0))
-                            else if ((fileBuffer[j] == 0) && (fileBuffer[j + 1] == 1)) {
-
-                                // end of RLE bitmap
-                                x = 0;
-                                y = imgExtents[1] - 1;
-
-                                if (actualFrames > 1) {
-                                    fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
-                                }
-
-                                z++;
-                                j = j + 2;
-                            } // else if ((fileBuffer[j] == 0) && (fileBuffer[j+1] == 1))
-                        } // for (j = 0; j < dataLength;)
+                        
                     } // else if ((dataSignature[2] == 0x64 /* d */) && (dataSignature[3] == 0x63 /* c */))
                     else {
                         dataLength = getInt(endianess);
