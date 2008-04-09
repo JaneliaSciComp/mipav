@@ -70,6 +70,9 @@ public class JDialogVOIStats extends JDialogBase
 
     /** DOCUMENT ME! */
     private JButton calcButton;
+    
+    /** DOCUMENT ME! */
+    private JButton helpButton;
 
     /** DOCUMENT ME! */
     private JCheckBox checkboxAdditiveOrSubtractive;
@@ -222,6 +225,8 @@ public class JDialogVOIStats extends JDialogBase
                                                  new CancelListener());
         } else if (source == followVOISelectionBox) {
             frameFollowsSelection = followVOISelectionBox.isSelected();
+        } else if (source == helpButton) {
+        	MipavUtil.showHelp("10231");
         } else if (source == applyButton) {
             ViewVOIVector vectorVOI = image.getVOIs();
             if (vectorVOI.size() == 0) {
@@ -1557,6 +1562,9 @@ public class JDialogVOIStats extends JDialogBase
 
         cancelButton = buildCancelButton();
         cancelButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        
+        helpButton = buildHelpButton();
+        helpButton.setPreferredSize(MipavUtil.defaultButtonSize);
 
         // build the VOI tree
         buildVOITree();
@@ -1600,6 +1608,7 @@ public class JDialogVOIStats extends JDialogBase
         JPanel leftButton = new JPanel();
         leftButton.add(applyButton);
         leftButton.add(cancelButton);
+        leftButton.add(helpButton);
 
         JPanel leftWholePanel = new JPanel(new BorderLayout());
         leftWholePanel.add(panelVOIProps, BorderLayout.NORTH);
@@ -1616,6 +1625,7 @@ public class JDialogVOIStats extends JDialogBase
 
         JPanel rightButton = new JPanel();
         rightButton.add(calcButton);
+        //rightButton.add(helpButton);
 
         JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.add(calcPanel);
