@@ -249,6 +249,8 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
             }
         } else if (source == cancelButton) {
             cleanUpAndDispose();
+        } else if (command.equals("Help")) {
+        	MipavUtil.showHelp("GroupStat001");
         }
     }
 
@@ -724,6 +726,10 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
         buildCancelButton();
         cancelButton.setText("Close");
         ocp.add(cancelButton);
+        
+        buildHelpButton();
+        helpButton.setText("Help");
+        ocp.add(helpButton);
 
         return ocp;
     }
