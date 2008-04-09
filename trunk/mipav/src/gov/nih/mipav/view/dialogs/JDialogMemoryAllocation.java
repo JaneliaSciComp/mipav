@@ -29,10 +29,10 @@ public class JDialogMemoryAllocation extends JDialogBase {
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -1470759041555523857L;
 
-    /** Indictes that a particular file is a &quot;lax&quot;-format file. Literally, <code>LAX</code> */
+    /** Indicates that a particular file is a &quot;lax&quot;-format file. Literally, <code>LAX</code> */
     private static final String laxType = "LAX";
 
-    /** Indictes that a particular file is a &quot;xml&quot;-format file. Literally, <code>XML</code> */
+    /** Indicates that a particular file is a &quot;xml&quot;-format file. Literally, <code>XML</code> */
     private static final String xmlType = "XML";
 
     // java startup options used in XML file
@@ -75,17 +75,11 @@ public class JDialogMemoryAllocation extends JDialogBase {
     /** DOCUMENT ME! */
     private JTextField initHeapText;
 
-    /** Offset value of line with inital heap value. */
-    private int initOffset = -1;
-
     /** DOCUMENT ME! */
-    private Vector laxContents = null;
+    private Vector<String> laxContents = null;
 
     /** DOCUMENT ME! */
     private JTextField maxHeapText;
-
-    /** Offset value of line with max heap value */
-    private int maxOffset = -1;
 
     /** Contains all java properties of the MIPAV app (used at least when loading!) */
     private File startupFile;
@@ -301,8 +295,6 @@ public class JDialogMemoryAllocation extends JDialogBase {
      * @throws  FileNotFoundException  When the LAX file cannot be found.
      */
     public static String[] readStartupFile(File lax) throws IOException, FileNotFoundException {
-        int initOffset = 0; // offset value of line with inital valu
-        int maxOffset = 0; // offset value of line with max valu
         String line;
         String[] heapMemories = new String[2];
         BufferedReader readFile;
@@ -323,8 +315,6 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
         // read lax file
         line = readFile.readLine(); // IOException thrown
-
-        String returnLine = "";
 
         String[] lines = new String[2];
 
@@ -920,7 +910,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
         readFile = new BufferedReader(new FileReader(startupFile));
         // FileNotFoundException thrown
 
-        laxContents = new Vector();
+        laxContents = new Vector<String>();
 
         String line;
 
@@ -1001,7 +991,10 @@ public class JDialogMemoryAllocation extends JDialogBase {
             throw new IOException("Unable to open " + startupFile.getAbsolutePath() + " for writing.");
         }
 
-        if (!startupFile.getParentFile().canWrite()) {
+        System.out.println(startupFile.toURI());
+        System.out.println(startupFile.getParentFile().toURI());
+        
+        if (!startupFile.canWrite()) {
             MipavUtil.displayError("Not allowed to alter the java runtime start up file.\n" +
                                    "To alter the memory allocation, either set the permissions or \n" +
                                    "contact the system administrator.");
