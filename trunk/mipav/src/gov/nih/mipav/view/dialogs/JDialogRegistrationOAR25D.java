@@ -1425,7 +1425,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         JPanel refPanel = new JPanel(new GridBagLayout());
         refPanel.setBorder(buildTitledBorder("Reference image"));
 
-        JLabel labelInternal = new JLabel("Reference slice (1-" + String.valueOf(matchImage.getExtents()[2]) + ")");
+        JLabel labelInternal = new JLabel("Reference slice (0-" + String.valueOf(matchImage.getExtents()[2]-1) + ")");
         labelInternal.setForeground(Color.black);
         labelInternal.setFont(serif12);
         gbc.gridx = 0;
@@ -1434,7 +1434,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         gbc.weightx = 0;
         refPanel.add(labelInternal, gbc);
 
-        refImageNumText = new JTextField(String.valueOf((matchImage.getExtents()[2] / 2) + 1), 3);
+        refImageNumText = new JTextField(String.valueOf((matchImage.getExtents()[2] / 2) - 1), 3);
         refImageNumText.setEnabled(true);
         gbc.gridx = 1;
         gbc.gridy = 0;
@@ -1927,13 +1927,13 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
             }
         }
 
-        if (!testParameter(refImageNumText.getText(), 1, matchImage.getExtents()[2])) {
+        if (!testParameter(refImageNumText.getText(), 0, matchImage.getExtents()[2]-1)) {
             refImageNumText.requestFocus();
             refImageNumText.selectAll();
 
             return false;
         } else {
-            refImageNum = Integer.valueOf(refImageNumText.getText()).intValue() - 1;
+            refImageNum = Integer.valueOf(refImageNumText.getText()).intValue();
         }
 
         if (adjacentImageRButton.isSelected()) {
