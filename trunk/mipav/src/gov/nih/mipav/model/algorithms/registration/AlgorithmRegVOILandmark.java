@@ -167,6 +167,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
 
         Preferences.debug("baseVOIGradMagSum = " + baseVOIGradMagSum + "\n");
         Search();
+        setCompleted(true);
     }
 
     /**
@@ -321,7 +322,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
         
         for (int t = 1; t < tdim; t++) {
 
-            fireProgressStateChanged( (increment * t), null, null);
+            fireProgressStateChanged( ((increment * t)/(increment * tdim)), null, null);
         
 
             func.setSlice(t);
