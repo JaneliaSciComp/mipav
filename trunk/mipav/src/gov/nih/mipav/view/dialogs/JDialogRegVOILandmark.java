@@ -392,7 +392,7 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        if (algorithm instanceof AlgorithmRegVOILandmark) {
+       /* if (algorithm instanceof AlgorithmRegVOILandmark) {
 
             if (algoRegVOILankmark.isCompleted() == true) {
 
@@ -414,7 +414,7 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
 
                 image.notifyImageDisplayListeners(null, true);
             }
-        }
+        }*/
 
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
