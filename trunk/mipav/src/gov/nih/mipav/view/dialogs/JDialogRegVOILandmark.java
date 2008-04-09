@@ -400,7 +400,7 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
                 Vector imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
-                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                    //((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
                     ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
 
                     if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
