@@ -3976,7 +3976,6 @@ class PaintAutoSave extends TimerTask {
             tmp.importData(0, image.getParentFrame().getComponentImage().getPaintMask(), true);
 
             FileImageXML file = new FileImageXML("paint_autosave", image.getFileInfo(0).getFileDirectory());
-            file.writeHeader(tmp, null, "paint_autosave", image.getFileInfo(0).getFileDirectory(), true);
 
             FileWriteOptions opt = new FileWriteOptions(true);
             opt.setBeginSlice(0);
@@ -3987,6 +3986,7 @@ class PaintAutoSave extends TimerTask {
                 opt.setEndSlice(0);
             }
 
+            file.writeHeader(tmp, opt, "paint_autosave", image.getFileInfo(0).getFileDirectory(), true);
             file.writeImage(tmp, opt);
             file = null;
         } catch (IOException io) { }
