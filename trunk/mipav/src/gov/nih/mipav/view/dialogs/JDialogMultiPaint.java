@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.file.*;
 
 import gov.nih.mipav.view.*;
 
@@ -129,7 +130,15 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     /** DOCUMENT ME! */
     private JButton loadMaskButton;
 
-    /** dialog elements. */
+	private JCheckBox checkAutosave;
+	
+    /** DOCUMENT ME! */
+    private MultiPaintAutoSave save;
+
+    /** DOCUMENT ME! */
+    private java.util.Timer saver;
+
+   /** dialog elements. */
     private JPanel mainPanel;
 
     /** DOCUMENT ME! */
@@ -309,6 +318,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             newSelection = num;
             int colorNum = 1;
             //the text on the buttons represent the color
+			// warning: when using hotkeys, the selected button is not the good one
+			// use num instead
+			/*
             for(int i=0;i<multiButton.length;i++) {
             	if(multiButton[i] != null) {
             		if(event.getSource() == multiButton[i]) {
@@ -323,6 +335,10 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             		}
             	}
             }
+			*/
+			if(multiButton[num] != null) {
+				colorNum = Integer.parseInt(multiButton[num].getText());
+			}
             // convert the paint to previous selection
             // and the newly selected mask to paint
             switchPaintAndMask(selected, num, colorNum);
@@ -533,17 +549,90 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 image.getParentFrame().getComponentImage().setFocusable(true);
                 image.getParentFrame().getComponentImage().addKeyListener(this);
                 image.getParentFrame().getComponentImage().requestFocusInWindow();
+				if (image.getTriImageFrame()!=null) {
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).setFocusable(true);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).addKeyListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).requestFocusInWindow();
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B).setFocusable(true);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B).addKeyListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B).requestFocusInWindow();
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB).setFocusable(true);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB).addKeyListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB).requestFocusInWindow();
+					
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).setFocusable(true);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).addKeyListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).requestFocusInWindow();
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B).setFocusable(true);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B).addKeyListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B).requestFocusInWindow();
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).setFocusable(true);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).addKeyListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).requestFocusInWindow();
+					
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).setFocusable(true);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).addKeyListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).requestFocusInWindow();
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B).setFocusable(true);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B).addKeyListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B).requestFocusInWindow();
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB).setFocusable(true);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB).addKeyListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB).requestFocusInWindow();
+				}
             } else {
                 removeKeyListener(this);
                 setFocusable(false);
                 image.getParentFrame().getComponentImage().removeKeyListener(this);
                 image.getParentFrame().getComponentImage().setFocusable(false);
-            }
+				if (image.getTriImageFrame()!=null) {
+					image.getTriImageFrame().setFocusable(false);
+					image.getTriImageFrame().removeKeyListener(this);
+					image.getTriImageFrame().setFocusable(false);
+					
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).setFocusable(false);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).removeKeyListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B).setFocusable(false);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B).removeKeyListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB).setFocusable(false);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB).removeKeyListener(this);
+					
+     				image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).setFocusable(false);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).removeKeyListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B).setFocusable(false);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B).removeKeyListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).setFocusable(false);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).removeKeyListener(this);
+					
+     				image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).setFocusable(false);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).removeKeyListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B).setFocusable(false);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B).removeKeyListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB).setFocusable(false);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB).removeKeyListener(this);
+				}
+	        }
         } else if(command.equals("lockAll")) {
         	lockAll();
         } else if(command.equals("unlockAll")) {
         	unlockAll();
-        }
+        } else if (command.equals("Autosave")) {
+
+            if (checkAutosave.isSelected()) {
+
+                // start the auto-save option
+                int delay = 5;
+                save = new MultiPaintAutoSave(image);
+                saver = new java.util.Timer();
+                saver.schedule(save, new Date(), delay * 60 * 1000);
+            } else {
+
+                // stop the auto-save option
+                saver.cancel();
+                save = null;
+                saver = null;
+            }
+        } 
 
     }
 
@@ -644,6 +733,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         return Nlabel;
     }
 
+	public final int getActiveMask() { return selected; }
 
     /**
      * DOCUMENT ME!
@@ -861,10 +951,10 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     public void keyTyped(KeyEvent e) {
         String key = Character.toString(e.getKeyChar());
 
+		//System.out.print(":"+key);
 
         if (key.equals("1")) {
-
-            actionPerformed(new ActionEvent(this, 0, "PaintMask 1"));
+			actionPerformed(new ActionEvent(this, 0, "PaintMask 1"));
         } else if (key.equals("2")) {
             actionPerformed(new ActionEvent(this, 0, "PaintMask 2"));
         } else if (key.equals("3")) {
@@ -1462,9 +1552,16 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         exportVoiButton.addActionListener(this);
         exportVoiButton.setActionCommand("ExportVOI");
         exportVoiButton.setFont(serif12);
-        exportVoiButton.setToolTipText("Convert the masks into VOIs");
+        exportVoiButton.setToolTipText("Converts the masks into VOIs");
 
-        buttonShortkeys = new JToggleButton("Use hotkeys");
+        checkAutosave = new JCheckBox("autosave mask");
+        checkAutosave.addActionListener(this);
+        checkAutosave.setActionCommand("Autosave");
+        checkAutosave.setSelected(false);
+		checkAutosave.setFont(serif12);
+        checkAutosave.setToolTipText("Automatically saves the mask each time you switch paint colors, plus saves the active paint mask every 5 minutes");
+
+		buttonShortkeys = new JToggleButton("Use hotkeys");
         buttonShortkeys.addActionListener(this);
         buttonShortkeys.setActionCommand("Shortkeys");
         buttonShortkeys.setFont(serif12);
@@ -1660,6 +1757,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         gbc.gridy = 1;
         optionPanel.add(leftRightPanel, gbc);
         gbc.gridy = 2;
+        optionPanel.add(checkAutosave, gbc);
+        gbc.gridy = 3;
         optionPanel.add(buttonShortkeys, gbc);
         
         bottomPanel = new JPanel(new GridBagLayout());
@@ -2488,6 +2587,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[_from].getText()).intValue()));
                 image.getParentFrame().getComponentImage().commitMask(imageB, true, true, intensityLockVector, false);
 
+				// if desired, this is a good place to save the mask
+				if (checkAutosave.isSelected()) autosaveMask();
+				
                 // call the mask to paint program for starting mask
                 if (color[_to] == null) {
                     color[_to] = lutB.getColor(_to);
@@ -2572,5 +2674,88 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
     }
 
+	private final void autosaveMask() {
+		// transfer the paint to a ModelImage
+        System.out.println("saving the mask");
 
+        try {
+			ModelImage tmp = image.getParentFrame().getImageB();
+
+            FileImageXML file = new FileImageXML("multipaint_mask_autosave", image.getFileInfo(0).getFileDirectory());
+
+            FileWriteOptions opt = new FileWriteOptions(true);
+            opt.setBeginSlice(0);
+
+            if (image.getNDims() > 2) {
+                opt.setEndSlice(image.getExtents()[2] - 1);
+            } else {
+                opt.setEndSlice(0);
+            }
+
+            file.writeHeader(tmp, opt, "multipaint_mask_autosave", image.getFileInfo(0).getFileDirectory(), true);
+            file.writeImage(tmp, opt);
+			
+			file = null;
+		} catch (IOException io) { 
+			System.err.println(io.getMessage());
+		}
+
+    }
+}
+
+
+/**
+ * DOCUMENT ME!
+ */
+class MultiPaintAutoSave extends TimerTask {
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    ModelImage image;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new PaintAutoSave object.
+     *
+     * @param  img  DOCUMENT ME!
+     */
+    public MultiPaintAutoSave(ModelImage img) {
+        image = img;
+    }
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * DOCUMENT ME!
+     */
+    public void run() {
+
+        // transfer the paint to a ModelImage
+        System.out.println("saving the paint");
+
+        ModelImage tmp = new ModelImage(ModelImage.BOOLEAN, image.getExtents(), "active_mask_autosave");
+
+        try {
+            tmp.importData(0, image.getParentFrame().getComponentImage().getPaintMask(), true);
+
+            FileImageXML file = new FileImageXML("active_mask_autosave", image.getFileInfo(0).getFileDirectory());
+
+            FileWriteOptions opt = new FileWriteOptions(true);
+            opt.setBeginSlice(0);
+
+            if (image.getNDims() > 2) {
+                opt.setEndSlice(image.getExtents()[2] - 1);
+            } else {
+                opt.setEndSlice(0);
+            }
+
+            file.writeHeader(tmp, opt, "active_mask_autosave", image.getFileInfo(0).getFileDirectory(), true);
+            file.writeImage(tmp, opt);
+            file = null;
+        } catch (IOException io) { }
+
+        tmp = null;
+    }
 }
