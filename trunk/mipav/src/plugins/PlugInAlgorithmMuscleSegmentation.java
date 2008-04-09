@@ -87,15 +87,15 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     	TreeMap calcTree = new TreeMap();
     	
     	String[][] mirrorArr = new String[3][];
-        mirrorArr[0] = null;
+        mirrorArr[0] = new String[0];
         
-        mirrorArr[1] = null;
+        mirrorArr[1] = new String[0];
         
         mirrorArr[2] = new String[4];
         mirrorArr[2][0] = "psoas";
-        mirrorArr[2][1] = "lateral obliques";
+        mirrorArr[2][1] = "lat. obliques";
         mirrorArr[2][2] = "paraspinous";
-        mirrorArr[2][3] = "rectus abdominus";
+        mirrorArr[2][3] = "rectus";
 
         for(int i=0; i<mirrorArr.length; i++)  {
         	if(mirrorArr[i] != null) {
@@ -105,9 +105,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         }
         
         boolean[][] mirrorZ = new boolean[3][];
-        mirrorZ[0] = null;
+        mirrorZ[0] = new boolean[0];
         
-        mirrorZ[1] = null;
+        mirrorZ[1] = new boolean[0];
         
         mirrorZ[2] = new boolean[4];
         mirrorZ[2][0] = true;
@@ -120,20 +120,20 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         noMirrorArr[0][0] = "Abdomen";
         noMirrorArr[0][1] = "Phantom";
         
-        noMirrorArr[1] = new String[1];
+        noMirrorArr[1] = new String[3];
         noMirrorArr[1][0] = "Visceral cavity";
-        noMirrorArr[1][0] = "Bone sample";
+        noMirrorArr[1][1] = "Bone sample";
+        noMirrorArr[1][2] = "Water sample";
         
-        noMirrorArr[2] = new String[2];
+        noMirrorArr[2] = new String[1];
         noMirrorArr[2][0] = "Aorta";
-        noMirrorArr[2][1] = "Water sample";
         
         for(int i=0; i<noMirrorArr.length; i++) {
         	for(int j=0; j<noMirrorArr[i].length; j++) {
-        		if(mirrorArr[i][j].equals("Phantom") || mirrorArr[i][j].contains("sample"))
-        			calcTree.put(mirrorArr[i][j], false);
+        		if(noMirrorArr[i][j].equals("Phantom") || noMirrorArr[i][j].contains("sample"))
+        			calcTree.put(noMirrorArr[i][j], false);
         		else
-        			calcTree.put(mirrorArr[i][j], true);
+        			calcTree.put(noMirrorArr[i][j], true);
         	}
         }
         
@@ -142,17 +142,17 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         noMirrorZ[0][0] = false;
         noMirrorZ[0][1] = false;
         
-        noMirrorZ[1] = new boolean[2];
+        noMirrorZ[1] = new boolean[3];
         noMirrorZ[1][0] = false;
-        noMirrorZ[0][1] = false;
+        noMirrorZ[1][1] = false;
+        noMirrorZ[1][2] = false;
         
-        noMirrorZ[2] = new boolean[2];
-        noMirrorZ[2][0] = false;
-        noMirrorZ[2][1] = false;
+        noMirrorZ[2] = new boolean[1];
+        noMirrorZ[2][0] = true;
         
         String[] titles = new String[3];
         titles[0] = "Abdomen";
-        titles[1] = "Samples";
+        titles[1] = "Tissue";
         titles[2] = "Muscles"; 
         
         if (ViewUserInterface.getReference().isAppFrameVisible()) {
@@ -193,8 +193,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    
 	    for(int i=0; i<mirrorArr.length; i++) 
 	    	for(int j=0; j<mirrorArr[i].length; j++)
-	    		calcTree.put(mirrorArr[i][j], true);
-	    
+	    		calcTree.put(mirrorArr[i][j], true); //true
+	    //calcTree.put("Sartorius", false);
 	    
 	    boolean[][] mirrorZ = new boolean[3][];
 	    mirrorZ[0] = new boolean[1];
@@ -223,7 +223,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    
 	    for(int i=0; i<noMirrorArr.length; i++) 
 	    	for(int j=0; j<noMirrorArr[i].length; j++)
-	    		calcTree.put(noMirrorArr[i][j], false);
+	    		calcTree.put(noMirrorArr[i][j], false);  //false
+	    //calcTree.put("Phantom", true);
 	    
 	    boolean[][] noMirrorZ = new boolean[3][];
 	    noMirrorZ[0] = new boolean[1];
