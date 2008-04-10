@@ -14,9 +14,9 @@ import javax.media.j3d.*;
 
 import javax.vecmath.*;
 
-import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
+import WildMagic.LibFoundation.Mathematics.*;
+import WildMagic.LibGraphics.Rendering.*;
+import WildMagic.LibGraphics.SceneGraph.*;
 
 
 /**

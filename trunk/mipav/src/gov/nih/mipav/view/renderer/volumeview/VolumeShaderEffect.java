@@ -9,11 +9,11 @@ import javax.vecmath.Vector3f;
 
 import com.sun.j3d.utils.universe.SimpleUniverse;
 
-import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
+import WildMagic.LibFoundation.Mathematics.*;
+import WildMagic.LibGraphics.Rendering.*;
+import WildMagic.LibGraphics.Shaders.*;
+import WildMagic.LibGraphics.ObjectSystem.*;
+import WildMagic.LibGraphics.Effects.*;
 import gov.nih.mipav.view.renderer.surfaceview.*;
 
 import gov.nih.mipav.view.*;
@@ -554,7 +554,7 @@ public class VolumeShaderEffect extends ShaderEffect
      * @param kRenderer, the Renderer displaying the scene-graph, to which the
      * new shader program is passed.
      */
-    public void MIPMode(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    public void MIPMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
         if ( m_iWhichShader == MIP )
         {
@@ -571,7 +571,7 @@ public class VolumeShaderEffect extends ShaderEffect
      * new shader program is passed.
      */
     private void SetProgram(PixelShader kShader,
-                            gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+                            WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
         SetPShader(0,kShader);
         LoadPrograms(kRenderer, 0,kRenderer.GetMaxColors(),
@@ -592,7 +592,7 @@ public class VolumeShaderEffect extends ShaderEffect
      * @param kRenderer, the Renderer displaying the scene-graph, to which the
      * new shader program is passed.
      */
-    public void DDRMode(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    public void DDRMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
         if ( m_iWhichShader == DDR )
         {
@@ -607,7 +607,7 @@ public class VolumeShaderEffect extends ShaderEffect
      * @param kRenderer, the Renderer displaying the scene-graph, to which the
      * new shader program is passed.
      */
-    public void CMPMode(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    public void CMPMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
         if ( m_iWhichShader == CMP )
         {
@@ -622,7 +622,7 @@ public class VolumeShaderEffect extends ShaderEffect
      * @param kRenderer, the Renderer displaying the scene-graph, to which the
      * new shader program is passed.
      */
-    public void SURMode(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    public void SURMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
 
         if ( m_iWhichShader == CMP_SUR )
@@ -652,7 +652,7 @@ public class VolumeShaderEffect extends ShaderEffect
      * @param kRenderer, the Renderer displaying the scene-graph, to which the
      * new shader program is passed.
      */
-    public void SURFASTMode(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    public void SURFASTMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
         if ( m_iWhichShader == SUR )
         {
@@ -804,8 +804,8 @@ public class VolumeShaderEffect extends ShaderEffect
         }
 
         int[] aiNormalAverageIndex = new int[]{ 0, -1, +1, -iXBound, +iXBound, -iXYBound, +iXYBound };
-        gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.Vector3f kNormal = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.Vector3f();
-        gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.Vector3f kNormalTmp = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.Vector3f();
+        WildMagic.LibFoundation.Mathematics.Vector3f kNormal = new WildMagic.LibFoundation.Mathematics.Vector3f();
+        WildMagic.LibFoundation.Mathematics.Vector3f kNormalTmp = new WildMagic.LibFoundation.Mathematics.Vector3f();
         byte[] acData = new byte[afData.length*3];
                    
         // Catch any zero-vector normals and replace them by an average of
@@ -818,7 +818,7 @@ public class VolumeShaderEffect extends ShaderEffect
                 for (iX = 1; iX < (iXBound - 1); iX++) {
                     int i = iX + offset;
 
-                    kNormal.SetData(gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.Vector3f.ZERO);
+                    kNormal.SetData(WildMagic.LibFoundation.Mathematics.Vector3f.ZERO);
                     for ( int iN = 0; iN < aiNormalAverageIndex.length; iN++ )
                     {
                         int index = i + aiNormalAverageIndex[iN];
@@ -1226,7 +1226,7 @@ public class VolumeShaderEffect extends ShaderEffect
      * @param kRenderer, the Renderer object displaying the scene-graph which
      * will apply the shader programs.
      */
-    public void Reload( gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    public void Reload( WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
         Program kVProgram = GetVProgram(0);
         kVProgram.Release();

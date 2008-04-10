@@ -12,8 +12,6 @@ import javax.media.j3d.Material;
 import javax.swing.*;
 import javax.swing.border.*;
 
-import gov.nih.mipav.view.WildMagic.ApplicationDemos.*;
-
 
 /**
  * This class is the base for all the other dialogs. It has two important functions that are used by almost all the
@@ -77,7 +75,6 @@ public abstract class JPanelRendererBase extends JPanel
 
     /** Render base. */
     protected RenderViewBase renderBase = null;
-    protected VolumeViewer m_kVolumeViewer = null;
 
     /** Flag indicating if the algorithm should run in a separate thread. Default is <code>true</code>. */
     protected boolean runInSeparateThread = true;
@@ -95,19 +92,6 @@ public abstract class JPanelRendererBase extends JPanel
      */
     public JPanelRendererBase(RenderViewBase parent) {
         renderBase = parent;
-        serif12 = MipavUtil.font12;
-        serif12B = MipavUtil.font12B;
-        addKeyListener(this);
-    }
-
-    /**
-     * Constructor that sets the parent frame of the dialog and whether or not the dialog is modal. Also adds this as a
-     * window listener and key listener to all dialogs.
-     *
-     * @param  parent  Parent frame.
-     */
-    public JPanelRendererBase(VolumeViewer parent) {
-        m_kVolumeViewer = parent;
         serif12 = MipavUtil.font12;
         serif12B = MipavUtil.font12B;
         addKeyListener(this);

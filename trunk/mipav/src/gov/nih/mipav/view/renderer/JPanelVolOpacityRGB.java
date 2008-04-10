@@ -165,7 +165,7 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
      * @param  _imageA         Model of imageA
      * @param  _imageB         Model of imageB
      */
-    public JPanelVolOpacityRGB(VolumeViewer theParentFrame, ModelImage _imageA, ModelImage _imageB) {
+    public JPanelVolOpacityRGB(VolumeTriPlanarInterface theParentFrame, ModelImage _imageA, ModelImage _imageB) {
         super(theParentFrame);
 
         rendererProgressBar = ViewJFrameVolumeView.getRendererProgressBar();

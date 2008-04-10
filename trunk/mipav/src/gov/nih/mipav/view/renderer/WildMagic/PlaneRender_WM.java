@@ -12,12 +12,13 @@ import java.awt.event.*;
 import javax.media.opengl.*;
 import com.sun.opengl.util.*;
 
-import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.*;
-import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
-import gov.nih.mipav.view.WildMagic.LibRenderers.OpenGLRenderer.*;
+import gov.nih.mipav.view.renderer.WildMagic.Render.*;
+import WildMagic.LibApplications.OpenGLApplication.*;
+import WildMagic.LibFoundation.Mathematics.*;
+import WildMagic.LibGraphics.Effects.*;
+import WildMagic.LibGraphics.Rendering.*;
+import WildMagic.LibGraphics.SceneGraph.*;
+import WildMagic.LibRenderers.OpenGLRenderer.*;
 
 import java.io.FileNotFoundException;
 
@@ -31,7 +32,7 @@ import java.io.FileNotFoundException;
  * Surfaces are displayed as the intersection of the ModelTriangleMesh with
  * the rendered z-slice. 
  */
-public class PlaneRender_WM extends JavaApplication3D
+public class PlaneRender_WM extends GPURenderBase
     implements GLEventListener
 {
 
@@ -41,13 +42,6 @@ public class PlaneRender_WM extends JavaApplication3D
     private static final long serialVersionUID = 2025132936439496099L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-    /** Animator object, displays scene in rendering loop (similar to GLUTMainLoop() */
-    private Animator m_kAnimator;
-    
-    private VolumeImage m_kVolumeImageA;
-
-    /** Set to true when init() is called: */
-    private boolean m_bInit = false;
     
     /** The image dimensions in x,y,z:. */
     private int[] m_aiLocalImageExtents;
@@ -91,10 +85,10 @@ public class PlaneRender_WM extends JavaApplication3D
     private boolean m_bLeftMousePressed = false;
 
     /** Whether to store all the data in ImageComponent2D array or not:. */
-    private boolean m_bMemoryUsage;
+    protected boolean m_bMemoryUsage;
 
     /** Actual image orietation. */
-    private boolean m_bPatientOrientation = true;
+    protected boolean m_bPatientOrientation = true;
 
     /** Flag indicating if the right mouse button is currently pressed
      * down: */
@@ -138,7 +132,7 @@ public class PlaneRender_WM extends JavaApplication3D
     private float m_fZoomScale = 1.0f;
 
     /** Which dimension of the ModelImage to render. */
-    private int m_iPlaneOrientation = 0;
+    protected int m_iPlaneOrientation = 0;
 
     /** Which slice is currently displayed in the XY plane. */
     private int m_iSlice;
@@ -147,12 +141,6 @@ public class PlaneRender_WM extends JavaApplication3D
      * right-mouse down. */
     private ModelImage m_kActiveImage;
 
-    /** Current image A. */
-    private ModelImage m_kImageA;
-
-    /** Current image B. */
-    private ModelImage m_kImageB;
-
     /** x-axis label: */
     private String m_kLabelX = new String("X");
     private String m_kLabelXDisplay = new String("X");
@@ -160,10 +148,7 @@ public class PlaneRender_WM extends JavaApplication3D
     /** y-axis label: */
     private String m_kLabelY = new String("Y");
 
-    /** Reference to the parent frame:. */
-    private VolumeViewer m_kParent;
-
-    private WindowLevel m_kWinLevel;
+    protected WindowLevel m_kWinLevel;
 
     private TriMesh[] m_kXArrow;
     private TriMesh[] m_kYArrow;
@@ -175,6 +160,11 @@ public class PlaneRender_WM extends JavaApplication3D
     private boolean m_bUpdateSpacing = false;
     
     private Camera m_spkScreenCamera;
+
+    private VolumePlaneEffect m_spkEffect;
+    private TriMesh m_pkPlane = null;
+    private boolean m_bRadiological = true;
+
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -191,7 +181,7 @@ public class PlaneRender_WM extends JavaApplication3D
      * @param bMemory when true store all the data in memory, when false,
      * write textues as the slices change
      */
-    public PlaneRender_WM(VolumeViewer kParent, Animator kAnimator, 
+    public PlaneRender_WM(VolumeTriPlanarInterface kParent, Animator kAnimator, 
                           VolumeImage kVolumeImageA, ModelImage kImageA, ModelLUT kLUTa,
                           VolumeImage kVolumeImageB, ModelImage kImageB, ModelLUT kLUTb,
                           int iPlane, boolean bMemory)
@@ -222,53 +212,16 @@ public class PlaneRender_WM extends JavaApplication3D
 
         setOrientation();
         m_kWinLevel = new WindowLevel();
-
-
-    }
-    
-    public PlaneRender_WM()
-	{
-		super( "PlaneRender", 0, 0, 512, 512,
-		 new ColorRGBA(0.0f,0.0f,0.0f,0.0f));
-		m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
-		                            m_eBuffering, m_eMultisampling,
-		                             m_iWidth, m_iHeight );
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
-		
-		
     }
 
-    
-    public void loadImage( VolumeViewer kParent, Animator kAnimator, VolumeImage kVolumeImageA, ModelImage kImageA, ModelLUT kLUTa,
-            VolumeImage kVolumeImageB, ModelImage kImageB, ModelLUT kLUTb,
-            int iPlane, boolean bMemory)
-	{
-		
-        m_kAnimator = kAnimator;
-		
-		m_kParent = kParent;
-    	
-		m_kVolumeImageA = kVolumeImageA;
-		m_iPlaneOrientation = iPlane;
-		m_bMemoryUsage = bMemory;
-		
-		m_kImageA = kImageA;
-		m_kImageB = kImageB;
-		m_kImageA.setImageOrder(ModelImage.IMAGE_A);
-		
-		if (m_kImageB != null) {
-		m_kImageB.setImageOrder(ModelImage.IMAGE_B);
-		}
-		
-		setOrientation();
-		m_kWinLevel = new WindowLevel();
-	}
+    public PlaneRender_WM ( final String acWindowTitle, int iXPosition,
+            int iYPosition, int iWidth, int iHeight,
+            final ColorRGBA rkBackgroundColor )
+    {
 
-    
-
+        super( "PlaneRender", 0, 0, 512, 512,
+                new ColorRGBA(0.0f,0.0f,0.0f,0.0f));
+    }
     public void display(GLAutoDrawable arg0) {
 
         if ( !m_bModified )
@@ -490,13 +443,6 @@ public class PlaneRender_WM extends JavaApplication3D
         
         CreateLabels();
     }
-
-    private Node m_spkScene;
-    private Culler m_kCuller = new Culler(0,0,null);
-    private VolumePlaneEffect m_spkEffect;
-    private TriMesh m_pkPlane = null;
-    private boolean m_bModified = true;
-    private boolean m_bRadiological = true;
 
     /**
      * Closes the frame.
@@ -1322,7 +1268,7 @@ public class PlaneRender_WM extends JavaApplication3D
      * any of the original x,y, or z dimensions in the original
      * ModelImage.</p>
      */
-    private void setOrientation() {
+    protected void setOrientation() {
         m_aiLocalImageExtents = m_kImageA.getExtents( m_iPlaneOrientation );
 
         float[] afResolutions = m_kImageA.getResolutions( 0, m_iPlaneOrientation );

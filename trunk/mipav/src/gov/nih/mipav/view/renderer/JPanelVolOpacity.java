@@ -71,10 +71,10 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
      * @param  _imgA           Source imageA.
      * @param  _imgB           Source imageB.
      */
-    public JPanelVolOpacity(VolumeViewer theParentFrame, ModelImage _imgA, ModelImage _imgB) {
+    public JPanelVolOpacity(VolumeTriPlanarInterface theParentFrame, ModelImage _imgA, ModelImage _imgB) {
         super(theParentFrame);
         
-        rendererProgressBar = VolumeViewer.getRendererProgressBar();
+        rendererProgressBar = VolumeTriPlanarInterface.getRendererProgressBar();
 
         
         imageA = _imgA;

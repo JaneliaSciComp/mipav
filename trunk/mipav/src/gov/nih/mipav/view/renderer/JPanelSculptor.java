@@ -13,7 +13,6 @@ import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
-import gov.nih.mipav.view.WildMagic.ApplicationDemos.*;
 
 /**
  * <p>Title: JPanelSculptor</p>
@@ -87,7 +86,7 @@ public class JPanelSculptor extends JPanelRendererBase {
     /** Toolbar builder reference. */
     private ViewToolBarBuilder toolbarBuilder;
     
-    private GPUVolumeRender_WM m_kVolumeRendererGPU = null;
+    private VolumeTriPlanarRender m_kVolumeRendererGPU = null;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -105,16 +104,6 @@ public class JPanelSculptor extends JPanelRendererBase {
             m_kTextureSculptor = new TextureSculptor(surRender);
         }
 
-    }
-
-    /**
-     * Contructor. Called from the surface render to create the sculptor control panel.
-     *
-     * @param  parent  surface render
-     */
-    public JPanelSculptor(VolumeViewer kVolumeViewer) {
-        super(kVolumeViewer);
-        init();
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -507,7 +496,7 @@ public class JPanelSculptor extends JPanelRendererBase {
      *
      * @param  _rayBasedRender  VolumeRenderer
      */
-    public void setVolumeSculptor(GPUVolumeRender_WM _rayBasedRender) {
+    public void setVolumeSculptor(VolumeTriPlanarRender _rayBasedRender) {
         m_kVolumeRendererGPU = _rayBasedRender;
     }
 

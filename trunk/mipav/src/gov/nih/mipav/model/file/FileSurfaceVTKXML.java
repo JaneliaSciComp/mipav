@@ -22,7 +22,7 @@ import org.jdom.input.SAXBuilder;
 
 import gov.nih.mipav.model.structures.ModelTriangleMesh;
 
-import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;;
+import WildMagic.LibGraphics.SceneGraph.*;;
 
 
 

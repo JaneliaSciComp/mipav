@@ -4,10 +4,10 @@ package gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM;
 import gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.*;
 import java.util.*;
 import javax.vecmath.Point3f;
-import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
-import gov.nih.mipav.view.WildMagic.LibFoundation.Meshes.*;
-import gov.nih.mipav.view.WildMagic.LibFoundation.Intersection.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
+import WildMagic.LibFoundation.Mathematics.*;
+import WildMagic.LibGraphics.Meshes.*;
+import WildMagic.LibFoundation.Intersection.*;
+import WildMagic.LibGraphics.SceneGraph.*;
 
 /**
  * DOCUMENT ME!
@@ -206,15 +206,6 @@ public class MjCorticalMesh_WM {
     public void computeConformalMapping()
     {
         int iVQuantity = m_kMesh.VBuffer.GetVertexQuantity();
-        m_akPlane = new Vector2f[iVQuantity];
-        m_akSphere = new Vector3f[iVQuantity];
-        m_akCylinder = new Vector3f[iVQuantity];
-
-        for (int i = 0; i < iVQuantity; i++) {
-            m_akPlane[i] = new Vector2f();
-            m_akSphere[i] = new Vector3f();
-            m_akCylinder[i] = new Vector3f();
-        }
 
         Vector3f kE0 = new Vector3f();
         Vector3f kE1 = new Vector3f();
@@ -233,6 +224,7 @@ public class MjCorticalMesh_WM {
         Vector3f kPos0 = new Vector3f();
         Vector3f kPos1 = new Vector3f();
         Vector3f kPos2= new Vector3f();
+
         for (int iE = 0; iE < m_iEQuantity; iE++) {
             Edge kE = m_akEdge[iE];
             iV0 = kE.V[0];
@@ -294,8 +286,7 @@ public class MjCorticalMesh_WM {
             assert (iV0 != iV1);
             afTmp[iV0] -= fValue;
             afTmp[iV1] -= fValue;
-        }
-
+        }        
         for (int iV = 0; iV < iVQuantity; iV++) {
             kAMat.setElement(iV, iV, afTmp[iV]);
         }
@@ -342,12 +333,11 @@ public class MjCorticalMesh_WM {
         boolean bSolved = kAMat.solveSymmetricCG(iVQuantity, afTmp, afResult);
         assert (bSolved);
 
+        m_akPlane = new Vector2f[iVQuantity];
         for (int i = 0; i < iVQuantity; i++) {
+            m_akPlane[i] = new Vector2f();
             m_akPlane[i].X(afResult[i]);
-        }
-
-        /* solve sparse system for imaginary parts */
-        for (int i = 0; i < iVQuantity; i++) {
+            
             afTmp[i] = 0.0f;
         }
 
@@ -356,17 +346,19 @@ public class MjCorticalMesh_WM {
         afTmp[iV2] = -fIm2;
         bSolved = kAMat.solveSymmetricCG(iVQuantity, afTmp, afResult);
         assert (bSolved);
-
+        
+        /* scale to [-1,1]^2 for numerical conditioning in later steps */
+        float fMin = -1;
+        float fMax = -1;
+        
         for (int i = 0; i < iVQuantity; i++) {
             m_akPlane[i].Y(afResult[i]);
-        }
-
-        /* scale to [-1,1]^2 for numerical conditioning in later steps */
-        float fMin = m_akPlane[0].X();
-        float fMax = fMin;
-
-        for (int i = 0; i < iVQuantity; i++) {
-
+            
+            if ( i == 0 )
+            {
+                fMin = m_akPlane[0].X();
+                fMax = fMin;
+            }
             if (m_akPlane[i].X() < fMin) {
                 fMin = m_akPlane[i].X();
             } else if (m_akPlane[i].X() > fMax) {
@@ -383,36 +375,34 @@ public class MjCorticalMesh_WM {
         float fHalfRange = 0.5f * (fMax - fMin);
         float fInvHalfRange = 1.0f / fHalfRange;
 
-        for (int i = 0; i < iVQuantity; i++) {
-            m_akPlane[i].X( -1.0f + (fInvHalfRange * (m_akPlane[i].X() - fMin)) );
-            m_akPlane[i].Y( -1.0f + (fInvHalfRange * (m_akPlane[i].Y() - fMin)) );
-        }
-
         /* Map plane points to sphere using inverse stereographic projection. */
         /* The main issue is selecting a translation in (x,y) and a radius of */
         /* the projection sphere.  Both factors strongly influence the final */
         /* result. */
-
+        
         /* Use the average as the south pole.  The points tend to be clustered */
         /* approximately in the middle of the conformally mapped punctured */
         /* triangle, so the average is a good choice to place the pole. */
         Vector2f kOrigin = new Vector2f(0.0f, 0.0f);
-
         for (int i = 0; i < iVQuantity; i++) {
+            m_akPlane[i].X( -1.0f + (fInvHalfRange * (m_akPlane[i].X() - fMin)) );
+            m_akPlane[i].Y( -1.0f + (fInvHalfRange * (m_akPlane[i].Y() - fMin)) );
+            
+
             kOrigin.addEquals(m_akPlane[i]);
         }
-
         kOrigin.scaleEquals(1.0f / (float) iVQuantity);
 
+        m_kPlaneMin = new Vector2f();
+        m_kPlaneMax = new Vector2f();
         for (int i = 0; i < iVQuantity; i++) {
             m_akPlane[i].subEquals(kOrigin);
-        }
-
-        m_kPlaneMin = new Vector2f(m_akPlane[0]);
-        m_kPlaneMax = new Vector2f(m_akPlane[0]);
-
-        for (int i = 1; i < iVQuantity; i++) {
-
+            
+            if ( i == 0 )
+            {
+                m_kPlaneMin.SetData(m_akPlane[0]);
+                m_kPlaneMax.SetData(m_akPlane[0]);
+            }
             if (m_akPlane[i].X() < m_kPlaneMin.X()) {
                 m_kPlaneMin.X( m_akPlane[i].X() );
             } else if (m_akPlane[i].X() > m_kPlaneMax.X()) {
@@ -451,7 +441,7 @@ public class MjCorticalMesh_WM {
         /* Inverse stereographic projection to obtain sphere coordinates.  The */
         /* sphere is centered at the origin and has radius 1. */
         Vector2f kPlaneVector = new Vector2f();
-
+        m_akSphere = new Vector3f[iVQuantity];
         for (int i = 0; i < iVQuantity; i++) {
             kPlaneVector.SetData(m_akPlane[i]);
 
@@ -460,7 +450,8 @@ public class MjCorticalMesh_WM {
             float fX = 2.0f * fMult * fRhoSqr * m_akPlane[i].X();
             float fY = 2.0f * fMult * fRhoSqr * m_akPlane[i].Y();
             float fZ = fMult * m_fRho * (fRSqr - fRhoSqr);
-            m_akSphere[i].SetData(fX, fY, fZ);
+
+            m_akSphere[i] = new Vector3f(fX, fY, fZ);
             m_akSphere[i].scaleEquals(1.0f / m_fRho);
         }
 
@@ -468,10 +459,22 @@ public class MjCorticalMesh_WM {
         /* origin and has axis direction (0,0,1).  The radius of the cylinder is */
         /* the radius of the sphere, 1.  The height of the cylinder is 2 since z */
         /* varies from -1 to 1. */
+        m_akCylinder = new Vector3f[iVQuantity];
         for (int i = 0; i < iVQuantity; i++) {
+            m_akCylinder[i] = new Vector3f();
             m_akCylinder[i].X( -(float) Math.atan2(m_akSphere[i].Y(), m_akSphere[i].X()) );
             m_akCylinder[i].Y( m_akSphere[i].Z() );
             m_akCylinder[i].Z( 0.0f );
+        }
+        if ( m_kSphereMesh != null )
+        {
+            m_kSphereMesh.dispose();
+            m_kSphereMesh = null;
+        }
+        if ( m_kCylinderMesh != null )
+        {
+            m_kCylinderMesh.dispose();
+            m_kCylinderMesh = null;
         }
     }
 
@@ -917,17 +920,17 @@ public class MjCorticalMesh_WM {
 
         for (int i = 0; kIM.hasNext(); i++) {
             kPolylines.kMVertex.SetPosition3( i, (Vector3f) (((Map.Entry) kIM.next()).getValue()) );
-            kPolylines.kMVertex.SetColor3( 0, i, 1.0f, 0.0f, 0.0f );
+            kPolylines.kMVertex.SetColor3( 0, i, 1.0f, 1.0f, 1.0f );
             
             kPolylines.kSVertex.SetPosition3( i, (Vector3f) (((Map.Entry) kIS.next()).getValue()) );
-            kPolylines.kSVertex.SetColor3( 0, i, 1.0f, 0.0f, 0.0f );
+            kPolylines.kSVertex.SetColor3( 0, i, 1.0f, 1.0f, 1.0f );
         }
 
         kPolylines.kPVertex = new VertexBuffer( kAttr, 2);
         kPolylines.kPVertex.SetPosition3( 0, new Vector3f(+(float) Math.PI, fZNormal, -fPBias) );
-        kPolylines.kPVertex.SetColor3( 0, 0, 1.0f, 0.0f, 0.0f );
+        kPolylines.kPVertex.SetColor3( 0, 0, 1.0f, 1.0f, 1.0f );
         kPolylines.kPVertex.SetPosition3( 1, new Vector3f(-(float) Math.PI, fZNormal, -fPBias) );
-        kPolylines.kPVertex.SetColor3( 0, 1, 1.0f, 0.0f, 0.0f );
+        kPolylines.kPVertex.SetColor3( 0, 1, 1.0f, 1.0f, 1.0f );
 
         return kPolylines;
     }
@@ -1142,20 +1145,25 @@ public class MjCorticalMesh_WM {
 
         for (int i = 0; kIM.hasNext(); i++) {
             kPolylines.kMVertex.SetPosition3( i, (Vector3f) (((Map.Entry) kIM.next()).getValue()) );
-            kPolylines.kMVertex.SetColor3( 0, i, 1.0f, 0.0f, 0.0f );
+            kPolylines.kMVertex.SetColor3( 0, i, 1.0f, 1.0f, 1.0f );
             
             kPolylines.kSVertex.SetPosition3( i, (Vector3f) (((Map.Entry) kIS.next()).getValue()) );
-            kPolylines.kSVertex.SetColor3( 0, i, 1.0f, 0.0f, 0.0f );
+            kPolylines.kSVertex.SetColor3( 0, i, 1.0f, 1.0f, 1.0f );
         }
 
         fAngle -= Math.PI;
         kPolylines.kPVertex = new VertexBuffer( kAttr, 2);
         kPolylines.kPVertex.SetPosition3( 0, new Vector3f(fAngle, -1.0f, -fPBias) );
-        kPolylines.kPVertex.SetColor3( 0, 0, 1.0f, 0.0f, 0.0f );
+        kPolylines.kPVertex.SetColor3( 0, 0, 1.0f, 1.0f, 1.0f );
         kPolylines.kPVertex.SetPosition3( 1, new Vector3f(fAngle, +1.0f, -fPBias) );
-        kPolylines.kPVertex.SetColor3( 0, 1, 1.0f, 0.0f, 0.0f );
+        kPolylines.kPVertex.SetColor3( 0, 1, 1.0f, 1.0f, 1.0f );
 
         return kPolylines;
+    }
+    
+    public TriMesh getMesh()
+    {
+        return m_kMesh;
     }
 
     /**
@@ -1391,8 +1399,12 @@ public class MjCorticalMesh_WM {
         }
     }
 
-    public void updateMesh()
+    public void updateMesh( boolean bUpdateNormals )
     {
+        if ( bUpdateNormals )
+        {
+            m_kMesh.UpdateMS();
+        }
         m_kMesh.VBuffer.Release();
     }
     
@@ -1662,10 +1674,10 @@ public class MjCorticalMesh_WM {
 
             Vertex kVertex = m_akVertex[i0];
 
+            m_kMesh.VBuffer.GetPosition3( i0, kPos0 );
+
             for (int j = 0; j < kVertex.VQuantity; j++) {
                 int i1 = kVertex.V[j];
-
-                m_kMesh.VBuffer.GetPosition3( i0, kPos0 );
                 m_kMesh.VBuffer.GetPosition3( i1, kPos1 );
                 kPos0.sub(kPos1, kVDiff);
 
@@ -1720,11 +1732,10 @@ public class MjCorticalMesh_WM {
 
         for (int i0 = 0; i0 < iVQuantity; i0++) {
             Vertex kVertex = m_akVertex[i0];
-
+            m_kMesh.VBuffer.GetPosition3( i0, kPos0 );
+            
             for (int j = 0; j < kVertex.VQuantity; j++) {
                 int i1 = kVertex.V[j];
-
-                m_kMesh.VBuffer.GetPosition3( i0, kPos0 );
                 m_kMesh.VBuffer.GetPosition3( i1, kPos1 );
                 kPos0.sub(kPos1, kVDiff);
                 akDJDX[i0].sub(akDJDX[i1], kDDiff);
@@ -1772,18 +1783,26 @@ public class MjCorticalMesh_WM {
                 iMin = i;
             }
         }
-
+        int iChanged = 0;
         if (iMin >= 0) {
             float fH = afRoot[iMin];
 
             Vector3f kPos = new Vector3f();
+            Vector3f kPos2 = new Vector3f();
             for (int i = 0; i < iVQuantity; i++) {
                 m_kMesh.VBuffer.GetPosition3( i, kPos );
+                m_kMesh.VBuffer.GetPosition3( i, kPos2 );
                 kPos.addEquals( akDJDX[i].scale(fH));
                 m_kMesh.VBuffer.SetPosition3( i, kPos );
+                
+                if ( !kPos.isEqual( kPos2 ) )
+                {
+                    iChanged++;
+                }
             }
+            System.err.println( "changed: " + iChanged + " " + fH );
         }
-
+        
         return fError;
     }
 

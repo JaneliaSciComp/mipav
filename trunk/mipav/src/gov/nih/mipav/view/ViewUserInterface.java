@@ -17,9 +17,9 @@ import gov.nih.mipav.view.renderer.WildMagic.*;
 import gov.nih.mipav.plugins.*;
 
 import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.view.renderer.WildMagic.VolumeViewerDTI;
+import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.*;
 import gov.nih.mipav.view.xcede.*;
-import gov.nih.mipav.view.dialogs.JDialogDTIInput;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
 
 import edu.sdsc.grid.io.*;
 
@@ -728,7 +728,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public void invokeDTIframe() {
     	ModelImage imageA = createEmptyImage(null);
-        VolumeViewerDTI kWM = new VolumeViewerDTI (imageA, null, null, null, null, null, 0, 0);
+        VolumeTriPlanarInterfaceDTI kWM = new VolumeTriPlanarInterfaceDTI (imageA, null, null, null, null, null);
         kWM.constructRenderers();
     }
     

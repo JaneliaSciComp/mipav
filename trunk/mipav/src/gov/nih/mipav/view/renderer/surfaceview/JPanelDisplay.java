@@ -3,9 +3,6 @@ package gov.nih.mipav.view.renderer.surfaceview;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.*;
-import gov.nih.mipav.view.WildMagic.ApplicationDemos.*;
-import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -525,31 +522,4 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
             setBoxColor(button, color);
         }
     }
-
-    public void setMaterial(Material kMaterial, int iIndex)
-    {
-        MaterialState kMaterialState = new MaterialState();
-
-        javax.vecmath.Color3f kColor = new javax.vecmath.Color3f();
-        kMaterial.getAmbientColor(kColor);
-        kMaterialState.Ambient = new ColorRGB(kColor.x, kColor.y, kColor.z);
-
-        kMaterial.getEmissiveColor(kColor);
-        kMaterialState.Emissive = new ColorRGB(kColor.x, kColor.y, kColor.z);
-
-        kMaterial.getDiffuseColor(kColor);
-        kMaterialState.Diffuse = new ColorRGB(kColor.x, kColor.y, kColor.z);
-
-        kMaterial.getSpecularColor(kColor);
-        kMaterialState.Specular = new ColorRGB(kColor.x, kColor.y, kColor.z);
-
-        kMaterialState.Shininess = kMaterial.getShininess();
-    }
-
-
-    public void restorePerVertexColor(Material kMaterial, int index)
-    {
-        setMaterial( kMaterial, index );
-    }
-
 }

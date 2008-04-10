@@ -7,7 +7,7 @@ import javax.media.j3d.*;
 import javax.vecmath.*;
 
 
-import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
+import WildMagic.LibGraphics.Rendering.*;
 
 /**
  * This structure contains the information that describes how an XML surface (see surface.xsd and FileSurfaceXML.java)

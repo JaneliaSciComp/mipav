@@ -55,7 +55,7 @@ public class ViewJComponentVolOpacity extends ViewJComponentVolOpacityBase {
 
     /** DOCUMENT ME! */
     private RenderViewBase myParent;
-    private VolumeViewer m_kVolumeViewer;
+    private VolumeTriPlanarInterface m_kVolumeViewer;
 
     /** Opacity slider event count. */
     private int opacityCount;

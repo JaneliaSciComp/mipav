@@ -154,42 +154,6 @@ public class JPanelSlices extends JPanelRendererBase
         init();
     }
 
-    /**
-     * Creates new dialog for turning slices bounding box frame on and off.
-     *
-     */
-    public JPanelSlices(VolumeViewer parent) {
-        super(parent);
-
-        int[] fileExtents = parent.getImageA().getExtents( );
-        Point3Df modelExtents = new Point3Df();
-        MipavCoordinateSystems.fileToModel( new Point3Df( fileExtents[0], fileExtents[1], fileExtents[2] ),
-                                            modelExtents, parent.getImageA() );
-
-        xDim = (int)modelExtents.x;
-        yDim = (int)modelExtents.y;
-        zDim = (int)modelExtents.z;
-
-        xSlice = (xDim - 1) / 2;
-        ySlice = (yDim - 1) / 2;
-        zSlice = (zDim - 1) / 2;
-
-        xProbe = xSlice;
-        yProbe = ySlice;
-        zProbe = zSlice;
-
-
-
-        if (parent.getImageA().getNDims() == 4) {
-            tDim = parent.getImageA().getExtents()[3];
-
-            // tSlice  = 0;
-            tSlice = (tDim - 1) / 2;
-        }
-
-        init();
-    }
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -211,13 +175,6 @@ public class JPanelSlices extends JPanelRendererBase
         for ( int i = 0; i < 3; i++ )
         {
             if (source == boundingCheck[i]) {
-
-                if ( m_kVolumeViewer != null )
-                {
-                    m_kVolumeViewer.setSliceFromSurface( getCenter() );
-                    m_kVolumeViewer.showBoundingBox( i, boundingCheck[i].isSelected() );
-                }
-
                 if (boundingCheck[i].isSelected()) {
                     if ( renderBase != null )
                     {
@@ -237,11 +194,6 @@ public class JPanelSlices extends JPanelRendererBase
         }
 
         if (command.equals("X")) {
-            if ( m_kVolumeViewer != null )
-            {
-                m_kVolumeViewer.setSliceFromSurface( getCenter() );
-                m_kVolumeViewer.showSlice( 0, boxX.isSelected() );
-            }
             if (!boxX.isSelected()) {
                 if ( renderBase != null )
                 {
@@ -260,12 +212,6 @@ public class JPanelSlices extends JPanelRendererBase
                 sliceVisible[1] = true;
             }
         } else if (command.equals("Y")) {
-            if ( m_kVolumeViewer != null )
-            {
-                m_kVolumeViewer.setSliceFromSurface( getCenter() );
-                m_kVolumeViewer.showSlice( 1, boxY.isSelected() );
-            }
-
             if (!boxY.isSelected()) {
                 if ( renderBase != null )
                 {
@@ -284,12 +230,6 @@ public class JPanelSlices extends JPanelRendererBase
                 sliceVisible[2] = true;
             }
         } else if (command.equals("Z")) {
-            if ( m_kVolumeViewer != null )
-            {
-                m_kVolumeViewer.setSliceFromSurface( getCenter() );
-                m_kVolumeViewer.showSlice( 2, boxZ.isSelected() );
-            }
-
             if (!boxZ.isSelected()) {
                 if ( renderBase != null )
                 {
@@ -534,14 +474,6 @@ public class JPanelSlices extends JPanelRendererBase
                 buildTimeSlider();
             }
         }
-        else if ( m_kVolumeViewer != null )
-        {
-            if (m_kVolumeViewer.getImageA().getNDims() == 4) {
-                buildTimeSlider();
-            }
-        }
-
-
     }
 
     /**
@@ -938,12 +870,6 @@ public class JPanelSlices extends JPanelRendererBase
             MipavCoordinateSystems.fileToModel( new Point3Df( x, y, z ), center,
                                                 renderBase.getImageA() );
         }
-        else if ( m_kVolumeViewer != null )
-        {
-            MipavCoordinateSystems.fileToModel( new Point3Df( x, y, z ), center,
-                                                m_kVolumeViewer.getImageA() );
-        }
-
         setXSlicePos( (int)center.x );
         setYSlicePos( (int)center.y );
         setZSlicePos( (int)center.z );
@@ -964,11 +890,6 @@ public class JPanelSlices extends JPanelRendererBase
             MipavCoordinateSystems.modelToFile( new Point3Df( xSlice, ySlice, zSlice ), center,
                                                 renderBase.getImageA() );
         }
-        else if ( m_kVolumeViewer != null )
-        {
-            MipavCoordinateSystems.modelToFile( new Point3Df( xSlice, ySlice, zSlice ), center,
-                                                m_kVolumeViewer.getImageA() );
-        }        
         return center;
     }
 
@@ -1384,10 +1305,6 @@ public class JPanelSlices extends JPanelRendererBase
                 ((SurfaceRender) renderBase).updateBoxSlicePos( true );
                 ((SurfaceRender) renderBase).update3DTriplanar(null, null, false);
             }
-            else if ( m_kVolumeViewer != null )
-            {
-                m_kVolumeViewer.setSliceFromSurface( getCenter() );
-            }
             if ( (myMouseDialog != null) && myMouseDialog.isRecording() && setSliderFlag) {
 
                 renderBase.getSliderEvents().setName("xSlider" + current);
@@ -1407,10 +1324,6 @@ public class JPanelSlices extends JPanelRendererBase
             {
                 ((SurfaceRender) renderBase).updateBoxSlicePos( true );
                 ((SurfaceRender) renderBase).update3DTriplanar(null, null, false);
-            }
-            else if ( m_kVolumeViewer != null )
-            {
-                m_kVolumeViewer.setSliceFromSurface( getCenter() );
             }
             if ((myMouseDialog != null) && myMouseDialog.isRecording() && setSliderFlag) {
 
@@ -1432,10 +1345,6 @@ public class JPanelSlices extends JPanelRendererBase
             {
                 ((SurfaceRender) renderBase).updateBoxSlicePos( true );
                 ((SurfaceRender) renderBase).update3DTriplanar(null, null, false);
-            }
-            else if ( m_kVolumeViewer != null )
-            {
-                m_kVolumeViewer.setSliceFromSurface( getCenter() );
             }
             if ((myMouseDialog != null) && myMouseDialog.isRecording() && setSliderFlag) {
 
@@ -1461,10 +1370,6 @@ public class JPanelSlices extends JPanelRendererBase
             {
                 ((SurfaceRender) renderBase).updateOpacityOfOthrogPlanes(xOpacitySlice, -1, -1);
             }
-            else if ( m_kVolumeViewer != null )
-            {
-                m_kVolumeViewer.setSliceOpacity( 0, (float)xOpacitySlice/100.0f );
-            }
             if ((myMouseDialog != null) && myMouseDialog.isRecording() && setSliderFlag) {
 
                 renderBase.getSliderEvents().setName("xSliderOpacity" + current);
@@ -1480,10 +1385,6 @@ public class JPanelSlices extends JPanelRendererBase
             {
                 ((SurfaceRender) renderBase).updateOpacityOfOthrogPlanes(-1, yOpacitySlice, -1);
             }
-            else if ( m_kVolumeViewer != null )
-            {
-                m_kVolumeViewer.setSliceOpacity( 1, (float)yOpacitySlice/100.0f );
-            }
             if ((myMouseDialog != null) && myMouseDialog.isRecording() && setSliderFlag) {
 
                 renderBase.getSliderEvents().setName("ySliderOpacity" + current);
@@ -1498,10 +1399,6 @@ public class JPanelSlices extends JPanelRendererBase
             if ( renderBase != null )
             {
                 ((SurfaceRender) renderBase).updateOpacityOfOthrogPlanes(-1, -1, zOpacitySlice);
-            }
-            else if ( m_kVolumeViewer != null )
-            {
-                m_kVolumeViewer.setSliceOpacity( 2, (float)zOpacitySlice/100.0f );
             }
             if ((myMouseDialog != null) && myMouseDialog.isRecording() && setSliderFlag) {
 
@@ -1524,7 +1421,7 @@ public class JPanelSlices extends JPanelRendererBase
      * @param  color   Color to set box frame to.
      */
     protected void setBoxColor(JButton button, Color color) {
-        if ( (renderBase == null) && (m_kVolumeViewer == null) )
+        if ( renderBase == null )
         {
             return;
         }
@@ -1537,16 +1434,6 @@ public class JPanelSlices extends JPanelRendererBase
                 ((SurfaceRender) renderBase).setSliceColor(color, 1);
             } else if (button == colorButton[2]) {
                 ((SurfaceRender) renderBase).setSliceColor(color, 2);
-            }
-        }
-        else if ( m_kVolumeViewer != null )
-        {
-            if (button == colorButton[0]) {
-                m_kVolumeViewer.setSliceHairColor( 0, color );
-            } else if (button == colorButton[1]) {
-                m_kVolumeViewer.setSliceHairColor( 1, color );
-            } else if (button == colorButton[2]) {
-                m_kVolumeViewer.setSliceHairColor( 2, color );
             }
         }
     }
