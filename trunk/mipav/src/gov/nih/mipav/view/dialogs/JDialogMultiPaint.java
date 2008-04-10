@@ -229,6 +229,10 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     /** lock panel */
     private JPanel lockPanel;
 
+	private boolean isVisibleMask = true;
+	private boolean isVisiblePaint = true;
+	private boolean isCompactDisplay = true;
+	
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -288,7 +292,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
 
-        if (command.equals("Close")) {
+        if (command.equals("AdvancedPaint:Close")) {
 
             // we need to commit the paint to mask
             BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
@@ -310,17 +314,15 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             image.getParentFrame().getComponentImage().removeKeyListener(this);
             image.getParentFrame().getComponentImage().setFocusable(false);
             dispose();
-        } else if (command.equals("Help")) {
+        } else if (command.equals("AdvancedPaint:Help")) {
             MipavUtil.showHelp("PT0003");
-        } else if (command.startsWith("PaintMask")) {
+        } else if (command.startsWith("AdvancedPaint:PaintMask")) {
 
             int num = Integer.valueOf(command.substring(command.indexOf(" ") + 1)).intValue();
             newSelection = num;
             int colorNum = 1;
             //the text on the buttons represent the color
-			// warning: when using hotkeys, the selected button is not the good one
-			// use num instead
-			/*
+			/* not correct for shortcuts
             for(int i=0;i<multiButton.length;i++) {
             	if(multiButton[i] != null) {
             		if(event.getSource() == multiButton[i]) {
@@ -336,13 +338,12 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             	}
             }
 			*/
-			if(multiButton[num] != null) {
+			if (multiButton!=null && multiButton.length>num)
 				colorNum = Integer.parseInt(multiButton[num].getText());
-			}
             // convert the paint to previous selection
             // and the newly selected mask to paint
             switchPaintAndMask(selected, num, colorNum);
-        } else if (command.startsWith("Preserve")) {
+        } else if (command.startsWith("AdvancedPaint:Preserve")) {
             int num = Integer.valueOf(command.substring(command.indexOf(" ") + 1)).intValue();
 
             if (preserveBox[num].isSelected()) {
@@ -358,19 +359,24 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                     removeIntensityLock(Integer.parseInt(listButton[num].getText()));
                 }
             }
-        } else if (command.startsWith("Label")) {
+        } else if (command.startsWith("AdvancedPaint:Label")) {
             int num = Integer.valueOf(command.substring(command.indexOf(" ") + 1)).intValue();
 
             label[num] = labelField[num].getText();
             multiButton[num].setToolTipText(label[num]);
-        } else if (command.equals("SwitchMode")) {
+        } else if (command.equals("AdvancedPaint:SwitchMode")) {
 
-            if (displayModeButton.isSelected()) {
+            if (isCompactDisplay) {
+				isCompactDisplay = false;
+				displayModeButton.setSelected(true);
+				
                 multiPanel.setVisible(false);
                 scrollPane.setVisible(true);
                 lockPanel.setVisible(true);
             } else {
-
+				isCompactDisplay = true;
+				displayModeButton.setSelected(false);
+				
                 // refresh the text tooltips
                 for (int n = 1; n < ((nbx * nby) + 1); n++) {
                     label[n] = labelField[n].getText();
@@ -384,7 +390,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
             pack();
             repaint();
-        } else if (command.equals("Editable")) {
+        } else if (command.equals("AdvancedPaint:Editable")) {
 
             if (editBox.isSelected()) {
 
@@ -397,7 +403,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                     labelField[n].setEditable(false);
                 }
             }
-        } else if (command.equals("Resize")) {
+        } else if (command.equals("AdvancedPaint:Resize")) {
             int Nbx = Integer.valueOf(numberXField.getText()).intValue();
             int Nby = Integer.valueOf(numberYField.getText()).intValue();
             if(Nbx * Nby != nbx * nby) {
@@ -421,10 +427,12 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 	            }
             }
 
-        } else if (command.equals("HidePaint")) {
+        } else if (command.equals("AdvancedPaint:HidePaint")) {
 
-            if (displayPaintButton.isSelected()) {
-            	
+            if (isVisiblePaint) {
+				isVisiblePaint = false;
+            	displayPaintButton.setSelected(true);
+				
                 currentMask = (BitSet) image.getParentFrame().getComponentImage().getPaintMask().clone();
                 refreshImagePaint(image, new BitSet());
                 if(image.getTriImageFrame() != null) {
@@ -436,11 +444,15 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                     }
                 } 
             } else {
-                refreshImagePaint(image, currentMask);
+                isVisiblePaint = true;
+            	displayPaintButton.setSelected(false);
+				refreshImagePaint(image, currentMask);
             }
-        } else if (command.equals("HideMasks")) {
+        } else if (command.equals("AdvancedPaint:HideMasks")) {
 
-            if (displayMasksButton.isSelected()) {
+            if (isVisibleMask) {
+				isVisibleMask = false;
+				displayMasksButton.setSelected(true);
                 alphaBlend = (int) (image.getParentFrame().getComponentImage().getAlphaBlend() * 100.0f);
                 image.getParentFrame().getComponentImage().setAlphaBlend(100);
                 if(image.getTriImageFrame() != null) {
@@ -448,6 +460,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 	image.getTriImageFrame().setAlphaBlend(100);
                 }   
             } else {
+                isVisibleMask = true;
+				displayMasksButton.setSelected(false);
                 image.getParentFrame().getComponentImage().setAlphaBlend(alphaBlend);
                 if(image.getTriImageFrame() != null) {
                 	image.getTriImageFrame().setAlphaBlend(triPlanarAlphaBlend);
@@ -455,23 +469,23 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             }
 
             refreshImagePaint(image, image.getParentFrame().getComponentImage().getPaintMask());
-        } else if (command.equals("Save")) {
+        } else if (command.equals("AdvancedPaint:SaveLabels")) {
             buildSaveDialog();
             saveDialog.setSize(500, 326);
-        } else if (command.equals("Load")) {
+        } else if (command.equals("AdvancedPaint:LoadLabels")) {
             buildLoadDialog();
             loadDialog.setSize(500, 326);
-        } else if (command.equals("SaveMask")) {
+        } else if (command.equals("AdvancedPaint:SaveMask")) {
             int num = selected;
             commitPaintToMask(num);
             image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "SaveMask"));
             selectedMaskToPaint(num);
-        } else if (command.equals("LoadMask")) {
+        } else if (command.equals("AdvancedPaint:LoadMask")) {
             deselectMask();
             image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "OpenMask"));
             imageBInit();
             // selectedMaskToPaint(1);
-        } else if (command.equals("ImportVOI")) {
+        } else if (command.equals("AdvancedPaint:ImportVOI")) {
             deselectMask();
 
             /** I changed this to onlyActive is false... you can switch*/
@@ -487,7 +501,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             }
 
             selectedMaskToPaint(1);
-        } else if (command.equals("ExportVOI")) {
+        } else if (command.equals("AdvancedPaint:ExportVOI")) {
             int num = selected;
             commitPaintToMask(num);
 
@@ -524,8 +538,11 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             image.setVOIs(voi);
             deselectMask();
             selectedMaskToPaint(num);
-        } else if (command.equals("Collapse")) {
-
+        } else if (command.equals("AdvancedPaint:Collapse")) {
+			// this is a pretty violent function: I (plb) would personally
+			// remove it (you can do the exact same thing by 
+			// thresholding the mask)
+			/*
             // go through image b and find all mask values
             ModelImage imageB = image.getParentFrame().getImageB();
             TreeSet vals = getMaskTreeSet(imageB);
@@ -540,83 +557,48 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             image.getParentFrame().getComponentImage().setModifyFlag(true);
             image.notifyImageDisplayListeners();
             refreshImagePaint(image, obj);
-        } else if (command.equals("Shortkeys")) {
-
-            if (buttonShortkeys.isSelected()) {
-                setFocusable(true);
-                addKeyListener(this);
-                requestFocusInWindow();
-                image.getParentFrame().getComponentImage().setFocusable(true);
-                image.getParentFrame().getComponentImage().addKeyListener(this);
-                image.getParentFrame().getComponentImage().requestFocusInWindow();
-				if (image.getTriImageFrame()!=null) {
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).setFocusable(true);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).addKeyListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).requestFocusInWindow();
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B).setFocusable(true);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B).addKeyListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B).requestFocusInWindow();
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB).setFocusable(true);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB).addKeyListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB).requestFocusInWindow();
-					
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).setFocusable(true);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).addKeyListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).requestFocusInWindow();
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B).setFocusable(true);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B).addKeyListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B).requestFocusInWindow();
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).setFocusable(true);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).addKeyListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).requestFocusInWindow();
-					
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).setFocusable(true);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).addKeyListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).requestFocusInWindow();
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B).setFocusable(true);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B).addKeyListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B).requestFocusInWindow();
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB).setFocusable(true);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB).addKeyListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB).requestFocusInWindow();
-				}
-            } else {
-                removeKeyListener(this);
-                setFocusable(false);
-                image.getParentFrame().getComponentImage().removeKeyListener(this);
-                image.getParentFrame().getComponentImage().setFocusable(false);
-				if (image.getTriImageFrame()!=null) {
-					image.getTriImageFrame().setFocusable(false);
-					image.getTriImageFrame().removeKeyListener(this);
-					image.getTriImageFrame().setFocusable(false);
-					
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).setFocusable(false);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).removeKeyListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B).setFocusable(false);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B).removeKeyListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB).setFocusable(false);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB).removeKeyListener(this);
-					
-     				image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).setFocusable(false);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).removeKeyListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B).setFocusable(false);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B).removeKeyListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).setFocusable(false);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).removeKeyListener(this);
-					
-     				image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).setFocusable(false);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).removeKeyListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B).setFocusable(false);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B).removeKeyListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB).setFocusable(false);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB).removeKeyListener(this);
-				}
-	        }
-        } else if(command.equals("lockAll")) {
+			*/
+        } else if (command.equals("AdvancedPaint:Shortkeys")) {
+			// presets for shortcuts: can be changed through regular shortcut editor
+			if (buttonShortkeys.isSelected()) {
+				Preferences.addShortcut("AdvancedPaint:SaveMasks",KeyStroke.getKeyStroke('S', 0, false));
+				Preferences.addShortcut("AdvancedPaint:HideMasks",KeyStroke.getKeyStroke('M', 0, false));
+				Preferences.addShortcut("AdvancedPaint:HidePaint",KeyStroke.getKeyStroke('P', 0, false));
+				Preferences.addShortcut("AdvancedPaint:LockAll",KeyStroke.getKeyStroke('L', 0, false));
+				Preferences.addShortcut("AdvancedPaint:UnlockAll",KeyStroke.getKeyStroke('U', 0, false));
+				
+				Preferences.addShortcut("AdvancedPaint:PaintMask 1",KeyStroke.getKeyStroke('1', Event.CTRL_MASK+Event.ALT_MASK, false));
+				Preferences.addShortcut("AdvancedPaint:PaintMask 2",KeyStroke.getKeyStroke('2', Event.CTRL_MASK+Event.ALT_MASK, false));
+				Preferences.addShortcut("AdvancedPaint:PaintMask 3",KeyStroke.getKeyStroke('3', Event.CTRL_MASK+Event.ALT_MASK, false));
+				Preferences.addShortcut("AdvancedPaint:PaintMask 4",KeyStroke.getKeyStroke('4', Event.CTRL_MASK+Event.ALT_MASK, false));
+				Preferences.addShortcut("AdvancedPaint:PaintMask 5",KeyStroke.getKeyStroke('5', Event.CTRL_MASK+Event.ALT_MASK, false));
+				Preferences.addShortcut("AdvancedPaint:PaintMask 6",KeyStroke.getKeyStroke('6', Event.CTRL_MASK+Event.ALT_MASK, false));
+				Preferences.addShortcut("AdvancedPaint:PaintMask 7",KeyStroke.getKeyStroke('7', Event.CTRL_MASK+Event.ALT_MASK, false));
+				Preferences.addShortcut("AdvancedPaint:PaintMask 8",KeyStroke.getKeyStroke('8', Event.CTRL_MASK+Event.ALT_MASK, false));
+				Preferences.addShortcut("AdvancedPaint:PaintMask 9",KeyStroke.getKeyStroke('9', Event.CTRL_MASK+Event.ALT_MASK, false));
+				
+			} else {
+				Preferences.removeShortcut("AdvancedPaint:SaveMasks");
+				Preferences.removeShortcut("AdvancedPaint:HideMasks");
+				Preferences.removeShortcut("AdvancedPaint:HidePaint");
+				Preferences.removeShortcut("AdvancedPaint:LockAll");
+				Preferences.removeShortcut("AdvancedPaint:UnlockAll");
+				
+				Preferences.removeShortcut("AdvancedPaint:PaintMask 1");
+				Preferences.removeShortcut("AdvancedPaint:PaintMask 2");
+				Preferences.removeShortcut("AdvancedPaint:PaintMask 3");
+				Preferences.removeShortcut("AdvancedPaint:PaintMask 4");
+				Preferences.removeShortcut("AdvancedPaint:PaintMask 5");
+				Preferences.removeShortcut("AdvancedPaint:PaintMask 6");
+				Preferences.removeShortcut("AdvancedPaint:PaintMask 7");
+				Preferences.removeShortcut("AdvancedPaint:PaintMask 8");
+				Preferences.removeShortcut("AdvancedPaint:PaintMask 9");
+			}
+        } else if(command.equals("AdvancedPaint:LockAll")) {
         	lockAll();
-        } else if(command.equals("unlockAll")) {
+        } else if(command.equals("AdvancedPaint:UnlockAll")) {
         	unlockAll();
-        } else if (command.equals("Autosave")) {
+        } else if (command.equals("AdvancedPaint:Autosave")) {
 
             if (checkAutosave.isSelected()) {
 
@@ -951,10 +933,10 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     public void keyTyped(KeyEvent e) {
         String key = Character.toString(e.getKeyChar());
 
-		//System.out.print(":"+key);
 
         if (key.equals("1")) {
-			actionPerformed(new ActionEvent(this, 0, "PaintMask 1"));
+
+            actionPerformed(new ActionEvent(this, 0, "PaintMask 1"));
         } else if (key.equals("2")) {
             actionPerformed(new ActionEvent(this, 0, "PaintMask 2"));
         } else if (key.equals("3")) {
@@ -1471,13 +1453,13 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             labelField[n].setText(label[n]);
             labelField[n].setFont(serif12);
             labelField[n].addActionListener(this);
-            labelField[n].setActionCommand("Label " + n);
+            labelField[n].setActionCommand("AdvancedPaint:Label " + n);
 
             multiButton[n] = new BorderedButton(String.valueOf(n));
             multiButton[n].setName("multiButton:" + n);
-            multiButton[n].addActionListener(this);
+            multiButton[n].addActionListener(image.getParentFrame());
             multiButton[n].addMouseListener(this);
-            multiButton[n].setActionCommand("PaintMask " + n);
+            multiButton[n].setActionCommand("AdvancedPaint:PaintMask " + n);
             multiButton[n].setFont(MipavUtil.font10);
             multiButton[n].setSelected(false);
             multiButton[n].setMaximumSize(new Dimension(48, 20));
@@ -1486,9 +1468,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
             listButton[n] = new BorderedButton(String.valueOf(n));
             listButton[n].setName("listButton:" + n);
-            listButton[n].addActionListener(this);
+            listButton[n].addActionListener(image.getParentFrame());
             listButton[n].addMouseListener(this);
-            listButton[n].setActionCommand("PaintMask " + n);
+            listButton[n].setActionCommand("AdvancedPaint:PaintMask " + n);
             listButton[n].setFont(MipavUtil.font10);
             listButton[n].setSelected(false);
             listButton[n].setMaximumSize(new Dimension(50, 18));
@@ -1501,8 +1483,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             preserved[n] = false;
             preserveBox[n] = new JCheckBox(MipavUtil.getIcon("unlocked.gif"));
             preserveBox[n].setSelectedIcon(MipavUtil.getIcon("locked.gif"));
-            preserveBox[n].addActionListener(this);
-            preserveBox[n].setActionCommand("Preserve " + n);
+            preserveBox[n].addActionListener(image.getParentFrame());
+            preserveBox[n].setActionCommand("AdvancedPaint:Preserve " + n);
             preserveBox[n].setToolTipText("Lock the paint mask");
 
             buttonTextArrayList.add(new Integer(n));
@@ -1513,65 +1495,67 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
         // edit, load and save palettes
         editBox = new JCheckBox("Edit");
-        editBox.addActionListener(this);
-        editBox.setActionCommand("Editable");
+        editBox.addActionListener(image.getParentFrame());
+        editBox.setActionCommand("AdvancedPaint:Editable");
         editBox.setToolTipText("Edit the labels");
         editBox.setSelected(true);
 
         loadLabelsButton = new JButton("Load labels");
         loadLabelsButton.addActionListener(this);
-        loadLabelsButton.setActionCommand("Load");
+        loadLabelsButton.setActionCommand("AdvancedPaint:LoadLabels");
         loadLabelsButton.setFont(serif12);
         loadLabelsButton.setToolTipText("Load a palette");
 
         saveLabelsButton = new JButton("Save labels");
         saveLabelsButton.addActionListener(this);
-        saveLabelsButton.setActionCommand("Save");
+        saveLabelsButton.setActionCommand("AdvancedPaint:SaveLabels");
         saveLabelsButton.setFont(serif12);
         saveLabelsButton.setToolTipText("Save current palette");
 
         loadMaskButton = new JButton("Load masks");
         loadMaskButton.addActionListener(this);
-        loadMaskButton.setActionCommand("LoadMask");
+        loadMaskButton.setActionCommand("AdvancedPaint:LoadMask");
         loadMaskButton.setFont(serif12);
         loadMaskButton.setToolTipText("Load a mask");
 
         saveMaskButton = new JButton("Save masks");
-        saveMaskButton.addActionListener(this);
-        saveMaskButton.setActionCommand("SaveMask");
+        saveMaskButton.addActionListener(image.getParentFrame());
+        saveMaskButton.setActionCommand("AdvancedPaint:SaveMask");
         saveMaskButton.setFont(serif12);
         saveMaskButton.setToolTipText("Save current mask");
 
         importVoiButton = new JButton("Import from VOIs");
         importVoiButton.addActionListener(this);
-        importVoiButton.setActionCommand("ImportVOI");
+        importVoiButton.setActionCommand("AdvancedPaint:ImportVOI");
         importVoiButton.setFont(serif12);
         importVoiButton.setToolTipText("Create a mask from the image's VOIs");
 
         exportVoiButton = new JButton("Export to VOIs");
         exportVoiButton.addActionListener(this);
-        exportVoiButton.setActionCommand("ExportVOI");
+        exportVoiButton.setActionCommand("AdvancedPaint:ExportVOI");
         exportVoiButton.setFont(serif12);
         exportVoiButton.setToolTipText("Converts the masks into VOIs");
 
         checkAutosave = new JCheckBox("autosave mask");
         checkAutosave.addActionListener(this);
-        checkAutosave.setActionCommand("Autosave");
+        checkAutosave.setActionCommand("AdvancedPaint:Autosave");
         checkAutosave.setSelected(false);
 		checkAutosave.setFont(serif12);
         checkAutosave.setToolTipText("Automatically saves the mask each time you switch paint colors, plus saves the active paint mask every 5 minutes");
 
-		buttonShortkeys = new JToggleButton("Use hotkeys");
+		buttonShortkeys = new JToggleButton("Use shortcuts");
         buttonShortkeys.addActionListener(this);
-        buttonShortkeys.setActionCommand("Shortkeys");
+        buttonShortkeys.setActionCommand("AdvancedPaint:Shortkeys");
         buttonShortkeys.setFont(serif12);
-        buttonShortkeys.setToolTipText("<html>" + "&nbsp;<u>Use hotkeys for commands:</u>" + "<br>" +
-                                       "&nbsp;<b>1-9:</b> change to mask #1-9 " + "<br>" +
-                                       "&nbsp;<b>t:</b> show/hide label text " + "<br>" +
-                                       "&nbsp;<b>c:</b> show/hide current paint mask&nbsp;" + "<br>" +
-                                       "&nbsp;<b>v:</b> show/hide validated masks " + "<br>" +
-                                       "&nbsp;<b>s:</b> save masks" + "</html>");
-
+        buttonShortkeys.setToolTipText("<html>" + "&nbsp;<u>Use preset shortcuts for commands:</u>" + "<br>" +
+                                       "&nbsp;<b>alt ctrl + 1-9:</b> change to mask #1-9 " + "<br>" +
+                                       "&nbsp;<b>p:</b> show/hide active paint" + "<br>" +
+                                       "&nbsp;<b>m:</b> show/hide masks " + "<br>" +
+                                       "&nbsp;<b>l:</b> lock all masks " + "<br>" +
+                                       "&nbsp;<b>u:</b> unlock all masks " + "<br>" +
+                                       "&nbsp;<b>s:</b> save mask image" + "</html>");
+		
+		
         // customize the mask palette
         numberLabel = new JLabel("Number of masks: ");
         numberLabel.setForeground(Color.black);
@@ -1588,35 +1572,36 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
         resizeButton = new JButton("Resize");
         resizeButton.addActionListener(this);
-        resizeButton.setActionCommand("Resize");
+        resizeButton.setActionCommand("AdvancedPaint:Resize");
         resizeButton.setFont(serif12);
         resizeButton.setToolTipText("Resize the palette to the appropriate dimensions");
 
         // display options
         displayModeButton = new JToggleButton("Show label text");
-        displayModeButton.addActionListener(this);
-        displayModeButton.setActionCommand("SwitchMode");
+        displayModeButton.addActionListener(image.getParentFrame());
+        displayModeButton.setActionCommand("AdvancedPaint:SwitchMode");
         displayModeButton.setFont(serif12);
         displayModeButton.setToolTipText("Switch between the compact palette and the detailed list modes");
 
         displayPaintButton = new JToggleButton("Hide paint");
-        displayPaintButton.addActionListener(this);
-        displayPaintButton.setActionCommand("HidePaint");
+        displayPaintButton.addActionListener(image.getParentFrame());
+        displayPaintButton.setActionCommand("AdvancedPaint:HidePaint");
         displayPaintButton.setFont(serif12);
         displayPaintButton.setToolTipText("Hide the paint mask for visualization");
 
         displayMasksButton = new JToggleButton("Hide masks");
-        displayMasksButton.addActionListener(this);
-        displayMasksButton.setActionCommand("HideMasks");
+        displayMasksButton.addActionListener(image.getParentFrame());
+        displayMasksButton.setActionCommand("AdvancedPaint:HideMasks");
         displayMasksButton.setFont(serif12);
         displayMasksButton.setToolTipText("Hide inactive masks for visualization");
 
+		/* is it really useful ? -> very bad if clicked by accident
         collapseButton = new JButton("Collapse masks/paint");
-        collapseButton.addActionListener(this);
-        collapseButton.setActionCommand("Collapse");
+        collapseButton.addActionListener(image.getParentFrame());
+        collapseButton.setActionCommand("AdvancedPaint:Collapse");
         collapseButton.setFont(serif12);
         collapseButton.setToolTipText("Collapse masks and paint to single value");
-
+		*/
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
@@ -1668,8 +1653,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         
         lockPanel = new JPanel();
         lockAllButton = new JButton("lock all masks");
-        lockAllButton.addActionListener(this);
-        lockAllButton.setActionCommand("lockAll");
+        lockAllButton.addActionListener(image.getParentFrame());
+        lockAllButton.setActionCommand("AdvancedPaint:LockAll");
         gbc.gridy = 0;
         gbc.gridx = 0;
         gbc.anchor = GridBagConstraints.CENTER;
@@ -1677,8 +1662,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         lockPanel.add(lockAllButton,gbc);
         
         unlockAllButton = new JButton("unlock all masks");
-        unlockAllButton.addActionListener(this);
-        unlockAllButton.setActionCommand("unlockAll");
+        unlockAllButton.addActionListener(image.getParentFrame());
+        unlockAllButton.setActionCommand("AdvancedPaint:UnlockAll");
         gbc.gridy = 0;
         gbc.gridx = 1;
         lockPanel.add(unlockAllButton,gbc);
@@ -1740,7 +1725,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         gbc.gridy = 3;
         rightPanel.add(displayMasksButton,gbc);
         gbc.gridy = 4;
-        rightPanel.add(collapseButton,gbc);
+        //rightPanel.add(collapseButton,gbc);
+        rightPanel.add(buttonShortkeys,gbc);
         
         leftRightPanel = new JPanel(new GridBagLayout());
         gbc.gridy = 0;
@@ -1759,7 +1745,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         gbc.gridy = 2;
         optionPanel.add(checkAutosave, gbc);
         gbc.gridy = 3;
-        optionPanel.add(buttonShortkeys, gbc);
+        //optionPanel.add(buttonShortkeys, gbc);
         
         bottomPanel = new JPanel(new GridBagLayout());
         gbc.weightx = 0;
@@ -2682,6 +2668,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 			ModelImage tmp = image.getParentFrame().getImageB();
 
             FileImageXML file = new FileImageXML("multipaint_mask_autosave", image.getFileInfo(0).getFileDirectory());
+            file.writeHeader(tmp, null, "multipaint_mask_autosave", image.getFileInfo(0).getFileDirectory(), true);
 
             FileWriteOptions opt = new FileWriteOptions(true);
             opt.setBeginSlice(0);
@@ -2692,7 +2679,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 opt.setEndSlice(0);
             }
 
-            file.writeHeader(tmp, opt, "multipaint_mask_autosave", image.getFileInfo(0).getFileDirectory(), true);
             file.writeImage(tmp, opt);
 			
 			file = null;
@@ -2741,6 +2727,7 @@ class MultiPaintAutoSave extends TimerTask {
             tmp.importData(0, image.getParentFrame().getComponentImage().getPaintMask(), true);
 
             FileImageXML file = new FileImageXML("active_mask_autosave", image.getFileInfo(0).getFileDirectory());
+            file.writeHeader(tmp, null, "active_mask_autosave", image.getFileInfo(0).getFileDirectory(), true);
 
             FileWriteOptions opt = new FileWriteOptions(true);
             opt.setBeginSlice(0);
@@ -2751,7 +2738,6 @@ class MultiPaintAutoSave extends TimerTask {
                 opt.setEndSlice(0);
             }
 
-            file.writeHeader(tmp, opt, "active_mask_autosave", image.getFileInfo(0).getFileDirectory(), true);
             file.writeImage(tmp, opt);
             file = null;
         } catch (IOException io) { }
