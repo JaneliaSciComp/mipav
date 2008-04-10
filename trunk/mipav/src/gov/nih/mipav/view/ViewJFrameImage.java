@@ -3,7 +3,7 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.algorithms.itk.*;
+import gov.nih.mipav.model.algorithms.itk.autoItk.*;
 import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
@@ -174,6 +174,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     
     AutoItkLoader m_kAutoItkLoader = null;
     
+    /** reference to the JDialogMultiPaint for shortcuts */
+    protected JDialogMultiPaint multipaintDialog = null;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -295,9 +298,22 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogPowerPaint(this, getImageA());
         } else if (command.equals("AdvancedPaint")) {
             menuBuilder.setMenuItemEnabled("Extract image(B)", true);
-            new JDialogMultiPaint(this, getImageA());
-            getControls().getTools().setPaintBrushButtonSelected();
-            componentImage.setCursorMode(ViewJComponentEditImage.PAINT_VOI);
+            multipaintDialog = new JDialogMultiPaint(this, getImageA());
+			// I (plb) find this switching to paint brush annoying as the 
+			// image often needs to be moved or resized (others might disagree)
+            //getControls().getTools().setPaintBrushButtonSelected();
+            //componentImage.setCursorMode(ViewJComponentEditImage.PAINT_VOI);
+        } else if (command.equals("AdvancedPaint")) {
+            menuBuilder.setMenuItemEnabled("Extract image(B)", true);
+            multipaintDialog = new JDialogMultiPaint(this, getImageA());
+			// I (plb) find this switching to paint brush annoying as the 
+			// image often needs to be moved or resized (others might disagree)
+            //getControls().getTools().setPaintBrushButtonSelected();
+            //componentImage.setCursorMode(ViewJComponentEditImage.PAINT_VOI);
+        } else if (command.startsWith("AdvancedPaint:")) {
+			if (multipaintDialog!=null) {
+				multipaintDialog.actionPerformed(event);
+			}
         } else if (command.equals(Preferences.PREF_SHOW_PAINT_BORDER)) {
 
             // swap the border painting

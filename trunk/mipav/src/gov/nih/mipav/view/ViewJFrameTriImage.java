@@ -1594,6 +1594,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 return;
             }
         }
+		
+		// pass the key bindings to the underlying image (plb)
+		String command = null;
+        KeyStroke ks = KeyStroke.getKeyStrokeForEvent(e);
+
+        command = Preferences.getShortcutCommand(ks);
+
+        if (command != null) {
+            parentFrame.actionPerformed(new ActionEvent(ks, 0, command));
+        }
+
     }
 
     /**

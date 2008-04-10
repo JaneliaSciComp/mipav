@@ -654,6 +654,56 @@ public class Preferences {
     }
 
     /**
+     * Adds a new shortcut to the hashtable with a given keystroke. if there is already a command predefined for the keystroke set from <code>
+     * setShortcut()</code>, it will be removed then replaced with the new command.
+     *
+     * @param   command  the command to map
+     *
+     * @return  DOCUMENT ME!
+     */
+    public static boolean addShortcut(String command, KeyStroke shortcut) {
+
+        if ((command != null) && (shortcut != null)) {
+
+			if (isDefaultCommand(command)) {
+                MipavUtil.displayWarning("This is a default function: shortcut can not be remapped");
+
+                return false;
+            }
+
+
+            if (userShortcutTable.containsKey(command)) {
+                userShortcutTable.remove(command);
+            }
+
+            if (userShortcutTable.containsValue(shortcut)) {
+                Enumeration e = userShortcutTable.keys();
+
+                while (e.hasMoreElements()) {
+                    String key = (String) e.nextElement();
+
+                    if (currentShortcut.equals(userShortcutTable.get(key))) {
+                        userShortcutTable.remove(key);
+                    }
+                }
+            }
+
+            userShortcutTable.put(command, shortcut);
+
+			/*
+            MipavUtil.displayInfo("Shortcut captured: " + shortcut.toString().replaceAll("pressed", "").trim() +
+                                  " : " + command);
+			*/
+            saveShortcuts();
+            shortcut = null;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Builds a hashtable of actioncommands (keys) with associated keystrokes from the Preferences file.
      */
     public static final void buildShortcutTable() {
