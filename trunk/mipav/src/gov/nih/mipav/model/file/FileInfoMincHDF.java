@@ -279,6 +279,47 @@ public class FileInfoMincHDF extends FileInfoBase {
     }
     
     /**
+     * Strips out the relevant patient info (if present) to insert into MIPAV's XML header
+     * @param dInfo destination XML fileinfo
+     */
+    public void convertPatientInfo(FileInfoImageXML dInfo) {
+    	if (informationNode == null) {
+    		return;
+    	}
+    	System.err.println("convertPatientInfo");
+    	int children = informationNode.getChildCount();
+    	DefaultMutableTreeNode currentNode;
+    	for (int i = 0; i < children; i++) {
+    		currentNode = (DefaultMutableTreeNode)informationNode.getChildAt(i);
+    		if (currentNode.getUserObject().toString().equals("patient")) {
+    			
+    			try {
+    				List metaData = ((HObject)currentNode.getUserObject()).getMetadata();
+    				Iterator it = metaData.iterator();
+    				while(it.hasNext()) {
+    					
+    					Attribute currentAttribute = (Attribute)it.next();
+    					String name = currentAttribute.getName();
+    					if (name.equals("full_name")) {
+    						dInfo.setSubjectName(((String[])currentAttribute.getValue())[0]);
+    					} else if (name.equals("sex")) {
+    						dInfo.setSex(((String[])currentAttribute.getValue())[0]);
+    					} else if (name.equals("identification")) {
+    						dInfo.setSubjectID(((String[])currentAttribute.getValue())[0]);
+    					} else if (name.equals("birthdate")) {
+    						dInfo.setDOB(((String[])currentAttribute.getValue())[0]);
+    					}
+    				}
+    			} catch (Exception e) {
+    				return;
+    			}
+    			
+    		}
+    	}
+    	
+    }
+    
+    /**
      * Converts from the minc start location to the dicom start locations 
      * @param step the resolutions (step, can be negative)
      * @param cosines the directional matrix

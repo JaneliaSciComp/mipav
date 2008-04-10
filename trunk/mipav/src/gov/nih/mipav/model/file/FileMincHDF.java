@@ -274,12 +274,16 @@ public class FileMincHDF extends FileBase {
     				Attribute attr = (Attribute)it.next();
     				String dicomElement = attr.getName();
     				dicomElement = dicomElement.substring(DICOM_ELEMENT_PREFIX.length());
-    				
+    				try {
     				FileDicomKey key = new FileDicomKey(Integer.parseInt(dicomGroup, 16), 
     						Integer.parseInt(dicomElement, 16));
-    				FileDicomTag tag = new FileDicomTag(new FileDicomTagInfo(key.getGroupNumber(), key.getElementNumber(), 
-    						((String[])attr.getValue())[0],0, null, DicomDictionary.getName(key)));
-    				fileInfo.getDicomTable().put(key, tag);
+    				FileDicomTag tag = new FileDicomTag(DicomDictionary.getInfo(key));
+    				tag.setValueRepresentation("stringValue");
+    				tag.setValue(((String[])attr.getValue())[0]);
+    				fileInfo.getDicomTable().put(key, tag); 
+    				} catch (Exception e) {
+    					//do nothing (for now)
+    				}
     			}
     		}
     		
