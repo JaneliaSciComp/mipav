@@ -2484,11 +2484,7 @@ public class FileIO {
        
         if (destInfo instanceof FileInfoImageXML) {
         	FileInfoImageXML dInfo = (FileInfoImageXML)destInfo;
-        	
-        	if (sourceInfo instanceof FileInfoMincHDF) {
-        		//look for patient data here to convert
-        	}
-        	
+        	        	
         	//now convert that DICOM tags list into an XML tags List:
         	Enumeration e = tags2save.keys();
         	while (e.hasMoreElements()) {
@@ -8800,6 +8796,8 @@ public class FileIO {
             	 if (!dataConversion(( image.getFileInfo()[0]), xmlFile.getFileInfo())) {
                      return false;
                  }
+       
+            	 xmlFile.setAdditionalSets(xmlFile.getFileInfo().getPSetHashtable().elements());
             }
 
             xmlFile.writeImage(image, options);
