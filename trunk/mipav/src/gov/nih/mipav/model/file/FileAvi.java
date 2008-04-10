@@ -355,6 +355,8 @@ public class FileAvi extends FileBase {
         long startPosition; // position to start reading data
         int actualFrames = 0; // number of frames with data found on first read thru.
         int indexBytesRead = 0;
+        long firstDataSignature;
+        boolean firstRun;
 
         boolean wasCompressed = false;
 
@@ -442,6 +444,8 @@ public class FileAvi extends FileBase {
 
             chunkRead = true;
 
+            firstDataSignature = raFile.getFilePointer();
+            firstRun = true;
             loop1:
             while (((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
                        (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) {
@@ -469,9 +473,13 @@ public class FileAvi extends FileBase {
                     indexPointer = indexPointer + 8;
                     raFile.seek(indexPointer);
                     moviOffset = getInt(endianess);
+                    if (firstRun && (moviOffset == firstDataSignature)) {
+                        moviPosition = 0L;
+                    }
                     indexPointer = indexPointer + 8;
                     indexBytesRead += 16;
                     raFile.seek(moviPosition + (long) moviOffset);
+                    firstRun = false;
                 } // if (AVIFMUSTINDEX)
 
                 raFile.read(dataSignature);
@@ -509,7 +517,6 @@ public class FileAvi extends FileBase {
                     subchunkBytesRead += 4;
 
                     long ptr = raFile.getFilePointer();
-                    // dataLength = -2080013696
                     raFile.seek(ptr + dataLength);
                     totalBytesRead = totalBytesRead + dataLength;
                     subchunkBytesRead += dataLength;
@@ -3819,7 +3826,6 @@ public class FileAvi extends FileBase {
             } else {
                 Preferences.debug("AVIF_MUSTUSEINDEX = false\n");
             }
-            //AVIF_MUSTUSEINDEX = true;
 
             if ((flags & 0x800) != 0) {
                 Preferences.debug("AVIF_TRUSTCKTYPE = true\n");
@@ -4327,6 +4333,9 @@ public class FileAvi extends FileBase {
 
                     // have read vedt
                     int vedtLength = getInt(endianess);
+                    if ((vedtLength %2) == 1) {
+                        vedtLength++;
+                    }
                     byte[] vedt = new byte[vedtLength];
                     raFile.read(vedt);
                 } else {
@@ -5275,11 +5284,8 @@ public class FileAvi extends FileBase {
         long savestrnPos;
         long saveJUNKsignature;
         int[] imgExtents;
-        byte[] imgBuffer;
         byte[] fileBuffer;
-        int bufferSize;
-        int x, y, z, k;
-        int col1, col2, totalC;
+        int z;
         int totalDataArea;
         int remainingFileLength;
         int totalBytesRead;
@@ -5289,7 +5295,6 @@ public class FileAvi extends FileBase {
         int signature;
         int CHUNKtype;
         boolean haveMoviSubchunk = false;
-        int subchunkDataArea = 0;
         int subchunkBytesRead = 0;
         int subchunkBlocksRead = 0;
         boolean chunkRead;
@@ -5299,8 +5304,6 @@ public class FileAvi extends FileBase {
         int actualFramesW = 0;
         long savedibPos[];
         boolean doWrite[];
-        boolean isColor = true;
-        int bufferFactor;
         byte dataSignatureW[]; 
         long idx1Pos;
         int zw;
@@ -5311,6 +5314,8 @@ public class FileAvi extends FileBase {
         long saveHere;
         long streamPositionW;
         boolean vidsRead = false;
+        long firstDataSignature;
+        boolean firstRun;
 
         try {
             System.out.println("Started " + outputFileName + " creation");
@@ -5425,8 +5430,6 @@ public class FileAvi extends FileBase {
             Preferences.debug("Frames to capture = " + framesToCapture + "\n");
             framesToSkip = Math.round(skipTime/secPerFrame);
             Preferences.debug("Frames to skip = " + framesToSkip + "\n");
-            //framesToCapture = 1;
-            //framesToSkip = 1;
 
             int maxBytesPerSecond = getInt(endianess);
             Preferences.debug("maxBytesPerSecond = " + maxBytesPerSecond + "\n");
@@ -5497,7 +5500,7 @@ public class FileAvi extends FileBase {
 
             int totalFrames = getInt(endianess);
 
-            // System.err.println("total frames: " + totalFrames);
+            //System.err.println("total frames: " + totalFrames);
             Preferences.debug("totalFrames = " + totalFrames + "\n");
             totalFramesW = (totalFrames * framesToCapture)/(framesToCapture + framesToSkip);
             int remainderFrames = totalFrames % (framesToCapture + framesToSkip);
@@ -6103,7 +6106,7 @@ public class FileAvi extends FileBase {
                     LUTa = new ModelLUT(ModelLUT.GRAY, colorsUsed, dimExtentsLUT);
                     lutBuffer = new byte[4 * colorsUsed];
                     raFile.read(lutBuffer);
-                    raFileW.write(lutBuffer);
+                    raFileW.write(lutBuffer);   
 
                     for (int i = 0; i < colorsUsed; i++) {
                         LUTa.set(0, i, 1.0f); // alpha
@@ -6159,13 +6162,21 @@ public class FileAvi extends FileBase {
                     strfEndBytes = strfEndBytes - (4 * colorsUsed);
                 }
 
-                byte[] byteb = new byte[strfEndBytes];
-                raFile.read(byteb);
-                raFileW.write(byteb);
+                if (strfEndBytes > 0) {
+                    byte[] byteb = new byte[strfEndBytes];
+                    raFile.read(byteb);
+                    raFileW.write(byteb);
+                }
             } // for (loop = 0; loop < streams; loop++)
 
             marker = raFile.getFilePointer();
             
+            savestrnPos = raFileW.getFilePointer();
+            if (marker > savestrnPos) {
+                // audio and vids in input, but only vids in output
+                byte[] extra = new byte[(int)(marker - savestrnPos)];
+                raFileW.write(extra);
+            }
             savestrnPos = raFileW.getFilePointer();
             raFileW.seek(savestrfSize);
             writeIntW((int)(savestrnPos - (savestrfSize + 4)), endianess);
@@ -6178,6 +6189,7 @@ public class FileAvi extends FileBase {
                 writeIntW(strnSignature, endianess);
 
                 if (strnSignature == 0x6E727473) {
+
                     int strnLength = getInt(endianess);
                     writeIntW(strnLength, endianess);
                     if ((strnLength % 2) == 1) {
@@ -6210,7 +6222,7 @@ public class FileAvi extends FileBase {
                     }
                 } // else if (strnSignature == 0x4B4E554A)
                 else if (strnSignature == 0x54465349) {
-
+ 
                     // have read ISFT
                     int ISFTlength = getInt(endianess);
                     writeIntW(ISFTlength,endianess);
@@ -6226,6 +6238,10 @@ public class FileAvi extends FileBase {
 
                     // have read vedt
                     int vedtLength = getInt(endianess);
+                    writeIntW(vedtLength, endianess);
+                    if ((vedtLength %2) == 1) {
+                        vedtLength++;
+                    }
                     byte[] vedt = new byte[vedtLength];
                     raFile.read(vedt);
                     raFileW.write(vedt);
@@ -6293,6 +6309,10 @@ public class FileAvi extends FileBase {
             }
             
             startPosition = raFile.getFilePointer();
+            doWrite = new boolean[totalFrames];
+            z = 0;
+            int skipCount = 0;
+            int captureCount = 0;
             // Do first read thru the data to find the actual number of frames used by MIPAV. This must be done before
             // the MIPAV image can be created.
 
@@ -6326,7 +6346,6 @@ public class FileAvi extends FileBase {
                         // have read rec<sp>
                         haveMoviSubchunk = true;
                         Preferences.debug("LIST rec found\n");
-                        subchunkDataArea = LIST2subchunkSize - 4;
                         subchunkBytesRead = 0;
                         subchunkBlocksRead = 0;
                     } else {
@@ -6340,6 +6359,8 @@ public class FileAvi extends FileBase {
 
             chunkRead = true;
 
+            firstDataSignature = raFile.getFilePointer();
+            firstRun = true;
             loop1:
             while (((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
                        (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) {
@@ -6367,9 +6388,13 @@ public class FileAvi extends FileBase {
                     indexPointer = indexPointer + 8;
                     raFile.seek(indexPointer);
                     moviOffset = getInt(endianess);
+                    if (firstRun && (moviOffset == firstDataSignature)) {
+                        moviPosition = 0L;
+                    }
                     indexPointer = indexPointer + 8;
                     indexBytesRead += 16;
                     raFile.seek(moviPosition + (long) moviOffset);
+                    firstRun = false;
                 } // if (AVIFMUSTINDEX)
 
                 raFile.read(dataSignature);
@@ -6384,9 +6409,25 @@ public class FileAvi extends FileBase {
                         dataLength++;
                     }
 
-                    if (dataLength > 0) {
+                    if (dataLength > 2) {
+                        // Only consider frames with dataLength > 0 in capturing
+                        // and skipping
+                        // RLE uses 2 bytes to show a repeat frame
                         actualFrames++;
+                        if (captureCount < framesToCapture) {
+                            doWrite[z] = true;
+                            captureCount++;
+                        }
+                        else {
+                            doWrite[z] = false;
+                            skipCount++;
+                        }
+                        if (skipCount == framesToSkip) {
+                            captureCount = 0;
+                            skipCount = 0;
+                        }
                     }
+                    z++;
 
                     totalBytesRead = totalBytesRead + 4;
                     subchunkBytesRead += 4;
@@ -6434,7 +6475,6 @@ public class FileAvi extends FileBase {
 
                             // have read rec<sp>
                             totalBytesRead += 4;
-                            subchunkDataArea = LIST2subchunkSize - 4;
                             subchunkBytesRead = 0;
                             subchunkBlocksRead = 0;
                         } else {
@@ -6472,41 +6512,12 @@ public class FileAvi extends FileBase {
             raFileW.seek(saveHere);
             savedibPos = new long[actualFramesW];
             dcLength = new int[actualFramesW];
-            doWrite = new boolean[actualFrames];
             zw = 0;
-            int captureCount = 0;
-            int skipCount = 0;
-            for (int i = 0; i < actualFrames; i++) {
-                if (captureCount < framesToCapture) {
-                    doWrite[i] = true;
-                    captureCount++;
-                }
-                else {
-                    doWrite[i] = false;
-                    skipCount++;
-                }
-                if (skipCount == framesToSkip) {
-                    captureCount = 0;
-                    skipCount = 0;
-                }
-            } // for (int i = 0; i < actualFrames; i++)
 
             imgExtents[0] = width;
             imgExtents[1] = height;
-
-            if ((bitCount == 16) || (bitCount == 24) || (bitCount == 32) || doMSVC) {
-                isColor = true;
-            } else if ((bitCount == 4) || (bitCount == 8)) {
-                isColor = false;
-            }
             
             if (compression == 0) {
-                bufferFactor = 1;
-                if (isColor) {
-                    bufferFactor = 4;    
-                }
-                
-                imageBufferA = new float[bufferFactor * xDim * yDim];
                 
                 // Write the data record signature '00db' where db means the DIB bitmap data (uncompressed)
                 // follows.  The characters 00 are used to identify the stream.
@@ -6519,12 +6530,10 @@ public class FileAvi extends FileBase {
                 // Each 3-byte triplet in the bitmap array represents the relative intensities
                 // of blue, green, and red, respectively, for a pixel.  The color bytes are
                 // in reverse order from the Windows convention.
-                bufferWrite = new byte[3 * xDim * yDim];
             } // if (compression == 0)
-            else { // compression == 1
-                imageBufferA = new float[xDim * yDim];
+            else { // compression == 1 or MSVC
                 // Write the data record signature '00dc' where dc means that DIB bitmap data (compressed)
-                // follows.  The characters 00 azre used to identify the stream.
+                // follows.  The characters 00 are used to identify the stream.
                 dataSignatureW = new byte[4];
                 dataSignatureW[0] = 48; // 0
                 dataSignatureW[1] = 48; // 0
@@ -6537,13 +6546,6 @@ public class FileAvi extends FileBase {
 
             if (compression == 0) {
 
-                if ((bitCount == 16) || (bitCount == 24) || (bitCount == 32)) {
-                    bufferSize = 4 * imgExtents[0] * imgExtents[1];
-                } else { // bitCount == 8
-                    bufferSize = imgExtents[0] * imgExtents[1];
-                }
-
-                imgBuffer = new byte[bufferSize];
                 dataSignature = new byte[4];
 
                 totalDataArea = LIST2Size - 4; // Subtract out 4 'movi' bytes
@@ -6572,7 +6574,6 @@ public class FileAvi extends FileBase {
 
                             // have read rec<sp>
                             haveMoviSubchunk = true;
-                            subchunkDataArea = LIST2subchunkSize - 4;
                             subchunkBytesRead = 0;
                             subchunkBlocksRead = 0;
                         } else {
@@ -6582,10 +6583,8 @@ public class FileAvi extends FileBase {
                     } else {
                         raFile.seek(startPosition);
                     }
-                } // if (1AVIF_MUSTUSEINDEX)
-
-                x = 0;
-                y = imgExtents[1] - 1;
+                } // if (1AVIF_MUSTUSEINDEX
+                
                 z = 0;
                 chunkRead = true;
 
@@ -6687,7 +6686,6 @@ public class FileAvi extends FileBase {
 
                                 // have read rec<sp>
                                 totalBytesRead += 4;
-                                subchunkDataArea = LIST2subchunkSize - 4;
                                 subchunkBytesRead = 0;
                                 subchunkBlocksRead = 0;
                             } else {
@@ -6701,8 +6699,6 @@ public class FileAvi extends FileBase {
                 } // while ((totalBytesRead < (totalDataArea-8)) && chunkRead)
             } // if (compression == 0)
             else if (compression == 1) {
-                bufferSize = imgExtents[0] * imgExtents[1];
-                imgBuffer = new byte[bufferSize];
                 dataSignature = new byte[4];
                 totalDataArea = LIST2Size - 4; // Subtract out 4 'movi' bytes
                 totalBytesRead = 0;
@@ -6722,7 +6718,6 @@ public class FileAvi extends FileBase {
 
                             // have read rec<sp>
                             haveMoviSubchunk = true;
-                            subchunkDataArea = LIST2subchunkSize - 4;
                             subchunkBytesRead = 0;
                             subchunkBlocksRead = 0;
                         } else {
@@ -6734,8 +6729,6 @@ public class FileAvi extends FileBase {
                     }
                 } // if (!AVIF_MUSTUSEINDEX)
 
-                x = 0;
-                y = imgExtents[1] - 1;
                 z = 0;
                 chunkRead = true;
 
@@ -6833,7 +6826,6 @@ public class FileAvi extends FileBase {
 
                                 // have read rec<sp>
                                 totalBytesRead += 4;
-                                subchunkDataArea = LIST2subchunkSize - 4;
                                 subchunkBytesRead = 0;
                                 subchunkBlocksRead = 0;
                             } else {
@@ -6848,8 +6840,6 @@ public class FileAvi extends FileBase {
 
             } // else if (compression == 1)
             else if (doMSVC && (bitCount == 8)) {
-                bufferSize = 4 * imgExtents[0] * imgExtents[1];
-                imgBuffer = new byte[bufferSize];
                 dataSignature = new byte[4];
                 totalDataArea = LIST2Size - 4; // Subtract out 4 'movi' bytes
                 totalBytesRead = 0;
@@ -6869,7 +6859,6 @@ public class FileAvi extends FileBase {
 
                             // have read rec<sp>
                             haveMoviSubchunk = true;
-                            subchunkDataArea = LIST2subchunkSize - 4;
                             subchunkBytesRead = 0;
                             subchunkBlocksRead = 0;
                         } else {
@@ -6881,8 +6870,6 @@ public class FileAvi extends FileBase {
                     }
                 } // if (!AVIF_MUSTUSEINDEX)
 
-                x = 0;
-                y = imgExtents[1] - 1;
                 z = 0;
                 chunkRead = true;
 
@@ -6983,7 +6970,6 @@ public class FileAvi extends FileBase {
 
                                 // have read rec<sp>
                                 totalBytesRead += 4;
-                                subchunkDataArea = LIST2subchunkSize - 4;
                                 subchunkBytesRead = 0;
                                 subchunkBlocksRead = 0;
                             } else {
@@ -6997,8 +6983,6 @@ public class FileAvi extends FileBase {
                 } // while ((totalBytesRead < totalDataArea) && chunkRead)
             } // else if (doMSVC && (bitCount == 8))
             else { // doMSVC && (bitCount == 16)
-                bufferSize = 4 * imgExtents[0] * imgExtents[1];
-                imgBuffer = new byte[bufferSize];
                 dataSignature = new byte[4];
                 totalDataArea = LIST2Size - 4; // Subtract out 4 'movi' bytes
                 totalBytesRead = 0;
@@ -7018,7 +7002,6 @@ public class FileAvi extends FileBase {
 
                             // have read rec<sp>
                             haveMoviSubchunk = true;
-                            subchunkDataArea = LIST2subchunkSize - 4;
                             subchunkBytesRead = 0;
                             subchunkBlocksRead = 0;
                         } else {
@@ -7030,8 +7013,6 @@ public class FileAvi extends FileBase {
                     }
                 } // if (!AVIF_MUSTUSEINDEX)
 
-                x = 0;
-                y = imgExtents[1] - 1;
                 z = 0;
 
                 chunkRead = true;
@@ -7132,7 +7113,6 @@ public class FileAvi extends FileBase {
 
                                 // have read rec<sp>
                                 totalBytesRead += 4;
-                                subchunkDataArea = LIST2subchunkSize - 4;
                                 subchunkBytesRead = 0;
                                 subchunkBlocksRead = 0;
                             } else {
@@ -7167,20 +7147,10 @@ public class FileAvi extends FileBase {
             saveidx1Length = raFileW.getFilePointer();
             writeIntW(0, endianess);
             for (z = 0; z < actualFramesW; z++) {
-                if (z == 0) {
-                    // Write the flags - select AVIIF_KEYFRAME
-                    writeIntW(0x10, endianess);
-                }
-                else {
-                    writeIntW(0x00, endianess);
-                }
+                raFileW.write(dataSignatureW);
+                writeIntW(0x10, endianess);
                 writeIntW((int)(savedibPos[z] - 4 - savemovi), endianess);
-                if (compression == 0) {
-                    writeIntW(3 * xDim * yDim, endianess);    
-                }
-                else {
-                    writeIntW(dcLength[z], endianess);
-                }
+                writeIntW(dcLength[z], endianess);
             }
             
             endPos = raFileW.getFilePointer();
