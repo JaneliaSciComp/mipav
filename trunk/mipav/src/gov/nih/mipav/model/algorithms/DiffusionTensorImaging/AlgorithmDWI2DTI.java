@@ -16,7 +16,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
-import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
+import WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.model.structures.jama.*;
 import gov.nih.mipav.view.dialogs.JDialogBrainSurfaceExtractor;
 

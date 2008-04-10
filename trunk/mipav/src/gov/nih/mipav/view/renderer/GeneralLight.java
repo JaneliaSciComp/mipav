@@ -274,7 +274,7 @@ public class GeneralLight {
      *
      * @return  Light Java3D light instance based on current type.
      */
-    public gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Light createWMLight() {
+    public WildMagic.LibGraphics.Rendering.Light createWMLight() {
 
         // Apply the scale factors to the position and direction.
         Point3f kPosition = createJava3dLightPosition();
@@ -282,25 +282,25 @@ public class GeneralLight {
 
         // Create the instance of the light and set any properties
         // which are specific to that type of light.
-        gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Light kLight = null;
+        WildMagic.LibGraphics.Rendering.Light kLight = null;
 
         switch (m_iType) {
 
             default:
             case TYPE_AMBIENT:
-                kLight = new gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.
-                    Light(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Light.LightType.LT_AMBIENT);
+                kLight = new WildMagic.LibGraphics.Rendering.
+                    Light(WildMagic.LibGraphics.Rendering.Light.LightType.LT_AMBIENT);
                 break;
 
             case TYPE_DIRECTIONAL:
-                kLight = new gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.
-                    Light(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Light.LightType.LT_DIRECTIONAL);
+                kLight = new WildMagic.LibGraphics.Rendering.
+                    Light(WildMagic.LibGraphics.Rendering.Light.LightType.LT_DIRECTIONAL);
                 break;
 
             case TYPE_POINT:
-                kLight = new gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.
-                    Light(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Light.LightType.LT_POINT);
-                kLight.Position = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
+                kLight = new WildMagic.LibGraphics.Rendering.
+                    Light(WildMagic.LibGraphics.Rendering.Light.LightType.LT_POINT);
+                kLight.Position = new WildMagic.LibFoundation.Mathematics.
                     Vector3f(kPosition.x, kPosition.y, kPosition.z);
                 kLight.Constant = m_fAttenuationC0;
                 kLight.Linear = m_fAttenuationC1;
@@ -308,9 +308,9 @@ public class GeneralLight {
                 break;
 
             case TYPE_SPOT:
-                kLight = new gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.
-                    Light(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Light.LightType.LT_SPOT);
-                kLight.Position = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
+                kLight = new WildMagic.LibGraphics.Rendering.
+                    Light(WildMagic.LibGraphics.Rendering.Light.LightType.LT_SPOT);
+                kLight.Position = new WildMagic.LibFoundation.Mathematics.
                     Vector3f(kPosition.x, kPosition.y, kPosition.z);
                 
                 kLight.Exponent = m_fSpotExponent;
@@ -321,13 +321,13 @@ public class GeneralLight {
                 break;
         }
 
-        kLight.DVector = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
+        kLight.DVector = new WildMagic.LibFoundation.Mathematics.
             Vector3f(kDirection.x, kDirection.y, -kDirection.z);
-        kLight.Ambient = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
+        kLight.Ambient = new WildMagic.LibFoundation.Mathematics.
             ColorRGB( m_kLightColor.getRed()/255.0f, m_kLightColor.getGreen()/255.0f, m_kLightColor.getBlue()/255.0f );
-        kLight.Diffuse = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
+        kLight.Diffuse = new WildMagic.LibFoundation.Mathematics.
             ColorRGB( m_kLightColor.getRed()/255.0f, m_kLightColor.getGreen()/255.0f, m_kLightColor.getBlue()/255.0f );
-        kLight.Specular = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
+        kLight.Specular = new WildMagic.LibFoundation.Mathematics.
             ColorRGB( m_kLightColor.getRed()/255.0f, m_kLightColor.getGreen()/255.0f, m_kLightColor.getBlue()/255.0f );
         kLight.Intensity = m_fIntensity;
 

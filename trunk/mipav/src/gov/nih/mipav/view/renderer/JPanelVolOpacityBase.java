@@ -145,6 +145,10 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
      * tri-planar volume view.
      */
     protected JTextField yRangeTextA, yRangeTextB, yRangeTextGM_A, yRangeTextGM_B;
+    
+
+    /** Render base. */
+    protected VolumeTriPlanarInterface m_kVolumeViewer = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -161,8 +165,9 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
      * Base for the opacity objects.
      *
      */
-    public JPanelVolOpacityBase(VolumeViewer theParentFrame) {
-        super(theParentFrame);
+    public JPanelVolOpacityBase(VolumeTriPlanarInterface kVolumeViewer) {
+        super(null);
+        m_kVolumeViewer = kVolumeViewer;
     }
 
 
@@ -326,7 +331,7 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
 
     /**
      */
-    public VolumeViewer getParentVolumeViewer() {
+    public VolumeTriPlanarInterface getParentVolumeViewer() {
 
         // This instance is stored in the base class.
         return m_kVolumeViewer;

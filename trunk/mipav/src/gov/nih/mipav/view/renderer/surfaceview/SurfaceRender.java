@@ -30,7 +30,6 @@ import javax.swing.event.*;
 import javax.swing.JPanel;
 
 import javax.vecmath.*;
-import gov.nih.mipav.view.WildMagic.ApplicationDemos.*;
 
 /**
  * Frame that holds the surface renderer. This frame is only possible to

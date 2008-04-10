@@ -26,9 +26,6 @@ import javax.swing.event.*;
 
 import javax.vecmath.*;
 
-import gov.nih.mipav.view.WildMagic.ApplicationDemos.*;
-import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
-
 
 /**
  * <p>Title: JPanelClip</p>

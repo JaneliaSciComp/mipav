@@ -1,8 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM;
 
-import gov.nih.mipav.view.renderer.WildMagic.FileSurface_WM;
-import gov.nih.mipav.view.renderer.WildMagic.VolumeViewer;
-import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -11,14 +9,12 @@ import gov.nih.mipav.view.renderer.*;
 import java.awt.*;
 import java.awt.event.*;
 
-import java.io.*;
-
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
-import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibFoundation.Mathematics.*;
+import WildMagic.LibGraphics.SceneGraph.*;
 
 /**
  * DOCUMENT ME!
@@ -42,12 +38,6 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
     private int m_iGridY = 0;
 
     /** DOCUMENT ME! */
-    private JButton m_kButtonLoadImage = new JButton();
-
-    /** DOCUMENT ME! */
-    private JButton m_kButtonLoadSurface = new JButton();
-
-    /** DOCUMENT ME! */
     private JRadioButton m_kDisablePick = new JRadioButton();
 
     /** DOCUMENT ME! */
@@ -60,22 +50,7 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
     private JRadioButton m_kDisplaySphere = new JRadioButton();
 
     /** DOCUMENT ME! */
-    private File m_kFile;
-
-    /** DOCUMENT ME! */
     private ModelImage m_kImage = null;
-
-    /** DOCUMENT ME! */
-    private String m_kImageDir;
-
-    /** DOCUMENT ME! */
-    private String m_kImageFile;
-
-    /** DOCUMENT ME! */
-    private JLabel m_kLabelFileName = new JLabel();
-
-    /** DOCUMENT ME! */
-    private JLabel m_kLabelFileNameImage = new JLabel();
 
     /** DOCUMENT ME! */
     private JCheckBox m_kLatLonLines = new JCheckBox();
@@ -105,13 +80,10 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
     private JRadioButton m_kPickPuncture = new JRadioButton();
 
     /** DOCUMENT ME! */
-    private String m_kSurfaceDir;
-
-    /** DOCUMENT ME! */
     private TriMesh m_kTriangleMesh = null;
 
     /** DOCUMENT ME! */
-    private MjCorticalAnalysis_WM m_kView;
+    private CorticalAnalysisRender m_kView;
 
     /** The scroll pane holding the panel content. Useful when the screen is small. */
     private JScrollPane scroller;
@@ -133,7 +105,7 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
      */
     protected JButton cancelButton;
     
-    private VolumeViewer m_kVolumeViewer;
+    private VolumeTriPlanarInterface m_kVolumeViewer;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -145,7 +117,7 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
      * @param  kParentFrame  the parent frame for the panel, contains the surfaceRenderer, where the brain model is
      *                       displayed
      */
-    public JPanelBrainSurfaceFlattener_WM(MjCorticalAnalysis_WM kView, ModelImage kImage, VolumeViewer kParent) {
+    public JPanelBrainSurfaceFlattener_WM(CorticalAnalysisRender kView, ModelImage kImage, VolumeTriPlanarInterface kParent) {
 
         serif12 = MipavUtil.font12;
         serif12B = MipavUtil.font12B;
@@ -169,7 +141,8 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
         String command = event.getActionCommand();
 
         if (command.equals("LatLonLines")) {
-            m_kView.toggleLatLonLines();
+            m_kView.toggleLatLonLines( m_kLatLonLines.isSelected() );
+            m_kVolumeViewer.toggleNode( m_kView.getMeshLines(), m_kLatLonLines.isSelected() );
         }
         /* Toggle the enable picking On/Off: */
         else if (source == m_kPickCorrespondence) {
@@ -179,6 +152,7 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
             }
 
             m_kView.togglePickCorrespondence();
+            m_kVolumeViewer.PickCorrespondence( m_kPickCorrespondence.isSelected() );
         } else if (source == m_kPickPuncture) {
 
             if (m_kView.isCorrespondencePickEnabled()) {
@@ -186,6 +160,8 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
             }
 
             m_kView.togglePickPuncture();
+            
+            m_kVolumeViewer.PickCorrespondence( m_kPickPuncture.isSelected() );
         } else if (source == m_kDisablePick) {
 
             if (m_kView.isCorrespondencePickEnabled()) {
@@ -195,6 +171,7 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
             if (m_kView.isPuncturePickEnabled()) {
                 m_kView.togglePickPuncture();
             }
+            m_kVolumeViewer.PickCorrespondence( false );
         }
         /* Remove all picked points from the scene: */
         else if (command.equals("RemovePoints")) {
@@ -204,13 +181,20 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
         else if (command.equals("RecalculateConformal")) {
 
             if (m_bFileLoaded) {
-                //m_kParentFrame.removeBranch(m_kView.getMeshLines(), false);
+                m_kView.removePoints();
                 m_kView.calculateConformal();
 
                 int iNumLat = Integer.parseInt(m_kNumLatText.getText());
                 int iNumLon = Integer.parseInt(m_kNumLonText.getText());
                 m_kView.setupLatLon(iNumLat, iNumLon);
-                //m_kParentFrame.addBranch(m_kView.getMeshLines(), null, null);
+                if ( m_kDisplayPlane.isSelected() )
+                {
+                    m_kView.displayPlane();
+                }
+                else
+                {
+                    m_kView.displaySphere();
+                }
             }
         }
 
@@ -224,14 +208,11 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
         }
         /* Perform the inflation step in the brainsurface flattener */
         else if (command.equals("Inflation")) {
-            boolean bResult = m_kView.inflation();
+            m_kView.inflation();
         }
         /* The number of latitude/longitude lines has changed, update the
          * meshes: */
-        else if (command.equals("UpdateMesh")) {
-            //m_kParentFrame.removeBranch(m_kView.getMesh(), true);
-            //m_kParentFrame.addBranch(m_kView.getMesh(), m_kView.getTMesh(), m_kCenter);
-        } else if (command.equals("NumLatChanged") || command.equals("NumLonChanged")) {
+        else if (command.equals("NumLatChanged") || command.equals("NumLonChanged")) {
             m_kLatLonLines.setSelected(true);
 
             //m_kParentFrame.removeBranch(m_kView.getMeshLines(), false);
@@ -248,10 +229,6 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
      * DOCUMENT ME!
      */
     public void disposeLocal() {
-        m_kLabelFileName = null;
-        m_kButtonLoadSurface = null;
-        m_kLabelFileNameImage = null;
-        m_kButtonLoadImage = null;
         m_kLatLonLines = null;
         m_kPickCorrespondence = null;
         m_kPickButtonGroup = null;
@@ -427,7 +404,7 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
     /**
      * Resets the Mesh Display, when the file is reloaded:
      */
-    public void displayCorticalAnalysis( TriMesh kMesh, Vector3f kCenter ) {
+    public Node displayCorticalAnalysis( TriMesh kMesh, Vector3f kCenter ) {
         m_kTriangleMesh = kMesh;
         m_kView.setup(m_kTriangleMesh, kCenter);
 
@@ -454,8 +431,10 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
 
         /* Reset the color map to display curvature: */
         m_kView.displayCurvatureColors();
-    }
 
+        return m_kView.getMeshLines();
+    }
+    
     /**
      * Initialize the user-interface, buttons and ActionCommands.
      */
@@ -642,17 +621,6 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
         gbc.gridx = 1;
         gbc.gridy = iGridY;
         kPanel.add(kButtonInflation, gbc);
-
-        /* Update the mesh in the 2D planar views button: */
-        JButton kButtonUpdateMesh = new JButton();
-        kButtonUpdateMesh.setText("Update Mesh in 2D-Planar Views");
-        kButtonUpdateMesh.setActionCommand("UpdateMesh");
-        kButtonUpdateMesh.addActionListener(this);
-        gbc.gridx = 2;
-        gbc.gridy = iGridY++;
-        kPanel.add(kButtonUpdateMesh, gbc);
-
-
         kContentBox.add(kPanel);
         
         // Scroll panel that hold the control panel layout in order to use JScrollPane
