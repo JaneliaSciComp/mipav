@@ -2320,13 +2320,23 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         // read in the .gif or .png as a model image to create the BitSet
         ModelImage brushImage = fileIO.readImage(paintFile.getPath());
-
+        
         if (brushImage == null) {
             return;
         }
 
         int[] brushExtents = brushImage.getExtents();
-
+        
+        // change the brush extents with the current image resolution.
+        // So, if the the resolution is high, the paint brush extents are scaled down. 
+        float[] orientedResols = imageA.getResolutions(0, orientation);
+        float[] imageResols = imageA.getResolutions(0);
+        float minResol = Math.min(imageResols[2], Math.min(imageResols[0], imageResols[1]));
+        float extentConst;
+        extentConst = brushExtents[0];
+        brushExtents[0] = (int)((minResol * extentConst) / orientedResols[0] + 0.5f);
+        brushExtents[1] = (int)((minResol * extentConst) / orientedResols[1] + 0.5f);
+        
         // create the bitset and the brush dimensions
         paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
         paintBrush = new BitSet(brushExtents[0] * brushExtents[1]);
@@ -2417,9 +2427,19 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         if (brushImage == null) {
             return;
         }
-
+        
         int[] brushExtents = brushImage.getExtents();
-
+        
+        // change the brush extents with the current image resolution.
+        // So, if the the resolution is high, the paint brush extents are scaled down. 
+        float[] orientedResols = imageA.getResolutions(0, orientation);
+        float[] imageResols = imageA.getResolutions(0);
+        float minResol = Math.min(imageResols[2], Math.min(imageResols[0], imageResols[1]));
+        float extentConst;
+        extentConst = brushExtents[0];
+        brushExtents[0] = (int)((minResol * extentConst) / orientedResols[0] + 0.5f);
+        brushExtents[1] = (int)((minResol * extentConst) / orientedResols[1] + 0.5f);
+        
         // create the bitset and the brush dimensions
         paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
         paintBrush = new BitSet(brushExtents[0] * brushExtents[1]);
