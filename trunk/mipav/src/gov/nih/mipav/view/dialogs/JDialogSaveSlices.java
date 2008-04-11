@@ -193,7 +193,7 @@ public class JDialogSaveSlices extends JDialogBase {
             tmpStr = textFirstSlice.getText();
 
             if (testParameter(tmpStr, minValue, maxValue)) {
-                options.setBeginSlice(Integer.parseInt(tmpStr) - 1);
+                options.setBeginSlice(Integer.parseInt(tmpStr));
             } else {
                 textFirstSlice.requestFocus();
                 textFirstSlice.selectAll();
@@ -204,7 +204,7 @@ public class JDialogSaveSlices extends JDialogBase {
             tmpStr = textLastSlice.getText();
 
             if (testParameter(tmpStr, minValue, maxValue)) {
-                options.setEndSlice(Integer.parseInt(tmpStr) - 1);
+                options.setEndSlice(Integer.parseInt(tmpStr));
             } else {
                 textLastSlice.requestFocus();
                 textLastSlice.selectAll();
@@ -224,7 +224,7 @@ public class JDialogSaveSlices extends JDialogBase {
                 tmpStr = textFirstTimePeriod.getText();
 
                 if (testParameter(tmpStr, minTimeValue, maxTimeValue)) {
-                    options.setBeginTime(Integer.parseInt(tmpStr) - 1);
+                    options.setBeginTime(Integer.parseInt(tmpStr));
 
                     if (tiffEnabled) {
                         options.setTimeSlice(options.getBeginTime());
@@ -241,7 +241,7 @@ public class JDialogSaveSlices extends JDialogBase {
                     tmpStr = textLastTimePeriod.getText();
 
                     if (testParameter(tmpStr, minTimeValue, maxTimeValue)) {
-                        options.setEndTime(Integer.parseInt(tmpStr) - 1);
+                        options.setEndTime(Integer.parseInt(tmpStr));
                     } else {
                         textLastTimePeriod.requestFocus();
                         textLastTimePeriod.selectAll();
