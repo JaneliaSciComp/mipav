@@ -2332,10 +2332,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         float[] orientedResols = imageA.getResolutions(0, orientation);
         float[] imageResols = imageA.getResolutions(0);
         float minResol = Math.min(imageResols[2], Math.min(imageResols[0], imageResols[1]));
-        float extentConst;
+        float maxResol = Math.max(imageResols[2], Math.max(imageResols[0], imageResols[1]));
+        float ratio = maxResol / minResol;
+        int extentConst;
         extentConst = brushExtents[0];
-        brushExtents[0] = Math.max(Math.round((minResol * extentConst) / orientedResols[0]), 1);
-        brushExtents[1] = Math.max(Math.round((minResol * extentConst) / orientedResols[1]), 1);
+        if ( ratio > 10 ) {
+          brushExtents[0] = Math.max(Math.round((minResol * extentConst) / orientedResols[0]), 1);
+          brushExtents[1] = Math.max(Math.round((minResol * extentConst) / orientedResols[1]), 1);
+        }
+        // System.err.println("brushExtents[0] = "+ brushExtents[0] + " brushExtents[1] = " + brushExtents[1]);
         
         // create the bitset and the brush dimensions
         paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
@@ -2435,10 +2440,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         float[] orientedResols = imageA.getResolutions(0, orientation);
         float[] imageResols = imageA.getResolutions(0);
         float minResol = Math.min(imageResols[2], Math.min(imageResols[0], imageResols[1]));
-        float extentConst;
+        float maxResol = Math.max(imageResols[2], Math.max(imageResols[0], imageResols[1]));
+        float ratio = maxResol / minResol;
+        int extentConst;
         extentConst = brushExtents[0];
-        brushExtents[0] = Math.max(Math.round((minResol * extentConst) / orientedResols[0]), 1);
-        brushExtents[1] = Math.max(Math.round((minResol * extentConst) / orientedResols[1]), 1);
+        if ( ratio > 10 ) {
+          brushExtents[0] = Math.max(Math.round((minResol * extentConst) / orientedResols[0]), 1);
+          brushExtents[1] = Math.max(Math.round((minResol * extentConst) / orientedResols[1]), 1);
+        }
+        // System.err.println("brushExtents[0] = "+ brushExtents[0] + " brushExtents[1] = " + brushExtents[1]);
         
         // create the bitset and the brush dimensions
         paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
