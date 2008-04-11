@@ -3056,7 +3056,7 @@ public class FileAvi extends FileBase {
         raFile.write(CHUNKsignature); // Write LIST to the file
 
         // Write the size of the first LIST subCHUNK not including the first 8 bytes with
-        // LIST and size.  Note that saveLIST1subSize = saveLIST1Size + 76, and that
+        // LIST and size.  Note that saveLIST1Size = saveLIST1subSize + 76, and that
         // the length written to saveLIST1subSize is 76 less than the length written to saveLIST1Size.
         // The end of the first LIST subCHUNK is followed by JUNK.
         saveLIST1subSize = raFile.getFilePointer();
@@ -5593,10 +5593,12 @@ public class FileAvi extends FileBase {
                 LISTsubchunkMarker = raFile.getFilePointer();
                 
                 // Write the size of the first LIST subCHUNK not including the first 8 bytes with
-                // LIST and size.  Note that saveLIST1subSize = saveLIST1Size + 76, and that
+                // LIST and size.  Note that saveLIST1Size = saveLIST1subSize + 76, and that
                 // the length written to saveLIST1subSize is 76 less than the length written to saveLIST1Size.
                 // The end of the first LIST subCHUNK is followed by JUNK.
-                saveLIST1subSize = raFileW.getFilePointer();
+                if (!vidsRead) {
+                    saveLIST1subSize = raFileW.getFilePointer();
+                }
                 // For now write 0 in CHUNK size location
                 if (!vidsRead) {
                     writeIntW(0, endianess);
@@ -6171,12 +6173,6 @@ public class FileAvi extends FileBase {
 
             marker = raFile.getFilePointer();
             
-            savestrnPos = raFileW.getFilePointer();
-            if (marker > savestrnPos) {
-                // audio and vids in input, but only vids in output
-                byte[] extra = new byte[(int)(marker - savestrnPos)];
-                raFileW.write(extra);
-            }
             savestrnPos = raFileW.getFilePointer();
             raFileW.seek(savestrfSize);
             writeIntW((int)(savestrnPos - (savestrfSize + 4)), endianess);
