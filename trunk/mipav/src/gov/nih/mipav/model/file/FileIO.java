@@ -2897,9 +2897,9 @@ public class FileIO {
         } else if (extents.length > 2) {
 
             if (extents.length == 3) {
-                dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 1, extents[2], options);
+                dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, extents[2]-1, options);
             } else if (extents.length == 4) {
-                dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 1, extents[2], 1, extents[3], options);
+                dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, extents[2]-1, 0, extents[3]-1, options);
             }
 
             if (dialogSave.isCancelled()) {
