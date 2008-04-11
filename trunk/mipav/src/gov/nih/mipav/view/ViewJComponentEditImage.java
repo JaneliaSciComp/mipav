@@ -2334,8 +2334,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         float minResol = Math.min(imageResols[2], Math.min(imageResols[0], imageResols[1]));
         float extentConst;
         extentConst = brushExtents[0];
-        brushExtents[0] = (int)((minResol * extentConst) / orientedResols[0] + 0.5f);
-        brushExtents[1] = (int)((minResol * extentConst) / orientedResols[1] + 0.5f);
+        brushExtents[0] = Math.max(Math.round((minResol * extentConst) / orientedResols[0]), 1);
+        brushExtents[1] = Math.max(Math.round((minResol * extentConst) / orientedResols[1]), 1);
         
         // create the bitset and the brush dimensions
         paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
@@ -2437,8 +2437,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         float minResol = Math.min(imageResols[2], Math.min(imageResols[0], imageResols[1]));
         float extentConst;
         extentConst = brushExtents[0];
-        brushExtents[0] = (int)((minResol * extentConst) / orientedResols[0] + 0.5f);
-        brushExtents[1] = (int)((minResol * extentConst) / orientedResols[1] + 0.5f);
+        brushExtents[0] = Math.max(Math.round((minResol * extentConst) / orientedResols[0]), 1);
+        brushExtents[1] = Math.max(Math.round((minResol * extentConst) / orientedResols[1]), 1);
         
         // create the bitset and the brush dimensions
         paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
