@@ -387,6 +387,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         cellNumberLabel = new JLabel("Number of cells");
         cellNumberLabel.setForeground(Color.black);
         cellNumberLabel.setFont(serif12);
+        gbc.gridx = 0;
         gbc.gridy = yPos;
         mainPanel.add(cellNumberLabel, gbc);
 
@@ -401,8 +402,10 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         greenRegionsLabel.setForeground(Color.black);
         greenRegionsLabel.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = yPos++;
+        gbc.gridy = yPos;
         mainPanel.add(greenRegionsLabel, gbc);
+        
+        JPanel buttonPanel = new JPanel(new GridBagLayout());
         
         greenGroup = new ButtonGroup();
         
@@ -411,24 +414,28 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         oneButton.setFont(serif12);
         greenGroup.add(oneButton);
         gbc.gridx = 0;
-        gbc.gridy = yPos++;
-        mainPanel.add(oneButton, gbc);
+        gbc.gridy = 0;
+        buttonPanel.add(oneButton, gbc);
         
         twoButton = new JRadioButton("2", true);
         twoButton.setForeground(Color.black);
         twoButton.setFont(serif12);
         greenGroup.add(twoButton);
-        gbc.gridx = 0;
-        gbc.gridy = yPos++;
-        mainPanel.add(twoButton, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        buttonPanel.add(twoButton, gbc);
         
         variesButton = new JRadioButton("Varies with cell", true);
         variesButton.setForeground(Color.black);
         variesButton.setFont(serif12);
         greenGroup.add(variesButton);
-        gbc.gridx = 0;
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        buttonPanel.add(variesButton, gbc);
+        
+        gbc.gridx = 1;
         gbc.gridy = yPos++;
-        mainPanel.add(variesButton, gbc);
+        mainPanel.add(buttonPanel, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
 
