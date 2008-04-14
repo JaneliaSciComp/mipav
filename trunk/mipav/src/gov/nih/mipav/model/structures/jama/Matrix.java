@@ -1474,4 +1474,22 @@ public class Matrix implements Cloneable, java.io.Serializable {
         }
     }
 
+    public boolean equals(Object obj){
+        if(obj instanceof Matrix){
+            Matrix m = (Matrix)obj;
+            if(m.getRowDimension() != mRow ||m.getColumnDimension() != nCol){
+                return false;
+            }
+            for(int i = 0; i < mRow; i++){
+                for(int j = 0; j < nCol; j++){
+                    if(m.get(i, j) != matrix[i][j]){
+                        return false;
+                    }
+                
+                }
+            }
+            return true;
+        }
+        return false;
+    }
 }
