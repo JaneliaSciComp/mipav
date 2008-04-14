@@ -42,7 +42,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
     private JTextField greenMinText;
     
     /** DOCUMENT ME! */
-    private float greenFraction = 0.15f;
+    private float greenFraction = 0.01f;
 
     /** DOCUMENT ME! */
     private JLabel greenFractionLabel;
@@ -50,9 +50,9 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
     /** DOCUMENT ME! */
     private JTextField greenFractionText;
     
-    private JLabel cellNumberLabel;
+    private JLabel blueMinLabel;
     
-    private JTextField cellNumberText;
+    private JTextField blueMinText;
     
     private JLabel greenRegionsLabel;
     
@@ -64,13 +64,17 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
     
     private JRadioButton variesButton;
     
-    private float mergingDistance = 1.0f;
+    private float mergingDistance = 0.1f;
     
-    private int cellNumber;
+    private int blueMin = 1000;
     
     // Number of green regions per cell
     // Either 1 for 1 for all cells, 2 for 2 for all cells, or 0 for 1 or 2 for all cells
     private int greenRegionNumber;
+    
+    private JCheckBox twoBox;
+    
+    private boolean twoGreenLevels = false;
     
     
     /** DOCUMENT ME! */
@@ -177,10 +181,10 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         }
 
         String str = new String();
+        str += blueMin + delim;
         str += mergingDistance + delim;
         str += greenMin + delim;
         str += greenFraction + delim;
-        str += cellNumber + delim;
         str += greenRegionNumber + delim;
 
         return str;
@@ -215,12 +219,12 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
     }
 
     /**
-     * Accessor that set the cellNumber variable
+     * Accessor that set the blueMin variable, minimum number of blue pixels per cell
      *
-     * @param  cellNumber float
+     * @param  blueMin int
      */
-    public void setCellNumber(int cellNumber) {
-        this.cellNumber = cellNumber;
+    public void setBlueMin(int blueMin) {
+        this.blueMin = blueMin;
     }
 
     /**
@@ -232,6 +236,10 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
     public void setGreenRegionNumber(int greenRegionNumber) {
         this.greenRegionNumber = greenRegionNumber;
     }
+    
+    public void setTwoGreenLevels(boolean twoGreenLevels) {
+        this.twoGreenLevels = twoGreenLevels;
+    }
 
     /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
@@ -241,8 +249,8 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
 
         try {
 
-            centerDistanceAlgo = new PlugInAlgorithmCenterDistance(image, mergingDistance, greenMin, greenFraction,
-                                                                   cellNumber, greenRegionNumber);
+            centerDistanceAlgo = new PlugInAlgorithmCenterDistance(image, blueMin, mergingDistance, greenMin, greenFraction,
+                                                                   greenRegionNumber, twoGreenLevels);
 
             // This is very important. Adding this object as a listener allows
             // the algorithm to
@@ -289,11 +297,12 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
             throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "Source Image must be Color");
         }
 
+        setBlueMin(scriptParameters.getParams().getInt("blue_min"));
         setMergingDistance(scriptParameters.getParams().getFloat("merging_distance"));
         setGreenMin(scriptParameters.getParams().getInt("green_min"));
         setGreenFraction(scriptParameters.getParams().getFloat("green_fraction"));
-        setCellNumber(scriptParameters.getParams().getInt("cell_number"));
         setGreenRegionNumber(scriptParameters.getParams().getInt("green_region_number"));
+        setTwoGreenLevels(scriptParameters.getParams().getBoolean("two_green_levels"));
     }
 
     /**
@@ -301,12 +310,12 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blue_min", blueMin));
         scriptParameters.getParams().put(ParameterFactory.newParameter("merging_distance", mergingDistance));
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_min", greenMin));
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_fraction", greenFraction));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("cell_number", cellNumber));
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_region_number", greenRegionNumber));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("two_green_levels", twoGreenLevels));
     }
 
     /**
@@ -314,7 +323,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Center Distances 04/11/08");
+        setTitle("Center Distances 04/14/08");
 
         GridBagConstraints gbc = new GridBagConstraints();
         int yPos = 0;
@@ -342,7 +351,21 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         gbc.gridy = yPos++;
         mainPanel.add(labelVOI2, gbc);
         
-        greenMergingLabel = new JLabel("Green merging radius around peak (microns)");
+        blueMinLabel = new JLabel("Minimum number of blue pixels per cell");
+        blueMinLabel.setForeground(Color.black);
+        blueMinLabel.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = yPos;
+        mainPanel.add(blueMinLabel, gbc);
+
+        blueMinText = new JTextField(5);
+        blueMinText.setText("1000");
+        blueMinText.setFont(serif12);
+        gbc.gridx = 1;
+        gbc.gridy = yPos++;
+        mainPanel.add(blueMinText, gbc);
+        
+        greenMergingLabel = new JLabel("Green merging radius around peak (inches)");
         greenMergingLabel.setForeground(Color.black);
         greenMergingLabel.setFont(serif12);
         gbc.gridx = 0;
@@ -350,7 +373,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         mainPanel.add(greenMergingLabel, gbc);
 
         greenMergingText = new JTextField(5);
-        greenMergingText.setText("1.0");
+        greenMergingText.setText("0.1");
         greenMergingText.setFont(serif12);
         gbc.gridx = 1;
         gbc.gridy = yPos++;
@@ -378,25 +401,11 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         mainPanel.add(greenFractionLabel, gbc);
 
         greenFractionText = new JTextField(5);
-        greenFractionText.setText("0.15");
+        greenFractionText.setText("0.01");
         greenFractionText.setFont(serif12);
         gbc.gridx = 1;
         gbc.gridy = yPos++;
         mainPanel.add(greenFractionText, gbc);
-
-        cellNumberLabel = new JLabel("Number of cells");
-        cellNumberLabel.setForeground(Color.black);
-        cellNumberLabel.setFont(serif12);
-        gbc.gridx = 0;
-        gbc.gridy = yPos;
-        mainPanel.add(cellNumberLabel, gbc);
-
-        cellNumberText = new JTextField(5);
-        cellNumberText.setText("1");
-        cellNumberText.setFont(serif12);
-        gbc.gridx = 1;
-        gbc.gridy = yPos++;
-        mainPanel.add(cellNumberText, gbc);
 
         greenRegionsLabel = new JLabel("Green regions per cell");
         greenRegionsLabel.setForeground(Color.black);
@@ -436,6 +445,13 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         gbc.gridx = 1;
         gbc.gridy = yPos++;
         mainPanel.add(buttonPanel, gbc);
+        
+        twoBox = new JCheckBox("Use 2 top gray levels in green segmentation", false);
+        twoBox.setForeground(Color.black);
+        twoBox.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = yPos++;
+        mainPanel.add(twoBox, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
 
@@ -531,19 +547,21 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         }
         
         
-        if (nVOIs > 0) {
-            cellNumber = nVOIs;
+        
+        tmpStr = blueMinText.getText();
+        blueMin = Integer.parseInt(tmpStr);
+        if (blueMin <= 0) {
+            MipavUtil.displayError("Number of blue pixels must be greater than 0");
+            blueMinText.requestFocus();
+            blueMinText.selectAll();
+            return false;    
+        } else if (blueMin > totLength) {
+            MipavUtil.displayError("blue minimum must not exceed " + totLength);
+            blueMinText.requestFocus();
+            blueMinText.selectAll();
+
+            return false;
         }
-        else { // nVOIs = 0
-            tmpStr = cellNumberText.getText();
-            cellNumber = Integer.parseInt(tmpStr);
-            if (cellNumber <= 0) {
-                MipavUtil.displayError("Number of cells must be greater than 0");
-                cellNumberText.requestFocus();
-                cellNumberText.selectAll();
-                return false;    
-            }
-        } // else nVOIs = 0
         
         if (oneButton.isSelected()) {
             greenRegionNumber = 1;
@@ -554,6 +572,8 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         else {
             greenRegionNumber = 0;
         }
+        
+        twoGreenLevels = twoBox.isSelected();
         
         return true;
     } // end setVariables()
