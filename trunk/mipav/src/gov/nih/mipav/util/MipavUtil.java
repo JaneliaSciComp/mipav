@@ -135,8 +135,28 @@ public class MipavUtil {
         return min;
     }
     
+    public static short min(short[] data){
+        short min = Short.MAX_VALUE;
+        for(int i = 0; i < data.length; i++){
+            if(min > data[i]){
+                min = data[i];
+            }
+        }
+        return min;
+    }
+    
     public static float max(float[] data){
         float max = Float.MIN_VALUE;
+        for(int i = 0; i < data.length; i++){
+            if(max < data[i]){
+                max = data[i];
+            }
+        }
+        return max;
+    }
+    
+    public static short max(short[] data){
+        short max = Short.MIN_VALUE;
         for(int i = 0; i < data.length; i++){
             if(max < data[i]){
                 max = data[i];
