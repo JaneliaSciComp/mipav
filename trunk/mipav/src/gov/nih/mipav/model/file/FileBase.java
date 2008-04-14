@@ -1140,6 +1140,53 @@ public abstract class FileBase {
     }
     
     /**
+     * Read a short from a file.
+     * @param raFile
+     * @param bigEndian
+     * @return
+     * @throws IOException
+     */
+    public static short readShort(RandomAccessFile raFile, boolean bigEndian) throws IOException {
+        short tempShort = 0;
+        byte[] buffer = new byte[2];
+
+        raFile.readFully(buffer);
+
+        if (bigEndian) {
+            tempShort = (short) (((buffer[0] & 0xff) << 8) | (buffer[1] & 0xff));
+        } else {
+            tempShort = (short) (((buffer[1] & 0xff) << 8) | (buffer[0] & 0xff));
+        }
+
+        return tempShort;
+    }
+
+    /**
+     * Read short data from a file.
+     * @param filename
+     * @param bigEndian
+     * @return
+     */
+    public static short[] readRawFileShort(String filename, boolean bigEndian){
+        RandomAccessFile raFile = null;
+        try{
+            raFile = new RandomAccessFile(new File(filename), "r");
+            int length = (int)(raFile.length()/2);
+            short[] data = new short[length];
+            for(int i = 0; i < length; i++){
+                data[i] = readShort(raFile, bigEndian);
+            }
+            return data;
+        }catch(FileNotFoundException e){
+            e.printStackTrace();
+            return null;
+        }catch(IOException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
      * Read a float from a file.
      * @param raFile
      * @param bigEndian
