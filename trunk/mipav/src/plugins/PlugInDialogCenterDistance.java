@@ -13,7 +13,7 @@ import javax.swing.*;
 
 
 /**
- * @version  April 11, 2008
+ * @version  April 15, 2008
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -34,8 +34,8 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
     /** Green merging radius around peak green spot */
     private JTextField greenMergingText;
     
-    /** Minimum nuber of pixels in a green VOI */
-    private int greenMin;
+    /** Minimum number of pixels in a green VOI */
+    private int greenMin = 10;
     
     private JLabel greenMinLabel;
     
@@ -49,6 +49,21 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
 
     /** DOCUMENT ME! */
     private JTextField greenFractionText;
+    
+    private int redMin = 50;
+    
+    private JLabel redMinLabel;
+    
+    private JTextField redMinText;
+    
+    /** DOCUMENT ME! */
+    private float redFraction = 0.15f;
+
+    /** DOCUMENT ME! */
+    private JLabel redFractionLabel;
+
+    /** DOCUMENT ME! */
+    private JTextField redFractionText;
     
     private JLabel blueMinLabel;
     
@@ -217,6 +232,25 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
     public void setGreenMin(int greenMin) {
         this.greenMin = greenMin;
     }
+    
+    /**
+     * Accessor that set the redFraction variable, for portion of red pixels considered by fuzzy c means
+     * segmentation.
+     *
+     * @param  redFraction  float
+     */
+    public void setRedFraction(float redFraction) {
+        this.redFraction = redFraction;
+    }
+    
+    /**
+     * Accessor that sets the redMin variable, for minimum pixel number in a red voi.
+     *
+     * @param  redMin  minimum number of pixels in a red voi
+     */
+    public void setRedMin(int redMin) {
+        this.redMin = redMin;
+    }
 
     /**
      * Accessor that set the blueMin variable, minimum number of blue pixels per cell
@@ -249,7 +283,8 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
 
         try {
 
-            centerDistanceAlgo = new PlugInAlgorithmCenterDistance(image, blueMin, mergingDistance, greenMin, greenFraction,
+            centerDistanceAlgo = new PlugInAlgorithmCenterDistance(image, blueMin, redMin, redFraction, mergingDistance,
+                                                                   greenMin, greenFraction,
                                                                    greenRegionNumber, twoGreenLevels);
 
             // This is very important. Adding this object as a listener allows
@@ -298,6 +333,8 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         }
 
         setBlueMin(scriptParameters.getParams().getInt("blue_min"));
+        setRedMin(scriptParameters.getParams().getInt("red_min"));
+        setRedFraction(scriptParameters.getParams().getFloat("red_fraction"));
         setMergingDistance(scriptParameters.getParams().getFloat("merging_distance"));
         setGreenMin(scriptParameters.getParams().getInt("green_min"));
         setGreenFraction(scriptParameters.getParams().getFloat("green_fraction"));
@@ -311,6 +348,8 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
         scriptParameters.getParams().put(ParameterFactory.newParameter("blue_min", blueMin));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("red_min", redMin));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("red_fraction", redFraction));
         scriptParameters.getParams().put(ParameterFactory.newParameter("merging_distance", mergingDistance));
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_min", greenMin));
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_fraction", greenFraction));
@@ -323,7 +362,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Center Distances 04/14/08");
+        setTitle("Center Distances 04/15/08");
 
         GridBagConstraints gbc = new GridBagConstraints();
         int yPos = 0;
@@ -339,17 +378,6 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
         mainPanel.setBorder(buildTitledBorder("Input parameters"));
-
-        JLabel labelVOI = new JLabel("Optionally draw a new VOI around each cell");
-        labelVOI.setForeground(Color.black);
-        labelVOI.setFont(serif12);
-        mainPanel.add(labelVOI, gbc);
-
-        JLabel labelVOI2 = new JLabel("Program automatically generates VOIs if none present");
-        labelVOI2.setForeground(Color.black);
-        labelVOI2.setFont(serif12);
-        gbc.gridy = yPos++;
-        mainPanel.add(labelVOI2, gbc);
         
         blueMinLabel = new JLabel("Minimum number of blue pixels per cell");
         blueMinLabel.setForeground(Color.black);
@@ -364,6 +392,34 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         gbc.gridx = 1;
         gbc.gridy = yPos++;
         mainPanel.add(blueMinText, gbc);
+        
+        redMinLabel = new JLabel("Minimum red pixel count");
+        redMinLabel.setForeground(Color.black);
+        redMinLabel.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = yPos;
+        mainPanel.add(redMinLabel, gbc);
+
+        redMinText = new JTextField(5);
+        redMinText.setText("50");
+        redMinText.setFont(serif12);
+        gbc.gridx = 1;
+        gbc.gridy = yPos++;
+        mainPanel.add(redMinText, gbc);
+        
+        redFractionLabel = new JLabel("Fraction of red pixels to consider");
+        redFractionLabel.setForeground(Color.black);
+        redFractionLabel.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = yPos;
+        mainPanel.add(redFractionLabel, gbc);
+
+        redFractionText = new JTextField(5);
+        redFractionText.setText("0.15");
+        redFractionText.setFont(serif12);
+        gbc.gridx = 1;
+        gbc.gridy = yPos++;
+        mainPanel.add(redFractionText, gbc);
         
         greenMergingLabel = new JLabel("Green merging radius around peak (inches)");
         greenMergingLabel.setForeground(Color.black);
@@ -481,8 +537,6 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
      */
     private boolean setVariables() {
         String tmpStr;
-        ViewVOIVector VOIs;
-        int nVOIs;
         int i;
         
         int totLength = image.getExtents()[0];
@@ -491,24 +545,46 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
             totLength *= image.getExtents()[i];
         }
         
-        VOIs = image.getVOIs();
-        nVOIs = VOIs.size();
-        
-        for (i = nVOIs - 1; i >=0; i--) {
-
-            if (VOIs.VOIAt(i).getCurveType() != VOI.CONTOUR) {
-                VOIs.remove(i);
-            }
-        }
-        
-        nVOIs = VOIs.size();
-        
         tmpStr = greenMergingText.getText();
         mergingDistance = Float.parseFloat(tmpStr);
         if (mergingDistance <= 0.0f) {
             MipavUtil.displayError("Merging distance must be greater than 0");
             greenMergingText.requestFocus();
             greenMergingText.selectAll();
+            return false;
+        }
+        
+        tmpStr = redMinText.getText();
+        redMin = Integer.parseInt(tmpStr);
+
+        if (redMin < 1) {
+            MipavUtil.displayError("red minimum must be at least 1");
+            redMinText.requestFocus();
+            redMinText.selectAll();
+
+            return false;
+        } else if (redMin > totLength) {
+            MipavUtil.displayError("red minimum must not exceed " + totLength);
+            redMinText.requestFocus();
+            redMinText.selectAll();
+
+            return false;
+        }
+        
+        tmpStr = redFractionText.getText();
+        redFraction = Float.parseFloat(tmpStr);
+
+        if (redFraction <= 0.0f) {
+            MipavUtil.displayError("red fraction must be greater than zero");
+            redFractionText.requestFocus();
+            redFractionText.selectAll();
+
+            return false;
+        } else if (redFraction > 1.0f) {
+            MipavUtil.displayError("red fraction must not exceed one");
+            redFractionText.requestFocus();
+            redFractionText.selectAll();
+
             return false;
         }
         
