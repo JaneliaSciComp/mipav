@@ -1,8 +1,7 @@
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmMedian;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
 
 import gov.nih.mipav.view.*;
 
@@ -20,14 +19,13 @@ import javax.swing.*;
 /**
  * This shows how to extend the AlgorithmBase class.
  *
- * @version  April 14, 2008
+ * @version  April 15, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
  *           <p>$Logfile: /mipav/src/plugins/PlugInAlgorithmCenterDistance.java $ $Revision: 72 $ $Date: 2/06/06 5:50p $
  *           PlugInAlgorithmCenterDistance is used to find the distances between geometric cell centers and cell
- *           boundaries, geometric cell centers and voi geometric centers, geometric cell centers and voi centers of
- *           mass, voi geometric centers and cell boundaries, and voi centers of mass and cell boundaries. The geometric
+ *           boundaries, geometric cell centers and voi centers of mass and voi centers of mass and cell boundaries. The geometric
  *           center is a zero order moment not using intensity multiplications. The center of mass is a first order
  *           moment mutliplying position by intensity. The cells are blue and the chromosome regions of interest
  *           outlined by the vois are predominantly green. Images are 2D. VOIs can be supplied by the
@@ -39,81 +37,65 @@ import javax.swing.*;
  *
  *           <p>2.) Fuzzy C means segmentation is performed on the blueImage to create a blueSegImage, in which all of
  *           the blueImage pixel intensities are assigned to 1 of 2 classes. The lower intensity value pixels
- *           corresponding to the background in blueImage are all given the intensity value 127 in blueSegImage and the
+ *           corresponding to the background in blueImage are all given the intensity value 1 in blueSegImage and the
  *           higher intensity value pixels in blueImage corresponding to the nucleus are all given the intensity value
- *           254 in blueSegImage. In fuzzy c means segmentation pixels less than the threshold are excluded from the
+ *           2 in blueSegImage. In fuzzy c means segmentation pixels less than the threshold are excluded from the
  *           classification process and assigned the intensity value of 0 in the segmentation image. Here, threshold is
- *           set to 0.0, so no pixels are less than threshold, so all the pixels in blueImage are assigned to either 127
- *           or 254 in blueSegImage. Why 127 and 254? The fuzzy c means program assigns values of 255/(number of
- *           classes) to the classes in the segmented image. With 2 classes, the resulting values are 127 and 254.</p>
+ *           set to 0.0, so no pixels are less than threshold, so all the pixels in blueImage are assigned to either 1
+ *           or 2 in blueSegImage.</p>
  *
- *           <p>3.) AlgorithmThresholdDual is used to set all the pixels with intensity = 254 to pixels with intensity =
- *           1 and all the pixels with intensity = 127 to pixels with intensity = 0.</p>
+ *           <p>3.) AlgorithmThresholdDual is used to set all the pixels with intensity = 2 to pixels with intensity =
+ *           1 and all the pixels with intensity = 1 to pixels with intensity = 0.</p>
  *
  *           <p>4.) A slice by slice hole filling is performed on the blue segmented image.</p>
  *
  *           
- *           <p>5.) Assign positive integer IDs to each object between blueMin and 200,000 pixels in size in the 2D
- *           program or between blueMin and 2,000,000 pixels in size in the 3D program. blueSegImage now has 0 for
+ *           <p>5.) Assign positive integer IDs to each object between blueMin and 200,000 pixels in size.
+ *            blueSegImage now has 0 for
  *           background and a positive integer ID for each object between the minimum and maximum size. blueMin has a
  *           default of 1,000.</p>
  *
  *           <p>6.) Set all the pixels in any blue object touching an edge to 0.</p>
  *
- *           <p>11.) Export the green portion of the image to greenBuffer.
+ *           <p>7.) Export the green portion of the image to greenBuffer.
  *           </p>
  *
- *           <p>12.) If no user supplied contour VOIs are present, the program automatically generates VOIs.</p>
+ *           <p>8.) If no user supplied contour VOIs are present, the program automatically generates VOIs.</p>
  *
- *           <p>13.) Process each VOI one at a time. a.) For each VOI find the sum
+ *           <p>9.) Process each VOI one at a time. a.) For each VOI find the sum
  *           of the green intensity values, and the pixel count for each ID object. b.) Look at all the object pixel
  *           counts and assign the ID of the object with the most pixels in the VOI to the VOI's objectID. c.) Find the
- *           center of the VOI. Find the green center. Both
- *           the zero order geometric centers and the first order centers of mass are found. d.) Expand the nucleus to
+ *           green center of mass of the VOI. d.) Expand the nucleus to
  *           which the VOI belongs to include the VOI.</p>
  *
- *           <p>14.) Process IDArray objects one at a time. a.) Ellipse fit blue IDArray objects with first and second
- *           moments to calculate the length of the 3 semiaxes. b.) Find the zero order moments of each blue IDArray
- *           object. c.) Create a byteBuffer with pixels for that ID object equal to 1 and all the other pixels = 0. d.)
- *           Import byteBuffer into grayImage. e.) Run a dilation on grayImage and export the result to dilateArray. e.)
+ *           <p>10.) Process IDArray objects one at a time. a.) Find the zero order moments of each blue IDArray
+ *           object. b.) Create a byteBuffer with pixels for that ID object equal to 1 and all the other pixels = 0. c.)
+ *           Import byteBuffer into grayImage. e.) Run a dilation on grayImage and export the result to dilateArray. d.)
  *           At every point where dilateArray = 1 and byteBuffer = 0, set boundaryArray = to the id of that object. For
  *           every point on the boundary find the square of the distance to the center of the object and if this square
  *           distance is the lowest yet noted, put the value in lowestSquare. If this square distance is the highest yet
- *           noted, put the value in highestSquare. f.) After examining all points in the image, the program records the
+ *           noted, put the value in highestSquare. e.) After examining all points in the image, the program records the
  *           Rmin distance from the center to edge as the square root of lowestSquare and the Rmax distance from the
- *           center to the edge as the square root of highestSquare. g.) Put points on the boundary of each blue ID
- *           object into a second ellipsoid fitting program that uses the peripheral points to find the 3 semiaxes. h.)
- *           Nuclei volumes are found from the blue count multiplied by the x, y, and z resolutions. 15.) Determine
- *           nucleus-VOI distances a.) Determine the distance from the center of the ID object to the zero order center
- *           of the VOI. Find the distance of the line segment that passes thru these 2 points and terminates at the
- *           cell surface. b.) Find the distance from the center of the ID object to the first order center of the VOI.
+ *           center to the edge as the square root of highestSquare. f.)
+ *           Nuclei areas are found from the blue count multiplied by the x and y resolutions. 11.) Determine
+ *           nucleus-VOI distances a.) Find the distance from the center of the ID object to the first order center of the VOI.
  *           Find the distance of the line segment that passes thru these 2 points and terminates at the cell surface.
  *           </p>
  *
- *           <p>Scheme for automatic VOI generation: 1.) Create a red image. 2.) Median filter the red image. 3.) Obtain
- *           histogram information on the red image. Set the threshold so that the redFraction portion of the cumulative
- *           histogram is at or above threshold for the fuzzy c means. 4.) Perform a 3 level fuzzy c means segmentation
- *           on the red image. 5.) Convert the red max to 1 and the other values to 0. 6.) Remove holes from red VOIs.
- *           7.) Smooth red with a morphological opening followed by a closing. 8.) ID objects in red segmented image
- *           which have at least redMin pixels. Split redIDArray objects apart into 2 or 3 redIDArray objects if they go
- *           between 2 or 3 cells. 9.) Create a green image. 10.) Median filter the green image. 11.) Obtain histogram
+ *           <p>Scheme for automatic VOI generation: 1.) Create a green image. 2.) Obtain histogram
  *           information on the green image. Set the threshold so that the greenFraction portion of the cumulative
- *           histogram is at or above threshold for the fuzzy c means. 12.) Perform a 3 level fuzzy c means segmentation
- *           on the green image. 13.) Convert the green max to 1 and the other values to 0. 15.) Remove holes from green
- *           VOIs. 15.) Smooth green with a morphological opening followed by a closing. 16.) ID objects in green
- *           segmented image which have at least greenMin pixels. Split greenIDArray objects apart into 2 or 3
- *           greenIDArray objects if they go between 2 or 3 cells. 17.) Sort red objects by red intensity count into a
- *           sorted red array. Have a separate sorted array for each nucleus. Put no more than redNumber red objects
- *           into the sorted red array for each nucleus. 18.) Sort green objects by green intensity count into a sorted
- *           green array. Have a separate sorted green array for each nucleus. Put no more than greenNumber green
+ *           histogram is at or above threshold for the fuzzy c means. 3.) Perform a 3 level fuzzy c means segmentation
+ *           on the green image. 4.) If twoGreenLevels is true, convert the green max and max-1 to 1 and the other values to 0.
+ *           If twoGreenLevels is false, convert the green max to 1 and the other values to 0. 5.) ID objects in green
+ *           segmented image which have at least greenMin pixels. 6.) Sort green objects by green intensity count into a sorted
+ *           green array. Have a separate sorted green array for each nucleus. Put no more than greenRegionNumber green
  *           objects into the sorted green array for each nucleus. 19.) Create byteBuffer with value = 0 if no sorted
- *           object is present at that position and use a separate positive index for each red or green voi. Create an
- *           accompanying color table to set for each nucleus the largest red voi to color yellow, the other red vois to
- *           a color yellow.darker(), the largest green voi to color pink, and the other green vois to color
- *           pink.darker(). Create an accompanying name table to set the name for each voi. The largest red voi in the
- *           fifth nucleus has name 5R1. The second largest red voi in the fifth nucleus has the name 5R2. The third
- *           largest green voi in the fourth nucleus has the name 4G3. 20.) Extract VOIs from the red_green image. 21.)
- *           Set the source image VOIs to the VOIs obtained from the red_green image.</p>
+ *           object is present at that position and use a separate positive index for each green voi. Create an
+ *           accompanying color table to set for each nucleus the largest green voi to color pink, and the other green vois to color
+ *           pink.darker(). Create an accompanying name table to set the name for each voi. The largest green voi in the
+ *           fifth nucleus has name 5G1. The second largest green voi in the fifth nucleus has the name 5G2  20.) Extract VOIs from the green image. 21.)
+ *           Set the source image VOIs to the VOIs obtained from the green image.  From each blue object extract a VOI and color the
+ *           boundary dark yellow. </p>
  */
 public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
@@ -130,22 +112,32 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Green merging radius around peak green spot */
+    /** Minimum number of pixels in a red object */
+    private int redMin = 50;
+
+    /** Portion of red pixels above threshold in fuzzy c means. */
+    private float redFraction = 0.15f;
+    
+    /** Green merging radius in inches around peak green spot */
+    /** Merge 2 green VOIs together if 2 centers are <= merging radius */
     private float mergingDistance = 0.1f;
     
     // Number of green regions per cell
     // Either 1 for 1 for all cells, 2 for 2 for all cells, or 0 for 1 or 2 for all cells
     private int greenRegionNumber = 1;
     
-    /** DOCUMENT ME! */
+    /** Minimum number of pixels in a blue object */
     private int blueMin = 1000;
 
     /** Portion of green pixels above threshold in fuzzy c means. */
     private float greenFraction = 0.01f;
 
-    /** DOCUMENT ME! */
+    /** Minimum number of pixels in green VOI */
     private int greenMin = 10;
     
+    /** If true, in green 3 level fuzzy c means, assign max and max-1 to 1 and other values to 0.
+     * If false, in green 3 level fuzzy c means, assign max to 1 and other values to 0.
+     */
     private boolean twoGreenLevels;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -155,17 +147,21 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
      *
      * @param  srcImg         Source image model.
      * @param  blueMin
+     * @param  redMin
+     * @param  redFraction
      * @param  mergingDistance         DOCUMENT ME!
      * @param  greenMin
      * @param  greenFraction
      * @param  greenRegionNumber      DOCUMENT ME!
      * @param  twoGreenLevels
      */
-    public PlugInAlgorithmCenterDistance(ModelImage srcImg, int blueMin, float mergingDistance, 
+    public PlugInAlgorithmCenterDistance(ModelImage srcImg, int blueMin, int redMin, float redFraction, float mergingDistance, 
                                          int greenMin, float greenFraction,  int greenRegionNumber,
                                          boolean twoGreenLevels) {
         super(null, srcImg);
         this.blueMin = blueMin;
+        this.redMin = redMin;
+        this.redFraction = redFraction;
         this.mergingDistance = mergingDistance;
         this.greenMin = greenMin;
         this.greenFraction = greenFraction;
@@ -179,7 +175,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
      * Prepares this class for destruction.
      */
     public void finalize() {
-        destImage = null;
         srcImage = null;
         super.finalize();
     }
@@ -353,25 +348,17 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         double distY;
         double distance;
         int greenBelong[];
+        int[] redCellNumber;
+        int[] redBelong;
+        int redAdded;
 
 
         nf = NumberFormat.getNumberInstance();
         nf.setMinimumFractionDigits(3);
         nf.setMaximumFractionDigits(3);
-
-        VOIs = srcImage.getVOIs();
-        nVOIs = VOIs.size();
-        
-        for (i = nVOIs - 1; i >=0; i--) {
-
-            if (VOIs.VOIAt(i).getCurveType() != VOI.CONTOUR) {
-                VOIs.remove(i);
-            }
-        }
-        
-        nVOIs = VOIs.size();
         
         if (greenRegionNumber == 0) {
+            // 0 means each cell has 1 or 2 green regions, so look for 2 green regions in each cell
             greenRegionNumber = 2;
         }
 
@@ -415,11 +402,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         // Segment into 2 values
         fireProgressStateChanged("Performing FuzzyCMeans Segmentation on blue");
 
-        if (nVOIs > 0) {
-            fireProgressStateChanged(5);
-        } else {
-            fireProgressStateChanged(2);
-        }
+        
+        fireProgressStateChanged(2);
 
         nClasses = 2;
         nPyramid = 4;
@@ -453,11 +437,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         // Now convert the min and max to 0 and 1
         fireProgressStateChanged("Setting segmented blue values to 0 and 1");
 
-        if (nVOIs > 0) {
-            fireProgressStateChanged(20);
-        } else {
-            fireProgressStateChanged(6);
-        }
+        fireProgressStateChanged(6);
 
         grayImage.calcMinMax();
         max = (float) grayImage.getMax();
@@ -474,11 +454,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         // Remove all inappropriate holes in blue nuclei
         fireProgressStateChanged("Removing holes from blue nuclei");
 
-        if (nVOIs > 0) {
-            fireProgressStateChanged(23);
-        } else {
-            fireProgressStateChanged(7);
-        }
+        fireProgressStateChanged(7);
 
         fillHolesAlgo2D = new AlgorithmMorphology2D(grayImage, 0, 0, AlgorithmMorphology2D.FILL_HOLES, 0, 0, 0, 0,
                                                     wholeImage);
@@ -490,16 +466,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         edgingType = 0;
         
         byteBuffer = new byte[length];
-
-        try {
-            grayImage.exportData(0, length, byteBuffer);
-        } catch (IOException error) {
-            byteBuffer = null;
-            errorCleanUp("Error on grayImage.exportData", true);
-
-            return;
-        }
-
         
         kernel = AlgorithmMorphology2D.SIZED_CIRCLE;
         circleDiameter = 0.0f;
@@ -529,22 +495,14 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             return;
         }
 
-        if (nVOIs > 0) {
-            fireProgressStateChanged(65);
-        } else {
-            fireProgressStateChanged(22);
-        }
+        fireProgressStateChanged(22);
 
         
 
         edgeObjects = numObjects;
         fireProgressStateChanged("Removing blue objects touching edges");
 
-        if (nVOIs > 0) {
-            fireProgressStateChanged(70);
-        } else {
-            fireProgressStateChanged(23);
-        }
+        fireProgressStateChanged(23);
 
         if (numObjects == 1) {
             initiallyOneObject = true;
@@ -601,7 +559,185 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             return;
         }
 
+        try {
+            srcImage.exportRGBData(1, 0, length, buffer); // export red data
+        } catch (IOException error) {
+            buffer = null;
+            greenBuffer = null;
+            errorCleanUp("Algorithm RegionDistance reports: source image locked", true);
 
+            return;
+        }
+
+
+        fireProgressStateChanged("Creating red image");
+        fireProgressStateChanged(30);
+
+        // grayImage is ModelStorageBase.UBYTE
+        grayImage.reallocate(ModelStorageBase.FLOAT);
+
+        try {
+            grayImage.importData(0, buffer, true);
+        } catch (IOException error) {
+            buffer = null;
+            errorCleanUp("Error on grayImage.importData", true);
+
+            return;
+        }
+        
+        wholeImage = true;
+        
+
+        fireProgressStateChanged("Getting histogram info on red");
+        fireProgressStateChanged(32);
+        bins = 256;
+        algoHist = new AlgorithmHistogram(grayImage, bins);
+        algoHist.run();
+        histoBuffer = algoHist.getHistoBuffer();
+        lowValue = algoHist.getLowValue();
+        algoHist.finalize();
+        algoHist = null;
+
+        totalCount = histoBuffer[0];
+
+        for (i = 1; i < histoBuffer.length; i++) {
+            totalCount += histoBuffer[i];
+        }
+
+        countsToRetain = (int) Math.round(redFraction * totalCount);
+        found = false;
+        countsFound = 0;
+        threshold = 1.0f;
+
+        for (i = bins - 1; (i >= 0) && !found; i--) {
+            countsFound += histoBuffer[i];
+
+            if (countsFound >= countsToRetain) {
+                found = true;
+                threshold = (float) lowValue[i];
+            }
+        }
+
+        cropBackground = true;
+
+        // Segment red into 3 values
+        fireProgressStateChanged("Performing FuzzyCMeans Segmentation on red");
+        fireProgressStateChanged(33);
+        nClasses = 3;
+        nPyramid = 4;
+        oneJacobiIter = 1;
+        twoJacobiIter = 2;
+        q = 2.0f;
+        oneSmooth = 2e4f;
+        twoSmooth = 2e5f;
+        outputGainField = false;
+        segmentation = HARD_ONLY;
+        maxIter = 200;
+        endTolerance = 0.01f;
+        wholeImage = true;
+
+        // grayImage enters ModelStorageBase.FLOAT and returns ModelStorageBase.UBYTE
+        fcmAlgo = new AlgorithmFuzzyCMeans(grayImage, nClasses, nPyramid, oneJacobiIter, twoJacobiIter, q,
+                                           oneSmooth, twoSmooth, outputGainField, segmentation, cropBackground,
+                                           threshold, maxIter, endTolerance, wholeImage);
+        centroids = new float[3];
+
+        // Find the first value above the 0 value for min
+        min = Float.MAX_VALUE;
+
+        for (i = 0; i < length; i++) {
+
+            if ((buffer[i] < min) && (buffer[i] != 0.0f)) {
+                min = buffer[i];
+            }
+        }
+
+        max = (float) grayImage.getMax();
+        centroids[0] = min + ((max - min) / 4.0f);
+        centroids[1] = min + (2.0f * (max - min) / 4.0f);
+        centroids[2] = min + (3.0f * (max - min) / 4.0f);
+        fcmAlgo.setCentroids(centroids);
+        fcmAlgo.run();
+        fcmAlgo.finalize();
+        fcmAlgo = null;
+
+        // ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
+        // new Dimension(600, 300), srcImage.getUserInterface());
+
+        // Now convert the red min and max to 0 and 1
+        fireProgressStateChanged("Setting segmented red values to 0 and 1");
+        fireProgressStateChanged(35);
+        grayImage.calcMinMax();
+        max = (float) grayImage.getMax();
+        thresholds[0] = max;
+        thresholds[1] = max;
+        fillValue = 0.0f;
+        thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
+                                                   AlgorithmThresholdDual.BINARY_TYPE, wholeImage, false);
+        thresholdAlgo.run();
+        thresholdAlgo.finalize();
+        thresholdAlgo = null;
+        
+        // Put the red VOI IDs in redIDArray
+        fireProgressStateChanged("IDing objects in red segmented image");
+        fireProgressStateChanged(44);
+        kernel = AlgorithmMorphology2D.SIZED_CIRCLE;
+        circleDiameter = 0.0f;
+        method = AlgorithmMorphology2D.ID_OBJECTS;
+        itersDilation = 0;
+        itersErosion = 0;
+        idObjectsAlgo2D = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation,
+                                                    itersErosion, numPruningPixels, edgingType, wholeImage);
+        idObjectsAlgo2D.setMinMax(redMin, 200000);
+        idObjectsAlgo2D.run();
+        idObjectsAlgo2D.finalize();
+        idObjectsAlgo2D = null;
+
+        grayImage.calcMinMax();
+        int numRedObjects = (int) grayImage.getMax();
+        byte [] redIDArray = new byte[length];
+
+        try {
+            grayImage.exportData(0, length, redIDArray);
+        } catch (IOException error) {
+            byteBuffer = null;
+            redIDArray = null;
+            errorCleanUp("Error on grayImage.exportData", true);
+
+            return;
+        }
+        
+        redCellNumber = new int[numRedObjects];
+        
+        redAdded = 0;
+        for (j = 1; j <= numRedObjects; j++) {
+            redBelong = new int[numObjects+1];
+            for (i = 0; i < length; i++) {
+
+                if (redIDArray[i] == j) {
+                    
+                    redBelong[IDArray[i]] = redBelong[IDArray[i]] + 1;
+                }
+
+                
+            }
+
+            redCellNumber[j-1] = 0;
+            for (k = 1; k <= numObjects; k++) {
+                if (redBelong[k] > redCellNumber[j-1]) {
+                    redCellNumber[j-1] = k;
+                }
+            }
+            
+            // Expand IDArray to include red regions protruding out of the blue cell boundary
+            for (i = 0; i < length; i++) {
+                if ((redIDArray[i] == j) && (IDArray[i] == 0)) {
+                    IDArray[i] = (byte)redCellNumber[j-1];
+                    redAdded++;
+                }
+            }
+        }
+        Preferences.debug("redAdded = " + redAdded + "\n");
         
         greenBuffer = new float[length];
 
@@ -613,365 +749,358 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             errorCleanUp("Algorithm CenterDistance reports: source image locked", true);
 
             return;
+        }         
+
+        fireProgressStateChanged("Creating green image");
+        fireProgressStateChanged(46);
+
+        // grayImage is ModelStorageBase.UBYTE
+        grayImage.reallocate(ModelStorageBase.FLOAT);
+
+        try {
+            grayImage.importData(0, greenBuffer, true);
+        } catch (IOException error) {
+            greenBuffer = null;
+            errorCleanUp("Error on grayImage.importData", true);
+
+            return;
         }
 
-        if (nVOIs == 0) {
+        
 
-            
+        fireProgressStateChanged("Getting histogram info on green");
+        fireProgressStateChanged(48);
+        bins = 256;
+        algoHist = new AlgorithmHistogram(grayImage, bins);
+        algoHist.run();
+        histoBuffer = algoHist.getHistoBuffer();
+        lowValue = algoHist.getLowValue();
+        algoHist.finalize();
+        algoHist = null;
 
-            fireProgressStateChanged("Creating green image");
-            fireProgressStateChanged(46);
+        totalCount = histoBuffer[0];
 
-            // grayImage is ModelStorageBase.UBYTE
-            grayImage.reallocate(ModelStorageBase.FLOAT);
+        for (i = 1; i < histoBuffer.length; i++) {
+            totalCount += histoBuffer[i];
+        }
 
-            try {
-                grayImage.importData(0, greenBuffer, true);
-            } catch (IOException error) {
-                greenBuffer = null;
-                errorCleanUp("Error on grayImage.importData", true);
+        countsToRetain = (int) Math.round(greenFraction * totalCount);
+        found = false;
+        countsFound = 0;
+        threshold = 1.0f;
 
-                return;
+        for (i = bins - 1; (i >= 0) && !found; i--) {
+            countsFound += histoBuffer[i];
+
+            if (countsFound >= countsToRetain) {
+                found = true;
+                threshold = (float) lowValue[i];
             }
+        }
 
-            
+        cropBackground = true;
+        
+        Preferences.debug("threshold = " + threshold + "\n");
 
-            fireProgressStateChanged("Getting histogram info on green");
-            fireProgressStateChanged(48);
-            bins = 256;
-            algoHist = new AlgorithmHistogram(grayImage, bins);
-            algoHist.run();
-            histoBuffer = algoHist.getHistoBuffer();
-            lowValue = algoHist.getLowValue();
-            algoHist.finalize();
-            algoHist = null;
 
-            totalCount = histoBuffer[0];
+        // Segment green into 3 values
+        fireProgressStateChanged("Performing FuzzyCMeans Segmentation on green");
+        fireProgressStateChanged(49);
+        nClasses = 3;
+        nPyramid = 4;
+        oneJacobiIter = 1;
+        twoJacobiIter = 2;
+        q = 2.0f;
+        oneSmooth = 2e4f;
+        twoSmooth = 2e5f;
+        outputGainField = false;
+        segmentation = HARD_ONLY;
+        maxIter = 200;
+        endTolerance = 0.01f;
+        wholeImage = true;
 
-            for (i = 1; i < histoBuffer.length; i++) {
-                totalCount += histoBuffer[i];
+        // grayImage enters ModelStorageBase.FLOAT and returns ModelStorageBase.UBYTE
+        fcmAlgo = new AlgorithmFuzzyCMeans(grayImage, nClasses, nPyramid, oneJacobiIter, twoJacobiIter, q,
+                                           oneSmooth, twoSmooth, outputGainField, segmentation, cropBackground,
+                                           threshold, maxIter, endTolerance, wholeImage);
+        centroids = new float[3];
+
+        // Find the first value above the 0 value for min
+        min = Float.MAX_VALUE;
+
+        for (i = 0; i < length; i++) {
+
+            if ((greenBuffer[i] < min) && (greenBuffer[i] != 0.0f)) {
+                min = greenBuffer[i];
             }
+        }
 
-            countsToRetain = (int) Math.round(greenFraction * totalCount);
-            found = false;
-            countsFound = 0;
-            threshold = 1.0f;
+        max = (float) grayImage.getMax();
+        centroids[0] = min + ((max - min) / 4.0f);
+        centroids[1] = min + (2.0f * (max - min) / 4.0f);
+        centroids[2] = min + (3.0f * (max - min) / 4.0f);
+        fcmAlgo.setCentroids(centroids);
+        fcmAlgo.run();
+        fcmAlgo.finalize();
+        fcmAlgo = null;
 
-            for (i = bins - 1; (i >= 0) && !found; i--) {
-                countsFound += histoBuffer[i];
 
-                if (countsFound >= countsToRetain) {
-                    found = true;
-                    threshold = (float) lowValue[i];
+        // Now convert the green min and max to 0 and 1
+        fireProgressStateChanged("Setting segmented green values to 0 and 1");
+        fireProgressStateChanged(50);
+        grayImage.calcMinMax();
+        max = (float) grayImage.getMax();
+        if (twoGreenLevels) {
+            thresholds[0] = max-1;
+        }
+        else {
+            thresholds[0] = max;
+        }
+        thresholds[1] = max;
+        fillValue = 0.0f;
+        thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
+                                                   AlgorithmThresholdDual.BINARY_TYPE, wholeImage, false);
+        thresholdAlgo.run();
+        thresholdAlgo.finalize();
+        thresholdAlgo = null;
+
+        
+        // Put the green VOI IDs in greenIDArray
+        fireProgressStateChanged("IDing objects in green segmented image");
+        fireProgressStateChanged(58);
+        kernel = AlgorithmMorphology2D.SIZED_CIRCLE;
+        circleDiameter = 0.0f;
+        method = AlgorithmMorphology2D.ID_OBJECTS;
+        itersDilation = 0;
+        itersErosion = 0;
+        idObjectsAlgo2D = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation,
+                                                    itersErosion, numPruningPixels, edgingType, wholeImage);
+        idObjectsAlgo2D.setMinMax(greenMin, 200);
+        idObjectsAlgo2D.run();
+        idObjectsAlgo2D.finalize();
+        idObjectsAlgo2D = null;
+
+        grayImage.calcMinMax();
+        numGreenObjects = (int) grayImage.getMax();
+        greenIDArray = new byte[length];
+
+        try {
+            grayImage.exportData(0, length, greenIDArray);
+        } catch (IOException error) {
+            byteBuffer = null;
+            greenIDArray = null;
+            errorCleanUp("Error on grayImage.exportData", true);
+
+            return;
+        }
+
+        // Sort the green objects within each nucleus.
+        // Create no more than greenRegionNumber green objects within each nucleus.
+        fireProgressStateChanged("Sorting green objects by intensity count");
+        fireProgressStateChanged(62);
+        greenIntensityTotal = new float[numGreenObjects];
+        greenXCenter = new float[numGreenObjects];
+        greenYCenter = new float[numGreenObjects];
+        greenCellNumber = new int[numGreenObjects];
+        greenNucleusNumber = new int[numObjects];
+        sortedGreenIndex = new int[numObjects][greenRegionNumber];
+        sortedGreenIntensity = new float[numObjects][greenRegionNumber];
+        sortedGreenXCenter = new float[numObjects][greenRegionNumber];
+        sortedGreenYCenter = new float[numObjects][greenRegionNumber];
+        
+        for (j = 1; j <= numGreenObjects; j++) {
+            greenBelong = new int[numObjects+1];
+            for (x = 0, y = 0, i = 0; i < length; i++) {
+
+                if (greenIDArray[i] == j) {
+                    greenIntensityTotal[j - 1] += greenBuffer[i];
+                    greenXCenter[j - 1] += greenBuffer[i] * x;
+                    greenYCenter[j - 1] += greenBuffer[i] * y;
+                    greenBelong[IDArray[i]] = greenBelong[IDArray[i]] + 1;
+                }
+
+                x++;
+
+                if (x == xDim) {
+                    x = 0;
+                    y++;
                 }
             }
 
-            cropBackground = true;
+            greenXCenter[j - 1] = greenXCenter[j - 1] / greenIntensityTotal[j - 1];
+            greenYCenter[j - 1] = greenYCenter[j - 1] / greenIntensityTotal[j - 1];
+            greenCellNumber[j-1] = 0;
+            for (k = 1; k <= numObjects; k++) {
+                if (greenBelong[k] > greenCellNumber[j-1]) {
+                    greenCellNumber[j-1] = k;
+                }
+            }
             
-            Preferences.debug("threshold = " + threshold + "\n");
-
-
-            // Segment green into 3 values
-            fireProgressStateChanged("Performing FuzzyCMeans Segmentation on green");
-            fireProgressStateChanged(49);
-            nClasses = 3;
-            nPyramid = 4;
-            oneJacobiIter = 1;
-            twoJacobiIter = 2;
-            q = 2.0f;
-            oneSmooth = 2e4f;
-            twoSmooth = 2e5f;
-            outputGainField = false;
-            segmentation = HARD_ONLY;
-            maxIter = 200;
-            endTolerance = 0.01f;
-            wholeImage = true;
-
-            // grayImage enters ModelStorageBase.FLOAT and returns ModelStorageBase.UBYTE
-            fcmAlgo = new AlgorithmFuzzyCMeans(grayImage, nClasses, nPyramid, oneJacobiIter, twoJacobiIter, q,
-                                               oneSmooth, twoSmooth, outputGainField, segmentation, cropBackground,
-                                               threshold, maxIter, endTolerance, wholeImage);
-            centroids = new float[3];
-
-            // Find the first value above the 0 value for min
-            min = Float.MAX_VALUE;
-
+            // Expand IDArray to include green regions protruding out of the blue cell boundary
             for (i = 0; i < length; i++) {
-
-                if ((greenBuffer[i] < min) && (greenBuffer[i] != 0.0f)) {
-                    min = greenBuffer[i];
+                if ((greenIDArray[i] == j) && (IDArray[i] == 0)) {
+                    IDArray[i] = (byte)greenCellNumber[j-1];
                 }
             }
-
-            max = (float) grayImage.getMax();
-            centroids[0] = min + ((max - min) / 4.0f);
-            centroids[1] = min + (2.0f * (max - min) / 4.0f);
-            centroids[2] = min + (3.0f * (max - min) / 4.0f);
-            fcmAlgo.setCentroids(centroids);
-            fcmAlgo.run();
-            fcmAlgo.finalize();
-            fcmAlgo = null;
-
-
-            // Now convert the green min and max to 0 and 1
-            fireProgressStateChanged("Setting segmented green values to 0 and 1");
-            fireProgressStateChanged(50);
-            grayImage.calcMinMax();
-            max = (float) grayImage.getMax();
-            if (twoGreenLevels) {
-                thresholds[0] = max-1;
-            }
-            else {
-                thresholds[0] = max;
-            }
-            thresholds[1] = max;
-            fillValue = 0.0f;
-            thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
-                                                       AlgorithmThresholdDual.BINARY_TYPE, wholeImage, false);
-            thresholdAlgo.run();
-            thresholdAlgo.finalize();
-            thresholdAlgo = null;
-
-            
-            // Put the green VOI IDs in greenIDArray
-            fireProgressStateChanged("IDing objects in green segmented image");
-            fireProgressStateChanged(58);
-            kernel = AlgorithmMorphology2D.SIZED_CIRCLE;
-            circleDiameter = 0.0f;
-            method = AlgorithmMorphology2D.ID_OBJECTS;
-            itersDilation = 0;
-            itersErosion = 0;
-            idObjectsAlgo2D = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation,
-                                                        itersErosion, numPruningPixels, edgingType, wholeImage);
-            idObjectsAlgo2D.setMinMax(greenMin, 200);
-            idObjectsAlgo2D.run();
-            idObjectsAlgo2D.finalize();
-            idObjectsAlgo2D = null;
-
-            grayImage.calcMinMax();
-            numGreenObjects = (int) grayImage.getMax();
-            greenIDArray = new byte[length];
-
-            try {
-                grayImage.exportData(0, length, greenIDArray);
-            } catch (IOException error) {
-                byteBuffer = null;
-                greenIDArray = null;
-                errorCleanUp("Error on grayImage.exportData", true);
-
-                return;
-            }
-
-            // Sort the green objects within each nucleus.
-            // Create no more than greenNumber green objects within each nucleus.
-            fireProgressStateChanged("Sorting green objects by intensity count");
-            fireProgressStateChanged(62);
-            greenIntensityTotal = new float[numGreenObjects];
-            greenXCenter = new float[numGreenObjects];
-            greenYCenter = new float[numGreenObjects];
-            greenCellNumber = new int[numGreenObjects];
-            greenNucleusNumber = new int[numObjects];
-            sortedGreenIndex = new int[numObjects][greenRegionNumber+1];
-            sortedGreenIntensity = new float[numObjects][greenRegionNumber+1];
-            sortedGreenXCenter = new float[numObjects][greenRegionNumber+1];
-            sortedGreenYCenter = new float[numObjects][greenRegionNumber+1];
-            
-            for (j = 1; j <= numGreenObjects; j++) {
-                greenBelong = new int[numObjects+1];
-                for (x = 0, y = 0, i = 0; i < length; i++) {
-
-                    if (greenIDArray[i] == j) {
-                        greenIntensityTotal[j - 1] += greenBuffer[i];
-                        greenXCenter[j - 1] += greenBuffer[i] * x;
-                        greenYCenter[j - 1] += greenBuffer[i] * y;
-                        greenBelong[IDArray[i]] = greenBelong[IDArray[i]] + 1;
-                    }
-
-                    x++;
-
-                    if (x == xDim) {
-                        x = 0;
-                        y++;
-                    }
-                }
-
-                greenXCenter[j - 1] = greenXCenter[j - 1] / greenIntensityTotal[j - 1];
-                greenYCenter[j - 1] = greenYCenter[j - 1] / greenIntensityTotal[j - 1];
-                greenCellNumber[j-1] = 0;
-                for (k = 1; k <= numObjects; k++) {
-                    if (greenBelong[k] > greenCellNumber[j-1]) {
-                        greenCellNumber[j-1] = k;
-                    }
-                }
-                
-                // Expand IDArray to include green regions protruding out of the blue cell boundary
-                for (i = 0; i < length; i++) {
-                    if ((greenIDArray[i] == j) && (IDArray[i] == 0)) {
-                        IDArray[i] = (byte)greenCellNumber[j-1];
-                    }
-                }
-            }
-            
-            // Merge green regions in the same cell within merging distance together
-            loop1:
-            for (j = numGreenObjects; j >= 1; j--) {
-                for (i = 1; i < j; i++) {
-                    if (greenCellNumber[j-1] == greenCellNumber[i-1]) {
-                        distX = greenXCenter[j-1] - greenXCenter[i-1];
-                        distY = greenYCenter[j-1] - greenYCenter[i-1];
-                        distance = Math.sqrt(distX*distX + distY*distY);
-                        if (distance <= mergingDistance) {
-                            greenIntensityTotal[i-1] = 0.0f;
-                            greenXCenter[i-1] = 0.0f;
-                            greenYCenter[i-1] = 0.0f;
-                            for (x = 0, y = 0, k = 0; k < length; k++) {
-                                if (greenIDArray[k] == j) {
-                                    greenIDArray[k] = (byte)i;
-                                }
-                                if (greenIDArray[k] == i) {
-                                    greenIntensityTotal[i-1] += greenBuffer[k];
-                                    greenXCenter[i-1] += greenBuffer[k] * x;
-                                    greenYCenter[i-1] += greenBuffer[k] * y;
-                                }
-                                
-                                x++;
-                                if (x == xDim) {
-                                    x = 0;
-                                    y++;
-                                }
-                            } // for (x = 0, y = 0, k = 0; k < length; k++)
-                            greenXCenter[i - 1] = greenXCenter[i - 1] / greenIntensityTotal[i - 1];
-                            greenYCenter[i - 1] = greenYCenter[i - 1] / greenIntensityTotal[i - 1];
-                            numGreenObjects--;
-                            continue loop1;
-                        } // if (distance <= mergingDistance)
-                    }
-                }
-            }
-
-            for (j = 1; j <= numGreenObjects; j++) {
-                id = greenCellNumber[j-1];
-
-                if (id >= 1) {
-
-                    if (greenNucleusNumber[id - 1] < greenRegionNumber) {
-                        greenNucleusNumber[id - 1]++;
-                    }
-
-                    found = false;
-
-                    for (i = 0; (i < greenNucleusNumber[id - 1]) && !found; i++) {
-
-                        if (greenIntensityTotal[j - 1] >= sortedGreenIntensity[id - 1][i]) {
-                            found = true;
-
-                            for (k = greenNucleusNumber[id - 1] - 1; k >= i; k--) {
-                                sortedGreenIntensity[id - 1][k + 1] = sortedGreenIntensity[id - 1][k];
-                                sortedGreenIndex[id - 1][k + 1] = sortedGreenIndex[id - 1][k];
-                                sortedGreenXCenter[id - 1][k + 1] = sortedGreenXCenter[id - 1][k];
-                                sortedGreenYCenter[id - 1][k + 1] = sortedGreenYCenter[id - 1][k];
+        }
+        
+        // Merge green regions in the same cell within merging distance together
+        loop1:
+        for (j = numGreenObjects; j >= 1; j--) {
+            for (i = 1; i < j; i++) {
+                if (greenCellNumber[j-1] == greenCellNumber[i-1]) {
+                    distX = (greenXCenter[j-1] - greenXCenter[i-1]) * xRes;
+                    distY = (greenYCenter[j-1] - greenYCenter[i-1]) * yRes;
+                    distance = Math.sqrt(distX*distX + distY*distY);
+                    if (distance <= mergingDistance) {
+                        greenIntensityTotal[i-1] = 0.0f;
+                        greenXCenter[i-1] = 0.0f;
+                        greenYCenter[i-1] = 0.0f;
+                        for (x = 0, y = 0, k = 0; k < length; k++) {
+                            if (greenIDArray[k] == j) {
+                                greenIDArray[k] = (byte)i;
                             }
-
-                            sortedGreenIntensity[id - 1][i] = greenIntensityTotal[j - 1];
-                            sortedGreenIndex[id - 1][i] = j; // from greenIDArray
-                            sortedGreenXCenter[id - 1][i] = greenXCenter[j - 1];
-                            sortedGreenYCenter[id - 1][i] = greenYCenter[j - 1];
-                        }
-                    } // for (i = 0; i < greenNucleusNumber[id-1]  && !found; i++)
-                } // if (id >= 1)
-            } // for (j = 1; j <= numGreenObjects; j++)
-
-            Arrays.fill(byteBuffer, (byte) 0);
-
-            numGreenVOIObjects = 0;
-
-            for (i = 0; i < numObjects; i++) {
-
-                
-
-                numGreenVOIObjects += greenNucleusNumber[i];
-            }
-
-            numVOIObjects = numGreenVOIObjects;
-            colorTable = new Color[numVOIObjects];
-            nameTable = new String[numVOIObjects];
-
-            
-
-            Arrays.fill(byteBuffer, (byte) 0);
-
-            for (i = 0, j = 0; i < numObjects; i++) {
-
-                for (m = 0; m < greenRegionNumber; m++) {
-
-                    if (greenNucleusNumber[i] > m) {
-
-                        for (k = 0; k < length; k++) {
-
-                            if (greenIDArray[k] == sortedGreenIndex[i][m]) {
-                                byteBuffer[k] = (byte) (j + 1);
+                            if (greenIDArray[k] == i) {
+                                greenIntensityTotal[i-1] += greenBuffer[k];
+                                greenXCenter[i-1] += greenBuffer[k] * x;
+                                greenYCenter[i-1] += greenBuffer[k] * y;
                             }
-                        } // for (k = 0; k < length; k++)
+                            
+                            x++;
+                            if (x == xDim) {
+                                x = 0;
+                                y++;
+                            }
+                        } // for (x = 0, y = 0, k = 0; k < length; k++)
+                        greenXCenter[i - 1] = greenXCenter[i - 1] / greenIntensityTotal[i - 1];
+                        greenYCenter[i - 1] = greenYCenter[i - 1] / greenIntensityTotal[i - 1];
+                        numGreenObjects--;
+                        continue loop1;
+                    } // if (distance <= mergingDistance)
+                }
+            }
+        }
 
-                        if (m == 0) {
-                            colorTable[j] = Color.pink;
-                        } else {
-                            colorTable[j] = Color.pink.darker();
+        for (j = 1; j <= numGreenObjects; j++) {
+            id = greenCellNumber[j-1];
+
+            if (id >= 1) {
+
+                if (greenNucleusNumber[id - 1] < greenRegionNumber) {
+                    greenNucleusNumber[id - 1]++;
+                }
+
+                found = false;
+
+                for (i = 0; (i < greenNucleusNumber[id - 1]) && !found; i++) {
+
+                    if (greenIntensityTotal[j - 1] >= sortedGreenIntensity[id - 1][i]) {
+                        found = true;
+
+                        if ((i == 0) && (greenRegionNumber == 2)) {
+                            sortedGreenIntensity[id - 1][1] = sortedGreenIntensity[id - 1][0];
+                            sortedGreenIndex[id - 1][1] = sortedGreenIndex[id - 1][0];
+                            sortedGreenXCenter[id - 1][1] = sortedGreenXCenter[id - 1][0];
+                            sortedGreenYCenter[id - 1][1] = sortedGreenYCenter[id - 1][0];
                         }
 
-                        nameTable[j] = new String((i + 1) + "G" + (m + 1));
-                        j++;
-                    } // if (greenNucleusNumber[i] > m)
-                } // for (m = 0; m < greenNumber; m++)
-            } // for (i = 0, j = 0; i < numObjects; i++)
+                        sortedGreenIntensity[id - 1][i] = greenIntensityTotal[j - 1];
+                        sortedGreenIndex[id - 1][i] = j; // from greenIDArray
+                        sortedGreenXCenter[id - 1][i] = greenXCenter[j - 1];
+                        sortedGreenYCenter[id - 1][i] = greenYCenter[j - 1];
+                    }
+                } // for (i = 0; i < greenNucleusNumber[id-1]  && !found; i++)
+            } // if (id >= 1)
+        } // for (j = 1; j <= numGreenObjects; j++)
 
-            grayImage.resetVOIs();
+        numGreenVOIObjects = 0;
 
-            try {
-                grayImage.importData(0, byteBuffer, true);
-            } catch (IOException error) {
-                byteBuffer = null;
-                errorCleanUp("Error on grayImage.importData", true);
+        for (i = 0; i < numObjects; i++) {
 
-                return;
-            }
-
-            fireProgressStateChanged("Extracting VOIs from green image");
-            fireProgressStateChanged(74);
-            algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
-            algoVOIExtraction.setColorTable(colorTable);
-            algoVOIExtraction.setNameTable(nameTable);
-            algoVOIExtraction.run();
-            algoVOIExtraction.finalize();
-            algoVOIExtraction = null;
-
-            srcImage.setVOIs(grayImage.getVOIs());
-            grayImage.resetVOIs();
-
-            VOIs = srcImage.getVOIs();
-            nVOIs = VOIs.size();
             
-            try {
-                grayImage.importData(0, IDArray, true);
-            } catch (IOException error) {
-                byteBuffer = null;
-                errorCleanUp("Error on grayImage.importData", true);
 
-                return;
-            }
+            numGreenVOIObjects += greenNucleusNumber[i];
+        }
 
-            fireProgressStateChanged("Extracting VOIs from blue image");
-            fireProgressStateChanged(76);
-            algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
-            algoVOIExtraction.run();
-            algoVOIExtraction.finalize();
-            algoVOIExtraction = null;
-            for (i = 0; i < grayImage.getVOIs().size(); i++) {
-                grayImage.getVOIs().VOIAt(i).setColor(Color.yellow.darker());
-                VOIs.add(grayImage.getVOIs().VOIAt(i));
-            }
-            srcImage.setVOIs((VOIVector)VOIs);
-        } // if (nVOIs == 0)
+        numVOIObjects = numGreenVOIObjects;
+        colorTable = new Color[numVOIObjects];
+        nameTable = new String[numVOIObjects];
+
+        
+
+        Arrays.fill(byteBuffer, (byte) 0);
+
+        for (i = 0, j = 0; i < numObjects; i++) {
+
+            for (m = 0; m < greenRegionNumber; m++) {
+
+                if (greenNucleusNumber[i] > m) {
+
+                    for (k = 0; k < length; k++) {
+
+                        if (greenIDArray[k] == sortedGreenIndex[i][m]) {
+                            byteBuffer[k] = (byte) (j + 1);
+                        }
+                    } // for (k = 0; k < length; k++)
+
+                    if (m == 0) {
+                        colorTable[j] = Color.pink;
+                    } else {
+                        colorTable[j] = Color.pink.darker();
+                    }
+
+                    nameTable[j] = new String((i + 1) + "G" + (m + 1));
+                    j++;
+                } // if (greenNucleusNumber[i] > m)
+            } // for (m = 0; m < greenNumber; m++)
+        } // for (i = 0, j = 0; i < numObjects; i++)
+
+        grayImage.resetVOIs();
+
+        try {
+            grayImage.importData(0, byteBuffer, true);
+        } catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.importData", true);
+
+            return;
+        }
+
+        fireProgressStateChanged("Extracting VOIs from green image");
+        fireProgressStateChanged(74);
+        algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
+        algoVOIExtraction.setColorTable(colorTable);
+        algoVOIExtraction.setNameTable(nameTable);
+        algoVOIExtraction.run();
+        algoVOIExtraction.finalize();
+        algoVOIExtraction = null;
+
+        srcImage.setVOIs(grayImage.getVOIs());
+        grayImage.resetVOIs();
+
+        VOIs = srcImage.getVOIs();
+        nVOIs = VOIs.size();
+        
+        try {
+            grayImage.importData(0, IDArray, true);
+        } catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.importData", true);
+
+            return;
+        }
+
+        fireProgressStateChanged("Extracting VOIs from blue image");
+        fireProgressStateChanged(76);
+        algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
+        algoVOIExtraction.run();
+        algoVOIExtraction.finalize();
+        algoVOIExtraction = null;
+        for (i = 0; i < grayImage.getVOIs().size(); i++) {
+            grayImage.getVOIs().VOIAt(i).setColor(Color.yellow.darker());
+            VOIs.add(grayImage.getVOIs().VOIAt(i));
+        }
+        srcImage.setVOIs((VOIVector)VOIs);
 
         shortMask = new short[length];
 
@@ -1059,8 +1188,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
         } // for (i = 0; i < nVOIs; i++)
         
-        gIndex = new int[3];
-        gCount = new float[3];
+        gIndex = new int[2];
+        gCount = new float[2];
         VOIs2 = new ViewVOIVector();
         objectID2 = new int[nVOIs];
         xPosGeo2 = new float[nVOIs];
@@ -1073,7 +1202,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             numGreenFound = 0;
             gCount[0] = 0.0f;
             gCount[1] = 0.0f;
-            gCount[2] = 0.0f;
             for (i = 0; i < nVOIs; i++) {
                 if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) && (objectID[i] == j)) {
                     if (numGreenFound < 2) {
@@ -1083,9 +1211,9 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     for (k = 0; k <= 1 && (!placed); k++) {
                         if (colorCount[i] >= gCount[k]) {
                             placed = true; 
-                            for (m = numGreenFound - 1; m >= k; m--) {
-                                gIndex[m+1] = gIndex[m];
-                                gCount[m+1] = gCount[m];
+                            if ((k == 0) && (numGreenFound == 2)) {
+                                gIndex[1] = gIndex[0];
+                                gCount[1] = gCount[0];
                             }
                             gIndex[k] = i;
                             gCount[k] = colorCount[i];
@@ -1165,11 +1293,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         for (id = 1; id <= numObjects; id++) {
             fireProgressStateChanged("Processing object " + id + " of " + numObjects + " in blue segmented image");
 
-            if (nVOIs > 0) {
-                fireProgressStateChanged(85 + (id * 10 / numObjects));
-            } else {
-                fireProgressStateChanged(25 + (id * 3 / numObjects));
-            }
+            fireProgressStateChanged(85 + (id * 10 / numObjects));
 
             Arrays.fill(byteBuffer, (byte) 0);
             xCenter[id - 1] = 0.0f;
@@ -1315,7 +1439,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     
 
                     voiArea = xRes * yRes * voiCount[j];
-                    if (j == 1) {
+                    if (greenFound == 2) {
                         UI.setDataText("\t");
                     }
                     UI.setDataText("\t" + nf.format(voiArea));
