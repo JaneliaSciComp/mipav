@@ -108,6 +108,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         this.srcImage = null;
         destFlag = false;
         threadStopped = false;
+        multiThreadingEnabled = false;
         nthreads = MipavUtil.getAvailableCores();
         if( nthreads > 1){
         	multiThreadingEnabled = true;
@@ -815,5 +816,15 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
 
     public void setNumberOfThreads(int nthreads) {
         this.nthreads = nthreads;
+    }
+
+
+    public int getProgressModulus() {
+        return progressModulus;
+    }
+
+
+    public void setProgressModulus(int progressModulus) {
+        this.progressModulus = progressModulus;
     }
 }
