@@ -61,6 +61,11 @@ public class AlgorithmGradientMagnitudeSepTest extends TestCase {
     public void testExecute() {
         gmagSep.setDirectionNeeded(true);
         gmagSep.setNormalized(true);
+        
+        /**
+         * Single-threading gradient magnitude algorithm
+         */
+        gmagSep.setMultiThreadingEnabled(false);
         gmagSep.execute();
         testBufferMag = gmagSep.getResultBuffer();
         testBufferXDir = gmagSep.getXDerivativeDirections();
@@ -72,7 +77,24 @@ public class AlgorithmGradientMagnitudeSepTest extends TestCase {
             Assert.assertEquals(testBufferXDir[i], refBufferXDir[i]);
          }
         for(int i = 0; i < imgLength; i++){
-            System.out.println("y:" + i);
+            Assert.assertEquals(testBufferYDir[i], refBufferYDir[i]);
+         }
+        
+        /**
+         * Multi-threading gradient magnitude algorithm
+         */
+        gmagSep.setMultiThreadingEnabled(true);
+        gmagSep.execute();
+        testBufferMag = gmagSep.getResultBuffer();
+        testBufferXDir = gmagSep.getXDerivativeDirections();
+        testBufferYDir = gmagSep.getYDerivativeDirections();
+        for(int i = 0; i < imgLength; i++){
+            Assert.assertEquals(testBufferMag[i], refBufferMag[i]);
+         }
+        for(int i = 0; i < imgLength; i++){
+            Assert.assertEquals(testBufferXDir[i], refBufferXDir[i]);
+         }
+        for(int i = 0; i < imgLength; i++){
             Assert.assertEquals(testBufferYDir[i], refBufferYDir[i]);
          }
     }

@@ -1,14 +1,33 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions;
+import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions2D;
+import gov.nih.mipav.model.algorithms.AlgorithmPowellOpt2D;
+import gov.nih.mipav.model.algorithms.AlgorithmPowellOptBase;
+import gov.nih.mipav.model.algorithms.AlgorithmTransform;
+import gov.nih.mipav.model.algorithms.Vectornd;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelSimpleImage;
+import gov.nih.mipav.model.structures.Point2Dd;
+import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
 
-import gov.nih.mipav.view.*;
+import java.awt.Dimension;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.Vector;
 
-import java.util.*;
+import javax.vecmath.Point3d;
+import javax.vecmath.Point3f;
+import javax.vecmath.Point3i;
 
 
 /**
@@ -285,6 +304,46 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     /** DOCUMENT ME! */
     private int weightedRefPixelsSub8 = 0;
 
+    /**
+     * Used to store all paths for levelEigth, levelFour, levelTwo and levelOne.
+     */
+    private Vector<Vector<Point3d>>[] paths = new Vector[6];
+    
+    /**
+     * The optimal path.
+     */
+    private Vector<Point3d> optimalPath = new Vector<Point3d>();
+    
+    private boolean pathRecorded = false;
+    
+    private static final Point3d[] originalPath = {
+    	new Point3d(18.0,27.201007843017578,35.089054107666016),
+    	new Point3d(18.0,26.926931381225586,35.089054107666016),
+    	new Point3d(18.0,26.926931381225586,37.107540130615234),
+    	new Point3d(18.0,26.987857818603516,37.107540130615234),
+    	new Point3d(18.0,26.987857818603516,37.013275146484375),
+    	new Point3d(18.0,26.987857818603516,37.013275146484375),
+    	new Point3d(19.229249954223633,26.987857818603516,37.013275146484375),
+    	new Point3d(19.229249954223633,26.926382064819336,37.013275146484375),
+    	new Point3d(19.229249954223633,26.926382064819336,39.34950256347656),
+    	new Point3d(19.83618927001953,26.926382064819336,39.34950256347656),
+    	new Point3d(19.83618927001953,27.25579261779785,39.34950256347656),
+    	new Point3d(19.83618927001953,27.25579261779785,40.23905563354492),
+    	new Point3d(19.83618927001953,27.25579261779785,40.23905563354492),
+    	new Point3d(19.99574089050293,27.25579261779785,40.23905563354492),
+    	new Point3d(19.99574089050293,27.316665649414062,40.23905563354492),
+    	new Point3d(9.99574089050293,27.316665649414062,40.429630279541016),
+    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
+    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
+    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
+    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
+    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
+    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
+    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
+    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
+    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
+    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
+    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016)};
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -813,6 +872,156 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         return answer.matrix;
     }
 
+    public void drawLine(int xdim, int ydim, int zdim, float[] image, float value, Vector<Point3i> path){
+    	if(path == null)
+    		return;
+    	for(int i = 0; i < path.size(); i++){
+    		Point3i p3i = path.elementAt(i);
+    		if(image[p3i.z*xdim*ydim+p3i.y*xdim+p3i.x] >300){
+    			image[p3i.z*xdim*ydim+p3i.y*xdim+p3i.x] = value-100;
+    		}else{
+    			image[p3i.z*xdim*ydim+p3i.y*xdim+p3i.x] = value;
+    		}
+    	}
+    }
+    
+    public Vector<Point3f> param2Coordinates(double startX, double endX, double stepX,
+    		double startY, double endY, double stepY, 
+    		double startZ, double endZ, double stepZ, Vector<Point3d> path){
+    	if(path == null){
+    		return null;
+    	}
+    	
+    	Vector<Point3f> coordPath = new Vector<Point3f>(path.size());
+    	for(int i = 0; i < path.size(); i++){
+    		Point3d p3d = path.elementAt(i);
+    		Point3f p3f = new Point3f();
+    		p3f.x = (float)((p3d.y-startX)/stepX);
+    		p3f.y = (float)((p3d.z-startY)/stepY);
+    		p3f.z = (float)((p3d.x-startZ)/stepZ);
+    		coordPath.add(p3f);
+    	}
+    	return coordPath;
+    }
+    
+    public Vector<Point3i> findPointsOfLine(Vector<Point3f> realPath){
+    	if(realPath == null){
+    		return null;
+    	}
+    	
+    	Vector<Point3i> imagePath = new Vector<Point3i>(realPath.size()*2);
+    	for(int i = 0; i < realPath.size()-1; i++){
+    		Point3f p3fFrom = realPath.elementAt(i);
+    		Point3f p3fTo = realPath.elementAt(i+1);
+    		if(p3fFrom.equals(p3fTo))
+    			continue;
+    		midpointLine(p3fFrom, p3fTo, imagePath);    		
+    	}
+    	Point3i previousPoint = imagePath.elementAt(0);
+    	
+    	for(int i = 1; i < imagePath.size(); i++){
+    		Point3i currentPoint = imagePath.elementAt(i);
+    		if(currentPoint.equals(previousPoint)){
+    			imagePath.remove(i--);
+    		}else{
+    			previousPoint = currentPoint;
+    		}
+    	}
+    	return imagePath;
+    }
+    
+    public void midpointLine(Point3f p0, Point3f p1, Vector<Point3i> imagePath){
+    	if(Math.abs(p1.x-p0.x)>=Math.abs(p1.y-p0.y) && Math.abs(p1.x-p0.x)>=Math.abs(p1.z-p0.z)){
+			float a1 = (p1.y - p0.y) / (p1.x - p0.x);
+			float b1 = p0.y - a1 * p0.x;
+			float a2 = (p1.z - p0.z) / (p1.x - p0.x);
+			float b2 = p0.z - a2 * p0.x;
+			int x = (int) (p0.x + 0.5);
+			float fy = p0.y;
+			float fz = p0.z;
+			int y = (int) p0.y;
+			int z = (int) p0.z;
+
+			while (x < p1.x) {
+				float d1 = line(a1, b1, x, y + 0.5f);
+				if (d1 < 0) {
+					y++;
+				}
+				float d2 = line(a2, b2, x, z + 0.5f);
+				if (d2 < 0) {
+					z++;
+				}
+				Point3i p3i = new Point3i(x, y, z);
+				imagePath.add(p3i);
+				fy += a1;
+				fz += a2;
+				x++;
+				y = (int) fy;
+				z = (int) fz;
+			}
+		}else if(Math.abs(p1.y-p0.y)>=Math.abs(p1.x-p0.x) && Math.abs(p1.y-p0.y)>=Math.abs(p1.z-p0.z)){
+			float a1 = (p1.x - p0.x) / (p1.y - p0.y);
+			float b1 = p0.x - a1 * p0.y;
+			float a2 = (p1.z - p0.z) / (p1.y - p0.y);
+			float b2 = p0.z - a2 * p0.y;
+			int y = (int) (p0.y + 0.5);
+			float fx = p0.x;
+			float fz = p0.z;
+			int x = (int) p0.x;
+			int z = (int) p0.z;
+
+			while (y < p1.y) {
+				float d1 = line(a1, b1, y, x + 0.5f);
+				if (d1 < 0) {
+					x++;
+				}
+				float d2 = line(a2, b2, y, z + 0.5f);
+				if (d2 < 0) {
+					z++;
+				}
+				Point3i p3i = new Point3i(x, y, z);
+				imagePath.add(p3i);
+				fx += a1;
+				fz += a2;
+				y++;
+				x = (int) fx;
+				z = (int) fz;
+			}
+		}else{
+			float a1 = (p1.x - p0.x) / (p1.z - p0.z);
+			float b1 = p0.x - a1 * p0.z;
+			float a2 = (p1.y - p0.y) / (p1.z - p0.z);
+			float b2 = p0.z - a2 * p0.y;
+			int z = (int) (p0.z + 0.5);
+			float fy = p0.y;
+			float fx = p0.x;
+			int y = (int) p0.y;
+			int x = (int) p0.x;
+
+			while (z < p1.z) {
+				float d1 = line(a1, b1, z, x + 0.5f);
+				if (d1 < 0) {
+					x++;
+				}
+				float d2 = line(a2, b2, z, y + 0.5f);
+				if (d2 < 0) {
+					y++;
+				}
+				Point3i p3i = new Point3i(x, y, z);
+				imagePath.add(p3i);
+				fx += a1;
+				fy += a2;
+				z++;
+				y = (int) fy;
+				x = (int) fx;
+			}
+		}
+    	
+    }
+    
+    public float line(float a, float b, int x, float y){
+    	return y-a*x-b;
+    }
     /**
      * Runs the image registration. Blurs the images based on what their minimum resolutions are. The reference image is
      * blurred if one of the input image resolutions is 50% or more bigger than the corresponding resolution in the
@@ -1365,48 +1574,57 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         }
 
         if (DOF >= 3) {
-            Preferences.debug(" Starting level 8 ************************************************\n");
+			Preferences
+					.debug(" Starting level 8 ************************************************\n");
 
-            Vector[] minimas = levelEight(simpleRefSub8, simpleInputSub8);
-            time = System.currentTimeMillis() - time;
-            Preferences.debug(" Level 8 min = " + ((float) time / 60000.0f) + "\n");
-            time = System.currentTimeMillis();
+			Vector[] minimas = levelEight(simpleRefSub8, simpleInputSub8);
+			time = System.currentTimeMillis() - time;
+			Preferences.debug(" Level 8 min = " + ((float) time / 60000.0f)
+					+ "\n");
+			time = System.currentTimeMillis();
 
-            if (threadStopped) {
-                finalize();
+			if (threadStopped) {
+				finalize();
 
-                return;
-            }
+				return;
+			}
 
-            Preferences.debug(" Starting level 4 ************************************************\n");
+			Preferences
+					.debug(" Starting level 4 ************************************************\n");
 
-            Vector minima = levelFour(simpleRefSub4, simpleInputSub4, minimas[0], minimas[1]);
-            time = System.currentTimeMillis() - time;
-            Preferences.debug(" Level 4  min = " + ((float) time / 60000.0f) + "\n");
-            time = System.currentTimeMillis();
+			Vector minima = levelFour(simpleRefSub4, simpleInputSub4,
+					minimas[0], minimas[1]);
+			time = System.currentTimeMillis() - time;
+			Preferences.debug(" Level 4  min = " + ((float) time / 60000.0f)
+					+ "\n");
+			time = System.currentTimeMillis();
 
-            if (threadStopped) {
-                finalize();
+			if (threadStopped) {
+				finalize();
 
-                return;
-            }
+				return;
+			}
 
-            Preferences.debug(" Starting level 2 ************************************************\n");
+			Preferences
+					.debug(" Starting level 2 ************************************************\n");
 
-            MatrixListItem item = levelTwo(simpleRefSub2, simpleInputSub2, minima);
-            time = System.currentTimeMillis() - time;
-            Preferences.debug(" Level 2 min = " + ((float) time / 60000.0f) + "\n");
-            time = System.currentTimeMillis();
+			MatrixListItem item = levelTwo(simpleRefSub2, simpleInputSub2,
+					minima);
+			time = System.currentTimeMillis() - time;
+			Preferences.debug(" Level 2 min = " + ((float) time / 60000.0f)
+					+ "\n");
+			time = System.currentTimeMillis();
 
-            if (threadStopped) {
-                finalize();
+			if (threadStopped) {
+				finalize();
 
-                return;
-            }
+				return;
+			}
 
-            Preferences.debug(" Starting level 1 ************************************************\n");
-            answer = levelOne(simpleRef, simpleInput, item);
-        } // if (DOF >= 3)
+			Preferences.debug(" Starting level 1 ************************************************\n");
+			answer = levelOne(simpleRef, simpleInput, item);
+//			createTerrain();
+		} // if (DOF >= 3)
         else {
             Preferences.debug(" Starting level 1 ************************************************\n");
             answer = levelOne2D(simpleRef, simpleInput);
@@ -1429,6 +1647,167 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         setCompleted(true);
     }
 
+    private void createTerrain(){
+		searchOptimalPath();
+		print(optimalPath, "Optimal Path: ");
+		long startTime = System.nanoTime();
+		AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(
+				simpleRef, simpleInput, costChoice, 256, 1);
+		maxIter = baseNumIter * 2;
+		Point2Dd cog = calculateCenterOfMass2D(simpleInput,
+				simpleWeightInput, doColor);
+		double[] initial = new double[7];
+
+		initial[0] = 0; // initial rotation
+		initial[1] = 0; // initial translations
+		initial[2] = 0;
+		initial[3] = initial[4] = 1; // initial scaling
+		initial[5] = initial[6] = 0; // initial skewing
+		float xFrom = 17.2f;
+		float xTo = 42.81f;
+		float xStep = 0.2f;
+		float yFrom = 27.2f;
+		float yTo = 52.81f;
+		float yStep = 0.2f;
+		float zFrom = 7.2f;
+		float zTo = 32.81f;
+		float zStep = 0.2f;
+		Vector<Point3f> realPath = param2Coordinates(xFrom, xTo, xStep,
+				yFrom, yTo, yStep, zFrom, zTo, zStep, optimalPath);
+		Vector<Point3i> imagePath = findPointsOfLine(realPath);
+		print(imagePath, "Final Path:");
+		Vector<Point3d> originalPath2 = new Vector<Point3d>(30);
+		for(int j = 0; j < originalPath.length; j++){
+			originalPath2.add(originalPath[j]);
+		}
+		Vector<Point3f> origRealPath = param2Coordinates(xFrom, xTo, xStep,
+				yFrom, yTo, yStep, zFrom, zTo, zStep, originalPath2);
+		Vector<Point3i> origImagePath = findPointsOfLine(origRealPath);
+		print(origImagePath, "Original Final Path:");
+		AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog,
+				DOF, cost, getTolerance(DOF), maxIter, rigidFlag,
+				bracketBound);
+		float[] terrain = powell.createTerrain(xFrom, xTo, xStep, yFrom,
+				yTo, yStep, zFrom, zTo, zStep);
+		final int xdim = (int) ((xTo - xFrom) / xStep);
+		final int ydim = (int) ((yTo - yFrom) / yStep);
+		final int zdim = (int) ((zTo - zFrom) / zStep);
+		drawLine(xdim, ydim, zdim, terrain, 300f, origImagePath);
+		drawLine(xdim, ydim, zdim, terrain, 500f, imagePath);
+		ModelImage resultImage = new ModelImage(ModelImage.FLOAT,
+				new int[] { xdim, ydim, zdim }, "LevelOne_Terrain");
+		try {
+			resultImage.importData(0, terrain, true);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		FileInfoBase[] fileInfos = resultImage.getFileInfo();
+		for(int j = 0; j < fileInfos.length; j++){
+			fileInfos[j].setResolutions(new float[] {xStep, yStep, zStep});
+			fileInfos[j].setOrigin(new float[]{xFrom, yFrom, zFrom});
+		}
+		try {
+			new ViewJFrameImage(resultImage, null,
+					new Dimension(xdim, ydim));
+		} catch (OutOfMemoryError error) {
+			gov.nih.mipav.view.MipavUtil
+					.displayError("Out of memory: unable to open new frame");
+		}
+
+		System.out.println("Time consumed by createTerrain(): "
+				+ (System.nanoTime() - startTime));
+    }
+    
+    private void searchOptimalPath(){
+    	if(paths == null){
+    		return;
+    	}
+    	optimalPath = new Vector<Point3d>(100);
+    	optimalPath.addAll(paths[5].get(0));
+    	optimalPath.addAll(paths[4].get(0));
+    	int index = indexOf(paths[3], optimalPath.elementAt(0));
+    	if(index < 0){
+    		System.out.println("######3: Something is wrong, please double check! #######");
+//    		return;
+    	}else{
+    		optimalPath.addAll(paths[3].get(index));
+    	}
+    	index = indexOf(paths[2], optimalPath.elementAt(0));
+    	if(index < 0){
+    		System.out.println("######2: Something is wrong, please double check! #######");
+//    		return;
+    	}else{
+    		optimalPath.addAll(paths[2].get(index));
+    	}
+    	index = indexOf(paths[1], optimalPath.elementAt(0));
+    	if(index < 0){
+        	index = indexOf(paths[0], optimalPath.elementAt(0));
+        	if(index < 0){
+        		System.out.println("######1: Something is wrong, please double check! #######");
+//        		return;
+        	}else{
+        		optimalPath.addAll(paths[0].get(index));
+        	}
+    	}else{
+    		optimalPath.addAll(paths[1].get(index));
+    	}
+    }
+    
+    private int indexOf(Vector<Vector<Point3d>> aPaths, Point3d tp3d){
+    	for(int i = 0; i < aPaths.size(); i++){
+    		Vector<Point3d> aPath = aPaths.get(i);
+    		if(tp3d.equals(aPath.get(aPath.size()-1))){
+    			return i;
+    		}
+    	}
+    	return -1;
+    }
+    public void print(Vector data, String message){
+    	if(data == null || data.size() == 0){
+    		return;
+    	}
+    	System.out.println(message + "**************");
+    	for(int i = 0; i < data.size(); i++){
+    		Object obj = data.get(i);
+    		StringBuffer sb = new StringBuffer("");
+    		if (obj instanceof MatrixListItem) {
+				MatrixListItem item = (MatrixListItem) data.get(i);
+				for (int j = 0; j < item.initial.length; j++) {
+					sb.append(item.initial[j]);
+					sb.append(",");
+				}
+			}else if(obj instanceof Point3d){
+				Point3d p3d = (Point3d) data.get(i);
+				sb.append(p3d.x);
+				sb.append(",");
+				sb.append(p3d.y);
+				sb.append(",");
+				sb.append(p3d.z);
+			}else if(obj instanceof Point3i){
+				Point3i p3i = (Point3i) data.get(i);
+				sb.append(p3i.x);
+				sb.append(",");
+				sb.append(p3i.y);
+				sb.append(",");
+				sb.append(p3i.z);
+			}
+    		System.out.println(sb.toString());
+    	}
+    }
+    
+    public void print(MatrixListItem item, String message){
+    	if(item == null){
+    		return;
+    	}
+    	System.out.println(message + "**************");
+		StringBuffer sb = new StringBuffer("");
+		for(int j = 0; j < item.initial.length; j++){
+			sb.append(item.initial[j]);
+			sb.append(",");
+		}
+		System.out.println(sb.toString());
+    }
     /**
      * setBruteForce. Tells the algorithm to do a brute-force optimization, where it will iterate of the the input
      * rotation, xscale, yscale, and translation ranges calculating the cost function at each point and returing the
@@ -1488,11 +1867,11 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         initial[3] = initial[4] = 1; // initial scaling
         initial[5] = initial[6] = 0; // initial skewing
 
-        AlgorithmPowellOpt2D powell;
+        AlgorithmPowellOptBase powell;
         maxIter = baseNumIter;
-        powell = new AlgorithmPowellOpt2D(this, cog, 7, cost, initial, getTolerance(7), maxIter, false, bracketBound);
+        powell = new AlgorithmPowellOpt2D(this, cog, 7, cost, getTolerance(7), maxIter, false, bracketBound);
 
-        Vector minima = new Vector();
+        Vector<MatrixListItem> minima = new Vector<MatrixListItem>();
 
         /* Count the number of times the cost function is called: */
         int iBruteCount = 1;
@@ -1538,10 +1917,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             bDone = true;
 
             /* initial must already be set to identity: */
-            powell.setInitialPoint(initial);
-            powell.measureCost();
-            minima.add(new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal()));
-            dCost = powell.getCost();
+            dCost = powell.measureCost(initial);
+            minima.add(new MatrixListItem(dCost, powell.convertToMatrix(initial), initial));
             dMinCost = dCost;
         }
 
@@ -1567,11 +1944,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             initial[3] = 1 / (1.0 + (xScale / 100f));
             initial[4] = 1 / (1.0 + (yScale / 100f));
 
-            powell.setInitialPoint(initial);
-            powell.measureCost();
-            minima.add(new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal()));
-
-            dCost = powell.getCost();
+            dCost = powell.measureCost(initial);
+            minima.add(new MatrixListItem(dCost, powell.convertToMatrix(initial), initial));
 
             if (dCost < dMinCost) {
                 dMinCost = dCost;
@@ -1909,7 +2283,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      *
      * @return  List of preoptimized and optimized points.
      */
-    private Vector[] levelEight(ModelSimpleImage ref, ModelSimpleImage input) {
+    public Vector<MatrixListItem>[] levelEight(ModelSimpleImage ref, ModelSimpleImage input) {
         double factor;
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 32, 1);
 
@@ -1939,29 +2313,31 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
         // Optimizing over translations and global scaling in AlgorithmPowellOpt2D for DOF = 3
         // Optimizing only over translations in AlgorithmPowellOpt2D for DOF = 2
-        AlgorithmPowellOpt2D powell;
+        AlgorithmPowellOptBase powell;
         maxIter = baseNumIter;
 
+        int dofs = 2;
         if (DOF > 3) {
-            powell = new AlgorithmPowellOpt2D(this, cog, 3, cost, initial, getTolerance(3), maxIter, false,
-                                              bracketBound);
-        } else {
-            powell = new AlgorithmPowellOpt2D(this, cog, 2, cost, initial, getTolerance(2), maxIter, false,
-                                              bracketBound);
+            dofs = 3;
         }
+        powell = new AlgorithmPowellOpt2D(this, cog, dofs, cost, getTolerance(dofs), maxIter, false, bracketBound);
+        powell.setMultiThreadingEnabled(multiThreadingEnabled);
 
         // Should we even try to coarse since 2D images at level 8 are pretty small and not computionally taxing ?
         fireProgressStateChanged("Optimizing at coarse samples");
 
+        Vectornd[] initials = new Vectornd[coarseNum];
         for (int i = 0; (i < coarseNum) && !threadStopped; i++) {
             fireProgressStateChanged((i + 1) * 10 / coarseNum);
 
             initial[0] = rotateBegin + (i * coarseRate);
+            initials[i] = new Vectornd(initial, true);
+        }
 
-            // find cost, record
-            powell.setInitialPoint(initial);
-            powell.run();
-            transforms[i] = powell.getPoint();
+        powell.setPoints(initials);
+        powell.run();
+        for(int i = 0; i < coarseNum; i++){
+            transforms[i] = powell.extractPoint(powell.getPoint(i));
         }
 
         if (threadStopped) {
@@ -1985,10 +2361,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             interpolate(factor, initial, transforms, (DOF > 3));
             initial[4] = initial[3];
 
-            powell.setInitialPoint(initial);
-            powell.measureCost();
-            matrixList[i] = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
-            costs[index++] = matrixList[i].cost;
+            costs[index] = powell.measureCost(initial);
+            matrixList[i] = new MatrixListItem(costs[index++], powell.convertToMatrix(initial), initial);
         }
 
         if (threadStopped) {
@@ -2007,21 +2381,39 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
         fireProgressStateChanged("Optimizing top samples");
 
+        powell.setPathRecorded(true);
+        paths[0] = new Vector<Vector<Point3d>>(10);
+        index = Arrays.binarySearch(costs, threshold);
+        if(index < 0){
+            index = -1 * (index + 1);
+        }
+        initials = new Vectornd[index];
+        index = 0;
         for (int i = 0; (i < fineNum) && !threadStopped; i++) {
             fireProgressStateChanged(15 + ((i + 1) * 5 / fineNum));
 
             if (matrixList[i].cost < threshold) {
-                powell.setInitialPoint(matrixList[i].initial);
-                powell.run();
-                matrixList[i] = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
+                initials[index++] = new Vectornd(matrixList[i].initial);
             }
         }
+        powell.setPoints(initials);
+        powell.run();
+        index = 0;
+        for(int i = 0; i < fineNum; i++){
+            if (matrixList[i].cost < threshold) {
+                matrixList[i] = new MatrixListItem(powell.getCost(index), powell.getMatrix(index), powell.getPoint(index));
+                index++;
+            }
+//          paths[0].add(powell.getPath());
+//          powell.clearPath();
+        }
+
 
         if (threadStopped) {
             return null;
         }
 
-        Vector minima = new Vector();
+        Vector<MatrixListItem> minima = new Vector<MatrixListItem>();
 
         for (int i = 0; i < fineNum; i++) {
             boolean minimum = true; // possible minimum
@@ -2048,29 +2440,37 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
         Preferences.debug("Number of minima: " + minima.size() + "\n");
 
-        Vector optMinima = new Vector();
+        Vector<MatrixListItem> optMinima = new Vector<MatrixListItem>();
         // Now freely optimizes over rotation:
 
         fireProgressStateChanged("Optimizing minima");
 
-        int count = 0;
-
         int degree = (DOF < 4) ? DOF : 4;
         maxIter = baseNumIter * 2;
-        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, initial, getTolerance(degree), maxIter, rigidFlag,
+        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag,
                                           bracketBound);
+        powell.setMultiThreadingEnabled(multiThreadingEnabled);
+
+        paths[1] = new Vector<Vector<Point3d>>(10);
+        powell.setPathRecorded(true);
+//        long startTime = System.nanoTime();
+//        powell.createTerrain(-50f, 50f, 1f, -50f, 50f, 1f, -30f, 30f, 1f, "LevelEight_Terrain");
+//        System.out.println("Time consumed by createTerrain(): " + (System.nanoTime()-startTime));
 
         MatrixListItem item;
+        initials = new Vectornd[minima.size()];
+        index = 0;
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
+            initials[index++] = new Vectornd(en.nextElement().initial, true);
+        }
 
-        for (Enumeration en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
-            fireProgressStateChanged(20 + ((count + 1) * 5 / minima.size()));
-
-            powell.setInitialPoint(((MatrixListItem) en.nextElement()).initial);
-            powell.run();
-            item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
-            Preferences.debug(" item.cost = " + item.cost + "\n");
+        powell.setPoints(initials);
+        powell.run();
+        for(int i = 0; i < initials.length; i++){
+            item = new MatrixListItem(powell.getCost(i), powell.getMatrix(i), powell.getPoint(i));
             optMinima.add(item);
-            count++;
+//            paths[1].add(powell.getPath());
+//            powell.clearPath();
         }
 
         if (threadStopped) {
@@ -2100,7 +2500,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      *
      * @return  A vector of perturbed, optimized minima.
      */
-    private Vector levelFour(ModelSimpleImage ref, ModelSimpleImage input, Vector minima, Vector optMinima) {
+    public Vector<MatrixListItem> levelFour(ModelSimpleImage ref, ModelSimpleImage input, Vector<MatrixListItem> minima, Vector<MatrixListItem> optMinima) {
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 64, 1);
 
         if (weighted) {
@@ -2112,14 +2512,14 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         MatrixListItem item = null;
 
         // fix translations based on image resolutions!
-        for (Enumeration en = minima.elements(); en.hasMoreElements();) {
-            item = ((MatrixListItem) en.nextElement());
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
+            item = en.nextElement();
             item.initial[1] *= level4Factor;
             item.initial[2] *= level4Factor;
         }
 
-        for (Enumeration en = optMinima.elements(); en.hasMoreElements();) {
-            item = ((MatrixListItem) en.nextElement());
+        for (Enumeration<MatrixListItem> en = optMinima.elements(); en.hasMoreElements();) {
+            item = en.nextElement();
             item.initial[1] *= level4Factor;
             item.initial[2] *= level4Factor;
         }
@@ -2128,25 +2528,25 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
         maxIter = baseNumIter * 2;
 
-        AlgorithmPowellOpt2D powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, dummy, getTolerance(degree),
+        AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree),
                                                                maxIter, rigidFlag, bracketBound);
+        powell.setMultiThreadingEnabled(multiThreadingEnabled);
 
-        for (Enumeration en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
-            item = ((MatrixListItem) en.nextElement());
-            powell.setInitialPoint(item.initial);
-            powell.measureCost();
-            item.cost = powell.getCost(); // pointer, so this changes the element in the minima Vector
+//        long startTime = System.nanoTime();
+//        powell.createTerrain(-50f, 50f, 1f, -50f, 50f, 1f, -30f, 30f, 1f, "LevelFour_Terrain");
+//        System.out.println("Time consumed by createTerrain(): " + (System.nanoTime()-startTime));
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
+            item = en.nextElement();
+            item.cost = powell.measureCost(item.initial);
         }
 
         if (threadStopped) {
             return null;
         }
 
-        for (Enumeration en = optMinima.elements(); en.hasMoreElements() && !threadStopped;) {
-            item = ((MatrixListItem) en.nextElement());
-            powell.setInitialPoint(item.initial);
-            powell.measureCost();
-            item.cost = powell.getCost(); // pointer, so this changes the element in the minima Vector
+        for (Enumeration<MatrixListItem> en = optMinima.elements(); en.hasMoreElements() && !threadStopped;) {
+            item = en.nextElement();
+            item.cost = powell.measureCost(item.initial);
         }
 
         if (threadStopped) {
@@ -2156,7 +2556,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         Collections.sort(minima);
         Collections.sort(optMinima);
 
-        Vector newMinima = new Vector();
+        Vector<MatrixListItem> newMinima = new Vector<MatrixListItem>();
 
         fireProgressStateChanged("Optimizing new minima");
 
@@ -2164,43 +2564,42 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         // passed in from JDialog.  It used to be set to "3".
         int total = (numMinima < minima.size()) ? numMinima : minima.size();
         powell.setMaxIterations(baseNumIter);
-
-        for (int i = 0; (i < total) && !threadStopped; i++) {
-            fireProgressStateChanged(25 + ((i + 1) * 4 / total));
-
-            powell.setInitialPoint(((MatrixListItem) minima.elementAt(i)).initial);
-            powell.run();
-
-            if (threadStopped) {
-                return null;
-            }
-
-            item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
-            newMinima.add(item);
-            powell.setInitialPoint(((MatrixListItem) optMinima.elementAt(i)).initial);
-            powell.run();
-
-            if (threadStopped) {
-                return null;
-            }
-
-            item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
-            newMinima.add(item);
+        paths[2] = new Vector<Vector<Point3d>>(10);
+        powell.setPathRecorded(true);
+        Vectornd[] initials = new Vectornd[2*total];
+        for (int i = 0; i < total; i++) {
+            initials[i] = new Vectornd(minima.elementAt(i).initial);
+            initials[i+total] = new Vectornd(optMinima.elementAt(i).initial);
         }
+        powell.setPoints(initials);
+        powell.run();
+//        paths[2].add(powell.getPath());
+//        powell.clearPath();
 
         if (threadStopped) {
             return null;
+        }
+        for(int i = 0;i < initials.length; i++){
+            item = new MatrixListItem(powell.getCost(i), powell.getMatrix(i), powell.getPoint(i));
+            newMinima.add(item);
         }
 
         Collections.sort(newMinima);
 
         double fineDelta = fineRate / 2.0;
         double[] initial;
-        Vector perturbList = new Vector();
+        Vector<MatrixListItem> perturbList = new Vector<MatrixListItem>();
 
         fireProgressStateChanged("Perturbing minima");
-
+        paths[3] = new Vector<Vector<Point3d>>(10);
+        powell.setPathRecorded(true);
+        if(DOF > 3){
+            initials = new Vectornd[newMinima.size()*8];
+        }else{
+            initials = new Vectornd[newMinima.size()*3];
+        }
         // Perturb rotation.  Add fine delta and optimize, then subtract fine delta and optimize.
+        int index = 0;
         for (int j = 0; (j < 3) && !threadStopped; j++) {
 
             for (int i = 0; (i < (2 * total)) && !threadStopped; i++) {
@@ -2226,17 +2625,10 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                 // 1.) unchanged initial
                 // 2.) make initial variable old initial + fineDelta
                 // 3.) Make initial variable old initial - fineDelta
-                powell.setInitialPoint(initial);
-                powell.run();
-                item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
-                perturbList.add(item);
+                initials[index++] = new Vectornd(initial, true);
+
             }
         }
-
-        if (threadStopped) {
-            return null;
-        }
-
         if (DOF > 3) {
             float scaleDelta = 0.8f;
 
@@ -2262,13 +2654,25 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                     Preferences.debug("Multiplying by " + scaleDelta + "\n");
 
                     // make initial variable old initial * scaleDelta in each dimension
-                    powell.setInitialPoint(initial);
-                    powell.run();
-                    item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
-                    perturbList.add(item);
+                    initials[index++ ] = new Vectornd(initial, true);
                 }
             }
         }
+
+        powell.setPoints(initials);
+        powell.run();
+        
+        for (int i = 0; i < initials.length; i++) {
+            item = new MatrixListItem(powell.getCost(i), powell.getMatrix(i), powell.getPoint(i));
+            perturbList.add(item);
+//            paths[3].add(powell.getPath());
+//            powell.clearPath();
+        }
+
+        if (threadStopped) {
+            return null;
+        }
+
 
         if (threadStopped) {
             return null;
@@ -2296,9 +2700,9 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      *
      * @return  Best minimum after optimization.
      */
-    private MatrixListItem levelOne(ModelSimpleImage ref, ModelSimpleImage input, MatrixListItem item) {
-        int degree;
-        AlgorithmPowellOpt2D powell;
+    public MatrixListItem levelOne(ModelSimpleImage ref, ModelSimpleImage input, MatrixListItem item) {
+    	int degree;
+        AlgorithmPowellOptBase powell;
         MatrixListItem item2;
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 256, 1);
 
@@ -2317,18 +2721,30 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         fireProgressStateChanged("Starting last optimization");
 
         maxIter = baseNumIter * 2;
-        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial, getTolerance(DOF), maxIter, rigidFlag,
+        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(DOF), maxIter, rigidFlag,
                                           bracketBound);
+        powell.setMultiThreadingEnabled(false);
+
+        powell.setPathRecorded(true);
+        paths[5] = new Vector<Vector<Point3d>>(1);
+//      long startTime = System.nanoTime();
+//      powell.createTerrain(-50f, 50f, 1f, -50f, 50f, 1f, -30f, 30f, 1f, "LevelOne_Terrain");
+//      System.out.println("Time consumed by createTerrain(): " + (System.nanoTime()-startTime));
         linkProgressToAlgorithm(powell);
         powell.setProgressValues(generateProgressValues(60, 100));
-
+        Vectornd[] initials = new Vectornd[1];
+        initials[0] = new Vectornd(item.initial);
+        powell.setPoints(initials);
         powell.run();
+//        paths[5].add(powell.getPath());
+//        powell.clearPath();
 
+        delinkProgressToAlgorithm(powell);
         if (threadStopped) {
             return null;
         }
 
-        item2 = new MatrixListItem(powell.getCost(), powell.getMatrix(input.xRes), powell.getFinal());
+        item2 = new MatrixListItem(powell.getCost(0), powell.getMatrix(0, input.xRes), powell.getPoint(0));
         Preferences.debug("Best answer: \n" + item2 + "\n");
 
         fireProgressStateChanged(100);
@@ -2351,7 +2767,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      */
     private MatrixListItem levelOne2D(ModelSimpleImage ref, ModelSimpleImage input) {
         int degree;
-        AlgorithmPowellOpt2D powell;
+        AlgorithmPowellOptBase powell;
         MatrixListItem item2;
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 256, 1);
 
@@ -2382,19 +2798,22 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         fireProgressStateChanged("Starting last optimization");
 
         maxIter = baseNumIter * 2;
-        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, initial, getTolerance(DOF), maxIter, rigidFlag,
+        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(DOF), maxIter, rigidFlag,
                                           bracketBound);
+        powell.setMultiThreadingEnabled(false);
 
         linkProgressToAlgorithm(powell);
         powell.setProgressValues(generateProgressValues(60, 100));
-
+        Vectornd[] initials = new Vectornd[1];
+        initials[0] = new Vectornd(initial);
+        powell.setPoints(initials);
         powell.run();
-
+        delinkProgressToAlgorithm(powell);
         if (threadStopped) {
             return null;
         }
 
-        item2 = new MatrixListItem(powell.getCost(), powell.getMatrix(input.xRes), powell.getFinal());
+        item2 = new MatrixListItem(powell.getCost(0), powell.getMatrix(0, input.xRes), powell.getPoint(0));
 
         Preferences.debug("Best answer: \n" + item2 + "\n");
 
@@ -2419,7 +2838,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      *
      * @return  The optimized minimum.
      */
-    private MatrixListItem levelTwo(ModelSimpleImage ref, ModelSimpleImage input, Vector minima) {
+    public MatrixListItem levelTwo(ModelSimpleImage ref, ModelSimpleImage input, Vector<MatrixListItem> minima) {
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 128, 1);
 
         if (weighted) {
@@ -2430,8 +2849,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         Point2Dd cog = calculateCenterOfMass2D(input, simpleWeightInputSub2, doColor);
         MatrixListItem item = null;
 
-        for (Enumeration en = minima.elements(); en.hasMoreElements();) {
-            item = ((MatrixListItem) en.nextElement());
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
+            item = en.nextElement();
             item.initial[1] *= level2Factor;
             item.initial[2] *= level2Factor;
         }
@@ -2439,36 +2858,46 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         int degree = (DOF < 4) ? DOF : 4;
         maxIter = baseNumIter;
 
-        AlgorithmPowellOpt2D powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial,
-                                                               getTolerance(degree), maxIter, rigidFlag, bracketBound);
+        AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag, bracketBound);
+        powell.setMultiThreadingEnabled(false);
 
         fireProgressStateChanged("Measuring costs of minima");
 
-        for (Enumeration en = minima.elements(); en.hasMoreElements();) {
-            item = ((MatrixListItem) en.nextElement());
-            powell.setInitialPoint(item.initial);
-            powell.measureCost();
-            item.cost = powell.getCost(); // pointer, so this changes the element in the minima Vector
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
+            item = en.nextElement();
+            item.cost = powell.measureCost(item.initial);
         }
 
         Collections.sort(minima);
 
         fireProgressStateChanged("Optimizing with " + degree + " DOF");
 
-        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
+        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter,
                                           rigidFlag, bracketBound);
+        powell.setMultiThreadingEnabled(false);
+
+        powell.setPathRecorded(true);
+        paths[4] = new Vector<Vector<Point3d>>(1);
+//        long startTime = System.nanoTime();
+//        powell.createTerrain(-50f, 50f, 1f, -50f, 50f, 1f, -30f, 30f, 1f, "LevelTwo_Terrain");
+//        System.out.println("Time consumed by createTerrain(): " + (System.nanoTime()-startTime));
         linkProgressToAlgorithm(powell);
         powell.setProgressValues(generateProgressValues(35, 43));
-
-        powell.setInitialPoint(((MatrixListItem) minima.elementAt(0)).initial);
-        Preferences.debug("item for level2 powell run = " + (MatrixListItem) minima.elementAt(0) + "\n");
+        
+        Vectornd[] initials = new Vectornd[1];
+        initials[0] = new Vectornd(minima.elementAt(0).initial);
+        powell.setPoints(initials);
+//        Preferences.debug("item for level2 powell run = " + (MatrixListItem) minima.elementAt(0) + "\n");
         powell.run();
+        delinkProgressToAlgorithm(powell);
+//        paths[4].add(powell.getPath());
+//        powell.clearPath();
 
         if (threadStopped) {
             return null;
         }
 
-        item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
+        item = new MatrixListItem(powell.getCost(0), powell.getMatrix(0), powell.getPoint(0));
         Preferences.debug("Level 2, after " + degree + " DOF: " + item + "\n");
 
         if (DOF > 4) {
@@ -2477,41 +2906,48 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             fireProgressStateChanged("Optimizing with " + degree + " DOF");
             fireProgressStateChanged(43);
 
-            powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
+            powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter,
                                               rigidFlag, bracketBound);
+            powell.setMultiThreadingEnabled(false);
+
             linkProgressToAlgorithm(powell);
             powell.setProgressValues(generateProgressValues(43, 51));
-
+            powell.setPoints(initials);
             powell.run();
+            delinkProgressToAlgorithm(powell);
 
             if (threadStopped) {
                 return null;
             }
 
-            item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
+            item = new MatrixListItem(powell.getCost(0), powell.getMatrix(0), powell.getPoint(0));
             Preferences.debug("Level 2, after " + degree + " DOF: " + item + "\n");
 
             if (DOF > 5) {
                 degree = (DOF < 7) ? DOF : 7;
-                powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
+                powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter,
                                                   rigidFlag, bracketBound);
+                powell.setMultiThreadingEnabled(false);
+
 
                 fireProgressStateChanged("Optimizing with 7 DOF");
 
 
                 fireProgressStateChanged(51);
 
-
+             
                 linkProgressToAlgorithm(powell);
                 powell.setProgressValues(generateProgressValues(51, 60));
+                powell.setPoints(initials);
 
                 powell.run();
+                delinkProgressToAlgorithm(powell);
 
                 if (threadStopped) {
                     return null;
                 }
 
-                item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
+                item = new MatrixListItem(powell.getCost(0), powell.getMatrix(0), powell.getPoint(0));
                 Preferences.debug("Level 2, after " + degree + " DOF: " + item + "\n");
             }
         }
@@ -2524,100 +2960,35 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         return item;
     }
 
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
-
-    /**
-     * Helper class to make it easy to store the necessary information about a minimum. Stores the "point", or vector at
-     * which the minimum was reached; the "cost", or value of the cost function at that minimum; and the matrix, which
-     * was the true input into the cost function and represents the transformation that gives the minimum cost of
-     * differences between the images. Implements Comparable, so that a list of MatrixListItems can be sorted using
-     * Java's sort.
-     */
-    class MatrixListItem implements Comparable {
-
-        /** Cost of function at this minimum. */
-        protected double cost;
-
-        /** Rotations, translations, scales, and skews that make up transformation. */
-        protected double[] initial;
-
-        /** Matrix that gives best transformation. */
-        protected TransMatrix matrix;
-
-        /**
-         * Creates new minimum object, setting the data and copying the point array explicitly.
-         *
-         * @param  _cost     Cost of this minimum.
-         * @param  _matrix   Matrix that gives best transformation.
-         * @param  _initial  Rotations, translations, scales, and skews that make up transformation.
-         */
-        protected MatrixListItem(double _cost, TransMatrix _matrix, double[] _initial) {
-            this.cost = _cost;
-            this.matrix = _matrix;
-            initial = new double[_initial.length];
-
-            for (int i = 0; i < initial.length; i++) {
-                initial[i] = _initial[i];
-            }
-        }
-
-        /**
-         * Necessary to implement so that list may be sorted. Returns -1 if this cost is less than the parameter's cost;
-         * 1 if this cost is greater than the parameter's cost; and 0 if they are equal.
-         *
-         * @param   o  MatrixListItem to compare to.
-         *
-         * @return  -1 if this is less than, 1 if greater than, 0 if equal.
-         */
-        public int compareTo(Object o) {
-
-            if (cost < ((MatrixListItem) o).cost) {
-                return -1;
-            } else if (cost > ((MatrixListItem) o).cost) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }
-
-        /**
-         * Creates readable string of this object, including cost, matrix, and point with its meanings.
-         *
-         * @return  Readable string representation of this object.
-         */
-        public String toString() {
-            String s = "";
-            s += "Cost of " + cost + " at:\n";
-            s += matrix.toString();
-            s += "\n";
-            s += "Point:\n";
-
-            s += " Rotation : ";
-            s += initial[0];
-            s += "\n";
-
-            for (int i = 1; i < 3; i++) {
-                s += " Translations : ";
-                s += initial[i] + " ";
-                s += "\n";
-            }
-
-            for (int i = 3; i < 5; i++) {
-                s += " Zooms : ";
-                s += initial[i] + " ";
-                s += "\n";
-            }
-
-            for (int i = 5; i < 7; i++) {
-                s += " Skews : ";
-                s += initial[i] + " ";
-                s += "\n";
-            }
-
-            return s;
-
-        }
-
+    public float getLevel1Factor() {
+        return level1Factor;
     }
 
+    public void setLevel1Factor(float level1Factor) {
+        this.level1Factor = level1Factor;
+    }
+
+    public float getLevel2Factor() {
+        return level2Factor;
+    }
+
+    public void setLevel2Factor(float level2Factor) {
+        this.level2Factor = level2Factor;
+    }
+
+    public float getLevel4Factor() {
+        return level4Factor;
+    }
+
+    public void setLevel4Factor(float level4Factor) {
+        this.level4Factor = level4Factor;
+    }
+
+    public int getMaxDim() {
+        return maxDim;
+    }
+
+    public void setMaxDim(int maxDim) {
+        this.maxDim = maxDim;
+    }
 }

@@ -1,16 +1,29 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions;
+import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions2D;
+import gov.nih.mipav.model.algorithms.AlgorithmPowellOpt2D;
+import gov.nih.mipav.model.algorithms.AlgorithmPowellOptBase;
+import gov.nih.mipav.model.algorithms.AlgorithmTransform;
+import gov.nih.mipav.model.algorithms.Vectornd;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelSimpleImage;
+import gov.nih.mipav.model.structures.Point2Dd;
+import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
-import gov.nih.mipav.view.*;
-
-import java.awt.*;
-
-import java.io.*;
-
-import java.util.*;
+import java.awt.Color;
+import java.awt.Polygon;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.Vector;
 
 
 /**
@@ -381,7 +394,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             DOF = 7; // use 2 shears
         }
 
-        answer = new MatrixListItem();
+        answer = null;
 
         interp = _interp;
         interp2 = _interp2;
@@ -466,7 +479,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             DOF = 7; // use 2 shears
         }
 
-        answer = new MatrixListItem();
+        answer = null;
 
         interp = _interp;
         interp2 = _interp2;
@@ -2560,7 +2573,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
      *
      * @return  List of preoptimized and optimized points.
      */
-    private Vector[] levelEight(ModelSimpleImage ref, ModelSimpleImage input) {
+    private Vector<MatrixListItem>[] levelEight(ModelSimpleImage ref, ModelSimpleImage input) {
 
         double factor;
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 32, 1);
@@ -2599,39 +2612,38 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             cog = cogR;
         }
 
-        double[] initial = new double[7];
-
-        initial[0] = 0; // initial rotation
-        initial[1] = diffX; // initial translations
-        initial[2] = diffY;
-        initial[3] = initial[4] = 1; // initial scaling
-        initial[5] = initial[6] = 0; // initial skewing
-
-        double[][] transforms = new double[coarseNum][3];
-
         // Prepare data for call to getTolerance
         // if all subsampling done =2*2*2=8 (if x-large img=4*2*2=16)
         // There is no need to get separate resolutions for each direction since the
         // images have been resampled to be isotropic (and have matching resolutions).
         // Optimizing over translations and global scaling. DOF = 3;
-        AlgorithmPowellOpt2D powell;
+        AlgorithmPowellOptBase powell;
         maxIter = baseNumIter;
-
+        int nDims = 2;
         if (DOF > 3) {
-            powell = new AlgorithmPowellOpt2D(this, cog, 3, cost, initial, getTolerance(3), maxIter, false,
-                                              bracketBound);
-        } else {
-            powell = new AlgorithmPowellOpt2D(this, cog, 2, cost, initial, getTolerance(2), maxIter, false,
-                                              bracketBound);
+            nDims = 3;
         }
+        powell = new AlgorithmPowellOpt2D(this, cog, nDims, cost, getTolerance(nDims), maxIter, false,
+                                              bracketBound);
 
+        Vectornd[] initials = new Vectornd[coarseNum];
+        
+        double[] initial = new double[7];
+        initial[0] = 0; // initial rotation
+        initial[1] = diffX; // initial translations
+        initial[2] = diffY;
+        initial[3] = initial[4] = 1; // initial scaling
+        initial[5] = initial[6] = 0; // initial skewing
         for (int i = 0; (i < coarseNum) && !threadStopped; i++) {
             initial[0] = rotateBegin + (i * coarseRate);
+            initials[i] = new Vectornd(initial, true);
+        }
+        powell.setPoints(initials);
+        powell.run();
 
-            // find cost, record
-            powell.setInitialPoint(initial);
-            powell.run();
-            transforms[i] = powell.getPoint();
+        double[][] transforms = new double[coarseNum][3];
+        for(int i = 0; i < coarseNum; i++){
+            transforms[i] = powell.getPoint(i);
         }
 
         if (threadStopped) {
@@ -2650,10 +2662,8 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             factor = (rotateBegin - rotateBegin + (i * fineRate)) / coarseRate;
             interpolate(factor, initial, transforms, (DOF > 3));
             initial[4] = initial[3];
-            powell.setInitialPoint(initial);
-            powell.measureCost();
-            matrixList[i] = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
-            costs[index++] = matrixList[i].cost;
+            costs[index] = powell.measureCost(initial);
+            matrixList[i] = new MatrixListItem(costs[index++], powell.convertToMatrix(initial), initial);
         }
 
         if (threadStopped) {
@@ -2668,12 +2678,17 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             threshold = costs[(int) (0.2 * costs.length)];
         }
 
+        initials = new Vectornd[fineNum];
         for (int i = 0; (i < fineNum) && !threadStopped; i++) {
-
             if (matrixList[i].cost < threshold) {
-                powell.setInitialPoint(matrixList[i].initial);
-                powell.run();
-                matrixList[i] = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
+                initials[i] = new Vectornd(matrixList[i].initial);
+            }
+        }
+        powell.setPoints(initials);
+        powell.run();
+        for(int i = 0; i < fineNum; i++){
+            if (matrixList[i].cost < threshold) {
+                matrixList[i] = new MatrixListItem(powell.getCost(i), powell.getMatrix(i), powell.getPoint(i));
             }
         }
 
@@ -2681,7 +2696,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             return null;
         }
 
-        Vector minima = new Vector();
+        Vector<MatrixListItem> minima = new Vector<MatrixListItem>();
 
         for (int i = 0; i < fineNum; i++) {
             boolean minimum = true; // possible minimum
@@ -2707,7 +2722,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         }
 
         // Preferences.debug("Number of minima: " + minima.size() + "\n");
-        Vector optMinima = new Vector();
+        Vector<MatrixListItem> optMinima = new Vector<MatrixListItem>();
 
         // Now freely optimizes over rotation:
         int count = 0;
@@ -2718,15 +2733,18 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         }
 
         maxIter = baseNumIter;
-        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, initial, getTolerance(degree), maxIter, rigidFlag,
-                                          bracketBound);
+        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag, bracketBound);
 
         MatrixListItem item;
-
-        for (Enumeration en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
-            powell.setInitialPoint(((MatrixListItem) en.nextElement()).initial);
-            powell.run();
-            item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
+        initials = new Vectornd[minima.size()];
+        index = 0;
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
+            initials[index++] = new Vectornd(en.nextElement().initial, true);
+        }
+        powell.setPoints(initials);
+        powell.run();
+        for(int i = 0; i < minima.size(); i++){
+            item = new MatrixListItem(powell.getCost(i), powell.getMatrix(i), powell.getPoint(i));
             optMinima.add(item);
             count++;
         }
@@ -2758,7 +2776,8 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
      *
      * @return  A vector of perturbed, optimized minima.
      */
-    private Vector levelFour(ModelSimpleImage ref, ModelSimpleImage input, Vector minima, Vector optMinima) {
+    private Vector<MatrixListItem> levelFour(ModelSimpleImage ref, ModelSimpleImage input, 
+            Vector<MatrixListItem> minima, Vector<MatrixListItem> optMinima) {
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 64, 1);
 
         if (weighted) {
@@ -2772,14 +2791,14 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         MatrixListItem item = null;
 
         // fix translations based on image resolutions!
-        for (Enumeration en = minima.elements(); en.hasMoreElements();) {
-            item = ((MatrixListItem) en.nextElement());
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
+            item =  en.nextElement();
             item.initial[1] *= level4Factor;
             item.initial[2] *= level4Factor;
         }
 
-        for (Enumeration en = optMinima.elements(); en.hasMoreElements();) {
-            item = ((MatrixListItem) en.nextElement());
+        for (Enumeration<MatrixListItem> en = optMinima.elements(); en.hasMoreElements();) {
+            item = en.nextElement();
             item.initial[1] *= level4Factor;
             item.initial[2] *= level4Factor;
         }
@@ -2787,25 +2806,19 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         int degree = (DOF < 4) ? DOF : 4;
         maxIter = baseNumIter;
 
-        AlgorithmPowellOpt2D powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, dummy, getTolerance(degree),
+        AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree),
                                                                maxIter, rigidFlag, bracketBound);
 
-        for (Enumeration en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
-            item = ((MatrixListItem) en.nextElement());
-            powell.setInitialPoint(item.initial);
-            powell.measureCost();
-            item.cost = powell.getCost(); // pointer, so this changes the element in the minima Vector
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
+            item.cost = powell.measureCost(en.nextElement().initial);
         }
 
         if (threadStopped) {
             return null;
         }
 
-        for (Enumeration en = optMinima.elements(); en.hasMoreElements() && !threadStopped;) {
-            item = ((MatrixListItem) en.nextElement());
-            powell.setInitialPoint(item.initial);
-            powell.measureCost();
-            item.cost = powell.getCost(); // pointer, so this changes the element in the minima Vector
+        for (Enumeration<MatrixListItem> en = optMinima.elements(); en.hasMoreElements() && !threadStopped;) {
+            item.cost = powell.measureCost(en.nextElement().initial);
         }
 
         if (threadStopped) {
@@ -2815,7 +2828,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         Collections.sort(minima);
         Collections.sort(optMinima);
 
-        Vector newMinima = new Vector();
+        Vector<MatrixListItem> newMinima = new Vector<MatrixListItem>();
 
         // Old code:
         // int total = (3 < minima.size()) ? 3 : minima.size();
@@ -2824,25 +2837,20 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         int total = (numMinima < minima.size()) ? numMinima : minima.size();
         Preferences.debug("Number of minima to test at levelFour: " + total + ".\n");
         powell.setMaxIterations(7);
-
+        Vectornd[] initials = new Vectornd[total*2];
         for (int i = 0; (i < total) && !threadStopped; i++) {
-            powell.setInitialPoint(((MatrixListItem) minima.elementAt(i)).initial);
-            powell.run();
+            initials[i] = new Vectornd(minima.elementAt(i).initial);
+            initials[i+total] = new Vectornd(optMinima.elementAt(i).initial);
+        }
+        powell.setPoints(initials);
+        powell.run();
 
-            if (threadStopped) {
-                return null;
-            }
+        if (threadStopped) {
+            return null;
+        }
 
-            item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
-            newMinima.add(item);
-            powell.setInitialPoint(((MatrixListItem) optMinima.elementAt(i)).initial);
-            powell.run();
-
-            if (threadStopped) {
-                return null;
-            }
-
-            item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
+        for(int i = 0; i < 2*total; i++){
+            item = new MatrixListItem(powell.getCost(i), powell.getMatrix(i), powell.getPoint(i));
             newMinima.add(item);
         }
 
@@ -2854,9 +2862,15 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
         double fineDelta = fineRate / 2.0;
         double[] initial;
-        Vector perturbList = new Vector();
+        Vector<MatrixListItem> perturbList = new Vector<MatrixListItem>();
 
+        if(DOF > 3){
+            initials = new Vectornd[newMinima.size()*8];
+        }else{
+            initials = new Vectornd[newMinima.size()*3];
+        }
         // Perturb rotation.  Add fine delta and optimize, then subtract fine delta and optimize.
+        int index = 0;
         for (int j = 0; (j < 2) && !threadStopped; j++) {
 
             for (int i = 0; (i < total) && !threadStopped; i++) {
@@ -2879,17 +2893,8 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                 // 1.) unchanged initial
                 // 2.) make initial variable old initial + fineDelta
                 // 3.) Make initial variable old initial - fineDelta
-                powell.setInitialPoint(initial);
-
-                // powell.setSeparateThread(false);
-                powell.run();
-                item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
-                perturbList.add(item);
+                initials[index++] = new Vectornd(initial);
             }
-        }
-
-        if (threadStopped) {
-            return null;
         }
 
         if (DOF > 3) {
@@ -2915,12 +2920,20 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
                     // Preferences.debug("Multiplying by " + scaleDelta + "\n");
                     // make initial variable old initial * scaleDelta in each dimension
-                    powell.setInitialPoint(initial);
-                    powell.run();
-                    item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
-                    perturbList.add(item);
+                    initials[index++] = new Vectornd(initial);
                 }
             }
+        }
+        powell.setPoints(initials);
+        powell.run();
+        
+        for(int i = 0; i < initials.length; i++){
+            item = new MatrixListItem(powell.getCost(i), powell.getMatrix(i), powell.getPoint(i));
+            perturbList.add(item);
+        }
+
+        if (threadStopped) {
+            return null;
         }
 
         if (threadStopped) {
@@ -2966,16 +2979,17 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
         maxIter = 4 * baseNumIter;
 
-        AlgorithmPowellOpt2D powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial,
-                                                               getTolerance(degree), maxIter, rigidFlag, bracketBound);
-
+        AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost,
+                getTolerance(degree), maxIter, rigidFlag, bracketBound);
+        Vectornd[] initials = new Vectornd[1];
+        initials[0] = new Vectornd(item.initial);
         powell.run();
 
         if (threadStopped) {
             return null;
         }
 
-        MatrixListItem item2 = new MatrixListItem(powell.getCost(), powell.getMatrix(input.xRes), powell.getFinal());
+        MatrixListItem item2 = new MatrixListItem(powell.getCost(0), powell.getMatrix(0, input.xRes), powell.getPoint(0));
         Preferences.debug("Best answer: \n" + item2 + "\n");
 
         sliceCosts[frame] = item2.getCost();
@@ -3025,8 +3039,10 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
         maxIter = 4 * baseNumIter;
 
-        AlgorithmPowellOpt2D powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, initial, getTolerance(degree),
+        AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree),
                                                                maxIter, rigidFlag, bracketBound);
+        Vectornd[] initials = new Vectornd[1];
+        initials[0] = new Vectornd(initial);
 
         powell.run();
 
@@ -3034,7 +3050,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             return null;
         }
 
-        MatrixListItem item2 = new MatrixListItem(powell.getCost(), powell.getMatrix(input.xRes), powell.getFinal());
+        MatrixListItem item2 = new MatrixListItem(powell.getCost(0), powell.getMatrix(0, input.xRes), powell.getPoint(0));
         Preferences.debug("Best answer: \n" + item2 + "\n");
         cost.disposeLocal();
         powell.finalize();
@@ -3055,7 +3071,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
      *
      * @return  The optimized minimum.
      */
-    private MatrixListItem levelTwo(ModelSimpleImage ref, ModelSimpleImage input, Vector minima) {
+    private MatrixListItem levelTwo(ModelSimpleImage ref, ModelSimpleImage input, Vector<MatrixListItem> minima) {
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 128, 1);
 
         if (weighted) {
@@ -3066,8 +3082,8 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         Point2Dd cog = calculateCenterOfMass2D(input, simpleWeightISub2_1, doColor);
         MatrixListItem item = null;
 
-        for (Enumeration en = minima.elements(); en.hasMoreElements();) {
-            item = ((MatrixListItem) en.nextElement());
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
+            item = en.nextElement();
             item.initial[1] *= level2Factor;
             item.initial[2] *= level2Factor;
         }
@@ -3075,14 +3091,10 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         int degree = (DOF < 4) ? DOF : 4;
         maxIter = baseNumIter;
 
-        AlgorithmPowellOpt2D powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial,
-                                                               getTolerance(degree), maxIter, rigidFlag, bracketBound);
+        AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag, bracketBound);
 
-        for (Enumeration en = minima.elements(); en.hasMoreElements();) {
-            item = ((MatrixListItem) en.nextElement());
-            powell.setInitialPoint(item.initial);
-            powell.measureCost();
-            item.cost = powell.getCost(); // pointer, so this changes the element in the minima Vector
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
+            item.cost = powell.measureCost(en.nextElement().initial);
         }
 
         Collections.sort(minima);
@@ -3092,9 +3104,10 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         }
 
         maxIter = baseNumIter;
-        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
-                                          rigidFlag, bracketBound);
-        powell.setInitialPoint(((MatrixListItem) minima.elementAt(0)).initial);
+        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag, bracketBound);
+        Vectornd[] initials = new Vectornd[1];
+        initials[0] = new Vectornd(minima.elementAt(0).initial);
+        powell.setPoints(initials);
 
         powell.run();
 
@@ -3102,7 +3115,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             return null;
         }
 
-        item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
+        item = new MatrixListItem(powell.getCost(0), powell.getMatrix(0), powell.getPoint(0));
         // Preferences.debug("Level 2, after " + degree + " DOF: " + item + "\n");
 
         if (DOF > 4) {
@@ -3113,15 +3126,16 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             }
 
             maxIter = baseNumIter;
-            powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
+            powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter,
                                               rigidFlag, bracketBound);
+            powell.setPoints(initials);
             powell.run();
 
             if (threadStopped) {
                 return null;
             }
 
-            item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
+            item = new MatrixListItem(powell.getCost(0), powell.getMatrix(0), powell.getPoint(0));
             // Preferences.debug("Level 2, after " + degree + " DOF: " + item + "\n");
 
             if (DOF > 5) {
@@ -3132,16 +3146,17 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                 }
 
                 maxIter = baseNumIter;
-                powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
+                powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter,
                                                   rigidFlag, bracketBound);
 
+                powell.setPoints(initials);
                 powell.run();
 
                 if (threadStopped) {
                     return null;
                 }
 
-                item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
+                item = new MatrixListItem(powell.getCost(0), powell.getMatrix(0), powell.getPoint(0));
                 // Preferences.debug("Level 2, after " + degree + " DOF: " + item + "\n");
             }
         }
@@ -3151,115 +3166,4 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
         return item;
     }
-
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
-
-    /**
-     * Helper class to make it easy to store the necessary information about a minimum. Stores the "point", or vector at
-     * which the minimum was reached; the "cost", or value of the cost function at that minimum; and the matrix, which
-     * was the true input into the cost function and represents the transformation that gives the minimum cost of
-     * differences between the images. Implements Comparable, so that a list of MatrixListItems can be sorted using
-     * Java's sort.
-     */
-    class MatrixListItem implements Comparable {
-
-        /** Cost of function at this minimum. */
-        protected double cost;
-
-        /** Rotations, translations, scales, and skews that make up transformation. */
-        protected double[] initial;
-
-        /** Matrix that gives best transformation. */
-        protected TransMatrix matrix = new TransMatrix(3);
-
-        /**
-         * Creates new minimum object, setting the data and copying the point array explicitly.
-         */
-        protected MatrixListItem() { }
-
-        /**
-         * Creates new minimum object, setting the data and copying the point array explicitly.
-         *
-         * @param  _cost     Cost of this minimum.
-         * @param  _matrix   Matrix that gives best transformation.
-         * @param  _initial  Rotations, translations, scales, and skews that make up transformation.
-         */
-        protected MatrixListItem(double _cost, TransMatrix _matrix, double[] _initial) {
-            this.cost = _cost;
-            this.matrix = _matrix;
-            initial = new double[_initial.length];
-
-            for (int i = 0; i < initial.length; i++) {
-                initial[i] = _initial[i];
-            }
-        }
-
-        /**
-         * Necessary to implement so that list may be sorted. Returns -1 if this cost is less than the parameter's cost;
-         * 1 if this cost is greater than the parameter's cost; and 0 if they are equal.
-         *
-         * @param   o  MatrixListItem to compare to.
-         *
-         * @return  -1 if this is less than, 1 if greater than, 0 if equal.
-         */
-        public int compareTo(Object o) {
-
-            if (cost < ((MatrixListItem) o).cost) {
-                return -1;
-            } else if (cost > ((MatrixListItem) o).cost) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }
-
-        /**
-         * Gets the cost.
-         *
-         * @return  double the cost
-         */
-        public double getCost() {
-            return this.cost;
-        }
-
-        /**
-         * Creates readable string of this object, including cost, matrix, and point with its meanings.
-         *
-         * @return  Readable string representation of this object.
-         */
-        public String toString() {
-            String s = "";
-            s += "Cost of " + cost + " at:\n";
-            s += matrix.toString();
-            s += "\n";
-            s += "Point:\n";
-
-            s += " Rotation : ";
-            s += initial[0];
-            s += "\n";
-
-            for (int i = 1; i < 3; i++) {
-                s += " Translations : ";
-                s += initial[i] + " ";
-                s += "\n";
-            }
-
-            for (int i = 3; i < 5; i++) {
-                s += " Zooms : ";
-                s += initial[i] + " ";
-                s += "\n";
-            }
-
-            for (int i = 5; i < 7; i++) {
-                s += " Skews : ";
-                s += initial[i] + " ";
-                s += "\n";
-            }
-
-            return s;
-
-        }
-
-    }
-
 }
