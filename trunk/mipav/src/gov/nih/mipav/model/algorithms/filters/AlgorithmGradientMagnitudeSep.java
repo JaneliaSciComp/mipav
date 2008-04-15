@@ -198,7 +198,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 	private float[] calculateDerivativeImage(float[] imgData, boolean color,
 			float[][] kernelData, int progressFrom, int progressTo) {
 		AlgorithmSeparableConvolver convolver = new AlgorithmSeparableConvolver(
-				imgData, srcImage.getExtents(), kernelData, color,false);
+				imgData, srcImage.getExtents(), kernelData, color, multiThreadingEnabled);
 		convolver.setNumberOfThreads(Preferences.getNumberOfThreads());
 		convolver.setProgressValues(generateProgressValues(progressFrom,
 				progressTo));

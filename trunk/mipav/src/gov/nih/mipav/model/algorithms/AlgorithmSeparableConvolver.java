@@ -358,7 +358,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         int halfKDim = kDim / 2;
         int halfKDimTimesCFactor = halfKDim * cFactor;
         int combined, start, end;
-		float sum, norm;
+		double sum, norm;
 		int index = 0;
 		for (int pix = from; (pix < to) && !threadStopped; pix++) {
             if (colorImage && !red && ((pix % 4) == 1)) {
@@ -428,7 +428,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         int halfKDim = kDim / 2;
         int combined, start, end;
         int step = kDim * offset;
-		float sum, norm;
+		double sum, norm;
 		int index = 0;
         for (int pix = from; (pix < to) && !threadStopped; pix++) {
             if (colorImage && !red && ((pix % 4) == 1)) {
@@ -495,7 +495,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         int kDim = kernelBuffer[2].length;
         int halfKDim = kDim / 2;
         int combined, start, end;
-		float sum, norm;
+		double sum, norm;
 		int step = kDim * sliceSize;
 		int index = 0;
 
