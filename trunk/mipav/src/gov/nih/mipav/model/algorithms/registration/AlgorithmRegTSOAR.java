@@ -942,7 +942,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         // going from refNum up, then refNum down.  does this mean the transformation matrices are
         // being applied improperly in getTransformedImage() ??
         AlgorithmCostFunctions cost;
-        AlgorithmPowellOpt3D powell;
+        AlgorithmPowellOptBase powell;
         double[] initial = new double[] { 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0 };
         MatrixListItem[] results = new MatrixListItem[nVolumes];
         TransMatrix matrix;
@@ -1074,12 +1074,15 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
 
             } // if (previous != null)
 
-            powell = new AlgorithmPowellOpt3D(this, cog, DOF, cost, initial, getTolerance(DOF, factor), maxIter,
+            powell = new AlgorithmPowellOpt3D(this, cog, DOF, cost, getTolerance(DOF, factor), maxIter,
                                               bracketBound);
             powell.setRunningInSeparateThread(runningInSeparateThread);
+            Vectornd[] initials = new Vectornd[1];
+            initials[0] = new Vectornd(initial);
+            powell.setPoints(initials);
             powell.run();
-            results[i] = new MatrixListItem(powell.getCost(), powell.getMatrix(refImage.xRes),
-                                            powell.getFinal(refImage.xRes));
+            results[i] = new MatrixListItem(powell.getCost(0), powell.getMatrix(0, refImage.xRes),
+                                            powell.getPoint(0, refImage.xRes));
             cost.disposeLocal();
             powell.disposeLocal();
         }
@@ -1169,12 +1172,15 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
                 }
             } // if (previous != null)
 
-            powell = new AlgorithmPowellOpt3D(this, cog, DOF, cost, initial, getTolerance(DOF, factor), maxIter,
+            powell = new AlgorithmPowellOpt3D(this, cog, DOF, cost, getTolerance(DOF, factor), maxIter,
                                               bracketBound);
             powell.setRunningInSeparateThread(runningInSeparateThread);
+            Vectornd[] initials = new Vectornd[1];
+            initials[0] = new Vectornd(initial);
+            powell.setPoints(initials);
             powell.run();
-            results[i] = new MatrixListItem(powell.getCost(), powell.getMatrix(refImage.xRes),
-                                            powell.getFinal(refImage.xRes));
+            results[i] = new MatrixListItem(powell.getCost(0), powell.getMatrix(0, refImage.xRes),
+                                            powell.getPoint(0, refImage.xRes));
             cost.disposeLocal();
             powell.disposeLocal();
         }
@@ -1184,103 +1190,5 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         }
 
         return results;
-    }
-
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
-
-    /**
-     * Helper class to make it easy to store the necessary information about a minimum. Stores the "point", or vector at
-     * which the minimum was reached; the "cost", or value of the cost function at that minimum; and the matrix, which
-     * was the true input into the cost function and represents the transformation that gives the minimum cost of
-     * differences between the images. Implements Comparable, so that a list of MatrixListItems can be sorted using
-     * Java's sort.
-     */
-    class MatrixListItem implements Comparable {
-
-        /** Cost of function at this minimum. */
-        protected double cost;
-
-        /** Rotations, translations, scales, and skews that make up transformation. */
-        protected double[] initial;
-
-        /** Matrix that gives best transformation. */
-        protected TransMatrix matrix;
-
-        /**
-         * Creates new minimum object, setting the data and copying the point array explicitly.
-         *
-         * @param  _cost     Cost of this minimum.
-         * @param  _matrix   Matrix that gives best transformation.
-         * @param  _initial  Rotations, translations, scales, and skews that make up transformation.
-         */
-        protected MatrixListItem(double _cost, TransMatrix _matrix, double[] _initial) {
-            this.cost = _cost;
-            this.matrix = _matrix;
-            initial = new double[_initial.length];
-
-            for (int i = 0; i < initial.length; i++) {
-                initial[i] = _initial[i];
-            }
-        }
-
-        /**
-         * Necessary to implement so that list may be sorted. Returns -1 if this cost is less than the parameter's cost;
-         * 1 if this cost is greater than the parameter's cost; and 0 if they are equal.
-         *
-         * @param   o  MatrixListItem to compare to.
-         *
-         * @return  -1 if this is less than, 1 if greater than, 0 if equal.
-         */
-        public int compareTo(Object o) {
-
-            if (cost < ((MatrixListItem) o).cost) {
-                return -1;
-            } else if (cost > ((MatrixListItem) o).cost) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }
-
-        /**
-         * Creates readable string of this object, including cost, matrix, and point with its meanings.
-         *
-         * @return  Readable string representation of this object.
-         */
-        public String toString() {
-            String s = "";
-            s += "Cost of " + cost + " at:\n";
-            s += matrix.toString();
-            s += "\n";
-            s += "Point:\n";
-
-            for (int i = 0; i < 3; i++) {
-                s += " Rotations : ";
-                s += initial[i] + " ";
-                s += "\n";
-            }
-
-            for (int i = 3; i < 6; i++) {
-                s += " Translations : ";
-                s += initial[i] + " ";
-                s += "\n";
-            }
-
-            for (int i = 6; i < 9; i++) {
-                s += " Zooms : ";
-                s += initial[i] + " ";
-                s += "\n";
-            }
-
-            for (int i = 9; i < 12; i++) {
-                s += " Skews : ";
-                s += initial[i] + " ";
-                s += "\n";
-            }
-
-            return s;
-
-        }
-
     }
 }

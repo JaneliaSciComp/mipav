@@ -50,7 +50,20 @@ public class AlgorithmSeparableConvolverTest extends TestCase {
     public void testPerform() {
         gkf.setKernelType(GaussianKernelFactory.X_DERIVATIVE_KERNEL);
         Kernel xDerivativeKernel = gkf.createKernel();
-        sepConvolver = new AlgorithmSeparableConvolver(srcBuffer, new int[]{512, 512}, xDerivativeKernel.getData(), false, false);;
+        /**
+         * Single thread
+         */
+        sepConvolver = new AlgorithmSeparableConvolver(srcBuffer, new int[]{512, 512}, xDerivativeKernel.getData(), false, false);
+        sepConvolver.run();
+        testBuffer = sepConvolver.getOutputBuffer();
+        for(int i = 0; i < imgLength; i++){
+            Assert.assertEquals(testBuffer[i], refBufferXDer[i]);
+        }
+        
+        /**
+         * multi-threading separable convolution.
+         */
+        sepConvolver = new AlgorithmSeparableConvolver(srcBuffer, new int[]{512, 512}, xDerivativeKernel.getData(), false, true);
         sepConvolver.run();
         testBuffer = sepConvolver.getOutputBuffer();
         for(int i = 0; i < imgLength; i++){
@@ -59,6 +72,20 @@ public class AlgorithmSeparableConvolverTest extends TestCase {
         
         gkf.setKernelType(GaussianKernelFactory.Y_DERIVATIVE_KERNEL);
         Kernel yDerivativeKernel = gkf.createKernel();
+        
+        /**
+         * Single-threading separable convolution.
+         */
+        sepConvolver = new AlgorithmSeparableConvolver(srcBuffer, new int[]{512, 512}, yDerivativeKernel.getData(), false, false);;
+        sepConvolver.run();
+        testBuffer = sepConvolver.getOutputBuffer();
+        for(int i = 0; i < imgLength; i++){
+            Assert.assertEquals(testBuffer[i], refBufferYDer[i]);
+        }
+
+        /**
+         * multi-threading separable convolution.
+         */
         sepConvolver = new AlgorithmSeparableConvolver(srcBuffer, new int[]{512, 512}, yDerivativeKernel.getData(), false, false);;
         sepConvolver.run();
         testBuffer = sepConvolver.getOutputBuffer();

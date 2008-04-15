@@ -1,13 +1,9 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import java.util.concurrent.CountDownLatch;
-
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
-
-import gov.nih.mipav.util.MipavUtil;
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.model.structures.Point2Dd;
+import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.model.structures.jama.Matrix;
 
 
 /**
@@ -16,6 +12,8 @@ import gov.nih.mipav.view.*;
  * @version  0.1 Oct 1, 2001
  * @author   Neva Cherniavsky
  * @author   Matthew McAuliffe
+ * @version  0.2 March 27, 2008
+ * @author   Hailong Wang, Ph.D
  */
 public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
 
@@ -23,8 +21,6 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
 
     /** Flag indicating this is a rigid transformation. */
     private boolean rigid = false;
-
-    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Constructs a new algorithm with the given centers of mass (needed for setting the transformations), the given
@@ -35,16 +31,15 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
      * @param  com              Center of Mass of the input image.
      * @param  degreeOfFreedom  Degree of freedom for transformation (must be 2, 3, 4, 5, 7).
      * @param  costFunc         Cost function to use.
-     * @param  initial          Initial point to start from, length of 7 for linear or more for nonlinear.
      * @param  tols             Tolerance for each dimension (tols.length == degreeOfFreedom).
      * @param  maxIter          Maximum number of iterations.
      * @param  _rigid           <code>true</code> means this was a rigid transformation
      * @param  bracketBound     DOCUMENT ME!
      */
     public AlgorithmPowellOpt2D(AlgorithmBase parent, Point2Dd com, int degreeOfFreedom,
-                                AlgorithmOptimizeFunctionBase costFunc, double[] initial, double[] tols, int maxIter,
+                                AlgorithmOptimizeFunctionBase costFunc, double[] tols, int maxIter,
                                 boolean _rigid, int bracketBound) {
-        super(parent, degreeOfFreedom, costFunc, initial, tols, maxIter, 2, bracketBound);
+        super(parent, degreeOfFreedom, costFunc, tols, maxIter, 2, bracketBound);
 
         this.rigid = _rigid;
         toOrigin = new TransMatrix(3);
@@ -52,322 +47,185 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
 
         fromOrigin = new TransMatrix(3);
         fromOrigin.setTranslate(-com.x, -com.y);
-
-        finalPoint = new double[start.length];
-
-        // set up initial point properly
-        if (degreeOfFreedom == 2) {
-            point[0] = initial[1];
-            point[1] = initial[2];
-        }
-
-        if ((degreeOfFreedom == 3) && (rigid == true)) {
-            point[0] = initial[0]; // rotation
-            point[1] = initial[1]; // translation x
-            point[2] = initial[2]; // translation y
-        } else if (degreeOfFreedom == 3) {
-            point[0] = initial[3]; // global scaling factor
-            point[1] = initial[1]; // translation x
-            point[2] = initial[2]; // translation y
-        } else if (degreeOfFreedom >= 4) {
-
-            for (int i = 0; i < degreeOfFreedom; i++) {
-                point[i] = initial[i]; // 1 rotation, then 2 translations, then 2 scalings, then 2 skews
-            }
-        }
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Helper method to take the "point" we've been working with as a vector, and convert it into a transformation
-     * matrix. The length of the vector should be equal to the global variable nDims, which in turn was initialized by
-     * the degrees of freedom originally sent to this algorithm. Therefore, if there are 2 degrees of freedom, we set
-     * only the translations; 3 and no rigid means translation and global scaling; 3 and rigid means rotation and
-     * translation; 4 means rotation, translation, and global scaling; 5 means rotation, translation, and scaling; and 6
-     * means translation, scaling, and skewing.
-     *
-     * @param   vector  Vector that represented a "point" in the algorithm which needs to be converted to a matrix.
-     *
-     * @return  The transformation matrix created from the vector.
+     * Construct a full 7-dimension transformation vector from the partial transformation vector.
+     * For missing values in point, the values in defaultPoint will be used.
+     * 
+     * Different degree of freedom has different meanings:
+     *      2: only 2 translations
+     *      3: rigid:      1 rotation and 2 translations
+     *         non-rigid:    global scaling and 2 translations
+     *      4: 1 rotation, 2 translations and global scaling
+     *      5: 1 rotation, 2 translations and scalings
+     *      7: 1 rotation, 2 translations, scalings and skews
+     *      
+     * @param defaultPoint  a default full 7-dimension transformation vector.
+     * @param point         a partial or full transformation vector.
+     * @return              a full transformation vector.
      */
-    public TransMatrix convertToMatrix(double[] vector) {
-
-        double rot = start[0];
-        double transX = start[1];
-        double transY = start[2];
-        double scaleX = start[3];
-        double scaleY = start[4];
-        double skewX = start[5];
-        double skewY = start[6];
+    public double[] constructPoint(double[] defaultPoint, double[] point) {
+    	if(point == null || (point.length != 2 && point.length != 3 && 
+    	   point.length != 4 && point.length != 5 && point.length != 7)){
+    	    gov.nih.mipav.view.MipavUtil.displayError("The transformation vector either is null or has invlid length!");
+    		return null;
+    	}
+    	
+    	if(defaultPoint == null || defaultPoint.length != 7){
+    	    gov.nih.mipav.view.MipavUtil.displayError("The default transformation vector either is null or the length is not 7!");
+    		return null;
+    	}
+    	double[] workingPoint = new double[defaultPoint.length];
+    	System.arraycopy(defaultPoint, 0, workingPoint, 0, defaultPoint.length);
 
         // set up parts of transform properly
-        if (vector.length == 2) {
-            transX = vector[0];
-            transY = vector[1];
-        } else if ((vector.length == 3) && (rigid == true)) {
-            rot = vector[0];
-            transX = vector[1];
-            transY = vector[2];
-        } else if ((vector.length == 3) && (rigid == false)) {
-            scaleX = scaleY = vector[0];
-            transX = vector[1];
-            transY = vector[2];
-        } else if (vector.length == 4) {
-            rot = vector[0];
-            transX = vector[1];
-            transY = vector[2];
-            scaleX = scaleY = vector[3];
-        } else if (vector.length == 5) {
-            rot = vector[0];
-            transX = vector[1];
-            transY = vector[2];
-            scaleX = vector[3];
-            scaleY = vector[4];
-        } else if (vector.length == 7) {
-            rot = vector[0];
-            transX = vector[1];
-            transY = vector[2];
-            scaleX = vector[3];
-            scaleY = vector[4];
-            skewX = vector[5];
-            skewY = vector[6];
+        if (point.length == 2) {
+            workingPoint[1] = point[0];
+            workingPoint[2] = point[1];
+        } else if ((point.length == 3) && (rigid == true)) {
+            workingPoint[0] = point[0];
+            workingPoint[1] = point[1];
+            workingPoint[2] = point[2];
+        } else if ((point.length == 3) && (rigid == false)) {
+            workingPoint[3] = workingPoint[4] = point[0];
+            workingPoint[1] = point[1];
+            workingPoint[2] = point[2];
+        } else if (point.length == 4) {
+            workingPoint[0] = point[0];
+            workingPoint[1] = point[1];
+            workingPoint[2] = point[2];
+            workingPoint[3] = workingPoint[4] = point[3];
+        } else if (point.length > 4) {
+            System.arraycopy(point, 0, workingPoint, 0, point.length);
         }
-
-        TransMatrix matrix = new TransMatrix(3);
-
-        matrix.setTransform(transX, transY, rot);
-        matrix.setSkew(skewX, skewY);
-        matrix.setZoom(scaleX, scaleY);
-
-        Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
-
-        matrix.convertFromMatrix(mtx);
-
-        return matrix;
+        return workingPoint;
     }
-
+    
     /**
-     * Accessor that returns the final point with translations, rotations, scales, and skews representing the best
-     * tranformation.
-     *
-     * @return  A vector representing the best transformation in terms of translations, rotations, scales, and skews.
+     * Convert a 7-dimension transformation vector to a 3x3 transformation matrix.
+     * 
+     * @param vector	a 7-dimension transformation vector including 1 rotation, 2 translations, 2 scalings and 2 skews.
+     * @return			a 3x3 transformation matrix
      */
-    public double[] getFinal() {
+    public TransMatrix convertToMatrix(TransMatrix toOrigin, TransMatrix fromOrigin, double[] vector) {
 
-        for (int i = 0; i < start.length; i++) {
-            finalPoint[i] = start[i];
+		if (vector == null || vector.length != 7) {
+			return null;
+		}
+		TransMatrix matrix = new TransMatrix(3);
+
+		matrix.setTransform(vector[1], vector[2], vector[0]);
+		matrix.setSkew(vector[5], vector[6]);
+		matrix.setZoom(vector[3], vector[4]);
+
+		Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
+
+		matrix.convertFromMatrix(mtx);
+
+		return matrix;
+	}
+    
+    /**
+     * Extract the partial or full transformation vector from the start transformation vector,
+     * which will be optimized.
+     * 
+     * @param startPoint    the start full 7-dimension transformation vector.
+     * @return              the partial or full transformation vector which will be optimized. 
+     */
+    public double[] extractPoint(double[] startPoint){
+        if(startPoint == null || startPoint.length != 7){
+            gov.nih.mipav.view.MipavUtil.displayError("The start transformation vector either is null or the length is not 7!");
+            return null;
+        }
+        
+        double[] point = new double[dof];
+        
+        // set up initial point properly
+        if (dof == 2) {
+            point[0] = startPoint[1];
+            point[1] = startPoint[2];
         }
 
-        // nDims = degrees of freedom
-        if (nDims == 2) {
-            finalPoint[1] = point[0];
-            finalPoint[2] = point[1];
-        } else if ((nDims == 3) && (rigid == true)) {
-            finalPoint[0] = point[0]; // rotation
-            finalPoint[1] = point[1]; // translation x
-            finalPoint[2] = point[2]; // translation y
-        } else if (nDims == 3) {
-            finalPoint[3] = finalPoint[4] = point[0]; // global scaling factor
-            finalPoint[1] = point[1]; // translation x
-            finalPoint[2] = point[2]; // translation y
-        } else if (nDims >= 4) {
-
-            for (int i = 0; i < nDims; i++) {
-                finalPoint[i] = point[i]; // 1 rotation, then 2 translations, then 2 scalings, then 2 skews
-
+        if ((dof == 3) && rigid) {
+            point[0] = startPoint[0]; // rotation
+            point[1] = startPoint[1]; // translation x
+            point[2] = startPoint[2]; // translation y
+        } else if (dof == 3) {
+            point[0] = startPoint[3]; // global scaling factor
+            point[1] = startPoint[1]; // translation x
+            point[2] = startPoint[2]; // translation y
+        } else if (dof >= 4) {
+            for (int i = 0; i < dof; i++) {
+                point[i] = startPoint[i]; // 1 rotation, then 2 translations, then 2 scalings, then 2 skews
             }
-
-            if (nDims == 4) {
-                finalPoint[4] = finalPoint[3];
-            }
         }
-
-        return finalPoint;
+        return point;
     }
 
     /**
-     * Accessor that returns the matrix representing the best tranformation.
-     *
-     * @return  A matrix representing the best transformation.
+     * @see AlgorithmPowellOptBase#adjustTranslation(TransMatrix, float)
      */
-    public TransMatrix getMatrix() {
-        return convertToMatrix(point);
-    }
-
-    /**
-     * Accessor that returns the matrix representing the best tranformation. The passed in parameter represents the
-     * resolution (same in all directions and for both input and reference images, since resampled isotropically). Since
-     * the optimization was done in pixel space, not millimeter space, the translation parameters need to be scaled by
-     * the sample value.
-     *
-     * @param   sample  DOCUMENT ME!
-     *
-     * @return  A matrix representing the best transformation.
-     */
-    public TransMatrix getMatrix(float sample) {
-
-        // will resolution affect scale??
-        TransMatrix mat = convertToMatrix(point);
+    public void adjustTranslation(TransMatrix mat, float sample){
         double transX = mat.get(0, 2) * sample;
         double transY = mat.get(1, 2) * sample;
 
         mat.set(0, 2, transX);
         mat.set(1, 2, transY);
-
+    }
+    
+    /**
+     * @see AlgorithmPowellOptBase#getMatrix(int, float)
+     */
+    public TransMatrix getMatrix(int index,float sample) {
+        TransMatrix mat = getMatrix(index);
+        adjustTranslation(mat, sample);
         return mat;
     }
 
     /**
-     * Calls cost function with point and saves result in functionAtBest.
+     * @see AlgorithmPowellOptBase#updatePoint(double[], double, Vectornd).
      */
-    public void measureCost() {
-        functionAtBest = costFunction.cost(convertToMatrix(point));
-    }
-
-    /**
-     * Runs Powell's method. Powell's method is a way to find minimums without finding derivatives. Basically, it starts
-     * at some point P in N-dimensional space, proceeds in a direction, and minimizes along that line using golden
-     * search. It then resets the point and minimizes again, until the point moves by less than the tolerance. This
-     * method starts with the initial point defined in the constructor and initial directions of (1 0 ... 0) (0 1 0 ...
-     * ) ..., the basis vectors. At the end, "point" is the best point found and functionAtBest is the value at "point".
-     */
-    public void runAlgorithm() {
-        int count = 0;
-        boolean keepGoing = true;
-
-        functionAtBest = 0;
-        double[] pt = new double[nDims];
-        while ((count < maxIterations) && keepGoing && (nDims > 0)) {
-            keepGoing = false; // Only terminate loop when point changes for ALL directions are less
-
-            // than their respective tolerances.  Will only stay false if ALL are false.
-
-        	fireProgressStateChanged((int)(minProgressValue + count*progressStep));
-            System.arraycopy(point, 0, pt, 0, nDims);
-            
-            final CountDownLatch doneSignal = new CountDownLatch(nDims);
-
-            for (int i = 0; (i < nDims) && !parent.isThreadStopped(); i++) {
-
-                // Change by Z Cohen on 6/14/04
-                // Old code handled the first run through this loop differently than
-                // subsequent runs.
-                // The first time, initialGuess was set to zero and the boundGuess was
-                // set to the bracketBound.  On subsequent runs, initialGuess was set to
-                // functionAtBest and boundGuess to 1.
-                // Each parsing of this loop, though, is for a different degree of freedom and
-                // so the Powell parameters should be the same each the loop starts.
-                // Here's the old code:
-                //
-                // Initialize values for call to lineMinimization.
-                //
-                // if (count == 0) {
-                // // first time through use large bounds (obtained from JDialogRegistrationOAR3D)
-                // // lineMinimization will use boundGuess*tolerance to get bracket
-                // boundGuess = bracketBound;
-                // initialGuess = 0;
-                // } else {
-                // boundGuess = 1;
-                // initialGuess = functionAtBest;
-                // }
-                //
-                // End of old code.
-                //
-                // Here's the new code:
-                int boundGuess = bracketBound;
-                double initialGuess = 0;
-                final double[] directions = new double[nDims];
-
-                // directions should hold "1" for i and "0" for all other dimensions.
-                for (int j = 0; j < nDims; j++) {
-                    directions[j] = 0;
-                }
-                if (i < directions.length) {
-                    directions[i] = 1;
-                }
-                if (count == 0) {
-                    boundGuess = bracketBound; // first time through use large bounds
-
-                    // lineMinimization will use boundGuess*tolerance to get bracket
-                    initialGuess = 0;
-                } else {
-                    boundGuess = 1;
-                    initialGuess = functionAtBest;
-                    // old version of algorithm had boundGuess = 10 or =1
-                }
-
-                final int fboundGuess = boundGuess;
-                final double finitialGuess = initialGuess;
-                // Preferences.debug("Calling lineMinimization for dimension "+i +".\n");
-                Runnable task = new Runnable(){
-                	public void run(){
-                        lineMinimization(point, finitialGuess, fboundGuess, directions);
-                        doneSignal.countDown();
-                	}
-                };
-                MipavUtil.mipavThreadPool.execute(task);
-            } // end of nDims loop
-            try {
-                doneSignal.await();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            for(int i = 0; i < nDims; i++){
-                if (Math.abs(point[i] - pt[i]) > tolerance[i]){
-                	keepGoing = true;
-                	break;
-                }
-            }
-
-            if (parent.isThreadStopped()) {
-                return;
-            }
-
-            count++;
-        }
-
-        // Preferences.debug("Exited loop with count= " +count +" > maxIters" +maxIterations +" and keepGoing= "
-        // +keepGoing +".\n");
-        return;
-
-    }
-
-    /**
-     * Sets the initial point to the value passed in.
-     *
-     * @param  initial  Initial point.
-     */
-    public void setInitialPoint(double[] initial) {
-
-        for (int i = 0; i < initial.length; i++) {
-            start[i] = initial[i];
-        }
-
-        // set up initial point properly
-        // nDims = degrees of freedom
-        if (nDims == 2) {
-            point[0] = initial[1]; // translation x
-            point[1] = initial[2]; // translation y
-        } else if ((nDims == 3) && (rigid == true)) {
-            point[0] = initial[0]; // rotation
-            point[1] = initial[1]; // translation x
-            point[2] = initial[2]; // translation y
-        } else if (nDims == 3) {
-            point[0] = initial[3]; // global scaling factor
-            point[1] = initial[1]; // translation x
-            point[2] = initial[2]; // translation y
-        } else if (nDims >= 4) {
-
-            for (int i = 0; i < nDims; i++) {
-                point[i] = initial[i]; // 1 rotation, then 2 translations, then 2 scalings, then 2 skews
-
-                //
+    public void updatePoint(double[] point, double cost, Vectornd v) {
+        double[] finalPoint = v.getPoint();
+        if(dof == 2){
+            /**
+             * x and y translations.
+             */
+            finalPoint[1] = point[0];
+            finalPoint[2] = point[1];
+        }else if (dof == 3 && rigid) {
+            /**
+             * rotation, and x, y translations.
+             */
+            finalPoint[0] = point[0];
+            finalPoint[1] = point[1];
+            finalPoint[2] = point[2];
+        } else if (dof == 3) {
+            /**
+             * global scaling and x, y translations.
+             */
+            finalPoint[3] = finalPoint[4] = point[0];
+            finalPoint[1] = point[1];
+            finalPoint[2] = point[2];
+        } else if (dof == 4) {
+            /**
+             * Global scaling factor and x, y  translations.
+             */
+            finalPoint[0] = point[0];
+            finalPoint[1] = point[1];
+            finalPoint[2] = point[2];
+            finalPoint[3] = finalPoint[4] = point[3];
+        } else if (dof > 4) {
+            /**
+             * rotation, x, y translations, scalings and skews.
+             */
+            for (int j = 0; j < point.length; j++) {
+                finalPoint[j] = point[j];
             }
         }
+        v.setCost(cost);
     }
-
-   
-
 }

@@ -1,12 +1,10 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import java.util.concurrent.CountDownLatch;
-
 import gov.nih.mipav.model.structures.Point3Dd;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.jama.Matrix;
-import gov.nih.mipav.util.MipavUtil;
+
 
 
 /**
@@ -14,12 +12,11 @@ import gov.nih.mipav.util.MipavUtil;
  *
  * @version  0.1 Oct 1, 2001
  * @author   Neva Cherniavsky
+ * @version  0.2 March 27, 2008
+ * @author   Hailong Wang, Ph.D
  */
 public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
-
-    //~ Constructors ---------------------------------------------------------------------------------------------------
-
-    /**
+	/**
      * Constructs a new algorithm with the given centers of mass (needed for setting the transformations), the given
      * cost function (which was constructed with the proper images), the initial point we're looking at, some tolerance
      * within that point to look for the minimum, and the maximum number of iterations.
@@ -28,15 +25,14 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
      * @param  com              Center of Mass of the input image.
      * @param  degreeOfFreedom  Degree of freedom for transformation (must be 3, 4, 6, 7, 9, or 12).
      * @param  costFunc         Cost function to use.
-     * @param  initial          Initial point to start from, length of 12.
      * @param  tols             Tolerance for each dimension (tols.length == degreeOfFreedom).
      * @param  maxIter          Maximum number of iterations.
      * @param  bracketBound     DOCUMENT ME!
      */
     public AlgorithmPowellOpt3D(AlgorithmBase parent, Point3Dd com, int degreeOfFreedom,
-                                AlgorithmOptimizeFunctionBase costFunc, double[] initial, double[] tols, int maxIter,
+                                AlgorithmOptimizeFunctionBase costFunc, double[] tols, int maxIter,
                                 int bracketBound) {
-        super(parent, degreeOfFreedom, costFunc, initial, tols, maxIter, 3, bracketBound);
+        super(parent, degreeOfFreedom, costFunc, tols, maxIter, 3, bracketBound);
 
         if (degreeOfFreedom <= 12) {
             toOrigin = new TransMatrix(4);
@@ -45,389 +41,193 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
             fromOrigin = new TransMatrix(4);
             fromOrigin.setTranslate(-com.x, -com.y, -com.z);
         }
-
-        finalPoint = new double[start.length];
-
-        // set up initial point properly
-        if (degreeOfFreedom == 3) {
-            point[0] = initial[3]; // translation x
-            point[1] = initial[4]; // translation y
-            point[2] = initial[5]; // translation z
-        } else if (degreeOfFreedom == 4) {
-            point[0] = initial[6]; // global scaling factor
-            point[1] = initial[3]; // translation x
-            point[2] = initial[4]; // translation y
-            point[3] = initial[5]; // translation z
-        } else if (degreeOfFreedom >= 6) {
-
-            for (int i = 0; i < degreeOfFreedom; i++) {
-                point[i] = initial[i]; // 3 rotations, then 3 translations, then 3 scalings, then 3 skews
-            } // = 6       + 1 scale = 7   + 3 scales = 9   + 3 skews = 12
-        }
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Helper method to take the "point" we've been working with as a vector, and convert it into a transformation
-     * matrix. The length of the vector should be equal to the global variable nDims, which in turn was initialized by
-     * the degrees of freedom originally sent to this algorithm. Therefore, if there are 3 degrees of freedom, we set
-     * only the translations; 4 means translation and global scaling; 6 means rotation and translation; 7 means
-     * rotation, translation, and global scaling; 9 means rotation, translation, and scaling; and 12 means rotation,
-     * translation, scaling, and skewing.
-     *
-     * @param   vector  Vector that represented a "point" in the algorithm which needs to be converted to a matrix.
-     *
-     * @return  The transformation matrix created from the vector.
+     * Construct a full 12-dimension transformation vector from the partial transformation vector.
+     * For missing values in point, the values in defaultPoint will be used.
+     * 
+     * Different degree of freedom has different meanings:
+     *      3: only 3 translations
+     *      4: 3 translation and global scaling
+     *      6: 3 rotations and translations
+     *      7: 3 rotations and translations, and global scaling
+     *      9: 3 rotations, translations and scalings
+     *      12: 3 rotations, translations, scalings and skewings.
+     *      
+     * @param defaultPoint  a default full 12-dimension transformation vector.
+     * @param point         a partial or full transformation vector.
+     * @return              a full transformation vector.
      */
-    public TransMatrix convertToMatrix(double[] vector) {
-
+    public double[] constructPoint(double[] defaultPoint, double[] point){
+        if(defaultPoint == null || defaultPoint.length != 12){
+            gov.nih.mipav.view.MipavUtil.displayError("The default vector either is null or has incorrect dimension.");
+            return null;
+        }
+        
+        if(point == null || (point.length != 3 && point.length != 4
+                && point.length != 6 && point.length != 7 && point.length != 9
+                && point.length != 12)){
+            gov.nih.mipav.view.MipavUtil.displayError("The vector either is null or has incorrect dimension.");
+            return null;
+        }
         // 3 rotations, then 3 translations, then 3 scalings, then 3 skews
         // = 6       + 1 scale = 7   + 3 scales = 9   + 3 skews = 12
-        double rotX = start[0];
-        double rotY = start[1];
-        double rotZ = start[2];
-        double transX = start[3];
-        double transY = start[4];
-        double transZ = start[5];
-        double scaleX = start[6];
-        double scaleY = start[7];
-        double scaleZ = start[8];
-        double skewX = start[9];
-        double skewY = start[10];
-        double skewZ = start[11];
-
+        double[] fullPoint = new double[defaultPoint.length];
+        System.arraycopy(defaultPoint, 0, fullPoint, 0, fullPoint.length);
+        
         // set up parts of transform properly
-        if (vector.length == 3) {
-            transX = vector[0];
-            transY = vector[1];
-            transZ = vector[2];
-        } else if (vector.length == 4) {
-            transX = vector[1];
-            transY = vector[2];
-            transZ = vector[3];
-            scaleX = scaleY = scaleZ = vector[0];
-        } else if ((vector.length == 6) || (vector.length == 7) || (vector.length == 9) || (vector.length == 12)) {
-            rotX = vector[0];
-            rotY = vector[1];
-            rotZ = vector[2];
-            transX = vector[3];
-            transY = vector[4];
-            transZ = vector[5];
+        if (point.length == 3) {
+            fullPoint[3] = point[0];
+            fullPoint[4] = point[1];
+            fullPoint[5] = point[2];
+        } else if (point.length == 4) {
+            fullPoint[3] = point[1];
+            fullPoint[4] = point[2];
+            fullPoint[5] = point[3];
+            fullPoint[6] = fullPoint[7] = fullPoint[8] = point[0];
+        } else if ((point.length == 6) || (point.length == 7) 
+                || (point.length == 9) || (point.length == 12)) {
+            fullPoint[0] = point[0];
+            fullPoint[1] = point[1];
+            fullPoint[2] = point[2];
+            fullPoint[3] = point[3];
+            fullPoint[4] = point[4];
+            fullPoint[5] = point[5];
 
-            if (vector.length == 7) {
-                scaleX = scaleY = scaleZ = vector[6];
-            } else if (vector.length > 7) {
-                scaleX = vector[6];
-                scaleY = vector[7];
-                scaleZ = vector[8];
+            if (point.length == 7) {
+                fullPoint[6] = fullPoint[7] = fullPoint[8] = point[6];
+            } else if (point.length > 7) {
+                fullPoint[6] = point[6];
+                fullPoint[7] = point[7];
+                fullPoint[8] = point[8];
 
-                if (vector.length > 9) {
-                    skewX = vector[9];
-                    skewY = vector[10];
-                    skewZ = vector[11];
+                if (point.length > 9) {
+                    fullPoint[9] = point[9];
+                    fullPoint[10] = point[10];
+                    fullPoint[11] = point[11];
                 }
             }
         }
-
-        TransMatrix matrix = new TransMatrix(4);
-
-        matrix.setTransform(transX, transY, transZ, rotX, rotY, rotZ, scaleX, scaleY, scaleZ, skewX, skewY, skewZ);
-
-        Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
-
-        matrix.convertFromMatrix(mtx);
-
-        return matrix;
+        return fullPoint;
     }
 
     /**
-     * Helper method to take the "point" we've been working with as a vector, and convert it into a transformation
-     * matrix. The length of the vector should be equal to the global variable nDims, which in turn was initialized by
-     * the degrees of freedom originally sent to this algorithm. Therefore, if there are 3 degrees of freedom, we set
-     * only the translations; 4 means translation and global scaling; 6 means rotation and translation; 7 means
-     * rotation, translation, and global scaling; 9 means rotation, translation, and scaling; and 12 means rotation,
-     * translation, scaling, and skewing.
-     *
-     * @param   vector  Vector that represented a "point" in the algorithm which needs to be converted to a matrix.
-     *
-     * @return  The transformation matrix created from the vector.
+     * Convert a 12-dimension transformation vector to a 4x4 transformation matrix.
+     * 
+     * @param vector	a 12-dimension transformation vector including 3 rotations, translations, scalings and skews.
+     * @return			a 4x4 transformation matrix
      */
-    public TransMatrix convertToMatrixHalf(double[] vector) {
+    public TransMatrix convertToMatrix(TransMatrix toOrigin, TransMatrix fromOrigin, double[] vector) {
+		if (vector == null || vector.length != 12) {
+			return null;
+		}
+		TransMatrix matrix = new TransMatrix(4);
 
-        // 3 rotations, then 3 translations, then 3 scalings, then 3 skews
-        // = 6       + 1 scale = 7   + 3 scales = 9   + 3 skews = 12
-        double rotX = start[0];
-        double rotY = start[1];
-        double rotZ = start[2];
-        double transX = start[3];
-        double transY = start[4];
-        double transZ = start[5];
-        double scaleX = start[6];
-        double scaleY = start[7];
-        double scaleZ = start[8];
-        double skewX = start[9];
-        double skewY = start[10];
-        double skewZ = start[11];
+		matrix.setTransform(vector[3], vector[4], vector[5], vector[0],
+				vector[1], vector[2], vector[6], vector[7], vector[8],
+				vector[9], vector[10], vector[11]);
 
-        // set up parts of transform properly
-        if (vector.length == 3) {
-            transX = vector[0];
-            transY = vector[1];
-            transZ = vector[2];
-        } else if (vector.length == 4) {
-            transX = vector[1];
-            transY = vector[2];
-            transZ = vector[3];
-            scaleX = scaleY = scaleZ = vector[0];
-        } else if ((vector.length == 6) || (vector.length == 7) || (vector.length == 9) || (vector.length == 12)) {
-            rotX = vector[0];
-            rotY = vector[1];
-            rotZ = vector[2];
-            transX = vector[3];
-            transY = vector[4];
-            transZ = vector[5];
+		Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
 
-            if (vector.length == 7) {
-                scaleX = scaleY = scaleZ = vector[6];
-            } else if (vector.length > 7) {
-                scaleX = vector[6];
-                scaleY = vector[7];
-                scaleZ = vector[8];
+		matrix.convertFromMatrix(mtx);
 
-                if (vector.length > 9) {
-                    skewX = vector[9];
-                    skewY = vector[10];
-                    skewZ = vector[11];
-                }
+		return matrix;
+
+	} 
+
+    /**
+     * Extract the partial or full transformation vector from the start transformation vector,
+     * which will be optimized.
+     * 
+     * @param startPoint    the start full 12-dimension transformation vector.
+     * @return              the partial or full transformation vector which will be optimized. 
+     */
+    public double[] extractPoint(double[] startPoint){
+        if(startPoint == null || startPoint.length != 12){
+            gov.nih.mipav.view.MipavUtil.displayError("The start transformation vector either is null or the length is not 12!");
+            return null;
+        }
+        
+        double[] point = new double[dof];
+        if (dof == 3) {
+        	/**
+        	 * x, y and z translation.
+        	 */
+            point[0] = startPoint[3];
+            point[1] = startPoint[4];
+            point[2] = startPoint[5];
+        } else if (dof == 4) {
+        	/**
+        	 * Global scaling factor and x, y and z translation.
+        	 */
+            point[0] = startPoint[6]; // global scaling factor
+            point[1] = startPoint[3]; // translation x
+            point[2] = startPoint[4]; // translation y
+            point[3] = startPoint[5]; // translation z
+        } else if (dof >= 6) {
+        	/**
+        	 * x, y and z rotation, translation, scalings and skews.
+        	 */
+            for (int i = 0; i < dof; i++) {
+                point[i] = startPoint[i];
             }
         }
-
-        rotX /= 2;
-        rotY /= 2;
-        rotZ /= 2;
-        transX /= 2;
-        transY /= 2;
-        transZ /= 2;
-        scaleX /= 2;
-        scaleY /= 2;
-        scaleZ /= 2;
-        skewX /= 2;
-        skewY /= 2;
-        skewZ /= 2;
-
-        TransMatrix matrix = new TransMatrix(4);
-
-        matrix.setTransform(transX, transY, transZ, rotX, rotY, rotZ, scaleX, scaleY, scaleZ, skewX, skewY, skewZ);
-
-        Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
-
-        matrix.convertFromMatrix(mtx);
-
-        return matrix;
+        return point;
+    }
+    
+    /**
+     * @see AlgorithmPowellOptBase#getMatrix(int, float)
+     */
+    public TransMatrix getMatrix(int index, float sample) {
+        TransMatrix mat = getMatrix(index);
+        adjustTranslation(mat, sample);
+        return mat;
     }
 
     /**
-     * Helper method to take the "point" we've been working with as a vector, and convert it into a transformation
-     * matrix. The length of the vector should be equal to the global variable nDims, which in turn was initialized by
-     * the degrees of freedom originally sent to this algorithm. Therefore, if there are 3 degrees of freedom, we set
-     * only the translations; 4 means translation and global scaling; 6 means rotation and translation; 7 means
-     * rotation, translation, and global scaling; 9 means rotation, translation, and scaling; and 12 means rotation,
-     * translation, scaling, and skewing.
-     *
-     * @param   vector  Vector that represented a "point" in the algorithm which needs to be converted to a matrix.
-     *
-     * @return  The transformation matrix created from the vector.
+     * @see AlgorithmPowellOptBase#getMatrix(int, float)
      */
-    public TransMatrix convertToMatrixMidsagittal(double[] vector) {
-
-        // 3 rotations, then 3 translations, then 3 scalings, then 3 skews
-        // = 6       + 1 scale = 7   + 3 scales = 9   + 3 skews = 12
-        double rotX = start[0];
-        double rotY = start[1];
-        double rotZ = start[2];
-        double transX = start[3];
-        double transY = start[4];
-        double transZ = start[5];
-        double scaleX = start[6];
-        double scaleY = start[7];
-        double scaleZ = start[8];
-        double skewX = start[9];
-        double skewY = start[10];
-        double skewZ = start[11];
-
-        // set up parts of transform properly
-        if (vector.length == 3) {
-            transX = vector[0];
-            transY = vector[1];
-            transZ = vector[2];
-        } else if (vector.length == 4) {
-            transX = vector[1];
-            transY = vector[2];
-            transZ = vector[3];
-            scaleX = scaleY = scaleZ = vector[0];
-        } else if ((vector.length == 6) || (vector.length == 7) || (vector.length == 9) || (vector.length == 12)) {
-            rotX = vector[0];
-            rotY = vector[1];
-            rotZ = vector[2];
-            transX = vector[3];
-            transY = vector[4];
-            transZ = vector[5];
-
-            if (vector.length == 7) {
-                scaleX = scaleY = scaleZ = vector[6];
-            } else if (vector.length > 7) {
-                scaleX = vector[6];
-                scaleY = vector[7];
-                scaleZ = vector[8];
-
-                if (vector.length > 9) {
-                    skewX = vector[9];
-                    skewY = vector[10];
-                    skewZ = vector[11];
-                }
-            }
-        }
-
-        // only want z rotation and translations in x and y dims
-        rotX /= 2;
-        rotY /= 2;
-        rotZ /= 2;
-        transX /= 2;
-        transY /= 2;
-        transZ = 0;
-        scaleX = 1;
-        scaleY = 1;
-        scaleZ = 1;
-        skewX = 0;
-        skewY = 0;
-        skewZ = 0;
-
-        TransMatrix matrix = new TransMatrix(4);
-
-        matrix.setTransform(transX, transY, transZ, rotX, rotY, rotZ, scaleX, scaleY, scaleZ, skewX, skewY, skewZ);
-
-        Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
-
-        matrix.convertFromMatrix(mtx);
-
-        return matrix;
+    public TransMatrix getMatrix(double[] point, float sample){
+        TransMatrix mat = convertToMatrix(point);
+        adjustTranslation(mat, sample);
+        return mat;
     }
-
+    
     /**
-     * Accessor that returns the final point with translations, rotations, scales, and skews representing the best
-     * tranformation.
-     *
-     * @return  vector representing the best transformation in terms of translations, rotations, scales, and skews.
+     * @see AlgorithmPowellOptBase#adjustTranslation(TransMatrix, float)
      */
-    public double[] getFinal() {
+    public void adjustTranslation(TransMatrix mat, float sample){
+        double transX = mat.get(0, 3) * sample;
+        double transY = mat.get(1, 3) * sample;
+        double transZ = mat.get(2, 3) * sample;
 
-        for (int i = 0; i < start.length; i++) {
-            finalPoint[i] = start[i];
-        }
-
-        if (nDims == 3) {
-            finalPoint[3] = point[0]; // translation x
-            finalPoint[4] = point[1]; // translation y
-            finalPoint[5] = point[2]; // translation z
-        } else if (nDims == 4) {
-            finalPoint[7] = finalPoint[8] = finalPoint[6] = point[0]; // global scaling factor
-            finalPoint[3] = point[1]; // translation x
-            finalPoint[4] = point[2]; // translation y
-            finalPoint[5] = point[3]; // translation z
-        } else if (nDims >= 6) {
-
-            for (int i = 0; i < nDims; i++) {
-                finalPoint[i] = point[i]; // 3 rotations, then 3 translations, then 3 scalings, then 3 skews
-            }
-
-            if (nDims == 7) {
-                finalPoint[7] = finalPoint[8] = finalPoint[6];
-            }
-        }
-
-        return finalPoint;
+        mat.set(0, 3, transX);
+        mat.set(1, 3, transY);
+        mat.set(2, 3, transZ);
     }
-
     /**
-     * Accessor that returns the final point with translations, rotations, scales, and skews representing the best
-     * tranformation.
-     *
-     * @param   sample  the voxel resolution
-     *
-     * @return  vector representing the best transformation in terms of translations, rotations, scales, and skews.
+     * Obtain the transformation vector, scale it by 0.5, then convert it to transformation
+     * matrix.
+     * @param index     the index of transformation vector.
+     * @return          the scaled transformation matrix.
      */
-    public double[] getFinal(float sample) {
-        double transX = 0.0;
-        double transY = 0.0;
-        double transZ = 0.0;
-
-        for (int i = 0; i < start.length; i++) {
-            finalPoint[i] = start[i];
-        }
-
-        if (nDims <= 12) {
-            TransMatrix mat = convertToMatrix(point);
-
-            transX = mat.get(0, 3) * sample;
-            transY = mat.get(1, 3) * sample;
-            transZ = mat.get(2, 3) * sample;
-        }
-
-        if (nDims == 3) {
-            finalPoint[3] = transX; // translation x
-            finalPoint[4] = transY; // translation y
-            finalPoint[5] = transZ; // translation z
-        } else if (nDims == 4) {
-            finalPoint[7] = finalPoint[8] = finalPoint[6] = point[0]; // global scaling factor
-            finalPoint[3] = transX; // translation x
-            finalPoint[4] = transY; // translation y
-            finalPoint[5] = transZ; // translation z
-        } else if (nDims >= 6) {
-
-            for (int i = 0; i < nDims; i++) {
-
-                if (i == 3) {
-                    finalPoint[3] = transX;
-                } else if (i == 4) {
-                    finalPoint[4] = transY;
-                } else if (i == 5) {
-                    finalPoint[5] = transZ;
-                } else {
-                    finalPoint[i] = point[i]; // 3 rotations, then 3 translations, then 3 scalings, then 3 skews
-                }
-            }
-
-            if (nDims == 7) {
-                finalPoint[7] = finalPoint[8] = finalPoint[6];
-            }
-        }
-
-        return finalPoint;
-    }
-
-    /**
-     * Accessor that returns the matrix representing the best tranformation.
-     *
-     * @return  matrix representing the best transformation.
-     */
-    public TransMatrix getMatrix() {
+    public TransMatrix getMatrixHalf(int index) {
+        double [] point = scalePoint(index, 0.5);
         return convertToMatrix(point);
     }
 
     /**
-     * Accessor that returns the matrix representing the best tranformation. The passed in parameter represents the
-     * resolution (same in all directions and for both input and reference images, since resampled isotropically). Since
-     * the optimization was done in pixel space, not millimeter space, the translation parameters need to be scaled by
-     * the sample value.
-     *
-     * @param   sample  the voxel resolution
-     *
-     * @return  matrix representing the best transformation.
+     * Obtain the transformation vector, scale it by 0.5, then convert it to transformation
+     * matrix and scale the translations by sample parameter.
+     * @param index     the index of transformation vector.
+     * @param sample    the translation scaling parameter.
+     * @return          the scaled transformation matrix.
      */
-    public TransMatrix getMatrix(float sample) {
-
-        // will resolution affect scale??
+    public TransMatrix getMatrixHalf(int index, float sample) {
+        double[] point = scalePoint(index, 0.5);
         TransMatrix mat = convertToMatrix(point);
         double transX = mat.get(0, 3) * sample;
         double transY = mat.get(1, 3) * sample;
@@ -436,53 +236,61 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
         mat.set(0, 3, transX);
         mat.set(1, 3, transY);
         mat.set(2, 3, transZ);
-
         return mat;
     }
 
     /**
-     * Accessor that returns the matrix representing the best tranformation. All of the components of the transformation
-     * are halved from the 'best transformation' matrix.
-     *
-     * @return  matrix representing the best transformation with its components halved.
+     * Converts a full transformation vector into a midsagittal transformation vector.
+     * @param point     the full 12-dimension transformation vector.
+     * @return          the transformation vector complying with midsagittal alignment algorithm.
      */
-    public TransMatrix getMatrixHalf() {
-        return convertToMatrixHalf(point);
+    public double[] convertToMidsagittal(double[] point){
+        if(point == null || point.length != 12){
+            gov.nih.mipav.view.MipavUtil.displayError("The start transformation vector either is null or the length is not 12!");
+            return null;
+        }
+        double[] copy = copyPoint(point);
+        
+        /**
+         * 3 rotations
+         */
+        copy[0] /= 2;
+        copy[1] /= 2;
+        copy[2] /= 2;
+        
+        /**
+         * 3 translations
+         */
+        copy[3] /= 2;
+        copy[4] /= 2;
+        copy[5] = 0;
+        
+        /**
+         * 3 scalings
+         */
+        copy[6] = 1;
+        copy[7] = 1;
+        copy[8] = 1;
+        
+        /**
+         * 3 skews
+         */
+        copy[9] = 0;
+        copy[10] = 0;
+        copy[11] = 0;
+        return copy;
     }
-
-    /**
-     * Accessor that returns the matrix representing the best tranformation. The passed in parameter represents the
-     * resolution (same in all directions and for both input and reference images, since resampled isotropically). Since
-     * the optimization was done in pixel space, not millimeter space, the translation parameters need to be scaled by
-     * the sample value. All of the components of the transformation are halved from the 'best transformation' matrix.
-     *
-     * @param   sample  the voxel resolution
-     *
-     * @return  matrix representing the best transformation with its components halved.
-     */
-    public TransMatrix getMatrixHalf(float sample) {
-
-        // will resolution affect scale??
-        TransMatrix mat = convertToMatrixHalf(point);
-        double transX = mat.get(0, 3) * sample;
-        double transY = mat.get(1, 3) * sample;
-        double transZ = mat.get(2, 3) * sample;
-
-        mat.set(0, 3, transX);
-        mat.set(1, 3, transY);
-        mat.set(2, 3, transZ);
-
-        return mat;
-    }
-
+    
     /**
      * Accessor that returns the matrix representing the best tranformation. This transformation contains only the z
      * rotation and the x and y translation, to be used in the midsagittal alignment algorithm.
      *
      * @return  matrix representing the best transformation's z rot and x and y trans.
      */
-    public TransMatrix getMatrixMidsagittal() {
-        return convertToMatrixMidsagittal(point);
+    public TransMatrix getMatrixMidsagittal(int index) {
+        double[] point = getPoint(index);
+        double[] copy = convertToMidsagittal(point);       
+        return convertToMatrix(copy);
     }
 
     /**
@@ -496,164 +304,52 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
      *
      * @return  matrix representing the best transformation's z rot and x and y trans.
      */
-    public TransMatrix getMatrixMidsagittal(float sample) {
-
-        // will resolution affect scale??
-        TransMatrix mat = convertToMatrixMidsagittal(point);
-        double transX = mat.get(0, 3) * sample;
-        double transY = mat.get(1, 3) * sample;
-        double transZ = mat.get(2, 3) * sample;
-
-        mat.set(0, 3, transX);
-        mat.set(1, 3, transY);
-        mat.set(2, 3, transZ);
-
+    public TransMatrix getMatrixMidsagittal(int index, float sample) {
+        double[] point = getPoint(index);
+        double[] copy = convertToMidsagittal(point);       
+        TransMatrix mat = convertToMatrix(copy);
+        adjustTranslation(mat, sample);
         return mat;
     }
 
     /**
-     * Calls cost function with point and saves result in functionAtBest.
+     * @see AlgorithmPowellOptBase#updatePoint(double[], double, Vectornd)
      */
-    public void measureCost() {
-        functionAtBest = costFunction.cost(convertToMatrix(point));
-    }
+    public void updatePoint(double[] point, double cost, Vectornd v) {
+        double[] fullPoint = v.getPoint();
 
-    /**
-     * Runs Powell's method. Powell's method is a way to find minimums without finding derivatives. Basically, it starts
-     * at some point P in N-dimensional space, proceeds in a direction, and minimizes along that line using golden
-     * search. It then resets the point and minimizes again, until the point moves by less than the tolerance. This
-     * method starts with the initial point defined in the constructor and initial directions of (1 0 ... 0) (0 1 0 ...
-     * ) ..., the basis vectors. At the end, "point" is the best point found and functionAtBest is the value at "point".
-     */
-    public void runAlgorithm() {
-        int count = 0;
-        final double[] pt = new double[nDims];
-        boolean keepGoing = true;
+        if (point.length == 3) {
+            fullPoint[3] = point[0];
+            fullPoint[4] = point[1];
+            fullPoint[5] = point[2];
+        } else if (point.length == 4) {
+            fullPoint[3] = point[1];
+            fullPoint[4] = point[2];
+            fullPoint[5] = point[3];
+            fullPoint[6] = fullPoint[7] = fullPoint[8] = point[0];
+        } else if ((point.length == 6) || (point.length == 7) 
+                || (point.length == 9) || (point.length == 12)) {
+            fullPoint[0] = point[0];
+            fullPoint[1] = point[1];
+            fullPoint[2] = point[2];
+            fullPoint[3] = point[3];
+            fullPoint[4] = point[4];
+            fullPoint[5] = point[5];
 
-        functionAtBest = Double.MAX_VALUE;
-        
-        progressStep = (maxProgressValue -minProgressValue)/ maxIterations;
+            if (point.length == 7) {
+                fullPoint[6] = fullPoint[7] = fullPoint[8] = point[6];
+            } else if (point.length > 7) {
+                fullPoint[6] = point[6];
+                fullPoint[7] = point[7];
+                fullPoint[8] = point[8];
 
-        while ((count < maxIterations) && keepGoing && !parent.isThreadStopped()) {
-
-            keepGoing = false; // Only terminate loop when point changes for ALL directions are less
-
-            // than their respective tolerances.  Will only stay false if ALL are false.
-
-        	fireProgressStateChanged((int)(minProgressValue + count*progressStep));
-            System.arraycopy(point, 0, pt, 0, nDims);
-            
-            final CountDownLatch doneSignal = new CountDownLatch(nDims);
-
-            for (int i = 0; (i < nDims) && !parent.isThreadStopped(); i++) {
-
-                // Change by Z Cohen on 6/14/04
-                // Old code handled the first run through this loop differently than
-                // subsequent runs.
-                // The first time, initialGuess was set to zero and the boundGuess was
-                // set to the bracketBound.  On subsequent runs, initialGuess was set to
-                // functionAtBest and boundGuess to 1.
-                // Each parsing of this loop, though, is for a different degree of freedom and
-                // so the Powell parameters should be the same each the loop starts.
-                // Here's the old code:
-                //
-                // Initialize values for call to lineMinimization.
-                //
-                // if (count == 0) {
-                // // first time through use large bounds (obtained from JDialogRegistrationOAR3D)
-                // // lineMinimization will use boundGuess*tolerance to get bracket
-                // boundGuess = bracketBound;
-                // initialGuess = 0;
-                // } else {
-                // boundGuess = 1;
-                // initialGuess = functionAtBest;
-                // }
-                //
-                // End of old code.
-                //
-                // Here's the new code:
-                final int boundGuess = bracketBound;
-                final double initialGuess = 0;
-                final double[] directions = new double[nDims];
-
-                // directions should hold "1" for i and "0" for all other dimensions.
-                for (int j = 0; j < nDims; j++) {
-                    directions[j] = 0;
-                }
-                directions[i] = 1;
-
-                // Preferences.debug("Calling lineMinimization for dimension "+i +".\n");
-                Runnable task = new Runnable(){
-                	public void run(){
-                        lineMinimization(point, initialGuess, boundGuess, directions);
-                        doneSignal.countDown();
-                	}
-                };
-                MipavUtil.mipavThreadPool.execute(task);
-            } // end of nDims loop
-            try {
-                doneSignal.await();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            for(int i = 0; i < nDims; i++){
-                if (Math.abs(point[i] - pt[i]) > tolerance[i]){
-                	keepGoing = true;
-                	break;
+                if (point.length > 9) {
+                    fullPoint[9] = point[9];
+                    fullPoint[10] = point[10];
+                    fullPoint[11] = point[11];
                 }
             }
-
-            if (parent.isThreadStopped()) {
-                return;
-            }
-
-            count++;
         }
-
-        // Preferences.debug("Exited loop with count= " +count +", maxIters " +maxIterations +
-        // ", and keepGoing= " +keepGoing +".\n");
-        fireProgressStateChanged((int)maxProgressValue);
-        return;
-    }
-
-    private int findBestDirection(double[][] costs){
-    	double best = costs[0][0];
-    	int indexAtBest = 0;
-    	for(int i = 1; i < nDims; i++){
-    		if(best < costs[i][0]){
-    			best = costs[i][0];
-    			indexAtBest = i;
-    		}
-    	}
-    	return indexAtBest;
-    }
-    /**
-     * Sets the initial point to the value passed in.
-     *
-     * @param  initial  Initial point.
-     */
-    public void setInitialPoint(double[] initial) {
-
-        for (int i = 0; i < initial.length; i++) {
-            start[i] = initial[i];
-        }
-
-        // set up initial point properly
-        if (nDims == 3) {
-            point[0] = initial[3]; // translation x
-            point[1] = initial[4]; // translation y
-            point[2] = initial[5]; // translation z
-        } else if (nDims == 4) {
-            point[0] = initial[6]; // global scaling factor
-            point[1] = initial[3]; // translation x
-            point[2] = initial[4]; // translation y
-            point[3] = initial[5]; // translation z
-        } else if (nDims >= 6) {
-
-            for (int i = 0; i < nDims; i++) {
-                point[i] = initial[i]; // 3 rotations, then 3 translations, then 3 scalings, then 3 skews
-            }
-        }
+        v.setCost(cost);
     }
 }
