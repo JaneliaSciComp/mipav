@@ -86,7 +86,7 @@ public class JPanelSurface_WM extends JInterfaceBase
     private boolean findProbe = false;
 
     /** Save surface button. */
-    private JButton levelSButton, levelVButton, levelWButton, levelXMLButton;
+    private JButton levelSButton, levelVButton, levelWButton, levelXMLButton, levelSTLButton;
 
     // Paint tool-bar (containted in the SurfacePaint class)
     private SurfacePaint_WM m_kSurfacePaint = null;
@@ -280,7 +280,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         else if (command.equals("ChangePolyMode")) {
             changePolyMode(polygonIndexToMode(polygonModeCB.getSelectedIndex()));
         } else if (command.equals("LevelXML") || command.equals("LevelW") || command.equals("LevelS") ||
-                   command.equals("LevelV"))
+                   command.equals("LevelV") || command.equals("LevelSTL"))
         {
             saveSurfaces( surfaceList.getSelectedIndices(), command );
         } 
@@ -474,6 +474,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         levelVButton = toolbarBuilder.buildButton("LevelV", "Save single level (.wrl)", "levelvsave");
         levelWButton = toolbarBuilder.buildButton("LevelW", "Save multi objects (.wrl)", "levelwsave");
         levelXMLButton = toolbarBuilder.buildButton("LevelXML", "Save xml surface (.xml)", "savexml");
+        levelSTLButton = toolbarBuilder.buildButton("LevelSTL", "Save STL binary surface (.stl)", "savestl");
 
         toolBar.add(smooth1Button);
         toolBar.add(smooth2Button);
@@ -483,6 +484,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         toolBar.add(levelVButton);
         toolBar.add(levelWButton);
         toolBar.add(levelXMLButton);
+        toolBar.add(levelSTLButton);
 
         JPanel toolBarPanel = new JPanel();
         toolBarPanel.setLayout(new BorderLayout());
