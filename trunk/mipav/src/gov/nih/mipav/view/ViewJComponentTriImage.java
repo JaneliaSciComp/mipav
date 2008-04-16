@@ -2132,6 +2132,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         int i, j, index;
         int[] iterFactors = imageActive.getVolumeIterationFactors();
 
+        
         Point3Df paintPoint = new Point3Df();
 
         if (paintBrush != null) {
@@ -2142,35 +2143,28 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
             int brushXDim = paintBrushDim.width;
             int brushYDim = paintBrushDim.height;
+            int hgt, wdt; // height and width of the paint cursor icon
+            double height, width; // scaled height and width in the paintBitmap
             
             // change the brush extents with the current image resolution.
             // So, if the the resolution is high, the paint brush extents are scaled down. 
-            float[] orientedResols = imageA.getResolutions(0, orientation);
-           
-            float minResol = Math.min(orientedResols[2], Math.min(orientedResols[0], orientedResols[1]));
-            float ratio = Math.max(resolutionX/resolutionY, resolutionY/resolutionX);
-            int extentConst;
-            extentConst = paintBrushDim.width;
+      
+            double minResol = Math.min(resolutionX, resolutionY);
+
             
-            if ( ratio != 1 ) {
-               brushXDim = Math.max(Math.round((minResol * extentConst) / orientedResols[0]), 1);
-               brushYDim = Math.max(Math.round((minResol * extentConst) / orientedResols[1]), 1);
-            }
-            
-            for (int height = 0; height < brushYDim; height++) {
+            for (height = 0, hgt = 0; hgt < brushYDim; hgt++, height = hgt*minResol/resolutionY) {
 
-                for (int width = 0; width < brushXDim; width++) {
+                for (width = 0, wdt = 0; wdt < brushXDim; wdt++, width = wdt*minResol/resolutionX) {
+                	int idx = ((hgt * brushXDim) + wdt);
+                    if (paintBrush.get(idx)) {
 
-                    if (paintBrush.get((height * brushYDim) + width)) {
-
-                        Point3Df patientPaintPoint = new Point3Df(x + width, y + height, slice);
+                        Point3Df patientPaintPoint = new Point3Df((float)(x + width), (float)(y + height), slice);
                         MipavCoordinateSystems.patientToFile(patientPaintPoint, paintPoint, imageActive, orientation);
-
                         if (((paintPoint.x <= (xDim - 1)) && (paintPoint.x >= 0)) && (paintPoint.y <= (yDim - 1)) &&
                                 (paintPoint.y >= 0) && (paintPoint.z <= (zDim - 1)) && (paintPoint.z >= 0)) {
-
-                            index = (int) ((iterFactors[0] * paintPoint.x) + (iterFactors[1] * paintPoint.y) +
-                                           (iterFactors[2] * paintPoint.z));
+                            
+                        	index = MipavMath.round((iterFactors[0] * (int)paintPoint.x) + (iterFactors[1] * (int)paintPoint.y) +
+                                           (iterFactors[2] * (int)paintPoint.z));
 
                             if (paintPixels == true) {
                                 paintBitmap.set(index);
