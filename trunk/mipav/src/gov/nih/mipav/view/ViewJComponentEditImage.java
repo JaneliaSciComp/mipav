@@ -2327,19 +2327,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         int[] brushExtents = brushImage.getExtents();
         
-        // change the brush extents with the current image resolution.
-        // So, if the the resolution is high, the paint brush extents are scaled down. 
-        float[] orientedResols = imageA.getResolutions(0, orientation);
-        float[] imageResols = imageA.getResolutions(0);
-        float minResol = Math.min(imageResols[2], Math.min(imageResols[0], imageResols[1]));
-        int extentConst;
-        extentConst = brushExtents[0];
-        
-        brushExtents[0] = Math.max(Math.round((minResol * extentConst) / orientedResols[0]), 1);
-        brushExtents[1] = Math.max(Math.round((minResol * extentConst) / orientedResols[1]), 1);
-        
-        // System.err.println("brushExtents[0] = "+ brushExtents[0] + " brushExtents[1] = " + brushExtents[1]);
-        
         // create the bitset and the brush dimensions
         paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
         paintBrush = new BitSet(brushExtents[0] * brushExtents[1]);
@@ -2432,20 +2419,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
         
         int[] brushExtents = brushImage.getExtents();
-        
-        // change the brush extents with the current image resolution.
-        // So, if the the resolution is high, the paint brush extents are scaled down. 
-        float[] orientedResols = imageA.getResolutions(0, orientation);
-        float[] imageResols = imageA.getResolutions(0);
-        float minResol = Math.min(imageResols[2], Math.min(imageResols[0], imageResols[1]));
-        int extentConst;
-        extentConst = brushExtents[0];
-        
-        brushExtents[0] = Math.max(Math.round((minResol * extentConst) / orientedResols[0]), 1);
-        brushExtents[1] = Math.max(Math.round((minResol * extentConst) / orientedResols[1]), 1);
-        
-        // System.err.println("brushExtents[0] = "+ brushExtents[0] + " brushExtents[1] = " + brushExtents[1]);
-        
          
         // create the bitset and the brush dimensions
         paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
@@ -5965,23 +5938,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             factor = 1f;
         }
         
-        if ( resolutionX >= resolutionY ) {
-        	ratioY = resolutionY / resolutionX;
-        	ratioX = 1.0f;
-        	if ( ratioY < 0.1f) ratioY = 1.0f;
-        } else {
-        	ratioX = resolutionX / resolutionY;
-        	ratioY = 1.0f;
-        	if ( ratioX < 0.1f) ratioX = 1.0f;
-        }
-        // System.err.println("resolutionX = " + resolutionX + " resolutionY = " + resolutionY + " factor = " + factor + " factor2 = " + factor2);
-        
         graphics2d.drawImage(paintImage.getScaledInstance(MipavMath.round(paintImage.getWidth() * zoomX * factor),
                                                           MipavMath.round(paintImage.getHeight() * zoomY * factor2), 0),
-                             new AffineTransform(ratioX, 0f, 0f, ratioY, xS, yS), null);
-       
-      
-
+                             new AffineTransform(1.0f/factor, 0f, 0f, 1.0f/factor2, xS, yS), null);
+        
+        
     }
 
 

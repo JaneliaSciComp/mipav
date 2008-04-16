@@ -8,6 +8,7 @@ import gov.nih.mipav.model.structures.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.*;
 
 import java.util.*;
 
@@ -2141,7 +2142,21 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
             int brushXDim = paintBrushDim.width;
             int brushYDim = paintBrushDim.height;
-
+            
+            // change the brush extents with the current image resolution.
+            // So, if the the resolution is high, the paint brush extents are scaled down. 
+            float[] orientedResols = imageA.getResolutions(0, orientation);
+           
+            float minResol = Math.min(orientedResols[2], Math.min(orientedResols[0], orientedResols[1]));
+            float ratio = Math.max(resolutionX/resolutionY, resolutionY/resolutionX);
+            int extentConst;
+            extentConst = paintBrushDim.width;
+            
+            if ( ratio != 1 ) {
+               brushXDim = Math.max(Math.round((minResol * extentConst) / orientedResols[0]), 1);
+               brushYDim = Math.max(Math.round((minResol * extentConst) / orientedResols[1]), 1);
+            }
+            
             for (int height = 0; height < brushYDim; height++) {
 
                 for (int width = 0; width < brushXDim; width++) {
