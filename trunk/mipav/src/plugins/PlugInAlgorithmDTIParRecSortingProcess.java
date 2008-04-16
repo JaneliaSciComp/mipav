@@ -1,5 +1,8 @@
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -13,6 +16,7 @@ import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoImageXML;
+import gov.nih.mipav.model.file.FileInfoPARREC;
 import gov.nih.mipav.model.file.FilePARREC;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileWriteOptions;
@@ -42,6 +46,9 @@ public class PlugInAlgorithmDTIParRecSortingProcess extends AlgorithmBase {
 	
 	/** file dir **/
 	private String fileDir;
+	
+	/** path to gradient file (only necessary for version 4 of Par/Rec) **/
+	private String gradientFilePath;
 	
 	/** FileParRec handle **/
 	private FilePARREC fileParRec;
@@ -93,9 +100,7 @@ public class PlugInAlgorithmDTIParRecSortingProcess extends AlgorithmBase {
     
     /** vol paramters **/
     private HashMap volParameters;
-    
-    /** slices **/
-    private Vector slices;
+
 	
     /** slice gap String **/
     private String sliceGapString;
@@ -133,18 +138,31 @@ public class PlugInAlgorithmDTIParRecSortingProcess extends AlgorithmBase {
     this int represents which volume index to exclude**/
     private int avgVolIndex = -1;
     
-    
     /** boolean if proc dir is created **/
     private boolean isProcDirCreated;
+    
+    /** boolean identifying if datset is older than version 4.1 **/
+    private boolean isOldVersion = false;
+    
+    /** this counter is used for version 4 of Par/Rec...nim is calculated from gradient file **/
+    private int nimCounter = 0;
+    
+    /** arraylist of gradients for version 4 of Par/Rec **/
+    private  ArrayList<String[]> oldVersionGradientsAL;
+    
+    /** file info Par/Rec **/
+	private FileInfoPARREC fileInfoPR;
+    
 	
 	
 	/** constructor
 	 * 
 	 */
-	public PlugInAlgorithmDTIParRecSortingProcess(String fileName, String fileDir, JTextArea outputTextArea) {
+	public PlugInAlgorithmDTIParRecSortingProcess(String fileName, String fileDir, String gradientFilePath, JTextArea outputTextArea) {
 		this.fileName = fileName;
 		this.studyName = fileName.substring(0, fileName.indexOf("."));
 		this.fileDir = fileDir;
+		this.gradientFilePath = gradientFilePath;
 		this.listFileName = studyName + ".list";
 		this.bmatrixFileName = studyName + ".BMTXT";
 		this.pathFileName = studyName + ".path";
@@ -293,18 +311,22 @@ public class PlugInAlgorithmDTIParRecSortingProcess extends AlgorithmBase {
 	 */
 	public boolean obtainListFileData() {
 		try{
+
+			fileInfoPR = (FileInfoPARREC)image4D.getFileInfo(0);
+
 			int extents[] = image4D.getExtents();
 			originalColumnsString = String.valueOf(extents[0]);
 			originalRowsString = String.valueOf(extents[1]);
 			numSlicesString = String.valueOf(extents[2]);
-			volParameters = fileParRec.getVolParameters();
+			volParameters = fileInfoPR.getVolParameters();
 			String fovString = (String)volParameters.get("scn_fov");
 			String[] fovs = fovString.trim().split("\\s+");
 			horizontalFOVString = fovs[0];
 			verticalFOVString = fovs[2];
-			slices = fileParRec.getSlices();
+			//slices = fileInfoPR.getSlices();
 			//get some list file info from 1st slice 
-	        String slice = (String)slices.get(0);
+			FileInfoPARREC firstFileInfo = (FileInfoPARREC)image4D.getFileInfo(0);
+			String slice = firstFileInfo.getSliceInfo();
 	        String[] values = slice.split("\\s+");
 	        //slice gap
 	        sliceGapString = values[23];
@@ -325,10 +347,11 @@ public class PlugInAlgorithmDTIParRecSortingProcess extends AlgorithmBase {
 			//Once we find this volume, exclude
 	        avgVolIndex = -1;
 	        
-			for(int i=0,vol=0;i<slices.size();i=i+extents[2],vol++) {
-				slice = (String)slices.get(i);
+	        for(int i = 0,vol=0; i < (extents[2] * extents[3]);i=i+extents[2],vol++) {
+				FileInfoPARREC fileInfoPR = (FileInfoPARREC)image4D.getFileInfo(i);
+	            slice = fileInfoPR.getSliceInfo();
 				values = slice.split("\\s+");
-				float bValue = (Float.valueOf(values[41])).floatValue();
+				float bValue = (Float.valueOf(values[33])).floatValue();
 				float grad1 = (Float.valueOf(values[45])).floatValue();
 				float grad2 = (Float.valueOf(values[46])).floatValue();
 				float grad3 = (Float.valueOf(values[47])).floatValue();
@@ -342,7 +365,66 @@ public class PlugInAlgorithmDTIParRecSortingProcess extends AlgorithmBase {
 			}else {
 				nimString = String.valueOf(extents[3]);
 			}    
-		}catch(Exception e) {
+		} catch(ArrayIndexOutOfBoundsException e) {
+			//this means that we the Par/Rec version is an older one
+			//so first check if gradient file was supplied...if so, get nimString
+			//by the number of lines in that file....if no gradient file was supplied...exit
+			//and complain!  
+			//also...might as well just read the gradient file at this point
+			if(gradientFilePath == null) {
+				Preferences.debug("! ERROR: A valid gradient file must be supplied for this dataset....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+				outputTextArea.append("! ERROR: A valid gradient file must be supplied for this dataset....exiting algorithm \n");
+				return false;
+			}else {
+				boolean success = readGradientFile();
+				if(success == false) {
+		            Preferences.debug("! ERROR: Error in reading gradient file....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+
+		            if (outputTextArea != null) {
+		                outputTextArea.append("! ERROR: Error in reading gradient file....exiting algorithm \n");
+		            }
+					return false;
+				}
+				else {
+
+					isOldVersion = true;
+					//Philips puts in one volume as the average of all the DWIs. This
+					//volume will have a non-zero B value and 0 in the gradients
+					//Once we find this volume, exclude
+			        avgVolIndex = -1;
+			        int extents[] = image4D.getExtents();
+			        int k = 0;
+			        for(int i = 0,vol=0; i < (extents[2] * extents[3]);i=i+extents[2],vol++) {
+						FileInfoPARREC fileInfoPR = (FileInfoPARREC)image4D.getFileInfo(i);
+			            String slice = fileInfoPR.getSliceInfo();
+						String[] values = slice.split("\\s+");
+						float bValue = (Float.valueOf(values[33])).floatValue();
+						if(bValue != 0) {
+							String[] gradStrings = oldVersionGradientsAL.get(k);
+							float grad1 = (Float.valueOf(gradStrings[0])).floatValue();
+							float grad2 = (Float.valueOf(gradStrings[1])).floatValue();
+							float grad3 = (Float.valueOf(gradStrings[2])).floatValue();
+							if(grad1 == 0 && grad2 == 0 && grad3 == 0) {
+								avgVolIndex = vol;	
+							}
+							k++;
+						}
+						
+						
+					}
+					if(avgVolIndex != -1) {
+						nimString = String.valueOf(extents[3]-1);
+					}else {
+						nimString = String.valueOf(extents[3]);
+					}   
+					
+				}
+				
+			}
+			
+			
+		}
+		catch(Exception e) {
 			Preferences.debug("! ERROR: " + e.toString() + "\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("! ERROR: Obtaining list file data falied....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
 
@@ -359,8 +441,27 @@ public class PlugInAlgorithmDTIParRecSortingProcess extends AlgorithmBase {
 	
 	
 	
-	
-	
+	public boolean readGradientFile() {
+
+        try {
+            String str;
+            FileInputStream fis = new FileInputStream(gradientFilePath);
+            BufferedReader d = new BufferedReader(new InputStreamReader(fis));
+            oldVersionGradientsAL = new ArrayList<String[]>();
+            while ((str = d.readLine()) != null) {
+                str = str.trim();
+                String[] arr = str.split("\\s+");
+                oldVersionGradientsAL.add(arr);
+                nimCounter++;
+            }
+            fis.close();
+        }
+        catch(Exception e) {
+        	return false;
+        }
+        
+        return true;
+	}
 	
 	
 	
@@ -536,20 +637,35 @@ public class PlugInAlgorithmDTIParRecSortingProcess extends AlgorithmBase {
             File bMatrixFile = new File(fileDir + "_proc" + File.separator + bmatrixFileName);
             FileOutputStream outputStream = new FileOutputStream(bMatrixFile);
             PrintStream printStream = new PrintStream(outputStream);
-
-	    	for(int i=0,vol=0;i<slices.size();i=i+extents[2],vol++) {
+            float x = 0;
+            float y = 0;
+            float z = 0;
+            float b;
+            int k = 0;
+            for(int i = 0,vol=0; i < (extents[2] * extents[3]);i=i+extents[2],vol++) {
+				FileInfoPARREC fileInfoPR = (FileInfoPARREC)image4D.getFileInfo(i);
 	    		if(vol!=avgVolIndex) {
-					slice = (String)slices.get(i);
+					slice = fileInfoPR.getSliceInfo();
 					values = slice.split("\\s+");
-					float b = (Float.valueOf(values[33])).floatValue();
-					float x = (Float.valueOf(values[45])).floatValue();
-					float y = (Float.valueOf(values[46])).floatValue();
-					float z = (Float.valueOf(values[47])).floatValue();
+					b = (Float.valueOf(values[33])).floatValue();
+					if(!isOldVersion) {
+						x = (Float.valueOf(values[45])).floatValue();
+						y = (Float.valueOf(values[46])).floatValue();
+						z = (Float.valueOf(values[47])).floatValue();
+					}else {
+						if(b != 0) {
+							String[] grads = oldVersionGradientsAL.get(k);
+							x = Float.valueOf(grads[0]).floatValue();
+							y = Float.valueOf(grads[1]).floatValue();
+							z = Float.valueOf(grads[2]).floatValue();
+							k++;
+						}
+						
+					}
 
 					// For Par/Rec datasets, Philips uses another coordinate frame
 					// formula for bmtxt values is :
 		            // bzz 2bxz -2byz bxx -2bxy byy
-					
 
 					float _bxx = b * x * x;
 	
@@ -557,13 +673,13 @@ public class PlugInAlgorithmDTIParRecSortingProcess extends AlgorithmBase {
 	                    _bxx = Math.abs(_bxx);
 	                }
 	
-	                float _2bxy = -2 * b * x * y;
+	                float _2bxy = -2.0f * b * x * y;
 	
 	                if (Math.abs(_2bxy) == 0) {
 	                   _2bxy = Math.abs(_2bxy);
 	                }
 	
-	                float _2bxz = 2 * b * x * z;
+	                float _2bxz = 2.0f * b * x * z;
 	
 	                if (Math.abs(_2bxz) == 0) {
 	                    _2bxz = Math.abs(_2bxz);
@@ -575,7 +691,7 @@ public class PlugInAlgorithmDTIParRecSortingProcess extends AlgorithmBase {
 	                    _byy = Math.abs(_byy);
 	                }
 	
-	                float _2byz = -2 * b * y * z;
+	                float _2byz = -2.0f * b * y * z;
 	
 	                if (Math.abs(_2byz) == 0) {
 	                    _2byz = Math.abs(_2byz);
@@ -667,14 +783,9 @@ public class PlugInAlgorithmDTIParRecSortingProcess extends AlgorithmBase {
 	                }
 	                sb.insert(padLength, _byy_string);
 	                printStream.print(sb.toString());
-	
-	
-	                
-	
-	
-	                
-	
+
 	                printStream.println();
+	               
 	    		}
 	    	}
 	    	outputStream.close();
@@ -718,7 +829,7 @@ public class PlugInAlgorithmDTIParRecSortingProcess extends AlgorithmBase {
             
             for(int i=0;i<zDim;i++) {   	
             	for(int j=i;j<unsortedPathsArrayList.size();j=j+zDim) {
-            		printStream.println((String)unsortedPathsArrayList.get(j));
+            		printStream.println(((String)unsortedPathsArrayList.get(j)) + ".raw");
             	}
             }
             outputStream.close();
@@ -757,7 +868,8 @@ public class PlugInAlgorithmDTIParRecSortingProcess extends AlgorithmBase {
     	
     	
     	//get some of the values for eqautions above from 1st slice 
-        String slice = (String)slices.get(0);
+    	FileInfoPARREC firstFileInfo = (FileInfoPARREC)image4D.getFileInfo(0);
+		String slice = firstFileInfo.getSliceInfo();
         String[] values = slice.split("\\s+");
     	float RS = Float.valueOf(values[12]).floatValue();
     	float RI = Float.valueOf(values[11]).floatValue();
@@ -777,7 +889,7 @@ public class PlugInAlgorithmDTIParRecSortingProcess extends AlgorithmBase {
         float[] volBuffer = new float[volLength];
         float[] sliceBuffer = new float[sliceLength];
         FileInfoImageXML fileInfoXML;
-        String dir = fileDir + File.separator + "imageSlices" + File.separator;
+        String dir = fileDir + "_proc" + File.separator + studyName + "_slices" + File.separator;
 		String filename;
 		int[] sliceUnits = new int[2];
 		sliceUnits[0] = FileInfoBase.MILLIMETERS;

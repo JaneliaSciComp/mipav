@@ -27,6 +27,7 @@ import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileInfoImageXML;
+import gov.nih.mipav.model.file.FileInfoPARREC;
 import gov.nih.mipav.model.file.FilePARREC;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileWriteOptions;
@@ -165,9 +166,7 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
     
     /** vol paramters **/
     private HashMap volParameters;
-    
-    /** slices **/
-    private Vector slices;
+
     
     /**Philips puts in one volume as the average of all the DWIs. This
 	volume will have a non-zero B value and 0 in the gradients
@@ -207,6 +206,9 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
     
     /** tDim of 4d image **/
     private int tDim;
+    
+    /** file info Par/Rec **/
+	private FileInfoPARREC fileInfoPR;
     
     
     /**
@@ -2060,18 +2062,20 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
 	 */
 	public boolean obtainListFileDataParRec() {
 		try{
+			fileInfoPR = (FileInfoPARREC)image4D.getFileInfo(0);
 			int extents[] = image4D.getExtents();
 			originalColumnsString = String.valueOf(extents[0]);
 			originalRowsString = String.valueOf(extents[1]);
 			numSlicesString = String.valueOf(extents[2]);
-			volParameters = fileParRec.getVolParameters();
+			volParameters = fileInfoPR.getVolParameters();
 			String fovString = (String)volParameters.get("scn_fov");
 			String[] fovs = fovString.trim().split("\\s+");
 			horizontalFOVString = fovs[0];
 			verticalFOVString = fovs[2];
-			slices = fileParRec.getSlices();
+			//slices = fileInfoPR.getSlices();
 			//get some list file info from 1st slice 
-	        String slice = (String)slices.get(0);
+			FileInfoPARREC firstFileInfo = (FileInfoPARREC)image4D.getFileInfo(0);
+			String slice = firstFileInfo.getSliceInfo();
 	        String[] values = slice.split("\\s+");
 	        //slice gap
 	        sliceGapString = values[23];
@@ -2092,8 +2096,9 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
 			//Once we find this volume, exclude
 	        avgVolIndex = -1;
 	        
-			for(int i=0,vol=0;i<slices.size();i=i+extents[2],vol++) {
-				slice = (String)slices.get(i);
+	        for(int i = 0,vol=0; i < (extents[2] * extents[3]);i=i+extents[2],vol++) {
+				FileInfoPARREC fileInfoPR = (FileInfoPARREC)image4D.getFileInfo(i);
+	            slice = fileInfoPR.getSliceInfo();
 				values = slice.split("\\s+");
 				float bValue = (Float.valueOf(values[33])).floatValue();
 				float grad1 = (Float.valueOf(values[45])).floatValue();
@@ -2160,8 +2165,9 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
 				        avgVolIndex = -1;
 				        int extents[] = image4D.getExtents();
 				        int k = 0;
-						for(int i=0,vol=0;i<slices.size();i=i+extents[2],vol++) {
-							String slice = (String)slices.get(i);
+				        for(int i = 0,vol=0; i < (extents[2] * extents[3]);i=i+extents[2],vol++) {
+							FileInfoPARREC fileInfoPR = (FileInfoPARREC)image4D.getFileInfo(i);
+				            String slice = fileInfoPR.getSliceInfo();
 							String[] values = slice.split("\\s+");
 							float bValue = (Float.valueOf(values[33])).floatValue();
 							if(bValue != 0) {
@@ -2410,9 +2416,10 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
             float z = 0;
             float b;
             int k = 0;
-	    	for(int i=0,vol=0;i<slices.size();i=i+extents[2],vol++) {
+            for(int i = 0,vol=0; i < (extents[2] * extents[3]);i=i+extents[2],vol++) {
+				FileInfoPARREC fileInfoPR = (FileInfoPARREC)image4D.getFileInfo(i);
 	    		if(vol!=avgVolIndex) {
-					slice = (String)slices.get(i);
+					slice = fileInfoPR.getSliceInfo();
 					values = slice.split("\\s+");
 					b = (Float.valueOf(values[33])).floatValue();
 					if(!isOldVersion) {
@@ -2594,7 +2601,8 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
     	
     	
     	//get some of the values for eqautions above from 1st slice 
-        String slice = (String)slices.get(0);
+    	FileInfoPARREC firstFileInfo = (FileInfoPARREC)image4D.getFileInfo(0);
+		String slice = firstFileInfo.getSliceInfo();
         String[] values = slice.split("\\s+");
     	float RS = Float.valueOf(values[12]).floatValue();
     	float RI = Float.valueOf(values[11]).floatValue();

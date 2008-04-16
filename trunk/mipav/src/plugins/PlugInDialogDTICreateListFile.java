@@ -450,6 +450,8 @@ public class PlugInDialogDTICreateListFile extends JDialogBase implements Algori
 			//setInterleaved(interleavedCheckbox.isSelected());
 			//interleavedCheckbox.setEnabled(false);
 			callAlgorithm();
+		}else if (command.equalsIgnoreCase("help")) {
+			MipavUtil.showHelp("DTI00010");
 		}
 	}
 	

@@ -46,8 +46,14 @@ public class PlugInDialogDTIParRecSortingProcess extends JDialogScriptableBase
     /** path to Par file **/
     private JTextField parRecFilePathTextField;
     
-    /** browse button **/
+    /** path to gradient file (necessary for versions < 4.1) **/
+    private JTextField gradientFilePathTextField;
+    
+    /** browse button for rec file**/
     private JButton parRecFilePathBrowseButton;
+    
+    /** browse button for gradient file **/
+    private JButton gradientFilePathBrowseButton;
     
     /** current directory  **/
     private String currDir = null;
@@ -60,6 +66,9 @@ public class PlugInDialogDTIParRecSortingProcess extends JDialogScriptableBase
     
     /** file name **/
     private String fileName;
+    
+    /** path to gradient file (only necessary for version 4 of Par/Rec) **/
+	private String gradientFilePath = null;
     
     /** output text area **/
     protected JTextArea outputTextArea;
@@ -104,8 +113,8 @@ public class PlugInDialogDTIParRecSortingProcess extends JDialogScriptableBase
         mainPanelConstraints.gridx = 0;
 		mainPanelConstraints.gridy = 0;
 		mainPanelConstraints.insets = new Insets(15,5,15,0);
-        JLabel studyPathLabel = new JLabel(" Par/Rec File : ");
-        mainPanel.add(studyPathLabel, mainPanelConstraints);
+        JLabel parRecLabel = new JLabel(" Par/Rec File : ");
+        mainPanel.add(parRecLabel, mainPanelConstraints);
         
         mainPanelConstraints.gridx = 1;
 		mainPanelConstraints.gridy = 0;
@@ -121,9 +130,38 @@ public class PlugInDialogDTIParRecSortingProcess extends JDialogScriptableBase
 		parRecFilePathBrowseButton.setActionCommand("parFilePathBrowse");
 		mainPanel.add(parRecFilePathBrowseButton, mainPanelConstraints);
 		
-		
+
 		mainPanelConstraints.gridx = 0;
 		mainPanelConstraints.gridy = 1;
+		mainPanelConstraints.insets = new Insets(15,5,15,0);
+        JLabel gradientLabel = new JLabel(" Gradient File : ");
+        mainPanel.add(gradientLabel, mainPanelConstraints);
+        
+        mainPanelConstraints.gridx = 1;
+		mainPanelConstraints.gridy = 1;
+		mainPanelConstraints.insets = new Insets(15,5,15,0);
+		gradientFilePathTextField = new JTextField(45);
+		mainPanel.add(gradientFilePathTextField, mainPanelConstraints);
+		
+		mainPanelConstraints.gridx = 2;
+		mainPanelConstraints.gridy = 1;
+		mainPanelConstraints.insets = new Insets(15,5,15,5);
+		gradientFilePathBrowseButton = new JButton("Browse");
+		gradientFilePathBrowseButton.addActionListener(this);
+		gradientFilePathBrowseButton.setActionCommand("gradientFilePathBrowse");
+		mainPanel.add(gradientFilePathBrowseButton, mainPanelConstraints);
+
+		
+		mainPanelConstraints.anchor = GridBagConstraints.CENTER;
+		mainPanelConstraints.gridx = 1;
+		mainPanelConstraints.gridy = 2;
+		mainPanelConstraints.insets = new Insets(10,5,5,5);
+		JLabel gradientTipLabel = new JLabel("* gradient file is only necessary for version 4 of Par/Rec");
+		mainPanel.add(gradientTipLabel, mainPanelConstraints);
+		
+
+		mainPanelConstraints.gridx = 0;
+		mainPanelConstraints.gridy = 3;
 		mainPanelConstraints.gridwidth = 3;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
 		outputTextArea = new JTextArea(15, 60);
@@ -162,7 +200,7 @@ public class PlugInDialogDTIParRecSortingProcess extends JDialogScriptableBase
 		if(outputTextArea != null) {
 			outputTextArea.append("*** Beginning DTI Par/Rec Sorting Process *** \n");
 		}
-		alg = new PlugInAlgorithmDTIParRecSortingProcess(fileName, fileDir, outputTextArea);
+		alg = new PlugInAlgorithmDTIParRecSortingProcess(fileName, fileDir, gradientFilePath, outputTextArea);
 		alg.addListener(this);
 		
 		
@@ -235,6 +273,18 @@ public class PlugInDialogDTIParRecSortingProcess extends JDialogScriptableBase
 					MipavUtil.displayError("A proper Par/Rec data file was not chosen...file must be either .rec or .frec");
 					return;
 	        	}	
+	        }
+		}if(command.equalsIgnoreCase("gradientFilePathBrowse")) {
+			JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
+			if (currDir != null) {
+				chooser.setCurrentDirectory(new File(currDir));
+            }
+	        chooser.setDialogTitle("Choose gradient file");
+	        int returnValue = chooser.showOpenDialog(this);
+	        if (returnValue == JFileChooser.APPROVE_OPTION) {
+	        	gradientFilePath = chooser.getSelectedFile().getAbsolutePath();
+	        	gradientFilePathTextField.setText(gradientFilePath);
+	        		
 	        }
 		}else if(command.equalsIgnoreCase("cancel")) {
 			if(alg != null) {
