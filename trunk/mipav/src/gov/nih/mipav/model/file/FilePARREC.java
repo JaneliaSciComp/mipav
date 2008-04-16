@@ -1163,10 +1163,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Examination name                   : ");
@@ -1176,10 +1176,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Protocol name                      : ");
@@ -1189,10 +1189,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Examination date/time              : ");
@@ -1202,10 +1202,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Series Type                        : ");
@@ -1215,10 +1215,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Acquisition nr                     : ");
@@ -1228,10 +1228,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Reconstruction nr                  : ");
@@ -1241,10 +1241,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Scan Duration [sec]                : ");
@@ -1254,10 +1254,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Max. number of cardiac phases      : ");
@@ -1267,10 +1267,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Max. number of echoes              : ");
@@ -1280,10 +1280,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.println(".    Max. number of slices/locations    : "+extents[2]);
@@ -1295,10 +1295,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Max. number of mixes               : ");
@@ -1308,10 +1308,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Patient position                   : ");
@@ -1321,10 +1321,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Preparation direction              : ");
@@ -1334,10 +1334,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Technique                          : ");
@@ -1347,10 +1347,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Scan resolution  (x, y)            : ");
@@ -1360,10 +1360,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Scan mode                          : ");
@@ -1373,10 +1373,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Repetition time [ms]               : ");
@@ -1386,10 +1386,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         switch(outInfo.getImageOrientation()) {
@@ -1416,10 +1416,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Angulation midslice(ap,fh,rl)[degr]: ");
@@ -1429,10 +1429,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Off Centre midslice(ap,fh,rl) [mm] : ");
@@ -1442,10 +1442,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Flow compensation <0=no 1=yes> ?   : ");
@@ -1455,10 +1455,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Presaturation     <0=no 1=yes> ?   : ");
@@ -1468,10 +1468,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Phase encoding velocity [cm/sec]   : ");
@@ -1481,10 +1481,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    MTC               <0=no 1=yes> ?   : ");
@@ -1494,10 +1494,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    SPIR              <0=no 1=yes> ?   : ");
@@ -1507,10 +1507,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    EPI factor        <0,1=no EPI>     : ");
@@ -1520,10 +1520,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Dynamic scan      <0=no 1=yes> ?   : ");
@@ -1533,10 +1533,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Diffusion         <0=no 1=yes> ?   : ");
@@ -1546,10 +1546,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Diffusion echo time [ms]           : ");
@@ -1559,10 +1559,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Max. number of diffusion values    : ");
@@ -1572,10 +1572,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Max. number of gradient orients    : ");
@@ -1585,10 +1585,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         fp.print(".    Number of label types   <0=no ASL> : ");
@@ -1598,10 +1598,10 @@ public class FilePARREC extends FileBase {
             if(s!=null) {
             	fp.println(s);
             }else {
-            	fp.println("");
+            	fp.println("NULL");
             }
         }else {
-        	fp.println("");
+        	fp.println("NULL");
         }
         
         
