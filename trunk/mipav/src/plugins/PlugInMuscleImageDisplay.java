@@ -128,8 +128,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     private boolean oldPrefCloseFrameCheckValue = Preferences.is(Preferences.PREF_CLOSE_FRAME_CHECK);
    
     public PlugInMuscleImageDisplay(ModelImage image, String[] titles,
-            String[][] mirrorArr, boolean[][] mirrorZ, 
-            String[][] noMirrorArr, boolean[][] noMirrorZ, TreeMap calcTree, 
+            PlugInSelectableVOI[][] voiList,  
             ImageType imageType, Symmetry symmetry, boolean multipleSlices) {
     	//calls the super that will invoke ViewJFrameImage's init() function
     	super(image);
@@ -141,14 +140,46 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.setImageA(image);
         this.setActiveImage(IMAGE_A);
         this.titles = titles;
-        this.mirrorArr = mirrorArr;
-        this.mirrorZ = mirrorZ;
-        this.noMirrorArr = noMirrorArr;
-        this.noMirrorZ = noMirrorZ;
+        this.mirrorArr = new String[voiList.length][];
+        this.mirrorZ = new boolean[voiList.length][];
+        this.noMirrorArr = new String[voiList.length][];
+        this.noMirrorZ = new boolean[voiList.length][];
+        this.calcTree = new TreeMap();
+        
+        for(int i=0; i<voiList.length; i++) {
+        	ArrayList mirrorArrList = new ArrayList(), noMirrorArrList = new ArrayList(), 
+        				mirrorZList = new ArrayList(), noMirrorZList = new ArrayList();
+        	for(int j=0; j<voiList[i].length; j++) {
+        		if(voiList[i][j].getName().contains("Left")) {
+        			mirrorArrList.add(voiList[i][j].getName().substring(new String("Left ").length()));
+        			mirrorZList.add(voiList[i][j].isFillable());
+        			calcTree.put(voiList[i][j].getName().substring(new String("Left ").length()), voiList[i][j].doCalc());
+        		} else if(voiList[i][j].getName().contains("Right")) {
+        			//do nothing
+        		} else {
+        			noMirrorArrList.add(voiList[i][j].getName());
+        			noMirrorZList.add(voiList[i][j].isFillable());
+        			calcTree.put(voiList[i][j].getName(), voiList[i][j].doCalc());
+        		}
+        	}
+        	mirrorArr[i] = new String[mirrorArrList.size()];
+        	mirrorZ[i] = new boolean[mirrorZList.size()];
+        	for(int j=0; j<mirrorArr[i].length; j++) {
+        		mirrorArr[i][j] = (String)mirrorArrList.get(j);
+        		mirrorZ[i][j] = (Boolean)mirrorZList.get(j);
+        	}
+        	noMirrorArr[i] = new String[noMirrorArrList.size()];
+        	noMirrorZ[i] = new boolean[noMirrorZList.size()];
+        	for(int j=0; j<noMirrorArr[i].length; j++) {
+        		noMirrorArr[i][j] = (String)noMirrorArrList.get(j);
+        		noMirrorZ[i][j] = (Boolean)noMirrorZList.get(j);
+        	}
+        }
+        
+        
         this.imageType = imageType;
         this.symmetry = symmetry;
         this.multipleSlices = multipleSlices;
-        this.calcTree = calcTree;
         
         voiColor = new TreeMap();
         locationStatus = new TreeMap();
@@ -176,8 +207,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      * @param standAlone
      */
     public PlugInMuscleImageDisplay(ModelImage image, String[] titles,
-            String[][] mirrorArr, boolean[][] mirrorZ, 
-            String[][] noMirrorArr, boolean[][] noMirrorZ, TreeMap calcTree, 
+            PlugInSelectableVOI[][] voiList, 
             ImageType imageType, Symmetry symmetry, 
             boolean standAlone, boolean multipleSlices) {
     	// calls the super that will not call ViewJFrameImage's init() function
@@ -185,14 +215,44 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	this.setImageA(image);
         
         this.titles = titles;
-        this.mirrorArr = mirrorArr;
-        this.mirrorZ = mirrorZ;
-        this.noMirrorArr = noMirrorArr;
-        this.noMirrorZ = noMirrorZ;
+        this.mirrorArr = new String[voiList.length][];
+        this.mirrorZ = new boolean[voiList.length][];
+        this.noMirrorArr = new String[voiList.length][];
+        this.noMirrorZ = new boolean[voiList.length][];
+        this.calcTree = new TreeMap();
+        
+        for(int i=0; i<voiList.length; i++) {
+        	ArrayList mirrorArrList = new ArrayList(), noMirrorArrList = new ArrayList(), 
+        				mirrorZList = new ArrayList(), noMirrorZList = new ArrayList();
+        	for(int j=0; j<voiList[i].length; j++) {
+        		if(voiList[i][j].getName().contains("Left")) {
+        			mirrorArrList.add(voiList[i][j].getName().substring(new String("Left ").length()));
+        			mirrorZList.add(voiList[i][j].isFillable());
+        			calcTree.put(voiList[i][j].getName().substring(new String("Left ").length()), voiList[i][j].doCalc());
+        		} else if(voiList[i][j].getName().contains("Right")) {
+        			//do nothing
+        		} else {
+        			noMirrorArrList.add(voiList[i][j].getName());
+        			noMirrorZList.add(voiList[i][j].isFillable());
+        			calcTree.put(voiList[i][j].getName(), voiList[i][j].doCalc());
+        		}
+        	}
+        	mirrorArr[i] = new String[mirrorArrList.size()];
+        	mirrorZ[i] = new boolean[mirrorZList.size()];
+        	for(int j=0; j<mirrorArr.length; j++) {
+        		mirrorArr[i][j] = (String)mirrorArrList.get(j);
+        		mirrorZ[i][j] = (Boolean)mirrorZList.get(j);
+        	}
+        	noMirrorArr[i] = new String[noMirrorArrList.size()];
+        	noMirrorZ[i] = new boolean[noMirrorZList.size()];
+        	for(int j=0; j<noMirrorArr.length; j++) {
+        		noMirrorArr[i][j] = (String)noMirrorArrList.get(j);
+        		noMirrorZ[i][j] = (Boolean)noMirrorZList.get(j);
+        	}
+        }
         this.imageType = imageType;
         this.symmetry = symmetry;
         this.multipleSlices = multipleSlices;
-        this.calcTree = calcTree;
         
         voiColor = new TreeMap();
         locationStatus = new TreeMap();
@@ -508,10 +568,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	JButton[] mirror = ((MuscleDialogPrompt)tabs[i]).getMirrorButton();
             JButton[] noMirror = ((MuscleDialogPrompt)tabs[i]).getNoMirrorButton();
             for(int j=0; j<mirror.length; j++) {
-                locationStatus.put(mirror[j].getText(), i);
+                locationStatus.put(mirror[j].getText().toLowerCase(), i);
             }
             for(int j=0; j<noMirror.length; j++) {
-                locationStatus.put(noMirror[j].getText(), i);
+                locationStatus.put(noMirror[j].getText().toLowerCase(), i);
             }
         }
         //now put voiTab up
@@ -837,8 +897,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      */
     public int getLocationStatus(String name) {
     	int loc = -1;
-    	if(locationStatus.get(name) != null)
-    		loc = (Integer)locationStatus.get(name);
+    	if(locationStatus.get(name.toLowerCase()) != null)
+    		loc = (Integer)locationStatus.get(name.toLowerCase());
     	return loc;
     }
     
@@ -880,7 +940,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	            	String name = voiName[i].substring(0, voiName[i].indexOf(".xml"));
 	            	String ext = ".xml";
 	            	VOI v;
-	            	if((Integer)locationStatus.get(name) == pane) {
+	            	if((Integer)locationStatus.get(name.toLowerCase()) == pane) {
 	            		v = getSingleVOI(name+ext);
 	            		if(v != null) {
 	            			v.setThickness(2);
