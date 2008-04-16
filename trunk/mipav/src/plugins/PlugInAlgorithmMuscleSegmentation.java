@@ -84,71 +84,27 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     
     private void performAbdomenDialog() {
         
-    	TreeMap calcTree = new TreeMap();
+    	PlugInSelectableVOI[][] voiList = new PlugInSelectableVOI[3][];
+    	//String name, boolean closed, int numCurves, int location, boolean fillable, doCalc
+    	voiList[0] = new PlugInSelectableVOI[2];
+    	voiList[0][0] = new PlugInSelectableVOI("Abdomen", true, 1, 0, false, true);
+    	voiList[0][1] = new PlugInSelectableVOI("Phantom", true, 1, 0, false, false);
     	
-    	String[][] mirrorArr = new String[3][];
-        mirrorArr[0] = new String[0];
-        
-        mirrorArr[1] = new String[0];
-        
-        mirrorArr[2] = new String[4];
-        mirrorArr[2][0] = "psoas";
-        mirrorArr[2][1] = "lat. obliques";
-        mirrorArr[2][2] = "paraspinous";
-        mirrorArr[2][3] = "rectus";
-
-        for(int i=0; i<mirrorArr.length; i++)  {
-        	if(mirrorArr[i] != null) {
-        		for(int j=0; j<mirrorArr[i].length; j++)
-        			calcTree.put(mirrorArr[i][j], true);
-        	}
-        }
-        
-        boolean[][] mirrorZ = new boolean[3][];
-        mirrorZ[0] = new boolean[0];
-        
-        mirrorZ[1] = new boolean[0];
-        
-        mirrorZ[2] = new boolean[4];
-        mirrorZ[2][0] = true;
-        mirrorZ[2][1] = true;
-        mirrorZ[2][2] = true;
-        mirrorZ[2][3] = true;
-        
-        String[][] noMirrorArr = new String[3][];
-        noMirrorArr[0] = new String[2];
-        noMirrorArr[0][0] = "Abdomen";
-        noMirrorArr[0][1] = "Phantom";
-        
-        noMirrorArr[1] = new String[3];
-        noMirrorArr[1][0] = "Visceral cavity";
-        noMirrorArr[1][1] = "Bone sample";
-        noMirrorArr[1][2] = "Water sample";
-        
-        noMirrorArr[2] = new String[1];
-        noMirrorArr[2][0] = "Aorta";
-        
-        for(int i=0; i<noMirrorArr.length; i++) {
-        	for(int j=0; j<noMirrorArr[i].length; j++) {
-        		if(noMirrorArr[i][j].equals("Phantom") || noMirrorArr[i][j].contains("sample"))
-        			calcTree.put(noMirrorArr[i][j], false);
-        		else
-        			calcTree.put(noMirrorArr[i][j], true);
-        	}
-        }
-        
-        boolean[][] noMirrorZ = new boolean[3][];
-        noMirrorZ[0] = new boolean[2];
-        noMirrorZ[0][0] = false;
-        noMirrorZ[0][1] = false;
-        
-        noMirrorZ[1] = new boolean[3];
-        noMirrorZ[1][0] = false;
-        noMirrorZ[1][1] = false;
-        noMirrorZ[1][2] = false;
-        
-        noMirrorZ[2] = new boolean[1];
-        noMirrorZ[2][0] = true;
+    	voiList[1] = new PlugInSelectableVOI[3];
+    	voiList[1][0] = new PlugInSelectableVOI("Visceral Cavity", true, 1, 1, false, true);
+    	voiList[1][1] = new PlugInSelectableVOI("Bone Sample", true, 1, 1, false, false);
+    	voiList[1][2] = new PlugInSelectableVOI("Water Sample", true, 1, 1, false, false);
+    	
+    	voiList[2] = new PlugInSelectableVOI[9];
+    	voiList[2][0] = new PlugInSelectableVOI("Left Psoas", true, 1, 2, true, true);
+    	voiList[2][1] = new PlugInSelectableVOI("Right Psoas", true, 1, 2, true, true);
+    	voiList[2][2] = new PlugInSelectableVOI("Left Lat. obliques", true, 1, 2, true, true);
+    	voiList[2][3] = new PlugInSelectableVOI("Right Lat. obliques", true, 1, 2, true, true);
+    	voiList[2][4] = new PlugInSelectableVOI("Left Paraspinous", true, 1, 2, true, true);
+    	voiList[2][5] = new PlugInSelectableVOI("Right Paraspinous", true, 1, 2, true, true);
+    	voiList[2][6] = new PlugInSelectableVOI("Left Rectus", true, 1, 2, true, true);
+    	voiList[2][7] = new PlugInSelectableVOI("Right Rectus", true, 1, 2, true, true);
+    	voiList[2][8] = new PlugInSelectableVOI("Aortic Calcium", true, 2, 2, true, true);
         
         String[] titles = new String[3];
         titles[0] = "Abdomen";
@@ -156,13 +112,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         titles[2] = "Muscles"; 
         
         if (ViewUserInterface.getReference().isAppFrameVisible()) {
-        	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
-        			noMirrorArr, noMirrorZ, calcTree, 
+        	new PlugInMuscleImageDisplay(srcImage, titles, voiList,  
         			PlugInMuscleImageDisplay.ImageType.Abdomen, 
         			PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT, multipleSlices);
         } else {
-        	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
-        			noMirrorArr, noMirrorZ, calcTree, 
+        	new PlugInMuscleImageDisplay(srcImage, titles, voiList, 
         			PlugInMuscleImageDisplay.ImageType.Abdomen, 
         			PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT, true, multipleSlices);
         }
@@ -175,66 +129,37 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	private void performThighDialog() {
 	    
 	    TreeMap calcTree = new TreeMap();
+	    //String name, boolean closed, int numCurves, int location, boolean fillable, doCalc
 	    
-		String[][] mirrorArr = new String[3][];
-	    mirrorArr[0] = new String[1];
-	    mirrorArr[0][0] = "Thigh";
+	    PlugInSelectableVOI[][] voiList = new PlugInSelectableVOI[3][];
 	    
-	    mirrorArr[1] = new String[2];
-	    mirrorArr[1][0] = "Bone";
-	    mirrorArr[1][1] = "Marrow";
+	    voiList[0] = new PlugInSelectableVOI[3];
+	    voiList[0][0] = new PlugInSelectableVOI("Left Thigh", true, 1, 0, false, true);
+    	voiList[0][1] = new PlugInSelectableVOI("Right Thigh", true, 1, 0, false, true);
+    	
+    	voiList[0][2] = new PlugInSelectableVOI("Phantom", true, 1, 0, false, false);
 	    
-	    mirrorArr[2] = new String[5];
-	    mirrorArr[2][0] = "Fascia";
-	    mirrorArr[2][1] = "Quads";
-	    mirrorArr[2][2] = "Hamstrings";
-	    mirrorArr[2][3] = "Sartorius";
-	    mirrorArr[2][4] = "Adductors";
+    	voiList[1] = new PlugInSelectableVOI[5];
+	    voiList[1][0] = new PlugInSelectableVOI("Left Bone", true, 1, 1, false, true);
+    	voiList[1][1] = new PlugInSelectableVOI("Right Bone", true, 1, 1, false, true);
+	    voiList[1][2] = new PlugInSelectableVOI("Left Marrow", true, 1, 1, true, true);
+    	voiList[1][3] = new PlugInSelectableVOI("Right Marrow", true, 1, 1, true, true);
+    	
+    	voiList[1][4] = new PlugInSelectableVOI("Bone Sample", true, 1, 1, false, false);
 	    
-	    for(int i=0; i<mirrorArr.length; i++) 
-	    	for(int j=0; j<mirrorArr[i].length; j++)
-	    		calcTree.put(mirrorArr[i][j], true); //true
-	    //calcTree.put("Sartorius", false);
-	    
-	    boolean[][] mirrorZ = new boolean[3][];
-	    mirrorZ[0] = new boolean[1];
-	    mirrorZ[0][0] = false;
-	    
-	    mirrorZ[1] = new boolean[2];
-	    mirrorZ[1][0] = false;
-	    mirrorZ[1][1] = false;
-	    
-	    mirrorZ[2] = new boolean[5];
-	    mirrorZ[2][0] = false;
-	    mirrorZ[2][1] = true;
-	    mirrorZ[2][2] = true;
-	    mirrorZ[2][3] = true;
-	    mirrorZ[2][4] = true;
-	    
-	    String[][] noMirrorArr = new String[3][];
-	    noMirrorArr[0] = new String[1];
-	    noMirrorArr[0][0] = "Phantom";
-	    
-	    noMirrorArr[1] = new String[1];
-	    noMirrorArr[1][0] = "Bone sample";
-	    
-	    noMirrorArr[2] = new String[1];
-	    noMirrorArr[2][0] = "Water sample";
-	    
-	    for(int i=0; i<noMirrorArr.length; i++) 
-	    	for(int j=0; j<noMirrorArr[i].length; j++)
-	    		calcTree.put(noMirrorArr[i][j], false);  //false
-	    //calcTree.put("Phantom", true);
-	    
-	    boolean[][] noMirrorZ = new boolean[3][];
-	    noMirrorZ[0] = new boolean[1];
-	    noMirrorZ[0][0] = false;
-	    
-	    noMirrorZ[1] = new boolean[1];
-	    noMirrorZ[1][0] = false;
-	    
-	    noMirrorZ[2] = new boolean[1];
-	    noMirrorZ[2][0] = false;
+    	voiList[2] = new PlugInSelectableVOI[11];
+	    voiList[2][0] = new PlugInSelectableVOI("Left Fascia", true, 1, 2, true, true);
+    	voiList[2][1] = new PlugInSelectableVOI("Right Fascia", true, 1, 2, true, true);
+	    voiList[2][2] = new PlugInSelectableVOI("Left Quads", true, 1, 2, true, true);
+    	voiList[2][3] = new PlugInSelectableVOI("Right Quads", true, 1, 2, true, true);
+	    voiList[2][4] = new PlugInSelectableVOI("Left Hamstrings", true, 1, 2, true, true);
+    	voiList[2][5] = new PlugInSelectableVOI("Right Hamstrings", true, 1, 2, true, true);
+	    voiList[2][6] = new PlugInSelectableVOI("Left Sartorius", true, 1, 2, true, true);
+    	voiList[2][7] = new PlugInSelectableVOI("Right Sartorius", true, 1, 2, true, true);
+	    voiList[2][8] = new PlugInSelectableVOI("Left Adductors", true, 1, 2, true, true);
+    	voiList[2][9] = new PlugInSelectableVOI("Right Adductors", true, 1, 2, true, true);
+
+    	voiList[2][10] = new PlugInSelectableVOI("Water Sample", true, 1, 1, false, false);
 	    
 	    String[] titles = new String[3];
 	    titles[0] = "Thigh";
@@ -244,14 +169,14 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    this.symmetry = PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT;
 	    
 	    if (ViewUserInterface.getReference().isAppFrameVisible()) {
-	    	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
-	    			noMirrorArr, noMirrorZ, calcTree, 
-	    			PlugInMuscleImageDisplay.ImageType.Thigh, symmetry, multipleSlices);
-	    } else {
-	    	new PlugInMuscleImageDisplay(srcImage, titles, mirrorArr, mirrorZ, 
-	    			noMirrorArr, noMirrorZ, calcTree, 
-	    			PlugInMuscleImageDisplay.ImageType.Thigh, symmetry, true, multipleSlices);
-	    }
+        	new PlugInMuscleImageDisplay(srcImage, titles, voiList,  
+        			PlugInMuscleImageDisplay.ImageType.Thigh, 
+        			PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT, multipleSlices);
+        } else {
+        	new PlugInMuscleImageDisplay(srcImage, titles, voiList, 
+        			PlugInMuscleImageDisplay.ImageType.Thigh, 
+        			PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT, true, multipleSlices);
+        }
 	}
 	
 }
