@@ -77,7 +77,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     private DialogPrompt[] tabs;
     
-    private TreeMap zeroStatus;
+    //private TreeMap zeroStatus;
     
     private boolean changeSlice = false;
     
@@ -357,8 +357,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	
     	imagePane.removeAll();
     	imagePane = null;
-    	
-    	zeroStatus = null;
+
     	System.gc();
     	
     	if (ViewUserInterface.getReference().isAppFrameVisible() == false &&
@@ -515,9 +514,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     }
     
     private JPanel buildMainPanel() {
-    	//The component image will be displayed in a scrollpane.
-        zeroStatus = new TreeMap();
-        
+    	//The component image will be displayed in a scrollpane.       
         scrollPane = new JScrollPane(componentImage, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         
@@ -555,8 +552,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	tabs[i].addListener(this);
         	tabs[i].setName(titles[i]);
         	imagePane.addTab((i+1)+": "+titles[i], tabs[i]);
-        	
-        	zeroStatus.putAll(((MuscleDialogPrompt)tabs[i]).getZeroStatus());
         	
         	JButton[] mirror = ((MuscleDialogPrompt)tabs[i]).getMirrorButton();
             JButton[] noMirror = ((MuscleDialogPrompt)tabs[i]).getNoMirrorButton();
@@ -897,8 +892,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      */
     public boolean getZeroStatus(String name) {
     	boolean fill = false;
-    	if(zeroStatus.get(name) != null)
-    		fill = (Boolean)zeroStatus.get(name);
+    	if(voiMap.get(name) != null)
+    		fill = voiMap.get(name).isFillable();
     	return fill;
     }
 
@@ -962,23 +957,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         loadVOI(pane);
         
         ctMode(getImageA(), -175, 275);
-    
-        VOIVector vec = getImageA().getVOIs();
-        for(int j=0; j<tabs.length; j++) {
-			if(tabs[j] instanceof MuscleDialogPrompt) {
-				((MuscleDialogPrompt)tabs[j]).clearButtons();
-			}
-		}
         
-    	for(int i=0; i<vec.size(); i++) {            
-    		for(int j=0; j<tabs.length; j++) {
-    			if(tabs[j] instanceof MuscleDialogPrompt) {
-    				if(((MuscleDialogPrompt)tabs[j]).hasButton(vec.get(i).getName())) {
-    					((MuscleDialogPrompt)tabs[j]).setButton(vec.get(i));
-    				}	
-    			}
-    		}
-    	}
+        VOIVector vec = getActiveImage().getVOIs();
+        
+        for(int i=0; i<vec.size(); i++) { 
+        	((MuscleDialogPrompt)tabs[pane]).setButton(vec.get(i), vec.get(i).getName(), vec.get(i).getColor());
+        }
+        
     	this.repaint();
 
         updateImages(true);
@@ -991,7 +976,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         VOIVector voiVec = getActiveImage().getVOIs();
     	for(int i=0; i<voiVec.size(); i++) {
     		VOI voi = voiVec.get(i);
-    		if((Boolean)zeroStatus.get(voi.getName()) && 
+    		if(voiMap.get(voi.getName()).isFillable() && 
     				!(((VoiDialogPrompt)tabs[voiTabLoc]).getObjectName().equals(voi.getName()))) 
     			voi.setDisplayMode(VOI.SOLID);
     	}
@@ -1537,7 +1522,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         private boolean[] noMirrorZ;
         
-        private TreeMap zeroStatus;
+        //private TreeMap zeroStatus;
 
         private int index;
         
@@ -1571,7 +1556,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	return index;
         }
         
-        public boolean hasButton(String buttonText) {
+        /*public boolean hasButton(String buttonText) {
             if(zeroStatus.get(buttonText) != null) {
                 return true;
             } 
@@ -1592,15 +1577,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                     voi.addVOIListener(noMirrorCheckArr[i].getColorButton());
                 }
             }
-        }
+        }*/
         
         public void actionPerformed(ActionEvent e) {
             System.err.println(e.getActionCommand());
             System.out.println(e.getActionCommand());
-        }
-        
-        public TreeMap getZeroStatus() {
-            return zeroStatus;
         }
         
         private JPanel initInstructionPanel() {
@@ -1633,7 +1614,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         private JPanel initSymmetricalObjects() {
             
             VOIVector existingVois = muscleFrame.getImageA().getVOIs();
-            zeroStatus = new TreeMap();
             
             ButtonGroup mirrorGroup = new ButtonGroup();
             JPanel mirrorPanel = new JPanel(new GridBagLayout());
@@ -1675,15 +1655,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 mirrorButtonArr[i].setActionCommand(CHECK_VOI);
                 mirrorButtonArr[i].addActionListener(muscleFrame);
                 mirrorGroup.add(mirrorButtonArr[i]);
-               
-                Color voiColor = Color.BLACK;
-               // System.err.println("yo");
-                for(int j=0; j<existingVois.size(); j++) {
-                    if(existingVois.get(j).getName().equals(mirrorButtonArr[i].getText())) {
-                        voiColor = existingVois.get(j).getColor();
-                    }
-                }
-                
+
                 mirrorCheckArr[i] = new ColorButtonPanel(Color.black, mirrorButtonArr[i].getText());        
                
                 if(i != 0 && i % 2 == 0) {
@@ -1698,8 +1670,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 gbc.weightx = 1;
                 mirrorPanel.add(mirrorButtonArr[i], gbc);
                 gbc.gridx++;
-                
-                zeroStatus.put(mirrorButtonArr[i].getText(), mirrorZ[i/2]);
             }          
             return mirrorPanel;      
         }
@@ -1755,28 +1725,29 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 gbc.gridx++;
                 noMirrorPanel.add(Box.createGlue(), gbc);
                 
-                //noMirrorPanel.add(noMirrorCheckArr[i], gbc);
-                //gbc.gridx++;
-                //gbc.weightx = 1;
-                //noMirrorPanel.add(noMirrorButtonArr[i], gbc);
-                
                 gbc.gridy++;
-                for(int j=0; j<existingVois.size(); j++) {
-                    if(existingVois.get(j).getName().equals(noMirrorButtonArr[i].getText())) {
-                    	
-                    }
-                }
-                
-                //System.out.println(noMirrorButtonArr[i].getText()+" is "+noMirrorZ[i]);
-                zeroStatus.put(noMirrorButtonArr[i].getText(), noMirrorZ[i]);
             }
             
             return noMirrorPanel;
         }
         
+        public void setButton(VOI v, String buttonName, Color c) {
+        	for(int i=0; i<mirrorButtonArr.length; i++) {
+        		if(buttonName.equals(mirrorButtonArr[i].getText())) {
+        			mirrorCheckArr[i].setColor(c);
+        			v.addVOIListener(mirrorCheckArr[i].getColorButton());
+        		}
+        	}
+        	for(int i=0; i<noMirrorButtonArr.length; i++) {
+        		if(buttonName.equals(noMirrorButtonArr[i].getText())) {
+        			noMirrorCheckArr[i].setColor(c);
+        			v.addVOIListener(mirrorCheckArr[i].getColorButton());
+        		}
+        	}
+        }
+        
         protected void initDialog() {
             setForeground(Color.black);
-            zeroStatus = new TreeMap();
             
             this.setLayout(new GridBagLayout());
             GridBagConstraints gbc = new GridBagConstraints();
@@ -1816,10 +1787,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             gbc.anchor = GridBagConstraints.SOUTH;
             gbc.gridy++;
             add(buildButtons(), gbc);                
-        }
-        
-        public TreeMap getIdentifiers() {
-            return zeroStatus;
         }
         
         public JButton[] getMirrorButton() {
@@ -3210,7 +3177,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		
 		public void setColor(Color c) {
 			colorButton.getColorIcon().setColor(c);
-			//voiMap.get(voiName).setColor(c);
 		}
 		
 		public ColorButton getColorButton() {
