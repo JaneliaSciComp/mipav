@@ -471,6 +471,7 @@ public class FilePARREC extends FileBase {
 
             nextLine = raFile.readLine();
             //System.out.println(":"+ nextLine);
+            
 
         }
 
