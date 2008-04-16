@@ -1,5 +1,8 @@
 package gov.nih.mipav.model.file;
 
+import java.util.HashMap;
+import java.util.Vector;
+
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogFileInfo;
 import gov.nih.mipav.view.dialogs.JDialogEditor;
@@ -16,10 +19,22 @@ import gov.nih.mipav.model.structures.ModelImage;
  * To change this template use File | Settings | File Templates.
  */
 public class FileInfoPARREC extends FileInfoBase {
+	
+	
+
+    /** vol paramters **/
+    private static HashMap VolParameters;
+
+    
+    /** slice specific info **/
+    private String sliceInfo;
+    
+    
 
     //default constructor
     public FileInfoPARREC(String name, String directory, int format) {
             super(name, directory, format);
+           
     }
    
     //required by FileInfoBase
@@ -92,7 +107,34 @@ public class FileInfoPARREC extends FileInfoBase {
                     // calling prg might use an editing panel to adjust this matrix
                     dialog.appendPrimaryData("Matrix", matrix.matrixToString(10, 4));
                 }
-
-
     }
+    
+    
+    
+
+    
+    
+
+
+	/** getter for vol parameters **/
+	public HashMap getVolParameters() {
+		return VolParameters;
+	}
+
+	public void setVolParameters(HashMap volParameters) {
+		VolParameters = volParameters;
+	}
+
+	public String getSliceInfo() {
+		return sliceInfo;
+	}
+
+	public void setSliceInfo(String sliceInfo) {
+		this.sliceInfo = sliceInfo;
+	}
+	
+	
+
+	
+	
 }
