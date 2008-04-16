@@ -91,9 +91,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     	voiList[0][1] = new PlugInSelectableVOI("Phantom", true, 1, 0, false, false);
     	
     	voiList[1] = new PlugInSelectableVOI[3];
-    	voiList[1][0] = new PlugInSelectableVOI("Visceral Cavity", true, 1, 1, false, true);
-    	voiList[1][1] = new PlugInSelectableVOI("Bone Sample", true, 1, 1, false, false);
-    	voiList[1][2] = new PlugInSelectableVOI("Water Sample", true, 1, 1, false, false);
+    	voiList[1][0] = new PlugInSelectableVOI("Visceral cavity", true, 1, 1, false, true);
+    	voiList[1][1] = new PlugInSelectableVOI("Bone sample", true, 1, 1, false, false);
+    	voiList[1][2] = new PlugInSelectableVOI("Water sample", true, 1, 1, false, false);
     	
     	voiList[2] = new PlugInSelectableVOI[9];
     	voiList[2][0] = new PlugInSelectableVOI("Left Psoas", true, 1, 2, true, true);
@@ -145,7 +145,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    voiList[1][2] = new PlugInSelectableVOI("Left Marrow", true, 1, 1, true, true);
     	voiList[1][3] = new PlugInSelectableVOI("Right Marrow", true, 1, 1, true, true);
     	
-    	voiList[1][4] = new PlugInSelectableVOI("Bone Sample", true, 1, 1, false, false);
+    	voiList[1][4] = new PlugInSelectableVOI("Bone sample", true, 1, 1, false, false);
 	    
     	voiList[2] = new PlugInSelectableVOI[11];
 	    voiList[2][0] = new PlugInSelectableVOI("Left Fascia", true, 1, 2, true, true);
@@ -159,7 +159,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    voiList[2][8] = new PlugInSelectableVOI("Left Adductors", true, 1, 2, true, true);
     	voiList[2][9] = new PlugInSelectableVOI("Right Adductors", true, 1, 2, true, true);
 
-    	voiList[2][10] = new PlugInSelectableVOI("Water Sample", true, 1, 1, false, false);
+    	voiList[2][10] = new PlugInSelectableVOI("Water sample", true, 1, 1, false, false);
 	    
 	    String[] titles = new String[3];
 	    titles[0] = "Thigh";
