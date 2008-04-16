@@ -8834,6 +8834,10 @@ public class FileIO {
         try { // Construct new file info and file objects
 
             FileInfoBase fileBase = image.getFileInfo()[0];
+            if(!(fileBase instanceof FileInfoPARREC)) {
+            	MipavUtil.displayError("MIPAV only supports Par/Rec to Par/Rec");
+            	return false;
+            }
             if(fileBase.getDataType()!=ModelStorageBase.FLOAT &&
                     fileBase.getDataType()!=ModelStorageBase.USHORT &&
                     fileBase.getDataType()!=ModelStorageBase.UBYTE ) {

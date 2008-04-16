@@ -45,7 +45,8 @@ public class FilePARREC extends FileBase {
     private float vox_offset = 0.0f;
 
     /** file info **/
-    private FileInfoBase outInfo;
+    private FileInfoPARREC outInfo;
+    
     
     /** vol map **/
     private HashMap VolMap;
@@ -61,6 +62,8 @@ public class FilePARREC extends FileBase {
     
     /** sliecs **/
     private Vector Slices;
+    
+   
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -93,7 +96,7 @@ public class FilePARREC extends FileBase {
     * @param fileInfo
     */
     public FilePARREC(String fileName, String fileDirectory, FileInfoBase fileInfo) {
-        outInfo = fileInfo;
+        outInfo = (FileInfoPARREC)fileInfo;
         this.fileName = fileName;
         this.fileDir = fileDirectory;
         fileNames =getCompleteFileNameListDefault(fileDirectory+fileName);
@@ -441,7 +444,6 @@ public class FilePARREC extends FileBase {
                         String ignore = "#  The rest of this file contains ONE line per image, this line contains the following information:";
 
                         while(line.compareToIgnoreCase("# === IMAGE INFORMATION ==========================================================")!=0) {
-                            //System.out.println(line);
                             if(line.length()>1) {
                                 if(line.compareToIgnoreCase(ignore)!=0)
                                     SliceParameters.add(line.trim());
@@ -609,6 +611,8 @@ public class FilePARREC extends FileBase {
         fileInfo.setExtents(numSlices,2);
         fileInfo.setExtents(numVolumes,3);*/
         fileInfo.setExtents(Extents);
+        fileInfo.setVolParameters(VolParameters);
+        
 
 
         switch(ori) {
@@ -665,6 +669,10 @@ public class FilePARREC extends FileBase {
         }
         fileInfo.setOrigin(o);
 
+        
+        
+
+        
         return true; // If it got this far, it has successfully read in the header
     }
 
@@ -710,7 +718,8 @@ public class FilePARREC extends FileBase {
         // if vox units defines the units of measure, then use that instead
         // clones the file info
         updateUnitsOfMeasure(fileInfo, image);
-//        updateStartLocations(image.getFileInfo());
+//        updateStartLocations(image.getFileInfo());	
+
 
         try { // Construct a FileRaw to actually read the image.
 
@@ -821,7 +830,7 @@ public class FilePARREC extends FileBase {
      */
     public void writeImage(ModelImage image, FileWriteOptions options) throws IOException {
 
-    	writeHeader(options);
+    	writeHeader(image, options);
     	
     	FileInfoXML tempInfo = new FileInfoImageXML(options.getFileName(), options.getFileDirectory(), FileUtility.RAW);
     	tempInfo.setEndianess(FileBase.LITTLE_ENDIAN); //FORCE LITTLE ENDIAN for rec/frec files!!!
@@ -984,6 +993,7 @@ public class FilePARREC extends FileBase {
             for (int i = 0; i < (extents[2] * extents[3]); i++) {
                 FileInfoPARREC newFileInfo = (FileInfoPARREC) fileInfo.clone();
                 newFileInfo.setOrigin(fileInfo.getOriginAtSlice(i));
+                newFileInfo.setSliceInfo((String)Slices.get(i));
                 image.setFileInfo(newFileInfo, i); // Set the array of fileInfos in ModelImage
             }
         }
@@ -992,6 +1002,719 @@ public class FilePARREC extends FileBase {
 
     } // end updateUnitsOfMeasure()
 
+    
+
+
+    /**
+     * Gets the header and image file names given a header or image file name
+     * @param absolutePath header or image filename
+     * @return array [0] headerfilename [1] imagefilename
+     */
+    public String[] getCompleteFileNameListDefault(String absolutePath) {
+        String[] completeFileNameList = new String[2];
+
+        if (FilePARREC.isHeaderFile(absolutePath)) {
+            completeFileNameList[0] = absolutePath;
+
+            String ext = FileUtility.getExtension((absolutePath));
+            int k,k0;
+
+            if(ext.equals(hdrEXTENSIONS[0]) || ext.equals(hdrEXTENSIONS[2])) { //lower case
+                if(outInfo.getDataType()==ModelStorageBase.FLOAT) {
+                    // frec, lower case
+                    k=2;
+                    k0=2;
+                } else {
+                    // rec, lower case
+                    k=0;
+                    k0=2;
+                }
+
+            } else {//upper case
+                if(outInfo.getDataType()==ModelStorageBase.FLOAT) {
+                    // fREC, upper case
+                    k=3;
+                    k0=3;
+                } else {
+                    // REC, upper case
+                    k=1;
+                    k0=3;
+                }
+            }
+            if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
+            	completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + "." + FilePARREC.imgEXTENSIONS[k];
+                completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + "." + FilePARREC.hdrEXTENSIONS[k0];
+            }
+            
+            
+        } else if (FilePARREC.isImageFile(absolutePath)) {
+            completeFileNameList[1] = absolutePath;
+
+            //public static final String[] hdrEXTENSIONS = { ".par", ".PAR", ".parv2", ".PARv2" };
+            //public static final String[] imgEXTENSIONS = { ".rec", ".REC", ".frec", ".fREC" };
+
+            String ext = FileUtility.getExtension((absolutePath));
+            int k,k0;
+            if(ext.equals(imgEXTENSIONS[0]) || ext.equals(imgEXTENSIONS[2])) {
+                if(outInfo.getDataType()==ModelStorageBase.FLOAT) {
+                    // frec, lower case
+                    k=2;
+                    k0=2;
+                } else {
+                    // rec, lower case
+                    k=2;
+                    k0=0;
+                }
+
+            } else {//upper case
+                if(outInfo.getDataType()==ModelStorageBase.FLOAT) {
+                    // fREC, upper case
+                    k=3;
+                    k0=3;
+                } else {
+                    // REC, upper case
+                    k=3;
+                    k0=1;
+                }
+            }
+            if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
+            	completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + FilePARREC.hdrEXTENSIONS[k];
+            	completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + FilePARREC.imgEXTENSIONS[k0];
+            }
+        } else {
+            completeFileNameList = null;
+        }
+
+        
+        return completeFileNameList;
+    }
+
+
+    //todo: monitor options for cropped data
+    public void writeHeader(ModelImage writeImage, FileWriteOptions options) throws IOException {
+        int bpp=0;
+        int ori=0;
+        switch(outInfo.getDataType()) {
+            case ModelStorageBase.FLOAT:
+                bpp=32;
+                break;
+            case ModelStorageBase.USHORT :
+                bpp=16;
+                break;
+            case ModelStorageBase.UBYTE:
+                bpp=8;
+                break;
+            default: bpp=16;
+        }
+        switch(outInfo.getImageOrientation()) {
+            case FileInfoBase.AXIAL:
+                ori=1;
+                break;
+            case FileInfoBase.SAGITTAL:
+                ori=2;
+                break;
+            case FileInfoBase.CORONAL:
+                ori=3;
+                break;
+            default: ori=1;
+
+        }
+        int []extents = outInfo.getExtents();
+
+        //Set the number of slices
+        extents[2] = options.getEndSlice()-options.getBeginSlice()+1;
+        PrintStream fp = new PrintStream(new File(fileNames[0]));
+        fp.println("# === DATA DESCRIPTION FILE ======================================================");
+        fp.println("#");
+        fp.println("# CAUTION - Investigational device.");
+        fp.println("# Limited by Federal Law to investigational use.");
+        fp.println("#");
+        fp.println("# Dataset name: Generated by MIPAV (MINIMAL FILE)");
+        fp.println("#");
+        fp.println("# CLINICAL TRYOUT             Research image export tool     V4.2");
+        fp.println("#");
+        fp.println("# === GENERAL INFORMATION ========================================================");
+        fp.println("# ");
+        
+        /*
+        fp.println(".    Max. number of slices/locations    : "+extents[2]);
+        switch(outInfo.getImageOrientation()) {
+            case FileInfoBase.AXIAL:
+                fp.println(".    FOV (ap,fh,rl) [mm]                : "+extents[0]*outInfo.getResolution(0)+
+                        " "+extents[2]*outInfo.getResolution(2)+" "+extents[1]*outInfo.getResolution(1));
+                break;
+            case FileInfoBase.SAGITTAL:
+                fp.println(".    FOV (ap,fh,rl) [mm]                : "+extents[1]*outInfo.getResolution(1)+
+                        " "+extents[0]*outInfo.getResolution(0)+" "+extents[2]*outInfo.getResolution(2));
+                break;
+            case FileInfoBase.CORONAL:
+                fp.println(".    FOV (ap,fh,rl) [mm]                : "+extents[1]*outInfo.getResolution(1)+
+                        " "+extents[2]*outInfo.getResolution(2)+" "+extents[0]*outInfo.getResolution(0));
+                break;
+            default: ori=1;
+
+        }
+       */ 
+        HashMap VolParameters = outInfo.getVolParameters();
+        fp.print(".    Patient name                       : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("info_patient_name");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Examination name                   : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("scn_exam_name");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Protocol name                      : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("scn_protocol_name");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Examination date/time              : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("info_exam_datetime");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Series Type                        : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("scn_series_type");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Acquisition nr                     : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("scn_acquisitin_num");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Reconstruction nr                  : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("scn_recon_num");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Scan Duration [sec]                : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("scn_scan_dur");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Max. number of cardiac phases      : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("max_card_phs");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Max. number of echoes              : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("max_num_echo");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.println(".    Max. number of slices/locations    : "+extents[2]);
+        
+        fp.print(".    Max. number of dynamics            : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("max_num_dynamics");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Max. number of mixes               : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("max_num_mixes");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Patient position                   : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("orient_patient_pos");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Preparation direction              : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("orient_prep_dir");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Technique                          : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("scn_technique");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Scan resolution  (x, y)            : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("scn_scan_res");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Scan mode                          : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("scn_scan_mode");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Repetition time [ms]               : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("scn_rep_time");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        switch(outInfo.getImageOrientation()) {
+        case FileInfoBase.AXIAL:
+            fp.println(".    FOV (ap,fh,rl) [mm]                : "+extents[0]*outInfo.getResolution(0)+
+                    " "+extents[2]*outInfo.getResolution(2)+" "+extents[1]*outInfo.getResolution(1));
+            break;
+        case FileInfoBase.SAGITTAL:
+            fp.println(".    FOV (ap,fh,rl) [mm]                : "+extents[1]*outInfo.getResolution(1)+
+                    " "+extents[0]*outInfo.getResolution(0)+" "+extents[2]*outInfo.getResolution(2));
+            break;
+        case FileInfoBase.CORONAL:
+            fp.println(".    FOV (ap,fh,rl) [mm]                : "+extents[1]*outInfo.getResolution(1)+
+                    " "+extents[2]*outInfo.getResolution(2)+" "+extents[0]*outInfo.getResolution(0));
+            break;
+        default: ori=1;
+
+        }
+        
+        fp.print(".    Water Fat shift [pixels]           : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("scn_water_fat_shift");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Angulation midslice(ap,fh,rl)[degr]: ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("orient_ang_midslice");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Off Centre midslice(ap,fh,rl) [mm] : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("orient_off_ctr_midslice");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Flow compensation <0=no 1=yes> ?   : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("special_flow_comp");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Presaturation     <0=no 1=yes> ?   : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("special_presatuaration");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Phase encoding velocity [cm/sec]   : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("cardiac_phase_enc_vel");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    MTC               <0=no 1=yes> ?   : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("special_mtc");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    SPIR              <0=no 1=yes> ?   : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("special_spir");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    EPI factor        <0,1=no EPI>     : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("special_epi_factor");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Dynamic scan      <0=no 1=yes> ?   : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("special_dynamic_scan");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Diffusion         <0=no 1=yes> ?   : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("diffusion_diffusion");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Diffusion echo time [ms]           : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("special_diffusion_echo_time");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Max. number of diffusion values    : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("special_max_num_diffusion_values");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Max. number of gradient orients    : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("special_max_num_gradient_orients");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        fp.print(".    Number of label types   <0=no ASL> : ");
+        if(VolParameters != null) {
+        	String s;
+        	s = (String)VolParameters.get("special_num_of_label_types");
+            if(s!=null) {
+            	fp.println(s);
+            }else {
+            	fp.println("");
+            }
+        }else {
+        	fp.println("");
+        }
+        
+        
+       
+        
+        
+        
+        
+        
+        
+        
+        
+        
+
+        fp.println("#");
+        fp.println("# === PIXEL VALUES =============================================================");
+        fp.println("#  PV = pixel value in REC file, FP = floating point value, DV = displayed value on console");
+        fp.println("#  RS = rescale slope,           RI = rescale intercept,    SS = scale slope ");
+        fp.println("#  DV = PV * RS + RI             FP = DV / (RS * SS) ");
+        fp.println("# ");
+        fp.println("# === IMAGE INFORMATION DEFINITION =============================================");
+        fp.println("#  The rest of this file contains ONE line per image, this line contains the following information:");
+        fp.println("#");
+        fp.println("#  slice number                             (integer)");
+        fp.println("#  echo number                              (integer)");
+        fp.println("#  dynamic scan number                      (integer)");
+        fp.println("#  cardiac phase number                     (integer)");
+        fp.println("#  image_type_mr                            (integer)");
+        fp.println("#  scanning sequence                        (integer)");
+        fp.println("#  index in REC file (in images)            (integer)");
+        fp.println("#  image pixel size (in bits)               (integer)");
+        fp.println("#  scan percentage                          (integer)");
+        fp.println("#  recon resolution (x y)                   (2*integer)");
+        fp.println("#  rescale intercept                        (float)");
+        fp.println("#  rescale slope                            (float)");
+        fp.println("#  scale slope                              (float)");
+        fp.println("#  window center                            (integer)");
+        fp.println("#  window width                             (integer)");
+        fp.println("#  image angulation (ap,fh,rl in degrees )  (3*float)");
+        fp.println("#  image offcentre (ap,fh,rl in mm )        (3*float)");
+        fp.println("#  slice thickness (in mm )                 (float)");
+        fp.println("#  slice gap (in mm )                       (float)");
+        fp.println("#  image_display_orientation                (integer)");
+        fp.println("#  slice orientation ( TRA/SAG/COR )        (integer)");
+        fp.println("#  fmri_status_indication                   (integer)");
+        fp.println("#  image_type_ed_es  (end diast/end syst)   (integer)");
+        fp.println("#  pixel spacing (x,y) (in mm)              (2*float)");
+        fp.println("#  echo_time                                (float)");
+        fp.println("#  dyn_scan_begin_time                      (float)");
+        fp.println("#  trigger_time                             (float)");
+        fp.println("#  diffusion_b_factor                       (float)");
+        fp.println("#  number of averages                       (integer)");
+        fp.println("#  image_flip_angle (in degrees)            (float)");
+        fp.println("#  cardiac frequency   (bpm)                (integer)");
+        fp.println("#  minimum RR-interval (in ms)              (integer)");
+        fp.println("#  maximum RR-interval (in ms)              (integer)");
+        fp.println("#  TURBO factor  <0=no turbo>               (integer)");
+        fp.println("#  Inversion delay (in ms)                  (float)");
+        fp.println("#  diffusion b value number    (imagekey!)  (integer)");
+        fp.println("#  gradient orientation number (imagekey!)  (integer)");
+        fp.println("#  contrast type                            (string)");
+        fp.println("#  diffusion anisotropy type                (string)");
+        fp.println("#  diffusion (ap, fh, rl)                   (3*float)");
+        fp.println("#  label type (ASL)            (imagekey!)  (integer)");
+        fp.println("#");
+        fp.println("# === IMAGE INFORMATION ==========================================================");
+        fp.println("#  sl ec  dyn ph ty    idx pix scan% rec size                (re)scale              window        angulation              offcentre        thick   gap   info      spacing     echo     dtime   ttime    diff  avg  flip    freq   RR-int  turbo delay b grad cont anis         diffusion       L.ty");
+        fp.println("");
+
+        
+        /**
+        if(extents.length>3) {
+            for(int k=options.getBeginTime();k<=options.getEndTime();k++) {
+                for(int j=1;j<=extents[2];j++) {
+
+                    fp.println(j+" "+k+" "+bpp+" "+extents[0]+" "+extents[1]+
+                            " "+outInfo.getResolution(2)+" "+0+" "+ori);
+                }
+            }
+        } else {
+            for(int j=1;j<=extents[2];j++) {
+
+                fp.println(j+" "+1+" "+bpp+" "+extents[0]+" "+extents[1]+
+                        " "+outInfo.getResolution(2)+" "+0+" "+ori);
+            }
+        }**/
+        //Vector Slices = outInfo.getSlices();
+        //Vector SliceParameters = outInfo.getSliceParameters();
+        //following info is slice specific....so can not get it only from outInfo
+        for (int i = 0; i < (extents[2] * extents[3]); i++) {
+            FileInfoPARREC fileInfoPR = (FileInfoPARREC)writeImage.getFileInfo(i);
+            String tag = fileInfoPR.getSliceInfo();
+            fp.println(tag);
+        }
+        
+        
+        
+	       /* if(Slices != null) {
+	        	for(int j=0;j<Slices.size();j++) {
+	        		String tag = (String)Slices.get(j);
+	                //String tag = (String)SliceParameters.get(j);
+	                fp.println(tag);
+	        	}
+	        }*/
+
+
+
+        fp.println("# === END OF DATA DESCRIPTION FILE ===============================================");
+
+        fp.close();
+    }
+
+    
     private HashMap buildParVolMap() {
         HashMap map = new HashMap();
         map.put(".    Patient name","info_patient_name");
@@ -1095,219 +1818,6 @@ public class FilePARREC extends FileBase {
         map.put("#  label type (ASL)            (imagekey!)  (integer)", new Integer(1));
         return map;
     };
-
-
-    /**
-     * Gets the header and image file names given a header or image file name
-     * @param absolutePath header or image filename
-     * @return array [0] headerfilename [1] imagefilename
-     */
-    public String[] getCompleteFileNameListDefault(String absolutePath) {
-        String[] completeFileNameList = new String[2];
-
-        if (FilePARREC.isHeaderFile(absolutePath)) {
-            completeFileNameList[0] = absolutePath;
-
-            String ext = FileUtility.getExtension((absolutePath));
-            int k,k0;
-
-            if(ext.equals(hdrEXTENSIONS[0]) || ext.equals(hdrEXTENSIONS[2])) { //lower case
-                if(outInfo.getDataType()==ModelStorageBase.FLOAT) {
-                    // frec, lower case
-                    k=2;
-                    k0=2;
-                } else {
-                    // rec, lower case
-                    k=0;
-                    k0=2;
-                }
-
-            } else {//upper case
-                if(outInfo.getDataType()==ModelStorageBase.FLOAT) {
-                    // fREC, upper case
-                    k=3;
-                    k0=3;
-                } else {
-                    // REC, upper case
-                    k=1;
-                    k0=3;
-                }
-            }
-            if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
-            	completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + "." + FilePARREC.imgEXTENSIONS[k];
-                completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + "." + FilePARREC.hdrEXTENSIONS[k0];
-            }
-            
-            
-        } else if (FilePARREC.isImageFile(absolutePath)) {
-            completeFileNameList[1] = absolutePath;
-
-            //public static final String[] hdrEXTENSIONS = { ".par", ".PAR", ".parv2", ".PARv2" };
-            //public static final String[] imgEXTENSIONS = { ".rec", ".REC", ".frec", ".fREC" };
-
-            String ext = FileUtility.getExtension((absolutePath));
-            int k,k0;
-            if(ext.equals(imgEXTENSIONS[0]) || ext.equals(imgEXTENSIONS[2])) {
-                if(outInfo.getDataType()==ModelStorageBase.FLOAT) {
-                    // frec, lower case
-                    k=2;
-                    k0=2;
-                } else {
-                    // rec, lower case
-                    k=2;
-                    k0=0;
-                }
-
-            } else {//upper case
-                if(outInfo.getDataType()==ModelStorageBase.FLOAT) {
-                    // fREC, upper case
-                    k=3;
-                    k0=3;
-                } else {
-                    // REC, upper case
-                    k=3;
-                    k0=1;
-                }
-            }
-            if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
-            	completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + FilePARREC.hdrEXTENSIONS[k];
-            	completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + FilePARREC.imgEXTENSIONS[k0];
-            }
-        } else {
-            completeFileNameList = null;
-        }
-
-        
-        return completeFileNameList;
-    }
-
-
-    //todo: monitor options for cropped data
-    public void writeHeader(FileWriteOptions options) throws IOException {
-        int bpp=0;
-        int ori=0;
-        switch(outInfo.getDataType()) {
-            case ModelStorageBase.FLOAT:
-                bpp=32;
-                break;
-            case ModelStorageBase.USHORT :
-                bpp=16;
-                break;
-            case ModelStorageBase.UBYTE:
-                bpp=8;
-                break;
-            default: bpp=16;
-        }
-        switch(outInfo.getImageOrientation()) {
-            case FileInfoBase.AXIAL:
-                ori=1;
-                break;
-            case FileInfoBase.SAGITTAL:
-                ori=2;
-                break;
-            case FileInfoBase.CORONAL:
-                ori=3;
-                break;
-            default: ori=1;
-
-        }
-        int []extents = outInfo.getExtents();
-        //Set the number of slices
-        extents[2] = options.getEndSlice()-options.getBeginSlice()+1;
-        PrintStream fp = new PrintStream(new File(fileNames[0]));
-        fp.println("# === DATA DESCRIPTION FILE ======================================================");
-        fp.println("#");
-        fp.println("# CAUTION - Investigational device.");
-        fp.println("# Limited by Federal Law to investigational use.");
-        fp.println("#");
-        fp.println("# Dataset name: Generated by MIPAV (MINIMAL FILE)");
-        fp.println("#");
-        fp.println("# CLINICAL TRYOUT             Research image export tool     V4");
-        fp.println("#");
-        fp.println("# === GENERAL INFORMATION ========================================================");
-        fp.println("# ");
-        fp.println(".    Max. number of slices/locations    : "+extents[2]);
-        switch(outInfo.getImageOrientation()) {
-            case FileInfoBase.AXIAL:
-                fp.println(".    FOV (ap,fh,rl) [mm]                : "+extents[0]*outInfo.getResolution(0)+
-                        " "+extents[2]*outInfo.getResolution(2)+" "+extents[1]*outInfo.getResolution(1));
-                break;
-            case FileInfoBase.SAGITTAL:
-                fp.println(".    FOV (ap,fh,rl) [mm]                : "+extents[1]*outInfo.getResolution(1)+
-                        " "+extents[0]*outInfo.getResolution(0)+" "+extents[2]*outInfo.getResolution(2));
-                break;
-            case FileInfoBase.CORONAL:
-                fp.println(".    FOV (ap,fh,rl) [mm]                : "+extents[1]*outInfo.getResolution(1)+
-                        " "+extents[2]*outInfo.getResolution(2)+" "+extents[0]*outInfo.getResolution(0));
-                break;
-            default: ori=1;
-
-        }
-
-        fp.println("#");
-        fp.println("# === PIXEL VALUES =============================================================");
-        fp.println("#  PV = pixel value in REC file, FP = floating point value, DV = displayed value on console");
-        fp.println("#  RS = rescale slope,           RI = rescale intercept,    SS = scale slope ");
-        fp.println("#  DV = PV * RS + RI             FP = DV / (RS * SS) ");
-        fp.println("# ");
-        fp.println("# === IMAGE INFORMATION DEFINITION =============================================");
-        fp.println("#  The rest of this file contains ONE line per image, this line contains the following information:");
-        fp.println("#");
-        fp.println("#  slice number                             (integer)");
-        fp.println("#  dynamic scan number                      (integer)");
-        fp.println("#  image pixel size (in bits)               (integer)");
-        fp.println("#  recon resolution (x y)                   (2*integer)");
-        fp.println("#  slice thickness (in mm )                 (float)");
-        fp.println("#  slice gap (in mm )                       (float)");
-        fp.println("#  slice orientation ( TRA/SAG/COR )        (integer)");
-        fp.println("#");
-        fp.println("# === IMAGE INFORMATION ==========================================================");
-        fp.println("");
-
-
-        if(extents.length>3) {
-            for(int k=options.getBeginTime();k<=options.getEndTime();k++) {
-                for(int j=1;j<=extents[2];j++) {
-
-                    fp.println(j+" "+k+" "+bpp+" "+extents[0]+" "+extents[1]+
-                            " "+outInfo.getResolution(2)+" "+0+" "+ori);
-                }
-            }
-        } else {
-            for(int j=1;j<=extents[2];j++) {
-
-                fp.println(j+" "+1+" "+bpp+" "+extents[0]+" "+extents[1]+
-                        " "+outInfo.getResolution(2)+" "+0+" "+ori);
-            }
-        }
-
-
-        fp.println("# === END OF DATA DESCRIPTION FILE ===============================================");
-
-        fp.close();
-    }
-
-    /** getter for volMap **/
-	public HashMap getVolMap() {
-		return VolMap;
-	}
-
-	/** getter for vol parameters **/
-	public HashMap getVolParameters() {
-		return VolParameters;
-	}
-
-	/** getter for slice parameters **/
-	public Vector getSliceParameters() {
-		return SliceParameters;
-	}
-	
-	/** getter for sliecs **/
-	public Vector getSlices() {
-		return Slices;
-	}
-
-	
 	
 	
 	
