@@ -20,15 +20,19 @@ import java.util.TreeSet;
 import java.util.Vector;
 
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR35D;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileDicom;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileInfoImageXML;
+import gov.nih.mipav.model.file.FileInfoPARREC;
 import gov.nih.mipav.model.file.FilePARREC;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileWriteOptions;
@@ -37,8 +41,10 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageFileFilter;
+import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewJProgressBar;
 
-public class AlgorithmDTICreateListFile extends AlgorithmBase {
+public class AlgorithmDTICreateListFile extends AlgorithmBase implements AlgorithmInterface{
 
 	
 	
@@ -63,8 +69,11 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase {
     /** boolean if dataset is interelaved **/
     private boolean isInterleaved;
     
-    /** TextArea of main dialogfor text output.* */
+    /** TextArea of main dialog for text output.* */
     private JTextArea outputTextArea;
+    
+    /** handle to dwi data textfield of main dialog **/
+    private JTextField dwiPathTextField;
     
     /** This is an ordered map of series number and seriesFileInfoTreeSet.* */
     private TreeMap seriesFileInfoTreeMap;
@@ -132,6 +141,9 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase {
     /** FileParRec handle **/
 	private FilePARREC fileParRec;
 	
+	/** file info Par/Rec **/
+	private FileInfoPARREC fileInfoPR;
+	
 	/** ModelImage of 4D par/rec dataset **/
 	private ModelImage image4D;
 	
@@ -167,9 +179,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase {
     
     /** vol paramters **/
     private HashMap volParameters;
-    
-    /** slices **/
-    private Vector slices;
+
     
     /**Philips puts in one volume as the average of all the DWIs. This
 	volume will have a non-zero B value and 0 in the gradients
@@ -210,6 +220,20 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase {
     /** tDim of 4d image **/
     private int tDim;
     
+    /** boolean for performing registration **/
+    private boolean performRegistration;
+    
+    /** handle to AlgorithmRegOAR35D **/
+    private AlgorithmRegOAR35D reg35;
+    
+    private int cost, DOF, interp, interp2, registerTo, bracketBound, maxIterations, numMinima;
+    
+    private float rotateBegin, rotateEnd, coarseRate, fineRate;
+    
+    private boolean doGraph = false;
+    
+    private boolean doSubsample, fastMode;
+    
     
     
     /**
@@ -222,7 +246,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase {
      * @param  outputTextArea   
      */
     public AlgorithmDTICreateListFile(String studyPath, String studyName, String gradientFilePath,
-                                            String bmtxtFilePath, JTextArea outputTextArea, boolean isInterleaved) {
+                                            String bmtxtFilePath, JTextArea outputTextArea, boolean isInterleaved, boolean performRegsitration) {
         this.studyPath = studyPath;
         this.studyName = studyName;
         this.gradientFilePath = gradientFilePath;
@@ -232,6 +256,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase {
         this.listFileName = studyName + ".list";
 		this.bmatrixFileName = studyName + ".BMTXT";
 		this.pathFileName = studyName + ".path";
+		this.performRegistration = performRegsitration;
         seriesFileInfoTreeMap = new TreeMap();
         isDICOM = true;
     }
@@ -241,7 +266,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase {
     /** constructor for par/rec
 	 * 
 	 */
-	public AlgorithmDTICreateListFile(String fileName, String fileDir, String gradientFilePath, String bmtxtFilePath, JTextArea outputTextArea) {
+	public AlgorithmDTICreateListFile(String fileName, String fileDir, String gradientFilePath, String bmtxtFilePath, JTextArea outputTextArea, boolean performRegsitration) {
 		this.prFileName = fileName;
 		this.studyName = fileName.substring(0, fileName.indexOf("."));
 		this.prFileDir = fileDir;
@@ -251,6 +276,42 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase {
 		this.bmatrixFileName = studyName + ".BMTXT";
 		this.pathFileName = studyName + ".path";
 		this.outputTextArea = outputTextArea;
+		this.performRegistration = performRegsitration;
+		isDICOM = false;
+	}
+	
+	
+	
+	/** constructor for par/rec if registration is to done first
+	 * 
+	 */
+	public AlgorithmDTICreateListFile(String fileName, String fileDir, String gradientFilePath, String bmtxtFilePath, JTextArea outputTextArea, boolean performRegsitration, int cost, int DOF, int interp, int interp2, int registerTo, float rotateBegin, float rotateEnd, float coarseRate, float fineRate, boolean doSubsample, boolean fastMode, int bracketBound, int maxIterations, int numMinima, JTextField dwiPathTextField) {
+		this.prFileName = fileName;
+		this.studyName = fileName.substring(0, fileName.indexOf("."));
+		this.prFileDir = fileDir;
+		this.gradientFilePath = gradientFilePath;
+		this.bmtxtFilePath = bmtxtFilePath;
+		this.listFileName = studyName + ".list";
+		this.bmatrixFileName = studyName + ".BMTXT";
+		this.pathFileName = studyName + ".path";
+		this.outputTextArea = outputTextArea;
+		this.performRegistration = performRegsitration;
+		this.cost = cost;
+		this.DOF = DOF;
+		this.interp = interp;
+		this.interp2 = interp2;
+		this.registerTo = registerTo;
+		this.rotateBegin = rotateBegin;
+		this.rotateEnd = rotateEnd;
+		this.coarseRate = coarseRate;
+		this.fineRate = fineRate;
+		this.doSubsample = doSubsample;
+		this.fastMode = fastMode;
+		this.bracketBound = bracketBound;
+		this.maxIterations = maxIterations;
+		this.numMinima = numMinima;
+		this.dwiPathTextField = dwiPathTextField;
+		
 		isDICOM = false;
 	}
 	
@@ -263,20 +324,133 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase {
 	
 	
 	
-	
-	
-	
-	
 	public void runAlgorithm() {
 		if(isDICOM) {
+			if(performRegistration) {
+				performRegistrationDICOM();
+			}
 			runAlgorithmDICOM();
 		}else {
+			if(performRegistration) {
+				performRegistraionPARREC();
+			}
 			runAlgorithmPARREC();
 		}
+		setCompleted(true);
+	}
+	
+	/**
+	 * regsitration of PAR REC DWI dataset
+	 *
+	 */
+	public void performRegistraionPARREC() {
+		 Preferences.debug("** Registering DWI dataset...\n", Preferences.DEBUG_ALGORITHM);
+
+        if (outputTextArea != null) {
+            outputTextArea.append("** Registering DWI dataset...\n");
+        }
+
+        System.out.println("** Registering DWI dataset...\n");
+        
+		fileParRec = new FilePARREC(prFileName, prFileDir + File.separator);
+		System.out.println(prFileName);
+		//read in 4d par/rec data
+		try {
+			image4D = fileParRec.readImage(false);
+		}catch (Exception e) {
+			e.printStackTrace();
+			finalize();
+            setCompleted(true);
+            return;
+		}
+		fileInfoPR = (FileInfoPARREC)image4D.getFileInfo(0);
+		int extents[] = image4D.getExtents();
+		String[] values;
+		int bZeroIndex = -1;
+		String slice;
+		
+		//find B0 volume index
+		for (int i = 0,vol=0; i < (extents[2] * extents[3]);i=i+extents[2],vol++) {
+            FileInfoPARREC fileInfoPR = (FileInfoPARREC)image4D.getFileInfo(i);
+            slice = fileInfoPR.getSliceInfo();
+            values = slice.split("\\s+");
+			float bValue = (Float.valueOf(values[33])).floatValue();
+
+			if(bValue == 0) {
+				bZeroIndex = vol;
+				break;
+			}
+        }
+		
+		
+		
+		//now we have to volume index to register other volumes to....call algorithm to register
+		int refImageNum = bZeroIndex;
+		
+		System.out.println("refImageNum is " + refImageNum);
+
+		
+		reg35 = new AlgorithmRegOAR35D(image4D, cost, DOF, interp, interp2, registerTo, refImageNum, rotateBegin,
+                rotateEnd, coarseRate, fineRate, doGraph, doSubsample, fastMode,
+                bracketBound, maxIterations, numMinima);
+		
+		
+		reg35.setRunningInSeparateThread(isRunningInSeparateThread());
+		reg35.addListener(this);
+		ViewJProgressBar progressBar = new ViewJProgressBar("", " ...", 0, 100, true);
+        progressBar.setSeparateThread(isRunningInSeparateThread());
+        reg35.addProgressChangeListener(progressBar);
+        reg35.setProgressValues(0, 100);
+		reg35.run();
+		
+
+		try {
+			String[] splits = prFileName.split("\\.");
+			String prFileNameRegistered = splits[0] + "_Registered." + splits[1];
+
+			FileWriteOptions opts = new FileWriteOptions(true);
+	        opts.setFileType(FileUtility.PARREC);
+	        opts.setFileDirectory(prFileDir + File.separator);
+	        opts.setFileName(prFileNameRegistered);
+	        opts.setBeginSlice(0);
+	        opts.setEndSlice(extents[2]-1);
+	        System.out.println(extents[2]-1);
+	        opts.setTimeSlice(0);
+	        opts.setEndTime(extents[3]-1);
+	        System.out.println(extents[3]-1);
+	        opts.setOptionsSet(true);
+	        FileIO fileIO = new FileIO();
+	        fileIO.writeImage(image4D, opts);
+	        //now set prFileName to this registered image for continuation of algorithm
+	        prFileName = prFileNameRegistered;
+	        dwiPathTextField.setText(prFileDir + File.separator + prFileName);
+		}catch (Exception e) {
+			e.printStackTrace();
+        	Preferences.debug("! ERROR: " + e.toString() + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("! ERROR: Writing of registered image failed....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+
+            if (outputTextArea != null) {
+                outputTextArea.append("! ERROR: " + e.toString() + "\n");
+                outputTextArea.append("! ERROR: Writing registered image failed....exiting algorithm \n");
+            }
+
+        }
+		
+		
+		
+		
+		image4D.disposeLocal();
+		image4D = null;
 	}
 	
 	
-	
+	/**
+	 * regsitration of DICOM DWI dataset
+	 *
+	 */
+	public void performRegistrationDICOM() {
+		
+	}
 	
 	
 	/**
@@ -556,7 +730,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase {
 
 	        System.out.println("** Algorithm took " + seconds + " seconds \n");
 
-	        setCompleted(true);
+
 	}
 	
 	
@@ -680,7 +854,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase {
         image4D.disposeLocal();
     	image4D = null;
 
-        setCompleted(true);
+        
 	}
 	
 	
@@ -2079,14 +2253,18 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase {
 			originalColumnsString = String.valueOf(extents[0]);
 			originalRowsString = String.valueOf(extents[1]);
 			numSlicesString = String.valueOf(extents[2]);
-			volParameters = fileParRec.getVolParameters();
+			if(fileInfoPR == null) {
+				fileInfoPR = (FileInfoPARREC)image4D.getFileInfo(0);
+			}
+			volParameters = fileInfoPR.getVolParameters();
 			String fovString = (String)volParameters.get("scn_fov");
 			String[] fovs = fovString.trim().split("\\s+");
 			horizontalFOVString = fovs[0];
 			verticalFOVString = fovs[2];
-			slices = fileParRec.getSlices();
 			//get some list file info from 1st slice 
-	        String slice = (String)slices.get(0);
+
+	        FileInfoPARREC firstFileInfo = (FileInfoPARREC)image4D.getFileInfo(0);
+	        String slice = firstFileInfo.getSliceInfo();
 	        String[] values = slice.split("\\s+");
 	        //slice gap
 	        sliceGapString = values[23];
@@ -2107,8 +2285,9 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase {
 			//Once we find this volume, exclude
 	        avgVolIndex = -1;
 	        
-			for(int i=0,vol=0;i<slices.size();i=i+extents[2],vol++) {
-				slice = (String)slices.get(i);
+			for(int i = 0,vol=0; i < (extents[2] * extents[3]);i=i+extents[2],vol++) {
+				FileInfoPARREC fileInfoPR = (FileInfoPARREC)image4D.getFileInfo(i);
+	            slice = fileInfoPR.getSliceInfo();
 				values = slice.split("\\s+");
 				float bValue = (Float.valueOf(values[33])).floatValue();
 				float grad1 = (Float.valueOf(values[45])).floatValue();
@@ -2175,8 +2354,9 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase {
 				        avgVolIndex = -1;
 				        int extents[] = image4D.getExtents();
 				        int k = 0;
-						for(int i=0,vol=0;i<slices.size();i=i+extents[2],vol++) {
-							String slice = (String)slices.get(i);
+				        for(int i = 0,vol=0; i < (extents[2] * extents[3]);i=i+extents[2],vol++) {
+							FileInfoPARREC fileInfoPR = (FileInfoPARREC)image4D.getFileInfo(i);
+				            String slice = fileInfoPR.getSliceInfo();
 							String[] values = slice.split("\\s+");
 							float bValue = (Float.valueOf(values[33])).floatValue();
 							if(bValue != 0) {
@@ -2425,9 +2605,10 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase {
             float z = 0;
             float b;
             int k = 0;
-	    	for(int i=0,vol=0;i<slices.size();i=i+extents[2],vol++) {
+            for(int i = 0,vol=0; i < (extents[2] * extents[3]);i=i+extents[2],vol++) {
+				FileInfoPARREC fileInfoPR = (FileInfoPARREC)image4D.getFileInfo(i);
 	    		if(vol!=avgVolIndex) {
-					slice = (String)slices.get(i);
+	    			slice = fileInfoPR.getSliceInfo();
 					values = slice.split("\\s+");
 					b = (Float.valueOf(values[33])).floatValue();
 					if(!isOldVersion) {
@@ -2609,7 +2790,8 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase {
     	
     	
     	//get some of the values for eqautions above from 1st slice 
-        String slice = (String)slices.get(0);
+    	FileInfoPARREC firstFileInfo = (FileInfoPARREC)image4D.getFileInfo(0);
+        String slice = firstFileInfo.getSliceInfo();
         String[] values = slice.split("\\s+");
     	float RS = Float.valueOf(values[12]).floatValue();
     	float RI = Float.valueOf(values[11]).floatValue();
@@ -2914,7 +3096,9 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase {
     
     
     
-    
+    public void algorithmPerformed(AlgorithmBase algorithm) {
+    	
+    }
     
     
     

@@ -18,6 +18,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowEvent;
 import java.io.File;
 
 import javax.swing.ButtonGroup;
@@ -55,6 +56,9 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
     
     /** path to gradient file **/
     private JTextField gradientFilePathTextField;
+    
+    /** dwi data label **/
+    private JLabel dwiLabel;
     
     /** browse button **/
     private JButton gradientFileBrowseButton;
@@ -101,10 +105,21 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
     /** boolean indicating if we are dealing with dicom or par/rec **/
     private boolean isDICOM;
     
+    /** checkbox for performing registration **/
+    private JCheckBox performRegistrationCheckbox;
+    
+    /** button to launch the registration settings **/
+    private JButton registrationSettingsButton;
+    
+    /** handle to JDialogDTICreateListFileRegOAR35DOptions **/
+    private JDialogDTICreateListFileRegOAR35DOptions regOptions;
+    
     
     
     
     public JDialogDTICreateListFile() {
+    	regOptions = new JDialogDTICreateListFileRegOAR35DOptions();
+    	regOptions.setVariables();
     	init();
     }
     
@@ -116,21 +131,45 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
     	setForeground(Color.black);
         setTitle("DTI Create List File " + " v1.0");
         
-        GridBagLayout mainPanelGridBagLayout = new GridBagLayout();
+        GridBagLayout gbl = new GridBagLayout();
         GridBagConstraints mainPanelConstraints = new GridBagConstraints();
-        mainPanelConstraints.anchor = GridBagConstraints.WEST;
+        JPanel mainPanel = new JPanel(gbl);
         
-        
-        JPanel mainPanel = new JPanel(mainPanelGridBagLayout);
-        
-        mainPanelConstraints.gridx = 0;
-		mainPanelConstraints.gridy = 0;
-		mainPanelConstraints.insets = new Insets(15,5,15,0);
-        JLabel parRecLabel = new JLabel(" DWI data : ");
-        mainPanel.add(parRecLabel, mainPanelConstraints);
-        
+        performRegistrationCheckbox = new JCheckBox("Register DWI Images first");
+        performRegistrationCheckbox.setSelected(false);
+        performRegistrationCheckbox.addActionListener(this);
+        performRegistrationCheckbox.setActionCommand("performRegistrationCheckbox");
+        registrationSettingsButton = new JButton("Registration Settings");
+        registrationSettingsButton.setEnabled(false);
+        registrationSettingsButton.addActionListener(this);
+        registrationSettingsButton.setActionCommand("registrationSettingsButton");
+        JPanel regPanel = new JPanel(gbl);
+        GridBagConstraints regPanelConstraints = new GridBagConstraints();
+        regPanelConstraints.gridx = 0;
+        regPanelConstraints.gridy = 0;
+        regPanelConstraints.insets = new Insets(15,5,15,0);
+        regPanel.add(performRegistrationCheckbox, regPanelConstraints);
+        regPanelConstraints.gridx = 1;
+        regPanelConstraints.gridy = 0;
+        regPanelConstraints.insets = new Insets(15,5,15,0);
+        regPanel.add(registrationSettingsButton, regPanelConstraints);
         mainPanelConstraints.gridx = 1;
 		mainPanelConstraints.gridy = 0;
+		mainPanelConstraints.insets = new Insets(15,5,15,0);
+		mainPanelConstraints.gridwidth = 1;
+		mainPanelConstraints.anchor = GridBagConstraints.CENTER;
+		mainPanel.add(regPanel, mainPanelConstraints);
+
+        mainPanelConstraints.gridx = 0;
+		mainPanelConstraints.gridy = 1;
+		mainPanelConstraints.insets = new Insets(15,5,15,0);
+		mainPanelConstraints.gridwidth = 1;
+		mainPanelConstraints.anchor = GridBagConstraints.WEST;
+        dwiLabel = new JLabel(" DWI data : ");
+        mainPanel.add(dwiLabel, mainPanelConstraints);
+        
+        mainPanelConstraints.gridx = 1;
+		mainPanelConstraints.gridy = 1;
 		mainPanelConstraints.insets = new Insets(15,5,15,0);
 		dwiPathTextField = new JTextField(55);
 		dwiPathTextField.setEditable(false);
@@ -139,7 +178,7 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		mainPanel.add(dwiPathTextField, mainPanelConstraints);
 		
 		mainPanelConstraints.gridx = 2;
-		mainPanelConstraints.gridy = 0;
+		mainPanelConstraints.gridy = 1;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
 		dwiPathBrowseButton = new JButton("Browse");
 		dwiPathBrowseButton.addActionListener(this);
@@ -157,7 +196,7 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		mainPanelConstraints.anchor = GridBagConstraints.CENTER;
 		JLabel dwiDataInfoLabel = new JLabel("For DICOM datasets, select the top level study directory.  For Par/Rec datasets, select the .rec file");
 		mainPanelConstraints.gridx = 0;
-		mainPanelConstraints.gridy = 1;
+		mainPanelConstraints.gridy = 2;
 		mainPanelConstraints.gridwidth = 3;
 		mainPanelConstraints.insets = new Insets(0,5,70,5);
 		mainPanel.add(dwiDataInfoLabel, mainPanelConstraints);
@@ -172,14 +211,14 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		gradFileRadio.setActionCommand("gradFileRadio");
 		optionsGroup.add(gradFileRadio);
 		mainPanelConstraints.gridx = 0;
-		mainPanelConstraints.gridy = 2;
+		mainPanelConstraints.gridy = 3;
 		mainPanelConstraints.gridwidth = 1;
 		mainPanelConstraints.insets = new Insets(0,5,15,0);
 		mainPanel.add(gradFileRadio, mainPanelConstraints);
 		
 		
 		mainPanelConstraints.gridx = 1;
-		mainPanelConstraints.gridy = 2;
+		mainPanelConstraints.gridy = 3;
 		mainPanelConstraints.insets = new Insets(0,5,15,0);
 		gradientFilePathTextField = new JTextField(55);
 		gradientFilePathTextField.setEditable(false);
@@ -188,7 +227,7 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		mainPanel.add(gradientFilePathTextField, mainPanelConstraints);
 		
 		mainPanelConstraints.gridx = 2;
-		mainPanelConstraints.gridy = 2;
+		mainPanelConstraints.gridy = 3;
 		mainPanelConstraints.insets = new Insets(0,5,15,5);
 		gradientFileBrowseButton = new JButton("Browse");
 		gradientFileBrowseButton.addActionListener(this);
@@ -202,13 +241,13 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		bmtxtFileRadio.setActionCommand("bmtxtFileRadio");
 		optionsGroup.add(bmtxtFileRadio);
 		mainPanelConstraints.gridx = 0;
-		mainPanelConstraints.gridy = 3;
+		mainPanelConstraints.gridy = 4;
 		mainPanelConstraints.insets = new Insets(0,5,5,0);
 		mainPanel.add(bmtxtFileRadio, mainPanelConstraints);
 		
 		
 		mainPanelConstraints.gridx = 1;
-		mainPanelConstraints.gridy = 3;
+		mainPanelConstraints.gridy = 4;
 		mainPanelConstraints.insets = new Insets(0,5,5,0);
 		bmtxtFilePathTextField = new JTextField(55);
 		bmtxtFilePathTextField.setText("");
@@ -219,7 +258,7 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		mainPanel.add(bmtxtFilePathTextField, mainPanelConstraints);
 		
 		mainPanelConstraints.gridx = 2;
-		mainPanelConstraints.gridy = 3;
+		mainPanelConstraints.gridy = 4;
 		mainPanelConstraints.insets = new Insets(0,5,5,5);
 		bmtxtFileBrowseButton = new JButton("Browse");
 		bmtxtFileBrowseButton.addActionListener(this);
@@ -230,7 +269,7 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		
 		mainPanelConstraints.anchor = GridBagConstraints.CENTER;
 		mainPanelConstraints.gridx = 0;
-		mainPanelConstraints.gridy = 4;
+		mainPanelConstraints.gridy = 5;
 		mainPanelConstraints.gridwidth = 3;
 		mainPanelConstraints.insets = new Insets(10,5,5,5);
 		JLabel parRecInfoLabel = new JLabel("*Gradient file or b-matrix file must be provided for all DICOM study directories and for versions 4.0 and earlier of Par/Rec");
@@ -245,7 +284,7 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		//mainPanel.add(interleavedLabel, mainPanelConstraints);
 		
 		mainPanelConstraints.gridx = 0;
-		mainPanelConstraints.gridy = 5;
+		mainPanelConstraints.gridy = 6;
 		mainPanelConstraints.gridwidth = 3;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
 		outputTextArea = new JTextArea(15, 70);
@@ -257,7 +296,7 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		mainPanel.add(scrollPane, mainPanelConstraints);
 		
 		mainPanelConstraints.gridx = 0;
-		mainPanelConstraints.gridy = 6;
+		mainPanelConstraints.gridy = 7;
 		mainPanelConstraints.gridwidth = 3;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
 		JLabel refLabel = new JLabel("Developed in concert with Dr. Lin-Ching Chang D.Sc.,  Dr. Carlo Pierpaoli MD Ph.D.,  and Lindsay Walker MS from the NIH/NICHD/LIMB/STBB group");
@@ -404,6 +443,9 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 			bmtxtFileBrowseButton.setEnabled(false);
 			gradFileRadio.setEnabled(false);
 			bmtxtFileRadio.setEnabled(false);
+			performRegistrationCheckbox.setEnabled(false);
+			registrationSettingsButton.setEnabled(false);
+			dwiLabel.setEnabled(false);
 			
 			//setStudyPath(studyPathTextField.getText().trim());
 			setGradientPath(gradientFilePathTextField.getText().trim());
@@ -412,6 +454,17 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 			//setInterleaved(interleavedCheckbox.isSelected());
 			//interleavedCheckbox.setEnabled(false);
 			callAlgorithm();
+		}else if (command.equalsIgnoreCase("performRegistrationCheckbox")) {
+			if(performRegistrationCheckbox.isSelected()) {
+				registrationSettingsButton.setEnabled(true);
+			}else {
+				registrationSettingsButton.setEnabled(false);
+			}
+		}else if (command.equalsIgnoreCase("registrationSettingsButton")) {
+			regOptions.setVisible(true);
+		}else if (command.equalsIgnoreCase("cancel")) {
+			regOptions.dispose();
+			dispose();
 		}else if (command.equalsIgnoreCase("help")) {
 			MipavUtil.showHelp("DTI00010");
 		}
@@ -422,6 +475,7 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 	 * call algorithm
 	 */
 	protected void callAlgorithm() {
+		boolean performRegistration = performRegistrationCheckbox.isSelected();
 		
 		Preferences.debug("*** Beginning DTI Sorting Process *** \n",Preferences.DEBUG_ALGORITHM);
 		if(outputTextArea != null) {
@@ -429,9 +483,30 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		}
 		System.out.println("*** Beginning DTI Sorting Process *** \n");
 		if(isDICOM) {
-			alg = new AlgorithmDTICreateListFile(studyPath, studyName, gradientPath, bmatrixPath, outputTextArea, isInterleaved);
+			alg = new AlgorithmDTICreateListFile(studyPath, studyName, gradientPath, bmatrixPath, outputTextArea, isInterleaved, performRegistration);
 		}else {
-			alg = new AlgorithmDTICreateListFile(prFileName, prFileDir, gradientPath, bmatrixPath, outputTextArea);
+			if(performRegistration) {
+				int cost = regOptions.getCost();
+				int DOF = regOptions.getDOF();
+				int interp = regOptions.getInterp();
+				int interp2 = regOptions.getInterp2();
+				int registerTo = regOptions.getRegisterTo();
+				float rotateBegin = regOptions.getRotateBegin();
+				float rotateEnd = regOptions.getRotateEnd();
+				float coarseRate = regOptions.getCoarseRate();
+				float fineRate = regOptions.getFineRate();
+				boolean doSubsample = regOptions.isDoSubsample();
+				boolean fastMode = regOptions.isFastMode();
+				int bracketBound = regOptions.getBracketBound();
+				int maxIterations = regOptions.getMaxIterations();
+				int numMinima = regOptions.getNumMinima();
+				System.out.println("pfFileName is" +  prFileName);
+				System.out.println("prFileDir is " + prFileDir);
+				
+				alg = new AlgorithmDTICreateListFile(prFileName, prFileDir, gradientPath, bmatrixPath, outputTextArea, performRegistration, cost, DOF, interp, interp2, registerTo, rotateBegin, rotateEnd, coarseRate, fineRate, doSubsample, fastMode, bracketBound, maxIterations, numMinima, dwiPathTextField);
+			}else {
+				alg = new AlgorithmDTICreateListFile(prFileName, prFileDir, gradientPath, bmatrixPath, outputTextArea, performRegistration);
+			}
 		}
 		alg.addListener(this);
 		
@@ -464,6 +539,9 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 				dwiPathBrowseButton.setEnabled(true);
 				gradFileRadio.setEnabled(true);
 				bmtxtFileRadio.setEnabled(true);
+				performRegistrationCheckbox.setEnabled(true);
+				registrationSettingsButton.setEnabled(true);
+				dwiLabel.setEnabled(true);
 				//interleavedCheckbox.setEnabled(true);
 				if(gradFileRadio.isSelected()) {
 					gradientFileBrowseButton.setEnabled(true);
@@ -545,6 +623,16 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 	 */
 	public void setInterleaved(boolean isInterleaved) {
 		this.isInterleaved = isInterleaved;
+	}
+
+
+
+
+
+	@Override
+	public void windowClosing(WindowEvent event) {
+		regOptions.dispose();
+		super.windowClosing(event);
 	}
 	
 	
