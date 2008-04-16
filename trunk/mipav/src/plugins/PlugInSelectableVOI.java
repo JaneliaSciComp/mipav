@@ -20,7 +20,7 @@ public class PlugInSelectableVOI {//extends VOI{
 	
 	public static final int INVALID_LOCATION = -1;
 
-	public static final Color INVALID_COLOR = Color.black;
+	public static final Color INVALID_COLOR = new Color(234, 123, 123);
 	
 	public PlugInSelectableVOI(String name, boolean closed, int numCurves, int location, 
 								boolean fillable, boolean doCalc) {

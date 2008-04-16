@@ -11,8 +11,6 @@ import gov.nih.mipav.model.scripting.actions.ActionCloseFrame;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.event.*;
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.CustomUIBuilder.UIParams;
-import gov.nih.mipav.view.dialogs.JDialogCaptureScreen;
 import gov.nih.mipav.view.dialogs.JDialogWinLevel;
 
 import com.lowagie.text.*;
@@ -23,14 +21,11 @@ import com.lowagie.text.pdf.*;
 import java.awt.*;
 import java.awt.Rectangle;
 import java.awt.event.*;
-import java.awt.image.PixelGrabber;
 import java.io.*;
 import java.text.DecimalFormat;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyListener {
     
@@ -95,9 +90,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     private boolean displayChanged = false;
     
-    private TreeMap locationStatus;
+    private TreeMap<String, PlugInSelectableVOI> voiMap;
     
-    private TreeMap<String, Color> voiColor;
+    private PlugInSelectableVOI[][] voiList;
     
     private TreeMap<String, Boolean> calcTree;
         
@@ -145,11 +140,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.noMirrorArr = new String[voiList.length][];
         this.noMirrorZ = new boolean[voiList.length][];
         this.calcTree = new TreeMap();
+        this.voiMap = new TreeMap();
+        this.voiList = voiList;
         
         for(int i=0; i<voiList.length; i++) {
         	ArrayList mirrorArrList = new ArrayList(), noMirrorArrList = new ArrayList(), 
         				mirrorZList = new ArrayList(), noMirrorZList = new ArrayList();
         	for(int j=0; j<voiList[i].length; j++) {
+        		voiMap.put(voiList[i][j].getName(), voiList[i][j]);
         		if(voiList[i][j].getName().contains("Left")) {
         			mirrorArrList.add(voiList[i][j].getName().substring(new String("Left ").length()));
         			mirrorZList.add(voiList[i][j].isFillable());
@@ -180,9 +178,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.imageType = imageType;
         this.symmetry = symmetry;
         this.multipleSlices = multipleSlices;
-        
-        voiColor = new TreeMap();
-        locationStatus = new TreeMap();
         
         if (imageA == null) {
             return;
@@ -220,11 +215,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.noMirrorArr = new String[voiList.length][];
         this.noMirrorZ = new boolean[voiList.length][];
         this.calcTree = new TreeMap();
+        this.voiMap = new TreeMap();
         
         for(int i=0; i<voiList.length; i++) {
         	ArrayList mirrorArrList = new ArrayList(), noMirrorArrList = new ArrayList(), 
         				mirrorZList = new ArrayList(), noMirrorZList = new ArrayList();
         	for(int j=0; j<voiList[i].length; j++) {
+        		voiMap.put(voiList[i][j].getName(), voiList[i][j]);
         		if(voiList[i][j].getName().contains("Left")) {
         			mirrorArrList.add(voiList[i][j].getName().substring(new String("Left ").length()));
         			mirrorZList.add(voiList[i][j].isFillable());
@@ -253,9 +250,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.imageType = imageType;
         this.symmetry = symmetry;
         this.multipleSlices = multipleSlices;
-        
-        voiColor = new TreeMap();
-        locationStatus = new TreeMap();
         
         Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(true));
                 
@@ -365,7 +359,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	imagePane = null;
     	
     	zeroStatus = null;
-    	locationStatus = null;
     	System.gc();
     	
     	if (ViewUserInterface.getReference().isAppFrameVisible() == false &&
@@ -567,12 +560,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	
         	JButton[] mirror = ((MuscleDialogPrompt)tabs[i]).getMirrorButton();
             JButton[] noMirror = ((MuscleDialogPrompt)tabs[i]).getNoMirrorButton();
-            for(int j=0; j<mirror.length; j++) {
-                locationStatus.put(mirror[j].getText().toLowerCase(), i);
-            }
-            for(int j=0; j<noMirror.length; j++) {
-                locationStatus.put(noMirror[j].getText().toLowerCase(), i);
-            }
         }
         //now put voiTab up
         voiTabLoc = mirrorArr.length;
@@ -896,9 +883,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      * @return a panel where 0 is first
      */
     public int getLocationStatus(String name) {
-    	int loc = -1;
-    	if(locationStatus.get(name.toLowerCase()) != null)
-    		loc = (Integer)locationStatus.get(name.toLowerCase());
+    	int loc = PlugInSelectableVOI.INVALID_LOCATION;
+    	if(voiMap.get(name) != null)
+    		loc = voiMap.get(name).getLocation();
     	return loc;
     }
     
@@ -940,19 +927,20 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	            	String name = voiName[i].substring(0, voiName[i].indexOf(".xml"));
 	            	String ext = ".xml";
 	            	VOI v;
-	            	if((Integer)locationStatus.get(name.toLowerCase()) == pane) {
+	            	System.out.println(name);
+	            	if(voiMap.get(name).getLocation() == pane) {
 	            		v = getSingleVOI(name+ext);
 	            		if(v != null) {
 	            			v.setThickness(2);
-	            			Color c = null;
+	            			Color c = PlugInSelectableVOI.INVALID_COLOR;
 	            			
-	            			if((c = voiColor.get(v.getName())) == null) {
+	            			if((c = voiMap.get(v.getName()).getColor()).equals(PlugInSelectableVOI.INVALID_COLOR)) {
 		            			//System.out.println("A new one: "+v.getColor());
-		                    	if((c = hasColor(v)) == null)
+		                    	if((c = hasColor(v)).equals(PlugInSelectableVOI.INVALID_COLOR))
 		                            v.setColor(c = colorPick[colorChoice++ % colorPick.length]);
 		                    	else
 		                    		v.setColor(c);
-		                    	voiColor.put(v.getName(), c);
+		                    	voiMap.get(v.getName()).setColor(c);
 	            			} else
 	            				v.setColor(c);
 	            			v.setDisplayMode(VOI.BOUNDARY);
@@ -1456,7 +1444,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             if(countQualifiedVOIs != 1) {
 	            //else VOI no longer exists, look for a VOI that doesn't fit to call objectName
 	            for(int i=0; i<srcVOI.size(); i++) {
-	            	if(getLocationStatus(srcVOI.get(i).getName()) == -1) {
+	            	if(getLocationStatus(srcVOI.get(i).getName()) == PlugInSelectableVOI.INVALID_LOCATION) {
 	            		goodVOI = srcVOI.get(i);
 	            		countQualifiedVOIs++;
 	            	}
@@ -2344,7 +2332,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	            	if(!exists) {
 	            		VOI rec = getSingleVOI(text);
 	            		Color c = null;
-	            		if((c = voiColor.get(rec.getName())) == null && (c = hasColor(rec)) == null) {
+	            		if((c = voiMap.get(rec.getName()).getColor()).equals(PlugInSelectableVOI.INVALID_COLOR) && 
+	            				(c = hasColor(rec)).equals(PlugInSelectableVOI.INVALID_COLOR)) {
 	                		c = colorPick[colorChoice++ % colorPick.length];
 	                	}
 	            		rec.removeVOIListener(checkBoxLocationTree.get(text).getColorButton());
@@ -2692,15 +2681,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                     if(voiVec.length > 1) {
                         MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+fileName);
                     } else {
-                    	if(voiColor.get(voiVec[0].getName()) == null) {
+                    	if(voiMap.get(voiVec[0].getName()).getColor().equals(PlugInSelectableVOI.INVALID_COLOR)) {
 	                    	Color c = hasColor(voiVec[0]);
-	                        if((c = hasColor(voiVec[0])) != null)
+	                        if(!(c = hasColor(voiVec[0])).equals(PlugInSelectableVOI.INVALID_COLOR))
 	                            voiVec[0].setColor(c);
 	                        else 
 	                            voiVec[0].setColor(c = colorPick[colorChoice++ % colorPick.length]);
-	                        voiColor.put(voiVec[0].getName(), c);
+	                        voiMap.get(voiVec[0].getName()).setColor(c);
                     	} else
-                    		voiVec[0].setColor(voiColor.get(voiVec[0].getName()));
+                    		voiVec[0].setColor(voiMap.get(voiVec[0].getName()).getColor());
                         voiVec[0].setThickness(2);
                         if(fillVOIs != 0 && getZeroStatus(voiVec[0].getName())) {
                         	voiVec[0].setDisplayMode(VOI.SOLID);
@@ -2714,7 +2703,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     }
     
     private Color hasColor(VOI voiVec) {
-        Color c = null;
+        Color c = PlugInSelectableVOI.INVALID_COLOR;
         VOIVector tempVec = getActiveImage().getVOIs();
         String side1 = "", side2 = ""; 
         if(Symmetry.LEFT_RIGHT == Symmetry.LEFT_RIGHT) {
@@ -3189,7 +3178,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 			//add(checkBox);
 			this.voiName = voiName;
-			colorButton = new ColorButton(c);
+			colorButton = new ColorButton(c, voiName);
 			colorButton.addActionListener(new ActionListener() { 
                 public void actionPerformed(ActionEvent ae) {
                 	if (colorButton.getColorIcon().getColor() != Color.BLACK) {
@@ -3221,6 +3210,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		
 		public void setColor(Color c) {
 			colorButton.getColorIcon().setColor(c);
+			//voiMap.get(voiName).setColor(c);
 		}
 		
 		public ColorButton getColorButton() {
@@ -3231,9 +3221,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	private class ColorButton extends JButton implements VOIListener {
 
 		private ColorIcon cIcon;
-		public ColorButton(Color c) {
+		
+		private String voiName;
+		
+		public ColorButton(Color c, String voiName) {
 			super();
 			cIcon = new ColorIcon(c, 13, 13);
+			this.voiName = voiName;
+			
 			setIcon(cIcon);
 			setForeground(ColorIcon.TRANSPARENT);
 			setBackground(ColorIcon.TRANSPARENT);
@@ -3263,7 +3258,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
          */
         public void colorChanged(Color c) {
         	cIcon.setColor(c);
-        	//voiColor.put(voiName, c);
+        	voiMap.get(voiName).setColor(c);
         	this.repaint();
         }
         
