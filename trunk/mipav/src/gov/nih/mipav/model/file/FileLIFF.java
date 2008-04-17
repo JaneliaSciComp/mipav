@@ -113,6 +113,7 @@ public class FileLIFF extends FileBase {
     public ModelImage readImage(boolean multiFile, boolean one) throws IOException {
         int[] imgExtents;
         int totalSize;
+        long fileLength;
 
         try {
             file = new File(fileDir + fileName);
@@ -128,7 +129,6 @@ public class FileLIFF extends FileBase {
                 image = null;
             }
 
-            byteBuffer = null;
             System.gc();
             throw error;
         }
