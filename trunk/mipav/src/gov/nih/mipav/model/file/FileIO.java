@@ -1403,6 +1403,10 @@ public class FileIO {
 
             switch (fileType) {
 
+                case FileUtility.LIFF:
+                    image = readLIFF(fileName, fileDir, one);
+                    break;
+                
                 case FileUtility.TIFF:
                     image = readTiff(fileName, fileDir, one);
                     break;
@@ -6939,6 +6943,62 @@ public class FileIO {
         return image;
 
     }
+    
+    /**
+     * Reads a Improvision OpenLab LIFF file by calling the read method of the file.
+     *
+     * @param   fileName  Name of the image file to read.
+     * @param   fileDir   Directory of the image file to read.
+     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
+     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
+     *                    from 3D dataset.
+     *
+     * @return  The image that was read in, or null if failure.
+     */
+    private ModelImage readLIFF(String fileName, String fileDir, boolean one) {
+        ModelImage image = null;
+        FileLIFF imageFile;
+
+        try {
+            imageFile = new FileLIFF(fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
+            image = imageFile.readImage(false, one);
+            LUT = imageFile.getModelLUT();
+
+        } catch (IOException error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return null;
+        } catch (OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return null;
+        }
+
+        return image;
+    }
+    
+    
 
     /**
      * Reads a TIFF file by calling the read method of the file.
