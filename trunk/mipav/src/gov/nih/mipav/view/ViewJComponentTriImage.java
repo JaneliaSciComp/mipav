@@ -2143,19 +2143,15 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
             int brushXDim = paintBrushDim.width;
             int brushYDim = paintBrushDim.height;
-            int hgt, wdt; // height and width of the paint cursor icon
+            int heightCursor, weightCursor; // height and width of the paint cursor icon
             double height, width; // scaled height and width in the paintBitmap
             
-            // change the brush extents with the current image resolution.
-            // So, if the the resolution is high, the paint brush extents are scaled down. 
-      
             double minResol = Math.min(resolutionX, resolutionY);
-
             
-            for (height = 0, hgt = 0; hgt < brushYDim; hgt++, height = hgt*minResol/resolutionY) {
+            for (height = 0, heightCursor = 0; heightCursor < brushYDim; heightCursor++, height = heightCursor*minResol/resolutionY) {
 
-                for (width = 0, wdt = 0; wdt < brushXDim; wdt++, width = wdt*minResol/resolutionX) {
-                	int idx = ((hgt * brushXDim) + wdt);
+                for (width = 0, weightCursor = 0; weightCursor < brushXDim; weightCursor++, width = weightCursor*minResol/resolutionX) {
+                	int idx = ((heightCursor * brushXDim) + weightCursor);
                     if (paintBrush.get(idx)) {
 
                         Point3Df patientPaintPoint = new Point3Df((float)(x + width), (float)(y + height), slice);
