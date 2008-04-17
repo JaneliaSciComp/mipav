@@ -5929,7 +5929,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         // yx, xz
         float factor = 1f;
         float factor2 = 1f;
-        float ratioX, ratioY;
         
         factor = resolutionX / resolutionY;
 
