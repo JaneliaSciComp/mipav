@@ -217,6 +217,10 @@ public class FileUtility {
     /** MINC 2.0 (HDF5) */
     public static final int MINC_HDF = 61;
     
+    /** Improvision OpenLab LIFF .liff */
+    /** Do not confuse with Leica image file format .lif */
+    public static final int LIFF = 62;
+    
     /** Arrary of strings describing the file formats. These are in synch with the above constants (same order) */
     private static String[] fileFormatStr = {
         "Undefined", "AFNI", "Analyze", "Analyze multifile", "Avi", "Bio-Rad", "BMP", "BRUKER", "Chesire",
@@ -224,7 +228,7 @@ public class FileUtility {
         "Interfile", "JIMI", "JPEG", "LSM", "LSM multifile", "Magnetom Vision", "Map", "Medvision", "MGH", "Micro CAT",
         "MINC", "MIPAV", "MRC", "NIFTI", "NIFTI multifile", "NRRD", "OSM", "PCX", "PIC", "PICT", "PNG", "Project",
         "PSD", "QT", "Raw", "Raw multifile", "SPM", "STK", "Surface XML", "TGA", "Tiff", "Tiff multifile", "TMG", "VOI",
-        "XBM", "XML", "XML multifile", "XPM", "Philips PARREC", "Surface Reference XML", "MINC 2.0"
+        "XBM", "XML", "XML multifile", "XPM", "Philips PARREC", "Surface Reference XML", "MINC 2.0", "LIFF"
     };
 
     /**
@@ -241,7 +245,7 @@ public class FileUtility {
                                                           "imc", "oly", "qt", "mov", "head", "brik", "ics", "ids",
                                                           "hdr", "spm", "fits", "dm3", "tmg", "mrc", "wu", "sig",
                                                           "gedno", "log", "ct", "info", "info~", "voi", "afni", "par",
-                                                          "parv2", "rec", "frec"
+                                                          "parv2", "rec", "frec", "liff"
                                                       };
 
     /** This map is needed in order to populate JDialogUnknownIO typeNames. */
@@ -586,6 +590,9 @@ public class FileUtility {
 
             case FileUtility.PARREC:
                 suffix = ".par";
+                break;
+            case FileUtility.LIFF:
+                suffix = ".liff";
                 break;
         }
 
@@ -1329,6 +1336,8 @@ public class FileUtility {
             fileType = FileUtility.PARREC;
         } else if (suffix.equalsIgnoreCase(".frec")) { /*for PAR/REC Supported*/
             fileType = FileUtility.PARREC;
+        } else if (suffix.equalsIgnoreCase(".liff")) {
+            fileType = FileUtility.LIFF;
         } else {
 
             // cannot automatically determine the filetype from the filename extension
