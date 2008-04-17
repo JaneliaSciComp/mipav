@@ -306,7 +306,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("AdvancedPaint")) {
             menuBuilder.setMenuItemEnabled("Extract image(B)", true);
             multipaintDialog = new JDialogMultiPaint(this, getImageA());
-			// I (plb) find this switching to paint brush annoying as the 
+			// I (Pilou) find this switching to paint brush annoying as the 
 			// image often needs to be moved or resized (others might disagree)
             //getControls().getTools().setPaintBrushButtonSelected();
             //componentImage.setCursorMode(ViewJComponentEditImage.PAINT_VOI);
