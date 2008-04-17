@@ -2274,13 +2274,13 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         fireProgressStateChanged("Measuring at fine samples");
 
         double[] costs = new double[fineNumX * fineNumY * fineNumZ];
-        index = 0;
         double factorX, factorY, factorZ;
 
         System.out.println("coarseNumX and fineNumX " + coarseNumX + " " + fineNumX);
         System.out.println("coarseNumY and fineNumY " + coarseNumY + " " + fineNumY);
         System.out.println("coarseNumZ and fineNumZ " + coarseNumZ + " " + fineNumZ);
 
+        index = 0;
         for (int i = 0; (i < fineNumX) && !threadStopped; i++) {
 
             for (int j = 0; (j < fineNumY) && !threadStopped; j++) {

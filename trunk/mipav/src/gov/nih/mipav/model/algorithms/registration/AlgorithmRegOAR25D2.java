@@ -2900,7 +2900,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         if (DOF > 3) {
             float scaleDelta = 0.8f;
 
-            for (int j = 0; (j < 5) && !threadStopped; j++) {
+            for (int j = 0; (j < 4) && !threadStopped; j++) {
 
                 for (int i = 0; (i < (2 * total)) && !threadStopped; i++) {
                     initial = (double[]) ((MatrixListItem) newMinima.elementAt(i)).initial.clone();
@@ -2908,12 +2908,10 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                     if (j == 1) {
                         scaleDelta = 0.9f;
                     } else if (j == 2) {
-                        scaleDelta = 1.0f;
-                    } else if (j == 3) {
                         scaleDelta = 1.1f;
-                    } else if (j == 4) {
+                    } else if (j == 3) {
                         scaleDelta = 1.2f;
-                    }
+                    } 
 
                     // Preferences.debug("Perturbing initial[3] by ");
                     initial[3] *= scaleDelta;
