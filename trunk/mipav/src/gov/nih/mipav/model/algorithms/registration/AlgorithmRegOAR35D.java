@@ -2895,9 +2895,9 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         MatrixListItem[][][] matrixList = new MatrixListItem[fineNum][fineNum][fineNum];
 
         double[] costs = new double[fineNum * fineNum * fineNum];
-        index = 0;
         double factorX, factorY, factorZ;
 
+        index = 0;
         for (int i = 0; (i < fineNum) && !threadStopped; i++) {
 
             for (int j = 0; (j < fineNum) && !threadStopped; j++) {
@@ -3016,6 +3016,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
         MatrixListItem item;
         initials = new Vectornd[minima.size()];
+        index = 0;
         for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
             initials[index++] = new Vectornd(en.nextElement().initial, true);
         }
@@ -3160,9 +3161,9 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         // then subtract fine delta and optimize.
         perturbList.addAll(newMinima);
         if(DOF > 6){
-            initials = new Vectornd[10];
+            initials = new Vectornd[newMinima.size() * 10];
         }else{
-            initials = new Vectornd[6];
+            initials = new Vectornd[newMinima.size()*6];
         }
         
         int index = 0;
@@ -3206,7 +3207,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             // Perturb scales.  Multiply scaleDelta by 0.8, 0.9, 1.0, 1.1, and 1.2.
             float scaleDelta = 0.8f;
 
-            for (int j = 0; (j < 5) && !threadStopped; j++) {
+            for (int j = 0; (j < 4) && !threadStopped; j++) {
 
                 for (int i = 0; (i < (2 * total)) && !threadStopped; i++) {
                     initial = (double[]) ((MatrixListItem) newMinima.elementAt(i)).initial.clone();
@@ -3214,12 +3215,10 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                     if (j == 1) {
                         scaleDelta = 0.9f;
                     } else if (j == 2) {
-                        scaleDelta = 1.0f;
-                    } else if (j == 3) {
                         scaleDelta = 1.1f;
-                    } else if (j == 4) {
+                    } else if (j == 3) {
                         scaleDelta = 1.2f;
-                    }
+                    } 
 
                     Preferences.debug("Perturbing initial[6] by ");
                     initial[6] *= scaleDelta;
