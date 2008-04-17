@@ -1548,7 +1548,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         buttonShortkeys.setActionCommand("AdvancedPaint:Shortkeys");
         buttonShortkeys.setFont(serif12);
         buttonShortkeys.setToolTipText("<html>" + "&nbsp;<u>Use preset shortcuts for commands:</u>" + "<br>" +
-                                       "&nbsp;<b>alt ctrl + 1-9:</b> change to mask #1-9 " + "<br>" +
+                                       "&nbsp;<b>shift + 1-9:</b> change to mask #1-9 " + "<br>" +
+                                       "&nbsp;<b>t:</b> show/hide label text " + "<br>" +
                                        "&nbsp;<b>p:</b> show/hide active paint" + "<br>" +
                                        "&nbsp;<b>m:</b> show/hide masks " + "<br>" +
                                        "&nbsp;<b>l:</b> lock all masks " + "<br>" +
