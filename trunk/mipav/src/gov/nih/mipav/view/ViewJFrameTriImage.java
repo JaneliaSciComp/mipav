@@ -1188,7 +1188,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             Point3Df kCenter = triImage[0].getCenter();
             setPositionLabels((int) kCenter.x, (int) kCenter.y, (int) kCenter.z);
             updateImages(true);
-        }
+        } else {
+			getParentFrame().actionPerformed(event);	
+		}
 
         this.requestFocusInWindow();
     }
