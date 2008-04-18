@@ -79,7 +79,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
     
     private JRadioButton variesButton;
     
-    private float mergingDistance = 0.1f;
+    private float mergingDistance = 0.33f;
     
     private int blueMin = 1000;
     
@@ -362,7 +362,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Center Distances 04/15/08");
+        setTitle("Center Distances 04/18/08");
 
         GridBagConstraints gbc = new GridBagConstraints();
         int yPos = 0;
@@ -379,7 +379,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         mainPanel.setForeground(Color.black);
         mainPanel.setBorder(buildTitledBorder("Input parameters"));
         
-        blueMinLabel = new JLabel("Minimum number of blue pixels per cell");
+        blueMinLabel = new JLabel("Minimum number of blue pixels per nucleus");
         blueMinLabel.setForeground(Color.black);
         blueMinLabel.setFont(serif12);
         gbc.gridx = 0;
@@ -429,7 +429,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         mainPanel.add(greenMergingLabel, gbc);
 
         greenMergingText = new JTextField(5);
-        greenMergingText.setText("0.1");
+        greenMergingText.setText("0.33");
         greenMergingText.setFont(serif12);
         gbc.gridx = 1;
         gbc.gridy = yPos++;
