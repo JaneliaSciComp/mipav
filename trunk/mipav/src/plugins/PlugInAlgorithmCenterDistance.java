@@ -122,7 +122,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
     
     /** Green merging radius in inches around peak green spot */
     /** Merge 2 green VOIs together if 2 centers are <= merging radius */
-    private float mergingDistance = 0.1f;
+    private float mergingDistance = 0.33f;
     
     // Number of green regions per cell
     // Either 1 for 1 for all cells, 2 for 2 for all cells, or 0 for 1 or 2 for all cells
@@ -355,6 +355,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         int[] redCellNumber;
         int[] redBelong;
         int redAdded;
+        int sortedGreenFound[];
 
 
         nf = NumberFormat.getNumberInstance();
@@ -977,6 +978,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             }
         }
 
+        sortedGreenFound = new int[numObjects];
         for (j = 1; j <= numGreenObjects; j++) {
             id = greenCellNumber[j-1];
 
@@ -992,8 +994,9 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                     if (greenIntensityTotal[j - 1] >= sortedGreenIntensity[id - 1][i]) {
                         found = true;
+                        sortedGreenFound[id - 1]++;
 
-                        if ((i == 0) && (greenRegionNumber == 2)) {
+                        if ((i == 0) && (sortedGreenFound[id-1] >= 2)) {
                             sortedGreenIntensity[id - 1][1] = sortedGreenIntensity[id - 1][0];
                             sortedGreenIndex[id - 1][1] = sortedGreenIndex[id - 1][0];
                             sortedGreenXCenter[id - 1][1] = sortedGreenXCenter[id - 1][0];
@@ -1375,8 +1378,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
 
         for (i = 0; i < numObjects; i++) {
-            newPtVOI = new VOI((short) (i + (2 * nVOIs)), "point2D" + i + ".voi", 1, VOI.POINT, -1.0f);
-            newPtVOI.setColor(Color.magenta);
+            newPtVOI = new VOI((short) (i + (2 * nVOIs)), "Center" + (i+1) + ".voi", 1, VOI.POINT, -1.0f);
+            newPtVOI.setColor(Color.white);
             xArr[0] = xCenter[i];
             yArr[0] = yCenter[i];
             zArr[0] = 0.0f;
@@ -1388,7 +1391,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 04/14/08 version\n");
+        UI.setDataText("Plugin 04/18/08 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
@@ -1828,6 +1831,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         double distY;
         double distZ;
         double distance;
+        int sortedGreenFound[];
 
         nf = NumberFormat.getNumberInstance();
         nf.setMinimumFractionDigits(3);
@@ -2573,6 +2577,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             }
         }
 
+        sortedGreenFound = new int[numObjects];
         for (j = 1; j <= numGreenObjects; j++) {
             id = greenCellNumber[j-1];
 
@@ -2588,8 +2593,9 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                     if (greenIntensityTotal[j - 1] >= sortedGreenIntensity[id - 1][i]) {
                         found = true;
+                        sortedGreenFound[id-1]++;
 
-                        if ((i == 0) && (greenRegionNumber == 2)) {
+                        if ((i == 0) && (sortedGreenFound[id-1] >= 2)) {
                             sortedGreenIntensity[id - 1][1] = sortedGreenIntensity[id - 1][0];
                             sortedGreenIndex[id - 1][1] = sortedGreenIndex[id - 1][0];
                             sortedGreenXCenter[id - 1][1] = sortedGreenXCenter[id - 1][0];
@@ -3194,8 +3200,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
 
         for (i = 0; i < numObjects; i++) {
-            newPtVOI = new VOI((short) (i + (2 * nVOIs)), "point3D" + i + ".voi", zDim, VOI.POINT, -1.0f);
-            newPtVOI.setColor(Color.magenta);
+            newPtVOI = new VOI((short) (i + (2 * nVOIs)), "Center" + (i+1) + ".voi", zDim, VOI.POINT, -1.0f);
+            newPtVOI.setColor(Color.white);
             xArr[0] = xCenter[i];
             yArr[0] = yCenter[i];
             zArr[0] = zCenter[i];
@@ -3207,7 +3213,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 10/19/07 version\n");
+        UI.setDataText("Plugin 04/18/08 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
