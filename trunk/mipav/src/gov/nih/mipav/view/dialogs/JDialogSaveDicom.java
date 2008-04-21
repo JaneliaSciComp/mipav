@@ -226,7 +226,7 @@ public class JDialogSaveDicom extends JDialogBase {
     /**
      * DICOM tags extracted from the image we want to save. Example: dicom_0xNNNN el_0xNNNN tags stored in MINC headers.
      */
-    private Hashtable tagsImportedFromNonDicomImage;
+    private Hashtable<String,String> tagsImportedFromNonDicomImage;
 
     /** The additional tags list is a list of tags the DTI group has requested. */
     private Hashtable tagsList, additionalTagsList;
@@ -300,11 +300,11 @@ public class JDialogSaveDicom extends JDialogBase {
 
             // remove tags which were used to fill the GUI in fillDataFromTable().  the rest will be blindly imported
             // into the dicom fileinfo later..
-            Enumeration keys = tagsImportedFromNonDicomImage.keys();
+            Enumeration<String> keys = tagsImportedFromNonDicomImage.keys();
             String tag;
 
             while (keys.hasMoreElements()) {
-                tag = (String) keys.nextElement();
+                tag = keys.nextElement();
 
                 // handle chooser fields differently
                 if (tag.equals("(0008,0060)") || tag.equals("(0010,0040)") || tag.equals("(0018,0015)") ||
@@ -324,11 +324,11 @@ public class JDialogSaveDicom extends JDialogBase {
 
             // remove tags which were used to fill the GUI in fillDataFromTable().  the rest will be blindly imported
             // into the dicom fileinfo later..
-            Enumeration keys = tagsImportedFromNonDicomImage.keys();
+            Enumeration<String> keys = tagsImportedFromNonDicomImage.keys();
             String tag;
 
             while (keys.hasMoreElements()) {
-                tag = (String) keys.nextElement();
+                tag = keys.nextElement();
 
                 // handle chooser fields differently
                 if (tag.equals("(0008,0060)") || tag.equals("(0010,0040)") || tag.equals("(0018,0015)") ||
@@ -388,14 +388,14 @@ public class JDialogSaveDicom extends JDialogBase {
                 // blindly import any tags which were exported from the image we want to save (shouldn't be any gui
                 // tags, though)
                 if (tagsImportedFromNonDicomImage != null) {
-                    Enumeration keys = tagsImportedFromNonDicomImage.keys();
+                    Enumeration<String> keys = tagsImportedFromNonDicomImage.keys();
                     String tag;
                     String value;
                     Object[] valueArray;
 
                     while (keys.hasMoreElements()) {
-                        tag = (String) keys.nextElement();
-                        value = (String) tagsImportedFromNonDicomImage.get(tag);
+                        tag = keys.nextElement();
+                        value = tagsImportedFromNonDicomImage.get(tag);
                         tag = tag.replaceAll("[()]", "");
                         tag = tag.toUpperCase();
 
