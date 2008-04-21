@@ -348,9 +348,13 @@ public class FileInterfile extends FileBase {
                 return fileHeaderName;
             }
         } catch (FileNotFoundException e) {
-            MipavUtil.displayError("FileInterfile: Error reading file.");
+            // do not display a hard error in the is*() methods
+            // MipavUtil.displayError("FileInterfile: Error reading file.");
+            Preferences.debug("FileInterfile: Error reading file: File not found - " + fDir + File.separator + fName + "\n", Preferences.DEBUG_FILEIO);
         } catch (IOException e) {
-            MipavUtil.displayError("FileInterfile: Error reading file.");
+            // do not display a hard error in the is*() methods
+            // MipavUtil.displayError("FileInterfile: Error reading file.");
+            Preferences.debug("FileInterfile: Error reading file - " + fDir + File.separator + fName + "\n", Preferences.DEBUG_FILEIO);
         }
 
         return null;
