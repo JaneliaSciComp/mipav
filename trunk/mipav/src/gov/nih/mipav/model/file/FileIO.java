@@ -402,6 +402,8 @@ public class FileIO {
             } else {
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (IOException error) {
@@ -412,6 +414,8 @@ public class FileIO {
             } else {
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -442,6 +446,8 @@ public class FileIO {
             } else {
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -505,6 +511,8 @@ public class FileIO {
             } else {
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -636,6 +644,8 @@ public class FileIO {
                         image.disposeLocal();
                         image = null;
                     }
+                    
+                    error.printStackTrace();
 
                     System.gc();
 
@@ -1083,6 +1093,8 @@ public class FileIO {
                     image.disposeLocal();
                     image = null;
                 }
+                
+                error.printStackTrace();
 
                 System.gc();
 
@@ -2434,6 +2446,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -2441,6 +2455,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -3002,6 +3018,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -3016,6 +3034,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -3062,6 +3082,8 @@ public class FileIO {
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
+                
+                error.printStackTrace();
 
                 return null;
             } catch (OutOfMemoryError error) {
@@ -3076,6 +3098,8 @@ public class FileIO {
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
+                
+                error.printStackTrace();
 
                 return null;
             }
@@ -3125,6 +3149,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -3153,6 +3179,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("Error reading header file.");
             }
+            
+            ioe.printStackTrace();
         }
 
         fileInfo = ((FileAnalyze) imageFile).getFileInfo();
@@ -3288,6 +3316,8 @@ public class FileIO {
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
                     image.disposeLocal();
@@ -3304,6 +3334,8 @@ public class FileIO {
                     MipavUtil.displayError("Unable to read images: the image\nnumber in the file " +
                                            fileInfo.getFileName() + " is corrupted.");
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
                     image.disposeLocal();
@@ -3315,10 +3347,11 @@ public class FileIO {
                 return null;
             } catch (OutOfMemoryError error) {
 
-
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
                     image.disposeLocal();
@@ -3415,6 +3448,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -3429,6 +3464,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -3468,6 +3505,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -3482,6 +3521,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -3518,6 +3559,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("d3proc FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -3525,6 +3568,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("d3proc Out of memory: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -3541,6 +3586,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("reco out of memory: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -3596,6 +3643,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -3610,6 +3659,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("Out of memory: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -3645,6 +3696,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -3659,6 +3712,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -3705,6 +3760,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("Out of memory: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -3723,6 +3780,8 @@ public class FileIO {
                 if (!quiet) {
                     MipavUtil.displayError("Out of memory: " + error);
                 }
+                
+                error.printStackTrace();
 
                 return null;
             }
@@ -3739,6 +3798,8 @@ public class FileIO {
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
+                
+                error.printStackTrace();
 
                 return null;
             } catch (OutOfMemoryError error) {
@@ -3746,6 +3807,8 @@ public class FileIO {
                 if (!quiet) {
                     MipavUtil.displayError("Out of memory: " + error);
                 }
+                
+                error.printStackTrace();
 
                 return null;
             }
@@ -3784,6 +3847,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("Out of memory: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -3794,10 +3859,11 @@ public class FileIO {
             imageFile = new FileCOR(fileList[0], fileDir);
         } catch (IOException error) {
 
-
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             if (image != null) {
                 image.disposeLocal();
@@ -3831,6 +3897,8 @@ public class FileIO {
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
                     image.disposeLocal();
@@ -3842,11 +3910,12 @@ public class FileIO {
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
 
-
                 if (!quiet) {
                     MipavUtil.displayError("Unable to read images: the image\n" + "number in the file " +
                                            myFileInfo.getFileName() + " is corrupted.");
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
                     image.disposeLocal();
@@ -3858,10 +3927,11 @@ public class FileIO {
                 return null;
             } catch (OutOfMemoryError error) {
 
-
                 if (!quiet) {
                     MipavUtil.displayError("Out of memory: " + error);
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
 
@@ -3911,6 +3981,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -3925,6 +3997,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -3965,6 +4039,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -3979,6 +4055,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -4079,6 +4157,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             if (progressBar != null) { }
 
@@ -4088,6 +4168,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             if (progressBar != null) { }
 
@@ -4188,10 +4270,11 @@ public class FileIO {
             } // try
             catch (IOException error) {
 
-
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
                     image.disposeLocal();
@@ -4207,6 +4290,8 @@ public class FileIO {
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
 
@@ -4221,7 +4306,6 @@ public class FileIO {
         } // for (i = 0; i < nImages; i++)
 
         image.setImageName(imageFile.getFileInfo().getImageNameFromInfo(), false);
-
 
         return image;
     }
@@ -4316,6 +4400,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (IOException error) {
@@ -4323,6 +4409,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -4422,10 +4510,11 @@ public class FileIO {
             } // try
             catch (IOException error) {
 
-
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
                     image.disposeLocal();
@@ -4437,13 +4526,13 @@ public class FileIO {
                 return null;
             } catch (OutOfMemoryError error) {
 
-
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
-
                     image.disposeLocal();
                     image = null;
                 }
@@ -4489,6 +4578,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -4503,6 +4594,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -4543,6 +4636,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -4557,6 +4652,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -4622,7 +4719,6 @@ public class FileIO {
 
                     } catch (IOException ioe) {
                         // intentionally empty
-
                     }
                 }
 
@@ -4733,6 +4829,7 @@ public class FileIO {
             modelImage.importData(0, buffer, true);
         } catch (IOException e) {
             Preferences.debug("FileIO.JIMI : " + e + "\n", Preferences.DEBUG_FILEIO);
+            e.printStackTrace();
         }
 
         // get the fileInfo and make sure some fields are set (like the
@@ -4786,6 +4883,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -4800,6 +4899,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -4853,6 +4954,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -4860,6 +4963,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("Out of memory: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -4936,6 +5041,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("Out of memory: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -4946,10 +5053,11 @@ public class FileIO {
             imageFile = new FileLSM(fileList[0], fileDir, secondAddress);
         } catch (IOException error) {
 
-
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             if (image != null) {
                 image.disposeLocal();
@@ -5002,10 +5110,11 @@ public class FileIO {
 
                 } catch (IOException error) {
 
-
                     if (!quiet) {
                         MipavUtil.displayError("FileIO: " + error);
                     }
+                    
+                    error.printStackTrace();
 
                     if (image != null) {
                         image.disposeLocal();
@@ -5017,11 +5126,12 @@ public class FileIO {
                     return null;
                 } catch (ArrayIndexOutOfBoundsException error) {
 
-
                     if (!quiet) {
                         MipavUtil.displayError("Unable to read images: the image\n" + "number in the file " +
                                                myFileInfo.getFileName() + " is corrupted.");
                     }
+                    
+                    error.printStackTrace();
 
                     if (image != null) {
                         image.disposeLocal();
@@ -5033,10 +5143,11 @@ public class FileIO {
                     return null;
                 } catch (OutOfMemoryError error) {
 
-
                     if (!quiet) {
                         MipavUtil.displayError("Out of memory: " + error);
                     }
+                    
+                    error.printStackTrace();
 
                     if (image != null) {
 
@@ -5093,10 +5204,11 @@ public class FileIO {
                     } // for (j = 0; j < extents[2]; j++) {
                 } catch (IOException error) {
 
-
                     if (!quiet) {
                         MipavUtil.displayError("FileIO: " + error);
                     }
+                    
+                    error.printStackTrace();
 
                     if (image != null) {
                         image.disposeLocal();
@@ -5108,11 +5220,12 @@ public class FileIO {
                     return null;
                 } catch (ArrayIndexOutOfBoundsException error) {
 
-
                     if (!quiet) {
                         MipavUtil.displayError("Unable to read images: the image\n" + "number in the file " +
                                                myFileInfo.getFileName() + " is corrupted.");
                     }
+                    
+                    error.printStackTrace();
 
                     if (image != null) {
                         image.disposeLocal();
@@ -5124,10 +5237,11 @@ public class FileIO {
                     return null;
                 } catch (OutOfMemoryError error) {
 
-
                     if (!quiet) {
                         MipavUtil.displayError("Out of memory: " + error);
                     }
+                    
+                    error.printStackTrace();
 
                     if (image != null) {
 
@@ -5185,9 +5299,7 @@ public class FileIO {
             }
         } // else for singleDims == 3
 
-
         return image;
-
     }
 
 
@@ -5274,6 +5386,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (IOException error) {
@@ -5281,6 +5395,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -5308,10 +5424,11 @@ public class FileIO {
             imageFile.close();
         } catch (IOException error) {
 
-
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             if (image != null) {
                 image.disposeLocal();
@@ -5323,10 +5440,11 @@ public class FileIO {
             return null;
         } catch (OutOfMemoryError error) {
 
-
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             if (image != null) {
 
@@ -5382,6 +5500,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -5416,6 +5536,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -5430,6 +5552,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -5466,6 +5590,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -5480,6 +5606,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -5519,6 +5647,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -5533,6 +5663,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -5607,6 +5739,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -5621,6 +5755,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -5659,11 +5795,9 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug(error + "\n", Preferences.DEBUG_FILEIO);
-
-                for (int i = 0; i < error.getStackTrace().length; i++) {
-                    Preferences.debug("\t" + error.getStackTrace()[i] + "\n", Preferences.DEBUG_FILEIO);
-                }
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -5678,6 +5812,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -5705,11 +5841,9 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug(error + "\n", Preferences.DEBUG_FILEIO);
-
-                for (int i = 0; i < error.getStackTrace().length; i++) {
-                    Preferences.debug("\t" + error.getStackTrace()[i] + "\n", Preferences.DEBUG_FILEIO);
-                }
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -5724,6 +5858,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -5760,6 +5896,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -5774,6 +5912,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -5813,6 +5953,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -5827,6 +5969,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -5876,6 +6020,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -5907,6 +6053,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("Error reading header file.");
             }
+            
+            ioe.printStackTrace();
         }
 
         fileInfo = ((FileNIFTI) imageFile).getFileInfo();
@@ -6036,11 +6184,11 @@ public class FileIO {
                 imageCount++;   
             } catch (IOException error) {
 
-
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
-                    error.printStackTrace();
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
                     image.disposeLocal();
@@ -6052,11 +6200,12 @@ public class FileIO {
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
 
-
                 if (!quiet) {
                     MipavUtil.displayError("Unable to read images: the image\nnumber in the file " +
                                            fileInfo.getFileName() + " is corrupted.");
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
                     image.disposeLocal();
@@ -6068,11 +6217,11 @@ public class FileIO {
                 return null;
             } catch (OutOfMemoryError error) {
 
-
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
-                    error.printStackTrace();
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
                     image.disposeLocal();
@@ -6112,6 +6261,8 @@ public class FileIO {
                 if (!quiet) {
                     MipavUtil.displayError("FileIO reports: " + ioe.getMessage());
                 }
+                
+                ioe.printStackTrace();
 
                 return null;
             }
@@ -6160,6 +6311,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -6174,6 +6327,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -6257,6 +6412,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (IOException error) {
@@ -6264,6 +6421,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -6347,6 +6506,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (IOException error) {
@@ -6354,6 +6515,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -6401,6 +6564,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             if (image != null) {
                 image.disposeLocal();
@@ -6415,6 +6580,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             if (image != null) {
 
@@ -6459,6 +6626,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -6473,6 +6642,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -6481,15 +6652,6 @@ public class FileIO {
 
     }
 
-    /**
-     * for PAR/REC support.
-     *
-     * @param   fileName  DOCUMENT ME!
-     * @param   fileDir   DOCUMENT ME!
-     * @param   one       DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
     /**
      * Reads a PARREC file by calling the read method of the file. This method contains special code to not display the
      * progress bar should the image be <q>splash.img</q>.
@@ -6522,6 +6684,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -6536,6 +6700,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -6625,6 +6791,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -6654,6 +6822,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -6668,6 +6838,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -6722,6 +6894,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO.readRawMulti: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -6775,6 +6949,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -6812,6 +6988,8 @@ public class FileIO {
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
+                
+                error.printStackTrace();
 
                 return null;
             } catch (OutOfMemoryError error) {
@@ -6828,6 +7006,8 @@ public class FileIO {
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
+                
+                error.printStackTrace();
 
                 return null;
             }
@@ -6869,6 +7049,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -6883,6 +7065,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -6922,6 +7106,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -6936,6 +7122,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -7033,6 +7221,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -7047,6 +7237,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -7094,6 +7286,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -7101,6 +7295,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("Out of memory: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -7144,8 +7340,10 @@ public class FileIO {
             System.gc();
 
             if (!quiet) {
-                MipavUtil.displayError("Out of memory: " + error);
+                MipavUtil.displayError("FileIO: Out of memory: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -7159,6 +7357,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             if (image != null) {
                 image.disposeLocal();
@@ -7201,6 +7401,8 @@ public class FileIO {
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
                     image.disposeLocal();
@@ -7216,6 +7418,8 @@ public class FileIO {
                     MipavUtil.displayError("Unable to read images: the image\n" + "number in the file " +
                                            myFileInfo.getFileName() + " is corrupted.");
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
                     image.disposeLocal();
@@ -7230,6 +7434,8 @@ public class FileIO {
                 if (!quiet) {
                     MipavUtil.displayError("Out of memory: " + error);
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
                     image.disposeLocal();
@@ -7275,6 +7481,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -7289,6 +7497,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -7337,6 +7547,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
@@ -7351,6 +7563,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -7401,6 +7615,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return null;
         }
@@ -7434,6 +7650,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("Error reading header file.");
             }
+            
+            ioe.printStackTrace();
         }
 
         fileInfo = ((FileImageXML) imageFile).getFileInfo();
@@ -7558,12 +7776,13 @@ public class FileIO {
 
             } catch (IOException error) {
 
-
                 if (!quiet) {
                     Preferences.debug("Failed to read XML multifile. This error can be caused by attempting to read an XML file that is not actually a multi-file.\n",
                                       Preferences.DEBUG_FILEIO);
                     MipavUtil.displayError("Failed to read XML multifile.");
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
                     image.disposeLocal();
@@ -7575,11 +7794,12 @@ public class FileIO {
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
 
-
                 if (!quiet) {
                     MipavUtil.displayError("Unable to read images: the image\nnumber in the file " +
                                            fileInfo.getFileName() + " is corrupted.");
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
                     image.disposeLocal();
@@ -7591,10 +7811,11 @@ public class FileIO {
                 return null;
             } catch (OutOfMemoryError error) {
 
-
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
+                
+                error.printStackTrace();
 
                 if (image != null) {
                     image.disposeLocal();
@@ -7634,6 +7855,8 @@ public class FileIO {
                 if (!quiet) {
                     MipavUtil.displayError("FileIO reports: " + ioe.getMessage());
                 }
+                
+                ioe.printStackTrace();
 
                 return null;
             }
@@ -7680,6 +7903,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -7687,6 +7912,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -7727,6 +7954,8 @@ public class FileIO {
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
+                
+                error.printStackTrace();
 
                 return false;
             } catch (OutOfMemoryError error) {
@@ -7734,6 +7963,8 @@ public class FileIO {
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
+                
+                error.printStackTrace();
 
                 return false;
             }
@@ -7748,6 +7979,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -7755,6 +7988,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -7797,6 +8032,8 @@ public class FileIO {
 
         } catch (IOException ex) {
             options.disposeLocal();
+
+            ex.printStackTrace();
 
             return false;
         }
@@ -7881,6 +8118,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -7888,6 +8127,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -7950,6 +8191,8 @@ public class FileIO {
                 // options.setFileDirectory(fileDir);
             } catch (Exception e) {
                 MipavUtil.displayError("Unable to create directory for DICOM file: \n" + fileDir);
+                
+                e.printStackTrace();
 
                 return false;
             }
@@ -8176,6 +8419,8 @@ public class FileIO {
                             if (!quiet) {
                                 MipavUtil.displayError("FileIO: " + ioe);
                             }
+                            
+                            ioe.printStackTrace();
 
                             return false;
                         }
@@ -8273,6 +8518,7 @@ public class FileIO {
                 MipavUtil.displayError("FileIO: " + error);
             }
 
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -8283,7 +8529,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -8313,6 +8560,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -8320,6 +8569,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -8348,6 +8599,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -8355,6 +8608,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -8382,6 +8637,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -8389,6 +8646,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -8435,6 +8694,8 @@ public class FileIO {
             } catch (JimiException jimiException) {
                 Preferences.debug("JIMI write error: " + jimiException + "\n", Preferences.DEBUG_FILEIO);
 
+                jimiException.printStackTrace();
+
                 return false;
             }
         }
@@ -8465,6 +8726,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -8472,6 +8735,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -8525,11 +8790,9 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug(error.getMessage() + "\n", Preferences.DEBUG_FILEIO);
-
-                for (int i = 0; i < error.getStackTrace().length; i++) {
-                    Preferences.debug("\t" + error.getStackTrace()[i] + "\n", Preferences.DEBUG_FILEIO);
-                }
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -8537,6 +8800,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -8587,14 +8852,11 @@ public class FileIO {
         } catch (Exception error) {
 
             if (!quiet) {
-               // MipavUtil.displayError("FileIO: " + error);
-                error.printStackTrace();
+                MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug(error.getMessage() + "\n", Preferences.DEBUG_FILEIO);
-
-                for (int i = 0; i < error.getStackTrace().length; i++) {
-                    Preferences.debug("\t" + error.getStackTrace()[i] + "\n", Preferences.DEBUG_FILEIO);
-                }
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -8602,6 +8864,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -8627,6 +8891,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -8634,6 +8900,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -8661,6 +8929,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -8668,6 +8938,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -8695,6 +8967,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -8702,6 +8976,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -8731,6 +9007,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -8738,6 +9016,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -8765,6 +9045,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -8772,6 +9054,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -8808,6 +9092,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -8815,6 +9101,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -8866,6 +9154,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -8873,6 +9163,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -8925,6 +9217,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -8932,6 +9226,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }
@@ -8959,6 +9255,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -8966,6 +9264,8 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
+            
+            error.printStackTrace();
 
             return false;
         }

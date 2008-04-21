@@ -2,7 +2,6 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -14,37 +13,38 @@ import javax.swing.tree.*;
 import ncsa.hdf.object.Attribute;
 import ncsa.hdf.object.HObject;
 
+
 public class FileInfoMincHDF extends FileInfoBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
-   
-	
-	/**
-	 * The dimension tree node that holds xspace, yspace, and (optionally) zspace nodes
-	 */
-	private transient DefaultMutableTreeNode dimensionNode;
-	
-	
-	/**
-	 * The information node that holds acquisition information, dicom tags, and more
-	 */
-	private transient DefaultMutableTreeNode informationNode;
-	
-	/**
-	 * The axis orientation static types
-	 */
-	protected static int[] axisOrientation = { ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE };
-	
-	/**
-	 * The valid range for image pixel values
-	 */
-	private double [] validRange = null;
-	
-	/**
-	 * Hashtable to hold the tags for conversion to->from dicom and to-> mipav XML format
-	 */
-	private transient Hashtable dicomTable = null;
-	
+
+
+    /**
+     * The dimension tree node that holds xspace, yspace, and (optionally) zspace nodes
+     */
+    private transient DefaultMutableTreeNode dimensionNode;
+
+
+    /**
+     * The information node that holds acquisition information, dicom tags, and more
+     */
+    private transient DefaultMutableTreeNode informationNode;
+
+    /**
+     * The axis orientation static types
+     */
+    protected static int[] axisOrientation = { ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE };
+
+    /**
+     * The valid range for image pixel values
+     */
+    private double [] validRange = null;
+
+    /**
+     * Hashtable to hold the tags for conversion to->from dicom and to-> mipav XML format
+     */
+    private transient Hashtable<FileDicomKey,FileDicomTag> dicomTable = new Hashtable<FileDicomKey,FileDicomTag>();
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -55,7 +55,7 @@ public class FileInfoMincHDF extends FileInfoBase {
      * @param  format     format (in this case, MINC)
      */
     public FileInfoMincHDF(String name, String directory, int format) {
-        super(name, directory, format);
+	super(name, directory, format);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -65,37 +65,38 @@ public class FileInfoMincHDF extends FileInfoBase {
      *
      * @return  a tag-value hashtable
      */
-    public Hashtable convertTagsToTable() {
-    	//reset the dicom table so that it has <String><String>
-    	createDicomTable();
+    public Hashtable<String,String> convertTagsToTable() {
+	// create the dicom table so that it has <String><String>
+	Hashtable<String,String> dicomTagStrings = new Hashtable<String,String>();
 
-    	if (informationNode != null) {
-    		DefaultMutableTreeNode currentNode;
-    		String group;
-    		String element;
-    		for (int i = 0; i < informationNode.getChildCount(); i++) {
-    			currentNode = (DefaultMutableTreeNode)informationNode.getChildAt(i);
-    			if (currentNode.getUserObject().toString().startsWith(FileMincHDF.DICOM_GROUP_PREFIX)) {
-    				group = currentNode.getUserObject().toString().substring(FileMincHDF.DICOM_GROUP_PREFIX.length());
-    				try {
-    					Iterator it = ((HObject)currentNode.getUserObject()).getMetadata().iterator();
-    					while(it.hasNext()) {
-    						Attribute attr = (Attribute)it.next();
-    						element = attr.getName().substring(FileMincHDF.DICOM_ELEMENT_PREFIX.length());
-        				
-    						dicomTable.put("(" + group.toUpperCase() + "," + element.toUpperCase() + ")", 
-    								((String[])attr.getValue())[0].trim());
-    					}
-    				} catch (Exception e) {
-    						continue;
-    				}
-    			}
-    		}
-    	}
+	if (informationNode != null) {
+	    DefaultMutableTreeNode currentNode;
+	    String group;
+	    String element;
+	    for (int i = 0; i < informationNode.getChildCount(); i++) {
+		currentNode = (DefaultMutableTreeNode)informationNode.getChildAt(i);
+		if (currentNode.getUserObject().toString().startsWith(FileMincHDF.DICOM_GROUP_PREFIX)) {
+		    group = currentNode.getUserObject().toString().substring(FileMincHDF.DICOM_GROUP_PREFIX.length());
+		    try {
+			Iterator<Attribute> it = ((HObject)currentNode.getUserObject()).getMetadata().iterator();
+			while(it.hasNext()) {
+			    Attribute attr = it.next();
+			    element = attr.getName().substring(FileMincHDF.DICOM_ELEMENT_PREFIX.length());
 
-    	return dicomTable;
+			    dicomTagStrings.put("(" + group.toUpperCase() + "," + element.toUpperCase() + ")", 
+				    ((String[])attr.getValue())[0].trim());
+			}
+		    } catch (Exception e) {
+			e.printStackTrace();
+			continue;
+		    }
+		}
+	    }
+	}
+
+	return dicomTagStrings;
     }
-    
+
     /**
      * Displays important information about the image.
      *
@@ -103,8 +104,8 @@ public class FileInfoMincHDF extends FileInfoBase {
      * @param  matrix  the transformation matrix
      */
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
-    	//never called
-        
+	//never called
+
     }
 
     /**
@@ -114,94 +115,94 @@ public class FileInfoMincHDF extends FileInfoBase {
      * @throws Exception
      */
     private void parseNodes(DefaultMutableTreeNode node, JDialogText dialog) throws Exception {
-    	long [] dataDims;
-    	boolean isDicom = false;
-    	if (node.isLeaf()) {
-    		dialog.append("\n");
-    		HObject userObject = (HObject)node.getUserObject();
-    		
-    		String nodeName = userObject.toString();
-    		String dicomGroup = null;
-    	//	dicom_0x0008
-    		if (nodeName.startsWith("dicom_")) {
-    			isDicom = true;
-    			dicomGroup = nodeName.substring(8);
-    		} else {
-    			dialog.append(userObject + "\n");
-    		}
-    		List metaData = userObject.getMetadata();
-    		Iterator it = metaData.iterator();
-    		while(it.hasNext()) {
-    			Attribute currentAttribute = (Attribute)it.next();
-    			dataDims = currentAttribute.getDataDims();
-    			String name = currentAttribute.getName();
-    			if (!name.equals("varid") && !name.equals("vartype") &&
-    					!name.equals("version")) {
-    				
-    				if (!isDicom) {
-    					dialog.append("\t" + currentAttribute.getName());
-    				} else {
-    					dialog.append("(" + dicomGroup + "," + name.substring(5) + ") - ");
-    				}
-    				Object value = currentAttribute.getValue();
-    				for (int i = 0; i < dataDims.length; i++) {
-    					//System.err.print(", " + dataDims[i]);
-    					if (value instanceof String[]) {
-    						if (isDicom) {
-    							FileDicomKey tagKey = new FileDicomKey(dicomGroup + "," + name.substring(5));
+	long [] dataDims;
+	boolean isDicom = false;
+	if (node.isLeaf()) {
+	    dialog.append("\n");
+	    HObject userObject = (HObject)node.getUserObject();
 
-                                FileDicomTagInfo info = DicomDictionary.getInfo(tagKey);
-                                dialog.append(info.getName() + " :\t");
-    						}
-    						
-    						dialog.append("\t" + ((String[])value)[i]);
-    					} else if (value instanceof float[]) {
-    						dialog.append("\t" + ((float[])value)[i]);
-    					} else if (value instanceof double[]) {
-    						dialog.append("\t" + ((double[])value)[i]);
-    					} else if (value instanceof int[]) {
-    						dialog.append("\t" + ((int[])value)[i]);
-    					} else if (value instanceof short[]) {
-    						dialog.append("\t" + ((short[])value)[i]);
-    					}
-    				}
-    				dialog.append("\n");
-    			//System.err.println("");
-    			//System.err.println(currentAttribute.getValue());
-    			}
-    		}
-    		
-    	} else {
-    	
-    		//recursively calls parseHDFHeader to reach every non-leaf
-    		for (int i = 0; i < node.getChildCount(); i++) {
-    			parseNodes((DefaultMutableTreeNode)node.getChildAt(i), dialog);
-    		}
-    	}
+	    String nodeName = userObject.toString();
+	    String dicomGroup = null;
+	    //	dicom_0x0008
+	    if (nodeName.startsWith("dicom_")) {
+		isDicom = true;
+		dicomGroup = nodeName.substring(8);
+	    } else {
+		dialog.append(userObject + "\n");
+	    }
+	    List<Attribute> metaData = userObject.getMetadata();
+	    Iterator<Attribute> it = metaData.iterator();
+	    while(it.hasNext()) {
+		Attribute currentAttribute = it.next();
+		dataDims = currentAttribute.getDataDims();
+		String name = currentAttribute.getName();
+		if (!name.equals("varid") && !name.equals("vartype") &&
+			!name.equals("version")) {
+
+		    if (!isDicom) {
+			dialog.append("\t" + currentAttribute.getName());
+		    } else {
+			dialog.append("(" + dicomGroup + "," + name.substring(5) + ") - ");
+		    }
+		    Object value = currentAttribute.getValue();
+		    for (int i = 0; i < dataDims.length; i++) {
+			//System.err.print(", " + dataDims[i]);
+			if (value instanceof String[]) {
+			    if (isDicom) {
+				FileDicomKey tagKey = new FileDicomKey(dicomGroup + "," + name.substring(5));
+
+				FileDicomTagInfo info = DicomDictionary.getInfo(tagKey);
+				dialog.append(info.getName() + " :\t");
+			    }
+
+			    dialog.append("\t" + ((String[])value)[i]);
+			} else if (value instanceof float[]) {
+			    dialog.append("\t" + ((float[])value)[i]);
+			} else if (value instanceof double[]) {
+			    dialog.append("\t" + ((double[])value)[i]);
+			} else if (value instanceof int[]) {
+			    dialog.append("\t" + ((int[])value)[i]);
+			} else if (value instanceof short[]) {
+			    dialog.append("\t" + ((short[])value)[i]);
+			}
+		    }
+		    dialog.append("\n");
+		    //System.err.println("");
+		    //System.err.println(currentAttribute.getValue());
+		}
+	    }
+
+	} else {
+
+	    //recursively calls parseHDFHeader to reach every non-leaf
+	    for (int i = 0; i < node.getChildCount(); i++) {
+		parseNodes((DefaultMutableTreeNode)node.getChildAt(i), dialog);
+	    }
+	}
     }
-  
+
     /**
      * Sets the dimension node (xspace, yspace and optional zspace nodes)
      * @param dimNode the dimension node
      */
     public void setDimensionNode(DefaultMutableTreeNode dimNode) {
-    	this.dimensionNode = dimNode;
+	this.dimensionNode = dimNode;
     }
-    
+
     /**
      * Returns the dimension node (only 1 exists at fileinfo[0] position
      * @return the dimension node
      */
     public DefaultMutableTreeNode getDimensionNode() {
-    	return this.dimensionNode;
+	return this.dimensionNode;
     }
-    
+
     /**
      * Sets the information node (includes dicom tags and patient info
      * @param infoNode the information node
      */
     public void setInfoNode(DefaultMutableTreeNode infoNode) {
-    	this.informationNode = infoNode;
+	this.informationNode = infoNode;
     }
 
     /**
@@ -209,116 +210,108 @@ public class FileInfoMincHDF extends FileInfoBase {
      * @return the information node
      */
     public DefaultMutableTreeNode getInfoNode() {
-    	return this.informationNode;
+	return this.informationNode;
     }
-    
+
     /**
      * Sets the image modality based on the string
      */
     public void setModality(String modality) {
 
-    	  if (modality.equals("PET__")) {
-              setModality(FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY);
-          } else if (modality.equals("MRI__")) {
-              setModality(FileInfoBase.MAGNETIC_RESONANCE);
-          } else if (modality.equals("SPECT")) {
-              setModality(FileInfoBase.SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY);
-          } else if (modality.equals("GAMMA")) {
-              // setModality(FileInfoBase.);
-          } else if (modality.equals("MRS__")) {
-              setModality(FileInfoBase.MAGNETIC_RESONANCE_SPECTROSCOPY);
-          } else if (modality.equals("MRA__")) {
-              setModality(FileInfoBase.MAGNETIC_RESONANCE_ANGIOGRAPHY);
-          } else if (modality.equals("CT___")) {
-              setModality(FileInfoBase.COMPUTED_TOMOGRAPHY);
-          } else if (modality.equals("DSA__")) {
-              // setModality(FileInfoBase.);
-          } else if (modality.equals("DR___")) {
-              setModality(FileInfoBase.DIGITAL_RADIOGRAPHY);
-          }
+	if (modality.equals("PET__")) {
+	    setModality(FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY);
+	} else if (modality.equals("MRI__")) {
+	    setModality(FileInfoBase.MAGNETIC_RESONANCE);
+	} else if (modality.equals("SPECT")) {
+	    setModality(FileInfoBase.SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY);
+	} else if (modality.equals("GAMMA")) {
+	    // setModality(FileInfoBase.);
+	} else if (modality.equals("MRS__")) {
+	    setModality(FileInfoBase.MAGNETIC_RESONANCE_SPECTROSCOPY);
+	} else if (modality.equals("MRA__")) {
+	    setModality(FileInfoBase.MAGNETIC_RESONANCE_ANGIOGRAPHY);
+	} else if (modality.equals("CT___")) {
+	    setModality(FileInfoBase.COMPUTED_TOMOGRAPHY);
+	} else if (modality.equals("DSA__")) {
+	    // setModality(FileInfoBase.);
+	} else if (modality.equals("DR___")) {
+	    setModality(FileInfoBase.DIGITAL_RADIOGRAPHY);
+	}
     }
-    
+
     /**
      * Sets the valid range for the image data
      * @param valid_range double valid range of image data values
      */
     public void setValidRange(double[] valid_range) {
-    	this.validRange = valid_range;
+	this.validRange = valid_range;
     }
-    
+
     /**
      * Gets the valid range for image data values
      * @return the valid range (min to max) array
      */
     public double [] getValidRange() {
-    	return this.validRange;
+	return this.validRange;
     }
-    
-    /**
-     * Creates a new hashtable for use in converting dicom tags
-     *
-     */
-    public void createDicomTable() {
-    	this.dicomTable = new Hashtable();
-    }
-    
+
     /**
      * Sets the dicom converted tag hashtable
      * @param dTable hashtable holding dicom keys and tags
      */
-    public void setDicomTable(Hashtable dTable) {
-    	this.dicomTable = dTable;
+    public void setDicomTable(Hashtable<FileDicomKey,FileDicomTag> dTable) {
+	this.dicomTable = dTable;
     }
-    
+
     /**
      * Retrieves the dicom converted tag hashtable
      * @return the dicom hashtable
      */
-    public Hashtable getDicomTable() {
-    	return this.dicomTable;
+    public Hashtable<FileDicomKey,FileDicomTag> getDicomTable() {
+	return this.dicomTable;
     }
-    
+
     /**
      * Strips out the relevant patient info (if present) to insert into MIPAV's XML header
      * @param dInfo destination XML fileinfo
      */
     public void convertPatientInfo(FileInfoImageXML dInfo) {
-    	if (informationNode == null) {
-    		return;
-    	}
-    	System.err.println("convertPatientInfo");
-    	int children = informationNode.getChildCount();
-    	DefaultMutableTreeNode currentNode;
-    	for (int i = 0; i < children; i++) {
-    		currentNode = (DefaultMutableTreeNode)informationNode.getChildAt(i);
-    		if (currentNode.getUserObject().toString().equals("patient")) {
-    			
-    			try {
-    				List metaData = ((HObject)currentNode.getUserObject()).getMetadata();
-    				Iterator it = metaData.iterator();
-    				while(it.hasNext()) {
-    					
-    					Attribute currentAttribute = (Attribute)it.next();
-    					String name = currentAttribute.getName();
-    					if (name.equals("full_name")) {
-    						dInfo.setSubjectName(((String[])currentAttribute.getValue())[0]);
-    					} else if (name.equals("sex")) {
-    						dInfo.setSex(((String[])currentAttribute.getValue())[0]);
-    					} else if (name.equals("identification")) {
-    						dInfo.setSubjectID(((String[])currentAttribute.getValue())[0]);
-    					} else if (name.equals("birthdate")) {
-    						dInfo.setDOB(((String[])currentAttribute.getValue())[0]);
-    					}
-    				}
-    			} catch (Exception e) {
-    				return;
-    			}
-    			
-    		}
-    	}
-    	
+	if (informationNode == null) {
+	    return;
+	}
+	System.err.println("convertPatientInfo");
+	int children = informationNode.getChildCount();
+	DefaultMutableTreeNode currentNode;
+	for (int i = 0; i < children; i++) {
+	    currentNode = (DefaultMutableTreeNode)informationNode.getChildAt(i);
+	    if (currentNode.getUserObject().toString().equals("patient")) {
+
+		try {
+		    List<Attribute> metaData = ((HObject)currentNode.getUserObject()).getMetadata();
+		    Iterator<Attribute> it = metaData.iterator();
+		    while(it.hasNext()) {
+
+			Attribute currentAttribute = it.next();
+			String name = currentAttribute.getName();
+			if (name.equals("full_name")) {
+			    dInfo.setSubjectName(((String[])currentAttribute.getValue())[0]);
+			} else if (name.equals("sex")) {
+			    dInfo.setSex(((String[])currentAttribute.getValue())[0]);
+			} else if (name.equals("identification")) {
+			    dInfo.setSubjectID(((String[])currentAttribute.getValue())[0]);
+			} else if (name.equals("birthdate")) {
+			    dInfo.setDOB(((String[])currentAttribute.getValue())[0]);
+			}
+		    }
+		} catch (Exception e) {
+		    e.printStackTrace();
+		    return;
+		}
+	    }
+	}
+
     }
-    
+
     /**
      * Converts from the minc start location to the dicom start locations 
      * @param step the resolutions (step, can be negative)
@@ -329,73 +322,73 @@ public class FileInfoMincHDF extends FileInfoBase {
      * @return
      */
     public final double[] getConvertStartLocationsToDICOM(double[] step, double[][]cosines, 
-    		boolean[]isCentered, int slice, double [] mincStartLoc) {
-       
-        double[] startLocs = new double[getExtents().length];
+	    boolean[]isCentered, int slice, double [] mincStartLoc) {
 
-        if (startLocs.length == 2) {
-            startLocs[0] = mincStartLoc[0];
-            startLocs[1] = mincStartLoc[1];
-        } else {
-            startLocs[0] = mincStartLoc[0];
-            startLocs[1] = mincStartLoc[1];
-            startLocs[2] = mincStartLoc[2] + (step[2] * slice);
-        }
+	double[] startLocs = new double[getExtents().length];
 
-        TransMatrix matrix = new TransMatrix(getExtents().length + 1);
-        matrix.identity();
+	if (startLocs.length == 2) {
+	    startLocs[0] = mincStartLoc[0];
+	    startLocs[1] = mincStartLoc[1];
+	} else {
+	    startLocs[0] = mincStartLoc[0];
+	    startLocs[1] = mincStartLoc[1];
+	    startLocs[2] = mincStartLoc[2] + (step[2] * slice);
+	}
 
-        for (int i = 0; i < 3; i++) {
-        	for (int j = 0; j < cosines[i].length; j++) {
-        		matrix.set(i, j, cosines[i][j]);
-        	}
-        	
-        }
+	TransMatrix matrix = new TransMatrix(getExtents().length + 1);
+	matrix.identity();
 
-        matrix.invert();
+	for (int i = 0; i < 3; i++) {
+	    for (int j = 0; j < cosines[i].length; j++) {
+		matrix.set(i, j, cosines[i][j]);
+	    }
 
-        double[] transformedPt = new double[getExtents().length];
+	}
 
-        if (isCentered[0]) {
-            startLocs[0] -= (step[0] / 2);
-        }
+	matrix.invert();
 
-        if (isCentered[1]) {
-            startLocs[1] -= (step[1] / 2);
-        }
+	double[] transformedPt = new double[getExtents().length];
 
-        // mni seems not to adjust the zstart by the zstep even when xspace has the attrib alignment=centre
-        /*if (isZCentered) {
-         *  startLocs[2] -= (step[2] / 2);}*/
+	if (isCentered[0]) {
+	    startLocs[0] -= (step[0] / 2);
+	}
 
-        if (getExtents().length == 2) {
-            matrix.transform(startLocs[0], startLocs[1], transformedPt);
-        } else if (getExtents().length == 3) {
-            matrix.transform(startLocs[0], startLocs[1], startLocs[2], transformedPt);
-        }
+	if (isCentered[1]) {
+	    startLocs[1] -= (step[1] / 2);
+	}
 
-        if (startLocs.length == 3) {
+	// mni seems not to adjust the zstart by the zstep even when xspace has the attrib alignment=centre
+	/*if (isZCentered) {
+	 *  startLocs[2] -= (step[2] / 2);}*/
 
-            if (getImageOrientation() == FileInfoBase.SAGITTAL) {
-                transformedPt[0] = -transformedPt[0];
-                transformedPt[2] = -transformedPt[2];
-            } else if (getImageOrientation() == FileInfoBase.AXIAL) {
-                transformedPt[0] = -transformedPt[0];
-                transformedPt[1] = -transformedPt[1];
-            } else if (getImageOrientation() == FileInfoBase.CORONAL) {
-                transformedPt[0] = -transformedPt[0];
-                transformedPt[2] = -transformedPt[2];
-            }
-        }
+	if (getExtents().length == 2) {
+	    matrix.transform(startLocs[0], startLocs[1], transformedPt);
+	} else if (getExtents().length == 3) {
+	    matrix.transform(startLocs[0], startLocs[1], startLocs[2], transformedPt);
+	}
 
-      // System.err.println("convert: result[" + slice + "]:\t" + transformedPt[0] + " " + transformedPt[1] + " " +
-     //   transformedPt[2]);
+	if (startLocs.length == 3) {
 
-        
-        
-        return transformedPt;
+	    if (getImageOrientation() == FileInfoBase.SAGITTAL) {
+		transformedPt[0] = -transformedPt[0];
+		transformedPt[2] = -transformedPt[2];
+	    } else if (getImageOrientation() == FileInfoBase.AXIAL) {
+		transformedPt[0] = -transformedPt[0];
+		transformedPt[1] = -transformedPt[1];
+	    } else if (getImageOrientation() == FileInfoBase.CORONAL) {
+		transformedPt[0] = -transformedPt[0];
+		transformedPt[2] = -transformedPt[2];
+	    }
+	}
+
+	// System.err.println("convert: result[" + slice + "]:\t" + transformedPt[0] + " " + transformedPt[1] + " " +
+		//   transformedPt[2]);
+
+
+
+	return transformedPt;
     }
-    
+
     /**
      * Sets start locations of each axis.
      *
@@ -403,21 +396,21 @@ public class FileInfoMincHDF extends FileInfoBase {
      */
     public final void setStartLocations(double[] origin) {
 
-        if (origin.length != 3) {
-            Preferences.debug("Start locations array must be of length 3.\n");
+	if (origin.length != 3) {
+	    Preferences.debug("Start locations array must be of length 3.\n");
 
-            return;
-        }
+	    return;
+	}
 
-        float[] fOrigin = new float[origin.length];
+	float[] fOrigin = new float[origin.length];
 
-        for (int i = 0; i < origin.length; i++) {
-            fOrigin[i] = (float) origin[i];
-        }
+	for (int i = 0; i < origin.length; i++) {
+	    fOrigin[i] = (float) origin[i];
+	}
 
-        super.setOrigin(fOrigin);
+	super.setOrigin(fOrigin);
     }
-    
+
     /**
      * In MINC images, "real" values for pixels are calculated by taking the given image min and image max and rescaling
      * the data accordingly. Image min and image max are given per slice.
@@ -429,21 +422,21 @@ public class FileInfoMincHDF extends FileInfoBase {
      * @param validMin
      */
     public static void calculateRescaleIntercept(double[] rescaleIntercept, double[] rescaleSlope, 
-    		double[] imageMax, double [] imageMin,
-    		double [] valid_range) {
+	    double[] imageMax, double [] imageMin,
+	    double [] valid_range) {
 
-        try {
+	try {
 
-            for (int i = 0; i < rescaleSlope.length; i++) {
-                rescaleSlope[i] = FileInfoMinc.calculateSlope(imageMax[i], imageMin[i], valid_range[1], valid_range[0]);
-                rescaleIntercept[i] = FileInfoMinc.calculateIntercept(imageMin[i], rescaleSlope[i], valid_range[0]);
-            }
-        } catch (ArrayIndexOutOfBoundsException error) {
-
-            for (int i = 0; i < rescaleSlope.length; i++) {
-                rescaleSlope[i] = 1.0;
-                rescaleIntercept[i] = 0.0;
-            }
-        }
+	    for (int i = 0; i < rescaleSlope.length; i++) {
+		rescaleSlope[i] = FileInfoMinc.calculateSlope(imageMax[i], imageMin[i], valid_range[1], valid_range[0]);
+		rescaleIntercept[i] = FileInfoMinc.calculateIntercept(imageMin[i], rescaleSlope[i], valid_range[0]);
+	    }
+	} catch (ArrayIndexOutOfBoundsException error) {
+	    
+	    for (int i = 0; i < rescaleSlope.length; i++) {
+		rescaleSlope[i] = 1.0;
+		rescaleIntercept[i] = 0.0;
+	    }
+	}
     }
 }
