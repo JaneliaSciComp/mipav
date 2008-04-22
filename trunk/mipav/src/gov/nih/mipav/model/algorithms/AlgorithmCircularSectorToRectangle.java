@@ -45,12 +45,18 @@ import java.io.*;
  * xDim-1, 0 z2" = 0, 0 z3" = 0, yDim-1 z4" = xDim - 1, yDim-1</p>
  *
  * <p>x" = (1 - x')*(xDim - 1) Let var = log(sqrt(rmax/rmin))/(alpha*PI) y" = (y' + var)* (yDim - 1)/(2 * var)</p>
+ * 
+ * A similar transformation is performed in Conformal Mapping by Zeev Nehari Chapter VI Mapping Properties of Special 
+ * Functions 2. Exponential and Trigonometric Functios pp. 273-280.  Nehari states that "the transformation w = exp(z)
+ * maps the boundary of any rectangle in the z-plane whose sides are parallel to the axes onto a closed contour 
+ * consisting of two circular arcs about the origin and two linear segments pointing at the origin."
  *
  * <p>References: 1.) Advanced Calculus For Applications Second Edition by F. B. Hildebrand, Section 10.4 Analytic
  * Functions of a Complex Variable pages 550-554 and Section 11.4 Conformal Mapping pages 628-632, Prentice-Hall, Inc.,
  * 1976. 2.) "A Domain Decomposition Method for Conformal Mapping onto a Rectangle", N. Papamichael and N. S.
  * Stylianopoulos, Constructive Approximation, Vol. 7, 1991, pp. 349-379. Relevant result is given in Remark 4.7 on
- * pages 374-375.</p>
+ * pages 374-375.</p>  3.) Conformal Mapping by Zeev Nehari Chapter VI Mapping Properties of Special Functions 2.
+ * Exponential and Trigonometric Functions pp. 273-280.
  */
 public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
 
