@@ -143,7 +143,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         boolean test = false;
         
         if (test) {
-            selfTest();
+            selfTest2();
         }
 
         if (srcImage == null) {
@@ -377,7 +377,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         // z3, lower left point = 180, 180 at theta = -45 degrees on rmin = 75.5*sqrt(2) = 106.7731239
         // z4, lower right point = 331, 180 at theta = +45 degrees on rmin = 75.5*sqrt(2) = 106.7731239
         // Top point of circular sector at 255.5, 35.58979105 at theta = 0 degrees
-        // Radial segements in input image transformed in to lines in output image
+        // White and black radial segements in input image transformed in to vertical white and black in output image
         int xDim = 512;
         int yDim = 512;
         int sliceSize = 512 * 512;
@@ -420,6 +420,92 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
                         buffer[index] = (byte)255;
                     }
                 } // if ((r >= 106.7731239) && (r <= 219.91020894))
+            } // for (x = 100; x <= 411; x++)
+        } // for (y = 36; y <= 180; y++)
+        try {
+            srcImage.importData(0, buffer, true);
+        }
+        catch(IOException e) {
+            MipavUtil.displayError("IOException on srcImage.importData");
+        }
+        new ViewJFrameImage(srcImage);
+        x = new double[4];
+        y = new double[4];
+        x[0] = 411.0;
+        x[1] = 100.0;
+        x[2] = 180.0;
+        x[3] = 331.0;
+        y[0] = 100.0;
+        y[1] = 100.0;
+        y[2] = 180.0;
+        y[3] = 180.0;
+    }
+    
+    private void selfTest2() {
+        // Call up JDialogCircularSectorToRectangle with any 512 by 512 image
+        // In a 512 x 512 image create an image which is a circular sector going from -45 degrees to 45 degrees with
+        // rmin to rmin + .1*(rmax - rmin) on
+        // rmin + .1*(rmax - rmin) to rmin + .2*(rmax - rmin) off
+        // rmin + .2*(rmax - rmin) to rmin + .3*(rmax - rmin) on
+        // rmin + .3*(rmax - rmin) to rmin + .4*(rmax - rmin) off
+        // rmin + .4*(rmax - rmin) to rmin + .5*(rmax - rmin) on
+        // rmin + .5*(rmax - rmin) to rmin + .6*(rmax - rmin) off
+        // rmin + .6*(rmax - rmin) to rmin + .7*(rmax - rmin) on
+        // rmin + .7*(rmax - rmin) to rmin + .8*(rmax - rmin) off
+        // rmin + .8*(rmax - rmin) to rmin + .9*(rmax - rmin) on
+        // rmin + .9*(rmax - rmin) to rmax off
+        // Center point of circle at 255.5, 255.5
+        // z1, upper right point = 411, 100 at theta = 45 degrees on rmax = 155.5*sqrt(2) = 219.91020894
+        // z2, upper left point = 100, 100 at theta = -45 degrees on rmax = 155.5*sqrt(2) = 219.91020894
+        // z3, lower left point = 180, 180 at theta = -45 degrees on rmin = 75.5*sqrt(2) = 106.7731239
+        // z4, lower right point = 331, 180 at theta = +45 degrees on rmin = 75.5*sqrt(2) = 106.7731239
+        // Top point of circular sector at 255.5, 35.58979105 at theta = 0 degrees
+        // White and black circular segments transformed into white and black horizontal lines
+        int xDim = 512;
+        int yDim = 512;
+        int sliceSize = 512 * 512;
+        int extents[] = new int[2];
+        extents[0] = xDim;
+        extents[1] = yDim;
+        byte buffer[] = new byte[sliceSize];
+        int xs;
+        int ys;
+        int index;
+        double xDist;
+        double yDist;
+        double r;
+        double theta;
+        double thetaAbs;
+        double tMax = Math.PI/4.0;
+        double rmax = 155.5*Math.sqrt(2.0);
+        double rmin = 75.5*Math.sqrt(2.0);
+        double delr = rmax - rmin;
+        for (ys = 35; ys <= 180; ys++) {
+            for (xs = 100; xs <= 411; xs++) {
+                index = xs + ys * xDim;
+                xDist = xs - 255.5;
+                yDist = 255.5 - ys;
+                r = Math.sqrt(xDist*xDist + yDist*yDist);
+                // Note here theta = 0 for xDist = 0
+                theta = Math.atan2(xDist, yDist);
+                thetaAbs = Math.abs(theta);
+                if (thetaAbs <= tMax) {
+                    if ((r >= rmin) && (r < rmin + 0.1*delr)) {
+                        buffer[index] = (byte)255;
+                    }
+                    else if ((r >= rmin + 0.2*delr) && (r < rmin + 0.3*delr)) {
+                        buffer[index] = (byte)255;
+                    }
+                    else if ((r >= rmin + 0.4*delr) && (r < rmin + 0.5*delr)) {
+                        buffer[index] = (byte)255;
+                    }
+                    else if ((r >= rmin + 0.6*delr) && (r < rmin + 0.7*delr)) {
+                        buffer[index] = (byte)255;
+                    }
+                    else if ((r >= rmin + 0.8*delr) && (r < rmin + 0.9*delr)) {
+                        buffer[index] = (byte)255;
+                    }
+                }
             } // for (x = 100; x <= 411; x++)
         } // for (y = 36; y <= 180; y++)
         try {
