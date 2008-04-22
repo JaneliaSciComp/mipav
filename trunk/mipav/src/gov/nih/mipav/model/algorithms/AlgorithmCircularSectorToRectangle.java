@@ -140,6 +140,11 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         float delY;
         int sIndex;
         int cf;
+        boolean test = false;
+        
+        if (test) {
+            selfTest();
+        }
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -344,5 +349,95 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         setCompleted(true);
 
         return;
+    }
+    
+    private void selfTest() {
+        // Call up JDialogCircularSectorToRectangle with any 512 by 512 image
+        // In a 512 x 512 image create an image which is a circular sector going from -45 degrees to 45 degrees with
+        // white -45 to -40
+        // black -40 to -35
+        // white -35 to -30
+        // black -30 to -25
+        // white -25 to -20
+        // black -20 to -15
+        // white -15 to -10
+        // black -10 to -5
+        // white -5 to +5
+        // black +5 to +10
+        // white +10 to +15
+        // black +15 to +20
+        // white +20 to +25
+        // black +25 to +30
+        // white +30 to +35
+        // black +35 to +40
+        // white +40 to +45
+        // Center point of circle at 255.5, 255.5
+        // z1, upper right point = 411, 100 at theta = 45 degrees on rmax = 155.5*sqrt(2) = 219.91020894
+        // z2, upper left point = 100, 100 at theta = -45 degrees on rmax = 155.5*sqrt(2) = 219.91020894
+        // z3, lower left point = 180, 180 at theta = -45 degrees on rmin = 75.5*sqrt(2) = 106.7731239
+        // z4, lower right point = 331, 180 at theta = +45 degrees on rmin = 75.5*sqrt(2) = 106.7731239
+        // Top point of circular sector at 255.5, 35.58979105 at theta = 0 degrees
+        // Radial segements in input image transformed in to lines in output image
+        int xDim = 512;
+        int yDim = 512;
+        int sliceSize = 512 * 512;
+        int extents[] = new int[2];
+        extents[0] = xDim;
+        extents[1] = yDim;
+        byte buffer[] = new byte[sliceSize];
+        int xs;
+        int ys;
+        int index;
+        double xDist;
+        double yDist;
+        double r;
+        double theta;
+        double thetaAbs;
+        double tMax = Math.PI/4.0;
+        for (ys = 35; ys <= 180; ys++) {
+            for (xs = 100; xs <= 411; xs++) {
+                index = xs + ys * xDim;
+                xDist = xs - 255.5;
+                yDist = 255.5 - ys;
+                r = Math.sqrt(xDist*xDist + yDist*yDist);
+                // Note here theta = 0 for xDist = 0
+                theta = Math.atan2(xDist, yDist);
+                thetaAbs = Math.abs(theta);
+                if ((r >= 106.7731239) && (r <= 219.91020894)) {
+                    if ((thetaAbs <= tMax) && (thetaAbs > (tMax * (40.0/45.0)))) {
+                        buffer[index] = (byte)255;  
+                    }
+                    else if ((thetaAbs <= (tMax * (35.0/45.0))) && (thetaAbs > (tMax * (30.0/45.0)))) {
+                        buffer[index] = (byte)255;
+                    }
+                    else if ((thetaAbs <= (tMax * (25.0/45.0))) && (thetaAbs > (tMax * (20.0/45.0)))) {
+                        buffer[index] = (byte)255;
+                    }
+                    else if ((thetaAbs <= (tMax * (15.0/45.0))) && (thetaAbs > (tMax * (10.0/45.0)))) {
+                        buffer[index] = (byte)255;
+                    }
+                    else if (thetaAbs <= (tMax * (5.0/45.0))) {
+                        buffer[index] = (byte)255;
+                    }
+                } // if ((r >= 106.7731239) && (r <= 219.91020894))
+            } // for (x = 100; x <= 411; x++)
+        } // for (y = 36; y <= 180; y++)
+        try {
+            srcImage.importData(0, buffer, true);
+        }
+        catch(IOException e) {
+            MipavUtil.displayError("IOException on srcImage.importData");
+        }
+        new ViewJFrameImage(srcImage);
+        x = new double[4];
+        y = new double[4];
+        x[0] = 411.0;
+        x[1] = 100.0;
+        x[2] = 180.0;
+        x[3] = 331.0;
+        y[0] = 100.0;
+        y[1] = 100.0;
+        y[2] = 180.0;
+        y[3] = 180.0;
     }
 }
