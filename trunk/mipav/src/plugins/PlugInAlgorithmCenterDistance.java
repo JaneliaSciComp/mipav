@@ -971,6 +971,16 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                         } // for (x = 0, y = 0, k = 0; k < length; k++)
                         greenXCenter[i - 1] = greenXCenter[i - 1] / greenIntensityTotal[i - 1];
                         greenYCenter[i - 1] = greenYCenter[i - 1] / greenIntensityTotal[i - 1];
+                        for (m = j+1; m <= numGreenObjects; m++) {
+                            for (k = 0; k < length; k++) {
+                                if (greenIDArray[k] == m) {
+                                    greenIDArray[k] = (byte)(m-1);
+                                }
+                            }
+                            greenIntensityTotal[m-2] = greenIntensityTotal[m-1];
+                            greenXCenter[m-2] = greenXCenter[m-1];
+                            greenYCenter[m-2] = greenYCenter[m-1];
+                        }
                         numGreenObjects--;
                         continue loop1;
                     } // if (distance <= mergingDistance)
@@ -995,6 +1005,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     if (greenIntensityTotal[j - 1] >= sortedGreenIntensity[id - 1][i]) {
                         found = true;
                         sortedGreenFound[id - 1]++;
+                        //System.out.println("sortedGreenFound[" + (id-1) + "] = " + sortedGreenFound[id-1]);
 
                         if ((i == 0) && (sortedGreenFound[id-1] >= 2)) {
                             sortedGreenIntensity[id - 1][1] = sortedGreenIntensity[id - 1][0];
@@ -2570,6 +2581,17 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                         greenXCenter[i - 1] = greenXCenter[i - 1] / greenIntensityTotal[i - 1];
                         greenYCenter[i - 1] = greenYCenter[i - 1] / greenIntensityTotal[i - 1];
                         greenZCenter[i - 1] = greenZCenter[i - 1] / greenIntensityTotal[i - 1];
+                        for (m = j+1; m <= numGreenObjects; m++) {
+                            for (k = 0; k < totLength; k++) {
+                                if (greenIDArray[k] == m) {
+                                    greenIDArray[k] = (byte)(m-1);
+                                }
+                            }
+                            greenIntensityTotal[m-2] = greenIntensityTotal[m-1];
+                            greenXCenter[m-2] = greenXCenter[m-1];
+                            greenYCenter[m-2] = greenYCenter[m-1];
+                            greenZCenter[m-2] = greenZCenter[m-1];
+                        }
                         numGreenObjects--;
                         continue loop1;
                     } // if (distance <= mergingDistance)
