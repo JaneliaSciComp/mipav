@@ -943,8 +943,10 @@ public class VolumeSurface extends VolumeObject
 
         HashSet[] connections = buildConnections();
 
-        scaleMesh( lambda, connections );
-        scaleMesh( mu, connections );
+        for ( int k = 0; k < iteration; k++ ) {
+           scaleMesh( lambda, connections );
+           scaleMesh( mu, connections );
+        }
 
         m_kMesh.UpdateMS();
         m_kMesh.VBuffer.Release();
