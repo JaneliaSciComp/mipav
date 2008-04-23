@@ -13,7 +13,7 @@ import javax.swing.*;
 
 
 /**
- * @version  April 15, 2008
+ * @version  April 23, 2008
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -77,19 +77,17 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
     
     private JRadioButton twoButton;
     
-    private JRadioButton variesButton;
-    
     private float mergingDistance = 0.33f;
     
     private int blueMin = 1000;
     
     // Number of green regions per cell
-    // Either 1 for 1 for all cells, 2 for 2 for all cells, or 0 for 1 or 2 for all cells
+    // Either 1 for 1 for all cells or 2 for 2 for all cells
     private int greenRegionNumber;
     
     private JCheckBox twoBox;
     
-    private boolean twoGreenLevels = false;
+    private boolean twoGreenLevels = true;
     
     
     /** DOCUMENT ME! */
@@ -197,10 +195,13 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
 
         String str = new String();
         str += blueMin + delim;
+        str += redMin + delim;
+        str += redFraction + delim;
         str += mergingDistance + delim;
         str += greenMin + delim;
         str += greenFraction + delim;
         str += greenRegionNumber + delim;
+        str += twoGreenLevels + delim;
 
         return str;
     }
@@ -263,7 +264,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
 
     /**
      * Accessor that sets the greenRegionNumber variable, for number of green regions per cell
-     * 1 for 1 for all cells, 2 for 2 for all cells, or 0 for 1 or 2 for all cells
+     * 1 for 1 for all cells or 2 for 2 for all cells
      *
      * @param  greenRegionNumber
      */
@@ -362,7 +363,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Center Distances 04/18/08");
+        setTitle("Center Distances 04/23/08");
 
         GridBagConstraints gbc = new GridBagConstraints();
         int yPos = 0;
@@ -474,7 +475,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         
         greenGroup = new ButtonGroup();
         
-        oneButton = new JRadioButton("1", true);
+        oneButton = new JRadioButton("1", false);
         oneButton.setForeground(Color.black);
         oneButton.setFont(serif12);
         greenGroup.add(oneButton);
@@ -490,19 +491,11 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         gbc.gridy = 0;
         buttonPanel.add(twoButton, gbc);
         
-        variesButton = new JRadioButton("Varies with cell", true);
-        variesButton.setForeground(Color.black);
-        variesButton.setFont(serif12);
-        greenGroup.add(variesButton);
-        gbc.gridx = 2;
-        gbc.gridy = 0;
-        buttonPanel.add(variesButton, gbc);
-        
         gbc.gridx = 1;
         gbc.gridy = yPos++;
         mainPanel.add(buttonPanel, gbc);
         
-        twoBox = new JCheckBox("Use 2 top gray levels in green segmentation", false);
+        twoBox = new JCheckBox("Use 2 top gray levels in green segmentation", true);
         twoBox.setForeground(Color.black);
         twoBox.setFont(serif12);
         gbc.gridx = 0;
@@ -510,18 +503,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         mainPanel.add(twoBox, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
-
-        // Build the Panel that holds the OK and CANCEL Buttons
-        JPanel OKCancelPanel = new JPanel();
-
-        // size and place the OK button
-        buildOKButton();
-        OKCancelPanel.add(OKButton, BorderLayout.WEST);
-
-        // size and place the CANCEL button
-        buildCancelButton();
-        OKCancelPanel.add(cancelButton, BorderLayout.EAST);
-        getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
+        getContentPane().add(buildButtons(), BorderLayout.SOUTH);
 
         pack();
         setVisible(true);
@@ -642,11 +624,8 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         if (oneButton.isSelected()) {
             greenRegionNumber = 1;
         }
-        else if (twoButton.isSelected()) {
-            greenRegionNumber = 2;
-        }
         else {
-            greenRegionNumber = 0;
+            greenRegionNumber = 2;
         }
         
         twoGreenLevels = twoBox.isSelected();
