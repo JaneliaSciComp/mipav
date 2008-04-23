@@ -1386,7 +1386,7 @@ public class FileSurface_WM {
 //                     kVBuffer.SetPosition3( j, kVBuffer.GetPosition3fX(j),
 //                                            (2 * startLocation[1]) + (box[1] * direction[1]) - kVBuffer.GetPosition3fY(j),
 //                                            (2 * startLocation[2]) + (box[2] * direction[2]) - kVBuffer.GetPosition3fZ(j) );
-
+                   /*
                     if (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
 
                         // Get the DICOM transform that describes the transformation from
@@ -1408,7 +1408,7 @@ public class FileSurface_WM {
                         tCoord[1] = tCoord[1] + startLocation[1];
                         tCoord[2] = tCoord[2] + startLocation[2];
                         kVBuffer.SetPosition3(j, tCoord[0], tCoord[1], tCoord[2]);
-                    }
+                    } */
                 }
 //             }
 
