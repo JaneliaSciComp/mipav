@@ -2,12 +2,14 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.file.FileInfoBase;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.text.NumberFormat;
 
 import javax.swing.*;
 
@@ -362,8 +364,18 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
+        NumberFormat nf;
+        int xUnits;
+        String unitStr;
+        String distStr;
+        int i;
+        String dStr;
         setForeground(Color.black);
         setTitle("Center Distances 04/23/08");
+        
+        nf = NumberFormat.getNumberInstance();
+        nf.setMinimumFractionDigits(3);
+        nf.setMaximumFractionDigits(3);
 
         GridBagConstraints gbc = new GridBagConstraints();
         int yPos = 0;
@@ -422,15 +434,31 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         gbc.gridy = yPos++;
         mainPanel.add(redFractionText, gbc);
         
-        greenMergingLabel = new JLabel("Green merging radius around peak (inches)");
+        xUnits = image.getFileInfo(0).getUnitsOfMeasure()[0];
+        if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
+            unitStr = FileInfoBase.getUnitsOfMeasureStr(xUnits);
+            greenMergingLabel = new JLabel("Green merging radius around peak (" + unitStr + ")");
+        }
+        else {
+            greenMergingLabel = new JLabel("Green merging radius around peak");    
+        }
         greenMergingLabel.setForeground(Color.black);
         greenMergingLabel.setFont(serif12);
         gbc.gridx = 0;
         gbc.gridy = yPos;
         mainPanel.add(greenMergingLabel, gbc);
 
-        greenMergingText = new JTextField(5);
-        greenMergingText.setText("0.33");
+        mergingDistance = 24.0f * image.getFileInfo(0).getResolutions()[0];
+        distStr = nf.format(mergingDistance);
+        dStr = "";
+        for (i = 0; i < distStr.length(); i++) {
+            // Remove commas
+            if (distStr.charAt(i) != 44)  {
+                dStr += distStr.substring(i,i+1);
+            }
+        }
+        greenMergingText = new JTextField(10);
+        greenMergingText.setText(dStr);
         greenMergingText.setFont(serif12);
         gbc.gridx = 1;
         gbc.gridy = yPos++;
