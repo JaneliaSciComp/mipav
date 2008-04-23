@@ -1906,8 +1906,12 @@ public class FileSurface_WM {
 			for (int i = 0; i < iTriangleCount; i++) {
 				// read normal.x, normal.y, normal.z
 				kIn.read(value);
+				x = FileBase.bytesToFloat(false, 0, value);
 				kIn.read(value);
+				y = FileBase.bytesToFloat(false, 0, value);
 				kIn.read(value);
+				z = FileBase.bytesToFloat(false, 0, value);
+				normal = new Vector3f(x, y, z);
 
 				// index 1
 				kIn.read(value);
