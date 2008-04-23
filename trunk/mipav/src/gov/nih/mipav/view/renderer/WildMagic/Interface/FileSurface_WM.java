@@ -1872,7 +1872,7 @@ public class FileSurface_WM {
      */
 	public static TriMesh loadSTLBinaryMesh(RandomAccessFile kIn) throws IOException  {
 		int iTriangleCount;
-		Vector vertexArray = new Vector();
+		HashMap<String, Integer> vertexHashtable = new HashMap<String, Integer>();
 		float x, y, z;
 		byte[] value = new byte[4];
 		byte[] header = new byte[80];
@@ -1880,6 +1880,9 @@ public class FileSurface_WM {
 		VertexBuffer kVBuffer;
         int[] aiConnect;
         TriMesh kMesh = null;
+        Vector vertexArray = new Vector();
+        Integer searchIndex;
+        Vector<Integer> connectivity = new Vector<Integer>();
         
 		try { 
 		 // nothing header
@@ -1888,6 +1891,8 @@ public class FileSurface_WM {
 		 // number of facets
 		 kIn.read(value);
 		 iTriangleCount = FileBase.bytesToInt(false, 0, value);
+		 
+		 int index = 0;
 		 
 		 for ( int i = 0; i < iTriangleCount; i++ ) {  
 			 // read normal.x, normal.y, normal.z
@@ -1902,7 +1907,16 @@ public class FileSurface_WM {
 			 y = FileBase.bytesToFloat(false, 0, value);
 			 kIn.read(value);
 			 z = FileBase.bytesToFloat(false, 0, value);
-			 vertexArray.add(new Vector3f(x, y, z));
+			 
+			 searchIndex = vertexHashtable.get((x + " " + y + " " + z));
+			 if ( searchIndex == null ) {  // not found
+			   vertexHashtable.put((x + " " + y + " " + z), new Integer(index));
+			   connectivity.add(new Integer(index));
+			   vertexArray.add(new Vector3f(x, y, z));
+			   index++;
+			 } else {
+				 connectivity.add(searchIndex);
+			 }
 			 
 			 // index 2
 			 kIn.read(value);
@@ -1911,7 +1925,16 @@ public class FileSurface_WM {
 			 y = FileBase.bytesToFloat(false, 0, value);
 			 kIn.read(value);
 			 z = FileBase.bytesToFloat(false, 0, value);
-			 vertexArray.add(new Vector3f(x, y, z));
+		
+			 searchIndex = vertexHashtable.get((x + " " + y + " " + z));
+			 if ( searchIndex == null ) {
+			   vertexHashtable.put((x + " " + y + " " + z), new Integer(index));
+			   connectivity.add(new Integer(index));
+			   vertexArray.add(new Vector3f(x, y, z));
+			   index++;
+			 } else {
+			   connectivity.add(searchIndex); 
+			 }
 			 
 			// index 3
 			 kIn.read(value);
@@ -1920,29 +1943,42 @@ public class FileSurface_WM {
 			 y = FileBase.bytesToFloat(false, 0, value);
 			 kIn.read(value);
 			 z = FileBase.bytesToFloat(false, 0, value);
-			 vertexArray.add(new Vector3f(x, y, z));
+			 
+			 searchIndex = vertexHashtable.get((x + " " + y + " " + z));
+			 if ( searchIndex == null ) {
+			   vertexHashtable.put((x + " " + y + " " + z), new Integer(index));
+			   vertexArray.add(new Vector3f(x, y, z));
+			   connectivity.add(new Integer(index));
+			   index++;
+			 } else {
+			   connectivity.add(searchIndex); 	 
+			 }
 			 
 			 // attribute
 			 kIn.read(attribute);
 		 }
 		 
 		 int vertexCount = vertexArray.size();
-			Attributes kAttr = new Attributes();
+		 Attributes kAttr = new Attributes();
          kAttr.SetPChannels(3);
          kAttr.SetNChannels(3);
          kAttr.SetTChannels(0,3);
          kAttr.SetCChannels(0,4);
          kVBuffer = new VertexBuffer( kAttr, vertexCount );
-         for(int i=0;i<vertexCount;i++){
-             kVBuffer.SetPosition3( i, ((Vector3f)vertexArray.elementAt(i)).X(),
-             		((Vector3f)vertexArray.elementAt(i)).Y(), 
-             		((Vector3f)vertexArray.elementAt(i)).Z());
-             kVBuffer.SetColor4( 0, i, 1.0f, 1.0f, 1.0f, 1.0f );
+         
+         index = 0; 
+         Vector3f pos;
+         for ( int i = 0; i < vertexCount; i++ ) {
+        	 pos = (Vector3f)vertexArray.elementAt(i);
+             kVBuffer.SetPosition3( index, pos);
+             kVBuffer.SetColor4( 0, index, 1.0f, 1.0f, 1.0f, 1.0f );
+             index++;
          }
          
-         aiConnect = new int[vertexCount];
-         for (int i = 0; i < vertexCount; i++) {
-         	aiConnect[i] = i;
+         int indexCount = connectivity.size();
+         aiConnect = new int[indexCount];
+         for (int i = 0; i < indexCount; i++) {
+         	aiConnect[i] = connectivity.get(i);
          }
 		 
      } catch (IOException e) {
@@ -1955,7 +1991,7 @@ public class FileSurface_WM {
      return kMesh;
 	
 	}
-    
+
     /**
      * Load the STL ASCII file. 
      * @param file STL surface file reference
@@ -1998,19 +2034,36 @@ public class FileSurface_WM {
         Vector vertexArray = new Vector();
         VertexBuffer kVBuffer;
         int[] aiConnect;
-        int i;
-        TriMesh kMesh = null;
         
+        TriMesh kMesh = null;
+        float x, y, z;
+        Vector3f vertex;
+        int index = 0;
+        Integer searchIndex;
+        Vector<Integer> connectivity = new Vector<Integer>();
+        HashMap<String, Integer> vertexHashtable = new HashMap<String, Integer>();
 		try {
 			while (true) {
 				if ((temp = readPoint(tokenizer, "normal")) == null)
 					break;
-				normal = new Vector3f(temp);
-				
-				vertexArray.add(readPoint(tokenizer, "vertex"));
-				vertexArray.add(readPoint(tokenizer, "vertex"));
-				vertexArray.add(readPoint(tokenizer, "vertex"));
-				
+				 normal = new Vector3f(temp);
+				 for ( int i = 0; i < 3; i++ ) {
+					 // index i  
+					 vertex = readPoint(tokenizer, "vertex");
+					 x = vertex.X();
+					 y = vertex.Y();
+					 z = vertex.Z();
+					 
+					 searchIndex = vertexHashtable.get((x + " " + y + " " + z));
+					 if ( searchIndex == null ) {  // not found
+					   vertexHashtable.put((x + " " + y + " " + z), new Integer(index));
+					   connectivity.add(new Integer(index));
+					   vertexArray.add(new Vector3f(x, y, z));
+					   index++;
+					 } else {
+						 connectivity.add(searchIndex);
+					 }
+				 }
 			
                  /*
 				// Check that the normal is in the correct direction
@@ -2029,24 +2082,28 @@ public class FileSurface_WM {
 				*/
 			}
 			
-			int vertexCount = vertexArray.size();
-			Attributes kAttr = new Attributes();
-            kAttr.SetPChannels(3);
-            kAttr.SetNChannels(3);
-            kAttr.SetTChannels(0,3);
-            kAttr.SetCChannels(0,4);
-            kVBuffer = new VertexBuffer( kAttr, vertexCount );
-            for(i=0;i<vertexCount;i++){
-                kVBuffer.SetPosition3( i, ((Vector3f)vertexArray.elementAt(i)).X(),
-                		((Vector3f)vertexArray.elementAt(i)).Y(), 
-                		((Vector3f)vertexArray.elementAt(i)).Z());
-                kVBuffer.SetColor4( 0, i, 1.0f, 1.0f, 1.0f, 1.0f );
-            }
-            
-            aiConnect = new int[vertexCount];
-            for (i = 0; i < vertexCount; i++) {
-            	aiConnect[i] = i;
-            }
+			 int vertexCount = vertexArray.size();
+			 Attributes kAttr = new Attributes();
+	         kAttr.SetPChannels(3);
+	         kAttr.SetNChannels(3);
+	         kAttr.SetTChannels(0,3);
+	         kAttr.SetCChannels(0,4);
+	         kVBuffer = new VertexBuffer( kAttr, vertexCount );
+	         
+	         index = 0; 
+	         Vector3f pos;
+	         for ( int i = 0; i < vertexCount; i++ ) {
+	        	 pos = (Vector3f)vertexArray.elementAt(i);
+	             kVBuffer.SetPosition3( index, pos);
+	             kVBuffer.SetColor4( 0, index, 1.0f, 1.0f, 1.0f, 1.0f );
+	             index++;
+	         }
+	         
+	         int indexCount = connectivity.size();
+	         aiConnect = new int[indexCount];
+	         for (int i = 0; i < indexCount; i++) {
+	         	aiConnect[i] = connectivity.get(i);
+	         }
 			
 		} catch (IOException e) {
 			throw e;
