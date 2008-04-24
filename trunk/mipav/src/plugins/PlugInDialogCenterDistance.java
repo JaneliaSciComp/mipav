@@ -15,7 +15,7 @@ import javax.swing.*;
 
 
 /**
- * @version  April 23, 2008
+ * @version  April 24, 2008
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
