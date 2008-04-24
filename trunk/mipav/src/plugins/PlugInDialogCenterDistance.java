@@ -9,7 +9,7 @@ import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.text.NumberFormat;
+import java.text.DecimalFormat;
 
 import javax.swing.*;
 
@@ -364,18 +364,14 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
-        NumberFormat nf;
+        DecimalFormat df;
         int xUnits;
         String unitStr;
         String distStr;
-        int i;
-        String dStr;
         setForeground(Color.black);
-        setTitle("Center Distances 04/23/08");
+        setTitle("Center Distances 04/24/08");
         
-        nf = NumberFormat.getNumberInstance();
-        nf.setMinimumFractionDigits(3);
-        nf.setMaximumFractionDigits(3);
+        df = new DecimalFormat("0.000E0");
 
         GridBagConstraints gbc = new GridBagConstraints();
         int yPos = 0;
@@ -449,16 +445,9 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         mainPanel.add(greenMergingLabel, gbc);
 
         mergingDistance = 24.0f * image.getFileInfo(0).getResolutions()[0];
-        distStr = nf.format(mergingDistance);
-        dStr = "";
-        for (i = 0; i < distStr.length(); i++) {
-            // Remove commas
-            if (distStr.charAt(i) != 44)  {
-                dStr += distStr.substring(i,i+1);
-            }
-        }
+        distStr = df.format(mergingDistance);
         greenMergingText = new JTextField(10);
-        greenMergingText.setText(dStr);
+        greenMergingText.setText(distStr);
         greenMergingText.setFont(serif12);
         gbc.gridx = 1;
         gbc.gridy = yPos++;
