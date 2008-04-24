@@ -21,7 +21,7 @@ import javax.swing.*;
 /**
  * This shows how to extend the AlgorithmBase class.
  *
- * @version  April 16, 2008
+ * @version  April 24, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -322,7 +322,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         float nuclearArea;
 
         float voiArea;
-        NumberFormat nf;
+        DecimalFormat df;
+        DecimalFormat dfFract;
         float initialdx;
         float initialdy;
         int lastEdgeX;
@@ -363,9 +364,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         boolean isMaxGreen[][] = null;
 
 
-        nf = NumberFormat.getNumberInstance();
-        nf.setMinimumFractionDigits(3);
-        nf.setMaximumFractionDigits(3);
+        df = new DecimalFormat("0.000E0");
+        dfFract = new DecimalFormat("0.000");
 
         try {
 
@@ -1489,7 +1489,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 04/23/08 version\n");
+        UI.setDataText("Plugin 04/24/08 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
@@ -1518,12 +1518,12 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         for (i = 0; i < numObjects; i++) {
             nuclearArea = xRes * yRes * blueCountTotal[i];
-            UI.setDataText((i + 1) + "\t" + nf.format(nuclearArea));
-            UI.setDataText("\t" + nf.format(centerToNearEdge[i]));
+            UI.setDataText((i + 1) + "\t" + df.format(nuclearArea));
+            UI.setDataText("\t" + df.format(centerToNearEdge[i]));
 
             // equivalentRadius = (float)Math.sqrt(nuclearArea/Math.PI);
             // UI.setDataText("\t" + nf.format(equivalentRadius));
-            UI.setDataText("\t" + nf.format(centerToFarEdge[i]));
+            UI.setDataText("\t" + df.format(centerToFarEdge[i]));
             greenFound = 0;
 
             for (j = 0; j <= (nVOIs - 1); j++) {
@@ -1537,7 +1537,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     if (greenFound == 2) {
                         UI.setDataText("\t");
                     }
-                    UI.setDataText("\t" + nf.format(voiArea));
+                    UI.setDataText("\t" + df.format(voiArea));
 
                     /*geoToCenter = (float)
                                       Math.sqrt(((xPosGeo[j] - xCenter[i]) * (xPosGeo[j] - xCenter[i]) * xRes * xRes) +
@@ -1674,10 +1674,10 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                                                             xRes) +
                                                        ((lastEdgeY - yCenter[i]) * (lastEdgeY - yCenter[i]) * yRes *
                                                             yRes));
-                    UI.setDataText("\t" + nf.format(gravToCenter));
-                    UI.setDataText("\t" + nf.format(centerToGravToEdge));
+                    UI.setDataText("\t" + df.format(gravToCenter));
+                    UI.setDataText("\t" + df.format(centerToGravToEdge));
                     fractionOut = gravToCenter/centerToGravToEdge;
-                    UI.setDataText("\t\t" + nf.format(fractionOut));
+                    UI.setDataText("\t\t" + dfFract.format(fractionOut));
 
 
                     /*lowestSqr = Float.MAX_VALUE;
@@ -1852,7 +1852,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         float nuclearVolume;
 
         // float equivalentRadius;
-        NumberFormat nf;
+        DecimalFormat df;
+        DecimalFormat dfFract;
         float voiVolume;
         float initialdx;
         float initialdy;
@@ -1938,9 +1939,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         int sortedGreenFound[];
         boolean isMaxGreen[][] = null;
 
-        nf = NumberFormat.getNumberInstance();
-        nf.setMinimumFractionDigits(3);
-        nf.setMaximumFractionDigits(3);
+        df = new DecimalFormat("0.000E0");
+        dfFract = new DecimalFormat("0.000");
 
         fireProgressStateChanged("Processing image ...");
 
@@ -3414,7 +3414,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 04/23/08 version\n");
+        UI.setDataText("Plugin 04/24/08 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
@@ -3451,12 +3451,12 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         for (i = 0; i < numObjects; i++) {
             nuclearVolume = xRes * yRes * zRes * blueCountTotal[i];
-            UI.setDataText((i + 1) + "\t" + nf.format(nuclearVolume));
-            UI.setDataText("\t" + nf.format(centerToNearEdge[i]));
+            UI.setDataText((i + 1) + "\t" + df.format(nuclearVolume));
+            UI.setDataText("\t" + df.format(centerToNearEdge[i]));
 
             // equivalentRadius = (float)Math.pow(nuclearVolume/((4.0/3.0)*Math.PI),1.0/3.0);
             // UI.setDataText("\t" + nf.format(equivalentRadius));
-            UI.setDataText("\t" + nf.format(centerToFarEdge[i]));
+            UI.setDataText("\t" + df.format(centerToFarEdge[i]));
             //UI.setDataText("\t" + nf.format(sAxisCen[i][0]));
             //UI.setDataText("\t" + nf.format(sAxisCen[i][1]));
             //UI.setDataText("\t" + nf.format(sAxisCen[i][2]));
@@ -3477,7 +3477,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     if (greenFound == 2) {
                         UI.setDataText("\t");
                     }
-                    UI.setDataText("\t" + nf.format(voiVolume));
+                    UI.setDataText("\t" + df.format(voiVolume));
                     /*geoToCenter = (float)
                                       Math.sqrt(((xPosGeo[j] - xCenter[i]) * (xPosGeo[j] - xCenter[i]) * xRes * xRes) +
                                                 ((yPosGeo[j] - yCenter[i]) * (yPosGeo[j] - yCenter[i]) * yRes * yRes) +
@@ -3668,10 +3668,10 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                                                             yRes) +
                                                        ((lastEdgeZ - zCenter[i]) * (lastEdgeZ - zCenter[i]) * zRes *
                                                             zRes));
-                    UI.setDataText("\t" + nf.format(gravToCenter));
-                    UI.setDataText("\t" + nf.format(centerToGravToEdge));
+                    UI.setDataText("\t" + df.format(gravToCenter));
+                    UI.setDataText("\t" + df.format(centerToGravToEdge));
                     fractionOut = gravToCenter/centerToGravToEdge;
-                    UI.setDataText("\t\t" + nf.format(fractionOut));
+                    UI.setDataText("\t\t" + dfFract.format(fractionOut));
                     /*gravToCenter = 100.0f * gravToCenter / centerToGravToEdge;
                     
                     gravToEdge = (float)
