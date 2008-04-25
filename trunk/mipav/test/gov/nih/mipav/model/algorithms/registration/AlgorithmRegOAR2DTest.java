@@ -1,10 +1,9 @@
 package gov.nih.mipav.model.algorithms.registration;
 
-import static org.junit.Assert.fail;
-import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.util.FileUtil;
 
 import java.util.Vector;
 
@@ -20,10 +19,8 @@ public class AlgorithmRegOAR2DTest extends TestCase {
     private static final double[][] levelEightOptMinimas = new double[][] { {25.984392846879377, -3.1527437360924235, 3.213989784315583, 0.9969396587669149, 0.9969396587669149, 0.0, 0.0} };
 
     private static final double[][] levelFourMinimas = new double[][] {{25.981874537315036, -6.305487472184847, 6.427979568631166, 0.9995063996809996, 0.9995063996809996, 0.0, 0.0},
-        {25.981874537315036, -6.305487472184847, 6.427979568631166, 0.9995063996809996, 0.9995063996809996, 0.0, 0.0},
         {25.98327349166584, -6.305487472184847, 6.427979568631166, 0.9995063996809996, 0.9995063996809996, 0.0, 0.0},
         {25.97968281464621, -6.305487472184847, 6.427979568631166, 0.9995063996809996, 0.9995063996809996, 0.0, 0.0},
-        {25.970903490105133, -6.2868253871520094, 6.427979568631166, 0.9987254779004654, 0.9987254779004654, 0.0, 0.0},
         {25.970903490105133, -6.2868253871520094, 6.427979568631166, 0.9987254779004654, 0.9987254779004654, 0.0, 0.0},
         {25.96786355716043, -6.2868253871520094, 6.427979568631166, 0.9987254779004654, 0.9987254779004654, 0.0, 0.0},
         {25.98156691552056, -6.2868253871520094, 6.427979568631166, 0.9987254779004654, 0.9987254779004654, 0.0, 0.0},
@@ -43,12 +40,12 @@ public class AlgorithmRegOAR2DTest extends TestCase {
     /**
      * The original image file
      */
-    private static final String refImageFileName = "test\\r_M00176_Anatomic_slice2.raw";
+    private static final String refImageFileName = "images\\r_M00176_Anatomic_slice2.raw";
     
     /**
      * The transformed image file: translation (20, 20), rotation 26 about the center of mass  
      */
-    private static final String matchImageFileName = "test\\r_M00176_Anatomic_slice2_20_20_26.raw";
+    private static final String matchImageFileName = "images\\r_M00176_Anatomic_slice2_20_20_26.raw";
 
     private AlgorithmRegOAR2D reg;
     private ModelImage refImage;
@@ -102,11 +99,11 @@ public class AlgorithmRegOAR2DTest extends TestCase {
         maxIterations = 2;
         numMinima = 3;
         
-        float[] data = FileBase.readRawFileFloat(refImageFileName, false);
+        float[] data = FileUtil.readRawFileFloat(refImageFileName, false);
         refImage = new ModelImage(ModelStorageBase.FLOAT, new int[]{512, 512}, "r_M00176_Anatomic_slice2");
         refImage.importData(0, data, true);
         refImage.setResolutions(0, resolution);
-        data = FileBase.readRawFileFloat(matchImageFileName, false);
+        data = FileUtil.readRawFileFloat(matchImageFileName, false);
         matchImage = new ModelImage(ModelStorageBase.FLOAT, new int[]{512, 512}, "r_M00176_Anatomic_slice2_20_20_26");
         matchImage.importData(0, data, true);
         matchImage.setResolutions(0, resolution);
@@ -161,7 +158,7 @@ public class AlgorithmRegOAR2DTest extends TestCase {
 
     @Test
     public void testLevelFour() {
-        reg.setMultiThreadingEnabled(true);
+        reg.setMultiThreadingEnabled(false);
         Vector<MatrixListItem> minimas = reg.levelFour(refImageLevelFour, matchImageLevelFour, inputLevelFour[0], inputLevelFour[1]);
         
         for(int i = 0; i < minimas.size(); i++){

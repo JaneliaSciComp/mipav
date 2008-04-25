@@ -8,7 +8,7 @@ package gov.nih.mipav.model.algorithms;
  */
 import gov.nih.mipav.model.GaussianKernelFactory;
 import gov.nih.mipav.model.Kernel;
-import gov.nih.mipav.model.file.FileBase;
+import gov.nih.mipav.util.FileUtil;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
@@ -18,17 +18,17 @@ public class AlgorithmSeparableConvolverTest extends TestCase {
     /**
      * The test 2d image with 512x512 dimension
      */
-    public static final String testImageFileName = "test\\r_M00176_Anatomic_slice2.raw";
+    public static final String testImageFileName = "images\\r_M00176_Anatomic_slice2.raw";
     
     /**
      * The x derivative image of the test image with the kernel of 1.00, 1.00
      */
-    public static final String xDerivativeImageFileName = "test\\r_M00176_Anatomic_slice2_x_der_100_100.raw";
+    public static final String xDerivativeImageFileName = "images\\r_M00176_Anatomic_slice2_x_der_100_100.raw";
     
     /**
      * The y derivative image of the test image with the kernel of 1.00, 1.00
      */
-    public static final String yDerivativeImageFileName = "test\\r_M00176_Anatomic_slice2_y_der_100_100.raw";
+    public static final String yDerivativeImageFileName = "images\\r_M00176_Anatomic_slice2_y_der_100_100.raw";
 
     private int imgLength;
     private AlgorithmSeparableConvolver sepConvolver;
@@ -40,10 +40,10 @@ public class AlgorithmSeparableConvolverTest extends TestCase {
     private GaussianKernelFactory gkf;
     protected void setUp(){
         float[] sigmas = new float[] {1.0f, 1.0f};
-        srcBuffer = FileBase.readRawFileFloat(testImageFileName, false);
-        refBufferXDer = FileBase.readRawFileFloat(xDerivativeImageFileName, false);
-        refBufferYDer = FileBase.readRawFileFloat(yDerivativeImageFileName, false);
-//        refBufferZDer = FileBase.readRawFileFloat("test\\r_M00176_Anatomic_slice2_z_der.raw", false);
+        srcBuffer = FileUtil.readRawFileFloat(testImageFileName, false);
+        refBufferXDer = FileUtil.readRawFileFloat(xDerivativeImageFileName, false);
+        refBufferYDer = FileUtil.readRawFileFloat(yDerivativeImageFileName, false);
+//        refBufferZDer = FileUtil.readRawFileFloat("test\\r_M00176_Anatomic_slice2_z_der.raw", false);
         imgLength = srcBuffer.length;
         gkf = GaussianKernelFactory.getInstance(sigmas);
     }
@@ -97,7 +97,7 @@ public class AlgorithmSeparableConvolverTest extends TestCase {
 //        Kernel zDerivativeKernel = gkf.createKernel();
 //        sepConvolver = new AlgorithmSeparableConvolver(testBuffer, srcBuffer, new int[]{512, 512}, zDerivativeKernel.getData(), false, false);;
 //        sepConvolver.run();
-////        FileBase.writeRawFileFloat("test\\r_M00176_Anatomic_slice2_z_der.raw", false, testBuffer);
+////        FileUtil.writeRawFileFloat("test\\r_M00176_Anatomic_slice2_z_der.raw", false, testBuffer);
 //        for(int i = 0; i < imgLength; i++){
 //            Assert.assertEquals(testBuffer[i], refBufferZDer[i]);
 //        }
