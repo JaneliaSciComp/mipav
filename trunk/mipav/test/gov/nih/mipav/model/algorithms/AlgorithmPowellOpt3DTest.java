@@ -1,12 +1,12 @@
 package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR3D;
-import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.Point3Dd;
 import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.util.FileUtil;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
@@ -31,12 +31,12 @@ public class AlgorithmPowellOpt3DTest extends TestCase {
     /**
      * The original image file
      */
-    private static final String refImageFileName = "test\\33175_3_concat_with_same_resolution.raw";
+    private static final String refImageFileName = "images\\33175_3_concat_with_same_resolution.raw";
     
     /**
      * The transformed image file: translation (20, 20, 20), rotation (30, 30, 30) about origin  
      */
-    private static final String matchImageFileName = "test\\33175_3_concat_with_same_resolution_20_20_20_30_30_30.raw";
+    private static final String matchImageFileName = "images\\33175_3_concat_with_same_resolution_20_20_20_30_30_30.raw";
     private ModelImage refImage;
     private ModelImage matchImage;
     private ModelSimpleImage refSimpleImage8;
@@ -65,11 +65,11 @@ public class AlgorithmPowellOpt3DTest extends TestCase {
         fromOrigin = new TransMatrix(4);
         fromOrigin.setArray(new double[][]{{1.0, 0.0, 0.0, -17.314208192569254},{0.0, 1.0, 0.0, -21.140626155237523},{0.0, 0.0, 1.0, -11.527512442322395},{0.0, 0.0, 0.0, 1.0}});
 
-        short[] data = FileBase.readRawFileShort(refImageFileName, false);
+        short[] data = FileUtil.readRawFileShort(refImageFileName, false);
         refImage = new ModelImage(ModelStorageBase.SHORT, new int[]{256, 256, 198}, "33175_3_concat_with_same_resolution");
         refImage.importData(0, data, true);
         refImage.setResolutions(0, resolution);
-        data = FileBase.readRawFileShort(matchImageFileName, false);
+        data = FileUtil.readRawFileShort(matchImageFileName, false);
         matchImage = new ModelImage(ModelStorageBase.SHORT, new int[]{256, 256, 198}, "33175_3_concat_with_same_resolution_20_20_20_30_30_30");
         matchImage.importData(0, data, true);
         matchImage.setResolutions(0, resolution);
