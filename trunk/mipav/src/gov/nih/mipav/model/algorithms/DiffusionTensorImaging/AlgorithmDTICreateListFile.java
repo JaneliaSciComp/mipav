@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms.DiffusionTensorImaging;
 
+import java.awt.Dimension;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,7 +26,9 @@ import javax.swing.JTextField;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR35D;
+import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR3D;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileDicom;
 import gov.nih.mipav.model.file.FileIO;
@@ -226,14 +229,56 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
     /** handle to AlgorithmRegOAR35D **/
     private AlgorithmRegOAR35D reg35;
     
+    /** handle to AlgorithmRegOAR3D **/
+    private AlgorithmRegOAR3D reg3;
+    
+    /** registration option parameters **/
     private int cost, DOF, interp, interp2, registerTo, bracketBound, maxIterations, numMinima;
     
-    private float rotateBegin, rotateEnd, coarseRate, fineRate;
+    /** registration option parameters **/
+    private float rotateBegin, rotateEnd, coarseRate, fineRate, rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ;
     
+    /** registration option parameters **/
     private boolean doGraph = false;
     
-    private boolean doSubsample, fastMode;
+    /** registration option parameters **/
+    private boolean doSubsample, fastMode, maxOfMinResol;
     
+    /** path to dicom B0 for registration purposes **/
+    private String dicomB0VolumePath;
+    
+    /** model images **/
+    private ModelImage refImage, matchImage, resultImage;
+    
+    /** file IO **/
+    private FileIO fileIO;
+    
+    /** study name for registered data set **/
+    private String registeredStudyName;
+    
+    /** handle to AlgorithmTransform **/
+    private AlgorithmTransform transform;
+    
+    /** parameter for AlgorithmTransform **/
+    private int xdimA;
+    
+    /** parameter for AlgorithmTransform **/
+    private int ydimA;
+    
+    /** parameter for AlgorithmTransform **/
+    private int zdimA;
+    
+    /** parameter for AlgorithmTransform **/
+    private float xresA;
+    
+    /** parameter for AlgorithmTransform **/
+    private float yresA;
+    
+    /** parameter for AlgorithmTransform **/
+    private float zresA;
+    
+    /** registered B0 parent folder **/
+    private String registeredDicomB0VolumePathParentFolder;
     
     
     /**
@@ -245,8 +290,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
      * @param  bmtxtFilePath     
      * @param  outputTextArea   
      */
-    public AlgorithmDTICreateListFile(String studyPath, String studyName, String gradientFilePath,
-                                            String bmtxtFilePath, JTextArea outputTextArea, boolean isInterleaved, boolean performRegsitration) {
+    public AlgorithmDTICreateListFile(String studyPath, String studyName, String gradientFilePath, String bmtxtFilePath, JTextArea outputTextArea, boolean isInterleaved, boolean performRegsitration) {
         this.studyPath = studyPath;
         this.studyName = studyName;
         this.gradientFilePath = gradientFilePath;
@@ -261,6 +305,58 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
         isDICOM = true;
     }
     
+    
+    
+    
+    /**
+     * constructor for dicom if registration is to be done first
+     *
+     * @param  studyPath         
+     * @param  studyName         
+     * @param  gradientFilePath  
+     * @param  bmtxtFilePath     
+     * @param  outputTextArea   
+     */
+    public AlgorithmDTICreateListFile(String studyPath, String studyName, String dicomB0VolumePath, String gradientFilePath, String bmtxtFilePath, JTextArea outputTextArea, boolean isInterleaved, boolean performRegsitration, int cost, int DOF, int interp, int interp2, float rotateBeginX, float rotateEndX, float coarseRateX, float fineRateX, float rotateBeginY, float rotateEndY, float coarseRateY, float fineRateY, float rotateBeginZ, float rotateEndZ, float coarseRateZ, float fineRateZ, boolean maxOfMinResol, boolean doSubsample, boolean fastMode, int bracketBound, int maxIterations, int numMinima, JTextField dwiPathTextField) {
+        this.studyPath = studyPath;
+        this.studyName = studyName;
+        this.dicomB0VolumePath = dicomB0VolumePath;
+        this.gradientFilePath = gradientFilePath;
+        this.bmtxtFilePath = bmtxtFilePath;
+        this.outputTextArea = outputTextArea;
+        this.isInterleaved = isInterleaved;
+        this.listFileName = studyName + ".list";
+		this.bmatrixFileName = studyName + ".BMTXT";
+		this.pathFileName = studyName + ".path";
+		this.performRegistration = performRegsitration;
+		this.cost = cost;
+		this.DOF = DOF;
+		this.interp = interp;
+		this.interp2 = interp2;
+		this.rotateBeginX = rotateBeginX;
+		this.rotateEndX = rotateEndX;
+		this.coarseRateX = coarseRateX;
+		this.fineRateX = fineRateX;
+		this.rotateBeginY = rotateBeginY;
+		this.rotateEndY = rotateEndY;
+		this.coarseRateY = coarseRateY;
+		this.fineRateY = fineRateY;
+		this.rotateBeginZ = rotateBeginZ;
+		this.rotateEndZ = rotateEndZ;
+		this.coarseRateZ = coarseRateZ;
+		this.fineRateZ = fineRateZ;
+		this.maxOfMinResol = maxOfMinResol;
+		this.doSubsample = doSubsample;
+		this.fastMode = fastMode;
+		this.bracketBound = bracketBound;
+		this.maxIterations = maxIterations;
+		this.numMinima = numMinima;
+		this.dwiPathTextField = dwiPathTextField;
+		registeredStudyName = studyName + "_registered";
+		fileIO = new FileIO();
+        seriesFileInfoTreeMap = new TreeMap();
+        isDICOM = true;
+    }
     
     
     /** constructor for par/rec
@@ -282,7 +378,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	
 	
 	
-	/** constructor for par/rec if registration is to done first
+	/** constructor for par/rec if registration is to be done first
 	 * 
 	 */
 	public AlgorithmDTICreateListFile(String fileName, String fileDir, String gradientFilePath, String bmtxtFilePath, JTextArea outputTextArea, boolean performRegsitration, int cost, int DOF, int interp, int interp2, int registerTo, float rotateBegin, float rotateEnd, float coarseRate, float fineRate, boolean doSubsample, boolean fastMode, int bracketBound, int maxIterations, int numMinima, JTextField dwiPathTextField) {
@@ -325,17 +421,61 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	
 	
 	public void runAlgorithm() {
+		long begTime = System.currentTimeMillis();
+
+
+        Preferences.debug("** Beginning Algorithm \n", Preferences.DEBUG_ALGORITHM);
+
+        if (outputTextArea != null) {
+            outputTextArea.append("** Beginning Algorithm \n");
+        }
+
+        System.out.println("** Beginning Algorithm \n");
+        
+        
 		if(isDICOM) {
+			success = true;
 			if(performRegistration) {
-				performRegistrationDICOM();
+				success = performRegistrationDICOM();
 			}
-			runAlgorithmDICOM();
+			if(success) {
+				runAlgorithmDICOM();
+			}
 		}else {
+			success = true;
 			if(performRegistration) {
-				performRegistraionPARREC();
+				success = performRegistrationPARREC();
 			}
-			runAlgorithmPARREC();
+			if(success) {
+				runAlgorithmPARREC();
+			}
 		}
+		
+		long endTime = System.currentTimeMillis();
+        long diffTime = endTime - begTime;
+        float seconds = ((float) diffTime) / 1000;
+
+        Preferences.debug("** Algorithm took " + seconds + " seconds \n", Preferences.DEBUG_ALGORITHM);
+
+        if (outputTextArea != null) {
+            outputTextArea.append("** Algorithm took " + seconds + " seconds \n");
+        }
+
+        System.out.println("** Algorithm took " + seconds + " seconds \n");
+        
+        if(refImage != null) {
+        	refImage.disposeLocal();
+        	refImage = null;
+        }
+        if(resultImage != null) {
+        	resultImage.disposeLocal();
+        	resultImage = null;
+        }
+        if(matchImage != null) {
+        	matchImage.disposeLocal();
+        	matchImage = null;
+        }
+		
 		setCompleted(true);
 	}
 	
@@ -343,7 +483,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	 * regsitration of PAR REC DWI dataset
 	 *
 	 */
-	public void performRegistraionPARREC() {
+	public boolean performRegistrationPARREC() {
 		 Preferences.debug("** Registering DWI dataset...\n", Preferences.DEBUG_ALGORITHM);
 
         if (outputTextArea != null) {
@@ -353,15 +493,15 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
         System.out.println("** Registering DWI dataset...\n");
         
 		fileParRec = new FilePARREC(prFileName, prFileDir + File.separator);
-		System.out.println(prFileName);
 		//read in 4d par/rec data
 		try {
 			image4D = fileParRec.readImage(false);
 		}catch (Exception e) {
 			e.printStackTrace();
+			success = false;
 			finalize();
             setCompleted(true);
-            return;
+            return false;
 		}
 		fileInfoPR = (FileInfoPARREC)image4D.getFileInfo(0);
 		int extents[] = image4D.getExtents();
@@ -384,11 +524,8 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 		
 		
 		
-		//now we have to volume index to register other volumes to....call algorithm to register
+		//now we have the volume index to register other volumes to....call algorithm to register
 		int refImageNum = bZeroIndex;
-		
-		System.out.println("refImageNum is " + refImageNum);
-
 		
 		reg35 = new AlgorithmRegOAR35D(image4D, cost, DOF, interp, interp2, registerTo, refImageNum, rotateBegin,
                 rotateEnd, coarseRate, fineRate, doGraph, doSubsample, fastMode,
@@ -406,7 +543,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 
 		try {
 			String[] splits = prFileName.split("\\.");
-			String prFileNameRegistered = splits[0] + "_Registered." + splits[1];
+			String prFileNameRegistered = splits[0] + "_registered." + splits[1];
 
 			FileWriteOptions opts = new FileWriteOptions(true);
 	        opts.setFileType(FileUtility.PARREC);
@@ -414,16 +551,18 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	        opts.setFileName(prFileNameRegistered);
 	        opts.setBeginSlice(0);
 	        opts.setEndSlice(extents[2]-1);
-	        System.out.println(extents[2]-1);
 	        opts.setTimeSlice(0);
 	        opts.setEndTime(extents[3]-1);
-	        System.out.println(extents[3]-1);
 	        opts.setOptionsSet(true);
 	        FileIO fileIO = new FileIO();
 	        fileIO.writeImage(image4D, opts);
 	        //now set prFileName to this registered image for continuation of algorithm
 	        prFileName = prFileNameRegistered;
 	        dwiPathTextField.setText(prFileDir + File.separator + prFileName);
+	        studyName = studyName + "_registered";
+	        listFileName = studyName + ".list";
+			bmatrixFileName = studyName + ".BMTXT";
+			pathFileName = studyName + ".path";
 		}catch (Exception e) {
 			e.printStackTrace();
         	Preferences.debug("! ERROR: " + e.toString() + "\n", Preferences.DEBUG_ALGORITHM);
@@ -441,6 +580,16 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 		
 		image4D.disposeLocal();
 		image4D = null;
+		
+		Preferences.debug(" - Registration complete \n", Preferences.DEBUG_ALGORITHM);
+
+	    if (outputTextArea != null) {
+	    	outputTextArea.append(" - Registration complete \n");
+	    }
+
+	    System.out.println(" - Registration complete \n");
+		
+		return true;
 	}
 	
 	
@@ -448,8 +597,211 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	 * regsitration of DICOM DWI dataset
 	 *
 	 */
-	public void performRegistrationDICOM() {
+	public boolean performRegistrationDICOM() {
+		Preferences.debug("** Registering DWI dataset", Preferences.DEBUG_ALGORITHM);
+
+        if (outputTextArea != null) {
+            outputTextArea.append("** Registering DWI dataset");
+        }
+
+        System.out.println("** Registering DWI dataset");
 		
+		
+		//load up reference B0 volume
+		int index = dicomB0VolumePath.lastIndexOf(File.separator);
+		String fileDir = dicomB0VolumePath.substring(0, index) + File.separator;
+		String fileName = dicomB0VolumePath.substring(index+1, dicomB0VolumePath.length());
+		refImage = fileIO.readImage(fileName, fileDir, true, null);
+		
+		//create parallel directory to studyDir for the studyDir_registered directory
+		File registeredDir = new File(studyPath + "_registered");
+		if (!registeredDir.isDirectory()) {
+			 try {
+				 success = registeredDir.mkdir();
+			 }catch(Exception e) {
+				 e.printStackTrace();
+			 }
+	         if (!success) {
+	        	 Preferences.debug("! ERROR: Creation of registered study dir directory failed....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+
+	             if (outputTextArea != null) {
+	            	 outputTextArea.append("! ERROR: Creation of registered study dir directory failed....exiting algorithm \n");
+	             }
+	             return false;
+	         }
+	     } else {
+	         //we should delete everything in this dir first
+	    	 deleteAllFiles(registeredDir);
+	    	 try {
+				 success = registeredDir.mkdir();
+			 }catch(Exception e) {
+				 e.printStackTrace();
+			 }  
+	     }
+	    //now create all the subdirectories    
+	    File studyPathDir = new File(studyPath);
+	    createSubDirsInRegisteredDir(studyPathDir);
+	    
+	    
+	    //ready to start registration
+
+	    //ok....first thing we can do is save the B0 volume over since this is the reference volume
+	    String dicomB0VolumePathParentFolder = dicomB0VolumePath.substring(0, dicomB0VolumePath.lastIndexOf(File.separator));
+	    //replace the studyname with the registeredStudyName and then save here
+	    registeredDicomB0VolumePathParentFolder = dicomB0VolumePathParentFolder.replace(studyName, registeredStudyName);
+	    String fName = registeredDicomB0VolumePathParentFolder.substring(registeredDicomB0VolumePathParentFolder.lastIndexOf(File.separator)+1,registeredDicomB0VolumePathParentFolder.length());
+	    int[] extents = refImage.getExtents();
+	    FileWriteOptions opts = new FileWriteOptions(true);
+        opts.setFileType(FileUtility.DICOM);
+        opts.setFileDirectory(registeredDicomB0VolumePathParentFolder + File.separator);
+        opts.setFileName(fName);
+        opts.setBeginSlice(0);
+        opts.setEndSlice(extents[2]-1);
+        opts.setOptionsSet(true);
+        FileIO fileIO = new FileIO();
+        fileIO.writeImage(refImage, opts);
+        
+        //now ready to register all the non-reference volumes to the reference volume and then save in the
+        //registered folder
+        xdimA = refImage.getExtents()[0];
+        ydimA = refImage.getExtents()[1];
+        zdimA = refImage.getExtents()[2];
+        xresA = refImage.getFileInfo(0).getResolutions()[0];
+        yresA = refImage.getFileInfo(0).getResolutions()[1];
+        zresA = refImage.getFileInfo(0).getResolutions()[2];
+		
+		//register!
+        registerAndSaveVolumes(studyPathDir);
+	    
+
+	    //last steps....rename the studyPath and studyName to the registered one
+		studyPath = studyPath + "_registered";
+		studyName = studyName + "_registered";
+		dwiPathTextField.setText(studyPath);
+		
+		Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        if (outputTextArea != null) {
+            outputTextArea.append("\n");
+        }
+		return true;
+	}
+	
+	
+	
+	public boolean registerAndSaveVolumes(File dir) {
+		if(dir.isDirectory()) {
+			File[] files = dir.listFiles();
+			for(int i = 0; i < files.length; i++) {
+				if(files[i].isDirectory()) {
+					registerAndSaveVolumes(files[i]);
+				}else {
+					//load the input image
+					String path = files[i].getAbsolutePath();
+					String matchImagePathParentFolder = path.substring(0, path.lastIndexOf(File.separator));
+					String temp = matchImagePathParentFolder.replace(studyName, registeredStudyName);
+					if(temp.equals(registeredDicomB0VolumePathParentFolder)) {
+						//this means that this is the ref image...obviusly we dont want to register the ref image to itself
+						break;
+					}
+					Preferences.debug(".", Preferences.DEBUG_ALGORITHM);
+
+                    if (outputTextArea != null) {
+                        outputTextArea.append(".");
+                    }
+
+                    System.out.print(".");
+                    
+					int index = path.lastIndexOf(File.separator);
+					String fileDir = path.substring(0, index) + File.separator;
+					String fileName = path.substring(index+1, path.length());
+					matchImage = fileIO.readImage(fileName, fileDir, true, null);
+					//call algorithm to register
+					reg3 = new AlgorithmRegOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, fastMode, bracketBound, maxIterations, numMinima);
+					reg3.setRunningInSeparateThread(isRunningInSeparateThread());
+					reg3.addListener(this);
+					ViewJProgressBar progressBar = new ViewJProgressBar("", " ...", 0, 100, true);
+			        progressBar.setSeparateThread(isRunningInSeparateThread());
+			        reg3.addProgressChangeListener(progressBar);
+			        reg3.setProgressValues(0, 100);
+					reg3.run();
+					TransMatrix finalMatrix = reg3.getTransform();
+					transform = new AlgorithmTransform(matchImage, finalMatrix, interp2, xresA, yresA, zresA, xdimA, ydimA, zdimA, true, false, false);
+					transform.setUpdateOriginFlag(true);
+					transform.run();
+					resultImage = transform.getTransformedImage();
+					transform.finalize();
+					resultImage.calcMinMax();
+					//now we need to save the result image in the appropriate place in the registered directory
+				    //replace the studyname with the registeredStudyName and then save here
+				    String registeredMatchImagePathParentFolder = matchImagePathParentFolder.replace(studyName, registeredStudyName);
+				    String fName = registeredMatchImagePathParentFolder.substring(registeredMatchImagePathParentFolder.lastIndexOf(File.separator)+1,registeredMatchImagePathParentFolder.length());
+					resultImage.setImageName(fName);
+
+				    int[] extents = refImage.getExtents();
+				    FileWriteOptions opts = new FileWriteOptions(true);
+			        opts.setFileType(FileUtility.DICOM);
+			        opts.setFileDirectory(registeredMatchImagePathParentFolder + File.separator);
+			        opts.setFileName(fName);
+			        opts.setBeginSlice(0);
+			        opts.setEndSlice(extents[2]-1);
+			        opts.setOptionsSet(true);
+			        opts.setRecalculateInstanceNumber(false);
+			        FileIO fileIO = new FileIO();
+			        fileIO.writeImage(resultImage, opts);
+
+
+			        resultImage.disposeLocal();
+			        matchImage.disposeLocal();
+					resultImage = null;
+					matchImage = null;
+					//since we only need the first image slice to create the ModelImage, we can break now
+					break;
+				}
+			}
+
+		}
+		return true;
+	}
+	
+	
+	
+	
+
+	public boolean createSubDirsInRegisteredDir(File dir) {
+		
+		if(dir.isDirectory())  {
+			File[] files = dir.listFiles();
+			
+			for(int i = 0; i < files.length; i++) {
+	          if(files[i].isDirectory()) {
+	        	  String path = files[i].getAbsolutePath();
+	        	  String regPath = path.replace(studyName, registeredStudyName);
+	        	  File newDir = new File(regPath);
+	        	  newDir.mkdir();
+	        	  createSubDirsInRegisteredDir(files[i]);
+	          }
+	        }
+			
+		}
+		
+		return true;
+	}
+	
+	public boolean deleteAllFiles(File dir) {
+		if(!dir.exists()) {
+            return true;
+        }
+        boolean res = true;
+        if(dir.isDirectory()) {
+            File[] files = dir.listFiles();
+            for(int i = 0; i < files.length; i++) {
+                res &= deleteAllFiles(files[i]);
+            }
+            res = dir.delete();//Delete dir itself
+        } else {
+            res = dir.delete();
+        }
+        return res;
 	}
 	
 	
@@ -458,16 +810,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	 *
 	 */
 	public void runAlgorithmDICOM() {
-		 long begTime = System.currentTimeMillis();
-
-
-	        Preferences.debug("** Beginning Algorithm v2.3\n", Preferences.DEBUG_ALGORITHM);
-
-	        if (outputTextArea != null) {
-	            outputTextArea.append("** Beginning Algorithm v2.3\n");
-	        }
-
-	        System.out.println("** Beginning Algorithm v2.3\n");
+		    
 
 	        //remove last slash from study path if it has it
 	        if(String.valueOf(studyPath.charAt(studyPath.length() - 1)).equals(File.separator)) {
@@ -504,7 +847,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	            }
 
 	            System.out.println("* For interleaved datasets, b-matrix file is required \n");
-	            
+	            success = false;
 	            finalize();
 	            setCompleted(true);
 	            return;
@@ -533,6 +876,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	            }
 	            System.out.println("! ERROR: " + e.getCause().toString() + "\n");
 	            System.out.println("! ERROR: out of memory....exiting algorithm \n");
+	            success = false;
 	            finalize();
 	            setCompleted(true);
 	            return;
@@ -542,6 +886,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	            }
 	            System.out.println("! ERROR: " + e.toString() + "\n");
 	            System.out.println("! ERROR: IOException....exiting algorithm \n");
+	            success = false;
 	            finalize();
 	            setCompleted(true);
 	            return;
@@ -566,6 +911,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 
 
 	        if (totalImageSlices == 0) {
+	        	success = false;
 	            finalize();
 	            setCompleted(true);
 	            return;
@@ -718,17 +1064,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	        finalize();
 
 
-	        long endTime = System.currentTimeMillis();
-	        long diffTime = endTime - begTime;
-	        float seconds = ((float) diffTime) / 1000;
-
-	        Preferences.debug("** Algorithm took " + seconds + " seconds \n", Preferences.DEBUG_ALGORITHM);
-
-	        if (outputTextArea != null) {
-	            outputTextArea.append("** Algorithm took " + seconds + " seconds \n");
-	        }
-
-	        System.out.println("** Algorithm took " + seconds + " seconds \n");
+	        
 
 
 	}
@@ -740,12 +1076,6 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	 *
 	 */
 	public void runAlgorithmPARREC() {
-		long begTime = System.currentTimeMillis();
-
-        Preferences.debug("** Beginning Algorithm v1.0\n", Preferences.DEBUG_ALGORITHM);
-        if (outputTextArea != null) {
-            outputTextArea.append("** Beginning Algorithm v1.0\n");
-        }
 		fileParRec = new FilePARREC(prFileName, prFileDir + File.separator);
 
 		
@@ -755,6 +1085,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 			image4D = fileParRec.readImage(false);
 		}catch (Exception e) {
 			e.printStackTrace();
+			success = false;
 			finalize();
             setCompleted(true);
             return;
@@ -842,15 +1173,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
             outputTextArea.append("** Ending Algorithm \n");
         }
         finalize();
-        long endTime = System.currentTimeMillis();
-        long diffTime = endTime - begTime;
-        float seconds = ((float) diffTime) / 1000;
-        Preferences.debug("** Algorithm took " + seconds + " seconds \n", Preferences.DEBUG_ALGORITHM);
-        if (outputTextArea != null) {
-            outputTextArea.append("** Algorithm took " + seconds + " seconds \n");
-        }
-        
-        
+
         image4D.disposeLocal();
     	image4D = null;
 
@@ -1168,7 +1491,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                     dicomInfo[5] = privateTag00431039;
                     dicomInfo[6] = privateTag001910B9;
                     dicomInfo[7] = imageSlice;
-
+                    
 
                     String seriesNumber_String = ((String) fileInfoDicom.getTagTable().getValue("0020,0011")).trim();
 
@@ -1421,7 +1744,8 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 
                 while (iter2.hasNext()) {
                     String[] arr = (String[]) iter2.next();
-                    String imgSlice = ((String) arr[1]).trim();
+                    //String imgSlice = ((String) arr[1]).trim();
+                    String imgSlice = ((String) arr[7]).trim();
 
                     // this is to just get total num volumes
                     if (imgSlice.equals(sliceLocation)) {
@@ -2496,9 +2820,9 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
                 }
             }
         }
-        Preferences.debug(" - imageSlices dir created : " + prFileDir + File.separator + "imageSlices \n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug(" - imageSlices dir created : " + prFileDir + "_proc" + File.separator + studyName + "_slices \n", Preferences.DEBUG_ALGORITHM);
         if (outputTextArea != null) {
-            outputTextArea.append(" - imageSlices dir created : " + prFileDir + File.separator + "imageSlices \n");
+            outputTextArea.append(" - imageSlices dir created : " + prFileDir + "_proc" + File.separator + studyName + "_slices \n");
         }
 
 
