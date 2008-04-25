@@ -12,6 +12,25 @@ import gov.nih.mipav.view.*;
 
 public class FileLIFF extends FileBase {
     
+    private static final short kMasterImageLayer = 0;
+    private static final short kGeneralImageLayer = 1;
+    private static final short kBinaryLayer = 2;
+    private static final short kRGBChannelLayer = 3;
+    private static final short kRedChannelLayer = 4;
+    private static final short kGreenChannelLayer = 5;
+    private static final short kBlueChannelLayer = 6;
+    private static final short kCyanChannelLayer = 7;
+    private static final short kMagentaChannelLayer = 8;
+    private static final short kYellowChannelLayer = 9;
+    private static final short kBlackChannelLayer = 10;
+    private static final short kLuminosityLayer = 11;
+    private static final short kMaskLayer = 12;
+    private static final short kDeepMaskLayer = 13;
+    private static final short kAnnotationLayer = 14;
+    private static final short kMovieLayer = 15;
+    private static final short kDarkFieldLayer = 16;
+    private static final short kBrightFieldLayer = 17;
+    
     private static final int UNKNOWN = 0;
     private static final int MAC_1_BIT = 1;
     private static final int MAC_4_GREYS = 2;
@@ -32,6 +51,23 @@ public class FileLIFF extends FileBase {
     private static final int DEEP_GREY_14 = 14;
     private static final int DEEP_GREY_15 = 15;
     private static final int DEEP_GREY_16 = 16;
+    
+    private static final short kUnitsPixels = 1;
+    private static final short kUnitsNanometers = 3;
+    private static final short kUnitsMicrons = 4;
+    private static final short kUnitsMillimeters = 5;
+    private static final short kUnitsCentimeters = 6;
+    private static final short kUnitsMeters = 7;
+    private static final short kUnitsKilometers = 8;
+    private static final short kUnused = 9;
+    private static final short kUnitsInches = 10;
+    private static final short kUnitsFeet = 11;
+    private static final short kUnitsYards = 12;
+    private static final short kUnitsMiles = 13;
+    private static final short kUnused2 = 14;
+    private static final short kUnitsOther = 15;
+    
+    
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -71,7 +107,6 @@ public class FileLIFF extends FileBase {
 
     /** DOCUMENT ME! */
     private int[] orient = new int[3];
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -136,7 +171,7 @@ public class FileLIFF extends FileBase {
         int totalSize;
         long fileLength;
         boolean endianess;
-        int i;
+        int i, j;
         short tagType;
         short subType;
         long nextOffset;
@@ -157,6 +192,70 @@ public class FileLIFF extends FileBase {
         byte layerHasGWorld[] = new byte[1];
         int layerImage;
         int imageType;
+        int redColor;
+        int greenColor;
+        int blueColor;
+        int imageTypeCount[] = new int[17];
+        int majorType = UNKNOWN;
+        int majorTypeCount = 0;
+        String[] typeStr = new String[17];
+        typeStr[0] = "UNKNOWN";
+        typeStr[1] = "MAC_1_BIT";
+        typeStr[2] = "MAC_4_GREYS";
+        typeStr[3] = "MAC_16_GREYS";
+        typeStr[4] = "MAC_16_COLORS";
+        typeStr[5] = "MAC_256_GREYS";
+        typeStr[6] = "MAC_256_COLORS";
+        typeStr[7] = "MAC_16_BIT_COLOR";
+        typeStr[8] = "MAC_24_BIT_COLOR";
+        typeStr[9] = "DEEP_GREY_9";
+        typeStr[10] = "DEEP_GREY_10";
+        typeStr[11] = "DEEP_GREY_11";
+        typeStr[12] = "DEEP_GREY_12";
+        typeStr[13] = "DEEP_GREY_13";
+        typeStr[14] = "DEEP_GREY_14";
+        typeStr[15] = "DEEP_GREY_15";
+        typeStr[16] = "DEEP_GREY_16";
+        int refCon;
+        int layerTimeStamp;
+        byte markDeleted[] = new byte[1];
+        byte imageUpdated[] = new byte[1];
+        int layerNameLength;
+        byte prefix[] = new byte[1];
+        String layerName;
+        long microSecsTimeStamp;
+        byte isBaseTimeLayer[] = new byte[1];
+        byte spare[] = new byte[118];
+        byte pad[];
+        byte pad196[] = new byte[196];
+        String appSignature;
+        String kindSignature;
+        int blkCount;
+        int totalBlocks;
+        int originalSize;
+        int compressedSize;
+        int picBlkSize;
+        short bitDepth;
+        short bitShift;
+        String platform;
+        short units;
+        String unitStr[] = new String[16];
+        unitStr[1] = "pixels";
+        unitStr[3] = "nanometers";
+        unitStr[4] = "microns";
+        unitStr[5] = "millimeters";
+        unitStr[6] = "centimeters";
+        unitStr[7] = "meters";
+        unitStr[8] = "kilometers";
+        unitStr[9] = "unused";
+        unitStr[10] = "inches";
+        unitStr[11] = "feet";
+        unitStr[12] = "yards";
+        unitStr[13] = "miles";
+        unitStr[14] = "unused2";
+        unitStr[15] = "other";
+        short calLayerID;
+        byte square[] = new byte[1];
 
         try {
             file = new File(fileDir + fileName);
@@ -280,18 +379,18 @@ public class FileLIFF extends FileBase {
                     Preferences.debug("The ID number for the layer = " + layerID + "\n");
                     layerType = readShort(endianess);
                     switch (layerType) {
-                        case 0:
+                        case kMasterImageLayer:
                             // This type is no longer used in Openlab or other Improvision software
                             // If Openlab encounters a layer with this type in a LIFF file, it
                             // will convert it to kGeneralImageLayer
                             Preferences.debug("kMasterImageLayer, which is no longer used\n");
                             break;
-                        case 1:
+                        case kGeneralImageLayer:
                             // This is a layer containing an image with depth, colors, etc.
                             // It has no special properties.  Most layers will be of this type.
                             Preferences.debug("kGeneralImageLayer, an image with any depth, colors, etc\n");
                             break;
-                        case 2:
+                        case kBinaryLayer:
                             // This layer contains only binary image data.  Its bit depth is always 1.
                             // The image itself can be a bitmap or a pixel map (usually the latter if
                             // GWorlds is used).  When rendering, the opacity shoudl be ignored, but 
@@ -300,69 +399,69 @@ public class FileLIFF extends FileBase {
                             // to.  The layerColour attribute should also be used to tint the bitmap
                             // when rendered.  This is very simple if using CopyBits, etc., just set
                             // the ForeColor to layerColour before calling it.
-                            Preferences.debug("kBinaryImageLayer contains only binary image data\n");
+                            Preferences.debug("kBinaryLayer contains only binary image data\n");
                             break;
-                        case 3:
+                        case kRGBChannelLayer:
                             // This type is not currently used.
                             Preferences.debug("kRGBChannelLayer not currently used\n");
                             break;
-                        case 4:
+                        case kRedChannelLayer:
                             // This is an image filtered to display only the red channel of the RGB image.
                             // The image itself will be full color.  It is up to you to apply the correct
                             // filtering when rendering a layer of this type.
                             Preferences.debug("kRedChannelLayer filtered to only display the red channel\n");
                             break;
-                        case 5:
+                        case kGreenChannelLayer:
                             // Same as above, but for green channel.
                             Preferences.debug("kGreenChannelLayer filtered to only display the green channel\n");
                             break;
-                        case 6:
+                        case kBlueChannelLayer:
                             Preferences.debug("kBlueChannelLayer filtered to only display the blue channel\n");
                             break;
-                        case 7:
+                        case kCyanChannelLayer:
                             Preferences.debug("kCyanChannelLayer\n");
                             break;
-                        case 8:
+                        case kMagentaChannelLayer:
                             Preferences.debug("kMagentaChannelLayer\n");
                             break;
-                        case 9:
+                        case kYellowChannelLayer:
                             // Same as above, etc.
                             Preferences.debug("kYellowChannelLayer\n");
                             break;
-                        case 10:
+                        case kBlackChannelLayer:
                             // Similar to above, but it black wherever there is color in the original, and
                             // white where there is white.  (Alternatively, you can allow this to mean black
                             // where the original is black, and white elsewhere - the convention is invoked
                             // by the application, not by anything inherent in the file).
                             Preferences.debug("kBlackChannelLayer\n");
                             break;
-                        case 11:
+                        case kLuminosityLayer:
                             // A grayscale representation of the master image (8-bit) that maps the relative
                             // luminosity of the colors to the shade of gray.
                             Preferences.debug("kLuminosityLayer\n");
                             break;
-                        case 12:
+                        case kMaskLayer:
                             Preferences.debug("kMaskLayer\n");
                             break;
-                        case 13:
+                        case kDeepMaskLayer:
                             Preferences.debug("kDeepMaskLayer\n");
                             break;
-                        case 14:
+                        case kAnnotationLayer:
                             // A layer (generally 8-bit, though not enforced) that can be used to add
                             // annotations to an image.  Usually, such layers will be transparent by 
                             // default.
                             Preferences.debug("kAnnotationLayer\n");
                             break;
-                        case 15:
+                        case kMovieLayer:
                             // A layer type reserved for animated or live images.  LIFF files should
                             // generally not contain this type.  If Openlab encounters a layer with 
                             // this type in a LIFF file, it will ignore it.
                             Preferences.debug("kMovieLayer\n");
                             break;
-                        case 16:
+                        case kDarkFieldLayer:
                             Preferences.debug("kDarkFieldLayer\n");
                             break;
-                        case 17:
+                        case kBrightFieldLayer:
                             Preferences.debug("kBrightFieldLayer\n");
                             break;
                         default:
@@ -489,67 +588,185 @@ public class FileLIFF extends FileBase {
                     // GWorldPtr layerImage ignore; set to zero
                     layerImage = readInt(endianess);
                     imageType = readInt(endianess);
-                    switch (imageType) {
-                        case UNKNOWN:
-                            Preferences.debug("Image type = UNKNOWN\n");
-                            break;
-                        case MAC_1_BIT:
-                            Preferences.debug("Image type = MAC_1_BIT\n");
-                            break;
-                        case MAC_4_GREYS:
-                            Preferences.debug("Image type = MAC_4_GREYS\n");
-                            break;
-                        case MAC_16_GREYS:
-                            Preferences.debug("Image type = MAC_16_GREYS\n");
-                            break;
-                        case MAC_16_COLORS:
-                            Preferences.debug("Image type = MAC_16_COLORS\n");
-                            break;
-                        case MAC_256_GREYS:
-                            Preferences.debug("Image type = MAC_256_GREYS\n");
-                            break;
-                        case MAC_256_COLORS:
-                            Preferences.debug("Image type = MAC_256_COLORS\n");
-                            break;
-                        case MAC_16_BIT_COLOR:
-                            Preferences.debug("Image type = MAC_16_BIT_COLOR\n");
-                            break;
-                        case MAC_24_BIT_COLOR:
-                            Preferences.debug("Image type = MAC_24_BIT_COLOR\n");
-                            break;
-                        case DEEP_GREY_9:
-                            Preferences.debug("Image type = DEEP_GREY_9\n");
-                            break;
-                        case DEEP_GREY_10:
-                            Preferences.debug("Image type = DEEP_GREY_10\n");
-                            break;
-                        case DEEP_GREY_11:
-                            Preferences.debug("Image type = DEEP_GREY_11\n");
-                            break;
-                        case DEEP_GREY_12:
-                            Preferences.debug("Image type = DEEP_GREY_12\n");
-                            break;
-                        case DEEP_GREY_13:
-                            Preferences.debug("Image type = DEEP_GREY_13\n");
-                            break;
-                        case DEEP_GREY_14:
-                            Preferences.debug("Image type = DEEP_GREY_14\n");
-                            break;
-                        case DEEP_GREY_15:
-                            Preferences.debug("Image type = DEEP_GREY_15\n");
-                            break;
-                        case DEEP_GREY_16:
-                            Preferences.debug("Image type = DEEP_GREY_16\n");
-                            break;
-                        default:
-                            Preferences.debug("imageType has unrecognized value = " + imageType + "\n");
-                            raFile.close();
-                            throw new IOException("imageType has unrecognized value = " + imageType);
-                    } // switch (imageType)
+                    if ((imageType >= 0) && (imageType <= 16)) {
+                        Preferences.debug("Image type = " + typeStr[imageType] + "\n");
+                    }
+                    else {
+                        Preferences.debug("imageType has unrecognized value = " + imageType + "\n");
+                        raFile.close();
+                        throw new IOException("imageType has unrecognized value = " + imageType);    
+                    }
+                    imageTypeCount[imageType]++;
+                    // read RGBColor =lyaerColor, which consists of 3 16-bit unsigned integers
+                    // for red, green, and blue.  For binary layers (layerType == kBinaryLayer), this
+                    // is the color that should be used to render the bitmap with.  The user chose
+                    // this color to represent that layer.  For other layer types this may not be
+                    // defined, and should be set to black.
+                    redColor = getUnsignedShort(endianess);
+                    greenColor = getUnsignedShort(endianess);
+                    blueColor = getUnsignedShort(endianess);
+                    if (layerType == kBinaryLayer) {
+                        Preferences.debug("redColor = " + redColor + "\n");
+                        Preferences.debug("greenColor = " + greenColor + "\n");
+                        Preferences.debug("blueColor = " + blueColor + "\n");
+                    } // if (layerType == kBinaryLayer)
+                    // ignore refCon; set to zero
+                    refCon = readInt(endianess);
+                    // A layer may represent a portion of a sequence captured at a particular 
+                    // time value.  This field contains the time value from the start of the 
+                    // sequence.  The time value is in ticks (60ths of a second).  This value
+                    // was replaced in Openlab 2.0 and higher by a microseconds timestamp.
+                    layerTimeStamp = readInt(endianess);
+                    if (isOpenlab2Header[0] == 0) {
+                        // Timestamp only used for pre-Openlab 2.0 files
+                        Preferences.debug("Time from start of sequence in ticks = " + layerTimeStamp + "\n");
+                    }
+                    // markDeleted ignore; set to zero
+                    raFile.read(markDeleted);
+                    // imageUpdated ignore; set to zero
+                    raFile.read(imageUpdated);
+                    // Read length of layerName string
+                    raFile.read(prefix);
+                    layerNameLength = prefix[0] & 0xff;
+                    Preferences.debug("layer name length = " + layerNameLength + "\n");
+                    layerName = getString(layerNameLength);
+                    Preferences.debug("layer name = " + layerName.trim() + "\n");
+                    if (isOpenlab2Header[0]  == 1) {
+                        // This section only exists if isOpenlab2Header is true
+                        if ((128 - (layerNameLength + 1)) > 0) {
+                            pad = new byte[128 - (layerNameLength + 1)];
+                            raFile.read(pad);
+                        }
+                        // microSecsTimeStamp is a 64 bit long value giving the absolute timestamp of
+                        // the layer in microseconds since January 1, 1904.
+                        microSecsTimeStamp = readLong(endianess);
+                        Preferences.debug("microSecsTimeStamp = " + microSecsTimeStamp + "\n");
+                        // isBaseTimeLayer is set to true if this layer is being used as the timebase
+                        // for relative layer times
+                        raFile.read(isBaseTimeLayer);
+                        if (isBaseTimeLayer[0] == 1) {
+                            Preferences.debug("This layer is being used as the timebase for relative layer times\n");    
+                        }
+                        else {
+                            Preferences.debug("This layer is not being used as the timebase for relative layer times\n");
+                        }
+                        // read in 1 byte for alignment
+                        raFile.read(spareByte);
+                        // spare space set to zero when writing files
+                        raFile.read(spare);
+                    } // if (isOpenlab2Header[0] == 1)
+                    else { // isOpenlab2header[0] == 0
+                        if ((256 - (layerNameLength + 1)) > 0) {
+                            pad = new byte[256 - (layerNameLength + 1)];
+                            raFile.read(pad);
+                        }
+                    } // else isOpenlab2Header[0] == 0
+                    if ((imageType >= DEEP_GREY_9)  && (imageType <= DEEP_GREY_16)) {
+                        // Have read 298 bytes, but there are 494 bytes from start of layerinfo record
+                        // till "IVEA" starts in PIC comment 101.  So read in another 196 bytes.
+                        raFile.read(pad196);
+                        appSignature = getString(4);
+                        if (appSignature.equals("IVEA")) {
+                            Preferences.debug("PIC Comment 101 appSignature is expected " +
+                                              appSignature + "\n");
+                        }
+                        else {
+                            Preferences.debug("PIC Comment 101 appSignature is unexpectedly " +
+                                              appSignature + "\n");
+                        }
+                        kindSignature = getString(4);
+                        if (kindSignature.equals("dbpq")) {
+                            Preferences.debug("kindSignature dbpq indicates that image data follows\n");
+                        }
+                        else if (kindSignature.equals("dbpl")) {
+                            Preferences.debug("kindSignature dbpl indicates that LUT data follows\n");
+                        }
+                        else {
+                            Preferences.debug("kindSignature has unrecognized value = "
+                                    + kindSignature + "\n");
+                        }
+                        // blkCount contains the index of this block in the sequence, and will be
+                        // from 0 to totalBlocks - 1.  Remember that it will generally require a
+                        // series of blocks to build a single image.  Openlab assumes that pic 
+                        // comment blocks arrive in the correct sequential order, starting at 0.
+                        blkCount = readInt(endianess);
+                        Preferences.debug("blkCount = " + blkCount + "\n");
+                        // totalBlocks is the number of blocks that make up this picture or LUT
+                        totalBlocks = readInt(endianess);
+                        Preferences.debug("totalBlocks = " + totalBlocks + "\n");
+                        // originalSize is the count of bytes in the original image or LUT
+                        originalSize = readInt(endianess);
+                        Preferences.debug("originalSize = " + originalSize + "\n");
+                        // compressedSize is always the same as originalSize
+                        compressedSize = readInt(endianess);
+                        Preferences.debug("compressedSize = " + compressedSize + "\n");
+                        // picBlkSize is the count of bytes of data in the remainder of the
+                        // comment.  This size does not include the header.  This is the count
+                        // of bytes after bitShift.
+                        picBlkSize = readInt(endianess);
+                        Preferences.debug("Bytes in Pic Comment 101 not including header = "
+                                          + picBlkSize + "\n");
+                        // bitDepth is the logical bitdepth of the image, and may be any
+                        // value from 9 to 16.
+                        bitDepth = readShort(endianess);
+                        Preferences.debug("bitDepth = " + bitDepth + "\n");
+                        // bitShift should be ignored
+                        bitShift = readShort(endianess);
+                    } // // if ((imageType >= DEEP_GREY_9)  && (imageType <= DEEP_GREY_16))
                 } // if ((tagType == 67) || (tagType == 68))
+                else if (tagType == 69) {
+                    // calibration
+                    platform = getString(4);
+                    if (platform.equals("pwpc")) {
+                        Preferences.debug("Platform is PowerPC\n");
+                    }
+                    else if (platform.equals("m68k")) {
+                        Preferences.debug("Platform is Motorola MC680x0 processor\n");
+                    }
+                    else if (platform.equals("unkn")) {
+                        Preferences.debug("Platform is unknown\n");
+                    }
+                    else {
+                        Preferences.debug("Platform has unrecognized value of " + platform + "\n");
+                    }
+                    units = readShort(endianess);
+                    if ((units == 1) || ((units >= 3) && (units <= 15))) {
+                        Preferences.debug("Units are " + unitStr[units] + "\n");
+                    }
+                    else {
+                        Preferences.debug("Unit has unrecognized value of " + units + "\n");
+                    }
+                    // calLayerID is obsolete and shoud be set to zero.  In Openlab, calibration is
+                    // not done on a per-layer basis, but on a per document basis with multiple layers.
+                    calLayerID = readShort(endianess);
+                    // square is true if x and y calibrations are identical, false if they are different.
+                    // If true, you should use the values for the x dimension to determine the
+                    // calibration.  y may not be defined
+                    raFile.read(square);
+                    if (square[0] == 1) {
+                        Preferences.debug("x and y calibrations are identical\n");
+                    }
+                    else {
+                        Preferences.debug("x and y calibrations are different\n");
+                    }
+                } // else if (tagType == 69)
             } // for (nextOffset = firstTagOffset, i = 1; nextOffset < fileLength - 1; i++)
             
-            Preferences.debug("The image has " + imageSlices + " slices\n");
+            for (i = 0; i <= 16; i++) {
+                if (imageTypeCount[i] == 1) {
+                    Preferences.debug("The image has 1 slice of type " + typeStr[i] + "\n");
+                }
+                else if (imageTypeCount[i] > 1) {
+                    Preferences.debug("The image has " + imageTypeCount[i] +
+                                      " slices of type " + typeStr[i] + "\n");
+                }
+                if (imageTypeCount[i] > majorTypeCount) {
+                    majorType = i;
+                    majorTypeCount = imageTypeCount[i];
+                }
+            } // for (i = 0; i <= 16; i++)
+            Preferences.debug("The MIPAV image will have " + majorTypeCount + 
+                              " slices of type " + typeStr[majorType] + "\n");
 
             
         } catch (OutOfMemoryError error) {
