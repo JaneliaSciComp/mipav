@@ -1,28 +1,34 @@
 package gov.nih.mipav.model.algorithms.DiffusionTensorImaging;
 
-import java.io.*;
-import java.util.BitSet;
-import java.awt.*;
-
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmBrainSurfaceExtractor;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.file.FileDicom;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
-import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewJProgressBar;
-import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.jama.Matrix;
+import gov.nih.mipav.model.structures.jama.SingularValueDecomposition;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
-import WildMagic.LibFoundation.Mathematics.*;
-import gov.nih.mipav.model.structures.jama.*;
-import gov.nih.mipav.view.dialogs.JDialogBrainSurfaceExtractor;
+import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
+
+import java.awt.Dimension;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.BitSet;
+import java.util.concurrent.CountDownLatch;
+
+import WildMagic.LibFoundation.Mathematics.GMatrixf;
 
 
 /**
- * Algorithm calculates a Diffusion Tensor Image from a series of Diffusion Wieghted Images.
+ * Algorithm calculates a Diffusion Tensor Image from a series of Diffusion Weighted Images.
  * 
  * See: Introduction to Diffusion Tensor Imaging, by Susumu Mori
  */
@@ -118,12 +124,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
         if ( m_kMaskImage == null )
         {
             createMaskImage();
-            createDWIImage();
         }
-        else
-        {
-            createDWIImage();
-        }
+        createDWIImage();
     }
 
     /** Return the DTI Image. 
@@ -343,10 +345,9 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
      */
     private float[][][] createTensorWeights() {
 
-        ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating tensor", "creating weights mask...", 0, 100, true);
+//        ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating tensor", "creating weights mask...", 0, 100, true);
 
         float[][][] norm = new float[m_iBOrig][m_iSlices][m_iDimX*m_iDimY];
-        float[][][] wmask = new float[m_iWeights][m_iSlices][m_iDimX*m_iDimY];
 
         for (int i=0; i<m_iBOrig; i++)
         {
@@ -377,11 +378,11 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
                 }
             }
             int iValue = (int)(100 * (float)(i+1)/(float)m_iBOrig);
-            kProgressBar.updateValueImmed( iValue );
+//            kProgressBar.updateValueImmed( iValue );
         }		
 
-        kProgressBar.dispose();
-        kProgressBar = null;
+//        kProgressBar.dispose();
+//        kProgressBar = null;
         return norm;
     }
 
@@ -394,20 +395,15 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
      * DialogDTIColorDisplay is then launched.
      * @param kMaskImage, mask image representing the brain.
      */
-    private void createDWIImage( )
+    public float[] createDWIImage( )
     {
-        float[][][] aaafWeights = createTensorWeights( );
+        long startTime = System.currentTimeMillis();
+        final float[][][] aaafWeights = createTensorWeights( );
         
         int iLen = m_iDimX * m_iDimY * m_iSlices;
-        float[] afTensorData = new float[iLen * 6];
+        final float[] afTensorData = new float[iLen * 6];
 
-
-        int vol = m_iWeights;
-        int a0 = 1;
-        
-        double[][] bmatrix = new double[vol][6+a0];
-
-        Matrix B = new Matrix( m_kBMatrix.GetRows(), 6+1 );
+        final Matrix B = new Matrix( m_kBMatrix.GetRows(), 6+1 );
         for ( int iR = 0; iR < m_kBMatrix.GetRows(); iR++ )
         {
             for ( int iC = 0; iC < 6+1; iC++ )
@@ -415,104 +411,34 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
                 B.set(iR, iC, m_kBMatrix.Get(iR,iC));
             }
         }
+        final Matrix H = calculateMatrix(B);
         
-        ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating tensor", "calculating tensor...", 0, 100, true);
+//        ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating tensor", "calculating tensor...", 0, 100, true);
 
-        for ( int iSlice = 0; iSlice < m_iSlices; iSlice++ )
-        {
-            float[][] buffer = new float[m_iWeights][];
-            for ( int iWeight = 0; iWeight < m_iWeights; iWeight++ )
-            {
-                buffer[iWeight] = readSliceWeight(iSlice, iWeight);
-            }
-            for ( int iY = 0; iY < m_iDimY; iY++ )
-            {
-                for ( int iX = 0; iX < m_iDimX; iX++ )
-                {
-                    int iIndex = (iY * m_iDimX) + iX;
-                    int index = iSlice * (m_iDimY * m_iDimX) + (iY * m_iDimX) + iX;
-                    if ( m_kMaskImage.getBoolean( index ) )
-                    {
-                        Matrix SIGMA = Matrix.identity(vol, vol);
-                        double[][] x = new double[vol][1];
-                        Matrix X = new Matrix(x);
-                        int[] r = new int[vol];
-                        int[] c = new int[vol];
-                        int idx=0;
-
-                        for ( int iWeight = 0; iWeight < m_iWeights; iWeight++ )
-                        {
-                            double p = buffer[iWeight][iIndex];
-                            double w = 0; //aaafWeights[iWeight][iSlice][iIndex];
-                            if ( aaafWeights[m_aiMatrixEntries[iWeight]][iSlice][iIndex]  != 0 )
-                            {
-                                w = p/aaafWeights[m_aiMatrixEntries[iWeight]][iSlice][iIndex];
-                            }
-                            if (w>0.196)
-                            {
-                                r[idx]=iWeight;
-                                c[idx]=iWeight;
-                                idx++;
-                            }
-                            
-                            //SIGMA is a diagonal matrix and its inverse would be diag(1/S(i,i))
-                            if ( p<m_fMeanNoise )
-                            {
-                                p=m_fMeanNoise;
-                            }
-
-                            X.set(iWeight,0,Math.log(p));
-                            SIGMA.set(iWeight,iWeight,(p*p*w)); // SIGMA here becomes SIGMA.inverse
-                        }
-                        Matrix B2 = B.getMatrix(r, 0, 6+a0-1);
-                        Matrix SIGMA2 = SIGMA.getMatrix(r, c);
-                        Matrix X2 = X.getMatrix(r, 0, 0);
-                        Matrix A = ((B2.transpose()).times( SIGMA2 )).times(B2);
-                        Matrix Y = ((B2.transpose()).times( SIGMA2 )).times(X2);
-                        
-                        Matrix D = new Matrix(7,1);
-                        SingularValueDecomposition SVD = new SingularValueDecomposition(A);
-                        Matrix S = SVD.getS();
-                        for (int i=0; i<S.getRowDimension(); i++)
-                            S.set(i,i,1/(S.get(i,i)));
-                        D = (((SVD.getV()).times(S)).times(SVD.getU().transpose())).times(Y);
-                        
-                        // D = [Dxx, Dxy, Dxz, Dyy, Dyz, Dzz, Amplitude] 
-                        float[] tensor = new float[10+vol];
-                        for (int i=0; i<6; i++) { 
-                            tensor[i] = (float)(-D.get(i,0)*1000000); // um^2/sec
-                            if (i==0 && tensor[0]<0) { tensor[0]=(float)0.01; }
-                            if (i==3 && tensor[3]<0) { tensor[3]=(float)0.01; }
-                            if (i==5 && tensor[5]<0) { tensor[5]=(float)0.01; }
-                        }
-                    
-
-                        float[] newTensor = new float[6];
-                        newTensor[0] = tensor[0];
-                        newTensor[1] = tensor[3];
-                        newTensor[2] = tensor[5];
-                        newTensor[3] = tensor[1];
-                        newTensor[4] = tensor[2];
-                        newTensor[5] = tensor[4];
-                        for ( int iT = 0; iT < 6; iT++ )
-                        {
-                            afTensorData[index + iT*iLen] = newTensor[iT];
-                        }
+        if(multiThreadingEnabled){
+            final CountDownLatch doneSignal = new CountDownLatch(nthreads);
+            float step = ((float)m_iSlices)/nthreads;
+            for(int i = 0; i < nthreads; i++){
+                final int start = (int)(i*step);
+                final int end  = (int)((i+1)*step);
+                Runnable task = new Runnable(){
+                    public void run(){
+                        calculateDTIImage(start, end, afTensorData, aaafWeights, B, H);
+                        doneSignal.countDown();
                     }
-                    else
-                    {
-                        for ( int iT = 0; iT < 6; iT++ )
-                        {
-                            afTensorData[index + iT*iLen] = 0;
-                        }
-                    }
-                }
+                };
+                
+                gov.nih.mipav.util.MipavUtil.mipavThreadPool.execute(task);
             }
-            int iValue = (int)(100 * (float)(iSlice+1)/(float)m_iSlices);
-            kProgressBar.updateValueImmed( iValue );
+            try {
+                doneSignal.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }else{
+            calculateDTIImage(0, m_iSlices, afTensorData, aaafWeights, B, H);
         }
-        kProgressBar.dispose();
-        aaafWeights = null;
+//        kProgressBar.dispose();
 
         int[] extents = new int[]{m_iDimX, m_iDimY, m_iSlices, 6};
         m_kDTIImage = new ModelImage( ModelStorageBase.FLOAT, extents, new String( "DiffusionTensorImage" ) );
@@ -523,8 +449,167 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
         }
 
         setCompleted(true);
+        Preferences.debug("DWI->DTI:" + (System.currentTimeMillis()-startTime) + "\n");
+        return afTensorData;
     }
 
+    public void calculateDTIImage(int start, int end, float[] dtiData, float[][][] weightData, Matrix B, Matrix H){
+        for ( int iSlice = start; iSlice < end; iSlice++ )
+        {
+            float[][] buffer = new float[m_iWeights][];
+            for ( int iWeight = 0; iWeight < m_iWeights; iWeight++ )
+            {
+                buffer[iWeight] = readSliceWeight(iSlice, iWeight);
+            }
+            for ( int iY = 0; iY < m_iDimY; iY++ )
+            {
+                for ( int iX = 0; iX < m_iDimX; iX++ )
+                {
+                    calculateDTIVoxel(dtiData, buffer, weightData, iX, iY, iSlice, B);
+                }
+            }
+//            int iValue = (int)(100 * (float)(iSlice+1)/(float)m_iSlices);
+//            kProgressBar.updateValueImmed( iValue );
+        }
+
+    }
+    
+    public void calculateDTIVoxel(float[] dtiData, float[][] dwiData, 
+            float[][][] weightData, int x, int y, int z, Matrix B) {
+        int vol = m_iWeights;
+        int indexInVolume = z * (m_iDimY * m_iDimX) + (y * m_iDimX) + x;
+        int indexInSlice = (y * m_iDimX) + x;
+        int volumeSize = m_iSlices * m_iDimY * m_iDimX;
+        if (m_kMaskImage.getBoolean(indexInVolume)) {
+            Matrix SIGMA = Matrix.identity(vol, vol);
+            Matrix X = new Matrix(new double[vol][1]);
+            int[] r = new int[vol];
+            int[] c = new int[vol];
+            int idx = 0;
+
+            for (int iWeight = 0; iWeight < m_iWeights; iWeight++) {
+                double p = dwiData[iWeight][indexInSlice];
+                double w = 0; // aaafWeights[iWeight][iSlice][iIndex];
+                if (weightData[m_aiMatrixEntries[iWeight]][z][indexInSlice] != 0) {
+                    w = p/ weightData[m_aiMatrixEntries[iWeight]][z][indexInSlice];
+                }
+                if (w > 0.196) {
+                    r[idx] = iWeight;
+                    c[idx] = iWeight;
+                    idx++;
+                }
+
+                // SIGMA is a diagonal matrix and its inverse would be
+                // diag(1/S(i,i))
+                if (p < m_fMeanNoise) {
+                    p = m_fMeanNoise;
+                }
+
+                X.set(iWeight, 0, Math.log(p));
+                SIGMA.set(iWeight, iWeight, (p * p * w)); // SIGMA here
+                                                            // becomes
+                                                            // SIGMA.inverse
+            }
+            Matrix B2 = B.getMatrix(r, 0, 6);
+            Matrix SIGMA2 = SIGMA.getMatrix(r, c);
+            Matrix X2 = X.getMatrix(r, 0, 0);
+            Matrix A = ((B2.transpose()).times(SIGMA2)).times(B2);
+            Matrix Y = ((B2.transpose()).times(SIGMA2)).times(X2);
+
+            Matrix D = new Matrix(7, 1);
+            SingularValueDecomposition SVD = new SingularValueDecomposition(A);
+            Matrix S = SVD.getS();
+            for (int i = 0; i < S.getRowDimension(); i++)
+                S.set(i, i, 1 / (S.get(i, i)));
+            D = (((SVD.getV()).times(S)).times(SVD.getU().transpose()))
+                    .times(Y);
+
+            // D = [Dxx, Dxy, Dxz, Dyy, Dyz, Dzz, Amplitude]
+            float[] tensor = new float[10 + vol];
+            for (int i = 0; i < 6; i++) {
+                tensor[i] = (float) (-D.get(i, 0) * 1000000); // um^2/sec
+                if (i == 0 && tensor[0] < 0) {
+                    tensor[0] = (float) 0.01;
+                }
+                if (i == 3 && tensor[3] < 0) {
+                    tensor[3] = (float) 0.01;
+                }
+                if (i == 5 && tensor[5] < 0) {
+                    tensor[5] = (float) 0.01;
+                }
+            }
+
+            float[] newTensor = new float[6];
+            newTensor[0] = tensor[0];
+            newTensor[1] = tensor[3];
+            newTensor[2] = tensor[5];
+            newTensor[3] = tensor[1];
+            newTensor[4] = tensor[2];
+            newTensor[5] = tensor[4];
+            for (int iT = 0; iT < 6; iT++) {
+                dtiData[indexInVolume + iT * volumeSize] = newTensor[iT];
+            }
+        } else {
+            for (int iT = 0; iT < 6; iT++) {
+                dtiData[indexInVolume + iT * volumeSize] = 0;
+            }
+        }
+
+    }
+    public void calculateDTIVoxel2(float[] dtiData, float[][] dwiData, 
+            float[][][] weightData, int x, int y, int z, Matrix H, int volumeSize){
+        int indexInSlice = (y * m_iDimX) + x;
+        int indexInVolume = z * m_iDimX * m_iDimY + (y * m_iDimX) + x;
+        if ( m_kMaskImage.getBoolean( indexInSlice ) )
+        {
+            Matrix Y = new Matrix(m_iWeights, 1);
+            for(int iWeight = 0; iWeight < m_iWeights; iWeight++){
+                Y.set(iWeight, 0, dwiData[iWeight][indexInSlice]);
+            }
+            float[] tensor = solve(Y, H);
+            float[] newTensor = new float[6];
+            newTensor[0] = tensor[0];
+            newTensor[1] = tensor[3];
+            newTensor[2] = tensor[5];
+            newTensor[3] = tensor[1];
+            newTensor[4] = tensor[2];
+            newTensor[5] = tensor[4];
+            for (int iT = 0; iT < 6; iT++) {
+                dtiData[indexInVolume + iT * volumeSize] = newTensor[iT]*1000000;
+            }
+         }
+        else
+        {
+            for ( int iT = 0; iT < 6; iT++ )
+            {
+                dtiData[indexInSlice + iT * volumeSize] = 0;
+            }
+        }
+        
+    }
+    public Matrix calculateMatrix(Matrix m){
+        int nrows = m.getRowDimension();
+        int ncols = m.getColumnDimension();
+        Matrix m2 = new Matrix(nrows, ncols);
+        for(int i = 0; i < nrows; i++){
+            for(int j = 0; j < ncols-1; j++){
+                m2.set(i, j+1, -1*m.get(i, j));
+            }
+            m2.set(i, 0, m.get(i, ncols-1));
+        }
+        Matrix m3 = m2.transpose().times(m2);
+        return m3.inverse().times(m2.transpose());
+    }
+    
+    public float[] solve(Matrix y, Matrix m){
+        Matrix b = m.times(y);
+        float[] a = new float[b.getRowDimension()];
+        for(int i = 1; i < a.length; i++){
+            a[i-1] = (float)b.get(i, 0);
+        }
+        return a;
+    }
+    
     /** Translates the byte[] into float values at the given indes iIndex.
      * @param abData, byte[] containing float values.
      * @param iIndex, index into the array to get the float from.
