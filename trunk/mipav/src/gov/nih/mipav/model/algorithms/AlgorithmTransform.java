@@ -4173,12 +4173,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         // create a new reference file info
                         fileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
                                                         oldDicomInfo.getFileFormat());
+                        ((FileInfoDicom)fileInfo[0]).vr_type = oldDicomInfo.vr_type;
                     } else {
 
                         // all other slices are children of the first file info..
                         fileInfo[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
                                                         oldDicomInfo.getFileFormat(), (FileInfoDicom) fileInfo[0]);
-
+                        ((FileInfoDicom)fileInfo[i]).vr_type = oldDicomInfo.vr_type;
                         childTagTables[i - 1] = ((FileInfoDicom) fileInfo[i]).getTagTable();
                     }
 
