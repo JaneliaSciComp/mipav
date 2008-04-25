@@ -6,9 +6,9 @@ package gov.nih.mipav.model.algorithms.filters;
  * @author Hailong Wang, Ph.D
  * @version 0.1, 04/04/2008
  */
-import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.util.FileUtil;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
@@ -16,22 +16,22 @@ public class AlgorithmGradientMagnitudeSepTest extends TestCase {
     /**
      * This is the test 2d image with 512x512 dimension 
      */
-    public static String testImageFileName = "test\\r_M00176_Anatomic_slice2.raw";
+    public static String testImageFileName = "images\\r_M00176_Anatomic_slice2.raw";
     
     /**
      * The gradient magnitude image with the kernel parameters of 1.75, 1.75 for above test image
      */
-    public static String gmagImageFileName = "test\\r_M00176_Anatomic_slice2_gmag_175_175.raw";
+    public static String gmagImageFileName = "images\\r_M00176_Anatomic_slice2_gmag_175_175.raw";
     
     /**
      * The normalized x directions of x derivative image.
      */
-    public static String xDerivativeDirectionImageFileName = "test\\r_M00176_Anatomic_slice2_x_dir_175_175.raw";
+    public static String xDerivativeDirectionImageFileName = "images\\r_M00176_Anatomic_slice2_x_dir_175_175.raw";
     
     /**
      * The normalized y directions of y derivative image.
      */
-    public static String yDerivativeDirectionImageFileName = "test\\r_M00176_Anatomic_slice2_y_dir_175_175.raw";
+    public static String yDerivativeDirectionImageFileName = "images\\r_M00176_Anatomic_slice2_y_dir_175_175.raw";
     
     private ModelImage srcImage;
     private int imgLength;
@@ -48,11 +48,11 @@ public class AlgorithmGradientMagnitudeSepTest extends TestCase {
     protected void setUp() throws Exception{
         srcImage = new ModelImage(ModelStorageBase.FLOAT, new int[]{512, 512}, "");
         float[] sigmas = new float[] {1.75f, 1.75f};
-        imageBuffer = FileBase.readRawFileFloat(testImageFileName, false);
+        imageBuffer = FileUtil.readRawFileFloat(testImageFileName, false);
         srcImage.importData(0, imageBuffer, true);
-        refBufferMag = FileBase.readRawFileFloat(gmagImageFileName, false);
-        refBufferXDir = FileBase.readRawFileFloat(xDerivativeDirectionImageFileName, false);
-        refBufferYDir = FileBase.readRawFileFloat(yDerivativeDirectionImageFileName, false);
+        refBufferMag = FileUtil.readRawFileFloat(gmagImageFileName, false);
+        refBufferXDir = FileUtil.readRawFileFloat(xDerivativeDirectionImageFileName, false);
+        refBufferYDir = FileUtil.readRawFileFloat(yDerivativeDirectionImageFileName, false);
         
         imgLength = imageBuffer.length;
         gmagSep = new AlgorithmGradientMagnitudeSep(srcImage, sigmas, true, false);
