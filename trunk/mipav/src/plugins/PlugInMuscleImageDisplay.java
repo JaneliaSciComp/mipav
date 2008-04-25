@@ -449,8 +449,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         if(command.equals(DialogPrompt.CHECK_VOI)) {
             ((VoiDialogPrompt)tabs[voiTabLoc]).setUpDialog(((JButton)(e.getSource())).getText(), true, 1);
             lockToPanel(voiTabLoc, "VOI"); //includes making visible
+            //TODO: add here
+            initVoiImage(activeTab); //replacing current image and updating
+	    	displayChanged = true;
         } else if(command.equals(DialogPrompt.CALCULATE)) {
         	lockToPanel(resultTabLoc, "Analysis"); //includes making visible
+        	getActiveImage().unregisterAllVOIs();
+	    	updateImages(true);
+	    	displayChanged = true;
         	((AnalysisPrompt)tabs[resultTabLoc]).setButtons();
         	((AnalysisPrompt)tabs[resultTabLoc]).performCalculations();
         } else if (!(command.equals(DialogPrompt.OUTPUT) ||
@@ -465,6 +471,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	} else if(command.equals(DialogPrompt.OK) && 
         			tabs[voiTabLoc].completed() == true) {
         		unlockToPanel(voiTabLoc);
+        		System.out.println("Place to look at voi based on activeTab: "+activeTab);
         		initMuscleImage(activeTab);
         	} else if(command.equals(DialogPrompt.BACK)) {
         		unlockToPanel(resultTabLoc);
@@ -616,14 +623,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    			displayChanged = true;
 	    		}
 	    	}
-	    } else if(c instanceof VoiDialogPrompt && activeTab != voiTabLoc && displayChanged != true) {
-	    	initVoiImage(activeTab); //replacing current image and updating
-	    	displayChanged = true;
-	    } else if(c instanceof AnalysisPrompt && activeTab != resultTabLoc && displayChanged != true) {
-	    	getActiveImage().unregisterAllVOIs();
-	    	updateImages(true);
-	    	displayChanged = true;
-	    }
+	    } 
 	    super.componentShown(event);
 	}
 
@@ -1220,18 +1220,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	objectList.addElement(obj);
         }
         
-        /**
-         * Used to notify all listeners that the pseudo-algorithm has completed.
-         *
-         * @param  dialog the sub-dialog that has completed the function
-         */
-        public void notifyListeners(String cmd) {
-
-            for (int i = 0; i < objectList.size(); i++) {
-                objectList.elementAt(i).actionPerformed(new ActionEvent(this, 0, cmd));
-            }
-        }
-        
         public abstract void actionPerformed(ActionEvent e);
     }
 
@@ -1298,15 +1286,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                         
                         getActiveImage().unregisterAllVOIs();
                         updateImages(true);
-                        
-                        notifyListeners(OK);
                     } else {
                     	//Note that no VOI has been saved due to previous error.  will not return to main dialog.
                     	completed = false;
                     }
                 } else if (command.equals(CANCEL)) {
                 	voiChangeState = true;
-                    notifyListeners(CANCEL);
+                    //notifyListeners(CANCEL);
+                	//TODO: Put back in
                     //dispose();
                 } else if (command.equals(HELP)) {
                     PlugInMuscleSegmentation.showHelp("MS00001");
@@ -2259,7 +2246,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	                    muscleFrame.getImageA().unregisterAllVOIs();
 	                    muscleFrame.updateImages();
 	                    
-	                    notifyListeners(OK);
+	                    //notifyListeners(OK);
+	                    //TODO: Put back in
 	                } else {
 	                    //individual error messages are already displayed
 	                }
