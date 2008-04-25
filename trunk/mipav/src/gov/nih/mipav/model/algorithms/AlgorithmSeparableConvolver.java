@@ -100,7 +100,10 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         super(null, null);
         this.multiThreadingEnabled = multiThreadingEnabled;
 			this.inputBuffer = new double[srcBuffer.length];
-			System.arraycopy(srcBuffer, 0, inputBuffer, 0, srcBuffer.length);
+			for(int i = 0; i < srcBuffer.length; i++){
+			    inputBuffer[i] = srcBuffer[i];
+			}
+//			System.arraycopy(srcBuffer, 0, inputBuffer, 0, srcBuffer.length);
 
 		if(multiThreadingEnabled){
 			this.outputBuffer = new double[inputBuffer.length];
