@@ -557,7 +557,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 message += "with a Y coarse rate of " + coarseRateY + " and Y fine rate of " + fineRateY + ".\n";
                 message += "Z Rotations from " + rotateBeginZ + " to " + rotateEndZ + ", ";
                 message += "with a Z coarse rate of " + coarseRateZ + " and Z fine rate of " + fineRateZ + ".\n";
-                finalMatrix.saveMatrix(UI.getDefaultDirectory() + matchImage.getImageName() + "_To_" +
+                finalMatrix.saveMatrix(UI.getDefaultDirectory() + File.separator + matchImage.getImageName() + "_To_" +
                                        refImage.getImageName() + ".mtx", message);
 
                 insertScriptLine();
