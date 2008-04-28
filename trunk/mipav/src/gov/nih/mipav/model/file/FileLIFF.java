@@ -227,7 +227,7 @@ public class FileLIFF extends FileBase {
         byte isBaseTimeLayer[] = new byte[1];
         byte spare[] = new byte[118];
         byte pad[];
-        byte pad196[] = new byte[196];
+        byte pad186[] = new byte[186];
         String appSignature;
         String kindSignature;
         int blkCount;
@@ -256,6 +256,32 @@ public class FileLIFF extends FileBase {
         unitStr[15] = "other";
         short calLayerID;
         byte square[] = new byte[1];
+        float xOrigin;
+        float yOrigin;
+        float xScale;
+        float yScale;
+        byte positiveY[] = new byte[1];
+        int otherUnitStrLength;
+        String otherUnitString;
+        int top;
+        int left;
+        int bottom;
+        int right;
+        int width;
+        int height;
+        int xDim;
+        int yDim;
+        long greyPictLocation[] = new long[1800];
+        int greyPictCount = 0;
+        String dyeString[] = new String[10];
+        int dyeNumber = 0;
+        int spaceIndex;
+        String dyeName;
+        boolean found = false;
+        boolean doDeepGreyColor = false;
+        int bitNumber = 0;
+        int byteSize;
+        
 
         try {
             file = new File(fileDir + fileName);
@@ -342,6 +368,15 @@ public class FileLIFF extends FileBase {
                     // is a Macintosh Picture.  For Openlab 5 LIFF files this will be a 'RAWi'
                     // type - this is a compressed raw image instead of PICT data.
                     Preferences.debug("Format of the data in the image tag is " + formatStr + "\n");
+                }
+                if (tagType == 69) {
+                    if (formatStr.equals("cali")) {
+                        Preferences.debug("calibration tag type has expected format string of cali\n");
+                    }
+                    else {
+                        Preferences.debug("calibration tag type unexpectedly has format string of " 
+                                          + formatStr + "\n");    
+                    }
                 }
                 
                 if (versionNumber <= 2) {
@@ -631,6 +666,20 @@ public class FileLIFF extends FileBase {
                     Preferences.debug("layer name length = " + layerNameLength + "\n");
                     layerName = getString(layerNameLength);
                     Preferences.debug("layer name = " + layerName.trim() + "\n");
+                    if (!layerName.toUpperCase().trim().equals("ORIGINAL IMAGE")) {
+                        spaceIndex = layerName.indexOf(" ");
+                        dyeName = layerName.substring(0, spaceIndex);
+                        Preferences.debug("dyeName = " + dyeName + "\n");
+                        found = false;
+                        for (j = 0; j < dyeNumber && (!found); j++) {
+                           if (dyeName.equals(dyeString[j])) {
+                               found = true;
+                           }
+                        }
+                        if (!found) {
+                            dyeString[dyeNumber++] = dyeName;
+                        }
+                    } // if (!layerName.trim().equals("Original image"))
                     if (isOpenlab2Header[0]  == 1) {
                         // This section only exists if isOpenlab2Header is true
                         if ((128 - (layerNameLength + 1)) > 0) {
@@ -639,6 +688,8 @@ public class FileLIFF extends FileBase {
                         }
                         // microSecsTimeStamp is a 64 bit long value giving the absolute timestamp of
                         // the layer in microseconds since January 1, 1904.
+                        // Note that java.util.date is a long integer giving milliseconds since
+                        // January 1, 1970.
                         microSecsTimeStamp = readLong(endianess);
                         Preferences.debug("microSecsTimeStamp = " + microSecsTimeStamp + "\n");
                         // isBaseTimeLayer is set to true if this layer is being used as the timebase
@@ -661,57 +712,37 @@ public class FileLIFF extends FileBase {
                             raFile.read(pad);
                         }
                     } // else isOpenlab2Header[0] == 0
+                    if (versionNumber <= 2) {
+                        // skip 2 bytes
+                        readShort(endianess);
+                        top = getUnsignedShort(endianess);
+                        Preferences.debug("top = " + top + "\n");
+                        left = getUnsignedShort(endianess);
+                        Preferences.debug("left = " + left + "\n");
+                        bottom = getUnsignedShort(endianess);
+                        Preferences.debug("bottom = " + bottom + "\n");
+                        right = getUnsignedShort(endianess);
+                        Preferences.debug("right = " + right + "\n");
+                        width = right - left;
+                        Preferences.debug("width = " + width + "\n");
+                        height = bottom - top;
+                        Preferences.debug("height = " + height + "\n");
+                    }
+                    else {
+                        width = readInt(endianess);
+                        Preferences.debug("width = " + width + "\n");
+                        height = readInt(endianess);
+                        Preferences.debug("height = " + height + "\n");
+                        readShort(endianess);
+                    }
                     if ((imageType >= DEEP_GREY_9)  && (imageType <= DEEP_GREY_16)) {
-                        // Have read 298 bytes, but there are 494 bytes from start of layerinfo record
-                        // till "IVEA" starts in PIC comment 101.  So read in another 196 bytes.
-                        raFile.read(pad196);
-                        appSignature = getString(4);
-                        if (appSignature.equals("IVEA")) {
-                            Preferences.debug("PIC Comment 101 appSignature is expected " +
-                                              appSignature + "\n");
-                        }
-                        else {
-                            Preferences.debug("PIC Comment 101 appSignature is unexpectedly " +
-                                              appSignature + "\n");
-                        }
-                        kindSignature = getString(4);
-                        if (kindSignature.equals("dbpq")) {
-                            Preferences.debug("kindSignature dbpq indicates that image data follows\n");
-                        }
-                        else if (kindSignature.equals("dbpl")) {
-                            Preferences.debug("kindSignature dbpl indicates that LUT data follows\n");
-                        }
-                        else {
-                            Preferences.debug("kindSignature has unrecognized value = "
-                                    + kindSignature + "\n");
-                        }
-                        // blkCount contains the index of this block in the sequence, and will be
-                        // from 0 to totalBlocks - 1.  Remember that it will generally require a
-                        // series of blocks to build a single image.  Openlab assumes that pic 
-                        // comment blocks arrive in the correct sequential order, starting at 0.
-                        blkCount = readInt(endianess);
-                        Preferences.debug("blkCount = " + blkCount + "\n");
-                        // totalBlocks is the number of blocks that make up this picture or LUT
-                        totalBlocks = readInt(endianess);
-                        Preferences.debug("totalBlocks = " + totalBlocks + "\n");
-                        // originalSize is the count of bytes in the original image or LUT
-                        originalSize = readInt(endianess);
-                        Preferences.debug("originalSize = " + originalSize + "\n");
-                        // compressedSize is always the same as originalSize
-                        compressedSize = readInt(endianess);
-                        Preferences.debug("compressedSize = " + compressedSize + "\n");
-                        // picBlkSize is the count of bytes of data in the remainder of the
-                        // comment.  This size does not include the header.  This is the count
-                        // of bytes after bitShift.
-                        picBlkSize = readInt(endianess);
-                        Preferences.debug("Bytes in Pic Comment 101 not including header = "
-                                          + picBlkSize + "\n");
-                        // bitDepth is the logical bitdepth of the image, and may be any
-                        // value from 9 to 16.
-                        bitDepth = readShort(endianess);
-                        Preferences.debug("bitDepth = " + bitDepth + "\n");
-                        // bitShift should be ignored
-                        bitShift = readShort(endianess);
+                        // Have read 288 bytes, but there are 494 bytes from start of layerinfo record
+                        // till "IVEA" starts in PIC comment 101.  So read in another 186 bytes.
+                        xDim = width;
+                        yDim = height;
+                        bitNumber = layerDepth;
+                        raFile.read(pad186);
+                        greyPictLocation[greyPictCount++] = raFile.getFilePointer();
                     } // // if ((imageType >= DEEP_GREY_9)  && (imageType <= DEEP_GREY_16))
                 } // if ((tagType == 67) || (tagType == 68))
                 else if (tagType == 69) {
@@ -749,6 +780,57 @@ public class FileLIFF extends FileBase {
                     else {
                         Preferences.debug("x and y calibrations are different\n");
                     }
+                    // There is a spare byte between square and xOrigin
+                    raFile.read(spareByte);
+                    // The storage format for the 4 floats is platform dependent.
+                    // On the PowerPC the IEEE-754 standard is followed for 32 bit float
+                    // and 64 bit double
+                    // xOrigin is the absolute position of the left of the calibrated image.
+                    // It will almost always be set to 0.0.
+                    xOrigin = readFloat(endianess);
+                    Preferences.debug("xOrigin = " + xOrigin + "\n");
+                    // yOrigin is the absolute position of the top of the calibrated image.
+                    // It will almost always be set to 0.0.
+                    yOrigin = readFloat(endianess);
+                    Preferences.debug("yOrigin = " + yOrigin + "\n");
+                    // xScale is the horizontal dimension of a single pixel in the calibrated units.
+                    // For example, if this is set to 0.01, and the units are in microns, the length
+                    // of a 100 pixel line in the image is 1 micron
+                    xScale = readFloat(endianess);
+                    if (((units >= 3) && (units <= 8)) || ((units >= 10) && (units <= 13))) {
+                        Preferences.debug("The width of a pixel is " + xScale + " " + unitStr[units] + "\n");
+                    }
+                    else {
+                        Preferences.debug("The width of a pixel is " + xScale + "\n");
+                    }
+                    // yScale is the vertical dimension of a single pixel in the calibrated units
+                    yScale = readFloat(endianess);
+                    if (((units >= 3) && (units <= 8)) || ((units >= 10) && (units <= 13))) {
+                        Preferences.debug("The height of a pixel is " + yScale + " " + unitStr[units] + "\n");
+                    }
+                    else {
+                        Preferences.debug("The height of a pixel is " + yScale + "\n");
+                    }
+                    // positiveY is a flag indicating the convention of the direction for the Y axis.
+                    // In mathematics, the Y axis normally is indicated increasing in value the
+                    // further toward the top of the graph you go.  Computer graphics usually adopt
+                    // the opposite convention for simplicity where y increases toward the bottom of
+                    // the graph.  Openlab can use either, as indicated by this flag.  If true, the 
+                    // mathematical convention is used.  If false, the computer convention is used.
+                    raFile.read(positiveY);
+                    if (positiveY[0] == 1) {
+                        Preferences.debug("y increases in value toward the top of the image\n");
+                    }
+                    else {
+                        Preferences.debug("y increases in value toward the bottom of the image\n");
+                    }
+                    if (units == kUnitsOther) {
+                        raFile.read(prefix);
+                        otherUnitStrLength = prefix[0] & 0xff;
+                        Preferences.debug("Other unit string length = " + otherUnitStrLength + "\n");
+                        otherUnitString = getString(otherUnitStrLength);
+                        Preferences.debug("Other unit name = " + otherUnitString.trim() + "\n");
+                    }
                 } // else if (tagType == 69)
             } // for (nextOffset = firstTagOffset, i = 1; nextOffset < fileLength - 1; i++)
             
@@ -765,9 +847,83 @@ public class FileLIFF extends FileBase {
                     majorTypeCount = imageTypeCount[i];
                 }
             } // for (i = 0; i <= 16; i++)
-            Preferences.debug("The MIPAV image will have " + majorTypeCount + 
-                              " slices of type " + typeStr[majorType] + "\n");
+            
+            Preferences.debug("The number of dyes is " + dyeNumber + "\n");
+            Preferences.debug("The dyes are: \n");
+            for (i = 0; i < dyeNumber; i++) {
+                Preferences.debug(dyeString[i] + "\n");    
+            }
+            if (((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) && (dyeNumber == 3) && ((majorTypeCount % 3) == 0)) {
+                Preferences.debug("Found " + majorTypeCount + " slices of type DEEP_GREY_12\n");
+                doDeepGreyColor = true;
+                Preferences.debug("These are RGB stored in " + bitNumber + " depth\n");
+                imageSlices = majorTypeCount/3;
+                Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type ARGB_USHORT\n");
+            }
+            else {
+                Preferences.debug("The MIPAV image will have " + majorTypeCount + 
+                                  " slices of type " + typeStr[majorType] + "\n");
+                imageSlices = majorTypeCount;
+            }
+            
+            if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) {
+                for (i = 0; i < greyPictCount; i++) {
+                    raFile.seek(greyPictLocation[i]);
+                    Preferences.debug("Located at greyPictCount " + (i+1) + " of " + greyPictCount + "\n");
+                    appSignature = getString(4);
+                    if (appSignature.equals("IVEA")) {
+                        Preferences.debug("PIC Comment 101 appSignature is expected " +
+                                          appSignature + "\n");
+                    }
+                    else {
+                        Preferences.debug("PIC Comment 101 appSignature is unexpectedly " +
+                                          appSignature + "\n");
+                    }
+                    kindSignature = getString(4);
+                    if (kindSignature.equals("dbpq")) {
+                        Preferences.debug("kindSignature dbpq indicates that image data follows\n");
+                    }
+                    else if (kindSignature.equals("dbpl")) {
+                        Preferences.debug("kindSignature dbpl indicates that LUT data follows\n");
+                    }
+                    else {
+                        Preferences.debug("kindSignature has unrecognized value = "
+                                + kindSignature + "\n");
+                    }
+                    // blkCount contains the index of this block in the sequence, and will be
+                    // from 0 to totalBlocks - 1.  Remember that it will generally require a
+                    // series of blocks to build a single image.  Openlab assumes that pic 
+                    // comment blocks arrive in the correct sequential order, starting at 0.
+                    blkCount = readInt(endianess);
+                    Preferences.debug("blkCount = " + blkCount + "\n");
+                    // totalBlocks is the number of blocks that make up this picture or LUT
+                    totalBlocks = readInt(endianess);
+                    Preferences.debug("totalBlocks = " + totalBlocks + "\n");
+                    // originalSize is the count of bytes in the original image or LUT
+                    originalSize = readInt(endianess);
+                    Preferences.debug("originalSize = " + originalSize + "\n");
+                    // compressedSize is always the same as originalSize
+                    compressedSize = readInt(endianess);
+                    Preferences.debug("compressedSize = " + compressedSize + "\n");
+                    // picBlkSize is the count of bytes of data in the remainder of the
+                    // comment.  This size does not include the header.  This is the count
+                    // of bytes after bitShift.
+                    picBlkSize = readInt(endianess);
+                    Preferences.debug("Bytes in Pic Comment 101 not including header = "
+                                      + picBlkSize + "\n");
+                    // bitDepth is the logical bitdepth of the image, and may be any
+                    // value from 9 to 16.
+                    bitDepth = readShort(endianess);
+                    Preferences.debug("bitDepth = " + bitDepth + "\n");
+                    // bitShift should be ignored
+                    bitShift = readShort(endianess);
+                    // PICT header
+                    byteSize = getUnsignedShort(endianess);
+                } // for (i = 0; i < greyPictCount; i++)
+            } // if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16))
+            
 
+            fireProgressStateChanged(100);
             
         } catch (OutOfMemoryError error) {
 
