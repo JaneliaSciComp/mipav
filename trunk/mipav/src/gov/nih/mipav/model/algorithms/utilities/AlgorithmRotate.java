@@ -584,11 +584,16 @@ public class AlgorithmRotate extends AlgorithmBase {
                     // create a new reference file info
                     newDicomInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
                                                         oldDicomInfo.getFileFormat());
+                    newDicomInfo[0].vr_type = oldDicomInfo.vr_type;
+                    newDicomInfo[0].setDataType(oldDicomInfo.getDataType());
                 } else {
 
                     // all other slices are children of the first file info..
                     newDicomInfo[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
                                                         oldDicomInfo.getFileFormat(), newDicomInfo[0]);
+                    
+                    newDicomInfo[i].vr_type = oldDicomInfo.vr_type;
+                    newDicomInfo[i].setDataType(oldDicomInfo.getDataType());
 
                     childTagTables[i - 1] = newDicomInfo[i].getTagTable();
                 }
