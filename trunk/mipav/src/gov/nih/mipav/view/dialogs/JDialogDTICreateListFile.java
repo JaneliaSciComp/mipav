@@ -147,25 +147,30 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
         JPanel mainPanel = new JPanel(gbl);
         
         performRegistrationCheckbox = new JCheckBox("Register first");
+        performRegistrationCheckbox.setFont(serif12B);
         performRegistrationCheckbox.setSelected(false);
         performRegistrationCheckbox.addActionListener(this);
         performRegistrationCheckbox.setActionCommand("performRegistrationCheckbox");
         performRegistrationCheckbox.setEnabled(false);
         registrationSettingsButton = new JButton("Registration Settings");
+        registrationSettingsButton.setFont(serif12B);
         registrationSettingsButton.setEnabled(false);
         registrationSettingsButton.addActionListener(this);
         registrationSettingsButton.setActionCommand("registrationSettingsButton");
         dicomB0VolumeLabel = new JLabel("DICOM B0 volume: ");
+        dicomB0VolumeLabel.setFont(serif12B);
         dicomB0VolumeLabel.setEnabled(false);
         dicomB0VolumeTextField = new JTextField(55);
         dicomB0VolumeTextField.setEditable(false);
         dicomB0VolumeTextField.setEnabled(false);
         dicomB0VolumeTextField.setBorder(new LineBorder(Color.gray));
         dicomB0VolumeBrowseButton = new JButton("Browse");
+        dicomB0VolumeBrowseButton.setFont(serif12B);
         dicomB0VolumeBrowseButton.addActionListener(this);
         dicomB0VolumeBrowseButton.setActionCommand("dicomB0VolumeBrowse");
         dicomB0VolumeBrowseButton.setEnabled(false);
 		JLabel dicomB0InfoLabel = new JLabel("Select the first image slice in the volume");
+		dicomB0InfoLabel.setFont(serif12B);
 		dicomB0InfoLabel.setEnabled(false);
 
         
@@ -208,6 +213,7 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		mainPanelConstraints.gridwidth = 1;
 		mainPanelConstraints.anchor = GridBagConstraints.WEST;
         dwiLabel = new JLabel(" DWI data : ");
+        dwiLabel.setFont(serif12B);
         mainPanel.add(dwiLabel, mainPanelConstraints);
         
         mainPanelConstraints.gridx = 1;
@@ -223,6 +229,7 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		mainPanelConstraints.gridy = 0;
 		mainPanelConstraints.insets = new Insets(15,5,5,5);
 		dwiPathBrowseButton = new JButton("Browse");
+		dwiPathBrowseButton.setFont(serif12B);
 		dwiPathBrowseButton.addActionListener(this);
 		dwiPathBrowseButton.setActionCommand("dwiPathBrowse");
 		mainPanel.add(dwiPathBrowseButton, mainPanelConstraints);
@@ -237,6 +244,7 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		
 		mainPanelConstraints.anchor = GridBagConstraints.CENTER;
 		JLabel dwiDataInfoLabel = new JLabel("For DICOM datasets, select the top level study directory.  For Par/Rec datasets, select the .rec file");
+		dwiDataInfoLabel.setFont(serif12B);
 		dwiDataInfoLabel.setEnabled(false);
 		mainPanelConstraints.gridx = 0;
 		mainPanelConstraints.gridy = 1;
@@ -249,6 +257,7 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		optionsGroup = new ButtonGroup();
 		
 		gradFileRadio = new JRadioButton(" gradient file : ");
+		gradFileRadio.setFont(serif12B);
 		gradFileRadio.setSelected(true);
 		gradFileRadio.addActionListener(this);
 		gradFileRadio.setActionCommand("gradFileRadio");
@@ -273,12 +282,14 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		mainPanelConstraints.gridy = 2;
 		mainPanelConstraints.insets = new Insets(0,5,15,5);
 		gradientFileBrowseButton = new JButton("Browse");
+		gradientFileBrowseButton.setFont(serif12B);
 		gradientFileBrowseButton.addActionListener(this);
 		gradientFileBrowseButton.setActionCommand("gradientFileBrowse");
 		mainPanel.add(gradientFileBrowseButton, mainPanelConstraints);
   
 		
 		bmtxtFileRadio = new JRadioButton(" b-matrix file : ");
+		bmtxtFileRadio.setFont(serif12B);
 		bmtxtFileRadio.setSelected(false);
 		bmtxtFileRadio.addActionListener(this);
 		bmtxtFileRadio.setActionCommand("bmtxtFileRadio");
@@ -304,6 +315,7 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		mainPanelConstraints.gridy = 3;
 		mainPanelConstraints.insets = new Insets(0,5,5,5);
 		bmtxtFileBrowseButton = new JButton("Browse");
+		bmtxtFileBrowseButton.setFont(serif12B);
 		bmtxtFileBrowseButton.addActionListener(this);
 		bmtxtFileBrowseButton.setActionCommand("bmtxtFileBrowse");
 		bmtxtFileBrowseButton.setEnabled(false);
@@ -316,6 +328,7 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		mainPanelConstraints.gridwidth = 3;
 		mainPanelConstraints.insets = new Insets(0,5,30,5);
 		JLabel parRecInfoLabel = new JLabel("Gradient file or b-matrix file must be provided for all DICOM study directories and for versions 4.0 and earlier of Par/Rec");
+		parRecInfoLabel.setFont(serif12B);
 		parRecInfoLabel.setEnabled(false);
 		mainPanel.add(parRecInfoLabel, mainPanelConstraints);
 		
@@ -352,6 +365,7 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		mainPanelConstraints.gridwidth = 3;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
 		JLabel refLabel = new JLabel("Developed in concert with Dr. Lin-Ching Chang D.Sc.,  Dr. Carlo Pierpaoli MD Ph.D.,  and Lindsay Walker MS from the NIH/NICHD/LIMB/STBB group");
+		refLabel.setFont(serif12B);
 		mainPanel.add(refLabel, mainPanelConstraints);
 		
 		
@@ -359,12 +373,15 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 		JPanel OKCancelPanel = new JPanel();
         buildOKButton();
         OKButton.setActionCommand("ok");
+        OKButton.setFont(serif12B);
         OKCancelPanel.add(OKButton);
         buildCancelButton();
         cancelButton.setActionCommand("cancel");
+        cancelButton.setFont(serif12B);
         OKCancelPanel.add(cancelButton);
         buildHelpButton();
         helpButton.setActionCommand("help");
+        helpButton.setFont(serif12B);
         OKCancelPanel.add(helpButton);
 		
         getContentPane().add(mainPanel, BorderLayout.CENTER);
