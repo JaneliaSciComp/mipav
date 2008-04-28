@@ -918,7 +918,12 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         }
 
         try {
-            File file = new File(ViewUserInterface.getReference().getDefaultDirectory() + fileName);
+			// search for file name relative to image first, then relative to MIPAV default, then absolute path
+            File file;
+			file = new File(image.getImageDirectory() + fileName);
+			if (!file.exists()) file = new File(ViewUserInterface.getReference().getDefaultDirectory() + fileName);
+			if (!file.exists()) file = new File(fileName);
+			
             RandomAccessFile raFile = new RandomAccessFile(file, "r");
             matrix.readMatrix(raFile, false);
             raFile.close();
