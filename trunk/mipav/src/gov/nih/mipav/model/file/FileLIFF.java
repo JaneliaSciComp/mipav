@@ -67,6 +67,17 @@ public class FileLIFF extends FileBase {
     private static final short kUnused2 = 14;
     private static final short kUnitsOther = 15;
     
+    private static final short Clip = 0x0001;
+    private static final short TxFont = 0x0003;
+    private static final short FillPat = 0x000A;
+    private static final short TxSize = 0x000D;
+    private static final short DefHilite = 0x001E;
+    private static final short fontName = 0x002C;
+    private static final short lineJustify = 0x002D;
+    private static final short eraseRect = 0x0032;
+    private static final short DirectBitsRect = 0x009A;
+    private static final short OpEndPic = 0x00FF;
+    
     
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -227,7 +238,8 @@ public class FileLIFF extends FileBase {
         byte isBaseTimeLayer[] = new byte[1];
         byte spare[] = new byte[118];
         byte pad[];
-        byte pad186[] = new byte[186];
+        byte pad154[] = new byte[154];
+        byte pad34[] = new byte[34];
         String appSignature;
         String kindSignature;
         int blkCount;
@@ -281,7 +293,30 @@ public class FileLIFF extends FileBase {
         boolean doDeepGreyColor = false;
         int bitNumber = 0;
         int byteSize;
-        
+        int pictureBytes;
+        int version;
+        int pictureVersion;
+        int headerOpcode;
+        short versionOpcode;
+        int reserved;
+        int bestHorizontalResolution;
+        int bestVerticalResolution;
+        int xTopLeft;
+        int yTopLeft;
+        int xBottomRight;
+        int yBottomRight;
+        int opcode;
+        int padBytes;
+        int fillPat1;
+        int fillPat2;
+        int fillPat3;
+        int fillPat4;
+        int dataLength;
+        int oldFontID;
+        int nameLength;
+        String fontNameStr;
+        int fontNumber;
+        int textSize;
 
         try {
             file = new File(fileDir + fileName);
@@ -713,8 +748,10 @@ public class FileLIFF extends FileBase {
                         }
                     } // else isOpenlab2Header[0] == 0
                     if (versionNumber <= 2) {
-                        // skip 2 bytes
-                        readShort(endianess);
+                        // picSize record
+                        // picture size; don't use this value for picture size
+                        pictureBytes  = getUnsignedShort(endianess);
+                        Preferences.debug("Picture size in bytes = " + pictureBytes + "\n");
                         top = getUnsignedShort(endianess);
                         Preferences.debug("top = " + top + "\n");
                         left = getUnsignedShort(endianess);
@@ -727,21 +764,182 @@ public class FileLIFF extends FileBase {
                         Preferences.debug("width = " + width + "\n");
                         height = bottom - top;
                         Preferences.debug("height = " + height + "\n");
-                    }
+                        // picFrame (PICT v2.0) record
+                        // version should be 0x0011
+                        version = getUnsignedShort(endianess);
+                        if (version == 0x0011) {
+                            Preferences.debug("picFrame version is 0x0011 as expected\n");
+                        }
+                        else {
+                            Preferences.debug("picFrame version is unexpectedly " + version + "\n");
+                        }
+                        // Picture version should be 0x02ff
+                        pictureVersion = getUnsignedShort(endianess);
+                        if (pictureVersion == 0x02ff) {
+                            Preferences.debug("Picture version is 0x02ff as expected\n");
+                        }
+                        else {
+                            Preferences.debug("Picture version is unexpectedly " + pictureVersion + "\n");
+                        }
+                        // Header opcode should be 0x0C00 in an extended version 2 or a version 2
+                        // format picture
+                        headerOpcode = getUnsignedShort(endianess);
+                        if (headerOpcode == 0x0C00) {
+                            Preferences.debug("Header opcode is 0x0C00 as expected\n");
+                        }
+                        else {
+                            Preferences.debug("Header opcode is unexpectedly " + headerOpcode + "\n");
+                        }
+                        // The version opcode has a value of -2 for an extneded version 2 picture and a
+                        // value of -1 for a version 2 picture.  The rest of the header for an extended
+                        // version 2 picture contains resolution information;  the reset of the header
+                        // for a version 2 picture specifies a fixed-point bounding box.
+                        versionOpcode = readShort(endianess);
+                        if (versionOpcode == -2) {
+                            Preferences.debug("The version opcode = -2 indicates an extended version 2 picture\n");
+                        }
+                        else if (versionOpcode == -1) {
+                            Preferences.debug("The version opcode = -1 indicates a version 2 picture\n");
+                        }
+                        else {
+                            Preferences.debug("The version opcode is unexpectedly = " + versionOpcode + "\n");
+                        }
+                        // reserved should be 0
+                        reserved = getUnsignedShort(endianess);
+                        Preferences.debug("reserved = " + reserved + "\n");
+                        bestHorizontalResolution = readInt(endianess);
+                        Preferences.debug("Best horizontal resolution = " +
+                                          bestHorizontalResolution + " pixels per inch\n");
+                        bestVerticalResolution = readInt(endianess);
+                        Preferences.debug("Best vertical resolution = " +
+                                          bestVerticalResolution + " pixels per inch\n");
+                        xTopLeft = getUnsignedShort(endianess);
+                        Preferences.debug("x top left = " + xTopLeft + "\n");
+                        yTopLeft = getUnsignedShort(endianess);
+                        Preferences.debug("y top left = " + yTopLeft + "\n");
+                        xBottomRight = getUnsignedShort(endianess);
+                        Preferences.debug("x bottom right = " + xBottomRight + "\n");
+                        yBottomRight = getUnsignedShort(endianess);
+                        Preferences.debug("y bottom right = " + yBottomRight + "\n");
+                        // reserved should be 0
+                        reserved = readInt(endianess);
+                        Preferences.debug("reserved = " + reserved + "\n");
+                        padBytes = 156;
+                        found = false;
+                        while ((padBytes > 1) && (!found)) {
+                            opcode = getUnsignedShort(endianess);
+                            padBytes = padBytes - 2;
+                            switch (opcode) {
+                                case Clip:
+                                    Preferences.debug("Clip: Clipping region\n");
+                                    break;
+                                case TxFont:
+                                    Preferences.debug("TxFont: Font number for text\n");
+                                    padBytes = padBytes - 2;
+                                    fontNumber = getUnsignedShort(endianess);
+                                    Preferences.debug("Font number = " + fontNumber + "\n");
+                                    break;
+                                case FillPat:
+                                    Preferences.debug("FillPat: Fill pattern\n");
+                                    if (padBytes > 7) {
+                                        padBytes = padBytes - 8;
+                                        fillPat1 = getUnsignedShort(endianess);
+                                        Preferences.debug("fill pattern 1 = " + fillPat1 + "\n");
+                                        fillPat2 = getUnsignedShort(endianess);
+                                        Preferences.debug("fill pattern 2 = " + fillPat2 + "\n");
+                                        fillPat3 = getUnsignedShort(endianess);
+                                        Preferences.debug("fill pattern 3 = " + fillPat3 + "\n");
+                                        fillPat4 = getUnsignedShort(endianess);
+                                        Preferences.debug("fill pattern 4 = " + fillPat4 + "\n");
+                                    }
+                                    else {
+                                        padBytes = 0;
+                                    }
+                                    break;
+                                case TxSize:
+                                    Preferences.debug("TxSize: Text size\n");
+                                    padBytes = padBytes - 2;
+                                    textSize = getUnsignedShort(endianess);
+                                    Preferences.debug("Text size = " + textSize + "\n");
+                                    break;
+                                case DefHilite:
+                                    Preferences.debug("DefHilite: use default highlight color\n");
+                                    break;
+                                case fontName:
+                                    Preferences.debug("fontName\n");
+                                    padBytes = padBytes - 5;
+                                    dataLength = getUnsignedShort(endianess);
+                                    Preferences.debug("Data length = " + dataLength + "\n");
+                                    oldFontID = getUnsignedShort(endianess);
+                                    Preferences.debug("old font ID = " + oldFontID + "\n");
+                                    raFile.read(prefix);
+                                    nameLength = prefix[0] & 0xff;
+                                    Preferences.debug("name length = " + nameLength + "\n");
+                                    padBytes = padBytes - nameLength;
+                                    fontNameStr = getString(nameLength);
+                                    Preferences.debug("font name = " + fontNameStr + "\n");
+                                    if (((5 + nameLength) % 2) == 1) {
+                                        padBytes = padBytes - 1;
+                                        raFile.read(spareByte);
+                                    }
+                                    break;
+                                case lineJustify:
+                                    Preferences.debug("lineJustify\n");
+                                    padBytes = padBytes - 10;
+                                    dataLength = getUnsignedShort(endianess);
+                                    Preferences.debug("Data length = " + dataLength + "\n");
+                                    // 2 fixed numbers
+                                    // intercharacter spacing
+                                    // total extra space for justification
+                                    readLong(endianess);
+                                    readLong(endianess);
+                                    break;
+                                case eraseRect:
+                                    Preferences.debug("eraseRect\n");
+                                    if (padBytes > 7) {
+                                        padBytes = padBytes - 8;
+                                        xTopLeft = getUnsignedShort(endianess);
+                                        Preferences.debug("x top left = " + xTopLeft + "\n");
+                                        yTopLeft = getUnsignedShort(endianess);
+                                        Preferences.debug("y top left = " + yTopLeft + "\n");
+                                        xBottomRight = getUnsignedShort(endianess);
+                                        Preferences.debug("x bottom right = " + xBottomRight + "\n");
+                                        yBottomRight = getUnsignedShort(endianess);
+                                        Preferences.debug("y bottom right = " + yBottomRight + "\n");
+                                    }
+                                    else {
+                                        padBytes = 0;
+                                    }
+                                    break;
+                                case DirectBitsRect:
+                                    Preferences.debug("DirectBitsRect\n");
+                                    break;
+                                case OpEndPic:
+                                    found = true;
+                                    Preferences.debug("OpEndPic: End of picture\n");
+                                    break;
+                                default:
+                                    Preferences.debug("opcode = " + opcode + "\n");
+                            } // switch (opcode)
+                        } // while ((padBytes > 1) && (!found))
+                        Preferences.debug("padBytes = " + padBytes + "\n");
+                    } // if (versionNumber <= 2)
                     else {
                         width = readInt(endianess);
                         Preferences.debug("width = " + width + "\n");
                         height = readInt(endianess);
                         Preferences.debug("height = " + height + "\n");
-                        readShort(endianess);
+                        padBytes = 188;
                     }
+                    
                     if ((imageType >= DEEP_GREY_9)  && (imageType <= DEEP_GREY_16)) {
                         // Have read 288 bytes, but there are 494 bytes from start of layerinfo record
                         // till "IVEA" starts in PIC comment 101.  So read in another 186 bytes.
                         xDim = width;
                         yDim = height;
                         bitNumber = layerDepth;
-                        raFile.read(pad186);
+                        pad = new byte[padBytes];
+                        raFile.read(pad);
                         greyPictLocation[greyPictCount++] = raFile.getFilePointer();
                     } // // if ((imageType >= DEEP_GREY_9)  && (imageType <= DEEP_GREY_16))
                 } // if ((tagType == 67) || (tagType == 68))
@@ -917,8 +1115,6 @@ public class FileLIFF extends FileBase {
                     Preferences.debug("bitDepth = " + bitDepth + "\n");
                     // bitShift should be ignored
                     bitShift = readShort(endianess);
-                    // PICT header
-                    byteSize = getUnsignedShort(endianess);
                 } // for (i = 0; i < greyPictCount; i++)
             } // if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16))
             
