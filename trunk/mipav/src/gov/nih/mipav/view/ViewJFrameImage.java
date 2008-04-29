@@ -30,6 +30,7 @@ import javax.swing.event.*;
 
 
 import gov.nih.mipav.view.renderer.WildMagic.*;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
 
 
 /**
@@ -2786,6 +2787,16 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogCorrectSpacing(this, getActiveImage()).callAlgorithm();
         } else if (command.equals("ToggleImageIntensities")) {
             controls.toggleSlider();
+        }else if (command.equals("loadDWI")) {
+            new JDialogDTIInput( JDialogDTIInput.DWI );
+        } else if (command.equals("loadDTI")) {
+            new JDialogDTIInput( JDialogDTIInput.DTI );
+        } else if (command.equals("loadEG_FA")) {
+            new JDialogDTIInput( JDialogDTIInput.EG_FA );
+        } else if (command.equals("loadDTIFrame")) {
+        	userInterface.invokeDTIframe();
+        } else if (command.equals("createListFile")) {
+            new JDialogDTICreateListFile();
         }
         
     }
