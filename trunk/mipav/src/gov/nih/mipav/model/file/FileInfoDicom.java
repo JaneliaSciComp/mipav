@@ -305,7 +305,7 @@ public class FileInfoDicom extends FileInfoBase {
      *          null.
      */
     public final TransMatrix getPatientOrientation() {
-        int index1, index2, index3, index4, index5;
+        int index1, index2, index3, index4, index5, index6;
         int notSet = -1;
         double[][] dirCos = null;
         TransMatrix xfrm = null;
@@ -317,13 +317,11 @@ public class FileInfoDicom extends FileInfoBase {
             String orientation = (String) tagTable.getValue("0020,0037");
 
             if (orientation == null) {
-
-                // MipavUtil.displayError("Patient Orientation string = null");
+                Preferences.debug("Error reading tag 0020, 0037 - null \n", Preferences.DEBUG_FILEIO);
                 return null;
             }
 
-            index1 = index2 = index3 = index4 = notSet = index5 = notSet;
-
+            index1 = index2 = index3 = index4 = index5 = index6 = notSet;
             for (int i = 0; i < orientation.length(); i++) {
 
                 if (orientation.charAt(i) == '\\') {
@@ -336,8 +334,11 @@ public class FileInfoDicom extends FileInfoBase {
                         index3 = i;
                     } else if (index4 == notSet) {
                         index4 = i;
-                    } else {
+                    } else if (index5 == notSet) {
                         index5 = i;
+                    } else {
+                        index6 = i;
+                        break;
                     }
                 }
             }
@@ -349,7 +350,11 @@ public class FileInfoDicom extends FileInfoBase {
 
             dirCos[1][0] = Double.valueOf(orientation.substring(index3 + 1, index4)).doubleValue();
             dirCos[1][1] = Double.valueOf(orientation.substring(index4 + 1, index5)).doubleValue();
-            dirCos[1][2] = Double.valueOf(orientation.substring(index5 + 1)).doubleValue();
+            if (index6 == notSet)
+            	dirCos[1][2] = Double.valueOf(orientation.substring(index5 + 1)).doubleValue();
+            else
+            	dirCos[1][2] = Double.valueOf(orientation.substring(index5 + 1, index6)).doubleValue();
+            	
             dirCos[1][3] = 0;
 
             // cross product
@@ -364,7 +369,6 @@ public class FileInfoDicom extends FileInfoBase {
             dirCos[3][3] = 1;
 
             xfrm.timesEquals(Matrix.constructWithCopy(dirCos));
-
             // if (Preferences.isDebug()) xfrm.print();
             return xfrm;
         } catch (OutOfMemoryError error) {
@@ -677,10 +681,17 @@ public class FileInfoDicom extends FileInfoBase {
                     }
                 }
             }
-
-            xLocation = Float.valueOf(orientation.substring(0, index1)).floatValue();
-            yLocation = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
-            zLocation = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
+            
+            if (index1 != -1)
+            	xLocation = Float.valueOf(orientation.substring(0, index1)).floatValue();
+            if (index1 != -1 && index2 != -1)
+            	yLocation = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
+            if (index2 != -1)
+            	zLocation = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
+            
+            if (index1 == -1 || index2 == -1)
+            	Preferences.debug("Warning reading tag 0020, 0032 - too few items \n", Preferences.DEBUG_FILEIO);
+            
         } else if (tagKey.equals("0020,0013")) { // type 2
 
             try {
