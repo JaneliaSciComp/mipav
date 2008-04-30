@@ -2161,8 +2161,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                         if (((paintPoint.x <= (xDim - 1)) && (paintPoint.x >= 0)) && (paintPoint.y <= (yDim - 1)) &&
                                 (paintPoint.y >= 0) && (paintPoint.z <= (zDim - 1)) && (paintPoint.z >= 0)) {
                             
-                        	index = MipavMath.round((iterFactors[0] * paintPoint.x) + (iterFactors[1] * paintPoint.y) +
-                                           (iterFactors[2] * paintPoint.z));
+                            index = (int) ((iterFactors[0] * paintPoint.x) + (iterFactors[1] * paintPoint.y) +
+                                    (iterFactors[2] * paintPoint.z));
 
 
                             if (paintPixels == true) {
@@ -2187,7 +2187,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                     patientPaintPoint.z =slice;
                     MipavCoordinateSystems.patientToFile(patientPaintPoint, paintPoint, imageActive, orientation);
 
-                    index = MipavMath.round((iterFactors[0] * paintPoint.x) + (iterFactors[1] * paintPoint.y) +
+                    index = (int) ((iterFactors[0] * paintPoint.x) + (iterFactors[1] * paintPoint.y) +
                             (iterFactors[2] * paintPoint.z));
 
                     if (paintPixels) {
