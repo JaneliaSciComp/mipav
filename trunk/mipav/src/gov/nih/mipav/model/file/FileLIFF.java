@@ -72,10 +72,13 @@ public class FileLIFF extends FileBase {
     private static final short FillPat = 0x000A;
     private static final short TxSize = 0x000D;
     private static final short DefHilite = 0x001E;
+    private static final short DHDVText = 0x002B;
     private static final short fontName = 0x002C;
     private static final short lineJustify = 0x002D;
+    private static final short glyphState = 0x002E;
     private static final short eraseRect = 0x0032;
     private static final short DirectBitsRect = 0x009A;
+    private static final short LongComment = 0x00A1;
     private static final short OpEndPic = 0x00FF;
     
     
@@ -238,8 +241,6 @@ public class FileLIFF extends FileBase {
         byte isBaseTimeLayer[] = new byte[1];
         byte spare[] = new byte[118];
         byte pad[];
-        byte pad154[] = new byte[154];
-        byte pad34[] = new byte[34];
         String appSignature;
         String kindSignature;
         int blkCount;
@@ -283,7 +284,8 @@ public class FileLIFF extends FileBase {
         int height;
         int xDim;
         int yDim;
-        long greyPictLocation[] = new long[1800];
+        long greyPictLocation[] = new long[24000];
+        int greySubPictCount = 0;
         int greyPictCount = 0;
         String dyeString[] = new String[10];
         int dyeNumber = 0;
@@ -292,21 +294,29 @@ public class FileLIFF extends FileBase {
         boolean found = false;
         boolean doDeepGreyColor = false;
         int bitNumber = 0;
-        int byteSize;
         int pictureBytes;
         int version;
         int pictureVersion;
         int headerOpcode;
         short versionOpcode;
         int reserved;
-        int bestHorizontalResolution;
-        int bestVerticalResolution;
+        float bestHorizontalResolution;
+        int bestHorizontalResolutionFract;
+        short bestHorizontalResolutionShort;
+        float bestVerticalResolution;
+        int bestVerticalResolutionFract;
+        short bestVerticalResolutionShort;
+        float horizontalResolution;
+        int horizontalResolutionFract;
+        short horizontalResolutionShort;
+        float verticalResolution;
+        int verticalResolutionFract;
+        short verticalResolutionShort;
         int xTopLeft;
         int yTopLeft;
         int xBottomRight;
         int yBottomRight;
         int opcode;
-        int padBytes;
         int fillPat1;
         int fillPat2;
         int fillPat3;
@@ -317,6 +327,65 @@ public class FileLIFF extends FileBase {
         String fontNameStr;
         int fontNumber;
         int textSize;
+        byte outlinePreferred[] = new byte[1];
+        byte preserveGlyph[] = new byte[1];
+        byte fractionalWidths[] = new byte[1];
+        byte scalingDisabled[] = new byte[1];
+        int dh;
+        int dv;
+        int count;
+        String textStr;
+        int commentKind;
+        int commentSize;
+        long baseAddr;
+        short rowBytes;
+        short pmVersion;
+        short packType;
+        long packSize;
+        short pixelType;
+        short pixelSize;
+        short cmpCount;
+        short cmpSize;
+        long planeBytes;
+        long pmTable;
+        int pmReserved;
+        String [] modeStr = new String[65];
+        // The 16 transfer modes
+        modeStr[0] = new String("srcCopy");
+        modeStr[1] = new String("srcOr");
+        modeStr[2] = new String("srcXor");
+        modeStr[3] = new String("srcBic");
+        modeStr[4] = new String("notSrcCopy");
+        modeStr[5] = new String("notSrcOr");
+        modeStr[6] = new String("notSrcXor");
+        modeStr[7] = new String("notSrcBic");
+        modeStr[8] = new String("patCopy");
+        modeStr[9] = new String("patOr");
+        modeStr[10] = new String("patXor");
+        modeStr[11] = new String("patBic");
+        modeStr[12] = new String("notPatCopy");
+        modeStr[13] = new String("notPatOr");
+        modeStr[14] = new String("notPatXor");
+        modeStr[15] = new String("notPatBic");
+        // 2 special text transfer modes
+        modeStr[49] = new String("grayishTextOr");
+        modeStr[50] = new String("hilitetransfermode");
+        // 2 arithmetic transfer modes
+        modeStr[32] = new String("blend");
+        modeStr[33] = new String("addPin");
+        // 6 QuickDraw color separation constants
+        modeStr[34] = new String("addOver");
+        modeStr[35] = new String("subPin");
+        modeStr[37] = new String("addMax");
+        modeStr[38] = new String("subOver");
+        modeStr[39] = new String("adMin");
+        modeStr[64] = new String("ditherCopy");
+        // Transparent mode constant
+        modeStr[36] = new String("transparent");
+        short mode;
+        int boundsTop;
+        int boundsBottom;
+        int byteCount;
 
         try {
             file = new File(fileDir + fileName);
@@ -556,96 +625,12 @@ public class FileLIFF extends FileBase {
                     // should not be relied on as an absolute indicator of the drawing mode - this 
                     // should ideally be determined on the fly from other factors.
                     layerMode = readShort(endianess);
-                    switch (layerMode) {
-                        // The 16 transfer modes
-                        case 0:
-                            Preferences.debug("layerMode = srcCopy\n");
-                            break;
-                        case 1:
-                            Preferences.debug("layerMode = srcOr\n");
-                            break;
-                        case 2:
-                            Preferences.debug("layerMode = srcXor\n");
-                            break;
-                        case 3:
-                            Preferences.debug("layerMode = srcBic\n");
-                            break;
-                        case 4:
-                            Preferences.debug("layerMode = notSrcCopy\n");
-                            break;
-                        case 5:
-                            Preferences.debug("layerMode = notSrcOr\n");
-                            break;
-                        case 6:
-                            Preferences.debug("layerMode = notSrcXor\n");
-                            break;
-                        case 7:
-                            Preferences.debug("layerMode = notSrcBic\n");
-                            break;
-                        case 8:
-                            Preferences.debug("layerMode = patCopy\n");
-                            break;
-                        case 9:
-                            Preferences.debug("layerMode = patOr\n");
-                            break;
-                        case 10:
-                            Preferences.debug("layerMode = patXor\n");
-                            break;
-                        case 11:
-                            Preferences.debug("layerMode = patBic\n");
-                            break;
-                        case 12:
-                            Preferences.debug("layerMode = notPatCopy\n");
-                            break;
-                        case 13:
-                            Preferences.debug("layerMode = notPatOr\n");
-                            break;
-                        case 14:
-                            Preferences.debug("layerMode =  notPatXor\n");
-                            break;
-                        case 15:
-                            Preferences.debug("layerMode = notPatBic\n");
-                            break;
-                        // 2 special text transfer modes
-                        case 49:
-                            Preferences.debug("layerMode = grayishTextOr\n");
-                            break;
-                        case 50:
-                            Preferences.debug("layerMode = hilitetransfermode\n");
-                            break;
-                        // 2 arithmetic transfer modes
-                        case 32:
-                            Preferences.debug("layerMode = blend\n");
-                            break;
-                        case 33:
-                            Preferences.debug("layerMode = addPin\n");
-                            break;
-                        // 6 QuickDraw color separation constants
-                        case 34:
-                            Preferences.debug("layerMode = addOver\n");
-                            break;
-                        case 35:
-                            Preferences.debug("layerMode = subPin\n");
-                            break;
-                        case 37:
-                            Preferences.debug("layerMode = addMax\n");
-                            break;
-                        case 38:
-                            Preferences.debug("layerMode = subOver\n");
-                            break;
-                        case 39:
-                            Preferences.debug("layerMode = adMin\n");
-                            break;
-                        case 64:
-                            Preferences.debug("layerMode = ditherCopy\n");
-                            break;
-                        // Transparent mode constant
-                        case 36:
-                            Preferences.debug("layerMode = transparent\n");
-                            break;
-                        default:
-                            Preferences.debug("layerMode has unrecognized value = " + layerMode + "\n");
-                    } // switch (layerMode)
+                    if ((layerMode >= 0) && (layerMode <= 64) && (modeStr[layerMode] != null)) {
+                        Preferences.debug("layerMode = " + modeStr[layerMode] + "\n");
+                    }
+                    else {
+                        Preferences.debug("layerMode has unrecognized value = " + layerMode + "\n");    
+                    }
                     // selected ignore;  set to true if this layer is the 'current' layer in
                     // the Layers Manager
                     raFile.read(selected);
@@ -807,10 +792,16 @@ public class FileLIFF extends FileBase {
                         // reserved should be 0
                         reserved = getUnsignedShort(endianess);
                         Preferences.debug("reserved = " + reserved + "\n");
-                        bestHorizontalResolution = readInt(endianess);
+                        bestHorizontalResolutionShort = readShort(endianess);
+                        bestHorizontalResolutionFract = getUnsignedShort(endianess);
+                        bestHorizontalResolution = (float)(bestHorizontalResolutionShort + 
+                                                    Math.pow(2.0,-16.0)*bestHorizontalResolutionFract);
                         Preferences.debug("Best horizontal resolution = " +
                                           bestHorizontalResolution + " pixels per inch\n");
-                        bestVerticalResolution = readInt(endianess);
+                        bestVerticalResolutionShort = readShort(endianess);
+                        bestVerticalResolutionFract = getUnsignedShort(endianess);
+                        bestVerticalResolution = (float)(bestVerticalResolutionShort + 
+                                                    Math.pow(2.0,-16.0)*bestVerticalResolutionFract);
                         Preferences.debug("Best vertical resolution = " +
                                           bestVerticalResolution + " pixels per inch\n");
                         xTopLeft = getUnsignedShort(endianess);
@@ -824,50 +815,56 @@ public class FileLIFF extends FileBase {
                         // reserved should be 0
                         reserved = readInt(endianess);
                         Preferences.debug("reserved = " + reserved + "\n");
-                        padBytes = 156;
                         found = false;
-                        while ((padBytes > 1) && (!found)) {
+                        while (!found) {
                             opcode = getUnsignedShort(endianess);
-                            padBytes = padBytes - 2;
                             switch (opcode) {
                                 case Clip:
                                     Preferences.debug("Clip: Clipping region\n");
                                     break;
                                 case TxFont:
                                     Preferences.debug("TxFont: Font number for text\n");
-                                    padBytes = padBytes - 2;
                                     fontNumber = getUnsignedShort(endianess);
                                     Preferences.debug("Font number = " + fontNumber + "\n");
                                     break;
                                 case FillPat:
                                     Preferences.debug("FillPat: Fill pattern\n");
-                                    if (padBytes > 7) {
-                                        padBytes = padBytes - 8;
-                                        fillPat1 = getUnsignedShort(endianess);
-                                        Preferences.debug("fill pattern 1 = " + fillPat1 + "\n");
-                                        fillPat2 = getUnsignedShort(endianess);
-                                        Preferences.debug("fill pattern 2 = " + fillPat2 + "\n");
-                                        fillPat3 = getUnsignedShort(endianess);
-                                        Preferences.debug("fill pattern 3 = " + fillPat3 + "\n");
-                                        fillPat4 = getUnsignedShort(endianess);
-                                        Preferences.debug("fill pattern 4 = " + fillPat4 + "\n");
-                                    }
-                                    else {
-                                        padBytes = 0;
-                                    }
+                                    fillPat1 = getUnsignedShort(endianess);
+                                    Preferences.debug("fill pattern 1 = " + fillPat1 + "\n");
+                                    fillPat2 = getUnsignedShort(endianess);
+                                    Preferences.debug("fill pattern 2 = " + fillPat2 + "\n");
+                                    fillPat3 = getUnsignedShort(endianess);
+                                    Preferences.debug("fill pattern 3 = " + fillPat3 + "\n");
+                                    fillPat4 = getUnsignedShort(endianess);
+                                    Preferences.debug("fill pattern 4 = " + fillPat4 + "\n");
                                     break;
                                 case TxSize:
                                     Preferences.debug("TxSize: Text size\n");
-                                    padBytes = padBytes - 2;
                                     textSize = getUnsignedShort(endianess);
                                     Preferences.debug("Text size = " + textSize + "\n");
                                     break;
                                 case DefHilite:
                                     Preferences.debug("DefHilite: use default highlight color\n");
                                     break;
+                                case DHDVText:
+                                    Preferences.debug("DHDVText\n");
+                                    raFile.read(prefix);
+                                    dh = prefix[0] & 0xff;
+                                    Preferences.debug("dh = " + dh + "\n");
+                                    raFile.read(prefix);
+                                    dv = prefix[0] & 0xff;
+                                    Preferences.debug("dv = " + dv + "\n");
+                                    raFile.read(prefix);
+                                    count = prefix[0] & 0xff;
+                                    Preferences.debug("count = " + count + "\n");
+                                    textStr = getString(count);
+                                    Preferences.debug("DHDVText string = " + textStr + "\n");
+                                    if (((3 + count) % 2)  == 1) {
+                                        raFile.read(spareByte);
+                                    }
+                                    break;
                                 case fontName:
                                     Preferences.debug("fontName\n");
-                                    padBytes = padBytes - 5;
                                     dataLength = getUnsignedShort(endianess);
                                     Preferences.debug("Data length = " + dataLength + "\n");
                                     oldFontID = getUnsignedShort(endianess);
@@ -875,17 +872,14 @@ public class FileLIFF extends FileBase {
                                     raFile.read(prefix);
                                     nameLength = prefix[0] & 0xff;
                                     Preferences.debug("name length = " + nameLength + "\n");
-                                    padBytes = padBytes - nameLength;
                                     fontNameStr = getString(nameLength);
                                     Preferences.debug("font name = " + fontNameStr + "\n");
                                     if (((5 + nameLength) % 2) == 1) {
-                                        padBytes = padBytes - 1;
                                         raFile.read(spareByte);
                                     }
                                     break;
                                 case lineJustify:
                                     Preferences.debug("lineJustify\n");
-                                    padBytes = padBytes - 10;
                                     dataLength = getUnsignedShort(endianess);
                                     Preferences.debug("Data length = " + dataLength + "\n");
                                     // 2 fixed numbers
@@ -894,25 +888,303 @@ public class FileLIFF extends FileBase {
                                     readLong(endianess);
                                     readLong(endianess);
                                     break;
+                                case glyphState:
+                                    Preferences.debug("glyphState\n");
+                                    dataLength = getUnsignedShort(endianess);
+                                    Preferences.debug("Data length = " + dataLength + "\n");
+                                    if (dataLength >= 1) {
+                                        raFile.read(outlinePreferred);
+                                        if (outlinePreferred[0] == 1) {
+                                            Preferences.debug("Outline preferred\n");
+                                        }
+                                        else {
+                                            Preferences.debug("Outline not preferred\n");
+                                        }
+                                    } // if (dataLength >= 1)
+                                    if (dataLength >= 2) {
+                                        raFile.read(preserveGlyph);
+                                        if (preserveGlyph[0] == 1) {
+                                            Preferences.debug("Preserve glyph");
+                                        }
+                                        else {
+                                            Preferences.debug("Don't preserve glyph\n");
+                                        }
+                                    } // if (dataLength >= 2)
+                                    if (dataLength >= 3) {
+                                        raFile.read(fractionalWidths);
+                                        if (fractionalWidths[0] == 1) {
+                                            Preferences.debug("Fractional widths\n");
+                                        }
+                                        else {
+                                            Preferences.debug("No fractional widths\n");
+                                        }
+                                    } // if (dataLength >= 3)
+                                    if (dataLength >= 4) {
+                                        raFile.read(scalingDisabled);
+                                        if (scalingDisabled[0] == 1) {
+                                            Preferences.debug("Scaling disabled\n");
+                                        }
+                                        else {
+                                            Preferences.debug("Scaling not disabled\n");
+                                        }
+                                    } // if (dataLength >= 4)
+                                    if ((dataLength % 2) == 1) {
+                                        raFile.read(spareByte);
+                                    }
+                                    break;
                                 case eraseRect:
                                     Preferences.debug("eraseRect\n");
-                                    if (padBytes > 7) {
-                                        padBytes = padBytes - 8;
-                                        xTopLeft = getUnsignedShort(endianess);
-                                        Preferences.debug("x top left = " + xTopLeft + "\n");
-                                        yTopLeft = getUnsignedShort(endianess);
-                                        Preferences.debug("y top left = " + yTopLeft + "\n");
-                                        xBottomRight = getUnsignedShort(endianess);
-                                        Preferences.debug("x bottom right = " + xBottomRight + "\n");
-                                        yBottomRight = getUnsignedShort(endianess);
-                                        Preferences.debug("y bottom right = " + yBottomRight + "\n");
-                                    }
-                                    else {
-                                        padBytes = 0;
-                                    }
+                                    xTopLeft = getUnsignedShort(endianess);
+                                    Preferences.debug("x top left = " + xTopLeft + "\n");
+                                    yTopLeft = getUnsignedShort(endianess);
+                                    Preferences.debug("y top left = " + yTopLeft + "\n");
+                                    xBottomRight = getUnsignedShort(endianess);
+                                    Preferences.debug("x bottom right = " + xBottomRight + "\n");
+                                    yBottomRight = getUnsignedShort(endianess);
+                                    Preferences.debug("y bottom right = " + yBottomRight + "\n");
                                     break;
                                 case DirectBitsRect:
                                     Preferences.debug("DirectBitsRect\n");
+                                    // PixMap, srcRect, dstRect, mode(short), PixData
+                                    // The unsigned 32 bit base address is set to $000000FF because
+                                    // of the direct pixMap used here.  This is done because machines
+                                    // without support for direct pixMaps read a word from the picture,
+                                    // skip that many bytes, and continue picture parsing.  When such a
+                                    // machine encounters the $000000FF baseAddr, the number of bytes
+                                    // skipped is $0000 and the next opcode is $00FF, which ends the
+                                    // picture playback.  A graceful exit from a tough situation
+                                    baseAddr = getUInt(endianess);
+                                    if (baseAddr == 0x000000FF) {
+                                        Preferences.debug("baseAddr is 0x000000FF as expected\n");
+                                    }
+                                    else {
+                                        Preferences.debug("baseAddr is unexpectedly " + baseAddr + "\n");
+                                    }
+                                    // rowBytes, The offset in bytes from one row of the image to the next.
+                                    // The value must be even, less than $4000, and for best performance it
+                                    // should be a multiple of 4.  The high 2 bits of rowBytes are used as
+                                    // flags.  If bit 15 = 1, the data structure pointed to is a PixMap 
+                                    // record; otherwise it is a bitMap record.
+                                    rowBytes = readShort(endianess);
+                                    if ((rowBytes & 0x8000) != 0) {
+                                        Preferences.debug("The data structure pointed to is a PixMap record\n");
+                                    }
+                                    else {
+                                        Preferences.debug("The data structure pointed to is a BitMap record\n");
+                                    }
+                                    // Strip out the 2 flag bits
+                                    rowBytes = (short)(rowBytes & 0x3fff);
+                                    Preferences.debug("Offset in bytes from one row of the image to the next = "
+                                                       + rowBytes + "\n");
+                                    // The boundary rectangle, which links the local coordinate system of a
+                                    // graphics port to QuickDraw's global coordinate system and defines the
+                                    // area of the bit image into which QuickDraw can draw.  By default,
+                                    // the boundary rectangle is the entire main screen.
+                                    xTopLeft = getUnsignedShort(endianess);
+                                    Preferences.debug("Boundary rectangle x top left = " + xTopLeft + "\n");
+                                    boundsTop = getUnsignedShort(endianess);
+                                    Preferences.debug("Boundary rectangle y top left = " + boundsTop + "\n");
+                                    xBottomRight = getUnsignedShort(endianess);
+                                    Preferences.debug("Boundary rectangle x bottom right = " + xBottomRight + "\n");
+                                    boundsBottom = getUnsignedShort(endianess);
+                                    Preferences.debug("Boundary rectangle y bottom right = " + boundsBottom + "\n");
+                                    // PixMap record version number.  The version number of Color QuickDraw
+                                    // that created this pixMap reocrd.  The value of pmVersion is normally 0.
+                                    // If pmVersion is 4, Color QuickDraw treats the pixMap reocrd's baseAddr
+                                    // field as 32-bit clean.  (All other flags are private.)
+                                    pmVersion = readShort(endianess);
+                                    Preferences.debug("The PixMap record version number = " + pmVersion + "\n");
+                                    // The packing algorithm used to compress image data.
+                                    // To facilitate banding fo images when memory is short, all data
+                                    // compression is done on a scan-line basis.  The following pseudocode
+                                    // describes the pixel data:
+                                    // PixData
+                                    // if packType = 1 (unpacked) or rowBytes < 8 then
+                                    //     data is unpacked;
+                                    //     data size = rowBytes * (bounds.bottom - bounds.top);
+                                    
+                                    // if packType = 2 (drop pad byte) then
+                                    //     the high-order pad byte of a 32-bit direct pixel is dropped;
+                                    //     data size = (3/4) * rowBytes * (bounds.bottom - bounds.top);
+                                    
+                                    // if packType > 2 (packed) then
+                                    //    image contains (bounds.bottom - bounds.top) packed scan lines;
+                                    //    each scan line consists of [byteCount] [data];
+                                    //    if rowBytes > 250 then
+                                    //        byteCount is a short
+                                    //    else
+                                    //        byteCount is a byte
+                                    // Here are the currently defined packing types:
+                                    // Packing type    Meaning
+                                    // 0               Use default packing
+                                    //                 The default for a pixelSize value of 16 is 3
+                                    //                 The default for a pixelSize value of 32 is 4
+                                    // 1               Use no packing
+                                    // 2               Remove pad byte -- supported only for 32-bit pixels
+                                    //                 (24-bit data)
+                                    // 3               Run length encoding by pixelSize chunks, one scan line
+                                    //                 at a time -- supported only for 16-bit pixels.
+                                    // 4               Run length encoding one component at a time, one scan
+                                    //                 line at a time, red component first--supported only for
+                                    //                 32-bit pixels (24-bit data)
+                                    // Each scan line of packed data is preceded by a byte or a short
+                                    // giving the count of data
+                                    // When the pixel type is direct, cmpCount * cmpSize is less than or equal
+                                    // to pixelSize.  For storing 24-bit data in a 32-bit pixel, set cmpSize
+                                    // to 8 and cmpCount to 3.  If you set cmpCount to 4, then the high byte
+                                    // is compressed by packing scheme 4 and stored in the picture.
+                                    packType = readShort(endianess);
+                                    Preferences.debug("The pack type used to compress image data = " +
+                                                       packType + "\n");
+                                    // The size of the packed image in bytes.  Since each scan line of 
+                                    // packed data is preceded by a byte count, packSize is not used and
+                                    // must be 0 for future compatibility.
+                                    packSize = getUInt(endianess);
+                                    if (packSize == 0) {
+                                        Preferences.debug("The field for the size of the packed image in bytes " 
+                                                    +  "is set to 0 as expected\n");
+                                    }
+                                    else {
+                                        Preferences.debug("The size of the packed image in bytes = " 
+                                             + packSize + "\n");         
+                                    }
+                                    // The horizontal resolution of the pixel image in pixels per inch.
+                                    // This value is of type Fixed; by default, the value here is
+                                    // $00480000(for 72 pixels per inch).
+                                    horizontalResolutionShort = readShort(endianess);
+                                    horizontalResolutionFract = getUnsignedShort(endianess);
+                                    horizontalResolution = (float)(horizontalResolutionShort + 
+                                                                Math.pow(2.0,-16.0)*horizontalResolutionFract);
+                                    Preferences.debug("Horizontal resolution = " +
+                                                      horizontalResolution + " pixels per inch\n");
+                                    // The vertical resolution of the pixel image in pixels per inch.
+                                    // This value is of type Fixed; by default, the value here is
+                                    // $00480000(for 72 pixels per inch).
+                                    verticalResolutionShort = readShort(endianess);
+                                    verticalResolutionFract = getUnsignedShort(endianess);
+                                    verticalResolution = (float)(verticalResolutionShort + 
+                                                                Math.pow(2.0,-16.0)*verticalResolutionFract);
+                                    Preferences.debug("Vertical resolution = " +
+                                                      verticalResolution + " pixels per inch\n");
+                                    // The storage format for a pixel image.  Indexed pixels are indicated
+                                    // by a value of 0.  Direct pixels sare specified by a value of RGBDirect,
+                                    // or 16.
+                                    pixelType = readShort(endianess);
+                                    if (pixelType == 0) {
+                                        Preferences.debug("Pixel image has indexed pixels\n");
+                                    }
+                                    else if (pixelType == 16) {
+                                        Preferences.debug("Pixel image has direct pixels\n");
+                                    }
+                                    else {
+                                        Preferences.debug("pixelType has unrecognized value = " + pixelType + "\n");
+                                    }
+                                    // Pixel depth; that is, the number of bits used to represent a pixel.
+                                    // Indexed pixels can have sizes of 1, 2, 4, and 8 bits;  direct pixel
+                                    // sizes are 16 and 32 bits.
+                                    pixelSize = readShort(endianess);
+                                    Preferences.debug("pixelSize = " + pixelSize + "\n");
+                                    // cmpCount - logical components per pixel
+                                    // The number of components used to represent a color for a pixel.
+                                    // With indexed pixels, each pixel is a single value representing an
+                                    // index in a color table, and therefore this field contains the value
+                                    // 1 -- the index is the single component.  With direct pixels, each
+                                    // pixel contains 3 components--one short each for the intnesities
+                                    // of red, green, and blue--so this field contains the value 3.
+                                    cmpCount = readShort(endianess);
+                                    Preferences.debug("Components per pixel = " + cmpCount + "\n");
+                                    // cmpSize - logical bits per component
+                                    // The size in bits of each component for a pixel.  Color QuickDraw
+                                    // expects that the sizes of all components are the same, and that the
+                                    // value of the cmpCount field multiplied by the cmpSize field is less 
+                                    // than or equal to the value in the pixelSize field.
+                                    // For an indexed value, which has only 1 component, the value of the
+                                    // cmpSize is the same as the value of the pixelSize field--that is,
+                                    // 1, 2, 4, or 8.
+                                    // For direct pixels there are 2 additional possibilities:
+                                    // A 16-bit pixel, which has 3 components, has a cmpSize value of 5.
+                                    // This leaves an unused high-order bit, which Color QuickDraw sets
+                                    // to 0.  A 32-bit pixel, which has 3 components(red, green, and blue),
+                                    // has a cmpSize vlaue of 8.  This leaves an unused high-order byte,
+                                    // which Color QuickDraw sets to 0.
+                                    cmpSize = readShort(endianess);
+                                    Preferences.debug("Bits per component = " + cmpSize + "\n");
+                                    // planeBytes - the offset in bytes form one drawing plane to the
+                                    // next.  This field is set to 0.
+                                    planeBytes = getUInt(endianess);
+                                    if (planeBytes == 0) {
+                                        Preferences.debug("The planeBytes field is set to 0 as expected\n");
+                                    }
+                                    else {
+                                        Preferences.debug("planeBytes unexpectedly = " + planeBytes + "\n");
+                                    }
+                                    // pmTable - a pointer to a ColorTable record for the colors in this\
+                                    // pixel map.
+                                    pmTable = getUInt(endianess);
+                                    Preferences.debug("Location of ColorTable record = " + pmTable + "\n");
+                                    // pmReserved - reserved for future expansion.  This field must be
+                                    // set to 0 for future compatibility.
+                                    pmReserved = readInt(endianess);
+                                    if (pmReserved == 0) {
+                                        Preferences.debug("pmReserved = 0 as expected\n");
+                                    }
+                                    else {
+                                        Preferences.debug("pmReserved unexpectedly = " + pmReserved + "\n");
+                                    }
+                                    // Source rectangle
+                                    xTopLeft = getUnsignedShort(endianess);
+                                    Preferences.debug("Source rectangle x top left = " + xTopLeft + "\n");
+                                    yTopLeft = getUnsignedShort(endianess);
+                                    Preferences.debug("Source rectangle y top left = " + yTopLeft + "\n");
+                                    xBottomRight = getUnsignedShort(endianess);
+                                    Preferences.debug("Source rectangle x bottom right = " + xBottomRight + "\n");
+                                    yBottomRight = getUnsignedShort(endianess);
+                                    Preferences.debug("Source rectangle y bottom right = " + yBottomRight + "\n");
+                                    // Destination rectangle
+                                    xTopLeft = getUnsignedShort(endianess);
+                                    Preferences.debug("Destination rectangle x top left = " + xTopLeft + "\n");
+                                    yTopLeft = getUnsignedShort(endianess);
+                                    Preferences.debug("Destination rectangle y top left = " + yTopLeft + "\n");
+                                    xBottomRight = getUnsignedShort(endianess);
+                                    Preferences.debug("Destination rectangle x bottom right = " + xBottomRight + "\n");
+                                    yBottomRight = getUnsignedShort(endianess);
+                                    Preferences.debug("Destination rectangle y bottom right = " + yBottomRight + "\n");
+                                    // mode
+                                    mode = readShort(endianess);
+                                    if ((mode >= 0) && (mode <= 64) && (modeStr[mode] != null)) {
+                                        Preferences.debug("mode = " + modeStr[mode] + "\n");
+                                    }
+                                    else {
+                                        Preferences.debug("mode has unrecognized value = " + mode + "\n");    
+                                    }
+                                    // PixData
+                                    if (packType > 2) {
+                                        for (j = boundsTop; j <= boundsBottom; j++) {
+                                            if (rowBytes > 250) {
+                                                byteCount = getUnsignedShort(endianess);
+                                            }
+                                            else {
+                                                raFile.read(prefix);
+                                                byteCount = prefix[0] & 0xff;
+                                            }
+                                            pad = new byte[byteCount];
+                                            raFile.read(pad);
+                                        }
+                                    } // if (packType > 2)
+                                    break;
+                                case LongComment:
+                                    Preferences.debug("LongComment\n");
+                                    commentKind = readUnsignedShort(endianess);
+                                    Preferences.debug("Comment kind = " + commentKind + "\n");
+                                    commentSize = readUnsignedShort(endianess);
+                                    Preferences.debug("Comment size = " + commentSize + "\n");
+                                    if (commentKind == 101) {
+                                        greyPictLocation[greySubPictCount++] = raFile.getFilePointer();
+                                    } // if (commentKind == 101)
+                                    raFile.seek(raFile.getFilePointer() + commentSize);
+                                    if (((4 + commentSize) % 2) == 1) {
+                                        raFile.read(spareByte);
+                                    }
                                     break;
                                 case OpEndPic:
                                     found = true;
@@ -921,15 +1193,13 @@ public class FileLIFF extends FileBase {
                                 default:
                                     Preferences.debug("opcode = " + opcode + "\n");
                             } // switch (opcode)
-                        } // while ((padBytes > 1) && (!found))
-                        Preferences.debug("padBytes = " + padBytes + "\n");
+                        } // while (!found)
                     } // if (versionNumber <= 2)
                     else {
                         width = readInt(endianess);
                         Preferences.debug("width = " + width + "\n");
                         height = readInt(endianess);
                         Preferences.debug("height = " + height + "\n");
-                        padBytes = 188;
                     }
                     
                     if ((imageType >= DEEP_GREY_9)  && (imageType <= DEEP_GREY_16)) {
@@ -938,9 +1208,7 @@ public class FileLIFF extends FileBase {
                         xDim = width;
                         yDim = height;
                         bitNumber = layerDepth;
-                        pad = new byte[padBytes];
-                        raFile.read(pad);
-                        greyPictLocation[greyPictCount++] = raFile.getFilePointer();
+                        greyPictCount++;
                     } // // if ((imageType >= DEEP_GREY_9)  && (imageType <= DEEP_GREY_16))
                 } // if ((tagType == 67) || (tagType == 68))
                 else if (tagType == 69) {
@@ -1065,9 +1333,9 @@ public class FileLIFF extends FileBase {
             }
             
             if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) {
-                for (i = 0; i < greyPictCount; i++) {
+                for (i = 0; i < greySubPictCount; i++) {
                     raFile.seek(greyPictLocation[i]);
-                    Preferences.debug("Located at greyPictCount " + (i+1) + " of " + greyPictCount + "\n");
+                    Preferences.debug("Located at greySubPictCount " + (i+1) + " of " + greySubPictCount + "\n");
                     appSignature = getString(4);
                     if (appSignature.equals("IVEA")) {
                         Preferences.debug("PIC Comment 101 appSignature is expected " +
@@ -1115,7 +1383,7 @@ public class FileLIFF extends FileBase {
                     Preferences.debug("bitDepth = " + bitDepth + "\n");
                     // bitShift should be ignored
                     bitShift = readShort(endianess);
-                } // for (i = 0; i < greyPictCount; i++)
+                } // for (i = 0; i < greySubPictCount; i++)
             } // if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16))
             
 
