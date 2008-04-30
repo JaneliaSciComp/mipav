@@ -2132,27 +2132,26 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         int i, j, index;
         int[] iterFactors = imageActive.getVolumeIterationFactors();
 
-        
         Point3Df paintPoint = new Point3Df();
         Point3Df patientPaintPoint = new Point3Df();
+        int xDim = imageActive.getExtents()[0];
+        int yDim = imageActive.getExtents()[1];
+        int zDim = imageActive.getExtents()[2];
 
         if (paintBrush != null) {
 
-            int xDim = imageActive.getExtents()[0];
-            int yDim = imageActive.getExtents()[1];
-            int zDim = imageActive.getExtents()[2];
-
+           
             int brushXDim = paintBrushDim.width;
             int brushYDim = paintBrushDim.height;
-            int heightCursor, weightCursor; // height and width of the paint cursor icon
+            int heightCursor, widthCursor; // height and width of the paint cursor icon
             double height, width; // scaled height and width in the paintBitmap
             
             double minResol = Math.min(resolutionX, resolutionY);
             
             for (height = 0, heightCursor = 0; heightCursor < brushYDim; heightCursor++, height += minResol/resolutionY) {
 
-                for (width = 0, weightCursor = 0; weightCursor < brushXDim; weightCursor++, width += minResol/resolutionX) {
-                	int idx = ((heightCursor * brushXDim) + weightCursor);
+                for (width = 0, widthCursor = 0; widthCursor < brushXDim; widthCursor++, width += minResol/resolutionX) {
+                	int idx = ((heightCursor * brushXDim) + widthCursor);
                     if (paintBrush.get(idx)) {
 
                         patientPaintPoint.x = (float)(x + width);
@@ -2162,8 +2161,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                         if (((paintPoint.x <= (xDim - 1)) && (paintPoint.x >= 0)) && (paintPoint.y <= (yDim - 1)) &&
                                 (paintPoint.y >= 0) && (paintPoint.z <= (zDim - 1)) && (paintPoint.z >= 0)) {
                             
-                        	index = MipavMath.round((iterFactors[0] * (int)paintPoint.x) + (iterFactors[1] * (int)paintPoint.y) +
-                                           (iterFactors[2] * (int)paintPoint.z));
+                        	index = MipavMath.round((iterFactors[0] * paintPoint.x) + (iterFactors[1] * paintPoint.y) +
+                                           (iterFactors[2] * paintPoint.z));
+
 
                             if (paintPixels == true) {
                                 paintBitmap.set(index);
@@ -2178,9 +2178,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
         } else {
 
-
             // Point2Df scalePoint = new Point2Df( 1, 1 );
-
             for (j = jMin; j <= jMax; j++) {
 
                 for (i = iMin; i <= iMax; i++) {
@@ -2189,8 +2187,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                     patientPaintPoint.z =slice;
                     MipavCoordinateSystems.patientToFile(patientPaintPoint, paintPoint, imageActive, orientation);
 
-                    index = (int) ((iterFactors[0] * paintPoint.x) + (iterFactors[1] * paintPoint.y) +
-                                   (iterFactors[2] * paintPoint.z));
+                    index = MipavMath.round((iterFactors[0] * paintPoint.x) + (iterFactors[1] * paintPoint.y) +
+                            (iterFactors[2] * paintPoint.z));
 
                     if (paintPixels) {
                         paintBitmap.set(index);
