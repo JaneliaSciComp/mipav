@@ -2371,6 +2371,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         // remove the image created as it is no longer needed
         brushImage.disposeLocal();
 
+        if ( buffer != null ) {
+        	buffer = null;
+        }
     }
 
     /**
@@ -2463,6 +2466,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         // remove the image created as it is no longer needed
         brushImage.disposeLocal();
+        
+        if ( buffer != null ) {
+        	buffer = null;
+        }
 
     }
 
