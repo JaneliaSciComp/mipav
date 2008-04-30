@@ -48,7 +48,7 @@ import javax.vecmath.*;
  * @see  JDialogView
  * @see  JDialogMouseRecorder
  */
-public class SurfaceRender extends RenderViewBase implements KeyListener, MouseListener {
+public class SurfaceRender extends RenderViewBase implements KeyListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -3015,7 +3015,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener, MouseL
         canvas = new VolumeCanvas3D(config);
         Preferences.debug("Canvas: " + canvas.queryProperties() + "\n");
         canvas.addKeyListener( this );  
-        canvas.addMouseListener( this );
         
         boxSliceVertices = new Point3Df[3][];
         boxSliceVertices[0] = null;
@@ -3600,53 +3599,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener, MouseL
                 rotationAlpha.pause();
             }
         }
-    }
-
-    /**
-     * Unchanged.
-     *
-     * @param  event  Original mouse event.
-     */
-    public void mouseClicked(MouseEvent event) {} 
-    /**
-     * Only invoked when the raycast renderer is active. 
-     *
-     * @param  event  Original mouse event.
-     */
-    public void mouseReleased(MouseEvent event) {
-    	updateRaycastRender();
-    }
-    
-    /**
-     * Unchanged.
-     *
-     * @param  event  Original mouse event.
-     */
-    public void mouseEntered(MouseEvent event) { }
-
-    /**
-     * Unchanged.
-     *
-     * @param  event  Original mouse event.
-     */
-    public void mouseExited(MouseEvent event) { }
-
-    /**
-     * Unchanged.
-     *
-     * @param  event  Original mouse event.
-     */
-    public void mouseMoved(MouseEvent event) { }
-    /**
-     * Unchanged.
-     *
-     * @param  event  Original mouse event.
-     */
-    public void mousePressed(MouseEvent event) { }
-
-    
-    
-    
-    
+    }    
     
 }
