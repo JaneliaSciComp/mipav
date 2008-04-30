@@ -2134,6 +2134,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
         
         Point3Df paintPoint = new Point3Df();
+        Point3Df patientPaintPoint = new Point3Df();
 
         if (paintBrush != null) {
 
@@ -2154,7 +2155,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 	int idx = ((heightCursor * brushXDim) + weightCursor);
                     if (paintBrush.get(idx)) {
 
-                        Point3Df patientPaintPoint = new Point3Df((float)(x + width), (float)(y + height), slice);
+                        patientPaintPoint.x = (float)(x + width);
+                        patientPaintPoint.y = (float)(y + height);
+                        patientPaintPoint.z = slice;
                         MipavCoordinateSystems.patientToFile(patientPaintPoint, paintPoint, imageActive, orientation);
                         if (((paintPoint.x <= (xDim - 1)) && (paintPoint.x >= 0)) && (paintPoint.y <= (yDim - 1)) &&
                                 (paintPoint.y >= 0) && (paintPoint.z <= (zDim - 1)) && (paintPoint.z >= 0)) {
@@ -2181,7 +2184,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             for (j = jMin; j <= jMax; j++) {
 
                 for (i = iMin; i <= iMax; i++) {
-                    Point3Df patientPaintPoint = new Point3Df(i, j, slice);
+                    patientPaintPoint.x = i;
+                    patientPaintPoint.y = j;
+                    patientPaintPoint.z =slice;
                     MipavCoordinateSystems.patientToFile(patientPaintPoint, paintPoint, imageActive, orientation);
 
                     index = (int) ((iterFactors[0] * paintPoint.x) + (iterFactors[1] * paintPoint.y) +
