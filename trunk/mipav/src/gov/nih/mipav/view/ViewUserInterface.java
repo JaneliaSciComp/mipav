@@ -2101,6 +2101,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         boolean voiFollowImage = false;
         int[] voiCount;
         int imgCount = 0;
+        boolean providedUserDefaultDir = false;
+        String userDefaultDir = "";
 
         String scriptFile = null;
         Vector imageList = new Vector();
@@ -2191,11 +2193,40 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 i++;
             }
         }
+        
+        //determine if -dir flag was provided (user defined default image directory)
+        for (i = 0; i < args.length; i++) {
+            if (args[i].equalsIgnoreCase("-dir")) {
+            	providedUserDefaultDir = true;
+            	userDefaultDir = args[++i];
+            	break;
+            }
+        }
+        
+        
+        //if -dir was given, verify that path provided is a proper path
+        if(providedUserDefaultDir) {
+        	if(userDefaultDir == null || userDefaultDir.trim().equals("")) {
+        		printUsageAndExit();
+        	}else {
+        		//check that there is a trailng slash at the end of the defaultDir...if not, add one
+        		if(!(userDefaultDir.charAt(userDefaultDir.length()-1) == File.separatorChar)) {
+        			userDefaultDir = userDefaultDir + File.separator;
+        		}
+        		//now check if this is a valid path
+        		File checkDefaultDir = new File(userDefaultDir);
+        		if(!checkDefaultDir.exists()) {
+        			printUsageAndExit();
+        		}
+        	}
+        }
+        
 
         i = 0;
 
         int voiIdx = 0, imgIdx = 0;
         boolean isMulti;
+        File checkFile;
 
         while (i < args.length) {
             arg = args[i];
@@ -2213,20 +2244,81 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     String imgName = args[++i];
                     index = imgName.lastIndexOf(File.separatorChar);
 
-                    if (index < 0) {
 
-                        // imgName = this.getDefaultDirectory() + File.separatorChar + imgName;
-                        // System.err.println(" ra 1= " + this.getDefaultDirectory());
-                        setDefaultDirectory(System.getProperty("user.dir"));
+                    if (index < 0) {
+                    	//only the image name was provided
+                    	//if the user provided defaultDir, first check to see if the file is there
+                    	//otherwise try to find the image under user.dir property
+                    	//if still not there, print usage and exit...since file was not found
+                    	if(providedUserDefaultDir) {
+                    		checkFile = new File(userDefaultDir + imgName);
+                    		if(checkFile.exists()) {
+                    			setDefaultDirectory(userDefaultDir);
+                    		}else {
+                    			checkFile = new File(System.getProperty("user.dir") + imgName);
+                    			if(checkFile.exists()) {
+                    				setDefaultDirectory(System.getProperty("user.dir"));
+                    			}else {
+                    				Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
+                    	            System.out.println("Can not find " + imgName);
+                    	            printUsageAndExit();
+                    			}
+                    		}
+                    	}else {
+                    		checkFile = new File(System.getProperty("user.dir") + imgName);
+                			if(checkFile.exists()) {
+                				setDefaultDirectory(System.getProperty("user.dir"));
+                			}else {
+                				Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
+                	            System.out.println("Can not find " + imgName);
+                	            printUsageAndExit();
+                			}
+                    	}
                         imageList.add(new OpenFileInfo(getDefaultDirectory(), imgName, isMulti));
                     } else {
-
-                        // System.err.println(" ra 2 = " + imgName.substring( 0, index + 1 ));
-
+                    	//either relative path or absolute path was provided
                         String dir = imgName.substring(0, index + 1);
                         String name = imgName.substring(index + 1);
-                        setDefaultDirectory(dir);
-                        imageList.add(new OpenFileInfo(dir, name, isMulti));
+                        checkFile = new File(imgName);
+                        if(checkFile.isAbsolute()) {
+                        	if(checkFile.exists()) {
+                        		imageList.add(new OpenFileInfo(dir, name, isMulti));
+                        	}else {
+                        		Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
+                	            System.out.println("Can not find " + imgName);
+                	            printUsageAndExit();
+                        	}
+                        }else {
+                        	if(providedUserDefaultDir) {
+                        		checkFile = new File(userDefaultDir + imgName);
+                        		if(checkFile.exists()) {
+                        			setDefaultDirectory(userDefaultDir);
+                        			imageList.add(new OpenFileInfo(userDefaultDir + dir, name, isMulti));
+                        		}else {
+                        			checkFile = new File(imgName);
+                        			if(checkFile.exists()) {
+                                		imageList.add(new OpenFileInfo(dir, name, isMulti));
+                                	}else {
+                                		Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
+                        	            System.out.println("Can not find " + imgName);
+                        	            printUsageAndExit();
+                                	}
+                        		}
+                        	}else {
+                        		checkFile = new File(imgName);
+                    			if(checkFile.exists()) {
+                            		imageList.add(new OpenFileInfo(dir, name, isMulti));
+                            	}else {
+                            		Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
+                    	            System.out.println("Can not find " + imgName);
+                    	            printUsageAndExit();
+                            	}
+                        	}
+                        	
+                        }
+                        
+            
+                        
                     }
                     // imageFileNames.add(args[++i]);
 
@@ -2300,7 +2392,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         MipavUtil.displayError("Unable to load plugin (acc)");
                     }
                     
-                } else {
+                }else if (arg.equalsIgnoreCase("-dir")) {
+                	++i;
+                }
+                else {
                     printUsageAndExit();
                 }
             } else {
@@ -3627,15 +3722,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     private void printUsageAndExit() {
         String helpInfo = "Usage: mipav " + "[-hH] " + "[-iI] imageFileName " + "[-sS] ScriptFileName " +
                           "[-vV] voiFileName " + "[-oO] imageFileName " +
-                          "[-dD] scriptVariableName scriptVariableValue " + "[-hideHide]" + "\n" +
+                          "[-dD] scriptVariableName scriptVariableValue " +  "[-dir][-DIR] Default image directory path " + "[-hideHide]" + "\n" +
                           "[-h][-H][--help]  Display this help" + "\n" + "[-hide][-HIDE]    Hide application frame" +
                           "\n" + "[-i][-I]          Image file name" + "\n" + "[-m][-M]          Image multifile name" +
                           "\n" + "[-s][-S]          Script file name" + "\n" + "[-v][-V]          VOI file name" +
                           "\n" + "[-o][-O]          Saved image file name (sets " + ActionSaveBase.SAVE_FILE_NAME +
                           " parameter)" + "\n" + "[-d][-D]          Set the value of a variable used in a script" +
-                          "\n" + "\n" + "Examples:" + "\n" + "> mipav" + "\n" + "> mipav imageFileName" + "\n" +
+                          "\n" + "[-dir][-DIR]      Default image directory path" + "\n" + "Examples:" + "\n" + "> mipav" + "\n" + "> mipav imageFileName" + "\n" +
                           "> mipav -i imageFileName -s scriptFileName -hide" + "\n" +
-                          "> mipav -s scriptFileName -i imageFileName1 -v voiName1 -v voiName2 -i imageFileName2 -v voiName3";
+                          "> mipav -s scriptFileName -i imageFileName1 -v voiName1 -v voiName2 -i imageFileName2 -v voiName3 -dir defaultImageDirectoryPath";
 
         // print this usage help to the console
         System.out.println(helpInfo);
