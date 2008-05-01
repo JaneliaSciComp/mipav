@@ -496,6 +496,7 @@ public abstract class RayCastRenderer extends Renderer {
 
 	public final void trace(final int rayTraceStepSize, final int iSpacing) {
 		long startTime = System.currentTimeMillis();
+		//multiThreadingEnabled=false;
 		if (multiThreadingEnabled) {
 			float step = ((float)m_iRBound)/nthreads;
 			final CountDownLatch doneSignal = new CountDownLatch(nthreads);
@@ -522,8 +523,8 @@ public abstract class RayCastRenderer extends Renderer {
 			traceBlockRays(0, m_iRBound, 0, m_iRBound, rayTraceStepSize, iSpacing);
 		}
 		Preferences.debug("Raycast elapse time = " + (System.currentTimeMillis()-startTime) + "\n");
-		Throwable t = new Throwable();
-		t.printStackTrace();
+		//Throwable t = new Throwable();
+		//t.printStackTrace();
 	}
 
 	/**
