@@ -53,7 +53,7 @@ public class AlgorithmSeparableConvolverTest extends TestCase {
         /**
          * Single thread
          */
-        sepConvolver = new AlgorithmSeparableConvolver(srcBuffer, new int[]{512, 512}, xDerivativeKernel.getData(), false, false);
+        sepConvolver = new AlgorithmSeparableConvolver(srcBuffer, new int[]{512, 512}, xDerivativeKernel.getData(), false);
         sepConvolver.run();
         testBuffer = sepConvolver.getOutputBuffer();
         for(int i = 0; i < imgLength; i++){
@@ -63,7 +63,7 @@ public class AlgorithmSeparableConvolverTest extends TestCase {
         /**
          * multi-threading separable convolution.
          */
-        sepConvolver = new AlgorithmSeparableConvolver(srcBuffer, new int[]{512, 512}, xDerivativeKernel.getData(), false, true);
+        sepConvolver = new AlgorithmSeparableConvolver(srcBuffer, new int[]{512, 512}, xDerivativeKernel.getData(), false);
         sepConvolver.run();
         testBuffer = sepConvolver.getOutputBuffer();
         for(int i = 0; i < imgLength; i++){
@@ -76,7 +76,7 @@ public class AlgorithmSeparableConvolverTest extends TestCase {
         /**
          * Single-threading separable convolution.
          */
-        sepConvolver = new AlgorithmSeparableConvolver(srcBuffer, new int[]{512, 512}, yDerivativeKernel.getData(), false, false);;
+        sepConvolver = new AlgorithmSeparableConvolver(srcBuffer, new int[]{512, 512}, yDerivativeKernel.getData(), false);;
         sepConvolver.run();
         testBuffer = sepConvolver.getOutputBuffer();
         for(int i = 0; i < imgLength; i++){
@@ -86,7 +86,7 @@ public class AlgorithmSeparableConvolverTest extends TestCase {
         /**
          * multi-threading separable convolution.
          */
-        sepConvolver = new AlgorithmSeparableConvolver(srcBuffer, new int[]{512, 512}, yDerivativeKernel.getData(), false, false);;
+        sepConvolver = new AlgorithmSeparableConvolver(srcBuffer, new int[]{512, 512}, yDerivativeKernel.getData(), false);;
         sepConvolver.run();
         testBuffer = sepConvolver.getOutputBuffer();
         for(int i = 0; i < imgLength; i++){
