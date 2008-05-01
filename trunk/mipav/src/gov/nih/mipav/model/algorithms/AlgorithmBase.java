@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.util.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ProgressChangeEvent;
 import gov.nih.mipav.view.ProgressChangeListener;
 import gov.nih.mipav.view.ViewJProgressBar;
@@ -108,11 +109,8 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         this.srcImage = null;
         destFlag = false;
         threadStopped = false;
-        multiThreadingEnabled = false;
         nthreads = MipavUtil.getAvailableCores();
-        if( nthreads > 1){
-        	multiThreadingEnabled = true;
-        }
+        multiThreadingEnabled = Preferences.isMultiThreadingEnabled();
     }
 
 
@@ -134,9 +132,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
 
         threadStopped = false;
         nthreads = MipavUtil.getAvailableCores();
-        if( nthreads > 1){
-        	multiThreadingEnabled = true;
-        }
+        multiThreadingEnabled = Preferences.isMultiThreadingEnabled();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

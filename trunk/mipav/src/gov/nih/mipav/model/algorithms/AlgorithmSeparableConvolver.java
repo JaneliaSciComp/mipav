@@ -69,9 +69,8 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
      * @param  maxProgressValue the maximum progress value.
      */
     public AlgorithmSeparableConvolver(float[] srcBuffer, int[] iExtents, float[][] kernBuffer, 
-            boolean colorImage, boolean multiThreadingEnabled) {
+            boolean colorImage) {
         super(null, null);
-        this.multiThreadingEnabled = multiThreadingEnabled;
         this.inputBuffer = new double[srcBuffer.length];
         MipavUtil.arrayCopy(srcBuffer, 0, inputBuffer, 0, srcBuffer.length);
 
@@ -96,9 +95,8 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 
 
     public AlgorithmSeparableConvolver(float[] srcBuffer, int[] iExtents, float[] kernBuffers, int[] kExtents, 
-    		boolean colorImage, boolean multiThreadingEnabled) {
+    		boolean colorImage) {
         super(null, null);
-        this.multiThreadingEnabled = multiThreadingEnabled;
 			this.inputBuffer = new double[srcBuffer.length];
 			for(int i = 0; i < srcBuffer.length; i++){
 			    inputBuffer[i] = srcBuffer[i];
