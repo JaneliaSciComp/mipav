@@ -322,4 +322,19 @@ public class MipavUtil {
         sb.append(data[data.length-1]);
         System.out.println(sb.toString());
     }
+    /**
+     * A utility function to print out a double array.
+     * @param data  a double array.
+     */
+    public static void print(float[] data){
+        if(data == null)
+            return;
+        StringBuffer sb = new StringBuffer("");
+        for(int i = 0; i < (data.length - 1); i++){
+            sb.append(data[i]);
+            sb.append(", ");
+        }
+        sb.append(data[data.length-1]);
+        System.out.println(sb.toString());
+    }
 }
