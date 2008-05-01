@@ -67,6 +67,7 @@ public class FileLIFF extends FileBase {
     private static final short kUnused2 = 14;
     private static final short kUnitsOther = 15;
     
+    private static final short NOP = 0x0000;
     private static final short Clip = 0x0001;
     private static final short TxFont = 0x0003;
     private static final short FillPat = 0x000A;
@@ -80,6 +81,8 @@ public class FileLIFF extends FileBase {
     private static final short DirectBitsRect = 0x009A;
     private static final short LongComment = 0x00A1;
     private static final short OpEndPic = 0x00FF;
+    private static final short HeaderOp = 0x0C00;
+    private static final int mystery = 0xCBCC;
     
     
 
@@ -285,6 +288,7 @@ public class FileLIFF extends FileBase {
         int xDim;
         int yDim;
         long greyPictLocation[] = new long[24000];
+        int  imageTypeLocation[] = new int[24000];
         int greySubPictCount = 0;
         int greyPictCount = 0;
         String dyeString[] = new String[10];
@@ -312,10 +316,16 @@ public class FileLIFF extends FileBase {
         float verticalResolution;
         int verticalResolutionFract;
         short verticalResolutionShort;
-        int xTopLeft;
-        int yTopLeft;
-        int xBottomRight;
-        int yBottomRight;
+        short hResShort;
+        int hResFract;
+        float hRes;
+        short vResShort;
+        int vResFract;
+        float vRes;
+        short xTopLeft;
+        short yTopLeft;
+        short xBottomRight;
+        short yBottomRight;
         int opcode;
         int fillPat1;
         int fillPat2;
@@ -383,9 +393,29 @@ public class FileLIFF extends FileBase {
         // Transparent mode constant
         modeStr[36] = new String("transparent");
         short mode;
-        int boundsTop;
-        int boundsBottom;
+        short boundsTop;
+        short boundsLeft;
+        short boundsBottom;
+        short boundsRight;
         int byteCount;
+        int regionSize;
+        short clipTop;
+        short clipLeft;
+        short clipBottom;
+        short clipRight;
+        int totalByteCount = 0;
+        short headerVersion;
+        short headerReservedShort;
+        int headerReservedInt;
+        short val1;
+        short val2;
+        int userTagNum = 0;
+        int classNameLength;
+        String className;
+        boolean nullFound;
+        short anum;
+        short numVars;
+        int bytesRead;
 
         try {
             file = new File(fileDir + fileName);
@@ -465,7 +495,6 @@ public class FileLIFF extends FileBase {
                 }
                 Preferences.debug("Absolute location of next tag header = " + nextOffset + "\n");
                 
-                // If the tag is not an image tag, this field should be set to zero
                 formatStr = getString(4);
                 if ((tagType == 67) || (tagType == 68)) {
                     // This field will most often contain 'PICT', indicating that the image data
@@ -473,7 +502,7 @@ public class FileLIFF extends FileBase {
                     // type - this is a compressed raw image instead of PICT data.
                     Preferences.debug("Format of the data in the image tag is " + formatStr + "\n");
                 }
-                if (tagType == 69) {
+                else if (tagType == 69) {
                     if (formatStr.equals("cali")) {
                         Preferences.debug("calibration tag type has expected format string of cali\n");
                     }
@@ -481,6 +510,10 @@ public class FileLIFF extends FileBase {
                         Preferences.debug("calibration tag type unexpectedly has format string of " 
                                           + formatStr + "\n");    
                     }
+                }
+                else if (tagType == 72) {
+                    // Have seen "USER"
+                    Preferences.debug("user tag type has format string of " + formatStr + "\n");
                 }
                 
                 if (versionNumber <= 2) {
@@ -804,14 +837,14 @@ public class FileLIFF extends FileBase {
                                                     Math.pow(2.0,-16.0)*bestVerticalResolutionFract);
                         Preferences.debug("Best vertical resolution = " +
                                           bestVerticalResolution + " pixels per inch\n");
-                        xTopLeft = getUnsignedShort(endianess);
-                        Preferences.debug("x top left = " + xTopLeft + "\n");
-                        yTopLeft = getUnsignedShort(endianess);
+                        yTopLeft = readShort(endianess);
                         Preferences.debug("y top left = " + yTopLeft + "\n");
-                        xBottomRight = getUnsignedShort(endianess);
-                        Preferences.debug("x bottom right = " + xBottomRight + "\n");
-                        yBottomRight = getUnsignedShort(endianess);
+                        xTopLeft = readShort(endianess);
+                        Preferences.debug("x top left = " + xTopLeft + "\n");
+                        yBottomRight = readShort(endianess);
                         Preferences.debug("y bottom right = " + yBottomRight + "\n");
+                        xBottomRight = readShort(endianess);
+                        Preferences.debug("x bottom right = " + xBottomRight + "\n");
                         // reserved should be 0
                         reserved = readInt(endianess);
                         Preferences.debug("reserved = " + reserved + "\n");
@@ -819,8 +852,31 @@ public class FileLIFF extends FileBase {
                         while (!found) {
                             opcode = getUnsignedShort(endianess);
                             switch (opcode) {
+                                case NOP:
+                                    Preferences.debug("NOP\n");
+                                    break;
                                 case Clip:
                                     Preferences.debug("Clip: Clipping region\n");
+                                    regionSize = getUnsignedShort(endianess);
+                                    // For rectangular regions (or empty regions), the region size
+                                    // field contains 10.
+                                    Preferences.debug("Size in bytes of clipping record = " + regionSize + "\n");
+                                    // Enclosing rectangle
+                                    clipTop = readShort(endianess);
+                                    Preferences.debug("Top of clipping rectangle = " + clipTop + "\n");
+                                    clipLeft = readShort(endianess);
+                                    Preferences.debug("Left of clipping rectangle = " + clipLeft + "\n");
+                                    clipBottom = readShort(endianess);
+                                    Preferences.debug("Bottom of clipping rectangle = " + clipBottom + "\n");
+                                    clipRight = readShort(endianess);
+                                    Preferences.debug("Right of clipping rectangle = " + clipRight + "\n");
+                                    if (regionSize > 10) {
+                                        pad = new byte[regionSize - 10];
+                                        raFile.read(pad);
+                                        if (((regionSize - 10) % 2) == 1) {
+                                            raFile.read(spareByte);
+                                        }
+                                    }
                                     break;
                                 case TxFont:
                                     Preferences.debug("TxFont: Font number for text\n");
@@ -934,14 +990,14 @@ public class FileLIFF extends FileBase {
                                     break;
                                 case eraseRect:
                                     Preferences.debug("eraseRect\n");
-                                    xTopLeft = getUnsignedShort(endianess);
-                                    Preferences.debug("x top left = " + xTopLeft + "\n");
-                                    yTopLeft = getUnsignedShort(endianess);
+                                    yTopLeft = readShort(endianess);
                                     Preferences.debug("y top left = " + yTopLeft + "\n");
-                                    xBottomRight = getUnsignedShort(endianess);
-                                    Preferences.debug("x bottom right = " + xBottomRight + "\n");
-                                    yBottomRight = getUnsignedShort(endianess);
+                                    xTopLeft = readShort(endianess);
+                                    Preferences.debug("x top left = " + xTopLeft + "\n");
+                                    yBottomRight = readShort(endianess);
                                     Preferences.debug("y bottom right = " + yBottomRight + "\n");
+                                    xBottomRight = readShort(endianess);
+                                    Preferences.debug("x bottom right = " + xBottomRight + "\n");
                                     break;
                                 case DirectBitsRect:
                                     Preferences.debug("DirectBitsRect\n");
@@ -980,14 +1036,14 @@ public class FileLIFF extends FileBase {
                                     // graphics port to QuickDraw's global coordinate system and defines the
                                     // area of the bit image into which QuickDraw can draw.  By default,
                                     // the boundary rectangle is the entire main screen.
-                                    xTopLeft = getUnsignedShort(endianess);
-                                    Preferences.debug("Boundary rectangle x top left = " + xTopLeft + "\n");
-                                    boundsTop = getUnsignedShort(endianess);
+                                    boundsTop = readShort(endianess);
                                     Preferences.debug("Boundary rectangle y top left = " + boundsTop + "\n");
-                                    xBottomRight = getUnsignedShort(endianess);
-                                    Preferences.debug("Boundary rectangle x bottom right = " + xBottomRight + "\n");
-                                    boundsBottom = getUnsignedShort(endianess);
+                                    boundsLeft = readShort(endianess);
+                                    Preferences.debug("Boundary rectangle x top left = " + boundsLeft + "\n");
+                                    boundsBottom = readShort(endianess);
                                     Preferences.debug("Boundary rectangle y bottom right = " + boundsBottom + "\n");
+                                    boundsRight = readShort(endianess);
+                                    Preferences.debug("Boundary rectangle x bottom right = " + boundsRight + "\n");
                                     // PixMap record version number.  The version number of Color QuickDraw
                                     // that created this pixMap reocrd.  The value of pmVersion is normally 0.
                                     // If pmVersion is 4, Color QuickDraw treats the pixMap reocrd's baseAddr
@@ -1093,6 +1149,9 @@ public class FileLIFF extends FileBase {
                                     // of red, green, and blue--so this field contains the value 3.
                                     cmpCount = readShort(endianess);
                                     Preferences.debug("Components per pixel = " + cmpCount + "\n");
+                                    if (cmpCount == 4) {
+                                        Preferences.debug("Alpha channel bytes are placed before red bytes\n");
+                                    }
                                     // cmpSize - logical bits per component
                                     // The size in bits of each component for a pixel.  Color QuickDraw
                                     // expects that the sizes of all components are the same, and that the
@@ -1132,23 +1191,23 @@ public class FileLIFF extends FileBase {
                                         Preferences.debug("pmReserved unexpectedly = " + pmReserved + "\n");
                                     }
                                     // Source rectangle
-                                    xTopLeft = getUnsignedShort(endianess);
-                                    Preferences.debug("Source rectangle x top left = " + xTopLeft + "\n");
-                                    yTopLeft = getUnsignedShort(endianess);
+                                    yTopLeft = readShort(endianess);
                                     Preferences.debug("Source rectangle y top left = " + yTopLeft + "\n");
-                                    xBottomRight = getUnsignedShort(endianess);
-                                    Preferences.debug("Source rectangle x bottom right = " + xBottomRight + "\n");
-                                    yBottomRight = getUnsignedShort(endianess);
+                                    xTopLeft = readShort(endianess);
+                                    Preferences.debug("Source rectangle x top left = " + xTopLeft + "\n");
+                                    yBottomRight = readShort(endianess);
                                     Preferences.debug("Source rectangle y bottom right = " + yBottomRight + "\n");
+                                    xBottomRight = readShort(endianess);
+                                    Preferences.debug("Source rectangle x bottom right = " + xBottomRight + "\n");
                                     // Destination rectangle
-                                    xTopLeft = getUnsignedShort(endianess);
-                                    Preferences.debug("Destination rectangle x top left = " + xTopLeft + "\n");
-                                    yTopLeft = getUnsignedShort(endianess);
+                                    yTopLeft = readShort(endianess);
                                     Preferences.debug("Destination rectangle y top left = " + yTopLeft + "\n");
-                                    xBottomRight = getUnsignedShort(endianess);
-                                    Preferences.debug("Destination rectangle x bottom right = " + xBottomRight + "\n");
-                                    yBottomRight = getUnsignedShort(endianess);
+                                    xTopLeft = readShort(endianess);
+                                    Preferences.debug("Destination rectangle x top left = " + xTopLeft + "\n");
+                                    yBottomRight = readShort(endianess);
                                     Preferences.debug("Destination rectangle y bottom right = " + yBottomRight + "\n");
+                                    xBottomRight = readShort(endianess);
+                                    Preferences.debug("Destination rectangle x bottom right = " + xBottomRight + "\n");
                                     // mode
                                     mode = readShort(endianess);
                                     if ((mode >= 0) && (mode <= 64) && (modeStr[mode] != null)) {
@@ -1158,28 +1217,38 @@ public class FileLIFF extends FileBase {
                                         Preferences.debug("mode has unrecognized value = " + mode + "\n");    
                                     }
                                     // PixData
-                                    if (packType > 2) {
+                                    Preferences.debug("PixData\n");
+                                    if (packType == 4) {
+                                        totalByteCount = 0;
                                         for (j = boundsTop; j <= boundsBottom; j++) {
                                             if (rowBytes > 250) {
                                                 byteCount = getUnsignedShort(endianess);
+                                                totalByteCount += (byteCount + 2);
                                             }
                                             else {
                                                 raFile.read(prefix);
                                                 byteCount = prefix[0] & 0xff;
+                                                totalByteCount += (byteCount + 1);
                                             }
+                                            Preferences.debug("row number = " + j + " byte count = " + byteCount + "\n");
                                             pad = new byte[byteCount];
                                             raFile.read(pad);
                                         }
-                                    } // if (packType > 2)
+                                        
+                                        if ((totalByteCount % 2) == 1) {
+                                            raFile.read(spareByte);
+                                        }
+                                    } // if (packType == 4)*/
                                     break;
                                 case LongComment:
-                                    Preferences.debug("LongComment\n");
+                                    Preferences.debug("LongComment for imageType = " + typeStr[imageType] + "\n");
                                     commentKind = readUnsignedShort(endianess);
                                     Preferences.debug("Comment kind = " + commentKind + "\n");
                                     commentSize = readUnsignedShort(endianess);
                                     Preferences.debug("Comment size = " + commentSize + "\n");
                                     if (commentKind == 101) {
-                                        greyPictLocation[greySubPictCount++] = raFile.getFilePointer();
+                                        greyPictLocation[greySubPictCount] = raFile.getFilePointer();
+                                        imageTypeLocation[greySubPictCount++] = imageType;
                                     } // if (commentKind == 101)
                                     raFile.seek(raFile.getFilePointer() + commentSize);
                                     if (((4 + commentSize) % 2) == 1) {
@@ -1189,6 +1258,54 @@ public class FileLIFF extends FileBase {
                                 case OpEndPic:
                                     found = true;
                                     Preferences.debug("OpEndPic: End of picture\n");
+                                    break;
+                                case HeaderOp:
+                                    Preferences.debug("HeaderOp\n");
+                                    headerVersion = readShort(endianess);
+                                    Preferences.debug("Version = " + headerVersion + "\n");
+                                    headerReservedShort = readShort(endianess);
+                                    // The horizontal resolution of the pixel image in pixels per inch.
+                                    // This value is of type Fixed; by default, the value here is
+                                    // $00480000(for 72 pixels per inch).
+                                    hResShort = readShort(endianess);
+                                    hResFract = getUnsignedShort(endianess);
+                                    hRes = (float)(hResShort + Math.pow(2.0,-16.0)*hResFract);
+                                    Preferences.debug("Horizontal resolution = " +
+                                                      hRes + " pixels per inch\n");
+                                    // The vertical resolution of the pixel image in pixels per inch.
+                                    // This value is of type Fixed; by default, the value here is
+                                    // $00480000(for 72 pixels per inch).
+                                    vResShort = readShort(endianess);
+                                    vResFract = getUnsignedShort(endianess);
+                                    vRes = (float)(vResShort + Math.pow(2.0,-16.0)*vResFract);
+                                    Preferences.debug("Vertical resolution = " +
+                                                      vRes + " pixels per inch\n");
+                                    // Source rectangle
+                                    yTopLeft = readShort(endianess);
+                                    Preferences.debug("Source rectangle y top left = " + yTopLeft + "\n");
+                                    xTopLeft = readShort(endianess);
+                                    Preferences.debug("Source rectangle x top left = " + xTopLeft + "\n");
+                                    yBottomRight = readShort(endianess);
+                                    Preferences.debug("Source rectangle y bottom right = " + yBottomRight + "\n");
+                                    xBottomRight = readShort(endianess);
+                                    Preferences.debug("Source rectangle x bottom right = " + xBottomRight + "\n");
+                                    headerReservedInt = readInt(endianess);
+                                    break;
+                                case mystery:
+                                    Preferences.debug("mystery opcode = 0xCBBC\n");
+                                    // rectangle
+                                    yTopLeft = readShort(endianess);
+                                    Preferences.debug("rectangle y top left = " + yTopLeft + "\n");
+                                    xTopLeft = readShort(endianess);
+                                    Preferences.debug("rectangle x top left = " + xTopLeft + "\n");
+                                    yBottomRight = readShort(endianess);
+                                    Preferences.debug("rectangle y bottom right = " + yBottomRight + "\n");
+                                    xBottomRight = readShort(endianess);
+                                    Preferences.debug("rectangle x bottom right = " + xBottomRight + "\n");
+                                    val1 = readShort(endianess);
+                                    Preferences.debug("mystery val1 = " + val1 + "\n");
+                                    val2 = readShort(endianess);
+                                    Preferences.debug("mystery val2 = " + val2 + "\n");
                                     break;
                                 default:
                                     Preferences.debug("opcode = " + opcode + "\n");
@@ -1298,6 +1415,39 @@ public class FileLIFF extends FileBase {
                         Preferences.debug("Other unit name = " + otherUnitString.trim() + "\n");
                     }
                 } // else if (tagType == 69)
+                else if (tagType == 72) {
+                    Preferences.debug("User tag number = " + (userTagNum+1) + "\n");
+                    userTagNum++;
+                    nullFound = false;
+                    className = "";
+                    bytesRead = 0;
+                    while (!nullFound) {
+                        raFile.read(spareByte);
+                        bytesRead++;
+                        if (spareByte[0]  == 0) {
+                            nullFound = true;
+                        }
+                        else {
+                            className += new String(spareByte);
+                        }
+                    } // while (!nullFound)
+                    if ((bytesRead % 2) == 1) {
+                        raFile.read(spareByte);
+                    }
+                    // Expect CVariableList
+                    Preferences.debug("className = " + className.trim() + "\n");
+                    if (className.equals("CVariableList")) {
+                        // Same as reading a character
+                        anum = readShort(FileBase.BIG_ENDIAN);
+                        Preferences.debug("anum = " + anum + "\n");
+                        //System.out.println("anum = " + anum);
+                        if (anum == 1) {
+                            numVars = readShort(endianess);
+                            Preferences.debug("numVars = " + numVars + "\n");
+                            //System.out.println("numVars = " + numVars);
+                        } // if (anum == 1)
+                    } // if (className.equals("CVariableList"))
+                } // else if (tagType == 72)
             } // for (nextOffset = firstTagOffset, i = 1; nextOffset < fileLength - 1; i++)
             
             for (i = 0; i <= 16; i++) {
@@ -1334,55 +1484,57 @@ public class FileLIFF extends FileBase {
             
             if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) {
                 for (i = 0; i < greySubPictCount; i++) {
-                    raFile.seek(greyPictLocation[i]);
-                    Preferences.debug("Located at greySubPictCount " + (i+1) + " of " + greySubPictCount + "\n");
-                    appSignature = getString(4);
-                    if (appSignature.equals("IVEA")) {
-                        Preferences.debug("PIC Comment 101 appSignature is expected " +
-                                          appSignature + "\n");
-                    }
-                    else {
-                        Preferences.debug("PIC Comment 101 appSignature is unexpectedly " +
-                                          appSignature + "\n");
-                    }
-                    kindSignature = getString(4);
-                    if (kindSignature.equals("dbpq")) {
-                        Preferences.debug("kindSignature dbpq indicates that image data follows\n");
-                    }
-                    else if (kindSignature.equals("dbpl")) {
-                        Preferences.debug("kindSignature dbpl indicates that LUT data follows\n");
-                    }
-                    else {
-                        Preferences.debug("kindSignature has unrecognized value = "
-                                + kindSignature + "\n");
-                    }
-                    // blkCount contains the index of this block in the sequence, and will be
-                    // from 0 to totalBlocks - 1.  Remember that it will generally require a
-                    // series of blocks to build a single image.  Openlab assumes that pic 
-                    // comment blocks arrive in the correct sequential order, starting at 0.
-                    blkCount = readInt(endianess);
-                    Preferences.debug("blkCount = " + blkCount + "\n");
-                    // totalBlocks is the number of blocks that make up this picture or LUT
-                    totalBlocks = readInt(endianess);
-                    Preferences.debug("totalBlocks = " + totalBlocks + "\n");
-                    // originalSize is the count of bytes in the original image or LUT
-                    originalSize = readInt(endianess);
-                    Preferences.debug("originalSize = " + originalSize + "\n");
-                    // compressedSize is always the same as originalSize
-                    compressedSize = readInt(endianess);
-                    Preferences.debug("compressedSize = " + compressedSize + "\n");
-                    // picBlkSize is the count of bytes of data in the remainder of the
-                    // comment.  This size does not include the header.  This is the count
-                    // of bytes after bitShift.
-                    picBlkSize = readInt(endianess);
-                    Preferences.debug("Bytes in Pic Comment 101 not including header = "
-                                      + picBlkSize + "\n");
-                    // bitDepth is the logical bitdepth of the image, and may be any
-                    // value from 9 to 16.
-                    bitDepth = readShort(endianess);
-                    Preferences.debug("bitDepth = " + bitDepth + "\n");
-                    // bitShift should be ignored
-                    bitShift = readShort(endianess);
+                    if (imageTypeLocation[i] == majorType) {
+                        raFile.seek(greyPictLocation[i]);
+                        Preferences.debug("Located at greySubPictCount " + (i+1) + " of " + greySubPictCount + "\n");
+                        appSignature = getString(4);
+                        if (appSignature.equals("IVEA")) {
+                            Preferences.debug("PIC Comment 101 appSignature has expected " +
+                                              appSignature + "\n");
+                        }
+                        else {
+                            Preferences.debug("PIC Comment 101 appSignature is unexpectedly " +
+                                              appSignature + "\n");
+                        }
+                        kindSignature = getString(4);
+                        if (kindSignature.equals("dbpq")) {
+                            Preferences.debug("kindSignature dbpq indicates that image data follows\n");
+                        }
+                        else if (kindSignature.equals("dbpl")) {
+                            Preferences.debug("kindSignature dbpl indicates that LUT data follows\n");
+                        }
+                        else {
+                            Preferences.debug("kindSignature has unrecognized value = "
+                                    + kindSignature + "\n");
+                        }
+                        // blkCount contains the index of this block in the sequence, and will be
+                        // from 0 to totalBlocks - 1.  Remember that it will generally require a
+                        // series of blocks to build a single image.  Openlab assumes that pic 
+                        // comment blocks arrive in the correct sequential order, starting at 0.
+                        blkCount = readInt(endianess);
+                        Preferences.debug("blkCount = " + blkCount + "\n");
+                        // totalBlocks is the number of blocks that make up this picture or LUT
+                        totalBlocks = readInt(endianess);
+                        Preferences.debug("totalBlocks = " + totalBlocks + "\n");
+                        // originalSize is the count of bytes in the original image or LUT
+                        originalSize = readInt(endianess);
+                        Preferences.debug("originalSize = " + originalSize + "\n");
+                        // compressedSize is always the same as originalSize
+                        compressedSize = readInt(endianess);
+                        Preferences.debug("compressedSize = " + compressedSize + "\n");
+                        // picBlkSize is the count of bytes of data in the remainder of the
+                        // comment.  This size does not include the header.  This is the count
+                        // of bytes after bitShift.
+                        picBlkSize = readInt(endianess);
+                        Preferences.debug("Bytes in Pic Comment 101 not including header = "
+                                          + picBlkSize + "\n");
+                        // bitDepth is the logical bitdepth of the image, and may be any
+                        // value from 9 to 16.
+                        bitDepth = readShort(endianess);
+                        Preferences.debug("bitDepth = " + bitDepth + "\n");
+                        // bitShift should be ignored
+                        bitShift = readShort(endianess);
+                    } // if (imageTypeLocation[i] == majorType)
                 } // for (i = 0; i < greySubPictCount; i++)
             } // if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16))
             
