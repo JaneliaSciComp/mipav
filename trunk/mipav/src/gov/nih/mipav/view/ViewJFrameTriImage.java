@@ -1143,7 +1143,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 setImageActiveInTriComponents(ViewJComponentBase.IMAGE_A);
             } else if (radioImageB.isSelected()) {
                 setSpinnerValues(imageB.getType());
-                parentFrame.setActiveImage(IMAGE_B);
+                parentFrame.setActiveImage(ViewJComponentBase.IMAGE_B);
                 setImageActiveInTriComponents(ViewJComponentBase.IMAGE_B);
             }
 
