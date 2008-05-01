@@ -111,7 +111,7 @@ public abstract class Renderer {
     boolean m_bReloadInput = false;
 
     /** General purpose Vectore3f - allocated once and reused. */
-    private Vector3f m_kVgen = new Vector3f();
+//    private Vector3f m_kVgen = new Vector3f();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -297,7 +297,7 @@ public abstract class Renderer {
         m_akAxis[2] = null;
         m_akAxis = null;
         m_kRotate = null;
-        m_kVgen = null;
+//        m_kVgen = null;
     }
 
     /**
@@ -753,11 +753,12 @@ public abstract class Renderer {
      * @param  kModel  Tuple3f output world space coordinates
      */
     protected final void convertWorldToModel(Tuple3f kWorld, Tuple3f kModel) {
-        m_kVgen.x = kWorld.x;
-        m_kVgen.y = kWorld.y;
-        m_kVgen.z = kWorld.z;
+    	Vector3f gen = new Vector3f();
+        gen.x = kWorld.x;
+        gen.y = kWorld.y;
+        gen.z = kWorld.z;
 
-        kModel.set(m_kVgen.dot(m_akAxis[0]), m_kVgen.dot(m_akAxis[1]), m_kVgen.dot(m_akAxis[2]));
+        kModel.set(gen.dot(m_akAxis[0]), gen.dot(m_akAxis[1]), gen.dot(m_akAxis[2]));
     }
 
 
