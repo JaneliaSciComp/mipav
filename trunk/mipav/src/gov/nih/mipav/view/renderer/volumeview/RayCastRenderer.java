@@ -223,12 +223,8 @@ public abstract class RayCastRenderer extends Renderer {
 		m_kRotate = new Matrix3f();
 
 		tempImage = new int[m_aiRImage.length];
-        multiThreadingEnabled = false;
-        nthreads = MipavUtil.getAvailableCores();
-        if( nthreads > 1){
-        	multiThreadingEnabled = true;
-        }
-
+		nthreads = MipavUtil.getAvailableCores();
+        multiThreadingEnabled = Preferences.isMultiThreadingEnabled();
 	}
 
 	// ~ Methods
@@ -496,7 +492,6 @@ public abstract class RayCastRenderer extends Renderer {
 
 	public final void trace(final int rayTraceStepSize, final int iSpacing) {
 		long startTime = System.currentTimeMillis();
-		//multiThreadingEnabled=false;
 		if (multiThreadingEnabled) {
 			float step = ((float)m_iRBound)/nthreads;
 			final CountDownLatch doneSignal = new CountDownLatch(nthreads);

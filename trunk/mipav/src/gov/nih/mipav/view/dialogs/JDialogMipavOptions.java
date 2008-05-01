@@ -57,6 +57,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     /** DOCUMENT ME! */
     private JCheckBox debugCommsBox;
 
+    /** Multi-Threading Enabled Check Box */
+    private JCheckBox multiThreadingEnabledCheckBox;
+
     /** DOCUMENT ME! */
     private JCheckBox debugFileIOBox;
 
@@ -303,6 +306,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         otherPanel.setLayout(gbl);
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.NORTHWEST;
+        makeMultiThreadingEnabledOptions(gbc, gbl);
         makeSaveDefaultsOptions(gbc, gbl);
         makeProvenanceOptions(gbc, gbl);
         makeLaxCheckOptions(gbc, gbl);
@@ -463,6 +467,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                                        });
 
             Preferences.setProperty(Preferences.PREF_SHOW_OUTPUT, String.valueOf(showOutputWindow.isSelected()));
+            Preferences.setProperty(Preferences.PREF_MULTI_THREADING_ENABLED, String.valueOf(multiThreadingEnabledCheckBox.isSelected()));
 
             Preferences.setProperty(Preferences.PREF_SHOW_SPLASH, String.valueOf(displaySplash.isSelected()));
             Preferences.setProperty(Preferences.PREF_SHOW_LINE_ANGLE, String.valueOf(showLineVOIAngleBox.isSelected()));
@@ -598,7 +603,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 LogStdStreams.initializeErrorLogging(logFilename, "\n" + "Mipav Log: " + new Date(), true, true);
                 Preferences.setProperty(Preferences.PREF_LOGGING_ENABLED, "true");
                 Preferences.setProperty(Preferences.PREF_LOG_FILENAME, logFilename);
-            }
+            } 
 
             if (dicomCatcher != null) {
                 Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, String.valueOf(dicomCatcher.isSelected()));
@@ -1213,6 +1218,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     }
 
 
+   
     /**
      * Makes options for default frame rate for saving AVIs.
      *
@@ -1527,6 +1533,22 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         // preset the choices.
         saveDefaultsCheckBox.setSelected(Preferences.is(Preferences.PREF_SAVE_DEFAULTS));
+    }
+
+    protected void makeMultiThreadingEnabledOptions(GridBagConstraints gbc, GridBagLayout gbl) {
+
+        multiThreadingEnabledCheckBox = new JCheckBox("Multi-Threading Enabled");
+        multiThreadingEnabledCheckBox.setFont(MipavUtil.font12);
+        multiThreadingEnabledCheckBox.setForeground(Color.black);
+        multiThreadingEnabledCheckBox.addActionListener(this);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(multiThreadingEnabledCheckBox, gbc);
+        otherPanel.add(multiThreadingEnabledCheckBox);
+
+        // preset the choices.
+        multiThreadingEnabledCheckBox.setSelected(Preferences.isMultiThreadingEnabled());
     }
 
     /**
