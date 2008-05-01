@@ -830,10 +830,6 @@ public abstract class FileBase {
             tempShort = (short) (((buffer[1] & 0xff) << 8) | (buffer[0] & 0xff));
         }
 
-        if ((tempShort & 0x0080) != 0) {
-            tempShort = (short) (tempShort | 0xff00);
-        }
-
         return tempShort;
     }
 
