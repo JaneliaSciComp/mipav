@@ -297,7 +297,7 @@ public class ViewJPanelHistoLUT extends JPanel implements HistoLUTParent, MouseL
         if (mouseEvent.getSource() instanceof ViewJComponentHLUTBase) {
             ((ViewJComponentHistoLUT) componentHistogram).dragPoint(mouseEvent);
             
-            updateFrames(false);
+            // updateFrames(false);
             //componentHistogram.showHistogram();
 
             if (lutRecorder != null) {
