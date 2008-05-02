@@ -167,6 +167,11 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
 
         Preferences.debug("baseVOIGradMagSum = " + baseVOIGradMagSum + "\n");
         Search();
+        if(gradMagVol != null) {
+        	gradMagVol.disposeLocal();
+        	gradMagVol = null;
+        }
+        new ViewJFrameImage(volume);
         setCompleted(true);
     }
 
