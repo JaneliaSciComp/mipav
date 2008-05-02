@@ -805,7 +805,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 }
             }
 
-            // updateImages(true);
+            updateImages(true);
         } else if (command.equals("CommitPaintExt")) {
 
             if (getSelectedImage() == ViewJComponentBase.BOTH) {
@@ -832,8 +832,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     triImage[AXIAL_B].commitMask(ViewJComponentBase.IMAGE_A, true, false);
                     triImage[AXIAL_B].getImageA().notifyImageDisplayListeners(null, true);
                 }
-                // updateImages(true);
             }
+            updateImages(true);
         } else if (command.equals("PaintCan")) {
 
             for (int i = 0; i < MAX_TRI_IMAGES; i++) {
