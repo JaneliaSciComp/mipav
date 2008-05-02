@@ -107,13 +107,8 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
     {
         String command = event.getActionCommand();
              
-        if (command.equals("OK")) {
-            if(flipVoiCheckbox.isSelected() && image.getVOIs().size() == 0) {
-                MipavUtil.displayError("No VOIs exist in this image, cannot flip VOIs.");
-            }
-            else if (setVariables()) {
-                callAlgorithm();
-            }
+        if (command.equals("OK") && setVariables()) {
+            callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
@@ -368,7 +363,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
     
     private boolean setVariables()
     {
-        if(flipVoiCheckbox.isSelected()) {
+        if(flipVoiCheckbox.isSelected() && image.getVOIs().size() != 0) {
             flipObject = AlgorithmFlip.IMAGE_AND_VOI;
         }
         else {
