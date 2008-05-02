@@ -60,6 +60,8 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
+    
+    private ModelImage clonedImage;
 
     /** DOCUMENT ME! */
     private float scaleX = 1.0f;
@@ -344,12 +346,14 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
                 setVisible(false);
 
                 String name = makeImageName(image.getImageName(), "_result");
+                
+                clonedImage = (ModelImage)image.clone(image.getImageName() + "_result");
 
                 // Make NEW result image of float type
                 resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name);
 
                 // call algoRegKidney here
-                algoRegVOILankmark = new AlgorithmRegVOILandmark(image, resultImage, sigmas, true, position, minTx,
+                algoRegVOILankmark = new AlgorithmRegVOILandmark(clonedImage, resultImage, sigmas, true, position, minTx,
                                                                  maxTx, minTy, maxTy, minRz, maxRz, step, opt,
                                                                  costFunc);
                 algoRegVOILankmark.addListener(this);
