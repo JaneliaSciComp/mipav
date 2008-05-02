@@ -377,7 +377,7 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
 
         showHistogram();
         
-        parentPanel.update();
+        // parentPanel.update();
 
         return;
     }
