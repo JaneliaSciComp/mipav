@@ -188,7 +188,7 @@ public class FileLIFF extends FileBase {
         int totalSize;
         long fileLength;
         boolean endianess;
-        int i, j;
+        int i, j, k;
         short tagType;
         short subType;
         long nextOffset;
@@ -254,7 +254,7 @@ public class FileLIFF extends FileBase {
         short bitDepth;
         short bitShift;
         String platform;
-        short units;
+        short units = 0;
         String unitStr[] = new String[16];
         unitStr[1] = "pixels";
         unitStr[3] = "nanometers";
@@ -285,12 +285,12 @@ public class FileLIFF extends FileBase {
         int right;
         int width;
         int height;
-        int xDim;
-        int yDim;
-        long greyPictLocation[] = new long[24000];
+        int xDim = 0;
+        int yDim = 0;
+        long pictLocation[] = new long[24000];
         int  imageTypeLocation[] = new int[24000];
-        int greySubPictCount = 0;
-        int greyPictCount = 0;
+        int subPictCount = 0;
+        int pictCount = 0;
         String dyeString[] = new String[10];
         int dyeNumber = 0;
         int spaceIndex;
@@ -416,6 +416,13 @@ public class FileLIFF extends FileBase {
         short anum;
         short numVars;
         int bytesRead;
+        double doubleValue;
+        byte derivedClassVersion[] = new byte[1];
+        byte baseClassVersion[] = new byte[1];
+        int strSize;
+        String nameStr;
+        String stringValue;
+        int unitsOfMeasure[];
 
         try {
             file = new File(fileDir + fileName);
@@ -435,6 +442,9 @@ public class FileLIFF extends FileBase {
                 raFile.close();
                 throw new IOException("LIFF Read Header: Error - first 4 bytes are an illegal " + byteOrder);
             }
+            
+            fileInfo = new FileInfoLIFF(fileName, fileDir, FileUtility.LIFF); // dummy fileInfo
+            fileInfo.setEndianess(endianess);
             
             String sigStr = getString(4);
             if (sigStr.equals("impr")) {
@@ -1247,8 +1257,8 @@ public class FileLIFF extends FileBase {
                                     commentSize = readUnsignedShort(endianess);
                                     Preferences.debug("Comment size = " + commentSize + "\n");
                                     if (commentKind == 101) {
-                                        greyPictLocation[greySubPictCount] = raFile.getFilePointer();
-                                        imageTypeLocation[greySubPictCount++] = imageType;
+                                        pictLocation[subPictCount] = raFile.getFilePointer();
+                                        imageTypeLocation[subPictCount++] = imageType;
                                     } // if (commentKind == 101)
                                     raFile.seek(raFile.getFilePointer() + commentSize);
                                     if (((4 + commentSize) % 2) == 1) {
@@ -1325,7 +1335,7 @@ public class FileLIFF extends FileBase {
                         xDim = width;
                         yDim = height;
                         bitNumber = layerDepth;
-                        greyPictCount++;
+                        pictCount++;
                     } // // if ((imageType >= DEEP_GREY_9)  && (imageType <= DEEP_GREY_16))
                 } // if ((tagType == 67) || (tagType == 68))
                 else if (tagType == 69) {
@@ -1418,35 +1428,53 @@ public class FileLIFF extends FileBase {
                 else if (tagType == 72) {
                     Preferences.debug("User tag number = " + (userTagNum+1) + "\n");
                     userTagNum++;
-                    nullFound = false;
-                    className = "";
-                    bytesRead = 0;
-                    while (!nullFound) {
-                        raFile.read(spareByte);
-                        bytesRead++;
-                        if (spareByte[0]  == 0) {
-                            nullFound = true;
-                        }
-                        else {
-                            className += new String(spareByte);
-                        }
-                    } // while (!nullFound)
-                    if ((bytesRead % 2) == 1) {
-                        raFile.read(spareByte);
-                    }
-                    // Expect CVariableList
+                    className = readCString();
                     Preferences.debug("className = " + className.trim() + "\n");
-                    if (className.equals("CVariableList")) {
-                        // Same as reading a character
-                        anum = readShort(FileBase.BIG_ENDIAN);
-                        Preferences.debug("anum = " + anum + "\n");
-                        //System.out.println("anum = " + anum);
-                        if (anum == 1) {
-                            numVars = readShort(endianess);
-                            Preferences.debug("numVars = " + numVars + "\n");
-                            //System.out.println("numVars = " + numVars);
-                        } // if (anum == 1)
-                    } // if (className.equals("CVariableList"))
+                    if (className.trim().equals("CVariableList")) {
+                        numVars = readShort(endianess);
+                        Preferences.debug("numVars = " + numVars + "\n");
+                        for (j = 0; j < numVars; j++) {
+                            className = readCString();
+                            Preferences.debug("j = " + j + " className = " + className.trim() + "\n");
+                            if ((!className.trim().equals("CStringVariable")) &&
+                                (!className.trim().equals("CFloatVariable"))) {
+                                break;
+                            }
+                            raFile.read(derivedClassVersion);
+                            if (derivedClassVersion[0] == 1) {
+                                Preferences.debug("derivedClassVersion[0] = 1 as expected\n");
+                            }
+                            else {
+                                Preferences.debug("Invalid derivedClassVersion[0] = " + 
+                                                  derivedClassVersion[0] + "\n");
+                            }
+                            if (className.trim().equals("CStringVariable")) {
+                                strSize = readInt(endianess);
+                                Preferences.debug("strSize = " + strSize + "\n");
+                                stringValue = getString(strSize);
+                                Preferences.debug("stringValue = " + stringValue + "\n");
+                                raFile.skipBytes(1);
+                            }
+                            else if (className.trim().equals("CFloatVariable")) {
+                                doubleValue = readDouble(endianess);
+                                Preferences.debug("doubleValue = " + doubleValue + "\n");
+                            } // else if (className.trim().equals("CFloatVariable"))
+                            
+                            raFile.read(baseClassVersion);
+                            if ((baseClassVersion[0] == 1) || (baseClassVersion[0] == 2)) {
+                                Preferences.debug("baseClassVersion[0] legally = " + baseClassVersion[0] + "\n");    
+                            }
+                            else {
+                                Preferences.debug("invalid baseClassVersion[0] = " + baseClassVersion[0] + "\n");
+                                break;
+                            }
+                            strSize = readInt(endianess);
+                            Preferences.debug("strSize = " + strSize + "\n");
+                            nameStr = getString(strSize);
+                            Preferences.debug("name = " + nameStr.trim() + "\n");
+                            raFile.skipBytes(2*baseClassVersion[0] + 1);
+                        } // for (j = 0; j < numVars; j++)
+                    } // if (className.equals("CVariableList"))*/
                 } // else if (tagType == 72)
             } // for (nextOffset = firstTagOffset, i = 1; nextOffset < fileLength - 1; i++)
             
@@ -1475,18 +1503,56 @@ public class FileLIFF extends FileBase {
                 Preferences.debug("These are RGB stored in " + bitNumber + " depth\n");
                 imageSlices = majorTypeCount/3;
                 Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type ARGB_USHORT\n");
+                imageExtents[0] = xDim;
+                imageExtents[1] = yDim;
+                imageExtents[2] = imageSlices;
+                fileInfo.setExtents(imageExtents);
+                image = new ModelImage(ModelStorageBase.ARGB_USHORT, imageExtents, fileName);
             }
             else {
                 Preferences.debug("The MIPAV image will have " + majorTypeCount + 
                                   " slices of type " + typeStr[majorType] + "\n");
                 imageSlices = majorTypeCount;
             }
+            fileInfo.setDataType(image.getType());
+            if (((units >= 3) && (units <= 8)) || (units == 10) || (units == 13)) {
+                unitsOfMeasure = new int[3];
+                switch (units) {
+                    case 3:
+                        unitsOfMeasure[0] = FileInfoBase.NANOMETERS;
+                        break;
+                    case 4:
+                        unitsOfMeasure[0] = FileInfoBase.MICROMETERS;
+                        break;
+                    case 5:
+                        unitsOfMeasure[0] = FileInfoBase.MILLIMETERS;
+                        break;
+                    case 6:
+                        unitsOfMeasure[0] = FileInfoBase.CENTIMETERS;
+                        break;
+                    case 7:
+                        unitsOfMeasure[0] = FileInfoBase.METERS;
+                        break;
+                    case 8:
+                        unitsOfMeasure[0] = FileInfoBase.KILOMETERS;
+                        break;
+                    case 10:
+                        unitsOfMeasure[0] = FileInfoBase.INCHES;
+                        break;
+                    case 13:
+                        unitsOfMeasure[0] = FileInfoBase.MILES;
+                        break;
+                } // switch (units)
+                unitsOfMeasure[1] = unitsOfMeasure[0];
+                unitsOfMeasure[2] = unitsOfMeasure[0];
+                fileInfo.setUnitsOfMeasure(unitsOfMeasure);
+            } // if (((units >= 3) && (units <= 8)) || (units == 10) || (units == 13))
             
             if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) {
-                for (i = 0; i < greySubPictCount; i++) {
+                for (i = 0; i < subPictCount; i++) {
                     if (imageTypeLocation[i] == majorType) {
-                        raFile.seek(greyPictLocation[i]);
-                        Preferences.debug("Located at greySubPictCount " + (i+1) + " of " + greySubPictCount + "\n");
+                        raFile.seek(pictLocation[i]);
+                        Preferences.debug("Located at greySubPictCount " + (i+1) + " of " + subPictCount + "\n");
                         appSignature = getString(4);
                         if (appSignature.equals("IVEA")) {
                             Preferences.debug("PIC Comment 101 appSignature has expected " +
@@ -1534,7 +1600,8 @@ public class FileLIFF extends FileBase {
                         Preferences.debug("bitDepth = " + bitDepth + "\n");
                         // bitShift should be ignored
                         bitShift = readShort(endianess);
-                    } // if (imageTypeLocation[i] == majorType)
+                        
+                     } // if (imageTypeLocation[i] == majorType)
                 } // for (i = 0; i < greySubPictCount; i++)
             } // if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16))
             
@@ -1553,6 +1620,22 @@ public class FileLIFF extends FileBase {
         }
 
         return image;
+    }
+    
+    private String readCString() throws IOException {
+        String cString = "";
+        boolean nullFound = false;
+        byte oneByte[] = new byte[1];
+        while (!nullFound) {
+            raFile.read(oneByte);
+            if (oneByte[0]  == 0) {
+                nullFound = true;
+            }
+            else {
+                cString += new String(oneByte);
+            }
+        } // while (!nullFound)
+        return cString;
     }
 
     
