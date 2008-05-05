@@ -15,6 +15,8 @@ public class FileInfoLIFF extends FileInfoBase {
 
     /** Use serialVersionUID for interoperability. */
     //private static final long serialVersionUID;
+    private String dyeString[] = null;
+    short bitDepth = 0;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -42,11 +44,30 @@ public class FileInfoLIFF extends FileInfoBase {
      * @param  matrix  transformation matrix
      */
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
+        int i;
         JDialogText dialog = (JDialogText) dlog;
         displayPrimaryInfo(dialog, matrix);
         dialog.append("\n\n                Other information\n\n");
-
+        if (dyeString != null) {
+            for (i = 0; i < dyeString.length; i++) {
+                if (dyeString[i] != null) {
+                    dialog.append("Dye " + (i + 1) + " = " + dyeString[i].trim() + "\n");
+                }
+            }
+        }
         
+        if (bitDepth > 0) {
+            dialog.append("Bit depth = " + bitDepth + "\n");
+        }
+        
+    }
+    
+    public void setDyeString(String dyeString[]) {
+        this.dyeString = dyeString;
+    }
+    
+    public void setBitDepth(short bitDepth) {
+        this.bitDepth = bitDepth;
     }
 
     
