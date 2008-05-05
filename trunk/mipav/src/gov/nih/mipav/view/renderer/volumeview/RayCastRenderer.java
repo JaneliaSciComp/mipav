@@ -835,32 +835,34 @@ public abstract class RayCastRenderer extends Renderer {
 	 * @param fNum
 	 *            the numerator of the line segment parameter of the
 	 *            intersection
-	 * 
+	 * @param t[]
+	 *            t[0] for the line starting point intersection parameter, t[1] for
+	 *            the line ending point intersection parameter. 
 	 * @return true if the entire line segment is entirely clipped by the
 	 *         current plane (segment is "outside" the plane), false if the
 	 *         segment intersects the plane or is contained "inside" the plane.
 	 */
-	private boolean clipped(float fDen, float fNum, LineSegment seg) {
+	private boolean clipped(float fDen, float fNum, float[] t) {
 
 		if (fDen > 0.0f) {
 
-			if (fNum > (fDen * seg.t1)) {
+			if (fNum > (fDen * t[1])) {
 				return true;
 			}
 
-			if (fNum > (fDen * seg.t0)) {
-				seg.t0 = fNum / fDen;
+			if (fNum > (fDen * t[0])) {
+				t[0] = fNum / fDen;
 			}
 
 			return false;
 		} else if (fDen < 0.0f) {
 
-			if (fNum > (fDen * seg.t0)) {
+			if (fNum > (fDen * t[0])) {
 				return true;
 			}
 
-			if (fNum > (fDen * seg.t1)) {
-				seg.t1 = fNum / fDen;
+			if (fNum > (fDen * t[1])) {
+				t[1] = fNum / fDen;
 			}
 
 			return false;
@@ -889,45 +891,46 @@ public abstract class RayCastRenderer extends Renderer {
 	 * 
 	 * @return true if and only if the ray intersects the box
 	 */
-	private boolean intersectsBox(Vector3f mDir, Point3f mOrig, Point3f p0,
-			Point3f p1) {
+	private boolean intersectsBox(Vector3f mDir, Point3f mOrig, Point3f p0, Point3f p1) {
 
 		// clip the ray to the box
-		LineSegment seg = new LineSegment(0.0f, Float.POSITIVE_INFINITY);
-
-		if (clipped(+mDir.x, -mOrig.x - m_kExtent.x + clipRegionXNeg, seg)) {
+        float[] t = new float[2];
+        t[0] = 0f;
+        t[1] = Float.POSITIVE_INFINITY;
+		
+		if (clipped(+mDir.x, -mOrig.x - m_kExtent.x + clipRegionXNeg, t)) {
 			return false;
 		}
 
-		if (clipped(-mDir.x, +mOrig.x - m_kExtent.x + clipRegionXPos, seg)) {
+		if (clipped(-mDir.x, +mOrig.x - m_kExtent.x + clipRegionXPos, t)) {
 			return false;
 		}
 
-		if (clipped(+mDir.y, -mOrig.y - m_kExtent.y + clipRegionYNeg, seg)) {
+		if (clipped(+mDir.y, -mOrig.y - m_kExtent.y + clipRegionYNeg, t)) {
 			return false;
 		}
 
-		if (clipped(-mDir.y, +mOrig.y - m_kExtent.y + clipRegionYPos, seg)) {
+		if (clipped(-mDir.y, +mOrig.y - m_kExtent.y + clipRegionYPos, t)) {
 			return false;
 		}
 
-		if (clipped(+mDir.z, -mOrig.z - m_kExtent.z + clipRegionZNeg, seg)) {
+		if (clipped(+mDir.z, -mOrig.z - m_kExtent.z + clipRegionZNeg, t)) {
 			return false;
 		}
 
-		if (clipped(-mDir.z, +mOrig.z - m_kExtent.z + clipRegionZPos, seg)) {
+		if (clipped(-mDir.z, +mOrig.z - m_kExtent.z + clipRegionZPos, t)) {
 			return false;
 		}
 
-		if ((seg.t0 == 0.0f) && (seg.t1 == Float.POSITIVE_INFINITY)) {
+		if ((t[0] == 0.0f) && (t[1] == Float.POSITIVE_INFINITY)) {
 			return false;
 		}
 
 		// The ray and box intersect. Return *image* coordinates since the
 		// image interpolation requires these.
 		mOrig.add(m_kExtent);
-		p0.scaleAdd(seg.t0, mDir, mOrig);
-		p1.scaleAdd(seg.t1, mDir, mOrig);
+		p0.scaleAdd(t[0], mDir, mOrig);
+		p1.scaleAdd(t[1], mDir, mOrig);
 
 		return true;
 	}
