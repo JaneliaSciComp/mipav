@@ -2243,7 +2243,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
                 }
 
                 GridBagConstraints gbc = new GridBagConstraints();
-
+                
                 gbc.gridx = 0;
                 gbc.gridy = 1;
                 gbc.gridwidth = 1;
@@ -2252,7 +2252,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
                 gbc.anchor = GridBagConstraints.WEST;
                 gbc.weightx = 1;
                 gbc.weighty = 1;
-                panelToolbar.add(rayCastToolBar, gbc);
+                panelToolbar.add(volToolBar, gbc);
                 panelToolbar.validate();
                 panelToolbar.repaint();
             } else if ((shearwarpRender != null) && (source == shearwarpRender.getCanvas())) {
