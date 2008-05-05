@@ -1024,7 +1024,7 @@ public class ViewJComponentHistoRGB extends ViewJComponentHLUTBase implements Mo
         if (logFlag == true) {
             histogramMaxLog = Math.log((double) (histogramMax));
         }
-        System.out.println("logFlag = " + logFlag);
+        //System.out.println("logFlag = " + logFlag);
 
         // Builds special buffer by remapping the data in the LUT range
         int lightGray = 0xFFAFAFAF;
