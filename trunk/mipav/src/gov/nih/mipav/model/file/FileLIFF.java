@@ -82,7 +82,6 @@ public class FileLIFF extends FileBase {
     private static final short LongComment = 0x00A1;
     private static final short OpEndPic = 0x00FF;
     private static final short HeaderOp = 0x0C00;
-    private static final int mystery = 0xCBCC;
     
     
 
@@ -102,16 +101,10 @@ public class FileLIFF extends FileBase {
     private String fileName;
 
     /** DOCUMENT ME! */
-    private boolean foundEOF = false;
-
-    /** DOCUMENT ME! */
     private ModelImage image;
 
     /** DOCUMENT ME! */
     private int[] imageExtents = new int[3];
-
-    /** DOCUMENT ME! */
-    private int imageOrientation;
 
     /** DOCUMENT ME! */
     private float[] imgBuffer = null;
@@ -122,8 +115,6 @@ public class FileLIFF extends FileBase {
     /** DOCUMENT ME! */
     private ModelLUT LUT = null;
 
-    /** DOCUMENT ME! */
-    private int[] orient = new int[3];
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -184,11 +175,9 @@ public class FileLIFF extends FileBase {
      * @exception  IOException  if there is an error reading the file
      */
     public ModelImage readImage(boolean multiFile, boolean one) throws IOException {
-        int[] imgExtents;
-        int totalSize;
         long fileLength;
         boolean endianess;
-        int i, j, k;
+        int i, j;
         short tagType;
         short subType;
         long nextOffset;
@@ -272,10 +261,6 @@ public class FileLIFF extends FileBase {
         unitStr[15] = "other";
         short calLayerID;
         byte square[] = new byte[1];
-        float xOrigin;
-        float yOrigin;
-        float xScale;
-        float yScale;
         byte positiveY[] = new byte[1];
         int otherUnitStrLength;
         String otherUnitString;
@@ -291,12 +276,11 @@ public class FileLIFF extends FileBase {
         int  imageTypeLocation[] = new int[24000];
         int subPictCount = 0;
         int pictCount = 0;
-        String dyeString[] = new String[10];
-        int dyeNumber = 0;
+        String layerString[] = new String[10];
+        int layerNumber = 0;
+        int layerTypeArray[] = new int[10];
         int spaceIndex;
-        String dyeName;
         boolean found = false;
-        boolean doDeepGreyColor = false;
         int bitNumber = 0;
         int pictureBytes;
         int version;
@@ -407,15 +391,9 @@ public class FileLIFF extends FileBase {
         short headerVersion;
         short headerReservedShort;
         int headerReservedInt;
-        short val1;
-        short val2;
         int userTagNum = 0;
-        int classNameLength;
         String className;
-        boolean nullFound;
-        short anum;
         short numVars;
-        int bytesRead;
         double doubleValue;
         byte derivedClassVersion[] = new byte[1];
         byte baseClassVersion[] = new byte[1];
@@ -427,12 +405,14 @@ public class FileLIFF extends FileBase {
         float origin[] = new float[4];
         short shortBuffer[] = null;
         int index;
-        byte byteBuffer[] = null;
         byte sliceColorBuffer[] = null;
         int sliceColorBytes = 0;
         int color = 1;
         int len;
         int sliceNumber = 0;
+        int majorLayerNumber = 0;
+        String majorLayerString[] = new String[10];
+        boolean doDeepGreyColor = false;
 
         try {
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
@@ -742,16 +722,17 @@ public class FileLIFF extends FileBase {
                     Preferences.debug("layer name = " + layerName.trim() + "\n");
                     if (!layerName.toUpperCase().trim().equals("ORIGINAL IMAGE")) {
                         spaceIndex = layerName.indexOf(" ");
-                        dyeName = layerName.substring(0, spaceIndex);
-                        Preferences.debug("dyeName = " + dyeName + "\n");
+                        layerName = layerName.substring(0, spaceIndex);
+                        Preferences.debug("layerName = " + layerName + "\n");
                         found = false;
-                        for (j = 0; j < dyeNumber && (!found); j++) {
-                           if (dyeName.equals(dyeString[j])) {
+                        for (j = 0; j < layerNumber && (!found); j++) {
+                           if (layerName.equals(layerString[j])) {
                                found = true;
                            }
                         }
                         if (!found) {
-                            dyeString[dyeNumber++] = dyeName;
+                            layerTypeArray[layerNumber] = imageType;
+                            layerString[layerNumber++] = layerName;
                         }
                     } // if (!layerName.trim().equals("Original image"))
                     if (isOpenlab2Header[0]  == 1) {
@@ -1241,7 +1222,7 @@ public class FileLIFF extends FileBase {
                                     Preferences.debug("PixData\n");
                                     if (packType == 4) {
                                         totalByteCount = 0;
-                                        for (j = boundsTop; j <= boundsBottom; j++) {
+                                        for (j = boundsTop; j < boundsBottom; j++) {
                                             if (rowBytes > 250) {
                                                 byteCount = getUnsignedShort(endianess);
                                                 totalByteCount += (byteCount + 2);
@@ -1359,22 +1340,6 @@ public class FileLIFF extends FileBase {
                                     xBottomRight = readShort(endianess);
                                     Preferences.debug("Source rectangle x bottom right = " + xBottomRight + "\n");
                                     headerReservedInt = readInt(endianess);
-                                    break;
-                                case mystery:
-                                    Preferences.debug("mystery opcode = 0xCBBC\n");
-                                    // rectangle
-                                    yTopLeft = readShort(endianess);
-                                    Preferences.debug("rectangle y top left = " + yTopLeft + "\n");
-                                    xTopLeft = readShort(endianess);
-                                    Preferences.debug("rectangle x top left = " + xTopLeft + "\n");
-                                    yBottomRight = readShort(endianess);
-                                    Preferences.debug("rectangle y bottom right = " + yBottomRight + "\n");
-                                    xBottomRight = readShort(endianess);
-                                    Preferences.debug("rectangle x bottom right = " + xBottomRight + "\n");
-                                    val1 = readShort(endianess);
-                                    Preferences.debug("mystery val1 = " + val1 + "\n");
-                                    val2 = readShort(endianess);
-                                    Preferences.debug("mystery val2 = " + val2 + "\n");
                                     break;
                                 default:
                                     Preferences.debug("opcode = " + opcode + "\n");
@@ -1551,15 +1516,22 @@ public class FileLIFF extends FileBase {
                 }
             } // for (i = 0; i <= 16; i++)
             
-            Preferences.debug("The number of dyes is " + dyeNumber + "\n");
-            Preferences.debug("The dyes are: \n");
-            for (i = 0; i < dyeNumber; i++) {
-                Preferences.debug(dyeString[i] + "\n");    
+            for (i = 0; i < layerNumber; i++) {
+                if (layerTypeArray[i] == majorType) {
+                    majorLayerString[majorLayerNumber++] = layerString[i];    
+                }
             }
-            fileInfo.setDyeString(dyeString);
-            if (((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) && (dyeNumber == 3) && ((majorTypeCount % 3) == 0)) {
-                Preferences.debug("Found " + majorTypeCount + " slices of type DEEP_GREY_12\n");
+            
+            Preferences.debug("The number of layers for the major image type is " + majorLayerNumber + "\n");
+            Preferences.debug("The major image type layers are: \n");
+            for (i = 0; i < majorLayerNumber; i++) {
+                Preferences.debug(majorLayerString[i] + "\n");    
+            }
+            fileInfo.setLayerString(majorLayerString);
+            if (((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) && ((majorTypeCount % 3) == 0) 
+                 && (majorLayerNumber == 3)) {
                 doDeepGreyColor = true;
+                Preferences.debug("Found " + majorTypeCount + " slices of type DEEP_GREY_12\n");
                 Preferences.debug("These are RGB stored in " + bitNumber + " depth\n");
                 imageSlices = majorTypeCount/3;
                 Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type ARGB_USHORT\n");
@@ -1613,7 +1585,7 @@ public class FileLIFF extends FileBase {
             fileInfo.setResolutions(imgResols);
             fileInfo.setOrigin(origin);
             
-            if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) {
+            if (doDeepGreyColor) {
                 index = 0;
                 color = 1;
                 sliceNumber = 0;
