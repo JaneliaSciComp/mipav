@@ -72,9 +72,6 @@ public abstract class RayCastRenderer extends Renderer {
 	/** Ray in box (model) coordinates. */
 	protected Point3f m_kMOrig;
 
-	/** temporary variables to avoid 'new' call. */
-	protected Point3f m_kP;
-
 	/** the intersection points of ray with box. */
 	protected Point3f m_kP0, m_kP1;
 
@@ -219,7 +216,6 @@ public abstract class RayCastRenderer extends Renderer {
 		m_kP0 = new Point3f();
 		m_kP1 = new Point3f();
 		m_kPDiff = new Vector3f();
-		m_kP = new Point3f();
 		m_kRotate = new Matrix3f();
 
 		tempImage = new int[m_aiRImage.length];
@@ -600,6 +596,7 @@ public abstract class RayCastRenderer extends Renderer {
 					int iIndex = iX + iY_renBound;
 
 					processRay(p0, p1, iIndex, rayTraceStepSize);
+					// processRay(iIndex, rayTraceStepSize);
 
 					if (iSpacing > 1) {
 
@@ -733,10 +730,28 @@ public abstract class RayCastRenderer extends Renderer {
 	 */
 	protected abstract void processRay(int iIndex, int rayTraceStepSize);
 
-	protected void processRay(Point3f p0, Point3f p1, int iIndex,
-			int rayTraceStepSize) {
-
-	}
+	/**
+	 * Process a ray that has intersected the oriented bounding box of the 3D
+	 * image. The method is only called if there is a line segment of
+	 * intersection. The 'intersectsBox' stores the end points of the line
+	 * segment in the class members P0 and P1 in image coordinates.  The local P0 and 
+	 * p1 are used for the multi-theading rendering. 
+	 * 
+	 * <p>
+	 * The function sets the color of the pixel corresponding to the processed
+	 * ray. The RGB value is stored as an integer in the format B | (G << 8) |
+	 * (R << 16). This method always returns a gray scale value (B = G = R).
+	 * However, the function can be overridden in a subclass to produce other
+	 * rendering effects. For example, the color can be set to a non-gray value
+	 * if the ray intersects a level region bounded by a level surface. See
+	 * SurfaceRayTrace.java for an example.
+	 * </p>
+	 * @param p0  Local starting point.
+	 * @param p1  Local ending point
+	 * @param iIndex  index of the pixel corresponding to the processed ray
+	 * @param rayTraceStepSize  raycast step size. 
+	 */
+	protected abstract void processRay(Point3f p0, Point3f p1, int iIndex, int rayTraceStepSize);
 
 	/**
 	 * Calls dispose.

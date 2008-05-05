@@ -8,6 +8,9 @@ import gov.nih.mipav.model.structures.*;
 import java.awt.*;
 import java.awt.Frame.*;
 
+import javax.vecmath.Point3f;
+import javax.vecmath.Vector3f;
+
 
 /**
  * A ray tracer for 3D images. Either a parallel or perspective camera model can be selected to form the rays. In the
@@ -78,6 +81,54 @@ public class RayCastIntensityDRR extends RayCastIntensity {
         return false;
     }
 
+    protected synchronized void processRay(Point3f p0, Point3f p1, int iIndex, int rayTraceStepSize) {
+
+        // Compute the number of integration steps to use.  The number of
+        // steps is proportional to the length of the line segment.
+    	Point3f m_kP = new Point3f();
+    	
+    	Vector3f lineSeg = new Vector3f();
+        lineSeg.sub(p1, p0);
+
+        float fLength = lineSeg.length();
+
+        // int iSteps = (int)(m_iMaxSamples*fLength*m_fMaxInvLength);
+        int iSteps = (int) (1.0f / rayTraceStepSize * fLength);
+
+        if (iSteps > 1) {
+
+            // integrate along the line segment using the Trapezoid Rule
+            float fIntegral = 0.5f * (interpolate(p0, m_acImageB) + interpolate(p1, m_acImageB));
+            boolean bHitModel = false;
+            float fTStep = 1.0f / iSteps;
+            for (int i = 1; i < iSteps; i++) {
+                m_kP.scaleAdd(i * fTStep, lineSeg, p0);
+
+                if (interpolate(m_kP, m_acImageA) > 0) {
+                    bHitModel = true;
+                    fIntegral += interpolate(m_kP, m_acImageB);
+                }
+            }
+
+            fIntegral *= fTStep;
+
+            if (bHitModel) {
+
+                // Normalize to be in [0,1].  The normalization factor is estimated
+                // from sampling, so the clamping after normalization is necessary.
+                int iValue = MipavMath.round(fIntegral * m_fNormalize);
+
+                if (iValue < 0) {
+                    iValue = 0;
+                } else if (iValue > 255) {
+                    iValue = 255;
+                }
+
+                m_aiRImage[iIndex] = m_kMap.mapValue(iValue);
+            }
+        }
+    }    
+    
     /**
      * Process a ray that has intersected the oriented bounding box of the 3D image. The method is only called if there
      * is a line segment of intersection. The 'intersectsBox' stores the end points of the line segment in the class
@@ -98,7 +149,9 @@ public class RayCastIntensityDRR extends RayCastIntensity {
 
         // Compute the number of integration steps to use.  The number of
         // steps is proportional to the length of the line segment.
-        m_kPDiff.sub(m_kP1, m_kP0);
+    	Point3f m_kP = new Point3f();
+    	
+    	m_kPDiff.sub(m_kP1, m_kP0);
 
         float fLength = m_kPDiff.length();
 

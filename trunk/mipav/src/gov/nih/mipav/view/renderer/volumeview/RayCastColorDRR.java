@@ -8,6 +8,9 @@ import gov.nih.mipav.model.structures.*;
 import java.awt.*;
 import java.awt.Frame.*;
 
+import javax.vecmath.Point3f;
+import javax.vecmath.Vector3f;
+
 
 /**
  * A ray tracer for 3D images. Either a parallel or perspective camera model can be selected to form the rays. In the
@@ -131,7 +134,99 @@ public class RayCastColorDRR extends RayCastColor {
         disposeLocal();
         super.finalize();
     }
+    
+    /**
+     * Process a ray that has intersected the oriented bounding box of the 3D image. The method is only called if there
+     * is a line segment of intersection. The 'intersectsBox' stores the end points of the line segment in the class
+     * members P0 and P1 in image coordinates. This method uses the Trapezoid Rule to numerically integrates the
+     * image along the line segment. The number of integration samples is chosen to be proportional to the length of the
+     * line segment.   P0 and P1 are used for multi-thread rendering. 
+     *
+     * <p>The function sets the color of the pixel corresponding to the processed ray. The RGB value is stored as an
+     * integer in the format B | (G << 8) | (R << 16). This method returns a yellowish value if the ray intersects a
+     * region bounded by the level surface indicated by the level value class member. Otherwise a gray scale value is
+     * returned.</p>
+     *
+     * @param  p0                ray trace starting point
+     * @param  p1                ray trace stopping point
+     * @param  iIndex            int the index of the pixel corresponding to the processed ray
+     * @param  rayTraceStepSize  int size of steps to take along ray being traced
+     */
+    protected synchronized void processRay(Point3f p0, Point3f p1, int iIndex, int rayTraceStepSize) {
 
+        // Compute the number of integration steps to use.  The number of
+        // steps is proportional to the length of the line segment.
+    	Point3f m_kP = new Point3f();
+    	
+    	Vector3f lineSeg = new Vector3f();
+        lineSeg.sub(p1, p0);
+
+        float fLength = lineSeg.length();
+
+        // int iSteps = (int)(m_iMaxSamples*fLength*m_fMaxInvLength);
+        int iSteps = (int) (1.0f / rayTraceStepSize * fLength);
+
+        if (iSteps > 1) {
+
+            // integrate along the line segment using the Trapezoid Rule
+            float fIntegralR = 0.5f * (interpolate(p0, m_acImageR) + interpolate(p1, m_acImageR));
+            float fIntegralG = 0.5f * (interpolate(p0, m_acImageG) + interpolate(p1, m_acImageG));
+            float fIntegralB = 0.5f * (interpolate(p0, m_acImageB) + interpolate(p1, m_acImageB));
+
+            boolean bHitModel = false;
+            float fTStep = 1.0f / iSteps;
+
+            for (int i = 1; i < iSteps; i++) {
+                m_kP.scaleAdd(i * fTStep, lineSeg, p0);
+
+                if (interpolate(m_kP, m_acImageA) > 0) {
+                    bHitModel = true;
+
+                    int iRGB = interpolateColor(m_kP);
+                    fIntegralR += (float) ((iRGB & 0x0ff0000) >> 16);
+                    fIntegralG += (float) ((iRGB & 0x0ff00) >> 8);
+                    fIntegralB += (float) ((iRGB & 0x0ff));
+                }
+            }
+
+            fIntegralR *= fTStep;
+            fIntegralG *= fTStep;
+            fIntegralB *= fTStep;
+
+            if (bHitModel) {
+
+                // Normalize to be in [0,1].  The normalization factor is estimated
+                // from sampling, so the clamping after normalization is necessary.
+                int iR = MipavMath.round(fIntegralR * m_kNormalizeR.floatValue());
+
+                if (iR < 0) {
+                    iR = 0;
+                } else if (iR > 255) {
+                    iR = 255;
+                }
+
+                int iG = MipavMath.round(fIntegralG * m_kNormalizeG.floatValue());
+
+                if (iG < 0) {
+                    iG = 0;
+                } else if (iG > 255) {
+                    iG = 255;
+                }
+
+                int iB = MipavMath.round(fIntegralB * m_kNormalizeB.floatValue());
+
+                if (iB < 0) {
+                    iB = 0;
+                } else if (iB > 255) {
+                    iB = 255;
+                }
+
+                m_aiRImage[iIndex] = (iR << 16) | (iG << 8) | iB;
+            }
+        }
+    }
+    
+    
     /**
      * Process a ray that has intersected the oriented bounding box of the 3D image. The method is only called if there
      * is a line segment of intersection. The 'intersectsBox' stores the end points of the line segment in the class
@@ -152,7 +247,9 @@ public class RayCastColorDRR extends RayCastColor {
 
         // Compute the number of integration steps to use.  The number of
         // steps is proportional to the length of the line segment.
-        m_kPDiff.sub(m_kP1, m_kP0);
+    	Point3f m_kP = new Point3f();
+    	
+    	m_kPDiff.sub(m_kP1, m_kP0);
 
         float fLength = m_kPDiff.length();
 

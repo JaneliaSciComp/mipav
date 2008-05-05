@@ -1,6 +1,9 @@
 package gov.nih.mipav.view.renderer.volumeview;
 
 
+import javax.vecmath.Point3f;
+import javax.vecmath.Vector3f;
+
 import gov.nih.mipav.model.structures.*;
 
 
@@ -101,6 +104,57 @@ public class RayCastColorMIP extends RayCastColor {
     /**
      * Process a ray that has intersected the oriented bounding box of the 3D image. The method is only called if there
      * is a line segment of intersection. The 'intersectsBox' stores the end points of the line segment in the class
+     * members P0 and P1 in image coordinates.  P0 and P1 are used in the multi-thread rendering. 
+     * 
+     * @param  p0                ray trace starting point
+     * @param  p1                ray trace stopping point
+     * @param  iIndex            index of the pixel corresponding to the processed ray
+     * @param  rayTraceStepSize  DOCUMENT ME!
+     */
+    protected synchronized void processRay(Point3f p0, Point3f p1, int iIndex, int rayTraceStepSize) {
+
+        // Compute the number of steps to use given the step size of the ray.
+        // The number of steps is proportional to the length of the line segment.
+    	Point3f m_kP = new Point3f();
+    	
+    	Vector3f lineSeg = new Vector3f();
+        lineSeg.sub(p1, p0);
+
+        float fLength = lineSeg.length();
+        int iSteps = (int) (1.0f / rayTraceStepSize * fLength);
+
+        // find the maximum value along the ray
+        if (iSteps > 1) {
+            int iMaxIntensityColor = getBackgroundColor().getRGB();
+            float fMax = -1.0f;
+            boolean bHitModel = false;
+            float fTStep = 1.0f / iSteps;
+
+            for (int i = 1; i < iSteps; i++) {
+                m_kP.scaleAdd(i * fTStep, lineSeg, p0);
+
+                if (interpolate(m_kP, m_acImageA) > 0) {
+                    bHitModel = true;
+
+                    float fValue = interpolate(m_kP, m_acImageI);
+
+                    if (fValue > fMax) {
+                        fMax = fValue;
+                        iMaxIntensityColor = interpolateColor(m_kP);
+                    }
+                }
+            }
+
+            if (bHitModel) {
+                m_aiRImage[iIndex] = iMaxIntensityColor;
+            }
+        }
+    }
+
+    
+    /**
+     * Process a ray that has intersected the oriented bounding box of the 3D image. The method is only called if there
+     * is a line segment of intersection. The 'intersectsBox' stores the end points of the line segment in the class
      * members m_kP0 and m_kP1 in image coordinates.
      *
      * @param  iIndex            index of the pixel corresponding to the processed ray
@@ -110,7 +164,9 @@ public class RayCastColorMIP extends RayCastColor {
 
         // Compute the number of steps to use given the step size of the ray.
         // The number of steps is proportional to the length of the line segment.
-        m_kPDiff.sub(m_kP1, m_kP0);
+    	Point3f m_kP = new Point3f();
+    	
+    	m_kPDiff.sub(m_kP1, m_kP0);
 
         float fLength = m_kPDiff.length();
         int iSteps = (int) (1.0f / rayTraceStepSize * fLength);

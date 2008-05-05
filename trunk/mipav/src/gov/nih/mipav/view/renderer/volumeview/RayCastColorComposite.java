@@ -14,11 +14,6 @@ public class RayCastColorComposite extends RayCastColor {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** alpha array. */
-    private float[] afAlphasFrontToBack;
-
-    /** Allocate arrays to store interpolated RGBA values along the ray in order from front-to-back. */
-    private Color3f[] akColorsFrontToBack;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -32,12 +27,6 @@ public class RayCastColorComposite extends RayCastColor {
      */
     public RayCastColorComposite(ModelImage kImage, int iRBound, int[] aiRImage) {
         super(kImage, iRBound, aiRImage);
-        akColorsFrontToBack = new Color3f[3000];
-        afAlphasFrontToBack = new float[3000];
-
-        for (int i = 0; i < 3000; i++) {
-            akColorsFrontToBack[i] = new Color3f();
-        }
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -75,8 +64,25 @@ public class RayCastColorComposite extends RayCastColor {
         super.finalize();
     }
     
+    /**
+     * Process a ray that has intersected the oriented bounding box of the 3D image. The method is only called if there
+     * is a line segment of intersection. The 'intersectsBox' stores the end points of the line segment in the class
+     * members P0 and P1 in image coordinates. This method uses the Trapezoid Rule to numerically integrates the
+     * image along the line segment. The number of integration samples is chosen to be proportional to the length of the
+     * line segment.   P0 and P1 are used for multi-thread rendering. 
+     *
+     * <p>The function sets the color of the pixel corresponding to the processed ray. The RGB value is stored as an
+     * integer in the format B | (G << 8) | (R << 16). This method returns a yellowish value if the ray intersects a
+     * region bounded by the level surface indicated by the level value class member. Otherwise a gray scale value is
+     * returned.</p>
+     *
+     * @param  p0                ray trace starting point
+     * @param  p1                ray trace stopping point
+     * @param  iIndex            int the index of the pixel corresponding to the processed ray
+     * @param  rayTraceStepSize  int size of steps to take along ray being traced
+     */
     protected void processRay(Point3f p0, Point3f p1, int iIndex, int rayTraceStepSize) {
-
+         
         // Compute the number of steps to use.  The number of
         // steps is proportional to the length of the line segment.
         Vector3f lineSeg = new Vector3f();
@@ -241,7 +247,13 @@ public class RayCastColorComposite extends RayCastColor {
      * @param  rayTraceStepSize  int size of steps to take along ray being traced
      */
     protected void processRay(int iIndex, int rayTraceStepSize) {
+    	Color3f[] akColorsFrontToBack = new Color3f[3000];
+        float[] afAlphasFrontToBack = new float[3000];
 
+        for (int i = 0; i < 3000; i++) {
+            akColorsFrontToBack[i] = new Color3f();
+        }
+        
         // Compute the number of steps to use.  The number of
         // steps is proportional to the length of the line segment.
         m_kPDiff.sub(m_kP1, m_kP0);
