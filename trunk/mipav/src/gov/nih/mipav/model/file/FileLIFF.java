@@ -251,7 +251,7 @@ public class FileLIFF extends FileBase {
         int originalSize;
         int compressedSize;
         int picBlkSize;
-        short bitDepth;
+        short bitDepth = 0;
         short bitShift;
         String platform;
         short units = 0;
@@ -423,8 +423,19 @@ public class FileLIFF extends FileBase {
         String nameStr;
         String stringValue;
         int unitsOfMeasure[];
+        long commentPointer;
+        float origin[] = new float[4];
+        short shortBuffer[] = null;
+        int index;
+        byte byteBuffer[] = null;
+        byte sliceColorBuffer[] = null;
+        int sliceColorBytes = 0;
+        int color = 1;
+        int len;
+        int sliceNumber = 0;
 
         try {
+            imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
             file = new File(fileDir + fileName);
             raFile = new RandomAccessFile(file, "r");
             
@@ -1055,7 +1066,7 @@ public class FileLIFF extends FileBase {
                                     boundsRight = readShort(endianess);
                                     Preferences.debug("Boundary rectangle x bottom right = " + boundsRight + "\n");
                                     // PixMap record version number.  The version number of Color QuickDraw
-                                    // that created this pixMap reocrd.  The value of pmVersion is normally 0.
+                                    // that created this pixMap record.  The value of pmVersion is normally 0.
                                     // If pmVersion is 4, Color QuickDraw treats the pixMap reocrd's baseAddr
                                     // field as 32-bit clean.  (All other flags are private.)
                                     pmVersion = readShort(endianess);
@@ -1256,11 +1267,59 @@ public class FileLIFF extends FileBase {
                                     Preferences.debug("Comment kind = " + commentKind + "\n");
                                     commentSize = readUnsignedShort(endianess);
                                     Preferences.debug("Comment size = " + commentSize + "\n");
+                                    commentPointer = raFile.getFilePointer();
                                     if (commentKind == 101) {
-                                        pictLocation[subPictCount] = raFile.getFilePointer();
-                                        imageTypeLocation[subPictCount++] = imageType;
+                                        // Read in first part of comment 101
+                                        appSignature = getString(4);
+                                        if (appSignature.equals("IVEA")) {
+                                            Preferences.debug("PIC Comment 101 appSignature has expected " +
+                                                              appSignature + "\n");
+                                        }
+                                        else {
+                                            Preferences.debug("PIC Comment 101 appSignature is unexpectedly " +
+                                                              appSignature + "\n");
+                                        }
+                                        kindSignature = getString(4);
+                                        if (kindSignature.equals("dbpq")) {
+                                            Preferences.debug("kindSignature dbpq indicates that image data follows\n");
+                                            // Read in the second part of comment 101 later
+                                            pictLocation[subPictCount] = raFile.getFilePointer();
+                                            imageTypeLocation[subPictCount++] = imageType;
+                                        }
+                                        else if (kindSignature.equals("dbpl")) {
+                                            // Read in the second part of comment 101 now
+                                            Preferences.debug("kindSignature dbpl indicates that LUT data follows\n");
+                                            blkCount = readInt(endianess);
+                                            Preferences.debug("blkCount = " + blkCount + "\n");
+                                            // totalBlocks is the number of blocks that make up this picture or LUT
+                                            totalBlocks = readInt(endianess);
+                                            Preferences.debug("totalBlocks = " + totalBlocks + "\n");
+                                            // originalSize is the count of bytes in the original image or LUT
+                                            originalSize = readInt(endianess);
+                                            Preferences.debug("originalSize = " + originalSize + "\n");
+                                            // compressedSize is always the same as originalSize
+                                            compressedSize = readInt(endianess);
+                                            Preferences.debug("compressedSize = " + compressedSize + "\n");
+                                            // picBlkSize is the count of bytes of data in the remainder of the
+                                            // comment.  This size does not include the header.  This is the count
+                                            // of bytes after bitShift.
+                                            picBlkSize = readInt(endianess);
+                                            Preferences.debug("Bytes in Pic Comment 101 not including header = "
+                                                              + picBlkSize + "\n");
+                                            // bitDepth is the logical bitdepth of the image, and may be any
+                                            // value from 9 to 16.
+                                            bitDepth = readShort(endianess);
+                                            Preferences.debug("bitDepth = " + bitDepth + "\n");
+                                            // bitShift should be ignored
+                                            bitShift = readShort(endianess);
+                                        }
+                                        else {
+                                            Preferences.debug("kindSignature has unrecognized value = "
+                                                    + kindSignature + "\n");
+                                        }
+                                        
                                     } // if (commentKind == 101)
-                                    raFile.seek(raFile.getFilePointer() + commentSize);
+                                    raFile.seek(commentPointer + commentSize);
                                     if (((4 + commentSize) % 2) == 1) {
                                         raFile.read(spareByte);
                                     }
@@ -1330,8 +1389,6 @@ public class FileLIFF extends FileBase {
                     }
                     
                     if ((imageType >= DEEP_GREY_9)  && (imageType <= DEEP_GREY_16)) {
-                        // Have read 288 bytes, but there are 494 bytes from start of layerinfo record
-                        // till "IVEA" starts in PIC comment 101.  So read in another 186 bytes.
                         xDim = width;
                         yDim = height;
                         bitNumber = layerDepth;
@@ -1380,29 +1437,29 @@ public class FileLIFF extends FileBase {
                     // and 64 bit double
                     // xOrigin is the absolute position of the left of the calibrated image.
                     // It will almost always be set to 0.0.
-                    xOrigin = readFloat(endianess);
-                    Preferences.debug("xOrigin = " + xOrigin + "\n");
+                    origin[0] = readFloat(endianess);
+                    Preferences.debug("xOrigin = " + origin[0] + "\n");
                     // yOrigin is the absolute position of the top of the calibrated image.
                     // It will almost always be set to 0.0.
-                    yOrigin = readFloat(endianess);
-                    Preferences.debug("yOrigin = " + yOrigin + "\n");
+                    origin[1] = readFloat(endianess);
+                    Preferences.debug("yOrigin = " + origin[1] + "\n");
                     // xScale is the horizontal dimension of a single pixel in the calibrated units.
                     // For example, if this is set to 0.01, and the units are in microns, the length
                     // of a 100 pixel line in the image is 1 micron
-                    xScale = readFloat(endianess);
+                    imgResols[0] = readFloat(endianess);
                     if (((units >= 3) && (units <= 8)) || ((units >= 10) && (units <= 13))) {
-                        Preferences.debug("The width of a pixel is " + xScale + " " + unitStr[units] + "\n");
+                        Preferences.debug("The width of a pixel is " + imgResols[0] + " " + unitStr[units] + "\n");
                     }
                     else {
-                        Preferences.debug("The width of a pixel is " + xScale + "\n");
+                        Preferences.debug("The width of a pixel is " + imgResols[0] + "\n");
                     }
                     // yScale is the vertical dimension of a single pixel in the calibrated units
-                    yScale = readFloat(endianess);
+                    imgResols[1] = readFloat(endianess);
                     if (((units >= 3) && (units <= 8)) || ((units >= 10) && (units <= 13))) {
-                        Preferences.debug("The height of a pixel is " + yScale + " " + unitStr[units] + "\n");
+                        Preferences.debug("The height of a pixel is " + imgResols[1] + " " + unitStr[units] + "\n");
                     }
                     else {
-                        Preferences.debug("The height of a pixel is " + yScale + "\n");
+                        Preferences.debug("The height of a pixel is " + imgResols[1] + "\n");
                     }
                     // positiveY is a flag indicating the convention of the direction for the Y axis.
                     // In mathematics, the Y axis normally is indicated increasing in value the
@@ -1478,6 +1535,8 @@ public class FileLIFF extends FileBase {
                 } // else if (tagType == 72)
             } // for (nextOffset = firstTagOffset, i = 1; nextOffset < fileLength - 1; i++)
             
+            fireProgressStateChanged(50);
+            
             for (i = 0; i <= 16; i++) {
                 if (imageTypeCount[i] == 1) {
                     Preferences.debug("The image has 1 slice of type " + typeStr[i] + "\n");
@@ -1497,6 +1556,7 @@ public class FileLIFF extends FileBase {
             for (i = 0; i < dyeNumber; i++) {
                 Preferences.debug(dyeString[i] + "\n");    
             }
+            fileInfo.setDyeString(dyeString);
             if (((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) && (dyeNumber == 3) && ((majorTypeCount % 3) == 0)) {
                 Preferences.debug("Found " + majorTypeCount + " slices of type DEEP_GREY_12\n");
                 doDeepGreyColor = true;
@@ -1508,6 +1568,9 @@ public class FileLIFF extends FileBase {
                 imageExtents[2] = imageSlices;
                 fileInfo.setExtents(imageExtents);
                 image = new ModelImage(ModelStorageBase.ARGB_USHORT, imageExtents, fileName);
+                shortBuffer = new short[4 * xDim * yDim];
+                sliceColorBytes = 2 * xDim * yDim;
+                sliceColorBuffer = new byte[sliceColorBytes];
             }
             else {
                 Preferences.debug("The MIPAV image will have " + majorTypeCount + 
@@ -1547,32 +1610,18 @@ public class FileLIFF extends FileBase {
                 unitsOfMeasure[2] = unitsOfMeasure[0];
                 fileInfo.setUnitsOfMeasure(unitsOfMeasure);
             } // if (((units >= 3) && (units <= 8)) || (units == 10) || (units == 13))
+            fileInfo.setResolutions(imgResols);
+            fileInfo.setOrigin(origin);
             
             if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) {
+                index = 0;
+                color = 1;
+                sliceNumber = 0;
                 for (i = 0; i < subPictCount; i++) {
                     if (imageTypeLocation[i] == majorType) {
                         raFile.seek(pictLocation[i]);
                         Preferences.debug("Located at greySubPictCount " + (i+1) + " of " + subPictCount + "\n");
-                        appSignature = getString(4);
-                        if (appSignature.equals("IVEA")) {
-                            Preferences.debug("PIC Comment 101 appSignature has expected " +
-                                              appSignature + "\n");
-                        }
-                        else {
-                            Preferences.debug("PIC Comment 101 appSignature is unexpectedly " +
-                                              appSignature + "\n");
-                        }
-                        kindSignature = getString(4);
-                        if (kindSignature.equals("dbpq")) {
-                            Preferences.debug("kindSignature dbpq indicates that image data follows\n");
-                        }
-                        else if (kindSignature.equals("dbpl")) {
-                            Preferences.debug("kindSignature dbpl indicates that LUT data follows\n");
-                        }
-                        else {
-                            Preferences.debug("kindSignature has unrecognized value = "
-                                    + kindSignature + "\n");
-                        }
+                        // Read in second section of comment 101
                         // blkCount contains the index of this block in the sequence, and will be
                         // from 0 to totalBlocks - 1.  Remember that it will generally require a
                         // series of blocks to build a single image.  Openlab assumes that pic 
@@ -1600,12 +1649,35 @@ public class FileLIFF extends FileBase {
                         Preferences.debug("bitDepth = " + bitDepth + "\n");
                         // bitShift should be ignored
                         bitShift = readShort(endianess);
-                        
+                        len = Math.min(picBlkSize, sliceColorBytes - index);
+                        raFile.read(sliceColorBuffer, index, len);
+                        index += len;
+                        if (index == sliceColorBytes) {
+                            for (j = 0; j < sliceColorBytes/2; j++) {
+                                shortBuffer[4*j + color] = getBufferShort(sliceColorBuffer, 2*j, endianess);
+                            } // for (j = 0; j < sliceColorBytes/2; j++)
+                            index = 0;
+                            if (color == 1) {
+                                color = 2;
+                            }
+                            else if (color == 2) {
+                                color = 3;
+                            }
+                            else if (color == 3) {
+                                color = 1;
+                                image.importData(4* sliceNumber * xDim * yDim, shortBuffer, false);
+                                sliceNumber++;
+                            }
+                        } // if (index == sliceColorBytes)
                      } // if (imageTypeLocation[i] == majorType)
                 } // for (i = 0; i < greySubPictCount; i++)
             } // if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16))
+            fileInfo.setBitDepth(bitDepth);
+            for (i = 0; i < imageSlices; i++) {
+                image.setFileInfo(fileInfo, i);
+            }
             
-
+            image.calcMinMax();
             fireProgressStateChanged(100);
             
         } catch (OutOfMemoryError error) {
