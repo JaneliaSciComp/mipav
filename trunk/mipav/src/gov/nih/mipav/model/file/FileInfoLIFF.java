@@ -15,7 +15,7 @@ public class FileInfoLIFF extends FileInfoBase {
 
     /** Use serialVersionUID for interoperability. */
     //private static final long serialVersionUID;
-    private String dyeString[] = null;
+    private String layerString[] = null;
     short bitDepth = 0;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -48,10 +48,10 @@ public class FileInfoLIFF extends FileInfoBase {
         JDialogText dialog = (JDialogText) dlog;
         displayPrimaryInfo(dialog, matrix);
         dialog.append("\n\n                Other information\n\n");
-        if (dyeString != null) {
-            for (i = 0; i < dyeString.length; i++) {
-                if (dyeString[i] != null) {
-                    dialog.append("Dye " + (i + 1) + " = " + dyeString[i].trim() + "\n");
+        if (layerString != null) {
+            for (i = 0; i < layerString.length; i++) {
+                if (layerString[i] != null) {
+                    dialog.append("Layer " + (i + 1) + " = " + layerString[i].trim() + "\n");
                 }
             }
         }
@@ -62,8 +62,8 @@ public class FileInfoLIFF extends FileInfoBase {
         
     }
     
-    public void setDyeString(String dyeString[]) {
-        this.dyeString = dyeString;
+    public void setLayerString(String layerString[]) {
+        this.layerString = layerString;
     }
     
     public void setBitDepth(short bitDepth) {
