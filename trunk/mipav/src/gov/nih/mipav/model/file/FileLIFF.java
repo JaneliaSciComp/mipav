@@ -11,6 +11,9 @@ import gov.nih.mipav.view.*;
  */
 
 public class FileLIFF extends FileBase {
+    /* In 3 color images, if CY3, FITC, and DAPI are used, they are set to red, green,
+     * and blue respectively.
+     */
     
     private static final short kMasterImageLayer = 0;
     private static final short kGeneralImageLayer = 1;
@@ -413,6 +416,10 @@ public class FileLIFF extends FileBase {
         int majorLayerNumber = 0;
         String majorLayerString[] = new String[10];
         boolean doDeepGreyColor = false;
+        boolean haveCY3 = false;
+        boolean haveFITC = false;
+        boolean haveDAPI = false;
+        int colorSequence[] = new int[3];
 
         try {
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
@@ -1518,9 +1525,19 @@ public class FileLIFF extends FileBase {
             
             for (i = 0; i < layerNumber; i++) {
                 if (layerTypeArray[i] == majorType) {
-                    majorLayerString[majorLayerNumber++] = layerString[i];    
+                    majorLayerString[majorLayerNumber++] = layerString[i]; 
+                    if (layerString[i].equals("CY3")) {
+                        haveCY3 = true;
+                    }
+                    else if (layerString[i].equals("FITC")) {
+                        haveFITC = true;
+                    }
+                    else if (layerString[i].equals("DAPI")) {
+                        haveDAPI = true;
+                    }
                 }
             }
+            
             
             Preferences.debug("The number of layers for the major image type is " + majorLayerNumber + "\n");
             Preferences.debug("The major image type layers are: \n");
@@ -1586,8 +1603,25 @@ public class FileLIFF extends FileBase {
             fileInfo.setOrigin(origin);
             
             if (doDeepGreyColor) {
+                colorSequence[0] = 1;
+                colorSequence[1] = 2;
+                colorSequence[2] = 3;
+                if (haveCY3 && haveFITC && haveDAPI) {
+                    // CY3 is red, FITC is green, and DAPI is blue
+                    for (i = 0; i < 3; i++) {
+                        if (majorLayerString[i].equals("CY3")) {
+                            colorSequence[i] = 1;
+                        }
+                        else if (majorLayerString[i].equals("FITC")) {
+                            colorSequence[i] = 2;
+                        }
+                        else {
+                            colorSequence[i] = 3;
+                        }
+                    }
+                } // if (haveCY3 && haveFITC && haveFITC)
                 index = 0;
-                color = 1;
+                color = colorSequence[0];
                 sliceNumber = 0;
                 for (i = 0; i < subPictCount; i++) {
                     if (imageTypeLocation[i] == majorType) {
@@ -1629,14 +1663,14 @@ public class FileLIFF extends FileBase {
                                 shortBuffer[4*j + color] = getBufferShort(sliceColorBuffer, 2*j, endianess);
                             } // for (j = 0; j < sliceColorBytes/2; j++)
                             index = 0;
-                            if (color == 1) {
-                                color = 2;
+                            if (color == colorSequence[0]) {
+                                color = colorSequence[1];
                             }
-                            else if (color == 2) {
-                                color = 3;
+                            else if (color == colorSequence[1]) {
+                                color = colorSequence[2];
                             }
-                            else if (color == 3) {
-                                color = 1;
+                            else if (color == colorSequence[2]) {
+                                color = colorSequence[0];
                                 image.importData(4* sliceNumber * xDim * yDim, shortBuffer, false);
                                 sliceNumber++;
                             }
