@@ -2200,6 +2200,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         }
 
         triImageFrame.updatePaint(paintBitmap);
+        iterFactors = null;
+        paintPoint = null;
+        patientPaintPoint = null;
+        System.gc();
     }
 
     /**
