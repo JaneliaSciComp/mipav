@@ -103,18 +103,6 @@ public class RayCastColorReflection extends RayCastColor {
         kVertexProperty.enableDiffuse(true);
         kVertexProperty.enableSpecular(true);
         
-        Point3f eyeModel = new Point3f();
-        eyeModel.x = m_kEyeModel.x;
-        eyeModel.y = m_kEyeModel.y;
-        eyeModel.z = m_kEyeModel.z;
-        
-        SoftwareMaterial material = new SoftwareMaterial();
-        material.diffuse = m_kMaterial.diffuse;
-        material.specular = m_kMaterial.specular;
-        material.ambient = m_kMaterial.ambient;
-        material.emissive = m_kMaterial.emissive;
-        material.shininess = m_kMaterial.shininess;
-        material.shininess = m_kMaterial.shininess;
         
         // RGBA values along the ray in order from front-to-back.
         float afAlphasFrontToBack = 0;
@@ -243,17 +231,19 @@ public class RayCastColorReflection extends RayCastColor {
             return;
         }
 
-        // apply the lighting to determine the color
+        
         Color3f m_kColor = m_kLightSet.getCellColor(m_kMaterial, kVertexProperty, m_kEyeModel);
         
         float fSrcR = m_kColor.x * 255.0f;
         float fSrcG = m_kColor.y * 255.0f;
         float fSrcB = m_kColor.z * 255.0f;
-
+        
         m_aiRImage[iIndex] = 
                              // (((int)255   & 0xff) << 24) |
                              (((int) (fSrcR) & 0xff) << 16) | (((int) (fSrcG) & 0xff) << 8) | ((int) (fSrcB) & 0xff);
         kVertexProperty = null;
+        m_kColor = null;
+        
     }
     
     

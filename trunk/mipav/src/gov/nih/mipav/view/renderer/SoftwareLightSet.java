@@ -45,9 +45,6 @@ public class SoftwareLightSet {
      */
     private Point3f[] m_akLightsWorldPositionInModelSpace = new Point3f[0];
 
-    /** DOCUMENT ME! */
-    private Color3f m_kColor = new Color3f();
-
     /** Avoid memory reallocations. */
     private Vector3f m_kV = new Vector3f();
 
@@ -131,7 +128,8 @@ public class SoftwareLightSet {
      * @return  Color3f Computed "lighted" color clamped so as not to exceed white.
      */
     public Color3f getCellColor(SoftwareMaterial kMaterial, SoftwareVertexProperty kVertexProperty, Point3f kEyeModel) {
-
+    	Color3f m_kColor = new Color3f();
+        
         // accumulate color from each light
         m_kColor.set(kMaterial.emissive);
 
