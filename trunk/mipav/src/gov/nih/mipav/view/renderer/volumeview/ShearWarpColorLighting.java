@@ -25,9 +25,6 @@ public class ShearWarpColorLighting extends ShearWarpColor {
     /** the current permutation of the voxel indices (0, 1, or 2). */
     protected int m_iPermute;
 
-    /** To avoid memory reallocations. */
-    protected Color3f m_kColor = new Color3f();
-
     /** DOCUMENT ME! */
     protected SoftwareVertexProperty m_kVertexProperty = new SoftwareVertexProperty();
 
@@ -57,7 +54,6 @@ public class ShearWarpColorLighting extends ShearWarpColor {
      * Deallocate memory.
      */
     public void disposeLocal() {
-        m_kColor = null;
         m_kVertexProperty = null;
         super.disposeLocal();
     }
@@ -240,12 +236,13 @@ public class ShearWarpColorLighting extends ShearWarpColor {
                 if (fSrcA > 0.0f) {
 
                     // apply the lighting to determine the color
-                    m_kColor = m_kLightSet.getCellColor(m_kMaterial, m_kVertexProperty, m_kEyeModel);
+                    Color3f m_kColor = m_kLightSet.getCellColor(m_kMaterial, m_kVertexProperty, m_kEyeModel);
 
                     float fSrcR = m_kColor.x * 255.0f;
                     float fSrcG = m_kColor.y * 255.0f;
                     float fSrcB = m_kColor.z * 255.0f;
 
+                    m_kColor = null;
                     // voxel is opaque
                     if (fSrcA == 1.0f) {
                         m_afInterR[m_iInterIndex] = fSrcR;

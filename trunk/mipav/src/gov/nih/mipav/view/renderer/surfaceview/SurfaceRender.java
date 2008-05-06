@@ -3487,6 +3487,7 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
                                                         (((int) (kColor.y * 255.0f) & 0x0ff) << 8) |
                                                         ((int) (kColor.z * 255.0f) & 0x0ff);
                         iVoxel++;
+                        kColor = null;
                     }
                 }
 
