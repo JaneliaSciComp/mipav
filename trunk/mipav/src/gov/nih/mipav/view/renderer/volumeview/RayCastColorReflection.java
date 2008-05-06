@@ -16,15 +16,6 @@ public class RayCastColorReflection extends RayCastColor {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** to avoid memory re-allocations. */
-    protected Color3f m_kColor = new Color3f();
-
-    /** RGBA values along the ray in order from front-to-back. */
-    private float[] afAlphasFrontToBack = null;
-
-    /** Allocate arrays to store interpolated positions, normal vectors. */
-    private SoftwareVertexProperty[] akVertexProperty;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -37,18 +28,6 @@ public class RayCastColorReflection extends RayCastColor {
      */
     public RayCastColorReflection(ModelImage kImage, int iRBound, int[] aiRImage) {
         super(kImage, iRBound, aiRImage);
-
-        akVertexProperty = new SoftwareVertexProperty[2000];
-
-        for (int i = 0; i < 2000; i++) {
-            SoftwareVertexProperty kVertexProperty = new SoftwareVertexProperty();
-            kVertexProperty.enableDiffuse(true);
-            kVertexProperty.enableSpecular(true);
-            akVertexProperty[i] = kVertexProperty;
-        }
-
-        afAlphasFrontToBack = new float[2000];
-
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -60,9 +39,6 @@ public class RayCastColorReflection extends RayCastColor {
      */
 
     public void disposeLocal(boolean flag) {
-        m_kColor = null;
-        akVertexProperty = null;
-        afAlphasFrontToBack = null;
 
         if (flag == true) {
             super.disposeLocal();
@@ -101,11 +77,47 @@ public class RayCastColorReflection extends RayCastColor {
         super.finalize();
     }
 
-    protected void processRay(Point3f p0, Point3f p1, int iIndex, int rayTraceStepSize) {
+    /**
+     * Process a ray that has intersected the oriented bounding box of the 3D image. The method is only called if there
+     * is a line segment of intersection. The 'intersectsBox' stores the end points of the line segment in the class
+     * members P0 and P1 in image coordinates, which are used for multithreading rendering. This method uses the Trapezoid Rule to numerically integrates the
+     * image along the line segment. The number of integration samples is chosen to be proportional to the length of the
+     * line segment.
+     *
+     * <p>The function sets the color of the pixel corresponding to the processed ray. The RGB value is stored as an
+     * integer in the format B | (G << 8) | (R << 16). This method returns a yellowish value if the ray intersects a
+     * region bounded by the level surface indicated by the level value class member. Otherwise a gray scale value is
+     * returned.</p>
+     *
+     * @param  p0                ray trace starting point
+     * @param  p1                ray trace ending point
+     * @param  iIndex            int the index of the pixel corresponding to the processed ray
+     * @param  rayTraceStepSize  int size of steps to take along ray being traced
+     */
+    protected synchronized void processRay(Point3f p0, Point3f p1, int iIndex, int rayTraceStepSize) {
 
         // Compute the number of steps to use.  The number of
         // steps is proportional to the length of the line segment.
-        SoftwareVertexProperty kVertexProperty;
+    	// Allocate arrays to store interpolated positions, normal vectors.
+        SoftwareVertexProperty kVertexProperty = new SoftwareVertexProperty();
+        kVertexProperty.enableDiffuse(true);
+        kVertexProperty.enableSpecular(true);
+        
+        Point3f eyeModel = new Point3f();
+        eyeModel.x = m_kEyeModel.x;
+        eyeModel.y = m_kEyeModel.y;
+        eyeModel.z = m_kEyeModel.z;
+        
+        SoftwareMaterial material = new SoftwareMaterial();
+        material.diffuse = m_kMaterial.diffuse;
+        material.specular = m_kMaterial.specular;
+        material.ambient = m_kMaterial.ambient;
+        material.emissive = m_kMaterial.emissive;
+        material.shininess = m_kMaterial.shininess;
+        material.shininess = m_kMaterial.shininess;
+        
+        // RGBA values along the ray in order from front-to-back.
+        float afAlphasFrontToBack = 0;
         
         Vector3f lineSeg = new Vector3f();
         lineSeg.sub(p1, p0);
@@ -113,7 +125,7 @@ public class RayCastColorReflection extends RayCastColor {
         float fLength = lineSeg.length();
 
         int iNumSteps = 1 + (int) ((fLength / rayTraceStepSize) * 1f);
-        int iNumStepsFrontToBack = 0;
+        // int iNumStepsFrontToBack = 0;
 
         // Compute the step increment for front to back.
         float fStepX = (p1.x - p0.x) / iNumSteps;
@@ -137,8 +149,6 @@ public class RayCastColorReflection extends RayCastColor {
             // make sure we are not trying to access voxels not in the volume
             if (((iX >= 0) && (iX <= m_iXBoundM2)) && ((iY >= 0) && (iY <= m_iYBoundM2)) &&
                     ((iZ >= 0) && (iZ <= m_iZBoundM2))) {
-
-                kVertexProperty = akVertexProperty[iNumStepsFrontToBack];
 
                 // compute linear array index for the 8 corner samples
                 int i000 = iX + (m_iXBound * iY) + (m_iXYProduct * iZ);
@@ -179,7 +189,7 @@ public class RayCastColorReflection extends RayCastColor {
 
                 if (fSrcA > 0) {
 
-                    afAlphasFrontToBack[iNumStepsFrontToBack] = fSrcA;
+                    afAlphasFrontToBack = fSrcA;
 
                     // Interpolate normal vector.
                     Vector3f kNormal000 = m_akNormal[i000];
@@ -209,7 +219,7 @@ public class RayCastColorReflection extends RayCastColor {
                     kVertexProperty.setNormal(0f, 0f, 0f);
                     kVertexProperty.setDiffuse(0f, 0f, 0f);
                     kVertexProperty.setSpecular(0f, 0f, 0f);
-                    afAlphasFrontToBack[iNumStepsFrontToBack] = 0;
+                    afAlphasFrontToBack = 0;
                 }
 
                 // Stop when fully opaque since nothing behind will affect the blended result.
@@ -227,15 +237,15 @@ public class RayCastColorReflection extends RayCastColor {
         // Access alpha along the ray.
         // Scale it so that it is in [0,1] range.
 
-        float fSrcA = afAlphasFrontToBack[iNumStepsFrontToBack];
+        float fSrcA = afAlphasFrontToBack;
 
         if (fSrcA == 0) {
             return;
         }
 
         // apply the lighting to determine the color
-        m_kColor = m_kLightSet.getCellColor(m_kMaterial, akVertexProperty[iNumStepsFrontToBack], m_kEyeModel);
-
+        Color3f m_kColor = m_kLightSet.getCellColor(m_kMaterial, kVertexProperty, m_kEyeModel);
+        
         float fSrcR = m_kColor.x * 255.0f;
         float fSrcG = m_kColor.y * 255.0f;
         float fSrcB = m_kColor.z * 255.0f;
@@ -243,6 +253,7 @@ public class RayCastColorReflection extends RayCastColor {
         m_aiRImage[iIndex] = 
                              // (((int)255   & 0xff) << 24) |
                              (((int) (fSrcR) & 0xff) << 16) | (((int) (fSrcG) & 0xff) << 8) | ((int) (fSrcB) & 0xff);
+        kVertexProperty = null;
     }
     
     
@@ -265,7 +276,13 @@ public class RayCastColorReflection extends RayCastColor {
 
         // Compute the number of steps to use.  The number of
         // steps is proportional to the length of the line segment.
-        SoftwareVertexProperty kVertexProperty;
+    	// Allocate arrays to store interpolated positions, normal vectors.
+        SoftwareVertexProperty kVertexProperty = new SoftwareVertexProperty();
+        kVertexProperty.enableDiffuse(true);
+        kVertexProperty.enableSpecular(true);
+        // RGBA values along the ray in order from front-to-back.
+        float afAlphasFrontToBack = 0;
+        
         m_kPDiff.sub(m_kP1, m_kP0);
 
         float fLength = m_kPDiff.length();
@@ -295,8 +312,6 @@ public class RayCastColorReflection extends RayCastColor {
             if (((iX >= 0) && (iX <= m_iXBoundM2)) && ((iY >= 0) && (iY <= m_iYBoundM2)) &&
                     ((iZ >= 0) && (iZ <= m_iZBoundM2))) {
 
-                kVertexProperty = akVertexProperty[iNumStepsFrontToBack];
-
                 // compute linear array index for the 8 corner samples
                 int i000 = iX + (m_iXBound * iY) + (m_iXYProduct * iZ);
                 int i100 = i000 + 1;
@@ -336,7 +351,7 @@ public class RayCastColorReflection extends RayCastColor {
 
                 if (fSrcA > 0) {
 
-                    afAlphasFrontToBack[iNumStepsFrontToBack] = fSrcA;
+                    afAlphasFrontToBack = fSrcA;
 
                     // Interpolate normal vector.
                     Vector3f kNormal000 = m_akNormal[i000];
@@ -366,7 +381,7 @@ public class RayCastColorReflection extends RayCastColor {
                     kVertexProperty.setNormal(0f, 0f, 0f);
                     kVertexProperty.setDiffuse(0f, 0f, 0f);
                     kVertexProperty.setSpecular(0f, 0f, 0f);
-                    afAlphasFrontToBack[iNumStepsFrontToBack] = 0;
+                    afAlphasFrontToBack = 0;
                 }
 
                 // Stop when fully opaque since nothing behind will affect the blended result.
@@ -384,14 +399,14 @@ public class RayCastColorReflection extends RayCastColor {
         // Access alpha along the ray.
         // Scale it so that it is in [0,1] range.
 
-        float fSrcA = afAlphasFrontToBack[iNumStepsFrontToBack];
+        float fSrcA = afAlphasFrontToBack;
 
         if (fSrcA == 0) {
             return;
         }
 
         // apply the lighting to determine the color
-        m_kColor = m_kLightSet.getCellColor(m_kMaterial, akVertexProperty[iNumStepsFrontToBack], m_kEyeModel);
+        Color3f m_kColor = m_kLightSet.getCellColor(m_kMaterial, kVertexProperty, m_kEyeModel);
 
         float fSrcR = m_kColor.x * 255.0f;
         float fSrcG = m_kColor.y * 255.0f;
@@ -400,6 +415,8 @@ public class RayCastColorReflection extends RayCastColor {
         m_aiRImage[iIndex] = 
                              // (((int)255   & 0xff) << 24) |
                              (((int) (fSrcR) & 0xff) << 16) | (((int) (fSrcG) & 0xff) << 8) | ((int) (fSrcB) & 0xff);
+    
+        kVertexProperty = null;
     }
 
     /**
