@@ -949,9 +949,9 @@ public abstract class ViewJComponentBase extends JComponent {
 
                 idx = (j * imageDim.width) + i;
 
-                int left = idx - 1;
+                int left = idx - 2;
                 int right = idx + 1;
-                int above = idx - imageDim.width;
+                int above = idx - imageDim.width * 2;
                 int below = idx + imageDim.width;
                 int northwest = above - 1;
                 int northeast = above + 1;
