@@ -81,6 +81,7 @@ public class FileLIFF extends FileBase {
     private static final short lineJustify = 0x002D;
     private static final short glyphState = 0x002E;
     private static final short eraseRect = 0x0032;
+    private static final short PackBitsRect = 0x0098;
     private static final short DirectBitsRect = 0x009A;
     private static final short LongComment = 0x00A1;
     private static final short OpEndPic = 0x00FF;
@@ -277,6 +278,11 @@ public class FileLIFF extends FileBase {
         int yDim = 0;
         long pictLocation[] = new long[24000];
         int  imageTypeLocation[] = new int[24000];
+        short packTypeArray[] = new short[24000];
+        short rowBytesArray[] = new short[24000];
+        short pixelSizeArray[] = new short[24000];
+        short boundsTopArray[] = new short[24000];
+        short boundsBottomArray[] = new short[24000];
         int subPictCount = 0;
         int pictCount = 0;
         String layerString[] = new String[10];
@@ -420,6 +426,9 @@ public class FileLIFF extends FileBase {
         boolean haveFITC = false;
         boolean haveDAPI = false;
         int colorSequence[] = new int[3];
+        int ctSeed;
+        short ctFlags;
+        short ctSize;
 
         try {
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
@@ -1008,6 +1017,262 @@ public class FileLIFF extends FileBase {
                                     xBottomRight = readShort(endianess);
                                     Preferences.debug("x bottom right = " + xBottomRight + "\n");
                                     break;
+                                case PackBitsRect:
+                                    Preferences.debug("PackBitsRect\n");
+                                    // PixMap, ColorTable, srcRect, dstRect, mode(short), PixData
+                                    // rowBytes, The offset in bytes from one row of the image to the next.
+                                    // The value must be even, less than $4000, and for best performance it
+                                    // should be a multiple of 4.  The high 2 bits of rowBytes are used as
+                                    // flags.  If bit 15 = 1, the data structure pointed to is a PixMap 
+                                    // record; otherwise it is a bitMap record.
+                                    rowBytes = readShort(endianess);
+                                    if ((rowBytes & 0x8000) != 0) {
+                                        Preferences.debug("The data structure pointed to is a PixMap record\n");
+                                    }
+                                    else {
+                                        Preferences.debug("The data structure pointed to is a BitMap record\n");
+                                    }
+                                    // Strip out the 2 flag bits
+                                    rowBytes = (short)(rowBytes & 0x3fff);
+                                    Preferences.debug("Offset in bytes from one row of the image to the next = "
+                                                       + rowBytes + "\n");
+                                    // The boundary rectangle, which links the local coordinate system of a
+                                    // graphics port to QuickDraw's global coordinate system and defines the
+                                    // area of the bit image into which QuickDraw can draw.  By default,
+                                    // the boundary rectangle is the entire main screen.
+                                    boundsTop = readShort(endianess);
+                                    Preferences.debug("Boundary rectangle y top left = " + boundsTop + "\n");
+                                    boundsLeft = readShort(endianess);
+                                    Preferences.debug("Boundary rectangle x top left = " + boundsLeft + "\n");
+                                    boundsBottom = readShort(endianess);
+                                    Preferences.debug("Boundary rectangle y bottom right = " + boundsBottom + "\n");
+                                    boundsRight = readShort(endianess);
+                                    Preferences.debug("Boundary rectangle x bottom right = " + boundsRight + "\n");
+                                    // PixMap record version number.  The version number of Color QuickDraw
+                                    // that created this pixMap record.  The value of pmVersion is normally 0.
+                                    // If pmVersion is 4, Color QuickDraw treats the pixMap reocrd's baseAddr
+                                    // field as 32-bit clean.  (All other flags are private.)
+                                    pmVersion = readShort(endianess);
+                                    Preferences.debug("The PixMap record version number = " + pmVersion + "\n");
+                                    // The packing algorithm used to compress image data.
+                                    // To facilitate banding fo images when memory is short, all data
+                                    // compression is done on a scan-line basis.  The following pseudocode
+                                    // describes the pixel data:
+                                    // PixData
+                                    // if packType = 1 (unpacked) or rowBytes < 8 then
+                                    //     data is unpacked;
+                                    //     data size = rowBytes * (bounds.bottom - bounds.top);
+                                    
+                                    // if packType = 2 (drop pad byte) then
+                                    //     the high-order pad byte of a 32-bit direct pixel is dropped;
+                                    //     data size = (3/4) * rowBytes * (bounds.bottom - bounds.top);
+                                    
+                                    // if packType > 2 (packed) then
+                                    //    image contains (bounds.bottom - bounds.top) packed scan lines;
+                                    //    each scan line consists of [byteCount] [data];
+                                    //    if rowBytes > 250 then
+                                    //        byteCount is a short
+                                    //    else
+                                    //        byteCount is a byte
+                                    // Here are the currently defined packing types:
+                                    // Packing type    Meaning
+                                    // 0               Use default packing
+                                    //                 The default for a pixelSize value of 16 is 3
+                                    //                 The default for a pixelSize value of 32 is 4
+                                    // 1               Use no packing
+                                    // 2               Remove pad byte -- supported only for 32-bit pixels
+                                    //                 (24-bit data)
+                                    // 3               Run length encoding by pixelSize chunks, one scan line
+                                    //                 at a time -- supported only for 16-bit pixels.
+                                    // 4               Run length encoding one component at a time, one scan
+                                    //                 line at a time, red component first--supported only for
+                                    //                 32-bit pixels (24-bit data)
+                                    // Each scan line of packed data is preceded by a byte or a short
+                                    // giving the count of data
+                                    // When the pixel type is direct, cmpCount * cmpSize is less than or equal
+                                    // to pixelSize.  For storing 24-bit data in a 32-bit pixel, set cmpSize
+                                    // to 8 and cmpCount to 3.  If you set cmpCount to 4, then the high byte
+                                    // is compressed by packing scheme 4 and stored in the picture.
+                                    packType = readShort(endianess);
+                                    Preferences.debug("The pack type used to compress image data = " +
+                                                       packType + "\n");
+                                    // The size of the packed image in bytes.  Since each scan line of 
+                                    // packed data is preceded by a byte count, packSize is not used and
+                                    // must be 0 for future compatibility.
+                                    packSize = getUInt(endianess);
+                                    if (packSize == 0) {
+                                        Preferences.debug("The field for the size of the packed image in bytes " 
+                                                    +  "is set to 0 as expected\n");
+                                    }
+                                    else {
+                                        Preferences.debug("The size of the packed image in bytes = " 
+                                             + packSize + "\n");         
+                                    }
+                                    // The horizontal resolution of the pixel image in pixels per inch.
+                                    // This value is of type Fixed; by default, the value here is
+                                    // $00480000(for 72 pixels per inch).
+                                    horizontalResolutionShort = readShort(endianess);
+                                    horizontalResolutionFract = getUnsignedShort(endianess);
+                                    horizontalResolution = (float)(horizontalResolutionShort + 
+                                                                Math.pow(2.0,-16.0)*horizontalResolutionFract);
+                                    Preferences.debug("Horizontal resolution = " +
+                                                      horizontalResolution + " pixels per inch\n");
+                                    // The vertical resolution of the pixel image in pixels per inch.
+                                    // This value is of type Fixed; by default, the value here is
+                                    // $00480000(for 72 pixels per inch).
+                                    verticalResolutionShort = readShort(endianess);
+                                    verticalResolutionFract = getUnsignedShort(endianess);
+                                    verticalResolution = (float)(verticalResolutionShort + 
+                                                                Math.pow(2.0,-16.0)*verticalResolutionFract);
+                                    Preferences.debug("Vertical resolution = " +
+                                                      verticalResolution + " pixels per inch\n");
+                                    // The storage format for a pixel image.  Indexed pixels are indicated
+                                    // by a value of 0.  Direct pixels sare specified by a value of RGBDirect,
+                                    // or 16.
+                                    pixelType = readShort(endianess);
+                                    if (pixelType == 0) {
+                                        Preferences.debug("Pixel image has indexed pixels\n");
+                                    }
+                                    else if (pixelType == 16) {
+                                        Preferences.debug("Pixel image has direct pixels\n");
+                                    }
+                                    else {
+                                        Preferences.debug("pixelType has unrecognized value = " + pixelType + "\n");
+                                    }
+                                    // Pixel depth; that is, the number of bits used to represent a pixel.
+                                    // Indexed pixels can have sizes of 1, 2, 4, and 8 bits;  direct pixel
+                                    // sizes are 16 and 32 bits.
+                                    pixelSize = readShort(endianess);
+                                    Preferences.debug("pixelSize = " + pixelSize + "\n");
+                                    // cmpCount - logical components per pixel
+                                    // The number of components used to represent a color for a pixel.
+                                    // With indexed pixels, each pixel is a single value representing an
+                                    // index in a color table, and therefore this field contains the value
+                                    // 1 -- the index is the single component.  With direct pixels, each
+                                    // pixel contains 3 components--one short each for the intnesities
+                                    // of red, green, and blue--so this field contains the value 3.
+                                    cmpCount = readShort(endianess);
+                                    Preferences.debug("Components per pixel = " + cmpCount + "\n");
+                                    if (cmpCount == 4) {
+                                        Preferences.debug("Alpha channel bytes are placed before red bytes\n");
+                                    }
+                                    // cmpSize - logical bits per component
+                                    // The size in bits of each component for a pixel.  Color QuickDraw
+                                    // expects that the sizes of all components are the same, and that the
+                                    // value of the cmpCount field multiplied by the cmpSize field is less 
+                                    // than or equal to the value in the pixelSize field.
+                                    // For an indexed value, which has only 1 component, the value of the
+                                    // cmpSize is the same as the value of the pixelSize field--that is,
+                                    // 1, 2, 4, or 8.
+                                    // For direct pixels there are 2 additional possibilities:
+                                    // A 16-bit pixel, which has 3 components, has a cmpSize value of 5.
+                                    // This leaves an unused high-order bit, which Color QuickDraw sets
+                                    // to 0.  A 32-bit pixel, which has 3 components(red, green, and blue),
+                                    // has a cmpSize vlaue of 8.  This leaves an unused high-order byte,
+                                    // which Color QuickDraw sets to 0.
+                                    cmpSize = readShort(endianess);
+                                    Preferences.debug("Bits per component = " + cmpSize + "\n");
+                                    // planeBytes - the offset in bytes form one drawing plane to the
+                                    // next.  This field is set to 0.
+                                    planeBytes = getUInt(endianess);
+                                    if (planeBytes == 0) {
+                                        Preferences.debug("The planeBytes field is set to 0 as expected\n");
+                                    }
+                                    else {
+                                        Preferences.debug("planeBytes unexpectedly = " + planeBytes + "\n");
+                                    }
+                                    // pmTable - a pointer to a ColorTable record for the colors in this\
+                                    // pixel map.
+                                    pmTable = getUInt(endianess);
+                                    Preferences.debug("Location of ColorTable record = " + pmTable + "\n");
+                                    // pmReserved - reserved for future expansion.  This field must be
+                                    // set to 0 for future compatibility.
+                                    pmReserved = readInt(endianess);
+                                    if (pmReserved == 0) {
+                                        Preferences.debug("pmReserved = 0 as expected\n");
+                                    }
+                                    else {
+                                        Preferences.debug("pmReserved unexpectedly = " + pmReserved + "\n");
+                                    }
+                                    // ColorTable
+                                    // Identifies a particular instance of the color table.
+                                    ctSeed = readInt(endianess);
+                                    Preferences.debug("ctSeed = " + ctSeed + "\n");
+                                    // Flags that distinguish pixel map color tables from color tables
+                                    // in GDevice records
+                                    ctFlags = readShort(endianess);
+                                    Preferences.debug("ctFlags = " + ctFlags + "\n");
+                                    // One less than the number of entries in the table
+                                    ctSize = readShort(endianess);
+                                    Preferences.debug("ctSize = " + ctSize + "\n");
+                                    // An array of ColorSpec records
+                                    for (j = 0; j <= ctSize; j++) {
+                                        index = getUnsignedShort(endianess);
+                                        redColor = getUnsignedShort(endianess);
+                                        greenColor = getUnsignedShort(endianess);
+                                        blueColor = getUnsignedShort(endianess);
+                                        Preferences.debug("j = " + j + " index = " + index + " red = "
+                                         + redColor + " green = " + greenColor + " blue = " +
+                                         blueColor + "\n");
+                                    }
+                                    // Source rectangle
+                                    yTopLeft = readShort(endianess);
+                                    Preferences.debug("Source rectangle y top left = " + yTopLeft + "\n");
+                                    xTopLeft = readShort(endianess);
+                                    Preferences.debug("Source rectangle x top left = " + xTopLeft + "\n");
+                                    yBottomRight = readShort(endianess);
+                                    Preferences.debug("Source rectangle y bottom right = " + yBottomRight + "\n");
+                                    xBottomRight = readShort(endianess);
+                                    Preferences.debug("Source rectangle x bottom right = " + xBottomRight + "\n");
+                                    // Destination rectangle
+                                    yTopLeft = readShort(endianess);
+                                    Preferences.debug("Destination rectangle y top left = " + yTopLeft + "\n");
+                                    xTopLeft = readShort(endianess);
+                                    Preferences.debug("Destination rectangle x top left = " + xTopLeft + "\n");
+                                    yBottomRight = readShort(endianess);
+                                    Preferences.debug("Destination rectangle y bottom right = " + yBottomRight + "\n");
+                                    xBottomRight = readShort(endianess);
+                                    Preferences.debug("Destination rectangle x bottom right = " + xBottomRight + "\n");
+                                    // mode
+                                    mode = readShort(endianess);
+                                    if ((mode >= 0) && (mode <= 64) && (modeStr[mode] != null)) {
+                                        Preferences.debug("mode = " + modeStr[mode] + "\n");
+                                    }
+                                    else {
+                                        Preferences.debug("mode has unrecognized value = " + mode + "\n");    
+                                    }
+                                    // PixData
+                                    Preferences.debug("PixData\n");
+                                    // Also read in pixData later if necessary
+                                    pictLocation[subPictCount] = raFile.getFilePointer();
+                                    packTypeArray[subPictCount] = packType;
+                                    rowBytesArray[subPictCount] = rowBytes;
+                                    pixelSizeArray[subPictCount] = pixelSize;
+                                    boundsTopArray[subPictCount] = boundsTop;
+                                    boundsBottomArray[subPictCount] = boundsBottom;
+                                    imageTypeLocation[subPictCount++] = imageType;
+                                    if ((packType == 0) || (packType > 2)) {
+                                        totalByteCount = 0;
+                                        for (j = boundsTop; j < boundsBottom; j++) {
+                                            if (rowBytes > 250) {
+                                                byteCount = getUnsignedShort(endianess);
+                                                totalByteCount += (byteCount + 2);
+                                            }
+                                            else {
+                                                raFile.read(prefix);
+                                                byteCount = prefix[0] & 0xff;
+                                                totalByteCount += (byteCount + 1);
+                                            }
+                                            Preferences.debug("row number = " + j + " byte count = " + byteCount + "\n");
+                                            pad = new byte[byteCount];
+                                            raFile.read(pad);
+                                        }
+                                        
+                                        if ((totalByteCount % 2) == 1) {
+                                            raFile.read(spareByte);
+                                        }
+                                    } // if ((packType == 0) || (packType > 2))
+                                    break;
                                 case DirectBitsRect:
                                     Preferences.debug("DirectBitsRect\n");
                                     // PixMap, srcRect, dstRect, mode(short), PixData
@@ -1227,7 +1492,15 @@ public class FileLIFF extends FileBase {
                                     }
                                     // PixData
                                     Preferences.debug("PixData\n");
-                                    if (packType == 4) {
+                                    // Also read in pixData later if necessary
+                                    pictLocation[subPictCount] = raFile.getFilePointer();
+                                    packTypeArray[subPictCount] = packType;
+                                    rowBytesArray[subPictCount] = rowBytes;
+                                    pixelSizeArray[subPictCount] = pixelSize;
+                                    boundsTopArray[subPictCount] = boundsTop;
+                                    boundsBottomArray[subPictCount] = boundsBottom;
+                                    imageTypeLocation[subPictCount++] = imageType;
+                                    if ((packType == 0) || (packType > 2)) {
                                         totalByteCount = 0;
                                         for (j = boundsTop; j < boundsBottom; j++) {
                                             if (rowBytes > 250) {
@@ -1247,7 +1520,7 @@ public class FileLIFF extends FileBase {
                                         if ((totalByteCount % 2) == 1) {
                                             raFile.read(spareByte);
                                         }
-                                    } // if (packType == 4)*/
+                                    } // if ((packType == 0) || (packType > 2))
                                     break;
                                 case LongComment:
                                     Preferences.debug("LongComment for imageType = " + typeStr[imageType] + "\n");
@@ -1561,6 +1834,16 @@ public class FileLIFF extends FileBase {
                 sliceColorBytes = 2 * xDim * yDim;
                 sliceColorBuffer = new byte[sliceColorBytes];
             }
+            else if (majorType == MAC_24_BIT_COLOR) {
+                Preferences.debug("Found " + majorTypeCount + " slices of type MAC_24_BIT_COLOR\n");
+                imageSlices = majorTypeCount;
+                Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type ARGB\n");
+                imageExtents[0] = xDim;
+                imageExtents[1] = yDim;
+                imageExtents[2] = imageSlices;
+                fileInfo.setExtents(imageExtents);
+                image = new ModelImage(ModelStorageBase.ARGB, imageExtents, fileName);
+            }
             else {
                 Preferences.debug("The MIPAV image will have " + majorTypeCount + 
                                   " slices of type " + typeStr[majorType] + "\n");
@@ -1626,7 +1909,7 @@ public class FileLIFF extends FileBase {
                 for (i = 0; i < subPictCount; i++) {
                     if (imageTypeLocation[i] == majorType) {
                         raFile.seek(pictLocation[i]);
-                        Preferences.debug("Located at greySubPictCount " + (i+1) + " of " + subPictCount + "\n");
+                        Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
                         // Read in second section of comment 101
                         // blkCount contains the index of this block in the sequence, and will be
                         // from 0 to totalBlocks - 1.  Remember that it will generally require a
@@ -1677,7 +1960,33 @@ public class FileLIFF extends FileBase {
                         } // if (index == sliceColorBytes)
                      } // if (imageTypeLocation[i] == majorType)
                 } // for (i = 0; i < greySubPictCount; i++)
-            } // if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16))
+            } // if (doDeepGreyColor)
+            else {
+                for (i = 0; i < subPictCount; i++) {
+                    if (imageTypeLocation[i] == majorType) {
+                        raFile.seek(pictLocation[i]);
+                        Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
+                        if ((packTypeArray[i] == 0) || (packTypeArray[i] > 2)) {
+                            totalByteCount = 0;
+                            for (j = boundsTopArray[i]; j < boundsBottomArray[i]; j++) {
+                                if (rowBytesArray[i] > 250) {
+                                    byteCount = getUnsignedShort(endianess);
+                                    totalByteCount += (byteCount + 2);
+                                }
+                                else {
+                                    raFile.read(prefix);
+                                    byteCount = prefix[0] & 0xff;
+                                    totalByteCount += (byteCount + 1);
+                                }
+                                Preferences.debug("row number = " + j + " byte count = " + byteCount + "\n");
+                                pad = new byte[byteCount];
+                                raFile.read(pad);
+                            }
+                            
+                        } // if ((packType == 0) || (packType > 2))
+                    } // if (imageTypeLocation[i] == majorType)
+                } // for (i = 0; i < subPictCount; i++)
+            } // else
             fileInfo.setBitDepth(bitDepth);
             for (i = 0; i < imageSlices; i++) {
                 image.setFileInfo(fileInfo, i);
