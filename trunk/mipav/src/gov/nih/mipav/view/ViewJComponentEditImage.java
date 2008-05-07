@@ -2824,7 +2824,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public void mouseReleased(MouseEvent mouseEvent) {
     	
     	//calling garbage collect here to clean up any memory used while getting the LPS coordinates
-    	 System.gc();
+    	System.gc();
     	
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
@@ -3162,6 +3162,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             }
 
+            
             memImageA = new MemoryImageSource(imageDim.width, imageDim.height, paintImageBuffer, 0, imageDim.width);
 
             Image paintImage = createImage(memImageA); // the image representing the paint mask
@@ -3177,9 +3178,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             offscreenGraphics2d.drawImage(paintImage, 0, 0, zoomedWidth, zoomedHeight, 0, 0, img.getWidth(this),
                                           img.getHeight(this), null);
             // remove the local buffer memory allocation
+            // It turns out that Java VM 32 system calls the gc() automatically without the performance hurdle. 
+            // Java VM 64 system has to call the gc() implicitly, and will not affect the performance. 
             paintImage.flush();
             paintImage= null;
-            System.gc();
+            String javaVMname = System.getProperty("java.vm.name");
+            if ( javaVMname.indexOf("64-Bit") > -1 ) {
+            	System.gc();
+            } 
             
             if ((cursorMode == PAINT_VOI) ||
                     ((cursorMode == ERASER_PAINT) && ((lastMouseX != OUT_OF_BOUNDS) || (lastMouseY !=
