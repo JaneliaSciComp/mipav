@@ -1893,6 +1893,25 @@ public class FileLIFF extends FileBase {
                 image = new ModelImage(ModelStorageBase.ARGB, imageExtents, fileName);
                 byteBuffer = new byte[4 * xDim * yDim];
             }
+            else if (majorType == MAC_256_GREYS) {
+                Preferences.debug("Found " + majorTypeCount + " slices of type MAC_256_GREYS\n");
+                imageSlices = majorTypeCount;
+                Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type UBYTE\n");
+                if (imageSlices > 1) {
+                    imageExtents = new int[3];
+                    imageExtents[0] = xDim;
+                    imageExtents[1] = yDim;
+                    imageExtents[2] = imageSlices;
+                }
+                else {
+                    imageExtents = new int[2];
+                    imageExtents[0] = xDim;
+                    imageExtents[1] = yDim;
+                }
+                fileInfo.setExtents(imageExtents);
+                image = new ModelImage(ModelStorageBase.UBYTE, imageExtents, fileName);
+                byteBuffer = new byte[xDim * yDim];    
+            } // else if (majorType == MAC_256_GREYS)
             else {
                 Preferences.debug("The MIPAV image will have " + majorTypeCount + 
                                   " slices of type " + typeStr[majorType] + "\n");
