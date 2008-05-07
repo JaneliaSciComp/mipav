@@ -2203,7 +2203,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         iterFactors = null;
         paintPoint = null;
         patientPaintPoint = null;
-        System.gc();
+        //System.gc(); - make painting too slow
     }
 
     /**
