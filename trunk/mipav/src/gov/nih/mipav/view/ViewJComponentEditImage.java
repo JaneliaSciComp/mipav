@@ -3098,7 +3098,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             if (Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
                 makePaintBitmapBorder(paintImageBuffer, paintBitmap, slice, frame);
             }
-
+            
             if (!(this instanceof ViewJComponentRegistration)) {
                 voiHandler.paintSolidVOIinImage(offscreenGraphics2d);
             }
@@ -3176,7 +3176,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             offscreenGraphics2d.drawImage(paintImage, 0, 0, zoomedWidth, zoomedHeight, 0, 0, img.getWidth(this),
                                           img.getHeight(this), null);
-
+            // remove the local buffer memory allocation
+            paintImage.flush();
+            paintImage= null;
+            System.gc();
+            
             if ((cursorMode == PAINT_VOI) ||
                     ((cursorMode == ERASER_PAINT) && ((lastMouseX != OUT_OF_BOUNDS) || (lastMouseY !=
                                                                                             OUT_OF_BOUNDS)))) {
