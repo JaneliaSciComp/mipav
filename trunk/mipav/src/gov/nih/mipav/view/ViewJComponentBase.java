@@ -943,20 +943,20 @@ public abstract class ViewJComponentBase extends JComponent {
             }
         }
 
-        for (j = 2; j < (imageDim.height - 2); j++) {
+        for (j = 1; j < (imageDim.height - 1); j++) {
 
-            for (i = 2; i < (imageDim.width - 2); i++) {
+            for (i = 1; i < (imageDim.width - 1); i++) {
 
                 idx = (j * imageDim.width) + i;
 
-                int left = idx - 2;
-                int right = idx + 2;
-                int above = idx - imageDim.width*2;
-                int below = idx + imageDim.width*2;
-                int northwest = above - 2;
-                int northeast = above + 2;
-                int southeast = below + 2;
-                int southwest = below - 2;
+                int left = idx - 1;
+                int right = idx + 1;
+                int above = idx - imageDim.width*1;
+                int below = idx + imageDim.width*1;
+                int northwest = above - 1;
+                int northeast = above + 1;
+                int southeast = below + 1;
+                int southwest = below - 1;
 
                 if (paintImageBuffer[idx] != 0) {
 
