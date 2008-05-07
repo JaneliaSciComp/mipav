@@ -108,7 +108,7 @@ public class FileLIFF extends FileBase {
     private ModelImage image;
 
     /** DOCUMENT ME! */
-    private int[] imageExtents = new int[3];
+    private int[] imageExtents = null;
 
     /** DOCUMENT ME! */
     private float[] imgBuffer = null;
@@ -436,6 +436,7 @@ public class FileLIFF extends FileBase {
         byte byteBuffer[] = null;
         int component = 0;
         int componentArray[];
+        int sliceBytes = 0;
 
         try {
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
@@ -1830,26 +1831,64 @@ public class FileLIFF extends FileBase {
             if (((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) && ((majorTypeCount % 3) == 0) 
                  && (majorLayerNumber == 3)) {
                 doDeepGreyColor = true;
-                Preferences.debug("Found " + majorTypeCount + " slices of type DEEP_GREY_12\n");
+                Preferences.debug("Found " + majorTypeCount + " slices of type " + typeStr[majorType] + "\n");
                 Preferences.debug("These are RGB stored in " + bitNumber + " depth\n");
                 imageSlices = majorTypeCount/3;
                 Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type ARGB_USHORT\n");
-                imageExtents[0] = xDim;
-                imageExtents[1] = yDim;
-                imageExtents[2] = imageSlices;
+                if (imageSlices > 1) {
+                    imageExtents = new int[3];
+                    imageExtents[0] = xDim;
+                    imageExtents[1] = yDim;
+                    imageExtents[2] = imageSlices;
+                }
+                else {
+                    imageExtents = new int[2];
+                    imageExtents[0] = xDim;
+                    imageExtents[1] = yDim;
+                }
                 fileInfo.setExtents(imageExtents);
                 image = new ModelImage(ModelStorageBase.ARGB_USHORT, imageExtents, fileName);
                 shortBuffer = new short[4 * xDim * yDim];
                 sliceColorBytes = 2 * xDim * yDim;
                 sliceColorBuffer = new byte[sliceColorBytes];
             }
+            else if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) {
+                Preferences.debug("Found " + majorTypeCount + " slices of type " + typeStr[majorType] + "\n");
+                Preferences.debug("These are USHORT stored in " + bitNumber + " depth\n");
+                imageSlices = majorTypeCount;
+                Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type USHORT\n");
+                if (imageSlices > 1) {
+                    imageExtents = new int[3];
+                    imageExtents[0] = xDim;
+                    imageExtents[1] = yDim;
+                    imageExtents[2] = imageSlices;
+                }
+                else {
+                    imageExtents = new int[2];
+                    imageExtents[0] = xDim;
+                    imageExtents[1] = yDim;
+                }
+                fileInfo.setExtents(imageExtents);
+                image = new ModelImage(ModelStorageBase.USHORT, imageExtents, fileName);
+                byteBuffer = new byte[2 * xDim * yDim];
+                shortBuffer = new short[xDim * yDim]; 
+                sliceBytes = 2 * xDim * yDim;
+            }
             else if (majorType == MAC_24_BIT_COLOR) {
                 Preferences.debug("Found " + majorTypeCount + " slices of type MAC_24_BIT_COLOR\n");
                 imageSlices = majorTypeCount;
                 Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type ARGB\n");
-                imageExtents[0] = xDim;
-                imageExtents[1] = yDim;
-                imageExtents[2] = imageSlices;
+                if (imageSlices > 1) {
+                    imageExtents = new int[3];
+                    imageExtents[0] = xDim;
+                    imageExtents[1] = yDim;
+                    imageExtents[2] = imageSlices;
+                }
+                else {
+                    imageExtents = new int[2];
+                    imageExtents[0] = xDim;
+                    imageExtents[1] = yDim;
+                }
                 fileInfo.setExtents(imageExtents);
                 image = new ModelImage(ModelStorageBase.ARGB, imageExtents, fileName);
                 byteBuffer = new byte[4 * xDim * yDim];
@@ -1971,6 +2010,55 @@ public class FileLIFF extends FileBase {
                      } // if (imageTypeLocation[i] == majorType)
                 } // for (i = 0; i < greySubPictCount; i++)
             } // if (doDeepGreyColor)
+            else if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) {
+                index = 0;
+                sliceNumber = 0;
+                for (i = 0; i < subPictCount; i++) {
+                    if (imageTypeLocation[i] == majorType) {
+                        raFile.seek(pictLocation[i]);
+                        Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
+                        // Read in second section of comment 101
+                        // blkCount contains the index of this block in the sequence, and will be
+                        // from 0 to totalBlocks - 1.  Remember that it will generally require a
+                        // series of blocks to build a single image.  Openlab assumes that pic 
+                        // comment blocks arrive in the correct sequential order, starting at 0.
+                        blkCount = readInt(endianess);
+                        Preferences.debug("blkCount = " + blkCount + "\n");
+                        // totalBlocks is the number of blocks that make up this picture or LUT
+                        totalBlocks = readInt(endianess);
+                        Preferences.debug("totalBlocks = " + totalBlocks + "\n");
+                        // originalSize is the count of bytes in the original image or LUT
+                        originalSize = readInt(endianess);
+                        Preferences.debug("originalSize = " + originalSize + "\n");
+                        // compressedSize is always the same as originalSize
+                        compressedSize = readInt(endianess);
+                        Preferences.debug("compressedSize = " + compressedSize + "\n");
+                        // picBlkSize is the count of bytes of data in the remainder of the
+                        // comment.  This size does not include the header.  This is the count
+                        // of bytes after bitShift.
+                        picBlkSize = readInt(endianess);
+                        Preferences.debug("Bytes in Pic Comment 101 not including header = "
+                                          + picBlkSize + "\n");
+                        // bitDepth is the logical bitdepth of the image, and may be any
+                        // value from 9 to 16.
+                        bitDepth = readShort(endianess);
+                        Preferences.debug("bitDepth = " + bitDepth + "\n");
+                        // bitShift should be ignored
+                        bitShift = readShort(endianess);
+                        len = Math.min(picBlkSize, sliceBytes - index);
+                        raFile.read(byteBuffer, index, len);
+                        index += len;
+                        if (index == sliceBytes) {
+                            for (j = 0; j < sliceBytes/2; j++) {
+                                shortBuffer[j] = getBufferShort(byteBuffer, 2*j, endianess);
+                            } // for (j = 0; j < sliceColorBytes/2; j++)
+                            index = 0;
+                            image.importData(sliceNumber * xDim * yDim, shortBuffer, false);
+                            sliceNumber++;
+                        } // if (index == sliceBytes)
+                     } // if (imageTypeLocation[i] == majorType)
+                } // for (i = 0; i < greySubPictCount; i++)
+            } // else if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16))
             else {
                 for (i = 0; i < subPictCount; i++) {
                     index = 0;
@@ -2045,7 +2133,12 @@ public class FileLIFF extends FileBase {
                                    } // else if (b1 != -128)
                                 } // while (rowBytesRead < rowBytesArray[i])
                             } // for (j = boundsTopArray[i]; j < boundsBottomArray[i]; j++)
-                            image.importData(4 * sliceNumber * xDim * yDim, byteBuffer, false);
+                            if (majorType == MAC_24_BIT_COLOR) {
+                                image.importData(4 * sliceNumber * xDim * yDim, byteBuffer, false);
+                            }
+                            else {
+                                image.importData(sliceNumber * xDim * yDim, byteBuffer, false);
+                            }
                             sliceNumber++;
                         } // if ((packType == 0) || (packType > 2))
                     } // if (imageTypeLocation[i] == majorType)
