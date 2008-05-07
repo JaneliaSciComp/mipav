@@ -161,8 +161,11 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     /** Label before combBoxSaveMethod */
     private JLabel saveLabel;
     
-    /** Whehter to save as selected by dialog or always as analyze, interfile, or nifti. */
-    private JComboBox comboBoxSaveMethod;
+    /** Whether to save .img files as selected by dialog or always as analyze, interfile, or nifti. */
+    private JComboBox comboBoxSaveImgMethod;
+    
+    /** Whether to save .mnc files as selected by dialog or always as minc1 or minc2. */
+    private JComboBox comboBoxSaveMncMethod;
 
     /** DOCUMENT ME! */
     private JCheckBox savePromptOverwriteBox;
@@ -284,6 +287,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         // makeSaveDefaultsOptions(gbc, gbl);
         makeSaveHdrImgOptions(gbc, gbl);
+        makeSaveMncOptions(gbc, gbl);
         makeSaveXMLOnHDRSaveOptions(gbc, gbl);
         makeSaveXMLThumbnailOptions(gbc, gbl);
         makeSaveXMLZipOptions(gbc, gbl);
@@ -491,11 +495,13 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             Preferences.setProperty(Preferences.PREF_IMAGE_LEVEL_DATA_PROVENANCE, String.valueOf(provenanceImageCheckBox.isSelected()));
             
             Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE,
-                                    String.valueOf(comboBoxSaveMethod.getSelectedIndex() == 1));
+                                    String.valueOf(comboBoxSaveImgMethod.getSelectedIndex() == 1));
             Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE,
-                    String.valueOf(comboBoxSaveMethod.getSelectedIndex() == 2));
+                    String.valueOf(comboBoxSaveImgMethod.getSelectedIndex() == 2));
             Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI,
-                    String.valueOf(comboBoxSaveMethod.getSelectedIndex() == 3));
+                    String.valueOf(comboBoxSaveImgMethod.getSelectedIndex() == 3));
+            Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC1, String.valueOf(comboBoxSaveMncMethod.getSelectedIndex() == 1));
+            Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC2, String.valueOf(comboBoxSaveMncMethod.getSelectedIndex() == 2));
             Preferences.setProperty(Preferences.PREF_SAVE_XML_ON_HDR_SAVE, String.valueOf(saveXMLOnHDRSaveCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SAVE_ALL_ON_SAVE, String.valueOf(saveAllCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SAVE_DEFAULTS, String.valueOf(saveDefaultsCheckBox.isSelected()));
@@ -1568,29 +1574,68 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbl.setConstraints(saveLabel, gbc);
         fileSavePanel.add(saveLabel);
         
-        comboBoxSaveMethod = new JComboBox();
-        comboBoxSaveMethod.setFont(MipavUtil.font12);
-        comboBoxSaveMethod.setBackground(Color.white);
-        comboBoxSaveMethod.addItem("from dialog choice");
-        comboBoxSaveMethod.addItem("in Analyze format");
-        comboBoxSaveMethod.addItem("in Interfile format");
-        comboBoxSaveMethod.addItem("in Nifti format");
-        comboBoxSaveMethod.setSelectedIndex(0);
+        comboBoxSaveImgMethod = new JComboBox();
+        comboBoxSaveImgMethod.setFont(MipavUtil.font12);
+        comboBoxSaveImgMethod.setBackground(Color.white);
+        comboBoxSaveImgMethod.addItem("from dialog choice");
+        comboBoxSaveImgMethod.addItem("in Analyze format");
+        comboBoxSaveImgMethod.addItem("in Interfile format");
+        comboBoxSaveImgMethod.addItem("in Nifti format");
+        comboBoxSaveImgMethod.setSelectedIndex(0);
         gbc.insets = new Insets(0, 0, 0, 0);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;  
-        gbl.setConstraints(comboBoxSaveMethod, gbc);
-        fileSavePanel.add(comboBoxSaveMethod);
+        gbl.setConstraints(comboBoxSaveImgMethod, gbc);
+        fileSavePanel.add(comboBoxSaveImgMethod);
 
         // preset the choices.
         if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE)) {
-            comboBoxSaveMethod.setSelectedIndex(1);
+            comboBoxSaveImgMethod.setSelectedIndex(1);
         }
         else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE)) {
-            comboBoxSaveMethod.setSelectedIndex(2);
+            comboBoxSaveImgMethod.setSelectedIndex(2);
         }
         else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI)) {
-            comboBoxSaveMethod.setSelectedIndex(3);
+            comboBoxSaveImgMethod.setSelectedIndex(3);
+        }
+    }
+    
+    /**
+     * Makes the "Always save .mnc files from dialog/ in Minc-1.0 CDF format/
+     *           in Minc-2.0 HDF5 format" combo box in the otherPanel.
+     *
+     * @param  gbc  the constraints used in the globalChangesPanel
+     * @param  gbl  the layout used in the globbalChangesPanel
+     */
+    protected void makeSaveMncOptions(GridBagConstraints gbc, GridBagLayout gbl) {
+        saveLabel = new JLabel("Always save .mnc files ");
+        saveLabel.setFont(MipavUtil.font12);
+        saveLabel.setForeground(Color.black);
+        gbc.insets = new Insets(0, 0, 0, 5);
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(saveLabel, gbc);
+        fileSavePanel.add(saveLabel);
+        
+        comboBoxSaveMncMethod = new JComboBox();
+        comboBoxSaveMncMethod.setFont(MipavUtil.font12);
+        comboBoxSaveMncMethod.setBackground(Color.white);
+        comboBoxSaveMncMethod.addItem("from dialog choice");
+        comboBoxSaveMncMethod.addItem("in Minc-1.0 CDF format");
+        comboBoxSaveMncMethod.addItem("in Minc-2.0 HDF5 format");
+        comboBoxSaveMncMethod.setSelectedIndex(0);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.WEST;  
+        gbl.setConstraints(comboBoxSaveMncMethod, gbc);
+        fileSavePanel.add(comboBoxSaveMncMethod);
+
+        // preset the choices.
+        if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC1)) {
+            comboBoxSaveMncMethod.setSelectedIndex(1);
+        }
+        else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC2)) {
+            comboBoxSaveMncMethod.setSelectedIndex(2);
         }
     }
 

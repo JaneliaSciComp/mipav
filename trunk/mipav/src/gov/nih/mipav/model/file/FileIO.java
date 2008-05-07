@@ -2200,15 +2200,7 @@ public class FileIO {
                 options.setFileName(options.getFileName() + suffix); // append file extension
             }
         } else if (fileType == FileUtility.MINC) {
-        	String [] mincOptionStr = new String[] { "MINC 1.0", "MINC 2.0 HDF5" };
-        	//create dialog to prompt for MINC 1.0 vs MINC 2.0 HDF
-        	Object selection  = JOptionPane.showInputDialog(ViewUserInterface.getReference().getMainFrame(), 
-        			"Choose MINC save type", "MINC Save Options", JOptionPane.YES_NO_OPTION, 
-        			null, mincOptionStr, "MINC 1.0"); 
-        	if (selection.equals(mincOptionStr[1])) {
-        		fileType = FileUtility.MINC_HDF;
-        	}
-        	
+        	fileType = new JDialogSaveMincVersionChoice(ViewUserInterface.getReference().getMainFrame()).fileType();
         }
 
         if (!options.isSet()) {

@@ -369,6 +369,18 @@ public class Preferences {
      * whether to save as analyze or interfile).
      */
     public static final String PREF_ALWAYS_SAVE_IMG_AS_NIFTI = "AlwaysSaveImgAsNifti";
+    
+    /**
+     * Constant that indicates whether .mnc files should always be written in minc1 CDF format (as opposed to asking
+     * whether to save as minc1 or minc2).
+     */
+    public static final String PREF_ALWAYS_SAVE_MNC_AS_MINC1 = "AlwaysSaveMncAsMinc1";
+    
+    /**
+     * Constant that indicates whether .mnc files should always be written in minc2 HDF5 format (as opposed to asking
+     * whether to save as minc1 or minc2).
+     */
+    public static final String PREF_ALWAYS_SAVE_MNC_AS_MINC2 = "AlwaysSaveMncAsMinc2";
 
     /** Constant that indicates the script directory. */
     public static final String PREF_SCRIPT_DIR = "ScriptDirectory";
@@ -2590,6 +2602,26 @@ public class Preferences {
      */
     public static final void setAlwaysSaveImgAsNifti(boolean doSaveNifti) {
         setProperty(PREF_ALWAYS_SAVE_IMG_AS_NIFTI, Boolean.toString(doSaveNifti));
+    }
+    
+    /**
+     * Sets whether all mncs should be saved in minc1 cdf format (i.e., don't ask about whether to save as 
+     * minc1/minc2).
+     *
+     * @param  doSaveMinc1  whether to always save .mnc files as minc1 cdf format files
+     */
+    public static final void setAlwaysSaveMncAsMinc1(boolean doSaveMinc1) {
+        setProperty(PREF_ALWAYS_SAVE_MNC_AS_MINC1, Boolean.toString(doSaveMinc1));
+    }
+    
+    /**
+     * Sets whether all mncs should be saved in minc2 hdf5 format (i.e., don't ask about whether to save as 
+     * minc1/minc2).
+     *
+     * @param  doSaveMinc2  whether to always save .mnc files as minc2 hdf5 format files
+     */
+    public static final void setAlwaysSaveMncAsMinc2(boolean doSaveMinc2) {
+        setProperty(PREF_ALWAYS_SAVE_MNC_AS_MINC2, Boolean.toString(doSaveMinc2));
     }
 
     /**

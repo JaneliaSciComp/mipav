@@ -18,7 +18,6 @@ public class FileInfoMincHDF extends FileInfoBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-
     /**
      * The dimension tree node that holds xspace, yspace, and (optionally) zspace nodes
      */
@@ -29,6 +28,11 @@ public class FileInfoMincHDF extends FileInfoBase {
      * The information node that holds acquisition information, dicom tags, and more
      */
     private transient DefaultMutableTreeNode informationNode;
+    
+    /**
+     * The image node that holds information about the image data (rescaling, dimorder, actual data).
+     */
+    private transient DefaultMutableTreeNode imageNode;
 
     /**
      * The axis orientation static types
@@ -211,6 +215,22 @@ public class FileInfoMincHDF extends FileInfoBase {
      */
     public DefaultMutableTreeNode getInfoNode() {
 	return this.informationNode;
+    }
+    
+    /**
+     * Sets the image node (includes image info and data)
+     * @param imageNode the image node
+     */
+    public void setImageNode(DefaultMutableTreeNode imageNode) {
+	this.imageNode = imageNode;
+    }
+
+    /**
+     * Returns the image node (image info and data)
+     * @return the image node
+     */
+    public DefaultMutableTreeNode getImageNode() {
+	return this.imageNode;
     }
 
     /**
