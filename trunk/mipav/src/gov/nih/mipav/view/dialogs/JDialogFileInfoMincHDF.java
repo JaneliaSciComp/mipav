@@ -22,9 +22,7 @@ import ncsa.hdf.object.HObject;
 
 
 public class JDialogFileInfoMincHDF extends JDialogScriptableBase implements ActionListener {
-
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
+    
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -35,12 +33,6 @@ public class JDialogFileInfoMincHDF extends JDialogScriptableBase implements Act
 
     /** DOCUMENT ME! */
     private JScrollPane scrollPaneDicom;
-
-    /** DOCUMENT ME! */
-    private ViewTableModel tagsModel;
-
-    /** DOCUMENT ME! */
-    private JTable tagsTable;
 
     /** DOCUMENT ME! */
     private boolean isAppend = false;
@@ -55,6 +47,12 @@ public class JDialogFileInfoMincHDF extends JDialogScriptableBase implements Act
     private int sliceIndex;
 
     private boolean launchFileChooser = true;
+    
+    /** Main dialog layout box. */
+    private Box mainBox;
+    
+    /** A set of strings that can be added to a ViewTableModel to insert an empty row. */
+    private static final String[] emptyRow = new String[]{"", "", ""};
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -79,47 +77,10 @@ public class JDialogFileInfoMincHDF extends JDialogScriptableBase implements Act
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Shows the "Other Image Information", with or without private tags.
-     *
-     * @param  tagsModel  DOCUMENT ME!
-     * @param  DicomInfo  DOCUMENT ME!
-     * @param  show       boolean that indicates whether or not to show private tags
-     */
-    public void showDicomSection(ViewTableModel tagsModel, FileInfoMincHDF mincInfo) {
-	Enumeration<FileDicomKey> e;
-	String name;
-	FileDicomKey key;
-	Object[] rowData = { "", "", "" };
-	Hashtable<FileDicomKey,FileDicomTag> tagsList = mincInfo.getDicomTable();
-	
-	if (tagsList.size() > 0) {
-	    tagsModel.addRow(new String[]{"", "DICOM information", ""});
-	}
-
-	// go through the hashlist, and for each element you find, copy it
-	// into the table, showing full info if it was coded
-	int ii;
-
-	for (ii = 0, e = tagsList.keys(); e.hasMoreElements(); ii++) {
-	    key = (FileDicomKey) e.nextElement();
-	    name = key.getKey();                       
-
-	    String tagName = "(" + name + ")";
-
-	    rowData[0] = tagName;
-	    rowData[1] =  DicomDictionary.getName(key);
-	    rowData[2] =  ((FileDicomTag) tagsList.get(key)).getValue(true);
-
-	    tagsModel.addRow(rowData);
-	}
-	sort(tagsModel, 0, false, true);
-    }
-
-    /**
      * Recursively parse and display (to JDialogText) the nodes
-     *  @throws Exception
+     * @throws Exception
      */
-    private static int displayNodes(DefaultMutableTreeNode rNode, ViewTableModel model, int index) throws Exception {
+    private static void displayNodes(DefaultMutableTreeNode rNode, ViewTableModel model) throws Exception {
 	long [] dataDims;
 	int children = rNode.getChildCount();
 	DefaultMutableTreeNode node;
@@ -132,7 +93,7 @@ public class JDialogFileInfoMincHDF extends JDialogScriptableBase implements Act
 		HObject userObject = (HObject)node.getUserObject();
 
 		String nodeName = userObject.toString();
-		if (nodeName.startsWith("dicom_")) {
+		if (nodeName.startsWith(FileMincHDF.DICOM_GROUP_PREFIX)) {
 		    //do nothing, dicom tags displayed elsewhere
 		} else {
 		    rowData[0] = nodeName;
@@ -144,17 +105,19 @@ public class JDialogFileInfoMincHDF extends JDialogScriptableBase implements Act
 			Attribute currentAttribute = it.next();
 			dataDims = currentAttribute.getDataDims();
 			String name = currentAttribute.getName();
-			if (!name.equals("varid") && !name.equals("vartype") &&
-				!name.equals("version")) {
+//			if (!name.equals("varid") && !name.equals("vartype") && !name.equals("version")) {
 			    rowData[1] = name;
 
 			    val = "";
 			    Object value = currentAttribute.getValue();
-			    for (int j = 0; j < dataDims.length; j++) {
-				//System.err.print(", " + dataDims[i]);
+			    for (int j = 0; j < dataDims[0]; j++) {
+				//System.err.println("dataDims:\t" + i + "\t" + dataDims[i]);
 
+				if (j != 0) {
+				    val += ", ";
+				}
+				
 				if (value instanceof String[]) {
-
 				    val += ((String[])value)[j];
 				    //	dialog.append("\t" + ((String[])value)[i]);
 				} else if (value instanceof float[]) {
@@ -167,19 +130,17 @@ public class JDialogFileInfoMincHDF extends JDialogScriptableBase implements Act
 				    val += ((short[])value)[j];
 				}
 			    }
+			    
 			    rowData[2] = val;
 			    model.addRow(rowData);
 			    rowData[0] = "";
-			    index++;
-			}
+//			}
 		    }
 		}
 	    } else {
 		//do nothing, should be leaf
 	    }
-	} 
-
-	return index;
+	}
     }
 
     /**
@@ -253,195 +214,55 @@ public class JDialogFileInfoMincHDF extends JDialogScriptableBase implements Act
 	imageA = _image; // set the input var
 	sliceIndex = sIndex;
 
-	Object[] rowData = {  "", "", "" };
-	String[] columnNames = {"Tag", "Name", "Value" };
-
 	try {
-	    tagsModel = new ViewTableModel();
-	    tagsTable = new JTable(tagsModel);
-
+	    mainBox = new Box(BoxLayout.Y_AXIS);
 	} catch (OutOfMemoryError error) {
-	    MipavUtil.displayError("JDialogFileInfoDICOM reports: Out of memory!");
+	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Out of memory!");
 
 	    return;
 	} catch (IllegalArgumentException ex) {
-	    MipavUtil.displayError("JDialogFileInfoDICOM reports: Editing table too small!");
+	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Editing table too small!");
 
 	    return;
 	}
+	
+	// essential image info display
+	mainBox.add(new JLabel("Essential image information"));
+	JTable essentialsTable = makeEssentialImageInfoTable();
+	//mainBox.add(essentialsTable.getTableHeader());
+	mainBox.add(essentialsTable);
 
-	int[] extents;
-	int i;
-
-	for (i = 0; i < 3; i++) {
-	    tagsModel.addColumn(columnNames[i]);
-	}
-
-	tagsTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-	//tagsTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-
-	tagsTable.getColumn("Tag").setMinWidth(90);
-	tagsTable.getColumn("Tag").setMaxWidth(90);
-	tagsTable.getColumn("Name").setMinWidth(160);
-	tagsTable.getColumn("Name").setMaxWidth(500);
-	tagsTable.getColumn("Value").setMinWidth(50);
-	tagsTable.getColumn("Value").setMaxWidth(1000);
-
-	tagsModel.addRow(rowData);
-	tagsModel.addRow(rowData);
-	tagsModel.setValueAt("Essential Image Information", 0, 1);
-	tagsModel.setValueAt(null, 0, 0);
-	tagsModel.setValueAt(null, 1, 0);
-	i = 2;
-	extents = mincInfo.getExtents();
-
-	for (int j = 0; j < extents.length; j++) {
-	    tagsModel.addRow(rowData);
-	    tagsModel.setValueAt("Dimension", i, 1);
-	    tagsModel.setValueAt(new Integer(extents[j]), i, 2);
-	    i++;
-	}
-
-	int dataType = mincInfo.getDataType();
-
-	tagsModel.addRow(rowData);
-	tagsModel.setValueAt("Type", i, 2);
-	tagsModel.setValueAt(ModelStorageBase.getBufferTypeStr(dataType), i, 2);
-
-	i++;
-	tagsModel.addRow(rowData);
-	tagsModel.setValueAt("Min", i, 2);
-	tagsModel.setValueAt(new Double(mincInfo.getMin()), i, 2);
-	tagsModel.addRow(rowData);
-	tagsModel.setValueAt("Max", ++i, 2);
-	tagsModel.setValueAt(new Double(mincInfo.getMax()), i, 2);
-	tagsModel.addRow(rowData);
-	tagsModel.setValueAt("Orientation", ++i, 1);
-
-	switch (mincInfo.getImageOrientation()) {
-
-	case FileInfoBase.AXIAL:
-	    tagsModel.setValueAt("Axial", i, 2);
-	    break;
-
-	case FileInfoBase.CORONAL:
-	    tagsModel.setValueAt("Coronal", i, 2);
-	    break;
-
-	case FileInfoBase.SAGITTAL:
-	    tagsModel.setValueAt("Sagittal", i, 2);
-	    break;
-
-	default:
-	    tagsModel.setValueAt("Unknown", i, 2);
-	}
-
-	float[] resolutions;
-
-	resolutions = mincInfo.getResolutions();
-	i++;
-
-	for (int j = 0; j < extents.length; j++) {
-	    tagsModel.addRow(rowData);
-	    tagsModel.setValueAt("Pixel resolution " + j, i, 1);
-	    tagsModel.setValueAt(new Float(resolutions[j]), i, 2);
-	    i++;
-	}
-
-	int measure = mincInfo.getUnitsOfMeasure(0);
-
-	tagsModel.addRow(rowData);
-	tagsModel.setValueAt("Unit of measure", i, 1);
-	tagsModel.setValueAt(null, i, 0);
-
-	if (measure == FileInfoBase.INCHES) {
-	    tagsModel.setValueAt("Inches per pixel", i, 2);
-	} else if (measure == FileInfoBase.MILLIMETERS) {
-	    tagsModel.setValueAt("Millimeters per pixel", i, 2);
-	} else if (measure == FileInfoBase.CENTIMETERS) {
-	    tagsModel.setValueAt("Centimeters per pixel", i, 2);
-	} else if (measure == FileInfoBase.METERS) {
-	    tagsModel.setValueAt("Meters per pixel", i, 2);
-	} else if (measure == FileInfoBase.KILOMETERS) {
-	    tagsModel.setValueAt("Kilometers per pixel", i, 2);
-	} else if (measure == FileInfoBase.MILES) {
-	    tagsModel.setValueAt("Miles per pixel", i, 2);
-	} else {
-	    tagsModel.setValueAt("Unknown", i, 2);
-	}
-
-	i++;
-	tagsModel.addRow(rowData);
-	tagsModel.setValueAt("Transformation Matrix", i, 1);
-
-	String matrixString = imageA.getMatrix().matrixToString(8, 4);
-	int nextIndex = 0, index = 0;
-	String subStr = new String();
-
-	for (int ii = 0; ii < imageA.getMatrix().getNRows(); ii++) {
-	    i++;
-	    nextIndex = matrixString.indexOf("\n", index);
-
-	    if (nextIndex != -1) {
-		subStr = matrixString.substring(index, nextIndex);
-		index = nextIndex + 1;
-		tagsModel.addRow(rowData);
-		tagsModel.setValueAt(subStr, i, 2);
-	    } else {
-		subStr = matrixString.substring(index, matrixString.length());
-		tagsModel.addRow(rowData);
-		tagsModel.setValueAt(subStr, i, 2);
-	    }
-	}
-
-
-	tagsModel.addRow(rowData);
-	tagsModel.addRow(rowData);
-	i += 2;
-
-	//dimension node display
-	if (mincInfo.getDimensionNode() != null) {
-	    tagsModel.setValueAt("Dimension information", i, 1); 
-	    i++;
-	    tagsModel.addRow(rowData);
-	    try {
-		i = displayNodes(mincInfo.getDimensionNode(), tagsModel, i);
-		tagsModel.addRow(rowData);
-		tagsModel.addRow(rowData);
-		i+=2;
-	    } catch (Exception e) {
-
-	    }
-	}
+	// dimension node display
+	mainBox.add(new JLabel("Dimension node"));
+	JTable dimensionTable = makeDimensionNodeTable();
+	mainBox.add(dimensionTable.getTableHeader());
+	mainBox.add(dimensionTable);
+	
+	// image node display
+	mainBox.add(new JLabel("Image node"));
+	JTable imageTable = makeImageNodeTable();
+	mainBox.add(imageTable.getTableHeader());
+	mainBox.add(imageTable);
 
 	// info node display
-	if (mincInfo.getInfoNode() != null) {
-	    tagsModel.addRow(rowData);
-	    tagsModel.setValueAt("Info node", i, 1);
-	    i++;
-	    try {
-		i = displayNodes(mincInfo.getInfoNode(), tagsModel, i);
-		tagsModel.addRow(rowData);
-		tagsModel.addRow(rowData);
-		i+=2;
-	    } catch (Exception e) {
+	mainBox.add(new JLabel("Information node"));
+	JTable informationTable = makeInformationNodeTable();
+	mainBox.add(informationTable.getTableHeader());
+	mainBox.add(informationTable);
 
-	    }
-	}
-
-	showDicomSection(tagsModel, mincInfo);
+	// dicom tag display
+	mainBox.add(new JLabel("Dicom tags stored in Information node"));
+	JTable dicomTable = makeDicomNodeTable();
+	mainBox.add(dicomTable.getTableHeader());
+	mainBox.add(dicomTable);
 
 	try {
-	    tagsTable.setPreferredScrollableViewportSize(new Dimension(200, 200));
-	    tagsTable.setMinimumSize(new Dimension(300, 300));
-	    scrollPaneDicom = new JScrollPane(tagsTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+	    scrollPaneDicom = new JScrollPane(mainBox, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 		    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 	    scrollPaneDicom.setPreferredSize(new Dimension(200, 200));
 	    scrollPaneDicom.setMinimumSize(new Dimension(150, 100));
-
 	} catch (OutOfMemoryError error) {
-	    MipavUtil.displayError("JDialogFileInfoDICOM reports: Out of memory!");
-
+	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Out of memory!");
 	    return;
 	}
 
@@ -450,11 +271,277 @@ public class JDialogFileInfoMincHDF extends JDialogScriptableBase implements Act
 	getContentPane().add(scrollPaneDicom, BorderLayout.CENTER);
 	getContentPane().setSize(new Dimension(700, 650));
 	setSize(700, 650);
-
     }
+    
+    private JTable makeEssentialImageInfoTable() {
+	ViewTableModel tableModel;
+	JTable nodeTable;
+	
+	try {
+	    tableModel = new ViewTableModel();
+	    nodeTable = new JTable(tableModel);
+	} catch (OutOfMemoryError error) {
+	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Out of memory!");
+	    error.printStackTrace();
+	    return null;
+	} catch (IllegalArgumentException ex) {
+	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Editing table too small!");
+	    ex.printStackTrace();
+	    return null;
+	}
+	
+	tableModel.addColumn("Tag");
+	tableModel.addColumn("Name");
+	tableModel.addColumn("Value");
+	
+	nodeTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+	nodeTable.setPreferredScrollableViewportSize(new Dimension(200, 200));
+	nodeTable.setMinimumSize(new Dimension(300, 300));
+	
+	nodeTable.getColumn("Tag").setMinWidth(90);
+	nodeTable.getColumn("Tag").setMaxWidth(90);
+	nodeTable.getColumn("Name").setMinWidth(160);
+	nodeTable.getColumn("Name").setMaxWidth(500);
+	nodeTable.getColumn("Value").setMinWidth(50);
+	nodeTable.getColumn("Value").setMaxWidth(1000);
+	
+	// info node display
+	int[] extents = mincInfo.getExtents();
 
+	for (int i = 0; i < extents.length; i++) {
+	    tableModel.addRow(new Object[]{"", "Dimension " + i, new Integer(extents[i])});
+	}
 
+	int dataType = mincInfo.getDataType();
 
+	tableModel.addRow(new Object[]{"", "Type", ModelStorageBase.getBufferTypeStr(dataType)});
+
+	tableModel.addRow(new Object[]{"", "Min", new Double(mincInfo.getMin())});
+	tableModel.addRow(new Object[]{"", "Max", new Double(mincInfo.getMax())});
+	
+	tableModel.addRow(new Object[]{"", "Orientation", FileInfoBase.getImageOrientationStr(mincInfo.getImageOrientation())});
+
+	float[] resolutions = mincInfo.getResolutions();
+	for (int i = 0; i < extents.length; i++) {
+	    tableModel.addRow(new Object[]{"", "Pixel resolution " + i, new Float(resolutions[i])});
+	}
+
+	int[] measure = mincInfo.getUnitsOfMeasure();
+	for (int i = 0; i < extents.length; i++) {
+	    tableModel.addRow(new Object[]{"", "Unit of measure " + i, FileInfoBase.getUnitsOfMeasureStr(measure[i])});
+	}
+	
+	tableModel.addRow(new Object[]{"", "Transformation matrix", });
+	
+	String matrixString = imageA.getMatrix().matrixToString(8, 4);
+	int nextIndex = 0, index = 0;
+	String subStr = new String();
+
+	for (int i = 0; i < imageA.getMatrix().getNRows(); i++) {
+	    nextIndex = matrixString.indexOf("\n", index);
+
+	    if (nextIndex != -1) {
+		subStr = matrixString.substring(index, nextIndex);
+		index = nextIndex + 1;
+		tableModel.addRow(new Object[]{"", "", subStr});
+	    } else {
+		subStr = matrixString.substring(index, matrixString.length());
+		tableModel.addRow(new Object[]{"", "", subStr});
+	    }
+	}
+	
+	return nodeTable;
+    }
+        
+    private JTable makeDimensionNodeTable() {
+	ViewTableModel tableModel;
+	JTable nodeTable;
+	
+	try {
+	    tableModel = new ViewTableModel();
+	    nodeTable = new JTable(tableModel);
+	} catch (OutOfMemoryError error) {
+	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Out of memory!");
+	    error.printStackTrace();
+	    return null;
+	} catch (IllegalArgumentException ex) {
+	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Editing table too small!");
+	    ex.printStackTrace();
+	    return null;
+	}
+	
+	tableModel.addColumn("Variable");
+	tableModel.addColumn("Attribute");
+	tableModel.addColumn("Value");
+	
+	nodeTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+	nodeTable.setPreferredScrollableViewportSize(new Dimension(200, 200));
+	nodeTable.setMinimumSize(new Dimension(300, 300));
+	
+	nodeTable.getColumn("Variable").setMinWidth(90);
+	nodeTable.getColumn("Variable").setMaxWidth(90);
+	nodeTable.getColumn("Attribute").setMinWidth(160);
+	nodeTable.getColumn("Attribute").setMaxWidth(500);
+	nodeTable.getColumn("Value").setMinWidth(50);
+	nodeTable.getColumn("Value").setMaxWidth(1000);
+	
+	// dimension node display
+	if (mincInfo.getDimensionNode() != null) {
+	    try {
+		displayNodes(mincInfo.getDimensionNode(), tableModel);
+	    } catch (Exception e) {
+		e.printStackTrace();
+		return null;
+	    }
+	}
+	
+	return nodeTable;
+    }
+    
+    private JTable makeImageNodeTable() {
+	ViewTableModel tableModel;
+	JTable nodeTable;
+	
+	try {
+	    tableModel = new ViewTableModel();
+	    nodeTable = new JTable(tableModel);
+	} catch (OutOfMemoryError error) {
+	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Out of memory!");
+	    error.printStackTrace();
+	    return null;
+	} catch (IllegalArgumentException ex) {
+	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Editing table too small!");
+	    ex.printStackTrace();
+	    return null;
+	}
+	
+	tableModel.addColumn("Variable");
+	tableModel.addColumn("Attribute");
+	tableModel.addColumn("Value");
+	
+	nodeTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+	nodeTable.setPreferredScrollableViewportSize(new Dimension(200, 200));
+	nodeTable.setMinimumSize(new Dimension(300, 300));
+	
+	nodeTable.getColumn("Variable").setMinWidth(90);
+	nodeTable.getColumn("Variable").setMaxWidth(90);
+	nodeTable.getColumn("Attribute").setMinWidth(160);
+	nodeTable.getColumn("Attribute").setMaxWidth(500);
+	nodeTable.getColumn("Value").setMinWidth(50);
+	nodeTable.getColumn("Value").setMaxWidth(1000);
+	
+	// image node display
+	if (mincInfo.getInfoNode() != null) {
+	    try {
+		displayNodes(mincInfo.getImageNode(), tableModel);
+	    } catch (Exception e) {
+		e.printStackTrace();
+		return null;
+	    }
+	}
+	
+	return nodeTable;
+    }
+    
+    private JTable makeInformationNodeTable() {
+	ViewTableModel tableModel;
+	JTable nodeTable;
+	
+	try {
+	    tableModel = new ViewTableModel();
+	    nodeTable = new JTable(tableModel);
+	} catch (OutOfMemoryError error) {
+	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Out of memory!");
+	    error.printStackTrace();
+	    return null;
+	} catch (IllegalArgumentException ex) {
+	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Editing table too small!");
+	    ex.printStackTrace();
+	    return null;
+	}
+	
+	tableModel.addColumn("Variable");
+	tableModel.addColumn("Attribute");
+	tableModel.addColumn("Value");
+	
+	nodeTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+	nodeTable.setPreferredScrollableViewportSize(new Dimension(200, 200));
+	nodeTable.setMinimumSize(new Dimension(300, 300));
+	
+	nodeTable.getColumn("Variable").setMinWidth(90);
+	nodeTable.getColumn("Variable").setMaxWidth(90);
+	nodeTable.getColumn("Attribute").setMinWidth(160);
+	nodeTable.getColumn("Attribute").setMaxWidth(500);
+	nodeTable.getColumn("Value").setMinWidth(50);
+	nodeTable.getColumn("Value").setMaxWidth(1000);
+	
+	// info node display
+	if (mincInfo.getInfoNode() != null) {
+	    try {
+		displayNodes(mincInfo.getInfoNode(), tableModel);
+	    } catch (Exception e) {
+		e.printStackTrace();
+		return null;
+	    }
+	}
+	
+	return nodeTable;
+    }
+    
+    private JTable makeDicomNodeTable() {
+	ViewTableModel tableModel;
+	JTable nodeTable;
+	
+	try {
+	    tableModel = new ViewTableModel();
+	    nodeTable = new JTable(tableModel);
+	} catch (OutOfMemoryError error) {
+	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Out of memory!");
+	    error.printStackTrace();
+	    return null;
+	} catch (IllegalArgumentException ex) {
+	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Editing table too small!");
+	    ex.printStackTrace();
+	    return null;
+	}
+	
+	tableModel.addColumn("Tag");
+	tableModel.addColumn("Name");
+	tableModel.addColumn("Value");
+	
+	nodeTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+	nodeTable.setPreferredScrollableViewportSize(new Dimension(200, 200));
+	nodeTable.setMinimumSize(new Dimension(300, 300));
+	
+	nodeTable.getColumn("Tag").setMinWidth(90);
+	nodeTable.getColumn("Tag").setMaxWidth(90);
+	nodeTable.getColumn("Name").setMinWidth(160);
+	nodeTable.getColumn("Name").setMaxWidth(500);
+	nodeTable.getColumn("Value").setMinWidth(50);
+	nodeTable.getColumn("Value").setMaxWidth(1000);
+	
+	// dicom tag display (technically part of info node)
+	FileDicomKey key;
+	Hashtable<FileDicomKey,FileDicomTag> dicomTagList = mincInfo.getDicomTable();
+	Enumeration<FileDicomKey> keyList = dicomTagList.keys();
+	
+	if (dicomTagList.size() > 0) {
+	    try {
+		while (keyList.hasMoreElements()) {
+		    key = keyList.nextElement();
+		    
+		    tableModel.addRow(new Object[]{"(" + key + ")", dicomTagList.get(key).getName(), dicomTagList.get(key).getValue(true)});
+		}
+		
+		sort(tableModel, 0, false, true);
+	    } catch (Exception e) {
+		e.printStackTrace();
+		return null;
+	    }
+	}
+	
+	return nodeTable;
+    }
 
     /**
      * call algorithm
@@ -462,9 +549,7 @@ public class JDialogFileInfoMincHDF extends JDialogScriptableBase implements Act
      */
     protected void callAlgorithm() {
     }
-
-
-
+    
     /**
      * set gui from parameters
      *
@@ -500,5 +585,3 @@ public class JDialogFileInfoMincHDF extends JDialogScriptableBase implements Act
 
     } 
 }
-
-

@@ -14,24 +14,16 @@ import javax.swing.*;
 /**
  * Confirmation Dialog giving user the choice to write an analyze file , interfile file, or a nifti file.
  */
-public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
-
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
-    /** Use serialVersionUID for interoperability. */
-    private static final long serialVersionUID = 4588130080855618027L;
+public class JDialogSaveMincVersionChoice extends JDialogBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Radio button to indicate that an analyze img file should be written out. */
-    private JRadioButton analyzeFile;
+    /** Radio button to indicate that an Minc1 CDF mnc file should be written out. */
+    private JRadioButton minc1File;
     
-    /** Radio button to indicate that an Interfile img file should be written out. */
-    private JRadioButton interfileFile;
-
-    /** Radio button to indicate that a nifti img file should be written out. */
-    private JRadioButton niftiFile;
-
+    /** Radio button to indicate that a Minc2 HDF5 mnc file should be written out. */
+    private JRadioButton minc2File;
+    
     /** Whether the window was closed through the user clicking the OK button (and not just killing the dialog). */
     private boolean okayPressed = false;
     
@@ -45,30 +37,22 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
      *
      * @param  theParentFrame  Parent frame of dialog.
      */
-    public JDialogAnalyzeNIFTIChoice(Frame theParentFrame) {
+    public JDialogSaveMincVersionChoice(Frame theParentFrame) {
         super(theParentFrame, true);
         init();
 
         // skip the dialog if the user has requested to not be bothered
-        if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE)) {
+        if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC1)) {
             comboBoxSaveMethod.setSelectedIndex(1);
-            analyzeFile.setSelected(true);
+            minc1File.setSelected(true);
             okayPressed = true;
             dispose();
 
             return;
         }
-        else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE)){
+        else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC2)){
             comboBoxSaveMethod.setSelectedIndex(2);
-            interfileFile.setSelected(true);
-            okayPressed = true;
-            dispose();
-            
-            return;
-        }
-        else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI)){
-            comboBoxSaveMethod.setSelectedIndex(3);
-            niftiFile.setSelected(true);
+            minc2File.setSelected(true);
             okayPressed = true;
             dispose();
             
@@ -94,13 +78,10 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
                     // do nothing
                     break;
                 case 1:
-                    Preferences.setAlwaysSaveImgAsAnalyze(true);
+                    Preferences.setAlwaysSaveMncAsMinc1(true);
                     break;
                 case 2:
-                    Preferences.setAlwaysSaveImgAsInterfile(true);
-                    break;
-                case 3:
-                    Preferences.setAlwaysSaveImgAsNifti(true);
+                    Preferences.setAlwaysSaveMncAsMinc2(true);
                     break;
             }
 
@@ -111,20 +92,17 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
     }
 
     /**
-     * Returns whether analyze, interfile, or nifti
+     * Returns whether Minc1 CDF or Minc2 HDF5 has been selected.
      *
-     * @return  whether analyze, interfile, or nifti
+     * @return  whether whether Minc1 CDF or Minc2 HDF5
      */
     public int fileType() {
 
-        if (analyzeFile.isSelected()) {
-            return FileUtility.ANALYZE;
+        if (minc2File.isSelected()) {
+            return FileUtility.MINC_HDF;
         } 
-        else if (interfileFile.isSelected()){
-            return FileUtility.INTERFILE;
-        }
         else {
-            return FileUtility.NIFTI;
+            return FileUtility.MINC;
         }
     }
 
@@ -144,28 +122,25 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
         JLabel saveLabel;
         setTitle("Choose type of file to write");
 
-        PanelManager manager = new PanelManager("Write .hdr/.img as..");
+        PanelManager manager = new PanelManager("Write .mnc file as..");
 
         ButtonGroup writeGroup = new ButtonGroup();
-        analyzeFile = WidgetFactory.buildRadioButton("Analyze file", true, writeGroup);
-        interfileFile = WidgetFactory.buildRadioButton("Interfile file", false, writeGroup);
-        niftiFile = WidgetFactory.buildRadioButton("Nifti file", false, writeGroup);
-        saveLabel = new JLabel("Always save .hdr/.img files ");
+        minc1File = WidgetFactory.buildRadioButton("Minc-1.0 CDF file", true, writeGroup);
+        minc2File = WidgetFactory.buildRadioButton("Minc-2.0 HDF5 file", false, writeGroup);
+        saveLabel = new JLabel("Always save .mnc files ");
         saveLabel.setFont(serif12);
         saveLabel.setForeground(Color.black);
         comboBoxSaveMethod = new JComboBox();
         comboBoxSaveMethod.setFont(serif12);
         comboBoxSaveMethod.setBackground(Color.white);
         comboBoxSaveMethod.addItem("from dialog choice");
-        comboBoxSaveMethod.addItem("in Analyze format");
-        comboBoxSaveMethod.addItem("in Interfile format");
-        comboBoxSaveMethod.addItem("in Nifti format");
+        comboBoxSaveMethod.addItem("in Minc-1.0 CDF format");
+        comboBoxSaveMethod.addItem("in Minc-2.0 HDF5 format");
         comboBoxSaveMethod.setSelectedIndex(0);
 
         manager.getConstraints().insets = new Insets(0, 15, 0, 10);
-        manager.add(analyzeFile);
-        manager.addOnNextLine(interfileFile);
-        manager.addOnNextLine(niftiFile);
+        manager.add(minc1File);
+        manager.addOnNextLine(minc2File);
 
         manager.getConstraints().insets = new Insets(10, 0, 0, 0);
         manager.addOnNextLine(saveLabel);
