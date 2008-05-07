@@ -396,7 +396,11 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     
     private File[] detectImageSequence(ModelImage im) {
     	File dir = new File(im.getFileInfo()[0].getFileDirectory());
-    	String name = im.getFileInfo()[0].getFileName().substring(0, im.getFileInfo()[0].getFileName().length()-2);
+    	String name = im.getFileInfo()[0].getFileName();
+    	if(name.indexOf('.') > name.length() - 5)
+    		name = name.substring(0, name.lastIndexOf('.')-2);
+    	else	
+    		name = name.substring(0, im.getFileInfo()[0].getFileName().length()-2);
     	File[] contain = dir.listFiles();
     	int size = 0;
     	ArrayList<File> fileList = new ArrayList();
