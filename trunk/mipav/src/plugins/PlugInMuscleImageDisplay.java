@@ -1500,16 +1500,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         /** Check boxes for non-mirror object buttons. */
         private ColorButtonPanel[] noMirrorCheckArr;
-        
-        public void clearButtons() {
-        	for(int i=0; i<mirrorCheckArr.length; i++) {
-        		mirrorCheckArr[i].setColor(Color.black);
-        	}
-        	for(int i=0; i<noMirrorCheckArr.length; i++) {
-        		noMirrorCheckArr[i].setColor(Color.black);
-        	}
-        }
-        
+
         /** Buttons for muscles where a mirror muscle may exist. */
         private JButton[] mirrorButtonArr;
         
@@ -1553,29 +1544,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	return index;
         }
         
-        /*public boolean hasButton(String buttonText) {
-            if(zeroStatus.get(buttonText) != null) {
-                return true;
-            } 
-            return false;
-        }
-        
-        public void setButton(VOI voi) {
-            for(int i=0; i<mirrorButtonArr.length; i++) {
-                if(mirrorButtonArr[i].getText().equals(voi.getName())) {
-                	mirrorCheckArr[i].setColor(voi.getColor());
-                	voi.addVOIListener(mirrorCheckArr[i].getColorButton());
-                	mirrorCheckArr[i].repaint();
-                }
-            }
-            for(int i=0; i<noMirrorButtonArr.length; i++) {
-                if(noMirrorButtonArr[i].getText().equals(voi.getName())) {
-                    noMirrorCheckArr[i].setColor(voi.getColor());
-                    voi.addVOIListener(noMirrorCheckArr[i].getColorButton());
-                }
-            }
-        }*/
-        
         public void actionPerformed(ActionEvent e) {
             System.err.println(e.getActionCommand());
             System.out.println(e.getActionCommand());
@@ -1608,9 +1576,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             return instructionPanel;
         }
         
+        public void clearButtons() {
+        	for(int i=0; i<mirrorCheckArr.length; i++) {
+        		mirrorCheckArr[i].setColor(Color.black);
+        	}
+        	for(int i=0; i<noMirrorCheckArr.length; i++) {
+        		noMirrorCheckArr[i].setColor(Color.black);
+        	}
+        }
+        
         private JPanel initSymmetricalObjects() {
-            
-            VOIVector existingVois = muscleFrame.getImageA().getVOIs();
             
             ButtonGroup mirrorGroup = new ButtonGroup();
             JPanel mirrorPanel = new JPanel(new GridBagLayout());
@@ -1672,8 +1647,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         }
         
         private JPanel initNonSymmetricalObjects() {
-            VOIVector existingVois = muscleFrame.getImageA().getVOIs();
-            
+
             ButtonGroup noMirrorGroup = new ButtonGroup();
             JPanel noMirrorPanel = new JPanel(new GridBagLayout());
             noMirrorPanel.setForeground(Color.black);
