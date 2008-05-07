@@ -181,7 +181,7 @@ public class FileLIFF extends FileBase {
     public ModelImage readImage(boolean multiFile, boolean one) throws IOException {
         long fileLength;
         boolean endianess;
-        int i, j;
+        int i, j, k;
         short tagType;
         short subType;
         long nextOffset;
@@ -283,6 +283,7 @@ public class FileLIFF extends FileBase {
         short pixelSizeArray[] = new short[24000];
         short boundsTopArray[] = new short[24000];
         short boundsBottomArray[] = new short[24000];
+        short cmpCountArray[] = new short[24000];
         int subPictCount = 0;
         int pictCount = 0;
         String layerString[] = new String[10];
@@ -429,6 +430,12 @@ public class FileLIFF extends FileBase {
         int ctSeed;
         short ctFlags;
         short ctSize;
+        int rowBytesRead = 0;
+        int rowIndex = 0;
+        byte b1;
+        byte byteBuffer[] = null;
+        int component = 0;
+        int componentArray[];
 
         try {
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
@@ -1250,6 +1257,7 @@ public class FileLIFF extends FileBase {
                                     pixelSizeArray[subPictCount] = pixelSize;
                                     boundsTopArray[subPictCount] = boundsTop;
                                     boundsBottomArray[subPictCount] = boundsBottom;
+                                    cmpCountArray[subPictCount] = cmpCount;
                                     imageTypeLocation[subPictCount++] = imageType;
                                     if ((packType == 0) || (packType > 2)) {
                                         totalByteCount = 0;
@@ -1499,6 +1507,7 @@ public class FileLIFF extends FileBase {
                                     pixelSizeArray[subPictCount] = pixelSize;
                                     boundsTopArray[subPictCount] = boundsTop;
                                     boundsBottomArray[subPictCount] = boundsBottom;
+                                    cmpCountArray[subPictCount] = cmpCount;
                                     imageTypeLocation[subPictCount++] = imageType;
                                     if ((packType == 0) || (packType > 2)) {
                                         totalByteCount = 0;
@@ -1843,6 +1852,7 @@ public class FileLIFF extends FileBase {
                 imageExtents[2] = imageSlices;
                 fileInfo.setExtents(imageExtents);
                 image = new ModelImage(ModelStorageBase.ARGB, imageExtents, fileName);
+                byteBuffer = new byte[4 * xDim * yDim];
             }
             else {
                 Preferences.debug("The MIPAV image will have " + majorTypeCount + 
@@ -1963,11 +1973,27 @@ public class FileLIFF extends FileBase {
             } // if (doDeepGreyColor)
             else {
                 for (i = 0; i < subPictCount; i++) {
+                    index = 0;
+                    component = 0;
+                    componentArray = new int[1];
                     if (imageTypeLocation[i] == majorType) {
                         raFile.seek(pictLocation[i]);
                         Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
                         if ((packTypeArray[i] == 0) || (packTypeArray[i] > 2)) {
                             totalByteCount = 0;
+                            if (cmpCountArray[i] == 3) {
+                                componentArray = new int[3];
+                                componentArray[0] = 1;
+                                componentArray[1] = 2;
+                                componentArray[2] = 3;
+                            }
+                            else  if (cmpCountArray[i] == 4) {
+                                componentArray = new int[4];
+                                componentArray[0] = 0;
+                                componentArray[1] = 1;
+                                componentArray[2] = 2;
+                                componentArray[3] = 3;
+                            }
                             for (j = boundsTopArray[i]; j < boundsBottomArray[i]; j++) {
                                 if (rowBytesArray[i] > 250) {
                                     byteCount = getUnsignedShort(endianess);
@@ -1978,11 +2004,49 @@ public class FileLIFF extends FileBase {
                                     byteCount = prefix[0] & 0xff;
                                     totalByteCount += (byteCount + 1);
                                 }
-                                Preferences.debug("row number = " + j + " byte count = " + byteCount + "\n");
+                                //Preferences.debug("row number = " + j + " byte count = " + byteCount + "\n");
                                 pad = new byte[byteCount];
                                 raFile.read(pad);
-                            }
-                            
+                                rowBytesRead = 0;
+                                rowIndex = 0;
+                                while ((rowBytesRead < rowBytesArray[i]) && (rowIndex < byteCount)) {
+                                   b1 = pad[rowIndex++]; 
+                                   if (b1 >= 0) { // 127 >= b1 >= 0
+                                     for (k = 0; k < (b1 + 1); k++) {
+                                         byteBuffer[(cmpCountArray[i]*index++) + componentArray[component]] =
+                                                                                 pad[rowIndex++];
+                                         if ((index % xDim) == 0) {
+                                             if (component < cmpCountArray[i] - 1) {
+                                               component++;
+                                               index = index - xDim;
+                                             }
+                                             else {
+                                               component = 0;
+                                             }
+                                         }
+                                     }
+                                   } // if (b1 >= 0)
+                                   else if (b1 != -128) { // -1 >= b1 >= -127
+                                     len = -b1 + 1;
+                                     for (k = 0; k < len; k++) {
+                                         byteBuffer[(cmpCountArray[i]*index++) + componentArray[component]] =
+                                             pad[rowIndex];
+                                         if ((index % xDim) == 0) {
+                                             if (component < cmpCountArray[i] - 1) {
+                                               component++;
+                                               index = index - xDim;
+                                             }
+                                             else {
+                                               component = 0;
+                                             }
+                                         }
+                                     }
+                                     rowIndex++;
+                                   } // else if (b1 != -128)
+                                } // while (rowBytesRead < rowBytesArray[i])
+                            } // for (j = boundsTopArray[i]; j < boundsBottomArray[i]; j++)
+                            image.importData(4 * sliceNumber * xDim * yDim, byteBuffer, false);
+                            sliceNumber++;
                         } // if ((packType == 0) || (packType > 2))
                     } // if (imageTypeLocation[i] == majorType)
                 } // for (i = 0; i < subPictCount; i++)
