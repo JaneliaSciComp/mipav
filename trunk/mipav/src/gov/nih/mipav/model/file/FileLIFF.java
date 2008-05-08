@@ -35,16 +35,56 @@ public class FileLIFF extends FileBase {
     private static final short kBrightFieldLayer = 17;
     
     private static final int UNKNOWN = 0;
+    // Note that types 1 thru 6 all have associated color tables in their PackBitsRect opcodes.
+    // The color tables contain 3 USHORT values, ranging from 0 to 65535
+    // For GREYS the 3 USHORT values are identical.
+    // For COLORS the 3 USHORT values can be different.
+    // For the below data types the most significant bit (MSB) corresponds to the leftmost
+    // pixel.  The least significant bit (LSB) corresponds to the rightmost pixel.
+    
+    // k1IndexedGrayPixelFormat Each bit represents a pixel, which is used as an index
+    // into the associated gray Color Table.  This is a legacy gray indexed format from
+    // the Mac platform.
     private static final int MAC_1_BIT = 1;
+    // k2IndexedGrayPixelFormat Each pixel is represented by two bits, which is used as an
+    // index into the associated 2-bit gray Color Table.  This is a legacy gray indexed
+    // format from the Mac platform.
     private static final int MAC_4_GREYS = 2;
+    // k4IndexedGrayPixelFormat Each pixel is represented by four bits, which is used as
+    // an index into the associated 4-bit gray Color Table.  This is a legacy gray 
+    // indexed format from the Mac platform.
     private static final int MAC_16_GREYS = 3;
+    // k4IndexedPixelFormat Each pixel is represented by four bits, which are used as
+    // an index into the associated Color Table.  The four bit indexed format is native
+    // to both the Mac and Win32 platforms.  The pixel defined by the most significant
+    // four bits of a byte come before the pixel defined by the least significant four
+    // bits.
     private static final int MAC_16_COLORS = 4;
+    // k8IndexedGrayPixelFormat Each pixel is represented by eight bits, which is used as
+    // an index into the associated 8-bit gray Color Table.  Thsi is a legacy gray indexed
+    // format from the Mac platform.
     private static final int MAC_256_GREYS = 5;
+    // k8IndexedPixelFormat Each pixel is represented by eight bits, which are used as
+    // an index into the associated Color Table.  The eight bit indexed format is native
+    // to both Mac and Win32 platforms.
     private static final int MAC_256_COLORS = 6;
+    // Have k16BE555PixelFormat  Each pixel is represented by 16 bits.  The MSB is unused,
+    // followed by five bits per each Red, Green, and Blue Component.  This is the
+    // native 16 bit format for the MAC platform.  For the MAC_16_BIT_COLOR
+    // BIT DEPTH OF LAYER = 15 as expected, so we do not have k16BE565PixelFormat where each pixel
+    // is represented by 16 bits.  Five bits for Red, 6 bits for Green, and 5 bits for
+    // Blue component.  This format is not commonly used, being defined primarily for
+    // completeness.
     private static final int MAC_16_BIT_COLOR = 7;
     // LIFF file format documentation has openlab_mac32bitColourImageType = 8L,
     // openlab_mac24bitColourImageType = openlab_mac32bitColourImageType,
     // OpenlabReader.java has MAC_24_BIT_COLOR = 8;
+    // k24RGBPixelFormat  Each pixel is represented by 24 bits.  Eight bits per
+    // each Red, Green, and Blue Component.  This is the native 24 bit format
+    // for the Mac platform.
+    // k32ARGBPixelFormat Each pixel is represneted by 32 bits.  Eight bits per
+    // each Alpha, Red, Green, and Blue Component.  This is the native 32 bit
+    // format for the Mac platform.
     private static final int MAC_24_BIT_COLOR = 8;
     private static final int DEEP_GREY_9 = 9;
     private static final int DEEP_GREY_10 = 10;
@@ -2095,6 +2135,8 @@ public class FileLIFF extends FileBase {
                                 componentArray[2] = 3;
                             }
                             else  if (cmpCountArray[i] == 4) {
+                                // To make the sample embryo2 LIFF file MAC_24_BIT_COLOR slices look like the 
+                                // DEEP_GREY_12 slices actually requires an order of 0, 2, 1, 3.
                                 componentArray = new int[4];
                                 componentArray[0] = 0;
                                 componentArray[1] = 1;
