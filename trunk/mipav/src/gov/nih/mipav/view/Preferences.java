@@ -1655,6 +1655,19 @@ public class Preferences {
     }
 
     /**
+     * Check the current Java virtual machine is 64 bit or not.
+     *
+     * @return  boolean  true 64 bit, otherwise
+     */
+    public static final boolean isJVM64bit() {
+    	String javaVMname = System.getProperty("java.vm.name");
+        if ( javaVMname.indexOf("64-Bit") > -1 ) {
+        	return true;
+        } 
+        return false;
+    }
+    
+    /**
      * Gets an int representing the operating system.
      *
      * @return  int operating system
