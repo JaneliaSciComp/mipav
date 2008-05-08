@@ -321,6 +321,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public void aboutJava() {
         JDialogText aboutJavaDialog;
+        String javaClassPath;
+
+        javaClassPath = System.getProperties().getProperty("java.class.path");
+        javaClassPath = javaClassPath.replace(';', '\n');
+        
         aboutJavaDialog = new JDialogText(mainFrame, "About System"); // Title
 
         aboutJavaDialog.append("Java version:       " + System.getProperties().getProperty("java.version") + "\n");
@@ -328,9 +333,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         aboutJavaDialog.append("Java vendor:        " + System.getProperties().getProperty("java.vendor") + "\n");
         aboutJavaDialog.append("Java vendor.url:    " + System.getProperties().getProperty("java.vendor.url") + "\n");
         aboutJavaDialog.append("Java home:          " + System.getProperties().getProperty("java.home") + "\n");
-        aboutJavaDialog.append("Java class version: " + System.getProperties().getProperty("java.class.version") +
-                               "\n");
-        aboutJavaDialog.append("Java class path:    " + System.getProperties().getProperty("java.class.path") + "\n");
+        aboutJavaDialog.append("Java class version: " + System.getProperties().getProperty("java.class.version") + "\n");
+        aboutJavaDialog.append("Java class path:    " + "\n" + javaClassPath + "\n");
         aboutJavaDialog.append("OS name:            " + System.getProperties().getProperty("os.name") + "\n");
         aboutJavaDialog.append("OS arch:            " + System.getProperties().getProperty("os.arch") + "\n");
         aboutJavaDialog.append("OS version:         " + System.getProperties().getProperty("os.version") + "\n");
