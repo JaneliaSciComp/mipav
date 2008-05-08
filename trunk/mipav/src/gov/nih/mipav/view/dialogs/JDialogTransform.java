@@ -242,7 +242,6 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         String command = event.getActionCommand();
 
         if (command.equals("OK")) {
-
             if (setVariables()) {
                 callAlgorithm();
             }
@@ -3172,12 +3171,10 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
         if (doPad) {
             tmpStr = padValTxt.getText();
-
-            if (testParameter(tmpStr, 0, 255)) {
+            if (testParameter(tmpStr, ModelStorageBase.getTypeMin(image.getType()), ModelStorageBase.getTypeMax(image.getType()))) {
                 padValue = Integer.valueOf(tmpStr).intValue();
             } else {
-                MipavUtil.displayError("Padding intensity must be between 0 and 255.");
-                padValue = 0;
+                return false;
             }
         }
 
