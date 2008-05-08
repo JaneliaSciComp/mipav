@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.volumeview;
 
 
+import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -63,6 +64,9 @@ public class RendererImageData {
 
     /** RGB opacity map for color images only. */
     private ModelRGB m_kOpacityRGB = null;
+    
+    /** JPanelVolOpacityRGB reference. */
+    private JPanelVolOpacityRGB m_kvolOpacityObj;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -228,7 +232,7 @@ public class RendererImageData {
      *
      * @return  boolean True if renderer is up-to-date; false if an error occurred.
      */
-    public boolean updateRenderer(Renderer kRayTracer, ModelRGB kIntensityRGB, ModelRGB kOpacityRGB,
+    public boolean updateRenderer(Renderer kRayTracer, ModelRGB kIntensityRGB, JPanelVolOpacityRGB volOpacityObj,
                                   ModelImage kImageGradMag, ModelRGB kOpacityGradMag, int iTimeSlice,
                                   boolean bUpdatedTimeSlice, boolean bForceShow) {
 
@@ -298,12 +302,15 @@ public class RendererImageData {
                 // If the input opacity map for the color image is not
                 // defined, then define one here.  If it is defined and
                 // changes, then remember the one specified.
+                /*
                 if ((m_kOpacityRGB != kOpacityRGB) && (null != kOpacityRGB)) {
                     m_kOpacityRGB = kOpacityRGB;
                 } else if (null == m_kOpacityRGB) {
                     m_kOpacityRGB = new ModelRGB(new int[] { 4, 256 });
                 }
-
+                */
+                m_kvolOpacityObj = volOpacityObj;
+                
                 // If the input intensity map for the color image is not
                 // defined, then define one here.  If it is defined and
                 // changes, then remember the one specified.
@@ -313,7 +320,7 @@ public class RendererImageData {
                     m_kIntensityRGB = new ModelRGB(new int[] { 4, 256 });
                 }
 
-                computeImageBytes(m_afData, m_kIntensityRGB, kMapColorToIntensity, m_kOpacityRGB);
+                computeImageBytes(m_afData, m_kIntensityRGB, kMapColorToIntensity);
 
                 if ((null != kImageGradMag) && (null != kOpacityGradMag)) {
                     modulateAlphaImageBytes(m_kImageGradMag.data, kMapColorToIntensity, kOpacityGradMag);
@@ -452,8 +459,7 @@ public class RendererImageData {
      * @param  kMapColorToIntensity  RendererMapColor Map to convert RGB channel valeus to intensity.
      * @param  kOpacityRGB           ModelRGB Input opacity map to apply to values.
      */
-    private void computeImageBytes(float[] afData, ModelRGB kIntensityRGB, RendererMapColor kMapColorToIntensity,
-                                   ModelRGB kOpacityRGB) {
+    private void computeImageBytes(float[] afData, ModelRGB kIntensityRGB, RendererMapColor kMapColorToIntensity) {
 
         // Setup bits mask to enable which colors can be selected for rendering.
         int iColorMask = 0xff000000 | (kIntensityRGB.getROn() ? 0x00ff0000 : 0) |
@@ -462,15 +468,23 @@ public class RendererImageData {
 
         // Access the intensity map for the color imge channels.
         int[] aiIntensityRGB = kIntensityRGB.exportIndexedRGB();
-
+        
         // Access the opacity map for the color image channels.
-        int[] aiOpacityRGB = kOpacityRGB.exportIndexedRGB();
+        // int[] aiOpacityRGB = kOpacityRGB.exportIndexedRGB();
 
         int iNumVoxels = afData.length / 4;
 
         // Even through the ARGB image is stored in a float array,
         // each component value should be in the [0,255] range.
         int iIndex = 0;
+        
+        int opacityValA_Avg = 0, opacityValA_R = 0, opacityValA_G = 0, opacityValA_B = 0;
+        
+        TransferFunction tfRed = m_kvolOpacityObj.getOpacityAfn(ViewJComponentHLUTBase.RED);
+        TransferFunction tfGreen = m_kvolOpacityObj.getOpacityAfn(ViewJComponentHLUTBase.GREEN);
+        TransferFunction tfBlue = m_kvolOpacityObj.getOpacityAfn(ViewJComponentHLUTBase.BLUE);
+        
+       
 
         for (int i = 0; i < iNumVoxels; i++) {
 
@@ -480,6 +494,11 @@ public class RendererImageData {
             int iG = (int) afData[iIndex++];
             int iB = (int) afData[iIndex++];
 
+            
+            opacityValA_R = MipavMath.round(tfRed.getRemappedValue(iR, 255));
+            opacityValA_G = MipavMath.round(tfGreen.getRemappedValue(iG, 255));
+            opacityValA_B = MipavMath.round(tfBlue.getRemappedValue(iB, 255));
+            
             // Clip RGB channels values to be in [0,255] range.
             if (iR < 0) {
                 iR = 0;
@@ -500,9 +519,11 @@ public class RendererImageData {
             }
 
             // Use RGB channel values to determine opacity.
-            iA = (int) kMapColorToIntensity.mapValue((aiOpacityRGB[iR] & 0x00ff0000) >> 16,
-                                                     (aiOpacityRGB[iG] & 0x0000ff00) >> 8,
-                                                     (aiOpacityRGB[iB] & 0x000000ff));
+            iA = (int) kMapColorToIntensity.mapValue((opacityValA_R & 0x00ff0000) >> 16,
+                                                     (opacityValA_G & 0x0000ff00) >> 8,
+                                                     (opacityValA_B & 0x000000ff));
+            
+            iA = (int)((opacityValA_R + opacityValA_B + opacityValA_B ) * 0.3333f);
 
             if (iA < 0) {
                 iA = 0;
@@ -525,7 +546,7 @@ public class RendererImageData {
             m_acImageB[i] = (byte) (iARGB & 0x000000ff);
         }
 
-        aiOpacityRGB = null;
+        // aiOpacityRGB = null;
         aiIntensityRGB = null;
     }
 
