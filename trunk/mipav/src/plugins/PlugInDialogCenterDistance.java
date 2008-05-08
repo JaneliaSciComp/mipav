@@ -15,7 +15,7 @@ import javax.swing.*;
 
 
 /**
- * @version  April 24, 2008
+ * @version  May 8, 2008
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -99,6 +99,24 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
 
     /** DOCUMENT ME! */
     private PlugInAlgorithmCenterDistance centerDistanceAlgo = null;
+    
+    private JLabel ratioLabel;
+    
+    private JTextField ratioText;
+    
+    /** The minimum ratio of the bounding box area or volume to the original blue object area or volume*/
+    /** This number must be greater than 1.0 */
+    private float minBoundsRatio;
+    
+    private JLabel intensityFractionLabel;
+    
+    private JTextField intensityFractionText;
+    
+    /** The minimum fraction of the total intensity count in the bounding box that just meets minAreaRatio  
+     *   requirements that must be present in the expanded blue object. 
+     *   This number must be less than 1.0.
+     */
+    private float minIntensityFraction;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -204,6 +222,8 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         str += greenFraction + delim;
         str += greenRegionNumber + delim;
         str += twoGreenLevels + delim;
+        str += minBoundsRatio + delim;
+        str += minIntensityFraction + delim;
 
         return str;
     }
@@ -277,6 +297,14 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
     public void setTwoGreenLevels(boolean twoGreenLevels) {
         this.twoGreenLevels = twoGreenLevels;
     }
+    
+    public void setMinBoundsRatio(float minBoundsRatio) {
+        this.minBoundsRatio = minBoundsRatio;
+    }
+    
+    public void setMinIntensityFraction(float minIntensityFraction) {
+        this.minIntensityFraction = minIntensityFraction;
+    }
 
     /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
@@ -288,7 +316,8 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
 
             centerDistanceAlgo = new PlugInAlgorithmCenterDistance(image, blueMin, redMin, redFraction, mergingDistance,
                                                                    greenMin, greenFraction,
-                                                                   greenRegionNumber, twoGreenLevels);
+                                                                   greenRegionNumber, twoGreenLevels,
+                                                                   minBoundsRatio, minIntensityFraction);
 
             // This is very important. Adding this object as a listener allows
             // the algorithm to
@@ -343,6 +372,8 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         setGreenFraction(scriptParameters.getParams().getFloat("green_fraction"));
         setGreenRegionNumber(scriptParameters.getParams().getInt("green_region_number"));
         setTwoGreenLevels(scriptParameters.getParams().getBoolean("two_green_levels"));
+        setMinBoundsRatio(scriptParameters.getParams().getFloat("min_bounds_ratio"));
+        setMinIntensityFraction(scriptParameters.getParams().getFloat("min_intensity_fraction"));
     }
 
     /**
@@ -358,6 +389,8 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_fraction", greenFraction));
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_region_number", greenRegionNumber));
         scriptParameters.getParams().put(ParameterFactory.newParameter("two_green_levels", twoGreenLevels));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("min_bounds_ratio", minBoundsRatio));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("min_intensity_fraction", minIntensityFraction));
     }
 
     /**
@@ -369,7 +402,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         String unitStr;
         String distStr;
         setForeground(Color.black);
-        setTitle("Center Distances 04/24/08");
+        setTitle("Center Distances 05/08/08");
         
         df = new DecimalFormat("0.000E0");
 
@@ -518,6 +551,39 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         gbc.gridx = 0;
         gbc.gridy = yPos++;
         mainPanel.add(twoBox, gbc);
+        
+        if (image.getNDims() == 2) {
+            ratioLabel = new JLabel("Minimum ratio of box to original blue area (> 1.0) ");
+        }
+        else {
+            ratioLabel = new JLabel("Minimum ratio of box to original blue volume (> 1.0) ");    
+        }
+        ratioLabel.setForeground(Color.black);
+        ratioLabel.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = yPos;
+        mainPanel.add(ratioLabel, gbc);
+        
+        ratioText = new JTextField(5);
+        ratioText.setText("3.0");
+        ratioText.setFont(serif12);
+        gbc.gridx = 1;
+        gbc.gridy = yPos++;
+        mainPanel.add(ratioText, gbc);
+        
+        intensityFractionLabel = new JLabel("Minimum fraction of box intensity in expanded blue object (< 1.0)");
+        intensityFractionLabel.setForeground(Color.black);
+        intensityFractionLabel.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = yPos;
+        mainPanel.add(intensityFractionLabel, gbc);
+        
+        intensityFractionText = new JTextField(5);
+        intensityFractionText.setText("0.9");
+        intensityFractionText.setFont(serif12);
+        gbc.gridx = 1;
+        gbc.gridy = yPos++;
+        mainPanel.add(intensityFractionText, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -646,6 +712,33 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         }
         
         twoGreenLevels = twoBox.isSelected();
+        
+        tmpStr = ratioText.getText();
+        minBoundsRatio = Float.parseFloat(tmpStr);
+        if (minBoundsRatio <= 1.0) {
+            if (image.getNDims() == 2) {
+                MipavUtil.displayError("Minimum area ratio must be greater than 1.0");
+            }
+            else {
+                MipavUtil.displayError("Minimum volume ratio must be greater than 1.0");    
+            }
+            ratioText.requestFocus();
+            ratioText.selectAll();
+            return false;
+        }
+        
+        tmpStr = intensityFractionText.getText();
+        minIntensityFraction = Float.parseFloat(tmpStr);
+        if (minIntensityFraction <= 0.0) {
+            MipavUtil.displayError("Minimum intensity fraction must be greater than 0");
+            intensityFractionText.requestFocus();
+            intensityFractionText.selectAll();
+        }
+        else if (minIntensityFraction >= 1.0) {
+            MipavUtil.displayError("Minimum intensity fraction must be less than 1");
+            intensityFractionText.requestFocus();
+            intensityFractionText.selectAll();
+        }
         
         return true;
     } // end setVariables()
