@@ -242,7 +242,6 @@ public class RayCastColorReflection extends RayCastColor {
                              // (((int)255   & 0xff) << 24) |
                              (((int) (fSrcR) & 0xff) << 16) | (((int) (fSrcG) & 0xff) << 8) | ((int) (fSrcB) & 0xff);
         kVertexProperty = null;
-        m_kColor = null;
         
     }
     
