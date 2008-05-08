@@ -915,8 +915,7 @@ public abstract class ViewJComponentRenderImage implements MouseMotionListener {
             } else { // ARGB image
 
                 if (!m_kRendererImageDataA.updateRenderer(rayTracerA, m_kRGBTA,
-                                                              ((JPanelVolOpacityRGB) (m_kVolumeRenderer.getVolOpacity()))
-                                                              .getRGB_OpacityA(),
+                                                              ((JPanelVolOpacityRGB) (m_kVolumeRenderer.getVolOpacity())),
                                                               m_kVolumeRenderer.getVolOpacity().getGradMagA(),
                                                               ((JPanelVolOpacityRGB) (m_kVolumeRenderer.getVolOpacity()))
                                                               .getRGB_OpacityA_GM(), timeSliceA, bUpdatedTimeSlice,
@@ -954,8 +953,7 @@ public abstract class ViewJComponentRenderImage implements MouseMotionListener {
             else {
 
                 if (!m_kRendererImageDataB.updateRenderer(rayTracerB, m_kRGBTB,
-                                                              ((JPanelVolOpacityRGB) (m_kVolumeRenderer.getVolOpacity()))
-                                                              .getRGB_OpacityB(),
+                                                              ((JPanelVolOpacityRGB) (m_kVolumeRenderer.getVolOpacity())),
                                                               m_kVolumeRenderer.getVolOpacity().getGradMagB(),
                                                               ((JPanelVolOpacityRGB) (m_kVolumeRenderer.getVolOpacity()))
                                                               .getRGB_OpacityB_GM(), timeSliceB, bUpdatedTimeSlice,
