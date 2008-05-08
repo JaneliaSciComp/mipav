@@ -245,8 +245,6 @@ public class RayCastColorLighting extends RayCastColor {
             float fSrcR = m_kColor.x * 255.0f;
             float fSrcG = m_kColor.y * 255.0f;
             float fSrcB = m_kColor.z * 255.0f;
-
-            m_kColor = null;
             
             // voxel is opaque
             if (fSrcA >= 1.0f) {
@@ -445,8 +443,6 @@ public class RayCastColorLighting extends RayCastColor {
 		    fSrcR = m_kColor.x * 255.0f;
 		    fSrcG = m_kColor.y * 255.0f;
 		    fSrcB = m_kColor.z * 255.0f;
-		
-		    m_kColor = null;
             
             // voxel is opaque
             if (fSrcA >= 1.0f) {

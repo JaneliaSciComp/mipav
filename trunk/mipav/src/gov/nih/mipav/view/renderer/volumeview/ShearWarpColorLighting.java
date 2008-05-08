@@ -242,7 +242,6 @@ public class ShearWarpColorLighting extends ShearWarpColor {
                     float fSrcG = m_kColor.y * 255.0f;
                     float fSrcB = m_kColor.z * 255.0f;
 
-                    m_kColor = null;
                     // voxel is opaque
                     if (fSrcA == 1.0f) {
                         m_afInterR[m_iInterIndex] = fSrcR;

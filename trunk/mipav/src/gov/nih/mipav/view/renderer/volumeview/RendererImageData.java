@@ -465,13 +465,9 @@ public class RendererImageData {
         int iColorMask = 0xff000000 | (kIntensityRGB.getROn() ? 0x00ff0000 : 0) |
                              (kIntensityRGB.getGOn() ? 0x0000ff00 : 0) | (kIntensityRGB.getBOn() ? 0x000000ff : 0);
 
-
         // Access the intensity map for the color imge channels.
         int[] aiIntensityRGB = kIntensityRGB.exportIndexedRGB();
         
-        // Access the opacity map for the color image channels.
-        // int[] aiOpacityRGB = kOpacityRGB.exportIndexedRGB();
-
         int iNumVoxels = afData.length / 4;
 
         // Even through the ARGB image is stored in a float array,
@@ -483,8 +479,6 @@ public class RendererImageData {
         TransferFunction tfRed = m_kvolOpacityObj.getOpacityAfn(ViewJComponentHLUTBase.RED);
         TransferFunction tfGreen = m_kvolOpacityObj.getOpacityAfn(ViewJComponentHLUTBase.GREEN);
         TransferFunction tfBlue = m_kvolOpacityObj.getOpacityAfn(ViewJComponentHLUTBase.BLUE);
-        
-       
 
         for (int i = 0; i < iNumVoxels; i++) {
 
@@ -546,7 +540,6 @@ public class RendererImageData {
             m_acImageB[i] = (byte) (iARGB & 0x000000ff);
         }
 
-        // aiOpacityRGB = null;
         aiIntensityRGB = null;
     }
 
