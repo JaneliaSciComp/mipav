@@ -21,7 +21,7 @@ import javax.swing.*;
 /**
  * This shows how to extend the AlgorithmBase class.
  *
- * @version  April 24, 2008
+ * @version  May 8, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -141,6 +141,16 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
      * If false, in green 3 level fuzzy c means, assign max to 1 and other values to 0.
      */
     private boolean twoGreenLevels;
+    
+    /** The minimum ratio of the bounding box area or volume to the original blue object area or volume*/
+    /** This number must be greater than 1.0 */
+    private float minBoundsRatio;
+    
+    /** The minimum fraction of the total intensity count in the bounding box that just meets minAreaRatio  
+     *   requirements that must be present in the expanded blue object. 
+     *   This number must be less than 1.0.
+     */
+    private float minIntensityFraction;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -156,10 +166,12 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
      * @param  greenFraction
      * @param  greenRegionNumber      DOCUMENT ME!
      * @param  twoGreenLevels
+     * @param  minAreaRatio
+     * @param  minIntensityFraction
      */
     public PlugInAlgorithmCenterDistance(ModelImage srcImg, int blueMin, int redMin, float redFraction, float mergingDistance, 
                                          int greenMin, float greenFraction,  int greenRegionNumber,
-                                         boolean twoGreenLevels) {
+                                         boolean twoGreenLevels, float minBoundsRatio, float minIntensityFraction) {
         super(null, srcImg);
         this.blueMin = blueMin;
         this.redMin = redMin;
@@ -169,6 +181,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         this.greenFraction = greenFraction;
         this.greenRegionNumber = greenRegionNumber;
         this.twoGreenLevels = twoGreenLevels;
+        this.minBoundsRatio = minBoundsRatio;
+        this.minIntensityFraction = minIntensityFraction;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -362,7 +376,21 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         int redAdded;
         int sortedGreenFound[];
         boolean isMaxGreen[][] = null;
-
+        int blueArea[];
+        double blueIntensityTotal[];
+        int blueLeft[];
+        int blueRight[];
+        int blueTop[];
+        int blueBottom[];
+        int blueWidth[];
+        int blueHeight[];
+        float blueMinArray[];
+        int blueRectArea[];
+        float areaRatio[];
+        double blueRectIntensityTotal[];
+        float intensityFraction[];
+        boolean atBounds;
+        boolean areaGrowth;
 
         df = new DecimalFormat("0.000E0");
         dfFract = new DecimalFormat("0.000");
@@ -555,6 +583,118 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
             return;
         }
+        
+        blueArea= new int[numObjects];
+        blueIntensityTotal = new double[numObjects];
+        blueLeft = new int[numObjects];
+        blueRight = new int[numObjects];
+        blueTop = new int[numObjects];
+        blueBottom = new int[numObjects];
+        blueMinArray = new float[numObjects];
+        blueWidth = new int[numObjects];
+        blueHeight = new int[numObjects];
+        blueRectArea = new int[numObjects];
+        areaRatio = new float[numObjects];
+        blueRectIntensityTotal = new double[numObjects];
+        intensityFraction = new float[numObjects];
+        for (i = 0; i < numObjects; i++) {
+            blueLeft[i] = Integer.MAX_VALUE;
+            blueTop[i] = Integer.MAX_VALUE;
+            blueMinArray[i] = Float.MAX_VALUE;
+        }
+        // Obtain areas and bounding rectangles of numObjects
+        for (y = 0; y < yDim; y++) {
+
+            for (x = 0; x < xDim; x++) {
+                i = x + y*xDim;
+                // id goes from 0 to numObjects
+                id = IDArray[i];
+                if (id >= 1) {
+                    blueArea[id-1]++;
+                    blueIntensityTotal[id-1] += buffer[i];
+                    if (buffer[i] < blueMinArray[id-1]) {
+                        blueMinArray[id-1] = buffer[i];
+                    }
+                    if (x < blueLeft[id-1]) {
+                        blueLeft[id-1] = x;
+                    }
+                    if (x > blueRight[id-1]) {
+                        blueRight[id-1] = x;
+                    }
+                    if (y < blueTop[id-1]) {
+                        blueTop[id-1] = y;
+                    }
+                    if (y > blueBottom[id-1]) {
+                        blueBottom[id-1] = y;
+                    }
+                } // if (id >= 1)
+            } // for (x = 0; x < xDim; x++)
+        } // for (y = 0; y < yDim; y++)
+        
+        for (i = 0; i < numObjects; i++) {
+            blueWidth[i] = (blueRight[i] - blueLeft[i]);
+            blueHeight[i] = (blueBottom[i] - blueTop[i]);
+            blueRectArea[i] = blueWidth[i]*blueHeight[i];
+            areaRatio[i] = (float)blueRectArea[i]/(float)blueArea[i];
+            atBounds = false;
+            while ((areaRatio[i] < minBoundsRatio) && (!atBounds)) { 
+                blueLeft[i] = Math.max(0, blueLeft[i] - 1);
+                blueRight[i] = Math.min(xDim-1, blueRight[i] + 1);
+                blueTop[i] = Math.max(0, blueTop[i] - 1);
+                blueBottom[i] = Math.min(yDim - 1, blueBottom[i] + 1);
+                if ((blueLeft[i] == 0) && (blueRight[i] == (xDim - 1)) &&
+                    (blueTop[i] == 0) && (blueBottom[i] == (yDim - 1))) {
+                    atBounds = true;
+                }
+                blueWidth[i] = (blueRight[i] - blueLeft[i]);
+                blueHeight[i] = (blueBottom[i] - blueTop[i]);
+                blueRectArea[i] = blueWidth[i]*blueHeight[i];
+                areaRatio[i] = (float)blueRectArea[i]/(float)blueArea[i];
+            } // while ((areaRatio[i] < minBoundsRatio) && (!atBounds))
+            for (y = blueTop[i]; y <= blueBottom[i]; y++) {
+                for (x = blueLeft[i]; x <= blueRight[i]; x++) {
+                    k = x + y * xDim;
+                    blueRectIntensityTotal[i] += buffer[k];
+                }
+            } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
+            intensityFraction[i] = (float)(blueIntensityTotal[i]/blueRectIntensityTotal[i]);
+            while (intensityFraction[i] < minIntensityFraction) {
+                blueMinArray[i] = blueMinArray[i] - 1; 
+                areaGrowth = true;
+                while (areaGrowth) {
+                    areaGrowth = false;
+                    for (y = blueTop[i]; y <= blueBottom[i]; y++) {
+                        for (x = blueLeft[i]; x <= blueRight[i]; x++) {
+                            k = x + y*xDim;
+                            if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i])) {
+                               if ((x > blueLeft[i]) && (IDArray[k-1] == (i+1))) {
+                                   IDArray[k] = (byte)(i+1); 
+                                   areaGrowth = true;
+                                   blueIntensityTotal[i] += buffer[k];
+                               }
+                               else if ((x < blueRight[i]) && (IDArray[k+1] == (i+1))) {
+                                   IDArray[k] = (byte)(i+1);
+                                   areaGrowth = true;
+                                   blueIntensityTotal[i] += buffer[k];
+                               }
+                               else if ((y > blueTop[i]) && (IDArray[k - xDim] == (i+1))) {
+                                   IDArray[k] = (byte)(i+1);
+                                   areaGrowth = true;
+                                   blueIntensityTotal[i] += buffer[k];
+                               }
+                               else if ((y < blueBottom[i]) && (IDArray[k + xDim] == (i+1))) {
+                                   IDArray[k] = (byte)(i+1);
+                                   areaGrowth = true;
+                                   blueIntensityTotal[i] += buffer[k];
+                               }
+                            } // if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i]))
+                        } // for (x = blueLeft[i]; x <= blueRight[i]; x++)
+                    } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
+                } // while (areaGrowth)
+                intensityFraction[i] = (float)(blueIntensityTotal[i]/blueRectIntensityTotal[i]);
+            } // while (intensityFraction[i] < minIntensityFraction)
+        } // for (i = 0; i < numObjects; i++)
+
 
         try {
             srcImage.exportRGBData(1, 0, length, buffer); // export red data
@@ -1489,7 +1629,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 04/24/08 version\n");
+        UI.setDataText("Plugin 05/08/08 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
@@ -1753,6 +1893,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         int x, y, z;
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
+        int sliceSize = xDim * yDim;
         int zDim = srcImage.getExtents()[2];
         float xRes = srcImage.getResolutions(0)[0];
         float yRes = srcImage.getResolutions(0)[1];
@@ -1938,6 +2079,24 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         double distance;
         int sortedGreenFound[];
         boolean isMaxGreen[][] = null;
+        int blueVolume[];
+        double blueIntensityTotal[];
+        int blueLeft[];
+        int blueRight[];
+        int blueTop[];
+        int blueBottom[];
+        int blueFront[];
+        int blueBack[];
+        int blueWidth[];
+        int blueHeight[];
+        int blueDepth[];
+        float blueMinArray[];
+        int blueBlockVolume[];
+        float volumeRatio[];
+        double blueBlockIntensityTotal[];
+        float intensityFraction[];
+        boolean atBounds;
+        boolean volumeGrowth;
 
         df = new DecimalFormat("0.000E0");
         dfFract = new DecimalFormat("0.000");
@@ -2227,6 +2386,148 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
             return;
         }
+        
+        blueVolume = new int[numObjects];
+        blueIntensityTotal = new double[numObjects];
+        blueLeft = new int[numObjects];
+        blueRight = new int[numObjects];
+        blueTop = new int[numObjects];
+        blueBottom = new int[numObjects];
+        blueFront = new int[numObjects];
+        blueBack = new int[numObjects];
+        blueMinArray = new float[numObjects];
+        blueWidth = new int[numObjects];
+        blueHeight = new int[numObjects];
+        blueDepth = new int[numObjects];
+        blueBlockVolume = new int[numObjects];
+        volumeRatio = new float[numObjects];
+        blueBlockIntensityTotal = new double[numObjects];
+        intensityFraction = new float[numObjects];
+        for (i = 0; i < numObjects; i++) {
+            blueLeft[i] = Integer.MAX_VALUE;
+            blueTop[i] = Integer.MAX_VALUE;
+            blueFront[i] = Integer.MAX_VALUE;
+            blueMinArray[i] = Float.MAX_VALUE;
+        }
+        // Obtain volumes and bounding blocks of numObjects
+        for (z = 0; z < zDim; z++) {
+            for (y = 0; y < yDim; y++) {
+    
+                for (x = 0; x < xDim; x++) {
+                    i = x + y*xDim + z*sliceSize;
+                    // id goes from 0 to numObjects
+                    id = IDArray[i];
+                    if (id >= 1) {
+                        blueVolume[id-1]++;
+                        blueIntensityTotal[id-1] += buffer[i];
+                        if (buffer[i] < blueMinArray[id-1]) {
+                            blueMinArray[id-1] = buffer[i];
+                        }
+                        if (x < blueLeft[id-1]) {
+                            blueLeft[id-1] = x;
+                        }
+                        if (x > blueRight[id-1]) {
+                            blueRight[id-1] = x;
+                        }
+                        if (y < blueTop[id-1]) {
+                            blueTop[id-1] = y;
+                        }
+                        if (y > blueBottom[id-1]) {
+                            blueBottom[id-1] = y;
+                        }
+                        if (z < blueFront[id-1]) {
+                            blueFront[id-1] = z;
+                        }
+                        if (z > blueBack[id-1]) {
+                            blueBack[id-1] = z;
+                        }
+                    } // if (id >= 1)
+                } // for (x = 0; x < xDim; x++)
+            } // for (y = 0; y < yDim; y++)
+        } // for (z = 0; z < zDim; z++)
+        
+        for (i = 0; i < numObjects; i++) {
+            blueWidth[i] = (blueRight[i] - blueLeft[i]);
+            blueHeight[i] = (blueBottom[i] - blueTop[i]);
+            blueDepth[i] = (blueBack[i] - blueFront[i]);
+            blueBlockVolume[i] = blueWidth[i]*blueHeight[i]*blueDepth[i];
+            volumeRatio[i] = (float)blueBlockVolume[i]/(float)blueVolume[i];
+            atBounds = false;
+            while ((volumeRatio[i] < minBoundsRatio) && (!atBounds)) { 
+                blueLeft[i] = Math.max(0, blueLeft[i] - 1);
+                blueRight[i] = Math.min(xDim-1, blueRight[i] + 1);
+                blueTop[i] = Math.max(0, blueTop[i] - 1);
+                blueBottom[i] = Math.min(yDim - 1, blueBottom[i] + 1);
+                blueFront[i] = Math.max(0, blueFront[i] - 1);
+                blueBack[i] = Math.min(zDim - 1, blueBack[i] + 1);
+                if ((blueLeft[i] == 0) && (blueRight[i] == (xDim - 1)) &&
+                    (blueTop[i] == 0) && (blueBottom[i] == (yDim - 1)) &&
+                    (blueFront[i] == 0) && (blueBack[i] == (zDim - 1))) {
+                    atBounds = true;
+                }
+                blueWidth[i] = (blueRight[i] - blueLeft[i]);
+                blueHeight[i] = (blueBottom[i] - blueTop[i]);
+                blueDepth[i] = (blueBack[i] - blueFront[i]);
+                blueBlockVolume[i] = blueWidth[i]*blueHeight[i]*blueDepth[i];
+                volumeRatio[i] = (float)blueBlockVolume[i]/(float)blueVolume[i];
+            } // while ((volumeRatio[i] < minBoundsRatio) && (!atBounds))
+            for (z = blueFront[i]; z <= blueBack[i]; z++) {
+                for (y = blueTop[i]; y <= blueBottom[i]; y++) {
+                    for (x = blueLeft[i]; x <= blueRight[i]; x++) {
+                        k = x + y * xDim + z * sliceSize;
+                        blueBlockIntensityTotal[i] += buffer[k];
+                    }
+                } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
+            } // for (z = blueFront[i]; z <= blueBack[i]; z++)
+            intensityFraction[i] = (float)(blueIntensityTotal[i]/blueBlockIntensityTotal[i]);
+            while (intensityFraction[i] < minIntensityFraction) {
+                blueMinArray[i] = blueMinArray[i] - 1; 
+                volumeGrowth = true;
+                while (volumeGrowth) {
+                    volumeGrowth = false;
+                    for (z = blueFront[i]; z <= blueBack[i]; z++) {
+                        for (y = blueTop[i]; y <= blueBottom[i]; y++) {
+                            for (x = blueLeft[i]; x <= blueRight[i]; x++) {
+                                k = x + y*xDim + z*sliceSize;
+                                if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i])) {
+                                   if ((x > blueLeft[i]) && (IDArray[k-1] == (i+1))) {
+                                       IDArray[k] = (byte)(i+1); 
+                                       volumeGrowth = true;
+                                       blueIntensityTotal[i] += buffer[k];
+                                   }
+                                   else if ((x < blueRight[i]) && (IDArray[k+1] == (i+1))) {
+                                       IDArray[k] = (byte)(i+1);
+                                       volumeGrowth = true;
+                                       blueIntensityTotal[i] += buffer[k];
+                                   }
+                                   else if ((y > blueTop[i]) && (IDArray[k - xDim] == (i+1))) {
+                                       IDArray[k] = (byte)(i+1);
+                                       volumeGrowth = true;
+                                       blueIntensityTotal[i] += buffer[k];
+                                   }
+                                   else if ((y < blueBottom[i]) && (IDArray[k + xDim] == (i+1))) {
+                                       IDArray[k] = (byte)(i+1);
+                                       volumeGrowth = true;
+                                       blueIntensityTotal[i] += buffer[k];
+                                   }
+                                   else if ((z > blueFront[i]) && (IDArray[k - sliceSize] == (i+1))) {
+                                       IDArray[k] = (byte)(i+1);
+                                       volumeGrowth = true;
+                                       blueIntensityTotal[i] += buffer[k];
+                                   }
+                                   else if ((z < blueBack[i]) && (IDArray[k + sliceSize] == (i+1))) {
+                                       IDArray[k] = (byte)(i+1);
+                                       volumeGrowth = true;
+                                       blueIntensityTotal[i] += buffer[k];
+                                   }
+                                } // if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i]))
+                            } // for (x = blueLeft[i]; x <= blueRight[i]; x++)
+                        } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
+                    } // for (z = blueFront[i]; z <= blueBack[i]; z++)
+                } // while (volumeGrowth)
+                intensityFraction[i] = (float)(blueIntensityTotal[i]/blueBlockIntensityTotal[i]);
+            } // while (intensityFraction[i] < minIntensityFraction)
+        } // for (i = 0; i < numObjects; i++)
         
         try {
             srcImage.exportRGBData(1, 0, totLength, buffer); // export red data       
@@ -3414,7 +3715,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 04/24/08 version\n");
+        UI.setDataText("Plugin 05/08/08 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
