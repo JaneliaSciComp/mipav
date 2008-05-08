@@ -7055,6 +7055,85 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
 
     } // end allocateData()
+    
+    
+    
+    /**
+     * his method return the min value allowed of the type
+     * @param type
+     * @return
+     */
+    public static double getTypeMin(int type) {
+    	if (type == ModelStorageBase.BOOLEAN) {
+    		return 0;
+        } else if (type == ModelStorageBase.BYTE) {
+        	return -128;
+        } else if (type == ModelStorageBase.UBYTE) {
+        	return 0;
+        } else if (type == ModelStorageBase.SHORT) {
+        	return -32768;
+        } else if (type == ModelStorageBase.USHORT) {
+        	return 0;
+        } else if (type == ModelStorageBase.INTEGER) {
+        	return Integer.MIN_VALUE;
+        } else if (type == ModelStorageBase.UINTEGER) {
+        	return 0;
+        } else if (type == ModelStorageBase.LONG) {
+        	return Long.MIN_VALUE;
+        } else if (type == ModelStorageBase.FLOAT) {
+        	return -Float.MAX_VALUE;
+        } else if (type == ModelStorageBase.DOUBLE) {
+        	return -Double.MAX_VALUE;
+        } else if (type == ModelStorageBase.ARGB) {
+        	return 0;
+        } else if (type == ModelStorageBase.ARGB_USHORT) {
+        	return 0;
+        } else if (type == ModelStorageBase.ARGB_FLOAT) {
+        	return -Float.MAX_VALUE;
+        } else {
+            return 0;
+        }
+    }
+    
+    
+    
+    /**
+     * This method return the max value allowed of the type
+     * @param type
+     * @return
+     */
+    public static double getTypeMax(int type) {
+    	if (type == ModelStorageBase.BOOLEAN) {
+    		return 1;
+        } else if (type == ModelStorageBase.BYTE) {
+        	return 127;
+        } else if (type == ModelStorageBase.UBYTE) {
+        	return 255;
+        } else if (type == ModelStorageBase.SHORT) {
+        	return 32767;
+        } else if (type == ModelStorageBase.USHORT) {
+        	return 65535;
+        } else if (type == ModelStorageBase.INTEGER) {
+        	return Integer.MAX_VALUE;
+        } else if (type == ModelStorageBase.UINTEGER) {
+        	return 4294967295L;
+        } else if (type == ModelStorageBase.LONG) {
+        	return Long.MAX_VALUE;
+        } else if (type == ModelStorageBase.FLOAT) {
+        	return Float.MAX_VALUE;
+        } else if (type == ModelStorageBase.DOUBLE) {
+        	return Double.MAX_VALUE;
+        } else if (type == ModelStorageBase.ARGB) {
+        	return 255;
+        } else if (type == ModelStorageBase.ARGB_USHORT) {
+        	return 65535;
+        } else if (type == ModelStorageBase.ARGB_FLOAT) {
+        	return Float.MAX_VALUE;
+        } else {
+            return 0;
+        }
+    }
+    
 
     /**
      * Computes the datasize based on the type of buffer.
