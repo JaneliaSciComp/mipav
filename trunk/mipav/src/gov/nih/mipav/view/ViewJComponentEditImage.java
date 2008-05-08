@@ -3182,8 +3182,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             // Java VM 64 system has to call the gc() implicitly, and will not affect the performance. 
             paintImage.flush();
             paintImage= null;
-            String javaVMname = System.getProperty("java.vm.name");
-            if ( javaVMname.indexOf("64-Bit") > -1 ) {
+           
+            if ( Preferences.isJVM64bit() ) {
             	System.gc();
             } 
             
