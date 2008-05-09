@@ -83,8 +83,7 @@ public class CustomUIBuilder {
 	public static final UIParams PARAM_PAINT_COLOR = new UIParams("colorPaint", "Change paint color.", "colorpaint");
 	public static final UIParams PARAM_PAINT_RGB_CHOOSER = new UIParams("RGBPaintComponent", "Choose RGB components of applied paint.", "rgbcomp");
 	public static final UIParams PARAM_PAINT_OPACITY = new UIParams("OpacityPaint", "Change opacity of paint.", "opacity");
-	public static final UIParams PARAM_PAINT_BORDER = new UIParams(Preferences.PREF_SHOW_PAINT_BORDER, "Display border around painted areas.",
-            "borderpaint");
+	public static final UIParams PARAM_PAINT_BORDER = new UIParams("DisplayBorder", "Display border around painted areas.", "borderpaint");
 	
 	/** Paint mask ops */
 	public static final UIParams PARAM_PAINT_MASK_INSIDE = new UIParams("CommitPaint", "<html>" + "Masks the inside of the painted area." +
