@@ -24,11 +24,6 @@ import javax.swing.*;
  *
  */
 public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implements AlgorithmInterface {
-    
-    
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
-    /**declare UID */
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     
@@ -45,13 +40,11 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     /** Result image. */
     private ModelImage resultImage = null;
 
-    /** DOCUMENT ME! */
-    private ModelImage image; // source image
+    /** The source image */
+    private ModelImage image; 
     
-    /** DOCUMENT ME! */
+    /** Segmentation algorithm */
     private PlugInAlgorithmMuscleSegmentation muscleSegAlgo = null;
-    
-    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -130,12 +123,8 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
                 insertScriptLine();
             }
 
-            if (algorithm != null) {
-                algorithm.finalize();
-                algorithm = null;
-            } else {
-            	System.out.println("Unexpected null occured.");
-            }
+            algorithm.finalize();
+            algorithm = null;
 
             dispose();
         }
@@ -272,6 +261,13 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         return true;
     }
     
+    /**
+     * Creates the image based on an array of files greater than one.  When dealing with single image, the ModelImage
+     * is already loaded.  FileInfo is transferred from 1st slice.
+     * 
+     * @param fileAr
+     * @return constructed image
+     */
     private ModelImage createImage(File[] fileAr) {
     	FileIO fileIO = new FileIO();
     	fileIO.setQuiet(true);
@@ -280,7 +276,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     	
     	FileInfoBase[] fb = new FileInfoBase[fileAr.length];
     	for(int i=0; i<fileAr.length; i++) {
-    		fb[i] = image.getFileInfo(0);
+    		fb[i] = resultImage.getFileInfo(i);
     	}
     	resultImage.setFileInfo(fb);
     	
