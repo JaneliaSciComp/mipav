@@ -315,23 +315,21 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 			if (multipaintDialog!=null) {
 				multipaintDialog.actionPerformed(event);
 			}
-        } else if (command.equals(Preferences.PREF_SHOW_PAINT_BORDER)) {
-
-            // swap the border painting
-            Preferences.setProperty(Preferences.PREF_SHOW_PAINT_BORDER,
-                                    String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
-
-            for (int i = 0; i < controls.paintToolBar.getComponentCount(); i++) {
-
-                if (controls.paintToolBar.getComponent(i).getName() != null) {
-
-                    if (controls.paintToolBar.getComponent(i).getName().equals(Preferences.PREF_SHOW_PAINT_BORDER)) {
-                        ((JButton) (controls.paintToolBar.getComponent(i))).setSelected(!((JButton)
-                                                                                              (controls.paintToolBar.getComponent(i)))
-                                                                                            .isSelected());
-                    }
-                }
+        } else if (command.equals("DisplayBorder")) {
+        	if(Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
+            	getControls().getTools().bogusBorderPaintButton.setSelected(true);
+            	if (linkTriFrame != null) {
+            		linkTriFrame.bogusBorderPaintButton.setSelected(true);
+            	}
+            }else {
+            	getControls().getTools().borderPaintButton.setSelected(true);
+            	if (linkTriFrame != null) {
+            		linkTriFrame.borderPaintButton.setSelected(true);
+            	}
             }
+            
+            // swap the border painting
+            Preferences.setProperty(Preferences.PREF_SHOW_PAINT_BORDER, String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
 
             updateImages(true);
             getActiveImage().notifyImageDisplayListeners();
@@ -3857,6 +3855,28 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 if (componentImage.getCursorMode() == ViewJComponentEditImage.QUICK_LUT) {
                     componentImage.setCursorMode(ViewJComponentEditImage.DEFAULT);
                 }
+
+                return;
+                
+            case KeyEvent.VK_B:
+
+                // swap the border painting
+            	if(Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
+                	getControls().getTools().bogusBorderPaintButton.setSelected(true);
+                	if (linkTriFrame != null) {
+                		linkTriFrame.bogusBorderPaintButton.setSelected(true);
+                	}
+                }else {
+                	getControls().getTools().borderPaintButton.setSelected(true);
+                	if (linkTriFrame != null) {
+                		linkTriFrame.borderPaintButton.setSelected(true);
+                	}
+                }
+            	
+                Preferences.setProperty(Preferences.PREF_SHOW_PAINT_BORDER,
+                                        String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
+                componentImage.getActiveImage().notifyImageDisplayListeners(null, true);
+
 
                 return;
 

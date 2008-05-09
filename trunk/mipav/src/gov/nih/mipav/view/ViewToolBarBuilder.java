@@ -44,7 +44,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** The button used to toggle borders around painted areas. */
-    protected JButton borderPaintButton;
+    public JToggleButton borderPaintButton, bogusBorderPaintButton;
 
     /** The button used to enable checker board display of two images. */
     protected JButton checkerBoardButton;
@@ -595,9 +595,14 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         
         JButton opacityPaintButton = buildButton(CustomUIBuilder.PARAM_PAINT_OPACITY);
         paintToolBar.add(opacityPaintButton);
-
-        borderPaintButton = buildButton(CustomUIBuilder.PARAM_PAINT_BORDER);
-        borderPaintButton.setName(Preferences.PREF_SHOW_PAINT_BORDER);
+        ButtonGroup borderPaintGroup = new ButtonGroup();
+        borderPaintButton = buildToggleButton(CustomUIBuilder.PARAM_PAINT_BORDER,borderPaintGroup);
+        bogusBorderPaintButton = buildToggleButton("","","",borderPaintGroup);
+        if (Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
+        	borderPaintButton.setSelected(true);
+        }else {
+        	bogusBorderPaintButton.setSelected(true);
+        }
         paintToolBar.add(borderPaintButton);
 
         paintToolBar.add(makeSeparator());

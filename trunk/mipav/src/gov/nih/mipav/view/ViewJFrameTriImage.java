@@ -8,6 +8,7 @@ import gov.nih.mipav.model.algorithms.registration.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.view.CustomUIBuilder.UIParams;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
@@ -298,6 +299,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** Paint tool bar. */
     protected JToolBar paintToolBar;
+    
+    public JToggleButton borderPaintButton, bogusBorderPaintButton;
 
     /** Panel for deciding which image is active; appears when 2 images are loaded. */
     protected JPanel panelActiveImage = null;
@@ -758,23 +761,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
 
             triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
-        } else if (command.equals(Preferences.PREF_SHOW_PAINT_BORDER)) {
-
-            // swap the border painting
-            Preferences.setProperty(Preferences.PREF_SHOW_PAINT_BORDER,
-                                    String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
-
-            for (int i = 0; i < controls.paintToolBar.getComponentCount(); i++) {
-
-                if (controls.paintToolBar.getComponent(i).getName() != null) {
-
-                    if (controls.paintToolBar.getComponent(i).getName().equals(Preferences.PREF_SHOW_PAINT_BORDER)) {
-                        ((JButton) (controls.paintToolBar.getComponent(i))).setSelected(!((JButton)
-                                                                                              (controls.paintToolBar.getComponent(i)))
-                                                                                            .isSelected());
-                    }
-                }
+        } else if (command.equals("DisplayBorder")) {
+        	if(Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
+            	getControls().getTools().bogusBorderPaintButton.setSelected(true);
+            	bogusBorderPaintButton.setSelected(true);
+            }else {
+            	getControls().getTools().borderPaintButton.setSelected(true);
+            	borderPaintButton.setSelected(true);
             }
+
+        	Preferences.setProperty(Preferences.PREF_SHOW_PAINT_BORDER, String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
 
             updateImages(true);
             triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners();
@@ -1622,8 +1618,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             case KeyEvent.VK_B:
 
                 // swap the border painting
-                Preferences.setProperty(Preferences.PREF_SHOW_PAINT_BORDER,
-                                        String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
+            	if(Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
+                	getControls().getTools().bogusBorderPaintButton.setSelected(true);
+                	bogusBorderPaintButton.setSelected(true);
+                }else {
+                	getControls().getTools().borderPaintButton.setSelected(true);
+                	borderPaintButton.setSelected(true);
+                }
+            	
+                Preferences.setProperty(Preferences.PREF_SHOW_PAINT_BORDER, String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
                 triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
                 if (triImage[AXIAL_B] != null) {
                     triImage[AXIAL_B].getActiveImage().notifyImageDisplayListeners(null, true);
@@ -2967,6 +2970,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         button.setSelected(selected);
     }
 
+    
+    
+
     /**
      * Builds the toolbars for the tri-planar view.
      */
@@ -3261,8 +3267,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         paintToolBar.add(colorPaintButton);
         paintToolBar.add(toolbarBuilder.buildTextButton("Opacity", "Change opacity of paint", "OpacityPaint"));
-        paintToolBar.add(toolbarBuilder.buildButton(Preferences.PREF_SHOW_PAINT_BORDER,
-                                                    "Show border around painted areas.", "borderpaint"));
+        ButtonGroup borderPaintGroup = new ButtonGroup();
+        borderPaintButton = toolbarBuilder.buildToggleButton(CustomUIBuilder.PARAM_PAINT_BORDER,borderPaintGroup);
+        bogusBorderPaintButton = toolbarBuilder.buildToggleButton("","","",borderPaintGroup);
+        if (Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
+        	borderPaintButton.setSelected(true);
+        }else {
+        	bogusBorderPaintButton.setSelected(true);
+        }
+        paintToolBar.add(borderPaintButton);
         paintToolBar.add(ViewToolBarBuilder.makeSeparator());
         paintToolBar.add(toolbarBuilder.buildButton("CommitPaint", "Changes image where painted inside",
                                                     "paintinside"));

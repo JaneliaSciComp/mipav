@@ -73,8 +73,7 @@ public class CustomToolBarBuilder extends ViewToolBarBuilder {
 	public static final ButtonParams PARAM_PAINT_COLOR = new ButtonParams("colorPaint", "Change paint color.", "colorpaint");
 	public static final ButtonParams PARAM_PAINT_RGB_CHOOSER = new ButtonParams("RGBPaintComponent", "Choose RGB components of applied paint.", "rgbcomp");
 	public static final ButtonParams PARAM_PAINT_OPACITY = new ButtonParams("OpacityPaint", "Change opacity of paint.", "opacity");
-	public static final ButtonParams PARAM_PAINT_BORDER = new ButtonParams(Preferences.PREF_SHOW_PAINT_BORDER, "Display border around painted areas.",
-            "borderpaint");
+	public static final ButtonParams PARAM_PAINT_BORDER = new ButtonParams("DisplayBorder", "Display border around painted areas.", "borderpaint");
 	
 	/** Paint mask ops */
 	public static final ButtonParams PARAM_PAINT_MASK_INSIDE = new ButtonParams("CommitPaint", "<html>" + "Masks the inside of the painted area." +
