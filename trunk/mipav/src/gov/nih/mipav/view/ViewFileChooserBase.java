@@ -396,8 +396,8 @@ public class ViewFileChooserBase {
         DefaultListModel listModel = new DefaultListModel();
 
         try {
-            String filePath = System.getProperty("user.home") + System.getProperty("file.separator") + 
-            				  applicationName + System.getProperty("file.separator") +
+            String filePath = System.getProperty("user.home") + File.separator + 
+            				  applicationName + File.separator +
                               "accessory.dirs";
             File file = new File(filePath);
 
@@ -494,8 +494,8 @@ public class ViewFileChooserBase {
     private void saveShortcuts() {
 
         try {
-            String filePath = System.getProperty("user.home") + System.getProperty("file.separator") + 
-			  				  applicationName + System.getProperty("file.separator") +
+            String filePath = System.getProperty("user.home") + File.separator + 
+			  				  applicationName + File.separator +
                               "accessory.dirs";
             PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(filePath)));
             out.println("//Directory Shortcuts for " + applicationName + " [" + new Date().toString() + ']');
