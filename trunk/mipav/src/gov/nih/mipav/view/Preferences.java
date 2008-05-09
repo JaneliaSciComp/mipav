@@ -154,6 +154,9 @@ public class Preferences {
 
     /** Constant that indicates if the paint border shown. */
     public static final String PREF_SHOW_PAINT_BORDER = "ShowPaintBorder";
+    
+    /** Constant that indicates if the private DICOM tags are to be shown */
+    public static final String PREF_SHOW_PRIVATE_TAGS = "ShowPrivateTags";
 
     /** Constant that indicates if the splash graphic should be shown when mipav starts. */
     public static final String PREF_SHOW_SPLASH = "SplashGraphics";
@@ -579,6 +582,7 @@ public class Preferences {
         defaultProps.setProperty(Preferences.PREF_LAST_X_PROJECTS, "");
         defaultProps.setProperty(Preferences.PREF_WARN_AUDIO_AVI, "true");
         defaultProps.setProperty(Preferences.PREF_SHOW_PAINT_BORDER, "false");
+        defaultProps.setProperty(Preferences.PREF_SHOW_PRIVATE_TAGS, "false");
 
         // lightbox properties
         defaultProps.setProperty(Preferences.PREF_LB_ROW_DEPENDENT, "true"); // display by columns
