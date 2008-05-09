@@ -597,7 +597,8 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         paintToolBar.add(opacityPaintButton);
         ButtonGroup borderPaintGroup = new ButtonGroup();
         borderPaintButton = buildToggleButton(CustomUIBuilder.PARAM_PAINT_BORDER,borderPaintGroup);
-        bogusBorderPaintButton = buildToggleButton("","","",borderPaintGroup);
+        bogusBorderPaintButton = new JToggleButton();
+        borderPaintGroup.add(bogusBorderPaintButton);
         if (Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
         	borderPaintButton.setSelected(true);
         }else {
