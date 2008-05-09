@@ -1,23 +1,57 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.model.structures.*;
-
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.model.provenance.*;
-
-import java.awt.*;
-import java.awt.event.*;
-
-import java.io.*;
-
-import java.util.*;
-
-import javax.swing.*;
-
 import edu.sdsc.grid.io.srb.SRBAccount;
-
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.srb.SRBFileTransferer;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.LogStdStreams;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewImageFileFilter;
+import gov.nih.mipav.view.ViewJColorChooser;
+import gov.nih.mipav.view.ViewJComponentEditImage;
+import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FileDialog;
+import java.awt.Font;
+import java.awt.GraphicsEnvironment;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.io.File;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.Vector;
+
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JColorChooser;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
+import javax.swing.ListCellRenderer;
 
 /**
  * This dialog contains access to MIPAV preferences.
@@ -1542,8 +1576,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     }
 
     protected void makeMultiThreadingEnabledOptions(GridBagConstraints gbc, GridBagLayout gbl) {
-
-        multiThreadingEnabledCheckBox = new JCheckBox("Multi-Threading Enabled");
+    	multiThreadingEnabledCheckBox = new JCheckBox("Multi-Threading Enabled(" + gov.nih.mipav.util.MipavUtil.getAvailableCores()+ " cores)" );
         multiThreadingEnabledCheckBox.setFont(MipavUtil.font12);
         multiThreadingEnabledCheckBox.setForeground(Color.black);
         multiThreadingEnabledCheckBox.addActionListener(this);
