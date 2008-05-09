@@ -66,7 +66,7 @@ public class ViewFileChooserBase {
     private JTextField aliasField;
 
     /** DOCUMENT ME! */
-    private String applicationName;
+    private String applicationName = new String("mipav");
 
     /** DOCUMENT ME! */
     private JButton deleteButton;
@@ -396,8 +396,9 @@ public class ViewFileChooserBase {
         DefaultListModel listModel = new DefaultListModel();
 
         try {
-            String filePath = System.getProperty("user.home") + System.getProperty("file.separator") + applicationName +
-                              ".accessory.dirs";
+            String filePath = System.getProperty("user.home") + System.getProperty("file.separator") + 
+            				  applicationName + System.getProperty("file.separator") +
+                              "accessory.dirs";
             File file = new File(filePath);
 
             if (!file.exists()) {
@@ -493,8 +494,9 @@ public class ViewFileChooserBase {
     private void saveShortcuts() {
 
         try {
-            String filePath = System.getProperty("user.home") + System.getProperty("file.separator") + applicationName +
-                              ".accessory.dirs";
+            String filePath = System.getProperty("user.home") + System.getProperty("file.separator") + 
+			  				  applicationName + System.getProperty("file.separator") +
+                              "accessory.dirs";
             PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(filePath)));
             out.println("//Directory Shortcuts for " + applicationName + " [" + new Date().toString() + ']');
 
