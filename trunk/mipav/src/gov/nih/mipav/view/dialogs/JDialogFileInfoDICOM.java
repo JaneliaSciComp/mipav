@@ -63,7 +63,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
     private int selectedRowDicom;
 
     /** DOCUMENT ME! */
-    private boolean showPrivate = false; // if this class shows private tags (priv)
+    private boolean showPrivate = Preferences.is(Preferences.PREF_SHOW_PRIVATE_TAGS); // if this class shows private tags (priv)
 
     /** DOCUMENT ME! */
     private ViewTableModel tagsModel;
@@ -81,10 +81,12 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
     private ViewToolBarBuilder toolbarBuilder;
     
     /** buttons for toolbar **/
-    private JButton showPrivateButton, saveCheckedButton, saveCheckedAppendButton, checkAllButton, uncheckAllButton, editTagButton, overlayButton, anonymizeButton;
+    private JButton saveCheckedButton, saveCheckedAppendButton, checkAllButton, uncheckAllButton, editTagButton, overlayButton, anonymizeButton;
 
     /** tool bar **/
     private JToolBar toolBar;
+    
+    private JToggleButton showPrivateButton, bogusShowPrivateButton;
     
     /** fileName of where dicom tags are save to **/
     private String fileName;
@@ -566,11 +568,25 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             dispose(); // remove self
         } else if (e.getActionCommand().equals("Show")) { // show
 
-            if (showPrivate) { // if currently showing private
+            /*if (showPrivate) { // if currently showing private
                 showPrivate = false; // but, toggle current status OFF
             } else {
                 showPrivate = true; // toggle current status to ON
+            }*/
+            
+            
+            if(Preferences.is(Preferences.PREF_SHOW_PRIVATE_TAGS)) {
+            	bogusShowPrivateButton.setSelected(true);
+            	showPrivate = false;
+            }else {
+            	showPrivateButton.setSelected(true);
+            	showPrivate = true;
             }
+            
+            // swap the border painting
+            Preferences.setProperty(Preferences.PREF_SHOW_PRIVATE_TAGS, String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PRIVATE_TAGS)));
+            
+            
 
             int i;
 
@@ -1019,7 +1035,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         i++;
         tagsModel.addRow(rowData);
         tagsModel.setValueAt(null, i, 0);
-        showTags(tagsModel, DicomInfo, false);
+        showTags(tagsModel, DicomInfo, showPrivate);
 
         try {
             tagsTable.setPreferredScrollableViewportSize(new Dimension(200, 200));
@@ -1042,8 +1058,14 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         toolbarPanel.setLayout(new BorderLayout());
         
         toolbarBuilder = new ViewToolBarBuilder(this);
-        
-        showPrivateButton = toolbarBuilder.buildButton("Show", "Show Private Tags", "showprivate");
+        ButtonGroup showPrivateGroup = new ButtonGroup();
+        showPrivateButton = toolbarBuilder.buildToggleButton("Show", "Show/Hide Private Tags", "showprivate", showPrivateGroup);
+        bogusShowPrivateButton = toolbarBuilder.buildToggleButton("","","",showPrivateGroup);
+        if (Preferences.is(Preferences.PREF_SHOW_PRIVATE_TAGS)) {
+        	showPrivateButton.setSelected(true);
+        }else {
+        	bogusShowPrivateButton.setSelected(true);
+        }
         saveCheckedButton = toolbarBuilder.buildButton("SaveTags", "Save Checked Tags to new file", "savechecked");
         saveCheckedAppendButton = toolbarBuilder.buildButton("SaveTagsAppend", "Save and Append Checked Tags to file", "savecheckedappend");
         checkAllButton = toolbarBuilder.buildButton("CheckAll", "Check All Tags", "checkall");
