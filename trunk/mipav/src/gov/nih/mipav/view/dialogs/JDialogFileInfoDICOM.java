@@ -1060,7 +1060,8 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         toolbarBuilder = new ViewToolBarBuilder(this);
         ButtonGroup showPrivateGroup = new ButtonGroup();
         showPrivateButton = toolbarBuilder.buildToggleButton("Show", "Show/Hide Private Tags", "showprivate", showPrivateGroup);
-        bogusShowPrivateButton = toolbarBuilder.buildToggleButton("","","",showPrivateGroup);
+        bogusShowPrivateButton = new JToggleButton();
+        showPrivateGroup.add(bogusShowPrivateButton);
         if (Preferences.is(Preferences.PREF_SHOW_PRIVATE_TAGS)) {
         	showPrivateButton.setSelected(true);
         }else {
