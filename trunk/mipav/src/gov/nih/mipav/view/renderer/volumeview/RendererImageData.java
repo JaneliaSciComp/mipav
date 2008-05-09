@@ -217,12 +217,7 @@ public class RendererImageData {
      *
      * @param   kRayTracer         Renderer Used to renderer the ray traced image.
      * @param   kIntensityRGB      ModelRGB Input transfer function for each RGB channel.
-     * @param   kOpacityRGB        ModelRGB Input opacity transfer functions for each channel.
-     * @param   kImageGradMag      ModelImage Input opacity specifying optional image with gradient magnitude of image
-     *                             per channel.
-     * @param   kOpacityGradMag    ModelRGB Input specifying optional transfer functions for each channel in mapping its
-     *                             gradient magnitude to modulate the opacity. This must be non-null if kImageGrad is
-     *                             non-null.
+     * @param   volOpacityObj      image opacity histogram reference. 
      * @param   iTimeSlice         int Current time slice of data in the volume.
      * @param   bUpdatedTimeSlice  boolean Flag set if time slice is different.
      * @param   bForceShow         boolean Flag set if the color mapping must be performed even if nothing else changed.
@@ -433,7 +428,7 @@ public class RendererImageData {
      * @param  afData                float[] Input array of voxel ARGB channel values interleaved.
      * @param  kIntensityRGB         ModelRGB Input transfer function for each RGB channel.
      * @param  kMapColorToIntensity  RendererMapColor Map to convert RGB channel valeus to intensity.
-     * @param  kOpacityRGB           ModelRGB Input opacity map to apply to values.
+     * @param  volOpacityObj         opacity map to apply to values.
      */
     private void computeImageBytes(float[] afData, ModelRGB kIntensityRGB, RendererMapColor kMapColorToIntensity, JPanelVolOpacityRGB volOpacityObj) {
 
