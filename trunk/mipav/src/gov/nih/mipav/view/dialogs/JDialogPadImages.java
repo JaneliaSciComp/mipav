@@ -528,14 +528,14 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
 
         buttonPanel.add(buildButtons());
         OKButton.setText("Pad");
-        helpButton.setVisible(false);
+        helpButton.setVisible(true);
 
         mainDialogPanel.setLayout(new BorderLayout());
         mainDialogPanel.add(mainPanel); // put the main panel into the center of the dialog
         mainDialogPanel.add(buttonPanel, BorderLayout.SOUTH);
         getContentPane().add(mainDialogPanel);
         pack();
-        setSize(240, 320);
+        setSize(300, 320);
         setResizable(false);
         setVisible(true);
     }

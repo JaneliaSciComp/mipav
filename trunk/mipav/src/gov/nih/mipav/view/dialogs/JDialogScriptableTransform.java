@@ -249,6 +249,9 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         } else if (command.equals("Cancel")) {
             dispose();
         }
+        else if (command.equals("Help")) {
+            MipavUtil.showHelp("Transform010");
+        }
     }
 
     // ************************************************************************
@@ -3139,11 +3142,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         gbc.weighty = 1.0;
                 
         JPanel buttonPanel = new JPanel();
-
-        buildOKButton();
-        buildCancelButton();
-        buttonPanel.add(OKButton);
-        buttonPanel.add(cancelButton);
+        buttonPanel.add(buildButtons());
 
         getContentPane().add(tabbedPane);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);

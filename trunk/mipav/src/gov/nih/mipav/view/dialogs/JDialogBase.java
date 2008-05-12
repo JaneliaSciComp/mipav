@@ -860,7 +860,7 @@ public abstract class JDialogBase extends JDialog
         helpButton = new JButton("Help");
         helpButton.addActionListener(this);
 
-        // helpButton.setToolTipText("Find help for this screen.");
+        helpButton.setToolTipText("Find help for this screen.");
         helpButton.setMinimumSize(MipavUtil.defaultButtonSize);
         helpButton.setPreferredSize(MipavUtil.defaultButtonSize);
         helpButton.setFont(serif12B);
