@@ -111,7 +111,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      *
      * @see  #getNewFrameLocation()
      */
-    private Dimension frameLocation = new Dimension(50, 500);
+    private Dimension frameLocation = new Dimension(50, 300);
 
     /** Stores array of images frames the first of which is the active image frame. */
     private Vector<Frame> imageFrameVector;

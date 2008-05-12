@@ -130,7 +130,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     /** DOCUMENT ME! */
     private JButton loadMaskButton;
 
-	private JCheckBox checkAutosave;
+	private JToggleButton checkAutosave;
 	
     /** DOCUMENT ME! */
     private MultiPaintAutoSave save;
@@ -232,6 +232,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 	private boolean isVisibleMask = true;
 	private boolean isVisiblePaint = true;
 	private boolean isCompactDisplay = true;
+
+	
+	
 	
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -257,6 +260,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         super(theParentFrame, false);
         userInterface = ViewUserInterface.getReference();
         image = im;
+        
 
         // first lets refresh the image
         BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
@@ -274,8 +278,14 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 if (vjfi.getLUTb().getLUTType() != ModelLUT.STRIPED) {
                     MipavUtil.displayInfo("This tool works best when image B has a striped LUT.");
                 }
-            }
+            } 
         }
+        
+        //move the image lower so that the new slider for imageB does not cover the image
+        Dimension mainFrameDimension = image.getParentFrame().getUserInterface().getMainFrame().getSize();
+        Point imageLocation = image.getParentFrame().getLocation();
+        image.getParentFrame().setLocation(imageLocation.x, mainFrameDimension.height + 20);
+        
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -1545,7 +1555,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         exportVoiButton.setFont(serif12);
         exportVoiButton.setToolTipText("Converts the masks into VOIs");
 
-        checkAutosave = new JCheckBox("autosave mask");
+        checkAutosave = new JToggleButton("Autosave mask");
         checkAutosave.addActionListener(this);
         checkAutosave.setActionCommand("AdvancedPaint:Autosave");
         checkAutosave.setSelected(false);
@@ -1742,8 +1752,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         gbc.gridy = 3;
         rightPanel.add(displayMasksButton,gbc);
         gbc.gridy = 4;
-        //rightPanel.add(collapseButton,gbc);
         rightPanel.add(buttonShortkeys,gbc);
+        gbc.gridy = 5;
+        rightPanel.add(checkAutosave,gbc);
         
         leftRightPanel = new JPanel(new GridBagLayout());
         gbc.anchor = GridBagConstraints.NORTHWEST;
@@ -1763,8 +1774,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         gbc.gridy = 1;
         optionPanel.add(leftRightPanel, gbc);
         gbc.gridy = 2;
-        optionPanel.add(checkAutosave, gbc);
-        gbc.gridy = 3;
+        //optionPanel.add(checkAutosave, gbc);
+        //gbc.gridy = 3;
         //optionPanel.add(buttonShortkeys, gbc);
         
         bottomPanel = new JPanel(new GridBagLayout());
