@@ -21,7 +21,7 @@ import javax.swing.*;
 /**
  * This shows how to extend the AlgorithmBase class.
  *
- * @version  May 8, 2008
+ * @version  May 12, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -57,20 +57,28 @@ import javax.swing.*;
  *           background and a positive integer ID for each object between the minimum and maximum size. blueMin has a
  *           default of 1,000.</p>
  *
- *           <p>6.) Set all the pixels in any blue object touching an edge to 0.</p>
+ *           <p>6.) If more than one blue object is present, 
+ *                  set all the pixels in any blue object touching an edge to 0.</p>
+ *                  
+ *           <p>7.) Find the bounding box of each blue object.  Expand the bounding box until
+ *                  bounding box area or volume/blue object area or volume >= minBoundsRatio.
+ *                  Keep decreasing the minimum blue value for the object by 1 and expanding the
+ *                  original blue object within the box until the sum of the expanded blue object intensities
+ *                  divided by the sum of the box blue intensities >= minIntensityFraction.
+ *           
+ *           <p>8.) Smooth the blue objects with an open operation followed by a close operation.
  *
- *           <p>7.) Export the green portion of the image to greenBuffer.
- *           </p>
+ *           <p>9.) Export the green portion of the image to greenBuffer.
  *
- *           <p>8.) If no user supplied contour VOIs are present, the program automatically generates VOIs.</p>
+ *           <p>10.) The program automatically generates VOIs.</p>
  *
- *           <p>9.) Process each VOI one at a time. a.) For each VOI find the sum
+ *           <p>11.) Process each VOI one at a time. a.) For each VOI find the sum
  *           of the green intensity values, and the pixel count for each ID object. b.) Look at all the object pixel
  *           counts and assign the ID of the object with the most pixels in the VOI to the VOI's objectID. c.) Find the
  *           green center of mass of the VOI. d.) Expand the nucleus to
  *           which the VOI belongs to include the VOI.</p>
  *
- *           <p>10.) Process IDArray objects one at a time. a.) Find the zero order moments of each blue IDArray
+ *           <p>12.) Process IDArray objects one at a time. a.) Find the zero order moments of each blue IDArray
  *           object. b.) Create a byteBuffer with pixels for that ID object equal to 1 and all the other pixels = 0. c.)
  *           Import byteBuffer into grayImage. e.) Run a dilation on grayImage and export the result to dilateArray. d.)
  *           At every point where dilateArray = 1 and byteBuffer = 0, set boundaryArray = to the id of that object. For
@@ -84,20 +92,31 @@ import javax.swing.*;
  *           Find the distance of the line segment that passes thru these 2 points and terminates at the cell surface.
  *           </p>
  *
- *           <p>Scheme for automatic VOI generation: 1.) Create a green image. 2.) Obtain histogram
- *           information on the green image. Set the threshold so that the greenFraction portion of the cumulative
- *           histogram is at or above threshold for the fuzzy c means. 3.) Perform a 3 level fuzzy c means segmentation
- *           on the green image. 4.) If twoGreenLevels is true, convert the green max and max-1 to 1 and the other values to 0.
- *           If twoGreenLevels is false, convert the green max to 1 and the other values to 0. 5.) ID objects in green
- *           segmented image which have at least greenMin pixels. 6.) Sort green objects by green intensity count into a sorted
- *           green array. Have a separate sorted green array for each nucleus. Put no more than greenRegionNumber green
- *           objects into the sorted green array for each nucleus. 19.) Create byteBuffer with value = 0 if no sorted
- *           object is present at that position and use a separate positive index for each green voi. Create an
- *           accompanying color table to set for each nucleus the largest green voi to color pink, and the other green vois to color
- *           pink.darker(). Create an accompanying name table to set the name for each voi. The largest green voi in the
- *           fifth nucleus has name 5G1. The second largest green voi in the fifth nucleus has the name 5G2  20.) Extract VOIs from the green image. 21.)
- *           Set the source image VOIs to the VOIs obtained from the green image.  From each blue object extract a VOI and color the
- *           boundary dark yellow. </p>
+ *           <p>Scheme for automatic VOI generation: 
+ *           1.) Create a green image. 
+ *           2.) Obtain histogram information on the green image. Set the threshold so that the greenFraction
+ *           portion of the cumulative histogram is at or above threshold for the fuzzy c means. 
+ *           3.) Perform a 3 level fuzzy c means segmentation on the green image. 
+ *           4.) If twoGreenLevels is true, convert the green max and max-1 to 1 and the other values to 0.
+ *           If twoGreenLevels is false, convert the green max to 1 and the other values to 0. 
+ *           5.) ID objects in green segmented image which have at least greenMin pixels. 
+ *           6.) Sort green objects by green intensity count into a sorted green array. Have a separate
+ *           sorted green array for each nucleus. Put no more than greenRegionNumber green objects into the
+ *           sorted green array for each nucleus. 
+ *           7.) Create byteBuffer with value = 0 if no sorted object is present at that position and use a
+ *           separate positive index for each green voi. Create an accompanying color table to set for each
+ *           nucleus the largest green voi to color pink, and the other green vois to color pink.darker(). 
+ *           Create an accompanying name table to set the name for each voi. The largest green voi in the
+ *           fifth nucleus has name 5G1. The second largest green voi in the fifth nucleus has the name 5G2  
+ *           8.) Extract VOIs from the green image. 
+ *           9.) Set the source image VOIs to the VOIs obtained from the green image.  
+ *           10.)From each blue object extract a VOI. 
+ *           11.) Smooth the VOI from the blue object.  
+ *           12.) Modify the IDArray of the object to reflect the change in the blue object VOI.
+ *           13.) Color the boundary dark yellow. </p>
+ *           
+ *           Note that the blue objects are smoothed twice.  The first smoothing before VOI extraction with
+ *           a morphological open followed by a close.  The second smoothing is after VOI extraction.
  */
 public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
@@ -260,6 +279,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         float yRes = srcImage.getResolutions(0)[1];
         boolean found;
         AlgorithmMorphology2D idObjectsAlgo2D;
+        AlgorithmMorphology2D openAlgo;
+        AlgorithmMorphology2D closeAlgo;
         int numObjects;
         byte[] byteBuffer;
         byte[] IDArray;
@@ -274,6 +295,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         float[] greenBuffer = null;
         ViewVOIVector VOIs = null;
         ViewVOIVector VOIs2 = null;
+        ViewVOIVector blueVOIs = null;
         int nVOIs;
         short[] shortMask;
         int index;
@@ -323,7 +345,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         float[] zArr = new float[1];
         int numVOIObjects;
         Color[] colorTable = null;
-        boolean removeID;
+        boolean removeID[];
         int m;
         String[] nameTable = null;
         String voiName;
@@ -359,8 +381,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         int totalCount;
         int countsToRetain;
         int countsFound;
-        boolean initiallyOneObject;
-        int response;
         int numGreenFound;
         int gIndex[];
         float gCount[];
@@ -391,9 +411,25 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         float intensityFraction[];
         boolean atBounds;
         boolean areaGrowth;
+        int elementNum;
+        Polygon[] gons = null;
+        float[] xPoints = null;
+        float[] yPoints = null;
+        AlgorithmArcLength arcLength;
+        int defaultPts;
+        boolean trim;
+        AlgorithmBSmooth smoothAlgo = null;
+        VOI resultVOI;
+        byte IDArray2[];
+        double minBlueValue;
+        int maxGreenBelong;
+        boolean allRemoved;
+        int numRemoved;
 
         df = new DecimalFormat("0.000E0");
         dfFract = new DecimalFormat("0.000");
+        
+        minBlueValue = srcImage.getMinB();
 
         try {
 
@@ -495,6 +531,31 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         fillHolesAlgo2D.finalize();
         fillHolesAlgo2D = null;
         
+        // Smooth with a morphological opening followed by a closing
+        fireProgressStateChanged("Opening blue segmented image");
+
+        kernel = AlgorithmMorphology2D.CONNECTED4;
+        circleDiameter = 1.0f;
+        method = AlgorithmMorphology2D.OPEN;
+        itersDilation = 1;
+        itersErosion = 1;
+        numPruningPixels = 0;
+        edgingType = 0;
+        openAlgo = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation, itersErosion,
+                                             numPruningPixels, edgingType, wholeImage);
+        openAlgo.run();
+        openAlgo.finalize();
+        openAlgo = null;
+
+        fireProgressStateChanged("Closing blue segmented image");
+
+        method = AlgorithmMorphology2D.CLOSE;
+        closeAlgo = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation, itersErosion,
+                                              numPruningPixels, edgingType, wholeImage);
+        closeAlgo.run();
+        closeAlgo.finalize();
+        closeAlgo = null;
+        
         numPruningPixels = 0;
         edgingType = 0;
         
@@ -536,16 +597,9 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         fireProgressStateChanged("Removing blue objects touching edges");
 
         fireProgressStateChanged(23);
-
-        if (numObjects == 1) {
-            initiallyOneObject = true;
-        }
-        else {
-            initiallyOneObject = false;
-        }
         
+        removeID = new boolean[numObjects];
         for (id = 1; id <= numObjects; id++) {
-            removeID = false;
 
             for (j = 0, y = 0; y < yDim; y++, j += xDim) {
 
@@ -553,14 +607,37 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     i = x + j;
 
                     if ((IDArray[i] == id) && ((x == 0) || (x == (xDim - 1)) || (y == 0) || (y == (yDim - 1)))) {
-                        removeID = true;
+                        removeID[id-1] = true;
                     }
                 } // for (x = 0; x < xDim; x++)
             } // for (j = 0, y = 0; y < yDim; y++, j += xDim)
+        } // for (id = 1; id <= numObjects; id++)
+        
+        allRemoved = true;
+        numRemoved = 0;
+        for (id = 1; id <= numObjects; id++) {
+            if (!removeID[id-1]) {
+                allRemoved = false;
+            }
+            else {
+                numRemoved++;
+            }
+        } // for (id = 1; id <= numObjects; id++)
+        
+        if (allRemoved) {
+            Preferences.debug("All blue objects touch edges so don't remove any\n");
+            for (id = 1; id <= numObjects; id++) {
+                removeID[id-1] = false;   
+            }
+        }
+        else {
+            Preferences.debug("Removing " + numRemoved + " blue objects of " + numObjects + " for touching edges\n");    
+        }
+        
 
-
-            if ((!initiallyOneObject) && removeID) {
-
+        for (id = 1; id <= numObjects; id++) {    
+            if (removeID[id-1]) {
+    
                 for (i = 0; i < length; i++) {
 
                     if (IDArray[i] == (byte) id) {
@@ -572,17 +649,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                 numObjects--;
                 id--;
-            } // if (removeID)
-        } // for (id = 1; id <= numObjects; id++)
-
-        if (numObjects == 0) {
-            MipavUtil.displayError(edgeObjects + " blue objects touched edges");
-            MipavUtil.displayError("No blue objects that do not touch edges");
-
-            setCompleted(false);
-
-            return;
-        }
+            } // if (removeID[id-1])
+        } // for (id = 1; id <= numObjects; id++)     
         
         blueArea= new int[numObjects];
         blueIntensityTotal = new double[numObjects];
@@ -658,7 +726,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 }
             } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
             intensityFraction[i] = (float)(blueIntensityTotal[i]/blueRectIntensityTotal[i]);
-            while (intensityFraction[i] < minIntensityFraction) {
+            while ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue)) {
                 blueMinArray[i] = blueMinArray[i] - 1; 
                 areaGrowth = true;
                 while (areaGrowth) {
@@ -692,9 +760,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
                 } // while (areaGrowth)
                 intensityFraction[i] = (float)(blueIntensityTotal[i]/blueRectIntensityTotal[i]);
-            } // while (intensityFraction[i] < minIntensityFraction)
+            } // while ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue))
         } // for (i = 0; i < numObjects; i++)
-
 
         try {
             srcImage.exportRGBData(1, 0, length, buffer); // export red data
@@ -705,7 +772,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
             return;
         }
-
 
         fireProgressStateChanged("Creating red image");
         fireProgressStateChanged(30);
@@ -1116,15 +1182,17 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             greenXCenter[j - 1] = greenXCenter[j - 1] / greenIntensityTotal[j - 1];
             greenYCenter[j - 1] = greenYCenter[j - 1] / greenIntensityTotal[j - 1];
             greenCellNumber[j-1] = 0;
+            maxGreenBelong = 0;
             for (k = 1; k <= numObjects; k++) {
-                if (greenBelong[k] > greenCellNumber[j-1]) {
+                if (greenBelong[k] > maxGreenBelong) {
                     greenCellNumber[j-1] = k;
+                    maxGreenBelong = greenBelong[k];
                 }
             }
             
             // Expand IDArray to include green regions protruding out of the blue cell boundary
             for (i = 0; i < length; i++) {
-                if ((j <= numGreenObjects) && (greenIDArray[i] == j) && (IDArray[i] == 0)) {
+                if ((greenIDArray[i] == j) && (IDArray[i] == 0)) {
                     IDArray[i] = (byte)greenCellNumber[j-1];
                 }
             }
@@ -1169,6 +1237,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                             greenIntensityTotal[m-2] = greenIntensityTotal[m-1];
                             greenXCenter[m-2] = greenXCenter[m-1];
                             greenYCenter[m-2] = greenYCenter[m-1];
+                            greenCellNumber[m-2] = greenCellNumber[m-1];
                         }
                         if (j <= numGreenObjects) {
                             numGreenObjects--;
@@ -1217,6 +1286,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 } // for (i = 0; i < greenNucleusNumber[id-1]  && !found; i++)
             } // if (id >= 1)
         } // for (j = 1; j <= numGreenObjects; j++)
+        
         for (j = numGreenObjects+1; j <= numGreenObjects+numGreenObjects2; j++) {
             id = greenCellNumber[j-1];
 
@@ -1313,33 +1383,104 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         algoVOIExtraction = null;
 
         srcImage.setVOIs(grayImage.getVOIs());
-        grayImage.resetVOIs();
 
         VOIs = srcImage.getVOIs();
-        nVOIs = VOIs.size();
-        
-        try {
-            grayImage.importData(0, IDArray, true);
-        } catch (IOException error) {
-            byteBuffer = null;
-            errorCleanUp("Error on grayImage.importData", true);
-
-            return;
-        }
+        nVOIs = VOIs.size();  
 
         fireProgressStateChanged("Extracting VOIs from blue image");
-        fireProgressStateChanged(76);
-        algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
-        algoVOIExtraction.run();
-        algoVOIExtraction.finalize();
-        algoVOIExtraction = null;
-        for (i = 0; i < grayImage.getVOIs().size(); i++) {
-            grayImage.getVOIs().VOIAt(i).setColor(Color.yellow.darker());
-            VOIs.add(grayImage.getVOIs().VOIAt(i));
-        }
-        srcImage.setVOIs((VOIVector)VOIs);
-
+        
+        
+        
+        trim = true;
         shortMask = new short[length];
+        IDArray2 = new byte[length];
+        for (i = 0; i < numObjects; i++) {
+            grayImage.resetVOIs();
+            for (j = 0; j < length; j++) {
+                IDArray2[j] = 0;
+                if (IDArray[j] == (i+1)) {
+                    IDArray2[j] = (byte)(i+1);    
+                }
+            }
+            
+            try {
+                grayImage.importData(0, IDArray2, true);
+            } catch (IOException error) {
+                byteBuffer = null;
+                errorCleanUp("Error on grayImage.importData", true);
+
+                return;
+            }
+            
+            algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
+            algoVOIExtraction.run();
+            algoVOIExtraction.finalize();
+            algoVOIExtraction = null;
+            
+            blueVOIs = grayImage.getVOIs();
+            if ((blueVOIs.size() != 0) && (blueVOIs.VOIAt(0).getCurves().length != 0) &&
+                (blueVOIs.VOIAt(0).getCurves()[0].size() != 0)) {
+            
+                gons = blueVOIs.VOIAt(0).exportPolygons(0);
+                elementNum = 0;
+                xPoints = new float[gons[elementNum].npoints + 5];
+                yPoints = new float[gons[elementNum].npoints + 5];
+    
+                xPoints[0] = gons[elementNum].xpoints[gons[elementNum].npoints - 2];
+                yPoints[0] = gons[elementNum].ypoints[gons[elementNum].npoints - 2];
+    
+                xPoints[1] = gons[elementNum].xpoints[gons[elementNum].npoints - 1];
+                yPoints[1] = gons[elementNum].ypoints[gons[elementNum].npoints - 1];
+    
+                for (j = 0; j < gons[elementNum].npoints; j++) {
+                    xPoints[j + 2] = gons[elementNum].xpoints[j];
+                    yPoints[j + 2] = gons[elementNum].ypoints[j];
+                }
+    
+                xPoints[gons[elementNum].npoints + 2] = gons[elementNum].xpoints[0];
+                yPoints[gons[elementNum].npoints + 2] = gons[elementNum].ypoints[0];
+    
+                xPoints[gons[elementNum].npoints + 3] = gons[elementNum].xpoints[1];
+                yPoints[gons[elementNum].npoints + 3] = gons[elementNum].ypoints[1];
+    
+                xPoints[gons[elementNum].npoints + 4] = gons[elementNum].xpoints[2];
+                yPoints[gons[elementNum].npoints + 4] = gons[elementNum].ypoints[2];
+    
+                arcLength = new AlgorithmArcLength(xPoints, yPoints);
+                defaultPts = Math.round(arcLength.getTotalArcLength() / 3);
+                blueVOIs.VOIAt(0).setAllActive(true);
+                smoothAlgo = new AlgorithmBSmooth(grayImage, blueVOIs.VOIAt(0), defaultPts, trim);
+                smoothAlgo.run();
+                if (smoothAlgo.isCompleted()) {
+                    // The algorithm has completed and produced a VOI
+                    resultVOI = smoothAlgo.getResultVOI();
+                    blueVOIs.VOIAt(0).removeCurves(0);
+                    blueVOIs.VOIAt(0).importCurve((VOIContour)resultVOI.getCurves()[0].elementAt(0),0);
+                    // Change IDArray to reflect the changed boundaries of the voi
+                    Arrays.fill(shortMask, (short) -1);
+                    shortMask = grayImage.generateVOIMask(shortMask, 0);
+                    if (shortMask != null) {
+                        for (j = 0; j < length; j++) {
+                            if (IDArray[j] == (i+1)) {
+                                IDArray[j] = 0;
+                            }
+                            if (shortMask[j] != -1) {
+                                IDArray[j] = (byte)(i + 1);
+                            }
+                        }
+                    } // if (shortMask != null)
+                    else {
+                        shortMask = new short[length];
+                    }
+                } // if (smoothAlgo.isCompleted())
+                smoothAlgo.finalize();
+                smoothAlgo = null;
+                blueVOIs.VOIAt(0).setColor(Color.yellow.darker());
+                VOIs.add(blueVOIs.VOIAt(0));
+            } // if ((blueVOIs.size() != 0) && (blueVOIs.VOIAt(0).getCurves().length != 0)) 
+        } // for (i = 0; i < numObjects; i++)
+        
+        srcImage.setVOIs((VOIVector)VOIs);
 
         idCount = new int[numObjects];
         xPosGeo = new float[nVOIs];
@@ -1356,7 +1497,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         for (i = 0; i < nVOIs; i++) {
             fireProgressStateChanged("Processing VOI " + (i + 1) + " of " + nVOIs);
-            fireProgressStateChanged(75 + (10 * (i + 1) / nVOIs));
+            fireProgressStateChanged(76 + (10 * (i + 1) / nVOIs));
             VOIs.VOIAt(i).setOnlyID((short) i);
             voiName = VOIs.VOIAt(i).getName();
 
@@ -1629,7 +1770,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 05/08/08 version\n");
+        UI.setDataText("Plugin 05/12/08 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
@@ -1900,6 +2041,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         float zRes = srcImage.getResolutions(0)[2];
         boolean found;
         AlgorithmMorphology3D idObjectsAlgo3D;
+        AlgorithmMorphology3D openAlgo;
+        AlgorithmMorphology3D closeAlgo;
         int numObjects;
         byte[] byteBuffer;
         byte[] IDArray;
@@ -1916,6 +2059,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         ViewVOIVector VOIs = null;
         int nVOIs;
         ViewVOIVector VOIs2 = null;
+        ViewVOIVector blueVOIs = null;
         short[] shortMask;
         int index;
         int greenCount;
@@ -1975,7 +2119,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         float[] zArr = new float[1];
         int numVOIObjects;
         Color[] colorTable = null;
-        boolean removeID;
+        boolean removeID[];
         int m;
         String[] nameTable = null;
         String voiName;
@@ -2061,8 +2205,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         //double[] axes;
         //float[][] sAxisPer;
         //float tempf;
-        boolean initiallyOneObject;
-        //int response;
         int numGreenFound;
         int gIndex[];
         float gCount[];
@@ -2097,11 +2239,29 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         float intensityFraction[];
         boolean atBounds;
         boolean volumeGrowth;
+        int elementNum;
+        Polygon srcGon;
+        float[] xPoints = null;
+        float[] yPoints = null;
+        AlgorithmArcLength arcLength;
+        int defaultPts;
+        boolean trim;
+        AlgorithmBSmooth smoothAlgo = null;
+        VOI resultVOI;
+        byte IDArray2[];
+        double minBlueValue;
+        int maxGreenBelong;
+        boolean allRemoved;
+        int numRemoved;
+        Vector[] contours;
+        VOI newVOI;
 
         df = new DecimalFormat("0.000E0");
         dfFract = new DecimalFormat("0.000");
 
         fireProgressStateChanged("Processing image ...");
+        
+        minBlueValue = srcImage.getMinB();
 
         try {
             sliceLength = xDim * yDim;
@@ -2271,9 +2431,41 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         } // for (z = 0; z < zDim; z++)
 
         grayImage.calcMinMax();
-        grayImage2D.disposeLocal();
-        grayImage2D = null;
         buffer2D = null;
+        System.gc();
+        
+//      Smooth with a morphological opening followed by a closing
+        fireProgressStateChanged("Opening blue segmented image");
+
+        kernel = AlgorithmMorphology3D.CONNECTED6;
+        sphereDiameter = 1.0f;
+        method = AlgorithmMorphology3D.OPEN;
+        itersDilation = 1;
+        itersErosion = 1;
+        numPruningPixels = 0;
+        edgingType = 0;
+        openAlgo = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation, itersErosion,
+                                             numPruningPixels, edgingType, wholeImage);
+        openAlgo.run();
+        openAlgo.finalize();
+        openAlgo = null;
+
+        /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
+        new Dimension(600, 300));
+        boolean runTest = true;
+        if (runTest) {
+            setCompleted(true);
+            return;
+        }*/
+
+        fireProgressStateChanged("Closing blue segmented image");
+
+        method = AlgorithmMorphology3D.CLOSE;
+        closeAlgo = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation, itersErosion,
+                                              numPruningPixels, edgingType, wholeImage);
+        closeAlgo.run();
+        closeAlgo.finalize();
+        closeAlgo = null;
         System.gc();
 
         /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
@@ -2333,16 +2525,9 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         fireProgressStateChanged("Removing blue objects touching edges");
 
         fireProgressStateChanged(23);
-
-        if (numObjects == 1) {
-            initiallyOneObject = true;
-        }
-        else {
-            initiallyOneObject = false;
-        }
         
+        removeID = new boolean[numObjects];
         for (id = 1; id <= numObjects; id++) {
-            removeID = false;
 
             for (k = 0, z = 0; z < zDim; z++, k += sliceLength) {
 
@@ -2354,19 +2539,42 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                         if ((IDArray[i] == id) &&
                                 ((x == 0) || (x == (xDim - 1)) || (y == 0) || (y == (yDim - 1)) || (z == 0) ||
                                      (z == (zDim - 1)))) {
-                            removeID = true;
+                            removeID[id-1] = true;
                         }
                     }
                 }
             }
-            
+        } // for (id = 1; id <= numObjects; id++)
+        
+        allRemoved = true;
+        numRemoved = 0;
+        for (id = 1; id <= numObjects; id++) {
+            if (!removeID[id-1]) {
+                allRemoved = false;
+            }
+            else {
+                numRemoved++;
+            }
+        } // for (id = 1; id <= numObjects; id++)
+        
+        if (allRemoved) {
+            Preferences.debug("All blue objects touch edges so don't remove any\n");
+            for (id = 1; id <= numObjects; id++) {
+                removeID[id-1] = false;   
+            }
+        }
+        else {
+            Preferences.debug("Removing " + numRemoved + " blue objects of " + numObjects + " for touching edges\n");    
+        }
+        
 
-            if ((!initiallyOneObject) && removeID) {
-
+        for (id = 1; id <= numObjects; id++) {    
+            if (removeID[id-1]) {
+    
                 for (i = 0; i < totLength; i++) {
 
-                    if (IDArray[i] == id) {
-                        IDArray[i] = 0;
+                    if (IDArray[i] == (byte) id) {
+                        IDArray[i] = (byte) 0;
                     } else if (IDArray[i] > id) {
                         IDArray[i]--;
                     }
@@ -2374,18 +2582,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                 numObjects--;
                 id--;
-            } // if (removeID)
-
+            } // if (removeID[id-1])
         } // for (id = 1; id <= numObjects; id++)
-
-        if (numObjects == 0) {
-            MipavUtil.displayError(edgeObjects + " blue objects touched edges");
-            MipavUtil.displayError("No blue objects that do not touch edges");
-
-            setCompleted(false);
-
-            return;
-        }
         
         blueVolume = new int[numObjects];
         blueIntensityTotal = new double[numObjects];
@@ -2480,7 +2678,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
             } // for (z = blueFront[i]; z <= blueBack[i]; z++)
             intensityFraction[i] = (float)(blueIntensityTotal[i]/blueBlockIntensityTotal[i]);
-            while (intensityFraction[i] < minIntensityFraction) {
+            while ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue)) {
                 blueMinArray[i] = blueMinArray[i] - 1; 
                 volumeGrowth = true;
                 while (volumeGrowth) {
@@ -2526,7 +2724,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     } // for (z = blueFront[i]; z <= blueBack[i]; z++)
                 } // while (volumeGrowth)
                 intensityFraction[i] = (float)(blueIntensityTotal[i]/blueBlockIntensityTotal[i]);
-            } // while (intensityFraction[i] < minIntensityFraction)
+            } // while ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue))
         } // for (i = 0; i < numObjects; i++)
         
         try {
@@ -2968,15 +3166,17 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             greenYCenter[j - 1] = greenYCenter[j - 1] / greenIntensityTotal[j - 1];
             greenZCenter[j - 1] = greenZCenter[j - 1] / greenIntensityTotal[j - 1];
             greenCellNumber[j-1] = 0;
+            maxGreenBelong = 0;
             for (k = 1; k <= numObjects; k++) {
-                if (greenBelong[k] > greenCellNumber[j-1]) {
+                if (greenBelong[k] > maxGreenBelong) {
                     greenCellNumber[j-1] = k;
+                    maxGreenBelong = greenBelong[k];
                 }
             }
             
             // Expand IDArray to include green regions protruding out of the blue cell boundary
             for (i = 0; i < totLength; i++) {
-                if ((j <= numGreenObjects) && (greenIDArray[i] == j) && (IDArray[i] == 0)) {
+                if ((greenIDArray[i] == j) && (IDArray[i] == 0)) {
                     IDArray[i] = (byte)greenCellNumber[j-1];
                 }
             }
@@ -3031,6 +3231,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                             greenXCenter[m-2] = greenXCenter[m-1];
                             greenYCenter[m-2] = greenYCenter[m-1];
                             greenZCenter[m-2] = greenZCenter[m-1];
+                            greenCellNumber[m-2] = greenCellNumber[m-1];
                         }
                         if (j <= numGreenObjects) {
                             numGreenObjects--;
@@ -3200,33 +3401,109 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         System.gc();
 
         srcImage.setVOIs(grayImage.getVOIs());
-        grayImage.resetVOIs();
 
         VOIs = srcImage.getVOIs();
         nVOIs = VOIs.size();
-        
-        try {
-            grayImage.importData(0, IDArray, true);
-        } catch (IOException error) {
-            byteBuffer = null;
-            errorCleanUp("Error on grayImage.importData", true);
-
-            return;
-        }
 
         fireProgressStateChanged("Extracting VOIs from blue image");
-        fireProgressStateChanged(76);
-        algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
-        algoVOIExtraction.run();
-        algoVOIExtraction.finalize();
-        algoVOIExtraction = null;
-        for (i = 0; i < grayImage.getVOIs().size(); i++) {
-            grayImage.getVOIs().VOIAt(i).setColor(Color.yellow.darker());
-            VOIs.add(grayImage.getVOIs().VOIAt(i));
-        }
-        srcImage.setVOIs((VOIVector)VOIs);
-
+        
+        
+        blueVOIs = grayImage.getVOIs();
+        trim = true;
         shortMask = new short[totLength];
+        IDArray2 = new byte[totLength];
+        for (i = 0; i < numObjects; i++) {
+            grayImage.resetVOIs();
+            for (j = 0; j < totLength; j++) {
+                IDArray2[j] = 0;
+                if (IDArray[j] == (i+1)) {
+                    IDArray2[j] = (byte)(i+1);    
+                }
+            }
+            
+            try {
+                grayImage.importData(0, IDArray2, true);
+            } catch (IOException error) {
+                byteBuffer = null;
+                errorCleanUp("Error on grayImage.importData", true);
+
+                return;
+            }
+            
+            algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
+            algoVOIExtraction.run();
+            algoVOIExtraction.finalize();
+            algoVOIExtraction = null;
+            
+            blueVOIs = grayImage.getVOIs();
+            newVOI = new VOI((short) 1, "blueVOI", 1, VOI.CONTOUR, -1.0f);
+            if ((blueVOIs.size() != 0) && (blueVOIs.VOIAt(0).getCurves().length != 0)) {
+                contours = blueVOIs.VOIAt(0).getCurves();
+                for (z = 0; z < zDim; z++) {
+                    if (contours[z].size() != 0) {
+                        srcGon = ((VOIContour) (contours[z].elementAt(0))).exportPolygon(1,1,1,1);
+                        xPoints = new float[srcGon.npoints + 5];
+                        yPoints = new float[srcGon.npoints + 5];
+            
+                        xPoints[0] = srcGon.xpoints[srcGon.npoints - 2];
+                        yPoints[0] = srcGon.ypoints[srcGon.npoints - 2];
+            
+                        xPoints[1] = srcGon.xpoints[srcGon.npoints - 1];
+                        yPoints[1] = srcGon.ypoints[srcGon.npoints - 1];
+            
+                        for (j = 0; j < srcGon.npoints; j++) {
+                            xPoints[j + 2] = srcGon.xpoints[j];
+                            yPoints[j + 2] = srcGon.ypoints[j];
+                        }
+            
+                        xPoints[srcGon.npoints + 2] = srcGon.xpoints[0];
+                        yPoints[srcGon.npoints + 2] = srcGon.ypoints[0];
+            
+                        xPoints[srcGon.npoints + 3] = srcGon.xpoints[1];
+                        yPoints[srcGon.npoints + 3] = srcGon.ypoints[1];
+            
+                        xPoints[srcGon.npoints + 4] = srcGon.xpoints[2];
+                        yPoints[srcGon.npoints + 4] = srcGon.ypoints[2];
+            
+                        arcLength = new AlgorithmArcLength(xPoints, yPoints);
+                        defaultPts = Math.round(arcLength.getTotalArcLength() / 3);
+                        newVOI.removeCurves(0);
+                        newVOI.importCurve((VOIContour)contours[z].elementAt(0),0);
+                        newVOI.setAllActive(true);
+                        smoothAlgo = new AlgorithmBSmooth(grayImage2D, newVOI, defaultPts, trim);
+                        smoothAlgo.run();
+                        if (smoothAlgo.isCompleted()) {
+                            // The algorithm has completed and produced a VOI
+                            resultVOI = smoothAlgo.getResultVOI();
+                            blueVOIs.VOIAt(0).removeCurves(z);
+                            blueVOIs.VOIAt(0).importCurve((VOIContour)resultVOI.getCurves()[0].elementAt(0),z);
+                        } // if (smoothAlgo.isCompleted())
+                        smoothAlgo.finalize();
+                        smoothAlgo = null;
+                    } // if (contours[z].size() != 0)
+                } // for (z = 0; z < zDim; z++)
+            } // if ((blueVOIs.size() != 0) && (blueVOIs.VOIAt(0).getCurves().length != 0))
+            // Change IDArray to reflect the changed boundaries of the voi
+            Arrays.fill(shortMask, (short) -1);
+            shortMask = grayImage.generateVOIMask(shortMask, 0);
+            if (shortMask != null) {
+                for (j = 0; j < totLength; j++) {
+                    if (IDArray[j] == (i+1)) {
+                        IDArray[j] = 0;
+                    }
+                    if (shortMask[j] != -1) {
+                        IDArray[j] = (byte)(i + 1);
+                    }
+                }
+                blueVOIs.VOIAt(0).setColor(Color.yellow.darker());
+                VOIs.add(blueVOIs.VOIAt(0));
+            } // if (shortMask != null)
+            else {
+                shortMask = new short[totLength];
+            }
+        } // for (i = 0; i < numObjects; i++)
+        
+        srcImage.setVOIs((VOIVector)VOIs);
 
         // System.out.println("Image = " + srcImage);
         // System.out.println("VOIs = " + VOIs);
@@ -3715,7 +3992,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 05/08/08 version\n");
+        UI.setDataText("Plugin 05/12/08 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
