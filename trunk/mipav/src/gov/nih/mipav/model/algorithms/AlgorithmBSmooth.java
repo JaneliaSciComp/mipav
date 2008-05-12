@@ -124,7 +124,7 @@ public class AlgorithmBSmooth extends AlgorithmBase {
 
             if (((VOIContour) (contours[0].elementAt(elementNum))).isActive()) {
                 srcGon = ((VOIContour) (contours[0].elementAt(elementNum))).exportPolygon(1, 1, 1, 1);
-                System.err.println("Element number is: " + elementNum);
+                //System.err.println("Element number is: " + elementNum);
                 if (srcGon.npoints > 5) {
                     xPoints = new float[srcGon.npoints + 5];
                     yPoints = new float[srcGon.npoints + 5];
