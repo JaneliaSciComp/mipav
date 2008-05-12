@@ -142,6 +142,9 @@ public class JDialogTransformNL extends JDialogScriptableBase implements Algorit
         } else if (command.equals("fileChoose")) {
             parametersFile = parametersFileMenu();
         }
+        else if (command.equals("Help")) {
+            MipavUtil.showHelp("TransNon10");
+        }
     }
 
     // ************************************************************************
@@ -718,11 +721,12 @@ public class JDialogTransformNL extends JDialogScriptableBase implements Algorit
         mainPanel.add(optionPanel, BorderLayout.SOUTH);
 
         JPanel buttonPanel = new JPanel();
+        buttonPanel.add(buildButtons());
 
-        buildOKButton();
-        buildCancelButton();
-        buttonPanel.add(OKButton);
-        buttonPanel.add(cancelButton);
+        //buildOKButton();
+        //buildCancelButton();
+        //buttonPanel.add(OKButton);
+       // buttonPanel.add(cancelButton);
 
         getContentPane().add(mainPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);

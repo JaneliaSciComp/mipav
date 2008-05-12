@@ -17,7 +17,7 @@ import gov.nih.mipav.model.structures.ModelLUT;
  * 
  * References: Developed in concert with Sinisa Pajevic from the NIH/CIT/DCB/MSCL group,
  * Lin-Ching Chang D.Sc., Carlo Pierpaoli MD Ph.D., and Lindsay Walker MS from the
- * the NIH/NICHD/LIMB/STBB group and Olga Vogt from the NIH/CIT/DCB/ISL/BIRSS group:
+ * the NIH/NICHD/LIMB/STBB group and Olga Vovk from the NIH/CIT/DCB/ISL/BIRSS group:
  * 
  * 
  * Mathematical and Statistical Computing Laboratory (MSCL)

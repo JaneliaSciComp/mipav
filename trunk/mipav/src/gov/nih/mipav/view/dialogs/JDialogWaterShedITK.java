@@ -108,9 +108,9 @@ public class JDialogWaterShedITK extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } 
-        //else if (command.equals("Help")) {
-        //    MipavUtil.showHelp("10009");
-        //} **Help is currently not available for this algorithm**
+        else if (command.equals("Help")) {
+            MipavUtil.showHelp("WShed10");
+        }
     }
 
     // ************************************************************************

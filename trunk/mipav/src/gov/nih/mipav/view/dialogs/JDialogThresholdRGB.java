@@ -184,6 +184,8 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        }  else if (command.equals("Help")) {
+            MipavUtil.showHelp("19074");
         }
     }
 
@@ -923,10 +925,7 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         JPanel buttonPanel = new JPanel();
-        buildOKButton();
-        buttonPanel.add(OKButton);
-        buildCancelButton();
-        buttonPanel.add(cancelButton);
+        buttonPanel.add(buildButtons());
 
         getContentPane().add(mainPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);

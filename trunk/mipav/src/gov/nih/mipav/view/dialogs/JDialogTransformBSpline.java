@@ -157,7 +157,9 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
         } else if (command.equals("Cancel")) {
             dispose();
         }
-
+        else if (command.equals("Help")) {
+            MipavUtil.showHelp("TransNon10");
+        }
     }
 
     // ************************************************************************
@@ -301,10 +303,12 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
         getContentPane().add(nltPanel);
 
         JPanel buttonPanel = new JPanel();
-        buildOKButton();
-        buttonPanel.add(OKButton);
-        buildCancelButton();
-        buttonPanel.add(cancelButton);
+        buttonPanel.add(buildButtons());
+        
+        //buildOKButton();
+        //buttonPanel.add(OKButton);
+        //buildCancelButton();
+        //buttonPanel.add(cancelButton);
 
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();
