@@ -699,7 +699,7 @@ public class Preferences {
                 while (e.hasMoreElements()) {
                     String key = (String) e.nextElement();
 
-                    if (currentShortcut.equals(userShortcutTable.get(key))) {
+                    if (shortcut.equals(userShortcutTable.get(key))) {
                         userShortcutTable.remove(key);
                     }
                 }

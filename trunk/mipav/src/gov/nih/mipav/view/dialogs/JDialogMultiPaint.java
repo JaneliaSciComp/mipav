@@ -540,25 +540,29 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             deselectMask();
             selectedMaskToPaint(num);
         } else if (command.equals("AdvancedPaint:Collapse")) {
-			// this is a pretty violent function: I (plb) would personally
-			// remove it (you can do the exact same thing by 
-			// thresholding the mask)
-			/*
-            // go through image b and find all mask values
-            ModelImage imageB = image.getParentFrame().getImageB();
-            TreeSet vals = getMaskTreeSet(imageB);
+        	
+        	
+        	int reply = JOptionPane.showConfirmDialog(this, "Do you really want to collapse masks/paint?", "MIPAV",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
-            image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST,
-                                                                   "CollapseAllToSinglePaint"));
+        	if (reply == JOptionPane.YES_OPTION) {
 
-            BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-            ModelImage imgB = image.getParentFrame().getImageB();
-            image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[selected].getText()).intValue()));
-            image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false);
-            image.getParentFrame().getComponentImage().setModifyFlag(true);
-            image.notifyImageDisplayListeners();
-            refreshImagePaint(image, obj);
-			*/
+	            // go through image b and find all mask values
+	            ModelImage imageB = image.getParentFrame().getImageB();
+	            TreeSet vals = getMaskTreeSet(imageB);
+	
+	            image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST,
+	                                                                   "CollapseAllToSinglePaint"));
+	
+	            BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+	            ModelImage imgB = image.getParentFrame().getImageB();
+	            image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[selected].getText()).intValue()));
+	            image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false);
+	            image.getParentFrame().getComponentImage().setModifyFlag(true);
+	            image.notifyImageDisplayListeners();
+	            refreshImagePaint(image, obj);
+        	}
+			
         } else if (command.equals("AdvancedPaint:Shortkeys")) {
 			// presets for shortcuts: can be changed through regular shortcut editor
 			if (buttonShortkeys.isSelected()) {
@@ -1604,13 +1608,13 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         displayMasksButton.setFont(serif12);
         displayMasksButton.setToolTipText("Hide inactive masks for visualization");
 
-		/* is it really useful ? -> very bad if clicked by accident
+
         collapseButton = new JButton("Collapse masks/paint");
-        collapseButton.addActionListener(image.getParentFrame());
+        collapseButton.addActionListener(this);
         collapseButton.setActionCommand("AdvancedPaint:Collapse");
         collapseButton.setFont(serif12);
         collapseButton.setToolTipText("Collapse masks and paint to single value");
-		*/
+		
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
@@ -1722,6 +1726,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         leftPanel.add(displayPaintButton,gbc);
         gbc.gridy = 4;
         leftPanel.add(displayModeButton,gbc);
+        gbc.gridy = 5;
+        leftPanel.add(collapseButton,gbc);
         
         rightPanel = new JPanel(new GridBagLayout());
         gbc.gridy = 0;
@@ -1740,6 +1746,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         rightPanel.add(buttonShortkeys,gbc);
         
         leftRightPanel = new JPanel(new GridBagLayout());
+        gbc.anchor = GridBagConstraints.NORTHWEST;
         gbc.gridy = 0;
         gbc.gridx = 0;
         gbc.weightx = 1;
@@ -1748,6 +1755,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         gbc.gridx = 1;
         leftRightPanel.add(rightPanel,gbc);
         
+        
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
         gbc.gridy = 0;
         optionPanel.add(numberPanel, gbc);
@@ -1802,12 +1811,16 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         gbc.fill = GridBagConstraints.BOTH;
         gbc.gridx = 0;
         gbc.gridy = 0;
-        closePanel.add(buildCloseButton(), gbc);
+        closeButton = buildCloseButton();
+        closeButton.setActionCommand("AdvancedPaint:Close");
+        closePanel.add(closeButton, gbc);
         gbc.fill = GridBagConstraints.BOTH;
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        closePanel.add(buildHelpButton(), gbc);
+        helpButton = buildHelpButton();
+        helpButton.setActionCommand("AdvancedPaint:Help");
+        closePanel.add(helpButton, gbc);
 
         getContentPane().add(mainPanel);
         //getContentPane().add(bottomPanel, BorderLayout.SOUTH);

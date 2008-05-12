@@ -300,21 +300,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("AdvancedPaint")) {
             menuBuilder.setMenuItemEnabled("Extract image(B)", true);
             multipaintDialog = new JDialogMultiPaint(this, getImageA());
-			// I (plb) find this switching to paint brush annoying as the 
-			// image often needs to be moved or resized (others might disagree)
-            //getControls().getTools().setPaintBrushButtonSelected();
-            //componentImage.setCursorMode(ViewJComponentEditImage.PAINT_VOI);
-        } else if (command.equals("AdvancedPaint")) {
-            menuBuilder.setMenuItemEnabled("Extract image(B)", true);
-            multipaintDialog = new JDialogMultiPaint(this, getImageA());
-			// I (Pilou) find this switching to paint brush annoying as the 
-			// image often needs to be moved or resized (others might disagree)
-            //getControls().getTools().setPaintBrushButtonSelected();
-            //componentImage.setCursorMode(ViewJComponentEditImage.PAINT_VOI);
-        } else if (command.startsWith("AdvancedPaint:")) {
-			if (multipaintDialog!=null) {
-				multipaintDialog.actionPerformed(event);
-			}
+            getControls().getTools().setPaintBrushButtonSelected();
+            componentImage.setCursorMode(ViewJComponentEditImage.PAINT_VOI);
+        }else if (command.startsWith("AdvancedPaint:")) {
+        	if(event.getSource() instanceof KeyStroke) {
+        		if (multipaintDialog!=null) {
+    				multipaintDialog.actionPerformed(event);
+    			}
+        	}
+			
         } else if (command.equals("DisplayBorder")) {
         	if(Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
             	getControls().getTools().bogusBorderPaintButton.setSelected(true);
