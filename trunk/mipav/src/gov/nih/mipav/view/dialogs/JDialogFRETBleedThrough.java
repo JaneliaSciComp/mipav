@@ -286,7 +286,7 @@ public class JDialogFRETBleedThrough extends JDialogScriptableBase
                 componentImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
             }
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10095");
+            MipavUtil.showHelp("10096");
         }
     }
 
