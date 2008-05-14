@@ -71,10 +71,7 @@ public class FileLIFF extends FileBase {
     // Have k16BE555PixelFormat  Each pixel is represented by 16 bits.  The MSB is unused,
     // followed by five bits per each Red, Green, and Blue Component.  This is the
     // native 16 bit format for the MAC platform.  For the MAC_16_BIT_COLOR
-    // BIT DEPTH OF LAYER = 15 as expected, so we do not have k16BE565PixelFormat where each pixel
-    // is represented by 16 bits.  Five bits for Red, 6 bits for Green, and 5 bits for
-    // Blue component.  This format is not commonly used, being defined primarily for
-    // completeness.
+    // BIT DEPTH OF LAYER = 15 as expected and bits per component = 5 as expected.
     private static final int MAC_16_BIT_COLOR = 7;
     // LIFF file format documentation has openlab_mac32bitColourImageType = 8L,
     // openlab_mac24bitColourImageType = openlab_mac32bitColourImageType,
@@ -485,6 +482,8 @@ public class FileLIFF extends FileBase {
         int rightShift;
         int sliceSize = 0;
         short shortColor;
+        int bufferSize;
+        boolean booleanBuffer[] = null;
 
         try {
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
@@ -1883,7 +1882,12 @@ public class FileLIFF extends FileBase {
                 Preferences.debug("Found " + majorTypeCount + " slices of type " + typeStr[majorType] + "\n");
                 Preferences.debug("These are RGB stored in " + bitNumber + " depth\n");
                 imageSlices = majorTypeCount/3;
-                Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type ARGB_USHORT\n");
+                if (imageSlices > 1) {
+                    Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type ARGB_USHORT\n");
+                }
+                else {
+                    Preferences.debug("The MIPAV image will have 1 slice of type ARGB_USHORT\n");    
+                }
                 if (imageSlices > 1) {
                     imageExtents = new int[3];
                     imageExtents[0] = xDim;
@@ -1903,10 +1907,20 @@ public class FileLIFF extends FileBase {
                 sliceColorBuffer = new byte[sliceColorBytes];
             }
             else if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) {
-                Preferences.debug("Found " + majorTypeCount + " slices of type " + typeStr[majorType] + "\n");
+                if (majorTypeCount > 1) {
+                    Preferences.debug("Found " + majorTypeCount + " slices of type " + typeStr[majorType] + "\n");
+                }
+                else {
+                    Preferences.debug("Found 1 slice of type " + typeStr[majorType] + "\n");    
+                }
                 Preferences.debug("These are USHORT stored in " + bitNumber + " depth\n");
                 imageSlices = majorTypeCount;
-                Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type USHORT\n");
+                if (imageSlices > 1) {
+                    Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type USHORT\n");
+                }
+                else {
+                    Preferences.debug("The MIPAV image will have 1 slice of type USHORT\n");    
+                }
                 if (imageSlices > 1) {
                     imageExtents = new int[3];
                     imageExtents[0] = xDim;
@@ -1926,10 +1940,21 @@ public class FileLIFF extends FileBase {
                 sliceBytes = 2 * xDim * yDim;
             }
             else if ((majorType == MAC_24_BIT_COLOR) || (majorType == MAC_16_BIT_COLOR)) {
-                Preferences.debug("Found " + majorTypeCount + " slices of type " +
-                        typeStr[majorType] + "\n");
+                if (majorTypeCount > 1) {
+                    Preferences.debug("Found " + majorTypeCount + " slices of type " +
+                            typeStr[majorType] + "\n");
+                }
+                else {
+                    Preferences.debug("Found 1 slice of type " +
+                            typeStr[majorType] + "\n");    
+                }
                 imageSlices = majorTypeCount;
-                Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type ARGB\n");
+                if (imageSlices > 1) {
+                    Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type ARGB\n");
+                }
+                else {
+                    Preferences.debug("The MIPAV image will have 1 slice of type ARGB\n");    
+                }
                 if (imageSlices > 1) {
                     imageExtents = new int[3];
                     imageExtents[0] = xDim;
@@ -1945,14 +1970,29 @@ public class FileLIFF extends FileBase {
                 fileInfo.setExtents(imageExtents);
                 image = new ModelImage(ModelStorageBase.ARGB, imageExtents, fileName);
                 if (majorType == MAC_16_BIT_COLOR) {
-                    byteBuffer2 = new byte[2 * xDim * yDim];
+                    byteBuffer = new byte[2 * xDim * yDim];
+                    byteBuffer2 = new byte[4 * xDim * yDim];
                 }
-                byteBuffer = new byte[4 * xDim * yDim];
+                else {
+                    byteBuffer = new byte[4 * xDim * yDim];
+                }
             }
-            else if ((majorType == MAC_256_GREYS) || (majorType == MAC_256_COLORS)) {
-                Preferences.debug("Found " + majorTypeCount + " slices of type " + typeStr[majorType] + "\n");
+            else if ((majorType == MAC_256_GREYS) || (majorType == MAC_256_COLORS) ||
+                     (majorType == MAC_16_GREYS) || (majorType == MAC_16_COLORS) || 
+                     (majorType == MAC_4_GREYS)) {
+                if (majorTypeCount > 1) {
+                    Preferences.debug("Found " + majorTypeCount + " slices of type " + typeStr[majorType] + "\n");
+                }
+                else {
+                    Preferences.debug("Found 1 slice of type " + typeStr[majorType] + "\n");    
+                }
                 imageSlices = majorTypeCount;
-                Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type UBYTE\n");
+                if (imageSlices > 1) {
+                    Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type UBYTE\n");
+                }
+                else {
+                    Preferences.debug("The MIPAV image will have 1 slice of type UBYTE\n");    
+                }
                 if (imageSlices > 1) {
                     imageExtents = new int[3];
                     imageExtents[0] = xDim;
@@ -1967,8 +2007,57 @@ public class FileLIFF extends FileBase {
                 sliceSize = xDim * yDim;
                 fileInfo.setExtents(imageExtents);
                 image = new ModelImage(ModelStorageBase.UBYTE, imageExtents, fileName);
-                byteBuffer = new byte[xDim * yDim];    
-            } // else if (majorType == MAC_256_GREYS)
+                if ((majorType == MAC_16_GREYS) || (majorType == MAC_16_COLORS)) {
+                    byteBuffer = new byte[sliceSize/2 + sliceSize % 2];
+                    byteBuffer2 = new byte[sliceSize];
+                }
+                else if (majorType == MAC_4_GREYS) {
+                    bufferSize = sliceSize/4;
+                    if ((sliceSize % 4) > 0) {
+                        bufferSize++;
+                    }
+                    byteBuffer = new byte[bufferSize];
+                    byteBuffer2 = new byte[sliceSize];
+                }
+                else {
+                    byteBuffer = new byte[sliceSize];  
+                }
+            } // else if ((majorType == MAC_256_GREYS) || (majorType == MAC_256_COLORS) ||
+            else if (majorType == MAC_1_BIT) {
+                if (majorTypeCount > 1) {
+                    Preferences.debug("Found " + majorTypeCount + " slices of type MAC_1_BIT\n");
+                }
+                else {
+                    Preferences.debug("Found 1 slice of type MAC_1_BIT\n");    
+                }
+                imageSlices = majorTypeCount;
+                if (imageSlices > 1) {
+                    Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type BOOLEAN\n");
+                }
+                else {
+                    Preferences.debug("The MIPAV image will have 1 slice of type BOOLEAN\n");    
+                }
+                if (imageSlices > 1) {
+                    imageExtents = new int[3];
+                    imageExtents[0] = xDim;
+                    imageExtents[1] = yDim;
+                    imageExtents[2] = imageSlices;
+                }
+                else {
+                    imageExtents = new int[2];
+                    imageExtents[0] = xDim;
+                    imageExtents[1] = yDim;
+                }
+                sliceSize = xDim * yDim;
+                fileInfo.setExtents(imageExtents);
+                image = new ModelImage(ModelStorageBase.BOOLEAN, imageExtents, fileName); 
+                bufferSize = sliceSize/8;
+                if ((sliceSize % 8) > 0) {
+                    bufferSize++;
+                }
+                byteBuffer = new byte[bufferSize];
+                booleanBuffer = new boolean[sliceSize];
+            } // else if (majorType == MAC_1_BIT)
             else {
                 Preferences.debug("The MIPAV image will have " + majorTypeCount + 
                                   " slices of type " + typeStr[majorType] + "\n");
@@ -2146,15 +2235,12 @@ public class FileLIFF extends FileBase {
                         if ((packTypeArray[i] == 0) || (packTypeArray[i] > 2)) {
                             totalByteCount = 0;
                             if (majorType == MAC_16_BIT_COLOR) {
-                                cmpCountArray[i] = 1;
                                 if (packTypeArray[i] == 0) {
                                     packTypeArray[i] = 3;
                                 }
                             }
-                            else if (majorType == MAC_24_BIT_COLOR) {
-                                if (packTypeArray[i] == 0) {
+                            else if (packTypeArray[i] == 0) {
                                     packTypeArray[i] = 4;
-                                }
                             }
                             if (cmpCountArray[i] == 3) {
                                 componentArray = new int[3];
@@ -2190,13 +2276,13 @@ public class FileLIFF extends FileBase {
                                         b1 = pad[rowIndex++]; 
                                         if (b1 >= 0) { // 127 >= b1 >= 0
                                           for (k = 0; k < 2*(b1 + 1); k++) {
-                                              byteBuffer2[index++] = pad[rowIndex++];
+                                              byteBuffer[index++] = pad[rowIndex++];
                                           }
                                         } // if (b1 >= 0)
                                         else if (b1 != -128) { // -1 >= b1 >= -127
                                           len = -b1 + 1;
                                           for (k = 0; k < 2*len; k++) {
-                                              byteBuffer2[index++] = pad[rowIndex];
+                                              byteBuffer[index++] = pad[rowIndex];
                                           }
                                           rowIndex += 2;
                                         } // else if (b1 != -128)
@@ -2205,7 +2291,6 @@ public class FileLIFF extends FileBase {
                                 else { // packTypeArray[i] == 4
                                     while ((rowBytesRead < rowBytesArray[i]) && (rowIndex < byteCount)) {
                                        b1 = pad[rowIndex++]; 
-                                       Preferences.debug("b1 = " + b1 + "\n");
                                        if (b1 >= 0) { // 127 >= b1 >= 0
                                          for (k = 0; k < (b1 + 1); k++) {
                                              byteBuffer[(cmpCountArray[i]*index++) + componentArray[component]] =
@@ -2246,15 +2331,66 @@ public class FileLIFF extends FileBase {
                             }
                             else if (majorType == MAC_16_BIT_COLOR) {    
                                 for (j = 0; j < sliceSize; j++) {
-                                    byteBuffer[4*j] = (byte)255;
-                                    shortColor = (short) (((byteBuffer2[2*j] & 0xff) << 8) |
-                                                           (byteBuffer2[2*j + 1] & 0xff));
-                                    byteBuffer[4*j+1] = (byte)((shortColor & 0x7C00) >>> 7);
-                                    byteBuffer[4*j+2] = (byte)((shortColor & 0x03E0) >>> 2);
-                                    byteBuffer[4*j+3] = (byte)((shortColor & 0x001F) << 3);
+                                    byteBuffer2[4*j] = (byte)255;
+                                    shortColor = (short) (((byteBuffer[2*j] & 0xff) << 8) |
+                                                           (byteBuffer[2*j + 1] & 0xff));
+                                    byteBuffer2[4*j+1] = (byte)((shortColor & 0x7C00) >>> 7);
+                                    byteBuffer2[4*j+2] = (byte)((shortColor & 0x03E0) >>> 2);
+                                    byteBuffer2[4*j+3] = (byte)((shortColor & 0x001F) << 3);
                                 }
-                                image.importData(4 * sliceNumber * sliceSize, byteBuffer, false); 
-                            }
+                                image.importData(4 * sliceNumber * sliceSize, byteBuffer2, false); 
+                            } // else if (majorType == MAC_16_BIT_COLOR)
+                            else if ((majorType == MAC_16_GREYS) || (majorType == MAC_16_COLORS)) {
+                                for (j = 0, k = 0; j < sliceSize; j++) {
+                                    if (k == 0) {
+                                        byteBuffer2[j] = (byte)(byteBuffer[j >> 1] & 0x0f);
+                                        k = 1;
+                                    }
+                                    else if (k == 1) {
+                                        byteBuffer2[j] = (byte)((byteBuffer[j >> 1] & 0xf0) >>> 4);
+                                        k = 0;
+                                    }
+                                }
+                                image.importData(sliceNumber * sliceSize, byteBuffer2, false);
+                            } // else if ((majorType == MAC_16_GREYS) || (majorType == MAC_16_COLORS))
+                            else if (majorType == MAC_4_GREYS) {
+                                for (j = 0, k = 0; j < sliceSize; j++) {
+                                    if (k == 0) {
+                                        byteBuffer2[j] = (byte)(byteBuffer[j >> 2] & 0x03);
+                                        k = 1;
+                                    }
+                                    else if (k == 1) {
+                                        byteBuffer2[j] = (byte)((byteBuffer[j >> 2] & 0xc0) >>> 2);
+                                        k = 2;
+                                    }
+                                    else if (k == 2) {
+                                        byteBuffer2[j] = (byte)((byteBuffer[j >> 2] & 0x30) >>> 4);
+                                        k = 3;
+                                    }
+                                    else if (k == 3) {
+                                        byteBuffer2[j] = (byte)((byteBuffer[j >> 2] & 0xc0) >>> 6);
+                                        k = 0;
+                                    }
+                                }
+                                image.importData(sliceNumber * sliceSize, byteBuffer2, false);
+                            } // else if (majorType == MAC_4_GREYS)
+                            else if (majorType == MAC_1_BIT) {
+                                for (j = 0, k = 0x01; j < sliceSize; j++) {
+                                    if ((byteBuffer[j >> 3] & k) != 0) {
+                                        booleanBuffer[j] = true;
+                                    }
+                                    else {
+                                        booleanBuffer[j] = false;
+                                    }
+                                    if (k == 0x80) {
+                                        k = 0x01;
+                                    }
+                                    else {
+                                        k = k << 1;
+                                    }
+                                }
+                                image.importData(sliceNumber * sliceSize, booleanBuffer, false);
+                            } // else if (majorType == MAC_1_BIT)
                             else {
                                 image.importData(sliceNumber * sliceSize, byteBuffer, false);
                             }
