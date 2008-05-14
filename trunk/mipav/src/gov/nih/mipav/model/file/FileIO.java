@@ -2149,7 +2149,9 @@ public class FileIO {
 
         if (options.isSaveAs()) { // if we're doing a save-as op, then try to get the filetype from the name
             fileType = FileUtility.getFileType(options.getFileName(), options.getFileDirectory(), true, quiet);
-            System.err.println("FileType: " + fileType);
+            
+            //System.err.println("FileType: " + fileType);
+            
             options.setDefault(true); // this would already be set....  hrmm....
         } else { // otherwise, get the file-type from the file-info.
             fileType = image.getFileInfo(0).getFileFormat();

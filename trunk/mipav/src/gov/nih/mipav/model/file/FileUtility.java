@@ -5,8 +5,6 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import ncsa.hdf.object.*;
-import ncsa.hdf.object.h5.*;
-import ncsa.hdf.view.*;
 import java.io.*;
 
 import java.util.*;
@@ -935,12 +933,34 @@ public class FileUtility {
         String suffix = FileUtility.getExtension(fileName);
 
         fileType = FileUtility.getFileTypeFromSuffix(suffix);
-
-        //check here for minc 2.0 vs 1.0
+        
+        // handle when the .mnc extension but MINC_HDF file
         if (fileType == FileUtility.MINC) {
-        	if (isMincHDF(fileName, fileDir, quiet) == FileUtility.MINC_HDF) {
-        		fileType = FileUtility.MINC_HDF;
+            try {
+        	// inspect the file to see if it is really a MINC1 (suppressing any error dialogs).
+        	// if not, set the file type using isMincHDF()
+        	if (isMinc(fileName, fileDir, true) != FileUtility.MINC) {
+        	    fileType = isMincHDF(fileName, fileDir, quiet);
         	}
+            } catch (IOException ioe) {
+        	if (ioe instanceof FileNotFoundException) {
+        	    MipavUtil.displayError("File does not exist '" + fileDir + fileName + "'.");
+        	    ioe.printStackTrace();
+
+        	    return FileUtility.ERROR;
+        	}
+
+        	if (!quiet) {
+        	    MipavUtil.displayError("FileIO: " + ioe);
+        	    Preferences.debug("FileIO: " + ioe + "\n", Preferences.DEBUG_FILEIO);
+        	    ioe.printStackTrace();
+        	} else {
+        	    Preferences.debug("FileIO: " + ioe + "\n", Preferences.DEBUG_FILEIO);
+        	    ioe.printStackTrace();
+        	}
+
+        	fileType = FileUtility.UNDEFINED;
+            }
         }
         
         if (fileType == FileUtility.UNDEFINED) {
@@ -1145,9 +1165,9 @@ public class FileUtility {
             if (fileType == FileUtility.UNDEFINED) {
                 fileType = FileUtility.isMinc(fileName, fileDir, quiet);
             }
-
+            
             if (fileType == FileUtility.UNDEFINED) {
-                fileType = FileUtility.isMincHDF(fileName, fileDir, quiet);
+                fileType = isMincHDF(fileName, fileDir, quiet);
             }
             
             if (fileType == FileUtility.UNDEFINED) {
@@ -1822,6 +1842,28 @@ public class FileUtility {
      */
     public static final int isMincHDF(String fileName, String fileDir, boolean quiet) {
     	
+	// first, make sure that the hdf5 libs are available (no pre-built ones for win64)
+	try {
+	    System.loadLibrary("jhdf");
+	    System.loadLibrary("jhdf5");
+	} catch (SecurityException e) {
+	    if (!quiet) {
+		MipavUtil.displayError("Unable to load HDF libraries: " + e.getMessage());
+	    }
+	    
+	    e.printStackTrace();
+	    
+	    return FileUtility.ERROR;
+	} catch (UnsatisfiedLinkError e) {
+	    if (!quiet) {
+		MipavUtil.displayError("Unable to load HDF libraries: " + e.getMessage());
+	    }
+	    
+	    e.printStackTrace();
+	    
+	    return FileUtility.ERROR;
+	}
+	
     	FileFormat h5F = FileFormat.getFileFormat(FileFormat.FILE_TYPE_HDF5);
     	
     	boolean isMincHDF = h5F.isThisType(fileDir + File.separator + fileName);
