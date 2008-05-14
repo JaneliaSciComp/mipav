@@ -2,8 +2,6 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -21,7 +19,7 @@ import ncsa.hdf.object.Attribute;
 import ncsa.hdf.object.HObject;
 
 
-public class JDialogFileInfoMincHDF extends JDialogScriptableBase implements ActionListener {
+public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListener {
     
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -33,26 +31,6 @@ public class JDialogFileInfoMincHDF extends JDialogScriptableBase implements Act
 
     /** DOCUMENT ME! */
     private JScrollPane scrollPaneDicom;
-
-    /** DOCUMENT ME! */
-    private boolean isAppend = false;
-
-    /** fileName of where dicom tags are save to **/
-    private String fileName;
-
-    /** directory of where dicom tags are save to **/
-    private String directory;
-
-    /** slice index for which fileInfo is saved **/
-    private int sliceIndex;
-
-    private boolean launchFileChooser = true;
-    
-    /** Main dialog layout box. */
-    private Box mainBox;
-    
-    /** A set of strings that can be added to a ViewTableModel to insert an empty row. */
-    private static final String[] emptyRow = new String[]{"", "", ""};
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -105,7 +83,7 @@ public class JDialogFileInfoMincHDF extends JDialogScriptableBase implements Act
 			Attribute currentAttribute = it.next();
 			dataDims = currentAttribute.getDataDims();
 			String name = currentAttribute.getName();
-//			if (!name.equals("varid") && !name.equals("vartype") && !name.equals("version")) {
+			if (!name.equals("varid") && !name.equals("vartype") && !name.equals("version")) {
 			    rowData[1] = name;
 
 			    val = "";
@@ -134,7 +112,7 @@ public class JDialogFileInfoMincHDF extends JDialogScriptableBase implements Act
 			    rowData[2] = val;
 			    model.addRow(rowData);
 			    rowData[0] = "";
-//			}
+			}
 		    }
 		}
 	    } else {
@@ -212,7 +190,8 @@ public class JDialogFileInfoMincHDF extends JDialogScriptableBase implements Act
     public void displayAboutInfo(ModelImage _image, FileInfoMincHDF _info, int sIndex) {
 	mincInfo = _info; // set the input var
 	imageA = _image; // set the input var
-	sliceIndex = sIndex;
+	
+	Box mainBox;
 
 	try {
 	    mainBox = new Box(BoxLayout.Y_AXIS);
@@ -542,46 +521,4 @@ public class JDialogFileInfoMincHDF extends JDialogScriptableBase implements Act
 	
 	return nodeTable;
     }
-
-    /**
-     * call algorithm
-     *
-     */
-    protected void callAlgorithm() {
-    }
-    
-    /**
-     * set gui from parameters
-     *
-     */
-    protected void setGUIFromParams() {
-	imageA = scriptParameters.retrieveInputImage();
-	isAppend = scriptParameters.getParams().getBoolean("isAppend");
-	directory = scriptParameters.getParams().getString("directory");
-	fileName = scriptParameters.getParams().getString("fileName");
-	sliceIndex = scriptParameters.getParams().getInt("sliceIndex");
-	launchFileChooser = false;
-	FileInfoMincHDF fileInfo;
-	if(imageA.getFileInfo().length > sliceIndex) {
-	    fileInfo = (FileInfoMincHDF)imageA.getFileInfo()[sliceIndex];
-	}else {
-	    fileInfo = (FileInfoMincHDF)imageA.getFileInfo()[0];
-	}
-
-	displayAboutInfo(imageA,fileInfo,sliceIndex);
-
-    }
-
-    /**
-     * store parameters from gui
-     * @throws ParserException
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-	scriptParameters.storeInputImage(imageA);
-	scriptParameters.getParams().put(ParameterFactory.newParameter("isAppend", isAppend));
-	scriptParameters.getParams().put(ParameterFactory.newParameter("directory", directory));
-	scriptParameters.getParams().put(ParameterFactory.newParameter("fileName", fileName));
-	scriptParameters.getParams().put(ParameterFactory.newParameter("sliceIndex", sliceIndex));
-
-    } 
 }

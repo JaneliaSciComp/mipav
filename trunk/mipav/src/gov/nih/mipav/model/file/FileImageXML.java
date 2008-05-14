@@ -750,7 +750,8 @@ public class FileImageXML extends FileXML {
    
             if (img.getFileInfo(0) instanceof FileInfoMincHDF) {
             	((FileInfoMincHDF)img.getFileInfo(0)).convertPatientInfo((FileInfoImageXML)fileInfo);
-            	System.err.println("finfo subjectid: " + ((FileInfoImageXML)fileInfo).getSubjectID());
+            	
+            	//System.err.println("finfo subjectid: " + ((FileInfoImageXML)fileInfo).getSubjectID());
             }
             
             //if we are writing a non-XML file but are doing the SRB header-only writing
@@ -1235,12 +1236,16 @@ public class FileImageXML extends FileXML {
         // if this is being saved from an XML file, save off XML specific information if included
         // otherwise ignore these fields as they do not exist in the file info
         if (!simple || img.getFileInfo()[0] instanceof FileInfoMincHDF) {
-        	System.err.println("looking for subject id");
+            
+            //System.err.println("looking for subject id");
+            
             // IFF there is a subject ID, we will include this tag
             if ((((FileInfoImageXML) fileInfo).getSubjectID() != null) &&
                     !((FileInfoImageXML) fileInfo).getSubjectID().equalsIgnoreCase("")) {
                 openTag(imageStr[1], true);
-System.err.println("subjectID found");
+                
+                //System.err.println("subjectID found");
+                
                 temp = ((FileInfoImageXML) fileInfo).getSubjectName();
 
                 if ((temp != null) && !temp.equalsIgnoreCase("")) {

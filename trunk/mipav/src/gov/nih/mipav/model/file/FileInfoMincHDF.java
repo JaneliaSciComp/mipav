@@ -15,9 +15,6 @@ import ncsa.hdf.object.HObject;
 
 
 public class FileInfoMincHDF extends FileInfoBase {
-
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
     /**
      * The dimension tree node that holds xspace, yspace, and (optionally) zspace nodes
      */
@@ -108,81 +105,7 @@ public class FileInfoMincHDF extends FileInfoBase {
      * @param  matrix  the transformation matrix
      */
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
-	//never called
-
-    }
-
-    /**
-     * Recursively parse and display (to JDialogText) the nodes
-     * @param node HDF tree node
-     * @param dialog dialog to display the information
-     * @throws Exception
-     */
-    private void parseNodes(DefaultMutableTreeNode node, JDialogText dialog) throws Exception {
-	long [] dataDims;
-	boolean isDicom = false;
-	if (node.isLeaf()) {
-	    dialog.append("\n");
-	    HObject userObject = (HObject)node.getUserObject();
-
-	    String nodeName = userObject.toString();
-	    String dicomGroup = null;
-	    //	dicom_0x0008
-	    if (nodeName.startsWith("dicom_")) {
-		isDicom = true;
-		dicomGroup = nodeName.substring(8);
-	    } else {
-		dialog.append(userObject + "\n");
-	    }
-	    List<Attribute> metaData = userObject.getMetadata();
-	    Iterator<Attribute> it = metaData.iterator();
-	    while(it.hasNext()) {
-		Attribute currentAttribute = it.next();
-		dataDims = currentAttribute.getDataDims();
-		String name = currentAttribute.getName();
-		if (!name.equals("varid") && !name.equals("vartype") &&
-			!name.equals("version")) {
-
-		    if (!isDicom) {
-			dialog.append("\t" + currentAttribute.getName());
-		    } else {
-			dialog.append("(" + dicomGroup + "," + name.substring(5) + ") - ");
-		    }
-		    Object value = currentAttribute.getValue();
-		    for (int i = 0; i < dataDims.length; i++) {
-			//System.err.print(", " + dataDims[i]);
-			if (value instanceof String[]) {
-			    if (isDicom) {
-				FileDicomKey tagKey = new FileDicomKey(dicomGroup + "," + name.substring(5));
-
-				FileDicomTagInfo info = DicomDictionary.getInfo(tagKey);
-				dialog.append(info.getName() + " :\t");
-			    }
-
-			    dialog.append("\t" + ((String[])value)[i]);
-			} else if (value instanceof float[]) {
-			    dialog.append("\t" + ((float[])value)[i]);
-			} else if (value instanceof double[]) {
-			    dialog.append("\t" + ((double[])value)[i]);
-			} else if (value instanceof int[]) {
-			    dialog.append("\t" + ((int[])value)[i]);
-			} else if (value instanceof short[]) {
-			    dialog.append("\t" + ((short[])value)[i]);
-			}
-		    }
-		    dialog.append("\n");
-		    //System.err.println("");
-		    //System.err.println(currentAttribute.getValue());
-		}
-	    }
-
-	} else {
-
-	    //recursively calls parseHDFHeader to reach every non-leaf
-	    for (int i = 0; i < node.getChildCount(); i++) {
-		parseNodes((DefaultMutableTreeNode)node.getChildAt(i), dialog);
-	    }
-	}
+	// never called
     }
 
     /**
@@ -299,12 +222,14 @@ public class FileInfoMincHDF extends FileInfoBase {
 	if (informationNode == null) {
 	    return;
 	}
-	System.err.println("convertPatientInfo");
+	
+	//System.err.println("convertPatientInfo");
+	
 	int children = informationNode.getChildCount();
 	DefaultMutableTreeNode currentNode;
 	for (int i = 0; i < children; i++) {
 	    currentNode = (DefaultMutableTreeNode)informationNode.getChildAt(i);
-	    if (currentNode.getUserObject().toString().equals("patient")) {
+	    if (currentNode.getUserObject().toString().equals(FileMincHDF.LEAF_PATIENT)) {
 
 		try {
 		    List<Attribute> metaData = ((HObject)currentNode.getUserObject()).getMetadata();
@@ -316,11 +241,22 @@ public class FileInfoMincHDF extends FileInfoBase {
 			if (name.equals("full_name")) {
 			    dInfo.setSubjectName(((String[])currentAttribute.getValue())[0]);
 			} else if (name.equals("sex")) {
-			    dInfo.setSex(((String[])currentAttribute.getValue())[0]);
+			    String mincSex = ((String[])currentAttribute.getValue())[0];
+			    
+			    if (mincSex.equalsIgnoreCase("male__")) {
+				dInfo.setSex("Male");
+			    } else if (mincSex.equalsIgnoreCase("female")) {
+				dInfo.setSex("Female");
+			    } else if (mincSex.equalsIgnoreCase("other_")) {
+				dInfo.setSex("Other");
+			    } else {
+				dInfo.setSex("Other");
+			    }
 			} else if (name.equals("identification")) {
 			    dInfo.setSubjectID(((String[])currentAttribute.getValue())[0]);
 			} else if (name.equals("birthdate")) {
-			    dInfo.setDOB(((String[])currentAttribute.getValue())[0]);
+			    String mincDOB = ((String[])currentAttribute.getValue())[0];
+			    dInfo.setDOB(mincDOB.substring(0, 4) + "-" + mincDOB.substring(4, 6) + "-" + mincDOB.substring(6, 8));
 			}
 		    }
 		} catch (Exception e) {
@@ -329,7 +265,6 @@ public class FileInfoMincHDF extends FileInfoBase {
 		}
 	    }
 	}
-
     }
 
     /**
@@ -402,9 +337,7 @@ public class FileInfoMincHDF extends FileInfoBase {
 	}
 
 	// System.err.println("convert: result[" + slice + "]:\t" + transformedPt[0] + " " + transformedPt[1] + " " +
-		//   transformedPt[2]);
-
-
+	//   transformedPt[2]);
 
 	return transformedPt;
     }
