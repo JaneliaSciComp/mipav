@@ -896,7 +896,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     private void loadVOI(int pane) {
     	System.err.println("calling loadVOI");
         
-    	getImageA().unregisterAllVOIs();
+    	//getImageA().unregisterAllVOIs();
         String fileDir;
     	if(multipleSlices)
     		fileDir = getImageA().getFileInfo(0).getFileDirectory()+VOI_DIR+"_"+getViewableSlice()+"\\";
@@ -948,7 +948,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     }
     
     private void initMuscleImage(int pane) {        
-        loadVOI(pane);
+    	if(!changeSlice) 
+        	getImageA().unregisterAllVOIs();
+    	
+    	componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
+    	loadVOI(pane);
         
         ctMode(getImageA(), -175, 275);
         
@@ -964,7 +968,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     }
     
     private void initVoiImage(int pane) {
-    	getActiveImage().unregisterAllVOIs();
+    	//getActiveImage().unregisterAllVOIs();
     	//load VOIs of activeTab
     	loadVOI(pane);
         VOIVector voiVec = getActiveImage().getVOIs();
