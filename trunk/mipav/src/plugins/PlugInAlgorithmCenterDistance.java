@@ -21,7 +21,7 @@ import javax.swing.*;
 /**
  * This shows how to extend the AlgorithmBase class.
  *
- * @version  May 12, 2008
+ * @version  May 14, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -161,6 +161,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
      */
     private boolean twoGreenLevels;
     
+    private boolean blueExpand;
+    
     /** The minimum ratio of the bounding box area or volume to the original blue object area or volume*/
     /** This number must be greater than 1.0 */
     private float minBoundsRatio;
@@ -170,6 +172,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
      *   This number must be less than 1.0.
      */
     private float minIntensityFraction;
+    
+    private boolean blueSmooth;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -185,12 +189,16 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
      * @param  greenFraction
      * @param  greenRegionNumber      DOCUMENT ME!
      * @param  twoGreenLevels
+     * @param  blueExpand
      * @param  minAreaRatio
      * @param  minIntensityFraction
+     * @param  blueSmooth
      */
     public PlugInAlgorithmCenterDistance(ModelImage srcImg, int blueMin, int redMin, float redFraction, float mergingDistance, 
                                          int greenMin, float greenFraction,  int greenRegionNumber,
-                                         boolean twoGreenLevels, float minBoundsRatio, float minIntensityFraction) {
+                                         boolean twoGreenLevels, boolean blueExpand,
+                                         float minBoundsRatio, float minIntensityFraction,
+                                         boolean blueSmooth) {
         super(null, srcImg);
         this.blueMin = blueMin;
         this.redMin = redMin;
@@ -200,8 +208,10 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         this.greenFraction = greenFraction;
         this.greenRegionNumber = greenRegionNumber;
         this.twoGreenLevels = twoGreenLevels;
+        this.blueExpand = blueExpand;
         this.minBoundsRatio = minBoundsRatio;
         this.minIntensityFraction = minIntensityFraction;
+        this.blueSmooth = blueSmooth;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -531,31 +541,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         fillHolesAlgo2D.finalize();
         fillHolesAlgo2D = null;
         
-        // Smooth with a morphological opening followed by a closing
-        fireProgressStateChanged("Opening blue segmented image");
-
-        kernel = AlgorithmMorphology2D.CONNECTED4;
-        circleDiameter = 1.0f;
-        method = AlgorithmMorphology2D.OPEN;
-        itersDilation = 1;
-        itersErosion = 1;
-        numPruningPixels = 0;
-        edgingType = 0;
-        openAlgo = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation, itersErosion,
-                                             numPruningPixels, edgingType, wholeImage);
-        openAlgo.run();
-        openAlgo.finalize();
-        openAlgo = null;
-
-        fireProgressStateChanged("Closing blue segmented image");
-
-        method = AlgorithmMorphology2D.CLOSE;
-        closeAlgo = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation, itersErosion,
-                                              numPruningPixels, edgingType, wholeImage);
-        closeAlgo.run();
-        closeAlgo.finalize();
-        closeAlgo = null;
-        
         numPruningPixels = 0;
         edgingType = 0;
         
@@ -652,116 +637,152 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             } // if (removeID[id-1])
         } // for (id = 1; id <= numObjects; id++)     
         
-        blueArea= new int[numObjects];
-        blueIntensityTotal = new double[numObjects];
-        blueLeft = new int[numObjects];
-        blueRight = new int[numObjects];
-        blueTop = new int[numObjects];
-        blueBottom = new int[numObjects];
-        blueMinArray = new float[numObjects];
-        blueWidth = new int[numObjects];
-        blueHeight = new int[numObjects];
-        blueRectArea = new int[numObjects];
-        areaRatio = new float[numObjects];
-        blueRectIntensityTotal = new double[numObjects];
-        intensityFraction = new float[numObjects];
-        for (i = 0; i < numObjects; i++) {
-            blueLeft[i] = Integer.MAX_VALUE;
-            blueTop[i] = Integer.MAX_VALUE;
-            blueMinArray[i] = Float.MAX_VALUE;
-        }
-        // Obtain areas and bounding rectangles of numObjects
-        for (y = 0; y < yDim; y++) {
-
-            for (x = 0; x < xDim; x++) {
-                i = x + y*xDim;
-                // id goes from 0 to numObjects
-                id = IDArray[i];
-                if (id >= 1) {
-                    blueArea[id-1]++;
-                    blueIntensityTotal[id-1] += buffer[i];
-                    if (buffer[i] < blueMinArray[id-1]) {
-                        blueMinArray[id-1] = buffer[i];
-                    }
-                    if (x < blueLeft[id-1]) {
-                        blueLeft[id-1] = x;
-                    }
-                    if (x > blueRight[id-1]) {
-                        blueRight[id-1] = x;
-                    }
-                    if (y < blueTop[id-1]) {
-                        blueTop[id-1] = y;
-                    }
-                    if (y > blueBottom[id-1]) {
-                        blueBottom[id-1] = y;
-                    }
-                } // if (id >= 1)
-            } // for (x = 0; x < xDim; x++)
-        } // for (y = 0; y < yDim; y++)
-        
-        for (i = 0; i < numObjects; i++) {
-            blueWidth[i] = (blueRight[i] - blueLeft[i]);
-            blueHeight[i] = (blueBottom[i] - blueTop[i]);
-            blueRectArea[i] = blueWidth[i]*blueHeight[i];
-            areaRatio[i] = (float)blueRectArea[i]/(float)blueArea[i];
-            atBounds = false;
-            while ((areaRatio[i] < minBoundsRatio) && (!atBounds)) { 
-                blueLeft[i] = Math.max(0, blueLeft[i] - 1);
-                blueRight[i] = Math.min(xDim-1, blueRight[i] + 1);
-                blueTop[i] = Math.max(0, blueTop[i] - 1);
-                blueBottom[i] = Math.min(yDim - 1, blueBottom[i] + 1);
-                if ((blueLeft[i] == 0) && (blueRight[i] == (xDim - 1)) &&
-                    (blueTop[i] == 0) && (blueBottom[i] == (yDim - 1))) {
-                    atBounds = true;
-                }
+        if (blueExpand) {
+            blueArea= new int[numObjects];
+            blueIntensityTotal = new double[numObjects];
+            blueLeft = new int[numObjects];
+            blueRight = new int[numObjects];
+            blueTop = new int[numObjects];
+            blueBottom = new int[numObjects];
+            blueMinArray = new float[numObjects];
+            blueWidth = new int[numObjects];
+            blueHeight = new int[numObjects];
+            blueRectArea = new int[numObjects];
+            areaRatio = new float[numObjects];
+            blueRectIntensityTotal = new double[numObjects];
+            intensityFraction = new float[numObjects];
+            for (i = 0; i < numObjects; i++) {
+                blueLeft[i] = Integer.MAX_VALUE;
+                blueTop[i] = Integer.MAX_VALUE;
+                blueMinArray[i] = Float.MAX_VALUE;
+            }
+            // Obtain areas and bounding rectangles of numObjects
+            for (y = 0; y < yDim; y++) {
+    
+                for (x = 0; x < xDim; x++) {
+                    i = x + y*xDim;
+                    // id goes from 0 to numObjects
+                    id = IDArray[i];
+                    if (id >= 1) {
+                        blueArea[id-1]++;
+                        blueIntensityTotal[id-1] += buffer[i];
+                        if (buffer[i] < blueMinArray[id-1]) {
+                            blueMinArray[id-1] = buffer[i];
+                        }
+                        if (x < blueLeft[id-1]) {
+                            blueLeft[id-1] = x;
+                        }
+                        if (x > blueRight[id-1]) {
+                            blueRight[id-1] = x;
+                        }
+                        if (y < blueTop[id-1]) {
+                            blueTop[id-1] = y;
+                        }
+                        if (y > blueBottom[id-1]) {
+                            blueBottom[id-1] = y;
+                        }
+                    } // if (id >= 1)
+                } // for (x = 0; x < xDim; x++)
+            } // for (y = 0; y < yDim; y++)
+            
+            for (i = 0; i < numObjects; i++) {
                 blueWidth[i] = (blueRight[i] - blueLeft[i]);
                 blueHeight[i] = (blueBottom[i] - blueTop[i]);
                 blueRectArea[i] = blueWidth[i]*blueHeight[i];
                 areaRatio[i] = (float)blueRectArea[i]/(float)blueArea[i];
-            } // while ((areaRatio[i] < minBoundsRatio) && (!atBounds))
-            for (y = blueTop[i]; y <= blueBottom[i]; y++) {
-                for (x = blueLeft[i]; x <= blueRight[i]; x++) {
-                    k = x + y * xDim;
-                    blueRectIntensityTotal[i] += buffer[k];
-                }
-            } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
-            intensityFraction[i] = (float)(blueIntensityTotal[i]/blueRectIntensityTotal[i]);
-            while ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue)) {
-                blueMinArray[i] = blueMinArray[i] - 1; 
-                areaGrowth = true;
-                while (areaGrowth) {
-                    areaGrowth = false;
-                    for (y = blueTop[i]; y <= blueBottom[i]; y++) {
-                        for (x = blueLeft[i]; x <= blueRight[i]; x++) {
-                            k = x + y*xDim;
-                            if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i])) {
-                               if ((x > blueLeft[i]) && (IDArray[k-1] == (i+1))) {
-                                   IDArray[k] = (byte)(i+1); 
-                                   areaGrowth = true;
-                                   blueIntensityTotal[i] += buffer[k];
-                               }
-                               else if ((x < blueRight[i]) && (IDArray[k+1] == (i+1))) {
-                                   IDArray[k] = (byte)(i+1);
-                                   areaGrowth = true;
-                                   blueIntensityTotal[i] += buffer[k];
-                               }
-                               else if ((y > blueTop[i]) && (IDArray[k - xDim] == (i+1))) {
-                                   IDArray[k] = (byte)(i+1);
-                                   areaGrowth = true;
-                                   blueIntensityTotal[i] += buffer[k];
-                               }
-                               else if ((y < blueBottom[i]) && (IDArray[k + xDim] == (i+1))) {
-                                   IDArray[k] = (byte)(i+1);
-                                   areaGrowth = true;
-                                   blueIntensityTotal[i] += buffer[k];
-                               }
-                            } // if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i]))
-                        } // for (x = blueLeft[i]; x <= blueRight[i]; x++)
-                    } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
-                } // while (areaGrowth)
+                atBounds = false;
+                while ((areaRatio[i] < minBoundsRatio) && (!atBounds)) { 
+                    blueLeft[i] = Math.max(0, blueLeft[i] - 1);
+                    blueRight[i] = Math.min(xDim-1, blueRight[i] + 1);
+                    blueTop[i] = Math.max(0, blueTop[i] - 1);
+                    blueBottom[i] = Math.min(yDim - 1, blueBottom[i] + 1);
+                    if ((blueLeft[i] == 0) && (blueRight[i] == (xDim - 1)) &&
+                        (blueTop[i] == 0) && (blueBottom[i] == (yDim - 1))) {
+                        atBounds = true;
+                    }
+                    blueWidth[i] = (blueRight[i] - blueLeft[i]);
+                    blueHeight[i] = (blueBottom[i] - blueTop[i]);
+                    blueRectArea[i] = blueWidth[i]*blueHeight[i];
+                    areaRatio[i] = (float)blueRectArea[i]/(float)blueArea[i];
+                } // while ((areaRatio[i] < minBoundsRatio) && (!atBounds))
+                for (y = blueTop[i]; y <= blueBottom[i]; y++) {
+                    for (x = blueLeft[i]; x <= blueRight[i]; x++) {
+                        k = x + y * xDim;
+                        blueRectIntensityTotal[i] += buffer[k];
+                    }
+                } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
                 intensityFraction[i] = (float)(blueIntensityTotal[i]/blueRectIntensityTotal[i]);
-            } // while ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue))
-        } // for (i = 0; i < numObjects; i++)
+                while ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue)) {
+                    blueMinArray[i] = blueMinArray[i] - 1; 
+                    areaGrowth = true;
+                    while (areaGrowth) {
+                        areaGrowth = false;
+                        for (y = blueTop[i]; y <= blueBottom[i]; y++) {
+                            for (x = blueLeft[i]; x <= blueRight[i]; x++) {
+                                k = x + y*xDim;
+                                if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i])) {
+                                   if ((x > blueLeft[i]) && (IDArray[k-1] == (i+1))) {
+                                       IDArray[k] = (byte)(i+1); 
+                                       areaGrowth = true;
+                                       blueIntensityTotal[i] += buffer[k];
+                                   }
+                                   else if ((x < blueRight[i]) && (IDArray[k+1] == (i+1))) {
+                                       IDArray[k] = (byte)(i+1);
+                                       areaGrowth = true;
+                                       blueIntensityTotal[i] += buffer[k];
+                                   }
+                                   else if ((y > blueTop[i]) && (IDArray[k - xDim] == (i+1))) {
+                                       IDArray[k] = (byte)(i+1);
+                                       areaGrowth = true;
+                                       blueIntensityTotal[i] += buffer[k];
+                                   }
+                                   else if ((y < blueBottom[i]) && (IDArray[k + xDim] == (i+1))) {
+                                       IDArray[k] = (byte)(i+1);
+                                       areaGrowth = true;
+                                       blueIntensityTotal[i] += buffer[k];
+                                   }
+                                } // if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i]))
+                            } // for (x = blueLeft[i]; x <= blueRight[i]; x++)
+                        } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
+                    } // while (areaGrowth)
+                    intensityFraction[i] = (float)(blueIntensityTotal[i]/blueRectIntensityTotal[i]);
+                } // while ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue))
+            } // for (i = 0; i < numObjects; i++)
+        } // if (blueExpand)
+        
+        try {
+            grayImage.importData(0, IDArray, true);
+        } catch (IOException error) {
+            buffer = null;
+            errorCleanUp("Error on grayImage.importData", true);
+
+            return;
+        }  
+        
+        // Smooth with a morphological opening followed by a closing
+        fireProgressStateChanged("Opening blue segmented image");
+
+        kernel = AlgorithmMorphology2D.CONNECTED4;
+        circleDiameter = 1.0f;
+        method = AlgorithmMorphology2D.OPEN;
+        itersDilation = 1;
+        itersErosion = 1;
+        numPruningPixels = 0;
+        edgingType = 0;
+        openAlgo = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation, itersErosion,
+                                             numPruningPixels, edgingType, wholeImage);
+        openAlgo.run();
+        openAlgo.finalize();
+        openAlgo = null;
+
+        fireProgressStateChanged("Closing blue segmented image");
+
+        method = AlgorithmMorphology2D.CLOSE;
+        closeAlgo = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation, itersErosion,
+                                              numPruningPixels, edgingType, wholeImage);
+        closeAlgo.run();
+        closeAlgo.finalize();
+        closeAlgo = null;
 
         try {
             srcImage.exportRGBData(1, 0, length, buffer); // export red data
@@ -769,6 +790,16 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             buffer = null;
             greenBuffer = null;
             errorCleanUp("Algorithm CenterDistance reports: source image locked", true);
+
+            return;
+        }
+        
+        try {
+            grayImage.exportData(0, length, IDArray);
+        } catch (IOException error) {
+            byteBuffer = null;
+            IDArray = null;
+            errorCleanUp("Error on grayImage.exportData", true);
 
             return;
         }
@@ -1420,64 +1451,66 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             blueVOIs = grayImage.getVOIs();
             if ((blueVOIs.size() != 0) && (blueVOIs.VOIAt(0).getCurves().length != 0) &&
                 (blueVOIs.VOIAt(0).getCurves()[0].size() != 0)) {
-            
-                gons = blueVOIs.VOIAt(0).exportPolygons(0);
-                elementNum = 0;
-                xPoints = new float[gons[elementNum].npoints + 5];
-                yPoints = new float[gons[elementNum].npoints + 5];
-    
-                xPoints[0] = gons[elementNum].xpoints[gons[elementNum].npoints - 2];
-                yPoints[0] = gons[elementNum].ypoints[gons[elementNum].npoints - 2];
-    
-                xPoints[1] = gons[elementNum].xpoints[gons[elementNum].npoints - 1];
-                yPoints[1] = gons[elementNum].ypoints[gons[elementNum].npoints - 1];
-    
-                for (j = 0; j < gons[elementNum].npoints; j++) {
-                    xPoints[j + 2] = gons[elementNum].xpoints[j];
-                    yPoints[j + 2] = gons[elementNum].ypoints[j];
-                }
-    
-                xPoints[gons[elementNum].npoints + 2] = gons[elementNum].xpoints[0];
-                yPoints[gons[elementNum].npoints + 2] = gons[elementNum].ypoints[0];
-    
-                xPoints[gons[elementNum].npoints + 3] = gons[elementNum].xpoints[1];
-                yPoints[gons[elementNum].npoints + 3] = gons[elementNum].ypoints[1];
-    
-                xPoints[gons[elementNum].npoints + 4] = gons[elementNum].xpoints[2];
-                yPoints[gons[elementNum].npoints + 4] = gons[elementNum].ypoints[2];
-    
-                arcLength = new AlgorithmArcLength(xPoints, yPoints);
-                defaultPts = Math.round(arcLength.getTotalArcLength() / 3);
-                blueVOIs.VOIAt(0).setAllActive(true);
-                smoothAlgo = new AlgorithmBSmooth(grayImage, blueVOIs.VOIAt(0), defaultPts, trim);
-                smoothAlgo.run();
-                if (smoothAlgo.isCompleted()) {
-                    // The algorithm has completed and produced a VOI
-                    resultVOI = smoothAlgo.getResultVOI();
-                    blueVOIs.VOIAt(0).removeCurves(0);
-                    blueVOIs.VOIAt(0).importCurve((VOIContour)resultVOI.getCurves()[0].elementAt(0),0);
-                    // Change IDArray to reflect the changed boundaries of the voi
-                    Arrays.fill(shortMask, (short) -1);
-                    shortMask = grayImage.generateVOIMask(shortMask, 0);
-                    if (shortMask != null) {
-                        for (j = 0; j < length; j++) {
-                            if (IDArray[j] == (i+1)) {
-                                IDArray[j] = 0;
-                            }
-                            if (shortMask[j] != -1) {
-                                IDArray[j] = (byte)(i + 1);
-                            }
-                        }
-                    } // if (shortMask != null)
-                    else {
-                        shortMask = new short[length];
+                if (blueSmooth) {
+                    ((VOIContour) (blueVOIs.VOIAt(0).getCurves()[0].elementAt(0))).trimPoints(1.0, true);
+                    gons = blueVOIs.VOIAt(0).exportPolygons(0);
+                    elementNum = 0;
+                    xPoints = new float[gons[elementNum].npoints + 5];
+                    yPoints = new float[gons[elementNum].npoints + 5];
+        
+                    xPoints[0] = gons[elementNum].xpoints[gons[elementNum].npoints - 2];
+                    yPoints[0] = gons[elementNum].ypoints[gons[elementNum].npoints - 2];
+        
+                    xPoints[1] = gons[elementNum].xpoints[gons[elementNum].npoints - 1];
+                    yPoints[1] = gons[elementNum].ypoints[gons[elementNum].npoints - 1];
+        
+                    for (j = 0; j < gons[elementNum].npoints; j++) {
+                        xPoints[j + 2] = gons[elementNum].xpoints[j];
+                        yPoints[j + 2] = gons[elementNum].ypoints[j];
                     }
-                } // if (smoothAlgo.isCompleted())
-                smoothAlgo.finalize();
-                smoothAlgo = null;
+        
+                    xPoints[gons[elementNum].npoints + 2] = gons[elementNum].xpoints[0];
+                    yPoints[gons[elementNum].npoints + 2] = gons[elementNum].ypoints[0];
+        
+                    xPoints[gons[elementNum].npoints + 3] = gons[elementNum].xpoints[1];
+                    yPoints[gons[elementNum].npoints + 3] = gons[elementNum].ypoints[1];
+        
+                    xPoints[gons[elementNum].npoints + 4] = gons[elementNum].xpoints[2];
+                    yPoints[gons[elementNum].npoints + 4] = gons[elementNum].ypoints[2];
+        
+                    arcLength = new AlgorithmArcLength(xPoints, yPoints);
+                    defaultPts = Math.round(arcLength.getTotalArcLength() / 24);
+                    blueVOIs.VOIAt(0).setAllActive(true);
+                    smoothAlgo = new AlgorithmBSmooth(grayImage, blueVOIs.VOIAt(0), defaultPts, trim);
+                    smoothAlgo.run();
+                    if (smoothAlgo.isCompleted()) {
+                        // The algorithm has completed and produced a VOI
+                        resultVOI = smoothAlgo.getResultVOI();
+                        blueVOIs.VOIAt(0).removeCurves(0);
+                        blueVOIs.VOIAt(0).importCurve((VOIContour)resultVOI.getCurves()[0].elementAt(0),0);
+                        // Change IDArray to reflect the changed boundaries of the voi
+                        Arrays.fill(shortMask, (short) -1);
+                        shortMask = grayImage.generateVOIMask(shortMask, 0);
+                        if (shortMask != null) {
+                            for (j = 0; j < length; j++) {
+                                if (IDArray[j] == (i+1)) {
+                                    IDArray[j] = 0;
+                                }
+                                if (shortMask[j] != -1) {
+                                    IDArray[j] = (byte)(i + 1);
+                                }
+                            }
+                        } // if (shortMask != null)
+                        else {
+                            shortMask = new short[length];
+                        }
+                    } // if (smoothAlgo.isCompleted())
+                    smoothAlgo.finalize();
+                    smoothAlgo = null;
+                } // if (blueSmooth)
                 blueVOIs.VOIAt(0).setColor(Color.yellow.darker());
                 VOIs.add(blueVOIs.VOIAt(0));
-            } // if ((blueVOIs.size() != 0) && (blueVOIs.VOIAt(0).getCurves().length != 0)) 
+            } // if (blueVOIs.size() != 0) && (blueVOIs.VOIAt(0).getCurves().length != 0))
         } // for (i = 0; i < numObjects; i++)
         
         srcImage.setVOIs((VOIVector)VOIs);
@@ -1770,7 +1803,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 05/12/08 version\n");
+        UI.setDataText("Plugin 05/14/08 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
@@ -2433,40 +2466,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         grayImage.calcMinMax();
         buffer2D = null;
         System.gc();
-        
-//      Smooth with a morphological opening followed by a closing
-        fireProgressStateChanged("Opening blue segmented image");
-
-        kernel = AlgorithmMorphology3D.CONNECTED6;
-        sphereDiameter = 1.0f;
-        method = AlgorithmMorphology3D.OPEN;
-        itersDilation = 1;
-        itersErosion = 1;
-        numPruningPixels = 0;
-        edgingType = 0;
-        openAlgo = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation, itersErosion,
-                                             numPruningPixels, edgingType, wholeImage);
-        openAlgo.run();
-        openAlgo.finalize();
-        openAlgo = null;
-
-        /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
-        new Dimension(600, 300));
-        boolean runTest = true;
-        if (runTest) {
-            setCompleted(true);
-            return;
-        }*/
-
-        fireProgressStateChanged("Closing blue segmented image");
-
-        method = AlgorithmMorphology3D.CLOSE;
-        closeAlgo = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation, itersErosion,
-                                              numPruningPixels, edgingType, wholeImage);
-        closeAlgo.run();
-        closeAlgo.finalize();
-        closeAlgo = null;
-        System.gc();
 
         /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
         new Dimension(600, 300));
@@ -2585,147 +2584,201 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             } // if (removeID[id-1])
         } // for (id = 1; id <= numObjects; id++)
         
-        blueVolume = new int[numObjects];
-        blueIntensityTotal = new double[numObjects];
-        blueLeft = new int[numObjects];
-        blueRight = new int[numObjects];
-        blueTop = new int[numObjects];
-        blueBottom = new int[numObjects];
-        blueFront = new int[numObjects];
-        blueBack = new int[numObjects];
-        blueMinArray = new float[numObjects];
-        blueWidth = new int[numObjects];
-        blueHeight = new int[numObjects];
-        blueDepth = new int[numObjects];
-        blueBlockVolume = new int[numObjects];
-        volumeRatio = new float[numObjects];
-        blueBlockIntensityTotal = new double[numObjects];
-        intensityFraction = new float[numObjects];
-        for (i = 0; i < numObjects; i++) {
-            blueLeft[i] = Integer.MAX_VALUE;
-            blueTop[i] = Integer.MAX_VALUE;
-            blueFront[i] = Integer.MAX_VALUE;
-            blueMinArray[i] = Float.MAX_VALUE;
-        }
-        // Obtain volumes and bounding blocks of numObjects
-        for (z = 0; z < zDim; z++) {
-            for (y = 0; y < yDim; y++) {
-    
-                for (x = 0; x < xDim; x++) {
-                    i = x + y*xDim + z*sliceSize;
-                    // id goes from 0 to numObjects
-                    id = IDArray[i];
-                    if (id >= 1) {
-                        blueVolume[id-1]++;
-                        blueIntensityTotal[id-1] += buffer[i];
-                        if (buffer[i] < blueMinArray[id-1]) {
-                            blueMinArray[id-1] = buffer[i];
-                        }
-                        if (x < blueLeft[id-1]) {
-                            blueLeft[id-1] = x;
-                        }
-                        if (x > blueRight[id-1]) {
-                            blueRight[id-1] = x;
-                        }
-                        if (y < blueTop[id-1]) {
-                            blueTop[id-1] = y;
-                        }
-                        if (y > blueBottom[id-1]) {
-                            blueBottom[id-1] = y;
-                        }
-                        if (z < blueFront[id-1]) {
-                            blueFront[id-1] = z;
-                        }
-                        if (z > blueBack[id-1]) {
-                            blueBack[id-1] = z;
-                        }
-                    } // if (id >= 1)
-                } // for (x = 0; x < xDim; x++)
-            } // for (y = 0; y < yDim; y++)
-        } // for (z = 0; z < zDim; z++)
+        if (blueExpand) {
+            blueVolume = new int[numObjects];
+            blueIntensityTotal = new double[numObjects];
+            blueLeft = new int[numObjects];
+            blueRight = new int[numObjects];
+            blueTop = new int[numObjects];
+            blueBottom = new int[numObjects];
+            blueFront = new int[numObjects];
+            blueBack = new int[numObjects];
+            blueMinArray = new float[numObjects];
+            blueWidth = new int[numObjects];
+            blueHeight = new int[numObjects];
+            blueDepth = new int[numObjects];
+            blueBlockVolume = new int[numObjects];
+            volumeRatio = new float[numObjects];
+            blueBlockIntensityTotal = new double[numObjects];
+            intensityFraction = new float[numObjects];
+            for (i = 0; i < numObjects; i++) {
+                blueLeft[i] = Integer.MAX_VALUE;
+                blueTop[i] = Integer.MAX_VALUE;
+                blueFront[i] = Integer.MAX_VALUE;
+                blueMinArray[i] = Float.MAX_VALUE;
+            }
+            // Obtain volumes and bounding blocks of numObjects
+            for (z = 0; z < zDim; z++) {
+                for (y = 0; y < yDim; y++) {
         
-        for (i = 0; i < numObjects; i++) {
-            blueWidth[i] = (blueRight[i] - blueLeft[i]);
-            blueHeight[i] = (blueBottom[i] - blueTop[i]);
-            blueDepth[i] = (blueBack[i] - blueFront[i]);
-            blueBlockVolume[i] = blueWidth[i]*blueHeight[i]*blueDepth[i];
-            volumeRatio[i] = (float)blueBlockVolume[i]/(float)blueVolume[i];
-            atBounds = false;
-            while ((volumeRatio[i] < minBoundsRatio) && (!atBounds)) { 
-                blueLeft[i] = Math.max(0, blueLeft[i] - 1);
-                blueRight[i] = Math.min(xDim-1, blueRight[i] + 1);
-                blueTop[i] = Math.max(0, blueTop[i] - 1);
-                blueBottom[i] = Math.min(yDim - 1, blueBottom[i] + 1);
-                blueFront[i] = Math.max(0, blueFront[i] - 1);
-                blueBack[i] = Math.min(zDim - 1, blueBack[i] + 1);
-                if ((blueLeft[i] == 0) && (blueRight[i] == (xDim - 1)) &&
-                    (blueTop[i] == 0) && (blueBottom[i] == (yDim - 1)) &&
-                    (blueFront[i] == 0) && (blueBack[i] == (zDim - 1))) {
-                    atBounds = true;
-                }
+                    for (x = 0; x < xDim; x++) {
+                        i = x + y*xDim + z*sliceSize;
+                        // id goes from 0 to numObjects
+                        id = IDArray[i];
+                        if (id >= 1) {
+                            blueVolume[id-1]++;
+                            blueIntensityTotal[id-1] += buffer[i];
+                            if (buffer[i] < blueMinArray[id-1]) {
+                                blueMinArray[id-1] = buffer[i];
+                            }
+                            if (x < blueLeft[id-1]) {
+                                blueLeft[id-1] = x;
+                            }
+                            if (x > blueRight[id-1]) {
+                                blueRight[id-1] = x;
+                            }
+                            if (y < blueTop[id-1]) {
+                                blueTop[id-1] = y;
+                            }
+                            if (y > blueBottom[id-1]) {
+                                blueBottom[id-1] = y;
+                            }
+                            if (z < blueFront[id-1]) {
+                                blueFront[id-1] = z;
+                            }
+                            if (z > blueBack[id-1]) {
+                                blueBack[id-1] = z;
+                            }
+                        } // if (id >= 1)
+                    } // for (x = 0; x < xDim; x++)
+                } // for (y = 0; y < yDim; y++)
+            } // for (z = 0; z < zDim; z++)
+            
+            for (i = 0; i < numObjects; i++) {
                 blueWidth[i] = (blueRight[i] - blueLeft[i]);
                 blueHeight[i] = (blueBottom[i] - blueTop[i]);
                 blueDepth[i] = (blueBack[i] - blueFront[i]);
                 blueBlockVolume[i] = blueWidth[i]*blueHeight[i]*blueDepth[i];
                 volumeRatio[i] = (float)blueBlockVolume[i]/(float)blueVolume[i];
-            } // while ((volumeRatio[i] < minBoundsRatio) && (!atBounds))
-            for (z = blueFront[i]; z <= blueBack[i]; z++) {
-                for (y = blueTop[i]; y <= blueBottom[i]; y++) {
-                    for (x = blueLeft[i]; x <= blueRight[i]; x++) {
-                        k = x + y * xDim + z * sliceSize;
-                        blueBlockIntensityTotal[i] += buffer[k];
+                atBounds = false;
+                while ((volumeRatio[i] < minBoundsRatio) && (!atBounds)) { 
+                    blueLeft[i] = Math.max(0, blueLeft[i] - 1);
+                    blueRight[i] = Math.min(xDim-1, blueRight[i] + 1);
+                    blueTop[i] = Math.max(0, blueTop[i] - 1);
+                    blueBottom[i] = Math.min(yDim - 1, blueBottom[i] + 1);
+                    blueFront[i] = Math.max(0, blueFront[i] - 1);
+                    blueBack[i] = Math.min(zDim - 1, blueBack[i] + 1);
+                    if ((blueLeft[i] == 0) && (blueRight[i] == (xDim - 1)) &&
+                        (blueTop[i] == 0) && (blueBottom[i] == (yDim - 1)) &&
+                        (blueFront[i] == 0) && (blueBack[i] == (zDim - 1))) {
+                        atBounds = true;
                     }
-                } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
-            } // for (z = blueFront[i]; z <= blueBack[i]; z++)
-            intensityFraction[i] = (float)(blueIntensityTotal[i]/blueBlockIntensityTotal[i]);
-            while ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue)) {
-                blueMinArray[i] = blueMinArray[i] - 1; 
-                volumeGrowth = true;
-                while (volumeGrowth) {
-                    volumeGrowth = false;
-                    for (z = blueFront[i]; z <= blueBack[i]; z++) {
-                        for (y = blueTop[i]; y <= blueBottom[i]; y++) {
-                            for (x = blueLeft[i]; x <= blueRight[i]; x++) {
-                                k = x + y*xDim + z*sliceSize;
-                                if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i])) {
-                                   if ((x > blueLeft[i]) && (IDArray[k-1] == (i+1))) {
-                                       IDArray[k] = (byte)(i+1); 
-                                       volumeGrowth = true;
-                                       blueIntensityTotal[i] += buffer[k];
-                                   }
-                                   else if ((x < blueRight[i]) && (IDArray[k+1] == (i+1))) {
-                                       IDArray[k] = (byte)(i+1);
-                                       volumeGrowth = true;
-                                       blueIntensityTotal[i] += buffer[k];
-                                   }
-                                   else if ((y > blueTop[i]) && (IDArray[k - xDim] == (i+1))) {
-                                       IDArray[k] = (byte)(i+1);
-                                       volumeGrowth = true;
-                                       blueIntensityTotal[i] += buffer[k];
-                                   }
-                                   else if ((y < blueBottom[i]) && (IDArray[k + xDim] == (i+1))) {
-                                       IDArray[k] = (byte)(i+1);
-                                       volumeGrowth = true;
-                                       blueIntensityTotal[i] += buffer[k];
-                                   }
-                                   else if ((z > blueFront[i]) && (IDArray[k - sliceSize] == (i+1))) {
-                                       IDArray[k] = (byte)(i+1);
-                                       volumeGrowth = true;
-                                       blueIntensityTotal[i] += buffer[k];
-                                   }
-                                   else if ((z < blueBack[i]) && (IDArray[k + sliceSize] == (i+1))) {
-                                       IDArray[k] = (byte)(i+1);
-                                       volumeGrowth = true;
-                                       blueIntensityTotal[i] += buffer[k];
-                                   }
-                                } // if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i]))
-                            } // for (x = blueLeft[i]; x <= blueRight[i]; x++)
-                        } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
-                    } // for (z = blueFront[i]; z <= blueBack[i]; z++)
-                } // while (volumeGrowth)
+                    blueWidth[i] = (blueRight[i] - blueLeft[i]);
+                    blueHeight[i] = (blueBottom[i] - blueTop[i]);
+                    blueDepth[i] = (blueBack[i] - blueFront[i]);
+                    blueBlockVolume[i] = blueWidth[i]*blueHeight[i]*blueDepth[i];
+                    volumeRatio[i] = (float)blueBlockVolume[i]/(float)blueVolume[i];
+                } // while ((volumeRatio[i] < minBoundsRatio) && (!atBounds))
+                for (z = blueFront[i]; z <= blueBack[i]; z++) {
+                    for (y = blueTop[i]; y <= blueBottom[i]; y++) {
+                        for (x = blueLeft[i]; x <= blueRight[i]; x++) {
+                            k = x + y * xDim + z * sliceSize;
+                            blueBlockIntensityTotal[i] += buffer[k];
+                        }
+                    } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
+                } // for (z = blueFront[i]; z <= blueBack[i]; z++)
                 intensityFraction[i] = (float)(blueIntensityTotal[i]/blueBlockIntensityTotal[i]);
-            } // while ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue))
-        } // for (i = 0; i < numObjects; i++)
+                while ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue)) {
+                    blueMinArray[i] = blueMinArray[i] - 1; 
+                    volumeGrowth = true;
+                    while (volumeGrowth) {
+                        volumeGrowth = false;
+                        for (z = blueFront[i]; z <= blueBack[i]; z++) {
+                            for (y = blueTop[i]; y <= blueBottom[i]; y++) {
+                                for (x = blueLeft[i]; x <= blueRight[i]; x++) {
+                                    k = x + y*xDim + z*sliceSize;
+                                    if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i])) {
+                                       if ((x > blueLeft[i]) && (IDArray[k-1] == (i+1))) {
+                                           IDArray[k] = (byte)(i+1); 
+                                           volumeGrowth = true;
+                                           blueIntensityTotal[i] += buffer[k];
+                                       }
+                                       else if ((x < blueRight[i]) && (IDArray[k+1] == (i+1))) {
+                                           IDArray[k] = (byte)(i+1);
+                                           volumeGrowth = true;
+                                           blueIntensityTotal[i] += buffer[k];
+                                       }
+                                       else if ((y > blueTop[i]) && (IDArray[k - xDim] == (i+1))) {
+                                           IDArray[k] = (byte)(i+1);
+                                           volumeGrowth = true;
+                                           blueIntensityTotal[i] += buffer[k];
+                                       }
+                                       else if ((y < blueBottom[i]) && (IDArray[k + xDim] == (i+1))) {
+                                           IDArray[k] = (byte)(i+1);
+                                           volumeGrowth = true;
+                                           blueIntensityTotal[i] += buffer[k];
+                                       }
+                                       else if ((z > blueFront[i]) && (IDArray[k - sliceSize] == (i+1))) {
+                                           IDArray[k] = (byte)(i+1);
+                                           volumeGrowth = true;
+                                           blueIntensityTotal[i] += buffer[k];
+                                       }
+                                       else if ((z < blueBack[i]) && (IDArray[k + sliceSize] == (i+1))) {
+                                           IDArray[k] = (byte)(i+1);
+                                           volumeGrowth = true;
+                                           blueIntensityTotal[i] += buffer[k];
+                                       }
+                                    } // if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i]))
+                                } // for (x = blueLeft[i]; x <= blueRight[i]; x++)
+                            } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
+                        } // for (z = blueFront[i]; z <= blueBack[i]; z++)
+                    } // while (volumeGrowth)
+                    intensityFraction[i] = (float)(blueIntensityTotal[i]/blueBlockIntensityTotal[i]);
+                } // while ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue))
+            } // for (i = 0; i < numObjects; i++)
+        } // if (blueExpand)
+        
+        try {
+            grayImage.importData(0, IDArray, true);
+        }
+        catch(IOException e) {
+            buffer = null;
+            errorCleanUp("Algorithm CenterDistance reports: grayImage locked", true);
+
+            return;    
+        }
+        
+        fireProgressStateChanged("Opening blue segmented image");
+        kernel = AlgorithmMorphology3D.CONNECTED6;
+        sphereDiameter = 1.0f;
+        method = AlgorithmMorphology3D.OPEN;
+        itersDilation = 1;
+        itersErosion = 1;
+        numPruningPixels = 0;
+        edgingType = 0;
+        openAlgo = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation, itersErosion,
+                                             numPruningPixels, edgingType, wholeImage);
+        openAlgo.run();
+        openAlgo.finalize();
+        openAlgo = null;
+
+        /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
+        new Dimension(600, 300));
+        boolean runTest = true;
+        if (runTest) {
+            setCompleted(true);
+            return;
+        }*/
+
+        fireProgressStateChanged("Closing blue segmented image");
+
+        method = AlgorithmMorphology3D.CLOSE;
+        closeAlgo = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation, itersErosion,
+                                              numPruningPixels, edgingType, wholeImage);
+        closeAlgo.run();
+        closeAlgo.finalize();
+        closeAlgo = null;
+        System.gc();
+        
+        try {
+            grayImage.exportData(0, totLength, IDArray);
+        } catch (IOException error) {
+            byteBuffer = null;
+            IDArray = null;
+            errorCleanUp("Error on grayImage.exportData", true);
+
+            return;
+        }
         
         try {
             srcImage.exportRGBData(1, 0, totLength, buffer); // export red data       
@@ -3436,70 +3489,78 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             algoVOIExtraction = null;
             
             blueVOIs = grayImage.getVOIs();
-            newVOI = new VOI((short) 1, "blueVOI", 1, VOI.CONTOUR, -1.0f);
-            if ((blueVOIs.size() != 0) && (blueVOIs.VOIAt(0).getCurves().length != 0)) {
-                contours = blueVOIs.VOIAt(0).getCurves();
-                for (z = 0; z < zDim; z++) {
-                    if (contours[z].size() != 0) {
-                        srcGon = ((VOIContour) (contours[z].elementAt(0))).exportPolygon(1,1,1,1);
-                        xPoints = new float[srcGon.npoints + 5];
-                        yPoints = new float[srcGon.npoints + 5];
             
-                        xPoints[0] = srcGon.xpoints[srcGon.npoints - 2];
-                        yPoints[0] = srcGon.ypoints[srcGon.npoints - 2];
-            
-                        xPoints[1] = srcGon.xpoints[srcGon.npoints - 1];
-                        yPoints[1] = srcGon.ypoints[srcGon.npoints - 1];
-            
-                        for (j = 0; j < srcGon.npoints; j++) {
-                            xPoints[j + 2] = srcGon.xpoints[j];
-                            yPoints[j + 2] = srcGon.ypoints[j];
+            if (blueSmooth) {
+                newVOI = new VOI((short) 1, "blueVOI", 1, VOI.CONTOUR, -1.0f);
+                if ((blueVOIs.size() != 0) && (blueVOIs.VOIAt(0).getCurves().length != 0)) {
+                    contours = blueVOIs.VOIAt(0).getCurves();
+                    for (z = 0; z < zDim; z++) {
+                        if (contours[z].size() != 0) {
+                            ((VOIContour) (contours[z].elementAt(0))).trimPoints(1.0, true);
+                            srcGon = ((VOIContour) (contours[z].elementAt(0))).exportPolygon(1,1,1,1);
+                            xPoints = new float[srcGon.npoints + 5];
+                            yPoints = new float[srcGon.npoints + 5];
+                
+                            xPoints[0] = srcGon.xpoints[srcGon.npoints - 2];
+                            yPoints[0] = srcGon.ypoints[srcGon.npoints - 2];
+                
+                            xPoints[1] = srcGon.xpoints[srcGon.npoints - 1];
+                            yPoints[1] = srcGon.ypoints[srcGon.npoints - 1];
+                
+                            for (j = 0; j < srcGon.npoints; j++) {
+                                xPoints[j + 2] = srcGon.xpoints[j];
+                                yPoints[j + 2] = srcGon.ypoints[j];
+                            }
+                
+                            xPoints[srcGon.npoints + 2] = srcGon.xpoints[0];
+                            yPoints[srcGon.npoints + 2] = srcGon.ypoints[0];
+                
+                            xPoints[srcGon.npoints + 3] = srcGon.xpoints[1];
+                            yPoints[srcGon.npoints + 3] = srcGon.ypoints[1];
+                
+                            xPoints[srcGon.npoints + 4] = srcGon.xpoints[2];
+                            yPoints[srcGon.npoints + 4] = srcGon.ypoints[2];
+                
+                            arcLength = new AlgorithmArcLength(xPoints, yPoints);
+                            defaultPts = Math.round(arcLength.getTotalArcLength() / 24);
+                            newVOI.removeCurves(0);
+                            newVOI.importCurve((VOIContour)contours[z].elementAt(0),0);
+                            newVOI.setAllActive(true);
+                            smoothAlgo = new AlgorithmBSmooth(grayImage2D, newVOI, defaultPts, trim);
+                            smoothAlgo.run();
+                            if (smoothAlgo.isCompleted()) {
+                                // The algorithm has completed and produced a VOI
+                                resultVOI = smoothAlgo.getResultVOI();
+                                blueVOIs.VOIAt(0).removeCurves(z);
+                                blueVOIs.VOIAt(0).importCurve((VOIContour)resultVOI.getCurves()[0].elementAt(0),z);
+                            } // if (smoothAlgo.isCompleted())
+                            smoothAlgo.finalize();
+                            smoothAlgo = null;
+                        } // if (contours[z].size() != 0)
+                    } // for (z = 0; z < zDim; z++)
+                } // if ((blueVOIs.size() != 0) && (blueVOIs.VOIAt(0).getCurves().length != 0))
+                // Change IDArray to reflect the changed boundaries of the voi
+                Arrays.fill(shortMask, (short) -1);
+                shortMask = grayImage.generateVOIMask(shortMask, 0);
+                if (shortMask != null) {
+                    for (j = 0; j < totLength; j++) {
+                        if (IDArray[j] == (i+1)) {
+                            IDArray[j] = 0;
                         }
-            
-                        xPoints[srcGon.npoints + 2] = srcGon.xpoints[0];
-                        yPoints[srcGon.npoints + 2] = srcGon.ypoints[0];
-            
-                        xPoints[srcGon.npoints + 3] = srcGon.xpoints[1];
-                        yPoints[srcGon.npoints + 3] = srcGon.ypoints[1];
-            
-                        xPoints[srcGon.npoints + 4] = srcGon.xpoints[2];
-                        yPoints[srcGon.npoints + 4] = srcGon.ypoints[2];
-            
-                        arcLength = new AlgorithmArcLength(xPoints, yPoints);
-                        defaultPts = Math.round(arcLength.getTotalArcLength() / 3);
-                        newVOI.removeCurves(0);
-                        newVOI.importCurve((VOIContour)contours[z].elementAt(0),0);
-                        newVOI.setAllActive(true);
-                        smoothAlgo = new AlgorithmBSmooth(grayImage2D, newVOI, defaultPts, trim);
-                        smoothAlgo.run();
-                        if (smoothAlgo.isCompleted()) {
-                            // The algorithm has completed and produced a VOI
-                            resultVOI = smoothAlgo.getResultVOI();
-                            blueVOIs.VOIAt(0).removeCurves(z);
-                            blueVOIs.VOIAt(0).importCurve((VOIContour)resultVOI.getCurves()[0].elementAt(0),z);
-                        } // if (smoothAlgo.isCompleted())
-                        smoothAlgo.finalize();
-                        smoothAlgo = null;
-                    } // if (contours[z].size() != 0)
-                } // for (z = 0; z < zDim; z++)
-            } // if ((blueVOIs.size() != 0) && (blueVOIs.VOIAt(0).getCurves().length != 0))
-            // Change IDArray to reflect the changed boundaries of the voi
-            Arrays.fill(shortMask, (short) -1);
-            shortMask = grayImage.generateVOIMask(shortMask, 0);
-            if (shortMask != null) {
-                for (j = 0; j < totLength; j++) {
-                    if (IDArray[j] == (i+1)) {
-                        IDArray[j] = 0;
+                        if (shortMask[j] != -1) {
+                            IDArray[j] = (byte)(i + 1);
+                        }
                     }
-                    if (shortMask[j] != -1) {
-                        IDArray[j] = (byte)(i + 1);
-                    }
+                    blueVOIs.VOIAt(0).setColor(Color.yellow.darker());
+                    VOIs.add(blueVOIs.VOIAt(0));
+                } // if (shortMask != null)
+                else {
+                    shortMask = new short[totLength];
                 }
-                blueVOIs.VOIAt(0).setColor(Color.yellow.darker());
-                VOIs.add(blueVOIs.VOIAt(0));
-            } // if (shortMask != null)
+            } // if (blueSmooth)
             else {
-                shortMask = new short[totLength];
+                blueVOIs.VOIAt(0).setColor(Color.yellow.darker());
+                VOIs.add(blueVOIs.VOIAt(0));    
             }
         } // for (i = 0; i < numObjects; i++)
         
@@ -3992,7 +4053,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 05/12/08 version\n");
+        UI.setDataText("Plugin 05/14/08 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
