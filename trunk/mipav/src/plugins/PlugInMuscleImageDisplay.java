@@ -89,6 +89,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     private String imageDir;
     
     private boolean displayChanged = false;
+
+    private int colorChoice = 0;
     
     private TreeMap<String, PlugInSelectableVOI> voiMap;
     
@@ -142,6 +144,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.calcTree = new TreeMap();
         this.voiMap = new TreeMap();
         this.voiList = voiList;
+        this.imageType = imageType;
+        this.symmetry = symmetry;
+        this.multipleSlices = multipleSlices;
         
         for(int i=0; i<voiList.length; i++) {
         	ArrayList mirrorArrList = new ArrayList(), noMirrorArrList = new ArrayList(), 
@@ -173,11 +178,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         		noMirrorZ[i][j] = (Boolean)noMirrorZList.get(j);
         	}
         }
-        
-        
-        this.imageType = imageType;
-        this.symmetry = symmetry;
-        this.multipleSlices = multipleSlices;
         
         if (imageA == null) {
             return;
@@ -323,14 +323,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         //call the normal init function here
         initNext();
     } // end init()
-    
-  //  public void setControls() {
-  //  	System.err.println("Caught a setControls");
-  //  }
-    
-   // public void removeControls() {
-  //  	System.err.println("Caught a removeControls");
-  //  }
     
     /**
      * Cleans memory.
@@ -546,11 +538,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         testPanel.add(imagePane, BorderLayout.WEST);
         testPanel.add(scrollPane, BorderLayout.CENTER);
         
-       // JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, imagePane, scrollPane);
+        //JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, imagePane, scrollPane);
        
         panelA.add(testPanel);
         
-     //   panelA.add(new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, imagePane, scrollPane));
+        //panelA.add(new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, imagePane, scrollPane));
      
         for(int i=0; i<mirrorArr.length; i++) { 
         	tabs[i] = new MuscleDialogPrompt(this, titles[i], mirrorArr[i], 
@@ -898,8 +890,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     		fill = voiMap.get(name).isFillable();
     	return fill;
     }
-
-    int colorChoice = 0;
     
     private void loadVOI(int pane) {
     	System.err.println("calling loadVOI");
@@ -1245,19 +1235,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             setButtons(buttonStringList);
             
             initDialog();
-        }
-        
-        
-        public boolean getStringList(String objectName) {
-        	String fileDir = new String("Populate list: ");
-        	for(int i=0; i<getActiveImage().getFileInfo()[0].getNumOfBytesPerPixel(0); i++) {
-        		for(int j=0; j<i; j++) {
-        			System.out.println("Test: "+i+", "+j);
-        		}
-        	}
-        	return true;
-        	
-        	
         }
         
         private boolean voiExists(String objectName) {     	
@@ -2192,8 +2169,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 gbc.gridx++;
                 gbc.weightx = 1;
                 subPanel.add(noMirrorButtonArr[index][i], gbc);
-                gbc.gridx++;
-                
+                gbc.gridx++;   
             }          
 	        
 	        return subPanel;
@@ -2210,11 +2186,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        } else {
 	
 	            if (command.equals(OK)) {
-	                VOI goodVoi = null; //was checkVOI)_
-	                //check that VOI conforms to requirements, returns the VOI being modified/created
-	                
-	                if ( goodVoi != null ) { 
-	                    
+	                VOI goodVoi = null; //was checkVOI, why check exists
+	                if (goodVoi != null) { 
 	                    //save modified/created VOI to file
 	                	muscleFrame.getImageA().unregisterAllVOIs();
 	                	muscleFrame.getImageA().registerVOI(goodVoi);
@@ -2229,9 +2202,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	                    
 	                    muscleFrame.getImageA().unregisterAllVOIs();
 	                    muscleFrame.updateImages();
-	                    
-	                    //notifyListeners(OK);
-	                    //TODO: Put back in
 	                } else {
 	                    //individual error messages are already displayed
 	                }
@@ -2440,7 +2410,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    }
 	    
 		/**
-		 * Performs required calculations for plugin. Error estimated at 2%.
+		 * Performs required calculations for plugin. Partial voluming error ~2%
 		 * 
 		 * @author senseneyj
 		 *
@@ -2720,7 +2690,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    
 	    private int groupNum;
 	    
-	    private int i;
+	    private int thighIndex;
 	    
 	    private AlgorithmBSmooth[] smoothAlgo;
 	    
@@ -2745,10 +2715,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        VOI resultVOI;
 	        if(algorithm instanceof AlgorithmBSmooth) {
 	            System.out.println("B Smooth completed");
-	            if (smoothAlgo[i].isCompleted() == true && thighCompleted[i]) {
+	            if (smoothAlgo[thighIndex].isCompleted() == true && thighCompleted[thighIndex]) {
 	
 	                // The algorithm has completed and produced a
-	                resultVOI = smoothAlgo[i].getResultVOI();
+	                resultVOI = smoothAlgo[thighIndex].getResultVOI();
 	                image.registerVOI(resultVOI);
 	                //build axes here
 	                axesCompleted = true;
@@ -2994,7 +2964,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			mct2.addElement(new Paragraph(getActiveImage().getFileInfo()[getViewableSlice()].getFileName(), fontNormal));
 			mct2.addElement(new Paragraph("Center:", fontBold));
 			mct2.addElement(new Paragraph("Hjartavernd", fontNormal));
-			FileInfoBase[] f = getActiveImage().getFileInfo();
 			pdfDocument.add(mct2);
 			
 			MultiColumnText mct3 = new MultiColumnText(20);
