@@ -324,6 +324,12 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             setFocusable(false);
             image.getParentFrame().getComponentImage().removeKeyListener(this);
             image.getParentFrame().getComponentImage().setFocusable(false);
+            if(saver != null) {
+            	saver.cancel();
+            	save = null;
+            	saver = null;
+            }
+            
             dispose();
         } else if (command.equals("AdvancedPaint:Help")) {
             MipavUtil.showHelp("PT0003");
@@ -1265,6 +1271,13 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         setFocusable(false);
         image.getParentFrame().getComponentImage().removeKeyListener(this);
         image.getParentFrame().getComponentImage().setFocusable(false);
+        
+        if(saver != null) {
+        	saver.cancel();
+        	save = null;
+        	saver = null;
+        }
+        
         dispose();
     }
 
