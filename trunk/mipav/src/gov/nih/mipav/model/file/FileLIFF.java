@@ -382,7 +382,7 @@ public class FileLIFF extends FileBase {
         int commentKind;
         int commentSize;
         long baseAddr;
-        short rowBytes;
+        short rowBytes = 0;
         short pmVersion;
         short packType;
         long packSize;
@@ -484,6 +484,12 @@ public class FileLIFF extends FileBase {
         short shortColor;
         int bufferSize;
         boolean booleanBuffer[] = null;
+        int x;
+        int y;
+        int xDimArray[] = new int[17];
+        int yDimArray[] = new int[17];
+        int rowBytesTypeArray[] = new int[17];
+        int jstart;
 
         try {
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
@@ -853,8 +859,10 @@ public class FileLIFF extends FileBase {
                         Preferences.debug("right = " + right + "\n");
                         width = right - left;
                         Preferences.debug("width = " + width + "\n");
+                        xDimArray[imageType] = width;
                         height = bottom - top;
                         Preferences.debug("height = " + height + "\n");
+                        yDimArray[imageType] = height;
                         // picFrame (PICT v2.0) record
                         // version should be 0x0011
                         version = getUnsignedShort(endianess);
@@ -1303,6 +1311,7 @@ public class FileLIFF extends FileBase {
                                     pictLocation[subPictCount] = raFile.getFilePointer();
                                     packTypeArray[subPictCount] = packType;
                                     rowBytesArray[subPictCount] = rowBytes;
+                                    rowBytesTypeArray[imageType] = rowBytes;
                                     pixelSizeArray[subPictCount] = pixelSize;
                                     boundsTopArray[subPictCount] = boundsTop;
                                     boundsBottomArray[subPictCount] = boundsBottom;
@@ -1553,6 +1562,7 @@ public class FileLIFF extends FileBase {
                                     pictLocation[subPictCount] = raFile.getFilePointer();
                                     packTypeArray[subPictCount] = packType;
                                     rowBytesArray[subPictCount] = rowBytes;
+                                    rowBytesTypeArray[imageType] = rowBytes;
                                     pixelSizeArray[subPictCount] = pixelSize;
                                     boundsTopArray[subPictCount] = boundsTop;
                                     boundsBottomArray[subPictCount] = boundsBottom;
@@ -1692,8 +1702,6 @@ public class FileLIFF extends FileBase {
                     }
                     
                     if ((imageType >= DEEP_GREY_9)  && (imageType <= DEEP_GREY_16)) {
-                        xDim = width;
-                        yDim = height;
                         bitNumber = layerDepth;
                         pictCount++;
                     } // // if ((imageType >= DEEP_GREY_9)  && (imageType <= DEEP_GREY_16))
@@ -1851,6 +1859,9 @@ public class FileLIFF extends FileBase {
                 if (imageTypeCount[i] > majorTypeCount) {
                     majorType = i;
                     majorTypeCount = imageTypeCount[i];
+                    xDim = xDimArray[majorType];
+                    yDim = yDimArray[majorType];
+                    rowBytes = (short)rowBytesTypeArray[majorType];
                 }
             } // for (i = 0; i <= 16; i++)
             
@@ -2008,14 +2019,12 @@ public class FileLIFF extends FileBase {
                 fileInfo.setExtents(imageExtents);
                 image = new ModelImage(ModelStorageBase.UBYTE, imageExtents, fileName);
                 if ((majorType == MAC_16_GREYS) || (majorType == MAC_16_COLORS)) {
-                    byteBuffer = new byte[sliceSize/2 + sliceSize % 2];
+                    bufferSize = rowBytes * yDim;
+                    byteBuffer = new byte[bufferSize];
                     byteBuffer2 = new byte[sliceSize];
                 }
                 else if (majorType == MAC_4_GREYS) {
-                    bufferSize = sliceSize/4;
-                    if ((sliceSize % 4) > 0) {
-                        bufferSize++;
-                    }
+                    bufferSize = rowBytes * yDim;
                     byteBuffer = new byte[bufferSize];
                     byteBuffer2 = new byte[sliceSize];
                 }
@@ -2051,10 +2060,7 @@ public class FileLIFF extends FileBase {
                 sliceSize = xDim * yDim;
                 fileInfo.setExtents(imageExtents);
                 image = new ModelImage(ModelStorageBase.BOOLEAN, imageExtents, fileName); 
-                bufferSize = sliceSize/8;
-                if ((sliceSize % 8) > 0) {
-                    bufferSize++;
-                }
+                bufferSize = rowBytes * yDim;
                 byteBuffer = new byte[bufferSize];
                 booleanBuffer = new boolean[sliceSize];
             } // else if (majorType == MAC_1_BIT)
@@ -2230,6 +2236,7 @@ public class FileLIFF extends FileBase {
                     component = 0;
                     componentArray = new int[1];
                     if (imageTypeLocation[i] == majorType) {
+                        rowBytes = rowBytesArray[i];
                         raFile.seek(pictLocation[i]);
                         Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
                         if ((packTypeArray[i] == 0) || (packTypeArray[i] > 2)) {
@@ -2341,52 +2348,71 @@ public class FileLIFF extends FileBase {
                                 image.importData(4 * sliceNumber * sliceSize, byteBuffer2, false); 
                             } // else if (majorType == MAC_16_BIT_COLOR)
                             else if ((majorType == MAC_16_GREYS) || (majorType == MAC_16_COLORS)) {
-                                for (j = 0, k = 0; j < sliceSize; j++) {
-                                    if (k == 0) {
-                                        byteBuffer2[j] = (byte)(byteBuffer[j >> 1] & 0x0f);
-                                        k = 1;
+                                for (j = 0, jstart = 0,y = 0; y < yDim; y++) {
+                                    if ((j != 0) && (j < jstart + 2*rowBytes)) {
+                                        j = jstart + 2*rowBytes;
                                     }
-                                    else if (k == 1) {
-                                        byteBuffer2[j] = (byte)((byteBuffer[j >> 1] & 0xf0) >>> 4);
-                                        k = 0;
+                                    for (x = 0, jstart = j, k = 0; x < xDim; x++) {
+                                        index = x + y*xDim;
+                                        if (k == 0) {
+                                            byteBuffer2[index] = (byte)(byteBuffer[(j++) >> 1] & 0x0f);
+                                            k = 1;
+                                        }
+                                        else if (k == 1) {
+                                            byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 1] & 0xf0) >>> 4);
+                                            k = 0;
+                                        }
                                     }
                                 }
                                 image.importData(sliceNumber * sliceSize, byteBuffer2, false);
                             } // else if ((majorType == MAC_16_GREYS) || (majorType == MAC_16_COLORS))
                             else if (majorType == MAC_4_GREYS) {
-                                for (j = 0, k = 0; j < sliceSize; j++) {
-                                    if (k == 0) {
-                                        byteBuffer2[j] = (byte)(byteBuffer[j >> 2] & 0x03);
-                                        k = 1;
+                                for (j = 0, jstart = 0, y = 0; y < yDim; y++) {
+                                    if ((j != 0) && (j < jstart + 4*rowBytes)) {
+                                        j = jstart + 4*rowBytes;
                                     }
-                                    else if (k == 1) {
-                                        byteBuffer2[j] = (byte)((byteBuffer[j >> 2] & 0xc0) >>> 2);
-                                        k = 2;
-                                    }
-                                    else if (k == 2) {
-                                        byteBuffer2[j] = (byte)((byteBuffer[j >> 2] & 0x30) >>> 4);
-                                        k = 3;
-                                    }
-                                    else if (k == 3) {
-                                        byteBuffer2[j] = (byte)((byteBuffer[j >> 2] & 0xc0) >>> 6);
-                                        k = 0;
+                                    for (x = 0, jstart = j, k = 0; x < xDim; x++) {
+                                        index = x + y*xDim;
+                                        if (k == 0) {
+                                            byteBuffer2[index] = (byte)(byteBuffer[(j++) >> 2] & 0x03);
+                                            k = 1;
+                                        }
+                                        else if (k == 1) {
+                                            byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 2] & 0xc0) >>> 2);
+                                            k = 2;
+                                        }
+                                        else if (k == 2) {
+                                            byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 2] & 0x30) >>> 4);
+                                            k = 3;
+                                        }
+                                        else if (k == 3) {
+                                            byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 2] & 0xc0) >>> 6);
+                                            k = 0;
+                                        }
                                     }
                                 }
                                 image.importData(sliceNumber * sliceSize, byteBuffer2, false);
                             } // else if (majorType == MAC_4_GREYS)
                             else if (majorType == MAC_1_BIT) {
-                                for (j = 0, k = 0x01; j < sliceSize; j++) {
-                                    if ((byteBuffer[j >> 3] & k) != 0) {
-                                        booleanBuffer[j] = true;
+                                for (j = 0, jstart = 0, y = 0; y < yDim; y++) {
+                                    if ((j != 0) && (j < jstart + 8*rowBytes)) {
+                                        j = jstart + 8*rowBytes;
                                     }
-                                    else {
-                                        booleanBuffer[j] = false;
-                                    }
-                                    if (k == 0x80) {
-                                        k = 0x01;
-                                    }
-                                    else {
-                                        k = k << 1;
+                                    for (x = 0, jstart = j, k = 0x01; x < xDim; x++) {
+                                        index = x + y*xDim;
+                                        
+                                        if ((byteBuffer[(j++) >>> 3] & k) != 0) {
+                                            booleanBuffer[index] = true;
+                                        }
+                                        else {
+                                            booleanBuffer[index] = false;
+                                        }
+                                        if (k == 0x80) {
+                                            k = 0x01;
+                                        }
+                                        else {
+                                            k = k << 1;
+                                        }
                                     }
                                 }
                                 image.importData(sliceNumber * sliceSize, booleanBuffer, false);
