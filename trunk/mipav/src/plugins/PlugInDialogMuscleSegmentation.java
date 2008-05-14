@@ -276,7 +276,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     	
     	FileInfoBase[] fb = new FileInfoBase[fileAr.length];
     	for(int i=0; i<fileAr.length; i++) {
-    		fb[i] = resultImage.getFileInfo(i);
+    		fb[i] = image.getFileInfo(0);
     	}
     	resultImage.setFileInfo(fb);
     	

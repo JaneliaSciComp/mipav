@@ -282,7 +282,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         // build the menuBar based on the number of dimensions for imageA
         menuBarMaker = new ViewMenuBar(menuBuilder);
 
-//      add pre-defined UIParams to the vector
+        //add pre-defined UIParams to the vector
         Vector<CustomUIBuilder.UIParams> voiParams = new Vector<CustomUIBuilder.UIParams>();
         voiParams.addElement(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER);
         voiParams.addElement(CustomUIBuilder.PARAM_VOI_LEVELSET);
@@ -770,10 +770,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     		changeSlice = true;
     	super.setSlice(slice, updateLinkedImages);
     	if(changeSlice && activeTab < voiTabLoc) {
-    		initMuscleImage(activeTab);
     		if(tabs[resultTabLoc].isVisible()) {
     			((AnalysisPrompt)tabs[resultTabLoc]).setButtons();
     			getActiveImage().unregisterAllVOIs();
+    		} else {
+    			((MuscleDialogPrompt)tabs[activeTab]).clearButtons();
+    			initMuscleImage(activeTab);
     		}
     		updateImages(true);
     		changeSlice = false;
@@ -1266,11 +1268,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                         //save modified/created VOI to file
                         getActiveImage().unregisterAllVOIs();
                         getActiveImage().registerVOI(goodVoi);
-                        String dir;
+                        String dir = getImageA().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
                         if(multipleSlices)
-                        	dir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"_"+getViewableSlice()+"\\";
+                        	dir += "_"+getViewableSlice()+"\\";
                         else
-                        	dir = getImageA().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
+                        	dir += "\\";
                         saveAllVOIsTo(dir);
 
                         MipavUtil.displayInfo(objectName+" VOI saved in folder\n " + dir);
