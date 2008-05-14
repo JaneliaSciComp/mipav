@@ -15,7 +15,7 @@ import javax.swing.*;
 
 
 /**
- * @version  May 8, 2008
+ * @version  May 14, 2008
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -117,6 +117,14 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
      *   This number must be less than 1.0.
      */
     private float minIntensityFraction;
+    
+    private JCheckBox blueSmoothBox;
+    
+    private boolean blueSmooth;
+    
+    private JCheckBox blueExpandBox;
+    
+    private boolean blueExpand;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -158,6 +166,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
@@ -168,6 +177,19 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if (source == blueExpandBox) {
+            if (blueExpandBox.isSelected()) {
+                ratioLabel.setEnabled(true);
+                ratioText.setEnabled(true);
+                intensityFractionLabel.setEnabled(true);
+                intensityFractionText.setEnabled(true);
+            }
+            else {
+                ratioLabel.setEnabled(false);
+                ratioText.setEnabled(false);
+                intensityFractionLabel.setEnabled(false);
+                intensityFractionText.setEnabled(false);    
+            }
         }
     }
 
@@ -222,8 +244,10 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         str += greenFraction + delim;
         str += greenRegionNumber + delim;
         str += twoGreenLevels + delim;
+        str += blueExpand + delim;
         str += minBoundsRatio + delim;
         str += minIntensityFraction + delim;
+        str += blueSmooth + delim;
 
         return str;
     }
@@ -298,12 +322,20 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         this.twoGreenLevels = twoGreenLevels;
     }
     
+    public void setBlueExpand(boolean blueExpand) {
+        this.blueExpand = blueExpand;
+    }
+    
     public void setMinBoundsRatio(float minBoundsRatio) {
         this.minBoundsRatio = minBoundsRatio;
     }
     
     public void setMinIntensityFraction(float minIntensityFraction) {
         this.minIntensityFraction = minIntensityFraction;
+    }
+    
+    public void setBlueSmooth(boolean blueSmooth) {
+        this.blueSmooth = blueSmooth;
     }
 
     /**
@@ -316,8 +348,9 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
 
             centerDistanceAlgo = new PlugInAlgorithmCenterDistance(image, blueMin, redMin, redFraction, mergingDistance,
                                                                    greenMin, greenFraction,
-                                                                   greenRegionNumber, twoGreenLevels,
-                                                                   minBoundsRatio, minIntensityFraction);
+                                                                   greenRegionNumber, twoGreenLevels, blueExpand,
+                                                                   minBoundsRatio, minIntensityFraction,
+                                                                   blueSmooth);
 
             // This is very important. Adding this object as a listener allows
             // the algorithm to
@@ -372,8 +405,10 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         setGreenFraction(scriptParameters.getParams().getFloat("green_fraction"));
         setGreenRegionNumber(scriptParameters.getParams().getInt("green_region_number"));
         setTwoGreenLevels(scriptParameters.getParams().getBoolean("two_green_levels"));
+        setBlueExpand(scriptParameters.getParams().getBoolean("blue_expand"));
         setMinBoundsRatio(scriptParameters.getParams().getFloat("min_bounds_ratio"));
         setMinIntensityFraction(scriptParameters.getParams().getFloat("min_intensity_fraction"));
+        setBlueSmooth(scriptParameters.getParams().getBoolean("blue_smooth"));
     }
 
     /**
@@ -389,8 +424,10 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_fraction", greenFraction));
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_region_number", greenRegionNumber));
         scriptParameters.getParams().put(ParameterFactory.newParameter("two_green_levels", twoGreenLevels));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blue_expand", blueExpand));
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_bounds_ratio", minBoundsRatio));
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_intensity_fraction", minIntensityFraction));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blue_smooth", blueSmooth));
     }
 
     /**
@@ -402,7 +439,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         String unitStr;
         String distStr;
         setForeground(Color.black);
-        setTitle("Center Distances 05/08/08");
+        setTitle("Center Distances 05/14/08");
         
         df = new DecimalFormat("0.000E0");
 
@@ -552,6 +589,14 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         gbc.gridy = yPos++;
         mainPanel.add(twoBox, gbc);
         
+        blueExpandBox = new JCheckBox("Expand blue objects based on blue in surrounding box", true);
+        blueExpandBox.setForeground(Color.black);
+        blueExpandBox.setFont(serif12);
+        blueExpandBox.addActionListener(this);
+        gbc.gridx = 0;
+        gbc.gridy = yPos++;
+        mainPanel.add(blueExpandBox, gbc);
+        
         if (image.getNDims() == 2) {
             ratioLabel = new JLabel("Minimum ratio of box to original blue area (> 1.0) ");
         }
@@ -584,6 +629,13 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         gbc.gridx = 1;
         gbc.gridy = yPos++;
         mainPanel.add(intensityFractionText, gbc);
+        
+        blueSmoothBox = new JCheckBox("Smooth blue VOI contours with AlgorithmBSmooth", true);
+        blueSmoothBox.setForeground(Color.black);
+        blueSmoothBox.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = yPos++;
+        mainPanel.add(blueSmoothBox, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -687,8 +739,6 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
             return false;
         }
         
-        
-        
         tmpStr = blueMinText.getText();
         blueMin = Integer.parseInt(tmpStr);
         if (blueMin <= 0) {
@@ -712,6 +762,8 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         }
         
         twoGreenLevels = twoBox.isSelected();
+        
+        blueExpand = blueExpandBox.isSelected();
         
         tmpStr = ratioText.getText();
         minBoundsRatio = Float.parseFloat(tmpStr);
@@ -739,6 +791,8 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
             intensityFractionText.requestFocus();
             intensityFractionText.selectAll();
         }
+        
+        blueSmooth = blueSmoothBox.isSelected();
         
         return true;
     } // end setVariables()
