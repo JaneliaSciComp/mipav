@@ -439,6 +439,12 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         int maxGreenBelong;
         boolean allRemoved;
         int numRemoved;
+        Vector[] contours;
+        int nPoints;
+        int maxPoints;
+        int maxElement;
+        Polygon srcGon;
+        VOI newVOI;
 
         df = new DecimalFormat("0.000E0");
         dfFract = new DecimalFormat("0.000");
@@ -1453,39 +1459,51 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             algoVOIExtraction = null;
             
             blueVOIs = grayImage.getVOIs();
-            if ((blueVOIs.size() != 0) && (blueVOIs.VOIAt(0).getCurves().length != 0) &&
-                (blueVOIs.VOIAt(0).getCurves()[0].size() != 0)) {
+            if ((blueVOIs.size() != 0) && (blueVOIs.VOIAt(0).getCurves().length != 0)) {
                 if (blueSmooth) {
-                    ((VOIContour) (blueVOIs.VOIAt(0).getCurves()[0].elementAt(0))).trimPoints(1.0, true);
-                    gons = blueVOIs.VOIAt(0).exportPolygons(0);
-                    elementNum = 0;
-                    xPoints = new float[gons[elementNum].npoints + 5];
-                    yPoints = new float[gons[elementNum].npoints + 5];
+                    newVOI = new VOI((short) 1, "blueVOI", 1, VOI.CONTOUR, -1.0f);
+                    contours = blueVOIs.VOIAt(0).getCurves();
+                    maxPoints = 0;
+                    maxElement = 0;
+                    for (j = 0; j < contours[0].size(); j++) {
+                        nPoints = ((VOIContour)contours[0].elementAt(j)).size();
+                        if (nPoints > maxPoints) {
+                            maxPoints = nPoints;
+                            maxElement = j;
+                        }
+                    }
+                    ((VOIContour) (contours[0].elementAt(maxElement))).trimPoints(1.0, true);
+                    srcGon = ((VOIContour) (contours[0].elementAt(maxElement))).exportPolygon(1,1,1,1);
+                    xPoints = new float[srcGon.npoints + 5];
+                    yPoints = new float[srcGon.npoints + 5];
         
-                    xPoints[0] = gons[elementNum].xpoints[gons[elementNum].npoints - 2];
-                    yPoints[0] = gons[elementNum].ypoints[gons[elementNum].npoints - 2];
+                    xPoints[0] = srcGon.xpoints[srcGon.npoints - 2];
+                    yPoints[0] = srcGon.ypoints[srcGon.npoints - 2];
         
-                    xPoints[1] = gons[elementNum].xpoints[gons[elementNum].npoints - 1];
-                    yPoints[1] = gons[elementNum].ypoints[gons[elementNum].npoints - 1];
+                    xPoints[1] = srcGon.xpoints[srcGon.npoints - 1];
+                    yPoints[1] = srcGon.ypoints[srcGon.npoints - 1];
         
-                    for (j = 0; j < gons[elementNum].npoints; j++) {
-                        xPoints[j + 2] = gons[elementNum].xpoints[j];
-                        yPoints[j + 2] = gons[elementNum].ypoints[j];
+                    for (j = 0; j < srcGon.npoints; j++) {
+                        xPoints[j + 2] = srcGon.xpoints[j];
+                        yPoints[j + 2] = srcGon.ypoints[j];
                     }
         
-                    xPoints[gons[elementNum].npoints + 2] = gons[elementNum].xpoints[0];
-                    yPoints[gons[elementNum].npoints + 2] = gons[elementNum].ypoints[0];
+                    xPoints[srcGon.npoints + 2] = srcGon.xpoints[0];
+                    yPoints[srcGon.npoints + 2] = srcGon.ypoints[0];
         
-                    xPoints[gons[elementNum].npoints + 3] = gons[elementNum].xpoints[1];
-                    yPoints[gons[elementNum].npoints + 3] = gons[elementNum].ypoints[1];
+                    xPoints[srcGon.npoints + 3] = srcGon.xpoints[1];
+                    yPoints[srcGon.npoints + 3] = srcGon.ypoints[1];
         
-                    xPoints[gons[elementNum].npoints + 4] = gons[elementNum].xpoints[2];
-                    yPoints[gons[elementNum].npoints + 4] = gons[elementNum].ypoints[2];
+                    xPoints[srcGon.npoints + 4] = srcGon.xpoints[2];
+                    yPoints[srcGon.npoints + 4] = srcGon.ypoints[2];
         
                     arcLength = new AlgorithmArcLength(xPoints, yPoints);
                     defaultPts = Math.round(arcLength.getTotalArcLength() / interpolationDivisor);
+                    newVOI.removeCurves(0);
+                    newVOI.importCurve((VOIContour)contours[0].elementAt(maxElement),0);
+                    newVOI.setAllActive(true);
                     blueVOIs.VOIAt(0).setAllActive(true);
-                    smoothAlgo = new AlgorithmBSmooth(grayImage, blueVOIs.VOIAt(0), defaultPts, trim);
+                    smoothAlgo = new AlgorithmBSmooth(grayImage, newVOI, defaultPts, trim);
                     smoothAlgo.run();
                     if (smoothAlgo.isCompleted()) {
                         // The algorithm has completed and produced a VOI
@@ -2291,6 +2309,9 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         boolean allRemoved;
         int numRemoved;
         Vector[] contours;
+        int nPoints;
+        int maxPoints;
+        int maxElement;
         VOI newVOI;
 
         df = new DecimalFormat("0.000E0");
@@ -3500,8 +3521,18 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     contours = blueVOIs.VOIAt(0).getCurves();
                     for (z = 0; z < zDim; z++) {
                         if (contours[z].size() != 0) {
-                            ((VOIContour) (contours[z].elementAt(0))).trimPoints(1.0, true);
-                            srcGon = ((VOIContour) (contours[z].elementAt(0))).exportPolygon(1,1,1,1);
+                            maxPoints = 0;
+                            maxElement = 0;
+                            for (j = 0; j < contours[z].size(); j++) {
+                                nPoints = ((VOIContour)contours[z].elementAt(j)).size();
+                                if (nPoints > maxPoints) {
+                                    maxPoints = nPoints;
+                                    maxElement = j;
+                                }
+                            }
+                            ((VOIContour) (contours[z].elementAt(maxElement))).trimPoints(1.0, true);
+                            srcGon = ((VOIContour) (contours[z].elementAt(maxElement))).exportPolygon(1,1,1,1);
+                            
                             xPoints = new float[srcGon.npoints + 5];
                             yPoints = new float[srcGon.npoints + 5];
                 
@@ -3528,7 +3559,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                             arcLength = new AlgorithmArcLength(xPoints, yPoints);
                             defaultPts = Math.round(arcLength.getTotalArcLength() / interpolationDivisor);
                             newVOI.removeCurves(0);
-                            newVOI.importCurve((VOIContour)contours[z].elementAt(0),0);
+                            newVOI.importCurve((VOIContour)contours[z].elementAt(maxElement),0);
                             newVOI.setAllActive(true);
                             smoothAlgo = new AlgorithmBSmooth(grayImage2D, newVOI, defaultPts, trim);
                             smoothAlgo.run();
