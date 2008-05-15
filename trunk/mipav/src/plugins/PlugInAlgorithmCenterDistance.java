@@ -21,7 +21,7 @@ import javax.swing.*;
 /**
  * This shows how to extend the AlgorithmBase class.
  *
- * @version  May 14, 2008
+ * @version  May 15, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -174,6 +174,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
     private float minIntensityFraction;
     
     private boolean blueSmooth;
+    
+    private float interpolationDivisor = 24.0f;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -193,12 +195,13 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
      * @param  minAreaRatio
      * @param  minIntensityFraction
      * @param  blueSmooth
+     * @param  interpolationDivisor
      */
     public PlugInAlgorithmCenterDistance(ModelImage srcImg, int blueMin, int redMin, float redFraction, float mergingDistance, 
                                          int greenMin, float greenFraction,  int greenRegionNumber,
                                          boolean twoGreenLevels, boolean blueExpand,
                                          float minBoundsRatio, float minIntensityFraction,
-                                         boolean blueSmooth) {
+                                         boolean blueSmooth, float interpolationDivisor) {
         super(null, srcImg);
         this.blueMin = blueMin;
         this.redMin = redMin;
@@ -212,6 +215,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         this.minBoundsRatio = minBoundsRatio;
         this.minIntensityFraction = minIntensityFraction;
         this.blueSmooth = blueSmooth;
+        this.interpolationDivisor = interpolationDivisor;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -1479,7 +1483,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     yPoints[gons[elementNum].npoints + 4] = gons[elementNum].ypoints[2];
         
                     arcLength = new AlgorithmArcLength(xPoints, yPoints);
-                    defaultPts = Math.round(arcLength.getTotalArcLength() / 24);
+                    defaultPts = Math.round(arcLength.getTotalArcLength() / interpolationDivisor);
                     blueVOIs.VOIAt(0).setAllActive(true);
                     smoothAlgo = new AlgorithmBSmooth(grayImage, blueVOIs.VOIAt(0), defaultPts, trim);
                     smoothAlgo.run();
@@ -1803,7 +1807,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 05/14/08 version\n");
+        UI.setDataText("Plugin 05/15/08 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
@@ -3522,7 +3526,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                             yPoints[srcGon.npoints + 4] = srcGon.ypoints[2];
                 
                             arcLength = new AlgorithmArcLength(xPoints, yPoints);
-                            defaultPts = Math.round(arcLength.getTotalArcLength() / 24);
+                            defaultPts = Math.round(arcLength.getTotalArcLength() / interpolationDivisor);
                             newVOI.removeCurves(0);
                             newVOI.importCurve((VOIContour)contours[z].elementAt(0),0);
                             newVOI.setAllActive(true);
@@ -4053,7 +4057,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 05/14/08 version\n");
+        UI.setDataText("Plugin 05/15/08 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
