@@ -8,6 +8,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
+import java.awt.Dimension;
 import java.io.*;
 
 import java.util.*;
@@ -210,16 +211,23 @@ public class AlgorithmWatershed extends AlgorithmBase {
 
                     return;
                 }
+                try{
+                	energyImage.importData(0, gradMagAlgo.getResultBuffer(), true);
+                }catch(IOException e){
+        			errorCleanUp("Algorithm Watershed importData: Image(s) locked", false);
+        			fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
 
+        			return;
+                }
                 length = energyImage.getSize();
 
                 float max = (float) energyImage.getMax();
+                //System.out.println(energyImage);
 
                 // All points that are set to -1 are positions on the edge of the
                 // image where the gradient magnitude could not be calculated and
                 // should be set to the highest value for the watershed to work best
                 for (i = 0; i < length; i++) {
-
                     if (energyImage.getFloat(i) == -1) {
                         energyImage.set(i, max);
                     }
@@ -230,7 +238,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
                 if (wasRecording) {
                     ScriptRecorder.getReference().pauseRecording();
                 }
-
+                //new ViewJFrameImage(energyImage, null, new Dimension(610, 200));
                 energyImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getImageName() + "_gm",
                                       FileUtility.XML, true);
 
