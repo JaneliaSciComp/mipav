@@ -2355,11 +2355,11 @@ public class FileLIFF extends FileBase {
                                     for (x = 0, jstart = j, k = 0; x < xDim; x++) {
                                         index = x + y*xDim;
                                         if (k == 0) {
-                                            byteBuffer2[index] = (byte)(byteBuffer[(j++) >> 1] & 0x0f);
+                                            byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 1] & 0xf0) >>> 4);
                                             k = 1;
                                         }
                                         else if (k == 1) {
-                                            byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 1] & 0xf0) >>> 4);
+                                            byteBuffer2[index] = (byte)(byteBuffer[(j++) >> 1] & 0x0f);  
                                             k = 0;
                                         }
                                     }
@@ -2374,19 +2374,19 @@ public class FileLIFF extends FileBase {
                                     for (x = 0, jstart = j, k = 0; x < xDim; x++) {
                                         index = x + y*xDim;
                                         if (k == 0) {
-                                            byteBuffer2[index] = (byte)(byteBuffer[(j++) >> 2] & 0x03);
+                                            byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 2] & 0xc0) >>> 6);
                                             k = 1;
                                         }
                                         else if (k == 1) {
-                                            byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 2] & 0xc0) >>> 2);
+                                            byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 2] & 0x30) >>> 4);
                                             k = 2;
                                         }
                                         else if (k == 2) {
-                                            byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 2] & 0x30) >>> 4);
+                                            byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 2] & 0x0c) >>> 2);
                                             k = 3;
                                         }
                                         else if (k == 3) {
-                                            byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 2] & 0xc0) >>> 6);
+                                            byteBuffer2[index] = (byte)(byteBuffer[(j++) >> 2] & 0x03);
                                             k = 0;
                                         }
                                     }
@@ -2398,7 +2398,7 @@ public class FileLIFF extends FileBase {
                                     if ((j != 0) && (j < jstart + 8*rowBytes)) {
                                         j = jstart + 8*rowBytes;
                                     }
-                                    for (x = 0, jstart = j, k = 0x01; x < xDim; x++) {
+                                    for (x = 0, jstart = j, k = 0x80; x < xDim; x++) {
                                         index = x + y*xDim;
                                         
                                         if ((byteBuffer[(j++) >>> 3] & k) != 0) {
@@ -2407,11 +2407,11 @@ public class FileLIFF extends FileBase {
                                         else {
                                             booleanBuffer[index] = false;
                                         }
-                                        if (k == 0x80) {
-                                            k = 0x01;
+                                        if (k == 0x01) {
+                                            k = 0x80;
                                         }
                                         else {
-                                            k = k << 1;
+                                            k = k >>> 1;
                                         }
                                     }
                                 }
