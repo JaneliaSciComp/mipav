@@ -15,7 +15,7 @@ import javax.swing.*;
 
 
 /**
- * @version  May 14, 2008
+ * @version  May 15, 2008
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -125,6 +125,12 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
     private JCheckBox blueExpandBox;
     
     private boolean blueExpand;
+    
+    private JLabel interpolationLabel;
+    
+    private JTextField interpolationText;
+    
+    private float interpolationDivisor;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -190,6 +196,15 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
                 intensityFractionLabel.setEnabled(false);
                 intensityFractionText.setEnabled(false);    
             }
+        } else if (source == blueSmoothBox) {
+            if (blueSmoothBox.isSelected()) {
+                interpolationLabel.setEnabled(true);
+                interpolationText.setEnabled(true);
+            }
+            else {
+                interpolationLabel.setEnabled(false);
+                interpolationText.setEnabled(false);
+            }
         }
     }
 
@@ -248,6 +263,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         str += minBoundsRatio + delim;
         str += minIntensityFraction + delim;
         str += blueSmooth + delim;
+        str += interpolationDivisor + delim;
 
         return str;
     }
@@ -337,6 +353,10 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
     public void setBlueSmooth(boolean blueSmooth) {
         this.blueSmooth = blueSmooth;
     }
+    
+    public void setInterpolationDivisor(float interpolationDivisor) {
+        this.interpolationDivisor = interpolationDivisor;
+    }
 
     /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
@@ -350,7 +370,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
                                                                    greenMin, greenFraction,
                                                                    greenRegionNumber, twoGreenLevels, blueExpand,
                                                                    minBoundsRatio, minIntensityFraction,
-                                                                   blueSmooth);
+                                                                   blueSmooth, interpolationDivisor);
 
             // This is very important. Adding this object as a listener allows
             // the algorithm to
@@ -409,6 +429,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         setMinBoundsRatio(scriptParameters.getParams().getFloat("min_bounds_ratio"));
         setMinIntensityFraction(scriptParameters.getParams().getFloat("min_intensity_fraction"));
         setBlueSmooth(scriptParameters.getParams().getBoolean("blue_smooth"));
+        setInterpolationDivisor(scriptParameters.getParams().getFloat("interpolation_divisor"));
     }
 
     /**
@@ -428,6 +449,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_bounds_ratio", minBoundsRatio));
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_intensity_fraction", minIntensityFraction));
         scriptParameters.getParams().put(ParameterFactory.newParameter("blue_smooth", blueSmooth));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("interpolation_divisor", interpolationDivisor));
     }
 
     /**
@@ -439,7 +461,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         String unitStr;
         String distStr;
         setForeground(Color.black);
-        setTitle("Center Distances 05/14/08");
+        setTitle("Center Distances 05/15/08");
         
         df = new DecimalFormat("0.000E0");
 
@@ -633,9 +655,24 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         blueSmoothBox = new JCheckBox("Smooth blue VOI contours with AlgorithmBSmooth", true);
         blueSmoothBox.setForeground(Color.black);
         blueSmoothBox.setFont(serif12);
+        blueSmoothBox.addActionListener(this);
         gbc.gridx = 0;
         gbc.gridy = yPos++;
         mainPanel.add(blueSmoothBox, gbc);
+        
+        interpolationLabel = new JLabel("Number of interpolation points determined by divisor (> 1.0)");
+        interpolationLabel.setForeground(Color.black);
+        interpolationLabel.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = yPos;
+        mainPanel.add(interpolationLabel, gbc);
+        
+        interpolationText = new JTextField(5);
+        interpolationText.setText("24.0");
+        interpolationText.setFont(serif12);
+        gbc.gridx = 1;
+        gbc.gridy = yPos++;
+        mainPanel.add(interpolationText, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -785,14 +822,25 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
             MipavUtil.displayError("Minimum intensity fraction must be greater than 0");
             intensityFractionText.requestFocus();
             intensityFractionText.selectAll();
+            return false;
         }
         else if (minIntensityFraction >= 1.0) {
             MipavUtil.displayError("Minimum intensity fraction must be less than 1");
             intensityFractionText.requestFocus();
             intensityFractionText.selectAll();
+            return false;
         }
         
         blueSmooth = blueSmoothBox.isSelected();
+        
+        tmpStr = interpolationText.getText();
+        interpolationDivisor = Float.parseFloat(tmpStr);
+        if (interpolationDivisor <= 1.0f) {
+            MipavUtil.displayError("Interpolation divisor must be greater than 1");
+            interpolationText.requestFocus();
+            interpolationText.selectAll();
+            return false;
+        }
         
         return true;
     } // end setVariables()
