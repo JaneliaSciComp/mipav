@@ -79,7 +79,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
     
     private JRadioButton twoButton;
     
-    private float mergingDistance = 0.33f;
+    private float mergingDistance;
     
     private int blueMin = 1000;
     
