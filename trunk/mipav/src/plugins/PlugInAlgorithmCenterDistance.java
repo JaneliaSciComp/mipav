@@ -1871,20 +1871,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 05/16/08 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
-
-        if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
-            UI.setDataText("X resolution = " + xRes + "  " + FileInfoBase.getUnitsOfMeasureStr(xUnits) + "\n");
-        } else {
-            UI.setDataText("X resolution = " + xRes + "\n");
-        }
-
-        if (yUnits != FileInfoBase.UNKNOWN_MEASURE) {
-            UI.setDataText("Y resolution = " + yRes + "  " + FileInfoBase.getUnitsOfMeasureStr(yUnits) + "\n\n");
-        } else {
-            UI.setDataText("Y resolution = " + yRes + "\n\n");
-        }
 
         UI.setDataText("Nucleus\tNarea\tRmin\tRmax");
 
@@ -4182,26 +4169,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 05/16/08 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
-
-        if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
-            UI.setDataText("X resolution = " + xRes + "  " + FileInfoBase.getUnitsOfMeasureStr(xUnits) + "\n");
-        } else {
-            UI.setDataText("X resolution = " + xRes + "\n");
-        }
-
-        if (yUnits != FileInfoBase.UNKNOWN_MEASURE) {
-            UI.setDataText("Y resolution = " + yRes + "  " + FileInfoBase.getUnitsOfMeasureStr(yUnits) + "\n");
-        } else {
-            UI.setDataText("Y resolution = " + yRes + "\n");
-        }
-
-        if (zUnits != FileInfoBase.UNKNOWN_MEASURE) {
-            UI.setDataText("Z resolution = " + zRes + "  " + FileInfoBase.getUnitsOfMeasureStr(zUnits) + "\n\n");
-        } else {
-            UI.setDataText("Z resolution = " + zRes + "\n\n");
-        }
 
         UI.setDataText("Nucleus\tNvolume\tRmin\tRmax");
         //UI.setDataText("\tsAx1Cen\tsAx2Cen\tsAx3Cen");
