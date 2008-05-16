@@ -247,7 +247,7 @@ public class FileUtility {
                                                       };
 
     /** This map is needed in order to populate JDialogUnknownIO typeNames. */
-    private static TreeMap typeNamesTreeMap;
+    private static TreeMap<String,String> typeNamesTreeMap;
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -371,6 +371,243 @@ public class FileUtility {
 
         return sfx.toLowerCase();
     }
+    
+    /**
+     * Gets a list of file extensions based on the filetype of the image.
+     *
+     * @param   fileType  Type of file, found in FileBase.
+     *
+     * @return  An Vector containing the allowed file extension(s).
+     */
+    public static final Vector<String> getSuffixes(int fileType) {
+	Vector<String> suffixList = new Vector<String>(5);
+
+        switch (fileType) {
+
+            case FileUtility.JIMI:
+        	// TODO: is this the correct extension?  any others?
+        	suffixList.add(".jpg");
+                break;
+
+            case FileUtility.RAW:
+        	suffixList.add(".raw");
+                break;
+
+            case FileUtility.DICOM:
+        	suffixList.add(".dcm");
+        	suffixList.add(".ima");
+                break;
+
+            case FileUtility.MEDIVISION:
+        	suffixList.add(".bin");
+                break;
+
+            case FileUtility.MAP:
+        	suffixList.add(".map");
+                break;
+
+            case FileUtility.MINC:
+        	suffixList.add(".mnc");
+                break;
+
+            case FileUtility.MINC_HDF:
+        	suffixList.add(".mnc");
+            	break;
+                
+            case FileUtility.AVI:
+        	suffixList.add(".avi");
+                break;
+
+            case FileUtility.QT:
+        	suffixList.add(".mov");
+                break;
+
+            case FileUtility.CHESHIRE:
+        	suffixList.add(".imc");
+                break;
+
+            case FileUtility.CHESHIRE_OVERLAY:
+        	suffixList.add(".oly");
+                break;
+
+            case FileUtility.VOI_FILE:
+        	suffixList.add(".voi");
+                break;
+
+            case FileUtility.ANALYZE:
+        	suffixList.add(".img");
+                break;
+
+            case FileUtility.MGH:
+
+                // Uses .mgh for uncompressed storage
+                // Uses .mgz or .mgh.gz for compressed storage
+        	suffixList.add(".mgh");
+        	suffixList.add(".mgz");
+        	suffixList.add(".mgh.gz");
+                break;
+
+            case FileUtility.NIFTI:
+
+                // uses .hdr and .img for 2 file storage
+                // uses .nii for 1 file storage
+        	suffixList.add(".nii");
+        	suffixList.add(".img");
+                break;
+
+            case FileUtility.NRRD:
+
+                // uses .nhdr for header and any nhdr designated extension for data
+                // in 2 file storage
+                // uses .nrrd for 1 file storage
+        	suffixList.add(".nrrd");
+        	suffixList.add(".nhdr");
+                break;
+
+            case FileUtility.SPM:
+        	suffixList.add(".spm");
+                break;
+
+            case FileUtility.TIFF:
+        	suffixList.add(".tif");
+        	suffixList.add(".tiff");
+                break;
+
+            case FileUtility.LSM:
+        	suffixList.add(".lsm");
+                break;
+
+            case FileUtility.STK:
+        	suffixList.add(".stk");
+                break;
+
+            case FileUtility.AFNI:
+        	suffixList.add(".afni");
+                break;
+
+            case FileUtility.ICS:
+        	suffixList.add(".ics");
+                break;
+
+            case FileUtility.INTERFILE:
+        	suffixList.add(".hdr");
+                break;
+
+            case FileUtility.BIORAD:
+        	suffixList.add(".pic");
+                break;
+
+            case FileUtility.FITS:
+        	suffixList.add(".fits");
+                break;
+
+            case FileUtility.DM3:
+        	suffixList.add(".dm3");
+                break;
+
+            case FileUtility.TMG:
+        	suffixList.add(".tmg");
+                break;
+
+            case FileUtility.MRC:
+        	suffixList.add(".mrc");
+                break;
+
+            case FileUtility.OSM:
+        	suffixList.add(".wu");
+                break;
+
+            case FileUtility.MAGNETOM_VISION:
+        	suffixList.add(".ima");
+                break;
+
+            case FileUtility.GE_GENESIS:
+        	suffixList.add(".sig");
+                break;
+
+            case FileUtility.GE_SIGNA4X:
+        	suffixList.add(".gedno");
+                break;
+
+            case FileUtility.MICRO_CAT:
+        	suffixList.add(".log");
+                break;
+
+            case FileUtility.XML:
+        	suffixList.add(".xml");
+                break;
+
+            case FileUtility.COR:
+        	suffixList.add(".info");
+                break;
+
+            case FileUtility.BMP:
+        	suffixList.add(".bmp");
+                break;
+
+            case FileUtility.CUR:
+        	suffixList.add(".cur");
+                break;
+
+            case FileUtility.DIB:
+        	suffixList.add(".dib");
+                break;
+
+            case FileUtility.GIF:
+        	suffixList.add(".gif");
+                break;
+
+            case FileUtility.ICO:
+        	suffixList.add(".ico");
+                break;
+
+            case FileUtility.JPEG:
+        	suffixList.add(".jpg");
+        	suffixList.add(".jpeg");
+                break;
+
+            case FileUtility.PCX:
+        	suffixList.add(".pcx");
+                break;
+
+            case FileUtility.PICT:
+        	suffixList.add(".pict");
+                break;
+
+            case FileUtility.PNG:
+        	suffixList.add(".png");
+                break;
+
+            case FileUtility.PSD:
+        	suffixList.add(".psd");
+                break;
+
+            case FileUtility.TGA:
+        	suffixList.add(".tga");
+                break;
+
+            case FileUtility.XBM:
+        	suffixList.add(".xbm");
+                break;
+
+            case FileUtility.XPM:
+        	suffixList.add(".xpm");
+                break;
+
+            case FileUtility.PARREC:
+        	// TODO: is this the correct extension?  any others?
+        	suffixList.add(".par");
+        	suffixList.add(".rec");
+                break;
+                
+            case FileUtility.LIFF:
+        	// TODO: is this the correct extension?  any others?
+        	suffixList.add(".liff");
+                break;
+        }
+        
+        return suffixList;
+    }
 
     /**
      * Gets the file extension based on the filetype of the image. This returns the DEFAULT suffix
@@ -380,221 +617,7 @@ public class FileUtility {
      * @return  The appropriate file extension.
      */
     public static final String getDefaultSuffix(int fileType) {
-        String suffix = null;
-
-        switch (fileType) {
-
-            case FileUtility.JIMI:
-                suffix = ".jpg";
-                break;
-
-            case FileUtility.RAW:
-                suffix = ".raw";
-                break;
-
-            case FileUtility.DICOM:
-                suffix = ".dcm";
-                break;
-
-            case FileUtility.MEDIVISION:
-                suffix = ".bin";
-                break;
-
-            case FileUtility.MAP:
-                suffix = ".map";
-                break;
-
-            case FileUtility.MINC:
-                suffix = ".mnc";
-                break;
-
-            case FileUtility.MINC_HDF:
-            	suffix = ".mnc";
-            	break;
-                
-            case FileUtility.AVI:
-                suffix = ".avi";
-                break;
-
-            case FileUtility.QT:
-                suffix = ".mov";
-                break;
-
-            case FileUtility.CHESHIRE:
-                suffix = ".imc";
-                break;
-
-            case FileUtility.CHESHIRE_OVERLAY:
-                suffix = ".oly";
-                break;
-
-            case FileUtility.VOI_FILE:
-                suffix = ".voi";
-                break;
-
-            case FileUtility.ANALYZE:
-                suffix = ".img";
-                break;
-
-            case FileUtility.MGH:
-
-                // Uses .mgh for uncompressed storage
-                // Uses .mgz or .mgh.gz for compressed storage
-                suffix = ".mgh";
-                break;
-
-            case FileUtility.NIFTI:
-
-                // uses .hdr and .img for 2 file storage
-                // uses .nii for 1 file storage
-                suffix = ".nii";
-                break;
-
-            case FileUtility.NRRD:
-
-                // uses .nhdr for header and any nhdr designated extension for data
-                // in 2 file storage
-                // uses .nrrd for 1 file storage
-                suffix = ".nrrd";
-                break;
-
-            case FileUtility.SPM:
-                suffix = ".spm";
-                break;
-
-            case FileUtility.TIFF:
-                suffix = ".tiff";
-                break;
-
-            case FileUtility.LSM:
-                suffix = ".lsm";
-                break;
-
-            case FileUtility.STK:
-                suffix = ".stk";
-                break;
-
-            case FileUtility.AFNI:
-                suffix = ".afni";
-                break;
-
-            case FileUtility.ICS:
-                suffix = ".ics";
-                break;
-
-            case FileUtility.INTERFILE:
-                suffix = ".hdr";
-                break;
-
-            case FileUtility.BIORAD:
-                suffix = ".pic";
-                break;
-
-            case FileUtility.FITS:
-                suffix = ".fits";
-                break;
-
-            case FileUtility.DM3:
-                suffix = ".dm3";
-                break;
-
-            case FileUtility.TMG:
-                suffix = ".tmg";
-                break;
-
-            case FileUtility.MRC:
-                suffix = ".mrc";
-                break;
-
-            case FileUtility.OSM:
-                suffix = ".wu";
-                break;
-
-            case FileUtility.MAGNETOM_VISION:
-                suffix = ".ima";
-                break;
-
-            case FileUtility.GE_GENESIS:
-                suffix = ".sig";
-                break;
-
-            case FileUtility.GE_SIGNA4X:
-                suffix = ".gedno";
-                break;
-
-            case FileUtility.MICRO_CAT:
-                suffix = ".log";
-                break;
-
-            case FileUtility.XML:
-                suffix = ".xml";
-                break;
-
-            case FileUtility.COR:
-                suffix = ".info";
-                break;
-
-            case FileUtility.BMP:
-                suffix = ".bmp";
-                break;
-
-            case FileUtility.CUR:
-                suffix = ".cur";
-                break;
-
-            case FileUtility.DIB:
-                suffix = ".dib";
-                break;
-
-            case FileUtility.GIF:
-                suffix = ".gif";
-                break;
-
-            case FileUtility.ICO:
-                suffix = ".ico";
-                break;
-
-            case FileUtility.JPEG:
-                suffix = ".jpg";
-                break;
-
-            case FileUtility.PCX:
-                suffix = ".pcx";
-                break;
-
-            case FileUtility.PICT:
-                suffix = ".pict";
-                break;
-
-            case FileUtility.PNG:
-                suffix = ".png";
-                break;
-
-            case FileUtility.PSD:
-                suffix = ".psd";
-                break;
-
-            case FileUtility.TGA:
-                suffix = ".tga";
-                break;
-
-            case FileUtility.XBM:
-                suffix = ".xbm";
-                break;
-
-            case FileUtility.XPM:
-                suffix = ".xpm";
-                break;
-
-            case FileUtility.PARREC:
-                suffix = ".par";
-                break;
-            case FileUtility.LIFF:
-                suffix = ".liff";
-                break;
-        }
-
-        return suffix;
+        return FileUtility.getSuffixes(fileType).elementAt(0);
     }
 
     /**
@@ -1411,7 +1434,7 @@ public class FileUtility {
      * @return  Strin[] Array of descriptions
      */
     public static String[] getUnknownDialogsTypeNames() {
-        typeNamesTreeMap = new TreeMap();
+        typeNamesTreeMap = new TreeMap<String,String>();
 
         String description = "";
 
@@ -1510,9 +1533,9 @@ public class FileUtility {
         }
 
 
-        ArrayList descripArrayList = new ArrayList();
+        ArrayList<String> descripArrayList = new ArrayList<String>();
 
-        for (Iterator iter = typeNamesTreeMap.keySet().iterator(); iter.hasNext();) {
+        for (Iterator<String> iter = typeNamesTreeMap.keySet().iterator(); iter.hasNext();) {
             String key = (String) iter.next();
             String value = (String) typeNamesTreeMap.get(key);
             String descrip = key + " (" + value + ")";
@@ -1536,9 +1559,9 @@ public class FileUtility {
      * @return  String[] Array of suffices
      */
     public static String[] getUnknownDialogsTypeSuffices() {
-        ArrayList typeSufficesAL = new ArrayList();
+        ArrayList<String> typeSufficesAL = new ArrayList<String>();
 
-        for (Iterator iter = typeNamesTreeMap.keySet().iterator(); iter.hasNext();) {
+        for (Iterator<String> iter = typeNamesTreeMap.keySet().iterator(); iter.hasNext();) {
             String key = (String) iter.next();
 
             // since the fileFormetStr array ant the static final ints are in synch, getting the position
@@ -1546,8 +1569,7 @@ public class FileUtility {
             for (int i = 0; i < fileFormatStr.length; i++) {
 
                 if (key.equals(fileFormatStr[i])) {
-                    String suff = getDefaultSuffix(i);
-                    typeSufficesAL.add(suff);
+                    typeSufficesAL.addAll(FileUtility.getSuffixes(i));
                 }
             }
         }
@@ -1559,7 +1581,6 @@ public class FileUtility {
         }
 
         return typeSuffices;
-
     }
 
     /**
@@ -1841,11 +1862,24 @@ public class FileUtility {
      * @return whether the file is HDF5 type
      */
     public static final int isMincHDF(String fileName, String fileDir, boolean quiet) {
-    	
-	// first, make sure that the hdf5 libs are available (no pre-built ones for win64)
 	try {
-	    System.loadLibrary("jhdf");
-	    System.loadLibrary("jhdf5");
+	    FileFormat h5F = FileFormat.getFileFormat(FileFormat.FILE_TYPE_HDF5);
+	    
+	    // if the FileFormat object is null, there was probably a problem loading the hdf5 libraries
+	    if (h5F == null) {
+		if (!quiet) {
+		    MipavUtil.displayError("Unable to load HDF5 libraries required for MINC-2.0 HDF files.");
+		}
+		
+		return FileUtility.ERROR;
+	    }
+
+	    boolean isMincHDF = h5F.isThisType(fileDir + File.separator + fileName);
+	    if (isMincHDF) {
+		return FileUtility.MINC_HDF;
+	    } else {
+		return FileUtility.UNDEFINED;
+	    }
 	} catch (SecurityException e) {
 	    if (!quiet) {
 		MipavUtil.displayError("Unable to load HDF libraries: " + e.getMessage());
@@ -1863,17 +1897,8 @@ public class FileUtility {
 	    
 	    return FileUtility.ERROR;
 	}
-	
-    	FileFormat h5F = FileFormat.getFileFormat(FileFormat.FILE_TYPE_HDF5);
-    	
-    	boolean isMincHDF = h5F.isThisType(fileDir + File.separator + fileName);
-    	if (isMincHDF) {
-    		return FileUtility.MINC_HDF;
-    	} else {
-    		return FileUtility.UNDEFINED;
-    	}
-    	
     }
+    
     /**
      * Tests if the unknown file is of type Nifti.
      *
