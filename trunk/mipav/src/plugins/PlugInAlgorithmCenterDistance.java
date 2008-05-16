@@ -3218,7 +3218,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         itersErosion = 0;
         idObjectsAlgo3D = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation,
                                                     itersErosion, numPruningPixels, edgingType, wholeImage);
-        idObjectsAlgo3D.setMinMax(greenMin, 1000);
+        idObjectsAlgo3D.setMinMax(greenMin, 10000);
         idObjectsAlgo3D.run();
         idObjectsAlgo3D.finalize();
         idObjectsAlgo3D = null;
