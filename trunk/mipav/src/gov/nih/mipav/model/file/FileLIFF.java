@@ -322,6 +322,8 @@ public class FileLIFF extends FileBase {
         short boundsBottomArray[] = new short[24000];
         short cmpCountArray[] = new short[24000];
         long LUTSizeLocation[] = new long[24000];
+        double zStepArray[] = new double[1500];
+        int zStepNumber = 0;
         boolean haveLUT = false;
         int dimExtentsLUT[];
         int subPictCount = 0;
@@ -444,7 +446,7 @@ public class FileLIFF extends FileBase {
         int userTagNum = 0;
         String className;
         short numVars;
-        double doubleValue;
+        double doubleValue = 0.0;
         byte derivedClassVersion[] = new byte[1];
         byte baseClassVersion[] = new byte[1];
         int strSize;
@@ -490,6 +492,7 @@ public class FileLIFF extends FileBase {
         int yDimArray[] = new int[17];
         int rowBytesTypeArray[] = new int[17];
         int jstart;
+        boolean sameStep;
 
         try {
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
@@ -1840,6 +1843,9 @@ public class FileLIFF extends FileBase {
                             Preferences.debug("strSize = " + strSize + "\n");
                             nameStr = getString(strSize);
                             Preferences.debug("name = " + nameStr.trim() + "\n");
+                            if (nameStr.trim().toUpperCase().equals("ZSTEP")) {
+                               zStepArray[zStepNumber++] = doubleValue;    
+                            }
                             raFile.skipBytes(2*baseClassVersion[0] + 1);
                         } // for (j = 0; j < numVars; j++)
                     } // if (className.equals("CVariableList"))*/
@@ -1847,6 +1853,22 @@ public class FileLIFF extends FileBase {
             } // for (nextOffset = firstTagOffset, i = 1; nextOffset < fileLength - 1; i++)
             
             fireProgressStateChanged(50);
+            
+            if (zStepNumber >= 1) {
+                imgResols[2] = (float)zStepArray[0];
+                sameStep = true;
+                for (i = 1; i < zStepNumber & sameStep; i++) {
+                  if (zStepArray[0] != zStepArray[1]) {
+                      sameStep = false;
+                  }
+                }
+                if (sameStep) {
+                    Preferences.debug("All " + zStepNumber + " instances of ZStep are " + zStepArray[0] + "\n");
+                }
+                else {
+                   Preferences.debug("Warning, not all " + zStepNumber + " instances of ZStep are the same\n");
+                }
+            } // if (ZStepNumber >= 1)
             
             for (i = 0; i <= 16; i++) {
                 if (imageTypeCount[i] == 1) {
