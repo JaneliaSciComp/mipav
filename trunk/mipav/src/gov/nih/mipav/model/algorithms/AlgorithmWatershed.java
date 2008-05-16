@@ -465,7 +465,7 @@ Found:
         } catch (OutOfMemoryError error) {
             energyImage = null;
             System.gc();
-            displayError("Watershed: unable to allocate enough memory");
+            displayError("Watershed: unable to allocate enounear the seed poingh memory");
             setCompleted(false);
 
 
