@@ -21,7 +21,7 @@ import javax.swing.*;
 /**
  * This shows how to extend the AlgorithmBase class.
  *
- * @version  May 15, 2008
+ * @version  May 16, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -412,6 +412,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         boolean isMaxGreen[][] = null;
         int blueArea[];
         double blueIntensityTotal[];
+        double newBlueIntensityTotal[];
         int blueLeft[];
         int blueRight[];
         int blueTop[];
@@ -445,6 +446,10 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         int maxElement;
         Polygon srcGon;
         VOI newVOI;
+        int lowerValue;
+        int upperValue;
+        int midValue;
+        boolean lastRun;
 
         df = new DecimalFormat("0.000E0");
         dfFract = new DecimalFormat("0.000");
@@ -647,9 +652,11 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             } // if (removeID[id-1])
         } // for (id = 1; id <= numObjects; id++)     
         
+        IDArray2 = new byte[length];
         if (blueExpand) {
             blueArea= new int[numObjects];
             blueIntensityTotal = new double[numObjects];
+            newBlueIntensityTotal = new double[numObjects];
             blueLeft = new int[numObjects];
             blueRight = new int[numObjects];
             blueTop = new int[numObjects];
@@ -722,41 +729,79 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     }
                 } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
                 intensityFraction[i] = (float)(blueIntensityTotal[i]/blueRectIntensityTotal[i]);
-                while ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue)) {
-                    blueMinArray[i] = blueMinArray[i] - 1; 
-                    areaGrowth = true;
-                    while (areaGrowth) {
-                        areaGrowth = false;
-                        for (y = blueTop[i]; y <= blueBottom[i]; y++) {
-                            for (x = blueLeft[i]; x <= blueRight[i]; x++) {
-                                k = x + y*xDim;
-                                if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i])) {
-                                   if ((x > blueLeft[i]) && (IDArray[k-1] == (i+1))) {
-                                       IDArray[k] = (byte)(i+1); 
-                                       areaGrowth = true;
-                                       blueIntensityTotal[i] += buffer[k];
-                                   }
-                                   else if ((x < blueRight[i]) && (IDArray[k+1] == (i+1))) {
-                                       IDArray[k] = (byte)(i+1);
-                                       areaGrowth = true;
-                                       blueIntensityTotal[i] += buffer[k];
-                                   }
-                                   else if ((y > blueTop[i]) && (IDArray[k - xDim] == (i+1))) {
-                                       IDArray[k] = (byte)(i+1);
-                                       areaGrowth = true;
-                                       blueIntensityTotal[i] += buffer[k];
-                                   }
-                                   else if ((y < blueBottom[i]) && (IDArray[k + xDim] == (i+1))) {
-                                       IDArray[k] = (byte)(i+1);
-                                       areaGrowth = true;
-                                       blueIntensityTotal[i] += buffer[k];
-                                   }
-                                } // if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i]))
-                            } // for (x = blueLeft[i]; x <= blueRight[i]; x++)
-                        } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
-                    } // while (areaGrowth)
-                    intensityFraction[i] = (float)(blueIntensityTotal[i]/blueRectIntensityTotal[i]);
-                } // while ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue))
+                if ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue)) {
+                    lowerValue = (int)Math.round(minBlueValue + 1);
+                    upperValue = (int)Math.round(blueMinArray[i] - 1);
+                    if (lowerValue == upperValue) {
+                        lastRun = true;
+                    }
+                    else {
+                        lastRun = false;
+                    }
+                    midValue = (lowerValue + upperValue)/2;
+                    do {
+                        blueMinArray[i] = midValue; 
+                        areaGrowth = true;
+                        newBlueIntensityTotal[i] = blueIntensityTotal[i];
+                        for (k = 0; k < length; k++) {
+                            IDArray2[k] = IDArray[k];
+                        }
+                        while (areaGrowth) {
+                            areaGrowth = false;
+                                for (y = blueTop[i]; y <= blueBottom[i]; y++) {
+                                    for (x = blueLeft[i]; x <= blueRight[i]; x++) {
+                                        k = x + y*xDim;
+                                        if ((IDArray2[k] == 0) && (buffer[k] >= blueMinArray[i])) {
+                                           if ((x > blueLeft[i]) && (IDArray2[k-1] == (i+1))) {
+                                               IDArray2[k] = (byte)(i+1);
+                                               areaGrowth = true;
+                                               newBlueIntensityTotal[i] += buffer[k];
+                                           }
+                                           else if ((x < blueRight[i]) && (IDArray2[k+1] == (i+1))) {
+                                               IDArray2[k] = (byte)(i+1);
+                                               areaGrowth = true;
+                                               newBlueIntensityTotal[i] += buffer[k];
+                                           }
+                                           else if ((y > blueTop[i]) && (IDArray2[k - xDim] == (i+1))) {
+                                               IDArray2[k] = (byte)(i+1);
+                                               areaGrowth = true;
+                                               newBlueIntensityTotal[i] += buffer[k];
+                                           }
+                                           else if ((y < blueBottom[i]) && (IDArray2[k + xDim] == (i+1))) {
+                                               IDArray2[k] = (byte)(i+1);
+                                               areaGrowth = true;
+                                               newBlueIntensityTotal[i] += buffer[k];
+                                           }
+                                        } // if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i]))
+                                    } // for (x = blueLeft[i]; x <= blueRight[i]; x++)
+                                } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
+                        } // while (volumeGrowth)
+                        intensityFraction[i] = (float)(newBlueIntensityTotal[i]/blueRectIntensityTotal[i]);
+                        if (lastRun) {
+                            for (k = 0; k < length; k++) {
+                                IDArray[k] = IDArray2[k];
+                            }
+                            break;
+                        }
+                        if (intensityFraction[i] >= minIntensityFraction) {
+                                if (midValue != lowerValue) {
+                                    lowerValue = midValue;
+                                    midValue = (lowerValue + upperValue)/2;
+                                }
+                                else {
+                                    midValue = upperValue;
+                                }
+                        }
+                        else {
+                                upperValue = midValue-1; 
+                                midValue = (lowerValue + upperValue)/2;
+                        }
+                        
+                        if (lowerValue == upperValue) {
+                            lastRun = true;
+                        }
+                    } while (true);
+                } // if ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue))
             } // for (i = 0; i < numObjects; i++)
         } // if (blueExpand)
         
@@ -1178,6 +1223,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                 return;
             } 
+            grayImage2.disposeLocal();
+            grayImage2 = null;
             
             for (i = 0; i < length; i++) {
                 if ((greenIDArray[i] == 0) && (greenIDArray2[i] > 0)) {
@@ -1434,7 +1481,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         
         trim = true;
         shortMask = new short[length];
-        IDArray2 = new byte[length];
         for (i = 0; i < numObjects; i++) {
             grayImage.resetVOIs();
             for (j = 0; j < length; j++) {
@@ -1825,7 +1871,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 05/15/08 version\n");
+        UI.setDataText("Plugin 05/16/08 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
@@ -2101,6 +2147,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         int numObjects;
         byte[] byteBuffer;
         byte[] IDArray;
+        byte[] IDArray2;
         int id;
         byte[] dilateArray;
         byte[] boundaryArray;
@@ -2278,6 +2325,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         boolean isMaxGreen[][] = null;
         int blueVolume[];
         double blueIntensityTotal[];
+        double newBlueIntensityTotal[];
         int blueLeft[];
         int blueRight[];
         int blueTop[];
@@ -2303,7 +2351,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         boolean trim;
         AlgorithmBSmooth smoothAlgo = null;
         VOI resultVOI;
-        byte IDArray2[];
         double minBlueValue;
         int maxGreenBelong;
         boolean allRemoved;
@@ -2313,6 +2360,10 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         int maxPoints;
         int maxElement;
         VOI newVOI;
+        int lowerValue;
+        int upperValue;
+        int midValue;
+        boolean lastRun;
 
         df = new DecimalFormat("0.000E0");
         dfFract = new DecimalFormat("0.000");
@@ -2609,9 +2660,11 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             } // if (removeID[id-1])
         } // for (id = 1; id <= numObjects; id++)
         
+        IDArray2 = new byte[totLength];
         if (blueExpand) {
             blueVolume = new int[numObjects];
             blueIntensityTotal = new double[numObjects];
+            newBlueIntensityTotal = new double[numObjects];
             blueLeft = new int[numObjects];
             blueRight = new int[numObjects];
             blueTop = new int[numObjects];
@@ -2703,53 +2756,91 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
                 } // for (z = blueFront[i]; z <= blueBack[i]; z++)
                 intensityFraction[i] = (float)(blueIntensityTotal[i]/blueBlockIntensityTotal[i]);
-                while ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue)) {
-                    blueMinArray[i] = blueMinArray[i] - 1; 
-                    volumeGrowth = true;
-                    while (volumeGrowth) {
-                        volumeGrowth = false;
-                        for (z = blueFront[i]; z <= blueBack[i]; z++) {
-                            for (y = blueTop[i]; y <= blueBottom[i]; y++) {
-                                for (x = blueLeft[i]; x <= blueRight[i]; x++) {
-                                    k = x + y*xDim + z*sliceSize;
-                                    if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i])) {
-                                       if ((x > blueLeft[i]) && (IDArray[k-1] == (i+1))) {
-                                           IDArray[k] = (byte)(i+1); 
-                                           volumeGrowth = true;
-                                           blueIntensityTotal[i] += buffer[k];
-                                       }
-                                       else if ((x < blueRight[i]) && (IDArray[k+1] == (i+1))) {
-                                           IDArray[k] = (byte)(i+1);
-                                           volumeGrowth = true;
-                                           blueIntensityTotal[i] += buffer[k];
-                                       }
-                                       else if ((y > blueTop[i]) && (IDArray[k - xDim] == (i+1))) {
-                                           IDArray[k] = (byte)(i+1);
-                                           volumeGrowth = true;
-                                           blueIntensityTotal[i] += buffer[k];
-                                       }
-                                       else if ((y < blueBottom[i]) && (IDArray[k + xDim] == (i+1))) {
-                                           IDArray[k] = (byte)(i+1);
-                                           volumeGrowth = true;
-                                           blueIntensityTotal[i] += buffer[k];
-                                       }
-                                       else if ((z > blueFront[i]) && (IDArray[k - sliceSize] == (i+1))) {
-                                           IDArray[k] = (byte)(i+1);
-                                           volumeGrowth = true;
-                                           blueIntensityTotal[i] += buffer[k];
-                                       }
-                                       else if ((z < blueBack[i]) && (IDArray[k + sliceSize] == (i+1))) {
-                                           IDArray[k] = (byte)(i+1);
-                                           volumeGrowth = true;
-                                           blueIntensityTotal[i] += buffer[k];
-                                       }
-                                    } // if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i]))
-                                } // for (x = blueLeft[i]; x <= blueRight[i]; x++)
-                            } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
-                        } // for (z = blueFront[i]; z <= blueBack[i]; z++)
-                    } // while (volumeGrowth)
-                    intensityFraction[i] = (float)(blueIntensityTotal[i]/blueBlockIntensityTotal[i]);
-                } // while ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue))
+                if ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue)) {
+                    lowerValue = (int)Math.round(minBlueValue + 1);
+                    upperValue = (int)Math.round(blueMinArray[i] - 1);
+                    if (lowerValue == upperValue) {
+                        lastRun = true;
+                    }
+                    else {
+                        lastRun = false;
+                    }
+                    midValue = (lowerValue + upperValue)/2;
+                    do {
+                        blueMinArray[i] = midValue; 
+                        volumeGrowth = true;
+                        newBlueIntensityTotal[i] = blueIntensityTotal[i];
+                        for (k = 0; k < totLength; k++) {
+                            IDArray2[k] = IDArray[k];
+                        }
+                        while (volumeGrowth) {
+                            volumeGrowth = false;
+                            for (z = blueFront[i]; z <= blueBack[i]; z++) {
+                                for (y = blueTop[i]; y <= blueBottom[i]; y++) {
+                                    for (x = blueLeft[i]; x <= blueRight[i]; x++) {
+                                        k = x + y*xDim + z*sliceSize;
+                                        if ((IDArray2[k] == 0) && (buffer[k] >= blueMinArray[i])) {
+                                           if ((x > blueLeft[i]) && (IDArray2[k-1] == (i+1))) {
+                                               IDArray2[k] = (byte)(i+1);
+                                               volumeGrowth = true;
+                                               newBlueIntensityTotal[i] += buffer[k];
+                                           }
+                                           else if ((x < blueRight[i]) && (IDArray2[k+1] == (i+1))) {
+                                               IDArray2[k] = (byte)(i+1);
+                                               volumeGrowth = true;
+                                               newBlueIntensityTotal[i] += buffer[k];
+                                           }
+                                           else if ((y > blueTop[i]) && (IDArray2[k - xDim] == (i+1))) {
+                                               IDArray2[k] = (byte)(i+1);
+                                               volumeGrowth = true;
+                                               newBlueIntensityTotal[i] += buffer[k];
+                                           }
+                                           else if ((y < blueBottom[i]) && (IDArray2[k + xDim] == (i+1))) {
+                                               IDArray2[k] = (byte)(i+1);
+                                               volumeGrowth = true;
+                                               newBlueIntensityTotal[i] += buffer[k];
+                                           }
+                                           else if ((z > blueFront[i]) && (IDArray2[k - sliceSize] == (i+1))) {
+                                               IDArray2[k] = (byte)(i+1);
+                                               volumeGrowth = true;
+                                               newBlueIntensityTotal[i] += buffer[k];
+                                           }
+                                           else if ((z < blueBack[i]) && (IDArray2[k + sliceSize] == (i+1))) {
+                                               IDArray2[k] = (byte)(i+1);
+                                               volumeGrowth = true;
+                                               newBlueIntensityTotal[i] += buffer[k];
+                                           }
+                                        } // if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i]))
+                                    } // for (x = blueLeft[i]; x <= blueRight[i]; x++)
+                                } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
+                            } // for (z = blueFront[i]; z <= blueBack[i]; z++)
+                        } // while (volumeGrowth)
+                        intensityFraction[i] = (float)(newBlueIntensityTotal[i]/blueBlockIntensityTotal[i]);
+                        if (lastRun) {
+                            for (k = 0; k < totLength; k++) {
+                                IDArray[k] = IDArray2[k];
+                            }
+                            break;
+                        }
+                        if (intensityFraction[i] >= minIntensityFraction) {
+                                if (midValue != lowerValue) {
+                                    lowerValue = midValue;
+                                    midValue = (lowerValue + upperValue)/2;
+                                }
+                                else {
+                                    midValue = upperValue;
+                                }
+                        }
+                        else {
+                                upperValue = midValue-1; 
+                                midValue = (lowerValue + upperValue)/2;
+                        }
+                        
+                        if (lowerValue == upperValue) {
+                            lastRun = true;
+                        }
+                    } while (true);
+                } // if ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue))
             } // for (i = 0; i < numObjects; i++)
         } // if (blueExpand)
         
@@ -3171,7 +3262,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             itersErosion = 0;
             idObjectsAlgo3D = new AlgorithmMorphology3D(grayImage2, kernel, sphereDiameter, method, itersDilation,
                                                         itersErosion, numPruningPixels, edgingType, wholeImage);
-            idObjectsAlgo3D.setMinMax(greenMin, 1000);
+            idObjectsAlgo3D.setMinMax(greenMin, 10000);
             idObjectsAlgo3D.run();
             idObjectsAlgo3D.finalize();
             idObjectsAlgo3D = null;
@@ -3190,6 +3281,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                 return;
             } 
+            grayImage2.disposeLocal();
+            grayImage2 = null;
             
             for (i = 0; i < totLength; i++) {
                 if ((greenIDArray[i] == 0) && (greenIDArray2[i] > 0)) {
@@ -3319,9 +3412,9 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                         }
                         continue loop1;
                     } // if (distance <= mergingDistance)
-                }
-            }
-        }
+                } // if (greenCellNumber[j-1] == greenCellNumber[i-1])
+            } // for (i = 1; i < j; i++)
+        } // for (j = numGreenObjects+numGreenObjects2; j >= 1; j--)
 
         sortedGreenFound = new int[numObjects];
         for (j = 1; j <= numGreenObjects; j++) {
@@ -3489,7 +3582,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         blueVOIs = grayImage.getVOIs();
         trim = true;
         shortMask = new short[totLength];
-        IDArray2 = new byte[totLength];
         for (i = 0; i < numObjects; i++) {
             grayImage.resetVOIs();
             for (j = 0; j < totLength; j++) {
@@ -3598,6 +3690,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 VOIs.add(blueVOIs.VOIAt(0));    
             }
         } // for (i = 0; i < numObjects; i++)
+        grayImage2D.disposeLocal();
+        grayImage2D = null;
         
         srcImage.setVOIs((VOIVector)VOIs);
 
@@ -4088,7 +4182,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 05/15/08 version\n");
+        UI.setDataText("Plugin 05/16/08 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
