@@ -164,6 +164,10 @@ public class JDialogWatershed extends JDialogScriptableBase implements Algorithm
         } else if (source == cancelButton) {
             dispose();
         }
+         else if (source == helpButton) {
+            MipavUtil.showHelp("WShed10");
+            
+        }
     }
 
     // ************************************************************************
@@ -642,8 +646,10 @@ public class JDialogWatershed extends JDialogScriptableBase implements Algorithm
         JPanel buttonPanel = new JPanel();
         buildOKButton();
         buildCancelButton();
+        buildHelpButton();
         buttonPanel.add(OKButton);
         buttonPanel.add(cancelButton);
+        buttonPanel.add(helpButton);
 
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));

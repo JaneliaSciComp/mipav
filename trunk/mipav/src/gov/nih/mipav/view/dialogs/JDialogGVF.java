@@ -420,6 +420,10 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
         } else if (source == cancelButton) {
             dispose();
         }
+        else if (source == helpButton) {
+            MipavUtil.showHelp("10506");
+            
+        }
     }
 
     // ************************************************************************
@@ -648,6 +652,8 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
         buttonPanel.add(OKButton);
         buildCancelButton();
         buttonPanel.add(cancelButton);
+        buildHelpButton();
+        buttonPanel.add(helpButton);
 
         getContentPane().add(mainPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);

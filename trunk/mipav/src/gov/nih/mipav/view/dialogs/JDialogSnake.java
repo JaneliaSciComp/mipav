@@ -341,6 +341,10 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
         } else if (source == cancelButton) {
             dispose();
         }
+        else if (source == helpButton) {
+            MipavUtil.showHelp("10506");
+            
+        }
     }
 
     // ************************************************************************
@@ -599,6 +603,8 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
         buttonPanel.add(OKButton);
         buildCancelButton();
         buttonPanel.add(cancelButton);
+        buildHelpButton();
+        buttonPanel.add(helpButton);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
