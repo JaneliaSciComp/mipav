@@ -312,8 +312,10 @@ public class JDialogDCCIEConversion extends JDialogBase implements AlgorithmInte
         try {
             formats = new NativeEncoder().getSupportedOutputFormats(new RGBFormat());
         } catch (UnsatisfiedLinkError ex) {
+        	Preferences.debug("JMF library not installed"+ "\n", Preferences.DEBUG_FILEIO);
             System.err.println("JMF library not installed");
         } catch (NoClassDefFoundError ex) {
+        	Preferences.debug("JMF library not installed"+ "\n", Preferences.DEBUG_FILEIO);
             System.err.println("JMF library not installed");
         }
 

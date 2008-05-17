@@ -211,7 +211,7 @@ public class JPanelAVIChoice extends JDialogBase {
                 formats = new NativeEncoder().getSupportedOutputFormats(new RGBFormat());
 
                 for (int i = 0; i < formats.length; i++) {
-
+                	Preferences.debug(" Decoder = " +  formats[i].getEncoding() + "\n", Preferences.DEBUG_FILEIO);
                     if (formats[i].getEncoding().equals("IV32")) {
                         compressionBox.addItem("IR32");
                     } else if (formats[i].getEncoding().equals("IV41")) {
@@ -228,8 +228,10 @@ public class JPanelAVIChoice extends JDialogBase {
                 }
 
             } catch (UnsatisfiedLinkError ex) {
+            	Preferences.debug("JMF library not installed"+ "\n", Preferences.DEBUG_FILEIO);
                 System.err.println("JMF library not installed");
             } catch (NoClassDefFoundError ex) {
+            	Preferences.debug("JMF library not installed"+ "\n", Preferences.DEBUG_FILEIO);
                 System.err.println("JMF library not installed");
             }
         }
