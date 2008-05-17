@@ -65,6 +65,10 @@ public class AlgorithmTranscode extends AlgorithmBase implements ControllerListe
 
     /** DOCUMENT ME! */
     public static final int TRANSCODE_CVID = 11;
+    
+    /** DOCUMENT ME! */
+    public static final int TRANSCODE_GEOV = 12;
+
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -297,7 +301,11 @@ public class AlgorithmTranscode extends AlgorithmBase implements ControllerListe
         } else if (compressionType == TRANSCODE_CVID) {
             encodeStr += "CVID";
             tcs[index].setFormat(new VideoFormat("cvid"));
-        }
+    	} else if (compressionType == TRANSCODE_GEOV) {
+    		encodeStr += "GEOV";
+    		//tcs[index].setFormat(new VideoFormat("GEO-MPEG4")); 
+    		tcs[index].setFormat(new VideoFormat("GEOV")); 
+    	}
 
         // if .mov (quicktime)... dont need to set videoformat
 

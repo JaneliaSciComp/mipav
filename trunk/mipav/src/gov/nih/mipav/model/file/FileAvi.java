@@ -376,7 +376,8 @@ public class FileAvi extends FileBase {
                 AlgorithmTranscode at = new AlgorithmTranscode(new File(fileDir + fileName).toURI().toURL(),
                                                                fileDir + newFileName, AlgorithmTranscode.TRANSCODE_RGB);
 
-                at.setQuality(compressionQuality);
+                //at.setQuality(compressionQuality);
+                at.setQuality(1);
                 at.run();
 
                 // set the filename to the new file name and read header again
@@ -392,6 +393,7 @@ public class FileAvi extends FileBase {
                 }
 
                 if (readHeader() != 0) {
+                	Preferences.debug("FileAVI.readImage: Something messed up - could not read avi image transcoded to RGB-AVI" + "\n", Preferences.DEBUG_FILEIO);
                     System.err.println("Something messed up!!!");
                 }
             }
@@ -429,7 +431,7 @@ public class FileAvi extends FileBase {
 
                         // have read rec<sp>
                         haveMoviSubchunk = true;
-                        Preferences.debug("LIST rec found\n");
+                        Preferences.debug("LIST rec found\n", Preferences.DEBUG_FILEIO);
                         subchunkDataArea = LIST2subchunkSize - 4;
                         subchunkBytesRead = 0;
                         subchunkBlocksRead = 0;
@@ -557,8 +559,8 @@ public class FileAvi extends FileBase {
                 } // if (haveMoviSubchunk && (subchunkBlocksRead == streams))
             } // while ((totalBytesRead < totalDataArea) && chunkRead)
 
-            Preferences.debug("totalBytesRead = " + totalBytesRead + "\n");
-            Preferences.debug("totalDataArea = " + totalDataArea + "\n");
+            Preferences.debug("totalBytesRead = " + totalBytesRead + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("totalDataArea = " + totalDataArea + "\n", Preferences.DEBUG_FILEIO);
             indexPointer = idx1Position + 8;
             indexBytesRead = 0;
 
@@ -3595,7 +3597,7 @@ public class FileAvi extends FileBase {
             raFile.close();
             raFile = null;
         } else {
-            Preferences.debug("About to transcode to: " + fileDir + fileName + "\n");
+            Preferences.debug("About to transcode to: " + fileDir + fileName + "\n", Preferences.DEBUG_FILEIO);
 
             AlgorithmTranscode at = new AlgorithmTranscode(file.toURI().toURL(), fileDir + fileName,
                                                            newCompressionType);
@@ -3749,7 +3751,7 @@ public class FileAvi extends FileBase {
             }
 
             int LIST1Size = getInt(endianess); // size of first LIST CHUNK excluding first 8 bytes
-            Preferences.debug("LIST1Size = " + LIST1Size + "\n");
+            Preferences.debug("LIST1Size = " + LIST1Size + "\n", Preferences.DEBUG_FILEIO);
 
             // with CHUNKsignature and LIST1Size
             LIST1Marker = raFile.getFilePointer();
@@ -3785,10 +3787,10 @@ public class FileAvi extends FileBase {
             microSecPerFrame = getInt(endianess);
 
             // System.err.println("Microsec per frame: " + microSecPerFrame);
-            Preferences.debug("microSecPerFrame = " + microSecPerFrame + "\n");
+            Preferences.debug("microSecPerFrame = " + microSecPerFrame + "\n", Preferences.DEBUG_FILEIO);
 
             int maxBytesPerSecond = getInt(endianess);
-            Preferences.debug("maxBytesPerSecond = " + maxBytesPerSecond + "\n");
+            Preferences.debug("maxBytesPerSecond = " + maxBytesPerSecond + "\n", Preferences.DEBUG_FILEIO);
 
             // System.err.println("Unknown int: " + getInt(endianess));
             getInt(endianess);
@@ -3809,63 +3811,63 @@ public class FileAvi extends FileBase {
 
             if ((flags & 0x100) != 0) {
                 AVIF_ISINTERLEAVED = true;
-                Preferences.debug("AVIF_ISINTERLEAVED = true\n");
+                Preferences.debug("AVIF_ISINTERLEAVED = true\n", Preferences.DEBUG_FILEIO);
             } else {
                 AVIF_ISINTERLEAVED = false;
-                Preferences.debug("AVIF_ISINTERLEAVED = false\n");
+                Preferences.debug("AVIF_ISINTERLEAVED = false\n", Preferences.DEBUG_FILEIO);
             }
 
             if (AVIF_HASINDEX) {
-                Preferences.debug("AVIF_HASINDEX = true\n");
+                Preferences.debug("AVIF_HASINDEX = true\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug("AVIF_HASINDEX = false\n");
+                Preferences.debug("AVIF_HASINDEX = false\n", Preferences.DEBUG_FILEIO);
             }
 
             if (AVIF_MUSTUSEINDEX) {
-                Preferences.debug("AVIF_MUSTUSEINDEX = true\n");
+                Preferences.debug("AVIF_MUSTUSEINDEX = true\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug("AVIF_MUSTUSEINDEX = false\n");
+                Preferences.debug("AVIF_MUSTUSEINDEX = false\n", Preferences.DEBUG_FILEIO);
             }
 
             if ((flags & 0x800) != 0) {
-                Preferences.debug("AVIF_TRUSTCKTYPE = true\n");
+                Preferences.debug("AVIF_TRUSTCKTYPE = true\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug("AVIF_TRUSTCKTYPE = false\n");
+                Preferences.debug("AVIF_TRUSTCKTYPE = false\n", Preferences.DEBUG_FILEIO);
             }
 
             if ((flags & 0x10000) != 0) {
-                Preferences.debug("AVIF_WASCAPTUREFILE = true\n");
+                Preferences.debug("AVIF_WASCAPTUREFILE = true\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug("AVIF_WASCAPTUREFILE = false\n");
+                Preferences.debug("AVIF_WASCAPTUREFILE = false\n", Preferences.DEBUG_FILEIO);
             }
 
             if ((flags & 0x20000) != 0) {
-                Preferences.debug("AVIF_COPYRIGHTED = true\n");
+                Preferences.debug("AVIF_COPYRIGHTED = true\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug("AVIF_COPYRIGHTED = false\n");
+                Preferences.debug("AVIF_COPYRIGHTED = false\n", Preferences.DEBUG_FILEIO);
             }
 
             int totalFrames = getInt(endianess);
             fileInfo.setTotalFrames(totalFrames);
 
             // System.err.println("total frames: " + totalFrames);
-            Preferences.debug("totalFrames = " + totalFrames + "\n");
+            Preferences.debug("totalFrames = " + totalFrames + "\n", Preferences.DEBUG_FILEIO);
 
             // However, many AVI frames will have no data and will just be used to repeat the
             // previous frames.  So we will need to read thru the data to get the actual number
             // of frames used in MIPAV before the image is created.  Then a second read thru will
             // take place to import the data into the image.
             int initialFrames = getInt(endianess);
-            Preferences.debug("initialFrames = " + initialFrames + "\n");
+            Preferences.debug("initialFrames = " + initialFrames + "\n", Preferences.DEBUG_FILEIO);
             streams = getInt(endianess);
-            Preferences.debug("Number of streams: " + streams + "\n");
+            Preferences.debug("Number of streams: " + streams + "\n", Preferences.DEBUG_FILEIO);
 
             int suggestedBufferSize = getInt(endianess);
-            Preferences.debug("suggestedBufferSize = " + suggestedBufferSize + "\n");
+            Preferences.debug("suggestedBufferSize = " + suggestedBufferSize + "\n", Preferences.DEBUG_FILEIO);
             width = getInt(endianess); // xDim
-            Preferences.debug("width = " + width + "\n");
+            Preferences.debug("width = " + width + "\n", Preferences.DEBUG_FILEIO);
             height = getInt(endianess); // yDim
-            Preferences.debug("height = " + height + "\n");
+            Preferences.debug("height = " + height + "\n", Preferences.DEBUG_FILEIO);
 
             // read 4 reserved integers
             for (int i = 0; i < 4; i++) {
@@ -3964,13 +3966,13 @@ public class FileAvi extends FileBase {
                         (handler == 0x20574152 /* RAW<sp> */) || (handler == 0x00000000) ||
                         (handlerString.startsWith("00dc"))) {
                     // uncompressed data
-                    Preferences.debug("Uncompressed data\n");
+                    Preferences.debug("Uncompressed data\n", Preferences.DEBUG_FILEIO);
                 } else if (handlerString.toUpperCase().startsWith("MRLE") ||
                                handlerString.toUpperCase().startsWith("RLE")) {
-                    Preferences.debug("Microsoft run length encoding\n");
+                    Preferences.debug("Microsoft run length encoding\n", Preferences.DEBUG_FILEIO);
                     /* mrle microsoft run length encoding */
                 } else if (handlerString.toUpperCase().startsWith("MSVC")) {
-                    Preferences.debug("Microsoft video 1 compression\n");
+                    Preferences.debug("Microsoft video 1 compression\n", Preferences.DEBUG_FILEIO);
                     // Microsoft video 1 compression
                     doMSVC = true;
                 } else if (handlerString.toUpperCase().startsWith("MP42")) {
@@ -3989,6 +3991,8 @@ public class FileAvi extends FileBase {
                     return AlgorithmTranscode.TRANSCODE_IV50;
                 } else if (handlerString.toUpperCase().startsWith("CVID")) {
                     return AlgorithmTranscode.TRANSCODE_CVID;
+                } else if (handlerString.toUpperCase().startsWith("GEOV")) {
+                    return AlgorithmTranscode.TRANSCODE_GEOV;
                 } else {
                     raFile.close();
                     throw new IOException("Unrecognized compression handler is " + handlerString);
@@ -4011,7 +4015,7 @@ public class FileAvi extends FileBase {
                 }
 
                 int priority = getInt(endianess);
-                Preferences.debug("priority = " + priority + "\n");
+                Preferences.debug("priority = " + priority + "\n", Preferences.DEBUG_FILEIO);
                 initialFrames = getInt(endianess);
 
                 if (initialFrames != 0) {
@@ -4020,23 +4024,23 @@ public class FileAvi extends FileBase {
                 }
 
                 scale = getInt(endianess);
-                Preferences.debug("scale = " + scale + "\n");
+                Preferences.debug("scale = " + scale + "\n", Preferences.DEBUG_FILEIO);
 
                 // System.err.println("Scale is: " + scale);
                 rate = getInt(endianess);
 
                 // System.err.println("Rate is: " + rate);
-                Preferences.debug("rate = " + rate + "\n");
+                Preferences.debug("rate = " + rate + "\n", Preferences.DEBUG_FILEIO);
 
                 int start = getInt(endianess);
-                Preferences.debug("start = " + start + "\n");
+                Preferences.debug("start = " + start + "\n", Preferences.DEBUG_FILEIO);
 
                 int length = getInt(endianess);
-                Preferences.debug("length = " + length + "\n");
+                Preferences.debug("length = " + length + "\n", Preferences.DEBUG_FILEIO);
 
                 // System.err.println("DWLength: " + length);
                 suggestedBufferSize = getInt(endianess);
-                Preferences.debug("suggestedBufferSize = " + suggestedBufferSize + "\n");
+                Preferences.debug("suggestedBufferSize = " + suggestedBufferSize + "\n", Preferences.DEBUG_FILEIO);
 
                 int quality = getInt(endianess);
 
@@ -4045,23 +4049,23 @@ public class FileAvi extends FileBase {
                     throw new IOException("quality = " + quality);
                 }
 
-                Preferences.debug("quality = " + quality + "\n");
+                Preferences.debug("quality = " + quality + "\n", Preferences.DEBUG_FILEIO);
 
                 int sampleSize = getInt(endianess);
-                Preferences.debug("sampleSize = " + sampleSize + "\n");
+                Preferences.debug("sampleSize = " + sampleSize + "\n", Preferences.DEBUG_FILEIO);
 
                 // read destination rectangle within movie rectangle
                 short left = (short) getSignedShort(endianess);
                 Preferences.debug("left = " + left + "\n");
 
                 short top = (short) getSignedShort(endianess);
-                Preferences.debug("top = " + top + "\n");
+                Preferences.debug("top = " + top + "\n", Preferences.DEBUG_FILEIO);
 
                 short right = (short) getSignedShort(endianess);
                 Preferences.debug("right = " + right + "\n");
 
                 short bottom = (short) getSignedShort(endianess);
-                Preferences.debug("bottom = " + bottom + "\n");
+                Preferences.debug("bottom = " + bottom + "\n", Preferences.DEBUG_FILEIO);
 
                 if (strhLength > 56) {
                     byte[] extra = new byte[strhLength - 56];
@@ -4079,9 +4083,9 @@ public class FileAvi extends FileBase {
                 }
 
                 int strfSize = getInt(endianess);
-                Preferences.debug("strfSize = " + strfSize + "\n");
+                Preferences.debug("strfSize = " + strfSize + "\n", Preferences.DEBUG_FILEIO);
                 int BITMAPINFOsize = getInt(endianess);
-                Preferences.debug("BITMAPINFOsize = " + BITMAPINFOsize + "\n");
+                Preferences.debug("BITMAPINFOsize = " + BITMAPINFOsize + "\n", Preferences.DEBUG_FILEIO);
 
                 if (BITMAPINFOsize > strfSize) {
                     BITMAPINFOsize = strfSize;
@@ -4093,9 +4097,9 @@ public class FileAvi extends FileBase {
                 }
 
                 width = getInt(endianess);
-                Preferences.debug("width = " + width + "\n");
+                Preferences.debug("width = " + width + "\n", Preferences.DEBUG_FILEIO);
                 height = getInt(endianess);
-                Preferences.debug("height = " + height + "\n");
+                Preferences.debug("height = " + height + "\n", Preferences.DEBUG_FILEIO);
 
                 short planes = (short) getSignedShort(endianess);
 
@@ -4105,15 +4109,15 @@ public class FileAvi extends FileBase {
                 }
 
                 bitCount = (short) getSignedShort(endianess);
-                Preferences.debug("bitCount = " + bitCount + "\n");
+                Preferences.debug("bitCount = " + bitCount + "\n", Preferences.DEBUG_FILEIO);
 
                 compression = getInt(endianess);
 
                 if (compression == 0) {
-                    Preferences.debug("Compression is BI_RGB\n");
+                    Preferences.debug("Compression is BI_RGB\n", Preferences.DEBUG_FILEIO);
                     // BI_RGB uncompressed
                 } else if (compression == 1) {
-                    Preferences.debug("Compression is BI_RLE8\n");
+                    Preferences.debug("Compression is BI_RLE8\n", Preferences.DEBUG_FILEIO);
                     // BI_RLE8
                 } else if (compression == 2) {
 
@@ -4145,14 +4149,14 @@ public class FileAvi extends FileBase {
                     raFile.close();
                     throw new IOException("Cannot currently handle BI_BITFIELDS compresion");
                 } else if (compression == 1296126531) {
-                    Preferences.debug("compression is Microsoft video 1\n");
+                    Preferences.debug("compression is Microsoft video 1\n", Preferences.DEBUG_FILEIO);
                     doMSVC = true;
                 } else {
                     raFile.close();
                     throw new IOException("Unknown compression with value = " + compression);
                 }
 
-                Preferences.debug("compression = " + compression + "\n");
+                Preferences.debug("compression = " + compression + "\n", Preferences.DEBUG_FILEIO);
 
                 if (((compression == 0) &&
                          ((bitCount == 4) || (bitCount == 8) || (bitCount == 16) || (bitCount == 24) || (bitCount == 32))) ||
@@ -4165,13 +4169,13 @@ public class FileAvi extends FileBase {
                 }
 
                 int imageSize = getInt(endianess);
-                Preferences.debug("imageSize = " + imageSize + "\n");
+                Preferences.debug("imageSize = " + imageSize + "\n", Preferences.DEBUG_FILEIO);
 
                 float[] imgResols = new float[5];
                 imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = 1.0f;
 
                 int xPixelsPerMeter = getInt(endianess);
-                Preferences.debug("xPixelsPerMeter = " + xPixelsPerMeter + "\n");
+                Preferences.debug("xPixelsPerMeter = " + xPixelsPerMeter + "\n", Preferences.DEBUG_FILEIO);
 
                 // System.err.println("xPixelsPerMeter = " + xPixelsPerMeter);
                 if (xPixelsPerMeter > 0) {
@@ -4180,7 +4184,7 @@ public class FileAvi extends FileBase {
                 }
 
                 int yPixelsPerMeter = getInt(endianess);
-                Preferences.debug("yPixelsPerMeter = " + yPixelsPerMeter + "\n");
+                Preferences.debug("yPixelsPerMeter = " + yPixelsPerMeter + "\n", Preferences.DEBUG_FILEIO);
 
                 // System.err.println("yPixelsPerMeter = " + yPixelsPerMeter);
                 if (yPixelsPerMeter > 0) {
@@ -4195,7 +4199,7 @@ public class FileAvi extends FileBase {
                 fileInfo.setResolutions(imgResols);
 
                 int colorsUsed = getInt(endianess);
-                Preferences.debug("colorsUsed = " + colorsUsed + "\n");
+                Preferences.debug("colorsUsed = " + colorsUsed + "\n", Preferences.DEBUG_FILEIO);
 
                 if ((compression == 0) && ((bitCount == 24) || (bitCount == 32)) && (colorsUsed != 0)) {
                     raFile.close();
@@ -4208,7 +4212,7 @@ public class FileAvi extends FileBase {
                 }
 
                 int colorsImportant = getInt(endianess);
-                Preferences.debug("colorsImportant = " + colorsImportant + "\n");
+                Preferences.debug("colorsImportant = " + colorsImportant + "\n", Preferences.DEBUG_FILEIO);
 
                 if (BITMAPINFOsize > 40) {
                     byte[] extra = new byte[BITMAPINFOsize - 40];
@@ -4384,7 +4388,7 @@ public class FileAvi extends FileBase {
             System.gc();
             throw error;
         }
-        Preferences.debug("Finished readHeader\n");
+        Preferences.debug("Finished readHeader\n", Preferences.DEBUG_FILEIO);
         return 0;
     }
 
@@ -5422,17 +5426,17 @@ public class FileAvi extends FileBase {
             microSecPerFrame = getInt(endianess);
 
             // System.err.println("Microsec per frame: " + microSecPerFrame);
-            Preferences.debug("microSecPerFrame = " + microSecPerFrame + "\n");
+            Preferences.debug("microSecPerFrame = " + microSecPerFrame + "\n", Preferences.DEBUG_FILEIO);
             writeIntW(microSecPerFrame, endianess);
             
             secPerFrame = 1.0E-6F * microSecPerFrame;
             framesToCapture = Math.max(1, Math.round(captureTime/secPerFrame));
-            Preferences.debug("Frames to capture = " + framesToCapture + "\n");
+            Preferences.debug("Frames to capture = " + framesToCapture + "\n", Preferences.DEBUG_FILEIO);
             framesToSkip = Math.round(skipTime/secPerFrame);
-            Preferences.debug("Frames to skip = " + framesToSkip + "\n");
+            Preferences.debug("Frames to skip = " + framesToSkip + "\n", Preferences.DEBUG_FILEIO);
 
             int maxBytesPerSecond = getInt(endianess);
-            Preferences.debug("maxBytesPerSecond = " + maxBytesPerSecond + "\n");
+            Preferences.debug("maxBytesPerSecond = " + maxBytesPerSecond + "\n", Preferences.DEBUG_FILEIO);
             writeIntW(maxBytesPerSecond, endianess);
 
             // System.err.println("Unknown int: " + getInt(endianess));
@@ -5455,45 +5459,45 @@ public class FileAvi extends FileBase {
 
             if ((flags & 0x100) != 0) {
                 AVIF_ISINTERLEAVED = true;
-                Preferences.debug("AVIF_ISINTERLEAVED = true\n");
+                Preferences.debug("AVIF_ISINTERLEAVED = true\n", Preferences.DEBUG_FILEIO);
             } else {
                 AVIF_ISINTERLEAVED = false;
-                Preferences.debug("AVIF_ISINTERLEAVED = false\n");
+                Preferences.debug("AVIF_ISINTERLEAVED = false\n", Preferences.DEBUG_FILEIO);
             }
 
             if (AVIF_HASINDEX) {
-                Preferences.debug("AVIF_HASINDEX = true\n");
+                Preferences.debug("AVIF_HASINDEX = true\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug("AVIF_HASINDEX = false\n");
+                Preferences.debug("AVIF_HASINDEX = false\n", Preferences.DEBUG_FILEIO);
             }
 
             if (AVIF_MUSTUSEINDEX) {
-                Preferences.debug("AVIF_MUSTUSEINDEX = true\n");
+                Preferences.debug("AVIF_MUSTUSEINDEX = true\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug("AVIF_MUSTUSEINDEX = false\n");
+                Preferences.debug("AVIF_MUSTUSEINDEX = false\n", Preferences.DEBUG_FILEIO);
             }
             
             if (AVIF_HASINDEX && (!AVIF_MUSTUSEINDEX)) {
                 AVIF_MUSTUSEINDEX = true;
-                Preferences.debug("Changing AVIF_MUSTUSEINDEX from false to true for fast skipping\n");
+                Preferences.debug("Changing AVIF_MUSTUSEINDEX from false to true for fast skipping\n", Preferences.DEBUG_FILEIO);
             }
 
             if ((flags & 0x800) != 0) {
-                Preferences.debug("AVIF_TRUSTCKTYPE = true\n");
+                Preferences.debug("AVIF_TRUSTCKTYPE = true\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug("AVIF_TRUSTCKTYPE = false\n");
+                Preferences.debug("AVIF_TRUSTCKTYPE = false\n", Preferences.DEBUG_FILEIO);
             }
 
             if ((flags & 0x10000) != 0) {
-                Preferences.debug("AVIF_WASCAPTUREFILE = true\n");
+                Preferences.debug("AVIF_WASCAPTUREFILE = true\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug("AVIF_WASCAPTUREFILE = false\n");
+                Preferences.debug("AVIF_WASCAPTUREFILE = false\n", Preferences.DEBUG_FILEIO);
             }
 
             if ((flags & 0x20000) != 0) {
-                Preferences.debug("AVIF_COPYRIGHTED = true\n");
+                Preferences.debug("AVIF_COPYRIGHTED = true\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug("AVIF_COPYRIGHTED = false\n");
+                Preferences.debug("AVIF_COPYRIGHTED = false\n", Preferences.DEBUG_FILEIO);
             }
             
             writeIntW(0x10, endianess); // dwFlags - just set the bit for AVIF_HASINDEX
@@ -5501,7 +5505,7 @@ public class FileAvi extends FileBase {
             int totalFrames = getInt(endianess);
 
             //System.err.println("total frames: " + totalFrames);
-            Preferences.debug("totalFrames = " + totalFrames + "\n");
+            Preferences.debug("totalFrames = " + totalFrames + "\n", Preferences.DEBUG_FILEIO);
             totalFramesW = (totalFrames * framesToCapture)/(framesToCapture + framesToSkip);
             int remainderFrames = totalFrames % (framesToCapture + framesToSkip);
             if (remainderFrames > framesToCapture) {
@@ -5516,25 +5520,25 @@ public class FileAvi extends FileBase {
             // of frames used in MIPAV before the image is created.  Then a second read thru will
             // take place to import the data into the image.
             int initialFrames = getInt(endianess);
-            Preferences.debug("initialFrames = " + initialFrames + "\n");
+            Preferences.debug("initialFrames = " + initialFrames + "\n", Preferences.DEBUG_FILEIO);
             // dwInitinalFrames - Initial frame for interleaved files
             // Noninterleaved files should specify 0.
             writeIntW(0, endianess);
             
             streams = getInt(endianess);
-            Preferences.debug("Number of streams: " + streams + "\n");
+            Preferences.debug("Number of streams: " + streams + "\n", Preferences.DEBUG_FILEIO);
             // dwStreams - number of streams in the file - here 1 video and zero audio.
             writeIntW(1, endianess);
 
             int suggestedBufferSize = getInt(endianess);
-            Preferences.debug("suggestedBufferSize = " + suggestedBufferSize + "\n");
+            Preferences.debug("suggestedBufferSize = " + suggestedBufferSize + "\n", Preferences.DEBUG_FILEIO);
             writeIntW(suggestedBufferSize, endianess);
             width = getInt(endianess); // xDim
-            Preferences.debug("width = " + width + "\n");
+            Preferences.debug("width = " + width + "\n", Preferences.DEBUG_FILEIO);
             xDim = width;
             writeIntW(width, endianess);
             height = getInt(endianess); // yDim
-            Preferences.debug("height = " + height + "\n");
+            Preferences.debug("height = " + height + "\n", Preferences.DEBUG_FILEIO);
             yDim = height;
             writeIntW(height, endianess);
 
@@ -5692,10 +5696,10 @@ public class FileAvi extends FileBase {
                     handlerW[2] = 66; // B
                     handlerW[3] = 32; // space
                     compression = 0;
-                    Preferences.debug("Uncompressed data\n");
+                    Preferences.debug("Uncompressed data\n", Preferences.DEBUG_FILEIO);
                 } else if (handlerString.toUpperCase().startsWith("MRLE") ||
                                handlerString.toUpperCase().startsWith("RLE")) {
-                    Preferences.debug("Microsoft run length encoding\n");
+                    Preferences.debug("Microsoft run length encoding\n", Preferences.DEBUG_FILEIO);
                     /* mrle microsoft run length encoding */
                     handlerW[0] = 0x6D; // m
                     handlerW[1] = 0x72; // r
@@ -5703,7 +5707,7 @@ public class FileAvi extends FileBase {
                     handlerW[3] = 0x65; // e
                     compression = 1;
                 } else if (handlerString.toUpperCase().startsWith("MSVC")) {
-                    Preferences.debug("Microsoft video 1 compression\n");
+                    Preferences.debug("Microsoft video 1 compression\n", Preferences.DEBUG_FILEIO);
                     // Microsoft video 1 compression
                     doMSVC = true;
                     handlerW[0] = 109; // m
@@ -5741,7 +5745,7 @@ public class FileAvi extends FileBase {
                 writeIntW(0, endianess); // dwFlags
 
                 int priority = getInt(endianess);
-                Preferences.debug("priority = " + priority + "\n");
+                Preferences.debug("priority = " + priority + "\n", Preferences.DEBUG_FILEIO);
                 // dwPriority - priority of a stream type.  For example, in a file with
                 // multiple audio streams, the one with the highest priority might be the
                 // default one.
@@ -5763,32 +5767,32 @@ public class FileAvi extends FileBase {
 
                 // rate/scale = samples/second
                 scale = getInt(endianess);
-                Preferences.debug("scale = " + scale + "\n");
+                Preferences.debug("scale = " + scale + "\n", Preferences.DEBUG_FILEIO);
 
                 // System.err.println("Scale is: " + scale);
                 writeIntW(scale, endianess);
                 rate = getInt(endianess);
 
                 // System.err.println("Rate is: " + rate);
-                Preferences.debug("rate = " + rate + "\n");
+                Preferences.debug("rate = " + rate + "\n", Preferences.DEBUG_FILEIO);
                 writeIntW(rate, endianess);
                 
                 float samplesPerSecond = (float)rate/(float)scale;
-                Preferences.debug("Samples per second = " + samplesPerSecond + "\n");
+                Preferences.debug("Samples per second = " + samplesPerSecond + "\n", Preferences.DEBUG_FILEIO);
                 if (Math.abs(((1.0/samplesPerSecond) - secPerFrame)/secPerFrame) < 0.01) {
-                    Preferences.debug("Frame times from 1.0E-6*microSecPerFrame and scale/rate match\n");
+                    Preferences.debug("Frame times from 1.0E-6*microSecPerFrame and scale/rate match\n", Preferences.DEBUG_FILEIO);
                 }
                 else {
-                    Preferences.debug("Frame times from 1.0E-6*microSecPerFrame and scale/rate don't match");
+                    Preferences.debug("Frame times from 1.0E-6*microSecPerFrame and scale/rate don't match", Preferences.DEBUG_FILEIO);
                 }
 
                 int start = getInt(endianess);
-                Preferences.debug("start = " + start + "\n");
+                Preferences.debug("start = " + start + "\n", Preferences.DEBUG_FILEIO);
                 // dwStart - this field is usually set to zero
                 writeIntW(0, endianess);
 
                 int length = getInt(endianess);
-                Preferences.debug("length = " + length + "\n");
+                Preferences.debug("length = " + length + "\n", Preferences.DEBUG_FILEIO);
                 lengthW = (length * framesToCapture)/(framesToCapture + framesToSkip);
                 remainderFrames = length % (framesToCapture + framesToSkip);
                 if (remainderFrames > framesToCapture) {
@@ -5801,7 +5805,7 @@ public class FileAvi extends FileBase {
 
                 // System.err.println("DWLength: " + length);
                 suggestedBufferSize = getInt(endianess);
-                Preferences.debug("suggestedBufferSize = " + suggestedBufferSize + "\n");
+                Preferences.debug("suggestedBufferSize = " + suggestedBufferSize + "\n", Preferences.DEBUG_FILEIO);
                 // dwSuggestedBufferSize - suggested buffer size for reading the stream
                 writeIntW(suggestedBufferSize, endianess);
 
@@ -5812,14 +5816,14 @@ public class FileAvi extends FileBase {
                     throw new IOException("quality = " + quality);
                 }
 
-                Preferences.debug("quality = " + quality + "\n");
+                Preferences.debug("quality = " + quality + "\n", Preferences.DEBUG_FILEIO);
                 // dwQuality - encoding quality given by an integer between
                 // 0 and 10,000.  If set to -1, drivers use the default
                 // quality value.
                 writeIntW(quality, endianess);
 
                 int sampleSize = getInt(endianess);
-                Preferences.debug("sampleSize = " + sampleSize + "\n");
+                Preferences.debug("sampleSize = " + sampleSize + "\n", Preferences.DEBUG_FILEIO);
                 if ((compression == 0) || (compression == 1296126531)) {
                     writeIntW(3 * width * height, endianess);
                 }
@@ -5829,16 +5833,16 @@ public class FileAvi extends FileBase {
 
                 // read destination rectangle within movie rectangle
                 short left = (short) getSignedShort(endianess);
-                Preferences.debug("left = " + left + "\n");
+                Preferences.debug("left = " + left + "\n", Preferences.DEBUG_FILEIO);
 
                 short top = (short) getSignedShort(endianess);
                 Preferences.debug("top = " + top + "\n");
 
                 short right = (short) getSignedShort(endianess);
-                Preferences.debug("right = " + right + "\n");
+                Preferences.debug("right = " + right + "\n", Preferences.DEBUG_FILEIO);
 
                 short bottom = (short) getSignedShort(endianess);
-                Preferences.debug("bottom = " + bottom + "\n");
+                Preferences.debug("bottom = " + bottom + "\n", Preferences.DEBUG_FILEIO);
                 // rcFrame - Specifies the destination rectangle for a text or video stream within the movie
                 // rectangle specified by the dwWidth and dwHeight members of the AVI main header structure.
                 // The rcFrame member is typically used in support of multiple video streams.  Set this
@@ -5860,7 +5864,7 @@ public class FileAvi extends FileBase {
                 int strfSignature = getInt(endianess);
 
                 if (strfSignature == 0x66727473) {
-                    Preferences.debug("Read strf\n");
+                    Preferences.debug("Read strf\n", Preferences.DEBUG_FILEIO);
                     // read strf
                 } else {
                     raFile.close();
@@ -5892,11 +5896,11 @@ public class FileAvi extends FileBase {
                 writeIntW(BITMAPINFOsize, endianess);
 
                 width = getInt(endianess);
-                Preferences.debug("width = " + width + "\n");
+                Preferences.debug("width = " + width + "\n", Preferences.DEBUG_FILEIO);
                 // biWidth - image width in pixels
                 writeIntW(width, endianess);
                 height = getInt(endianess);
-                Preferences.debug("height = " + height + "\n");
+                Preferences.debug("height = " + height + "\n", Preferences.DEBUG_FILEIO);
                 // biHeight - image height in pixels.  If height is positive,
                 // the bitmap is a bottom up DIB and its origin is in the lower left corner.  If
                 // height is negative, the bitmap is a top-down DIB and its origin is the upper
@@ -5915,17 +5919,17 @@ public class FileAvi extends FileBase {
                 writeShortW((short)1, endianess);
 
                 bitCount = (short) getSignedShort(endianess);
-                Preferences.debug("bitCount = " + bitCount + "\n");
+                Preferences.debug("bitCount = " + bitCount + "\n", Preferences.DEBUG_FILEIO);
                 // biBitCount - number of bits per pixel
                 writeShortW(bitCount, endianess);
 
                 compression = getInt(endianess);
 
                 if (compression == 0) {
-                    Preferences.debug("Compression is BI_RGB\n");
+                    Preferences.debug("Compression is BI_RGB\n", Preferences.DEBUG_FILEIO);
                     // BI_RGB uncompressed
                 } else if (compression == 1) {
-                    Preferences.debug("Compression is BI_RLE8\n");
+                    Preferences.debug("Compression is BI_RLE8\n", Preferences.DEBUG_FILEIO);
                     // BI_RLE8
                 } else if (compression == 2) {
 
@@ -5957,14 +5961,14 @@ public class FileAvi extends FileBase {
                     raFile.close();
                     throw new IOException("Cannot currently handle BI_BITFIELDS compresion");
                 } else if (compression == 1296126531) {
-                    Preferences.debug("compression is Microsoft video 1\n");
+                    Preferences.debug("compression is Microsoft video 1\n", Preferences.DEBUG_FILEIO);
                     doMSVC = true;
                 } else {
                     raFile.close();
                     throw new IOException("Unknown compression with value = " + compression);
                 }
 
-                Preferences.debug("compression = " + compression + "\n");
+                Preferences.debug("compression = " + compression + "\n", Preferences.DEBUG_FILEIO);
 
                 if (((compression == 0) &&
                          ((bitCount == 4) || (bitCount == 8) || (bitCount == 16) || (bitCount == 24) || (bitCount == 32))) ||
@@ -6011,7 +6015,7 @@ public class FileAvi extends FileBase {
                 writeIntW(compression, endianess);
 
                 int imageSize = getInt(endianess);
-                Preferences.debug("imageSize = " + imageSize + "\n");
+                Preferences.debug("imageSize = " + imageSize + "\n", Preferences.DEBUG_FILEIO);
                 // biSizeImage - specifies the size in bytes of the image frame.  This can be
                 // set to zero for uncompressed RGB bitmaps.
                 if ((compression == 0) || (compression == 1296126531)) {
@@ -6025,7 +6029,7 @@ public class FileAvi extends FileBase {
                 imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = 1.0f;
 
                 int xPixelsPerMeter = getInt(endianess);
-                Preferences.debug("xPixelsPerMeter = " + xPixelsPerMeter + "\n");
+                Preferences.debug("xPixelsPerMeter = " + xPixelsPerMeter + "\n", Preferences.DEBUG_FILEIO);
                 // biXPelsPerMeter - horizontal resolution in pixels
                 writeIntW(xPixelsPerMeter, endianess);
 
@@ -6035,7 +6039,7 @@ public class FileAvi extends FileBase {
                 }
 
                 int yPixelsPerMeter = getInt(endianess);
-                Preferences.debug("yPixelsPerMeter = " + yPixelsPerMeter + "\n");
+                Preferences.debug("yPixelsPerMeter = " + yPixelsPerMeter + "\n", Preferences.DEBUG_FILEIO);
                 // biYPelsPerMeter - vertical resolution in pixels
                 writeIntW(yPixelsPerMeter, endianess);
 
@@ -6049,7 +6053,7 @@ public class FileAvi extends FileBase {
                 // System.err.println("Microseconds per frame (on read): " + microSecPerFrame);
 
                 int colorsUsed = getInt(endianess);
-                Preferences.debug("colorsUsed = " + colorsUsed + "\n");
+                Preferences.debug("colorsUsed = " + colorsUsed + "\n", Preferences.DEBUG_FILEIO);
 
                 if ((compression == 0) && ((bitCount == 24) || (bitCount == 32)) && (colorsUsed != 0)) {
                     raFile.close();
@@ -6077,7 +6081,7 @@ public class FileAvi extends FileBase {
                 }
 
                 int colorsImportant = getInt(endianess);
-                Preferences.debug("colorsImportant = " + colorsImportant + "\n");
+                Preferences.debug("colorsImportant = " + colorsImportant + "\n", Preferences.DEBUG_FILEIO);
                 // biClrImportant - specifies that the first x colors of the color table
                 // are important to the DIB.  If the rest of the colors are not available,
                 // the image still retains its meaning in an acceptable manner.  When this
@@ -6341,7 +6345,7 @@ public class FileAvi extends FileBase {
 
                         // have read rec<sp>
                         haveMoviSubchunk = true;
-                        Preferences.debug("LIST rec found\n");
+                        Preferences.debug("LIST rec found\n", Preferences.DEBUG_FILEIO);
                         subchunkBytesRead = 0;
                         subchunkBlocksRead = 0;
                     } else {
@@ -6483,8 +6487,8 @@ public class FileAvi extends FileBase {
                 } // if (haveMoviSubchunk && (subchunkBlocksRead == streams))
             } // while ((totalBytesRead < totalDataArea) && chunkRead)
 
-            Preferences.debug("totalBytesRead = " + totalBytesRead + "\n");
-            Preferences.debug("totalDataArea = " + totalDataArea + "\n");
+            Preferences.debug("totalBytesRead = " + totalBytesRead + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("totalDataArea = " + totalDataArea + "\n", Preferences.DEBUG_FILEIO);
             indexPointer = idx1Position + 8;
             indexBytesRead = 0;
 
