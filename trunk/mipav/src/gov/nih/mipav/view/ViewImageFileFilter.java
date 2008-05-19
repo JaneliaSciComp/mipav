@@ -42,7 +42,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
     /** Medical Formats(*.dcm; *.ima; *.img; *.mnc; *.sig; *.xml; *.head; *.nii, *.rec, *.frec, *.nrrd). */
     public static final int TECH = 8;
 
-    /** Microscopy files (*.avi; *.ics; *.lsm; *.pic; *.stk; *.tif; *.tiff; *.xml). */
+    /** Microscopy files (*.avi; *.ics; *.liff; *.lsm; *.pic; *.stk; *.tif; *.tiff; *.xml). */
     public static final int MICROSCOPY = 9;
 
     /** Misc.(*.bmp; *.pcx; *.png; *.tga; *.xbm; *.xpm). */
@@ -99,7 +99,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         "Look-Up-Table Files (*.lut)", // LUT
         "Matrix Files (*.mtx; *.mat; *.xfm)", // MATRIX
         "Medical (*.dcm; *.xml, *ima; *.img; *.mnc; *.sig; *.head; *.nii; *.rec; *.frec; *.nrrd)", // TECH
-        "Microscopy (*.avi; *.ics; *.lsm; *.pic; *.stk; *.tif; *.tiff; *.xml)", // MICROSCOPY
+        "Microscopy (*.avi; *.ics; *.liff; *.lsm; *.pic; *.stk; *.tif; *.tiff; *.xml)", // MICROSCOPY
         "Misc.(*.avi; *.bmp; *.pcx; *.png; *.tga; *.xbm; *.xpm)", // MISC
         "Optical (*.avi; *.bmp; *.img; *.jpg; *.pict; *.psd; *.tif; *.tiff; *.xml)", // OPTICAL
         "Project (*.xml)", // PROJECT
@@ -383,9 +383,9 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         } else if ((filterType == PROJECT) && (extension.equals("xml"))) {
             return true;
         } else if ((filterType == MICROSCOPY) &&
-                       ((extension.equals("avi")) || (extension.equals("ics")) || (extension.equals("lsm")) ||
-                            (extension.equals("pic")) || (extension.equals("stk")) || (extension.equals("tif")) ||
-                            (extension.equals("tiff")) || (extension.equals("xml")))) {
+                       ((extension.equals("avi")) || (extension.equals("ics")) || (extension.equals("liff")) || 
+                            (extension.equals("lsm")) || (extension.equals("pic")) || (extension.equals("stk"))||
+                            (extension.equals("tif")) || (extension.equals("tiff")) || (extension.equals("xml")))) {
             return true;
         } else if ((filterType == NLT) && (extension.equals("nlt"))) {
             return true;
