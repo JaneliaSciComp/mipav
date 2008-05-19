@@ -493,6 +493,13 @@ public class FileLIFF extends FileBase {
         int rowBytesTypeArray[] = new int[17];
         int jstart;
         boolean sameStep;
+        int uncompressedSize;
+        int dataWidth;
+        byte compressedBuffer[];
+        byte uncompressedBuffer[];
+        LZOCodec lzo;
+        int srcIndex;
+        int destIndex;
 
         try {
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
@@ -505,10 +512,10 @@ public class FileLIFF extends FileBase {
 
             if (byteOrder == 0xffff0000) {
                 endianess = FileBase.LITTLE_ENDIAN;
-                Preferences.debug("Byte order in unexpectedly little-endian\n");
+                Preferences.debug("\nByte order in unexpectedly little-endian\n");
             } else if (byteOrder == 0x0000ffff) {
                 endianess = FileBase.BIG_ENDIAN;
-                Preferences.debug("Byte order is the expected big-endian (Macintosh)\n");
+                Preferences.debug("\nByte order is the expected big-endian (Macintosh)\n");
             } else {
                 raFile.close();
                 throw new IOException("LIFF Read Header: Error - first 4 bytes are an illegal " + byteOrder);
@@ -1698,10 +1705,18 @@ public class FileLIFF extends FileBase {
                         } // while (!found)
                     } // if (versionNumber <= 2)
                     else {
+                        // Image width
                         width = readInt(endianess);
                         Preferences.debug("width = " + width + "\n");
+                        xDimArray[imageType] = width;
+                        // Image height
                         height = readInt(endianess);
                         Preferences.debug("height = " + height + "\n");
+                        yDimArray[imageType] = height;
+                        pictLocation[subPictCount] = raFile.getFilePointer();
+                        pixelSizeArray[subPictCount] = layerDepth;
+                        imageTypeLocation[subPictCount++] = imageType;
+                        // Read in rest of data later if necessary
                     }
                     
                     if ((imageType >= DEEP_GREY_9)  && (imageType <= DEEP_GREY_16)) {
@@ -1870,7 +1885,7 @@ public class FileLIFF extends FileBase {
                 }
             } // if (ZStepNumber >= 1)
             
-            for (i = 0; i <= 16; i++) {
+            for (i = 1; i <= 1; i++) {
                 if (imageTypeCount[i] == 1) {
                     Preferences.debug("The image has 1 slice of type " + typeStr[i] + "\n");
                 }
@@ -1937,7 +1952,9 @@ public class FileLIFF extends FileBase {
                 image = new ModelImage(ModelStorageBase.ARGB_USHORT, imageExtents, fileName);
                 shortBuffer = new short[4 * xDim * yDim];
                 sliceColorBytes = 2 * xDim * yDim;
-                sliceColorBuffer = new byte[sliceColorBytes];
+                if (versionNumber <= 2) {
+                    sliceColorBuffer = new byte[sliceColorBytes];
+                }
             }
             else if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) {
                 if (majorTypeCount > 1) {
@@ -2003,7 +2020,9 @@ public class FileLIFF extends FileBase {
                 fileInfo.setExtents(imageExtents);
                 image = new ModelImage(ModelStorageBase.ARGB, imageExtents, fileName);
                 if (majorType == MAC_16_BIT_COLOR) {
-                    byteBuffer = new byte[2 * xDim * yDim];
+                    if (versionNumber <= 2) {
+                        byteBuffer = new byte[2 * xDim * yDim];
+                    }
                     byteBuffer2 = new byte[4 * xDim * yDim];
                 }
                 else {
@@ -2041,13 +2060,17 @@ public class FileLIFF extends FileBase {
                 fileInfo.setExtents(imageExtents);
                 image = new ModelImage(ModelStorageBase.UBYTE, imageExtents, fileName);
                 if ((majorType == MAC_16_GREYS) || (majorType == MAC_16_COLORS)) {
-                    bufferSize = rowBytes * yDim;
-                    byteBuffer = new byte[bufferSize];
+                    if (versionNumber <= 2) {
+                        bufferSize = rowBytes * yDim;
+                        byteBuffer = new byte[bufferSize];
+                    }
                     byteBuffer2 = new byte[sliceSize];
                 }
                 else if (majorType == MAC_4_GREYS) {
-                    bufferSize = rowBytes * yDim;
-                    byteBuffer = new byte[bufferSize];
+                    if (versionNumber <= 2) {
+                        bufferSize = rowBytes * yDim;
+                        byteBuffer = new byte[bufferSize];
+                    }
                     byteBuffer2 = new byte[sliceSize];
                 }
                 else {
@@ -2082,8 +2105,10 @@ public class FileLIFF extends FileBase {
                 sliceSize = xDim * yDim;
                 fileInfo.setExtents(imageExtents);
                 image = new ModelImage(ModelStorageBase.BOOLEAN, imageExtents, fileName); 
-                bufferSize = rowBytes * yDim;
-                byteBuffer = new byte[bufferSize];
+                if (versionNumber <= 2) {
+                    bufferSize = rowBytes * yDim;
+                    byteBuffer = new byte[bufferSize];
+                }
                 booleanBuffer = new boolean[sliceSize];
             } // else if (majorType == MAC_1_BIT)
             else {
@@ -2127,66 +2152,426 @@ public class FileLIFF extends FileBase {
             fileInfo.setResolutions(imgResols);
             fileInfo.setOrigin(origin);
             
-            if (doDeepGreyColor) {
-                colorSequence[0] = 1;
-                colorSequence[1] = 2;
-                colorSequence[2] = 3;
-                if (haveCY3 && haveFITC && haveDAPI) {
-                    // CY3 is red, FITC is green, and DAPI is blue
-                    for (i = 0; i < 3; i++) {
-                        if (majorLayerString[i].equals("CY3")) {
-                            colorSequence[i] = 1;
+            if (versionNumber <= 2) {
+                if (doDeepGreyColor) {
+                    colorSequence[0] = 1;
+                    colorSequence[1] = 2;
+                    colorSequence[2] = 3;
+                    if (haveCY3 && haveFITC && haveDAPI) {
+                        // CY3 is red, FITC is green, and DAPI is blue
+                        for (i = 0; i < 3; i++) {
+                            if (majorLayerString[i].equals("CY3")) {
+                                colorSequence[i] = 1;
+                            }
+                            else if (majorLayerString[i].equals("FITC")) {
+                                colorSequence[i] = 2;
+                            }
+                            else {
+                                colorSequence[i] = 3;
+                            }
                         }
-                        else if (majorLayerString[i].equals("FITC")) {
-                            colorSequence[i] = 2;
+                    } // if (haveCY3 && haveFITC && haveFITC)
+                    index = 0;
+                    color = colorSequence[0];
+                    sliceNumber = 0;
+                    for (i = 0; i < subPictCount; i++) {
+                        if (imageTypeLocation[i] == majorType) {
+                            raFile.seek(pictLocation[i]);
+                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
+                            // Read in second section of comment 101
+                            // blkCount contains the index of this block in the sequence, and will be
+                            // from 0 to totalBlocks - 1.  Remember that it will generally require a
+                            // series of blocks to build a single image.  Openlab assumes that pic 
+                            // comment blocks arrive in the correct sequential order, starting at 0.
+                            blkCount = readInt(endianess);
+                            Preferences.debug("blkCount = " + blkCount + "\n");
+                            // totalBlocks is the number of blocks that make up this picture or LUT
+                            totalBlocks = readInt(endianess);
+                            Preferences.debug("totalBlocks = " + totalBlocks + "\n");
+                            // originalSize is the count of bytes in the original image or LUT
+                            originalSize = readInt(endianess);
+                            Preferences.debug("originalSize = " + originalSize + "\n");
+                            // compressedSize is always the same as originalSize
+                            compressedSize = readInt(endianess);
+                            Preferences.debug("compressedSize = " + compressedSize + "\n");
+                            // picBlkSize is the count of bytes of data in the remainder of the
+                            // comment.  This size does not include the header.  This is the count
+                            // of bytes after bitShift.
+                            picBlkSize = readInt(endianess);
+                            Preferences.debug("Bytes in Pic Comment 101 not including header = "
+                                              + picBlkSize + "\n");
+                            // bitDepth is the logical bitdepth of the image, and may be any
+                            // value from 9 to 16.
+                            bitDepth = readShort(endianess);
+                            Preferences.debug("bitDepth = " + bitDepth + "\n");
+                            // bitShift should be ignored
+                            bitShift = readShort(endianess);
+                            len = Math.min(picBlkSize, sliceColorBytes - index);
+                            raFile.read(sliceColorBuffer, index, len);
+                            index += len;
+                            if (index == sliceColorBytes) {
+                                for (j = 0; j < sliceColorBytes/2; j++) {
+                                    shortBuffer[4*j + color] = getBufferShort(sliceColorBuffer, 2*j, endianess);
+                                } // for (j = 0; j < sliceColorBytes/2; j++)
+                                index = 0;
+                                if (color == colorSequence[0]) {
+                                    color = colorSequence[1];
+                                }
+                                else if (color == colorSequence[1]) {
+                                    color = colorSequence[2];
+                                }
+                                else if (color == colorSequence[2]) {
+                                    color = colorSequence[0];
+                                    image.importData(4* sliceNumber * xDim * yDim, shortBuffer, false);
+                                    sliceNumber++;
+                                }
+                            } // if (index == sliceColorBytes)
+                         } // if (imageTypeLocation[i] == majorType)
+                    } // for (i = 0; i < greySubPictCount; i++)
+                } // if (doDeepGreyColor)
+                else if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) {
+                    index = 0;
+                    sliceNumber = 0;
+                    for (i = 0; i < subPictCount; i++) {
+                        if (imageTypeLocation[i] == majorType) {
+                            raFile.seek(pictLocation[i]);
+                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
+                            // Read in second section of comment 101
+                            // blkCount contains the index of this block in the sequence, and will be
+                            // from 0 to totalBlocks - 1.  Remember that it will generally require a
+                            // series of blocks to build a single image.  Openlab assumes that pic 
+                            // comment blocks arrive in the correct sequential order, starting at 0.
+                            blkCount = readInt(endianess);
+                            Preferences.debug("blkCount = " + blkCount + "\n");
+                            // totalBlocks is the number of blocks that make up this picture or LUT
+                            totalBlocks = readInt(endianess);
+                            Preferences.debug("totalBlocks = " + totalBlocks + "\n");
+                            // originalSize is the count of bytes in the original image or LUT
+                            originalSize = readInt(endianess);
+                            Preferences.debug("originalSize = " + originalSize + "\n");
+                            // compressedSize is always the same as originalSize
+                            compressedSize = readInt(endianess);
+                            Preferences.debug("compressedSize = " + compressedSize + "\n");
+                            // picBlkSize is the count of bytes of data in the remainder of the
+                            // comment.  This size does not include the header.  This is the count
+                            // of bytes after bitShift.
+                            picBlkSize = readInt(endianess);
+                            Preferences.debug("Bytes in Pic Comment 101 not including header = "
+                                              + picBlkSize + "\n");
+                            // bitDepth is the logical bitdepth of the image, and may be any
+                            // value from 9 to 16.
+                            bitDepth = readShort(endianess);
+                            Preferences.debug("bitDepth = " + bitDepth + "\n");
+                            // bitShift should be ignored
+                            bitShift = readShort(endianess);
+                            len = Math.min(picBlkSize, sliceBytes - index);
+                            raFile.read(byteBuffer, index, len);
+                            index += len;
+                            if (index == sliceBytes) {
+                                for (j = 0; j < sliceBytes/2; j++) {
+                                    shortBuffer[j] = getBufferShort(byteBuffer, 2*j, endianess);
+                                } // for (j = 0; j < sliceColorBytes/2; j++)
+                                index = 0;
+                                image.importData(sliceNumber * xDim * yDim, shortBuffer, false);
+                                sliceNumber++;
+                            } // if (index == sliceBytes)
+                         } // if (imageTypeLocation[i] == majorType)
+                    } // for (i = 0; i < greySubPictCount; i++)
+                } // else if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16))
+                else {
+                    for (i = 0; i < subPictCount; i++) {
+                        index = 0;
+                        component = 0;
+                        componentArray = new int[1];
+                        if (imageTypeLocation[i] == majorType) {
+                            rowBytes = rowBytesArray[i];
+                            raFile.seek(pictLocation[i]);
+                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
+                            if ((packTypeArray[i] == 0) || (packTypeArray[i] > 2)) {
+                                totalByteCount = 0;
+                                if (majorType == MAC_16_BIT_COLOR) {
+                                    if (packTypeArray[i] == 0) {
+                                        packTypeArray[i] = 3;
+                                    }
+                                }
+                                else if (packTypeArray[i] == 0) {
+                                        packTypeArray[i] = 4;
+                                }
+                                if (cmpCountArray[i] == 3) {
+                                    componentArray = new int[3];
+                                    componentArray[0] = 1;
+                                    componentArray[1] = 2;
+                                    componentArray[2] = 3;
+                                }
+                                else  if (cmpCountArray[i] == 4) {
+                                    // To make the sample embryo2 LIFF file MAC_24_BIT_COLOR slices look like the 
+                                    // DEEP_GREY_12 slices actually requires an order of 0, 2, 1, 3.
+                                    componentArray = new int[4];
+                                    componentArray[0] = 0;
+                                    componentArray[1] = 1;
+                                    componentArray[2] = 2;
+                                    componentArray[3] = 3;
+                                }
+                                for (j = boundsTopArray[i]; j < boundsBottomArray[i]; j++) {
+                                    if (rowBytesArray[i] > 250) {
+                                        byteCount = getUnsignedShort(endianess);
+                                        totalByteCount += (byteCount + 2);
+                                    }
+                                    else {
+                                        raFile.read(prefix);
+                                        byteCount = prefix[0] & 0xff;
+                                        totalByteCount += (byteCount + 1);
+                                    }
+                                    pad = new byte[byteCount];
+                                    raFile.read(pad);
+                                    rowBytesRead = 0;
+                                    rowIndex = 0;
+                                    if (packTypeArray[i] == 3) {
+                                        while ((rowBytesRead < rowBytesArray[i]) && (rowIndex < byteCount)) {
+                                            b1 = pad[rowIndex++]; 
+                                            if (b1 >= 0) { // 127 >= b1 >= 0
+                                              for (k = 0; k < 2*(b1 + 1); k++) {
+                                                  byteBuffer[index++] = pad[rowIndex++];
+                                              }
+                                            } // if (b1 >= 0)
+                                            else if (b1 != -128) { // -1 >= b1 >= -127
+                                              len = -b1 + 1;
+                                              for (k = 0; k < 2*len; k++) {
+                                                  byteBuffer[index++] = pad[rowIndex];
+                                              }
+                                              rowIndex += 2;
+                                            } // else if (b1 != -128)
+                                         } // while (rowBytesRead < rowBytesArray[i])
+                                    } // if (packTypeArray[i] == 3)
+                                    else { // packTypeArray[i] == 4
+                                        while ((rowBytesRead < rowBytesArray[i]) && (rowIndex < byteCount)) {
+                                           b1 = pad[rowIndex++]; 
+                                           if (b1 >= 0) { // 127 >= b1 >= 0
+                                             for (k = 0; k < (b1 + 1); k++) {
+                                                 byteBuffer[(cmpCountArray[i]*index++) + componentArray[component]] =
+                                                                                         pad[rowIndex++];
+                                                 if ((index % xDim) == 0) {
+                                                     if (component < cmpCountArray[i] - 1) {
+                                                       component++;
+                                                       index = index - xDim;
+                                                     }
+                                                     else {
+                                                       component = 0;
+                                                     }
+                                                 }
+                                             }
+                                           } // if (b1 >= 0)
+                                           else if (b1 != -128) { // -1 >= b1 >= -127
+                                             len = -b1 + 1;
+                                             for (k = 0; k < len; k++) {
+                                                 byteBuffer[(cmpCountArray[i]*index++) + componentArray[component]] =
+                                                     pad[rowIndex];
+                                                 if ((index % xDim) == 0) {
+                                                     if (component < cmpCountArray[i] - 1) {
+                                                       component++;
+                                                       index = index - xDim;
+                                                     }
+                                                     else {
+                                                       component = 0;
+                                                     }
+                                                 }
+                                             }
+                                             rowIndex++;
+                                           } // else if (b1 != -128)
+                                        } // while (rowBytesRead < rowBytesArray[i])
+                                    } // else packTypeArray[i] == 4
+                                } // for (j = boundsTopArray[i]; j < boundsBottomArray[i]; j++)
+                                if (majorType == MAC_24_BIT_COLOR) {
+                                    image.importData(4 * sliceNumber * sliceSize, byteBuffer, false);
+                                }
+                                else if (majorType == MAC_16_BIT_COLOR) {    
+                                    for (j = 0; j < sliceSize; j++) {
+                                        byteBuffer2[4*j] = (byte)255;
+                                        shortColor = (short) (((byteBuffer[2*j] & 0xff) << 8) |
+                                                               (byteBuffer[2*j + 1] & 0xff));
+                                        byteBuffer2[4*j+1] = (byte)((shortColor & 0x7C00) >>> 7);
+                                        byteBuffer2[4*j+2] = (byte)((shortColor & 0x03E0) >>> 2);
+                                        byteBuffer2[4*j+3] = (byte)((shortColor & 0x001F) << 3);
+                                    }
+                                    image.importData(4 * sliceNumber * sliceSize, byteBuffer2, false); 
+                                } // else if (majorType == MAC_16_BIT_COLOR)
+                                else if ((majorType == MAC_16_GREYS) || (majorType == MAC_16_COLORS)) {
+                                    for (j = 0, jstart = 0,y = 0; y < yDim; y++) {
+                                        if ((j != 0) && (j < jstart + 2*rowBytes)) {
+                                            j = jstart + 2*rowBytes;
+                                        }
+                                        for (x = 0, jstart = j, k = 0; x < xDim; x++) {
+                                            index = x + y*xDim;
+                                            if (k == 0) {
+                                                byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 1] & 0xf0) >>> 4);
+                                                k = 1;
+                                            }
+                                            else if (k == 1) {
+                                                byteBuffer2[index] = (byte)(byteBuffer[(j++) >> 1] & 0x0f);  
+                                                k = 0;
+                                            }
+                                        }
+                                    }
+                                    image.importData(sliceNumber * sliceSize, byteBuffer2, false);
+                                } // else if ((majorType == MAC_16_GREYS) || (majorType == MAC_16_COLORS))
+                                else if (majorType == MAC_4_GREYS) {
+                                    for (j = 0, jstart = 0, y = 0; y < yDim; y++) {
+                                        if ((j != 0) && (j < jstart + 4*rowBytes)) {
+                                            j = jstart + 4*rowBytes;
+                                        }
+                                        for (x = 0, jstart = j, k = 0; x < xDim; x++) {
+                                            index = x + y*xDim;
+                                            if (k == 0) {
+                                                byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 2] & 0xc0) >>> 6);
+                                                k = 1;
+                                            }
+                                            else if (k == 1) {
+                                                byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 2] & 0x30) >>> 4);
+                                                k = 2;
+                                            }
+                                            else if (k == 2) {
+                                                byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 2] & 0x0c) >>> 2);
+                                                k = 3;
+                                            }
+                                            else if (k == 3) {
+                                                byteBuffer2[index] = (byte)(byteBuffer[(j++) >> 2] & 0x03);
+                                                k = 0;
+                                            }
+                                        }
+                                    }
+                                    image.importData(sliceNumber * sliceSize, byteBuffer2, false);
+                                } // else if (majorType == MAC_4_GREYS)
+                                else if (majorType == MAC_1_BIT) {
+                                    for (j = 0, jstart = 0, y = 0; y < yDim; y++) {
+                                        if ((j != 0) && (j < jstart + 8*rowBytes)) {
+                                            j = jstart + 8*rowBytes;
+                                        }
+                                        for (x = 0, jstart = j, k = 0x80; x < xDim; x++) {
+                                            index = x + y*xDim;
+                                            
+                                            if ((byteBuffer[(j++) >>> 3] & k) != 0) {
+                                                booleanBuffer[index] = true;
+                                            }
+                                            else {
+                                                booleanBuffer[index] = false;
+                                            }
+                                            if (k == 0x01) {
+                                                k = 0x80;
+                                            }
+                                            else {
+                                                k = k >>> 1;
+                                            }
+                                        }
+                                    }
+                                    image.importData(sliceNumber * sliceSize, booleanBuffer, false);
+                                } // else if (majorType == MAC_1_BIT)
+                                else {
+                                    image.importData(sliceNumber * sliceSize, byteBuffer, false);
+                                }
+                                sliceNumber++;
+                            } // if ((packType == 0) || (packType > 2))
+                            if ((LUTSizeLocation[i] > 0L) && (!haveLUT)) {
+                                raFile.seek(LUTSizeLocation[i]); 
+                                haveLUT = true;
+                                // One less than the number of entries in the table
+                                ctSize = readShort(endianess);
+                                Preferences.debug("ctSize = " + ctSize + "\n");
+                                // read the color table into a LUT
+                                dimExtentsLUT = new int[2];
+                                dimExtentsLUT[0] = 4;
+                                dimExtentsLUT[1] = 256;
+                                LUT = new ModelLUT(ModelLUT.GRAY, (ctSize + 1), dimExtentsLUT);
+                                maxValue = 0;
+                                // An array of ColorSpec records
+                                for (j = 0; j <= ctSize; j++) {
+                                    index = getUnsignedShort(endianess);
+                                    redColor = getUnsignedShort(endianess);
+                                    if (redColor > maxValue) {
+                                        maxValue = redColor;
+                                    }
+                                    greenColor = getUnsignedShort(endianess);
+                                    if (greenColor > maxValue) {
+                                        maxValue = greenColor;
+                                    }
+                                    blueColor = getUnsignedShort(endianess);
+                                    if (blueColor > maxValue) {
+                                        maxValue = blueColor;
+                                    }
+                                } // for (j = 0; j <= ctSize; j++)
+                                rightShift = 0;
+                                while (maxValue >= 256) {
+                                    maxValue = maxValue >> 1;
+                                    rightShift++;
+                                }
+                                raFile.seek(LUTSizeLocation[i] + 2);
+                                for (j = 0; j <= ctSize; j++) {
+                                    index = getUnsignedShort(endianess);
+                                    redColor = (getUnsignedShort(endianess) >>> rightShift);
+                                    greenColor = (getUnsignedShort(endianess) >>> rightShift);
+                                    blueColor = (getUnsignedShort(endianess) >>> rightShift);
+                                    LUT.setColor(j, 1, redColor, greenColor, blueColor);
+                                } // for (j = 0; j <= ctSize; j++)
+                                for (j = (ctSize+1); j < 256; j++) {
+                                    LUT.setColor(j, 1, 0, 0, 0);    
+                                } // for (j = (ctSize+1); j < 256; j++)
+                                LUT.makeIndexedLUT(null);
+                            } // if (LUTSizeLocation[i] > 0L) && (!haveLUT))
+                        } // if (imageTypeLocation[i] == majorType)
+                    } // for (i = 0; i < subPictCount; i++)
+                } // else
+            } // if (versionNumber <= 2)
+            else { // versionNumber == 5
+                if (doDeepGreyColor) {
+                    colorSequence[0] = 1;
+                    colorSequence[1] = 2;
+                    colorSequence[2] = 3;
+                    if (haveCY3 && haveFITC && haveDAPI) {
+                        // CY3 is red, FITC is green, and DAPI is blue
+                        for (i = 0; i < 3; i++) {
+                            if (majorLayerString[i].equals("CY3")) {
+                                colorSequence[i] = 1;
+                            }
+                            else if (majorLayerString[i].equals("FITC")) {
+                                colorSequence[i] = 2;
+                            }
+                            else {
+                                colorSequence[i] = 3;
+                            }
                         }
-                        else {
-                            colorSequence[i] = 3;
-                        }
-                    }
-                } // if (haveCY3 && haveFITC && haveFITC)
-                index = 0;
-                color = colorSequence[0];
-                sliceNumber = 0;
-                for (i = 0; i < subPictCount; i++) {
-                    if (imageTypeLocation[i] == majorType) {
-                        raFile.seek(pictLocation[i]);
-                        Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
-                        // Read in second section of comment 101
-                        // blkCount contains the index of this block in the sequence, and will be
-                        // from 0 to totalBlocks - 1.  Remember that it will generally require a
-                        // series of blocks to build a single image.  Openlab assumes that pic 
-                        // comment blocks arrive in the correct sequential order, starting at 0.
-                        blkCount = readInt(endianess);
-                        Preferences.debug("blkCount = " + blkCount + "\n");
-                        // totalBlocks is the number of blocks that make up this picture or LUT
-                        totalBlocks = readInt(endianess);
-                        Preferences.debug("totalBlocks = " + totalBlocks + "\n");
-                        // originalSize is the count of bytes in the original image or LUT
-                        originalSize = readInt(endianess);
-                        Preferences.debug("originalSize = " + originalSize + "\n");
-                        // compressedSize is always the same as originalSize
-                        compressedSize = readInt(endianess);
-                        Preferences.debug("compressedSize = " + compressedSize + "\n");
-                        // picBlkSize is the count of bytes of data in the remainder of the
-                        // comment.  This size does not include the header.  This is the count
-                        // of bytes after bitShift.
-                        picBlkSize = readInt(endianess);
-                        Preferences.debug("Bytes in Pic Comment 101 not including header = "
-                                          + picBlkSize + "\n");
-                        // bitDepth is the logical bitdepth of the image, and may be any
-                        // value from 9 to 16.
-                        bitDepth = readShort(endianess);
-                        Preferences.debug("bitDepth = " + bitDepth + "\n");
-                        // bitShift should be ignored
-                        bitShift = readShort(endianess);
-                        len = Math.min(picBlkSize, sliceColorBytes - index);
-                        raFile.read(sliceColorBuffer, index, len);
-                        index += len;
-                        if (index == sliceColorBytes) {
-                            for (j = 0; j < sliceColorBytes/2; j++) {
-                                shortBuffer[4*j + color] = getBufferShort(sliceColorBuffer, 2*j, endianess);
-                            } // for (j = 0; j < sliceColorBytes/2; j++)
+                    } // if (haveCY3 && haveFITC && haveFITC)
+                    index = 0;
+                    color = colorSequence[0];
+                    sliceNumber = 0;
+                    for (i = 0; i < subPictCount; i++) {
+                        if (imageTypeLocation[i] == majorType) {
+                            raFile.seek(pictLocation[i]);
+                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
+                            uncompressedSize = readInt(endianess);
+                            Preferences.debug("Expected uncompressed data size = " + uncompressedSize + "\n");
+                            compressedSize = readInt(endianess);
+                            Preferences.debug("Compressed data size = " + compressedSize + "\n");
+                            dataWidth = uncompressedSize/yDim;
+                            Preferences.debug("dataWidth = " + dataWidth + "\n");
+                            // The data is compressed using MiniLZO.
+                            compressedBuffer = new byte[compressedSize];
+                            raFile.read(compressedBuffer);
+                            lzo = new LZOCodec();
+                            try {
+                                uncompressedBuffer = lzo.decompress(compressedBuffer);
+                            }
+                            catch (Exception e){
+                                MipavUtil.displayError("Exception on LZOCodec.decompress(compressedBuffer)");
+                                raFile.close();
+                                return null;
+                            }
+                            Preferences.debug("Actual uncompressed data size = " + uncompressedBuffer.length + "\n");
+                            for (y = 0; y < yDim; y++) {
+                                for (x = 0; x < xDim; x++) {
+                                    destIndex = 4*y*xDim + 4*x + color;
+                                    srcIndex = 2*y*xDim + 2*x;
+                                    shortBuffer[destIndex] = getBufferShort(uncompressedBuffer, srcIndex, endianess);
+                                }
+                            }
                             index = 0;
                             if (color == colorSequence[0]) {
                                 color = colorSequence[1];
@@ -2199,189 +2584,122 @@ public class FileLIFF extends FileBase {
                                 image.importData(4* sliceNumber * xDim * yDim, shortBuffer, false);
                                 sliceNumber++;
                             }
-                        } // if (index == sliceColorBytes)
-                     } // if (imageTypeLocation[i] == majorType)
-                } // for (i = 0; i < greySubPictCount; i++)
-            } // if (doDeepGreyColor)
-            else if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) {
-                index = 0;
-                sliceNumber = 0;
-                for (i = 0; i < subPictCount; i++) {
-                    if (imageTypeLocation[i] == majorType) {
-                        raFile.seek(pictLocation[i]);
-                        Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
-                        // Read in second section of comment 101
-                        // blkCount contains the index of this block in the sequence, and will be
-                        // from 0 to totalBlocks - 1.  Remember that it will generally require a
-                        // series of blocks to build a single image.  Openlab assumes that pic 
-                        // comment blocks arrive in the correct sequential order, starting at 0.
-                        blkCount = readInt(endianess);
-                        Preferences.debug("blkCount = " + blkCount + "\n");
-                        // totalBlocks is the number of blocks that make up this picture or LUT
-                        totalBlocks = readInt(endianess);
-                        Preferences.debug("totalBlocks = " + totalBlocks + "\n");
-                        // originalSize is the count of bytes in the original image or LUT
-                        originalSize = readInt(endianess);
-                        Preferences.debug("originalSize = " + originalSize + "\n");
-                        // compressedSize is always the same as originalSize
-                        compressedSize = readInt(endianess);
-                        Preferences.debug("compressedSize = " + compressedSize + "\n");
-                        // picBlkSize is the count of bytes of data in the remainder of the
-                        // comment.  This size does not include the header.  This is the count
-                        // of bytes after bitShift.
-                        picBlkSize = readInt(endianess);
-                        Preferences.debug("Bytes in Pic Comment 101 not including header = "
-                                          + picBlkSize + "\n");
-                        // bitDepth is the logical bitdepth of the image, and may be any
-                        // value from 9 to 16.
-                        bitDepth = readShort(endianess);
-                        Preferences.debug("bitDepth = " + bitDepth + "\n");
-                        // bitShift should be ignored
-                        bitShift = readShort(endianess);
-                        len = Math.min(picBlkSize, sliceBytes - index);
-                        raFile.read(byteBuffer, index, len);
-                        index += len;
-                        if (index == sliceBytes) {
-                            for (j = 0; j < sliceBytes/2; j++) {
-                                shortBuffer[j] = getBufferShort(byteBuffer, 2*j, endianess);
-                            } // for (j = 0; j < sliceColorBytes/2; j++)
-                            index = 0;
+                        } // if (imageTypeLocation[i] == majorType)
+                    } // for (i = 0; i < greySubPictCount; i++)
+                } // if (doDeepGreyColor)
+                else if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) {
+                    index = 0;
+                    sliceNumber = 0;
+                    for (i = 0; i < subPictCount; i++) {
+                        if (imageTypeLocation[i] == majorType) {
+                            raFile.seek(pictLocation[i]);
+                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
+                            uncompressedSize = readInt(endianess);
+                            Preferences.debug("Uncompressed data size = " + uncompressedSize + "\n");
+                            compressedSize = readInt(endianess);
+                            Preferences.debug("Compressed data size = " + compressedSize + "\n");
+                            dataWidth = uncompressedSize/yDim;
+                            Preferences.debug("dataWidth = " + dataWidth + "\n");
+//                          The data is compressed using MiniLZO. 
+                            compressedBuffer = new byte[compressedSize];
+                            raFile.read(compressedBuffer);
+                            lzo = new LZOCodec();
+                            try {
+                                uncompressedBuffer = lzo.decompress(compressedBuffer);
+                            }
+                            catch (Exception e){
+                                MipavUtil.displayError("Exception on LZOCodec.decompress(compressedBuffer)");
+                                raFile.close();
+                                return null;
+                            }
+                            Preferences.debug("Actual uncompressed data size = " + uncompressedBuffer.length + "\n");
+                            for (y = 0; y < yDim; y++) {
+                                for (x = 0; x < xDim; x++) {
+                                    destIndex = y*xDim + x;
+                                    srcIndex = 2*y*xDim + 2*x;
+                                    shortBuffer[destIndex] = getBufferShort(uncompressedBuffer, srcIndex, endianess);
+                                }
+                            }
                             image.importData(sliceNumber * xDim * yDim, shortBuffer, false);
                             sliceNumber++;
-                        } // if (index == sliceBytes)
-                     } // if (imageTypeLocation[i] == majorType)
-                } // for (i = 0; i < greySubPictCount; i++)
-            } // else if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16))
-            else {
-                for (i = 0; i < subPictCount; i++) {
-                    index = 0;
-                    component = 0;
-                    componentArray = new int[1];
-                    if (imageTypeLocation[i] == majorType) {
-                        rowBytes = rowBytesArray[i];
-                        raFile.seek(pictLocation[i]);
-                        Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
-                        if ((packTypeArray[i] == 0) || (packTypeArray[i] > 2)) {
-                            totalByteCount = 0;
-                            if (majorType == MAC_16_BIT_COLOR) {
-                                if (packTypeArray[i] == 0) {
-                                    packTypeArray[i] = 3;
-                                }
+                        } // if (imageTypeLocation[i] == majorType)
+                    } // for (i = 0; i < greySubPictCount; i++)
+                } // else if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16))
+                else {
+                    for (i = 0; i < subPictCount; i++) {
+                        index = 0;
+                        component = 0;
+                        componentArray = new int[1];
+                        if (imageTypeLocation[i] == majorType) {
+                            raFile.seek(pictLocation[i]);
+                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
+                            uncompressedSize = readInt(endianess);
+                            Preferences.debug("Uncompressed data size = " + uncompressedSize + "\n");
+                            compressedSize = readInt(endianess);
+                            Preferences.debug("Compressed data size = " + compressedSize + "\n");
+                            dataWidth = uncompressedSize/yDim;
+                            Preferences.debug("dataWidth = " + dataWidth + "\n");
+                            // The data is compressed using MiniLZO.
+                            compressedBuffer = new byte[compressedSize];
+                            raFile.read(compressedBuffer);
+                            lzo = new LZOCodec();
+                            try {
+                                uncompressedBuffer = lzo.decompress(compressedBuffer);
                             }
-                            else if (packTypeArray[i] == 0) {
-                                    packTypeArray[i] = 4;
+                            catch (Exception e){
+                                MipavUtil.displayError("Exception on LZOCodec.decompress(compressedBuffer)");
+                                raFile.close();
+                                return null;
                             }
-                            if (cmpCountArray[i] == 3) {
-                                componentArray = new int[3];
-                                componentArray[0] = 1;
-                                componentArray[1] = 2;
-                                componentArray[2] = 3;
-                            }
-                            else  if (cmpCountArray[i] == 4) {
-                                // To make the sample embryo2 LIFF file MAC_24_BIT_COLOR slices look like the 
-                                // DEEP_GREY_12 slices actually requires an order of 0, 2, 1, 3.
-                                componentArray = new int[4];
-                                componentArray[0] = 0;
-                                componentArray[1] = 1;
-                                componentArray[2] = 2;
-                                componentArray[3] = 3;
-                            }
-                            for (j = boundsTopArray[i]; j < boundsBottomArray[i]; j++) {
-                                if (rowBytesArray[i] > 250) {
-                                    byteCount = getUnsignedShort(endianess);
-                                    totalByteCount += (byteCount + 2);
-                                }
-                                else {
-                                    raFile.read(prefix);
-                                    byteCount = prefix[0] & 0xff;
-                                    totalByteCount += (byteCount + 1);
-                                }
-                                pad = new byte[byteCount];
-                                raFile.read(pad);
-                                rowBytesRead = 0;
-                                rowIndex = 0;
-                                if (packTypeArray[i] == 3) {
-                                    while ((rowBytesRead < rowBytesArray[i]) && (rowIndex < byteCount)) {
-                                        b1 = pad[rowIndex++]; 
-                                        if (b1 >= 0) { // 127 >= b1 >= 0
-                                          for (k = 0; k < 2*(b1 + 1); k++) {
-                                              byteBuffer[index++] = pad[rowIndex++];
-                                          }
-                                        } // if (b1 >= 0)
-                                        else if (b1 != -128) { // -1 >= b1 >= -127
-                                          len = -b1 + 1;
-                                          for (k = 0; k < 2*len; k++) {
-                                              byteBuffer[index++] = pad[rowIndex];
-                                          }
-                                          rowIndex += 2;
-                                        } // else if (b1 != -128)
-                                     } // while (rowBytesRead < rowBytesArray[i])
-                                } // if (packTypeArray[i] == 3)
-                                else { // packTypeArray[i] == 4
-                                    while ((rowBytesRead < rowBytesArray[i]) && (rowIndex < byteCount)) {
-                                       b1 = pad[rowIndex++]; 
-                                       if (b1 >= 0) { // 127 >= b1 >= 0
-                                         for (k = 0; k < (b1 + 1); k++) {
-                                             byteBuffer[(cmpCountArray[i]*index++) + componentArray[component]] =
-                                                                                     pad[rowIndex++];
-                                             if ((index % xDim) == 0) {
-                                                 if (component < cmpCountArray[i] - 1) {
-                                                   component++;
-                                                   index = index - xDim;
-                                                 }
-                                                 else {
-                                                   component = 0;
-                                                 }
-                                             }
-                                         }
-                                       } // if (b1 >= 0)
-                                       else if (b1 != -128) { // -1 >= b1 >= -127
-                                         len = -b1 + 1;
-                                         for (k = 0; k < len; k++) {
-                                             byteBuffer[(cmpCountArray[i]*index++) + componentArray[component]] =
-                                                 pad[rowIndex];
-                                             if ((index % xDim) == 0) {
-                                                 if (component < cmpCountArray[i] - 1) {
-                                                   component++;
-                                                   index = index - xDim;
-                                                 }
-                                                 else {
-                                                   component = 0;
-                                                 }
-                                             }
-                                         }
-                                         rowIndex++;
-                                       } // else if (b1 != -128)
-                                    } // while (rowBytesRead < rowBytesArray[i])
-                                } // else packTypeArray[i] == 4
-                            } // for (j = boundsTopArray[i]; j < boundsBottomArray[i]; j++)
-                            if (majorType == MAC_24_BIT_COLOR) {
-                                image.importData(4 * sliceNumber * sliceSize, byteBuffer, false);
-                            }
-                            else if (majorType == MAC_16_BIT_COLOR) {    
-                                for (j = 0; j < sliceSize; j++) {
-                                    byteBuffer2[4*j] = (byte)255;
-                                    shortColor = (short) (((byteBuffer[2*j] & 0xff) << 8) |
-                                                           (byteBuffer[2*j + 1] & 0xff));
-                                    byteBuffer2[4*j+1] = (byte)((shortColor & 0x7C00) >>> 7);
-                                    byteBuffer2[4*j+2] = (byte)((shortColor & 0x03E0) >>> 2);
-                                    byteBuffer2[4*j+3] = (byte)((shortColor & 0x001F) << 3);
-                                }
-                                image.importData(4 * sliceNumber * sliceSize, byteBuffer2, false); 
-                            } // else if (majorType == MAC_16_BIT_COLOR)
-                            else if ((majorType == MAC_16_GREYS) || (majorType == MAC_16_COLORS)) {
-                                for (j = 0, jstart = 0,y = 0; y < yDim; y++) {
-                                    if ((j != 0) && (j < jstart + 2*rowBytes)) {
-                                        j = jstart + 2*rowBytes;
+                            Preferences.debug("Actual uncompressed data size = " + uncompressedBuffer.length + "\n");
+                            if ((majorType == MAC_24_BIT_COLOR) && (pixelSizeArray[i] == 32)) {
+                                for (y = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++) {
+                                        for (color = 1; color <= 3; color++) {
+                                            destIndex = 4*y*xDim + 4*x + color;
+                                            srcIndex = y*dataWidth + 4*x + color;
+                                            byteBuffer[destIndex] = uncompressedBuffer[srcIndex];   
+                                        }
                                     }
-                                    for (x = 0, jstart = j, k = 0; x < xDim; x++) {
-                                        index = x + y*xDim;
+                                }
+                                image.importData(4 * sliceNumber * sliceSize, byteBuffer, false);
+                            } // if ((majorType = MAC_24_BIT_COLOR) && (pixelSizeArray[i] == 32))
+                            else if (majorType == MAC_16_BIT_COLOR) {
+                                for (y = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++) {
+                                        srcIndex = y*dataWidth + 2*x;
+                                        shortColor = (short) (((uncompressedBuffer[srcIndex] & 0xff) << 8) |
+                                                               (uncompressedBuffer[srcIndex + 1] & 0xff));
+                                        destIndex = 4*y*xDim + 4*x;
+                                        byteBuffer2[destIndex] = (byte)255;
+                                        byteBuffer2[destIndex+1] = (byte)((shortColor & 0x7C00) >>> 7);
+                                        byteBuffer2[destIndex+2] = (byte)((shortColor & 0x03E0) >>> 2);
+                                        byteBuffer2[destIndex+3] = (byte)((shortColor & 0x001F) << 3);
+                                    }
+                                }
+                                image.importData(4 * sliceNumber * sliceSize, byteBuffer2, false);     
+                            } // else if (majorType == MAC_16_BIT_COLOR)
+                            else if ((majorType == MAC_256_GREYS) || (majorType == MAC_256_COLORS)) {
+                                for (y = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++) {
+                                        destIndex = y*xDim + x;
+                                        srcIndex = y*dataWidth + x;
+                                        byteBuffer[destIndex] = uncompressedBuffer[srcIndex];
+                                    }
+                                }
+                                image.importData(sliceNumber * sliceSize, byteBuffer, false);
+                            } // else if ((majorType == MAC_256_GREYS) || (majorType == MAC_256_COLORS))
+                            else if ((majorType == MAC_16_GREYS) || (majorType == MAC_16_COLORS)) {
+                                for (y = 0; y < yDim; y++){
+                                    for (x = 0, k = 0; x < xDim; x++) {
+                                        srcIndex = (y*dataWidth + (x >> 1));
+                                        destIndex = y*xDim + x;
                                         if (k == 0) {
-                                            byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 1] & 0xf0) >>> 4);
+                                            byteBuffer2[destIndex] = (byte)((uncompressedBuffer[srcIndex] & 0xf0) >>> 4);
                                             k = 1;
                                         }
                                         else if (k == 1) {
-                                            byteBuffer2[index] = (byte)(byteBuffer[(j++) >> 1] & 0x0f);  
+                                            byteBuffer2[destIndex] = (byte)(uncompressedBuffer[srcIndex] & 0x0f);  
                                             k = 0;
                                         }
                                     }
@@ -2389,26 +2707,24 @@ public class FileLIFF extends FileBase {
                                 image.importData(sliceNumber * sliceSize, byteBuffer2, false);
                             } // else if ((majorType == MAC_16_GREYS) || (majorType == MAC_16_COLORS))
                             else if (majorType == MAC_4_GREYS) {
-                                for (j = 0, jstart = 0, y = 0; y < yDim; y++) {
-                                    if ((j != 0) && (j < jstart + 4*rowBytes)) {
-                                        j = jstart + 4*rowBytes;
-                                    }
-                                    for (x = 0, jstart = j, k = 0; x < xDim; x++) {
-                                        index = x + y*xDim;
+                                for (y = 0; y < yDim; y++) {
+                                    for (x = 0, k = 0; x < xDim; x++) {
+                                        srcIndex = (y*dataWidth + (x >> 2));
+                                        destIndex = y*xDim + x;
                                         if (k == 0) {
-                                            byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 2] & 0xc0) >>> 6);
+                                            byteBuffer2[destIndex] = (byte)((uncompressedBuffer[srcIndex] & 0xc0) >>> 6);
                                             k = 1;
                                         }
                                         else if (k == 1) {
-                                            byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 2] & 0x30) >>> 4);
+                                            byteBuffer2[destIndex] = (byte)((uncompressedBuffer[srcIndex] & 0x30) >>> 4);
                                             k = 2;
                                         }
                                         else if (k == 2) {
-                                            byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 2] & 0x0c) >>> 2);
+                                            byteBuffer2[destIndex] = (byte)((uncompressedBuffer[srcIndex] & 0x0c) >>> 2);
                                             k = 3;
                                         }
                                         else if (k == 3) {
-                                            byteBuffer2[index] = (byte)(byteBuffer[(j++) >> 2] & 0x03);
+                                            byteBuffer2[destIndex] = (byte)(uncompressedBuffer[srcIndex] & 0x03);
                                             k = 0;
                                         }
                                     }
@@ -2416,18 +2732,15 @@ public class FileLIFF extends FileBase {
                                 image.importData(sliceNumber * sliceSize, byteBuffer2, false);
                             } // else if (majorType == MAC_4_GREYS)
                             else if (majorType == MAC_1_BIT) {
-                                for (j = 0, jstart = 0, y = 0; y < yDim; y++) {
-                                    if ((j != 0) && (j < jstart + 8*rowBytes)) {
-                                        j = jstart + 8*rowBytes;
-                                    }
-                                    for (x = 0, jstart = j, k = 0x80; x < xDim; x++) {
-                                        index = x + y*xDim;
-                                        
-                                        if ((byteBuffer[(j++) >>> 3] & k) != 0) {
-                                            booleanBuffer[index] = true;
+                                for (y = 0; y < yDim; y++) {
+                                    for (x = 0, k = 0x80; x < xDim; x++) {
+                                        srcIndex = (y*dataWidth + (x >> 3));
+                                        destIndex = y*xDim + x;
+                                        if ((uncompressedBuffer[srcIndex] & k) != 0) {
+                                            booleanBuffer[destIndex] = true;
                                         }
                                         else {
-                                            booleanBuffer[index] = false;
+                                            booleanBuffer[destIndex] = false;
                                         }
                                         if (k == 0x01) {
                                             k = 0x80;
@@ -2439,60 +2752,11 @@ public class FileLIFF extends FileBase {
                                 }
                                 image.importData(sliceNumber * sliceSize, booleanBuffer, false);
                             } // else if (majorType == MAC_1_BIT)
-                            else {
-                                image.importData(sliceNumber * sliceSize, byteBuffer, false);
-                            }
                             sliceNumber++;
-                        } // if ((packType == 0) || (packType > 2))
-                        if ((LUTSizeLocation[i] > 0L) && (!haveLUT)) {
-                            raFile.seek(LUTSizeLocation[i]); 
-                            haveLUT = true;
-                            // One less than the number of entries in the table
-                            ctSize = readShort(endianess);
-                            Preferences.debug("ctSize = " + ctSize + "\n");
-                            // read the color table into a LUT
-                            dimExtentsLUT = new int[2];
-                            dimExtentsLUT[0] = 4;
-                            dimExtentsLUT[1] = 256;
-                            LUT = new ModelLUT(ModelLUT.GRAY, (ctSize + 1), dimExtentsLUT);
-                            maxValue = 0;
-                            // An array of ColorSpec records
-                            for (j = 0; j <= ctSize; j++) {
-                                index = getUnsignedShort(endianess);
-                                redColor = getUnsignedShort(endianess);
-                                if (redColor > maxValue) {
-                                    maxValue = redColor;
-                                }
-                                greenColor = getUnsignedShort(endianess);
-                                if (greenColor > maxValue) {
-                                    maxValue = greenColor;
-                                }
-                                blueColor = getUnsignedShort(endianess);
-                                if (blueColor > maxValue) {
-                                    maxValue = blueColor;
-                                }
-                            } // for (j = 0; j <= ctSize; j++)
-                            rightShift = 0;
-                            while (maxValue >= 256) {
-                                maxValue = maxValue >> 1;
-                                rightShift++;
-                            }
-                            raFile.seek(LUTSizeLocation[i] + 2);
-                            for (j = 0; j <= ctSize; j++) {
-                                index = getUnsignedShort(endianess);
-                                redColor = (getUnsignedShort(endianess) >>> rightShift);
-                                greenColor = (getUnsignedShort(endianess) >>> rightShift);
-                                blueColor = (getUnsignedShort(endianess) >>> rightShift);
-                                LUT.setColor(j, 1, redColor, greenColor, blueColor);
-                            } // for (j = 0; j <= ctSize; j++)
-                            for (j = (ctSize+1); j < 256; j++) {
-                                LUT.setColor(j, 1, 0, 0, 0);    
-                            } // for (j = (ctSize+1); j < 256; j++)
-                            LUT.makeIndexedLUT(null);
-                        } // if (LUTSizeLocation[i] > 0L) && (!haveLUT))
-                    } // if (imageTypeLocation[i] == majorType)
-                } // for (i = 0; i < subPictCount; i++)
-            } // else
+                        } // if (imageTypeLocation[i] == majorType)
+                    } // for (i = 0; i < subPictCount; i++)
+                } // else
+            } // else versionNumber == 5
             fileInfo.setBitDepth(bitDepth);
             for (i = 0; i < imageSlices; i++) {
                 image.setFileInfo(fileInfo, i);
