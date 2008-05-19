@@ -1885,7 +1885,7 @@ public class FileLIFF extends FileBase {
                 }
             } // if (ZStepNumber >= 1)
             
-            for (i = 1; i <= 1; i++) {
+            for (i = 0; i <= 16; i++) {
                 if (imageTypeCount[i] == 1) {
                     Preferences.debug("The image has 1 slice of type " + typeStr[i] + "\n");
                 }
