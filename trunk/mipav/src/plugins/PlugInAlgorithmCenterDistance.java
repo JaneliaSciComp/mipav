@@ -21,7 +21,7 @@ import javax.swing.*;
 /**
  * This shows how to extend the AlgorithmBase class.
  *
- * @version  May 16, 2008
+ * @version  May 20, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -62,9 +62,11 @@ import javax.swing.*;
  *                  
  *           <p>7.) Find the bounding box of each blue object.  Expand the bounding box until
  *                  bounding box area or volume/blue object area or volume >= minBoundsRatio.
- *                  Keep decreasing the minimum blue value for the object by 1 and expanding the
- *                  original blue object within the box until the sum of the expanded blue object intensities
- *                  divided by the sum of the box blue intensities >= minIntensityFraction.
+ *                  Use a midpoint algorithm with upper and lower limits to find the minimum
+ *                  blue value for the object.  This algorithm expands the
+ *                  original blue object within the box until smallest blue value is found for which
+ *                  the sum of the expanded blue object intensities divided by the sum of the box
+ *                  blue intensities >= minIntensityFraction.
  *           
  *           <p>8.) Smooth the blue objects with an open operation followed by a close operation.
  *
@@ -556,6 +558,10 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         fillHolesAlgo2D.finalize();
         fillHolesAlgo2D = null;
         
+        fireProgressStateChanged("IDing objects in blue segmented image");
+
+        fireProgressStateChanged(15);
+        
         numPruningPixels = 0;
         edgingType = 0;
         
@@ -589,15 +595,10 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             return;
         }
 
+        fireProgressStateChanged("Removing blue objects touching edges");
         fireProgressStateChanged(22);
 
-        
-
         edgeObjects = numObjects;
-        fireProgressStateChanged("Removing blue objects touching edges");
-
-        fireProgressStateChanged(23);
-        
         removeID = new boolean[numObjects];
         for (id = 1; id <= numObjects; id++) {
 
@@ -654,6 +655,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         
         IDArray2 = new byte[length];
         if (blueExpand) {
+            fireProgressStateChanged("Obtaining bounding boxes of blue objects");
+            fireProgressStateChanged(25);
             blueArea= new int[numObjects];
             blueIntensityTotal = new double[numObjects];
             newBlueIntensityTotal = new double[numObjects];
@@ -702,7 +705,11 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 } // for (x = 0; x < xDim; x++)
             } // for (y = 0; y < yDim; y++)
             
+            fireProgressStateChanged("Expanding blue objects within bounding boxes");
+            fireProgressStateChanged(26);
             for (i = 0; i < numObjects; i++) {
+                UI.setDataText("Expanding object " + (i+1) + "\n");
+                Preferences.debug("Expanding object " + (i+1) + "\n");
                 blueWidth[i] = (blueRight[i] - blueLeft[i]);
                 blueHeight[i] = (blueBottom[i] - blueTop[i]);
                 blueRectArea[i] = blueWidth[i]*blueHeight[i];
@@ -732,6 +739,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 if ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue)) {
                     lowerValue = (int)Math.round(minBlueValue + 1);
                     upperValue = (int)Math.round(blueMinArray[i] - 1);
+                    UI.setDataText("lowerValue = " + lowerValue + " upperValue = " + upperValue + "\n");
+                    Preferences.debug("lowerValue = " + lowerValue + " upperValue = " + upperValue + "\n");
                     if (lowerValue == upperValue) {
                         lastRun = true;
                     }
@@ -795,6 +804,12 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                         else {
                                 upperValue = midValue-1; 
                                 midValue = (lowerValue + upperValue)/2;
+                                // So you don't have to repeat all of the growth
+                                // process on every iteration
+                                blueIntensityTotal[i] = newBlueIntensityTotal[i];
+                                for (k = 0; k < length; k++) {
+                                    IDArray[k] = IDArray2[k];
+                                }
                         }
                         
                         if (lowerValue == upperValue) {
@@ -816,6 +831,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         
         // Smooth with a morphological opening followed by a closing
         fireProgressStateChanged("Opening blue segmented image");
+        fireProgressStateChanged(27);
 
         kernel = AlgorithmMorphology2D.CONNECTED4;
         circleDiameter = 1.0f;
@@ -831,6 +847,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         openAlgo = null;
 
         fireProgressStateChanged("Closing blue segmented image");
+        fireProgressStateChanged(28);
 
         method = AlgorithmMorphology2D.CLOSE;
         closeAlgo = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation, itersErosion,
@@ -1462,7 +1479,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         }
 
         fireProgressStateChanged("Extracting VOIs from green image");
-        fireProgressStateChanged(74);
+        fireProgressStateChanged(70);
         algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
         algoVOIExtraction.setColorTable(colorTable);
         algoVOIExtraction.setNameTable(nameTable);
@@ -1476,7 +1493,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         nVOIs = VOIs.size();  
 
         fireProgressStateChanged("Extracting VOIs from blue image");
-        
+        fireProgressStateChanged(72);
         
         
         trim = true;
@@ -2581,12 +2598,11 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         //System.out.println("Number of Objects = " + numObjects);
 
+        fireProgressStateChanged("Removing blue objects touching edges");
         fireProgressStateChanged(22);
 
         edgeObjects = numObjects;
-        fireProgressStateChanged("Removing blue objects touching edges");
-
-        fireProgressStateChanged(23);
+        
         
         removeID = new boolean[numObjects];
         for (id = 1; id <= numObjects; id++) {
@@ -2649,6 +2665,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         
         IDArray2 = new byte[totLength];
         if (blueExpand) {
+            fireProgressStateChanged("Obtaining bounding boxes of blue objects");
+            fireProgressStateChanged(25);
             blueVolume = new int[numObjects];
             blueIntensityTotal = new double[numObjects];
             newBlueIntensityTotal = new double[numObjects];
@@ -2709,7 +2727,11 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 } // for (y = 0; y < yDim; y++)
             } // for (z = 0; z < zDim; z++)
             
+            fireProgressStateChanged("Expanding blue objects within bounding boxes");
+            fireProgressStateChanged(26);
             for (i = 0; i < numObjects; i++) {
+                UI.setDataText("Expanding object " + (i+1) + "\n");
+                Preferences.debug("Expanding object " + (i+1) + "\n");
                 blueWidth[i] = (blueRight[i] - blueLeft[i]);
                 blueHeight[i] = (blueBottom[i] - blueTop[i]);
                 blueDepth[i] = (blueBack[i] - blueFront[i]);
@@ -2746,6 +2768,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 if ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue)) {
                     lowerValue = (int)Math.round(minBlueValue + 1);
                     upperValue = (int)Math.round(blueMinArray[i] - 1);
+                    UI.setDataText("lowerValue = " + lowerValue + " upperValue = " + upperValue + "\n");
+                    Preferences.debug("lowerValue = " + lowerValue + " upperValue = " + upperValue + "\n");
                     if (lowerValue == upperValue) {
                         lastRun = true;
                     }
@@ -2821,6 +2845,12 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                         else {
                                 upperValue = midValue-1; 
                                 midValue = (lowerValue + upperValue)/2;
+                                // So you don't have to repeat all of the growth
+                                // process on every iteration
+                                blueIntensityTotal[i] = newBlueIntensityTotal[i];
+                                for (k = 0; k < totLength; k++) {
+                                    IDArray[k] = IDArray2[k];
+                                }
                         }
                         
                         if (lowerValue == upperValue) {
@@ -2842,6 +2872,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         }
         
         fireProgressStateChanged("Opening blue segmented image");
+        fireProgressStateChanged(27);
         kernel = AlgorithmMorphology3D.CONNECTED6;
         sphereDiameter = 1.0f;
         method = AlgorithmMorphology3D.OPEN;
@@ -2864,7 +2895,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         }*/
 
         fireProgressStateChanged("Closing blue segmented image");
-
+        fireProgressStateChanged(28);
         method = AlgorithmMorphology3D.CLOSE;
         closeAlgo = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation, itersErosion,
                                               numPruningPixels, edgingType, wholeImage);
@@ -2893,10 +2924,10 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         }
             
         fireProgressStateChanged("Creating red image");
-
+        fireProgressStateChanged(30);
         // grayImage is ModelStorageBase.UBYTE
         grayImage.reallocate(ModelStorageBase.FLOAT);
-        fireProgressStateChanged(30);
+        
 
         try {
             grayImage.importData(0, buffer, true);
@@ -3549,7 +3580,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         }
 
         fireProgressStateChanged("Extracting VOIs from green image");
-        fireProgressStateChanged(74);
+        fireProgressStateChanged(70);
         algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
         algoVOIExtraction.setColorTable(colorTable);
         algoVOIExtraction.setNameTable(nameTable);
@@ -3564,6 +3595,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         nVOIs = VOIs.size();
 
         fireProgressStateChanged("Extracting VOIs from blue image");
+        fireProgressStateChanged(72);
         
         
         blueVOIs = grayImage.getVOIs();
