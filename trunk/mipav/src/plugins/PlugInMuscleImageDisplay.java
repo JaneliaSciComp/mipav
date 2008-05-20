@@ -459,7 +459,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	if(command.equals(DialogPrompt.CANCEL)) {
         		unlockToPanel(voiTabLoc);
         		initMuscleImage(activeTab);
-        	} else if(command.equals(DialogPrompt.CLEAR_ALL)) {
+        	} else if(command.equals(DialogPrompt.HIDE_ALL)) {
         		getActiveImage().unregisterAllVOIs();
         		updateImages(true);
         	} else if(command.equals(DialogPrompt.OK) && 
@@ -1101,7 +1101,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	/** Possible buttons for dialog prompts. */
     	public static final String OK = "Ok";
     	public static final String CANCEL = "Cancel";
-    	public static final String CLEAR_ALL = "Clear all";
+    	public static final String HIDE_ALL = "Hide all";
+    	public static final String SHOW_ALL = "Show all";
     	public static final String EXIT = "Exit";
     	public static final String HELP = "Help";
     	public static final String CALCULATE = "Calculate";
@@ -1110,10 +1111,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	public static final String TOGGLE_LUT = "Toggle LUT";
     	public static final String OUTPUT = "Output";
     	public static final String BACK = "Back";
-    	public static final String REDRAW = "Redraw";
-    	public static final String CLEAR_ONE = "Clear except";
+    	public static final String RESET = "Reset";
+    	public static final String HIDE_ONE = "Hide except";
     	
-    	private String buttonStringList[] = {OK, CLEAR_ALL, HELP};
+    	private String buttonStringList[] = {OK, HIDE_ALL, HELP};
     	
     	protected JButton buttonGroup[];
     	
@@ -1223,7 +1224,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 
     private class VoiDialogPrompt extends DialogPrompt implements ActionListener {
 
-        private final String[] buttonStringList = {OK, CLEAR_ALL, CANCEL, REDRAW, CLEAR_ONE};
+        private final String[] buttonStringList = {OK, HIDE_ALL, CANCEL, RESET, HIDE_ONE};
     	
         private String objectName;
         
@@ -1234,7 +1235,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         boolean voiExists;
         
         private JLabel selectText;
+        
+        /**Buffer for hide/show functions related to HIDE_ALL button**/
+        private VOIVector voiBuffer;
 
+        private JMenu propMenu;
+        
         public VoiDialogPrompt(PlugInMuscleImageDisplay theParentFrame) {
             super(theParentFrame, "VOI");
            
@@ -1260,13 +1266,22 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 
             String command = e.getActionCommand();
 
-            if(command.equals(CLEAR_ALL)) {
+            if(command.equals(HIDE_ALL)) {
                 //clear all VOIs drawn
+            	voiBuffer = getActiveImage().getVOIs();
                 getActiveImage().unregisterAllVOIs();
+                ((JButton)e.getSource()).setText(SHOW_ALL);
+                ((JButton)e.getSource()).setActionCommand(SHOW_ALL);
                 updateImages(true);
+            } else if(command.equals(SHOW_ALL)) {
+            	//show all VOIs previously drawn, do not get rid of any VOIs on screen
+            	for(int i=0; i<voiBuffer.size(); i++)
+            		getActiveImage().registerVOI(voiBuffer.get(i));
+            	((JButton)e.getSource()).setText(HIDE_ALL);
+                ((JButton)e.getSource()).setActionCommand(HIDE_ALL);
             } else if (command.equals(OK)) {
-                    VOI goodVoi = checkVoi();
-                    //check that VOI conforms to requirements, returns the VOI being modified/created
+            
+                    VOI goodVoi = checkVoi(); //check voi has correct number of curves, etc
                     if ( goodVoi != null ) { 
                         voiChangeState = true;
                         //save modified/created VOI to file
@@ -1285,35 +1300,43 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                         getActiveImage().unregisterAllVOIs();
                         updateImages(true);
                     } else {
-                    	//Note that no VOI has been saved due to previous error.  will not return to main dialog.
-                    	completed = false;
+                    	completed = false;	//error state, does not return to main dialog, waits for user
                     }
                 } else if (command.equals(CANCEL)) {
                 	voiChangeState = true;
-                    //notifyListeners(CANCEL);
-                	//TODO: Put back in
-                    //dispose();
                 } else if (command.equals(HELP)) {
                     PlugInMuscleSegmentation.showHelp("MS00001");
-                } else if (command.equals(REDRAW)) {
+                } else if (command.equals(RESET)) {
                 	getActiveImage().unregisterAllVOIs();
                 	initVoiImage(activeTab); //replacing current image and updating
                 	updateImages(true);
                 	
-                } else if (command.equals(CLEAR_ONE)) {
+                } else if (command.equals(HIDE_ONE)) {
                 	VOIVector vec = getActiveImage().getVOIs();
                 	VOI goodVoi = null;
                 	for(int i=0; i<vec.size(); i++) {
                 		if(vec.get(i).getName().equals(objectName))
                 			goodVoi = vec.get(i);
-                	}
-                	//note: does unregister/register to for faster method execution
+                	} //note: does unregister/register to for faster method execution
                 	getActiveImage().unregisterAllVOIs();
                     if(goodVoi != null)
                     	getActiveImage().registerVOI(goodVoi);
                     
                 	updateImages(true);
-                }
+                } else if (command.equals("PropVOIUp")) {
+                	//TODO: Perform propogate  + smooth on one VOI here
+                    if (componentImage.getVOIHandler().propVOI(1, false) == true) {
+                        incSlice();
+                    }
+                } else if (command.equals("PropVOIDown")) {
+                	//TODO: Perform propogate  + smooth on one VOI here
+                    if (componentImage.getVOIHandler().propVOI(-1, false) == true) {
+                        decSlice();
+                    }
+                } else if (command.equals("PropVOIAll")) {
+                	//TODO: Perform propogate  + smooth on all VOIs here
+                    componentImage.getVOIHandler().propVOIAll();
+                } 
             }
             
         
@@ -1330,8 +1353,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	voiExists = voiExists(objectName);
         	
         	for(int i=0; i<buttonGroup.length; i++) {
-	        	if(buttonGroup[i].getText().contains(CLEAR_ONE)) {
-	        		buttonGroup[i].setText(CLEAR_ONE+" "+name.toLowerCase());
+	        	if(buttonGroup[i].getText().contains(HIDE_ONE)) {
+	        		buttonGroup[i].setText(HIDE_ONE+" "+name.toLowerCase());
 	        		buttonGroup[i].setPreferredSize(new Dimension(185, 30));
 	        	}
 	        }
@@ -1372,26 +1395,39 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             
             setLayout(new BorderLayout());
             
-            JPanel mainPanel = new JPanel(new GridLayout(1, 1));
+            JPanel mainPanel = new JPanel(new GridLayout(3, 3));
             
             mainPanel.setForeground(Color.black);
             mainPanel.setBorder(MipavUtil.buildTitledBorder("VOI Selection"));
             
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.anchor = GridBagConstraints.CENTER;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            gbc.gridx = 0;
-            gbc.gridy = 0;
-            gbc.ipadx = 0;
+            //GridBagConstraints gbc = new GridBagConstraints();
+            //gbc.anchor = GridBagConstraints.CENTER;
+            //gbc.fill = GridBagConstraints.HORIZONTAL;
+            //gbc.gridx = 0;
+            //gbc.gridy = 0;
+            //gbc.ipadx = 0;
                 
             selectText = new JLabel("");
             
             selectText.setFont(MipavUtil.font12);
             mainPanel.add(selectText, BorderLayout.NORTH);
             
+            JPanel buttonPanel = new JPanel();
+            
+            if(multipleSlices) {
+            	
+            	propMenu = ViewMenuBuilder.buildMenu("Propogate", 0, true);
+            	propMenu.add(ViewMenuBuilder.buildMenuItem("To Next Slice", "PropVOIUp", 0, this, "voipropu.gif", true));
+            	propMenu.add(ViewMenuBuilder.buildMenuItem("To Previous Slice", "PropVOIDown", 0, this, "voipropd.gif", true));
+            	propMenu.add(ViewMenuBuilder.buildMenuItem("To all slices", "PropVOIAll", 0, this, "voipropall.gif", true));
+            	buttonPanel.add(propMenu, BorderLayout.NORTH);
+            }
+            
+            buttonPanel.add(buildButtons(), BorderLayout.CENTER);
+
             add(mainPanel, BorderLayout.NORTH);
-            gbc.gridy++;
-            add(buildButtons(), BorderLayout.CENTER);
+            add(buttonPanel, BorderLayout.CENTER);
+            //gbc.gridy++;
         }
         
         
@@ -2185,7 +2221,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    	System.out.println("Caught 2: "+e.getActionCommand());
 	    	String command = e.getActionCommand();
 	        displayChanged = false;
-	        if(command.equals(CLEAR_ALL)) {
+	        if(command.equals(HIDE_ALL)) {
 	            //clear all VOIs drawn
 	        	muscleFrame.getImageA().unregisterAllVOIs();
 	        	muscleFrame.updateImages();
