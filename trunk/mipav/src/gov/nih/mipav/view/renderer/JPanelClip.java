@@ -1998,33 +1998,78 @@ public class JPanelClip extends JPanelRendererBase
 
                 for (iY = 0; iY < iYBound; iY++) {
                     int iIndex = (int) (iZ * iSliceSize) + (iY * iXBound) + iX;
-
+                    
                     if (((iX >= 0) && (iX < xInv)) || ((iX < iXBound) && (iX >= (iXBound - x)))) {
-                        imgA.set(iIndex, minA);
+                    	
+                    	if (imgA.isColorImage()) {
+							for (int iColor = 0; iColor < 4; iColor++) {
+								imgA.set((iIndex * 4) + iColor, minA);
+							}
+						} else {
+							imgA.set(iIndex, minA);
+						}
 
-                        if (imgB != null) {
-                            imgB.set(iIndex, minB);
-                        }
+						if (imgB != null) {
+
+							if (imgB.isColorImage()) {
+
+								for (int iColor = 0; iColor < 4; iColor++) {
+									imgB.set((iIndex * 4) + iColor, minB);
+								}
+							} else {
+								imgB.set(iIndex, minB);
+							}
+						}
                     }
 
                     if (((iY >= 0) && (iY < yInv)) || ((iY < iYBound) && (iY >= (iYBound - y)))) {
-                        imgA.set(iIndex, minA);
+                    	if (imgA.isColorImage()) {
+							for (int iColor = 0; iColor < 4; iColor++) {
+								imgA.set((iIndex * 4) + iColor, minA);
+							}
+						} else {
+							imgA.set(iIndex, minA);
+						}
 
-                        if (imgB != null) {
-                            imgB.set(iIndex, minB);
-                        }
+						if (imgB != null) {
+
+							if (imgB.isColorImage()) {
+
+								for (int iColor = 0; iColor < 4; iColor++) {
+									imgB.set((iIndex * 4) + iColor, minB);
+								}
+							} else {
+								imgB.set(iIndex, minB);
+							}
+						}
                     }
 
                     if (((iZ >= 0) && (iZ < zInv)) || ((iZ < iZBound) && (iZ >= (iZBound - z)))) {
-                        imgA.set(iIndex, minA);
+                    	if (imgA.isColorImage()) {
+							for (int iColor = 0; iColor < 4; iColor++) {
+								imgA.set((iIndex * 4) + iColor, minA);
+							}
+						} else {
+							imgA.set(iIndex, minA);
+						}
 
-                        if (imgB != null) {
-                            imgB.set(iIndex, minB);
-                        }
+						if (imgB != null) {
+
+							if (imgB.isColorImage()) {
+
+								for (int iColor = 0; iColor < 4; iColor++) {
+									imgB.set((iIndex * 4) + iColor, minB);
+								}
+							} else {
+								imgB.set(iIndex, minB);
+							}
+						}
                     }
                 }
             }
         }
+        
+        
 
         ((SurfaceRender) renderBase).updateData();
         ((SurfaceRender) renderBase).updateImages();
