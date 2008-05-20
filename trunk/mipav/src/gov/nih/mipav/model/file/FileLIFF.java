@@ -13,6 +13,12 @@ import gov.nih.mipav.view.*;
 public class FileLIFF extends FileBase {
     /* In 3 color images, if CY3, FITC, and DAPI are used, they are set to red, green,
      * and blue respectively.
+     * 
+     * Note that for version 5, if the data type is not DEEP GREY, the padded width of the
+     * data row is found by dividing the uncompressed data size by the image height.
+     * For version 5, for DEEP GREY data, the individual rows are unpadded and the padding
+     * goes at the end of the data block.
+     * The LUTs found with some version 5 data types are not read in.
      */
     
     private static final short kMasterImageLayer = 0;
@@ -500,6 +506,7 @@ public class FileLIFF extends FileBase {
         LZOCodec lzo;
         int srcIndex;
         int destIndex;
+        String notesStr;
 
         try {
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
@@ -563,8 +570,23 @@ public class FileLIFF extends FileBase {
                 else if (tagType == 69) {
                     Preferences.debug("Tag type = " + tagType + " indicates calibration\n");
                 }
+                else if (tagType == 71) {
+                    Preferences.debug("Tag type = " + tagType + " indicates measurements data\n");
+                }
                 else if (tagType == 72) {
-                    Preferences.debug("Tag type = " + tagType + " indicates user\n");
+                    Preferences.debug("Tag type = " + tagType + " indicates layer user data\n");
+                }
+                else if (tagType == 73) {
+                    Preferences.debug("Tag type = " + tagType + " indicates density calibration data\n");
+                }
+                else if (tagType == 74) {
+                    Preferences.debug("Tag type = " + tagType + " indicates high speed graphing data\n");
+                }
+                else if (tagType == 75) {
+                    Preferences.debug("Tag type = " + tagType + " indicates user notes data\n");
+                }
+                else if (tagType == 76) {
+                    Preferences.debug("Tag type = " + tagType + " indicates scale bar settings\n");
                 }
                 else {
                     Preferences.debug("Tag type = " + tagType + "\n");
