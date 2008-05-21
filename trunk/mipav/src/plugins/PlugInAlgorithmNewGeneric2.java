@@ -96,9 +96,6 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
     // Bone marrow in CT images is "inside" the bone
     // determine an equation of a circle that describes the bone (some Hough transform)
     // check to see which pixels are inside the equation of the circle
-    // Simpler Algorithm: find the center-of-mass of the two identified regions, we anticipate the bone
-    // and marrow to be inside a 60X60 VOI about the center-of-mass, so use a scan-line algorithm to find
-    // the inside bone marrow pixels
     ModelImage extractBoneMarrow(ModelImage srcImage, ModelImage boneImageMask) {
         ModelImage CTBoneMarrowImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), "boneMarrowImg");
 
@@ -112,6 +109,40 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
                 System.err.println("Error exporting data");
             }
             
+            // find the center-of-mass of the two bones (average x and y location)
+            int idx = 0, xSum1 = 0, ySum1 = 0, xSum2 = 0, ySum2 = 0, count1 = 0, count2 = 0;
+            for (int j = 0; j < yDim; j++) {
+                for (int i = 0; i < xDim; i++, idx++) {
+                    if (boneBuffer[idx] == 1) {
+                        xSum1 += i;
+                        ySum1 += j;
+                        count1++;
+                    } else if (boneBuffer[idx] == 2) {
+                        xSum2 += i;
+                        ySum2 += j;
+                        count2++;
+                    }
+                } // end for (int j = 0; ...)
+            } // end for (int i = 0; ...)
+            
+            if (count1 == 0) {
+                MipavUtil.displayError("extractBoneMarrow() Could NOT find any pixels in the first bone");
+            }
+            if (count2 == 0) {
+                MipavUtil.displayError("extractBoneMarrow() Could NOT find any pixels in the second bone");
+            }
+            
+            int xcm1 = xSum1 / count1;
+            int ycm1 = ySum1 / count1;
+            
+            int xcm2 = xSum2 / count2;
+            int ycm2 = ySum2 / count2;
+            
+            System.out.println("Slice: " +sliceNum);
+            System.out.println("Bone 1 cm: (" +xcm1 +" " +ycm1 +")");
+            System.out.println("Bone 2 cm: (" +xcm2 +" " +ycm2 +")\n");
+            
+            // use the center-of-mass as an estimate for the center of the Hough circle
             
             
             try {
