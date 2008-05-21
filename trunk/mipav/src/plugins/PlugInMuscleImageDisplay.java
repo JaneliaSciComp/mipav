@@ -1382,6 +1382,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             
             String voiStr = new String(existStr+prefix+numVoi+" "+closedStr+"VOI curve"+pluralVOI+" around the "+
                                         objectName.toLowerCase()+".");
+            
             selectText.setText(voiStr); //automatically updates
         }
         
@@ -1407,20 +1408,37 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             //gbc.gridy = 0;
             //gbc.ipadx = 0;
                 
+            //String propStr = new String("Use the propogating buttons below to allow MIPAV to generate similar VOIs "+
+			//"on sequential slices.  First select the VOI you would like to propogate.");
+            //JLabel propLabel = new JLabel(propStr);
+            
             selectText = new JLabel("");
             
             selectText.setFont(MipavUtil.font12);
             mainPanel.add(selectText, BorderLayout.NORTH);
+            //mainPanel.add(propLabel, BorderLayout.CENTER);
             
             JPanel buttonPanel = new JPanel();
             
             if(multipleSlices) {
-            	
+            	JMenuItem item1, item2, item3;
             	propMenu = ViewMenuBuilder.buildMenu("Propogate", 0, true);
-            	propMenu.add(ViewMenuBuilder.buildMenuItem("To Next Slice", "PropVOIUp", 0, this, "voipropu.gif", true));
-            	propMenu.add(ViewMenuBuilder.buildMenuItem("To Previous Slice", "PropVOIDown", 0, this, "voipropd.gif", true));
-            	propMenu.add(ViewMenuBuilder.buildMenuItem("To all slices", "PropVOIAll", 0, this, "voipropall.gif", true));
-            	buttonPanel.add(propMenu, BorderLayout.NORTH);
+            	propMenu.add(item1 = ViewMenuBuilder.buildMenuItem("", "PropVOIDown", 0, this, "voipropd.gif", true));
+            	propMenu.add(item2 = ViewMenuBuilder.buildMenuItem("", "PropVOIAll", 0, this, "voipropall.gif", true));
+            	propMenu.add(item3 = ViewMenuBuilder.buildMenuItem("", "PropVOIUp", 0, this, "voipropu.gif", true));
+            	item1.setToolTipText("Propagate VOI down");
+            	item2.setToolTipText("Propagate VOI to all slices");
+            	item3.setToolTipText("Propagate VOI up");
+            	item1.setRolloverIcon(MipavUtil.getIcon("voipropdroll.gif"));
+            	item2.setRolloverIcon(MipavUtil.getIcon("voipropallroll.gif"));
+            	item3.setRolloverIcon(MipavUtil.getIcon("voipropuroll.gif"));
+            	item1.setSize(new Dimension(40, 30));
+            	item2.setSize(new Dimension(40, 30));
+            	item3.setSize(new Dimension(40, 30));
+            	buttonPanel.add(item1);
+            	buttonPanel.add(item2);
+            	buttonPanel.add(item3);
+            	
             }
             
             buttonPanel.add(buildButtons(), BorderLayout.CENTER);
