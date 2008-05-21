@@ -1,9 +1,6 @@
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmMedian;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.EigenvalueDecomposition;
-import gov.nih.mipav.model.structures.jama.Matrix;
 
 import gov.nih.mipav.view.*;
 
@@ -15,24 +12,22 @@ import java.text.*;
 
 import java.util.*;
 
-import javax.swing.*;
-
 
 /**
  * This shows how to extend the AlgorithmBase class.
  *
- * @version  May 20, 2008
+ * @version  May 21, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
  *           <p>$Logfile: /mipav/src/plugins/PlugInAlgorithmCenterDistance.java $ $Revision: 72 $ $Date: 2/06/06 5:50p $
- *           PlugInAlgorithmCenterDistance is used to find the distances between geometric cell centers and cell
- *           boundaries, geometric cell centers and voi centers of mass and voi centers of mass and cell boundaries. The geometric
- *           center is a zero order moment not using intensity multiplications. The center of mass is a first order
- *           moment mutliplying position by intensity. The cells are blue and the chromosome regions of interest
- *           outlined by the vois are predominantly green. Images are 2D or 3D. The program will automatically
- *           generate green VOIs in each cell. The user can input the number of green VOIs to be looked for in each cell. The
- *           default is 2 green VOIs.</p>
+ *           PlugInAlgorithmCenterDistance is used to find the distances between geometric nucleus centers and nucleus
+ *           boundaries, and distances on a straight line from the geometric nucleus center to the VOI center
+ *           of mass to the nucleus boundary. The geometric center is a zero order moment not using intensity
+ *           multiplications. The center of mass is a first order moment mutliplying position by intensity. The nuclei
+ *           are blue and the chromosome regions of interest outlined by the vois are predominantly green. Images are
+ *           2D or 3D. The program will automatically generate green VOIs in each nucleus. The user can input 1 or 2 as
+ *           the number of green VOIs to be looked for in each nucleus. The default is 2 green VOIs.</p>
  *
  *           <p>1.) Only the blue portion of the red, green, blue color image is used to create the blueImage.</p>
  *
@@ -45,87 +40,139 @@ import javax.swing.*;
  *           set to 0.0, so no pixels are less than threshold, so all the pixels in blueImage are assigned to either 1
  *           or 2 in blueSegImage.</p>
  *
- *           <p>3.) AlgorithmThresholdDual is used to set all the pixels with intensity = 2 to pixels with intensity =
+ *           <p>3.) Set all the pixels with intensity = 2 to pixels with intensity =
  *           1 and all the pixels with intensity = 1 to pixels with intensity = 0.</p>
  *
  *           <p>4.) A slice by slice hole filling is performed on the blue segmented image.</p>
- *
  *           
- *           <p>5.) Assign positive integer IDs to each object between blueMin and 200,000 pixels in size.
- *            blueSegImage now has 0 for
- *           background and a positive integer ID for each object between the minimum and maximum size. blueMin has a
- *           default of 1,000.</p>
+ *           <p>5.) Assign positive integer IDs to each object between blueMin and 200,000 pixels in size
+ *            for 2D and between blueMin and 20,000,000 pixels in size for 3D.
+ *            blueSegImage now has 0 for background and a positive integer ID for each object between the
+ *            minimum and maximum size. blueMin has a default of 1,000.</p>
  *
- *           <p>6.) If more than one blue object is present, 
+ *           <p>6.) If one or more blue objects that do not touch an edge are present, 
  *                  set all the pixels in any blue object touching an edge to 0.</p>
  *                  
  *           <p>7.) Find the bounding box of each blue object.  Expand the bounding box until
- *                  bounding box area or volume/blue object area or volume >= minBoundsRatio.
+ *                  (bounding box area or volume)/(blue object area or volume) >= minBoundsRatio.
  *                  Use a midpoint algorithm with upper and lower limits to find the minimum
- *                  blue value for the object.  This algorithm expands the
- *                  original blue object within the box until smallest blue value is found for which
+ *                  blue value for the object.  The initial upper value is taken as 1 less than the
+ *                  minimum blue value already present in the object and the initial lower value is
+ *                  taken as 1 more than the minimum blue value in the image.  The initial midValue is
+ *                  taken to be halfway between the lower and upper values.  This algorithm expands the
+ *                  original blue object within the box until 4 or 6 neigbor linked blue values that are >=
+ *                  midValue have been added to the original blue object.  The intensity fraction equal to
  *                  the sum of the expanded blue object intensities divided by the sum of the box
- *                  blue intensities >= minIntensityFraction.
+ *                  blue intensities is found.  If intensityFraction < minIntensityFraction, then 
+ *                  upperValue is set equal to midValue - 1 and the blue object growth that
+ *                  occurred during this iteration is made a permanent part of the expanded blue object,
+ *                  so that future iterations will only require partial rather than full growth of the 
+ *                  blue object.  If intensityFraction >= minIntensityFraction, then lowerValue is set
+ *                  equal to midValue.  A new midValue is found and the iterations continue until the
+ *                  smallest blue value is found for which intensityFraction >= minIntensityFraction.
  *           
  *           <p>8.) Smooth the blue objects with an open operation followed by a close operation.
+ *           
+ *           <p>9.) Obtain the red portion of the image.
+ *           
+ *           <p>10.) Obtain a red histogram.  Set the threshold so that the redFraction
+ *           portion of the cumulative histogram is at or above threshold for the fuzzy c means.
+ *           
+ *           <p>11.) Perform a 3 level fuzzy c means segmentation on the red image.  Values below threshold
+ *           are set equal to 0 and values >= threshold are assigned values of 1, 2, and 3
+ *            
+ *           <p>12.) Convert the red fuzzy segmented value of 3 to 1 and the other values to 0. 
+ *           
+ *           <p>13.) ID objects in red segmented image which have at least redMin pixels.
+ *           
+ *           <p>14.) Expand blue objects to include red objects protruding out of the blue boundary. 
  *
- *           <p>9.) Export the green portion of the image to greenBuffer.
+ *           <p>15.) Export the green portion of the image to greenBuffer.
  *
- *           <p>10.) Obtain histogram information on the green image. Set the threshold so that the greenFraction
+ *           <p>16.) Obtain histogram information on the green image. Set the threshold so that the greenFraction
  *           portion of the cumulative histogram is at or above threshold for the fuzzy c means. 
  *           
- *           <p>11.) Perform a 3 level fuzzy c means segmentation on the green image.
+ *           <p>17.) Perform a 3 level fuzzy c means segmentation on the green image.  Green values below threshold
+ *           are set to 0, and green values >= threshold are set to values of 1, 2, and 3.
+ *           
+ *           <p>18.) Create an image in which all the green values originally equal to 3 in the fuzzy
+ *           c means segmentation are set to 1 and all the other green values are set to 0.
+ *           
+ *           <p>19.) ID objects in this green segmented image which have at least greenMin pixels.
  *            
- *           <p>12.) If twoGreenLevels is true, convert the green max and max-1 to 1 and the other values to 0.
- *           If twoGreenLevels is false, convert the green max to 1 and the other values to 0. 
+ *           <p>20.) If twoGreenLevels is true, create an image in which all green values originally equal to
+ *           2 in the fuzzy c means segmentation are set to 1 and all the other green values are set to 0.
  *           
- *           <p>13.) ID objects in green segmented image which have at least greenMin pixels.
+ *           <p>21.) If twoGreenLevels is true, ID objects in green segmented image which have at least
+ *            greenMin pixels.
  *           
- *           <p>14.) Find blue objects to which the green objects belong.
+ *           <p>22.) Find blue objects to which the green objects belong.  Expand the blue objects to 
+ *           include green objects protruding out of the blue boundaries.
  *           
- *           <p>15.) Merge green objects with 2 pixels having a distance <= mergingDistance.
+ *           <p>23.) Merge green objects with 2 pixels having a distance <= mergingDistance.
  *            
- *           <p>16.) Sort green objects by green intensity count into a sorted green array. Have a separate
+ *           <p>24.) Sort green objects by green intensity count into a sorted green array. Have a separate
  *           sorted green array for each nucleus. Put no more than greenRegionNumber green objects into the
  *           sorted green array for each nucleus. 
  *           
- *           <p>17.) Create byteBuffer with value = 0 if no sorted object is present at that position and use a
- *           separate positive index for each green voi. Create an accompanying color table to set for each
- *           nucleus the largest green voi to color pink, and the other green vois to color pink.darker(). 
+ *           <p>25.) Fill the byteBuffer array with zeros.  For each sorted green VOI fill the appropriate
+ *           positions in byteBuffer with a positive index. Create an accompanying color table to set for each
+ *           nucleus the largest green voi to color pink and the other green voi to color pink.darker(). 
  *           Create an accompanying name table to set the name for each voi. The largest green voi in the
  *           fifth nucleus has name 5G1. The second largest green voi in the fifth nucleus has the name 5G2
  *             
- *           <p>18.) Extract VOIs from the green image.
+ *           <p>26.) Extract VOIs from the green image.
  *            
- *           <p>19.) Set the source image VOIs to the VOIs obtained from the green image. 
+ *           <p>27.) Set the source image VOIs to the VOIs obtained from the green image. 
  *            
- *           <p>20.)From each blue object extract a VOI.
+ *           <p>28.)From each blue object extract a VOI.
  *            
- *           <p>21.) Smooth the VOI from the blue object.
+ *           <p>29.) Smooth the VOI from the blue object as follows:  From each slice select the VOI contour 
+ *           with the largest number of points.  Use trimPoints at the maximum setting on this contour.
+ *           Determine the default number of points to be used in AlgorithmBSmooth by dividing the arc length
+ *           of the contour by the user supplied interpolationDivisor.  Apply AlgorithmBSmooth to the contour.
+ *           For this slice remove all of the original VOI contours and replace them with this 1 smoothed contour.
  *             
- *           <p>22.) Modify the IDArray of the object to reflect the change in the blue object VOI.
+ *           <p>30.) Generate a mask from the smoothed VOI.  Use the mask to modify the IDArray of the blue object
+ *            positions.
  *           
- *           <p>23.) Color the boundary dark yellow. </p>
+ *           <p>31.) Assing a dark yellow color to the VOI and add the VOI to the source image VOI vector. </p>
  *
- *           <p>24.) Process each VOI one at a time. a.) For each VOI find the sum
- *           of the green intensity values, and the pixel count for each ID object. b.) Look at all the object pixel
- *           counts and assign the ID of the object with the most pixels in the VOI to the VOI's objectID. c.) Find the
- *           green center of mass of the VOI. d.) Expand the nucleus to
- *           which the VOI belongs to include the VOI.</p>
- *
- *           <p>25.) Process IDArray objects one at a time. a.) Find the zero order moments of each blue IDArray
- *           object. b.) Create a byteBuffer with pixels for that ID object equal to 1 and all the other pixels = 0. c.)
- *           Import byteBuffer into grayImage. e.) Run a dilation on grayImage and export the result to dilateArray. d.)
- *           At every point where dilateArray = 1 and byteBuffer = 0, set boundaryArray = to the id of that object. For
- *           every point on the boundary find the square of the distance to the center of the object and if this square
- *           distance is the lowest yet noted, put the value in lowestSquare. If this square distance is the highest yet
- *           noted, put the value in highestSquare. e.) After examining all points in the image, the program records the
- *           Rmin distance from the center to edge as the square root of lowestSquare and the Rmax distance from the
- *           center to the edge as the square root of highestSquare. f.)
- *           Nuclei areas are found from the blue count multiplied by the x and y resolutions. 
+ *           <p>32.) Process each VOI one at a time. 
+ *           a.) For each VOI find the sum of the green intensity values, and the pixel count inside each blue object. 
+ *           b.) Look at all the blue object pixel counts and assign the ID of the blue object with the most pixels
+ *           in the VOI to the VOI's objectID. 
+ *           c.) Find the green center of mass of the VOI. 
+ *           d.) Expand the nucleus to which the VOI belongs to include the VOI.</p>
  *           
- *           <p>26.) Determine nucleus-VOI distances a.) Find the distance from the center of the ID object to the first order center of the VOI.
- *           Find the distance of the line segment that passes thru these 2 points and terminates at the cell surface.
+ *           <p>33.) // Reorder the indices for the green VOIs and their associated arrays so that the indices
+ *            use the sequence:
+ *            blue object 1 - large green VOI 
+ *            blue object 1 - small green VOI
+ *            blue object 2 - large green VOI
+ *            blue object 2 - small green VOI
+ *            and so on
+ *
+ *           <p>34.) Process blue IDArray objects one at a time. 
+ *           a.) Find the zero order moments of each blue IDArray object. 
+ *           b.) Create a byteBuffer with pixels for that ID object equal to 1 and all the other pixels = 0. 
+ *           c.)Import byteBuffer into grayImage. 
+ *           d.) Run a dilation on grayImage and export the result to dilateArray. 
+ *           e.) At every point where dilateArray = 1 and byteBuffer = 0, set boundaryArray = to the id of that
+ *           object. For every point on the boundary find the square of the distance to the center of the object
+ *           and if this square distance is the lowest yet noted, put the value in lowestSquare. If this square
+ *           distance is the highest yet noted, put the value in highestSquare. 
+ *           f.) After examining all points in the image, the program records the Rmin distance from the center
+ *           to edge as the square root of lowestSquare and the Rmax distance from the center to the edge as the
+ *           square root of highestSquare. 
+ *           g.) Nucleus area = (blue count) * (x resolution) * (y resolution). 
+ *           
+ *           <p>35.) Determine nucleus-VOI distances 
+ *           a.) Find the distance from the center of the ID object to the first order center of the VOI.
+ *           b.) Find the distance of the line segment that passes thru these 2 points and terminates at the
+ *           cell surface.
+ *           c.) Divide the center to VOI distance by the center to boundary distance to find the VOI's
+ *           fraction of the way out to the boundary.
  *           </p>
  *           
  *           Note that the blue objects are smoothed twice.  The first smoothing before VOI extraction with
@@ -288,9 +335,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         float[] centroids;
         float min;
         float max;
-        AlgorithmThresholdDual thresholdAlgo;
-        float[] thresholds;
-        float fillValue;
         int kernel;
         float circleDiameter;
         int method;
@@ -331,26 +375,17 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         int[] objectID;
         int[] objectID2;
         int objectCount;
-        float[] xPosGeo;
-        float[] yPosGeo;
-        float[] xPosGeo2;
-        float[] yPosGeo2;
         float[] xPosGrav;
         float[] yPosGrav;
         float[] xPosGrav2;
         float[] yPosGrav2;
         float colorCount[];
-        float geoToCenter;
         float gravToCenter;
-        float geoToEdge;
-        float gravToEdge;
         ViewUserInterface UI = ViewUserInterface.getReference();
         float distSqr;
         float lowestSqr;
         float highestSqr;
 
-        int xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
-        int yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
         FileInfoBase fileInfo;
         int numGreenObjects = 0;
         int numGreenObjects2 = 0;
@@ -396,11 +431,9 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         float incx;
         float incy;
         int numInc;
-        float centerToGeoToEdge;
         float centerToGravToEdge;
         float fractionOut;
         int numGreenVOIObjects;
-        int edgeObjects;
         AlgorithmHistogram algoHist;
         int bins;
         int[] histoBuffer;
@@ -416,7 +449,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         int greenCellNumber[];
         double distX;
         double distY;
-        double distance;
         double distanceSquared;
         double minDistanceSquared;
         int greenBelong[];
@@ -427,22 +459,20 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         boolean isMaxGreen[][] = null;
         int blueArea[];
         double blueIntensityTotal[];
-        double newBlueIntensityTotal[];
+        double newBlueIntensityTotal;
         int blueLeft[];
         int blueRight[];
         int blueTop[];
         int blueBottom[];
-        int blueWidth[];
-        int blueHeight[];
+        int blueWidth;
+        int blueHeight;
         float blueMinArray[];
-        int blueRectArea[];
-        float areaRatio[];
-        double blueRectIntensityTotal[];
-        float intensityFraction[];
+        int blueRectArea;
+        float areaRatio;
+        double blueRectIntensityTotal;
+        float intensityFraction;
         boolean atBounds;
         boolean areaGrowth;
-        int elementNum;
-        Polygon[] gons = null;
         float[] xPoints = null;
         float[] yPoints = null;
         AlgorithmArcLength arcLength;
@@ -553,26 +583,35 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         fcmAlgo.finalize();
         fcmAlgo = null;
 
-        // Now convert the min and max to 0 and 1
+        // Now convert the min = 1 and max = 2 to min = 0 and and max = 1
         fireProgressStateChanged("Setting segmented blue values to 0 and 1");
-
         fireProgressStateChanged(6);
 
-        grayImage.calcMinMax();
-        max = (float) grayImage.getMax();
-        thresholds = new float[2];
-        thresholds[0] = max;
-        thresholds[1] = max;
-        fillValue = 0.0f;
-        thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE,
-                                                   wholeImage, false);
-        thresholdAlgo.run();
-        thresholdAlgo.finalize();
-        thresholdAlgo = null;
+        byteBuffer = new byte[length];
+        try {
+            grayImage.exportData(0, length, byteBuffer);
+        } catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.exportData", true);
+
+            return;
+        }
+        
+        for (i = 0; i < length; i++) {
+            byteBuffer[i]--;
+        }
+        
+        try {
+            grayImage.importData(0, byteBuffer, true);
+        }
+        catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.importData", true);
+            return;
+        }
 
         // Remove all inappropriate holes in blue nuclei
         fireProgressStateChanged("Removing holes from blue nuclei");
-
         fireProgressStateChanged(7);
 
         fillHolesAlgo2D = new AlgorithmMorphology2D(grayImage, 0, 0, AlgorithmMorphology2D.FILL_HOLES, 0, 0, 0, 0,
@@ -582,13 +621,10 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         fillHolesAlgo2D = null;
         
         fireProgressStateChanged("IDing objects in blue segmented image");
-
         fireProgressStateChanged(15);
         
         numPruningPixels = 0;
-        edgingType = 0;
-        
-        byteBuffer = new byte[length];
+        edgingType = 0;   
         
         kernel = AlgorithmMorphology2D.SIZED_CIRCLE;
         circleDiameter = 0.0f;
@@ -621,7 +657,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         fireProgressStateChanged("Removing blue objects touching edges");
         fireProgressStateChanged(22);
 
-        edgeObjects = numObjects;
         removeID = new boolean[numObjects];
         for (id = 1; id <= numObjects; id++) {
 
@@ -682,18 +717,11 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             fireProgressStateChanged(25);
             blueArea= new int[numObjects];
             blueIntensityTotal = new double[numObjects];
-            newBlueIntensityTotal = new double[numObjects];
             blueLeft = new int[numObjects];
             blueRight = new int[numObjects];
             blueTop = new int[numObjects];
             blueBottom = new int[numObjects];
             blueMinArray = new float[numObjects];
-            blueWidth = new int[numObjects];
-            blueHeight = new int[numObjects];
-            blueRectArea = new int[numObjects];
-            areaRatio = new float[numObjects];
-            blueRectIntensityTotal = new double[numObjects];
-            intensityFraction = new float[numObjects];
             for (i = 0; i < numObjects; i++) {
                 blueLeft[i] = Integer.MAX_VALUE;
                 blueTop[i] = Integer.MAX_VALUE;
@@ -701,9 +729,9 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             }
             // Obtain areas and bounding rectangles of numObjects
             for (y = 0; y < yDim; y++) {
-    
+                index = y*xDim;
                 for (x = 0; x < xDim; x++) {
-                    i = x + y*xDim;
+                    i = x + index;
                     // id goes from 0 to numObjects
                     id = IDArray[i];
                     if (id >= 1) {
@@ -733,12 +761,12 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             for (i = 0; i < numObjects; i++) {
                 UI.setDataText("Expanding object " + (i+1) + "\n");
                 Preferences.debug("Expanding object " + (i+1) + "\n");
-                blueWidth[i] = (blueRight[i] - blueLeft[i]);
-                blueHeight[i] = (blueBottom[i] - blueTop[i]);
-                blueRectArea[i] = blueWidth[i]*blueHeight[i];
-                areaRatio[i] = (float)blueRectArea[i]/(float)blueArea[i];
+                blueWidth = (blueRight[i] - blueLeft[i]);
+                blueHeight = (blueBottom[i] - blueTop[i]);
+                blueRectArea = blueWidth*blueHeight;
+                areaRatio = (float)blueRectArea/(float)blueArea[i];
                 atBounds = false;
-                while ((areaRatio[i] < minBoundsRatio) && (!atBounds)) { 
+                while ((areaRatio < minBoundsRatio) && (!atBounds)) { 
                     blueLeft[i] = Math.max(0, blueLeft[i] - 1);
                     blueRight[i] = Math.min(xDim-1, blueRight[i] + 1);
                     blueTop[i] = Math.max(0, blueTop[i] - 1);
@@ -747,19 +775,21 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                         (blueTop[i] == 0) && (blueBottom[i] == (yDim - 1))) {
                         atBounds = true;
                     }
-                    blueWidth[i] = (blueRight[i] - blueLeft[i]);
-                    blueHeight[i] = (blueBottom[i] - blueTop[i]);
-                    blueRectArea[i] = blueWidth[i]*blueHeight[i];
-                    areaRatio[i] = (float)blueRectArea[i]/(float)blueArea[i];
-                } // while ((areaRatio[i] < minBoundsRatio) && (!atBounds))
+                    blueWidth = (blueRight[i] - blueLeft[i]);
+                    blueHeight = (blueBottom[i] - blueTop[i]);
+                    blueRectArea = blueWidth*blueHeight;
+                    areaRatio = (float)blueRectArea/(float)blueArea[i];
+                } // while ((areaRatio < minBoundsRatio) && (!atBounds))
+                blueRectIntensityTotal = 0;
                 for (y = blueTop[i]; y <= blueBottom[i]; y++) {
+                    index = y * xDim;
                     for (x = blueLeft[i]; x <= blueRight[i]; x++) {
-                        k = x + y * xDim;
-                        blueRectIntensityTotal[i] += buffer[k];
+                        k = x + index;
+                        blueRectIntensityTotal += buffer[k];
                     }
                 } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
-                intensityFraction[i] = (float)(blueIntensityTotal[i]/blueRectIntensityTotal[i]);
-                if ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue)) {
+                intensityFraction = (float)(blueIntensityTotal[i]/blueRectIntensityTotal);
+                if ((intensityFraction < minIntensityFraction) && (blueMinArray[i] > minBlueValue)) {
                     lowerValue = (int)Math.round(minBlueValue + 1);
                     upperValue = (int)Math.round(blueMinArray[i] - 1);
                     UI.setDataText("lowerValue = " + lowerValue + " upperValue = " + upperValue + "\n");
@@ -774,48 +804,49 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     do {
                         blueMinArray[i] = midValue; 
                         areaGrowth = true;
-                        newBlueIntensityTotal[i] = blueIntensityTotal[i];
+                        newBlueIntensityTotal = blueIntensityTotal[i];
                         for (k = 0; k < length; k++) {
                             IDArray2[k] = IDArray[k];
                         }
                         while (areaGrowth) {
                             areaGrowth = false;
                                 for (y = blueTop[i]; y <= blueBottom[i]; y++) {
+                                    index = y*xDim;
                                     for (x = blueLeft[i]; x <= blueRight[i]; x++) {
-                                        k = x + y*xDim;
+                                        k = x + index;
                                         if ((IDArray2[k] == 0) && (buffer[k] >= blueMinArray[i])) {
                                            if ((x > blueLeft[i]) && (IDArray2[k-1] == (i+1))) {
                                                IDArray2[k] = (byte)(i+1);
                                                areaGrowth = true;
-                                               newBlueIntensityTotal[i] += buffer[k];
+                                               newBlueIntensityTotal += buffer[k];
                                            }
                                            else if ((x < blueRight[i]) && (IDArray2[k+1] == (i+1))) {
                                                IDArray2[k] = (byte)(i+1);
                                                areaGrowth = true;
-                                               newBlueIntensityTotal[i] += buffer[k];
+                                               newBlueIntensityTotal += buffer[k];
                                            }
                                            else if ((y > blueTop[i]) && (IDArray2[k - xDim] == (i+1))) {
                                                IDArray2[k] = (byte)(i+1);
                                                areaGrowth = true;
-                                               newBlueIntensityTotal[i] += buffer[k];
+                                               newBlueIntensityTotal += buffer[k];
                                            }
                                            else if ((y < blueBottom[i]) && (IDArray2[k + xDim] == (i+1))) {
                                                IDArray2[k] = (byte)(i+1);
                                                areaGrowth = true;
-                                               newBlueIntensityTotal[i] += buffer[k];
+                                               newBlueIntensityTotal += buffer[k];
                                            }
                                         } // if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i]))
                                     } // for (x = blueLeft[i]; x <= blueRight[i]; x++)
                                 } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
                         } // while (volumeGrowth)
-                        intensityFraction[i] = (float)(newBlueIntensityTotal[i]/blueRectIntensityTotal[i]);
+                        intensityFraction = (float)(newBlueIntensityTotal/blueRectIntensityTotal);
                         if (lastRun) {
                             for (k = 0; k < length; k++) {
                                 IDArray[k] = IDArray2[k];
                             }
                             break;
                         }
-                        if (intensityFraction[i] >= minIntensityFraction) {
+                        if (intensityFraction >= minIntensityFraction) {
                                 if (midValue != lowerValue) {
                                     lowerValue = midValue;
                                     midValue = (lowerValue + upperValue)/2;
@@ -829,7 +860,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                                 midValue = (lowerValue + upperValue)/2;
                                 // So you don't have to repeat all of the growth
                                 // process on every iteration
-                                blueIntensityTotal[i] = newBlueIntensityTotal[i];
+                                blueIntensityTotal[i] = newBlueIntensityTotal;
                                 for (k = 0; k < length; k++) {
                                     IDArray[k] = IDArray2[k];
                                 }
@@ -839,7 +870,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                             lastRun = true;
                         }
                     } while (true);
-                } // if ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue))
+                } // if ((intensityFraction < minIntensityFraction) && (blueMinArray[i] > minBlueValue))
             } // for (i = 0; i < numObjects; i++)
         } // if (blueExpand)
         
@@ -966,6 +997,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         wholeImage = true;
 
         // grayImage enters ModelStorageBase.FLOAT and returns ModelStorageBase.UBYTE
+        // in which values below threshold are set to 0 and values >= threshold are set to 1, 2, and 3
         fcmAlgo = new AlgorithmFuzzyCMeans(grayImage, nClasses, nPyramid, oneJacobiIter, twoJacobiIter, q,
                                            oneSmooth, twoSmooth, outputGainField, segmentation, cropBackground,
                                            threshold, maxIter, endTolerance, wholeImage);
@@ -990,22 +1022,35 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         fcmAlgo.finalize();
         fcmAlgo = null;
 
-        // ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
-        // new Dimension(600, 300), srcImage.getUserInterface());
-
-        // Now convert the red min and max to 0 and 1
+        // Now convert the red = 3 in the fuzzy c means segmentation to 1 and the other values to 0
         fireProgressStateChanged("Setting segmented red values to 0 and 1");
         fireProgressStateChanged(35);
-        grayImage.calcMinMax();
-        max = (float) grayImage.getMax();
-        thresholds[0] = max;
-        thresholds[1] = max;
-        fillValue = 0.0f;
-        thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
-                                                   AlgorithmThresholdDual.BINARY_TYPE, wholeImage, false);
-        thresholdAlgo.run();
-        thresholdAlgo.finalize();
-        thresholdAlgo = null;
+        try {
+            grayImage.exportData(0, length, byteBuffer);
+        } catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.exportData", true);
+
+            return;
+        }
+        
+        for (i = 0; i < length; i++) {
+            if (byteBuffer[i] == 3) {
+                byteBuffer[i] = 1;
+            }
+            else {
+                byteBuffer[i] = 0;
+            }
+        }
+        
+        try {
+            grayImage.importData(0, byteBuffer, true);
+        }
+        catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.importData", true);
+            return;
+        }
         
         // Put the red VOI IDs in redIDArray
         fireProgressStateChanged("IDing objects in red segmented image");
@@ -1148,7 +1193,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         endTolerance = 0.01f;
         wholeImage = true;
 
-        // grayImage enters ModelStorageBase.FLOAT and returns ModelStorageBase.UBYTE
+        // grayImage enters ModelStorageBase.FLOAT and returns ModelStorageBase.UBYTE 
+        // having 0 for values below threshold and 1, 2, and 3 for 3 classes >= threshold.
         fcmAlgo = new AlgorithmFuzzyCMeans(grayImage, nClasses, nPyramid, oneJacobiIter, twoJacobiIter, q,
                                            oneSmooth, twoSmooth, outputGainField, segmentation, cropBackground,
                                            threshold, maxIter, endTolerance, wholeImage);
@@ -1176,20 +1222,36 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         if (twoGreenLevels) {
             grayImage2 = (ModelImage)grayImage.clone();
         }
-        // Now convert the green other and max to 0 and 1
+        
+        // Now convert the green = 3 in the fuzzy c means segmentation to 1 and convert all other values to 0.
         fireProgressStateChanged("Setting segmented green values to 0 and 1");
         fireProgressStateChanged(50);
-        grayImage.calcMinMax();
-        max = (float) grayImage.getMax();
-        thresholds[0] = max;
-        thresholds[1] = max;
-        fillValue = 0.0f;
-        thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
-                                                   AlgorithmThresholdDual.BINARY_TYPE, wholeImage, false);
-        thresholdAlgo.run();
-        thresholdAlgo.finalize();
-        thresholdAlgo = null;
+        try {
+            grayImage.exportData(0, length, byteBuffer);
+        } catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.exportData", true);
 
+            return;
+        }
+        
+        for (i = 0; i < length; i++) {
+            if (byteBuffer[i] == 3) {
+                byteBuffer[i] = 1;
+            }
+            else {
+                byteBuffer[i] = 0;
+            }
+        }
+        
+        try {
+            grayImage.importData(0, byteBuffer, true);
+        }
+        catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.importData", true);
+            return;
+        }
         
         // Put the green VOI IDs in greenIDArray
         fireProgressStateChanged("IDing objects in green segmented image");
@@ -1221,18 +1283,35 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         }
         
         if (twoGreenLevels) {
-            // Now convert the green other and max-1 to 0 and 1
+            // Now convert the green = 2 in the fuzzy c means segmentation to 1 and convert all other values to 0.
             fireProgressStateChanged("Setting segmented green values to 0 and 1");
             fireProgressStateChanged(59);
-            thresholds[0] = max-1;
-            thresholds[1] = max-1;
-            fillValue = 0.0f;
-            thresholdAlgo = new AlgorithmThresholdDual(grayImage2, thresholds, fillValue,
-                                                       AlgorithmThresholdDual.BINARY_TYPE, wholeImage, false);
-            thresholdAlgo.run();
-            thresholdAlgo.finalize();
-            thresholdAlgo = null;
+            try {
+                grayImage2.exportData(0, length, byteBuffer);
+            } catch (IOException error) {
+                byteBuffer = null;
+                errorCleanUp("Error on grayImage2.exportData", true);
 
+                return;
+            }
+            
+            for (i = 0; i < length; i++) {
+                if (byteBuffer[i] == 2) {
+                    byteBuffer[i] = 1;
+                }
+                else {
+                    byteBuffer[i] = 0;
+                }
+            }
+            
+            try {
+                grayImage2.importData(0, byteBuffer, true);
+            }
+            catch (IOException error) {
+                byteBuffer = null;
+                errorCleanUp("Error on grayImage2.importData", true);
+                return;
+            }
             
             // Put the green VOI IDs in greenIDArray
             fireProgressStateChanged("IDing objects in green segmented image");
@@ -1363,10 +1442,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         for (j = numGreenTotal; j >= 1; j--) {
             for (i = 1; i < j; i++) {
                 if (greenCellNumber[j-1] == greenCellNumber[i-1]) {
-                    //distX = (greenXCenter[j-1] - greenXCenter[i-1]) * xRes;
-                    //distY = (greenYCenter[j-1] - greenYCenter[i-1]) * yRes;
-                    //distanceSquared = distX*distX + distY*distY;
-                    //if (distanceSquared <= mergingDistanceSquared) {
                     minDistanceSquared = Double.MAX_VALUE; 
                     for (y = greenTop[j-1]; y <= greenBottom[j-1]; y++) {
                         index1 = y*xDim;
@@ -1693,8 +1768,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         srcImage.setVOIs((VOIVector)VOIs);
 
         idCount = new int[numObjects];
-        xPosGeo = new float[nVOIs];
-        yPosGeo = new float[nVOIs];
         xPosGrav = new float[nVOIs];
         yPosGrav = new float[nVOIs];
         objectID = new int[nVOIs];
@@ -1742,8 +1815,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     }
                 } // for (j = 2; j <= numObjects; j++)
 
-                xPosGeo[i] = 0.0f;
-                yPosGeo[i] = 0.0f;
                 xPosGrav[i] = 0.0f;
                 yPosGrav[i] = 0.0f;
 
@@ -1756,8 +1827,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                         index = x + j;
 
                         if (shortMask[index] != -1) {
-                            xPosGeo[i] += x;
-                            yPosGeo[i] += y;
                             xPosGrav[i] += greenBuffer[index] * x;
                             yPosGrav[i] += greenBuffer[index] * y;
                             colorCount[i] += greenBuffer[index];
@@ -1767,8 +1836,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     }
                 }
 
-                xPosGeo[i] /= voiCount[i];
-                yPosGeo[i] /= voiCount[i];
                 xPosGrav[i] /= colorCount[i];
                 yPosGrav[i] /= colorCount[i];
 
@@ -1776,12 +1843,17 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
         } // for (i = 0; i < nVOIs; i++)
         
+        // Reorder the indices for the green VOIs and their associated arrays so that
+        // the indices use the sequence:
+        // blue object 1 - large green VOI
+        // blue object 1 - small green VOI
+        // blue object 2 - large green VOI
+        // blue object 2 - small green VOI
+        // and so on
         gIndex = new int[2];
         gCount = new float[2];
         VOIs2 = new ViewVOIVector();
         objectID2 = new int[nVOIs];
-        xPosGeo2 = new float[nVOIs];
-        yPosGeo2 = new float[nVOIs];
         xPosGrav2 = new float[nVOIs];
         yPosGrav2 = new float[nVOIs];
         voiCount2 = new int[nVOIs];
@@ -1820,8 +1892,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 }
                 VOIs2.addElement(VOIs.VOIAt(gIndex[k]));
                 objectID2[index2] = j;
-                xPosGeo2[index2] = xPosGeo[gIndex[k]];
-                yPosGeo2[index2] = yPosGeo[gIndex[k]];
                 xPosGrav2[index2] = xPosGrav[gIndex[k]];
                 yPosGrav2[index2] = yPosGrav[gIndex[k]];
                 voiCount2[index2] = voiCount[gIndex[k]];
@@ -1837,15 +1907,11 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         VOIs2 = null;
         for (i = 0; i < nVOIs; i++) {
             objectID[i] = objectID2[i];
-            xPosGeo[i] = xPosGeo2[i];
-            yPosGeo[i] = yPosGeo2[i];
             xPosGrav[i] = xPosGrav2[i];
             yPosGrav[i] = yPosGrav2[i];
             voiCount[i] = voiCount2[i];
         }
         objectID2 = null;
-        xPosGeo2 = null;
-        yPosGeo2 = null;
         xPosGrav2 = null;
         yPosGrav2 = null;
         voiCount2 = null;
@@ -1998,9 +2064,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             nuclearArea = xRes * yRes * blueCountTotal[i];
             UI.setDataText((i + 1) + "\t" + df.format(nuclearArea));
             UI.setDataText("\t" + df.format(centerToNearEdge[i]));
-
-            // equivalentRadius = (float)Math.sqrt(nuclearArea/Math.PI);
-            // UI.setDataText("\t" + nf.format(equivalentRadius));
             UI.setDataText("\t" + df.format(centerToFarEdge[i]));
             greenFound = 0;
 
@@ -2008,84 +2071,11 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                 if (objectID[j] == (i + 1)) {
                     greenFound++;
-
-                    
-
                     voiArea = xRes * yRes * voiCount[j];
                     if (greenFound == 2) {
                         UI.setDataText("\t");
                     }
                     UI.setDataText("\t" + df.format(voiArea));
-
-                    /*geoToCenter = (float)
-                                      Math.sqrt(((xPosGeo[j] - xCenter[i]) * (xPosGeo[j] - xCenter[i]) * xRes * xRes) +
-                                                ((yPosGeo[j] - yCenter[i]) * (yPosGeo[j] - yCenter[i]) * yRes * yRes));
-
-                    initialdx = xPosGeo[j] - xCenter[i];
-                    initialdy = yPosGeo[j] - yCenter[i];
-                    lastEdgeX = (int) Math.round(xPosGeo[j]);
-                    lastEdgeY = (int) Math.round(yPosGeo[j]);
-
-                    if (Math.abs(initialdx) >= Math.abs(initialdy)) {
-
-                        if (initialdx >= 0.0f) {
-                            incx = 0.1f;
-                        } else {
-                            incx = -0.1f;
-                        }
-
-                        incy = 0.1f * initialdy / Math.abs(initialdx);
-                    } else {
-
-                        if (initialdy >= 0.0f) {
-                            incy = 0.1f;
-                        } else {
-                            incy = -0.1f;
-                        }
-
-                        incx = 0.1f * initialdx / Math.abs(initialdy);
-                    }
-
-                    numInc = 1;
-
-                    while (true) {
-                        newEdgeX = (int) Math.round(xPosGeo[j] + (numInc * incx));
-
-                        if ((newEdgeX < 0) || (newEdgeX >= xDim)) {
-                            break;
-                        }
-
-                        newEdgeY = (int) Math.round(yPosGeo[j] + (numInc * incy));
-
-                        if ((newEdgeY < 0) || (newEdgeY >= yDim)) {
-                            break;
-                        }
-
-                        numInc++;
-
-                        if ((newEdgeX == lastEdgeX) && (newEdgeY == lastEdgeY)) {
-                            continue;
-                        }
-
-                        index = newEdgeX + (xDim * newEdgeY);
-                        lastEdgeX = newEdgeX;
-                        lastEdgeY = newEdgeY;
-
-                        if (IDArray[index] != (i + 1)) {
-                            break;
-                        }
-                    } // while (true)
-
-                    centerToGeoToEdge = (float)
-                                            Math.sqrt(((lastEdgeX - xCenter[i]) * (lastEdgeX - xCenter[i]) * xRes *
-                                                           xRes) +
-                                                      ((lastEdgeY - yCenter[i]) * (lastEdgeY - yCenter[i]) * yRes *
-                                                           yRes));
-                    UI.setDataText("\t" + nf.format(geoToCenter));
-                    UI.setDataText("\t\t" + nf.format(centerToGeoToEdge));*/
-                    
-
-
                     gravToCenter = (float)
                                        Math.sqrt(((xPosGrav[j] - xCenter[i]) * (xPosGrav[j] - xCenter[i]) * xRes *
                                                       xRes) +
@@ -2156,25 +2146,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     UI.setDataText("\t" + df.format(centerToGravToEdge));
                     fractionOut = gravToCenter/centerToGravToEdge;
                     UI.setDataText("\t\t" + dfFract.format(fractionOut));
-
-
-                    /*lowestSqr = Float.MAX_VALUE;
-                     * for (j1 = 0, y = 0; y < yDim; y++, j1 += xDim) { for (x = 0; x < xDim; x++) {     index = x + j1;
-                     *  if (boundaryArray[index] == objectID[j]) {         distSqr = (xPosGeo[j] - x) * (xPosGeo[j] - x)
-                     *                   xRes * xRes +                   (yPosGeo[j] - y) * (yPosGeo[j] - y) * yRes *
-                     * yRes;         if (distSqr < lowestSqr) {             lowestSqr = distSqr; xEdge = x;       yEdge
-                     * = y;         }     } } } geoToEdge = (float) Math.sqrt(lowestSqr); UI.setDataText("\t\t" +
-                     * nf.format(geoToEdge)); geoToEdge *= 100.0f /centerToFarEdge[i]; UI.setDataText("\t" +
-                     * nf.format(geoToEdge));
-                     *
-                     * lowestSqr = Float.MAX_VALUE; for (j1 = 0, y = 0; y < yDim; y++, j1 += xDim) { for (x = 0; x < xDim;
-                     * x++) {     index = x + j1;     if (boundaryArray[index] == objectID[j]) {         distSqr =
-                     * (xPosGrav[j] - x) * (xPosGrav[j] - x) *                   xRes * xRes + (yPosGrav[j] - y) *
-                     * (yPosGrav[j] - y) *                   yRes * yRes;         if (distSqr < lowestSqr) { lowestSqr =
-                     * distSqr;             xEdge = x;             yEdge = y;  }     } } } gravToEdge = (float)
-                     * Math.sqrt(lowestSqr); UI.setDataText("\t\t" + nf.format(gravToEdge)); gravToEdge *= 100.0f
-                     * /centerToFarEdge[i];UI.setDataText("\t" +
-                     * nf.format(gravToEdge));*/
                 } // if (objectID[j] == (i+1))
             } // for (j = 0; j <= nVOIs - 1; j++)
 
@@ -2217,9 +2188,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         float[] centroids;
         float min;
         float max;
-        AlgorithmThresholdDual thresholdAlgo;
-        float[] thresholds;
-        float fillValue;
         int kernel;
         float sphereDiameter;
         int method;
@@ -2268,12 +2236,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         int[] objectID;
         int[] objectID2;
         int objectCount;
-        float[] xPosGeo;
-        float[] yPosGeo;
-        float[] zPosGeo;
-        float[] xPosGeo2;
-        float[] yPosGeo2;
-        float[] zPosGeo2;
         float[] xPosGrav;
         float[] yPosGrav;
         float[] zPosGrav;
@@ -2281,21 +2243,12 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         float[] yPosGrav2;
         float[] zPosGrav2;
         float colorCount[];
-        float geoToCenter;
         float gravToCenter;
-        float geoToEdge;
-        float gravToEdge;
         ViewUserInterface UI = ViewUserInterface.getReference();
         float distSqr;
         float lowestSqr;
         float highestSqr;
 
-        // int xEdge = -1;
-        // int yEdge = -1;
-        // int zEdge = -1;
-        int xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
-        int yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
-        int zUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[2];
         FileInfoBase fileInfo;
         int numRedObjects = 0;
         int numGreenObjects = 0;
@@ -2331,13 +2284,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         AlgorithmMorphology2D fillHolesAlgo2D;
         int[] voiCount;
         int[] voiCount2;
-
-        // int j1;
-        // int k1;
         int greenFound;
         float nuclearVolume;
-
-        // float equivalentRadius;
         DecimalFormat df;
         DecimalFormat dfFract;
         float voiVolume;
@@ -2354,11 +2302,9 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         float incy;
         float incz;
         int numInc;
-        float centerToGeoToEdge;
         float centerToGravToEdge;
         float fractionOut;
         int numGreenVOIObjects;
-        int edgeObjects;
         AlgorithmHistogram algoHist;
         int bins;
         int[] histoBuffer;
@@ -2366,46 +2312,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         int totalCount;
         int countsToRetain;
         int countsFound;
-        //int offset;
-        //int idm1;
-        //int[] volume;
-        //boolean adaptiveSize = false;
-        //int maximumSize = 0;
-
-        // centroids
-        //double[] cx;
-        //double[] cy;
-        //double[] cz;
-
-        // Second order moments
-        //double[] ixx;
-        //double[] iyy;
-        //double[] izz;
-        //double[] iyz;
-        //double[] ixy;
-        //double[] izx;
-        //double xdiff;
-        //double ydiff;
-        //double zdiff;
-        //double[][] tensor = new double[3][3];
-        //Matrix tensorMat;
-        //EigenvalueDecomposition eig;
-        //double[] eigenvalue;
-        //double[][] eigenvector;
-        //double temp;
-        //double ellipVol;
-        //double normFactor;
-        //int n;
-        //double[] tempCol = new double[3];
-        //float[][] sAxisCen;
-        float scaleMax;
-        float invMax;
-        Point3Df kVoxel;
-        //AlgorithmEllipsoidFit kF;
-        Vector[] volPoints;
-        //double[] axes;
-        //float[][] sAxisPer;
-        //float tempf;
         int numGreenFound;
         int gIndex[];
         float gCount[];
@@ -2420,31 +2326,29 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         double distX;
         double distY;
         double distZ;
-        double distance;
         double distanceSquared;
         double minDistanceSquared;
         int sortedGreenFound[];
         boolean isMaxGreen[][] = null;
         int blueVolume[];
         double blueIntensityTotal[];
-        double newBlueIntensityTotal[];
+        double newBlueIntensityTotal;
         int blueLeft[];
         int blueRight[];
         int blueTop[];
         int blueBottom[];
         int blueFront[];
         int blueBack[];
-        int blueWidth[];
-        int blueHeight[];
-        int blueDepth[];
+        int blueWidth;
+        int blueHeight;
+        int blueDepth;
         float blueMinArray[];
-        int blueBlockVolume[];
-        float volumeRatio[];
-        double blueBlockIntensityTotal[];
-        float intensityFraction[];
+        int blueBlockVolume;
+        float volumeRatio;
+        double blueBlockIntensityTotal;
+        float intensityFraction;
         boolean atBounds;
         boolean volumeGrowth;
-        int elementNum;
         Polygon srcGon;
         float[] xPoints = null;
         float[] yPoints = null;
@@ -2556,43 +2460,35 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         fcmAlgo = null;
         System.gc();
 
-        // Now convert the min and max to 0 and 1
+        // Now convert the min = 1 and max = 2 to min = 0 and and max = 1
         fireProgressStateChanged("Setting segmented blue values to 0 and 1");
-
         fireProgressStateChanged(6);
 
-        grayImage.calcMinMax();
-        max = (float) grayImage.getMax();
-        thresholds = new float[2];
-        thresholds[0] = max;
-        thresholds[1] = max;
-        fillValue = 0.0f;
+        byteBuffer = new byte[totLength];
+        try {
+            grayImage.exportData(0, totLength, byteBuffer);
+        } catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.exportData", true);
 
-         /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
-         new Dimension(600, 300));
-         boolean runTest = true;
-         if (runTest) {
-             setCompleted(true);
-             return;
-         }*/
-
-        thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE,
-                                                   wholeImage, false);
-        thresholdAlgo.run();
-        thresholdAlgo.finalize();
-        thresholdAlgo = null;
-        System.gc();
-        /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
-        new Dimension(600, 300));
-        boolean runTest = true;
-        if (runTest) {
-            setCompleted(true);
             return;
-        }*/
-
+        }
+        
+        for (i = 0; i < totLength; i++) {
+            byteBuffer[i]--;
+        }
+        
+        try {
+            grayImage.importData(0, byteBuffer, true);
+        }
+        catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.importData", true);
+            return;
+        }
+        
         // Do a slice by slice hole filling operation on the blue image
         fireProgressStateChanged("Slice by slice hole filling on blue segmented image");
-
         fireProgressStateChanged(7);
 
         extents2D[0] = srcImage.getExtents()[0];
@@ -2656,21 +2552,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         buffer2D = null;
         System.gc();
 
-        /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
-        new Dimension(600, 300));
-        boolean runTest = true;
-        if (runTest) {
-            setCompleted(true);
-            return;
-        }*/
-
-        
-
-        byteBuffer = new byte[totLength];
-
-        
         fireProgressStateChanged("IDing objects in blue segmented image");
-
         fireProgressStateChanged(15);
 
         kernel = AlgorithmMorphology3D.SIZED_SPHERE;
@@ -2705,12 +2587,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             return;
         }
 
-        //System.out.println("Number of Objects = " + numObjects);
-
         fireProgressStateChanged("Removing blue objects touching edges");
         fireProgressStateChanged(22);
-
-        edgeObjects = numObjects;
         
         
         removeID = new boolean[numObjects];
@@ -2778,7 +2656,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             fireProgressStateChanged(25);
             blueVolume = new int[numObjects];
             blueIntensityTotal = new double[numObjects];
-            newBlueIntensityTotal = new double[numObjects];
             blueLeft = new int[numObjects];
             blueRight = new int[numObjects];
             blueTop = new int[numObjects];
@@ -2786,13 +2663,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             blueFront = new int[numObjects];
             blueBack = new int[numObjects];
             blueMinArray = new float[numObjects];
-            blueWidth = new int[numObjects];
-            blueHeight = new int[numObjects];
-            blueDepth = new int[numObjects];
-            blueBlockVolume = new int[numObjects];
-            volumeRatio = new float[numObjects];
-            blueBlockIntensityTotal = new double[numObjects];
-            intensityFraction = new float[numObjects];
             for (i = 0; i < numObjects; i++) {
                 blueLeft[i] = Integer.MAX_VALUE;
                 blueTop[i] = Integer.MAX_VALUE;
@@ -2801,10 +2671,11 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             }
             // Obtain volumes and bounding blocks of numObjects
             for (z = 0; z < zDim; z++) {
+                index1 = z*sliceSize;
                 for (y = 0; y < yDim; y++) {
-        
+                    index = index1 + y*xDim;
                     for (x = 0; x < xDim; x++) {
-                        i = x + y*xDim + z*sliceSize;
+                        i = x + index;
                         // id goes from 0 to numObjects
                         id = IDArray[i];
                         if (id >= 1) {
@@ -2841,13 +2712,13 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             for (i = 0; i < numObjects; i++) {
                 UI.setDataText("Expanding object " + (i+1) + "\n");
                 Preferences.debug("Expanding object " + (i+1) + "\n");
-                blueWidth[i] = (blueRight[i] - blueLeft[i]);
-                blueHeight[i] = (blueBottom[i] - blueTop[i]);
-                blueDepth[i] = (blueBack[i] - blueFront[i]);
-                blueBlockVolume[i] = blueWidth[i]*blueHeight[i]*blueDepth[i];
-                volumeRatio[i] = (float)blueBlockVolume[i]/(float)blueVolume[i];
+                blueWidth = (blueRight[i] - blueLeft[i]);
+                blueHeight = (blueBottom[i] - blueTop[i]);
+                blueDepth = (blueBack[i] - blueFront[i]);
+                blueBlockVolume = blueWidth*blueHeight*blueDepth;
+                volumeRatio = (float)blueBlockVolume/(float)blueVolume[i];
                 atBounds = false;
-                while ((volumeRatio[i] < minBoundsRatio) && (!atBounds)) { 
+                while ((volumeRatio < minBoundsRatio) && (!atBounds)) { 
                     blueLeft[i] = Math.max(0, blueLeft[i] - 1);
                     blueRight[i] = Math.min(xDim-1, blueRight[i] + 1);
                     blueTop[i] = Math.max(0, blueTop[i] - 1);
@@ -2859,22 +2730,25 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                         (blueFront[i] == 0) && (blueBack[i] == (zDim - 1))) {
                         atBounds = true;
                     }
-                    blueWidth[i] = (blueRight[i] - blueLeft[i]);
-                    blueHeight[i] = (blueBottom[i] - blueTop[i]);
-                    blueDepth[i] = (blueBack[i] - blueFront[i]);
-                    blueBlockVolume[i] = blueWidth[i]*blueHeight[i]*blueDepth[i];
-                    volumeRatio[i] = (float)blueBlockVolume[i]/(float)blueVolume[i];
-                } // while ((volumeRatio[i] < minBoundsRatio) && (!atBounds))
+                    blueWidth = (blueRight[i] - blueLeft[i]);
+                    blueHeight = (blueBottom[i] - blueTop[i]);
+                    blueDepth = (blueBack[i] - blueFront[i]);
+                    blueBlockVolume = blueWidth*blueHeight*blueDepth;
+                    volumeRatio = (float)blueBlockVolume/(float)blueVolume[i];
+                } // while ((volumeRatio < minBoundsRatio) && (!atBounds))
+                blueBlockIntensityTotal = 0;
                 for (z = blueFront[i]; z <= blueBack[i]; z++) {
+                    index1 = z*sliceSize;
                     for (y = blueTop[i]; y <= blueBottom[i]; y++) {
+                        index = index1 + y*xDim;
                         for (x = blueLeft[i]; x <= blueRight[i]; x++) {
-                            k = x + y * xDim + z * sliceSize;
-                            blueBlockIntensityTotal[i] += buffer[k];
+                            k = x + index;
+                            blueBlockIntensityTotal += buffer[k];
                         }
                     } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
                 } // for (z = blueFront[i]; z <= blueBack[i]; z++)
-                intensityFraction[i] = (float)(blueIntensityTotal[i]/blueBlockIntensityTotal[i]);
-                if ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue)) {
+                intensityFraction = (float)(blueIntensityTotal[i]/blueBlockIntensityTotal);
+                if ((intensityFraction < minIntensityFraction) && (blueMinArray[i] > minBlueValue)) {
                     lowerValue = (int)Math.round(minBlueValue + 1);
                     upperValue = (int)Math.round(blueMinArray[i] - 1);
                     UI.setDataText("lowerValue = " + lowerValue + " upperValue = " + upperValue + "\n");
@@ -2889,60 +2763,62 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     do {
                         blueMinArray[i] = midValue; 
                         volumeGrowth = true;
-                        newBlueIntensityTotal[i] = blueIntensityTotal[i];
+                        newBlueIntensityTotal = blueIntensityTotal[i];
                         for (k = 0; k < totLength; k++) {
                             IDArray2[k] = IDArray[k];
                         }
                         while (volumeGrowth) {
                             volumeGrowth = false;
                             for (z = blueFront[i]; z <= blueBack[i]; z++) {
+                                index1 = z*sliceSize;
                                 for (y = blueTop[i]; y <= blueBottom[i]; y++) {
+                                    index = index1 + y*xDim;
                                     for (x = blueLeft[i]; x <= blueRight[i]; x++) {
-                                        k = x + y*xDim + z*sliceSize;
+                                        k = x + index;
                                         if ((IDArray2[k] == 0) && (buffer[k] >= blueMinArray[i])) {
                                            if ((x > blueLeft[i]) && (IDArray2[k-1] == (i+1))) {
                                                IDArray2[k] = (byte)(i+1);
                                                volumeGrowth = true;
-                                               newBlueIntensityTotal[i] += buffer[k];
+                                               newBlueIntensityTotal += buffer[k];
                                            }
                                            else if ((x < blueRight[i]) && (IDArray2[k+1] == (i+1))) {
                                                IDArray2[k] = (byte)(i+1);
                                                volumeGrowth = true;
-                                               newBlueIntensityTotal[i] += buffer[k];
+                                               newBlueIntensityTotal += buffer[k];
                                            }
                                            else if ((y > blueTop[i]) && (IDArray2[k - xDim] == (i+1))) {
                                                IDArray2[k] = (byte)(i+1);
                                                volumeGrowth = true;
-                                               newBlueIntensityTotal[i] += buffer[k];
+                                               newBlueIntensityTotal += buffer[k];
                                            }
                                            else if ((y < blueBottom[i]) && (IDArray2[k + xDim] == (i+1))) {
                                                IDArray2[k] = (byte)(i+1);
                                                volumeGrowth = true;
-                                               newBlueIntensityTotal[i] += buffer[k];
+                                               newBlueIntensityTotal += buffer[k];
                                            }
                                            else if ((z > blueFront[i]) && (IDArray2[k - sliceSize] == (i+1))) {
                                                IDArray2[k] = (byte)(i+1);
                                                volumeGrowth = true;
-                                               newBlueIntensityTotal[i] += buffer[k];
+                                               newBlueIntensityTotal += buffer[k];
                                            }
                                            else if ((z < blueBack[i]) && (IDArray2[k + sliceSize] == (i+1))) {
                                                IDArray2[k] = (byte)(i+1);
                                                volumeGrowth = true;
-                                               newBlueIntensityTotal[i] += buffer[k];
+                                               newBlueIntensityTotal += buffer[k];
                                            }
                                         } // if ((IDArray[k] == 0) && (buffer[k] >= blueMinArray[i]))
                                     } // for (x = blueLeft[i]; x <= blueRight[i]; x++)
                                 } // for (y = blueTop[i]; y <= blueBottom[i]; y++)
                             } // for (z = blueFront[i]; z <= blueBack[i]; z++)
                         } // while (volumeGrowth)
-                        intensityFraction[i] = (float)(newBlueIntensityTotal[i]/blueBlockIntensityTotal[i]);
+                        intensityFraction = (float)(newBlueIntensityTotal/blueBlockIntensityTotal);
                         if (lastRun) {
                             for (k = 0; k < totLength; k++) {
                                 IDArray[k] = IDArray2[k];
                             }
                             break;
                         }
-                        if (intensityFraction[i] >= minIntensityFraction) {
+                        if (intensityFraction >= minIntensityFraction) {
                                 if (midValue != lowerValue) {
                                     lowerValue = midValue;
                                     midValue = (lowerValue + upperValue)/2;
@@ -2956,7 +2832,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                                 midValue = (lowerValue + upperValue)/2;
                                 // So you don't have to repeat all of the growth
                                 // process on every iteration
-                                blueIntensityTotal[i] = newBlueIntensityTotal[i];
+                                blueIntensityTotal[i] = newBlueIntensityTotal;
                                 for (k = 0; k < totLength; k++) {
                                     IDArray[k] = IDArray2[k];
                                 }
@@ -2966,7 +2842,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                             lastRun = true;
                         }
                     } while (true);
-                } // if ((intensityFraction[i] < minIntensityFraction) && (blueMinArray[i] > minBlueValue))
+                } // if ((intensityFraction < minIntensityFraction) && (blueMinArray[i] > minBlueValue))
             } // for (i = 0; i < numObjects; i++)
         } // if (blueExpand)
         
@@ -2980,6 +2856,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             return;    
         }
         
+        // Smooth with a morphological opening followed by a closing
         fireProgressStateChanged("Opening blue segmented image");
         fireProgressStateChanged(27);
         kernel = AlgorithmMorphology3D.CONNECTED6;
@@ -2994,14 +2871,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         openAlgo.run();
         openAlgo.finalize();
         openAlgo = null;
-
-        /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
-        new Dimension(600, 300));
-        boolean runTest = true;
-        if (runTest) {
-            setCompleted(true);
-            return;
-        }*/
 
         fireProgressStateChanged("Closing blue segmented image");
         fireProgressStateChanged(28);
@@ -3096,6 +2965,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         wholeImage = true;
 
         // grayImage enters ModelStorageBase.FLOAT and returns ModelStorageBase.UBYTE
+        // in which values below threshold are set to 0 and values >= threshold are set to 1, 2, and 3
         fcmAlgo = new AlgorithmFuzzyCMeans(grayImage, nClasses, nPyramid, oneJacobiIter, twoJacobiIter, q,
                                            oneSmooth, twoSmooth, outputGainField, segmentation, cropBackground,
                                            threshold, maxIter, endTolerance, wholeImage);
@@ -3121,27 +2991,35 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         fcmAlgo = null;
         System.gc();
 
-        /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
-        new Dimension(600, 300));
-        boolean runTest = true;
-        if (runTest) {
-            setCompleted(true);
-            return;
-        }*/
-
-        // Now convert the red min and max to 0 and 1
+        // Now convert the red = 3 in the fuzzy c means segmentation to 1 and the other values to 0
         fireProgressStateChanged("Setting segmented red values to 0 and 1");
         fireProgressStateChanged(35);
-        grayImage.calcMinMax();
-        max = (float) grayImage.getMax();
-        thresholds[0] = max;
-        thresholds[1] = max;
-        fillValue = 0.0f;
-        thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
-                                                   AlgorithmThresholdDual.BINARY_TYPE, wholeImage, false);
-        thresholdAlgo.run();
-        thresholdAlgo.finalize();
-        thresholdAlgo = null;
+        try {
+            grayImage.exportData(0, totLength, byteBuffer);
+        } catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.exportData", true);
+
+            return;
+        }
+        
+        for (i = 0; i < totLength; i++) {
+            if (byteBuffer[i] == 3) {
+                byteBuffer[i] = 1;
+            }
+            else {
+                byteBuffer[i] = 0;
+            }
+        }
+        
+        try {
+            grayImage.importData(0, byteBuffer, true);
+        }
+        catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.importData", true);
+            return;
+        }
 
         // Put the red VOI IDs in redIDArray
         fireProgressStateChanged("IDing objects in red segmented image");
@@ -3162,14 +3040,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         grayImage.calcMinMax();
         numRedObjects = (int) grayImage.getMax();
         redIDArray = new byte[totLength];
-
-        /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
-        new Dimension(600, 300));
-        boolean runTest = true;
-        if (runTest) {
-            setCompleted(true);
-            return;
-        }*/
 
         try {
             grayImage.exportData(0, totLength, redIDArray);
@@ -3314,26 +3184,39 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         fcmAlgo = null;
         System.gc();
 
-        // ViewJFrameImage testFrame2 = new ViewJFrameImage(grayImage, null,
-        // new Dimension(600, 300), srcImage.getUserInterface());
-
         if (twoGreenLevels) {
             grayImage2 = (ModelImage)grayImage.clone();
         }
-        // Now convert the green other and max to 0 and 1
+        
+        // Now convert the green = 3 in the fuzzy c means segmentation to 1 and convert all other values to 0.
         fireProgressStateChanged("Setting segmented green values to 0 and 1");
         fireProgressStateChanged(50);
-        grayImage.calcMinMax();
-        max = (float) grayImage.getMax();
-        thresholds[0] = max;
-        thresholds[1] = max;
-        fillValue = 0.0f;
-        thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
-                                                   AlgorithmThresholdDual.BINARY_TYPE, wholeImage, false);
-        thresholdAlgo.run();
-        thresholdAlgo.finalize();
-        thresholdAlgo = null;
-        System.gc();
+        try {
+            grayImage.exportData(0, totLength, byteBuffer);
+        } catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.exportData", true);
+
+            return;
+        }
+        
+        for (i = 0; i < totLength; i++) {
+            if (byteBuffer[i] == 3) {
+                byteBuffer[i] = 1;
+            }
+            else {
+                byteBuffer[i] = 0;
+            }
+        }
+        
+        try {
+            grayImage.importData(0, byteBuffer, true);
+        }
+        catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.importData", true);
+            return;
+        }
 
         // Put the green VOI IDs in greenIDArray
         fireProgressStateChanged("IDing objects in green segmented image");
@@ -3366,18 +3249,35 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         }
         
         if (twoGreenLevels) {
-            // Now convert the green other and max-1 to 0 and 1
+            // Now convert the green = 2 in the fuzzy c means segmentation to 1 and convert all other values to 0.
             fireProgressStateChanged("Setting segmented green values to 0 and 1");
             fireProgressStateChanged(59);
-            thresholds[0] = max-1;
-            thresholds[1] = max-1;
-            fillValue = 0.0f;
-            thresholdAlgo = new AlgorithmThresholdDual(grayImage2, thresholds, fillValue,
-                                                       AlgorithmThresholdDual.BINARY_TYPE, wholeImage, false);
-            thresholdAlgo.run();
-            thresholdAlgo.finalize();
-            thresholdAlgo = null;
+            try {
+                grayImage2.exportData(0, totLength, byteBuffer);
+            } catch (IOException error) {
+                byteBuffer = null;
+                errorCleanUp("Error on grayImage2.exportData", true);
 
+                return;
+            }
+            
+            for (i = 0; i < totLength; i++) {
+                if (byteBuffer[i] == 2) {
+                    byteBuffer[i] = 1;
+                }
+                else {
+                    byteBuffer[i] = 0;
+                }
+            }
+            
+            try {
+                grayImage2.importData(0, byteBuffer, true);
+            }
+            catch (IOException error) {
+                byteBuffer = null;
+                errorCleanUp("Error on grayImage2.importData", true);
+                return;
+            }
             
             // Put the green VOI IDs in greenIDArray
             fireProgressStateChanged("IDing objects in green segmented image");
@@ -3531,11 +3431,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         for (j = numGreenTotal; j >= 1; j--) {
             for (i = 1; i < j; i++) {
                 if (greenCellNumber[j-1] == greenCellNumber[i-1]) {
-                    //distX = (greenXCenter[j-1] - greenXCenter[i-1]) * xRes;
-                    //distY = (greenYCenter[j-1] - greenYCenter[i-1]) * yRes;
-                    //distZ = (greenZCenter[j-1] - greenZCenter[i-1]) * zRes;
-                    //distanceSquared = distX*distX + distY*distY + distZ*distZ;
-                    //if (distanceSquared <= mergingDistanceSquared) {
                     minDistanceSquared = Double.MAX_VALUE;
                     for (z = greenFront[j-1]; z <= greenBack[j-1]; z++) {
                         index2 = z*sliceSize;
@@ -3915,13 +3810,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         
         srcImage.setVOIs((VOIVector)VOIs);
 
-        // System.out.println("Image = " + srcImage);
-        // System.out.println("VOIs = " + VOIs);
-
         idCount = new int[numObjects];
-        xPosGeo = new float[nVOIs];
-        yPosGeo = new float[nVOIs];
-        zPosGeo = new float[nVOIs];
         xPosGrav = new float[nVOIs];
         yPosGrav = new float[nVOIs];
         zPosGrav = new float[nVOIs];
@@ -3968,10 +3857,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                         objectCount = idCount[j - 1];
                     }
                 } // for (j = 2; j <= numObjects; j++)
-
-                xPosGeo[i] = 0.0f;
-                yPosGeo[i] = 0.0f;
-                zPosGeo[i] = 0.0f;
+                
                 xPosGrav[i] = 0.0f;
                 yPosGrav[i] = 0.0f;
                 zPosGrav[i] = 0.0f;
@@ -3986,9 +3872,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                             index = x + j;
 
                             if (shortMask[index] != -1) {
-                                xPosGeo[i] += x;
-                                yPosGeo[i] += y;
-                                zPosGeo[i] += z;
                                 xPosGrav[i] += greenBuffer[index] * x;
                                 yPosGrav[i] += greenBuffer[index] * y;
                                 zPosGrav[i] += greenBuffer[index] * z;
@@ -4002,9 +3885,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     }
                 }
 
-                xPosGeo[i] /= voiCount[i];
-                yPosGeo[i] /= voiCount[i];
-                zPosGeo[i] /= voiCount[i];
                 xPosGrav[i] /= colorCount[i];
                 yPosGrav[i] /= colorCount[i];
                 zPosGrav[i] /= colorCount[i];
@@ -4013,13 +3893,17 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
         } // for (i = 0; i < nVOIs; i++)
         
-        gIndex = new int[3];
-        gCount = new float[3];
+        // Reorder the indices for the green VOIs and their associated arrays so that
+        // the indices use the sequence:
+        // blue object 1 - large green VOI
+        // blue object 1 - small green VOI
+        // blue object 2 - large green VOI
+        // blue object 2 - small green VOI
+        // and so on
+        gIndex = new int[2];
+        gCount = new float[2];
         VOIs2 = new ViewVOIVector();
         objectID2 = new int[nVOIs];
-        xPosGeo2 = new float[nVOIs];
-        yPosGeo2 = new float[nVOIs];
-        zPosGeo2 = new float[nVOIs];
         xPosGrav2 = new float[nVOIs];
         yPosGrav2 = new float[nVOIs];
         zPosGrav2 = new float[nVOIs];
@@ -4029,7 +3913,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             numGreenFound = 0;
             gCount[0] = 0.0f;
             gCount[1] = 0.0f;
-            gCount[2] = 0.0f;
             for (i = 0; i < nVOIs; i++) {
                 if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) && (objectID[i] == j)) {
                     
@@ -4061,9 +3944,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 }
                 VOIs2.addElement(VOIs.VOIAt(gIndex[k]));
                 objectID2[index2] = j;
-                xPosGeo2[index2] = xPosGeo[gIndex[k]];
-                yPosGeo2[index2] = yPosGeo[gIndex[k]];
-                zPosGeo2[index2] = zPosGeo[gIndex[k]];
                 xPosGrav2[index2] = xPosGrav[gIndex[k]];
                 yPosGrav2[index2] = yPosGrav[gIndex[k]];
                 zPosGrav2[index2] = zPosGrav[gIndex[k]];
@@ -4080,18 +3960,12 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         VOIs2 = null;
         for (i = 0; i < nVOIs; i++) {
             objectID[i] = objectID2[i];
-            xPosGeo[i] = xPosGeo2[i];
-            yPosGeo[i] = yPosGeo2[i];
-            zPosGeo[i] = zPosGeo2[i];
             xPosGrav[i] = xPosGrav2[i];
             yPosGrav[i] = yPosGrav2[i];
             zPosGrav[i] = zPosGrav2[i];
             voiCount[i] = voiCount2[i];
         }
         objectID2 = null;
-        xPosGeo2 = null;
-        yPosGeo2 = null;
-        zPosGeo2 = null;
         xPosGrav2 = null;
         yPosGrav2 = null;
         zPosGrav2 = null;
@@ -4112,135 +3986,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             }
         }
 
-        // Ellipse fitting blue objects with first and second moments
-        /*fireProgressStateChanged("Ellipse fitting with moments");
-        volume = new int[numObjects];
-        cx = new double[numObjects];
-        cy = new double[numObjects];
-        cz = new double[numObjects];
-        ixx = new double[numObjects];
-        iyy = new double[numObjects];
-        izz = new double[numObjects];
-        iyz = new double[numObjects];
-        ixy = new double[numObjects];
-        izx = new double[numObjects];
-        sAxisCen = new float[numObjects][3];
-
-        for (z = 0; z < zDim; z++) {
-            offset = z * sliceLength;
-
-            for (y = 0; y < yDim; y++) {
-                j = offset + (y * xDim);
-
-                for (x = 0; x < xDim; x++) {
-                    i = j + x;
-
-                    if (IDArray[i] > 0) {
-                        idm1 = IDArray[i] - 1;
-                        volume[idm1]++;
-                        cx[idm1] += x * xRes;
-                        cy[idm1] += y * yRes;
-                        cz[idm1] += z * zRes;
-                    } // if (IDArray[i] > 0)
-                } // for (x = 0; x < xDim; x++)
-            } // for (y = 0; y < yDim; y++)
-        } // for (z = 0; z < zDim; z++)
-
-        for (k = 0; k < numObjects; k++) {
-            cx[k] = cx[k] / volume[k];
-            cy[k] = cy[k] / volume[k];
-            cz[k] = cz[k] / volume[k];
-        } // for (k = 0; k < numObjects; k++)
-
-        for (z = 0; z < zDim; z++) {
-            offset = z * sliceLength;
-
-            for (y = 0; y < yDim; y++) {
-                j = offset + (y * xDim);
-
-                for (x = 0; x < xDim; x++) {
-                    i = j + x;
-
-                    if (IDArray[i] > 0) {
-                        idm1 = IDArray[i] - 1;
-                        xdiff = (x * xRes) - cx[idm1];
-                        ydiff = (y * yRes) - cy[idm1];
-                        zdiff = (z * zRes) - cz[idm1];
-                        ixx[idm1] += xdiff * xdiff;
-                        iyy[idm1] += ydiff * ydiff;
-                        izz[idm1] += zdiff * zdiff;
-                        iyz[idm1] += ydiff * zdiff;
-                        ixy[idm1] += xdiff * ydiff;
-                        izx[idm1] += zdiff * xdiff;
-                    } // if (IDArray[i] > 0)
-                } // for (x = 0; x < xDim; x++)
-            } // for (y = 0; y < yDim; y++)
-        } // for (z = 0; z < zDim; z++)
-
-        for (k = 0; k < numObjects; k++) {
-            ixx[k] = ixx[k] / volume[k];
-            iyy[k] = iyy[k] / volume[k];
-            izz[k] = izz[k] / volume[k];
-            iyz[k] = iyz[k] / volume[k];
-            ixy[k] = ixy[k] / volume[k];
-            izx[k] = izx[k] / volume[k];
-            tensor[0][0] = ixx[k];
-            tensor[0][1] = ixy[k];
-            tensor[0][2] = izx[k];
-            tensor[1][0] = ixy[k];
-            tensor[1][1] = iyy[k];
-            tensor[1][2] = iyz[k];
-            tensor[2][0] = izx[k];
-            tensor[2][1] = iyz[k];
-            tensor[2][2] = izz[k];
-            tensorMat = new Matrix(tensor);
-            eig = new EigenvalueDecomposition(tensorMat);
-            eigenvalue = eig.getRealEigenvalues();
-
-            // In EigenvalueDecomposition the columns represent the eigenvectors
-            eigenvector = eig.getV().getArray();
-
-            // Arrange the eigenvalues and the corresponding eigenvectors
-            // in ascending order so that e0 <= e1 <= e2
-            for (m = 0; m < 3; m++) {
-                index = m;
-
-                for (n = m + 1; n < 3; n++) {
-
-                    if (eigenvalue[n] < eigenvalue[m]) {
-                        index = n;
-                    }
-                } // for (n = m+1; n < 3; n++)
-
-                if (index != m) {
-                    temp = eigenvalue[m];
-                    eigenvalue[m] = eigenvalue[index];
-                    eigenvalue[index] = temp;
-
-                    for (n = 0; n < 3; n++) {
-                        tempCol[n] = eigenvector[n][m];
-                        eigenvector[n][m] = eigenvector[n][index];
-                        eigenvector[n][index] = tempCol[n];
-                    }
-                } // if (index != m)
-            } // for (m = 0; m < 3; m++)
-
-            // Semi axes are proportional to the square root of the eigenvalues
-            for (m = 0; m < 3; m++) {
-                eigenvalue[m] = Math.sqrt(eigenvalue[m]);
-            }
-
-            // Calculate an unnormalized volume from the eigenvalues
-            ellipVol = (4.0 / 3.0) * Math.PI * eigenvalue[0] * eigenvalue[1] * eigenvalue[2];
-
-            // Calculate a normalizing factor with the actual volume
-            normFactor = Math.pow((xRes * yRes * zRes * volume[k] / ellipVol), (1.0 / 3.0));
-
-            // Normalize to obtain the actual semi axes
-            for (m = 0; m < 3; m++) {
-                sAxisCen[k][m] = (float) (normFactor * eigenvalue[m]);
-            }
-        } // for (k = 0; k < numObjects; k++)*/
+        
 
         boundaryArray = new byte[totLength];
         dilateArray = new byte[totLength];
@@ -4254,14 +4000,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         method = AlgorithmMorphology3D.DILATE;
         itersDilation = 1;
         blueCountTotal = new int[numObjects];
-        scaleMax = xRes * (xDim - 1);
-        scaleMax = Math.max(scaleMax, yRes * (yDim - 1));
-        scaleMax = Math.max(scaleMax, zRes * (zDim - 1));
-        invMax = 1.0f / scaleMax;
-        volPoints = new Vector[numObjects];
-        //sAxisPer = new float[numObjects][3];
-
-        // nucleusVoxel = new boolean[numObjects][totLength];
+        
         for (id = 1; id <= numObjects; id++) {
             fireProgressStateChanged("Processing object " + id + " of " + numObjects + " in blue segmented image");
             fireProgressStateChanged(85 + (id * 10 / numObjects));
@@ -4270,7 +4009,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             xCenter[id - 1] = 0.0f;
             yCenter[id - 1] = 0.0f;
             zCenter[id - 1] = 0.0f;
-            volPoints[id - 1] = new Vector();
             lowestSqr = Float.MAX_VALUE;
             highestSqr = -Float.MAX_VALUE;
 
@@ -4332,8 +4070,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                         if ((dilateArray[i] == (byte) 1) && (byteBuffer[i] == (byte) 0)) {
                             boundaryArray[i] = (byte) id;
-                            kVoxel = new Point3Df(x * xRes * invMax, y * yRes * invMax, z * zRes * invMax);
-                            volPoints[id - 1].add(kVoxel);
                             distSqr = ((xCenter[id - 1] - x) * (xCenter[id - 1] - x) * xRes * xRes) +
                                       ((yCenter[id - 1] - y) * (yCenter[id - 1] - y) * yRes * yRes) +
                                       ((zCenter[id - 1] - z) * (zCenter[id - 1] - z) * zRes * zRes);
@@ -4357,30 +4093,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                               ")\n");
             Preferences.debug("Distance from center of mass to near edge = " + centerToNearEdge[id - 1] + "\n");
             Preferences.debug("Distance from center of mass to far edge = " + centerToFarEdge[id - 1] + "\n");
-
-            /*kF = new AlgorithmEllipsoidFit(volPoints[id - 1]);
-            axes = kF.getAxes();
-            sAxisPer[id - 1][0] = (float) (0.5 * axes[0] * scaleMax);
-            sAxisPer[id - 1][1] = (float) (0.5 * axes[1] * scaleMax);
-            sAxisPer[id - 1][2] = (float) (0.5 * axes[2] * scaleMax);
-
-            // Arrange the ellipse lengths in ascending order
-            for (m = 0; m < 3; m++) {
-                index = m;
-
-                for (n = m + 1; n < 3; n++) {
-
-                    if (sAxisPer[id - 1][n] < sAxisPer[id - 1][index]) {
-                        index = n;
-                    }
-                } // for (n = m+1; n < 3; n++)
-
-                if (index != m) {
-                    tempf = sAxisPer[id - 1][m];
-                    sAxisPer[id - 1][m] = sAxisPer[id - 1][index];
-                    sAxisPer[id - 1][index] = tempf;
-                } // if (index != m)
-            } // for (m = 0; m < 3; m++)*/
         } // for (id = 1; id <= numObjects; id++)
 
         grayImage.disposeLocal();
@@ -4405,8 +4117,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         UI.setDataText("Nucleus\tNvolume\tRmin\tRmax");
-        //UI.setDataText("\tsAx1Cen\tsAx2Cen\tsAx3Cen");
-        //UI.setDataText("\tsAx1Per\tsAx2Per\tsAx3Per");
 
         UI.setDataText("\tG1volume");
         UI.setDataText("\tcenterToG1\tcenterToG1ToEdge\tfractionG1Out");
@@ -4422,17 +4132,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             nuclearVolume = xRes * yRes * zRes * blueCountTotal[i];
             UI.setDataText((i + 1) + "\t" + df.format(nuclearVolume));
             UI.setDataText("\t" + df.format(centerToNearEdge[i]));
-
-            // equivalentRadius = (float)Math.pow(nuclearVolume/((4.0/3.0)*Math.PI),1.0/3.0);
-            // UI.setDataText("\t" + nf.format(equivalentRadius));
             UI.setDataText("\t" + df.format(centerToFarEdge[i]));
-            //UI.setDataText("\t" + nf.format(sAxisCen[i][0]));
-            //UI.setDataText("\t" + nf.format(sAxisCen[i][1]));
-            //UI.setDataText("\t" + nf.format(sAxisCen[i][2]));
-            //UI.setDataText("\t" + nf.format(sAxisPer[i][0]));
-            //UI.setDataText("\t" + nf.format(sAxisPer[i][1]));
-            //UI.setDataText("\t" + nf.format(sAxisPer[i][2]));
-
+            
             greenFound = 0;
 
             for (j = 0; j <= (nVOIs - 1); j++) {
@@ -4447,103 +4148,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                         UI.setDataText("\t");
                     }
                     UI.setDataText("\t" + df.format(voiVolume));
-                    /*geoToCenter = (float)
-                                      Math.sqrt(((xPosGeo[j] - xCenter[i]) * (xPosGeo[j] - xCenter[i]) * xRes * xRes) +
-                                                ((yPosGeo[j] - yCenter[i]) * (yPosGeo[j] - yCenter[i]) * yRes * yRes) +
-                                                ((zPosGeo[j] - zCenter[i]) * (zPosGeo[j] - zCenter[i]) * zRes * zRes));
-
-                    initialdx = xPosGeo[j] - xCenter[i];
-                    initialdy = yPosGeo[j] - yCenter[i];
-                    initialdz = zPosGeo[j] - zCenter[i];
-                    lastEdgeX = (int) Math.round(xPosGeo[j]);
-                    lastEdgeY = (int) Math.round(yPosGeo[j]);
-                    lastEdgeZ = (int) Math.round(zPosGeo[j]);
-
-                    if ((Math.abs(initialdx) >= Math.abs(initialdy)) && (Math.abs(initialdx) >= Math.abs(initialdz))) {
-
-                        if (initialdx >= 0.0f) {
-                            incx = 0.1f;
-                        } else {
-                            incx = -0.1f;
-                        }
-
-                        incy = 0.1f * initialdy / Math.abs(initialdx);
-                        incz = 0.1f * initialdz / Math.abs(initialdx);
-                    } else if ((Math.abs(initialdy) >= Math.abs(initialdx)) &&
-                                   (Math.abs(initialdy) >= Math.abs(initialdz))) {
-
-                        if (initialdy >= 0.0f) {
-                            incy = 0.1f;
-                        } else {
-                            incy = -0.1f;
-                        }
-
-                        incx = 0.1f * initialdx / Math.abs(initialdy);
-                        incz = 0.1f * initialdz / Math.abs(initialdy);
-                    } else {
-
-                        if (initialdz >= 0.0f) {
-                            incz = 0.1f;
-                        } else {
-                            incz = -0.1f;
-                        }
-
-                        incx = 0.1f * initialdx / Math.abs(initialdz);
-                        incy = 0.1f * initialdy / Math.abs(initialdz);
-                    }
-
-                    numInc = 1;
-
-                    while (true) {
-                        newEdgeX = (int) Math.round(xPosGeo[j] + (numInc * incx));
-
-                        if ((newEdgeX < 0) || (newEdgeX >= xDim)) {
-                            break;
-                        }
-
-                        newEdgeY = (int) Math.round(yPosGeo[j] + (numInc * incy));
-
-                        if ((newEdgeY < 0) || (newEdgeY >= yDim)) {
-                            break;
-                        }
-
-                        newEdgeZ = (int) Math.round(zPosGeo[j] + (numInc * incz));
-
-                        if ((newEdgeZ < 0) || (newEdgeZ >= zDim)) {
-                            break;
-                        }
-
-                        numInc++;
-
-                        if ((newEdgeX == lastEdgeX) && (newEdgeY == lastEdgeY) && (newEdgeZ == lastEdgeZ)) {
-                            continue;
-                        }
-
-                        index = newEdgeX + (xDim * newEdgeY) + (sliceLength * newEdgeZ);
-                        lastEdgeX = newEdgeX;
-                        lastEdgeY = newEdgeY;
-                        lastEdgeZ = newEdgeZ;
-
-                        if (IDArray[index] != (i + 1)) {
-                            break;
-                        }
-                    } // while (true)
-
-                    centerToGeoToEdge = (float)
-                                            Math.sqrt(((lastEdgeX - xCenter[i]) * (lastEdgeX - xCenter[i]) * xRes *
-                                                           xRes) +
-                                                      ((lastEdgeY - yCenter[i]) * (lastEdgeY - yCenter[i]) * yRes *
-                                                           yRes) +
-                                                      ((lastEdgeZ - zCenter[i]) * (lastEdgeZ - zCenter[i]) * zRes *
-                                                           zRes));
-                    UI.setDataText("\t" + nf.format(centerToGeoToEdge));
-                    geoToCenter = 100.0f * geoToCenter / centerToGeoToEdge;
-                    UI.setDataText("\t" + nf.format(geoToCenter));
-                    geoToEdge = (float)
-                                    Math.sqrt(((lastEdgeX - xPosGeo[j]) * (lastEdgeX - xPosGeo[j]) * xRes * xRes) +
-                                              ((lastEdgeY - yPosGeo[j]) * (lastEdgeY - yPosGeo[j]) * yRes * yRes) +
-                                              ((lastEdgeZ - zPosGeo[j]) * (lastEdgeZ - zPosGeo[j]) * zRes * zRes));
-                    UI.setDataText("\t" + nf.format(geoToEdge));*/
+                    
 
                     gravToCenter = (float)
                                        Math.sqrt(((xPosGrav[j] - xCenter[i]) * (xPosGrav[j] - xCenter[i]) * xRes *
@@ -4641,45 +4246,11 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     UI.setDataText("\t" + df.format(centerToGravToEdge));
                     fractionOut = gravToCenter/centerToGravToEdge;
                     UI.setDataText("\t\t" + dfFract.format(fractionOut));
-                    /*gravToCenter = 100.0f * gravToCenter / centerToGravToEdge;
-                    
-                    gravToEdge = (float)
-                                     Math.sqrt(((lastEdgeX - xPosGrav[j]) * (lastEdgeX - xPosGrav[j]) * xRes * xRes) +
-                                               ((lastEdgeY - yPosGrav[j]) * (lastEdgeY - yPosGrav[j]) * yRes * yRes) +
-                                               ((lastEdgeZ - zPosGrav[j]) * (lastEdgeZ - zPosGrav[j]) * zRes * zRes));
-                    UI.setDataText("\t" + nf.format(gravToEdge));*/
-
-
-                    /*lowestSqr = Float.MAX_VALUE;
-                     * for (k1 = 0, z = 0; z < zDim; z++, k1 += sliceLength) { for (j1 = k1, y = 0; y < yDim; y++, j1 +=
-                     * xDim) {     for (x = 0; x < xDim; x++) {         index = x + j1;         if (boundaryArray[index]
-                     * == objectID[j]) {             distSqr = (xPosGeo[j] - x) * (xPosGeo[j] - x) *  xRes * xRes +
-                     *      (yPosGeo[j] - y) * (yPosGeo[j] - y) * yRes * yRes + (zPosGeo[j] - z) * (zPosGeo[j] - z) *
-                     * zRes * zRes;             if (distSqr < lowestSqr) {        lowestSqr = distSqr;       xEdge = x;
-                     *                yEdge = y;                 zEdge = z;             }         }  } } } geoToEdge =
-                     * (float) Math.sqrt(lowestSqr); UI.setDataText("\t\t" + nf.format(geoToEdge)); geoToEdge *= 100.0f
-                     * / centerToFarEdge[i]; UI.setDataText("\t" + nf.format(geoToEdge));
-                     *
-                     * lowestSqr = Float.MAX_VALUE; for (k1 = 0, z = 0; z < zDim; z++, k1 += sliceLength) { for (j1 = k1,
-                     * y = 0; y < yDim; y++, j1 += xDim) {     for (x = 0; x < xDim; x++) {         index = x + j1;   if
-                     * (boundaryArray[index] == objectID[j]) {             distSqr = (xPosGrav[j] - x) * (xPosGrav[j] -
-                     * x) *                       xRes * xRes +                       (yPosGrav[j] - y) * (yPosGrav[j] -
-                     * y) *                       yRes * yRes +                       (zPosGrav[j] - z) * (zPosGrav[j] -
-                     * z) *                       zRes * zRes;             if (distSqr < lowestSqr) { lowestSqr =
-                     * distSqr;                 xEdge = x;                 yEdge = y;     zEdge = z;    }         } } }
-                     * } gravToEdge = (float) Math.sqrt(lowestSqr); UI.setDataText("\t\t" + nf.format(gravToEdge));
-                     * gravToEdge *= 100.0f /
-                     * centerToFarEdge[i];UI.setDataText("\t" + nf.format(gravToEdge));*/
                 } // if (objectID[j] == (i+1))
             } // for (j = 0; j <= nVOIs - 1; j++)
 
             UI.setDataText("\n");
         } // for (i = 0; i < numObjects; i++)
-
-        /*VOIs = srcImage.getVOIs();
-         * System.out.println("Image = " + srcImage); System.out.println("VOIs = " + VOIs); for (i = 0; i < nVOIs; i++)
-         * { System.out.println("id = " + VOIs.VOIAt(i).getID()); System.out.println(VOIs.VOIAt(i).getName());
-         * System.out.println(VOIs.VOIAt(i).getColor());}*/
 
         if (threadStopped) {
             finalize();
