@@ -391,13 +391,9 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         byte[] greenIDArray = null;
         byte[] greenIDArray2 = null;
         float[] greenIntensityTotal;
-        float[] greenXCenter;
-        float[] greenYCenter;
         int[] greenNucleusNumber = null;
         int[][] sortedGreenIndex = null;
         float[][] sortedGreenIntensity;
-        float[][] sortedGreenXCenter;
-        float[][] sortedGreenYCenter;
         int k;
         AlgorithmVOIExtraction algoVOIExtraction;
         VOI newPtVOI;
@@ -432,7 +428,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         int numInc;
         float centerToGravToEdge;
         float fractionOut;
-        int numGreenVOIObjects;
         AlgorithmHistogram algoHist;
         int bins;
         int[] histoBuffer;
@@ -1358,37 +1353,22 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         fireProgressStateChanged(61);
         numGreenTotal = numGreenObjects+numGreenObjects2;
         greenIntensityTotal = new float[numGreenTotal];
-        greenXCenter = new float[numGreenTotal];
-        greenYCenter = new float[numGreenTotal];
         greenCellNumber = new int[numGreenTotal];
         greenNucleusNumber = new int[numObjects];
         sortedGreenIndex = new int[numObjects][greenRegionNumber];
         sortedGreenIntensity = new float[numObjects][greenRegionNumber];
-        sortedGreenXCenter = new float[numObjects][greenRegionNumber];
-        sortedGreenYCenter = new float[numObjects][greenRegionNumber];
         isMaxGreen = new boolean[numObjects][greenRegionNumber];
         
         for (j = 1; j <= numGreenTotal; j++) {
             greenBelong = new int[numObjects+1];
-            for (x = 0, y = 0, i = 0; i < length; i++) {
+            for (i = 0; i < length; i++) {
 
                 if (greenIDArray[i] == j) {
                     greenIntensityTotal[j - 1] += greenBuffer[i];
-                    greenXCenter[j - 1] += greenBuffer[i] * x;
-                    greenYCenter[j - 1] += greenBuffer[i] * y;
                     greenBelong[IDArray[i]] = greenBelong[IDArray[i]] + 1;
                 } // if (greenIDArray[i] == j)
-
-                x++;
-
-                if (x == xDim) {
-                    x = 0;
-                    y++;
-                }
             }
 
-            greenXCenter[j - 1] = greenXCenter[j - 1] / greenIntensityTotal[j - 1];
-            greenYCenter[j - 1] = greenYCenter[j - 1] / greenIntensityTotal[j - 1];
             greenCellNumber[j-1] = 0;
             maxGreenBelong = 0;
             for (k = 1; k <= numObjects; k++) {
@@ -1469,30 +1449,18 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     }
                     if (minDistanceSquared <= mergingDistanceSquared) {
                         greenIntensityTotal[i-1] = 0.0f;
-                        greenXCenter[i-1] = 0.0f;
-                        greenYCenter[i-1] = 0.0f;
                         greenLeft[i-1] = Math.min(greenLeft[i-1], greenLeft[j-1]);
                         greenRight[i-1] = Math.max(greenRight[i-1], greenRight[j-1]);
                         greenTop[i-1] = Math.min(greenTop[i-1], greenTop[j-1]);
                         greenBottom[i-1] = Math.max(greenBottom[i-1], greenBottom[j-1]);
-                        for (x = 0, y = 0, k = 0; k < length; k++) {
+                        for (k = 0; k < length; k++) {
                             if (greenIDArray[k] == j) {
                                 greenIDArray[k] = (byte)i;
                             }
                             if (greenIDArray[k] == i) {
                                 greenIntensityTotal[i-1] += greenBuffer[k];
-                                greenXCenter[i-1] += greenBuffer[k] * x;
-                                greenYCenter[i-1] += greenBuffer[k] * y;
                             }
-                            
-                            x++;
-                            if (x == xDim) {
-                                x = 0;
-                                y++;
-                            }
-                        } // for (x = 0, y = 0, k = 0; k < length; k++)
-                        greenXCenter[i - 1] = greenXCenter[i - 1] / greenIntensityTotal[i - 1];
-                        greenYCenter[i - 1] = greenYCenter[i - 1] / greenIntensityTotal[i - 1];
+                        } // for (k = 0; k < length; k++)
                         for (m = j+1; m <= numGreenTotal; m++) {
                             for (k = 0; k < length; k++) {
                                 if (greenIDArray[k] == m) {
@@ -1500,8 +1468,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                                 }
                             }
                             greenIntensityTotal[m-2] = greenIntensityTotal[m-1];
-                            greenXCenter[m-2] = greenXCenter[m-1];
-                            greenYCenter[m-2] = greenYCenter[m-1];
                             greenCellNumber[m-2] = greenCellNumber[m-1];
                             greenLeft[m-2] = greenLeft[m-1];
                             greenRight[m-2] = greenRight[m-1];
@@ -1544,15 +1510,11 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                         if ((i == 0) && (greenNucleusNumber[id-1] >= 2)) {
                             sortedGreenIntensity[id - 1][1] = sortedGreenIntensity[id - 1][0];
                             sortedGreenIndex[id - 1][1] = sortedGreenIndex[id - 1][0];
-                            sortedGreenXCenter[id - 1][1] = sortedGreenXCenter[id - 1][0];
-                            sortedGreenYCenter[id - 1][1] = sortedGreenYCenter[id - 1][0];
                             isMaxGreen[id-1][1] = true;
                         }
 
                         sortedGreenIntensity[id - 1][i] = greenIntensityTotal[j - 1];
                         sortedGreenIndex[id - 1][i] = j; // from greenIDArray
-                        sortedGreenXCenter[id - 1][i] = greenXCenter[j - 1];
-                        sortedGreenYCenter[id - 1][i] = greenYCenter[j - 1];
                         isMaxGreen[id-1][i] = true;
                     }
                 } // for (i = 0; i < greenNucleusNumber[id-1]  && !found; i++)
@@ -1578,60 +1540,63 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                         if ((i == 0) && (greenNucleusNumber[id-1] >= 2)) {
                             sortedGreenIntensity[id - 1][1] = sortedGreenIntensity[id - 1][0];
                             sortedGreenIndex[id - 1][1] = sortedGreenIndex[id - 1][0];
-                            sortedGreenXCenter[id - 1][1] = sortedGreenXCenter[id - 1][0];
-                            sortedGreenYCenter[id - 1][1] = sortedGreenYCenter[id - 1][0];
                         }
 
                         sortedGreenIntensity[id - 1][i] = greenIntensityTotal[j - 1];
                         sortedGreenIndex[id - 1][i] = j; // from greenIDArray
-                        sortedGreenXCenter[id - 1][i] = greenXCenter[j - 1];
-                        sortedGreenYCenter[id - 1][i] = greenYCenter[j - 1];
                     }
                 } // for (i = 0; i < greenNucleusNumber[id-1]  && !found; i++)
             } // if (id >= 1)    
         } // for (j = numGreenObjects+1; j <= numGreenTotal; j++)
-
-        numGreenVOIObjects = 0;
+        
+        greenIntensityTotal = null;
 
         for (i = 0; i < numObjects; i++) {
+            sortedGreenIntensity[i] = null;
+            isMaxGreen[i] = null;
+        }
+        isMaxGreen = null;
+        sortedGreenIntensity = null;
 
-            
+        numVOIObjects = 0;
 
-            numGreenVOIObjects += greenNucleusNumber[i];
+        for (i = 0; i < numObjects; i++) {
+            numVOIObjects += greenNucleusNumber[i];
         }
 
-        numVOIObjects = numGreenVOIObjects;
         colorTable = new Color[numVOIObjects];
         nameTable = new String[numVOIObjects];
-
-        
 
         Arrays.fill(byteBuffer, (byte) 0);
 
         for (i = 0, j = 0; i < numObjects; i++) {
 
-            for (m = 0; m < greenRegionNumber; m++) {
+            for (m = 0; m < greenNucleusNumber[i]; m++) {
 
-                if (greenNucleusNumber[i] > m) {
+                for (k = 0; k < length; k++) {
 
-                    for (k = 0; k < length; k++) {
-
-                        if (greenIDArray[k] == sortedGreenIndex[i][m]) {
-                            byteBuffer[k] = (byte) (j + 1);
-                        }
-                    } // for (k = 0; k < length; k++)
-
-                    if (m == 0) {
-                        colorTable[j] = Color.pink;
-                    } else {
-                        colorTable[j] = Color.pink.darker();
+                    if (greenIDArray[k] == sortedGreenIndex[i][m]) {
+                        byteBuffer[k] = (byte) (j + 1);
                     }
+                } // for (k = 0; k < length; k++)
 
-                    nameTable[j] = new String((i + 1) + "G" + (m + 1));
-                    j++;
-                } // if (greenNucleusNumber[i] > m)
-            } // for (m = 0; m < greenNumber; m++)
+                if (m == 0) {
+                    colorTable[j] = Color.pink;
+                } else {
+                    colorTable[j] = Color.pink.darker();
+                }
+
+                nameTable[j] = new String((i + 1) + "G" + (m + 1));
+                j++;
+            } // for (m = 0; m < greenNucleusNumber[i]; m++)
         } // for (i = 0, j = 0; i < numObjects; i++)
+        
+        for (i = 0; i < numObjects; i++) {
+            sortedGreenIndex[i] = null;
+        }
+
+        sortedGreenIndex = null;
+        greenIDArray = null;
 
         grayImage.resetVOIs();
 
@@ -2083,8 +2048,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                     initialdx = xPosGrav[j] - xCenter[i];
                     initialdy = yPosGrav[j] - yCenter[i];
-                    lastEdgeX = (int) Math.round(xPosGrav[j]);
-                    lastEdgeY = (int) Math.round(yPosGrav[j]);
+                    lastEdgeX = Math.round(xPosGrav[j]);
+                    lastEdgeY = Math.round(yPosGrav[j]);
 
                     if (Math.abs(initialdx) >= Math.abs(initialdy)) {
 
@@ -2109,13 +2074,13 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     numInc = 1;
 
                     while (true) {
-                        newEdgeX = (int) Math.round(xPosGrav[j] + (numInc * incx));
+                        newEdgeX = Math.round(xPosGrav[j] + (numInc * incx));
 
                         if ((newEdgeX < 0) || (newEdgeX >= xDim)) {
                             break;
                         }
 
-                        newEdgeY = (int) Math.round(yPosGrav[j] + (numInc * incy));
+                        newEdgeY = Math.round(yPosGrav[j] + (numInc * incy));
 
                         if ((newEdgeY < 0) || (newEdgeY >= yDim)) {
                             break;
@@ -2256,15 +2221,9 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         byte[] greenIDArray = null;
         byte[] greenIDArray2 = null;
         float[] greenIntensityTotal;
-        float[] greenXCenter;
-        float[] greenYCenter;
-        float[] greenZCenter;
         int[] greenNucleusNumber = null;
         int[][] sortedGreenIndex = null;
         float[][] sortedGreenIntensity;
-        float[][] sortedGreenXCenter;
-        float[][] sortedGreenYCenter;
-        float[][] sortedGreenZCenter;
         AlgorithmVOIExtraction algoVOIExtraction;
         VOI newPtVOI;
         float[] xArr = new float[1];
@@ -2303,7 +2262,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         int numInc;
         float centerToGravToEdge;
         float fractionOut;
-        int numGreenVOIObjects;
         AlgorithmHistogram algoHist;
         int bins;
         int[] histoBuffer;
@@ -3327,46 +3285,22 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         fireProgressStateChanged(61);
         numGreenTotal = numGreenObjects+numGreenObjects2;
         greenIntensityTotal = new float[numGreenTotal];
-        greenXCenter = new float[numGreenTotal];
-        greenYCenter = new float[numGreenTotal];
-        greenZCenter = new float[numGreenTotal];
         greenCellNumber = new int[numGreenTotal];
         greenNucleusNumber = new int[numObjects];
         sortedGreenIndex = new int[numObjects][greenRegionNumber];
         sortedGreenIntensity = new float[numObjects][greenRegionNumber];
-        sortedGreenXCenter = new float[numObjects][greenRegionNumber];
-        sortedGreenYCenter = new float[numObjects][greenRegionNumber];
-        sortedGreenZCenter = new float[numObjects][greenRegionNumber];
         isMaxGreen = new boolean[numObjects][greenRegionNumber];
         
         for (j = 1; j <= numGreenTotal; j++) {
             greenBelong = new int[numObjects+1];
-            for (x = 0, y = 0, z = 0, i = 0; i < totLength; i++) {
+            for (i = 0; i < totLength; i++) {
 
                 if (greenIDArray[i] == j) {
                     greenIntensityTotal[j - 1] += greenBuffer[i];
-                    greenXCenter[j - 1] += greenBuffer[i] * x;
-                    greenYCenter[j - 1] += greenBuffer[i] * y;
-                    greenZCenter[j - 1] += greenBuffer[i] * z;
                     greenBelong[IDArray[i]] = greenBelong[IDArray[i]] + 1;
-                }
-
-                x++;
-
-                if (x == xDim) {
-                    x = 0;
-                    y++;
-                }
-                
-                if (y == yDim) {
-                    y = 0;
-                    z++;
                 }
             }
 
-            greenXCenter[j - 1] = greenXCenter[j - 1] / greenIntensityTotal[j - 1];
-            greenYCenter[j - 1] = greenYCenter[j - 1] / greenIntensityTotal[j - 1];
-            greenZCenter[j - 1] = greenZCenter[j - 1] / greenIntensityTotal[j - 1];
             greenCellNumber[j-1] = 0;
             maxGreenBelong = 0;
             for (k = 1; k <= numObjects; k++) {
@@ -3466,40 +3400,20 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     } // for (z = greenFront[j-1]; z <= greenBack[j-1]; z++)
                     if (minDistanceSquared <= mergingDistanceSquared) {
                         greenIntensityTotal[i-1] = 0.0f;
-                        greenXCenter[i-1] = 0.0f;
-                        greenYCenter[i-1] = 0.0f;
-                        greenZCenter[i-1] = 0.0f;
                         greenLeft[i-1] = Math.min(greenLeft[i-1], greenLeft[j-1]);
                         greenRight[i-1] = Math.max(greenRight[i-1], greenRight[j-1]);
                         greenTop[i-1] = Math.min(greenTop[i-1], greenTop[j-1]);
                         greenBottom[i-1] = Math.max(greenBottom[i-1], greenBottom[j-1]);
                         greenFront[i-1] = Math.min(greenFront[i-1], greenFront[j-1]);
                         greenBack[i-1] = Math.max(greenBack[i-1], greenBack[j-1]);
-                        for (x = 0, y = 0, z = 0, k = 0; k < totLength; k++) {
+                        for (k = 0; k < totLength; k++) {
                             if (greenIDArray[k] == j) {
                                 greenIDArray[k] = (byte)i;
                             }
                             if (greenIDArray[k] == i) {
                                 greenIntensityTotal[i-1] += greenBuffer[k];
-                                greenXCenter[i-1] += greenBuffer[k] * x;
-                                greenYCenter[i-1] += greenBuffer[k] * y;
-                                greenZCenter[i-1] += greenBuffer[k] * z;
                             }
-                            
-                            x++;
-                            if (x == xDim) {
-                                x = 0;
-                                y++;
-                            }
-                            
-                            if (y == yDim) {
-                                y = 0;
-                                z++;
-                            }
-                        } // for (x = 0, y = 0, z = 0, k = 0; k < length; k++)
-                        greenXCenter[i - 1] = greenXCenter[i - 1] / greenIntensityTotal[i - 1];
-                        greenYCenter[i - 1] = greenYCenter[i - 1] / greenIntensityTotal[i - 1];
-                        greenZCenter[i - 1] = greenZCenter[i - 1] / greenIntensityTotal[i - 1];
+                        } // for (k = 0; k < length; k++)
                         for (m = j+1; m <= numGreenTotal; m++) {
                             for (k = 0; k < totLength; k++) {
                                 if (greenIDArray[k] == m) {
@@ -3507,9 +3421,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                                 }
                             }
                             greenIntensityTotal[m-2] = greenIntensityTotal[m-1];
-                            greenXCenter[m-2] = greenXCenter[m-1];
-                            greenYCenter[m-2] = greenYCenter[m-1];
-                            greenZCenter[m-2] = greenZCenter[m-1];
                             greenCellNumber[m-2] = greenCellNumber[m-1];
                             greenLeft[m-2] = greenLeft[m-1];
                             greenRight[m-2] = greenRight[m-1];
@@ -3552,17 +3463,11 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                         if ((i == 0) && (greenNucleusNumber[id-1] >= 2)) {
                             sortedGreenIntensity[id - 1][1] = sortedGreenIntensity[id - 1][0];
                             sortedGreenIndex[id - 1][1] = sortedGreenIndex[id - 1][0];
-                            sortedGreenXCenter[id - 1][1] = sortedGreenXCenter[id - 1][0];
-                            sortedGreenYCenter[id - 1][1] = sortedGreenYCenter[id - 1][0];
-                            sortedGreenZCenter[id - 1][1] = sortedGreenZCenter[id - 1][0];
                             isMaxGreen[id - 1][1] = true;
                         }
 
                         sortedGreenIntensity[id - 1][i] = greenIntensityTotal[j - 1];
                         sortedGreenIndex[id - 1][i] = j; // from greenIDArray
-                        sortedGreenXCenter[id - 1][i] = greenXCenter[j - 1];
-                        sortedGreenYCenter[id - 1][i] = greenYCenter[j - 1];
-                        sortedGreenZCenter[id - 1][i] = greenZCenter[j - 1];
                         isMaxGreen[id - 1][i] = true;
                     }
                 } // for (i = 0; i < greenNucleusNumber[id-1]  && !found; i++)
@@ -3587,16 +3492,10 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                         if ((i == 0) && (greenNucleusNumber[id-1] >= 2)) {
                             sortedGreenIntensity[id - 1][1] = sortedGreenIntensity[id - 1][0];
                             sortedGreenIndex[id - 1][1] = sortedGreenIndex[id - 1][0];
-                            sortedGreenXCenter[id - 1][1] = sortedGreenXCenter[id - 1][0];
-                            sortedGreenYCenter[id - 1][1] = sortedGreenYCenter[id - 1][0];
-                            sortedGreenZCenter[id - 1][1] = sortedGreenZCenter[id - 1][0];
                         }
 
                         sortedGreenIntensity[id - 1][i] = greenIntensityTotal[j - 1];
                         sortedGreenIndex[id - 1][i] = j; // from greenIDArray
-                        sortedGreenXCenter[id - 1][i] = greenXCenter[j - 1];
-                        sortedGreenYCenter[id - 1][i] = greenYCenter[j - 1];
-                        sortedGreenZCenter[id - 1][i] = greenZCenter[j - 1];
                     }
                 } // for (i = 0; i < greenNucleusNumber[id-1]  && !found; i++)
             } // if (id >= 1)    
@@ -3604,29 +3503,20 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         
 
         greenIntensityTotal = null;
-        greenXCenter = null;
-        greenYCenter = null;
-        greenZCenter = null;
 
         for (i = 0; i < numObjects; i++) {
             sortedGreenIntensity[i] = null;
-            sortedGreenXCenter[i] = null;
-            sortedGreenYCenter[i] = null;
-            sortedGreenZCenter[i] = null;
+            isMaxGreen[i] = null;
         }
-
+        isMaxGreen = null;
         sortedGreenIntensity = null;
-        sortedGreenXCenter = null;
-        sortedGreenYCenter = null;
-        sortedGreenZCenter = null;
 
-        numGreenVOIObjects = 0;
+        numVOIObjects = 0;
 
         for (i = 0; i < numObjects; i++) {
-            numGreenVOIObjects += greenNucleusNumber[i];
+            numVOIObjects += greenNucleusNumber[i];
         }
 
-        numVOIObjects = numGreenVOIObjects;
         colorTable = new Color[numVOIObjects];
         nameTable = new String[numVOIObjects];
 
@@ -3634,27 +3524,24 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         for (i = 0, j = 0; i < numObjects; i++) {
 
-            for (m = 0; m < greenRegionNumber; m++) {
+            for (m = 0; m < greenNucleusNumber[i]; m++) {
 
-                if (greenNucleusNumber[i] > m) {
+                for (k = 0; k < totLength; k++) {
 
-                    for (k = 0; k < totLength; k++) {
-
-                        if (greenIDArray[k] == sortedGreenIndex[i][m]) {
-                            byteBuffer[k] = (byte) (j + 1);
-                        }
-                    } // for (k = 0; k < totLength; k++)
-
-                    if (m == 0) {
-                        colorTable[j] = Color.pink;
-                    } else {
-                        colorTable[j] = Color.pink.darker();
+                    if (greenIDArray[k] == sortedGreenIndex[i][m]) {
+                        byteBuffer[k] = (byte) (j + 1);
                     }
+                } // for (k = 0; k < totLength; k++)
 
-                    nameTable[j] = new String((i + 1) + "G" + (m + 1));
-                    j++;
-                } // if (greenNucleusNumber[i] > m)
-            } // for (m = 0; m < greenRegionNumber; m++)
+                if (m == 0) {
+                    colorTable[j] = Color.pink;
+                } else {
+                    colorTable[j] = Color.pink.darker();
+                }
+
+                nameTable[j] = new String((i + 1) + "G" + (m + 1));
+                j++;
+            } // for (m = 0; m < greenNucleusNumber[i]; m++)
         } // for (i = 0, j = 0; i < numObjects; i++)
 
         for (i = 0; i < numObjects; i++) {
@@ -3691,8 +3578,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         nVOIs = VOIs.size();
 
         fireProgressStateChanged("Extracting VOIs from blue image");
-        fireProgressStateChanged(72);
-        
+        fireProgressStateChanged(72);      
         
         blueVOIs = grayImage.getVOIs();
         trim = true;
@@ -3979,9 +3865,9 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 xArr[0] = xPosGrav[i];
                 yArr[0] = yPosGrav[i];
                 zArr[0] = zPosGrav[i];
-                newPtVOI.importCurve(xArr, yArr, zArr, (int) zPosGrav[i]);
-                ((VOIPoint) (newPtVOI.getCurves()[(int) zPosGrav[i]].elementAt(0))).setFixed(true);
-                ((VOIPoint) (newPtVOI.getCurves()[(int) zPosGrav[i]].elementAt(0))).setLabel(voiName);
+                newPtVOI.importCurve(xArr, yArr, zArr, Math.round(zPosGrav[i]));
+                ((VOIPoint) (newPtVOI.getCurves()[Math.round(zPosGrav[i])].elementAt(0))).setFixed(true);
+                ((VOIPoint) (newPtVOI.getCurves()[Math.round(zPosGrav[i])].elementAt(0))).setLabel(voiName);
                 srcImage.registerVOI(newPtVOI);    
             }
         }
@@ -4106,9 +3992,9 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             xArr[0] = xCenter[i];
             yArr[0] = yCenter[i];
             zArr[0] = zCenter[i];
-            newPtVOI.importCurve(xArr, yArr, zArr, (int) zArr[0]);
-            ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setFixed(true);
-            ((VOIPoint) (newPtVOI.getCurves()[(int) zArr[0]].elementAt(0))).setLabel("Cen" + (i + 1));
+            newPtVOI.importCurve(xArr, yArr, zArr, Math.round(zArr[0]));
+            ((VOIPoint) (newPtVOI.getCurves()[Math.round(zArr[0])].elementAt(0))).setFixed(true);
+            ((VOIPoint) (newPtVOI.getCurves()[Math.round(zArr[0])].elementAt(0))).setLabel("Cen" + (i + 1));
             srcImage.registerVOI(newPtVOI);
         } // for (i = 0; i < numObjects; i++)
 
@@ -4161,9 +4047,9 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     initialdx = xPosGrav[j] - xCenter[i];
                     initialdy = yPosGrav[j] - yCenter[i];
                     initialdz = zPosGrav[j] - zCenter[i];
-                    lastEdgeX = (int) Math.round(xPosGrav[j]);
-                    lastEdgeY = (int) Math.round(yPosGrav[j]);
-                    lastEdgeZ = (int) Math.round(zPosGrav[j]);
+                    lastEdgeX = Math.round(xPosGrav[j]);
+                    lastEdgeY = Math.round(yPosGrav[j]);
+                    lastEdgeZ = Math.round(zPosGrav[j]);
 
                     if ((Math.abs(initialdx) >= Math.abs(initialdy)) && (Math.abs(initialdx) >= Math.abs(initialdz))) {
 
@@ -4201,13 +4087,13 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     numInc = 1;
 
                     while (true) {
-                        newEdgeX = (int) Math.round(xPosGrav[j] + (numInc * incx));
+                        newEdgeX = Math.round(xPosGrav[j] + (numInc * incx));
 
                         if ((newEdgeX < 0) || (newEdgeX >= xDim)) {
                             break;
                         }
 
-                        newEdgeY = (int) Math.round(yPosGrav[j] + (numInc * incy));
+                        newEdgeY = Math.round(yPosGrav[j] + (numInc * incy));
 
                         if ((newEdgeY < 0) || (newEdgeY >= yDim)) {
                             break;
