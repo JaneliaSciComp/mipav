@@ -175,7 +175,8 @@ import java.util.*;
  *           </p>
  *           
  *           Note that the blue objects are smoothed twice.  The first smoothing before VOI extraction with
- *           a morphological open followed by a close.  The second smoothing is after VOI extraction.
+ *           a morphological open followed by a close.  The second smoothing is after VOI extraction.  Note that
+ *           the smoothing can put part of a green VOI at the boundary outside of the blue object.
  */
 public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
@@ -749,8 +750,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 } // for (x = 0; x < xDim; x++)
             } // for (y = 0; y < yDim; y++)
             
-            fireProgressStateChanged("Expanding blue objects within bounding boxes");
             fireProgressStateChanged(26);
+            System.out.println("numObjects = " + numObjects);
             for (i = 0; i < numObjects; i++) {
                 UI.setDataText("Expanding object " + (i+1) + "\n");
                 Preferences.debug("Expanding object " + (i+1) + "\n");
@@ -795,6 +796,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     }
                     midValue = (lowerValue + upperValue)/2;
                     do {
+                        Preferences.debug("lowerValue = " + lowerValue + "midValue = " + midValue + 
+                                " upperValue = " + upperValue + "\n");
                         blueMinArray[i] = midValue; 
                         areaGrowth = true;
                         newBlueIntensityTotal = blueIntensityTotal[i];
@@ -849,7 +852,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                                 }
                         }
                         else {
-                                upperValue = midValue-1; 
+                                upperValue = Math.max(lowerValue, midValue-1); 
                                 midValue = (lowerValue + upperValue)/2;
                                 // So you don't have to repeat all of the growth
                                 // process on every iteration
@@ -2786,7 +2789,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                                 }
                         }
                         else {
-                                upperValue = midValue-1; 
+                                upperValue = Math.max(lowerValue, midValue-1); 
                                 midValue = (lowerValue + upperValue)/2;
                                 // So you don't have to repeat all of the growth
                                 // process on every iteration
