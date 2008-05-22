@@ -14,9 +14,8 @@ import java.util.*;
 
 
 /**
- * This shows how to extend the AlgorithmBase class.
  *
- * @version  May 21, 2008
+ * @version  May 22, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -455,7 +454,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         int[] redCellNumber;
         int[] redBelong;
         int redAdded;
-        int sortedGreenFound[];
         boolean isMaxGreen[][] = null;
         int blueArea[];
         double blueIntensityTotal[];
@@ -1081,6 +1079,9 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             return;
         }
         
+        // redCellNumber will contain the positive ID of the blue object that
+        // most completely contains it.  redCellNumber will be 0 if it is
+        // completely outside all blue objects.
         redCellNumber = new int[numRedObjects];
         
         redAdded = 0;
@@ -1253,7 +1254,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             return;
         }
         
-        // Put the green VOI IDs in greenIDArray
+        // Put the green objects IDs in greenIDArray
         fireProgressStateChanged("IDing objects in green segmented image");
         fireProgressStateChanged(58);
         kernel = AlgorithmMorphology2D.SIZED_CIRCLE;
@@ -1313,7 +1314,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 return;
             }
             
-            // Put the green VOI IDs in greenIDArray
+            // Put the green object IDs in greenIDArray2
             fireProgressStateChanged("IDing objects in green segmented image");
             fireProgressStateChanged(60);
             kernel = AlgorithmMorphology2D.SIZED_CIRCLE;
@@ -1345,6 +1346,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             grayImage2.disposeLocal();
             grayImage2 = null;
             
+            // Merge greenIDArray and greenIDArray2 into greenIDArray
             for (i = 0; i < length; i++) {
                 if ((greenIDArray[i] == 0) && (greenIDArray2[i] > 0)) {
                     greenIDArray[i] = (byte)(greenIDArray2[i] + numGreenObjects);
@@ -1414,7 +1416,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             greenLeft[i] = Integer.MAX_VALUE;
             greenTop[i] = Integer.MAX_VALUE;
         }
-        // Obtain bounding blocks of numGreenTotal
+        // Obtain bounding blocks of numGreenTotal green objects
         for (y = 0; y < yDim; y++) {
             index = y*xDim;
             for (x = 0; x < xDim; x++) {
@@ -1523,7 +1525,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         // Create no more than greenRegionNumber green objects within each nucleus.
         fireProgressStateChanged("Sorting green objects by intensity count");
         fireProgressStateChanged(66);
-        sortedGreenFound = new int[numObjects];
         for (j = 1; j <= numGreenObjects; j++) {
             id = greenCellNumber[j-1];
 
@@ -1539,9 +1540,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                     if (greenIntensityTotal[j - 1] >= sortedGreenIntensity[id - 1][i]) {
                         found = true;
-                        sortedGreenFound[id - 1]++;
 
-                        if ((i == 0) && (sortedGreenFound[id-1] >= 2)) {
+                        if ((i == 0) && (greenNucleusNumber[id-1] >= 2)) {
                             sortedGreenIntensity[id - 1][1] = sortedGreenIntensity[id - 1][0];
                             sortedGreenIndex[id - 1][1] = sortedGreenIndex[id - 1][0];
                             sortedGreenXCenter[id - 1][1] = sortedGreenXCenter[id - 1][0];
@@ -1574,9 +1574,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                     if ((!isMaxGreen[id-1][i])&& (greenIntensityTotal[j - 1] >= sortedGreenIntensity[id - 1][i])) {
                         found = true;
-                        sortedGreenFound[id - 1]++;
 
-                        if ((i == 0) && (sortedGreenFound[id-1] >= 2)) {
+                        if ((i == 0) && (greenNucleusNumber[id-1] >= 2)) {
                             sortedGreenIntensity[id - 1][1] = sortedGreenIntensity[id - 1][0];
                             sortedGreenIndex[id - 1][1] = sortedGreenIndex[id - 1][0];
                             sortedGreenXCenter[id - 1][1] = sortedGreenXCenter[id - 1][0];
@@ -2328,7 +2327,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         double distZ;
         double distanceSquared;
         double minDistanceSquared;
-        int sortedGreenFound[];
         boolean isMaxGreen[][] = null;
         int blueVolume[];
         double blueIntensityTotal[];
@@ -3051,6 +3049,9 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             return;
         }
         
+        // redCellNumber will contain the positive ID of the blue object that
+        // most completely contains it.  redCellNumber will be 0 if it is
+        // completely outside all blue objects.
         redCellNumber = new int[numRedObjects];
         
         redAdded = 0;
@@ -3159,6 +3160,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         wholeImage = true;
 
         // grayImage enters ModelStorageBase.FLOAT and returns ModelStorageBase.UBYTE
+        // having 0 for values below threshold and 1, 2, and 3 for 3 classes >= threshold.
         fcmAlgo = new AlgorithmFuzzyCMeans(grayImage, nClasses, nPyramid, oneJacobiIter, twoJacobiIter, q,
                                            oneSmooth, twoSmooth, outputGainField, segmentation, cropBackground,
                                            threshold, maxIter, endTolerance, wholeImage);
@@ -3218,7 +3220,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             return;
         }
 
-        // Put the green VOI IDs in greenIDArray
+        // Put the green objects IDs in greenIDArray
         fireProgressStateChanged("IDing objects in green segmented image");
         fireProgressStateChanged(58);
         kernel = AlgorithmMorphology3D.SIZED_SPHERE;
@@ -3279,7 +3281,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 return;
             }
             
-            // Put the green VOI IDs in greenIDArray
+            // Put the green objects IDs in greenIDArray2
             fireProgressStateChanged("IDing objects in green segmented image");
             fireProgressStateChanged(60);
             kernel = AlgorithmMorphology3D.SIZED_SPHERE;
@@ -3311,6 +3313,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             grayImage2.disposeLocal();
             grayImage2 = null;
             
+            // Merge greenIDArray and greenIDArray2 into greenIDArray
             for (i = 0; i < totLength; i++) {
                 if ((greenIDArray[i] == 0) && (greenIDArray2[i] > 0)) {
                     greenIDArray[i] = (byte)(greenIDArray2[i] + numGreenObjects);
@@ -3394,7 +3397,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             greenTop[i] = Integer.MAX_VALUE;
             greenFront[i] = Integer.MAX_VALUE;
         }
-        // Obtain bounding blocks of numGreenTotal
+        // Obtain bounding blocks of numGreenTotal green objects
         for (z = 0; z < zDim; z++) {
             index = z*sliceSize;
             for (y = 0; y < yDim; y++) {
@@ -3452,15 +3455,15 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                                                     distanceSquared = distX*distX + distY*distY + distZ*distZ;
                                                     if (distanceSquared < minDistanceSquared) {
                                                         minDistanceSquared = distanceSquared;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                                                    } // if (distanceSquared < minDistanceSquared)
+                                                } // if (greenIDArray[index3] == i)
+                                            } // for (x1 = greenLeft[i-1]; x1 <= greenRight[i-1]; x1++)
+                                        } // for (y1 = greenTop[i-1]; y1 <= greenBottom[i-1]; y1++)
+                                    } // for (z1 = greenFront[i-1]; z1 <= greenBack[i-1]; z1++)
+                                } // if (greenIDArray[index] == j)
+                            } // for (x = greenLeft[j-1]; x <= greenRight[j-1]; x++)
+                        } // for (y = greenTop[j-1]; y <= greenBottom[j-1]; y++)
+                    } // for (z = greenFront[j-1]; z <= greenBack[j-1]; z++)
                     if (minDistanceSquared <= mergingDistanceSquared) {
                         greenIntensityTotal[i-1] = 0.0f;
                         greenXCenter[i-1] = 0.0f;
@@ -3530,7 +3533,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         fireProgressStateChanged("Sorting green objects by intensity count");
         fireProgressStateChanged(66);
-        sortedGreenFound = new int[numObjects];
         for (j = 1; j <= numGreenObjects; j++) {
             id = greenCellNumber[j-1];
 
@@ -3546,9 +3548,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                     if (greenIntensityTotal[j - 1] >= sortedGreenIntensity[id - 1][i]) {
                         found = true;
-                        sortedGreenFound[id-1]++;
 
-                        if ((i == 0) && (sortedGreenFound[id-1] >= 2)) {
+                        if ((i == 0) && (greenNucleusNumber[id-1] >= 2)) {
                             sortedGreenIntensity[id - 1][1] = sortedGreenIntensity[id - 1][0];
                             sortedGreenIndex[id - 1][1] = sortedGreenIndex[id - 1][0];
                             sortedGreenXCenter[id - 1][1] = sortedGreenXCenter[id - 1][0];
@@ -3582,9 +3583,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                     if ((!isMaxGreen[id-1][i])&& (greenIntensityTotal[j - 1] >= sortedGreenIntensity[id - 1][i])) {
                         found = true;
-                        sortedGreenFound[id - 1]++;
 
-                        if ((i == 0) && (sortedGreenFound[id-1] >= 2)) {
+                        if ((i == 0) && (greenNucleusNumber[id-1] >= 2)) {
                             sortedGreenIntensity[id - 1][1] = sortedGreenIntensity[id - 1][0];
                             sortedGreenIndex[id - 1][1] = sortedGreenIndex[id - 1][0];
                             sortedGreenXCenter[id - 1][1] = sortedGreenXCenter[id - 1][0];
