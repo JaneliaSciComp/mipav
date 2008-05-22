@@ -123,26 +123,26 @@ import java.util.*;
  *           <p>26.) Extract VOIs from the green image.
  *            
  *           <p>27.) Set the source image VOIs to the VOIs obtained from the green image. 
- *            
- *           <p>28.)From each blue object extract a VOI.
- *            
- *           <p>29.) Smooth the VOI from the blue object as follows:  From each slice select the VOI contour 
- *           with the largest number of points.  Use trimPoints at the maximum setting on this contour.
- *           Determine the default number of points to be used in AlgorithmBSmooth by dividing the arc length
- *           of the contour by the user supplied interpolationDivisor.  Apply AlgorithmBSmooth to the contour.
- *           For this slice remove all of the original VOI contours and replace them with this 1 smoothed contour.
- *             
- *           <p>30.) Generate a mask from the smoothed VOI.  Use the mask to modify the IDArray of the blue object
- *            positions.
  *           
- *           <p>31.) Assing a dark yellow color to the VOI and add the VOI to the source image VOI vector. </p>
- *
- *           <p>32.) Process each VOI one at a time. 
+ *           <p>28.) Process each VOI one at a time. 
  *           a.) For each VOI find the sum of the green intensity values, and the pixel count inside each blue object. 
  *           b.) Look at all the blue object pixel counts and assign the ID of the blue object with the most pixels
  *           in the VOI to the VOI's objectID. 
  *           c.) Find the green center of mass of the VOI. 
  *           d.) Expand the nucleus to which the VOI belongs to include the VOI.</p>
+ *            
+ *           <p>29.)From each blue object extract a VOI.
+ *            
+ *           <p>30.) Smooth the VOI from the blue object as follows:  From each slice select the VOI contour 
+ *           with the largest number of points.  Use trimPoints at the maximum setting on this contour.
+ *           Determine the default number of points to be used in AlgorithmBSmooth by dividing the arc length
+ *           of the contour by the user supplied interpolationDivisor.  Apply AlgorithmBSmooth to the contour.
+ *           For this slice remove all of the original VOI contours and replace them with this 1 smoothed contour.
+ *             
+ *           <p>31.) Generate a mask from the smoothed VOI.  Use the mask to modify the IDArray of the blue object
+ *            positions.
+ *           
+ *           <p>32.) Assing a dark yellow color to the VOI and add the VOI to the source image VOI vector. </p>
  *           
  *           <p>33.) // Reorder the indices for the green VOIs and their associated arrays so that the indices
  *            use the sequence:
@@ -1266,6 +1266,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         grayImage.calcMinMax();
         numGreenObjects = (int) grayImage.getMax();
+        Preferences.debug("numGreenObjects = " + numGreenObjects + "\n");
         greenIDArray = new byte[length];
 
         try {
@@ -1326,6 +1327,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
             grayImage2.calcMinMax();
             numGreenObjects2 = (int) grayImage2.getMax();
+            Preferences.debug("numGreenObjects2 = " + numGreenObjects2 + "\n");
             greenIDArray2 = new byte[length];
 
             try {
@@ -1621,14 +1623,87 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         srcImage.setVOIs(grayImage.getVOIs());
 
         VOIs = srcImage.getVOIs();
-        nVOIs = VOIs.size();  
+        nVOIs = VOIs.size(); 
+        
+        idCount = new int[numObjects];
+        xPosGrav = new float[nVOIs];
+        yPosGrav = new float[nVOIs];
+        objectID = new int[nVOIs];
+        colorCount = new float[nVOIs];
+        shortMask = new short[length];
+        voiCount = new int[nVOIs];
+
+        for (i = 0; i < nVOIs; i++) {
+            fireProgressStateChanged("Processing VOI " + (i + 1) + " of " + nVOIs);
+            fireProgressStateChanged(72);
+            VOIs.VOIAt(i).setOnlyID((short) i);
+            voiName = VOIs.VOIAt(i).getName();
+
+            if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+                Arrays.fill(shortMask, (short) -1);
+
+                shortMask = srcImage.generateVOIMask(shortMask, i);
+                greenCount = 0;
+                Arrays.fill(idCount, 0);
+
+                for (j = 0; j < length; j++) {
+
+                    if (shortMask[j] != -1) {
+                        
+                        greenCount += greenBuffer[j];
+
+                        if (IDArray[j] > 0) {
+                            index = IDArray[j] - 1;
+                            idCount[index]++;
+                        }
+                    }
+                }
+
+                objectID[i] = 1;
+                objectCount = idCount[0];
+
+                for (j = 2; j <= numObjects; j++) {
+
+                    if (idCount[j - 1] > objectCount) {
+                        objectID[i] = j;
+                        objectCount = idCount[j - 1];
+                    }
+                } // for (j = 2; j <= numObjects; j++)
+
+                xPosGrav[i] = 0.0f;
+                yPosGrav[i] = 0.0f;
+
+                
+                colorCount[i] = 0.0f;
+
+                for (j = 0, y = 0; y < yDim; y++, j += xDim) {
+
+                    for (x = 0; x < xDim; x++) {
+                        index = x + j;
+
+                        if (shortMask[index] != -1) {
+                            xPosGrav[i] += greenBuffer[index] * x;
+                            yPosGrav[i] += greenBuffer[index] * y;
+                            colorCount[i] += greenBuffer[index];
+                            voiCount[i]++;
+                            IDArray[index] = (byte) objectID[i];
+                        }
+                    }
+                }
+
+                xPosGrav[i] /= colorCount[i];
+                yPosGrav[i] /= colorCount[i];
+
+                
+            } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
+        } // for (i = 0; i < nVOIs; i++)
 
         fireProgressStateChanged("Extracting VOIs from blue image");
-        fireProgressStateChanged(72);
+        fireProgressStateChanged(78);
         
         
         trim = true;
-        shortMask = new short[length];
+        
         for (i = 0; i < numObjects; i++) {
             grayImage.resetVOIs();
             for (j = 0; j < length; j++) {
@@ -1731,82 +1806,9 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         
         srcImage.setVOIs((VOIVector)VOIs);
 
-        idCount = new int[numObjects];
-        xPosGrav = new float[nVOIs];
-        yPosGrav = new float[nVOIs];
-        objectID = new int[nVOIs];
-        colorCount = new float[nVOIs];
-
         UI.clearAllDataText();
         UI.setDataText("\n");
 
-        voiCount = new int[nVOIs];
-
-        for (i = 0; i < nVOIs; i++) {
-            fireProgressStateChanged("Processing VOI " + (i + 1) + " of " + nVOIs);
-            fireProgressStateChanged(76 + (10 * (i + 1) / nVOIs));
-            VOIs.VOIAt(i).setOnlyID((short) i);
-            voiName = VOIs.VOIAt(i).getName();
-
-            if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                Arrays.fill(shortMask, (short) -1);
-
-                shortMask = srcImage.generateVOIMask(shortMask, i);
-                greenCount = 0;
-                Arrays.fill(idCount, 0);
-
-                for (j = 0; j < length; j++) {
-
-                    if (shortMask[j] != -1) {
-                        
-                        greenCount += greenBuffer[j];
-
-                        if (IDArray[j] > 0) {
-                            index = IDArray[j] - 1;
-                            idCount[index]++;
-                        }
-                    }
-                }
-
-                objectID[i] = 1;
-                objectCount = idCount[0];
-
-                for (j = 2; j <= numObjects; j++) {
-
-                    if (idCount[j - 1] > objectCount) {
-                        objectID[i] = j;
-                        objectCount = idCount[j - 1];
-                    }
-                } // for (j = 2; j <= numObjects; j++)
-
-                xPosGrav[i] = 0.0f;
-                yPosGrav[i] = 0.0f;
-
-                
-                colorCount[i] = 0.0f;
-
-                for (j = 0, y = 0; y < yDim; y++, j += xDim) {
-
-                    for (x = 0; x < xDim; x++) {
-                        index = x + j;
-
-                        if (shortMask[index] != -1) {
-                            xPosGrav[i] += greenBuffer[index] * x;
-                            yPosGrav[i] += greenBuffer[index] * y;
-                            colorCount[i] += greenBuffer[index];
-                            voiCount[i]++;
-                            IDArray[index] = (byte) objectID[i];
-                        }
-                    }
-                }
-
-                xPosGrav[i] /= colorCount[i];
-                yPosGrav[i] /= colorCount[i];
-
-                
-            } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
-        } // for (i = 0; i < nVOIs; i++)
-        
         // Reorder the indices for the green VOIs and their associated arrays so that
         // the indices use the sequence:
         // blue object 1 - large green VOI
@@ -3188,7 +3190,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         itersErosion = 0;
         idObjectsAlgo3D = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation,
                                                     itersErosion, numPruningPixels, edgingType, wholeImage);
-        idObjectsAlgo3D.setMinMax(greenMin, 10000);
+        idObjectsAlgo3D.setMinMax(greenMin, 100000);
         idObjectsAlgo3D.run();
         idObjectsAlgo3D.finalize();
         idObjectsAlgo3D = null;
@@ -3196,6 +3198,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         grayImage.calcMinMax();
         numGreenObjects = (int) grayImage.getMax();
+        Preferences.debug("numGreeenObjects = " + numGreenObjects + "\n");
         greenIDArray = new byte[totLength];
 
         try {
@@ -3249,13 +3252,14 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             itersErosion = 0;
             idObjectsAlgo3D = new AlgorithmMorphology3D(grayImage2, kernel, sphereDiameter, method, itersDilation,
                                                         itersErosion, numPruningPixels, edgingType, wholeImage);
-            idObjectsAlgo3D.setMinMax(greenMin, 10000);
+            idObjectsAlgo3D.setMinMax(greenMin, 100000);
             idObjectsAlgo3D.run();
             idObjectsAlgo3D.finalize();
             idObjectsAlgo3D = null;
 
             grayImage2.calcMinMax();
             numGreenObjects2 = (int) grayImage2.getMax();
+            Preferences.debug("numGreenObjects2 = " + numGreenObjects2 + "\n");
             greenIDArray2 = new byte[totLength];
 
             try {
@@ -3576,13 +3580,95 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         VOIs = srcImage.getVOIs();
         nVOIs = VOIs.size();
+        
+        idCount = new int[numObjects];
+        xPosGrav = new float[nVOIs];
+        yPosGrav = new float[nVOIs];
+        zPosGrav = new float[nVOIs];
+        objectID = new int[nVOIs];
+        colorCount = new float[nVOIs];
+
+        UI.clearAllDataText();
+        UI.setDataText("\n");
+
+        voiCount = new int[nVOIs];
+        shortMask = new short[totLength];
+        for (i = 0; i < nVOIs; i++) {
+            Preferences.debug("i = " + i + "\n");
+            fireProgressStateChanged("Processing green VOI " + (i + 1) + " of " + nVOIs);
+            fireProgressStateChanged(72);
+            VOIs.VOIAt(i).setOnlyID((short) i);
+            if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+                Preferences.debug("VOI contour i = " + i + "\n");
+                Arrays.fill(shortMask, (short) -1);
+
+                shortMask = srcImage.generateVOIMask(shortMask, i);
+                greenCount = 0;
+                Arrays.fill(idCount, 0);
+
+                for (j = 0; j < totLength; j++) {
+
+                    if (shortMask[j] != -1) {
+                        greenCount += greenBuffer[j];
+
+                        if (IDArray[j] > 0) {
+                            index = IDArray[j] - 1;
+                            idCount[index]++;
+                        }
+                    }
+                }
+
+                objectID[i] = 1;
+                objectCount = idCount[0];
+
+                for (j = 2; j <= numObjects; j++) {
+
+                    if (idCount[j - 1] > objectCount) {
+                        objectID[i] = j;
+                        objectCount = idCount[j - 1];
+                    }
+                } // for (j = 2; j <= numObjects; j++)
+                
+                xPosGrav[i] = 0.0f;
+                yPosGrav[i] = 0.0f;
+                zPosGrav[i] = 0.0f;
+                
+                colorCount[i] = 0.0f;
+
+                for (k = 0, z = 0; z < zDim; z++, k += sliceLength) {
+
+                    for (j = k, y = 0; y < yDim; y++, j += xDim) {
+
+                        for (x = 0; x < xDim; x++) {
+                            index = x + j;
+
+                            if (shortMask[index] != -1) {
+                                xPosGrav[i] += greenBuffer[index] * x;
+                                yPosGrav[i] += greenBuffer[index] * y;
+                                zPosGrav[i] += greenBuffer[index] * z;
+                                colorCount[i] += greenBuffer[index];
+                                voiCount[i]++;
+
+                                // Expand blue nuclei to include VOI
+                                IDArray[index] = (byte) objectID[i];
+                            }
+                        }
+                    }
+                }
+
+                xPosGrav[i] /= colorCount[i];
+                yPosGrav[i] /= colorCount[i];
+                zPosGrav[i] /= colorCount[i];
+
+                
+            } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
+        } // for (i = 0; i < nVOIs; i++)
 
         fireProgressStateChanged("Extracting VOIs from blue image");
-        fireProgressStateChanged(72);      
+        fireProgressStateChanged(78);      
         
         blueVOIs = grayImage.getVOIs();
         trim = true;
-        shortMask = new short[totLength];
         for (i = 0; i < numObjects; i++) {
             grayImage.resetVOIs();
             for (j = 0; j < totLength; j++) {
@@ -3696,88 +3782,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         
         srcImage.setVOIs((VOIVector)VOIs);
 
-        idCount = new int[numObjects];
-        xPosGrav = new float[nVOIs];
-        yPosGrav = new float[nVOIs];
-        zPosGrav = new float[nVOIs];
-        objectID = new int[nVOIs];
-        colorCount = new float[nVOIs];
-
-        UI.clearAllDataText();
-        UI.setDataText("\n");
-
-        voiCount = new int[nVOIs];
-
-        for (i = 0; i < nVOIs; i++) {
-            Preferences.debug("i = " + i + "\n");
-            fireProgressStateChanged("Processing VOI " + (i + 1) + " of " + nVOIs);
-            fireProgressStateChanged(75 + (10 * (i + 1) / nVOIs));
-            VOIs.VOIAt(i).setOnlyID((short) i);
-            if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                Preferences.debug("VOI contour i = " + i + "\n");
-                Arrays.fill(shortMask, (short) -1);
-
-                shortMask = srcImage.generateVOIMask(shortMask, i);
-                greenCount = 0;
-                Arrays.fill(idCount, 0);
-
-                for (j = 0; j < totLength; j++) {
-
-                    if (shortMask[j] != -1) {
-                        greenCount += greenBuffer[j];
-
-                        if (IDArray[j] > 0) {
-                            index = IDArray[j] - 1;
-                            idCount[index]++;
-                        }
-                    }
-                }
-
-                objectID[i] = 1;
-                objectCount = idCount[0];
-
-                for (j = 2; j <= numObjects; j++) {
-
-                    if (idCount[j - 1] > objectCount) {
-                        objectID[i] = j;
-                        objectCount = idCount[j - 1];
-                    }
-                } // for (j = 2; j <= numObjects; j++)
-                
-                xPosGrav[i] = 0.0f;
-                yPosGrav[i] = 0.0f;
-                zPosGrav[i] = 0.0f;
-                
-                colorCount[i] = 0.0f;
-
-                for (k = 0, z = 0; z < zDim; z++, k += sliceLength) {
-
-                    for (j = k, y = 0; y < yDim; y++, j += xDim) {
-
-                        for (x = 0; x < xDim; x++) {
-                            index = x + j;
-
-                            if (shortMask[index] != -1) {
-                                xPosGrav[i] += greenBuffer[index] * x;
-                                yPosGrav[i] += greenBuffer[index] * y;
-                                zPosGrav[i] += greenBuffer[index] * z;
-                                colorCount[i] += greenBuffer[index];
-                                voiCount[i]++;
-
-                                // Expand blue nuclei to include VOI
-                                IDArray[index] = (byte) objectID[i];
-                            }
-                        }
-                    }
-                }
-
-                xPosGrav[i] /= colorCount[i];
-                yPosGrav[i] /= colorCount[i];
-                zPosGrav[i] /= colorCount[i];
-
-                
-            } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
-        } // for (i = 0; i < nVOIs; i++)
+        
         
         // Reorder the indices for the green VOIs and their associated arrays so that
         // the indices use the sequence:
