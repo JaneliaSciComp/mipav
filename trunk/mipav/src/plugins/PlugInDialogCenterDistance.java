@@ -536,7 +536,12 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         gbc.gridy = yPos;
         mainPanel.add(greenMergingLabel, gbc);
 
-        mergingDistance = 4.0f * image.getFileInfo(0).getResolutions()[0];
+        if (image.getNDims() == 2) {
+            mergingDistance = 8.0f * image.getFileInfo(0).getResolutions()[0];    
+        }
+        else {
+            mergingDistance = 4.0f * image.getFileInfo(0).getResolutions()[0];
+        }
         distStr = df.format(mergingDistance);
         greenMergingText = new JTextField(10);
         greenMergingText.setText(distStr);
