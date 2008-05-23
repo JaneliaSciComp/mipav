@@ -229,7 +229,6 @@ public class JDialogCircularSectorToRectangle extends JDialogBase
         JLabel point1Label;
         JLabel point2Label;
         JLabel point3Label;
-        JLabel point4Label;
         JLabel xLabel;
         JLabel yLabel;
         setForeground(Color.black);
@@ -248,28 +247,22 @@ public class JDialogCircularSectorToRectangle extends JDialogBase
         gbc4.gridx = 0;
         gbc4.gridy = 0;
 
-        point1Label = new JLabel("Put point 1 at upper right corner");
+        point1Label = new JLabel("Enter 4 points in a counterclockwise path");
         point1Label.setForeground(Color.black);
         point1Label.setFont(serif12);
         pointPanel.add(point1Label, gbc4);
 
-        point2Label = new JLabel("Put point 2 at upper left corner");
+        point2Label = new JLabel("Put points 1 and 2 at edges of maximum radius boundary");
         point2Label.setForeground(Color.black);
         point2Label.setFont(serif12);
         gbc4.gridy = 1;
         pointPanel.add(point2Label, gbc4);
 
-        point3Label = new JLabel("Put point 3 at lower left corner");
+        point3Label = new JLabel("Put points 3 and 4 at edges of minimum radius boundary");
         point3Label.setForeground(Color.black);
         point3Label.setFont(serif12);
         gbc4.gridy = 2;
         pointPanel.add(point3Label, gbc4);
-
-        point4Label = new JLabel("Put point 4 at lower right corner");
-        point4Label.setForeground(Color.black);
-        point4Label.setFont(serif12);
-        gbc4.gridy = 3;
-        pointPanel.add(point4Label, gbc4);
 
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setForeground(Color.black);
