@@ -15,7 +15,7 @@ import java.util.*;
 
 /**
  *
- * @version  May 22, 2008
+ * @version  May 23, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -751,9 +751,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             } // for (y = 0; y < yDim; y++)
             
             fireProgressStateChanged(26);
-            System.out.println("numObjects = " + numObjects);
             for (i = 0; i < numObjects; i++) {
-                UI.setDataText("Expanding object " + (i+1) + "\n");
                 Preferences.debug("Expanding object " + (i+1) + "\n");
                 blueWidth = (blueRight[i] - blueLeft[i]);
                 blueHeight = (blueBottom[i] - blueTop[i]);
@@ -786,7 +784,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 if ((intensityFraction < minIntensityFraction) && (blueMinArray[i] > minBlueValue)) {
                     lowerValue = (int)Math.round(minBlueValue + 1);
                     upperValue = (int)Math.round(blueMinArray[i] - 1);
-                    UI.setDataText("lowerValue = " + lowerValue + " upperValue = " + upperValue + "\n");
                     Preferences.debug("lowerValue = " + lowerValue + " upperValue = " + upperValue + "\n");
                     if (lowerValue == upperValue) {
                         lastRun = true;
@@ -1809,9 +1806,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         
         srcImage.setVOIs((VOIVector)VOIs);
 
-        UI.clearAllDataText();
-        UI.setDataText("\n");
-
         // Reorder the indices for the green VOIs and their associated arrays so that
         // the indices use the sequence:
         // blue object 1 - large green VOI
@@ -1888,7 +1882,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         for (i = 0; i < nVOIs; i++) {
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 voiName = VOIs.VOIAt(i).getName();
-                newPtVOI = new VOI((short) (i + nVOIs), "point2D" + i + ".voi", 1, VOI.POINT, -1.0f);
+                newPtVOI = new VOI((short) (i + nVOIs), voiName, 1, VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
                 xArr[0] = xPosGrav[i];
                 yArr[0] = yPosGrav[i];
@@ -2002,7 +1996,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
 
         for (i = 0; i < numObjects; i++) {
-            newPtVOI = new VOI((short) (i + (2 * nVOIs)), "Center" + (i+1) + ".voi", 1, VOI.POINT, -1.0f);
+            newPtVOI = new VOI((short) (i + (2 * nVOIs)), "Cen" + (i+1), 1, VOI.POINT, -1.0f);
             newPtVOI.setColor(Color.white);
             xArr[0] = xCenter[i];
             yArr[0] = yCenter[i];
@@ -2014,26 +2008,14 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         } // for (i = 0; i < numObjects; i++)
 
         srcImage.notifyImageDisplayListeners();
-
-        UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
-
-        UI.setDataText("Nucleus\tNarea\tRmin\tRmax");
-
-        UI.setDataText("\tG1area");
-        UI.setDataText("\tcenterToG1\tcenterToG1ToEdge\tfractionG1Out");
-
-        if (greenRegionNumber > 1) {
-            UI.setDataText("\t\tG2area");
-            UI.setDataText("\tcenterToG2\tcenterToG2ToEdge\tfractionG2Out");
-        }
-
-        UI.setDataText("\n");
+        
+        UI.getMessageFrame().addTab("PlugInAlgorithmCenterDistance");
+        UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "\n");
+        UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "File Name \t\tNucleus\tNArea\tRmin\tRmax" +
+                                    "\tObj\tGarea\tcenterToG\tcenterToGToEdge\tfractionGOut\n");
 
         for (i = 0; i < numObjects; i++) {
             nuclearArea = xRes * yRes * blueCountTotal[i];
-            UI.setDataText((i + 1) + "\t" + df.format(nuclearArea));
-            UI.setDataText("\t" + df.format(centerToNearEdge[i]));
-            UI.setDataText("\t" + df.format(centerToFarEdge[i]));
             greenFound = 0;
 
             for (j = 0; j <= (nVOIs - 1); j++) {
@@ -2041,10 +2023,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 if (objectID[j] == (i + 1)) {
                     greenFound++;
                     voiArea = xRes * yRes * voiCount[j];
-                    if (greenFound == 2) {
-                        UI.setDataText("\t");
-                    }
-                    UI.setDataText("\t" + df.format(voiArea));
+                    
                     gravToCenter = (float)
                                        Math.sqrt(((xPosGrav[j] - xCenter[i]) * (xPosGrav[j] - xCenter[i]) * xRes *
                                                       xRes) +
@@ -2111,14 +2090,16 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                                                             xRes) +
                                                        ((lastEdgeY - yCenter[i]) * (lastEdgeY - yCenter[i]) * yRes *
                                                             yRes));
-                    UI.setDataText("\t" + df.format(gravToCenter));
-                    UI.setDataText("\t" + df.format(centerToGravToEdge));
                     fractionOut = gravToCenter/centerToGravToEdge;
-                    UI.setDataText("\t\t" + dfFract.format(fractionOut));
+        
+                    UI.getMessageFrame().append("PlugInAlgorithmCenterDistance",
+                    srcImage.getFileInfo(0).getFileName() + "\t" + (i+1) + "\t" + df.format(nuclearArea) +
+                    "\t" + df.format(centerToNearEdge[i]) + "\t" + df.format(centerToFarEdge[i]) +
+                    "\t" + (j+1) + "\t" + df.format(voiArea) + "\t" + df.format(gravToCenter) +
+                    "\t" + df.format(centerToGravToEdge) + "\t\t" + dfFract.format(fractionOut) + "\n");
                 } // if (objectID[j] == (i+1))
             } // for (j = 0; j <= nVOIs - 1; j++)
 
-            UI.setDataText("\n");
         } // for (i = 0; i < numObjects; i++)
 
         if (threadStopped) {
@@ -2671,7 +2652,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             fireProgressStateChanged("Expanding blue objects within bounding boxes");
             fireProgressStateChanged(26);
             for (i = 0; i < numObjects; i++) {
-                UI.setDataText("Expanding object " + (i+1) + "\n");
                 Preferences.debug("Expanding object " + (i+1) + "\n");
                 blueWidth = (blueRight[i] - blueLeft[i]);
                 blueHeight = (blueBottom[i] - blueTop[i]);
@@ -2712,7 +2692,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 if ((intensityFraction < minIntensityFraction) && (blueMinArray[i] > minBlueValue)) {
                     lowerValue = (int)Math.round(minBlueValue + 1);
                     upperValue = (int)Math.round(blueMinArray[i] - 1);
-                    UI.setDataText("lowerValue = " + lowerValue + " upperValue = " + upperValue + "\n");
                     Preferences.debug("lowerValue = " + lowerValue + " upperValue = " + upperValue + "\n");
                     if (lowerValue == upperValue) {
                         lastRun = true;
@@ -3591,9 +3570,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         objectID = new int[nVOIs];
         colorCount = new float[nVOIs];
 
-        UI.clearAllDataText();
-        UI.setDataText("\n");
-
         voiCount = new int[nVOIs];
         shortMask = new short[totLength];
         for (i = 0; i < nVOIs; i++) {
@@ -3868,7 +3844,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         for (i = 0; i < nVOIs; i++) {
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 voiName = VOIs.VOIAt(i).getName();
-                newPtVOI = new VOI((short) (i + nVOIs), "point3D" + i + ".voi", zDim, VOI.POINT, -1.0f);
+                newPtVOI = new VOI((short) (i + nVOIs), voiName, zDim, VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
                 xArr[0] = xPosGrav[i];
                 yArr[0] = yPosGrav[i];
@@ -3995,7 +3971,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
 
         for (i = 0; i < numObjects; i++) {
-            newPtVOI = new VOI((short) (i + (2 * nVOIs)), "Center" + (i+1) + ".voi", zDim, VOI.POINT, -1.0f);
+            newPtVOI = new VOI((short) (i + (2 * nVOIs)), "Cen" + (i+1), zDim, VOI.POINT, -1.0f);
             newPtVOI.setColor(Color.white);
             xArr[0] = xCenter[i];
             yArr[0] = yCenter[i];
@@ -4007,26 +3983,14 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         } // for (i = 0; i < numObjects; i++)
 
         srcImage.notifyImageDisplayListeners();
-
-        UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
-
-        UI.setDataText("Nucleus\tNvolume\tRmin\tRmax");
-
-        UI.setDataText("\tG1volume");
-        UI.setDataText("\tcenterToG1\tcenterToG1ToEdge\tfractionG1Out");
-
-        if (greenRegionNumber > 1) {
-            UI.setDataText("\t\tG2volume");
-            UI.setDataText("\tcenterToG2\tcenterToG2ToEdge\tfractionG2Out");
-        }
-
-        UI.setDataText("\n");
+        
+        UI.getMessageFrame().addTab("PlugInAlgorithmCenterDistance");
+        UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "\n");
+        UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "File Name \t\tNucleus\tNVolume\tRmin\tRmax" +
+                                    "\tObj\tGvolume\tcenterToG\tcenterToGToEdge\tfractionGOut\n");
 
         for (i = 0; i < numObjects; i++) {
             nuclearVolume = xRes * yRes * zRes * blueCountTotal[i];
-            UI.setDataText((i + 1) + "\t" + df.format(nuclearVolume));
-            UI.setDataText("\t" + df.format(centerToNearEdge[i]));
-            UI.setDataText("\t" + df.format(centerToFarEdge[i]));
             
             greenFound = 0;
 
@@ -4038,10 +4002,6 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     greenFound++;
 
                     voiVolume = xRes * yRes * zRes * voiCount[j];
-                    if (greenFound == 2) {
-                        UI.setDataText("\t");
-                    }
-                    UI.setDataText("\t" + df.format(voiVolume));
                     
 
                     gravToCenter = (float)
@@ -4136,14 +4096,16 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                                                             yRes) +
                                                        ((lastEdgeZ - zCenter[i]) * (lastEdgeZ - zCenter[i]) * zRes *
                                                             zRes));
-                    UI.setDataText("\t" + df.format(gravToCenter));
-                    UI.setDataText("\t" + df.format(centerToGravToEdge));
                     fractionOut = gravToCenter/centerToGravToEdge;
-                    UI.setDataText("\t\t" + dfFract.format(fractionOut));
+                    
+                    UI.getMessageFrame().append("PlugInAlgorithmCenterDistance",
+                            srcImage.getFileInfo(0).getFileName() + "\t" + (i+1) + "\t" + df.format(nuclearVolume) +
+                            "\t" + df.format(centerToNearEdge[i]) + "\t" + df.format(centerToFarEdge[i]) +
+                            "\t" + (j+1) + "\t" + df.format(voiVolume) + "\t" + df.format(gravToCenter) +
+                            "\t" + df.format(centerToGravToEdge) + "\t\t" + dfFract.format(fractionOut) + "\n");
                 } // if (objectID[j] == (i+1))
             } // for (j = 0; j <= nVOIs - 1; j++)
 
-            UI.setDataText("\n");
         } // for (i = 0; i < numObjects; i++)
 
         if (threadStopped) {
