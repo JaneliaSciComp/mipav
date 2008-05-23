@@ -461,7 +461,7 @@ public class PlugInDialogCenterDistance extends JDialogScriptableBase implements
         String unitStr;
         String distStr;
         setForeground(Color.black);
-        setTitle("Center Distances 05/15/08");
+        setTitle("Center Distances 05/22/08");
         
         df = new DecimalFormat("0.000E0");
 
