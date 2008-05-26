@@ -37,9 +37,6 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private int clipMode = AlgorithmImageMath.CLIP;
-    
-    /** DOCUMENT ME! */
-    private int floatMode = AlgorithmImageMath.CONVERT_FLOAT;
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxOperator;
@@ -50,8 +47,10 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
     /** source image. */
     private ModelImage image;
 
-    /** DOCUMENT ME! */
-    private float imaginaryValue = 0.0f;
+    /** Used as both imaginary value and blue value */
+    private double imaginaryValue = 0.0;
+    
+    private double blueValue = 0.0;
 
     /** DOCUMENT ME! */
     private JPanel inputPanel;
@@ -59,11 +58,14 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
     /** DOCUMENT ME! */
     private JLabel labelOperator;
 
-    /** DOCUMENT ME! */
+    /** Used for single value, real part of complex, and red part of color */
     private JLabel labelValue;
 
-    /** DOCUMENT ME! */
+    /** Used for imaginary part of complex and green part of color */
     private JLabel labelValueI;
+    
+    /** Used for blue part of color */
+    private JLabel labelValueB;
 
     /** DOCUMENT ME! */
     private AlgorithmImageMath mathAlgo;
@@ -85,16 +87,19 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
     
 
     /** DOCUMENT ME! */
-    private float realValue;
+    private double realValue;
 
     /** result image. */
     private ModelImage resultImage = null;
 
-    /** DOCUMENT ME! */
+    /** Used for single value, real part of complex, and red part of color */
     private JTextField textValue;
 
-    /** DOCUMENT ME! */
+    /** Use for imaginary part of complex and green part of color */
     private JTextField textValueI;
+    
+    /** Used for blue part of color */
+    private JTextField textValueB;
 
     /** DOCUMENT ME! */
     private String[] titles;
@@ -295,6 +300,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         str += outputPanel.isProcessWholeImageSet() + delim;
         str += realValue + delim;
         str += imaginaryValue + delim;
+        str += blueValue + delim;
         str += opType + delim;
         str += clipMode;
 
@@ -323,10 +329,17 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         Object source = event.getSource();
 
         textValue.setEnabled(true);
+        if (useComplex || image.isColorImage()) {
+            textValueI.setEnabled(true);
+        }
+        if (image.isColorImage()) {
+            textValueB.setEnabled(true);
+        }
         outputPanel.setOutputImageOptionsEnabled(true);
         radioClip.setEnabled(true);
         radioPromote.setEnabled(true);
-        if (image.getType() == ModelStorageBase.FLOAT || image.getType() == ModelStorageBase.DOUBLE) {
+        if (image.getType() == ModelStorageBase.FLOAT || image.getType() == ModelStorageBase.DOUBLE ||
+            image.getType() == ModelStorageBase.ARGB_FLOAT) {
         	radioFloat.setEnabled(false);
         } else {
         	radioFloat.setEnabled(true);
@@ -348,9 +361,21 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 opType = AlgorithmImageMath.DIVIDE;
             } else if (index == AlgorithmImageMath.SQUARE) {
                 textValue.setEnabled(false);
+                if (useComplex || image.isColorImage()) {
+                    textValueI.setEnabled(false);
+                }
+                if (image.isColorImage()) {
+                    textValueB.setEnabled(false);
+                }
                 opType = AlgorithmImageMath.SQUARE;
             } else if (index == AlgorithmImageMath.SQUARE_ROOT) {
                 textValue.setEnabled(false);
+                if (useComplex || image.isColorImage()) {
+                    textValueI.setEnabled(false);
+                }
+                if (image.isColorImage()) {
+                    textValueB.setEnabled(false);
+                }
                 opType = AlgorithmImageMath.SQUARE_ROOT;
                 radioClip.setEnabled(false);
                 radioPromote.setEnabled(false);
@@ -358,6 +383,12 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 radioFloat.setSelected(true);
             } else if (index == AlgorithmImageMath.LOG) {
                 textValue.setEnabled(false);
+                if (useComplex || image.isColorImage()) {
+                    textValueI.setEnabled(false);
+                }
+                if (image.isColorImage()) {
+                    textValueB.setEnabled(false);
+                }
                 opType = AlgorithmImageMath.LOG;
                 radioClip.setEnabled(false);
                 radioPromote.setEnabled(false);
@@ -367,14 +398,32 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 opType = AlgorithmImageMath.CONSTANT;
             } else if (index == AlgorithmImageMath.ABSOLUTE_VALUE) {
                 textValue.setEnabled(false);
+                if (useComplex || image.isColorImage()) {
+                    textValueI.setEnabled(false);
+                }
+                if (image.isColorImage()) {
+                    textValueB.setEnabled(false);
+                }
                 opType = AlgorithmImageMath.ABSOLUTE_VALUE;
             } else if (index == AlgorithmImageMath.AVERAGE) {
                 textValue.setEnabled(false);
+                if (useComplex || image.isColorImage()) {
+                    textValueI.setEnabled(false);
+                }
+                if (image.isColorImage()) {
+                    textValueB.setEnabled(false);
+                }
                 outputPanel.setOutputNewImage(true);
                 outputPanel.setOutputImageOptionsEnabled(false);
                 opType = AlgorithmImageMath.AVERAGE;
             } else if (index == AlgorithmImageMath.SUM) {
                 textValue.setEnabled(false);
+                if (useComplex || image.isColorImage()) {
+                    textValueI.setEnabled(false);
+                }
+                if (image.isColorImage()) {
+                    textValueB.setEnabled(false);
+                }
                 outputPanel.setOutputNewImage(true);
                 outputPanel.setOutputImageOptionsEnabled(false);
                 opType = AlgorithmImageMath.SUM;
@@ -400,8 +449,13 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
 
                 String iString = st.nextToken();
 
-                if (useComplex) {
+                if (useComplex || image.isColorImage()) {
                     textValueI.setText(iString);
+                }
+                
+                String blueString = st.nextToken();
+                if (image.isColorImage()) {
+                    textValueB.setText(blueString);
                 }
 
                 int selection = MipavUtil.getInt(st);
@@ -451,12 +505,16 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
     }
 
     /**
-     * Accessor that sets the imaginaryValue to be used when performing the algorithm.
+     * Accessor that sets the imaginaryValue or green value to be used when performing the algorithm.
      *
      * @param  v  realValue
      */
-    public void setImaginaryValue(float v) {
+    public void setImaginaryValue(double v) {
         imaginaryValue = v;
+    }
+    
+    public void setBlueValue(double blueValue) {
+        this.blueValue = blueValue;
     }
 
     /**
@@ -473,7 +531,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
      *
      * @param  v  realValue
      */
-    public void setRealValue(float v) {
+    public void setRealValue(double v) {
         realValue = v;
     }
 
@@ -507,7 +565,8 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                     }
 
                     // Make algorithm
-                    mathAlgo = new AlgorithmImageMath(resultImage, image, opType, realValue, imaginaryValue, clipMode,
+                    mathAlgo = new AlgorithmImageMath(resultImage, image, opType, realValue, imaginaryValue, 
+                                                      blueValue, clipMode,
                                                       outputPanel.isProcessWholeImageSet());
 
                     // This is very important. Adding this object as a listener allows the algorithm to
@@ -547,7 +606,8 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    mathAlgo = new AlgorithmImageMath(image, opType, realValue, imaginaryValue, clipMode,
+                    mathAlgo = new AlgorithmImageMath(image, opType, realValue, imaginaryValue, 
+                                                      blueValue, clipMode,
                                                       outputPanel.isProcessWholeImageSet());
 
                     // This is very important. Adding this object as a listener allows the algorithm to
@@ -614,8 +674,9 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         outputPanel = new JPanelAlgorithmOutputOptions(image);
         scriptParameters.setOutputOptionsGUI(outputPanel);
 
-        setRealValue(scriptParameters.getParams().getFloat("real_value"));
-        setImaginaryValue(scriptParameters.getParams().getFloat("imaginary_value"));
+        setRealValue(scriptParameters.getParams().getDouble("real_value"));
+        setImaginaryValue(scriptParameters.getParams().getDouble("imaginary_value"));
+        setBlueValue(scriptParameters.getParams().getDouble("blue_value"));
         setOperator(scriptParameters.getParams().getInt("operator_type"));
         setClipMode(scriptParameters.getParams().getInt("data_type_clip_mode"));
     }
@@ -630,6 +691,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
         scriptParameters.getParams().put(ParameterFactory.newParameter("real_value", realValue));
         scriptParameters.getParams().put(ParameterFactory.newParameter("imaginary_value", imaginaryValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blue_value", blueValue));
         scriptParameters.getParams().put(ParameterFactory.newParameter("operator_type", opType));
         scriptParameters.getParams().put(ParameterFactory.newParameter("data_type_clip_mode", clipMode));
     }
@@ -646,7 +708,9 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         inputPanel.setBorder(buildTitledBorder("Input parameters"));
 
         if (useComplex) {
-            labelValue = new JLabel("Real realValue");
+            labelValue = new JLabel("Real value");
+        } else if (image.isColorImage()) {
+            labelValue = new JLabel("Red value");
         } else {
             labelValue = new JLabel("Value");
         }
@@ -659,7 +723,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         textValue.setFont(serif12);
 
         if (useComplex) {
-            labelValueI = new JLabel("Imaginary realValue");
+            labelValueI = new JLabel("Imaginary value");
             labelValueI.setForeground(Color.black);
             labelValueI.setFont(serif12);
 
@@ -667,6 +731,23 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
             textValueI.setText("0.0");
             textValueI.setFont(serif12);
         } // if (useComplex)
+        else if (image.isColorImage()) {
+            labelValueI = new JLabel("Green value");
+            labelValueI.setForeground(Color.black);
+            labelValueI.setFont(serif12);
+
+            textValueI = new JTextField(5);
+            textValueI.setText("1.0");
+            textValueI.setFont(serif12); 
+            
+            labelValueB = new JLabel("Blue value");
+            labelValueB.setForeground(Color.black);
+            labelValueB.setFont(serif12);
+
+            textValueB = new JTextField(5);
+            textValueB.setText("1.0");
+            textValueB.setFont(serif12);   
+        }
 
         labelOperator = new JLabel("Operator");
         labelOperator.setForeground(Color.black);
@@ -722,7 +803,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         gbc.fill = GridBagConstraints.HORIZONTAL;
         inputPanel.add(textValue, gbc);
 
-        if (useComplex) {
+        if (useComplex || image.isColorImage()) {
             gbc.gridx = 0;
             gbc.gridy = yPos;
             gbc.weightx = 0;
@@ -733,7 +814,20 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
             gbc.weightx = 1;
             gbc.fill = GridBagConstraints.HORIZONTAL;
             inputPanel.add(textValueI, gbc);
-        } // if (useComplex)
+        } // if (useComplex || image.isColorImage())
+        
+        if (image.isColorImage()) {
+            gbc.gridx = 0;
+            gbc.gridy = yPos;
+            gbc.weightx = 0;
+            gbc.fill = GridBagConstraints.NONE;
+            inputPanel.add(labelValueB, gbc);
+            gbc.gridx = 1;
+            gbc.gridy = yPos++;
+            gbc.weightx = 1;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            inputPanel.add(textValueB, gbc);    
+        } // if (image.isColorImage())
 
         gbc.gridx = 0;
         gbc.gridy = yPos;
@@ -784,8 +878,15 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
 
         // set this for Absolute Value
         textValue.setEnabled(false);
+        if (useComplex || image.isColorImage()) {
+            textValueI.setEnabled(false);
+        }
+        if (image.isColorImage()) {
+            textValueB.setEnabled(false);
+        }
         radioClip.setSelected(true);
-        if (image.getType() == ModelStorageBase.FLOAT || image.getType() == ModelStorageBase.DOUBLE) {
+        if (image.getType() == ModelStorageBase.FLOAT || image.getType() == ModelStorageBase.DOUBLE ||
+            image.getType() == ModelStorageBase.ARGB_FLOAT) {
             radioFloat.setEnabled(false);
         } else {
             radioFloat.setEnabled(true);
@@ -805,8 +906,8 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
 
         tmpStr = textValue.getText();
 
-        if (testParameter(tmpStr, -Float.MAX_VALUE, Float.MAX_VALUE)) {
-            realValue = Float.valueOf(tmpStr).floatValue();
+        if (testParameter(tmpStr, -Double.MAX_VALUE, Double.MAX_VALUE)) {
+            realValue = Double.valueOf(tmpStr).doubleValue();
         } else {
             textValue.requestFocus();
             textValue.selectAll();
@@ -814,11 +915,11 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
             return false;
         }
 
-        if (useComplex) {
+        if (useComplex || image.isColorImage()) {
             tmpStr = textValueI.getText();
 
-            if (testParameter(tmpStr, -Float.MAX_VALUE, Float.MAX_VALUE)) {
-                imaginaryValue = Float.valueOf(tmpStr).floatValue();
+            if (testParameter(tmpStr, -Double.MAX_VALUE, Double.MAX_VALUE)) {
+                imaginaryValue = Double.valueOf(tmpStr).doubleValue();
             } else {
                 textValueI.requestFocus();
                 textValueI.selectAll();
@@ -826,6 +927,19 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 return false;
             }
         } // if (useComplex)
+        
+        if (image.isColorImage()) {
+            tmpStr = textValueB.getText();
+
+            if (testParameter(tmpStr, -Double.MAX_VALUE, Double.MAX_VALUE)) {
+                blueValue = Double.valueOf(tmpStr).doubleValue();
+            } else {
+                textValueB.requestFocus();
+                textValueB.selectAll();
+
+                return false;
+            }    
+        } // if (image.isColorImage())
 
         if (radioClip.isSelected()) {
             clipMode = AlgorithmImageMath.CLIP;
