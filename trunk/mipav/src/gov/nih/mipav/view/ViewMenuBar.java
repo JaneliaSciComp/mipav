@@ -1391,13 +1391,11 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Filters (homomorphic)", false);
             menuBuilder.setMenuItemEnabled("Filters (wavelet)", false);
             menuBuilder.setMenuItemEnabled("Grays -> RGB", false);
-            menuBuilder.setMenuItemEnabled("Image math", false);
             menuBuilder.setMenuItemEnabled("Inhomogeneity N3 correction", false);
             menuBuilder.setMenuItemEnabled("Laplacian", false);
             menuBuilder.setMenuItemEnabled("Levelset", false);
             menuBuilder.setMenuItemEnabled("Levelset diffusion", false);
             menuBuilder.setMenuItemEnabled("Local normalization", false);
-            menuBuilder.setMenuItemEnabled("Maximum intensity projection (MIP)", false);
             menuBuilder.setMenuItemEnabled("Mode", false);
             menuBuilder.setMenuItemEnabled("Morphological", false);
             menuBuilder.setMenuItemEnabled("MRI combined info", false);
