@@ -101,6 +101,13 @@ public class AlgorithmImageMath extends AlgorithmBase {
 
     /** Used to store the image minimum. */
     private double min;
+    
+    private double minR;
+    private double maxR;
+    private double minG;
+    private double maxG;
+    private double minB;
+    private double maxB;
 
     /** Operation to be performed on the images (i.e. Add, ...) */
     private int opType;
@@ -111,8 +118,10 @@ public class AlgorithmImageMath extends AlgorithmBase {
     /** the value to modify the image with. */
     private double value;
 
-    /** imaginary part of value to modify complex or dcomplex image with. */
+    /** imaginary part of value to modify complex or dcomplex image with or green color of color image. */
     private double valueI;
+    
+    private double valueB;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -122,16 +131,20 @@ public class AlgorithmImageMath extends AlgorithmBase {
      * @param  srcImg     source image model
      * @param  type       operation type to be performed on the image
      * @param  val        value applied to the image
-     * @param  valI       imaginary part of value applied if image is of complex type
+     * @param  valI       imaginary part of value applied if image is of complex type or 
+     *                    green part of color if color image
+     * @param  valB       blue part of color image
      * @param  _clipMode  clamp data to image type range or promote image type to hold new data range.
      * @param  maskFlag   Flag that indicates that the operator will be calculated for the whole image if equal to true
      */
-    public AlgorithmImageMath(ModelImage srcImg, int type, double val, double valI, int _clipMode, boolean maskFlag) {
+    public AlgorithmImageMath(ModelImage srcImg, int type, double val, double valI, 
+                              double valB, int _clipMode, boolean maskFlag) {
         super(null, srcImg);
         entireImage = maskFlag;
         opType = type;
         value = val;
         valueI = valI;
+        valueB = valB;
         clipMode = _clipMode;
         setClipValues();
 
@@ -151,17 +164,20 @@ public class AlgorithmImageMath extends AlgorithmBase {
      * @param  srcImg     source image model
      * @param  type       operation type to be performed on the image
      * @param  val        value applied to the image
-     * @param  valI       imaginary part of value applied if image is of complex type
+     * @param  valI       imaginary part of value applied if image is of complex type or
+     *                    green part of color if color image
+     * @param  valB       blue part of color image
      * @param  _clipMode  clamp data to image type range or promote image type to hold new data range.
      * @param  maskFlag   Flag that indicates that the operator will be calculated for the whole image if equal to true
      */
-    public AlgorithmImageMath(ModelImage destImg, ModelImage srcImg, int type, double val, double valI, int _clipMode,
-                              boolean maskFlag) {
+    public AlgorithmImageMath(ModelImage destImg, ModelImage srcImg, int type, double val, double valI, 
+                              double valB, int _clipMode, boolean maskFlag) {
         super(destImg, srcImg);
         entireImage = maskFlag;
         opType = type;
         value = val;
         valueI = valI;
+        valueB = valB;
         clipMode = _clipMode;
         setClipValues();
 
@@ -203,6 +219,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
 
             if (useComplex) {
                 calcStoreInDestComplex();
+            } else if (srcImage.isColorImage()) {
+                calcStoreInDestColor();
             } else {
                 calcStoreInDest();
             }
@@ -210,11 +228,472 @@ public class AlgorithmImageMath extends AlgorithmBase {
 
             if (useComplex) {
                 calcInPlaceComplex();
+            } else if (srcImage.isColorImage()) {
+                calcInPlaceColor();
             } else {
                 calcInPlace();
             }
         }
     }
+    
+    private void calcInPlaceColor() {
+        int i, j, k, m;
+        int z, t, f;
+        int offset;
+        int length; // total number of data-elements (pixels) in image
+        double[] buffer; // data-buffer (for pixel data) which is the "heart" of the image
+        double bestMin, bestMax;
+        double bestMinR, bestMaxR, bestMinG, bestMaxG, bestMinB, bestMaxB;
+
+        try {
+            length = srcImage.getSliceSize();
+            buffer = new double[4*length];
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating image ...");
+        } catch (OutOfMemoryError e) {
+            buffer = null;
+            System.gc();
+            displayError("Algorithm ImageMath reports: Out of memory when creating image buffer");
+            setCompleted(false);
+
+            return;
+        }
+
+        minR = srcImage.getMinR();
+        maxR = srcImage.getMaxR();
+        minG = srcImage.getMinG();
+        maxG = srcImage.getMaxG();
+        minB = srcImage.getMinB();
+        maxB = srcImage.getMaxB();
+        min = Math.min(minR, Math.min(minG, minB));
+        max = Math.max(maxR, Math.max(maxG, maxB));
+
+        if (opType == LOG) {
+
+            if (min <= 0) {
+                displayError("Algorithm ImageMath: Cannot do log on image data <= 0");
+                setCompleted(false);
+
+                return;
+            } else if (srcImage.getType() != ModelStorageBase.ARGB_FLOAT) {
+                AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, ModelStorageBase.ARGB_FLOAT,
+                                                     min, max, min, max, false);
+                changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
+                changeTypeAlgo.run();
+
+                // if the change algo was halted,
+                if (!changeTypeAlgo.isCompleted()) {
+
+                    // halt the rest of this processing.
+                    setThreadStopped(true);
+                }
+            }
+        } else if (opType == SQUARE_ROOT) {
+
+            if (min < 0) {
+                displayError("Algorithm ImageMath: Cannot do SQRT on image data < 0");
+                setCompleted(false);
+
+                return;
+            } else if (srcImage.getType() != ModelStorageBase.ARGB_FLOAT) {
+                AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, ModelStorageBase.ARGB_FLOAT,
+                                                     min, max, min, max, false);
+                changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
+                changeTypeAlgo.run();
+
+                // if the change algo is halted,
+                if (!changeTypeAlgo.isCompleted()) {
+
+                    // halt the rest of this processing.
+                    setThreadStopped(true);
+                }
+            }
+        } else if ((opType == DIVIDE) && ((value == 0.0) || (valueI == 0.0) || (valueB == 0.0))) {
+            displayError("Algorithm ImageMath: Cannot divide image data by zero");
+            setCompleted(false);
+
+            return;
+        } else if (clipMode == CONVERT_FLOAT) {
+            
+            int newType = ModelStorageBase.ARGB_FLOAT;
+            bestMinR = minR;
+            bestMaxR = maxR;
+            bestMinG = minG;
+            bestMaxG = maxG;
+            bestMinB = minB;
+            bestMaxB = maxB;
+            bestMin = Math.min(minR, Math.min(minG, minB));
+            bestMax = Math.max(maxR, Math.max(maxG, maxB));
+            
+            switch (opType) {
+            
+                case ADD:
+                    bestMinR = minR + value;
+                    bestMaxR = maxR + value;
+                    bestMinG = minG + valueI;
+                    bestMaxG = maxG + valueI;
+                    bestMinB = minB + valueB;
+                    bestMaxB = maxB + valueB;
+                    bestMin = Math.min(minR, Math.min(minG, minB));
+                    bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                    break;
+                    
+                case SUBTRACT:
+                    bestMinR = minR - value;
+                    bestMaxR = maxR - value;
+                    bestMinG = minG - valueI;
+                    bestMaxG = maxG - valueI;
+                    bestMinB = minB - valueB;
+                    bestMaxB = maxB - valueB;
+                    bestMin = Math.min(minR, Math.min(minG, minB));
+                    bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                    break;
+                    
+                case MULTIPLY:
+                    bestMinR = java.lang.Math.min(minR * value, maxR * value);
+                    bestMaxR = java.lang.Math.max(minR * value, maxR * value);
+                    bestMinG = java.lang.Math.min(minG * valueI, maxG * valueI);
+                    bestMaxG = java.lang.Math.max(minG * valueI, maxG * valueI);
+                    bestMinB = java.lang.Math.min(minB * valueB, maxB * valueB);
+                    bestMaxB = java.lang.Math.max(minB * valueB, maxB * valueB);
+                    bestMin = Math.min(minR, Math.min(minG, minB));
+                    bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                    break;
+                    
+                case DIVIDE:
+                    bestMinR = java.lang.Math.min(minR / value, maxR / value);
+                    bestMaxR = java.lang.Math.max(minR / value, maxR / value);
+                    bestMinG = java.lang.Math.min(minG / valueI, maxG / valueI);
+                    bestMaxG = java.lang.Math.max(minG / valueI, maxG / valueI);
+                    bestMinB = java.lang.Math.min(minB / valueB, maxB / valueB);
+                    bestMaxB = java.lang.Math.max(minB / valueB, maxB / valueB);
+                    bestMin = Math.min(minR, Math.min(minG, minB));
+                    bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                    break;
+                    
+                case SQUARE:
+                    bestMinR = minR * minR;
+                    bestMaxR = maxR * maxR;
+                    bestMinG = minG * minG;
+                    bestMaxG = maxG * maxG;
+                    bestMinB = minB * minB;
+                    bestMaxB = maxB * maxB;
+                    bestMin = min * min;
+                    bestMax = max * max;
+                    break;
+                    
+                case CONSTANT:
+                    if (value < minR) {
+                        bestMinR = value;
+                        bestMaxR = maxR;
+                    } else if (value > maxR) {
+                        bestMinR = minR;
+                        bestMaxR = maxR;
+                    } else {
+                        bestMinR = minR;
+                        bestMaxR = maxR;
+                    }
+                    
+                    if (valueI < minG) {
+                        bestMinG = valueI;
+                        bestMaxG = maxG;
+                    } else if (valueI > maxG) {
+                        bestMinG = minG;
+                        bestMaxG = maxG;
+                    } else {
+                        bestMinG = minG;
+                        bestMaxG = maxG;
+                    }
+                    
+                    if (valueB < minB) {
+                        bestMinB = valueB;
+                        bestMaxB = maxB;
+                    } else if (valueB > maxB) {
+                        bestMinB = minB;
+                        bestMaxB = maxB;
+                    } else {
+                        bestMinB = minB;
+                        bestMaxB = maxB;
+                    }
+                    
+                    bestMin = Math.min(minR, Math.min(minG, minB));
+                    bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                    break;
+                    
+            }
+            
+            AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, newType, min, max, min, max,
+                                                                        false);
+            changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
+            changeTypeAlgo.run();
+
+            // if the change algo is halted,
+            if (!changeTypeAlgo.isCompleted()) {
+
+            // halt the rest of this processing.
+            setThreadStopped(true);
+            }
+            
+        } else {
+            int newType = srcImage.getType();
+
+            if (clipMode == PROMOTE) {
+
+                switch (opType) {
+
+                    case ADD:
+                        if (((maxR + value) > clipMax) || ((minR + value) < clipMin) || 
+                            ((maxG + valueI) > clipMax) || ((minG + valueI) < clipMin) ||
+                            ((maxB + valueB) > clipMax) || ((minB + valueB) < clipMin)) {
+                            newType = findType(srcImage.getType());
+                        }
+
+                        break;
+
+                    case SUBTRACT:
+                        if (((minR - value) < clipMin) || ((maxR - value) > clipMax) ||
+                            ((minG - valueI) < clipMin) || ((maxG - valueI) > clipMax)||
+                            ((minB - valueB) < clipMin) || ((maxB - valueB) > clipMax)) {
+                            newType = findType(srcImage.getType());
+                        }
+
+                        break;
+
+                    case MULTIPLY:
+                        bestMinR = java.lang.Math.min(minR * value, maxR * value);
+                        bestMaxR = java.lang.Math.max(minR * value, maxR * value);
+                        bestMinG = java.lang.Math.min(minG * valueI, maxG * valueI);
+                        bestMaxG = java.lang.Math.max(minG * valueI, maxG * valueI);
+                        bestMinB = java.lang.Math.min(minB * valueB, maxB * valueB);
+                        bestMaxB = java.lang.Math.max(minB * valueB, maxB * valueB);
+                        bestMin = Math.min(minR, Math.min(minG, minB));
+                        bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                        if ((bestMax > clipMax) || (bestMin < clipMin)) {
+                            newType = findType(srcImage.getType());
+                        }
+
+                        break;
+
+                    case DIVIDE:
+                        bestMinR = java.lang.Math.min(minR / value, maxR / value);
+                        bestMaxR = java.lang.Math.max(minR / value, maxR / value);
+                        bestMinG = java.lang.Math.min(minG / valueI, maxG / valueI);
+                        bestMaxG = java.lang.Math.max(minG / valueI, maxG / valueI);
+                        bestMinB = java.lang.Math.min(minB / valueB, maxB / valueB);
+                        bestMaxB = java.lang.Math.max(minB / valueB, maxB / valueB);
+                        bestMin = Math.min(minR, Math.min(minG, minB));
+                        bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                        if ((bestMin < clipMin) || (bestMax > clipMax)) {
+                            newType = findType(srcImage.getType());
+                        }
+
+                        break;
+
+                    case SQUARE:
+                        if (((maxR * maxR) > clipMax) || ((minR * minR) > clipMax) ||
+                            ((maxG * maxG) > clipMax) || ((minG * minG) > clipMax) ||
+                            ((maxB * maxB) > clipMax) || ((minB * minB) > clipMax)) {
+                            newType = findType(srcImage.getType());
+                        }
+
+                        break;
+
+                    case CONSTANT:
+                        if ((value < clipMin) || (value > clipMax) ||
+                            (valueI < clipMin) || (valueI > clipMax) ||
+                            (valueB < clipMin) || (valueB > clipMax)) {
+                            newType = findType(srcImage.getType());
+                        }
+
+                        break;
+
+                    default:
+                        break;
+                }
+               
+                if (newType != srcImage.getType()) {
+                    AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, newType, min, max, min, max,
+                                                                                 false);
+                    changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
+                    changeTypeAlgo.run();
+
+                    // if the change algo is halted,
+                    if (!changeTypeAlgo.isCompleted()) {
+
+                        // halt the rest of this processing.
+                        setThreadStopped(true);
+                    }
+                }
+            }
+        }
+
+        // if the thread has been stopped, then prevent algo from continuing.
+        if (threadStopped) {
+            setCompleted(false);
+            finalize();
+
+            return;
+        }
+
+        
+
+        int mod = length / 20;
+
+        if (srcImage.getNDims() == 5) {
+            f = srcImage.getExtents()[4];
+        } else {
+            f = 1;
+        }
+
+        if (srcImage.getNDims() >= 4) {
+            t = srcImage.getExtents()[3];
+        } else {
+            t = 1;
+        }
+
+        if (srcImage.getNDims() >= 3) {
+            z = srcImage.getExtents()[2];
+        } else {
+            z = 1;
+        }
+
+        int volume = z * length;
+        int space4D = t * volume;
+        int totalLength = f * t * z * length;
+
+        for (m = 0; (m < f) && !threadStopped; m++) {
+
+            for (k = 0; (k < t) && !threadStopped; k++) {
+
+                for (j = 0; (j < z) && !threadStopped; j++) {
+
+                    try {
+                        offset = (m * space4D) + (k * volume) + (j * length);
+                        srcImage.exportData(4*offset, 4*length, buffer); // locks and releases lock
+                    } catch (IOException error) {
+                        displayError("Algorithm ImageMath : Image(s) locked");
+                        setCompleted(false);
+
+                        return;
+                    }
+
+                    for (i = 0; (i < length) && !threadStopped; i++) {
+
+                        try {
+
+                            if (((i % mod) == 0)) {
+                                fireProgressStateChanged(Math.round((float) (i + offset) / (totalLength - 1) * 100));
+                            }
+                        } catch (NullPointerException npe) {
+
+                            if (threadStopped) {
+                                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                                                  Preferences.DEBUG_ALGORITHM);
+                            }
+                        }
+
+                        // Get slice
+                        if ((entireImage == true) || mask.get(i + offset)) {
+
+                            switch (opType) {
+
+                                case ADD:
+                                    buffer[4*i+1] = buffer[4*i+1] + value;
+                                    buffer[4*i+2] = buffer[4*i+2] + valueI;
+                                    buffer[4*i+3] = buffer[4*i+3] + valueB;
+                                    break;
+
+                                case SUBTRACT:
+                                    buffer[4*i+1] = buffer[4*i+1] - value;
+                                    buffer[4*i+2] = buffer[4*i+2] - valueI;
+                                    buffer[4*i+3] = buffer[4*i+3] - valueB;
+                                    break;
+
+                                case MULTIPLY:
+                                    buffer[4*i+1] = buffer[4*i+1] * value;
+                                    buffer[4*i+2] = buffer[4*i+2] * valueI;
+                                    buffer[4*i+3] = buffer[4*i+3] * valueB;
+                                    break;
+
+                                case DIVIDE:
+                                    buffer[4*i+1] = buffer[4*i+1] / value;
+                                    buffer[4*i+2] = buffer[4*i+2] / valueI;
+                                    buffer[4*i+3] = buffer[4*i+3] / valueB;
+                                    break;
+
+                                case SQUARE:
+                                    buffer[4*i+1] = buffer[4*i+1] * buffer[4*i+1];
+                                    buffer[4*i+2] = buffer[4*i+2] * buffer[4*i+2];
+                                    buffer[4*i+3] = buffer[4*i+3] * buffer[4*i+3];
+                                    break;
+
+                                case SQUARE_ROOT:
+                                    buffer[4*i+1] = Math.sqrt(buffer[4*i+1]);
+                                    buffer[4*i+2] = Math.sqrt(buffer[4*i+2]);
+                                    buffer[4*i+3] = Math.sqrt(buffer[4*i+3]);
+                                    break;
+
+                                case LOG:
+                                    buffer[4*i+1] = Math.log(buffer[4*i+1]);
+                                    buffer[4*i+2] = Math.log(buffer[4*i+2]);
+                                    buffer[4*i+3] = Math.log(buffer[4*i+3]);
+                                    break;
+
+                                case CONSTANT:
+                                    buffer[4*i+1] = value;
+                                    buffer[4*i+2] = valueI;
+                                    buffer[4*i+3] = valueB;
+                                    break;
+                                    
+                                case ABSOLUTE_VALUE:
+                                    buffer[4*i+1] = Math.abs(buffer[4*i+1]);
+                                    buffer[4*i+2] = Math.abs(buffer[4*i+2]);
+                                    buffer[4*i+3] = Math.abs(buffer[4*i+3]);
+                                    break;
+
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+
+                    // clip check
+                    if (clipMode == CLIP) {
+
+                        for (i = 0; i < 4*length; i++) {
+
+                            if (buffer[i] > clipMax) {
+                                buffer[i] = clipMax;
+                            } else if (buffer[i] < clipMin) {
+                                buffer[i] = clipMin;
+                            }
+                        }
+                    }
+
+                    try {
+
+                        // do BEFORE buffer has been exported to Image
+                        if (threadStopped) {
+                            finalize();
+
+                            return;
+                        }
+
+                        srcImage.importData(4*offset, buffer, false);
+                    } catch (IOException error) {
+                        displayError("Algorithm ImageMath: Image(s) locked");
+                        setCompleted(false);
+                        
+
+                        return;
+                    }
+                }
+            } // t loop
+        } // f loop
+
+        srcImage.calcMinMax();
+        
+        setCompleted(true);    
+    } // private void calcInPlaceColor()
 
     /**
      * Generates the new data and places in the source image.
@@ -864,6 +1343,413 @@ public class AlgorithmImageMath extends AlgorithmBase {
         
         setCompleted(true);
     }
+    
+    private void calcStoreInDestColor() {
+        int i, j, k, m;
+        int z, t, f;
+        int offset;
+        int length; // total number of data-elements (pixels) in image
+        double[] buffer; // data-buffer (for pixel data) which is the "heart" of the image
+        double bestMin, bestMax;
+        double bestMinR, bestMaxR, bestMinG, bestMaxG, bestMinB, bestMaxB;
+
+        double[] sumAverageBuffer = null; // buffer needed to do summing/average
+
+        try {
+            length = srcImage.getSliceSize();
+            buffer = new double[4*length];
+
+            if ((opType == AVERAGE) || (opType == SUM)) {
+                sumAverageBuffer = new double[4*length];
+            }
+
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating image ...");
+        } catch (OutOfMemoryError e) {
+            buffer = null;
+            System.gc();
+            displayError("Algorithm ImageMath reports: Out of memory when creating image buffer");
+            setCompleted(false);
+
+            return;
+        }
+
+        minR = srcImage.getMinR();
+        maxR = srcImage.getMaxR();
+        minG = srcImage.getMinG();
+        maxG = srcImage.getMaxG();
+        minB = srcImage.getMinB();
+        maxB = srcImage.getMaxB();
+        min = Math.min(minR, Math.min(minG, minB));
+        max = Math.max(maxR, Math.max(maxG, maxB));
+        
+        int mod = length / 20;
+
+        if (srcImage.getNDims() == 5) {
+            f = srcImage.getExtents()[4];
+        } else {
+            f = 1;
+        }
+
+        if (srcImage.getNDims() >= 4) {
+            t = srcImage.getExtents()[3];
+        } else {
+            t = 1;
+        }
+
+        if (srcImage.getNDims() >= 3) {
+            z = srcImage.getExtents()[2];
+        } else {
+            z = 1;
+        }
+
+        int volume = z * length;
+        int space4D = t * volume;
+        int totalLength = f * t * z * length;
+
+        if (opType == LOG) {
+
+            if (min <= 0) {
+                displayError("Cannot do LOG on image data <= 0");
+                setCompleted(false);
+
+                return;
+            } else if (destImage.getType() != ModelStorageBase.ARGB_FLOAT) {
+                destImage.reallocate(ModelStorageBase.ARGB_FLOAT);
+            } 
+        } else if (opType == SQUARE_ROOT) {
+
+            if (min < 0) {
+                displayError("Cannot do SQRT on image data < 0");
+                setCompleted(false);
+
+                return;
+            } else if (destImage.getType() != ModelStorageBase.ARGB_FLOAT) {
+                destImage.reallocate(ModelStorageBase.ARGB_FLOAT);
+            } 
+        } else if ((opType == DIVIDE) && (value == 0.0)) {
+            displayError("cannot divide image data by zero");
+            setCompleted(false);
+
+            return;
+        } else if (clipMode == CONVERT_FLOAT) {
+            destImage.reallocate(ModelStorageBase.ARGB_FLOAT);
+        } else {
+            int newType = srcImage.getType();
+
+            if (clipMode == PROMOTE) {
+
+                switch (opType) {
+
+                    case ADD:
+                        if (((maxR + value) > clipMax) || ((minR + value) < clipMin) ||
+                            ((maxG + valueI) > clipMax) || ((minG + valueI) < clipMin) ||
+                            ((maxB + valueB) > clipMax) || ((minB + valueB) < clipMin)) {
+                            newType = findType(srcImage.getType());
+                        }
+
+                        break;
+
+                    case SUBTRACT:
+                        if (((minR - value) < clipMin) || ((maxR - value) > clipMax) ||
+                            ((minG - valueI) < clipMin) || ((maxG - valueI) > clipMax) ||
+                            ((minB - valueB) < clipMin) || ((maxB - valueB) > clipMax)) {
+                            newType = findType(srcImage.getType());
+                        }
+
+                        break;
+                        
+                    case MULTIPLY:
+                        bestMinR = java.lang.Math.min(minR * value, maxR * value);
+                        bestMaxR = java.lang.Math.max(minR * value, maxR * value);
+                        bestMinG = java.lang.Math.min(minG * valueI, maxG * valueI);
+                        bestMaxG = java.lang.Math.max(minG * valueI, maxG * valueI);
+                        bestMinB = java.lang.Math.min(minB * valueB, maxB * valueB);
+                        bestMaxB = java.lang.Math.max(minB * valueB, maxB * valueB);
+                        bestMin = Math.min(minR, Math.min(minG, minB));
+                        bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                        if ((bestMax > clipMax) || (bestMin < clipMin)) {
+                            newType = findType(srcImage.getType());
+                        }
+
+                        break;
+
+                    case DIVIDE:
+                        bestMinR = java.lang.Math.min(minR / value, maxR / value);
+                        bestMaxR = java.lang.Math.max(minR / value, maxR / value);
+                        bestMinG = java.lang.Math.min(minG / valueI, maxG / valueI);
+                        bestMaxG = java.lang.Math.max(minG / valueI, maxG / valueI);
+                        bestMinB = java.lang.Math.min(minB / valueB, maxB / valueB);
+                        bestMaxB = java.lang.Math.max(minB / valueB, maxB / valueB);
+                        bestMin = Math.min(minR, Math.min(minG, minB));
+                        bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                        if ((bestMin < clipMin) || (bestMax > clipMax)) {
+                            newType = findType(srcImage.getType());
+                        }
+
+                        break;
+
+                    case SQUARE:
+                        if (((maxR * maxR) > clipMax) || ((minR * minR) > clipMax) ||
+                            ((maxG * maxG) > clipMax) || ((minG * minG) > clipMax) ||
+                            ((maxB * maxB) > clipMax) || ((minB * minB) > clipMax)) {
+                            newType = findType(srcImage.getType());
+                        }
+
+                        break;
+
+                    case CONSTANT:
+                        if ((value < clipMin) || (value > clipMax) ||
+                            (valueI < clipMin) || (valueI > clipMax) ||
+                            (valueB < clipMin) || (valueB > clipMax)) {
+                            newType = findType(srcImage.getType());
+                        }
+
+                        break;
+                        
+                    case SUM:
+                        if (minR < 0) {
+                            bestMinR = minR * f * t * z;
+                        }
+                        else {
+                            bestMinR = 0;
+                        }
+                        if (maxR > 0) {
+                            bestMaxR = maxR * f * t * z;
+                        }
+                        else {
+                            bestMaxR = 0;
+                        }
+                        
+                        if (minG < 0) {
+                            bestMinG = minG * f * t * z;
+                        }
+                        else {
+                            bestMinG = 0;
+                        }
+                        if (maxG > 0) {
+                            bestMaxG = maxG * f * t * z;
+                        }
+                        else {
+                            bestMaxG = 0;
+                        }
+                        
+                        if (minB < 0) {
+                            bestMinB = minB * f * t * z;
+                        }
+                        else {
+                            bestMinB = 0;
+                        }
+                        if (maxB > 0) {
+                            bestMaxB = maxB * f * t * z;
+                        }
+                        else {
+                            bestMaxB = 0;
+                        }
+                        
+                        bestMin = Math.min(minR, Math.min(minG, minB));
+                        bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                        if ((bestMin < clipMin) || (bestMax > clipMax)) {
+                            newType = findType(srcImage.getType());
+                        }
+
+                        break;
+
+                    default:
+                        break;
+                }
+
+                if (newType > destImage.getType()) {
+                    destImage.reallocate(newType);
+                }
+            }
+        }
+
+        // do BEFORE starting progress bar
+        if (threadStopped) {
+            setCompleted(false);
+            finalize();
+
+            return;
+        }
+
+        for (m = 0; (m < f) && !threadStopped; m++) {
+
+            for (k = 0; (k < t) && !threadStopped; k++) {
+
+                for (j = 0; (j < z) && !threadStopped; j++) {
+
+                    try {
+                        offset = (m * space4D) + (k * volume) + (j * length);
+                        srcImage.exportData(4*offset, 4*length, buffer); // locks and releases lock
+                    } catch (IOException error) {
+                        displayError("Algorithm ImageMath : Image(s) locked");
+                        setCompleted(false);
+                        
+
+                        return;
+                    }
+
+                    for (i = 0; (i < length) && !threadStopped; i++) {
+
+                        try {
+
+                            if (((i % mod) == 0)) {
+                                fireProgressStateChanged(Math.round((float) (i + offset) / (totalLength - 1) * 100));
+                            }
+                        } catch (NullPointerException npe) {
+
+                            if (threadStopped) {
+                                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                                                  Preferences.DEBUG_ALGORITHM);
+                            }
+                        }
+
+                        // Get slice
+                        if ((entireImage == true) || mask.get(i + offset)) {
+
+                            switch (opType) {
+         
+                                case ADD:
+                                    buffer[4*i+1] = buffer[4*i+1] + value;
+                                    buffer[4*i+2] = buffer[4*i+2] + valueI;
+                                    buffer[4*i+3] = buffer[4*i+3] + valueB;
+                                    break;
+
+                                case SUBTRACT:
+                                    buffer[4*i+1] = buffer[4*i+1] - value;
+                                    buffer[4*i+2] = buffer[4*i+2] - valueI;
+                                    buffer[4*i+3] = buffer[4*i+3] - valueB;
+                                    break;
+
+                                case MULTIPLY:
+                                    buffer[4*i+1] = buffer[4*i+1] * value;
+                                    buffer[4*i+2] = buffer[4*i+2] * valueI;
+                                    buffer[4*i+3] = buffer[4*i+3] * valueB;
+                                    break;
+
+                                case DIVIDE:
+                                    buffer[4*i+1] = buffer[4*i+1] / value;
+                                    buffer[4*i+2] = buffer[4*i+2] / valueI;
+                                    buffer[4*i+3] = buffer[4*i+3] / valueB;
+                                    break;
+
+                                case SQUARE:
+                                    buffer[4*i+1] = buffer[4*i+1] * buffer[4*i+1];
+                                    buffer[4*i+2] = buffer[4*i+2] * buffer[4*i+2];
+                                    buffer[4*i+3] = buffer[4*i+3] * buffer[4*i+3];
+                                    break;
+
+                                case SQUARE_ROOT:
+                                    buffer[4*i+1] = Math.sqrt(buffer[4*i+1]);
+                                    buffer[4*i+2] = Math.sqrt(buffer[4*i+2]);
+                                    buffer[4*i+3] = Math.sqrt(buffer[4*i+3]);
+                                    break;
+
+                                case LOG:
+                                    buffer[4*i+1] = Math.log(buffer[4*i+1]);
+                                    buffer[4*i+2] = Math.log(buffer[4*i+2]);
+                                    buffer[4*i+3] = Math.log(buffer[4*i+3]);
+                                    break;
+
+                                case CONSTANT:
+                                    buffer[4*i+1] = value;
+                                    buffer[4*i+2] = valueI;
+                                    buffer[4*i+3] = valueB;
+                                    break;
+                                    
+                                case ABSOLUTE_VALUE:
+                                    buffer[4*i+1] = Math.abs(buffer[4*i+1]);
+                                    buffer[4*i+2] = Math.abs(buffer[4*i+2]);
+                                    buffer[4*i+3] = Math.abs(buffer[4*i+3]);
+                                    break;
+
+                                
+                                case AVERAGE:
+                                case SUM:
+                                    sumAverageBuffer[4*i+1] += buffer[4*i+1];
+                                    sumAverageBuffer[4*i+2] += buffer[4*i+2];
+                                    sumAverageBuffer[4*i+3] += buffer[4*i+3];
+                                    break;
+
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+
+                    // do not do the following segment for opType AVERAGE:
+                    if ((opType != AVERAGE) && (opType != SUM)) {
+
+                        // clip check
+                        if (clipMode == CLIP) {
+
+                            for (i = 0; i < 4*length; i++) {
+
+                                if (buffer[i] > clipMax) {
+                                    buffer[i] = clipMax;
+                                } else if (buffer[i] < clipMin) {
+                                    buffer[i] = clipMin;
+                                }
+                            }
+                        }
+
+                        try {
+                            destImage.importData(4*offset, buffer, false);
+                        } catch (IOException error) {
+                            displayError("Algorithm ImageMath: Destination Image locked");
+                            setCompleted(false);
+                            
+
+                            return;
+                        }
+                    }
+                }
+            } // t loop
+        } // f loop
+
+        if (threadStopped) {
+            setCompleted(false);
+            
+            finalize();
+
+            return;
+        }
+
+        if ((opType == AVERAGE) || (opType == SUM)) {
+
+            if (opType == AVERAGE) {
+
+                for (i = 0; i < sumAverageBuffer.length; i++) {
+                    sumAverageBuffer[i] /= (f * t * z);
+                }
+            }
+            
+            if ((opType == SUM) && (clipMode == CLIP)) {
+                for (i = 0; i < 4*length; i++) {
+
+                    if (sumAverageBuffer[i] > clipMax) {
+                        sumAverageBuffer[i] = clipMax;
+                    } else if (sumAverageBuffer[i] < clipMin) {
+                        sumAverageBuffer[i] = clipMin;
+                    }
+                }   
+            }
+
+            try {
+                destImage.importData(0, sumAverageBuffer, false);
+            } catch (Exception e) {
+                displayError("Algorithm ImageMath: Destination Image locked");
+                setCompleted(false);
+                
+
+                return;
+            }
+        }
+
+        destImage.calcMinMax();
+        
+        setCompleted(true);    
+    } // private void calcStoreInDestColor()
 
     /**
      * Generates the new data and places in a new (destination) image.
@@ -1507,163 +2393,386 @@ public class AlgorithmImageMath extends AlgorithmBase {
         boolean loop = true;
         int endType;
         double bestMin, bestMax;
+        double bestMinR, bestMaxR, bestMinG, bestMaxG, bestMinB, bestMaxB;
         int z, t;
 
         endType = stType;
 
-        switch (opType) {
-
-            case ADD:
-                while (loop == true) {
-
-                    if (testType(endType, min + value, max + value) == false) {
-                        endType = promoteType(endType);
-
-                        if (endType == ModelStorageBase.DOUBLE) {
-                            loop = false;
-                        }
-                    } else {
-                        loop = false;
-                    }
-                }
-
-                break;
-
-            case SUBTRACT:
-                while (loop == true) {
-
-                    if (testType(endType, min - value, max - value) == false) {
-                        endType = promoteType(endType);
-
-                        if (endType == ModelStorageBase.DOUBLE) {
-                            loop = false;
-                        }
-                    } else {
-                        loop = false;
-                    }
-                }
-
-                break;
-
-            case MULTIPLY:
-                bestMin = java.lang.Math.min(min * value, max * value);
-                bestMax = java.lang.Math.max(min * value, max * value);
-                while (loop == true) {
-
-                    if (testType(endType, bestMin, bestMax) == false) {
-                        endType = promoteType(endType);
-
-                        if (endType == ModelStorageBase.DOUBLE) {
-                            loop = false;
-                        }
-                    } else {
-                        loop = false;
-                    }
-                }
-
-                break;
-
-            case DIVIDE:
-                bestMin = java.lang.Math.min(min / value, max / value);
-                bestMax = java.lang.Math.max(min / value, max / value);
-                while (loop == true) {
-
-                    if (testType(endType, bestMin, bestMax) == false) {
-                        endType = promoteType(endType);
-
-                        if (endType == ModelStorageBase.DOUBLE) {
-                            loop = false;
-                        }
-                    } else {
-                        loop = false;
-                    }
-                }
-
-                break;
-
-            case SQUARE:
-                if ((min <= 0.0) && (max >= 0.0)) {
-                    bestMin = 0.0;
-                } else {
-                    bestMin = java.lang.Math.min(min * min, max * max);
-                }
-
-                bestMax = java.lang.Math.max(min * min, max * max);
-                while (loop == true) {
-
-                    if (testType(endType, bestMin, bestMax) == false) {
-                        endType = promoteType(endType);
-
-                        if (endType == ModelStorageBase.DOUBLE) {
-                            loop = false;
-                        }
-                    } else {
-                        loop = false;
-                    }
-                }
-
-                break;
-
-            case CONSTANT:
-                while (loop == true) {
-
-                    if (testType(endType, value, value) == false) {
-                        endType = promoteType(endType);
-
-                        if (endType == ModelStorageBase.DOUBLE) {
-                            loop = false;
-                        }
-                    } else {
-                        loop = false;
-                    }
-                }
-
-                break;
+        if (srcImage.isColorImage()) {
+            switch (opType) {
                 
-            case SUM:
-                if (srcImage.getNDims() >= 3) {
-                    z = srcImage.getExtents()[2];
-                }
-                else {
-                    z = 1;
-                }
-                if (srcImage.getNDims() >= 4) {
-                    t = srcImage.getExtents()[3];
-                }
-                else {
-                    t = 1;
-                }
-                if (min < 0) {
-                    bestMin = min * t * z;
-                }
-                else {
-                    bestMin = 0;
-                }
-                if (max > 0) {
-                    bestMax = max * t * z;
-                }
-                else {
-                    bestMax = 0;
-                }
-                
-                while (loop == true) {
-
-                    if (testType(endType, bestMin, bestMax) == false) {
-                        endType = promoteType(endType);
-
-                        if (endType == ModelStorageBase.DOUBLE) {
+                case ADD:
+                    while (loop == true) {
+    
+                        if ((testType(endType, minR + value, maxR + value) == false) ||
+                            (testType(endType, minG + valueI, maxG + valueI) == false) ||
+                            (testType(endType, minB + valueB, maxB + valueB) == false)) {
+                            endType = promoteType(endType);
+    
+                            if (endType == ModelStorageBase.ARGB_FLOAT) {
+                                loop = false;
+                            }
+                        } else {
                             loop = false;
                         }
-                    } else {
-                        loop = false;
                     }
-                }
-
-                break;
-
-            default:
-                break;
-        }
+    
+                    break;
+    
+                case SUBTRACT:
+                    while (loop == true) {
+    
+                        if ((testType(endType, minR - value, maxR - value) == false) ||
+                            (testType(endType, minG - valueI, maxG - valueI) == false) ||
+                            (testType(endType, minB - valueB, maxB - valueB) == false)) {
+                            endType = promoteType(endType);
+    
+                            if (endType == ModelStorageBase.ARGB_FLOAT) {
+                                loop = false;
+                            }
+                        } else {
+                            loop = false;
+                        }
+                    }
+    
+                    break;
+    
+                case MULTIPLY:
+                    bestMinR = java.lang.Math.min(minR * value, maxR * value);
+                    bestMaxR = java.lang.Math.max(minR * value, maxR * value);
+                    bestMinG = java.lang.Math.min(minG * valueI, maxG * valueI);
+                    bestMaxG = java.lang.Math.max(minG * valueI, maxG * valueI);
+                    bestMinB = java.lang.Math.min(minB * valueB, maxB * valueB);
+                    bestMaxB = java.lang.Math.max(minB * valueB, maxB * valueB);
+                    bestMin = Math.min(minR, Math.min(minG, minB));
+                    bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                    while (loop == true) {
+    
+                        if (testType(endType, bestMin, bestMax) == false) {
+                            endType = promoteType(endType);
+    
+                            if (endType == ModelStorageBase.ARGB_FLOAT) {
+                                loop = false;
+                            }
+                        } else {
+                            loop = false;
+                        }
+                    }
+    
+                    break;
+    
+                case DIVIDE:
+                    bestMinR = java.lang.Math.min(minR / value, maxR / value);
+                    bestMaxR = java.lang.Math.max(minR / value, maxR / value);
+                    bestMinG = java.lang.Math.min(minG / valueI, maxG / valueI);
+                    bestMaxG = java.lang.Math.max(minG / valueI, maxG / valueI);
+                    bestMinB = java.lang.Math.min(minB / valueB, maxB / valueB);
+                    bestMaxB = java.lang.Math.max(minB / valueB, maxB / valueB);
+                    bestMin = Math.min(minR, Math.min(minG, minB));
+                    bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                    while (loop == true) {
+    
+                        if (testType(endType, bestMin, bestMax) == false) {
+                            endType = promoteType(endType);
+    
+                            if (endType == ModelStorageBase.ARGB_FLOAT) {
+                                loop = false;
+                            }
+                        } else {
+                            loop = false;
+                        }
+                    }
+    
+                    break;
+    
+                case SQUARE:
+                    if ((minR <= 0.0) && (maxR >= 0.0)) {
+                        bestMinR = 0.0;
+                    } else {
+                        bestMinR = java.lang.Math.min(minR * minR, maxR * maxR);
+                    }
+    
+                    bestMaxR = java.lang.Math.max(minR * minR, maxR * maxR);
+                    
+                    if ((minG <= 0.0) && (maxG >= 0.0)) {
+                        bestMinG = 0.0;
+                    } else {
+                        bestMinG = java.lang.Math.min(minG * minG, maxG * maxG);
+                    }
+    
+                    bestMaxG = java.lang.Math.max(minG * minG, maxG * maxG);
+                    
+                    if ((minB <= 0.0) && (maxB >= 0.0)) {
+                        bestMinB = 0.0;
+                    } else {
+                        bestMinB = java.lang.Math.min(minB * minB, maxB * maxB);
+                    }
+    
+                    bestMaxB = java.lang.Math.max(minB * minB, maxB * maxB);
+                    
+                    bestMin = Math.min(minR, Math.min(minG, minB));
+                    bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                    while (loop == true) {
+    
+                        if (testType(endType, bestMin, bestMax) == false) {
+                            endType = promoteType(endType);
+    
+                            if (endType == ModelStorageBase.ARGB_FLOAT) {
+                                loop = false;
+                            }
+                        } else {
+                            loop = false;
+                        }
+                    }
+    
+                    break;
+    
+                case CONSTANT:
+                    while (loop == true) {
+    
+                        if ((testType(endType, value, value) == false) ||
+                            (testType(endType, valueI, valueI) == false) ||
+                            (testType(endType, valueB, valueB) == false)) {
+                            endType = promoteType(endType);
+    
+                            if (endType == ModelStorageBase.ARGB_FLOAT) {
+                                loop = false;
+                            }
+                        } else {
+                            loop = false;
+                        }
+                    }
+    
+                    break;
+                    
+                case SUM:
+                    if (srcImage.getNDims() >= 3) {
+                        z = srcImage.getExtents()[2];
+                    }
+                    else {
+                        z = 1;
+                    }
+                    if (srcImage.getNDims() >= 4) {
+                        t = srcImage.getExtents()[3];
+                    }
+                    else {
+                        t = 1;
+                    }
+                    if (minR < 0) {
+                        bestMinR = minR * t * z;
+                    }
+                    else {
+                        bestMinR = 0;
+                    }
+                    if (maxR > 0) {
+                        bestMaxR = maxR * t * z;
+                    }
+                    else {
+                        bestMaxR = 0;
+                    }
+                    
+                    if (minG < 0) {
+                        bestMinG = minG * t * z;
+                    }
+                    else {
+                        bestMinG = 0;
+                    }
+                    if (maxG > 0) {
+                        bestMaxG = maxG * t * z;
+                    }
+                    else {
+                        bestMaxG = 0;
+                    }
+                    
+                    if (minB < 0) {
+                        bestMinB = minB * t * z;
+                    }
+                    else {
+                        bestMinB = 0;
+                    }
+                    if (maxB > 0) {
+                        bestMaxB = maxB * t * z;
+                    }
+                    else {
+                        bestMaxB = 0;
+                    }
+                    
+                    bestMin = Math.min(minR, Math.min(minG, minB));
+                    bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                    while (loop == true) {
+    
+                        if (testType(endType, bestMin, bestMax) == false) {
+                            endType = promoteType(endType);
+    
+                            if (endType == ModelStorageBase.ARGB_FLOAT) {
+                                loop = false;
+                            }
+                        } else {
+                            loop = false;
+                        }
+                    }
+    
+                    break;
+    
+                default:
+                    break;
+            } // switch (opType)    
+        } // if (srcImage.isColorImage())
+        else { // black and white image
+            switch (opType) {
+    
+                case ADD:
+                    while (loop == true) {
+    
+                        if (testType(endType, min + value, max + value) == false) {
+                            endType = promoteType(endType);
+    
+                            if (endType == ModelStorageBase.DOUBLE) {
+                                loop = false;
+                            }
+                        } else {
+                            loop = false;
+                        }
+                    }
+    
+                    break;
+    
+                case SUBTRACT:
+                    while (loop == true) {
+    
+                        if (testType(endType, min - value, max - value) == false) {
+                            endType = promoteType(endType);
+    
+                            if (endType == ModelStorageBase.DOUBLE) {
+                                loop = false;
+                            }
+                        } else {
+                            loop = false;
+                        }
+                    }
+    
+                    break;
+    
+                case MULTIPLY:
+                    bestMin = java.lang.Math.min(min * value, max * value);
+                    bestMax = java.lang.Math.max(min * value, max * value);
+                    while (loop == true) {
+    
+                        if (testType(endType, bestMin, bestMax) == false) {
+                            endType = promoteType(endType);
+    
+                            if (endType == ModelStorageBase.DOUBLE) {
+                                loop = false;
+                            }
+                        } else {
+                            loop = false;
+                        }
+                    }
+    
+                    break;
+    
+                case DIVIDE:
+                    bestMin = java.lang.Math.min(min / value, max / value);
+                    bestMax = java.lang.Math.max(min / value, max / value);
+                    while (loop == true) {
+    
+                        if (testType(endType, bestMin, bestMax) == false) {
+                            endType = promoteType(endType);
+    
+                            if (endType == ModelStorageBase.DOUBLE) {
+                                loop = false;
+                            }
+                        } else {
+                            loop = false;
+                        }
+                    }
+    
+                    break;
+    
+                case SQUARE:
+                    if ((min <= 0.0) && (max >= 0.0)) {
+                        bestMin = 0.0;
+                    } else {
+                        bestMin = java.lang.Math.min(min * min, max * max);
+                    }
+    
+                    bestMax = java.lang.Math.max(min * min, max * max);
+                    while (loop == true) {
+    
+                        if (testType(endType, bestMin, bestMax) == false) {
+                            endType = promoteType(endType);
+    
+                            if (endType == ModelStorageBase.DOUBLE) {
+                                loop = false;
+                            }
+                        } else {
+                            loop = false;
+                        }
+                    }
+    
+                    break;
+    
+                case CONSTANT:
+                    while (loop == true) {
+    
+                        if (testType(endType, value, value) == false) {
+                            endType = promoteType(endType);
+    
+                            if (endType == ModelStorageBase.DOUBLE) {
+                                loop = false;
+                            }
+                        } else {
+                            loop = false;
+                        }
+                    }
+    
+                    break;
+                    
+                case SUM:
+                    if (srcImage.getNDims() >= 3) {
+                        z = srcImage.getExtents()[2];
+                    }
+                    else {
+                        z = 1;
+                    }
+                    if (srcImage.getNDims() >= 4) {
+                        t = srcImage.getExtents()[3];
+                    }
+                    else {
+                        t = 1;
+                    }
+                    if (min < 0) {
+                        bestMin = min * t * z;
+                    }
+                    else {
+                        bestMin = 0;
+                    }
+                    if (max > 0) {
+                        bestMax = max * t * z;
+                    }
+                    else {
+                        bestMax = 0;
+                    }
+                    
+                    while (loop == true) {
+    
+                        if (testType(endType, bestMin, bestMax) == false) {
+                            endType = promoteType(endType);
+    
+                            if (endType == ModelStorageBase.DOUBLE) {
+                                loop = false;
+                            }
+                        } else {
+                            loop = false;
+                        }
+                    }
+    
+                    break;
+    
+                default:
+                    break;
+            } // switch (opType)
+        } // else black and white image
 
         return endType;
 
@@ -1709,6 +2818,15 @@ public class AlgorithmImageMath extends AlgorithmBase {
 
             case ModelStorageBase.DOUBLE:
                 return ModelStorageBase.DOUBLE;
+                
+            case ModelStorageBase.ARGB:
+                return ModelStorageBase.ARGB_USHORT;
+                
+            case ModelStorageBase.ARGB_USHORT:
+                return ModelStorageBase.ARGB_FLOAT;
+                
+            case ModelStorageBase.ARGB_FLOAT:
+                return ModelStorageBase.ARGB_FLOAT;
 
             default:
                 return ModelStorageBase.DOUBLE;
@@ -1726,13 +2844,15 @@ public class AlgorithmImageMath extends AlgorithmBase {
         } else if (srcImage.getType() == ModelStorageBase.BYTE) {
             clipMin = -128;
             clipMax = 127;
-        } else if (srcImage.getType() == ModelStorageBase.UBYTE) {
+        } else if ((srcImage.getType() == ModelStorageBase.UBYTE) ||
+                   (srcImage.getType() == ModelStorageBase.ARGB)) {
             clipMin = 0;
             clipMax = 255;
         } else if (srcImage.getType() == ModelStorageBase.SHORT) {
             clipMin = -32768;
             clipMax = 32767;
-        } else if (srcImage.getType() == ModelStorageBase.USHORT) {
+        } else if ((srcImage.getType() == ModelStorageBase.USHORT) ||
+                   (srcImage.getType() == ModelStorageBase.ARGB_USHORT)) {
             clipMin = 0;
             clipMax = 65535;
         } else if (srcImage.getType() == ModelStorageBase.INTEGER) {
@@ -1747,10 +2867,14 @@ public class AlgorithmImageMath extends AlgorithmBase {
         } else if (srcImage.getType() == ModelStorageBase.FLOAT) {
             clipMin = -Float.MAX_VALUE;
             clipMax = Float.MAX_VALUE;
+        } else if (srcImage.getType() == ModelStorageBase.ARGB_FLOAT) {
+            clipMin = 0;
+            clipMax = Float.MAX_VALUE;
         } else if (srcImage.getType() == ModelStorageBase.DOUBLE) {
             clipMin = -Double.MAX_VALUE;
             clipMax = Double.MAX_VALUE;
         }
+        
     }
 
     /**
@@ -1778,7 +2902,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             } else {
                 return true;
             }
-        } else if (type == ModelStorageBase.UBYTE) {
+        } else if ((type == ModelStorageBase.UBYTE) || (type == ModelStorageBase.ARGB)) {
 
             if ((minVal < 0) || (maxVal > 255)) {
                 return false;
@@ -1792,7 +2916,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             } else {
                 return true;
             }
-        } else if (type == ModelStorageBase.USHORT) {
+        } else if ((type == ModelStorageBase.USHORT) || (type == ModelStorageBase.ARGB_USHORT)) {
 
             if ((minVal < 0) || (maxVal > 65535)) {
                 return false;
@@ -1823,6 +2947,13 @@ public class AlgorithmImageMath extends AlgorithmBase {
         } else if (type == ModelStorageBase.FLOAT) {
 
             if ((minVal < -Float.MAX_VALUE) || (maxVal > Float.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.ARGB_FLOAT) {
+
+            if ((minVal < 0) || (maxVal > Float.MAX_VALUE)) {
                 return false;
             } else {
                 return true;
