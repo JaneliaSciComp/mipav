@@ -229,7 +229,7 @@ System.err.println("starting process icg");
                                               srcImage.getImageName() + "_sum");
 
 
-        AlgorithmImageMath algoMath = new AlgorithmImageMath(destImage, srcImage, AlgorithmImageMath.SUM, 0, 0, 0, true);
+        AlgorithmImageMath algoMath = new AlgorithmImageMath(destImage, srcImage, AlgorithmImageMath.SUM, 0.0, 0.0, 0.0, 0, true);
         algoMath.runAlgorithm();
         destImage.calcMinMax();
         new ViewJFrameImage(destImage);
