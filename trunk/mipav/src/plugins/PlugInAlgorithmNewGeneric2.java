@@ -1,20 +1,27 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmMorphology3D;
+import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
 import gov.nih.mipav.model.algorithms.AlgorithmSnake;
 import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileVOI;
+import gov.nih.mipav.model.structures.CubeBounds;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.Point3Ds;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIVector;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewJFrameTriImage;
 import gov.nih.mipav.view.ViewVOIVector;
+import gov.nih.mipav.view.dialogs.JDialogPaintGrow;
 
+import java.awt.Point;
 import java.io.IOException;
+import java.util.BitSet;
 
 
 
@@ -35,6 +42,26 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
     /** Volume size for xDim*yDim*zDim */
     private int volumeSize;
     
+    ModelImage boneImage;
+    ModelImage boneMarrowImage;
+    ModelImage muscleBundleImage;
+    
+    // center-of-mass array for region 1 and 2 (the thresholded bone)
+    int[] x1CMs;
+    int[] y1CMs;
+    int[] x2CMs;
+    int[] y2CMs;
+    
+    // temp buffer to store slices.  Needed in many member functions.
+    short[] sliceBuffer;
+
+    // unique label values for the regions of interest
+    short muscleBundleLabel = 10;
+    short boneMarrowLabel = 20;
+    short boneLabel = 3;
+
+    
+    
     /**
      * Constructor.
      *
@@ -44,6 +71,8 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
     public PlugInAlgorithmNewGeneric2(ModelImage resultImage, ModelImage srcImg) {
         super(resultImage, srcImg);
     }
+
+    
     
     /**
      * Starts the algorithm.
@@ -77,34 +106,287 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
     }
     
     private void calc3D() {
+        
+        // compute the necessary fields
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         zDim = srcImage.getExtents()[2];
 
         sliceSize = xDim * yDim;
         volumeSize = sliceSize * zDim;
+        
+        sliceBuffer = new short[sliceSize];
 
-       ModelImage boneImage = extractBone(srcImage);
+        computeBoneImage();
         ShowImage(boneImage, "CT Bone");
         
-        ModelImage boneMarrowImage = extractBoneMarrow(srcImage, boneImage);
-        ShowImage(boneMarrowImage, "CT Bone Marrow");
+        x1CMs = new int [sliceSize];
+        y1CMs = new int [sliceSize];
+        x2CMs = new int [sliceSize];
+        y2CMs = new int [sliceSize];
+
+        computeBoneMarrowImage();
+//        ShowImage(boneMarrowImage, "CT Bone Marrow");
+        
+        computeMuscleBundle();
+        ShowImage(muscleBundleImage, "Segmented Image");
         
     } // end calc3D()
+
     
+    
+   void computeMuscleBundle() {
+       muscleBundleImage = new ModelImage(boneMarrowImage.getType(), boneMarrowImage.getExtents(), "MuscleBundleImg");
+       
+       // let's just grow a region
+       // we need a seed point
+       // walk out along the x-axis from the center-of-mass of the bone on the first slice
+       try {
+           srcImage.exportData(0, sliceSize, sliceBuffer);
+       } catch (IOException ex) {
+           System.err.println("Error exporting data");
+       }
+       
+       int xcm = x1CMs[0];
+       int ycm = y1CMs[0];
+       
+       // the center-of-mass should be in the marrow, increment x until we get to bone
+       int idx = ycm * xDim + xcm;
+       while(sliceBuffer[idx] < 750) {
+           xcm++;
+           idx++;
+       }
+       // increment x until we get past the bone
+       while(sliceBuffer[idx] > 750) {
+           xcm++;
+           idx++;
+       }
+       // use the seed point that is 5 more x units away from the bone
+       short seedX = (short)(xcm + 5);
+       short seedY = (short)ycm;
+       short seedZ = 0;
+       short seedVal = sliceBuffer[idx + 5];
+       
+       BitSet muscle1Bitmap = new BitSet();
+       regionGrowMuscle(seedX, seedY, seedZ, seedVal, muscle1Bitmap);
+
+       // segment the second muscle bundle
+       xcm = x2CMs[0];
+       ycm = y2CMs[0];
+       
+       // the center-of-mass should be in the marrow, increment x until we get to bone
+       idx = ycm * xDim + xcm;
+       while(sliceBuffer[idx] < 750) {
+           xcm++;
+           idx++;
+       }
+       // increment x until we get past the bone
+       while(sliceBuffer[idx] > 750) {
+           xcm++;
+           idx++;
+       }
+       // use the seed point that is 5 more x units away from the bone
+       seedX = (short)(xcm + 5);
+       seedY = (short)ycm;
+       seedZ = 0;
+       seedVal = sliceBuffer[idx + 5];
+       
+       BitSet muscle2Bitmap = new BitSet();
+       regionGrowMuscle(seedX, seedY, seedZ, seedVal, muscle2Bitmap);
+       
+       
+       int sliceByteOffset;
+       for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
+           sliceByteOffset = sliceNum * sliceSize;
+           try {
+               boneMarrowImage.exportData((sliceNum * sliceSize), sliceSize, sliceBuffer);
+           } catch (IOException ex) {
+               System.err.println("Error exporting data");
+           }
+           
+           idx = sliceByteOffset;
+           for (int j = 0; j < yDim; j++) {
+               for (int i = 0; i < xDim; i++, idx++) {
+                   if (muscle1Bitmap.get(idx)) {
+                       sliceBuffer[idx - sliceByteOffset] = muscleBundleLabel;
+                   }
+                   if (muscle2Bitmap.get(idx)) {
+                       sliceBuffer[idx - sliceByteOffset] = muscleBundleLabel;
+                   }
+               }
+           }
+           
+           try {
+               muscleBundleImage.importData((sliceNum * sliceSize), sliceBuffer, false);
+           } catch (IOException ex) {
+               System.err.println("Error importing data");
+           }
+       } // end for (int sliceNum = 0; ...)
+   } // end computeMuscleBundle(...)
+   
+    
+   
+   void regionGrowMuscle(short sX, short sY, short sZ, short seedVal, BitSet muscleBits) {
+       try {
+           AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(srcImage, 1.0f, 1.0f);
+
+           regionGrowAlgo.setRunningInSeparateThread(false);
+
+           if (boneImage.getNDims() == 2) {
+               MipavUtil.displayError("regionGrowMuscle(): Error plugin only works for 3D images");
+           } else if (boneImage.getNDims() == 3) {
+               CubeBounds regionGrowBounds;
+               regionGrowBounds = new CubeBounds(xDim, 0, yDim, 0, zDim, 0);
+               int count = regionGrowAlgo.regionGrow3D(muscleBits, new Point3Ds(sX, sY, sZ), -1,
+                                                   false, false, null, seedVal - 300,
+                                                   seedVal + 1000, -1, -1, false,
+                                                   0, regionGrowBounds);
+//               System.out.println("Muscle Count: " +count);
+           }
+       } catch (OutOfMemoryError error) {
+           System.gc();
+           MipavUtil.displayError("Out of memory: regionGrowMuscle");
+       }
+
+   } // regionGrowMuscle(...)
+   
+   
     
     // Bone marrow in CT images is "inside" the bone
-    // determine an equation of a circle that describes the bone (some Hough transform)
-    // check to see which pixels are inside the equation of the circle
-    ModelImage extractBoneMarrow(ModelImage srcImage, ModelImage boneImageMask) {
-        ModelImage CTBoneMarrowImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), "boneMarrowImg");
+    void computeBoneMarrowImage() {
+        boneMarrowImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), "boneMarrowImg");
 
-        short[] boneBuffer = new short[sliceSize];
+        // compute center-of-mass for each region on each slice
+        computeBoneCMs();
+ 
+        // compute statics about the center-of-mass for each region on each slice
+        // and insures that the distance and standard deviations of the distances between
+        // the center-of-mass for each region between each slice is "close"
+        if (!boneRegionsOK()) {
+            MipavUtil.displayError("Error computeBoneMarrowImage(), Bone segmentation error");
+            return;
+        }
+ 
+        // Detected bone regions are likely correct, find the marrow using a seeded region grow
+        BitSet boneMarrow1Bitmap = new BitSet();
+        regionGrow((short)x1CMs[0], (short)y1CMs[0], (short)0, boneMarrow1Bitmap);
+
+        BitSet boneMarrow2Bitmap = new BitSet();
+        regionGrow((short)x2CMs[0], (short)y2CMs[0], (short)0, boneMarrow2Bitmap);
+       
+        int sliceByteOffset;
+        for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
+            sliceByteOffset = sliceNum * sliceSize;
+            try {
+                boneImage.exportData((sliceNum * sliceSize), sliceSize, sliceBuffer);
+            } catch (IOException ex) {
+                System.err.println("computeBoneMarrowImage(): Error exporting data");
+            }
+            
+            int idx = sliceByteOffset;
+            for (int j = 0; j < yDim; j++) {
+                for (int i = 0; i < xDim; i++, idx++) {
+                    if (boneMarrow1Bitmap.get(idx)) {
+                        sliceBuffer[idx - sliceByteOffset] = boneMarrowLabel;
+                    }
+                    if (boneMarrow2Bitmap.get(idx)) {
+                        sliceBuffer[idx - sliceByteOffset] = boneMarrowLabel;
+                    }
+                }
+            }
+            
+            try {
+                boneMarrowImage.importData((sliceNum * sliceSize), sliceBuffer, false);
+            } catch (IOException ex) {
+                System.err.println("computeBoneMarrowImage(): Error importing data");
+            }
+        } // end for (int sliceNum = 0; ...)
+    } // end computeBoneMarrowImage(...)
+
+    
+    
+    void regionGrow(short seedX, short seedY, short seedZ, BitSet seedPaintBitmap) {
+        try {
+            AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(boneImage, 1.0f, 1.0f);
+
+            regionGrowAlgo.setRunningInSeparateThread(false);
+
+            if (boneImage.getNDims() == 2) {
+                MipavUtil.displayError("regionGrow(): Error plugin only works for 3D images");
+            } else if (boneImage.getNDims() == 3) {
+                CubeBounds regionGrowBounds;
+                regionGrowBounds = new CubeBounds(xDim, 0, yDim, 0, zDim, 0);
+                int count = regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3Ds(seedX, seedY, seedZ), -1,
+                                                    false, false, null, 0,
+                                                    0, -1, -1, false,
+                                                    0, regionGrowBounds);
+//                System.out.println("Count: " +count);
+            }
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("Out of memory: ComponentEditImage.regionGrow");
+        }
+
+    } // end regionGrow()
+    
+    
+    
+    // return true is the average and standard deviation of the distance between the center-of-mass
+    // for the two bone regions on each slice are "close" (within 10 pixels)
+    boolean boneRegionsOK() {
+        if (zDim == 0) return true;
+        
+        // compute the distance of adjacent CMs
+        float[] distances1 = new float [zDim - 1];
+        float[] distances2 = new float [zDim - 1];
+        float dx, dy;
+        for (int sliceNum = 0; sliceNum < zDim - 1; sliceNum++) {
+            // distance between CM of region 1
+            dx = x1CMs[sliceNum] - x1CMs[sliceNum + 1];
+            dy = y1CMs[sliceNum] - y1CMs[sliceNum + 1];
+            distances1[sliceNum] = (float)Math.sqrt(dx*dx + dy*dy);
+
+            // distance between CM of region 2
+            dx = x2CMs[sliceNum] - x2CMs[sliceNum + 1];
+            dy = y2CMs[sliceNum] - y2CMs[sliceNum + 1];
+            distances2[sliceNum] = (float)Math.sqrt(dx*dx + dy*dy);
+        } // end for (int sliceNum = 0; ...)
+        
+        // compute mean and standard deviation of the distances
+        float sum1 = 0.0f, sum2 = 0.0f;
+        for (int sliceNum = 0; sliceNum < zDim - 1; sliceNum++) {
+            sum1 += distances1[sliceNum];
+            sum2 += distances2[sliceNum];
+        } // end for (int sliceNum = 0; ...)
+        float meanDistance1 = sum1 / (zDim - 1);
+        float meanDistance2 = sum2 / (zDim - 1);
+        
+       sum1 = sum2 = 0.0f;
+       for (int sliceNum = 0; sliceNum < zDim - 1; sliceNum++) {
+           dx = distances1[sliceNum] - meanDistance1;
+           sum1 += (dx * dx);
+
+           dx = distances2[sliceNum] - meanDistance2;
+           sum2 += (dx * dx);
+       } // end for (int sliceNum = 0; ...)
+       float stdDev1 = (float)Math.sqrt(sum1 / (zDim - 1));
+       float stdDev2 = (float)Math.sqrt(sum2 / (zDim - 1));
+       
+       if (Math.abs(meanDistance1 - meanDistance2) < 10.0f &&
+           Math.abs(stdDev1 - stdDev2) < 10.0f) {
+        return true;
+       } else {
+           return false;
+       }
+    } // end boneRegionsOK(...)
+    
+    
+    
+    void computeBoneCMs() {
 
         for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
-
             try {
-                boneImageMask.exportData((sliceNum * boneBuffer.length), boneBuffer.length, boneBuffer);
+                boneImage.exportData((sliceNum * sliceSize), sliceSize, sliceBuffer);
             } catch (IOException ex) {
                 System.err.println("Error exporting data");
             }
@@ -113,11 +395,11 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
             int idx = 0, xSum1 = 0, ySum1 = 0, xSum2 = 0, ySum2 = 0, count1 = 0, count2 = 0;
             for (int j = 0; j < yDim; j++) {
                 for (int i = 0; i < xDim; i++, idx++) {
-                    if (boneBuffer[idx] == 1) {
+                    if (sliceBuffer[idx] == 1) {
                         xSum1 += i;
                         ySum1 += j;
                         count1++;
-                    } else if (boneBuffer[idx] == 2) {
+                    } else if (sliceBuffer[idx] == 2) {
                         xSum2 += i;
                         ySum2 += j;
                         count2++;
@@ -126,55 +408,67 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
             } // end for (int i = 0; ...)
             
             if (count1 == 0) {
-                MipavUtil.displayError("extractBoneMarrow() Could NOT find any pixels in the first bone");
+                MipavUtil.displayError("computeBoneCMs() Could NOT find any pixels in the first bone");
             }
             if (count2 == 0) {
-                MipavUtil.displayError("extractBoneMarrow() Could NOT find any pixels in the second bone");
+                MipavUtil.displayError("computeBoneCMs() Could NOT find any pixels in the second bone");
             }
             
-            int xcm1 = xSum1 / count1;
-            int ycm1 = ySum1 / count1;
+            x1CMs[sliceNum] = xSum1 / count1;
+            y1CMs[sliceNum] = ySum1 / count1;
             
-            int xcm2 = xSum2 / count2;
-            int ycm2 = ySum2 / count2;
-            
-            System.out.println("Slice: " +sliceNum);
-            System.out.println("Bone 1 cm: (" +xcm1 +" " +ycm1 +")");
-            System.out.println("Bone 2 cm: (" +xcm2 +" " +ycm2 +")\n");
-            
-            // use the center-of-mass as an estimate for the center of the Hough circle
-            
-            
-            try {
-                CTBoneMarrowImage.importData((sliceNum * boneBuffer.length), boneBuffer, false);
-            } catch (IOException ex) {
-                System.err.println("Error importing data");
-            }
-
-        } // end for (int sliceNum = 0; ...)
-        
-        return CTBoneMarrowImage;
-    } // end extractBoneMarrow(...)
+            x2CMs[sliceNum] = xSum2 / count2;
+            y2CMs[sliceNum] = ySum2 / count2;
+         } // end for (int sliceNum = 0; ...)
+    } // end computeBoneCMs(...)
     
     
-    ModelImage extractBone(ModelImage srcImage) {
+    
+    
+    void computeBoneImage() {
         // thresholds for bone in CT images
-        float[] thresholds = { 1000.0f, 2000.0f };
-        ModelImage CTBoneImage = threshold(srcImage, thresholds);
+        float[] thresholds = { 750.0f, 2000.0f };
+        boneImage = threshold(srcImage, thresholds);
         
         // filter by cardinality.  Keep only connected objects that are about the size of the CT bones
         // bones should be 200 to 5000 pixels per slice
-        IDObjects(CTBoneImage, 200 * zDim, 5000 * zDim);
+        IDObjects(boneImage, 200 * zDim, 5000 * zDim);
         
         // make sure we only found 2 objects
-        int numBones = (int)CTBoneImage.getMax();
+        int numBones = (int)boneImage.getMax();
         if (numBones != 2) {
-            MipavUtil.displayError("extractBone() found moreor less than two leg bones!!!");
+            MipavUtil.displayError("computeBoneImage() Did NOT find two leg bones!!!");
         }
         
-        // may need to make sure the bone is a closed annulus, some kind of hough transform
-        return CTBoneImage;
-    } // end extractBone(...)
+        /**********************************************************
+         * Nice idea, but the different label numbers given to the different bones are 
+         * used in the boneMarrowImage function, so we better not change them now!!!
+
+        // Give the identified bone objects the correct label value
+        for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
+            try {
+                boneImage.exportData((sliceNum * sliceSize), sliceSize, sliceBuffer);
+            } catch (IOException ex) {
+                System.err.println("Error extractBone():  exporting data");
+            }
+            
+            for (int idx = 0, j = 0; j < yDim; j++) {
+                for (int i = 0; i < xDim; i++, idx++) {
+                    if (sliceBuffer[idx] > 0) {
+                        sliceBuffer[idx] = boneLabel;
+                    }
+                } // end for (int i = 0; ...)
+            } // end for (int idx = 0, j = 0; ...)
+            
+            try {
+                boneImage.importData((sliceNum * sliceSize), sliceBuffer, false);
+            } catch (IOException ex) {
+                System.err.println("Error importing data");
+            }
+        } // end for (int sliceNum = 0; ...)
+ 
+        */
+    } // end computeBoneImage(...)
     
     
  
@@ -183,7 +477,7 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
         resultImage = new ModelImage(threshSourceImg.getType(), threshSourceImg.getExtents(), "threshResultImg");
 
         AlgorithmThresholdDual threshAlgo = null;
-        threshAlgo = new AlgorithmThresholdDual(resultImage, threshSourceImg, thresh, 1, AlgorithmThresholdDual.BINARY_TYPE, true, false);
+        threshAlgo = new AlgorithmThresholdDual(resultImage, threshSourceImg, thresh, boneLabel, AlgorithmThresholdDual.BINARY_TYPE, true, false);
         threshAlgo.run();
 
         return resultImage;
