@@ -295,8 +295,8 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
  		
  		fireProgressStateChanged(5, srcImage.getImageName(), "Subtracting 1 ...");
  		// Subtract 1 from image to make a binary image
- 		AlgorithmImageMath algoSubtract = new AlgorithmImageMath(kResult[0], AlgorithmImageMath.SUBTRACT, 1, 0.0f,
- 												1, true);
+ 		AlgorithmImageMath algoSubtract = new AlgorithmImageMath(kResult[0], AlgorithmImageMath.SUBTRACT, 1.0, 0.0,
+ 												0.0, 1, true);
  		
  		linkProgressToAlgorithm(algoSubtract);
         algoSubtract.setProgressValues(generateProgressValues(41, 45));
