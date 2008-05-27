@@ -210,7 +210,12 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                     userInterface.registerFrame(parentFrame);
                 }
 
-                image.notifyImageDisplayListeners(null, true);
+                if (image.isColorImage()) {
+                    image.notifyImageDisplayListeners(true, 0, null);    
+                }
+                else {
+                    image.notifyImageDisplayListeners(null, true);
+                }
             } else if (resultImage != null) {
 
                 // algorithm failed but result image still has garbage
