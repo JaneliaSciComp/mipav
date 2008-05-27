@@ -1683,7 +1683,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogMode(this, getActiveImage());
         } else if (command.equals("Midsagittal")) {
             new JDialogMidsagittal(this, getActiveImage());
-        } else if (command.equals("Close")) {
+        } else if (command.equals("talairachTransform")) {
+            new JDialogTalairachTransform(this, getActiveImage());
+        }else if (command.equals("Close")) {
             new JDialogClose(this, getActiveImage());
         } else if (command.equals("Dilate")) {
             new JDialogDilate(this, getActiveImage());
