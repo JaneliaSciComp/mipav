@@ -1,5 +1,6 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
 import gov.nih.mipav.model.algorithms.AlgorithmMorphology3D;
 import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
 import gov.nih.mipav.model.algorithms.AlgorithmSnake;
@@ -102,8 +103,31 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
     }
     
     private void calc2D() {
-        MipavUtil.displayError("Error plugin only works for 3D images");
-    }
+        
+        // compute the necessary fields
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        zDim = 1;
+
+        sliceSize = xDim * yDim;
+        
+        sliceBuffer = new short[sliceSize];
+        
+        x1CMs = new int [sliceSize];
+        y1CMs = new int [sliceSize];
+        x2CMs = new int [sliceSize];
+        y2CMs = new int [sliceSize];
+
+        computeBoneImage();
+//        ShowImage(boneImage, "CT Bone");
+
+        computeBoneMarrowImage();
+//        ShowImage(boneMarrowImage, "CT Bone Marrow");
+        
+        computeMuscleBundle();
+        ShowImage(muscleBundleImage, "Segmented Image");
+        
+   }
     
     private void calc3D() {
         
@@ -116,14 +140,14 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
         volumeSize = sliceSize * zDim;
         
         sliceBuffer = new short[sliceSize];
-
-        computeBoneImage();
-        ShowImage(boneImage, "CT Bone");
         
         x1CMs = new int [sliceSize];
         y1CMs = new int [sliceSize];
         x2CMs = new int [sliceSize];
         y2CMs = new int [sliceSize];
+
+        computeBoneImage();
+//        ShowImage(boneImage, "CT Bone");
 
         computeBoneMarrowImage();
 //        ShowImage(boneMarrowImage, "CT Bone Marrow");
@@ -233,7 +257,9 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
            regionGrowAlgo.setRunningInSeparateThread(false);
 
            if (boneImage.getNDims() == 2) {
-               MipavUtil.displayError("regionGrowMuscle(): Error plugin only works for 3D images");
+               regionGrowAlgo.regionGrow2D(muscleBits, new Point(sX, sY), -1,
+                                           false, false, null, seedVal - 300,
+                                           seedVal + 1000, -1, -1, false);
            } else if (boneImage.getNDims() == 3) {
                CubeBounds regionGrowBounds;
                regionGrowBounds = new CubeBounds(xDim, 0, yDim, 0, zDim, 0);
@@ -255,17 +281,6 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
     // Bone marrow in CT images is "inside" the bone
     void computeBoneMarrowImage() {
         boneMarrowImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), "boneMarrowImg");
-
-        // compute center-of-mass for each region on each slice
-        computeBoneCMs();
- 
-        // compute statics about the center-of-mass for each region on each slice
-        // and insures that the distance and standard deviations of the distances between
-        // the center-of-mass for each region between each slice is "close"
-        if (!boneRegionsOK()) {
-            MipavUtil.displayError("Error computeBoneMarrowImage(), Bone segmentation error");
-            return;
-        }
  
         // Detected bone regions are likely correct, find the marrow using a seeded region grow
         BitSet boneMarrow1Bitmap = new BitSet();
@@ -312,7 +327,9 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
             regionGrowAlgo.setRunningInSeparateThread(false);
 
             if (boneImage.getNDims() == 2) {
-                MipavUtil.displayError("regionGrow(): Error plugin only works for 3D images");
+                regionGrowAlgo.regionGrow2D(seedPaintBitmap, new Point(seedX, seedY), -1,
+                        false, false, null, 0,
+                        0, -1, -1, false);
             } else if (boneImage.getNDims() == 3) {
                 CubeBounds regionGrowBounds;
                 regionGrowBounds = new CubeBounds(xDim, 0, yDim, 0, zDim, 0);
@@ -331,13 +348,13 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
     
     
     
-    // return true is the average and standard deviation of the distance between the center-of-mass
+    // return true if the average and standard deviation of the distance between the center-of-mass
     // for the two bone regions on each slice are "close" (within 10 pixels)
     boolean boneRegionsOK() {
         if (zDim == 0) return true;
         
         // compute the distance of adjacent CMs
-        float[] distances1 = new float [zDim - 1];
+        float[] distances1 = new float [zDim];
         float[] distances2 = new float [zDim - 1];
         float dx, dy;
         for (int sliceNum = 0; sliceNum < zDim - 1; sliceNum++) {
@@ -372,12 +389,47 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
        float stdDev1 = (float)Math.sqrt(sum1 / (zDim - 1));
        float stdDev2 = (float)Math.sqrt(sum2 / (zDim - 1));
        
-       if (Math.abs(meanDistance1 - meanDistance2) < 10.0f &&
-           Math.abs(stdDev1 - stdDev2) < 10.0f) {
-        return true;
-       } else {
-           return false;
+       if (Math.abs(meanDistance1 - meanDistance2) > 10.0f ||
+           Math.abs(stdDev1 - stdDev2) > 10.0f) {
+        return false;
        }
+       
+       // see that the distance between the center-of-mass for the two bones is close
+       float maxDistance = 0.0f;
+       for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
+           // distance between CM of region 1
+           dx = x1CMs[sliceNum] - x2CMs[sliceNum];
+           dy = y1CMs[sliceNum] - y2CMs[sliceNum];
+           distances1[sliceNum] = (float)Math.sqrt(dx*dx + dy*dy);
+           if (distances1[sliceNum] > maxDistance) {
+               maxDistance = distances1[sliceNum];
+           }
+       } // end for (int sliceNum = 0; ...)
+
+       // mean distance between the bones on each slice
+       sum1 = 0.0f;
+       for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
+           sum1 += distances1[sliceNum];
+       } // end for (int sliceNum = 0; ...)
+       meanDistance1 = sum1 / zDim;
+
+       // standard deviation of the distance between the bones 
+       sum1 = 0.0f;
+       for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
+           dx = distances1[sliceNum] - meanDistance1;
+           sum1 += (dx * dx);
+       } // end for (int sliceNum = 0; ...)
+       stdDev1 = (float)Math.sqrt(sum1 / zDim);
+
+       // maxDistance between the bones on each slice should be close to the mean distance, so maxDistance
+       // should be close to 0
+       maxDistance -= meanDistance1;
+       if ((maxDistance + 3.0f * stdDev1) > 10.0f) {
+        return false;
+       }
+       
+       // Detected bone regions seems reasonable
+       return true;
     } // end boneRegionsOK(...)
     
     
@@ -432,7 +484,12 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
         
         // filter by cardinality.  Keep only connected objects that are about the size of the CT bones
         // bones should be 200 to 5000 pixels per slice
-        IDObjects(boneImage, 200 * zDim, 5000 * zDim);
+        
+        if (srcImage.getNDims() == 2) {
+            IDObjects2D(boneImage, 200 * zDim, 5000 * zDim);
+        } else if (srcImage.getNDims() == 3) {
+            IDObjects3D(boneImage, 200 * zDim, 5000 * zDim);
+        }
         
         // make sure we only found 2 objects
         int numBones = (int)boneImage.getMax();
@@ -468,6 +525,20 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
         } // end for (int sliceNum = 0; ...)
  
         */
+        
+        // make sure we get a reasonable bone segmentation
+
+        // compute center-of-mass for each region on each slice
+        computeBoneCMs();
+ 
+        // compute statics about the center-of-mass for each region on each slice
+        // and insures that the distance and standard deviations of the distances between
+        // the center-of-mass for each region between each slice is "close"
+        if (!boneRegionsOK()) {
+            MipavUtil.displayError("Error computeBoneImage(), Bone segmentation error");
+            return;
+        }
+
     } // end computeBoneImage(...)
     
     
@@ -490,7 +561,21 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
      * @param  min       --smallest object to let through
      * @param  max       --largest object to let through
      */
-    public void IDObjects(ModelImage srcImage, int min, int max) {
+    public void IDObjects2D(ModelImage srcImage, int min, int max) {
+        AlgorithmMorphology2D MorphIDObj = null;
+        MorphIDObj = new AlgorithmMorphology2D(srcImage, 4, 1, AlgorithmMorphology2D.ID_OBJECTS, 0, 0, 0, 0, true);
+        MorphIDObj.setMinMax(min, max);
+        MorphIDObj.run();
+    }
+
+    /**
+     * morphological ID_OBJECTS.
+     *
+     * @param  srcImage  --source image
+     * @param  min       --smallest object to let through
+     * @param  max       --largest object to let through
+     */
+    public void IDObjects3D(ModelImage srcImage, int min, int max) {
         AlgorithmMorphology3D MorphIDObj = null;
         MorphIDObj = new AlgorithmMorphology3D(srcImage, 4, 1, AlgorithmMorphology3D.ID_OBJECTS, 0, 0, 0, 0, true);
         MorphIDObj.setMinMax(min, max);
