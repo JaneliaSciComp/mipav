@@ -321,8 +321,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
             bestMaxG = maxG;
             bestMinB = minB;
             bestMaxB = maxB;
-            bestMin = Math.min(minR, Math.min(minG, minB));
-            bestMax = Math.max(maxR, Math.max(maxG, maxB));
+            bestMin = Math.min(bestMinR, Math.min(bestMinG, bestMinB));
+            bestMax = Math.max(bestMaxR, Math.max(bestMaxG, bestMaxB));
             
             switch (opType) {
             
@@ -333,8 +333,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     bestMaxG = maxG + valueI;
                     bestMinB = minB + valueB;
                     bestMaxB = maxB + valueB;
-                    bestMin = Math.min(minR, Math.min(minG, minB));
-                    bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                    bestMin = Math.min(bestMinR, Math.min(bestMinG, bestMinB));
+                    bestMax = Math.max(bestMaxR, Math.max(bestMaxG, bestMaxB));
                     break;
                     
                 case SUBTRACT:
@@ -344,8 +344,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     bestMaxG = maxG - valueI;
                     bestMinB = minB - valueB;
                     bestMaxB = maxB - valueB;
-                    bestMin = Math.min(minR, Math.min(minG, minB));
-                    bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                    bestMin = Math.min(bestMinR, Math.min(bestMinG, bestMinB));
+                    bestMax = Math.max(bestMaxR, Math.max(bestMaxG, bestMaxB));
                     break;
                     
                 case MULTIPLY:
@@ -355,8 +355,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     bestMaxG = java.lang.Math.max(minG * valueI, maxG * valueI);
                     bestMinB = java.lang.Math.min(minB * valueB, maxB * valueB);
                     bestMaxB = java.lang.Math.max(minB * valueB, maxB * valueB);
-                    bestMin = Math.min(minR, Math.min(minG, minB));
-                    bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                    bestMin = Math.min(bestMinR, Math.min(bestMinG, bestMinB));
+                    bestMax = Math.max(bestMaxR, Math.max(bestMaxG, bestMaxB));
                     break;
                     
                 case DIVIDE:
@@ -366,8 +366,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     bestMaxG = java.lang.Math.max(minG / valueI, maxG / valueI);
                     bestMinB = java.lang.Math.min(minB / valueB, maxB / valueB);
                     bestMaxB = java.lang.Math.max(minB / valueB, maxB / valueB);
-                    bestMin = Math.min(minR, Math.min(minG, minB));
-                    bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                    bestMin = Math.min(bestMinR, Math.min(bestMinG, bestMinB));
+                    bestMax = Math.max(bestMaxR, Math.max(bestMaxG, bestMaxB));
                     break;
                     
                 case SQUARE:
@@ -377,8 +377,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     bestMaxG = maxG * maxG;
                     bestMinB = minB * minB;
                     bestMaxB = maxB * maxB;
-                    bestMin = min * min;
-                    bestMax = max * max;
+                    bestMin = Math.min(bestMinR, Math.min(bestMinG, bestMinB));
+                    bestMax = Math.max(bestMaxR, Math.max(bestMaxG, bestMaxB));
                     break;
                     
                 case CONSTANT:
@@ -415,8 +415,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
                         bestMaxB = maxB;
                     }
                     
-                    bestMin = Math.min(minR, Math.min(minG, minB));
-                    bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                    bestMin = Math.min(bestMinR, Math.min(bestMinG, bestMinB));
+                    bestMax = Math.max(bestMaxR, Math.max(bestMaxG, bestMaxB));
                     break;
                     
             }
@@ -465,8 +465,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
                         bestMaxG = java.lang.Math.max(minG * valueI, maxG * valueI);
                         bestMinB = java.lang.Math.min(minB * valueB, maxB * valueB);
                         bestMaxB = java.lang.Math.max(minB * valueB, maxB * valueB);
-                        bestMin = Math.min(minR, Math.min(minG, minB));
-                        bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                        bestMin = Math.min(bestMinR, Math.min(bestMinG, bestMinB));
+                        bestMax = Math.max(bestMaxR, Math.max(bestMaxG, bestMaxB));
                         if ((bestMax > clipMax) || (bestMin < clipMin)) {
                             newType = findType(srcImage.getType());
                         }
@@ -480,8 +480,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
                         bestMaxG = java.lang.Math.max(minG / valueI, maxG / valueI);
                         bestMinB = java.lang.Math.min(minB / valueB, maxB / valueB);
                         bestMaxB = java.lang.Math.max(minB / valueB, maxB / valueB);
-                        bestMin = Math.min(minR, Math.min(minG, minB));
-                        bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                        bestMin = Math.min(bestMinR, Math.min(bestMinG, bestMinB));
+                        bestMax = Math.max(bestMaxR, Math.max(bestMaxG, bestMaxB));
                         if ((bestMin < clipMin) || (bestMax > clipMax)) {
                             newType = findType(srcImage.getType());
                         }
@@ -1465,8 +1465,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
                         bestMaxG = java.lang.Math.max(minG * valueI, maxG * valueI);
                         bestMinB = java.lang.Math.min(minB * valueB, maxB * valueB);
                         bestMaxB = java.lang.Math.max(minB * valueB, maxB * valueB);
-                        bestMin = Math.min(minR, Math.min(minG, minB));
-                        bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                        bestMin = Math.min(bestMinR, Math.min(bestMinG, bestMinB));
+                        bestMax = Math.max(bestMaxR, Math.max(bestMaxG, bestMaxB));
                         if ((bestMax > clipMax) || (bestMin < clipMin)) {
                             newType = findType(srcImage.getType());
                         }
@@ -1480,8 +1480,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
                         bestMaxG = java.lang.Math.max(minG / valueI, maxG / valueI);
                         bestMinB = java.lang.Math.min(minB / valueB, maxB / valueB);
                         bestMaxB = java.lang.Math.max(minB / valueB, maxB / valueB);
-                        bestMin = Math.min(minR, Math.min(minG, minB));
-                        bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                        bestMin = Math.min(bestMinR, Math.min(bestMinG, bestMinB));
+                        bestMax = Math.max(bestMaxR, Math.max(bestMaxG, bestMaxB));
                         if ((bestMin < clipMin) || (bestMax > clipMax)) {
                             newType = findType(srcImage.getType());
                         }
@@ -1546,8 +1546,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
                             bestMaxB = 0;
                         }
                         
-                        bestMin = Math.min(minR, Math.min(minG, minB));
-                        bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                        bestMin = Math.min(bestMinR, Math.min(bestMinG, bestMinB));
+                        bestMax = Math.max(bestMaxR, Math.max(bestMaxG, bestMaxB));
                         if ((bestMin < clipMin) || (bestMax > clipMax)) {
                             newType = findType(srcImage.getType());
                         }
@@ -2444,8 +2444,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     bestMaxG = java.lang.Math.max(minG * valueI, maxG * valueI);
                     bestMinB = java.lang.Math.min(minB * valueB, maxB * valueB);
                     bestMaxB = java.lang.Math.max(minB * valueB, maxB * valueB);
-                    bestMin = Math.min(minR, Math.min(minG, minB));
-                    bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                    bestMin = Math.min(bestMinR, Math.min(bestMinG, bestMinB));
+                    bestMax = Math.max(bestMaxR, Math.max(bestMaxG, bestMaxB));
                     while (loop == true) {
     
                         if (testType(endType, bestMin, bestMax) == false) {
@@ -2468,8 +2468,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     bestMaxG = java.lang.Math.max(minG / valueI, maxG / valueI);
                     bestMinB = java.lang.Math.min(minB / valueB, maxB / valueB);
                     bestMaxB = java.lang.Math.max(minB / valueB, maxB / valueB);
-                    bestMin = Math.min(minR, Math.min(minG, minB));
-                    bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                    bestMin = Math.min(bestMinR, Math.min(bestMinG, bestMinB));
+                    bestMax = Math.max(bestMaxR, Math.max(bestMaxG, bestMaxB));
                     while (loop == true) {
     
                         if (testType(endType, bestMin, bestMax) == false) {
@@ -2510,8 +2510,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
     
                     bestMaxB = java.lang.Math.max(minB * minB, maxB * maxB);
                     
-                    bestMin = Math.min(minR, Math.min(minG, minB));
-                    bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                    bestMin = Math.min(bestMinR, Math.min(bestMinG, bestMinB));
+                    bestMax = Math.max(bestMaxR, Math.max(bestMaxG, bestMaxB));
                     while (loop == true) {
     
                         if (testType(endType, bestMin, bestMax) == false) {
@@ -2597,8 +2597,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
                         bestMaxB = 0;
                     }
                     
-                    bestMin = Math.min(minR, Math.min(minG, minB));
-                    bestMax = Math.max(maxR, Math.max(maxG, maxB));
+                    bestMin = Math.min(bestMinR, Math.min(bestMinG, bestMinB));
+                    bestMax = Math.max(bestMaxR, Math.max(bestMaxG, bestMaxB));
                     while (loop == true) {
     
                         if (testType(endType, bestMin, bestMax) == false) {
@@ -2868,7 +2868,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             clipMin = -Float.MAX_VALUE;
             clipMax = Float.MAX_VALUE;
         } else if (srcImage.getType() == ModelStorageBase.ARGB_FLOAT) {
-            clipMin = 0;
+            clipMin = -Float.MAX_VALUE;
             clipMax = Float.MAX_VALUE;
         } else if (srcImage.getType() == ModelStorageBase.DOUBLE) {
             clipMin = -Double.MAX_VALUE;
@@ -2953,7 +2953,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             }
         } else if (type == ModelStorageBase.ARGB_FLOAT) {
 
-            if ((minVal < 0) || (maxVal > Float.MAX_VALUE)) {
+            if ((minVal < -Float.MAX_VALUE) || (maxVal > Float.MAX_VALUE)) {
                 return false;
             } else {
                 return true;
