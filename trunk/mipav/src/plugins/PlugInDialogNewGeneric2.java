@@ -201,7 +201,7 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
-        mainPanel.setBorder(buildTitledBorder("Input parameters"));
+        mainPanel.setBorder(buildTitledBorder(""));
 
         JLabel labelVOI = new JLabel("TBA");
         labelVOI.setForeground(Color.black);
