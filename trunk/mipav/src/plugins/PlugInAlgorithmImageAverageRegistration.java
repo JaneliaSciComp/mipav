@@ -445,7 +445,7 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase {
 
         float[] targetRes = new float[] { xresA, yresA, zresA };
         resultImage.getFileInfo(0).setResolutions(targetRes);
-        algMath = new AlgorithmImageMath(resultImage, bufferImage, AlgorithmImageMath.DIVIDE, size, imag,
+        algMath = new AlgorithmImageMath(resultImage, bufferImage, AlgorithmImageMath.DIVIDE, size, imag, 0.0,
                                          AlgorithmImageCalculator.PROMOTE, true);
         algMath.run();
         resultImage = algMath.getDestImage();
