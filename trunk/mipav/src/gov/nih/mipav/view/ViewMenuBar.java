@@ -139,7 +139,7 @@ public class ViewMenuBar {
                                                                  menuBuilder.buildMenuItem("Midsagittal line alignment",
                                                                                            "Midsagittal", 0, null,
                                                                                            false),
-                                                               menuBuilder.buildMenuItem("Talairach Transform",
+                                                               menuBuilder.buildMenuItem("Talairach transform",
                                                                        "talairachTransform", 0, null,
                                                                        false),
                                                              }),
