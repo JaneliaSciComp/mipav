@@ -455,9 +455,10 @@ public class FileLIFF extends FileBase {
         double doubleValue = 0.0;
         byte derivedClassVersion[] = new byte[1];
         byte baseClassVersion[] = new byte[1];
-        int strSize;
+        int strSize = 0;
+        int strSize2;
         String nameStr;
-        String stringValue;
+        String stringValue = null;
         int unitsOfMeasure[];
         long commentPointer;
         float origin[] = new float[4];
@@ -507,8 +508,45 @@ public class FileLIFF extends FileBase {
         int srcIndex;
         int destIndex;
         String notesStr;
+        String channelArray[] = new String[10];
+        int channelNumber = 0;
+        String channelStr;
+        int channelPresent = 0;
+        double emissionFilterChangerArray[] = new double[10];
+        double excitationArray[] = new double[10];
+        double exposureArray[] = new double[10];
+        double filterTurretArray[] = new double[10];
+        double focusPositionArray[] = new double[400];
+        int focusNumber = 0;
+        double leicaFilterCubeArray[] = new double[10];
+        double leicaFIMArray[][] = new double[400][10];
+        int fimNumber = 0;
+        double ludlMainWheel1Array[] = new double[10];
+        double wavelengthArray[] = new double[10];
+        double zPositionArray[] = new double[400];
+        int zNumber = 0;
 
         try {
+            for (i = 0; i < 10; i++) {
+                emissionFilterChangerArray[i] = Double.NaN;
+                excitationArray[i] = Double.NaN;
+                exposureArray[i] = Double.NaN;
+                filterTurretArray[i] = Double.NaN;
+                leicaFilterCubeArray[i] = Double.NaN;
+                ludlMainWheel1Array[i] = Double.NaN;
+                wavelengthArray[i] = Double.NaN;
+            }
+            for (i = 0; i < focusPositionArray.length; i++) {
+                focusPositionArray[i] = Double.NaN;
+            }
+            for (i = 0; i < leicaFIMArray.length; i++) {
+                for (j = 0; j < leicaFIMArray[i].length; j++) {
+                    leicaFIMArray[i][j] = Double.NaN;
+                }
+            }
+            for (i = 0; i < zPositionArray.length; i++) {
+                zPositionArray[i] = Double.NaN;
+            }
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
             file = new File(fileDir + fileName);
             raFile = new RandomAccessFile(file, "r");
@@ -1876,12 +1914,134 @@ public class FileLIFF extends FileBase {
                                 Preferences.debug("invalid baseClassVersion[0] = " + baseClassVersion[0] + "\n");
                                 break;
                             }
-                            strSize = readInt(endianess);
-                            Preferences.debug("strSize = " + strSize + "\n");
-                            nameStr = getString(strSize);
+                            strSize2 = readInt(endianess);
+                            Preferences.debug("strSize2 = " + strSize2 + "\n");
+                            nameStr = getString(strSize2);
                             Preferences.debug("name = " + nameStr.trim() + "\n");
                             if (nameStr.trim().toUpperCase().equals("ZSTEP")) {
                                zStepArray[zStepNumber++] = doubleValue;    
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("AUTO-CONTRAST")) {
+                                fileInfo.setAutoContrast(doubleValue);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("BINNING")) {
+                                fileInfo.setBinning(doubleValue);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("CAMERA")) {
+                                if (strSize != 0) {
+                                    fileInfo.setCamera(stringValue.trim());
+                                }
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("CHANNEL")) {
+                                if (strSize != 0) {
+                                    channelStr = stringValue;
+                                    found = false;
+                                    for (j = 0; j < channelNumber & !found; j++) {
+                                        if (channelArray[j].equals(stringValue)) {
+                                            found = true;
+                                            channelPresent = j;
+                                        }
+                                    }
+                                    if (!found) {
+                                        channelPresent = channelNumber;
+                                        channelArray[channelNumber++] = channelStr;
+                                        fileInfo.setChannelArray(channelArray);
+                                    }
+                                } // if (strSize != 0)
+                            } // else if (nameStr.trim().toUpperCase().equals("CHANNEL"))
+                            else if (nameStr.trim().toUpperCase().equals("COLORIZATION")) {
+                                fileInfo.setColorization(doubleValue);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("COOLING")) {
+                                fileInfo.setCooling(doubleValue);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("DIGITAL GAIN")) {
+                                fileInfo.setDigitalGain(doubleValue);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("EMISSION FILTER CHANGER")) {
+                                emissionFilterChangerArray[channelPresent] = doubleValue;
+                                fileInfo.setEmissionFilterChangerArray(emissionFilterChangerArray);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("EXCITATION FILTER CHANGER")) {
+                                 excitationArray[channelPresent] = doubleValue;  
+                                 fileInfo.setExcitationArray(excitationArray);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("EXPOSURE")) {
+                                exposureArray[channelPresent] = doubleValue;
+                                fileInfo.setExposureArray(exposureArray);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("FILTER TURRET")) {
+                                filterTurretArray[channelPresent] = doubleValue;
+                                fileInfo.setFilterTurretArray(filterTurretArray);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("FOCUS POSITION")) {
+                                if (channelPresent == 0) {
+                                    // focusNumber should be the same as sliceNumber
+                                    focusPositionArray[focusNumber++] = doubleValue;
+                                }
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("GAIN")) {
+                                fileInfo.setGain(doubleValue);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("LEICA CONDENSER TURRET")) {
+                                fileInfo.setLeicaCondenserTurret(doubleValue);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("LEICA FILTER CUBE")) {
+                                leicaFilterCubeArray[channelPresent] = doubleValue;
+                                fileInfo.setLeicaFilterCubeArray(leicaFilterCubeArray);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("LEICA FIM")) {
+                                if (channelPresent == 0) {
+                                    fimNumber++;
+                                }
+                                // fimNumber should be the same as sliceNumber
+                                leicaFIMArray[fimNumber-1][channelPresent] = doubleValue;
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("LEICA IC TURRET")) {
+                                fileInfo.setLeicaICTurret(doubleValue);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("LEICA MAGNIFICATION CHANGER")) {
+                                fileInfo.setLeicaMagnificationChanger(doubleValue);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("LIGHT MODE")) {
+                                fileInfo.setLightMode(doubleValue);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("LUDL AUX. WHEEL 1")) {
+                                fileInfo.setLudlAuxWheel1(doubleValue);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("LUDL MAIN WHEEL 1")) {
+                                ludlMainWheel1Array[channelPresent] = doubleValue;
+                                fileInfo.setLudlMainWheel1Array(ludlMainWheel1Array);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("MICROSCOPE")) {
+                                if (strSize != 0) {
+                                    fileInfo.setMicroscope(stringValue.trim());
+                                }
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("OBJECTIVE NAME")) {
+                                fileInfo.setObjectiveName(doubleValue);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("OBJECTIVE POSITION")) {
+                                fileInfo.setObjectivePosition(doubleValue);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("OFFSET")) {
+                                fileInfo.setOffset(doubleValue);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("WAVELENGTH")) {
+                                wavelengthArray[channelPresent] = doubleValue;
+                                fileInfo.setWavelengthArray(wavelengthArray);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("X-Y STAGE: X POSITION")) {
+                                fileInfo.setXPosition(doubleValue);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("X-Y STAGE: Y POSITION")) {
+                                fileInfo.setYPosition(doubleValue);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("ZPOSITION")) {
+                                if (channelPresent == 0) {
+                                    // zNumber should be the same as sliceNumber
+                                    zPositionArray[zNumber++] = doubleValue;
+                                }
                             }
                             raFile.skipBytes(2*baseClassVersion[0] + 1);
                         } // for (j = 0; j < numVars; j++)
@@ -2781,7 +2941,10 @@ public class FileLIFF extends FileBase {
             } // else versionNumber == 5
             fileInfo.setBitDepth(bitDepth);
             for (i = 0; i < imageSlices; i++) {
-                image.setFileInfo(fileInfo, i);
+                fileInfo.setFocusPosition(focusPositionArray[i]);
+                fileInfo.setLeicaFIMArray(leicaFIMArray[i]);
+                fileInfo.setZPosition(zPositionArray[i]);
+                image.setFileInfo((FileInfoLIFF)fileInfo.clone(), i);
             }
             
             image.calcMinMax();
