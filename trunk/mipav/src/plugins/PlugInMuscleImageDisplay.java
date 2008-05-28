@@ -97,8 +97,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     private PlugInSelectableVOI[][] voiList;
     
-    private boolean noShowAction = false;
-    
     private TreeMap<String, Boolean> calcTree;
         
     public enum ImageType{
@@ -443,7 +441,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     public void actionPerformed(ActionEvent e) {
     	displayChanged = false;
         String command = e.getActionCommand();
-        System.out.println("Anything2?");
         //run through toggle buttons to see if a menu selected one (updates the button status)
         getControls().getTools().setToggleButtonSelected(command);
                 
@@ -474,8 +471,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	} else if(command.equals(DialogPrompt.OK) && 
         			tabs[voiTabLoc].completed() == true) {
         		unlockToPanel(voiTabLoc);
-        		System.out.println("Place to look at voi based on activeTab: "+activeTab);
-        		noShowAction = true;
         		initMuscleImage(activeTab);
         	} else if(command.equals(DialogPrompt.BACK)) {
         		unlockToPanel(resultTabLoc);
@@ -1280,7 +1275,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         private int numVoi;
         
-        boolean voiExists;
+        private boolean voiExists;
         
         private JLabel selectText;
         
@@ -1347,6 +1342,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                     }
                 } else if (command.equals(CANCEL)) {
                 	voiChangeState = true;
+                	getActiveImage().unregisterAllVOIs();
                 } else if (command.equals(HELP)) {
                     PlugInMuscleSegmentation.showHelp("MS00001");
                 } else if (command.equals(RESET)) {
