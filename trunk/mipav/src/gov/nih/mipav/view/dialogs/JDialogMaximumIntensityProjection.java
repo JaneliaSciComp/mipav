@@ -301,6 +301,10 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
             setMinB(scriptParameters.getParams().getFloat("min_valueb"));
             setMaxB(scriptParameters.getParams().getFloat("max_valueb"));
             
+            if (minIntensityR < 0) {
+                throw new ParameterException("min_valuer", "Cannot have red minimum intensity < 0");
+            }
+            
             if (minIntensityR < image.getMinR()) {
                 throw new ParameterException("min_valuer", "Cannot have red minimum intensity < red image minimum");
             }
@@ -317,6 +321,10 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
                 throw new ParameterException("max_valuer", "Cannot have red minimum intensity > red image maximum");
             }
             
+            if (minIntensityG < 0) {
+                throw new ParameterException("min_valueg", "Cannot have green minimum intensity < 0");
+            }
+            
             if (minIntensityG < image.getMinG()) {
                 throw new ParameterException("min_valueg", "Cannot have green minimum intensity < green image minimum");
             }
@@ -331,6 +339,10 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
             
             if (maxIntensityG > image.getMaxG()) {
                 throw new ParameterException("max_valueg", "Cannot have green minimum intensity > green image maximum");
+            }
+            
+            if (minIntensityB < 0) {
+                throw new ParameterException("min_valueb", "Cannot have blue minimum intensity < 0");
             }
             
             if (minIntensityB < image.getMinB()) {
