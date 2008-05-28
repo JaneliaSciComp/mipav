@@ -5,6 +5,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmMorphology3D;
 import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
 import gov.nih.mipav.model.algorithms.AlgorithmSnake;
 import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
+import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.CubeBounds;
@@ -23,6 +24,7 @@ import gov.nih.mipav.view.dialogs.JDialogPaintGrow;
 import java.awt.Point;
 import java.io.IOException;
 import java.util.BitSet;
+import java.util.Vector;
 
 
 
@@ -43,23 +45,25 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
     /** Volume size for xDim*yDim*zDim */
     private int volumeSize;
     
-    ModelImage boneImage;
-    ModelImage boneMarrowImage;
-    ModelImage muscleBundleImage;
+    private ModelImage boneImage;
+    private ModelImage boneMarrowImage;
+    private ModelImage muscleBundleImage;
     
     // center-of-mass array for region 1 and 2 (the thresholded bone)
-    int[] x1CMs;
-    int[] y1CMs;
-    int[] x2CMs;
-    int[] y2CMs;
+    private int[] x1CMs;
+    private int[] y1CMs;
+    private int[] x2CMs;
+    private int[] y2CMs;
     
     // temp buffer to store slices.  Needed in many member functions.
-    short[] sliceBuffer;
+    private short[] sliceBuffer;
 
     // unique label values for the regions of interest
-    short muscleBundleLabel = 10;
-    short boneMarrowLabel = 20;
-    short boneLabel = 3;
+    private short muscleBundleLabel = 10;
+    private short boneMarrowLabel = 20;
+    private short boneLabel = 3;
+    
+    private boolean initializedFlag = false;
 
     
     
@@ -79,14 +83,17 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
      * Starts the algorithm.
      */
     public void runAlgorithm() {
-        // Algorithm to determine the outer thigh boundary and boundaries of the bone
+        // Algorithm to determine the outer thigh boundary and boundaries of the bone and bone marrow
         
-        if (srcImage.getNDims() == 2) {
-            calc2D();
-        } else if (srcImage.getNDims() == 3) {
-            calc3D();                
+        if (!initializedFlag) {
+            init();
         }
- 
+        
+        if (!initializedFlag) {
+            return;
+        }
+        
+        segmentImage();
     } // end runAlgorithm()
     
     
@@ -102,66 +109,76 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
         super.finalize();
     }
     
-    private void calc2D() {
-        
-        // compute the necessary fields
-        xDim = srcImage.getExtents()[0];
-        yDim = srcImage.getExtents()[1];
-        zDim = 1;
-
-        sliceSize = xDim * yDim;
-        
-        sliceBuffer = new short[sliceSize];
-        
-        x1CMs = new int [sliceSize];
-        y1CMs = new int [sliceSize];
-        x2CMs = new int [sliceSize];
-        y2CMs = new int [sliceSize];
-
-        computeBoneImage();
-//        ShowImage(boneImage, "CT Bone");
-
-        computeBoneMarrowImage();
-//        ShowImage(boneMarrowImage, "CT Bone Marrow");
-        
-        computeMuscleBundle();
-        ShowImage(muscleBundleImage, "Segmented Image");
-        
-   }
     
-    private void calc3D() {
+    
+    /**
+     * Create all the data structures that are needed by the various routines to automatically
+     * segment the bone, bone marrow, and muscle bundle in 2D and 3D CT images of the thighs.
+     */
+    void init() {
+        // simple error check up front
+        if ((srcImage.getNDims() != 2) && srcImage.getNDims() != 3) {
+            MipavUtil.displayError("PlugInAlgorithmNewGeneric2::init() Error image is not 2 or 3 dimensions");
+            return;
+        }
         
-        // compute the necessary fields
+        // set and allocate know values
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
-        zDim = srcImage.getExtents()[2];
 
         sliceSize = xDim * yDim;
-        volumeSize = sliceSize * zDim;
-        
         sliceBuffer = new short[sliceSize];
-        
+
         x1CMs = new int [sliceSize];
         y1CMs = new int [sliceSize];
         x2CMs = new int [sliceSize];
         y2CMs = new int [sliceSize];
 
-        computeBoneImage();
-//        ShowImage(boneImage, "CT Bone");
+        // set values that depend on the source image being a 2D or 3D image
+        if (srcImage.getNDims() == 2) {
+            zDim = 1;
+            volumeSize = sliceSize;
+        } else if (srcImage.getNDims() == 3) {
+            zDim = srcImage.getExtents()[2];
+            volumeSize = sliceSize * zDim;
+        }
 
+        // clone the images so that the resolutions and dimensions match the srcImage 
+        boneMarrowImage = (ModelImage) srcImage.clone();
+        muscleBundleImage = (ModelImage) srcImage.clone();
+        
+        // set initialized flag to true so the data structures are not reallocated
+        initializedFlag = true;
+    } // end init()
+    
+    
+    /**
+     * Find the bone, bone marrow, and muscle bundle for a 2D image
+     */
+    private void segmentImage() {
+        long time = System.currentTimeMillis();
+        computeBoneImage();
+ //       ShowImage(boneImage, "CT Bone");
+        System.out.println("Step 1: "+(System.currentTimeMillis() - time));
+        time = System.currentTimeMillis();
+        boneMarrowImage.setVOIs(boneImage.getVOIs());
         computeBoneMarrowImage();
 //        ShowImage(boneMarrowImage, "CT Bone Marrow");
-        
+        System.out.println("Step 2: "+(System.currentTimeMillis() - time));
+        time = System.currentTimeMillis();
+        muscleBundleImage.setVOIs(boneMarrowImage.getVOIs());
         computeMuscleBundle();
+        System.out.println("Step 3: "+(System.currentTimeMillis() - time));
+        time = System.currentTimeMillis();
         ShowImage(muscleBundleImage, "Segmented Image");
-        
-    } // end calc3D()
-
+        System.out.println("Show: "+(System.currentTimeMillis() - time));
+        time = System.currentTimeMillis();
+   } // end segmentImage()
+   
     
     
    void computeMuscleBundle() {
-       muscleBundleImage = new ModelImage(boneMarrowImage.getType(), boneMarrowImage.getExtents(), "MuscleBundleImg");
-       
+        
        // let's just grow a region
        // we need a seed point
        // walk out along the x-axis from the center-of-mass of the bone on the first slice
@@ -193,6 +210,18 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
        
        BitSet muscle1Bitmap = new BitSet();
        regionGrowMuscle(seedX, seedY, seedZ, seedVal, muscle1Bitmap);
+       
+       short voiID = (short) muscleBundleImage.getVOIs().size();
+       
+       // convert the region into a VOI
+       // get the VOI of the first bone marrow region
+       AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(muscleBundleImage,
+               muscle1Bitmap, xDim, yDim, zDim, voiID);
+
+       algoPaintToVOI.setRunningInSeparateThread(false);
+       algoPaintToVOI.run();
+       setCompleted(true);
+
 
        // segment the second muscle bundle
        xcm = x2CMs[0];
@@ -218,7 +247,11 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
        BitSet muscle2Bitmap = new BitSet();
        regionGrowMuscle(seedX, seedY, seedZ, seedVal, muscle2Bitmap);
        
-       
+       // get the VOI of the second bone marrow region
+       algoPaintToVOI.setPaintMask(muscle2Bitmap);
+       algoPaintToVOI.run();
+       setCompleted(true);
+
        int sliceByteOffset;
        for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
            sliceByteOffset = sliceNum * sliceSize;
@@ -280,15 +313,34 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
     
     // Bone marrow in CT images is "inside" the bone
     void computeBoneMarrowImage() {
-        boneMarrowImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), "boneMarrowImg");
- 
+
+        short voiID = (short) boneMarrowImage.getVOIs().size();
+        
         // Detected bone regions are likely correct, find the marrow using a seeded region grow
         BitSet boneMarrow1Bitmap = new BitSet();
         regionGrow((short)x1CMs[0], (short)y1CMs[0], (short)0, boneMarrow1Bitmap);
+        
+        // get the VOI of the first bone marrow region
+        AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(boneMarrowImage,
+                boneMarrow1Bitmap, xDim, yDim, zDim, voiID);
+
+        algoPaintToVOI.setRunningInSeparateThread(false);
+        algoPaintToVOI.run();
+        setCompleted(true);
 
         BitSet boneMarrow2Bitmap = new BitSet();
         regionGrow((short)x2CMs[0], (short)y2CMs[0], (short)0, boneMarrow2Bitmap);
        
+        // get the VOI of the second bone marrow region
+        algoPaintToVOI.setPaintMask(boneMarrow2Bitmap);
+        algoPaintToVOI.run();
+        setCompleted(true);
+ 
+        VOIVector voiVec = boneMarrowImage.getVOIs();
+        VOI theVOI = voiVec.get(0);
+        Vector[] contours = theVOI.getCurves();
+        System.out.println("Number of contours: " +contours[0].size());
+
         int sliceByteOffset;
         for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
             sliceByteOffset = sliceNum * sliceSize;
@@ -476,12 +528,14 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
     
     
     
-    
+    /**
+     * Uses a fixed threshold range to identify bone in CT images
+     */
     void computeBoneImage() {
         // thresholds for bone in CT images
         float[] thresholds = { 750.0f, 2000.0f };
         boneImage = threshold(srcImage, thresholds);
-        
+
         // filter by cardinality.  Keep only connected objects that are about the size of the CT bones
         // bones should be 200 to 5000 pixels per slice
         
@@ -533,20 +587,77 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
  
         // compute statics about the center-of-mass for each region on each slice
         // and insures that the distance and standard deviations of the distances between
-        // the center-of-mass for each region between each slice is "close"
+        // the center-of-mass for each region between each slice are "close"
         if (!boneRegionsOK()) {
             MipavUtil.displayError("Error computeBoneImage(), Bone segmentation error");
             return;
         }
+        
+        // get the VOI of the bone regions
+        computeLabelVOI(1);
+        computeLabelVOI(2);
+           } // end computeBoneImage(...)
+    
+    
+    
+    
+    void computeLabelVOI(int seedVal) {
+        // Simplest thing is to do a seeded region grow and let that set the BitSet
+        boolean seedPointFound = false;
+        short sx = 0, sy = 0, sz = 0;
+        for (int sliceNum = 0; sliceNum < zDim && !seedPointFound; sliceNum++) {
+            try {
+                boneImage.exportData((sliceNum * sliceSize), sliceSize, sliceBuffer);
+            } catch (IOException ex) {
+                System.err.println("Error computeBoneImage():  exporting data");
+            }
+            
+            for (int idx = 0, j = 0; j < yDim && !seedPointFound; j++) {
+                for (int i = 0; i < xDim && !seedPointFound; i++, idx++) {
+                    if (sliceBuffer[idx] == seedVal) {
+                        seedPointFound = true;
+                        sx = (short)i;
+                        sy = (short)j;
+                        sz = (short)sliceNum;
+                    }
+                } // end for (int i = 0; ...)
+            } // end for (int idx = 0, j = 0; ...)
+        } // end for (int sliceNum = 0; ...)
 
-    } // end computeBoneImage(...)
+        // run the regiongrow algorithm for region 1
+        BitSet boneBits = new BitSet();
+        AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(boneImage, 1.0f, 1.0f);
+
+        if (boneImage.getNDims() == 2) {
+            regionGrowAlgo.regionGrow2D(boneBits, new Point(sx, sy), -1,
+                                        false, false, null, seedVal,
+                                        seedVal, -1, -1, false);
+        } else if (boneImage.getNDims() == 3) {
+            CubeBounds regionGrowBounds;
+            regionGrowBounds = new CubeBounds(xDim, 0, yDim, 0, zDim, 0);
+            int count = regionGrowAlgo.regionGrow3D(boneBits, new Point3Ds(sx, sy, sz), -1,
+                                                false, false, null, seedVal,
+                                                seedVal, -1, -1, false,
+                                                0, regionGrowBounds);
+//            System.out.println("Bone Count: " +count);
+        }
+
+        // extract the 
+        AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(boneImage,
+                boneBits, xDim, yDim, zDim, (short)0);
+        algoPaintToVOI.setRunningInSeparateThread(false);
+        
+        algoPaintToVOI.run();
+        setCompleted(true);
+
+    } // end computeLabelVOI(...)
     
     
  
     public ModelImage threshold(ModelImage threshSourceImg, float[] thresh) {
         ModelImage resultImage = null;
-        resultImage = new ModelImage(threshSourceImg.getType(), threshSourceImg.getExtents(), "threshResultImg");
-
+        resultImage = (ModelImage) threshSourceImg.clone();
+        
         AlgorithmThresholdDual threshAlgo = null;
         threshAlgo = new AlgorithmThresholdDual(resultImage, threshSourceImg, thresh, boneLabel, AlgorithmThresholdDual.BINARY_TYPE, true, false);
         threshAlgo.run();
