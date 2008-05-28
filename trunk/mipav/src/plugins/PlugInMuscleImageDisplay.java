@@ -92,9 +92,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 
     private int colorChoice = 0;
     
-    private TreeMap<String, PlugInSelectableVOI> voiMap;
+    /**Buffer containing exact copies of VOIs on file system along with program relevant material.*/
+    private TreeMap<String, PlugInSelectableVOI> voiBuffer;
     
     private PlugInSelectableVOI[][] voiList;
+    
+    private boolean noShowAction = false;
     
     private TreeMap<String, Boolean> calcTree;
         
@@ -142,7 +145,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.noMirrorArr = new String[voiList.length][];
         this.noMirrorZ = new boolean[voiList.length][];
         this.calcTree = new TreeMap();
-        this.voiMap = new TreeMap();
+        this.voiBuffer = new TreeMap();
         this.voiList = voiList;
         this.imageType = imageType;
         this.symmetry = symmetry;
@@ -152,16 +155,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	ArrayList mirrorArrList = new ArrayList(), noMirrorArrList = new ArrayList(), 
         				mirrorZList = new ArrayList(), noMirrorZList = new ArrayList();
         	for(int j=0; j<voiList[i].length; j++) {
-        		voiMap.put(voiList[i][j].getName(), voiList[i][j]);
+        		voiBuffer.put(voiList[i][j].getName(), voiList[i][j]);
         		if(voiList[i][j].getName().contains("Left")) {
         			mirrorArrList.add(voiList[i][j].getName().substring(new String("Left ").length()));
-        			mirrorZList.add(voiList[i][j].isFillable());
+        			mirrorZList.add(voiList[i][j].doFill());
         			calcTree.put(voiList[i][j].getName().substring(new String("Left ").length()), voiList[i][j].doCalc());
         		} else if(voiList[i][j].getName().contains("Right")) {
         			//do nothing
         		} else {
         			noMirrorArrList.add(voiList[i][j].getName());
-        			noMirrorZList.add(voiList[i][j].isFillable());
+        			noMirrorZList.add(voiList[i][j].doFill());
         			calcTree.put(voiList[i][j].getName(), voiList[i][j].doCalc());
         		}
         	}
@@ -184,6 +187,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         }
         
         imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
+        
+        createVOIBuffer();
         
         initNext();
     }
@@ -215,22 +220,22 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.noMirrorArr = new String[voiList.length][];
         this.noMirrorZ = new boolean[voiList.length][];
         this.calcTree = new TreeMap();
-        this.voiMap = new TreeMap();
+        this.voiBuffer = new TreeMap();
         
         for(int i=0; i<voiList.length; i++) {
         	ArrayList mirrorArrList = new ArrayList(), noMirrorArrList = new ArrayList(), 
         				mirrorZList = new ArrayList(), noMirrorZList = new ArrayList();
         	for(int j=0; j<voiList[i].length; j++) {
-        		voiMap.put(voiList[i][j].getName(), voiList[i][j]);
+        		voiBuffer.put(voiList[i][j].getName(), voiList[i][j]);
         		if(voiList[i][j].getName().contains("Left")) {
         			mirrorArrList.add(voiList[i][j].getName().substring(new String("Left ").length()));
-        			mirrorZList.add(voiList[i][j].isFillable());
+        			mirrorZList.add(voiList[i][j].doFill());
         			calcTree.put(voiList[i][j].getName().substring(new String("Left ").length()), voiList[i][j].doCalc());
         		} else if(voiList[i][j].getName().contains("Right")) {
         			//do nothing
         		} else {
         			noMirrorArrList.add(voiList[i][j].getName());
-        			noMirrorZList.add(voiList[i][j].isFillable());
+        			noMirrorZList.add(voiList[i][j].doFill());
         			calcTree.put(voiList[i][j].getName(), voiList[i][j].doCalc());
         		}
         	}
@@ -252,13 +257,17 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.multipleSlices = multipleSlices;
         
         Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(true));
-                
+          
+        createVOIBuffer();
+        
     	initStandAlone();
     	this.setActiveImage(IMAGE_A);
     	setVisible(true);
     	scrollPane.requestFocus();
     	
     	imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
+    	
+    	
     }
     
     /**
@@ -365,7 +374,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      *
      * @param  voiDir  directory that contains VOIs for this image.
      */
-    public void saveAllVOIsTo(String voiDir) {
+    public void saveAllVOIsTo(String voiDir, String currentVoi) {
 
         int nVOI;
         int i;
@@ -432,16 +441,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        displayChanged = false;
+    	displayChanged = false;
         String command = e.getActionCommand();
-        
+        System.out.println("Anything2?");
         //run through toggle buttons to see if a menu selected one (updates the button status)
         getControls().getTools().setToggleButtonSelected(command);
                 
         if(command.equals(DialogPrompt.CHECK_VOI)) {
         	String name;
             ((VoiDialogPrompt)tabs[voiTabLoc]).setUpDialog(name = ((JButton)(e.getSource())).getText(), 
-            		true, voiMap.get(name).getNumCurves());
+            		true, voiBuffer.get(name).getMaxCurvesPerSlice());
             lockToPanel(voiTabLoc, "VOI"); //includes making visible
             //TODO: add here
             initVoiImage(activeTab); //replacing current image and updating
@@ -466,9 +475,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         			tabs[voiTabLoc].completed() == true) {
         		unlockToPanel(voiTabLoc);
         		System.out.println("Place to look at voi based on activeTab: "+activeTab);
+        		noShowAction = true;
         		initMuscleImage(activeTab);
         	} else if(command.equals(DialogPrompt.BACK)) {
         		unlockToPanel(resultTabLoc);
+        		getActiveImage().unregisterAllVOIs();
         		initMuscleImage(activeTab);
         	} else if(command.equals(DialogPrompt.EXIT)) {
             	close();
@@ -595,6 +606,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         } 
 
         pack();
+        initMuscleImage(2);
+        getActiveImage().unregisterAllVOIs();
+        initMuscleImage(1);
+        getActiveImage().unregisterAllVOIs();
         initMuscleImage(0);
         if (ViewUserInterface.getReference().isAppFrameVisible()) {
         	this.setMinimumSize(new Dimension(380, 550));
@@ -612,6 +627,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    if(c instanceof MuscleDialogPrompt) {
 	    	for(int i=0; i<voiTabLoc; i++) {
 	    		if(tabs[i].equals(c) && !voiChangeState) {
+	    			getActiveImage().unregisterAllVOIs();
 	    			initMuscleImage(i);
 	    			activeTab = i;
 	    			displayChanged = true;
@@ -770,12 +786,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     		changeSlice = true;
     	super.setSlice(slice, updateLinkedImages);
     	if(changeSlice && activeTab < voiTabLoc) {
-    		if(tabs[resultTabLoc].isVisible()) {
+    		if(tabs[resultTabLoc].isVisible()) 
     			((AnalysisPrompt)tabs[resultTabLoc]).setButtons();
-    			getActiveImage().unregisterAllVOIs();
-    		} else {
+    		else { 
     			((MuscleDialogPrompt)tabs[activeTab]).clearButtons();
-    			initMuscleImage(activeTab);
+    			initMuscleButton(activeTab);
     		}
     		updateImages(true);
     		changeSlice = false;
@@ -874,9 +889,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      * @return a panel where 0 is first
      */
     public int getLocationStatus(String name) {
-    	int loc = PlugInSelectableVOI.INVALID_LOCATION;
-    	if(voiMap.get(name) != null)
-    		loc = voiMap.get(name).getLocation();
+    	int loc = PlugInSelectableVOI.INVALID_PANE_NUMBER;
+    	if(voiBuffer.get(name) != null)
+    		loc = voiBuffer.get(name).getLocation();
     	return loc;
     }
     
@@ -888,8 +903,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      */
     public boolean getZeroStatus(String name) {
     	boolean fill = false;
-    	if(voiMap.get(name) != null)
-    		fill = voiMap.get(name).isFillable();
+    	if(voiBuffer.get(name) != null)
+    		fill = voiBuffer.get(name).doFill();
     	return fill;
     }
     
@@ -898,10 +913,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
     	//getImageA().unregisterAllVOIs();
         String fileDir;
-    	if(multipleSlices)
-    		fileDir = getImageA().getFileInfo(0).getFileDirectory()+VOI_DIR+"_"+getViewableSlice()+"\\";
-    	else
-    		fileDir = getImageA().getFileInfo(0).getFileDirectory()+VOI_DIR+"\\";
+    	fileDir = getImageA().getFileInfo(0).getFileDirectory()+VOI_DIR+"\\";
         File allVOIs = new File(fileDir);
         //ArrayList paneVOIs = new ArrayList();
         if(allVOIs.isDirectory()) {
@@ -917,22 +929,22 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	            	String ext = ".xml";
 	            	VOI v;
 	            	System.out.println(name);
-	            	if(voiMap.get(name).getLocation() == pane) {
+	            	if(voiBuffer.get(name).getLocation() == pane) {
 	            		v = getSingleVOI(name+ext);
 	            		if(v != null) {
 	            			v.setThickness(2);
 	            			Color c = PlugInSelectableVOI.INVALID_COLOR;
 	            			
-	            			if((c = voiMap.get(v.getName()).getColor()).equals(PlugInSelectableVOI.INVALID_COLOR)) {
+	            			if((c = voiBuffer.get(v.getName()).getColor()).equals(PlugInSelectableVOI.INVALID_COLOR)) {
 		            			//System.out.println("A new one: "+v.getColor());
 		                    	if((c = hasColor(v)).equals(PlugInSelectableVOI.INVALID_COLOR))
 		                            v.setColor(c = colorPick[colorChoice++ % colorPick.length]);
 		                    	else
 		                    		v.setColor(c);
-		                    	voiMap.get(v.getName()).setColor(c);
+		                    	voiBuffer.get(v.getName()).setColor(c);
 	            			} else
 	            				v.setColor(c);
-	            			v.setDisplayMode(VOI.BOUNDARY);
+	            			v.setDisplayMode(PlugInSelectableVOI.BOUNDARY);
 	            			getActiveImage().registerVOI(v);
 	            		}
 	            	}
@@ -947,36 +959,72 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         }
     }
     
+    private void initMuscleButton(int pane) {
+    	VOIVector vec = getActiveImage().getVOIs();
+    	
+    	for(int i=0; i<vec.size(); i++) { 
+        	if(voiBuffer.get(vec.get(i).getName()).getCurves()[getViewableSlice()].size() > 0) 
+        		((MuscleDialogPrompt)tabs[pane]).setButton(vec.get(i), vec.get(i).getName(), vec.get(i).getColor());
+        } 
+    }
+    
     private void initMuscleImage(int pane) {        
-    	if(!changeSlice) 
-        	getImageA().unregisterAllVOIs();
     	
     	componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
-    	loadVOI(pane);
+    	getVOIs(pane);
         
         ctMode(getImageA(), -175, 275);
         
-        VOIVector vec = getActiveImage().getVOIs();
-        
-        for(int i=0; i<vec.size(); i++) { 
-        	((MuscleDialogPrompt)tabs[pane]).setButton(vec.get(i), vec.get(i).getName(), vec.get(i).getColor());
-        }
+        initMuscleButton(pane);
         
     	this.repaint();
 
         updateImages(true);
     }
     
+    private void createVOIBuffer() {
+    	Iterator voiItr = voiBuffer.keySet().iterator();
+    	
+    	while(voiItr.hasNext()) {
+    		PlugInSelectableVOI v = loadVOI((String)voiItr.next());
+    		
+    		Color c = PlugInSelectableVOI.INVALID_COLOR;
+			
+			if((c = v.getColor()).equals(PlugInSelectableVOI.INVALID_COLOR)) {
+            	if((c = hasColor(v)).equals(PlugInSelectableVOI.INVALID_COLOR))
+                    v.setColor(c = colorPick[colorChoice++ % colorPick.length]);
+            	else
+            		v.setColor(c);
+			} else
+				v.setColor(c);
+			System.out.println(v.getName() +" "+ v.getColor());
+    	}
+    }
+    
+    private void getVOIs(int pane) {
+    	
+    	Iterator voiItr = voiBuffer.keySet().iterator();
+    	PlugInSelectableVOI v;
+    	while(voiItr.hasNext()) {
+    		String name = (String)voiItr.next();
+    	
+	    	if(voiBuffer.get(name).getLocation() == pane) {
+	    		v = getSingleVOI(name);
+	    		v.setThickness(2);
+	    		v.setDisplayMode(PlugInSelectableVOI.BOUNDARY);
+    			getActiveImage().registerVOI(v);
+	    	}
+    	}
+    }
+    
     private void initVoiImage(int pane) {
-    	//getActiveImage().unregisterAllVOIs();
-    	//load VOIs of activeTab
-    	loadVOI(pane);
+    	//VOIs of pane already loaded, just need to make relevant ones solid
         VOIVector voiVec = getActiveImage().getVOIs();
     	for(int i=0; i<voiVec.size(); i++) {
     		VOI voi = voiVec.get(i);
-    		if(voiMap.get(voi.getName()).isFillable() && 
+    		if(voiBuffer.get(voi.getName()).doFill() && 
     				!(((VoiDialogPrompt)tabs[voiTabLoc]).getObjectName().equals(voi.getName()))) 
-    			voi.setDisplayMode(VOI.SOLID);
+    			voi.setDisplayMode(PlugInSelectableVOI.SOLID);
     	}
         
         componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
@@ -1237,7 +1285,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         private JLabel selectText;
         
         /**Buffer for hide/show functions related to HIDE_ALL button**/
-        private VOIVector voiBuffer;
+        private VOIVector voiPromptBuffer;
 
         private JMenu propMenu;
         
@@ -1251,10 +1299,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         private boolean voiExists(String objectName) {     	
             String fileDir;
-            if(multipleSlices)
-            	fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"_"+getViewableSlice()+"\\";
-            else
-            	fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
+            fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
             
             if(new File(fileDir+objectName+".xml").exists()) {
                 return true;
@@ -1268,35 +1313,33 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 
             if(command.equals(HIDE_ALL)) {
                 //clear all VOIs drawn
-            	voiBuffer = getActiveImage().getVOIs();
+            	voiPromptBuffer = (VOIVector)getActiveImage().getVOIs().clone();
                 getActiveImage().unregisterAllVOIs();
                 ((JButton)e.getSource()).setText(SHOW_ALL);
                 ((JButton)e.getSource()).setActionCommand(SHOW_ALL);
                 updateImages(true);
             } else if(command.equals(SHOW_ALL)) {
             	//show all VOIs previously drawn, do not get rid of any VOIs on screen
-            	for(int i=0; i<voiBuffer.size(); i++)
-            		getActiveImage().registerVOI(voiBuffer.get(i));
+            	getActiveImage().unregisterAllVOIs();
+            	for(int i=0; i<voiPromptBuffer.size(); i++)
+            		getActiveImage().registerVOI(voiPromptBuffer.get(i));
             	((JButton)e.getSource()).setText(HIDE_ALL);
                 ((JButton)e.getSource()).setActionCommand(HIDE_ALL);
+                updateImages(true);
             } else if (command.equals(OK)) {
             
-                    VOI goodVoi = checkVoi(); //check voi has correct number of curves, etc
+                    PlugInSelectableVOI goodVoi = checkVoi(); //check voi has correct number of curves, etc
                     if ( goodVoi != null ) { 
                         voiChangeState = true;
                         //save modified/created VOI to file
                         getActiveImage().unregisterAllVOIs();
                         getActiveImage().registerVOI(goodVoi);
-                        String dir = getImageA().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
-                        if(multipleSlices)
-                        	dir += "_"+getViewableSlice()+"\\";
-                        else
-                        	dir += "\\";
+                        String dir = getImageA().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
                         saveAllVOIsTo(dir);
 
                         MipavUtil.displayInfo(objectName+" VOI saved in folder\n " + dir);
                         completed = true;
-                        
+                        voiBuffer.get(goodVoi.getName()).setCreated(true);
                         getActiveImage().unregisterAllVOIs();
                         updateImages(true);
                     } else {
@@ -1307,11 +1350,25 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 } else if (command.equals(HELP)) {
                     PlugInMuscleSegmentation.showHelp("MS00001");
                 } else if (command.equals(RESET)) {
+                	for(int i=0; i<buttonGroup.length; i++) {
+                		if(buttonGroup[i].getText().equals(SHOW_ALL)) {
+                			buttonGroup[i].setText(HIDE_ALL);
+                			buttonGroup[i].setActionCommand(HIDE_ALL);
+                		}
+                	}
                 	getActiveImage().unregisterAllVOIs();
+                	initMuscleImage(activeTab);
                 	initVoiImage(activeTab); //replacing current image and updating
                 	updateImages(true);
                 	
                 } else if (command.equals(HIDE_ONE)) {
+                	for(int i=0; i<buttonGroup.length; i++) {
+                		if(buttonGroup[i].getText().equals(HIDE_ALL)) {
+                			buttonGroup[i].setText(SHOW_ALL);
+                			buttonGroup[i].setActionCommand(SHOW_ALL);
+                		}
+                	}
+                	voiPromptBuffer = (VOIVector)getActiveImage().getVOIs().clone();
                 	VOIVector vec = getActiveImage().getVOIs();
                 	VOI goodVoi = null;
                 	for(int i=0; i<vec.size(); i++) {
@@ -1456,22 +1513,24 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
          * @return VOI created by user.  Null if no such VOI was created.
          */
         
-        private VOI checkVoi() {
+        private PlugInSelectableVOI checkVoi() {
             VOIVector srcVOI = muscleFrame.getActiveImage().getVOIs();
             int countQualifiedVOIs = 0; //equal to numVoi when the right  amount of VOIs have been created
-            VOI goodVOI = null;
+            VOIContour goodVOI = null;
             //see if the VOI has been modified
             for(int i=0; i<srcVOI.size(); i++) {
                 if(srcVOI.get(i).getName().equals(objectName)) {
-                    goodVOI = srcVOI.get(i);
-                    countQualifiedVOIs++;
+                    if(srcVOI.get(i).getCurves()[getViewableSlice()].size() > 0) {
+                    	goodVOI = (VOIContour)srcVOI.get(i).getCurves()[getViewableSlice()].get(0);
+                    	countQualifiedVOIs++;
+                    } 
                 }
             }
             if(countQualifiedVOIs != 1) {
 	            //else VOI no longer exists, look for a VOI that doesn't fit to call objectName
 	            for(int i=0; i<srcVOI.size(); i++) {
-	            	if(getLocationStatus(srcVOI.get(i).getName()) == PlugInSelectableVOI.INVALID_LOCATION) {
-	            		goodVOI = srcVOI.get(i);
+	            	if(getLocationStatus(srcVOI.get(i).getName()) == PlugInSelectableVOI.INVALID_PANE_NUMBER) {
+	            		goodVOI = (VOIContour)srcVOI.get(i).getCurves()[getViewableSlice()].get(0);
 	            		countQualifiedVOIs++;
 	            	}
 	            }
@@ -1483,14 +1542,21 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 MipavUtil.displayError(error);
                 return null;  
             }
-            Vector[] curves = goodVOI.getCurves();
+            
+            if(goodVOI != null) {
+            	voiBuffer.get(objectName).importCurve(goodVOI, getViewableSlice());
+            }
+            
+            return voiBuffer.get(objectName);
+           
+            /*Vector[] curves = goodVOI.getCurves();
             VOI voi = goodVOI;
             if(curves[getViewableSlice()].size() <= numVoi) {
                 for(int i=0; i<numVoi; i++) {
-                    if(closedVoi && voi.getCurveType() == VOI.CONTOUR) {
+                    if(closedVoi) {
                         goodVOI.setName(objectName);
                         return goodVOI;
-                    } else if(!closedVoi && voi.getCurveType() != VOI.CONTOUR) {
+                    } else {
                         goodVOI.setName(objectName);
                         return goodVOI;
                     } 
@@ -1503,7 +1569,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             String error = "You have created too many curves.";
             MipavUtil.displayError(error);
             
-            return null;
+            return null;*/
         }
         
     }
@@ -1615,10 +1681,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         public void clearButtons() {
         	for(int i=0; i<mirrorCheckArr.length; i++) {
-        		mirrorCheckArr[i].setColor(Color.black);
+        		mirrorCheckArr[i].setColor(Color.pink);
+        		mirrorCheckArr[i].getColorButton().colorChanged(Color.PINK);
         	}
         	for(int i=0; i<noMirrorCheckArr.length; i++) {
         		noMirrorCheckArr[i].setColor(Color.black);
+        		
         	}
         }
         
@@ -1739,7 +1807,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             return noMirrorPanel;
         }
         
-        public void setButton(VOI v, String buttonName, Color c) {
+        public void setButton( VOI v, String buttonName, Color c) {
+        	if(!c.equals(Color.BLACK)) 
+        		voiBuffer.get(buttonName).setCreated(true);
         	for(int i=0; i<mirrorButtonArr.length; i++) {
         		if(buttonName.equals(mirrorButtonArr[i].getText())) {
         			mirrorCheckArr[i].setColor(c);
@@ -1865,9 +1935,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		
 		private TreeMap<String,ColorButtonPanel> checkBoxLocationTree;
 		
-		//Keeping as treeMap since expected size is so small, if number of muscles were greater than say 128, might use HashMap
-		private Map <String,Double>totalAreaCalcTree, totalAreaCountTree, partialAreaTree, fatAreaTree, leanAreaTree;
+		/**Maps to store area calculations for each VOI*/
+		private Map <String,Double>totalBoundsCalcTree, totalBoundsCountTree, partialBoundsTree, fatBoundsTree, leanBoundsTree;
 		
+		/**Maps to store mean Hounsfield unit info for each VOI*/
 		private Map <String,Double>meanFatHTree, meanLeanHTree, meanTotalHTree;
 	
 		/**
@@ -1883,11 +1954,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        super(theParentFrame, "Analysis");
 	        
 	        //even though done flag exists, synchronized just in case
-	        totalAreaCalcTree = Collections.synchronizedMap(new TreeMap<String,Double>());
-	        totalAreaCountTree = Collections.synchronizedMap(new TreeMap<String,Double>()); 
-	        partialAreaTree = Collections.synchronizedMap(new TreeMap<String,Double>()); 
-	        fatAreaTree = Collections.synchronizedMap(new TreeMap<String,Double>()); 
-	        leanAreaTree = Collections.synchronizedMap(new TreeMap<String,Double>());
+	        totalBoundsCalcTree = Collections.synchronizedMap(new TreeMap<String,Double>());
+	        totalBoundsCountTree = Collections.synchronizedMap(new TreeMap<String,Double>()); 
+	        partialBoundsTree = Collections.synchronizedMap(new TreeMap<String,Double>()); 
+	        fatBoundsTree = Collections.synchronizedMap(new TreeMap<String,Double>()); 
+	        leanBoundsTree = Collections.synchronizedMap(new TreeMap<String,Double>());
 			
 			meanFatHTree = Collections.synchronizedMap(new TreeMap<String,Double>());
 			meanLeanHTree  = Collections.synchronizedMap(new TreeMap<String,Double>());
@@ -1928,15 +1999,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				Set<String> keySet = checkBoxLocationTree.keySet();
 				Iterator<String> it = keySet.iterator();
 				while(it.hasNext()) {
-					checkBoxLocationTree.get(it.next()).setColor(Color.black);
+					//Stays black until pressed.
+					checkBoxLocationTree.get(it.next()).setColor(Color.BLACK);
 				}
 			}
 			for(int index=0; index<mirrorButtonArr.length; index++) {
 				for(int i=0; i<mirrorButtonArr[index].length; i++) {
-					mirrorButtonArr[index][i].setEnabled(voiExists(mirrorButtonArr[index][i].getText()));
+					mirrorButtonArr[index][i].setEnabled(voiExists(mirrorButtonArr[index][i].getText(), getViewableSlice()));
 				}
 				for(int i=0; i<noMirrorButtonArr[index].length; i++) {
-					noMirrorButtonArr[index][i].setEnabled(voiExists(noMirrorButtonArr[index][i].getText()));
+					noMirrorButtonArr[index][i].setEnabled(voiExists(noMirrorButtonArr[index][i].getText(), getViewableSlice()));
 				}
 			}
 		}
@@ -2008,7 +2080,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			VOIVector vec = getActiveImage().getVOIs();
 			for(int i=0; i<vec.size(); i++) {
 				if(getZeroStatus(vec.get(i).getName())) {
-                	vec.get(i).setDisplayMode(VOI.SOLID);
+                	vec.get(i).setDisplayMode(PlugInSelectableVOI.SOLID);
                 	vec.get(i).setOpacity((float)0.7);
                 }
 			}
@@ -2028,7 +2100,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			
 			VOIVector vec = getActiveImage().getVOIs();
 			for(int i=0; i<vec.size(); i++) 
-				vec.get(i).setDisplayMode(VOI.CONTOUR);
+				vec.get(i).setDisplayMode(PlugInSelectableVOI.CONTOUR);
 			
 			updateImages(true);
 			
@@ -2246,7 +2318,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        } else {
 	
 	            if (command.equals(OK)) {
-	                VOI goodVoi = null; //was checkVOI, why check exists
+	                PlugInSelectableVOI goodVoi = null; //was checkVOI, why check exists
 	                if (goodVoi != null) { 
 	                    //save modified/created VOI to file
 	                	muscleFrame.getImageA().unregisterAllVOIs();
@@ -2301,7 +2373,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	            	if(!exists) {
 	            		VOI rec = getSingleVOI(text);
 	            		Color c = null;
-	            		if((c = voiMap.get(rec.getName()).getColor()).equals(PlugInSelectableVOI.INVALID_COLOR) && 
+	            		if((c = voiBuffer.get(rec.getName()).getColor()).equals(PlugInSelectableVOI.INVALID_COLOR) && 
 	            				(c = hasColor(rec)).equals(PlugInSelectableVOI.INVALID_COLOR)) {
 	                		c = colorPick[colorChoice++ % colorPick.length];
 	                	}
@@ -2312,7 +2384,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	            		rec.setThickness(2);
 	            		
 	            		if(lutOn && getZeroStatus(rec.getName())) {
-	                    	rec.setDisplayMode(VOI.SOLID);
+	                    	rec.setDisplayMode(PlugInSelectableVOI.SOLID);
 	                    	rec.setOpacity((float)0.7);
 	                    }
 	            		
@@ -2348,7 +2420,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			}
 			Iterator itr;
 			if(all)
-				itr = fatAreaTree.keySet().iterator();
+				itr = fatBoundsTree.keySet().iterator();
 			else {
 				ArrayList totalList = new ArrayList(), subList = new ArrayList();
 				for (int listNum = 0; listNum < mirrorButtonArr.length; listNum++, subList = new ArrayList())  {   	
@@ -2372,12 +2444,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				double totalAreaCalc = 0, totalAreaCount = 0, fatArea = 0, leanArea = 0;//, partialArea = 0;
 				double meanFatH = 0, meanLeanH = 0, meanTotalH = 0;
 				//pixels -> cm^2\
-				if(totalAreaCalcTree.get(itrObj) != null) {
+				if(totalBoundsCalcTree.get(itrObj) != null) {
 					
-					totalAreaCalc = totalAreaCalcTree.get(itrObj);
-					totalAreaCount = totalAreaCountTree.get(itrObj);
-					fatArea = fatAreaTree.get(itrObj);
-					leanArea = leanAreaTree.get(itrObj);
+					totalAreaCalc = totalBoundsCalcTree.get(itrObj);
+					totalAreaCount = totalBoundsCountTree.get(itrObj);
+					fatArea = fatBoundsTree.get(itrObj);
+					leanArea = leanBoundsTree.get(itrObj);
 					meanFatH = meanFatHTree.get(itrObj);
 					meanLeanH = meanLeanHTree.get(itrObj);
 					meanTotalH = meanTotalHTree.get(itrObj);
@@ -2476,26 +2548,35 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		 *
 		 */
 	    private class MuscleCalculation implements Runnable {
+	    	public static final int FAT_LOWER_BOUND = -190;
+	    	public static final int FAT_UPPER_BOUND = -30;
+	    	public static final int MUSCLE_LOWER_BOUND = 0;
+	    	public static final int MUSCLE_UPPER_BOUND = 100;
+	    	
 	    	private boolean done = false;
 	    	
 	    	public void run() {
 	    		long time = System.currentTimeMillis();
-	    		loadVOIs(totalList, 0);
+	    		getVOIs(totalList, 0);
 	    		VOIVector vec = (VOIVector)getActiveImage().getVOIs().clone();
 	    		getActiveImage().unregisterAllVOIs();
 	    		for(int i=0; i<vec.size(); i++) {
 	    			VOI v = vec.get(i);
 	    			String name = v.getName();
+	    			double multiplier = 0.0;
+	    			if(!multipleSlices)
+	    				multiplier = Math.pow(muscleFrame.getActiveImage().getResolutions(0)[0]*.1, 2);
+	    			else
+	    				multiplier *= muscleFrame.getActiveImage().getResolutions(0)[2];
+	    			fatBoundsTree.put(name, getPieceCount(v, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*multiplier);
+	    			partialBoundsTree.put(name, getPieceCount(v, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*multiplier);
+	    			leanBoundsTree.put(name, getPieceCount(v, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND)*multiplier);
+	    			totalBoundsCalcTree.put(name, getTotalAreaCalc(v)*multiplier);
+	    			totalBoundsCountTree.put(name, getTotalAreaCount(v)*multiplier);
 	    			
-	    			fatAreaTree.put(name, getFatArea(v)*(Math.pow(muscleFrame.getActiveImage().getResolutions(0)[0]*.1, 2)));
-	    			partialAreaTree.put(name, getPartialArea(v)*(Math.pow(muscleFrame.getActiveImage().getResolutions(0)[0]*.1, 2)));
-	    			leanAreaTree.put(name, getLeanArea(v)*(Math.pow(muscleFrame.getActiveImage().getResolutions(0)[0]*.1, 2)));
-	    			totalAreaCalcTree.put(name, getTotalAreaCalc(v)*(Math.pow(muscleFrame.getActiveImage().getResolutions(0)[0]*.1, 2)));
-	    			totalAreaCountTree.put(name, getTotalAreaCount(v)*(Math.pow(muscleFrame.getActiveImage().getResolutions(0)[0]*.1, 2)));
-	    			
-	    			meanFatHTree.put(name, getMeanFatH(v));
-	    			meanLeanHTree.put(name, getMeanLeanH(v));
-	    			meanTotalHTree.put(name, getMeanTotalH(v));
+	    			meanFatHTree.put(name, getMeanH(v, FAT_LOWER_BOUND, FAT_UPPER_BOUND));
+	    			meanLeanHTree.put(name, getMeanH(v, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND));
+	    			meanTotalHTree.put(name, getMeanH(v, FAT_LOWER_BOUND, MUSCLE_UPPER_BOUND));
 	    		}
 	    		time = System.currentTimeMillis() - time;
 	    		
@@ -2512,49 +2593,21 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    		return done;
 	    	}
 
-			public double getFatArea(VOI v) {
-				int fatArea = 0;
+			public double getPieceCount(VOI v, int lowerBound, int upperBound) {
+				int area = 0;
 				BitSet fullMask = new BitSet();
 				v.createBinaryMask(fullMask, getActiveImage().getExtents()[0], getActiveImage().getExtents()[1]);
 				double mark = 0;
 				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
 			        mark = getImageA().getDouble(i);
-					if(mark  >= -190 && mark <= -30) 
-						fatArea++;
+					if(mark  >= lowerBound && mark <= upperBound) 
+						area++;
 				}
-				return fatArea;
+				return area;
 			}
-
-			public double getPartialArea(VOI v) {
-				int partialArea = 0;
-				BitSet fullMask = new BitSet();
-				v.createBinaryMask(fullMask, getActiveImage().getExtents()[0], getActiveImage().getExtents()[1]);
-				double mark = 0;
-				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-			        mark = getImageA().getDouble(i);
-					if(mark  >= -30 && mark <= 0) 
-						partialArea++;
-				}
-				return partialArea;
-			}
-
-			public double getLeanArea(VOI v) {
-				int leanArea = 0;
-				BitSet fullMask = new BitSet();
-				v.createBinaryMask(fullMask, getActiveImage().getExtents()[0], getActiveImage().getExtents()[1]);
-				double mark = 0;
-				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-			        mark = getImageA().getDouble(i);
-					if(mark  >= 0 && mark <= 100) 
-						leanArea++;
-				}
-				return leanArea;
-			}
-
-			//TODO: Partial voluming difference between VOI calculations and counting
 			
 			public double getTotalAreaCalc(VOI v) {
-				return v.area();
+				return v.area(); //returns volume in 3D
 			}
 
 			public double getTotalAreaCount(VOI v) {
@@ -2566,58 +2619,47 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				return totalArea;
 			}
 
-			public double getMeanFatH(VOI v) {
-				int fatArea = 0;
-				double meanFatH = 0;
+			public double getMeanH(VOI v, int lowerBound, int upperBound) {
+				int area = 0;
+				double meanH = 0;
 				BitSet fullMask = new BitSet();
 				v.createBinaryMask(fullMask, getActiveImage().getExtents()[0], getActiveImage().getExtents()[1]);
 				double mark = 0;
 				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
 			        mark = getImageA().getDouble(i);
-					if(mark  >= -190 && mark <= -30) {
-						fatArea++;
-						meanFatH += mark;
+					if(mark  >= lowerBound && mark <= upperBound) {
+						area++;
+						meanH += mark;
 					}
 				}
-				meanFatH /= fatArea;
-				return meanFatH;
-			}
-
-			public double getMeanLeanH(VOI v) {
-				int leanArea = 0;
-				double meanLeanH = 0;
-				BitSet fullMask = new BitSet();
-				v.createBinaryMask(fullMask, getActiveImage().getExtents()[0], getActiveImage().getExtents()[1]);
-				double mark = 0;
-				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-			        mark = getImageA().getDouble(i);
-					if(mark  >= 0 && mark <= 100) {
-						leanArea++;
-						meanLeanH += mark;
-					}
-				}
-				double testMean = meanLeanH;
-				testMean /= leanArea;
-				meanLeanH /= leanArea;
-				return meanLeanH;
-			}
-
-			public double getMeanTotalH(VOI v) {
-				int totalArea = 0;
-				double meanTotalH = 0;
-				BitSet fullMask = new BitSet();
-				v.createBinaryMask(fullMask, getActiveImage().getExtents()[0], getActiveImage().getExtents()[1]);
-				double mark = 0;
-				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-			        mark = getImageA().getDouble(i);
-			        totalArea++;
-					meanTotalH += mark;
-				}
-				meanTotalH /= totalArea;
-				return meanTotalH;
+				meanH /= area;
+				return meanH;
 			}
 	    }
 	}
+    /**
+     * Gets all VOIs of given names from the buffer that have been created
+     */
+    
+    public void getVOIs(String[] voiName, double fillVOIs) {
+    	getActiveImage().unregisterAllVOIs();
+    	ArrayList newName = new ArrayList();
+    	String v;
+    	for(int i=0; i<voiName.length; i++) {
+    		if(voiBuffer.get(v = voiName[i].substring(0, voiName[i].lastIndexOf('.'))).isCreated())
+    			newName.add(v);
+    	}
+    	
+    	VOI tempVOI;
+    	for(int i=0; i<newName.size(); i++) {
+    		getActiveImage().registerVOI(tempVOI = voiBuffer.get(newName.get(i)));
+    		if(fillVOIs != 0 && getZeroStatus((String)newName.get(i))) {
+            	tempVOI.setDisplayMode(VOI.SOLID);
+            	tempVOI.setOpacity((float)fillVOIs);
+            }
+    	}
+    }
+    
     
     /**
      * Loads VOIs of all voiNames, 
@@ -2628,10 +2670,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         getActiveImage().unregisterAllVOIs();
         int colorChoice = new Random().nextInt(colorPick.length);
         String fileDir;
-        if(multipleSlices)
-        	fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"_"+getViewableSlice()+"\\";
-        else
-        	fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
+        fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
         File allVOIs = new File(fileDir);
         if(allVOIs.isDirectory()) {
             for(int i=0; i<voiName.length; i++) {
@@ -2650,18 +2689,18 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                     if(voiVec.length > 1) {
                         MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+fileName);
                     } else {
-                    	if(voiMap.get(voiVec[0].getName()).getColor().equals(PlugInSelectableVOI.INVALID_COLOR)) {
+                    	if(voiBuffer.get(voiVec[0].getName()).getColor().equals(PlugInSelectableVOI.INVALID_COLOR)) {
 	                    	Color c = hasColor(voiVec[0]);
 	                        if(!(c = hasColor(voiVec[0])).equals(PlugInSelectableVOI.INVALID_COLOR))
 	                            voiVec[0].setColor(c);
 	                        else 
 	                            voiVec[0].setColor(c = colorPick[colorChoice++ % colorPick.length]);
-	                        voiMap.get(voiVec[0].getName()).setColor(c);
+	                        voiBuffer.get(voiVec[0].getName()).setColor(c);
                     	} else
-                    		voiVec[0].setColor(voiMap.get(voiVec[0].getName()).getColor());
+                    		voiVec[0].setColor(voiBuffer.get(voiVec[0].getName()).getColor());
                         voiVec[0].setThickness(2);
                         if(fillVOIs != 0 && getZeroStatus(voiVec[0].getName())) {
-                        	voiVec[0].setDisplayMode(VOI.SOLID);
+                        	voiVec[0].setDisplayMode(PlugInSelectableVOI.SOLID);
                         	voiVec[0].setOpacity((float)fillVOIs);
                         }
                         getActiveImage().registerVOI(voiVec[0]);
@@ -2692,35 +2731,49 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     }
     
     public boolean voiExists(String name) {
-    	String fileDir;
-    	if(multipleSlices)
-    		fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"_"+getViewableSlice()+"\\";
-    	else
-    		fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
-    	String ext = name.contains(".xml") ? "" : ".xml";
-        
-        if(new File(fileDir+name+ext).exists())
-        	return true;
-        return false;
+    	return voiBuffer.get(name).isCreated();
     }
     
     /**
-     * Deal with color on individual basis.  Loads VOI.
+     * Whether a VOI contains a particular curve for the given slice.  If bad name or slice number, 
+     * returns false (performs bounds check)
+     * 
+     * @param name Name of VOI to check for
+     * @param slice Slice number to check
+     * @return
+     */
+    public boolean voiExists(String name, int slice) {
+    	if(!multipleSlices)
+    		return voiExists(name);
+    	if(voiBuffer.get(name).getCurves()[slice].size() > 0)
+    		return true;
+    	return false;
+    }
+    
+    /**
+     * Easy curveExists for checks if curveExists for viewableSlice(). (so no bounds check)
+     */
+    public boolean curveExists(String name) {
+    	if(voiBuffer.get(name).getCurves()[getViewableSlice()].size() > 0) 
+    		return true;
+    	return false;
+    }
+    
+    /**
+     * Loads VOI and automatically stores it into the voiBuffer.
      * @param name
      * @return
      */
-    public VOI getSingleVOI(String name) {
+    public PlugInSelectableVOI loadVOI(String name) {
     	String fileDir;
-    	if(multipleSlices)
-    		fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"_"+getViewableSlice()+"\\";
-    	else
-    		fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
+    	fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
     	String ext = name.contains(".xml") ? "" : ".xml";
         
         if(new File(fileDir+name+ext).exists()) {
             FileVOI v;
             VOI[] voiVec = null;
             try {
+            	ModelImage tryImage = getActiveImage();
                 v = new FileVOI(name+ext, fileDir, getActiveImage());
                 voiVec = v.readVOI(false);
             } catch(IOException e) {
@@ -2729,13 +2782,19 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             if(voiVec.length > 1) {
                 MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+name);
             } else {
-            	return voiVec[0];
+            	Vector <VOIBase>[] voiVecTemp = voiVec[0].getCurves();
+            	for(int i=0; i<voiVecTemp.length; i++) {
+            		voiBuffer.get(name).importCurve((VOIContour)(voiVecTemp[0].get(i)), i);
+            	}
             }
         }
-        return null;
+        return voiBuffer.get(name);
     }
-        
     
+    public PlugInSelectableVOI getSingleVOI(String name) {
+    	return voiBuffer.get(name);
+    }
+
 	private class BuildThighAxes implements AlgorithmInterface {
 		
 	    private int zSlice;
@@ -2754,7 +2813,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    
 	    private AlgorithmBSmooth[] smoothAlgo;
 	    
-	    private VOI[] thighVOIs;
+	    private PlugInSelectableVOI[] thighVOIs;
 	    
 	    private boolean[] thighCompleted;
 	    
@@ -2805,15 +2864,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	            return;
 	        }
 	        
-	        thighVOIs = new VOI[2];
+	        thighVOIs = new PlugInSelectableVOI[2];
 	        
 	        for (groupNum = 0; groupNum < nVOI; groupNum++) {
 	    
 	            if (VOIs.get(groupNum).getName().equals("Left Thigh")) {
-	                thighVOIs[0] = VOIs.get(groupNum);
+	                thighVOIs[0] = null;//VOIs.get(groupNum);
 	            }
 	            else if (VOIs.get(groupNum).getName().equals("Right Thigh")) {
-	                thighVOIs[1] = VOIs.get(groupNum);
+	                thighVOIs[1] = null;//VOIs.get(groupNum);
 	            }
 	        }
 	        
@@ -2965,21 +3024,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	 */
 	protected void createPDF() {		
 		String fileDir, fileName;
-		if(multipleSlices) {
-			fileDir = getActiveImage().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"_"+getViewableSlice()+"\\";
-			fileName = fileDir + File.separator + "NIA_Report_" +getViewableSlice()+".pdf";
-		} else {
-			fileDir = getActiveImage().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
-			fileName = fileDir + File.separator + "NIA_Report.pdf";
-		}
+		fileDir = getActiveImage().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
+		fileName = fileDir + File.separator + "NIA_Report.pdf";
 		pdfFile = new File(fileName);
 		if(pdfFile.exists()) {
 			int i=0;
 			while(pdfFile.exists() && i<1000) {
-				if(multipleSlices)
-					fileName = "NIA_Report_" +getViewableSlice()+"-"+(++i)+ ".pdf";
-				else
-					fileName = "NIA_Report-"+(++i)+ ".pdf";
+				fileName = "NIA_Report-"+(++i)+ ".pdf";
 				if(i == 1000) 
 					MipavUtil.displayError("Too many PDFs have been created, overwriting "+fileName);
 				pdfFile = new File(fileDir + File.separator + fileName);
@@ -3065,13 +3116,23 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			aTable = new PdfPTable(new float[] {1.8f, 1f, 1f, 1f, 1f, 1f, 1f});
 			
 			// add Column Titles (in bold)
-			aTable.addCell(new PdfPCell(new Paragraph("Area (cm^2)", fontBold)));
-			aTable.addCell(new PdfPCell(new Paragraph("Total Area", fontBold)));
-			aTable.addCell(new PdfPCell(new Paragraph("Fat Area", fontBold)));
-			aTable.addCell(new PdfPCell(new Paragraph("Lean Area", fontBold)));
-			aTable.addCell(new PdfPCell(new Paragraph("Fat HU", fontBold)));
-			aTable.addCell(new PdfPCell(new Paragraph("Lean HU", fontBold)));
-			aTable.addCell(new PdfPCell(new Paragraph("Total HU", fontBold)));
+			if(multipleSlices) {
+				aTable.addCell(new PdfPCell(new Paragraph("Volume (cm^3)", fontBold)));
+				aTable.addCell(new PdfPCell(new Paragraph("Total Vol", fontBold)));
+				aTable.addCell(new PdfPCell(new Paragraph("Fat Vol", fontBold)));
+				aTable.addCell(new PdfPCell(new Paragraph("Lean Vol", fontBold)));
+				aTable.addCell(new PdfPCell(new Paragraph("Fat HU", fontBold)));
+				aTable.addCell(new PdfPCell(new Paragraph("Lean HU", fontBold)));
+				aTable.addCell(new PdfPCell(new Paragraph("Total HU", fontBold)));
+			} else {
+				aTable.addCell(new PdfPCell(new Paragraph("Area (cm^2)", fontBold)));
+				aTable.addCell(new PdfPCell(new Paragraph("Total Area", fontBold)));
+				aTable.addCell(new PdfPCell(new Paragraph("Fat Area", fontBold)));
+				aTable.addCell(new PdfPCell(new Paragraph("Lean Area", fontBold)));
+				aTable.addCell(new PdfPCell(new Paragraph("Fat HU", fontBold)));
+				aTable.addCell(new PdfPCell(new Paragraph("Lean HU", fontBold)));
+				aTable.addCell(new PdfPCell(new Paragraph("Total HU", fontBold)));
+			}
 			
 			
 			return;
@@ -3213,7 +3274,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         }
         /**
          * We are not interested in removing Curves, so this method is empty.
-         *
+         *tp
          * @param  added  DOCUMENT ME!
          */
         public void removedCurve(VOIEvent added) {
@@ -3225,12 +3286,63 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
          */
         public void colorChanged(Color c) {
         	cIcon.setColor(c);
-        	voiMap.get(voiName).setColor(c);
+        	//voiBuffer.get(voiName).setColor(c);
         	this.repaint();
         }
         
         public void selectedVOI(VOIEvent selection) {
         	/* not interested in having the ColorButon select VOIs */
         }
+	}
+	
+	private class CustomLivewire extends RubberbandLivewire {
+		/**A set representing all VOIs that should be avoided */
+		private BitSet voiMap; 
+		
+		/**The length of this image in the x direction, normally 512.*/
+		private int xRes;
+		
+		/**
+	     * Sets up local costs graph by calling AlgorithmGradientMagnitude and AlgorithmEdgeLaplacianSep. Initializes
+	     * necessary global arrays.
+	     *
+	     * @param  component  component to add to
+	     * @param  selection  GRADIENT_MAG, MEDIALNESS, or INTENSITY
+	     */
+	    public CustomLivewire(Component component, int selection) {
+	    	super(component, selection);
+	    
+	    	xRes = getActiveImage().getExtents(0)[0];
+	    	
+	    	
+	    }
+		
+		
+	    /**
+	     * Stretch the rubberband to this point.
+	     *
+	     * @param  p  point to stretch to
+	     */
+	    public void stretch(Point p) {
+	        boolean stretchRight = false;
+	    	
+	    	if(voiSearch(p)) {
+	    		lastPt.x = stretchedPt.x;
+	            lastPt.y = stretchedPt.y;
+	            
+	            
+	        }
+
+	        super.stretch(p);
+	    }
+	    
+	    /**
+	     * Determines whether a VOI that should be avoided exists at the current point.
+	     * @param pt The current point
+	     * @return true if a VOI that should be avoided exists at current point
+	     */
+	    private boolean voiSearch(Point pt) {
+	    	return voiMap.get(pt.x+pt.y*xRes);
+	    }
 	}
 }
