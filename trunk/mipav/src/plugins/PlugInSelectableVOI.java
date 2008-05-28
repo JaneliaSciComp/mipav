@@ -1,70 +1,67 @@
+import gov.nih.mipav.model.structures.*;
+
 import java.awt.Color;
 
-public class PlugInSelectableVOI {//extends VOI{
-		
-	private String name;
+public class PlugInSelectableVOI extends VOI{//extends VOI{
 	
 	private boolean closed;
 	
-	private int numCurves;
+	private int maxCurvesPerSlice;
 	
-	private int location = INVALID_LOCATION;
+	private int paneNum = INVALID_PANE_NUMBER;
 	
-	private boolean fillable;
+	private boolean doFill;
 	
 	private boolean doCalc;
 	
-	private Color color = INVALID_COLOR;
+	private boolean created = false;
 
 	//~ Static fields --------------------------------------------------------------------------------------------------
 	
-	public static final int INVALID_LOCATION = -1;
+	public static final int INVALID_PANE_NUMBER = -1;
 
 	public static final Color INVALID_COLOR = new Color(234, 123, 123);
 	
-	public PlugInSelectableVOI(String name, boolean closed, int numCurves, int location, 
-								boolean fillable, boolean doCalc) {
-		this.name = name;
+	public PlugInSelectableVOI(String name, boolean closed, int maxCurvesPerSlice, int paneNum, 
+								boolean doFill, boolean doCalc, int imageSize) {
+		super((short)0, name, imageSize);
 		this.closed = closed;
-		this.numCurves = numCurves;
-		this.location = location;
-		this.fillable = fillable;
+		this.maxCurvesPerSlice = maxCurvesPerSlice;
+		this.paneNum = paneNum;
+		this.doFill = doFill;
 		this.doCalc = doCalc;
-	}
-
-	public String getName() {
-		return name;
+		setColor(INVALID_COLOR);
 	}
 
 	public boolean isClosed() {
 		return closed;
 	}
+	
+	public boolean isCreated() {
+		return created;
+	}
+	
+	public void setCreated(boolean created) {
+		this.created = created;
+	}
 
-	public int getNumCurves() {
-		return numCurves;
+	public int getMaxCurvesPerSlice() {
+		return maxCurvesPerSlice;
 	}
 	
 	public int getLocation() {
-		return location;
+		return paneNum;
 	}
 	
 	public void setLocation(int loc) {
-		this.location = loc;
+		this.paneNum = loc;
 	}
 
-	public boolean isFillable() {
-		return fillable;
+	public boolean doFill() {
+		return doFill;
 	}
 	
 	public boolean doCalc() {
 		return doCalc;
-	}
-
-	public Color getColor() {
-		return color;
-	}
-
-	public void setColor(Color color) {
-		this.color = color;
 	}
 }
