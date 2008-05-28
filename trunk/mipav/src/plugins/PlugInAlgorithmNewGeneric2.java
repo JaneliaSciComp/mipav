@@ -13,6 +13,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.Point3Ds;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
 
 import gov.nih.mipav.view.MipavUtil;
@@ -127,12 +128,17 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
         yDim = srcImage.getExtents()[1];
 
         sliceSize = xDim * yDim;
-        sliceBuffer = new short[sliceSize];
 
-        x1CMs = new int [sliceSize];
-        y1CMs = new int [sliceSize];
-        x2CMs = new int [sliceSize];
-        y2CMs = new int [sliceSize];
+        try {
+            sliceBuffer = new short[sliceSize];
+            x1CMs = new int [sliceSize];
+            y1CMs = new int [sliceSize];
+            x2CMs = new int [sliceSize];
+            y2CMs = new int [sliceSize];
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("Out of memory: init()");
+        }
 
         // set values that depend on the source image being a 2D or 3D image
         if (srcImage.getNDims() == 2) {
@@ -158,20 +164,28 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
     private void segmentImage() {
         long time = System.currentTimeMillis();
         computeBoneImage();
- //       ShowImage(boneImage, "CT Bone");
-        System.out.println("Step 1: "+(System.currentTimeMillis() - time));
+        System.out.println("Bone segmentation: "+(System.currentTimeMillis() - time));
+//        ShowImage(boneImage, "CT Bone");
+        
         time = System.currentTimeMillis();
-        boneMarrowImage.setVOIs(boneImage.getVOIs());
+        // We did not compute the VOI of the bone, so do not copy them over
+//        boneMarrowImage.setVOIs(boneImage.getVOIs());
         computeBoneMarrowImage();
+        System.out.println("Bone marrow segmentation: "+(System.currentTimeMillis() - time));
 //        ShowImage(boneMarrowImage, "CT Bone Marrow");
-        System.out.println("Step 2: "+(System.currentTimeMillis() - time));
+
         time = System.currentTimeMillis();
+        // copy the bone marrow VOI into the muscleBundle image
         muscleBundleImage.setVOIs(boneMarrowImage.getVOIs());
         computeMuscleBundle();
-        System.out.println("Step 3: "+(System.currentTimeMillis() - time));
+        System.out.println("Muscle bundle segmentation: "+(System.currentTimeMillis() - time));
+        
+        // copy the segmented bone into the MuscleBundle image
+        
+        
         time = System.currentTimeMillis();
         ShowImage(muscleBundleImage, "Segmented Image");
-        System.out.println("Show: "+(System.currentTimeMillis() - time));
+        System.out.println("Show image: "+(System.currentTimeMillis() - time));
         time = System.currentTimeMillis();
    } // end segmentImage()
    
@@ -252,11 +266,22 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
        algoPaintToVOI.run();
        setCompleted(true);
 
+       // copy the bone and bone marrow labels into the muscle bundle label image
+       short[] boneBuffer;
+       try {
+           boneBuffer = new short [sliceSize];
+       } catch (OutOfMemoryError error) {
+           System.gc();
+           MipavUtil.displayError("Out of memory: computeMuscleBundle()");
+           return;
+       }
+       
        int sliceByteOffset;
        for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
            sliceByteOffset = sliceNum * sliceSize;
            try {
                boneMarrowImage.exportData((sliceNum * sliceSize), sliceSize, sliceBuffer);
+               boneImage.exportData((sliceNum * sliceSize), sliceSize, boneBuffer);
            } catch (IOException ex) {
                System.err.println("Error exporting data");
            }
@@ -264,6 +289,11 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
            idx = sliceByteOffset;
            for (int j = 0; j < yDim; j++) {
                for (int i = 0; i < xDim; i++, idx++) {
+                   // put the bone into the muscleBundleImage
+                   if (boneBuffer[idx - sliceByteOffset] > 0) {
+                       sliceBuffer[idx - sliceByteOffset] = boneLabel;
+                   }
+                   // put the muscleBundle into the muscleBundleImage
                    if (muscle1Bitmap.get(idx)) {
                        sliceBuffer[idx - sliceByteOffset] = muscleBundleLabel;
                    }
@@ -330,26 +360,26 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
 
         BitSet boneMarrow2Bitmap = new BitSet();
         regionGrow((short)x2CMs[0], (short)y2CMs[0], (short)0, boneMarrow2Bitmap);
-       
+
         // get the VOI of the second bone marrow region
         algoPaintToVOI.setPaintMask(boneMarrow2Bitmap);
         algoPaintToVOI.run();
         setCompleted(true);
- 
-        VOIVector voiVec = boneMarrowImage.getVOIs();
-        VOI theVOI = voiVec.get(0);
-        Vector[] contours = theVOI.getCurves();
-        System.out.println("Number of contours: " +contours[0].size());
 
         int sliceByteOffset;
         for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
             sliceByteOffset = sliceNum * sliceSize;
-            try {
-                boneImage.exportData((sliceNum * sliceSize), sliceSize, sliceBuffer);
-            } catch (IOException ex) {
-                System.err.println("computeBoneMarrowImage(): Error exporting data");
+            // This copies the bone into the bone marrow image, let's not do that now
+ //           try {
+ //               boneImage.exportData(sliceByteOffset, sliceSize, sliceBuffer);
+ //           } catch (IOException ex) {
+ //               System.err.println("computeBoneMarrowImage(): Error exporting data");
+ //           }
+
+            // clear the sliceBuffer
+            for (int i = 0; i < sliceSize; i++) {
+                sliceBuffer[i] = 0;
             }
-            
             int idx = sliceByteOffset;
             for (int j = 0; j < yDim; j++) {
                 for (int i = 0; i < xDim; i++, idx++) {
@@ -363,7 +393,7 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
             }
             
             try {
-                boneMarrowImage.importData((sliceNum * sliceSize), sliceBuffer, false);
+                boneMarrowImage.importData(sliceByteOffset, sliceBuffer, false);
             } catch (IOException ex) {
                 System.err.println("computeBoneMarrowImage(): Error importing data");
             }
@@ -535,6 +565,9 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
         // thresholds for bone in CT images
         float[] thresholds = { 750.0f, 2000.0f };
         boneImage = threshold(srcImage, thresholds);
+        for (int i = 0; i < zDim; i++) {
+            boneImage.getFileInfo()[i].setResolutions(srcImage.getFileInfo()[i].getResolutions());
+        }
 
         // filter by cardinality.  Keep only connected objects that are about the size of the CT bones
         // bones should be 200 to 5000 pixels per slice
@@ -592,17 +625,51 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
             MipavUtil.displayError("Error computeBoneImage(), Bone segmentation error");
             return;
         }
-        
+
+        // We will get the bone VOI when doing the muscleBundle, so 
+/*
         // get the VOI of the bone regions
         computeLabelVOI(1);
         computeLabelVOI(2);
-           } // end computeBoneImage(...)
+
+        
+        // here is some stuff for dealing with VOI's
+        VOIVector vois = boneImage.getVOIs();
+        System.out.println("Number of VOIS: " + vois.size());
+
+        VOI theVOI = vois.get(0);
+        Vector[] curves = theVOI.getCurves();
+        
+        for (int i = 0; i < zDim; i++) {
+            System.out.println("Slice: " + i + "   Number of curves: " + curves[i].size());
+        }
+        
+        // the first curve on the first slice
+        VOIContour curve1 = (VOIContour)curves[0].elementAt(0);
+        System.out.println("1) Number of points: " + curve1.size());
+//        for (int i = 0; i < curve1.size(); i++) {
+//            System.out.println(+i +"  " +curve1.get(i));
+//        }
+        
+        // the second curve on the first slice
+        VOIContour curve2 = (VOIContour)curves[0].elementAt(1);
+        System.out.println("2) Number of points: " + curve2.size());
+        
+        // the third curve on the first slice
+        VOIContour curve3 = (VOIContour)curves[0].elementAt(2);
+        System.out.println("3) Number of points: " + curve3.size());
+        
+        // the fourth curve on the first slice
+        VOIContour curve4 = (VOIContour)curves[0].elementAt(3);
+        System.out.println("4) Number of points: " + curve4.size());
+*/
+    } // end computeBoneImage(...)
     
     
     
     
     void computeLabelVOI(int seedVal) {
-        // Simplest thing is to do a seeded region grow and let that set the BitSet
+        // Simplest thing is to do a seeded region grow to set the BitSet
         boolean seedPointFound = false;
         short sx = 0, sy = 0, sz = 0;
         for (int sliceNum = 0; sliceNum < zDim && !seedPointFound; sliceNum++) {
@@ -656,8 +723,8 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
  
     public ModelImage threshold(ModelImage threshSourceImg, float[] thresh) {
         ModelImage resultImage = null;
-        resultImage = (ModelImage) threshSourceImg.clone();
-        
+        resultImage = new ModelImage(threshSourceImg.getType(), threshSourceImg.getExtents(), "threshResultImg");
+
         AlgorithmThresholdDual threshAlgo = null;
         threshAlgo = new AlgorithmThresholdDual(resultImage, threshSourceImg, thresh, boneLabel, AlgorithmThresholdDual.BINARY_TYPE, true, false);
         threshAlgo.run();
