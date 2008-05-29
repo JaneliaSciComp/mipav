@@ -23,6 +23,7 @@ public class FileInfoLIFF extends FileInfoBase {
     String channelArray[] = null;
     double colorization = Double.NaN;
     double cooling = Double.NaN;
+    double CRIRGBFilter = Double.NaN;
     double digitalGain = Double.NaN;
     double emissionFilterChangerArray[] = null;
     int channelNumber = 0;
@@ -40,9 +41,14 @@ public class FileInfoLIFF extends FileInfoBase {
     double ludlAuxWheel1 = Double.NaN;
     double ludlMainWheel1Array[] = null;
     String microscope = null;
+    double microfocusPosition = Double.NaN;
     double objectiveName = Double.NaN;
     double objectivePosition = Double.NaN;
     double offset = Double.NaN;
+    double sensitivityArray[] = null;
+    double SutterDG4Filter = Double.NaN;
+    double SutterL10Filter1Array[] = null;
+    double SutterL10Filter2Array[] = null;
     double wavelengthArray[] = null;
     double xPosition = Double.NaN;
     double yPosition = Double.NaN;
@@ -124,6 +130,10 @@ public class FileInfoLIFF extends FileInfoBase {
             dialog.append("Digital gain = " + digitalGain + "\n");
         }
         
+        if (!Double.isNaN(CRIRGBFilter)) {
+            dialog.append("CRI RGB Filter = " + CRIRGBFilter + "\n");
+        }
+        
         if (emissionFilterChangerArray != null) {
             for (i = 0; i < emissionFilterChangerArray.length; i++) {
                 if ((!Double.isNaN(emissionFilterChangerArray[i])) && (channelArray != null) && (channelArray[i] != null)) {
@@ -131,7 +141,8 @@ public class FileInfoLIFF extends FileInfoBase {
                                   " for channel = " + channelArray[i] + "\n");
                 }
                 else if (!Double.isNaN(emissionFilterChangerArray[i])) {
-                    dialog.append("Emission Filter Changer = " + emissionFilterChangerArray[i] + "\n");
+                    dialog.append("Emission Filter Changer = " + emissionFilterChangerArray[i] +
+                            " for channel = " + (i + 1) + "\n");
                 }
             }
         } // if (emissionFilterChangerArray != null)      
@@ -143,7 +154,8 @@ public class FileInfoLIFF extends FileInfoBase {
                                   " for channel = " + channelArray[i] + "\n");
                 }
                 else if (!Double.isNaN(excitationArray[i])) {
-                    dialog.append("Excitation Filter Changer = " + excitationArray[i] + "\n");
+                    dialog.append("Excitation Filter Changer = " + excitationArray[i] + 
+                            " for channel = " + (i + 1) + "\n");
                 }
             }
         } // if (excitationArray != null)
@@ -155,7 +167,8 @@ public class FileInfoLIFF extends FileInfoBase {
                                   " for channel = " + channelArray[i] + "\n");
                 }
                 else if (!Double.isNaN(exposureArray[i])) {
-                    dialog.append("Exposure = " + exposureArray[i] + "\n");
+                    dialog.append("Exposure = " + exposureArray[i] + 
+                            " for channel = " + (i + 1) + "\n");
                 }
             }
         } // if (exposureArray != null)
@@ -167,7 +180,8 @@ public class FileInfoLIFF extends FileInfoBase {
                                   " for channel = " + channelArray[i] + "\n");
                 }
                 else if (!Double.isNaN(filterTurretArray[i])) {
-                    dialog.append("Filter Turret = " + filterTurretArray[i] + "\n");
+                    dialog.append("Filter Turret = " + filterTurretArray[i] + 
+                            " for channel = " + (i + 1) + "\n");
                 }
             }
         } // if (filterTurretArray != null)
@@ -191,7 +205,8 @@ public class FileInfoLIFF extends FileInfoBase {
                                   " for channel = " + channelArray[i] + "\n");
                 }
                 else if (!Double.isNaN(leicaFilterCubeArray[i])) {
-                    dialog.append("Leica Filter Cube = " + leicaFilterCubeArray[i] + "\n");
+                    dialog.append("Leica Filter Cube = " + leicaFilterCubeArray[i] + 
+                            " for channel = " + (i + 1) + "\n");
                 }
             }
         } // if (leicaFilterCubeArray != null)
@@ -231,10 +246,15 @@ public class FileInfoLIFF extends FileInfoBase {
                                   " for channel = " + channelArray[i] + "\n");
                 }
                 else if (!Double.isNaN(ludlMainWheel1Array[i])) {
-                    dialog.append("Ludl Main Wheel 1 = " + ludlMainWheel1Array[i] + "\n");
+                    dialog.append("Ludl Main Wheel 1 = " + ludlMainWheel1Array[i] + 
+                            " for channel = " + (i + 1) + "\n");
                 }
             }
         } // if (ludlMainWheel1Array != null)
+        
+        if (!Double.isNaN(microfocusPosition)) {
+            dialog.append("Microfocus Position = " + microfocusPosition + "\n");
+        }
         
         if (microscope != null) {
             dialog.append("Microscope = " + microscope + "\n");
@@ -252,6 +272,49 @@ public class FileInfoLIFF extends FileInfoBase {
             dialog.append("Offset = " + offset + "\n");
         }
         
+        if (sensitivityArray != null) {
+            for (i = 0; i < sensitivityArray.length; i++) {
+                if ((!Double.isNaN(sensitivityArray[i])) && (channelArray != null) && (channelArray[i] != null)) {
+                    dialog.append("Sensitivity = " + sensitivityArray[i] + 
+                                  " for channel = " + channelArray[i] + "\n");
+                }
+                else if (!Double.isNaN(sensitivityArray[i])) {
+                    dialog.append("Sensitivity = " + sensitivityArray[i] + 
+                            " for channel = " + (i + 1) + "\n");
+                }
+            }
+        } // if (sensitivityArray != null)
+        
+        if (!Double.isNaN(SutterDG4Filter)) {
+            dialog.append("Sutter DG-4 Filter = " + SutterDG4Filter + "\n");
+        }
+        
+        if (SutterL10Filter1Array != null) {
+            for (i = 0; i < SutterL10Filter1Array.length; i++) {
+                if ((!Double.isNaN(SutterL10Filter1Array[i])) && (channelArray != null) && (channelArray[i] != null)) {
+                    dialog.append("Sutter L-10 Filter 1 = " + SutterL10Filter1Array[i] + 
+                                  " for channel = " + channelArray[i] + "\n");
+                }
+                else if (!Double.isNaN(SutterL10Filter1Array[i])) {
+                    dialog.append("Sutter L-10 Filter 1 = " + SutterL10Filter1Array[i] + 
+                            " for channel = " + (i + 1) + "\n");
+                }
+            }
+        } // if (SutterL10Filter1Array != null)
+        
+        if (SutterL10Filter2Array != null) {
+            for (i = 0; i < SutterL10Filter2Array.length; i++) {
+                if ((!Double.isNaN(SutterL10Filter2Array[i])) && (channelArray != null) && (channelArray[i] != null)) {
+                    dialog.append("Sutter L-10 Filter 2 = " + SutterL10Filter2Array[i] + 
+                                  " for channel = " + channelArray[i] + "\n");
+                }
+                else if (!Double.isNaN(SutterL10Filter2Array[i])) {
+                    dialog.append("Sutter L-10 Filter 2 = " + SutterL10Filter2Array[i] + 
+                            " for channel = " + (i + 1) + "\n");
+                }
+            }
+        } // if (SutterL10Filter2Array != null)
+        
         if (wavelengthArray != null) {
             for (i = 0; i < wavelengthArray.length; i++) {
                 if ((!Double.isNaN(wavelengthArray[i])) && (channelArray != null) && (channelArray[i] != null)) {
@@ -259,7 +322,8 @@ public class FileInfoLIFF extends FileInfoBase {
                                   " for channel = " + channelArray[i] + "\n");
                 }
                 else if (!Double.isNaN(wavelengthArray[i])) {
-                    dialog.append("Wavelength = " + wavelengthArray[i] + "\n");
+                    dialog.append("Wavelength = " + wavelengthArray[i] + 
+                            " for channel = " + (i + 1) + "\n");
                 }
             }
         } // if (wavelengthArray != null)
@@ -308,6 +372,10 @@ public class FileInfoLIFF extends FileInfoBase {
     
     public void setCooling(double cooling) {
         this.cooling = cooling;
+    }
+    
+    public void setCRIRGBFilter(double CRIRGBFilter) {
+        this.CRIRGBFilter = CRIRGBFilter;
     }
     
     public void setDigitalGain(double digitalGain) {
@@ -370,6 +438,10 @@ public class FileInfoLIFF extends FileInfoBase {
         this.ludlMainWheel1Array = ludlMainWheel1Array;
     }
     
+    public void setMicrofocusPosition(double microfocusPosition) {
+        this.microfocusPosition = microfocusPosition;
+    }
+    
     public void setMicroscope(String microscope) {
         this.microscope = microscope;
     }
@@ -384,6 +456,22 @@ public class FileInfoLIFF extends FileInfoBase {
     
     public void setOffset(double offset) {
         this.offset = offset;
+    }
+    
+    public void setSensitivityArray(double sensitivityArray[]) {
+        this.sensitivityArray = sensitivityArray;
+    }
+    
+    public void setSutterDG4Filter(double SutterDG4Filter) {
+        this.SutterDG4Filter = SutterDG4Filter;
+    }
+    
+    public void setSutterL10Filter1Array(double SutterL10Filter1Array[]) {
+        this.SutterL10Filter1Array = SutterL10Filter1Array;
+    }
+    
+    public void setSutterL10Filter2Array(double SutterL10Filter2Array[]) {
+        this.SutterL10Filter2Array = SutterL10Filter2Array;
     }
     
     public void setWavelengthArray(double wavelengthArray[]) {
