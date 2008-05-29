@@ -88,7 +88,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     private String imageDir;
     
-    private boolean displayChanged = false;
+    private boolean voiChangeState = false;
+
+	private boolean displayChanged = false;
 
     private int colorChoice = 0;
     
@@ -262,6 +264,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	this.setActiveImage(IMAGE_A);
     	setVisible(true);
     	scrollPane.requestFocus();
+    	
+    	ctMode(getImageA(), -175, 275);
     	
     	imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
     	
@@ -601,6 +605,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         } 
 
         pack();
+        ctMode(getImageA(), -175, 275);
         initMuscleImage(2);
         getActiveImage().unregisterAllVOIs();
         initMuscleImage(1);
@@ -613,8 +618,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         }
         this.setResizable(true);
     }
-    
-    private boolean voiChangeState = false;
     
     @Override
 	public void componentShown(ComponentEvent event) {
@@ -968,8 +971,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
     	getVOIs(pane);
         
-        ctMode(getImageA(), -175, 275);
-        
         initMuscleButton(pane);
         
     	this.repaint();
@@ -1027,12 +1028,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     }
 
     /**
-     * Sets mode to CT and sets range to CT presets.
+     * Sets mode to CT and sets range to CT presets. Used for any new image.
      *
      * @param  preset1  first CT preset
      * @param  preset2  second CT preset
      */
-    public void ctMode(ModelImage image, int preset1, int preset2) {
+    private void ctMode(ModelImage image, int preset1, int preset2) {
     	Dimension dim = new Dimension(256, 256);
     	
     	//stores LUT min max values
