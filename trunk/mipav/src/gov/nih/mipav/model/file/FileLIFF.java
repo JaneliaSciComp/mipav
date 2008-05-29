@@ -507,7 +507,6 @@ public class FileLIFF extends FileBase {
         LZOCodec lzo;
         int srcIndex;
         int destIndex;
-        String notesStr;
         String channelArray[] = new String[10];
         int channelNumber = 0;
         String channelStr;
@@ -522,9 +521,23 @@ public class FileLIFF extends FileBase {
         double leicaFIMArray[][] = new double[400][10];
         int fimNumber = 0;
         double ludlMainWheel1Array[] = new double[10];
+        double sensitivityArray[] = new double[10];
+        double SutterL10Filter1Array[] = new double[10];
+        double SutterL10Filter2Array[] = new double[10];
         double wavelengthArray[] = new double[10];
         double zPositionArray[] = new double[400];
         int zNumber = 0;
+        boolean haveChannel = false;
+        int emissionIndex = 0;
+        int excitationIndex = 0;
+        int exposureIndex = 0;
+        int filterTurretIndex = 0;
+        int leicaFilterCubeIndex = 0;
+        int ludlMainWheel1Index = 0;
+        int sensitivityIndex = 0;
+        int SutterL10Filter1Index = 0;
+        int SutterL10Filter2Index = 0;
+        int wavelengthIndex = 0;
 
         try {
             for (i = 0; i < 10; i++) {
@@ -534,6 +547,9 @@ public class FileLIFF extends FileBase {
                 filterTurretArray[i] = Double.NaN;
                 leicaFilterCubeArray[i] = Double.NaN;
                 ludlMainWheel1Array[i] = Double.NaN;
+                sensitivityArray[i] = Double.NaN;
+                SutterL10Filter1Array[i] = Double.NaN;
+                SutterL10Filter2Array[i] = Double.NaN;
                 wavelengthArray[i] = Double.NaN;
             }
             for (i = 0; i < focusPositionArray.length; i++) {
@@ -1934,6 +1950,7 @@ public class FileLIFF extends FileBase {
                             }
                             else if (nameStr.trim().toUpperCase().equals("CHANNEL")) {
                                 if (strSize != 0) {
+                                    haveChannel = true;
                                     channelStr = stringValue;
                                     found = false;
                                     for (j = 0; j < channelNumber & !found; j++) {
@@ -1955,24 +1972,51 @@ public class FileLIFF extends FileBase {
                             else if (nameStr.trim().toUpperCase().equals("COOLING")) {
                                 fileInfo.setCooling(doubleValue);
                             }
+                            else if (nameStr.trim().toUpperCase().equals("CRI RGB FILTER")) {
+                                fileInfo.setCRIRGBFilter(doubleValue);
+                            }
                             else if (nameStr.trim().toUpperCase().equals("DIGITAL GAIN")) {
                                 fileInfo.setDigitalGain(doubleValue);
                             }
                             else if (nameStr.trim().toUpperCase().equals("EMISSION FILTER CHANGER")) {
-                                emissionFilterChangerArray[channelPresent] = doubleValue;
-                                fileInfo.setEmissionFilterChangerArray(emissionFilterChangerArray);
+                                if (haveChannel) {
+                                    emissionFilterChangerArray[channelPresent] = doubleValue;
+                                    fileInfo.setEmissionFilterChangerArray(emissionFilterChangerArray);
+                                }
+                                else if (emissionIndex < 3) {
+                                    emissionFilterChangerArray[emissionIndex++] = doubleValue;
+                                    fileInfo.setEmissionFilterChangerArray(emissionFilterChangerArray);
+                                }
                             }
                             else if (nameStr.trim().toUpperCase().equals("EXCITATION FILTER CHANGER")) {
-                                 excitationArray[channelPresent] = doubleValue;  
-                                 fileInfo.setExcitationArray(excitationArray);
+                                 if (haveChannel) {
+                                     excitationArray[channelPresent] = doubleValue;  
+                                     fileInfo.setExcitationArray(excitationArray);
+                                 }
+                                 else if (excitationIndex < 3) {
+                                     excitationArray[excitationIndex++] = doubleValue;  
+                                     fileInfo.setExcitationArray(excitationArray);    
+                                 }
                             }
                             else if (nameStr.trim().toUpperCase().equals("EXPOSURE")) {
-                                exposureArray[channelPresent] = doubleValue;
-                                fileInfo.setExposureArray(exposureArray);
+                                if (haveChannel) {
+                                    exposureArray[channelPresent] = doubleValue;
+                                    fileInfo.setExposureArray(exposureArray);
+                                }
+                                else if (exposureIndex < 3) {
+                                    exposureArray[exposureIndex++] = doubleValue;
+                                    fileInfo.setExposureArray(exposureArray);    
+                                }
                             }
                             else if (nameStr.trim().toUpperCase().equals("FILTER TURRET")) {
-                                filterTurretArray[channelPresent] = doubleValue;
-                                fileInfo.setFilterTurretArray(filterTurretArray);
+                                if (haveChannel) {
+                                    filterTurretArray[channelPresent] = doubleValue;
+                                    fileInfo.setFilterTurretArray(filterTurretArray);
+                                }
+                                else if (filterTurretIndex < 3) {
+                                    filterTurretArray[filterTurretIndex++] = doubleValue;
+                                    fileInfo.setFilterTurretArray(filterTurretArray);    
+                                }
                             }
                             else if (nameStr.trim().toUpperCase().equals("FOCUS POSITION")) {
                                 if (channelPresent == 0) {
@@ -1987,8 +2031,14 @@ public class FileLIFF extends FileBase {
                                 fileInfo.setLeicaCondenserTurret(doubleValue);
                             }
                             else if (nameStr.trim().toUpperCase().equals("LEICA FILTER CUBE")) {
-                                leicaFilterCubeArray[channelPresent] = doubleValue;
-                                fileInfo.setLeicaFilterCubeArray(leicaFilterCubeArray);
+                                if (haveChannel) {
+                                    leicaFilterCubeArray[channelPresent] = doubleValue;
+                                    fileInfo.setLeicaFilterCubeArray(leicaFilterCubeArray);
+                                }
+                                else if (leicaFilterCubeIndex < 3) {
+                                    leicaFilterCubeArray[leicaFilterCubeIndex++] = doubleValue;
+                                    fileInfo.setLeicaFilterCubeArray(leicaFilterCubeArray);    
+                                }
                             }
                             else if (nameStr.trim().toUpperCase().equals("LEICA FIM")) {
                                 if (channelPresent == 0) {
@@ -2010,8 +2060,17 @@ public class FileLIFF extends FileBase {
                                 fileInfo.setLudlAuxWheel1(doubleValue);
                             }
                             else if (nameStr.trim().toUpperCase().equals("LUDL MAIN WHEEL 1")) {
-                                ludlMainWheel1Array[channelPresent] = doubleValue;
-                                fileInfo.setLudlMainWheel1Array(ludlMainWheel1Array);
+                                if (haveChannel) {
+                                    ludlMainWheel1Array[channelPresent] = doubleValue;
+                                    fileInfo.setLudlMainWheel1Array(ludlMainWheel1Array);
+                                }
+                                else if (ludlMainWheel1Index < 3) {
+                                    ludlMainWheel1Array[ludlMainWheel1Index++] = doubleValue;
+                                    fileInfo.setLudlMainWheel1Array(ludlMainWheel1Array);    
+                                }
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("MICROFOCUS POSITION")) {
+                                fileInfo.setMicrofocusPosition(doubleValue);
                             }
                             else if (nameStr.trim().toUpperCase().equals("MICROSCOPE")) {
                                 if (strSize != 0) {
@@ -2027,9 +2086,48 @@ public class FileLIFF extends FileBase {
                             else if (nameStr.trim().toUpperCase().equals("OFFSET")) {
                                 fileInfo.setOffset(doubleValue);
                             }
+                            else if (nameStr.trim().toUpperCase().equals("SENSITIVITY")) {
+                                if (haveChannel) {
+                                    sensitivityArray[channelPresent] = doubleValue;
+                                    fileInfo.setSensitivityArray(sensitivityArray);
+                                }
+                                else if (sensitivityIndex < 3) {
+                                    sensitivityArray[sensitivityIndex++] = doubleValue;
+                                    fileInfo.setSensitivityArray(sensitivityArray);    
+                                }    
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("SUTTER DG-4 FILTER")) {
+                                fileInfo.setSutterDG4Filter(doubleValue);
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("SUTTER L-10 FILTER 1")) {
+                                if (haveChannel) {
+                                    SutterL10Filter1Array[channelPresent] = doubleValue;
+                                    fileInfo.setSutterL10Filter1Array(SutterL10Filter1Array);
+                                }
+                                else if (SutterL10Filter1Index < 3) {
+                                    SutterL10Filter1Array[SutterL10Filter1Index++] = doubleValue;
+                                    fileInfo.setSutterL10Filter1Array(SutterL10Filter1Array);    
+                                }
+                            }
+                            else if (nameStr.trim().toUpperCase().equals("SUTTER L-10 FILTER 2")) {
+                                if (haveChannel) {
+                                    SutterL10Filter2Array[channelPresent] = doubleValue;
+                                    fileInfo.setSutterL10Filter2Array(SutterL10Filter2Array);
+                                }
+                                else if (SutterL10Filter2Index < 3) {
+                                    SutterL10Filter2Array[SutterL10Filter2Index++] = doubleValue;
+                                    fileInfo.setSutterL10Filter2Array(SutterL10Filter2Array);    
+                                }
+                            }
                             else if (nameStr.trim().toUpperCase().equals("WAVELENGTH")) {
-                                wavelengthArray[channelPresent] = doubleValue;
-                                fileInfo.setWavelengthArray(wavelengthArray);
+                                if (haveChannel) {
+                                    wavelengthArray[channelPresent] = doubleValue;
+                                    fileInfo.setWavelengthArray(wavelengthArray);
+                                }
+                                else if (wavelengthIndex < 3) {
+                                    wavelengthArray[wavelengthIndex++] = doubleValue;
+                                    fileInfo.setWavelengthArray(wavelengthArray);   
+                                }
                             }
                             else if (nameStr.trim().toUpperCase().equals("X-Y STAGE: X POSITION")) {
                                 fileInfo.setXPosition(doubleValue);
