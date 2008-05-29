@@ -71,13 +71,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     /** Whether this image has mirror image muscles (eg VIEWS of thighs, abdomen. */
     private Symmetry symmetry;
     
-    private JTabbedPane imagePane;
+    private JTabbedPane dialogTabs;
     
     private int activeTab;
     
     private DialogPrompt[] tabs;
-    
-    //private TreeMap zeroStatus;
     
     private boolean changeSlice = false;
     
@@ -358,8 +356,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	}
     	tabs = null;
     	
-    	imagePane.removeAll();
-    	imagePane = null;
+    	dialogTabs.removeAll();
+    	dialogTabs = null;
 
     	System.gc();
     	
@@ -534,10 +532,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         scrollPane.setBackground(Color.black);
         scrollPane.addKeyListener(this);
         
-        imagePane = new JTabbedPane();
-        imagePane.setMinimumSize(new Dimension (370, 532));
-        imagePane.setPreferredSize(new Dimension(370, 532));
-        imagePane.setMaximumSize(new Dimension (370, 532));
+        dialogTabs = new JTabbedPane();
+        dialogTabs.setMinimumSize(new Dimension (370, 532));
+        dialogTabs.setPreferredSize(new Dimension(370, 532));
+        dialogTabs.setMaximumSize(new Dimension (370, 532));
         
         tabs = new DialogPrompt[mirrorArr.length+2]; //+2 for VOI and AnalysisPrompt
         
@@ -545,7 +543,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         JPanel testPanel = new JPanel();
         testPanel.setLayout(new BorderLayout());
-        testPanel.add(imagePane, BorderLayout.WEST);
+        testPanel.add(dialogTabs, BorderLayout.WEST);
         testPanel.add(scrollPane, BorderLayout.CENTER);
         
         //JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, imagePane, scrollPane);
@@ -562,10 +560,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	tabs[i].addComponentListener(this);
         	tabs[i].addListener(this);
         	tabs[i].setName(titles[i]);
-        	imagePane.addTab((i+1)+": "+titles[i], tabs[i]);
-        	
-        	JButton[] mirror = ((MuscleDialogPrompt)tabs[i]).getMirrorButton();
-            JButton[] noMirror = ((MuscleDialogPrompt)tabs[i]).getNoMirrorButton();
+        	dialogTabs.addTab((i+1)+": "+titles[i], tabs[i]);
         }
         //now put voiTab up
         voiTabLoc = mirrorArr.length;
@@ -860,9 +855,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     public void lockToPanel(int tabLoc, String title) {
     	tabs[tabLoc].setVisible(true);
     	for(int i=0; i<voiTabLoc; i++)
-    		imagePane.setEnabledAt(i, false);
-    	imagePane.addTab(title, tabs[tabLoc]);
-    	imagePane.setSelectedIndex(voiTabLoc);
+    		dialogTabs.setEnabledAt(i, false);
+    	dialogTabs.addTab(title, tabs[tabLoc]);
+    	dialogTabs.setSelectedIndex(voiTabLoc);
     	updateImages(true);
     }
     
@@ -873,10 +868,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      */
     public void unlockToPanel(int closingTabLoc) {
     	tabs[closingTabLoc].setVisible(false);
-    	imagePane.remove(tabs[closingTabLoc]);
+    	dialogTabs.remove(tabs[closingTabLoc]);
         for(int i=0; i<voiTabLoc; i++) 
-            imagePane.setEnabledAt(i, true);
-        imagePane.setSelectedIndex(activeTab);
+            dialogTabs.setEnabledAt(i, true);
+        dialogTabs.setSelectedIndex(activeTab);
         voiChangeState = false;
     }
     
@@ -1007,7 +1002,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    	if(voiBuffer.get(name).getLocation() == pane) {
 	    		v = getSingleVOI(name);
 	    		v.setThickness(2);
-	    		v.setDisplayMode(PlugInSelectableVOI.BOUNDARY);
+	    		v.setDisplayMode(VOI.BOUNDARY);
     			getActiveImage().registerVOI(v);
 	    	}
     	}
@@ -1020,7 +1015,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     		VOI voi = voiVec.get(i);
     		if(voiBuffer.get(voi.getName()).doFill() && 
     				!(((VoiDialogPrompt)tabs[voiTabLoc]).getObjectName().equals(voi.getName()))) 
-    			voi.setDisplayMode(PlugInSelectableVOI.SOLID);
+    			voi.setDisplayMode(VOI.SOLID);
     	}
         
         componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
@@ -1730,7 +1725,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 mirrorButtonArr[i].addActionListener(muscleFrame);
                 mirrorGroup.add(mirrorButtonArr[i]);
 
-                mirrorCheckArr[i] = new ColorButtonPanel(Color.black, mirrorButtonArr[i].getText());        
+                mirrorCheckArr[i] = new ColorButtonPanel(Color.BLACK, mirrorButtonArr[i].getText());        
                
                 if(i != 0 && i % 2 == 0) {
                     gbc.gridy++;
@@ -1752,7 +1747,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 
             ButtonGroup noMirrorGroup = new ButtonGroup();
             JPanel noMirrorPanel = new JPanel(new GridBagLayout());
-            noMirrorPanel.setForeground(Color.black);
+            noMirrorPanel.setForeground(Color.BLACK);
             noMirrorPanel.setBorder(MipavUtil.buildTitledBorder("Select an object"));
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.anchor = GridBagConstraints.WEST;
@@ -2335,7 +2330,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	                    //individual error messages are already displayed
 	                }
 	            } else if (command.equals(OUTPUT)) {
-	            	System.err.println("imagepane size: " + imagePane.size());
+	            	System.err.println("imagepane size: " + dialogTabs.size());
 	            	processCalculations(false, false);
 	            } else if (command.equals(OUTPUT_ALL)) { 
 	            	processCalculations(true, false);
