@@ -172,20 +172,30 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
      * @param  iters       DOCUMENT ME!
      */
     public void Close(ModelImage sourceImg, int kernalSize, int iters) {
-
-        AlgorithmMorphology3D MorphClose = null;
-
-        if (kernalSize == 6) {
-            MorphClose = new AlgorithmMorphology3D(sourceImg, AlgorithmMorphology3D.CONNECTED6, 1,
-                                                   AlgorithmMorphology3D.CLOSE, iters, iters, 0, 0, true);
+        
+        if (sourceImg.getNDims() == 2) {
+            AlgorithmMorphology2D MorphClose = null;
+            if (kernalSize == 4) {
+                MorphClose = new AlgorithmMorphology2D(sourceImg, AlgorithmMorphology2D.CONNECTED4, 1,
+                                                       AlgorithmMorphology2D.CLOSE, iters, iters, 0, 0, true);
+            }
+            if (kernalSize == 8) {
+                MorphClose = new AlgorithmMorphology2D(sourceImg, AlgorithmMorphology2D.CONNECTED8, 1,
+                                                       AlgorithmMorphology2D.CLOSE, iters, iters, 0, 0, true);
+            }
+            MorphClose.run();
+        } else if (sourceImg.getNDims() == 3) {
+            AlgorithmMorphology3D MorphClose = null;
+            if (kernalSize == 6) {
+                MorphClose = new AlgorithmMorphology3D(sourceImg, AlgorithmMorphology3D.CONNECTED6, 1,
+                                                       AlgorithmMorphology3D.CLOSE, iters, iters, 0, 0, true);
+            }
+            if (kernalSize == 24) {
+                MorphClose = new AlgorithmMorphology3D(sourceImg, AlgorithmMorphology3D.CONNECTED24, 1,
+                                                       AlgorithmMorphology3D.CLOSE, iters, iters, 0, 0, true);
+            }
+            MorphClose.run();
         }
-
-        if (kernalSize == 24) {
-            MorphClose = new AlgorithmMorphology3D(sourceImg, AlgorithmMorphology3D.CONNECTED24, 1,
-                                                   AlgorithmMorphology3D.CLOSE, iters, iters, 0, 0, true);
-        }
-
-        MorphClose.run();
     }
 
     /**
@@ -391,7 +401,12 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
         } // end for (int sliceNum = 0; ...)
 
         bone.calcMinMax();
-        Close(bone, 6, 2);
+        if (bone.getNDims() == 2) {
+            Close(bone, 4, 2);
+        } else if (bone.getNDims() == 3) {
+            Close(bone, 6, 2);
+        }
+        
 
         return bone;
 
@@ -420,7 +435,7 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
         // find the single object closest to the center of the image
         isolatingCenterObject(bMarrow);
         // bMarrow is a binary image where 1's label bone marrow and 0's are elsewhere
-        // PFH         ShowImage(bMarrow, "isolatingCenterObject");
+        // PFH        ShowImage(bMarrow, "isolatingCenterObject");
 
         return bMarrow;
     } // end extractedBoneMarrow(...)
@@ -578,10 +593,17 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
      * @param  max       --largest object to let through
      */
     public void IDObjects(ModelImage srcImage, int min, int max) {
-        AlgorithmMorphology3D MorphIDObj = null;
-        MorphIDObj = new AlgorithmMorphology3D(srcImage, 4, 1, AlgorithmMorphology3D.ID_OBJECTS, 0, 0, 0, 0, true);
-        MorphIDObj.setMinMax(min, max);
-        MorphIDObj.run();
+        if (srcImage.getNDims() == 2) {
+            AlgorithmMorphology2D MorphIDObj = null;
+            MorphIDObj = new AlgorithmMorphology2D(srcImage, 4, 1, AlgorithmMorphology2D.ID_OBJECTS, 0, 0, 0, 0, true);
+            MorphIDObj.setMinMax(min, max);
+            MorphIDObj.run();
+        } else if (srcImage.getNDims() == 3) {
+            AlgorithmMorphology3D MorphIDObj = null;
+            MorphIDObj = new AlgorithmMorphology3D(srcImage, 4, 1, AlgorithmMorphology3D.ID_OBJECTS, 0, 0, 0, 0, true);
+            MorphIDObj.setMinMax(min, max);
+            MorphIDObj.run();
+        }
     }
 
 
@@ -675,10 +697,17 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
 
                         centroidX[cc - 1] = centroidX[cc - 1] / n;
                         centroidY[cc - 1] = centroidY[cc - 1] / n;
+/*  PFH incorrect calculation 5/30/08
                         distFromCent[cc - 1] = Math.abs(((centroidX[cc - 1] - (xDim / 2f)) *
                                                              (centroidX[cc - 1] - (xDim / 2f))) +
                                                         ((centroidY[cc - 1] - (yDim / 3.0f)) *
                                                              (centroidY[cc - 1] - (yDim / 3.0f))));
+*/
+                        distFromCent[cc - 1] = Math.abs(((centroidX[cc - 1] - (xDim / 2.0f)) *
+                                                         (centroidX[cc - 1] - (xDim / 2.0f))) +
+                                                        ((centroidY[cc - 1] - (yDim / 2.0f)) *
+                                                         (centroidY[cc - 1] - (yDim / 2.0f))));
+
                     }
 
                     /**use centroids to find center Bone object. (object with minimum distFromCent)*/
@@ -858,29 +887,35 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
 
         // relabel all pixels inside the voi as muscle
         convert(fatImage, voiMask, fatImage, 1, MUSCLE);
-        //       PFH        ShowImage(fatImage, "voiMask");
+        // PFH        ShowImage(fatImage, "voiMask");
 
         // relabel all pixels classified as FAT_2_A, interstitial fat (189)
         // in the Hard4Classes as FAT (255) in the fatImage
         convert(fatImage, Hard4Classes, fatImage, 189, FAT);
-        //       PFH        ShowImage(fatImage, "fatA");
+        // PFH        ShowImage(fatImage, "fatA");
 
         // relabel all pixels classified as FAT_2_B, interstitial fat (252)
         // in the Hard4Classes as FAT in the fatImage
         convert(fatImage, Hard4Classes, fatImage, 252, FAT);
-        //       PFH        ShowImage(fatImage, "fatB");
+        // PFH
+        ShowImage(fatImage, "fatB");
 
         // label all pixels outside the VOI as subcutaneous fat
         //       PFH        ShowImage(fatImage, "BEFORE outside fat");
-        convert(fatImage, voiMask, fatImage, 0, SUB_CUT_FAT);
-        //       PFH        ShowImage(fatImage, "AFTER outside fat");
-        //       PFH        ShowImage(voiMask, "voiMask");
+//        convert(fatImage, voiMask, fatImage, 0, SUB_CUT_FAT);
+        convert(fatImage, voiMask, fatImage, 255, SUB_CUT_FAT);
+        // PFH
+        ShowImage(fatImage, "AFTER outside fat");
+        // PFH
+        ShowImage(voiMask, "voiMask");
 
         // relabel pixels outside the outer boundary mask as background
         convert(fatImage, obMask, fatImage, 0, BACKGROUND_NEW); /*all outside obMask labeled background*/
 
-        //       PFH        ShowImage(obMask, "obMask");
-        //       PFH        ShowImage(fatImage, "background");
+        // PFH
+        ShowImage(obMask, "obMask");
+        // PFH
+        ShowImage(fatImage, "background");
 
         // apply a fat cardinality filter to get rid of small regions of fat
         //
@@ -916,6 +951,8 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
         int total_thighCount = 0;
         
             getVariables(srcImageA, obMaskA);
+            ShowImage(srcImageA, "source image");
+            ShowImage(obMaskA, "obMaskA");
 
             sliceSize = xDim * yDim;
             volSize = xDim * yDim * zDim;
@@ -944,7 +981,9 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
 
 
             // STEP 2: ISN and N3 inside VOI
-            ISN(processedImage);
+            if (zDim > 1) {
+                ISN(processedImage);
+            }
             // processedImage is right/left thigh image after ISN
             // PFH            ShowImage(processedImage, "ISN");
 
@@ -993,7 +1032,10 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
             */
 
             // STEP 6: PROCESS FAT
-            ModelImage fatSeg = processHardFat(HardSeg1); // ShowImage(destImage3b, "bundle cleanedup fat image");
+            ModelImage fatSeg = processHardFat(HardSeg1);
+            
+            // PFH         ShowImage(fatSeg, "bundle cleaned-up fat image");
+            
             fireProgressStateChanged((50 * (aa - 1)) + 46);
             HardSeg1.disposeLocal();
             HardSeg1 = null;
