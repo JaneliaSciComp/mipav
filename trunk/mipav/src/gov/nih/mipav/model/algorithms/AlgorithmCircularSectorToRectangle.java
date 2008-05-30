@@ -9,17 +9,19 @@ import java.io.*;
 
 
 /**
- * This software uses 2D conformal mapping in converting a circular sector defined by 4 user points at the sector corners to
- * a rectangle of user specified size. The circular sector has an inner radius rmin, an outer radius rmax, and extends
+ * This software uses 2D conformal mapping in converting a circular sector defined by 4 user points at the sector corners
+ * to a rectangle of user specified size. The circular sector has an inner radius rmin, an outer radius rmax, and extends
  * over an angle theta = alpha * PI radians, with 0 < alpha <= 1. In a conformal mapping in any small neighborhood the
- * relative angle and shape are preserved. z1 is the upper right point on rmax, z2 is the upper left point on rmax, z3 is
- * the lower left point on rmin, and z4 is the lower right point on rmin. The mapping to the user specified rectangle is
- * performed in 3 steps. First, all distances from the circular center are divided by sqrt(rmax * rmin).  Second,
- * a conformal mapping to a rectangle of width 1 and height log(rmax/rmin)/theta occurs.  Then, this rectangle is linearly
- * scaled to a rectangle of user specified xDim and yDim.  Note that the linear scaling of one rectangle to another is not
- * a conformal mapping unless the width and height are scaled by the same factor.  From "Lectures on Quasiconformal Mappings"
- * second edition by Lars V. Ahlfors: "If Q is a square and R is a rectangle, not a square, there is no conformal mapping
- * of Q on R which maps vertices on vertices."
+ * relative angle and shape are preserved. The points z1, z2, z3, and z4 are entered in a counterclockwise order with
+ * z1 and z2 on rmax and z3 and z4 on rmin.  For the case of rmax pointing to the top of the image, z1 is the upper
+ * right point on rmax, z2 is the upper left point on rmax, z3 is the lower left point on rmin, and z4 is the lower
+ * right point on rmin. The mapping to the user specified rectangle is performed in 3 steps. First, all distances from
+ * the circular center are divided by sqrt(rmax * rmin).  Second, a conformal mapping to a rectangle of width 1 and
+ * height log(rmax/rmin)/theta occurs.  Then, this rectangle is linearly scaled to a rectangle of user specified xDim
+ * and yDim.  Note that the linear scaling of one rectangle to another is not a conformal mapping unless the width and
+ * height are scaled by the same factor.  From "Lectures on Quasiconformal Mappings" second edition by Lars V. Ahlfors:
+ * "If Q is a square and R is a rectangle, not a square, there is no conformal mapping of Q on R which maps vertices
+ * on vertices."
  *
  * <p>Let z4z1 be on the real axis, let the straight line z2z3 be inclined at an angle alpha*PI, 0 < alpha <= 1, z3 and
  * z4 are both on the radius rmin, and z1 and z2 are both on the radius rmax. For the conformal mapping we require that
@@ -125,7 +127,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
 
         int i, j;
         int index, index1;
-        double r;
+        double r = 0.0;
         double ang;
 
         int xDimDest;
@@ -134,8 +136,8 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         float[] srcBuffer;
         float[] destBuffer;
         double var;
-        double yp;
-        double xp;
+        double yp = 0.0;
+        double xp = 0.0;
         double rscale;
         double ySrc;
         double xSrc;
@@ -147,6 +149,10 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         int sIndex;
         int cf;
         boolean test = false;
+        boolean maxRadiusTop = false;
+        boolean maxRadiusBottom = false;
+        boolean maxRadiusRight = false;
+        boolean maxRadiusLeft = false;
         
         if (test) {
             selfTest2();
@@ -177,6 +183,18 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         y2 = y[1];
         y3 = y[2];
         y4 = y[3];
+        if ((x1 > x2) && (x4 > x3) && (y3 > y2) && (y4 > y1)) {
+            maxRadiusTop = true;
+        }
+        else if ((x2 > x1) && (x3 > x4) && (y2 > y3) && (y1 > y4)) {
+            maxRadiusBottom = true;
+        }
+        else if ((x1 > x4) && (x2 > x3) && (y1 > y2) && (y4 > y3)) {
+            maxRadiusRight = true;
+        }
+        else {
+            maxRadiusLeft = true;
+        }
         // Calculate center point of circle
         // (yc - y4)/(xc - x4) = (y4 - y1)/(x4 - x1)
         // yc - y4 = (xc - x4) * (y4 - y1)/(x4 - x1)
@@ -210,7 +228,13 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
 
         // Angle of sector in radians
         // theta = alpha * PI
-        theta = theta2 - theta1;
+        if (maxRadiusLeft) {
+            // Discontinuity of angle from -PI to PI at negative x axis
+            theta = Math.abs(theta1) + Math.abs(theta2) - 2.0 * Math.PI;    
+        }
+        else {
+            theta = theta2 - theta1;
+        }
 
         alpha = theta / Math.PI;
         Preferences.debug("alpha = " + alpha + "\n");
@@ -245,6 +269,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         } // if (!srcImage.isColorImage())
 
         // 2 mappings
+        // Consider case of maxRadiusTop
         // Mapping 1 is simply a mapping from 1 rectangle to another in which the
         // x axis is inverted and the x and y axes are scaled.
         // Map from z1" = (xDimDest-1, 0) to z1' = (0,-log(sqrt(rmax/rmin))/theta)
@@ -274,13 +299,43 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         for (j = 0; j < yDimDest; j++) {
             fireProgressStateChanged(100 * j / yDimDest);
             index1 = j * xDimDest;
-            yp = ((2.0 * var * j) / (yDimDest - 1)) - var;
+            if (maxRadiusTop) {
+                yp = ((2.0 * var * j) / (yDimDest - 1)) - var;
+                r = rscale * Math.exp(-theta * yp);
+            }
+            else if (maxRadiusBottom){
+                yp = ((-2.0 * var * j) / (yDimDest - 1)) + var;
+                r = rscale * Math.exp(-theta * yp);
+            }
+            else if (maxRadiusRight) {
+                xp = 1.0 - ((double)j/(yDimDest - 1));
+                ang = (theta * xp) + theta1;
+            }
+            else { // maxRadiusLeft
+                xp = ((double)j/(yDimDest - 1));
+                ang = (theta * xp) + theta1;
+            }
 
             // v = -log(r)/(alpha *PI) -> r = exp(-theta*v), then scale by sqrt(rmax/rmin).
-            r = rscale * Math.exp(-theta * yp);
+            
 
             for (i = 0; i < xDimDest; i++) {
-                xp = 1.0 - ((double) i / (xDimDest - 1));
+                if (maxRadiusTop) {
+                    xp = 1.0 - ((double) i / (xDimDest - 1));
+                    ang = (theta * xp) + theta1;
+                }
+                else if (maxRadiusBottom) {
+                    xp = ((double)i/ (xDimDest - 1));
+                    ang = (theta * xp) + theta1;
+                }
+                else if (maxRadiusRight) {
+                    yp = ((-2.0 * var * i)/ (xDimDest - 1)) + var;
+                    r = rscale * Math.exp(-theta * yp);
+                }
+                else { // maxRadiusLeft
+                    yp = ((2.0 * var * i)/ (xDimDest - 1)) - var;
+                    r = rscale * Math.exp(-theta * yp);    
+                }
 
                 // u = theta/(alpha*PI) -> theta = alpha * PI * u, then add in theta1.
                 ang = (theta * xp) + theta1;
