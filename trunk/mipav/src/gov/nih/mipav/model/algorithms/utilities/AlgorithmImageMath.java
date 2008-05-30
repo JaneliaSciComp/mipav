@@ -1352,15 +1352,37 @@ public class AlgorithmImageMath extends AlgorithmBase {
         double[] buffer; // data-buffer (for pixel data) which is the "heart" of the image
         double bestMin, bestMax;
         double bestMinR, bestMaxR, bestMinG, bestMaxG, bestMinB, bestMaxB;
+        int sumAverageLength;
 
         double[] sumAverageBuffer = null; // buffer needed to do summing/average
+        int sumFactor = 1;
 
         try {
             length = srcImage.getSliceSize();
             buffer = new double[4*length];
 
             if ((opType == AVERAGE) || (opType == SUM)) {
-                sumAverageBuffer = new double[4*length];
+                sumAverageLength = 4*length;
+                if (srcImage.getNDims() >= 4) {
+                    sumAverageLength *= srcImage.getExtents()[2];
+                }
+                if (srcImage.getNDims() == 5) {
+                    sumAverageLength *= srcImage.getExtents()[3];
+                }
+                sumAverageBuffer = new double[sumAverageLength];
+                if (srcImage.getNDims() == 5) {
+                    sumFactor = srcImage.getExtents()[4];
+                }
+                else if (srcImage.getNDims() == 4) {
+                    sumFactor = srcImage.getExtents()[3];
+                }
+                else if (srcImage.getNDims() == 3) {
+                    sumFactor = srcImage.getExtents()[2];
+                }
+                else {
+                    sumFactor = 1;
+                }
+                
             }
 
             fireProgressStateChanged(srcImage.getImageName(), "Calculating image ...");
@@ -1508,39 +1530,39 @@ public class AlgorithmImageMath extends AlgorithmBase {
                         
                     case SUM:
                         if (minR < 0) {
-                            bestMinR = minR * f * t * z;
+                            bestMinR = minR * sumFactor;
                         }
                         else {
                             bestMinR = 0;
                         }
                         if (maxR > 0) {
-                            bestMaxR = maxR * f * t * z;
+                            bestMaxR = maxR * sumFactor;
                         }
                         else {
                             bestMaxR = 0;
                         }
                         
                         if (minG < 0) {
-                            bestMinG = minG * f * t * z;
+                            bestMinG = minG * sumFactor;
                         }
                         else {
                             bestMinG = 0;
                         }
                         if (maxG > 0) {
-                            bestMaxG = maxG * f * t * z;
+                            bestMaxG = maxG * sumFactor;
                         }
                         else {
                             bestMaxG = 0;
                         }
                         
                         if (minB < 0) {
-                            bestMinB = minB * f * t * z;
+                            bestMinB = minB * sumFactor;
                         }
                         else {
                             bestMinB = 0;
                         }
                         if (maxB > 0) {
-                            bestMaxB = maxB * f * t * z;
+                            bestMaxB = maxB * sumFactor;
                         }
                         else {
                             bestMaxB = 0;
@@ -1666,9 +1688,21 @@ public class AlgorithmImageMath extends AlgorithmBase {
                                 
                                 case AVERAGE:
                                 case SUM:
-                                    sumAverageBuffer[4*i+1] += buffer[4*i+1];
-                                    sumAverageBuffer[4*i+2] += buffer[4*i+2];
-                                    sumAverageBuffer[4*i+3] += buffer[4*i+3];
+                                    if (srcImage.getNDims() <= 3) {
+                                        sumAverageBuffer[4*i+1] += buffer[4*i+1];
+                                        sumAverageBuffer[4*i+2] += buffer[4*i+2];
+                                        sumAverageBuffer[4*i+3] += buffer[4*i+3];
+                                    }
+                                    else if (srcImage.getNDims() == 4) {
+                                        sumAverageBuffer[4*j*length + 4*i + 1] += buffer[4*i+1];
+                                        sumAverageBuffer[4*j*length + 4*i + 2] += buffer[4*i+2];
+                                        sumAverageBuffer[4*j*length + 4*i + 3] += buffer[4*i+3];
+                                    }
+                                    else { // srcImage.getNDims() == 5
+                                        sumAverageBuffer[4*k*volume + 4*j*length + 4*i + 1] += buffer[4*i+1];
+                                        sumAverageBuffer[4*k*volume + 4*j*length + 4*i + 2] += buffer[4*i+2];
+                                        sumAverageBuffer[4*k*volume + 4*j*length + 4*i + 3] += buffer[4*i+3];
+                                    }
                                     break;
 
                                 default:
@@ -1720,12 +1754,12 @@ public class AlgorithmImageMath extends AlgorithmBase {
             if (opType == AVERAGE) {
 
                 for (i = 0; i < sumAverageBuffer.length; i++) {
-                    sumAverageBuffer[i] /= (f * t * z);
+                    sumAverageBuffer[i] /= sumFactor;
                 }
             }
             
             if ((opType == SUM) && (clipMode == CLIP)) {
-                for (i = 0; i < 4*length; i++) {
+                for (i = 0; i < sumAverageBuffer.length; i++) {
 
                     if (sumAverageBuffer[i] > clipMax) {
                         sumAverageBuffer[i] = clipMax;
@@ -1764,6 +1798,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
         int length; // total number of data-elements (pixels) in image
         double[] buffer; // data-buffer (for pixel data) which is the "heart" of the image
         double bestMin, bestMax;
+        int sumAverageLength;
+        int sumFactor = 1;
 
         double[] sumAverageBuffer = null; // buffer needed to do summing/average
 
@@ -1772,7 +1808,26 @@ public class AlgorithmImageMath extends AlgorithmBase {
             buffer = new double[length];
 
             if ((opType == AVERAGE) || (opType == SUM)) {
-                sumAverageBuffer = new double[length];
+                sumAverageLength = length;
+                if (srcImage.getNDims() >= 4) {
+                    sumAverageLength *= srcImage.getExtents()[2];
+                }
+                if (srcImage.getNDims() == 5) {
+                    sumAverageLength *= srcImage.getExtents()[3];
+                }
+                sumAverageBuffer = new double[sumAverageLength];
+                if (srcImage.getNDims() == 5) {
+                    sumFactor = srcImage.getExtents()[4];
+                }
+                else if (srcImage.getNDims() == 4) {
+                    sumFactor = srcImage.getExtents()[3];
+                }
+                else if (srcImage.getNDims() == 3) {
+                    sumFactor = srcImage.getExtents()[2];
+                }
+                else {
+                    sumFactor = 1;
+                }
             }
 
             fireProgressStateChanged(srcImage.getImageName(), "Calculating image ...");
@@ -1899,14 +1954,15 @@ public class AlgorithmImageMath extends AlgorithmBase {
                         break;
                         
                     case SUM:
+                        
                         if (min < 0) {
-                            bestMin = min * f * t * z;
+                            bestMin = min * sumFactor;
                         }
                         else {
                             bestMin = 0;
                         }
                         if (max > 0) {
-                            bestMax = max * f * t * z;
+                            bestMax = max * sumFactor;
                         }
                         else {
                             bestMax = 0;
@@ -2011,7 +2067,15 @@ public class AlgorithmImageMath extends AlgorithmBase {
 
                                 case AVERAGE:
                                 case SUM:
-                                    sumAverageBuffer[i] += buffer[i];
+                                    if (srcImage.getNDims() <= 3) {
+                                        sumAverageBuffer[i] += buffer[i];
+                                    }
+                                    else if (srcImage.getNDims() == 4) {
+                                        sumAverageBuffer[j*length + i] += buffer[i];
+                                    }
+                                    else { // srcImage.getNDims() == 5
+                                        sumAverageBuffer[k*volume + j*length + i] += buffer[i];
+                                    }
                                     break;
 
                                 default:
@@ -2063,12 +2127,12 @@ public class AlgorithmImageMath extends AlgorithmBase {
             if (opType == AVERAGE) {
 
                 for (i = 0; i < sumAverageBuffer.length; i++) {
-                    sumAverageBuffer[i] /= (f * t * z);
+                    sumAverageBuffer[i] /= sumFactor;
                 }
             }
             
             if ((opType == SUM) && (clipMode == CLIP)) {
-                for (i = 0; i < length; i++) {
+                for (i = 0; i < sumAverageBuffer.length; i++) {
 
                     if (sumAverageBuffer[i] > clipMax) {
                         sumAverageBuffer[i] = clipMax;
@@ -2394,7 +2458,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
         int endType;
         double bestMin, bestMax;
         double bestMinR, bestMaxR, bestMinG, bestMaxG, bestMinB, bestMaxB;
-        int z, t;
+        int sumFactor;
 
         endType = stType;
 
@@ -2546,52 +2610,53 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     break;
                     
                 case SUM:
-                    if (srcImage.getNDims() >= 3) {
-                        z = srcImage.getExtents()[2];
+                    if (srcImage.getNDims() == 5) {
+                        sumFactor = srcImage.getExtents()[4];
+                    }
+                    else if (srcImage.getNDims() == 4) {
+                        sumFactor = srcImage.getExtents()[3];
+                    }
+                    else if (srcImage.getNDims() == 3) {
+                        sumFactor = srcImage.getExtents()[2];
                     }
                     else {
-                        z = 1;
+                        sumFactor = 1;
                     }
-                    if (srcImage.getNDims() >= 4) {
-                        t = srcImage.getExtents()[3];
-                    }
-                    else {
-                        t = 1;
-                    }
+                    
                     if (minR < 0) {
-                        bestMinR = minR * t * z;
+                        bestMinR = minR * sumFactor;
                     }
                     else {
                         bestMinR = 0;
                     }
                     if (maxR > 0) {
-                        bestMaxR = maxR * t * z;
+                        bestMaxR = maxR * sumFactor;
                     }
                     else {
                         bestMaxR = 0;
                     }
                     
                     if (minG < 0) {
-                        bestMinG = minG * t * z;
+                        bestMinG = minG * sumFactor;
                     }
                     else {
                         bestMinG = 0;
                     }
                     if (maxG > 0) {
-                        bestMaxG = maxG * t * z;
+                        bestMaxG = maxG * sumFactor;
                     }
                     else {
                         bestMaxG = 0;
                     }
                     
                     if (minB < 0) {
-                        bestMinB = minB * t * z;
+                        bestMinB = minB * sumFactor;
                     }
                     else {
                         bestMinB = 0;
                     }
                     if (maxB > 0) {
-                        bestMaxB = maxB * t * z;
+                        bestMaxB = maxB * sumFactor;
                     }
                     else {
                         bestMaxB = 0;
@@ -2729,26 +2794,27 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     break;
                     
                 case SUM:
-                    if (srcImage.getNDims() >= 3) {
-                        z = srcImage.getExtents()[2];
+                    if (srcImage.getNDims() == 5) {
+                        sumFactor = srcImage.getExtents()[4];
+                    }
+                    else if (srcImage.getNDims() == 4) {
+                        sumFactor = srcImage.getExtents()[3];
+                    }
+                    else if (srcImage.getNDims() == 3) {
+                        sumFactor = srcImage.getExtents()[2];
                     }
                     else {
-                        z = 1;
+                        sumFactor = 1;
                     }
-                    if (srcImage.getNDims() >= 4) {
-                        t = srcImage.getExtents()[3];
-                    }
-                    else {
-                        t = 1;
-                    }
+                    
                     if (min < 0) {
-                        bestMin = min * t * z;
+                        bestMin = min * sumFactor;
                     }
                     else {
                         bestMin = 0;
                     }
                     if (max > 0) {
-                        bestMax = max * t * z;
+                        bestMax = max * sumFactor;
                     }
                     else {
                         bestMax = 0;
