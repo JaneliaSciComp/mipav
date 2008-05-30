@@ -545,6 +545,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
      * and whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
+        int i;
 
         if (image.getNDims() <= 5) {
 
@@ -561,9 +562,10 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                     if ((opType != AlgorithmImageMath.AVERAGE) && (opType != AlgorithmImageMath.SUM)) {
                         resultImage = new ModelImage(image.getType(), image.getExtents(), name);
                     } else {
-                        int[] extents = new int[2];
-                        extents[0] = image.getExtents()[0];
-                        extents[1] = image.getExtents()[1];
+                        int[] extents = new int[Math.max(2,image.getNDims()-1)];
+                        for (i = 0; i < Math.max(2, image.getNDims() - 1); i++) {
+                            extents[i] = image.getExtents()[i];
+                        }
 
                         resultImage = new ModelImage(image.getType(), extents, name);
                        
@@ -632,7 +634,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                     Vector imageFrames = image.getImageFrameVector();
                     titles = new String[imageFrames.size()];
 
-                    for (int i = 0; i < imageFrames.size(); i++) {
+                    for (i = 0; i < imageFrames.size(); i++) {
                         titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
                         ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
                         ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
