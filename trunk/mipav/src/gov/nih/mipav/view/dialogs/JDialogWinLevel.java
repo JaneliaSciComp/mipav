@@ -22,7 +22,7 @@ import javax.swing.event.*;
  *
  * <p>Image intensity</p>
  */
-public class JDialogWinLevel extends JDialogBase implements ChangeListener {
+public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -86,7 +86,12 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener {
     private int windowSliderMax;
 
     /** DOCUMENT ME! */
-    private JLabel winValLabel, levelValLabel;
+
+    /** textfield inputs for window and level **/
+    private JTextField winValTextField,levelValTextField;
+    
+    /** the maxes and mins for window and level **/
+    private float winMaxFloat, winMinFloat, levelMaxFloat, levelMinFloat;
 
     /** Three arrays to save the coordinates of the LUT's transfer fucntion. z[] not used. */
     private float[] x = new float[4];
@@ -271,8 +276,9 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener {
         level = (levelSlider.getValue() * (maxImage - minImage) / levelSliderMax) + minImage;
         window = (windowSlider.getValue() * 2 * (maxImage - minImage) / windowSliderMax);
 
-        winValLabel.setText(Float.toString(Math.round(window)));
-        levelValLabel.setText(Float.toString(Math.round(level)));
+
+        winValTextField.setText(Float.toString(Math.round(window)));
+        levelValTextField.setText(Float.toString(Math.round(level)));
 
         if (window == 0) {
             window = 1;
@@ -311,8 +317,45 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener {
             updateHistoLUTFrame();
         }
     }
+    
+    
+    
+    
 
+    
     /**
+     * key typed
+     */
+	public void keyTyped(KeyEvent event) {
+		Object source = event.getSource();
+		
+		if(event.getKeyChar() == KeyEvent.VK_ENTER) {
+			if(source == levelValTextField) {
+				String numString = levelValTextField.getText();
+				float num = validateCurrentNum(numString, levelMinFloat, levelMaxFloat);
+				if(num != -1) {
+					float val = ((num - minImage) * levelSliderMax) / (maxImage - minImage);
+					levelSlider.setValue((int)val);
+				}else {
+					level = (levelSlider.getValue() * (maxImage - minImage) / levelSliderMax) + minImage;
+					levelValTextField.setText(Float.toString(Math.round(level)));
+				}
+			}else if(source == winValTextField){
+				String numString = winValTextField.getText();
+				float num = validateCurrentNum(numString, winMinFloat, winMaxFloat);
+				if(num != -1) {
+					float val = (num * windowSliderMax)/(2 * (maxImage - minImage));
+					windowSlider.setValue((int)val);
+				}else {
+					window = (windowSlider.getValue() * 2 * (maxImage - minImage) / windowSliderMax);
+					winValTextField.setText(Float.toString(Math.round(window)));
+				}
+			}
+		}
+		
+	}
+
+	/**
      * Update the window, level sliders from CTPreset dialog.
      *
      * @param  min  min value
@@ -333,8 +376,8 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener {
         level = (levelSlider.getValue() * (maxImage - minImage) / levelSliderMax) + minImage;
         window = (windowSlider.getValue() * 2 * (maxImage - minImage) / windowSliderMax);
 
-        winValLabel.setText(Float.toString(Math.round(window)));
-        levelValLabel.setText(Float.toString(Math.round(level)));
+        winValTextField.setText(Float.toString(Math.round(window)));
+        levelValTextField.setText(Float.toString(Math.round(level)));
 
     }
 
@@ -364,7 +407,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener {
         // discovers the slider max and applies it to a
         // label at the top of the slider
         JLabel levelMax = new JLabel(Float.toString(maxImage));
-
+        levelMaxFloat = maxImage;
         levelMax.setForeground(Color.black);
         levelMax.setFont(serif12);
         gbc.gridx = 0;
@@ -418,7 +461,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JLabel levelMin = new JLabel(Float.toString(minImage));
-
+        levelMinFloat = minImage;
         levelMin.setForeground(Color.black);
         levelMin.setFont(serif12);
         spanel.add(levelMin, gbc);
@@ -430,10 +473,14 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener {
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        levelValLabel = new JLabel(Float.toString(level));
-        levelValLabel.setForeground(Color.black);
-        levelValLabel.setFont(serif12B);
-        spanel.add(levelValLabel, gbc);
+        //levelValLabel = new JLabel(Float.toString(level));
+        //levelValLabel.setForeground(Color.black);
+        //levelValLabel.setFont(serif12B);
+        levelValTextField = new JTextField(6);
+        levelValTextField.setText(Float.toString(level));
+        levelValTextField.addKeyListener(this);
+        levelValTextField.addFocusListener(this);
+        spanel.add(levelValTextField, gbc);
     }
 
     /**
@@ -472,7 +519,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JLabel winMax = new JLabel(Float.toString(2.0f * (maxImage - minImage)));
-
+        winMaxFloat = 2.0f * (maxImage - minImage);
         winMax.setForeground(Color.black);
         winMax.setFont(serif12);
         spanel.add(winMax, gbc);
@@ -518,7 +565,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JLabel winMin = new JLabel("0.0");
-
+        winMinFloat = 0.0f;
         winMin.setForeground(Color.black);
         winMin.setFont(serif12);
         spanel.add(winMin, gbc);
@@ -529,11 +576,39 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener {
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        winValLabel = new JLabel(Float.toString(window));
-        winValLabel.setForeground(Color.black);
-        winValLabel.setFont(serif12B);
-        spanel.add(winValLabel, gbc);
+        //winValLabel = new JLabel(Float.toString(window));
+        //winValLabel.setForeground(Color.black);
+        //winValLabel.setFont(serif12B);
+        winValTextField = new JTextField(6);
+        winValTextField.setText(Float.toString(window));
+        winValTextField.addKeyListener(this);
+        winValTextField.addFocusListener(this);
+        spanel.add(winValTextField, gbc);
     }
+    
+    
+    
+    /**
+	 * validate current number
+	 * @param numString
+	 * @param min
+	 * @param max
+	 * @return
+	 */
+	public float validateCurrentNum(String numString, float min, float max) {
+		float num;
+
+		try {
+			num = Float.parseFloat(numString);
+		}catch(NumberFormatException e){
+			return -1;
+		}
+		if(num >= min && num <= max) {
+			return num;
+		}else {
+			return -1;
+		}
+	}
 
     /**
      * Calculate the maximum and minimum valuse to setup the window and level sliders.
@@ -567,5 +642,15 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener {
         image.getHistoLUTFrame().update();
 
     }
+    
+    public void keyPressed(KeyEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void keyReleased(KeyEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
 
 } // end class JDialogWinLevel
