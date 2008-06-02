@@ -3401,6 +3401,92 @@ public class ModelImage extends ModelStorageBase {
             }
         }
     }
+    
+    public void makeUnitsOfMeasureIdentical() {
+        final int OTHER = 0;
+        final int SPATIAL = 1;
+        final int TIME = 2;
+        final int FREQUENCY = 3;
+        int i;
+        int nDims = getNDims();
+        int unitType[];
+        boolean set1To0 = false;
+        boolean set2To0 = false;
+        boolean set2To1 = false;
+        
+        int[] units = fileInfo[0].getUnitsOfMeasure();
+        if ((nDims == 2) && (units[0] == units[1])) {
+            return;
+        }
+        else if ((nDims == 3) && (units[0] == units[1]) && (units[1] == units[2])) {
+            return;
+        }
+        unitType = new int[nDims];
+        for (i = 0; i < nDims; i++) {
+            switch(units[i]) {
+                case FileInfoBase.INCHES:
+                case FileInfoBase.CENTIMETERS:
+                case FileInfoBase.ANGSTROMS:
+                case FileInfoBase.NANOMETERS:
+                case FileInfoBase.MICROMETERS:
+                case FileInfoBase.MILLIMETERS:
+                case FileInfoBase.METERS:
+                case FileInfoBase.KILOMETERS:
+                case FileInfoBase.MILES:
+                    unitType[i] = SPATIAL;
+                    break;
+                case FileInfoBase.NANOSEC:
+                case FileInfoBase.MICROSEC:
+                case FileInfoBase.MILLISEC:
+                case FileInfoBase.SECONDS:
+                case FileInfoBase.MINUTES:
+                case FileInfoBase.HOURS:
+                    unitType[i] = TIME;
+                    break;
+                case FileInfoBase.HZ:
+                case FileInfoBase.RADS:
+                    unitType[i] = FREQUENCY;
+                    break;
+            } // switch(units[i])
+        } // for (i = 0; i < nDims; i++)
+        
+        if (nDims == 2) {
+            if ((unitType[0] == OTHER) || (unitType[1] == OTHER) || (unitType[0] != unitType[1])) {
+                return;
+            }
+            else {
+                set1To0 = true;
+            }
+        } // if (nDims == 2)
+        else if ((nDims == 3) || (nDims == 4)) {
+            if ((unitType[0] == OTHER) || (unitType[1] == OTHER) || (unitType[0] != unitType[1])) {
+                ;
+            }
+            else {
+                set1To0 = true;
+            }
+            
+            if ((unitType[0] == OTHER) || (unitType[2] == OTHER) || (unitType[0] != unitType[2])) {
+                ;
+            }
+            else {
+                set2To0 = true;
+            } 
+            
+            if ((!set1To0) && (!set2To0)) {
+                if ((unitType[1] == OTHER) || (unitType[1] == OTHER) || (unitType[1] != unitType[2])) {
+                    ;
+                }
+                else {
+                    set2To1 = true;
+                }     
+            } // if ((!set1To0) && (!set2To0))
+            
+            if ((!set1To0) && (!set2To0) && (!set2To1)) {
+                return;
+            }
+        } // else if ((nDims == 3) || (nDims == 4))
+    } // public void makeUnitsOfMeasureIdentical()
 
     /**
      * Calls disposeLocal of this class to ensure this class nulls the references to global class variables so that
