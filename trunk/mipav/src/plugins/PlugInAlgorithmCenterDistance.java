@@ -15,7 +15,7 @@ import java.util.*;
 
 /**
  *
- * @version  May 23, 2008
+ * @version  June 2, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -110,9 +110,9 @@ import java.util.*;
  *           
  *           <p>23.) Merge green objects with 2 pixels having a distance <= mergingDistance.
  *            
- *           <p>24.) Sort green objects by green intensity count into a sorted green array. Have a separate
- *           sorted green array for each nucleus. Put no more than greenRegionNumber green objects into the
- *           sorted green array for each nucleus. 
+ *           <p>24.) Sort green objects by green intensity count per unit area or volume into a sorted green array.
+ *           Have a separate sorted green array for each nucleus. Put no more than greenRegionNumber green objects
+ *           into the sorted green array for each nucleus. 
  *           
  *           <p>25.) Fill the byteBuffer array with zeros.  For each sorted green VOI fill the appropriate
  *           positions in byteBuffer with a positive index. Create an accompanying color table to set for each
@@ -392,6 +392,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         byte[] greenIDArray = null;
         byte[] greenIDArray2 = null;
         float[] greenIntensityTotal;
+        int[] greenArea;
+        float[] greenIntensityPerArea;
         int[] greenNucleusNumber = null;
         int[][] sortedGreenIndex = null;
         float[][] sortedGreenIntensity;
@@ -1355,6 +1357,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         fireProgressStateChanged(61);
         numGreenTotal = numGreenObjects+numGreenObjects2;
         greenIntensityTotal = new float[numGreenTotal];
+        greenArea = new int[numGreenTotal];
         greenCellNumber = new int[numGreenTotal];
         greenNucleusNumber = new int[numObjects];
         sortedGreenIndex = new int[numObjects][greenRegionNumber];
@@ -1367,6 +1370,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                 if (greenIDArray[i] == j) {
                     greenIntensityTotal[j - 1] += greenBuffer[i];
+                    greenArea[j - 1]++;
                     greenBelong[IDArray[i]] = greenBelong[IDArray[i]] + 1;
                 } // if (greenIDArray[i] == j)
             }
@@ -1451,6 +1455,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     }
                     if (minDistanceSquared <= mergingDistanceSquared) {
                         greenIntensityTotal[i-1] = 0.0f;
+                        greenArea[i-1] = 0;
                         greenLeft[i-1] = Math.min(greenLeft[i-1], greenLeft[j-1]);
                         greenRight[i-1] = Math.max(greenRight[i-1], greenRight[j-1]);
                         greenTop[i-1] = Math.min(greenTop[i-1], greenTop[j-1]);
@@ -1461,6 +1466,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                             }
                             if (greenIDArray[k] == i) {
                                 greenIntensityTotal[i-1] += greenBuffer[k];
+                                greenArea[i-1]++;
                             }
                         } // for (k = 0; k < length; k++)
                         for (m = j+1; m <= numGreenTotal; m++) {
@@ -1470,6 +1476,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                                 }
                             }
                             greenIntensityTotal[m-2] = greenIntensityTotal[m-1];
+                            greenArea[m-2] = greenArea[m-1];
                             greenCellNumber[m-2] = greenCellNumber[m-1];
                             greenLeft[m-2] = greenLeft[m-1];
                             greenRight[m-2] = greenRight[m-1];
@@ -1493,8 +1500,10 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         // Create no more than greenRegionNumber green objects within each nucleus.
         fireProgressStateChanged("Sorting green objects by intensity count");
         fireProgressStateChanged(66);
+        greenIntensityPerArea = new float[numGreenTotal];
         for (j = 1; j <= numGreenObjects; j++) {
             id = greenCellNumber[j-1];
+            greenIntensityPerArea[j-1] = greenIntensityTotal[j-1]/greenArea[j-1];
 
             if (id >= 1) {
 
@@ -1506,7 +1515,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                 for (i = 0; (i < greenNucleusNumber[id - 1]) && !found; i++) {
 
-                    if (greenIntensityTotal[j - 1] >= sortedGreenIntensity[id - 1][i]) {
+                    if (greenIntensityPerArea[j - 1] >= sortedGreenIntensity[id - 1][i]) {
                         found = true;
 
                         if ((i == 0) && (greenNucleusNumber[id-1] >= 2)) {
@@ -1515,7 +1524,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                             isMaxGreen[id-1][1] = true;
                         }
 
-                        sortedGreenIntensity[id - 1][i] = greenIntensityTotal[j - 1];
+                        sortedGreenIntensity[id - 1][i] = greenIntensityPerArea[j - 1];
                         sortedGreenIndex[id - 1][i] = j; // from greenIDArray
                         isMaxGreen[id-1][i] = true;
                     }
@@ -1525,6 +1534,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         
         for (j = numGreenObjects+1; j <= numGreenTotal; j++) {
             id = greenCellNumber[j-1];
+            greenIntensityPerArea[j-1] = greenIntensityTotal[j-1]/greenArea[j-1];
 
             if (id >= 1) {
 
@@ -1536,7 +1546,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                 for (i = 0; (i < greenNucleusNumber[id - 1]) && !found; i++) {
 
-                    if ((!isMaxGreen[id-1][i])&& (greenIntensityTotal[j - 1] >= sortedGreenIntensity[id - 1][i])) {
+                    if ((!isMaxGreen[id-1][i])&& (greenIntensityPerArea[j - 1] >= sortedGreenIntensity[id - 1][i])) {
                         found = true;
 
                         if ((i == 0) && (greenNucleusNumber[id-1] >= 2)) {
@@ -1544,7 +1554,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                             sortedGreenIndex[id - 1][1] = sortedGreenIndex[id - 1][0];
                         }
 
-                        sortedGreenIntensity[id - 1][i] = greenIntensityTotal[j - 1];
+                        sortedGreenIntensity[id - 1][i] = greenIntensityPerArea[j - 1];
                         sortedGreenIndex[id - 1][i] = j; // from greenIDArray
                     }
                 } // for (i = 0; i < greenNucleusNumber[id-1]  && !found; i++)
@@ -1552,6 +1562,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         } // for (j = numGreenObjects+1; j <= numGreenTotal; j++)
         
         greenIntensityTotal = null;
+        greenIntensityPerArea = null;
 
         for (i = 0; i < numObjects; i++) {
             sortedGreenIntensity[i] = null;
@@ -2207,6 +2218,8 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         byte[] greenIDArray = null;
         byte[] greenIDArray2 = null;
         float[] greenIntensityTotal;
+        int[] greenVolume;
+        float[] greenIntensityPerVolume;
         int[] greenNucleusNumber = null;
         int[][] sortedGreenIndex = null;
         float[][] sortedGreenIntensity;
@@ -3271,6 +3284,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         fireProgressStateChanged(61);
         numGreenTotal = numGreenObjects+numGreenObjects2;
         greenIntensityTotal = new float[numGreenTotal];
+        greenVolume = new int[numGreenTotal];
         greenCellNumber = new int[numGreenTotal];
         greenNucleusNumber = new int[numObjects];
         sortedGreenIndex = new int[numObjects][greenRegionNumber];
@@ -3283,6 +3297,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                 if (greenIDArray[i] == j) {
                     greenIntensityTotal[j - 1] += greenBuffer[i];
+                    greenVolume[j - 1]++;
                     greenBelong[IDArray[i]] = greenBelong[IDArray[i]] + 1;
                 }
             }
@@ -3386,6 +3401,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                     } // for (z = greenFront[j-1]; z <= greenBack[j-1]; z++)
                     if (minDistanceSquared <= mergingDistanceSquared) {
                         greenIntensityTotal[i-1] = 0.0f;
+                        greenVolume[i-1] = 0;
                         greenLeft[i-1] = Math.min(greenLeft[i-1], greenLeft[j-1]);
                         greenRight[i-1] = Math.max(greenRight[i-1], greenRight[j-1]);
                         greenTop[i-1] = Math.min(greenTop[i-1], greenTop[j-1]);
@@ -3398,6 +3414,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                             }
                             if (greenIDArray[k] == i) {
                                 greenIntensityTotal[i-1] += greenBuffer[k];
+                                greenVolume[i-1]++;
                             }
                         } // for (k = 0; k < length; k++)
                         for (m = j+1; m <= numGreenTotal; m++) {
@@ -3407,6 +3424,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                                 }
                             }
                             greenIntensityTotal[m-2] = greenIntensityTotal[m-1];
+                            greenVolume[m-2] = greenVolume[m-1];
                             greenCellNumber[m-2] = greenCellNumber[m-1];
                             greenLeft[m-2] = greenLeft[m-1];
                             greenRight[m-2] = greenRight[m-1];
@@ -3430,8 +3448,10 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
         fireProgressStateChanged("Sorting green objects by intensity count");
         fireProgressStateChanged(66);
+        greenIntensityPerVolume = new float[numGreenTotal];
         for (j = 1; j <= numGreenObjects; j++) {
             id = greenCellNumber[j-1];
+            greenIntensityPerVolume[j-1] = greenIntensityTotal[j-1]/greenVolume[j-1];
 
             if (id >= 1) {
 
@@ -3443,7 +3463,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                 for (i = 0; (i < greenNucleusNumber[id - 1]) && !found; i++) {
 
-                    if (greenIntensityTotal[j - 1] >= sortedGreenIntensity[id - 1][i]) {
+                    if (greenIntensityPerVolume[j - 1] >= sortedGreenIntensity[id - 1][i]) {
                         found = true;
 
                         if ((i == 0) && (greenNucleusNumber[id-1] >= 2)) {
@@ -3452,7 +3472,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                             isMaxGreen[id - 1][1] = true;
                         }
 
-                        sortedGreenIntensity[id - 1][i] = greenIntensityTotal[j - 1];
+                        sortedGreenIntensity[id - 1][i] = greenIntensityPerVolume[j - 1];
                         sortedGreenIndex[id - 1][i] = j; // from greenIDArray
                         isMaxGreen[id - 1][i] = true;
                     }
@@ -3461,6 +3481,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         } // for (j = 1; j <= numGreenObjects; j++)
         for (j = numGreenObjects+1; j <= numGreenTotal; j++) {
             id = greenCellNumber[j-1];
+            greenIntensityPerVolume[j-1] = greenIntensityTotal[j-1]/greenVolume[j-1];
 
             if (id >= 1) {
 
@@ -3472,7 +3493,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
 
                 for (i = 0; (i < greenNucleusNumber[id - 1]) && !found; i++) {
 
-                    if ((!isMaxGreen[id-1][i])&& (greenIntensityTotal[j - 1] >= sortedGreenIntensity[id - 1][i])) {
+                    if ((!isMaxGreen[id-1][i])&& (greenIntensityPerVolume[j - 1] >= sortedGreenIntensity[id - 1][i])) {
                         found = true;
 
                         if ((i == 0) && (greenNucleusNumber[id-1] >= 2)) {
@@ -3480,7 +3501,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                             sortedGreenIndex[id - 1][1] = sortedGreenIndex[id - 1][0];
                         }
 
-                        sortedGreenIntensity[id - 1][i] = greenIntensityTotal[j - 1];
+                        sortedGreenIntensity[id - 1][i] = greenIntensityPerVolume[j - 1];
                         sortedGreenIndex[id - 1][i] = j; // from greenIDArray
                     }
                 } // for (i = 0; i < greenNucleusNumber[id-1]  && !found; i++)
@@ -3489,6 +3510,7 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
         
 
         greenIntensityTotal = null;
+        greenIntensityPerVolume = null;
 
         for (i = 0; i < numObjects; i++) {
             sortedGreenIntensity[i] = null;
