@@ -957,10 +957,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     private void initMuscleButton(int pane) {
     	VOIVector vec = getActiveImage().getVOIs();
-    	
     	for(int i=0; i<vec.size(); i++) { 
-        	if(voiBuffer.get(vec.get(i).getName()).getCurves()[getViewableSlice()].size() > 0) 
-        		((MuscleDialogPrompt)tabs[pane]).setButton(vec.get(i), vec.get(i).getName(), vec.get(i).getColor());
+        	VOI temp = null;
+        	if((temp = voiBuffer.get(vec.get(i).getName())) != null && temp.getCurves()[getViewableSlice()].size() > 0) 
+        		((MuscleDialogPrompt)tabs[pane]).setButton(temp, temp.getName(), temp.getColor());
         } 
     }
     
@@ -969,7 +969,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
     	getVOIs(pane);
         
-        initMuscleButton(pane);
+        System.out.println("Active tab: :"+activeTab);
+    	initMuscleButton(pane);
         
     	this.repaint();
 
@@ -1288,6 +1289,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
            
             setButtons(buttonStringList);
             
+            voiPromptBuffer = new VOIVector();
+            
             initDialog();
         }
         
@@ -1307,18 +1310,24 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 
             if(command.equals(HIDE_ALL)) {
                 //clear all VOIs drawn
-            	voiPromptBuffer = (VOIVector)getActiveImage().getVOIs().clone();
+            	VOIVector voiPromptBufferAppend = (VOIVector)getActiveImage().getVOIs().clone();
+            	for(int i=0; i<voiPromptBufferAppend.size(); i++)
+            		voiPromptBuffer.add(voiPromptBufferAppend.get(i));
                 getActiveImage().unregisterAllVOIs();
                 ((JButton)e.getSource()).setText(SHOW_ALL);
                 ((JButton)e.getSource()).setActionCommand(SHOW_ALL);
                 updateImages(true);
             } else if(command.equals(SHOW_ALL)) {
             	//show all VOIs previously drawn, do not get rid of any VOIs on screen
-            	getActiveImage().unregisterAllVOIs();
+            	VOIVector voiPromptBufferAppend = (VOIVector)getActiveImage().getVOIs().clone();
+            	for(int i=0; i<voiPromptBufferAppend.size(); i++)
+            		voiPromptBuffer.add(voiPromptBufferAppend.get(i));
+        		getActiveImage().unregisterAllVOIs();
             	for(int i=0; i<voiPromptBuffer.size(); i++)
             		getActiveImage().registerVOI(voiPromptBuffer.get(i));
             	((JButton)e.getSource()).setText(HIDE_ALL);
                 ((JButton)e.getSource()).setActionCommand(HIDE_ALL);
+                voiPromptBuffer.removeAllElements();
                 updateImages(true);
             } else if (command.equals(OK)) {
             
@@ -1351,30 +1360,39 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 			buttonGroup[i].setActionCommand(HIDE_ALL);
                 		}
                 	}
+                	voiPromptBuffer.removeAllElements();
                 	getActiveImage().unregisterAllVOIs();
                 	initMuscleImage(activeTab);
                 	initVoiImage(activeTab); //replacing current image and updating
                 	updateImages(true);
                 	
                 } else if (command.equals(HIDE_ONE)) {
+                	//cannot hide one if hide all has been changed to show all
+                	boolean hideEligible = false;
                 	for(int i=0; i<buttonGroup.length; i++) {
                 		if(buttonGroup[i].getText().equals(HIDE_ALL)) {
                 			buttonGroup[i].setText(SHOW_ALL);
                 			buttonGroup[i].setActionCommand(SHOW_ALL);
-                		}
+                			hideEligible = true;
+                		} 
                 	}
-                	voiPromptBuffer = (VOIVector)getActiveImage().getVOIs().clone();
-                	VOIVector vec = getActiveImage().getVOIs();
-                	VOI goodVoi = null;
-                	for(int i=0; i<vec.size(); i++) {
-                		if(vec.get(i).getName().equals(objectName))
-                			goodVoi = vec.get(i);
-                	} //note: does unregister/register to for faster method execution
-                	getActiveImage().unregisterAllVOIs();
-                    if(goodVoi != null)
-                    	getActiveImage().registerVOI(goodVoi);
-                    
-                	updateImages(true);
+                	if(hideEligible) {
+	                	voiPromptBuffer = (VOIVector)getActiveImage().getVOIs().clone();
+	                	VOIVector vec = getActiveImage().getVOIs();
+	                	VOI goodVoi = null;
+	                	for(int i=0; i<vec.size(); i++) {
+	                		if(vec.get(i).getName().equals(objectName)) {
+	                			goodVoi = vec.get(i);
+	                			voiPromptBuffer.remove(i);
+	                		}
+	                	} //note: does unregister/register to for faster method execution
+	                	getActiveImage().unregisterAllVOIs();
+	                    if(goodVoi != null)
+	                    	getActiveImage().registerVOI(goodVoi);
+	                    
+	                	updateImages(true);
+                	}
+                	
                 } else if (command.equals("PropVOIUp")) {
                 	//TODO: Perform propogate  + smooth on one VOI here
                     if (componentImage.getVOIHandler().propVOI(1, false) == true) {
@@ -1395,12 +1413,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         public void takeDownDialog() {
         	removeAll();
+        	voiPromptBuffer.removeAllElements();
         }
         
         public void setUpDialog(String name, boolean closedVoi, int numVoi) {	
         	this.objectName = name;
         	this.closedVoi = closedVoi;
         	this.numVoi = numVoi;
+        	
+        	voiPromptBuffer.removeAllElements();
         	
         	voiExists = voiExists(objectName);
         	
@@ -2495,11 +2516,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         			checkBoxLocationTree.get(voiName).setColor(Color.BLACK);
         			checkBoxLocationTree.get(voiName).repaint();
 				}
-				
-				
+
 				updateImages(true);
-				
-				
+
 				requestFocus();
 			}	
 		}
@@ -2534,6 +2553,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    	public static final int FAT_UPPER_BOUND = -30;
 	    	public static final int MUSCLE_LOWER_BOUND = 0;
 	    	public static final int MUSCLE_UPPER_BOUND = 100;
+	    	public static final int FAR_LOWER_BOUND = -1000;
+	    	public static final int FAR_UPPER_BOUND = 1000;
 	    	
 	    	private boolean done = false;
 	    	
@@ -2754,12 +2775,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
     	String ext = name.contains(".xml") ? "" : ".xml";
     	PlugInSelectableVOI temp = voiBuffer.get(name);
-    	
+    	VOIContour tempCurve;
         if(new File(fileDir+name+ext).exists()) {
             FileVOI v;
             VOI[] voiVec = null;
             try {
-            	ModelImage tryImage = getActiveImage();
                 v = new FileVOI(name+ext, fileDir, getActiveImage());
                 voiVec = v.readVOI(false);
             } catch(IOException e) {
@@ -2769,9 +2789,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+name);
             } else {
             	Vector <VOIBase>[] voiVecTemp = voiVec[0].getCurves();
-            	for(int i=0; i<voiVecTemp.length; i++) 
-            		for(int j=0; j<temp.getMaxCurvesPerSlice(); j++) 
-            			temp.importCurve((VOIContour)(voiVecTemp[i].get(j)), i);
+            	for(int i=0; i<voiVecTemp.length; i++) {
+            		if(voiVecTemp[i].size() > 0) {
+            			for(int j=0; j<temp.getMaxCurvesPerSlice(); j++) { 
+            				temp.importCurve((VOIContour)(voiVecTemp[i].get(j)), i);
+            			}
+            		}
+            	}
             }
         }
         return temp;
