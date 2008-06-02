@@ -220,6 +220,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.calcTree = new TreeMap();
         this.voiBuffer = new TreeMap();
         
+        
+        
         for(int i=0; i<voiList.length; i++) {
         	ArrayList mirrorArrList = new ArrayList(), noMirrorArrList = new ArrayList(), 
         				mirrorZList = new ArrayList(), noMirrorZList = new ArrayList();
@@ -783,7 +785,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     			((AnalysisPrompt)tabs[resultTabLoc]).setButtons();
     		else { 
     			((MuscleDialogPrompt)tabs[activeTab]).clearButtons();
-    			initMuscleButton(activeTab);
+    			//TODO: Fix buttons
+    			//initMuscleButton(activeTab);
     		}
     		updateImages(true);
     		changeSlice = false;
@@ -1508,12 +1511,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         private PlugInSelectableVOI checkVoi() {
             VOIVector srcVOI = muscleFrame.getActiveImage().getVOIs();
             int countQualifiedVOIs = 0; //equal to numVoi when the right  amount of VOIs have been created
-            VOIContour goodVOI = null;
+            VOI goodVOI = null;
             //see if the VOI has been modified
             for(int i=0; i<srcVOI.size(); i++) {
                 if(srcVOI.get(i).getName().equals(objectName)) {
                     if(srcVOI.get(i).getCurves()[getViewableSlice()].size() > 0) {
-                    	goodVOI = (VOIContour)srcVOI.get(i).getCurves()[getViewableSlice()].get(0);
+                    	goodVOI = srcVOI.get(i);
                     	countQualifiedVOIs++;
                     } 
                 }
@@ -1522,8 +1525,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	            //else VOI no longer exists, look for a VOI that doesn't fit to call objectName
 	            for(int i=0; i<srcVOI.size(); i++) {
 	            	if(getLocationStatus(srcVOI.get(i).getName()) == PlugInSelectableVOI.INVALID_PANE_NUMBER) {
-	            		goodVOI = (VOIContour)srcVOI.get(i).getCurves()[getViewableSlice()].get(0);
-	            		countQualifiedVOIs++;
+            			goodVOI = srcVOI.get(i);
+            			countQualifiedVOIs++;
 	            	}
 	            }
             }
@@ -1536,7 +1539,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             }
             
             if(goodVOI != null) {
-            	voiBuffer.get(objectName).importCurve(goodVOI, getViewableSlice());
+            	Vector<VOIBase>[] curves = goodVOI.getCurves();
+            	for(int i=0; i<curves.length; i++) 
+            		for(int j=0; j<curves[i].size(); j++)
+            			voiBuffer.get(objectName).importCurve((VOIContour)curves[i].get(j), i);
             }
             
             return voiBuffer.get(objectName);
