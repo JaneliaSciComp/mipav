@@ -1,6 +1,7 @@
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -67,6 +68,9 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         imageFile = detectImageSequence(im);
         if(imageFile.length > 1) {
         	image = createImage(imageFile);
+        	float[] origin = {0, 0, 0};
+        	image.getFileInfo()[0].setOrigin(origin);
+        	image.getFileInfo()[0].setFileFormat(FileUtility.XML);
         	multipleSlices = true;
         }
         if(imageType == PlugInMuscleImageDisplay.ImageType.Unknown)
