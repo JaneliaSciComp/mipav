@@ -319,20 +319,20 @@ public class FileLIFF extends FileBase {
         int height;
         int xDim = 0;
         int yDim = 0;
-        long pictLocation[] = new long[24000];
-        int  imageTypeLocation[] = new int[24000];
-        short packTypeArray[] = new short[24000];
-        short rowBytesArray[] = new short[24000];
-        short pixelSizeArray[] = new short[24000];
-        short boundsTopArray[] = new short[24000];
-        short boundsBottomArray[] = new short[24000];
-        short cmpCountArray[] = new short[24000];
-        long LUTSizeLocation[] = new long[24000];
+        long pictLocation[][] = new long[8000][3];
+        int  imageTypeLocation[][] = new int[8000][3];
+        short packTypeArray[][] = new short[8000][3];
+        short rowBytesArray[][] = new short[8000][3];
+        short pixelSizeArray[][] = new short[8000][3];
+        short boundsTopArray[][] = new short[8000][3];
+        short boundsBottomArray[][] = new short[8000][3];
+        short cmpCountArray[][] = new short[8000][3];
+        long LUTSizeLocation[][] = new long[8000][3];
         double zStepArray[] = new double[1500];
         int zStepNumber = 0;
         boolean haveLUT = false;
         int dimExtentsLUT[];
-        int subPictCount = 0;
+        int subPictCount[] = new int[3];
         int pictCount = 0;
         String layerString[] = new String[10];
         int layerNumber = 0;
@@ -538,6 +538,14 @@ public class FileLIFF extends FileBase {
         int SutterL10Filter1Index = 0;
         int SutterL10Filter2Index = 0;
         int wavelengthIndex = 0;
+        int colorIndex;
+        int presentLayer = 0;
+        int i0Last;
+        int i1Last;
+        int i2Last;
+        int totalSubPictCount;
+        int currentSubPictCount;
+        int scaleFactor;
 
         try {
             for (i = 0; i < 10; i++) {
@@ -883,21 +891,37 @@ public class FileLIFF extends FileBase {
                     Preferences.debug("layer name length = " + layerNameLength + "\n");
                     layerName = getString(layerNameLength);
                     Preferences.debug("layer name = " + layerName.trim() + "\n");
-                    if (!layerName.toUpperCase().trim().equals("ORIGINAL IMAGE")) {
-                        spaceIndex = layerName.indexOf(" ");
-                        layerName = layerName.substring(0, spaceIndex);
+                    if ((!layerName.toUpperCase().trim().equals("ORIGINAL IMAGE")) &&
+                        (imageType >= DEEP_GREY_10) && (imageType <= DEEP_GREY_16)){
+                        colorIndex = layerName.toUpperCase().indexOf("C=");
+                        if (colorIndex >= 0) {
+                            layerName = layerName.substring(colorIndex+2);
+                            spaceIndex = layerName.indexOf(" ");
+                            if (spaceIndex != -1) {
+                                layerName = layerName.substring(0, spaceIndex);
+                            }
+                        }
+                        else {
+                            spaceIndex = layerName.indexOf(" ");
+                            layerName = layerName.substring(0, spaceIndex);
+                        }
                         Preferences.debug("layerName = " + layerName + "\n");
                         found = false;
                         for (j = 0; j < layerNumber && (!found); j++) {
                            if (layerName.equals(layerString[j])) {
                                found = true;
+                               presentLayer = j;
                            }
                         }
                         if (!found) {
+                            presentLayer = layerNumber;
                             layerTypeArray[layerNumber] = imageType;
                             layerString[layerNumber++] = layerName;
                         }
-                    } // if (!layerName.trim().equals("Original image"))
+                    } // if ((!layerName.trim().equals("Original image")) &&
+                    else {
+                        presentLayer = 0;
+                    }
                     if (isOpenlab2Header[0]  == 1) {
                         // This section only exists if isOpenlab2Header is true
                         if ((128 - (layerNameLength + 1)) > 0) {
@@ -1352,7 +1376,7 @@ public class FileLIFF extends FileBase {
                                     ctFlags = readShort(endianess);
                                     Preferences.debug("ctFlags = " + ctFlags + "\n");
                                     // One less than the number of entries in the table
-                                    LUTSizeLocation[subPictCount] = raFile.getFilePointer();
+                                    LUTSizeLocation[subPictCount[presentLayer]][presentLayer] = raFile.getFilePointer();
                                     ctSize = readShort(endianess);
                                     Preferences.debug("ctSize = " + ctSize + "\n");
                                     // An array of ColorSpec records
@@ -1394,15 +1418,16 @@ public class FileLIFF extends FileBase {
                                     // PixData
                                     Preferences.debug("PixData\n");
                                     // Also read in pixData later if necessary
-                                    pictLocation[subPictCount] = raFile.getFilePointer();
-                                    packTypeArray[subPictCount] = packType;
-                                    rowBytesArray[subPictCount] = rowBytes;
+                                    pictLocation[subPictCount[presentLayer]][presentLayer] = raFile.getFilePointer();
+                                    packTypeArray[subPictCount[presentLayer]][presentLayer] = packType;
+                                    rowBytesArray[subPictCount[presentLayer]][presentLayer] = rowBytes;
                                     rowBytesTypeArray[imageType] = rowBytes;
-                                    pixelSizeArray[subPictCount] = pixelSize;
-                                    boundsTopArray[subPictCount] = boundsTop;
-                                    boundsBottomArray[subPictCount] = boundsBottom;
-                                    cmpCountArray[subPictCount] = cmpCount;
-                                    imageTypeLocation[subPictCount++] = imageType;
+                                    pixelSizeArray[subPictCount[presentLayer]][presentLayer] = pixelSize;
+                                    boundsTopArray[subPictCount[presentLayer]][presentLayer] = boundsTop;
+                                    boundsBottomArray[subPictCount[presentLayer]][presentLayer] = boundsBottom;
+                                    cmpCountArray[subPictCount[presentLayer]][presentLayer] = cmpCount;
+                                    imageTypeLocation[subPictCount[presentLayer]][presentLayer] = imageType;
+                                    subPictCount[presentLayer]++;
                                     if ((packType == 0) || (packType > 2)) {
                                         totalByteCount = 0;
                                         for (j = boundsTop; j < boundsBottom; j++) {
@@ -1645,15 +1670,16 @@ public class FileLIFF extends FileBase {
                                     // PixData
                                     Preferences.debug("PixData\n");
                                     // Also read in pixData later if necessary
-                                    pictLocation[subPictCount] = raFile.getFilePointer();
-                                    packTypeArray[subPictCount] = packType;
-                                    rowBytesArray[subPictCount] = rowBytes;
+                                    pictLocation[subPictCount[presentLayer]][presentLayer] = raFile.getFilePointer();
+                                    packTypeArray[subPictCount[presentLayer]][presentLayer] = packType;
+                                    rowBytesArray[subPictCount[presentLayer]][presentLayer] = rowBytes;
                                     rowBytesTypeArray[imageType] = rowBytes;
-                                    pixelSizeArray[subPictCount] = pixelSize;
-                                    boundsTopArray[subPictCount] = boundsTop;
-                                    boundsBottomArray[subPictCount] = boundsBottom;
-                                    cmpCountArray[subPictCount] = cmpCount;
-                                    imageTypeLocation[subPictCount++] = imageType;
+                                    pixelSizeArray[subPictCount[presentLayer]][presentLayer] = pixelSize;
+                                    boundsTopArray[subPictCount[presentLayer]][presentLayer] = boundsTop;
+                                    boundsBottomArray[subPictCount[presentLayer]][presentLayer] = boundsBottom;
+                                    cmpCountArray[subPictCount[presentLayer]][presentLayer] = cmpCount;
+                                    imageTypeLocation[subPictCount[presentLayer]][presentLayer] = imageType;
+                                    subPictCount[presentLayer]++;
                                     if ((packType == 0) || (packType > 2)) {
                                         totalByteCount = 0;
                                         for (j = boundsTop; j < boundsBottom; j++) {
@@ -1698,8 +1724,9 @@ public class FileLIFF extends FileBase {
                                         if (kindSignature.equals("dbpq")) {
                                             Preferences.debug("kindSignature dbpq indicates that image data follows\n");
                                             // Read in the second part of comment 101 later
-                                            pictLocation[subPictCount] = raFile.getFilePointer();
-                                            imageTypeLocation[subPictCount++] = imageType;
+                                            pictLocation[subPictCount[presentLayer]][presentLayer] = raFile.getFilePointer();
+                                            imageTypeLocation[subPictCount[presentLayer]][presentLayer] = imageType;
+                                            subPictCount[presentLayer]++;
                                         }
                                         else if (kindSignature.equals("dbpl")) {
                                             // Read in the second part of comment 101 now
@@ -1789,9 +1816,10 @@ public class FileLIFF extends FileBase {
                         height = readInt(endianess);
                         Preferences.debug("height = " + height + "\n");
                         yDimArray[imageType] = height;
-                        pictLocation[subPictCount] = raFile.getFilePointer();
-                        pixelSizeArray[subPictCount] = layerDepth;
-                        imageTypeLocation[subPictCount++] = imageType;
+                        pictLocation[subPictCount[presentLayer]][presentLayer] = raFile.getFilePointer();
+                        pixelSizeArray[subPictCount[presentLayer]][presentLayer] = layerDepth;
+                        imageTypeLocation[subPictCount[presentLayer]][presentLayer] = imageType;
+                        subPictCount[presentLayer]++;
                         // Read in rest of data later if necessary
                     }
                     
@@ -2454,10 +2482,16 @@ public class FileLIFF extends FileBase {
                     index = 0;
                     color = colorSequence[0];
                     sliceNumber = 0;
-                    for (i = 0; i < subPictCount; i++) {
-                        if (imageTypeLocation[i] == majorType) {
-                            raFile.seek(pictLocation[i]);
-                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
+                    i0Last = 0;
+                    i1Last = 0;
+                    i2Last = 0;
+                    totalSubPictCount = subPictCount[0] + subPictCount[1] + subPictCount[2];
+                    currentSubPictCount = 0;
+                    for (i = 0, k = 0; currentSubPictCount < totalSubPictCount; currentSubPictCount++) {
+                        if (imageTypeLocation[i][k] == majorType) {
+                            raFile.seek(pictLocation[i][k]);
+                            Preferences.debug("Located at subPictCount " + currentSubPictCount + " of " +
+                                              totalSubPictCount + "\n");
                             // Read in second section of comment 101
                             // blkCount contains the index of this block in the sequence, and will be
                             // from 0 to totalBlocks - 1.  Remember that it will generally require a
@@ -2488,6 +2522,16 @@ public class FileLIFF extends FileBase {
                             bitShift = readShort(endianess);
                             len = Math.min(picBlkSize, sliceColorBytes - index);
                             raFile.read(sliceColorBuffer, index, len);
+                            i++;
+                            if (k == 0) {
+                                i0Last = i;
+                            }
+                            else if (k == 1) {
+                                i1Last = i;
+                            }
+                            else {
+                                i2Last = i;
+                            }
                             index += len;
                             if (index == sliceColorBytes) {
                                 for (j = 0; j < sliceColorBytes/2; j++) {
@@ -2496,26 +2540,35 @@ public class FileLIFF extends FileBase {
                                 index = 0;
                                 if (color == colorSequence[0]) {
                                     color = colorSequence[1];
+                                    k = 1;
+                                    i = i1Last;
                                 }
                                 else if (color == colorSequence[1]) {
                                     color = colorSequence[2];
+                                    k = 2;
+                                    i = i2Last;
                                 }
                                 else if (color == colorSequence[2]) {
                                     color = colorSequence[0];
+                                    k = 0;
+                                    i = i0Last;
                                     image.importData(4* sliceNumber * xDim * yDim, shortBuffer, false);
                                     sliceNumber++;
                                 }
                             } // if (index == sliceColorBytes)
                          } // if (imageTypeLocation[i] == majorType)
-                    } // for (i = 0; i < greySubPictCount; i++)
+                        else {
+                            i++;
+                        }
+                    } // for (i = 0, k = 0; currentSubPictCount < totalSubPictCount; currentSubPictCount++)
                 } // if (doDeepGreyColor)
                 else if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) {
                     index = 0;
                     sliceNumber = 0;
-                    for (i = 0; i < subPictCount; i++) {
-                        if (imageTypeLocation[i] == majorType) {
-                            raFile.seek(pictLocation[i]);
-                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
+                    for (i = 0; i < subPictCount[0]; i++) {
+                        if (imageTypeLocation[i][0] == majorType) {
+                            raFile.seek(pictLocation[i][0]);
+                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount[0] + "\n");
                             // Read in second section of comment 101
                             // blkCount contains the index of this block in the sequence, and will be
                             // from 0 to totalBlocks - 1.  Remember that it will generally require a
@@ -2556,34 +2609,35 @@ public class FileLIFF extends FileBase {
                                 sliceNumber++;
                             } // if (index == sliceBytes)
                          } // if (imageTypeLocation[i] == majorType)
-                    } // for (i = 0; i < greySubPictCount; i++)
+                    } // for (i = 0; i < subPictCount; i++)
                 } // else if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16))
                 else {
-                    for (i = 0; i < subPictCount; i++) {
+                    for (i = 0; i < subPictCount[0]; i++) {
                         index = 0;
                         component = 0;
                         componentArray = new int[1];
-                        if (imageTypeLocation[i] == majorType) {
-                            rowBytes = rowBytesArray[i];
-                            raFile.seek(pictLocation[i]);
-                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
-                            if ((packTypeArray[i] == 0) || (packTypeArray[i] > 2)) {
+                        if (imageTypeLocation[i][0] == majorType) {
+                            rowBytes = rowBytesArray[i][0];
+                            raFile.seek(pictLocation[i][0]);
+                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount[0] + "\n");
+                            if ((packTypeArray[i][0] == 0) || (packTypeArray[i][0] > 2)) {
                                 totalByteCount = 0;
                                 if (majorType == MAC_16_BIT_COLOR) {
-                                    if (packTypeArray[i] == 0) {
-                                        packTypeArray[i] = 3;
+                                    if (packTypeArray[i][0] == 0) {
+                                        packTypeArray[i][0] = 3;
                                     }
                                 }
-                                else if (packTypeArray[i] == 0) {
-                                        packTypeArray[i] = 4;
+                                else if (packTypeArray[i][0] == 0) {
+                                        packTypeArray[i][0] = 4;
                                 }
-                                if (cmpCountArray[i] == 3) {
+                                if (cmpCountArray[i][0] == 3) {
                                     componentArray = new int[3];
                                     componentArray[0] = 1;
                                     componentArray[1] = 2;
                                     componentArray[2] = 3;
+                                    scaleFactor = 4;
                                 }
-                                else  if (cmpCountArray[i] == 4) {
+                                else  if (cmpCountArray[i][0] == 4) {
                                     // To make the sample embryo2 LIFF file MAC_24_BIT_COLOR slices look like the 
                                     // DEEP_GREY_12 slices actually requires an order of 0, 2, 1, 3.
                                     componentArray = new int[4];
@@ -2591,9 +2645,13 @@ public class FileLIFF extends FileBase {
                                     componentArray[1] = 1;
                                     componentArray[2] = 2;
                                     componentArray[3] = 3;
+                                    scaleFactor = 4;
                                 }
-                                for (j = boundsTopArray[i]; j < boundsBottomArray[i]; j++) {
-                                    if (rowBytesArray[i] > 250) {
+                                else {
+                                    scaleFactor = cmpCountArray[i][0];
+                                }
+                                for (j = boundsTopArray[i][0]; j < boundsBottomArray[i][0]; j++) {
+                                    if (rowBytesArray[i][0] > 250) {
                                         byteCount = getUnsignedShort(endianess);
                                         totalByteCount += (byteCount + 2);
                                     }
@@ -2606,8 +2664,8 @@ public class FileLIFF extends FileBase {
                                     raFile.read(pad);
                                     rowBytesRead = 0;
                                     rowIndex = 0;
-                                    if (packTypeArray[i] == 3) {
-                                        while ((rowBytesRead < rowBytesArray[i]) && (rowIndex < byteCount)) {
+                                    if (packTypeArray[i][0] == 3) {
+                                        while ((rowBytesRead < rowBytesArray[i][0]) && (rowIndex < byteCount)) {
                                             b1 = pad[rowIndex++]; 
                                             if (b1 >= 0) { // 127 >= b1 >= 0
                                               for (k = 0; k < 2*(b1 + 1); k++) {
@@ -2624,14 +2682,14 @@ public class FileLIFF extends FileBase {
                                          } // while (rowBytesRead < rowBytesArray[i])
                                     } // if (packTypeArray[i] == 3)
                                     else { // packTypeArray[i] == 4
-                                        while ((rowBytesRead < rowBytesArray[i]) && (rowIndex < byteCount)) {
+                                        while ((rowBytesRead < rowBytesArray[i][0]) && (rowIndex < byteCount)) {
                                            b1 = pad[rowIndex++]; 
                                            if (b1 >= 0) { // 127 >= b1 >= 0
                                              for (k = 0; k < (b1 + 1); k++) {
-                                                 byteBuffer[(cmpCountArray[i]*index++) + componentArray[component]] =
+                                                 byteBuffer[(scaleFactor*index++) + componentArray[component]] =
                                                                                          pad[rowIndex++];
                                                  if ((index % xDim) == 0) {
-                                                     if (component < cmpCountArray[i] - 1) {
+                                                     if (component < cmpCountArray[i][0] - 1) {
                                                        component++;
                                                        index = index - xDim;
                                                      }
@@ -2644,10 +2702,10 @@ public class FileLIFF extends FileBase {
                                            else if (b1 != -128) { // -1 >= b1 >= -127
                                              len = -b1 + 1;
                                              for (k = 0; k < len; k++) {
-                                                 byteBuffer[(cmpCountArray[i]*index++) + componentArray[component]] =
+                                                 byteBuffer[(scaleFactor*index++) + componentArray[component]] =
                                                      pad[rowIndex];
                                                  if ((index % xDim) == 0) {
-                                                     if (component < cmpCountArray[i] - 1) {
+                                                     if (component < cmpCountArray[i][0] - 1) {
                                                        component++;
                                                        index = index - xDim;
                                                      }
@@ -2750,8 +2808,8 @@ public class FileLIFF extends FileBase {
                                 }
                                 sliceNumber++;
                             } // if ((packType == 0) || (packType > 2))
-                            if ((LUTSizeLocation[i] > 0L) && (!haveLUT)) {
-                                raFile.seek(LUTSizeLocation[i]); 
+                            if ((LUTSizeLocation[i][0] > 0L) && (!haveLUT)) {
+                                raFile.seek(LUTSizeLocation[i][0]); 
                                 haveLUT = true;
                                 // One less than the number of entries in the table
                                 ctSize = readShort(endianess);
@@ -2783,7 +2841,7 @@ public class FileLIFF extends FileBase {
                                     maxValue = maxValue >> 1;
                                     rightShift++;
                                 }
-                                raFile.seek(LUTSizeLocation[i] + 2);
+                                raFile.seek(LUTSizeLocation[i][0] + 2);
                                 for (j = 0; j <= ctSize; j++) {
                                     index = getUnsignedShort(endianess);
                                     redColor = (getUnsignedShort(endianess) >>> rightShift);
@@ -2822,58 +2880,83 @@ public class FileLIFF extends FileBase {
                     index = 0;
                     color = colorSequence[0];
                     sliceNumber = 0;
-                    for (i = 0; i < subPictCount; i++) {
-                        if (imageTypeLocation[i] == majorType) {
-                            raFile.seek(pictLocation[i]);
-                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
-                            uncompressedSize = readInt(endianess);
-                            Preferences.debug("Expected uncompressed data size = " + uncompressedSize + "\n");
-                            compressedSize = readInt(endianess);
-                            Preferences.debug("Compressed data size = " + compressedSize + "\n");
-                            dataWidth = uncompressedSize/yDim;
-                            Preferences.debug("dataWidth = " + dataWidth + "\n");
-                            // The data is compressed using MiniLZO.
-                            compressedBuffer = new byte[compressedSize];
-                            raFile.read(compressedBuffer);
-                            lzo = new LZOCodec();
-                            try {
-                                uncompressedBuffer = lzo.decompress(compressedBuffer);
-                            }
-                            catch (Exception e){
-                                MipavUtil.displayError("Exception on LZOCodec.decompress(compressedBuffer)");
-                                raFile.close();
-                                return null;
-                            }
-                            Preferences.debug("Actual uncompressed data size = " + uncompressedBuffer.length + "\n");
-                            for (y = 0; y < yDim; y++) {
-                                for (x = 0; x < xDim; x++) {
-                                    destIndex = 4*y*xDim + 4*x + color;
-                                    srcIndex = 2*y*xDim + 2*x;
-                                    shortBuffer[destIndex] = getBufferShort(uncompressedBuffer, srcIndex, endianess);
+                    i0Last = 0;
+                    i1Last = 0;
+                    i2Last = 0;
+                    totalSubPictCount = subPictCount[0] + subPictCount[1] + subPictCount[2];
+                    currentSubPictCount = 0;
+                    for (i = 0, k = 0; currentSubPictCount < totalSubPictCount; currentSubPictCount++) {
+                            if (imageTypeLocation[i][k] == majorType) {
+                                raFile.seek(pictLocation[i][k]);
+                                Preferences.debug("Located at subPictCount " + currentSubPictCount + " of " +
+                                        totalSubPictCount + "\n");
+                                uncompressedSize = readInt(endianess);
+                                Preferences.debug("Expected uncompressed data size = " + uncompressedSize + "\n");
+                                compressedSize = readInt(endianess);
+                                Preferences.debug("Compressed data size = " + compressedSize + "\n");
+                                dataWidth = uncompressedSize/yDim;
+                                Preferences.debug("dataWidth = " + dataWidth + "\n");
+                                // The data is compressed using MiniLZO.
+                                compressedBuffer = new byte[compressedSize];
+                                raFile.read(compressedBuffer);
+                                i++;
+                                if (k == 0) {
+                                    i0Last = i;
                                 }
+                                else if (k == 1) {
+                                    i1Last = i;
+                                }
+                                else {
+                                    i2Last = i;
+                                }
+                                lzo = new LZOCodec();
+                                try {
+                                    uncompressedBuffer = lzo.decompress(compressedBuffer);
+                                }
+                                catch (Exception e){
+                                    MipavUtil.displayError("Exception on LZOCodec.decompress(compressedBuffer)");
+                                    raFile.close();
+                                    return null;
+                                }
+                                Preferences.debug("Actual uncompressed data size = " + uncompressedBuffer.length + "\n");
+                                for (y = 0; y < yDim; y++) {
+                                    for (x = 0; x < xDim; x++) {
+                                        destIndex = 4*y*xDim + 4*x + color;
+                                        srcIndex = 2*y*xDim + 2*x;
+                                        shortBuffer[destIndex] = getBufferShort(uncompressedBuffer, srcIndex, endianess);
+                                    }
+                                }
+                                index = 0;
+                                if (color == colorSequence[0]) {
+                                    color = colorSequence[1];
+                                    k = 1;
+                                    i = i1Last;
+                                }
+                                else if (color == colorSequence[1]) {
+                                    color = colorSequence[2];
+                                    k = 2;
+                                    i = i2Last;
+                                }
+                                else if (color == colorSequence[2]) {
+                                    color = colorSequence[0];
+                                    k = 0;
+                                    i = i0Last;
+                                    image.importData(4* sliceNumber * xDim * yDim, shortBuffer, false);
+                                    sliceNumber++;
+                                }
+                            } // if (imageTypeLocation[i] == majorType)
+                            else {
+                                i++;
                             }
-                            index = 0;
-                            if (color == colorSequence[0]) {
-                                color = colorSequence[1];
-                            }
-                            else if (color == colorSequence[1]) {
-                                color = colorSequence[2];
-                            }
-                            else if (color == colorSequence[2]) {
-                                color = colorSequence[0];
-                                image.importData(4* sliceNumber * xDim * yDim, shortBuffer, false);
-                                sliceNumber++;
-                            }
-                        } // if (imageTypeLocation[i] == majorType)
-                    } // for (i = 0; i < greySubPictCount; i++)
+                    } // for (i = 0, k = 0; currentSubPictCount < totalSubPictCount; currentSubPictCount++)
                 } // if (doDeepGreyColor)
                 else if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) {
                     index = 0;
                     sliceNumber = 0;
-                    for (i = 0; i < subPictCount; i++) {
-                        if (imageTypeLocation[i] == majorType) {
-                            raFile.seek(pictLocation[i]);
-                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
+                    for (i = 0; i < subPictCount[0]; i++) {
+                        if (imageTypeLocation[i][0] == majorType) {
+                            raFile.seek(pictLocation[i][0]);
+                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount[0] + "\n");
                             uncompressedSize = readInt(endianess);
                             Preferences.debug("Uncompressed data size = " + uncompressedSize + "\n");
                             compressedSize = readInt(endianess);
@@ -2906,13 +2989,13 @@ public class FileLIFF extends FileBase {
                     } // for (i = 0; i < greySubPictCount; i++)
                 } // else if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16))
                 else {
-                    for (i = 0; i < subPictCount; i++) {
+                    for (i = 0; i < subPictCount[0]; i++) {
                         index = 0;
                         component = 0;
                         componentArray = new int[1];
-                        if (imageTypeLocation[i] == majorType) {
-                            raFile.seek(pictLocation[i]);
-                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount + "\n");
+                        if (imageTypeLocation[i][0] == majorType) {
+                            raFile.seek(pictLocation[i][0]);
+                            Preferences.debug("Located at subPictCount " + (i+1) + " of " + subPictCount[0] + "\n");
                             uncompressedSize = readInt(endianess);
                             Preferences.debug("Uncompressed data size = " + uncompressedSize + "\n");
                             compressedSize = readInt(endianess);
@@ -2932,7 +3015,7 @@ public class FileLIFF extends FileBase {
                                 return null;
                             }
                             Preferences.debug("Actual uncompressed data size = " + uncompressedBuffer.length + "\n");
-                            if ((majorType == MAC_24_BIT_COLOR) && (pixelSizeArray[i] == 32)) {
+                            if ((majorType == MAC_24_BIT_COLOR) && (pixelSizeArray[i][0] == 32)) {
                                 for (y = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++) {
                                         for (color = 1; color <= 3; color++) {
