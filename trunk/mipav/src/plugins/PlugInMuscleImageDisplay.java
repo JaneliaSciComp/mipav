@@ -2753,7 +2753,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	String fileDir;
     	fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
     	String ext = name.contains(".xml") ? "" : ".xml";
-        
+    	PlugInSelectableVOI temp = voiBuffer.get(name);
+    	
         if(new File(fileDir+name+ext).exists()) {
             FileVOI v;
             VOI[] voiVec = null;
@@ -2768,12 +2769,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+name);
             } else {
             	Vector <VOIBase>[] voiVecTemp = voiVec[0].getCurves();
-            	for(int i=0; i<voiVecTemp.length; i++) {
-            		voiBuffer.get(name).importCurve((VOIContour)(voiVecTemp[0].get(i)), i);
-            	}
+            	for(int i=0; i<voiVecTemp.length; i++) 
+            		for(int j=0; j<temp.getMaxCurvesPerSlice(); j++) 
+            			temp.importCurve((VOIContour)(voiVecTemp[i].get(j)), i);
             }
         }
-        return voiBuffer.get(name);
+        return temp;
     }
     
     public PlugInSelectableVOI getSingleVOI(String name) {
