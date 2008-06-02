@@ -2149,7 +2149,7 @@ public class JPanelHistoLUT
 
         xRangeTextA = new JTextField(String.valueOf(0), 5);
         xRangeTextA.setFont(MipavUtil.font12);
-        xRangeTextA.setEnabled(true);
+        xRangeTextA.setEnabled(false);
 
         JLabel textYRange = new JLabel("Y Range");
 
@@ -2157,7 +2157,7 @@ public class JPanelHistoLUT
 
         yRangeTextA = new JTextField(String.valueOf(0), 5);
         yRangeTextA.setFont(MipavUtil.font12);
-        yRangeTextA.setEnabled(true);
+        yRangeTextA.setEnabled(false);
 
         GridBagLayout cpGBL = new GridBagLayout();
 
@@ -2342,7 +2342,7 @@ public class JPanelHistoLUT
 
         xRangeTextB = new JTextField(String.valueOf(0), 5);
         xRangeTextB.setFont(MipavUtil.font12);
-        xRangeTextB.setEnabled(true);
+        xRangeTextB.setEnabled(false);
 
         JLabel textYRange = new JLabel("Y Range");
 
@@ -2350,7 +2350,7 @@ public class JPanelHistoLUT
 
         yRangeTextB = new JTextField(String.valueOf(0), 5);
         yRangeTextB.setFont(MipavUtil.font12);
-        yRangeTextB.setEnabled(true);
+        yRangeTextB.setEnabled(false);
 
         GridBagLayout cpGBL = new GridBagLayout();
 
