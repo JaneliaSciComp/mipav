@@ -93,7 +93,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     private int colorChoice = 0;
     
     /**Buffer containing exact copies of VOIs on file system along with program relevant material.*/
-    private TreeMap<String, PlugInSelectableVOI> voiBuffer;
+    private Map<String, PlugInSelectableVOI> voiBuffer;
     
     private PlugInSelectableVOI[][] voiList;
     
@@ -143,7 +143,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.noMirrorArr = new String[voiList.length][];
         this.noMirrorZ = new boolean[voiList.length][];
         this.calcTree = new TreeMap();
-        this.voiBuffer = new TreeMap();
+        this.voiBuffer = Collections.synchronizedMap(new TreeMap<String, PlugInSelectableVOI>());
         this.voiList = voiList;
         this.imageType = imageType;
         this.symmetry = symmetry;
@@ -156,14 +156,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         		voiBuffer.put(voiList[i][j].getName(), voiList[i][j]);
         		if(voiList[i][j].getName().contains("Left")) {
         			mirrorArrList.add(voiList[i][j].getName().substring(new String("Left ").length()));
-        			mirrorZList.add(voiList[i][j].doFill());
-        			calcTree.put(voiList[i][j].getName().substring(new String("Left ").length()), voiList[i][j].doCalc());
+        			mirrorZList.add(voiList[i][j].fillEligible());
+        			calcTree.put(voiList[i][j].getName().substring(new String("Left ").length()), voiList[i][j].calcEligible());
         		} else if(voiList[i][j].getName().contains("Right")) {
         			//do nothing
         		} else {
         			noMirrorArrList.add(voiList[i][j].getName());
-        			noMirrorZList.add(voiList[i][j].doFill());
-        			calcTree.put(voiList[i][j].getName(), voiList[i][j].doCalc());
+        			noMirrorZList.add(voiList[i][j].fillEligible());
+        			calcTree.put(voiList[i][j].getName(), voiList[i][j].calcEligible());
         		}
         	}
         	mirrorArr[i] = new String[mirrorArrList.size()];
@@ -227,14 +227,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         		voiBuffer.put(voiList[i][j].getName(), voiList[i][j]);
         		if(voiList[i][j].getName().contains("Left")) {
         			mirrorArrList.add(voiList[i][j].getName().substring(new String("Left ").length()));
-        			mirrorZList.add(voiList[i][j].doFill());
-        			calcTree.put(voiList[i][j].getName().substring(new String("Left ").length()), voiList[i][j].doCalc());
+        			mirrorZList.add(voiList[i][j].fillEligible());
+        			calcTree.put(voiList[i][j].getName().substring(new String("Left ").length()), voiList[i][j].calcEligible());
         		} else if(voiList[i][j].getName().contains("Right")) {
         			//do nothing
         		} else {
         			noMirrorArrList.add(voiList[i][j].getName());
-        			noMirrorZList.add(voiList[i][j].doFill());
-        			calcTree.put(voiList[i][j].getName(), voiList[i][j].doCalc());
+        			noMirrorZList.add(voiList[i][j].fillEligible());
+        			calcTree.put(voiList[i][j].getName(), voiList[i][j].calcEligible());
         		}
         	}
         	mirrorArr[i] = new String[mirrorArrList.size()];
@@ -897,7 +897,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     public boolean getZeroStatus(String name) {
     	boolean fill = false;
     	if(voiBuffer.get(name) != null)
-    		fill = voiBuffer.get(name).doFill();
+    		fill = voiBuffer.get(name).fillEligible();
     	return fill;
     }
     
@@ -1013,7 +1013,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         VOIVector voiVec = getActiveImage().getVOIs();
     	for(int i=0; i<voiVec.size(); i++) {
     		VOI voi = voiVec.get(i);
-    		if(voiBuffer.get(voi.getName()).doFill() && 
+    		if(voiBuffer.get(voi.getName()).fillEligible() && 
     				!(((VoiDialogPrompt)tabs[voiTabLoc]).getObjectName().equals(voi.getName()))) 
     			voi.setDisplayMode(VOI.SOLID);
     	}
@@ -1926,12 +1926,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		private boolean lutOn = false;
 		
 		private TreeMap<String,ColorButtonPanel> checkBoxLocationTree;
-		
-		/**Maps to store area calculations for each VOI*/
-		private Map <String,Double>totalBoundsCalcTree, totalBoundsCountTree, partialBoundsTree, fatBoundsTree, leanBoundsTree;
-		
-		/**Maps to store mean Hounsfield unit info for each VOI*/
-		private Map <String,Double>meanFatHTree, meanLeanHTree, meanTotalHTree;
 	
 		/**
 		 * Constructor, note is called at beginning of program, so mirrorArr and noMirrorArr
@@ -1944,17 +1938,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		
 		public AnalysisPrompt(PlugInMuscleImageDisplay theParentFrame, String[][] mirrorArr, String[][] noMirrorArr) {
 	        super(theParentFrame, "Analysis");
-	        
-	        //even though done flag exists, synchronized just in case
-	        totalBoundsCalcTree = Collections.synchronizedMap(new TreeMap<String,Double>());
-	        totalBoundsCountTree = Collections.synchronizedMap(new TreeMap<String,Double>()); 
-	        partialBoundsTree = Collections.synchronizedMap(new TreeMap<String,Double>()); 
-	        fatBoundsTree = Collections.synchronizedMap(new TreeMap<String,Double>()); 
-	        leanBoundsTree = Collections.synchronizedMap(new TreeMap<String,Double>());
-			
-			meanFatHTree = Collections.synchronizedMap(new TreeMap<String,Double>());
-			meanLeanHTree  = Collections.synchronizedMap(new TreeMap<String,Double>());
-			meanTotalHTree = Collections.synchronizedMap(new TreeMap<String,Double>());
 	        
 	        setButtons(buttonStringList);
 
@@ -2412,7 +2395,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			}
 			Iterator itr;
 			if(all)
-				itr = fatBoundsTree.keySet().iterator();
+				itr = voiBuffer.keySet().iterator();
 			else {
 				ArrayList totalList = new ArrayList(), subList = new ArrayList();
 				for (int listNum = 0; listNum < mirrorButtonArr.length; listNum++, subList = new ArrayList())  {   	
@@ -2436,15 +2419,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				double totalAreaCalc = 0, totalAreaCount = 0, fatArea = 0, leanArea = 0;//, partialArea = 0;
 				double meanFatH = 0, meanLeanH = 0, meanTotalH = 0;
 				//pixels -> cm^2\
-				if(totalBoundsCalcTree.get(itrObj) != null) {
+				PlugInSelectableVOI temp;
+				if((temp = voiBuffer.get(itrObj)) != null && temp.getMeanFatH() != PlugInSelectableVOI.NOT_CALC) {
 					
-					totalAreaCalc = totalBoundsCalcTree.get(itrObj);
-					totalAreaCount = totalBoundsCountTree.get(itrObj);
-					fatArea = fatBoundsTree.get(itrObj);
-					leanArea = leanBoundsTree.get(itrObj);
-					meanFatH = meanFatHTree.get(itrObj);
-					meanLeanH = meanLeanHTree.get(itrObj);
-					meanTotalH = meanTotalHTree.get(itrObj);
+					totalAreaCalc = temp.getTotalAreaCalc();
+					totalAreaCount = temp.getTotalAreaCount();
+					fatArea = temp.getFatArea();
+					leanArea = temp.getLeanArea();
+					meanFatH = temp.getMeanFatH();
+					meanLeanH = temp.getMeanLeanH();
+					meanTotalH = temp.getMeanTotalH();
 					
 					System.out.println("Compare areas: "+totalAreaCalc+"\tcount: "+totalAreaCount);
 					
@@ -2560,15 +2544,18 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    				multiplier = Math.pow(muscleFrame.getActiveImage().getResolutions(0)[0]*.1, 2);
 	    			else
 	    				multiplier *= muscleFrame.getActiveImage().getResolutions(0)[2];
-	    			fatBoundsTree.put(name, getPieceCount(v, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*multiplier);
-	    			partialBoundsTree.put(name, getPieceCount(v, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*multiplier);
-	    			leanBoundsTree.put(name, getPieceCount(v, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND)*multiplier);
-	    			totalBoundsCalcTree.put(name, getTotalAreaCalc(v)*multiplier);
-	    			totalBoundsCountTree.put(name, getTotalAreaCount(v)*multiplier);
+	    			PlugInSelectableVOI temp = voiBuffer.get(name);
 	    			
-	    			meanFatHTree.put(name, getMeanH(v, FAT_LOWER_BOUND, FAT_UPPER_BOUND));
-	    			meanLeanHTree.put(name, getMeanH(v, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND));
-	    			meanTotalHTree.put(name, getMeanH(v, FAT_LOWER_BOUND, MUSCLE_UPPER_BOUND));
+	    			//note that even for 3D images this will still be called area, even though refers to volume
+	    			temp.setFatArea(getPieceCount(v, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*multiplier);
+	    			temp.setPartialArea(getPieceCount(v, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*multiplier);
+	    			temp.setLeanArea(getPieceCount(v, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND)*multiplier);
+	    			temp.setTotalAreaCalc(getTotalAreaCalc(v)*multiplier);
+	    			temp.setTotalAreaCount(getTotalAreaCount(v)*multiplier);
+	    			
+	    			temp.setMeanFatH(getMeanH(v, FAT_LOWER_BOUND, FAT_UPPER_BOUND));
+	    			temp.setMeanLeanH(getMeanH(v, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND));
+	    			temp.setMeanTotalH(getMeanH(v, FAT_LOWER_BOUND, MUSCLE_UPPER_BOUND));
 	    		}
 	    		time = System.currentTimeMillis() - time;
 	    		
