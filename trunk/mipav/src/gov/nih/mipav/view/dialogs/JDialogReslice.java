@@ -65,6 +65,7 @@ public class JDialogReslice extends JDialogScriptableBase implements AlgorithmIn
     public JDialogReslice(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
+        image.makeUnitsOfMeasureIdentical();
         userInterface = ViewUserInterface.getReference();
         init();
     }
@@ -210,6 +211,7 @@ public class JDialogReslice extends JDialogScriptableBase implements AlgorithmIn
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
+        image.makeUnitsOfMeasureIdentical();
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
