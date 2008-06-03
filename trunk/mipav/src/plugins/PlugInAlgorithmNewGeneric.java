@@ -58,10 +58,20 @@ public class PlugInAlgorithmNewGeneric extends AlgorithmBase {
     }
     
     private void calc3D() {
-        xDim = srcImage.getExtents()[0];
+    	String voiDir = "C:\\Hello\\"+PlugInMuscleImageDisplay.VOI_DIR+"\\";
+    	
+        System.out.println("Attempting to save VOIs: "+srcImage.getVOIs().size()+"\tTo: "+voiDir);
+        //VOI created
+        srcImage.getParentFrame().saveAllVOIsTo(voiDir);
+        srcImage.unregisterAllVOIs();
+        //Load VOIs, but first check done
+        
+        
+        
+    	xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         sliceSize = xDim * yDim;
-
+        System.out.println("Done");
         int zDim = srcImage.getExtents()[2];
     }
 }
