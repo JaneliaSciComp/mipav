@@ -129,6 +129,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
     public JDialogSubsample(Frame theParentFrame, ModelImage sourceImage) {
         super(theParentFrame, false);
         this.image = sourceImage;
+        image.makeUnitsOfMeasureIdentical();
         this.userInterface = ViewUserInterface.getReference();
         extents = sourceImage.getExtents();
         dim = extents.length;
@@ -445,6 +446,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
+        image.makeUnitsOfMeasureIdentical();
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
