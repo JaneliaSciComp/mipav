@@ -103,7 +103,11 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
     public JDialogDirectResample(ModelImage _imageA, ModelImage _imageB) {
         super(ViewUserInterface.getReference().getMainFrame(), false);
         this.image = _imageA;
+        image.makeUnitsOfMeasureIdentical();
         this.imageB = _imageB;
+        if (imageB != null) {
+            imageB.makeUnitsOfMeasureIdentical();
+        }
         this.userInterface = ViewUserInterface.getReference();
         extents = image.getExtents();
         res = image.getFileInfo(0).getResolutions();
@@ -580,11 +584,15 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
     protected void setGUIFromParams() {
 
         image = scriptParameters.retrieveInputImage();
+        image.makeUnitsOfMeasureIdentical();
 
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         imageB = ((ViewJFrameImage) parentFrame).getImageB(); // can be null
+        if (imageB != null) {
+            imageB.makeUnitsOfMeasureIdentical();
+        }
 
         extents = image.getExtents();
         res = image.getFileInfo(0).getResolutions();
