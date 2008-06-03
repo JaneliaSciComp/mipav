@@ -3402,6 +3402,11 @@ public class ModelImage extends ModelStorageBase {
         }
     }
     
+    /**
+     * Make all spatial units the same, all time units the same, and all
+     * frequency units the same 
+     *
+     */
     public void makeUnitsOfMeasureIdentical() {
         final int OTHER = 0;
         final int SPATIAL = 1;
@@ -3486,7 +3491,422 @@ public class ModelImage extends ModelStorageBase {
                 return;
             }
         } // else if ((nDims == 3) || (nDims == 4))
+        if (set1To0 && set2To0) {
+            make2UnitsOfMeasureIdentical(0, 1);
+            make2UnitsOfMeasureIdentical(0, 2);
+        }
+        else if (set1To0) {
+            make2UnitsOfMeasureIdentical(0, 1);
+        }
+        else if (set2To0) {
+            make2UnitsOfMeasureIdentical(0, 2);
+        }
+        else if (set2To1) {
+            make2UnitsOfMeasureIdentical(1, 2);
+        }
+        return;
     } // public void makeUnitsOfMeasureIdentical()
+    
+    /**
+     * 
+     * @param newUnitDim 
+     * @param oldUnitDim dimension which will have unit of measure converted to unit of measure
+     *                   of dimension newUnitDim and will have the resolution correspondingly
+     *                   converted.
+     */
+    public void make2UnitsOfMeasureIdentical(int newUnitDim, int oldUnitDim) {
+        int i;
+        int newUnit = fileInfo[0].getUnitsOfMeasure()[newUnitDim];
+        int oldUnit = fileInfo[0].getUnitsOfMeasure()[oldUnitDim];
+        float res = fileInfo[0].getResolutions()[oldUnitDim];
+        switch(newUnit) {
+            case FileInfoBase.INCHES:
+                switch(oldUnit) {
+                    case FileInfoBase.CENTIMETERS:
+                        res *= 0.393700787;
+                        break;
+                    case FileInfoBase.ANGSTROMS:
+                        res *= 3.93700787E-9;
+                        break;
+                    case FileInfoBase.NANOMETERS:
+                        res *= 3.93700787E-8;
+                        break;
+                    case FileInfoBase.MICROMETERS:
+                        res *= 3.93700787E-5;
+                        break;
+                    case FileInfoBase.MILLIMETERS:
+                        res *= 3.93700787E-2;
+                        break;
+                    case FileInfoBase.METERS:
+                        res *= 39.3700787;
+                        break;
+                    case FileInfoBase.KILOMETERS:
+                        res *= 3.93700787E4;
+                        break;
+                    case FileInfoBase.MILES:
+                        res *= 6.336E4;
+                        break;
+                }
+                break;
+            case FileInfoBase.CENTIMETERS:
+                switch(oldUnit) {
+                    case FileInfoBase.INCHES:
+                        res *= 2.54;
+                        break;
+                    case FileInfoBase.ANGSTROMS:
+                        res *= 1.0E-8;
+                        break;
+                    case FileInfoBase.NANOMETERS:
+                        res *= 1.0E-7;
+                        break;
+                    case FileInfoBase.MICROMETERS:
+                        res *= 1.0E-4;
+                        break;
+                    case FileInfoBase.MILLIMETERS:
+                        res *= 0.1;
+                        break;
+                    case FileInfoBase.METERS:
+                        res *= 1.0E2;
+                        break;
+                    case FileInfoBase.KILOMETERS:
+                        res *= 1.0E5;
+                        break;
+                    case FileInfoBase.MILES:
+                        res *= 1.609344E5;
+                        break;
+                }
+                break;
+            case FileInfoBase.ANGSTROMS:
+                switch(oldUnit) {
+                    case FileInfoBase.INCHES:
+                        res *= 2.54E8;
+                        break;
+                    case FileInfoBase.CENTIMETERS:
+                        res *= 1.0E8;
+                        break;
+                    case FileInfoBase.NANOMETERS:
+                        res *= 10.0;
+                        break;
+                    case FileInfoBase.MICROMETERS:
+                        res *= 1.0E4;
+                        break;
+                    case FileInfoBase.MILLIMETERS:
+                        res *= 1.0E7;
+                        break;
+                    case FileInfoBase.METERS:
+                        res *= 1.0E10;
+                        break;
+                    case FileInfoBase.KILOMETERS:
+                        res *= 1.0E13;
+                        break;
+                    case FileInfoBase.MILES:
+                        res *= 1.609344E13;
+                        break;
+                }
+                break;
+            case FileInfoBase.NANOMETERS:
+                switch(oldUnit) {
+                    case FileInfoBase.INCHES:
+                        res *= 2.54E7;
+                        break;
+                    case FileInfoBase.CENTIMETERS:
+                        res *= 1.0E7;
+                        break;
+                    case FileInfoBase.ANGSTROMS:
+                        res *= 0.1;
+                        break;
+                    case FileInfoBase.MICROMETERS:
+                        res *= 1.0E3;
+                        break;
+                    case FileInfoBase.MILLIMETERS:
+                        res *= 1.0E6;
+                        break;
+                    case FileInfoBase.METERS:
+                        res *= 1.0E9;
+                        break;
+                    case FileInfoBase.KILOMETERS:
+                        res *= 1.0E12;
+                        break;
+                    case FileInfoBase.MILES:
+                        res *= 1.609344E12;
+                        break;
+                }
+                break;
+            case FileInfoBase.MICROMETERS:
+                switch(oldUnit) {
+                    case FileInfoBase.INCHES:
+                        res *= 2.54E4;
+                        break;
+                    case FileInfoBase.CENTIMETERS:
+                        res *= 1.0E4;
+                        break;
+                    case FileInfoBase.ANGSTROMS:
+                        res *= 1.0E-4;
+                        break;
+                    case FileInfoBase.NANOMETERS:
+                        res *= 1.0E-3;
+                        break;
+                    case FileInfoBase.MILLIMETERS:
+                        res *= 1.0E3;
+                        break;
+                    case FileInfoBase.METERS:
+                        res *= 1.0E6;
+                        break;
+                    case FileInfoBase.KILOMETERS:
+                        res *= 1.0E9;
+                        break;
+                    case FileInfoBase.MILES:
+                        res *= 1.609344E9;
+                        break;
+                }
+                break;
+            case FileInfoBase.MILLIMETERS:
+                switch(oldUnit) {
+                    case FileInfoBase.INCHES:
+                        res *= 25.4;
+                        break;
+                    case FileInfoBase.CENTIMETERS:
+                        res *= 10.0;
+                        break;
+                    case FileInfoBase.ANGSTROMS:
+                        res *= 1.0E-7;
+                        break;
+                    case FileInfoBase.NANOMETERS:
+                        res *= 1.0E-6;
+                        break;
+                    case FileInfoBase.MICROMETERS:
+                        res *= 1.0E-3;
+                        break;
+                    case FileInfoBase.METERS:
+                        res *= 1.0E3;
+                        break;
+                    case FileInfoBase.KILOMETERS:
+                        res *= 1.0E6;
+                        break;
+                    case FileInfoBase.MILES:
+                        res *= 1.609344E6;
+                        break;
+                }
+                break;
+            case FileInfoBase.METERS:
+                switch(oldUnit) {
+                    case FileInfoBase.INCHES:
+                        res *= 2.54E-2;
+                        break;
+                    case FileInfoBase.CENTIMETERS:
+                        res *= 1.0E-2;
+                        break;
+                    case FileInfoBase.ANGSTROMS:
+                        res *= 1.0E-10;
+                        break;
+                    case FileInfoBase.NANOMETERS:
+                        res *= 1.0E-9;
+                        break;
+                    case FileInfoBase.MICROMETERS:
+                        res *= 1.0E-6;
+                        break;
+                    case FileInfoBase.MILLIMETERS:
+                        res *= 1.0E-3;
+                        break;
+                    case FileInfoBase.KILOMETERS:
+                        res *= 1.0E3;
+                        break;
+                    case FileInfoBase.MILES:
+                        res *= 1.609344E3;
+                        break;
+                }
+                break;
+            case FileInfoBase.KILOMETERS:
+                switch(oldUnit) {
+                    case FileInfoBase.INCHES:
+                        res *= 2.54E-5;
+                        break;
+                    case FileInfoBase.CENTIMETERS:
+                        res *= 1.0E-5;
+                        break;
+                    case FileInfoBase.ANGSTROMS:
+                        res *= 1.0E-13;
+                        break;
+                    case FileInfoBase.NANOMETERS:
+                        res *= 1.0E-12;
+                        break;
+                    case FileInfoBase.MICROMETERS:
+                        res *= 1.0E-9;
+                        break;
+                    case FileInfoBase.MILLIMETERS:
+                        res *= 1.0E-6;
+                        break;
+                    case FileInfoBase.METERS:
+                        res *= 1.0E-3;
+                        break;
+                    case FileInfoBase.MILES:
+                        res *= 1.609344;
+                        break;
+                }
+                break;
+            case FileInfoBase.MILES:
+                switch(oldUnit) {
+                    case FileInfoBase.INCHES:
+                        res *= 1.57828283E-5;
+                        break;
+                    case FileInfoBase.CENTIMETERS:
+                        res *= 6.21371192E-6;
+                        break;
+                    case FileInfoBase.ANGSTROMS:
+                        res *= 6.21371192E-14;
+                        break;
+                    case FileInfoBase.NANOMETERS:
+                        res *= 6.21371192E-13;
+                        break;
+                    case FileInfoBase.MICROMETERS:
+                        res *= 6.21371192E-10;
+                        break;
+                    case FileInfoBase.MILLIMETERS:
+                        res *= 6.21371192E-7;
+                        break;
+                    case FileInfoBase.METERS:
+                        res *= 6.21371192E-4;
+                        break;
+                    case FileInfoBase.KILOMETERS:
+                        res *= 6.21371192E-1;
+                        break;
+                }
+                break;
+            case FileInfoBase.NANOSEC:
+                switch(oldUnit) {
+                    case FileInfoBase.MICROSEC:
+                        res *= 1.0E3;
+                        break;
+                    case FileInfoBase.MILLISEC:
+                        res *= 1.0E6;
+                        break;
+                    case FileInfoBase.SECONDS:
+                        res *= 1.0E9;
+                        break;
+                    case FileInfoBase.MINUTES:
+                        res *= 6.0E10;
+                        break;
+                    case FileInfoBase.HOURS:
+                        res *= 3.6E12;
+                        break;
+                }
+                break;
+            case FileInfoBase.MICROSEC:
+                switch(oldUnit) {
+                    case FileInfoBase.NANOSEC:
+                        res *= 1.0E-3;
+                        break;
+                    case FileInfoBase.MILLISEC:
+                        res *= 1.0E3;
+                        break;
+                    case FileInfoBase.SECONDS:
+                        res *= 1.0E6;
+                        break;
+                    case FileInfoBase.MINUTES:
+                        res *= 6.0E7;
+                        break;
+                    case FileInfoBase.HOURS:
+                        res *= 3.6E9;
+                        break;
+                }
+                break;
+            case FileInfoBase.MILLISEC:
+                switch(oldUnit) {
+                    case FileInfoBase.NANOSEC:
+                        res *= 1.0E-6;
+                        break;
+                    case FileInfoBase.MICROSEC:
+                        res *= 1.0E-3;
+                        break;
+                    case FileInfoBase.SECONDS:
+                        res *= 1.0E3;
+                        break;
+                    case FileInfoBase.MINUTES:
+                        res *= 6.0E4;
+                        break;
+                    case FileInfoBase.HOURS:
+                        res *= 3.6E6;
+                        break;
+                }
+                break;
+            case FileInfoBase.SECONDS:
+                switch(oldUnit) {
+                    case FileInfoBase.NANOSEC:
+                        res *= 1.0E-9;
+                        break;
+                    case FileInfoBase.MICROSEC:
+                        res *= 1.0E-6;
+                        break;
+                    case FileInfoBase.MILLISEC:
+                        res *= 1.0E-3;
+                        break;
+                    case FileInfoBase.MINUTES:
+                        res *= 6.0E1;
+                        break;
+                    case FileInfoBase.HOURS:
+                        res *= 3.6E3;
+                        break;
+                }
+                break;
+            case FileInfoBase.MINUTES:
+                switch(oldUnit) {
+                    case FileInfoBase.NANOSEC:
+                        res *= 1.66666667E-11;
+                        break;
+                    case FileInfoBase.MICROSEC:
+                        res *= 1.66666667E-8;
+                        break;
+                    case FileInfoBase.MILLISEC:
+                        res *= 1.66666667E-5;
+                        break;
+                    case FileInfoBase.SECONDS:
+                        res *= 1.66666667E-2;
+                        break;
+                    case FileInfoBase.HOURS:
+                        res *= 6.0E1;
+                        break;
+                }
+                break;
+            case FileInfoBase.HOURS:
+                switch(oldUnit) {
+                    case FileInfoBase.NANOSEC:
+                        res *= 2.77777778E-13;
+                        break;
+                    case FileInfoBase.MICROSEC:
+                        res *= 2.77777778E-10;
+                        break;
+                    case FileInfoBase.MILLISEC:
+                        res *= 2.77777778E-7;
+                        break;
+                    case FileInfoBase.SECONDS:
+                        res *= 2.77777778E-4;
+                        break;
+                    case FileInfoBase.MINUTES:
+                        res *= 1.66666667E-2;
+                        break;
+                }
+                break;
+            case FileInfoBase.HZ:
+                switch(oldUnit) {
+                    case FileInfoBase.RADS:
+                        res *= 0.159154943274;
+                        break;
+                }
+                break;
+            case FileInfoBase.RADS:
+                switch(oldUnit) {
+                    case FileInfoBase.HZ:
+                        res *= 6.2831853;
+                        break;
+                }
+                break;
+        } // switch(newUnit)
+        for (i = 0; i < fileInfo.length; i++) {
+            fileInfo[i].setUnitsOfMeasure(newUnit,oldUnitDim);
+            fileInfo[i].setResolutions(res,oldUnitDim);
+            this.setFileInfo(fileInfo[i], i);
+        }
+    } // public void make2UnitsOfMeasureIdentical(int newUnit, int originalUnit)
 
     /**
      * Calls disposeLocal of this class to ensure this class nulls the references to global class variables so that
