@@ -92,10 +92,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 
     private int colorChoice = 0;
     
+    long time = 0;
+    
     /**Buffer containing exact copies of VOIs on file system along with program relevant material.*/
     private Map<String, PlugInSelectableVOI> voiBuffer;
     
     private PlugInSelectableVOI[][] voiList;
+    
+    private AutomaticSegmentation autoSeg = new AutomaticSegmentation();
     
     private TreeMap<String, Boolean> calcTree;
         
@@ -189,6 +193,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         createVOIBuffer();
         
         initNext();
+        
+        //Automatic segmentation here
+        /*autoSegmentation();
+        long time = System.currentTimeMillis();
+        while(!autoSeg.isFinished()) {
+        	System.out.println("true");
+        }
+        System.out.println("Done3: "+(System.currentTimeMillis() - time));*/
     }
     
     /**
@@ -220,7 +232,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.calcTree = new TreeMap();
         this.voiBuffer = new TreeMap();
         
+        createVOIBuffer();
         
+        //create automatic VOIs here
         
         for(int i=0; i<voiList.length; i++) {
         	ArrayList mirrorArrList = new ArrayList(), noMirrorArrList = new ArrayList(), 
@@ -258,7 +272,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(true));
           
-        createVOIBuffer();
+        
         
     	initStandAlone();
     	this.setActiveImage(IMAGE_A);
@@ -269,6 +283,39 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	
     	imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
     	
+    	
+    }
+    
+    private void autoSegmentation() {
+    	Thread seg = new Thread(autoSeg);
+    	seg.start();
+    }
+    
+    /**
+     * Performs automatic segmentation
+     * 
+     * @author senseneyj
+     *
+     */
+    private class AutomaticSegmentation implements Runnable {
+
+    	private boolean finished = false;
+    	
+		public void run() {
+			// TODO Auto-generated method stub
+			getActiveImage().unregisterAllVOIs();
+			updateImages(true);
+			for(int i=0; i<100000000; i++) {
+				if(i%100000 == 0)
+					System.out.println("Try: "+i);
+			}
+			
+			finished = true;
+		}
+		
+		public boolean isFinished() {
+			return finished;
+		}
     	
     }
     
@@ -583,6 +630,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     private void initNext() {
         
+    	time = System.currentTimeMillis();
     	JPanel mainPanel = buildMainPanel();
     	
     	//if this is standalone (app frame hidden), add the tabbedpane from the messageframe to the bottom of the plugin's frame
@@ -614,6 +662,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	this.setMinimumSize(new Dimension(380, 640));
         }
         this.setResizable(true);
+        System.out.println("Done2: "+(System.currentTimeMillis()-time));
     }
     
     @Override
@@ -1157,7 +1206,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	public static final String RESET = "Reset";
     	public static final String HIDE_ONE = "Hide except";
     	
-    	private String buttonStringList[] = {OK, HIDE_ALL, HELP};
+    	/** default button list*/
+    	protected String buttonStringList[] = {OK, HIDE_ALL, HELP};
     	
     	protected JButton buttonGroup[];
     	
@@ -1165,7 +1215,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	
     	private Vector<ActionListener> objectList = new Vector<ActionListener>();
     	
-    	private String title;
+    	protected String title;
     	
     	protected boolean completed = false;
     	
@@ -1534,11 +1584,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             int countQualifiedVOIs = 0; //equal to numVoi when the right  amount of VOIs have been created
             VOI goodVOI = null;
             //see if the VOI has been modified
+            boolean curveReplace = false;
             for(int i=0; i<srcVOI.size(); i++) {
                 if(srcVOI.get(i).getName().equals(objectName)) {
                     if(srcVOI.get(i).getCurves()[getViewableSlice()].size() > 0) {
-                    	goodVOI = srcVOI.get(i);
+                    	goodVOI = (VOI)srcVOI.get(i).clone();
                     	countQualifiedVOIs++;
+                    	curveReplace = true;
                     } 
                 }
             }
@@ -1561,9 +1613,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             
             if(goodVOI != null) {
             	Vector<VOIBase>[] curves = goodVOI.getCurves();
-            	for(int i=0; i<curves.length; i++) 
-            		for(int j=0; j<curves[i].size(); j++)
-            			voiBuffer.get(objectName).importCurve((VOIContour)curves[i].get(j), i);
+            	for(int i=0; i<curves.length; i++) { 
+            		for(int j=0; j<curves[i].size(); j++) {
+            			if(curveReplace) 
+            				voiBuffer.get(objectName).removeCurve(j, i);
+            		    voiBuffer.get(objectName).importCurve((VOIContour)curves[i].get(j), i);
+            		}
+            	}
             }
             
             return voiBuffer.get(objectName);
@@ -1634,8 +1690,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         /** Text for muscles where mirror muscles are not considered. */
         private String[] noMirrorArr;
-        
-        //private TreeMap zeroStatus;
 
         private int index;
         
