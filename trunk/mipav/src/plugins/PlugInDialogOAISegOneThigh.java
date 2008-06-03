@@ -69,6 +69,8 @@ public class PlugInDialogOAISegOneThigh extends JDialogBase implements Algorithm
         
         userInterface = ViewUserInterface.getReference();
         init();
+ //       userInterface.getMessageFrame().addTab("Segmented Images - Results:  " + PlugInAlgorithmOAICropImage.patientID);
+
     }
 
     /**
@@ -165,7 +167,8 @@ public class PlugInDialogOAISegOneThigh extends JDialogBase implements Algorithm
      */
     protected void callAlgorithm() {
 
-            userInterface.getMessageFrame().addTab(leftRightString+ " Thigh");
+//            userInterface.getMessageFrame().addTab(leftRightString+ " Thigh");
+        userInterface.getMessageFrame().addTab("Segmented Images - Results:  " + PlugInAlgorithmOAICropImage.patientID);
 
             System.out.println("Making algorithm");
             // Make algorithm
