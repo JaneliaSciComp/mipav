@@ -223,6 +223,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         super(theParentFrame, false);
 
         image = im;
+        image.makeUnitsOfMeasureIdentical();
         resampleImage = im;
 
         userInterface = ViewUserInterface.getReference();
@@ -1239,6 +1240,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
+        image.makeUnitsOfMeasureIdentical();
         resampleImage = image;
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
