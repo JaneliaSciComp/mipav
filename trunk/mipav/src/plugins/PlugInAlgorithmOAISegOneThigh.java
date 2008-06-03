@@ -36,6 +36,8 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
 
     /** FINAL SEGMENTATION INTENSITY VALUES. */
 
+    public static int BACKGROUND = 63;
+
     /** Interstitial fat. */
     public static int FAT = 255;
 
@@ -77,6 +79,9 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
 
     /** result image 'right thigh'. */
     private ModelImage destImageA = null;
+
+    /** DOCUMENT ME! */
+    private int[] imgBuffer = null;
 
     /** DOCUMENT ME! */
     private int[] imgBuffer1 = null;
@@ -138,7 +143,10 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
         this.obMaskA = obMaskA;
         this.srcImageA = srcImageA;
         this.leftThigh = leftThigh;
-        
+
+        // obMask is just the srcImage.  This is not correct and needs to be turned into
+        // the outer boundary mask image before we begin processing in runAlgorithm()
+        // PFH        ShowImage(obMaskA, "obMaskA");
         
     }
 
@@ -878,9 +886,12 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
      */
     public ModelImage processHardFat(ModelImage Hard4Classes) {
 
-        // PFH          ShowImage(Hard4Classes, "hard segmentation");
-        // ShowImage(obMask,"obMask");
-        //          ShowImage(voiMask,"voiMask");
+        // PFH        ShowImage(Hard4Classes, "hard segmentation");
+        // PFH        ShowImage(obMask, "obMask");
+        // PFH        ShowImage(voiMask, "voiMask");
+        
+        /////////****************  Here is where I am
+        
         fireProgressStateChanged("Processing bundle fat");
 
         ModelImage fatImage = (ModelImage) Hard4Classes.clone();
@@ -897,30 +908,25 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
         // relabel all pixels classified as FAT_2_B, interstitial fat (252)
         // in the Hard4Classes as FAT in the fatImage
         convert(fatImage, Hard4Classes, fatImage, 252, FAT);
-        // PFH
-        ShowImage(fatImage, "fatB");
+        // PFH        ShowImage(fatImage, "fatB");
 
         // label all pixels outside the VOI as subcutaneous fat
-        //       PFH        ShowImage(fatImage, "BEFORE outside fat");
-//        convert(fatImage, voiMask, fatImage, 0, SUB_CUT_FAT);
-        convert(fatImage, voiMask, fatImage, 255, SUB_CUT_FAT);
-        // PFH
-        ShowImage(fatImage, "AFTER outside fat");
-        // PFH
-        ShowImage(voiMask, "voiMask");
+        //PFH        ShowImage(fatImage, "BEFORE outside fat");
+        convert(fatImage, voiMask, fatImage, 0, SUB_CUT_FAT);
+//        convert(fatImage, voiMask, fatImage, 255, SUB_CUT_FAT);
+        // PFH        ShowImage(fatImage, "AFTER outside fat");
+        // PFH        ShowImage(voiMask, "voiMask");
 
         // relabel pixels outside the outer boundary mask as background
         convert(fatImage, obMask, fatImage, 0, BACKGROUND_NEW); /*all outside obMask labeled background*/
 
-        // PFH
-        ShowImage(obMask, "obMask");
-        // PFH
-        ShowImage(fatImage, "background");
+        // PFH        ShowImage(obMask, "obMask");
+        // PFH        ShowImage(fatImage, "background");
 
         // apply a fat cardinality filter to get rid of small regions of fat
         //
         cleanUp(fatImage, FAT, MUSCLE, 20);
-        //       PFH        ShowImage(fatImage, "fat suppression");
+        // PFH        ShowImage(fatImage, "fat suppression");
 
         return fatImage;
     }
@@ -929,9 +935,13 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
      * DOCUMENT ME!
      */
     public void runAlgorithm() {
+        
+        // These images were set in the constructor
+        // PFH        ShowImage(srcImageA, "srcImageA");
+        // PFH        ShowImage(obMaskA, "obMaskA");
 
         fireProgressStateChanged("OAI Single Thigh Seg. 7/27/07", "Processing images...");
-       
+
         xDim = 1;
         yDim = 1;
         zDim = 1;
@@ -949,16 +959,34 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
         int boneCountTotal = 0;
         int boneMarrowCountTotal = 0;
         int total_thighCount = 0;
+ 
+        // the next function sets x, y, and zDim variables, sets processedImage
+        // to a clone of the source image, and sets obMask to obMaskA which is
+        // passed in as an argument
+        getVariables(srcImageA, obMaskA);
+        // PFH        ShowImage(srcImageA, "source image");
+        // PFH        ShowImage(obMaskA, "obMaskA");
+        // PFH        ShowImage(obMask, "obMask");
+
         
-            getVariables(srcImageA, obMaskA);
-            ShowImage(srcImageA, "source image");
-            ShowImage(obMaskA, "obMaskA");
-
-            sliceSize = xDim * yDim;
-            volSize = xDim * yDim * zDim;
-            imgBuffer1 = new int[sliceSize];
-            imgBuffer2 = new int[sliceSize];
-
+        sliceSize = xDim * yDim;
+        volSize = xDim * yDim * zDim;
+        imgBuffer  = new int[sliceSize];
+        imgBuffer1 = new int[sliceSize];
+        imgBuffer2 = new int[sliceSize];
+            
+         // we need to make the outer boundary mask image
+         ModelImage hardSeg;
+         hardSeg = HardFuzzy(srcImageA, 3);
+         // PFH         ShowImage(hardSeg, "hardSeg");
+         obMaskA = boundaryCorrect(hardSeg);
+         // PFH         ShowImage(obMaskA, "obMaskA");
+         
+         // overwrite the incorrect clone set in getVariables
+         obMask = (ModelImage) obMaskA.clone();
+         // PFH         ShowImage(obMask, "obMask");
+         // PFH         ShowImage(processedImage, "processedImage");
+        
             /********************************************************
              **************** general processing ********************
              ********************************************************/
@@ -1009,7 +1037,6 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
             // make a empty bone/marrow image
             ModelImage boneSeg = new ModelImage(HardSeg1.getType(), HardSeg1.getExtents(), "Bone Seg Image");
             processBoneAndMarrow(boneSeg, HardSeg1, processedImage);
-
             // PFH            ShowImage(boneSeg, "bone/marrow seg");
 
             /*
@@ -1034,7 +1061,7 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
             // STEP 6: PROCESS FAT
             ModelImage fatSeg = processHardFat(HardSeg1);
             
-            // PFH         ShowImage(fatSeg, "bundle cleaned-up fat image");
+            // PFH            ShowImage(fatSeg, "bundle cleaned-up fat image");
             
             fireProgressStateChanged((50 * (aa - 1)) + 46);
             HardSeg1.disposeLocal();
@@ -1196,6 +1223,174 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
     }
 
 
+    
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   SegmentedImg  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public ModelImage boundaryCorrect(ModelImage SegmentedImg) {
+        ModelImage Mask = new ModelImage(SegmentedImg.getType(), SegmentedImg.getExtents(), "Mask");
+        int j, i, iPrime, x, y, xx, yy, BACKGROUNDFound;
+
+        for (j = 0; j < zDim; j++) {
+
+            try {
+                fireProgressStateChanged(Math.round(10 + (30 * j / zDim)));
+
+                SegmentedImg.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer);
+                Mask.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer1);
+
+                // setting the outer BACKGROUND imgBuffers on mask---------background = 0, thigh in=1
+                for (i = 0; i < imgBuffer.length; i++) {
+                    imgBuffer1[i] = 1;
+                    imgBuffer2[i] = 1;
+                }
+
+                x = 0;
+
+                for (y = 0; y < yDim; y++) {
+                    i = x + (y * xDim);
+
+                    if (imgBuffer[i] == BACKGROUND) {
+                        imgBuffer1[i] = 0;
+                        imgBuffer2[i] = 0;
+                    }
+                }
+
+                x = xDim - 1;
+
+                for (y = 0; y < yDim; y++) {
+                    i = x + (y * xDim);
+
+                    if (imgBuffer[i] == BACKGROUND) {
+                        imgBuffer1[i] = 0;
+                        imgBuffer2[i] = 0;
+                    }
+                }
+
+                y = 0;
+
+                for (x = 0; x < xDim; x++) {
+                    i = x + (y * xDim);
+
+                    if (imgBuffer[i] == BACKGROUND) {
+                        imgBuffer1[i] = 0;
+                        imgBuffer2[i] = 0;
+                    }
+                }
+
+                y = yDim - 1;
+
+                for (x = 0; x < xDim; x++) {
+                    i = x + (y * xDim);
+
+                    if (imgBuffer[i] == BACKGROUND) {
+                        imgBuffer1[i] = 0;
+                        imgBuffer2[i] = 0;
+                    }
+                }
+
+                // setting BACKGROUND imgBuffers 4-connected to 1 of original boundary, as background.
+                do {
+                    BACKGROUNDFound = 0;
+
+                    for (y = 0; y < yDim; y++) {
+
+                        for (x = 0; x < xDim; x++) {
+                            i = x + (y * xDim);
+
+                            if (imgBuffer1[i] == 0) {
+
+                                // checks left nearest neighbor   segmentedImg left pixel is background and left pixel
+                                // has not been relabeled from thigh
+                                iPrime = i - 1;
+
+                                if ((x != 0) && (imgBuffer[iPrime] == BACKGROUND) && (imgBuffer1[iPrime] == 1)) {
+                                    imgBuffer1[i - 1] = 0;
+                                    imgBuffer2[i - 1] = 0;
+                                    BACKGROUNDFound++;
+                                }
+
+                                // right nearest neighbor
+                                iPrime = i + 1;
+
+                                if ((x != (xDim - 1)) && (imgBuffer[iPrime] == BACKGROUND) &&
+                                        (imgBuffer1[iPrime] == 1)) {
+                                    imgBuffer1[i + 1] = 0;
+                                    imgBuffer2[i + 1] = 0;
+                                    BACKGROUNDFound++;
+                                }
+
+                                // below
+                                iPrime = i - xDim;
+
+                                if ((y != 0) && (imgBuffer[iPrime] == BACKGROUND) && (imgBuffer1[iPrime] == 1)) {
+                                    imgBuffer1[i - xDim] = 0;
+                                    imgBuffer2[i - xDim] = 0;
+                                    BACKGROUNDFound++;
+                                }
+
+                                // above
+                                iPrime = i + xDim;
+
+                                if ((y != (yDim - 1)) && (imgBuffer[iPrime] == BACKGROUND) &&
+                                        (imgBuffer1[iPrime] == 1)) {
+                                    imgBuffer1[i + xDim] = 0;
+                                    imgBuffer2[i + xDim] = 0;
+                                    BACKGROUNDFound++;
+                                }
+                            } // end if (imgBuffer1[i] == 0)
+                        } // end for (x = 0; ...)
+                    } // end for (y = 0; ...)
+                } while (BACKGROUNDFound > 0);
+
+                // at this point all non-background pixels in imgBuffer (segmentedImg) should be labeled one
+                // in imgBuffer1 and imgBuffer2
+
+                // convert gray imgBuffer with outer BACKGROUND imgBuffer in its 5x5 neighborhood, into BACKGROUND
+                // relabels all pixels in the segmentedImg (imgBuffer) to background (0) if any pixels in its
+                // 5x5 neighbor are labeled as non-thigh
+                for (y = 2; y < (yDim - 2); y++) {
+
+                    for (x = 2; x < (xDim - 2); x++) {
+                        i = x + (y * xDim);
+
+                        if (imgBuffer[i] == MUSCLE) {
+
+                            // check 5x5 neighborhood
+                            for (yy = -2; yy <= 2; yy++) {
+
+                                for (xx = -2; xx <= 2; xx++) {
+
+                                    if (imgBuffer1[i + xx + (yy * xDim)] == 0) {
+                                        imgBuffer[i] = BACKGROUND;
+                                        imgBuffer2[i] = 0;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } // end for (y = 2; ...)
+
+                Mask.importData((j * imgBuffer.length), imgBuffer2, false);
+            } catch (IOException ex) {
+                System.err.println("error exporting data from srcImage in AlgorithmPipeline");
+            }
+        } // end for (j = 0; ...)
+
+//        SegmentedImg.disposeLocal();
+//        SegmentedImg = null;
+
+        return Mask;
+    }
+
+    
+    
+    
     /**
      * Creates new screen to show image.
      *
