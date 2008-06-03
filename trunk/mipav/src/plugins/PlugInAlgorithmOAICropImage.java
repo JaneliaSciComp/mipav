@@ -564,6 +564,7 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
         // B) BOUNDARY CORRECTION (which works only with hard fuzzy data)
         fireProgressStateChanged(15);
         fireProgressStateChanged("Boundary Correction");
+         
         obMask = boundaryCorrect(HardSeg);
         // PFH        ShowImage(obMask, "outer boundary mask");
 
@@ -762,19 +763,21 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
 
         crop(destImageA, srcImage, xbound, ybound, zbound);
         fireProgressStateChanged(85);
-        // ShowImage(destImageA,"destImageA");
+        // PFH        ShowImage(destImageA,"destImageA");
 
         // System.out.println("used obMask voi to crop ISN'd imageA");
         crop(destImageB, srcImage, xbound1, ybound, zbound);
         fireProgressStateChanged(90);
-        // ShowImage(destImageB,"destImageA");
+        // PFH        ShowImage(destImageB,"destImageA");
 
         // System.out.println("used obMask voi to crop ISN'd imageB");
         crop(obMaskA, obMask, xbound, ybound, zbound);
-        fireProgressStateChanged(95);
+        // PFH        ShowImage(obMaskA, "obMaskA");
+       fireProgressStateChanged(95);
 
         // System.out.println("used obMask voi to crop ISN'd imageA");
         crop(obMaskB, obMask, xbound1, ybound, zbound);
+        // PFH        ShowImage(obMaskB, "obMaskB");
         fireProgressStateChanged(100);
 
         // set the first part to being done, and return to the listening dialog
