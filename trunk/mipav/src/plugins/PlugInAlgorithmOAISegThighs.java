@@ -876,43 +876,46 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
      */
     public ModelImage processHardFat(ModelImage Hard4Classes) {
 
-        // PFH          ShowImage(Hard4Classes, "hard segmentation");
-        // ShowImage(obMask,"obMask");
-        //          ShowImage(voiMask,"voiMask");
+        // PFH        ShowImage(Hard4Classes, "hard segmentation");
+        // PFH        ShowImage(obMask,"obMask");
+        // PFH        ShowImage(voiMask,"voiMask");
+        
+        /////////****************  Here is where I am
+        
         fireProgressStateChanged("Processing bundle fat");
 
         ModelImage fatImage = (ModelImage) Hard4Classes.clone();
 
         // relabel all pixels inside the voi as muscle
         convert(fatImage, voiMask, fatImage, 1, MUSCLE);
-        //       PFH        ShowImage(fatImage, "voiMask");
+        // PFH        ShowImage(fatImage, "voiMask");
 
         // relabel all pixels classified as FAT_2_A, interstitial fat (189)
         // in the Hard4Classes as FAT (255) in the fatImage
         convert(fatImage, Hard4Classes, fatImage, 189, FAT);
-        //       PFH        ShowImage(fatImage, "fatA");
+        // PFH        ShowImage(fatImage, "fatA");
 
         // relabel all pixels classified as FAT_2_B, interstitial fat (252)
         // in the Hard4Classes as FAT in the fatImage
         convert(fatImage, Hard4Classes, fatImage, 252, FAT);
-        //       PFH        ShowImage(fatImage, "fatB");
+        // PFH        ShowImage(fatImage, "fatB");
 
         // label all pixels outside the VOI as subcutaneous fat
-        //       PFH        ShowImage(fatImage, "BEFORE outside fat");
+        // PFH        ShowImage(fatImage, "BEFORE outside fat");
         convert(fatImage, voiMask, fatImage, 0, SUB_CUT_FAT);
-        //       PFH        ShowImage(fatImage, "AFTER outside fat");
-        //       PFH        ShowImage(voiMask, "voiMask");
+        // PFH        ShowImage(fatImage, "AFTER outside fat");
+        // PFH        ShowImage(voiMask, "voiMask");
 
         // relabel pixels outside the outer boundary mask as background
         convert(fatImage, obMask, fatImage, 0, BACKGROUND_NEW); /*all outside obMask labeled background*/
 
-        //       PFH        ShowImage(obMask, "obMask");
-        //       PFH        ShowImage(fatImage, "background");
+        // PFH        ShowImage(obMask, "obMask");
+        // PFH        ShowImage(fatImage, "background");
 
         // apply a fat cardinality filter to get rid of small regions of fat
         //
         cleanUp(fatImage, FAT, MUSCLE, 20);
-        //       PFH        ShowImage(fatImage, "fat suppression");
+        // PFH        ShowImage(fatImage, "fat suppression");
 
         return fatImage;
     }
@@ -923,6 +926,12 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
     public void runAlgorithm() {
 
         fireProgressStateChanged("OAI Thigh Seg. 6/29/06", "Processing images...");
+        
+        // These images were set in the constructor
+        // PFH        ShowImage(srcImageA, "srcImageA");
+        // PFH        ShowImage(srcImageB, "srcImageB");
+        // PFH        ShowImage(obMaskA, "obMaskA");
+        // PFH        ShowImage(obMaskB, "obMaskB");
         
 
         xDim = 1;
@@ -942,6 +951,8 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
         int boneCountTotal = 0;
         int boneMarrowCountTotal = 0;
         int total_thighCount = 0;
+        // PFH        ShowImage(srcImageA, "source image");
+        // PFH        ShowImage(obMaskA, "obMaskA");
 
         // aa=1 RIGHT THIGH, aa=2 LEFT THIGH
         for (aa = 1; aa <= 2; aa++) {
@@ -956,6 +967,10 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
                 getVariables(srcImageB, obMaskB);
             }
 
+            // getVariables sets x, y, zDim, processedImage to srcImageA or B, obMask to obMaskA or B
+            // PFH            ShowImage(processedImage, "processedImage");
+            // PFH            ShowImage(obMask, "obMask");
+            
             sliceSize = xDim * yDim;
             volSize = xDim * yDim * zDim;
             imgBuffer1 = new int[sliceSize];
@@ -1015,7 +1030,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
             ModelImage boneSeg = new ModelImage(HardSeg1.getType(), HardSeg1.getExtents(), "Bone Seg Image");
             processBoneAndMarrow(boneSeg, HardSeg1, processedImage);
 
-            // PFH            ShowImage(boneSeg, "bone/marrow seg");
+            // PFH            ShowImage(boneSeg, "boneSeg");
 
             /*
                         //STEP 4: ISOLATE BONE
@@ -1037,7 +1052,10 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
             */
 
             // STEP 6: PROCESS FAT
-            ModelImage fatSeg = processHardFat(HardSeg1); // ShowImage(destImage3b, "bundle cleanedup fat image");
+            ModelImage fatSeg = processHardFat(HardSeg1);
+
+            // PFH            ShowImage(fatSeg, "bundle cleaned-up fat image");
+                        
             fireProgressStateChanged((50 * (aa - 1)) + 46);
             HardSeg1.disposeLocal();
             HardSeg1 = null;
