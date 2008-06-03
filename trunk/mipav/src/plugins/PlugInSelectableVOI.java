@@ -16,6 +16,10 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 	
 	private boolean calcEligible;
 	
+	/**When true, automatic segmentation methods were used 
+	 * to generate this VOI and a person has NOT reviewed it.*/
+	private boolean computerGenerated;
+	
 	private boolean created = false;
 	
 	/** Total area of this VOI using calculating method. */
@@ -56,6 +60,7 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 		this.paneNum = paneNum;
 		this.fillEligible = fillEligible;
 		this.calcEligible = calcEligible;
+		this.computerGenerated = false;
 		setColor(INVALID_COLOR);
 	}
 
@@ -153,5 +158,13 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 
 	public void setMeanTotalH(double meanTotalH) {
 		this.meanTotalH = meanTotalH;
+	}
+
+	public boolean isComputerGenerated() {
+		return computerGenerated;
+	}
+
+	public void setComputerGenerated(boolean computerGenerated) {
+		this.computerGenerated = computerGenerated;
 	}
 }
