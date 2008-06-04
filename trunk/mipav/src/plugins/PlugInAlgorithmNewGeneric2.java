@@ -832,7 +832,12 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
             dy = y2CMs[sliceNum] - y2CMs[sliceNum + 1];
             distances2[sliceNum] = (float)Math.sqrt(dx*dx + dy*dy);
         } // end for (int sliceNum = 0; ...)
-        
+/*        
+        System.out.println("distances between slices\n\tRegion 1\t\t\tRegion 2");
+        for (int sliceNum = 0; sliceNum < zDim - 1; sliceNum++) {
+            System.out.println(sliceNum +" - " +(sliceNum+1) +"\t" +distances1[sliceNum] +"\t\t\t\t" +distances2[sliceNum]);
+        }
+*/
         // compute mean and standard deviation of the distances
         float sum1 = 0.0f, sum2 = 0.0f;
         for (int sliceNum = 0; sliceNum < zDim - 1; sliceNum++) {
@@ -842,6 +847,8 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
         float meanDistance1 = sum1 / (zDim - 1);
         float meanDistance2 = sum2 / (zDim - 1);
         
+        System.out.println("mean dist:  " +meanDistance1 +"\t\tmean dist:  " +meanDistance2);
+
        sum1 = sum2 = 0.0f;
        for (int sliceNum = 0; sliceNum < zDim - 1; sliceNum++) {
            dx = distances1[sliceNum] - meanDistance1;
@@ -853,12 +860,15 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
        float stdDev1 = (float)Math.sqrt(sum1 / (zDim - 1));
        float stdDev2 = (float)Math.sqrt(sum2 / (zDim - 1));
        
+       System.out.println("Std Dev:  " +stdDev1 +"\t\tStd Dev:  " +stdDev2);
+
        if (Math.abs(meanDistance1 - meanDistance2) > 10.0f ||
            Math.abs(stdDev1 - stdDev2) > 10.0f) {
-        return false;
+           MipavUtil.displayError("boneRegionsOK() mean distance or std dev. of bone center-of-masses is greater than 10");
+           return false;
        }
        
-       // see that the distance between the center-of-mass for the two bones is close
+       // see that the distance between the center-of-mass for the two bones on each slice is close
        float maxDistance = 0.0f;
        for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
            // distance between CM of region 1
@@ -870,12 +880,19 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
            }
        } // end for (int sliceNum = 0; ...)
 
+       System.out.println("Distance between bone regions on each slice");
+       for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
+           System.out.println("slice number: " +sliceNum +"  distance: " +distances1[sliceNum]);
+       }
+       System.out.println("Maximum distance: " +maxDistance);
+
        // mean distance between the bones on each slice
        sum1 = 0.0f;
        for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
            sum1 += distances1[sliceNum];
        } // end for (int sliceNum = 0; ...)
        meanDistance1 = sum1 / zDim;
+       System.out.println("Mean distance: " +meanDistance1);
 
        // standard deviation of the distance between the bones 
        sum1 = 0.0f;
@@ -884,12 +901,14 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
            sum1 += (dx * dx);
        } // end for (int sliceNum = 0; ...)
        stdDev1 = (float)Math.sqrt(sum1 / zDim);
+       System.out.println("Std dev: " +stdDev1);
 
        // maxDistance between the bones on each slice should be close to the mean distance, so maxDistance
        // should be close to 0
        maxDistance -= meanDistance1;
-       if ((maxDistance + 3.0f * stdDev1) > 10.0f) {
-        return false;
+       if (((meanDistance1 - maxDistance) + 3.0f * stdDev1) > 30.0f) {
+           MipavUtil.displayError("boneRegionsOK() (mean - max) distance + 3 * (std dev.) of bone is greater than 30");
+           return false;
        }
        
        // Detected bone regions seems reasonable
