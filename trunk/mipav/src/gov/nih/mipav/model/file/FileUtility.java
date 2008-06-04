@@ -219,6 +219,9 @@ public class FileUtility {
     /** Do not confuse with Leica image file format .lif */
     public static final int LIFF = 62;
     
+    /** Extension: .hdr for header, .bfloat for data */
+    public static final int BFLOAT = 63;
+    
     /** Arrary of strings describing the file formats. These are in synch with the above constants (same order) */
     private static String[] fileFormatStr = {
         "Undefined", "AFNI", "Analyze", "Analyze multifile", "Avi", "Bio-Rad", "BMP", "BRUKER", "Chesire",
@@ -226,7 +229,8 @@ public class FileUtility {
         "Interfile", "JIMI", "JPEG", "LSM", "LSM multifile", "Magnetom Vision", "Map", "Medvision", "MGH", "Micro CAT",
         "MINC", "MIPAV", "MRC", "NIFTI", "NIFTI multifile", "NRRD", "OSM", "PCX", "PIC", "PICT", "PNG", "Project",
         "PSD", "QT", "Raw", "Raw multifile", "SPM", "STK", "Surface XML", "TGA", "Tiff", "Tiff multifile", "TMG", "VOI",
-        "XBM", "XML", "XML multifile", "XPM", "Philips PARREC", "Surface Reference XML", "MINC 2.0", "LIFF"
+        "XBM", "XML", "XML multifile", "XPM", "Philips PARREC", "Surface Reference XML", "MINC 2.0", "LIFF",
+        "BFLOAT"
     };
 
     /**
@@ -243,7 +247,7 @@ public class FileUtility {
                                                           "imc", "oly", "qt", "mov", "head", "brik", "ics", "ids",
                                                           "hdr", "spm", "fits", "dm3", "tmg", "mrc", "wu", "sig",
                                                           "gedno", "log", "ct", "info", "info~", "voi", "afni", "par",
-                                                          "parv2", "rec", "frec", "liff"
+                                                          "parv2", "rec", "frec", "liff", "bfloat"
                                                       };
 
     /** This map is needed in order to populate JDialogUnknownIO typeNames. */
@@ -603,6 +607,10 @@ public class FileUtility {
             case FileUtility.LIFF:
         	// TODO: is this the correct extension?  any others?
         	suffixList.add(".liff");
+                break;
+                
+            case FileUtility.BFLOAT:
+            suffixList.add("bfloat");
                 break;
         }
         
@@ -1079,38 +1087,46 @@ public class FileUtility {
                         fileType = choice.fileType();
                     }
                 } else { // read
-                    String headerFile = FileInterfile.isInterfile(fileName, fileDir);
-                    if (headerFile != null) {
-                        fileType = FileUtility.INTERFILE;
+                    int p = fileName.lastIndexOf(".");
+                    String bfloatDataName = fileName.substring(0, p + 1) + "bfloat";
+                    File bfloatFile = new File(fileDir + bfloatDataName);
+                    if (bfloatFile.exists()) {
+                        fileType = FileUtility.BFLOAT;
                     }
                     else {
-                        fileType = FileUtility.ANALYZE;
-    
-                        try {
-                            File file = new File(fileDir + fileName);
-                            RandomAccessFile raFile = new RandomAccessFile(file, "r");
-    
-                            raFile.seek(344L);
-    
-                            char[] niftiName = new char[4];
-    
-                            for (i = 0; i < 4; i++) {
-                                niftiName[i] = (char) raFile.readUnsignedByte();
-                            }
-    
-                            raFile.close();
-    
-                            if ((niftiName[0] == 'n') && ((niftiName[1] == 'i') || (niftiName[1] == '+')) &&
-                                    (niftiName[2] == '1') && (niftiName[3] == '\0')) {
-                                fileType = FileUtility.NIFTI;
-                            }
-                        } catch (OutOfMemoryError error) {
-                            System.gc();
-                        } catch (FileNotFoundException e) {
-                            System.gc();
-                        } catch (IOException e) {
-                            System.gc();
-                        }    
+                        String headerFile = FileInterfile.isInterfile(fileName, fileDir);
+                        if (headerFile != null) {
+                            fileType = FileUtility.INTERFILE;
+                        }
+                        else {
+                            fileType = FileUtility.ANALYZE;
+        
+                            try {
+                                File file = new File(fileDir + fileName);
+                                RandomAccessFile raFile = new RandomAccessFile(file, "r");
+        
+                                raFile.seek(344L);
+        
+                                char[] niftiName = new char[4];
+        
+                                for (i = 0; i < 4; i++) {
+                                    niftiName[i] = (char) raFile.readUnsignedByte();
+                                }
+        
+                                raFile.close();
+        
+                                if ((niftiName[0] == 'n') && ((niftiName[1] == 'i') || (niftiName[1] == '+')) &&
+                                        (niftiName[2] == '1') && (niftiName[3] == '\0')) {
+                                    fileType = FileUtility.NIFTI;
+                                }
+                            } catch (OutOfMemoryError error) {
+                                System.gc();
+                            } catch (FileNotFoundException e) {
+                                System.gc();
+                            } catch (IOException e) {
+                                System.gc();
+                            } 
+                        }
                     }
                 }
             } else if (suffix.equalsIgnoreCase(".ima")) {
@@ -1341,7 +1357,7 @@ public class FileUtility {
         } else if (suffix.equalsIgnoreCase(".ids")) {
             fileType = FileUtility.ICS;
         } else if (suffix.equalsIgnoreCase(".hdr")) {
-            // .hdr found in ANALYZE, INTERFILE, and NIFTI
+            // .hdr found in ANALYZE, BFLOAT, INTERFILE, and NIFTI
             fileType = FileUtility.UNDEFINED;
         } else if (suffix.equalsIgnoreCase(".spm")) {
             fileType = FileUtility.SPM;
@@ -1381,6 +1397,8 @@ public class FileUtility {
             fileType = FileUtility.PARREC;
         } else if (suffix.equalsIgnoreCase(".liff")) {
             fileType = FileUtility.LIFF;
+        } else if (suffix.equalsIgnoreCase(".bfloat")) {
+            fileType = FileUtility.BFLOAT;
         } else {
 
             // cannot automatically determine the filetype from the filename extension
