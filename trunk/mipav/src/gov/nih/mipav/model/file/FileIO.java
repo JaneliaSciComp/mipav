@@ -1558,6 +1558,10 @@ public class FileIO {
                 case FileUtility.OSM:
                     image = readOSM(fileName, fileDir);
                     break;
+                    
+                case FileUtility.BFLOAT:
+                    image = readBFLOAT(fileName, fileDir, one);
+                    break;
 
                 case FileUtility.MAGNETOM_VISION:
                     image = readMagnetomVision(fileName, fileDir, one);
@@ -5878,6 +5882,61 @@ public class FileIO {
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
             // LUT      = imageFile.getModelLUT();
+        } catch (IOException error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+            
+            error.printStackTrace();
+
+            return null;
+        } catch (OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+            
+            error.printStackTrace();
+
+            return null;
+        }
+
+        return image;
+
+    }
+    
+    /**
+     * Reads a BFLOAT file by calling the read method of the file.
+     *
+     * @param   fileName  Name of the image file to read.
+     * @param   fileDir   Directory of the image file to read.
+     * @param   one       If true, read in only one middle slice
+     *
+     * @return  The image that was read in, or null if failure.
+     */
+    private ModelImage readBFLOAT(String fileName, String fileDir, boolean one) {
+        ModelImage image = null;
+        FileBFLOAT imageFile;
+
+        try {
+            imageFile = new FileBFLOAT(fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
+            image = imageFile.readImage(one);
         } catch (IOException error) {
 
             if (image != null) {
