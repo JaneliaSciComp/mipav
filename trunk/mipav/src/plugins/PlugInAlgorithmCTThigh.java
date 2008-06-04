@@ -161,44 +161,50 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
      */
     private void segmentImage() {
         long time = System.currentTimeMillis();
+        boolean doVOI = false;
         // compute the bone label image
-        segmentBone();
+        doVOI = segmentBone();
         System.out.println("Bone segmentation: "+(System.currentTimeMillis() - time));
 
         time = System.currentTimeMillis();
-        segmentThighTissue();
+        if(doVOI)
+        	doVOI = segmentThighTissue();
         System.out.println("Thigh tissue segmentation: "+(System.currentTimeMillis() - time));
 
         time = System.currentTimeMillis();
-        VOI totalVOI = makeThighTissueVOI();
+        VOI totalVOI = null;
+        if(doVOI)
+        	totalVOI = makeThighTissueVOI();
         System.out.println("Thigh tissue VOIs: "+(System.currentTimeMillis() - time));
-        ShowImage(thighTissueImage, "Thigh tissue");
-        
-        rightThighVOI = makeRightThighVOI(totalVOI);
-        leftThighVOI = makeLeftThighVOI(totalVOI);
-        
-        //boneImage.unregisterAllVOIs();
-        //boneImage.registerVOI(rightThighVOI);
-        //boneImage.registerVOI(leftThighVOI);
-        
-        //boneImage.getParentFrame().updateImages(true);
-        
-     // save the VOI to a file(s)
-        String directory = System.getProperty("user.dir");
-        System.out.println("directory: " +directory);
-        FileVOI fileVOI;
-        
-        String fileName = "Right Thigh.xml";
-        try {
-            fileVOI = new FileVOI(fileName, directory, boneImage);
-            fileVOI.writeVOI(rightThighVOI, true);
-            fileName = "Left Thigh.xml";
-            fileVOI = new FileVOI(fileName, directory, boneImage);
-            fileVOI.writeVOI(leftThighVOI, true);
-        } catch (IOException ex) {
-            System.err.println("Error segmentImage():  Opening VOI file");
-            return;
-        }     
+        //ShowImage(thighTissueImage, "Thigh tissue")
+        if(totalVOI != null) {
+	        rightThighVOI = makeRightThighVOI(totalVOI);
+	        leftThighVOI = makeLeftThighVOI(totalVOI);
+	        
+	        //boneImage.unregisterAllVOIs();
+	        //boneImage.registerVOI(rightThighVOI);
+	        //boneImage.registerVOI(leftThighVOI);
+	        
+	        //boneImage.getParentFrame().updateImages(true);
+	        
+	     // save the VOI to a file(s)
+	        String directory = System.getProperty("user.dir");
+	        System.out.println("directory: " +directory);
+	        FileVOI fileVOI;
+	        
+	        String fileName = "Right Thigh.xml";
+	        try {
+	            fileVOI = new FileVOI(fileName, directory, boneImage);
+	            fileVOI.writeVOI(rightThighVOI, true);
+	            fileName = "Left Thigh.xml";
+	            fileVOI = new FileVOI(fileName, directory, boneImage);
+	            fileVOI.writeVOI(leftThighVOI, true);
+	        } catch (IOException ex) {
+	            System.err.println("Error segmentImage():  Opening VOI file");
+	            return;
+	        }     
+        } else
+        	System.err.println("Automatic VOIs not created");
 
    } // end segmentImage()
     
@@ -272,13 +278,13 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
         // make sure we got one VOI composed of two curves
         VOIVector vois = thighTissueImage.getVOIs();
         if(vois.size() != 1) {
-            MipavUtil.displayError("makeThighTissueVOI() Error, did not get 1 VOI");
+            System.err.println("makeThighTissueVOI() Error, did not get 1 VOI");
             return null;
         }
         VOI theVOI = vois.get(0);
         theVOI.setName("Thigh Tissue");
         if (theVOI.getCurves()[0].size() != 4) {
-            MipavUtil.displayError("makeThighTissueVOI() Error, did not get 2 curves in the VOI");
+            System.err.println("makeThighTissueVOI() Error, did not get 2 curves in the VOI");
             return null;
         }
         return theVOI;
@@ -286,7 +292,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
     } // end makeThighTissueVOI()
     
     
-    private void segmentThighTissue() {
+    private boolean segmentThighTissue() {
          
         // let's just grow a region
         // we need a seed point
@@ -362,7 +368,8 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                 System.err.println("segmentThighTissue(): Error importing data");
             }
         } // end for(int bitSetIdx = 0, sliceNum = 0; ...)
-     } // end segmentThighTissue(...)
+        return true;
+    } // end segmentThighTissue(...)
     
     
     
@@ -394,7 +401,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
    
    
    
-   private void computeBoneCMs() {
+   private boolean computeBoneCMs() {
 
         for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
             try {
@@ -420,10 +427,12 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
             } // end for (int i = 0; ...)
             
             if (count1 == 0) {
-                MipavUtil.displayError("computeBoneCMs() Could NOT find any pixels in the first bone");
+            	System.err.println("computeBoneCMs() Could NOT find any pixels in the first bone");
+            	return false;
             }
             if (count2 == 0) {
-                MipavUtil.displayError("computeBoneCMs() Could NOT find any pixels in the second bone");
+            	System.err.println("computeBoneCMs() Could NOT find any pixels in the second bone");
+            	return false;
             }
             
             x1CMs[sliceNum] = xSum1 / count1;
@@ -432,6 +441,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
             x2CMs[sliceNum] = xSum2 / count2;
             y2CMs[sliceNum] = ySum2 / count2;
          } // end for (int sliceNum = 0; ...)
+        return true;
     } // end computeBoneCMs(...)
     
     
@@ -439,7 +449,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
     /**
      * Uses a fixed threshold range to identify bone in CT images
      */
-    private void segmentBone() {
+    private boolean segmentBone() {
         // thresholds for bone in CT images
         float[] thresholds = { 750.0f, 2000.0f };
         boneImage = threshold(srcImage, thresholds);
@@ -461,7 +471,8 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
         // make sure we only found 2 objects
         int numBones = (int)boneImage.getMax();
         if (numBones != 2) {
-            MipavUtil.displayError("computeBoneImage() Did NOT find two leg bones!!!");
+            System.err.println("computeBoneImage() Did NOT find two leg bones!!!");
+            return false;
         }
         
         // One bone has a label value of 1 and the other has a value of 2
@@ -469,15 +480,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
         // test to insure we got a reasonable bone segmentation
 
         // compute center-of-mass for each region on each slice
-        computeBoneCMs();
- 
-        // compute statics about the center-of-mass for each region on each slice
-        // and insures that the distance and standard deviations of the distances between
-        // the center-of-mass for each region between each slice are "close"
-        /*if (!boneRegionsOK()) {
-            MipavUtil.displayError("Error segmentBone(), Bone segmentation error");
-            return;
-        }*/
+        return computeBoneCMs();
     } // end segmentBone(...)
     
     

@@ -2770,20 +2770,24 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         }  
     }
     
-    private Color hasColor(VOI voiVec) {
+    private Color hasColor(VOI voi) {
         Color c = PlugInSelectableVOI.INVALID_COLOR;
-        VOIVector tempVec = getActiveImage().getVOIs();
+        Iterator voiListItr = voiBuffer.keySet().iterator();
+        boolean colorFound = false;
         String side1 = "", side2 = ""; 
         if(Symmetry.LEFT_RIGHT == Symmetry.LEFT_RIGHT) {
         	side1 = "Left";
         	side2 = "Right";
         }
-        for(int i=0; i<tempVec.size(); i++) {
-            if(voiVec.getName().contains(side1) || voiVec.getName().contains(side2)) {
-                if( !(tempVec.get(i).getName().contains(side1)  &&  voiVec.getName().contains(side1)) && 
-                        !(tempVec.get(i).getName().contains(side2)  &&  voiVec.getName().contains(side2)) && 
-                        tempVec.get(i).getName().endsWith(voiVec.getName().substring(voiVec.getName().indexOf(" ")))) {
-                    c =  tempVec.get(i).getColor();
+        String testName = new String();
+        while(voiListItr.hasNext() && !colorFound) {
+        	testName = (String)voiListItr.next();
+            if(voi.getName().contains(side1) || voi.getName().contains(side2)) {
+                if( !(testName.contains(side1)  &&  voi.getName().contains(side1)) && 
+                        !(testName.contains(side2)  &&  voi.getName().contains(side2)) && 
+                        testName.endsWith(voi.getName().substring(voi.getName().indexOf(" ")))) {
+                    c =  voiBuffer.get(testName).getColor();
+                    colorFound = true;
                 }
             }
         }
