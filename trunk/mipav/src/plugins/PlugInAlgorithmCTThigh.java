@@ -217,11 +217,11 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
    } // end segmentImage()
     
     /**
-     * Produces left thigh VOI.
+     * Produces right thigh VOI.
      * @param totalVOI VOI of both thighs (inside and outside)
      * @return multi-curve VOI
      */
-    private VOI makeLeftThighVOI(VOI totalVOI) {
+    private VOI makeRightThighVOI(VOI totalVOI) {
     	VOI tempVOI = (VOI)totalVOI.clone();
     	int size = 0;
     	for(int i=0; i<zDim; i++) {
@@ -229,17 +229,17 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
     		for(int j=1; j<size; j++)
     			tempVOI.removeCurve(1, i);
     	}
-    	tempVOI.setName("Left Thigh");
+    	tempVOI.setName("Right Thigh");
     	tempVOI.setColor(voiColor);
     	return tempVOI;
     }
     
     /**
-     * Produces right thigh VOI.
+     * Produces left thigh VOI.
      * @param totalVOI VOI of both thighs (inside and outside)
      * @return multi-curve VOI
      */
-    private VOI makeRightThighVOI(VOI totalVOI) {
+    private VOI makeLeftThighVOI(VOI totalVOI) {
     	VOI tempVOI = (VOI)totalVOI.clone();
     	int size = 0;
     	for(int i=0; i<zDim; i++) {
@@ -251,7 +251,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
     				tempVOI.removeCurve(1, i);
     		}
     	}
-    	tempVOI.setName("Right Thigh");
+    	tempVOI.setName("Left Thigh");
     	tempVOI.setColor(voiColor);
     	return tempVOI;
     }

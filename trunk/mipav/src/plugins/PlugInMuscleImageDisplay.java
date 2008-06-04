@@ -414,8 +414,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     public void algorithmPerformed(AlgorithmBase algorithm) {
 		Vector<VOIBase>[] firstVOI = null;
 		Vector<VOIBase>[] secondVOI = null;
-		VOI firstBufferVOI = null;
-		VOI secondBufferVOI = null;
+		PlugInSelectableVOI firstBufferVOI = null;
+		PlugInSelectableVOI secondBufferVOI = null;
     	if(algorithm instanceof PlugInAlgorithmCTThigh) {
 			if(((PlugInAlgorithmCTThigh)algorithm).getLeftThighVOI() != null && 
 					((PlugInAlgorithmCTThigh)algorithm).getRightThighVOI() != null) {
@@ -432,6 +432,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 						secondBufferVOI.importCurve((VOIContour)secondVOI[i].get(j), i);
 					}
 				}
+				firstBufferVOI.setComputerGenerated(true);
+				secondBufferVOI.setComputerGenerated(true);
 			}
 		} else if(algorithm instanceof PlugInAlgorithmCTMarrow) {
 			if(((PlugInAlgorithmCTMarrow)algorithm).getLeftMarrowVOI() != null && 
@@ -449,6 +451,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 						secondBufferVOI.importCurve((VOIContour)secondVOI[i].get(j), i);
 					}
 				}
+				firstBufferVOI.setComputerGenerated(true);
+				secondBufferVOI.setComputerGenerated(true);
 			}
 		} else if(algorithm instanceof PlugInAlgorithmCTBone) {
 			if(((PlugInAlgorithmCTBone)algorithm).getLeftBoneVOI() != null && 
@@ -466,6 +470,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 						secondBufferVOI.importCurve((VOIContour)secondVOI[i].get(j), i);
 					}
 				}
+				firstBufferVOI.setComputerGenerated(true);
+				secondBufferVOI.setComputerGenerated(true);
 			}
 		}
 
