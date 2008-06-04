@@ -21,6 +21,7 @@ import java.awt.image.*;
 import java.io.*;
 
 import java.util.*;
+import java.util.zip.GZIPInputStream;
 
 import javax.imageio.*;
 
@@ -1383,6 +1384,13 @@ public class FileIO {
      */
     public ModelImage readImage(String fileName, String fileDir, boolean multiFile, FileInfoBase fileInfo,
                                 int secondAddress, boolean loadB, boolean one) {
+        int index;
+        boolean gunzip;
+        File file;
+        FileInputStream fis;
+        GZIPInputStream gzin;
+        FileOutputStream out;
+        int bytesRead;
         ModelImage image = null;
         int fileType = FileUtility.UNDEFINED;
         int userDefinedFileType = 0;
@@ -1394,7 +1402,79 @@ public class FileIO {
         this.fileDir = fileDir;
         fileName.trim();
 
+        index = fileName.lastIndexOf(".");
 
+        if (fileName.substring(index + 1).equalsIgnoreCase("gz")) {
+            gunzip = true;
+        } else {
+            gunzip = false;
+        }
+
+        file = new File(fileDir + fileName);
+
+        if (gunzip) {
+            int totalBytesRead = 0;
+
+            try {
+                fis = new FileInputStream(file);
+            }
+            catch(FileNotFoundException e) {
+                MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + fileName);
+                return null;
+            }
+
+            try {
+                gzin = new GZIPInputStream(new BufferedInputStream(fis));
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOException on GZIPInputStream for " + fileName);
+                return null;
+            }
+            
+
+            
+            fileName = fileName.substring(0, index);
+            String uncompressedName = fileDir + fileName;
+            try {
+                out = new FileOutputStream(uncompressedName);
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOException on FileOutputStream for " + uncompressedName);
+                return null;
+            }
+            byte[] buffer = new byte[256];
+
+            while (true) {
+                try {
+                    bytesRead = gzin.read(buffer);
+                }
+                catch(IOException e) {
+                    MipavUtil.displayError("IOException on gzin.read(buffer) for " + uncompressedName);
+                    return null;
+                }
+
+                if (bytesRead == -1) {
+                    break;
+                }
+
+                totalBytesRead += bytesRead;
+                try {
+                    out.write(buffer, 0, bytesRead);
+                }
+                catch(IOException e) {
+                    MipavUtil.displayError("IOException on out.write for " + uncompressedName);
+                    return null;
+                }
+            }
+
+            try {
+                out.close();
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOException on out.close for " + uncompressedName);
+                return null;
+            }
+        } // if (gunzip)
         fileType = FileUtility.getFileType(fileName, fileDir, false, quiet); // set the fileType
 
         if (fileType == FileUtility.ERROR) {
