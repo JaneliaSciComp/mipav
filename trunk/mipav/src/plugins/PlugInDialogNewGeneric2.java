@@ -93,8 +93,8 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
         
         
 
-        if (algorithm instanceof PlugInAlgorithmKidneySegmentation) {
-            Preferences.debug("Kidney segmentation Elapsed: " + algorithm.getElapsedTime());
+        if (algorithm instanceof AlgorithmBase) {
+            Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
             
             if ((genericAlgo.isCompleted() == true) && (resultImage != null)) {
