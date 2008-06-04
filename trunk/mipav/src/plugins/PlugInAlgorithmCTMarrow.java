@@ -211,20 +211,6 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
    } // end segmentImage()
     
     /**
-     * Produces right marrow VOI.
-     * @param totalVOI VOI of both marrow (left and right)
-     * @return multi-curve VOI
-     */
-    private VOI makeRightMarrowVOI(VOI totalVOI) {
-    	VOI tempVOI = (VOI)totalVOI.clone();
-    	for(int i=0; i<zDim; i++) 
-    		tempVOI.removeCurve(1, i);
-    	tempVOI.setName("Right Marrow");
-    	tempVOI.setColor(voiColor);
-    	return tempVOI;
-    }
-    
-    /**
      * Produces left marrow VOI.
      * @param totalVOI VOI of both marrow (left and right)
      * @return multi-curve VOI
@@ -232,8 +218,22 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
     private VOI makeLeftMarrowVOI(VOI totalVOI) {
     	VOI tempVOI = (VOI)totalVOI.clone();
     	for(int i=0; i<zDim; i++) 
-    		tempVOI.removeCurve(0, i);
+    		tempVOI.removeCurve(1, i);
     	tempVOI.setName("Left Marrow");
+    	tempVOI.setColor(voiColor);
+    	return tempVOI;
+    }
+    
+    /**
+     * Produces right marrow VOI.
+     * @param totalVOI VOI of both marrow (left and right)
+     * @return multi-curve VOI
+     */
+    private VOI makeRightMarrowVOI(VOI totalVOI) {
+    	VOI tempVOI = (VOI)totalVOI.clone();
+    	for(int i=0; i<zDim; i++) 
+    		tempVOI.removeCurve(0, i);
+    	tempVOI.setName("Right Marrow");
     	tempVOI.setColor(voiColor);
     	return tempVOI;
     }
