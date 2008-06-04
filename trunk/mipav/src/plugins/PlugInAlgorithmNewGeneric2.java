@@ -906,8 +906,8 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
        // maxDistance between the bones on each slice should be close to the mean distance, so maxDistance
        // should be close to 0
        maxDistance -= meanDistance1;
-       if (((meanDistance1 - maxDistance) + 3.0f * stdDev1) > 30.0f) {
-           MipavUtil.displayError("boneRegionsOK() (mean - max) distance + 3 * (std dev.) of bone is greater than 30");
+       if ((maxDistance + 3.0f * stdDev1) > 30.0f) {
+           MipavUtil.displayError("boneRegionsOK() (max - mean) distance + 3 * (std dev.) of bone is greater than 30");
            return false;
        }
        
@@ -954,6 +954,8 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
             
             x2CMs[sliceNum] = xSum2 / count2;
             y2CMs[sliceNum] = ySum2 / count2;
+            
+            System.out.println(x1CMs[sliceNum] +" " +y1CMs[sliceNum] +"    " +x2CMs[sliceNum] +" " +y2CMs[sliceNum]);
          } // end for (int sliceNum = 0; ...)
     } // end computeBoneCMs(...)
     
