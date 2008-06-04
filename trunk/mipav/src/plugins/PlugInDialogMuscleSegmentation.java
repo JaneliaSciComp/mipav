@@ -144,7 +144,6 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         try {
             //FileInfoBase[] info = image.getFileInfo();
             //info[0].displayAboutInfo(this); //expecting a 2D image
-           
             muscleSegAlgo = new PlugInAlgorithmMuscleSegmentation(image, imageType, parentFrame, multipleSlices);
 
             // This is very important. Adding this object as a listener allows the algorithm to
