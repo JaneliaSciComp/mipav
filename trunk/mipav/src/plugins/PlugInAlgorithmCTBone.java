@@ -12,6 +12,7 @@ import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.util.BitSet;
 
@@ -56,6 +57,8 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
     /**The final right outside bone VOI*/
     private VOI rightBoneVOI;
     
+    private Color voiColor;
+    
     
     /**
      * Constructor.
@@ -63,10 +66,11 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
      * @param  resultImage  Result image model
      * @param  srcImg       Source image model.
      */
-    public PlugInAlgorithmCTBone(ModelImage resultImage, ModelImage srcImg, String imageDir) {
+    public PlugInAlgorithmCTBone(ModelImage resultImage, ModelImage srcImg, String imageDir, Color color) {
         super(resultImage, srcImg);
         
-        this.imageDir = imageDir;
+        this.imageDir = imageDir+"\\";
+        this.voiColor = color;
         
         leftBoneVOI = null;
         rightBoneVOI = null;
@@ -206,6 +210,7 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
     			tempVOI.removeCurve(1, i);
     	}
     	tempVOI.setName("Right Bone");
+    	tempVOI.setColor(voiColor);
     	return tempVOI;
     }
     
@@ -227,6 +232,7 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
     		}
     	}
     	tempVOI.setName("Left Bone");
+    	tempVOI.setColor(voiColor);
     	return tempVOI;
     }
     

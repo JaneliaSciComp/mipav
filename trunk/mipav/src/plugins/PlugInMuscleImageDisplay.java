@@ -11,6 +11,7 @@ import gov.nih.mipav.model.scripting.actions.ActionCloseFrame;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.event.*;
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogWinLevel;
 
 import com.lowagie.text.*;
@@ -27,7 +28,7 @@ import java.util.*;
 
 import javax.swing.*;
 
-public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyListener {
+public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyListener, AlgorithmInterface {
     
     //~ Static fields --------------------------------------------------------------------------------------------------
     
@@ -99,7 +100,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     private PlugInSelectableVOI[][] voiList;
     
-    private AutomaticSegmentation autoSeg = new AutomaticSegmentation();
+    private PlugInAlgorithmCTBone boneSeg;
+    
+    private PlugInAlgorithmCTMarrow marrowSeg;
+    
+    private PlugInAlgorithmCTThigh thighSeg;
     
     private TreeMap<String, Boolean> calcTree;
         
@@ -190,17 +195,45 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
         
+        File f;
+        if(!(f = new File(imageDir+"\\")).exists())
+        	f.mkdir();
+        
         createVOIBuffer();
         
         initNext();
         
+        
+        
         //Automatic segmentation here
-        /*autoSegmentation();
         long time = System.currentTimeMillis();
-        while(!autoSeg.isFinished()) {
-        	System.out.println("true");
+        autoSegmentation();
+        System.out.println("Time spent creating algs: "+(System.currentTimeMillis() - time));
+        time = System.currentTimeMillis();
+        if(boneSeg != null) {
+        	while(boneSeg.isAlive()) {
+        		//System.out.println("A");
+        	}
+        	System.out.println("Bone seg alg finished");
         }
-        System.out.println("Done3: "+(System.currentTimeMillis() - time));*/
+        if(marrowSeg != null) {
+        	while(marrowSeg.isAlive()) {
+        		//System.out.println("B");
+        	}
+        	System.out.println("Marrow seg alg finished");
+        }
+        if(thighSeg != null) {
+        	while(thighSeg.isAlive()) {
+        		//System.out.println("C");
+        	}
+        	System.out.println("Thigh seg alg finished");
+        }
+        System.out.println("Total time spent waiting for threads: "+(System.currentTimeMillis() - time));
+        initMuscleImage(2);
+        getActiveImage().unregisterAllVOIs();
+        initMuscleImage(1);
+        getActiveImage().unregisterAllVOIs();
+        initMuscleImage(0);  
     }
     
     /**
@@ -284,42 +317,137 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
     	
     	
+    	
+    	
     }
     
     private void autoSegmentation() {
-    	Thread seg = new Thread(autoSeg);
-    	seg.start();
+    	if(imageType.equals(ImageType.Thigh)) {
+    		ModelImage srcImage = (ModelImage)getActiveImage().clone();
+    		if(voiBuffer.get("Left Bone").area() == 0 && voiBuffer.get("Right Bone").area() == 0) {
+		        ModelImage resultImage = (ModelImage)srcImage.clone();
+		    	boneSeg = new PlugInAlgorithmCTBone(resultImage, srcImage, imageDir, voiBuffer.get("Left Bone").getColor());
+		    	performSegmentation(boneSeg, resultImage);
+    		}
+	    	
+    		if(voiBuffer.get("Left Marrow").area() == 0 && voiBuffer.get("Right Marrow").area() == 0) {
+		    	ModelImage resultImage2 = (ModelImage)srcImage.clone();
+		    	marrowSeg = new PlugInAlgorithmCTMarrow(resultImage2, srcImage, imageDir, voiBuffer.get("Left Marrow").getColor());
+		    	performSegmentation(marrowSeg, resultImage2);
+    		}
+	    	
+    		if(voiBuffer.get("Left Thigh").area() == 0 && voiBuffer.get("Right Thigh").area() == 0) {
+		    	ModelImage resultImage3 = (ModelImage)srcImage.clone();
+		    	thighSeg = new PlugInAlgorithmCTThigh(resultImage3, srcImage, imageDir, voiBuffer.get("Left Thigh").getColor());
+		    	performSegmentation(thighSeg, resultImage3);
+    		}
+    	}
     }
     
-    /**
-     * Performs automatic segmentation
-     * 
-     * @author senseneyj
-     *
-     */
-    private class AutomaticSegmentation implements Runnable {
+    private boolean performSegmentation(AlgorithmBase genericAlgo, ModelImage resultImage) {
+    	try {
+            String name = JDialogBase.makeImageName(getActiveImage().getImageName(), "_kidneys");
+            resultImage.setImageName(name);
+            
+            //genericAlgo = new PlugInAlgorithmNewGeneric2(resultImage, image);
 
-    	private boolean finished = false;
-    	
-		public void run() {
-			// TODO Auto-generated method stub
-			getActiveImage().unregisterAllVOIs();
-			updateImages(true);
-			for(int i=0; i<100000000; i++) {
-				if(i%100000 == 0)
-					System.out.println("Try: "+i);
-			}
-			
-			finished = true;
-		}
-		
-		public boolean isFinished() {
-			return finished;
-		}
-    	
+            // This is very important. Adding this object as a listener allows the algorithm to
+            // notify this object when it has completed or failed. See algorithm performed event.
+            // This is made possible by implementing AlgorithmedPerformed interface
+            genericAlgo.addListener(this);
+            //createProgressBar(srcImage.getImageName(), " ...", genericAlgo);
+
+            //setVisible(false); // Hide dialog
+
+            //if (isRunInSeparateThread()) {
+
+                // Start the thread as a low priority because we wish to still
+                // have user interface work fast.
+                if (genericAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                    System.err.println("A thread is already running on this object");
+                    return false;
+                }
+            //} else {
+           //     genericAlgo.run();
+            //}
+                return true;
+        } catch (OutOfMemoryError x) {
+            if (resultImage != null) {
+                resultImage.disposeLocal(); // Clean up memory of result image
+                resultImage = null;
+            }
+
+            System.err.println("Kidney segmentation: unable to allocate enough memory");
+
+            return false;
+        }
     }
     
-    /**
+    public void algorithmPerformed(AlgorithmBase algorithm) {
+		Vector<VOIBase>[] firstVOI = null;
+		Vector<VOIBase>[] secondVOI = null;
+		VOI firstBufferVOI = null;
+		VOI secondBufferVOI = null;
+    	if(algorithm instanceof PlugInAlgorithmCTThigh) {
+			if(((PlugInAlgorithmCTThigh)algorithm).getLeftThighVOI() != null && 
+					((PlugInAlgorithmCTThigh)algorithm).getRightThighVOI() != null) {
+				System.out.println("Thigh VOIs completed correctly");
+				firstVOI = ((PlugInAlgorithmCTThigh)algorithm).getLeftThighVOI().getCurves();
+				secondVOI = ((PlugInAlgorithmCTThigh)algorithm).getRightThighVOI().getCurves();
+				firstBufferVOI = voiBuffer.get("Left Thigh");
+				secondBufferVOI = voiBuffer.get("Right Thigh");
+				for(int i=0; i<firstVOI.length; i++) {
+					for(int j=0; j<firstVOI[i].size(); j++) {
+						firstBufferVOI.importCurve((VOIContour)firstVOI[i].get(j), i);
+					}
+					for(int j=0; j<secondVOI[i].size(); j++) {
+						secondBufferVOI.importCurve((VOIContour)secondVOI[i].get(j), i);
+					}
+				}
+			}
+		} else if(algorithm instanceof PlugInAlgorithmCTMarrow) {
+			if(((PlugInAlgorithmCTMarrow)algorithm).getLeftMarrowVOI() != null && 
+					((PlugInAlgorithmCTMarrow)algorithm).getRightMarrowVOI() != null) {
+				System.out.println("Marrow VOIs completed correctly");
+				firstVOI = ((PlugInAlgorithmCTMarrow)algorithm).getLeftMarrowVOI().getCurves();
+				secondVOI = ((PlugInAlgorithmCTMarrow)algorithm).getRightMarrowVOI().getCurves();
+				firstBufferVOI = voiBuffer.get("Left Marrow");
+				secondBufferVOI = voiBuffer.get("Right Marrow");
+				for(int i=0; i<firstVOI.length; i++) {
+					for(int j=0; j<firstVOI[i].size(); j++) {
+						firstBufferVOI.importCurve((VOIContour)firstVOI[i].get(j), i);
+					}
+					for(int j=0; j<secondVOI[i].size(); j++) {
+						secondBufferVOI.importCurve((VOIContour)secondVOI[i].get(j), i);
+					}
+				}
+			}
+		} else if(algorithm instanceof PlugInAlgorithmCTBone) {
+			if(((PlugInAlgorithmCTBone)algorithm).getLeftBoneVOI() != null && 
+					((PlugInAlgorithmCTBone)algorithm).getRightBoneVOI() != null) {
+				System.out.println("Bone VOIs completed correctly");
+				firstVOI = ((PlugInAlgorithmCTBone)algorithm).getLeftBoneVOI().getCurves();
+				secondVOI = ((PlugInAlgorithmCTBone)algorithm).getRightBoneVOI().getCurves();
+				firstBufferVOI = voiBuffer.get("Left Bone");
+				secondBufferVOI = voiBuffer.get("Right Bone");
+				for(int i=0; i<firstVOI.length; i++) {
+					for(int j=0; j<firstVOI[i].size(); j++) {
+						firstBufferVOI.importCurve((VOIContour)firstVOI[i].get(j), i);
+					}
+					for(int j=0; j<secondVOI[i].size(); j++) {
+						secondBufferVOI.importCurve((VOIContour)secondVOI[i].get(j), i);
+					}
+				}
+			}
+		}
+
+        if (algorithm != null) {
+            algorithm.finalize();
+            algorithm = null;
+        }
+	}
+
+	/**
      * Initializes the frame and variables.
      *
      */

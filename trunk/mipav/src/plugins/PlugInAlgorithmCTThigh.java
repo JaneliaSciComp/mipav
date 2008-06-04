@@ -15,6 +15,7 @@ import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 
+import java.awt.Color;
 import java.awt.Point;
 import java.io.IOException;
 import java.util.BitSet;
@@ -59,14 +60,21 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
     /**The final right thigh VOI*/
     private VOI rightThighVOI;
     
+    private String imageDir;
+    
+    private Color voiColor;
+    
     /**
      * Constructor.
      *
      * @param  resultImage  Result image model
      * @param  srcImg       Source image model.
      */
-    public PlugInAlgorithmCTThigh(ModelImage resultImage, ModelImage srcImg) {
+    public PlugInAlgorithmCTThigh(ModelImage resultImage, ModelImage srcImg, String imageDir, Color color) {
         super(resultImage, srcImg);
+        
+        this.imageDir = imageDir+"\\";
+        this.voiColor = color;
         
         leftThighVOI = null;
         rightThighVOI = null;
@@ -189,15 +197,15 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
 	        
 	     // save the VOI to a file(s)
 	        String directory = System.getProperty("user.dir");
-	        System.out.println("directory: " +directory);
+	        System.out.println("directory: " +imageDir);
 	        FileVOI fileVOI;
 	        
 	        String fileName = "Right Thigh.xml";
 	        try {
-	            fileVOI = new FileVOI(fileName, directory, boneImage);
+	            fileVOI = new FileVOI(fileName, imageDir, boneImage);
 	            fileVOI.writeVOI(rightThighVOI, true);
 	            fileName = "Left Thigh.xml";
-	            fileVOI = new FileVOI(fileName, directory, boneImage);
+	            fileVOI = new FileVOI(fileName, imageDir, boneImage);
 	            fileVOI.writeVOI(leftThighVOI, true);
 	        } catch (IOException ex) {
 	            System.err.println("Error segmentImage():  Opening VOI file");
@@ -222,6 +230,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
     			tempVOI.removeCurve(1, i);
     	}
     	tempVOI.setName("Left Thigh");
+    	tempVOI.setColor(voiColor);
     	return tempVOI;
     }
     
@@ -243,6 +252,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
     		}
     	}
     	tempVOI.setName("Right Thigh");
+    	tempVOI.setColor(voiColor);
     	return tempVOI;
     }
 

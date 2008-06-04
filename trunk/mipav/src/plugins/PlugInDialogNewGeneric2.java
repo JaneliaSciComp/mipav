@@ -31,7 +31,7 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
     private ModelImage image; // source image
     
     /** DOCUMENT ME! */
-    private PlugInAlgorithmCTThigh genericAlgo = null;
+    private AlgorithmBase genericAlgo = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -143,7 +143,7 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
             String name = makeImageName(image.getImageName(), "_kidneys");
             resultImage = (ModelImage) image.clone();
             resultImage.setImageName(name);
-            genericAlgo = new PlugInAlgorithmCTThigh(resultImage, image);
+            genericAlgo = new PlugInAlgorithmNewGeneric2(resultImage, image);
             //genericAlgo = new PlugInAlgorithmNewGeneric2(resultImage, image);
 
             // This is very important. Adding this object as a listener allows the algorithm to

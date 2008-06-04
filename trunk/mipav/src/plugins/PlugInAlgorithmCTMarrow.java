@@ -15,6 +15,7 @@ import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 
+import java.awt.Color;
 import java.awt.Point;
 import java.io.IOException;
 import java.util.BitSet;
@@ -60,16 +61,19 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
 
     private String imageDir;
     
+    private Color voiColor;
+    
     /**
      * Constructor.
      *
      * @param  resultImage  Result image model
      * @param  srcImg       Source image model.
      */
-    public PlugInAlgorithmCTMarrow(ModelImage resultImage, ModelImage srcImg, String imageDir) {
+    public PlugInAlgorithmCTMarrow(ModelImage resultImage, ModelImage srcImg, String imageDir, Color color) {
         super(resultImage, srcImg);
         
-        this.imageDir = imageDir;
+        this.imageDir = imageDir+"\\";
+        this.voiColor = color;
         
         leftMarrowVOI = null;
         rightMarrowVOI = null;
@@ -216,6 +220,7 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
     	for(int i=0; i<zDim; i++) 
     		tempVOI.removeCurve(1, i);
     	tempVOI.setName("Right Marrow");
+    	tempVOI.setColor(voiColor);
     	return tempVOI;
     }
     
@@ -229,6 +234,7 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
     	for(int i=0; i<zDim; i++) 
     		tempVOI.removeCurve(0, i);
     	tempVOI.setName("Left Marrow");
+    	tempVOI.setColor(voiColor);
     	return tempVOI;
     }
     
