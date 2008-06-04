@@ -139,8 +139,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             ImageType imageType, Symmetry symmetry, boolean multipleSlices) {
     	//calls the super that will invoke ViewJFrameImage's init() function
     	super(image);
-    	
-    	this.setVisible(true);
+    	ViewJProgressBar progressBar = new ViewJProgressBar("Automatic Seg", "Initializing...", 0, 100, true);
+    	setVisible(false);
         
         Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(true));
         
@@ -192,7 +192,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         if (imageA == null) {
             return;
         }
-        
+        progressBar.updateValue(5);
         imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
         
         File f;
@@ -203,37 +203,29 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         initNext();
         
-        
-        
         //Automatic segmentation here
+        setVisible(false);
+        progressBar.setMessage("Creating algorithms...");
+        progressBar.setSeparateThread(true);
         long time = System.currentTimeMillis();
+        progressBar.updateValue(10);
         autoSegmentation();
+        progressBar.updateValue(20);
+    	progressBar.setMessage("Segmenting...");
         System.out.println("Time spent creating algs: "+(System.currentTimeMillis() - time));
         time = System.currentTimeMillis();
-        if(boneSeg != null) {
-        	while(boneSeg.isAlive()) {
-        		//System.out.println("A");
-        	}
-        	System.out.println("Bone seg alg finished");
-        }
-        if(marrowSeg != null) {
-        	while(marrowSeg.isAlive()) {
-        		//System.out.println("B");
-        	}
-        	System.out.println("Marrow seg alg finished");
-        }
-        if(thighSeg != null) {
-        	while(thighSeg.isAlive()) {
-        		//System.out.println("C");
-        	}
-        	System.out.println("Thigh seg alg finished");
-        }
+        waitAlg(progressBar);
         System.out.println("Total time spent waiting for threads: "+(System.currentTimeMillis() - time));
+        progressBar.updateValue(90);
+    	progressBar.setMessage("Displaying results...");
         initMuscleImage(2);
         getActiveImage().unregisterAllVOIs();
         initMuscleImage(1);
         getActiveImage().unregisterAllVOIs();
-        initMuscleImage(0);  
+        initMuscleImage(0);
+        progressBar.setVisible(false);
+        progressBar.dispose();
+        setVisible(true);
     }
     
     /**
@@ -319,6 +311,42 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	
     	
     	
+    }
+    
+    private void waitAlg(ViewJProgressBar progressBar) {
+    	long time = System.currentTimeMillis();
+    	int extend = 0;
+    	if(marrowSeg != null) {
+    		while(marrowSeg.isAlive()) {
+        		if((System.currentTimeMillis() - time) / 2000 > extend) {
+        			progressBar.updateValue(20+(++extend));
+        		}
+        	}
+        	progressBar.updateValue(60);
+        	progressBar.setMessage("Marrow segmentation complete...");
+        	System.out.println("Marrow seg alg finished");
+        }
+    	if(boneSeg != null) {
+    		extend = (int)(System.currentTimeMillis() - time) / 2000 - 1;
+        	while(boneSeg.isAlive()) {
+        		if((System.currentTimeMillis() - time) / 2000 > extend) {
+        			progressBar.updateValue(60+(++extend));
+        		}
+        	}
+        	progressBar.updateValue(70);
+        	progressBar.setMessage("Bone segmentation complete...");
+        	System.out.println("Bone seg alg finished");
+        }
+        if(thighSeg != null) {
+        	extend = (int)(System.currentTimeMillis() - time) / 2000 - 1;
+        	while(thighSeg.isAlive()) {
+        		if((System.currentTimeMillis() - time) / 2000 > extend) {
+        			progressBar.updateValue(70+(++extend));
+        		}
+        	}
+        	progressBar.setMessage("Thigh segmentation complete...");
+        	System.out.println("Thigh seg alg finished");
+        }
     }
     
     private void autoSegmentation() {
