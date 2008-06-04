@@ -58,7 +58,7 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
     /**The final right marrow VOI*/
     private VOI rightMarrowVOI;
 
-    
+    private String imageDir;
     
     /**
      * Constructor.
@@ -66,8 +66,10 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
      * @param  resultImage  Result image model
      * @param  srcImg       Source image model.
      */
-    public PlugInAlgorithmCTMarrow(ModelImage resultImage, ModelImage srcImg) {
+    public PlugInAlgorithmCTMarrow(ModelImage resultImage, ModelImage srcImg, String imageDir) {
         super(resultImage, srcImg);
+        
+        this.imageDir = imageDir;
         
         leftMarrowVOI = null;
         rightMarrowVOI = null;
@@ -161,41 +163,47 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
      */
     private void segmentImage() {
         long time = System.currentTimeMillis();
-        segmentBone();
-        segmentBoneMarrow();
+        boolean doVOI = false;
+        doVOI = segmentBone();
+        if(doVOI)
+        	doVOI = segmentBoneMarrow();
         System.out.println("Bone marrow segmentation: "+(System.currentTimeMillis() - time));
 
         time = System.currentTimeMillis();
-        VOI totalVOI = makeBoneMarrowVOI();
+        VOI totalVOI = null;
+        if(doVOI)
+        	totalVOI = makeBoneMarrowVOI();
         
-        ShowImage(boneMarrowImage, "boneImage");
-        System.out.println("Bone/Bone marrow VOIs: "+(System.currentTimeMillis() - time));
-
-        rightMarrowVOI = makeRightMarrowVOI(totalVOI);
-        leftMarrowVOI = makeLeftMarrowVOI(totalVOI);
-        
-        //boneImage.unregisterAllVOIs();
-        //boneImage.registerVOI(rightMarrowVOI);
-        //boneImage.registerVOI(leftMarrowVOI);
-        
-        //boneImage.getParentFrame().updateImages(true);
-        
-     // save the VOI to a file(s)
-        String directory = System.getProperty("user.dir");
-        System.out.println("directory: " +directory);
-        FileVOI fileVOI;
-        
-        String fileName = "Right Marrow.xml";
-        try {
-            fileVOI = new FileVOI(fileName, directory, boneImage);
-            fileVOI.writeVOI(rightMarrowVOI, true);
-            fileName = "Left Marrow.xml";
-            fileVOI = new FileVOI(fileName, directory, boneImage);
-            fileVOI.writeVOI(leftMarrowVOI, true);
-        } catch (IOException ex) {
-            System.err.println("Error segmentImage():  Opening VOI file");
-            return;
-        }        
+        if(totalVOI != null) {
+	        //ShowImage(boneMarrowImage, "boneImage");
+	        System.out.println("Bone/Bone marrow VOIs: "+(System.currentTimeMillis() - time));
+	
+	        rightMarrowVOI = makeRightMarrowVOI(totalVOI);
+	        leftMarrowVOI = makeLeftMarrowVOI(totalVOI);
+	        
+	        //boneImage.unregisterAllVOIs();
+	        //boneImage.registerVOI(rightMarrowVOI);
+	        //boneImage.registerVOI(leftMarrowVOI);
+	        
+	        //boneImage.getParentFrame().updateImages(true);
+	        
+	     // save the VOI to a file(s)
+	        System.out.println("directory: " +imageDir);
+	        FileVOI fileVOI;
+	        
+	        String fileName = "Right Marrow.xml";
+	        try {
+	            fileVOI = new FileVOI(fileName, imageDir, boneImage);
+	            fileVOI.writeVOI(rightMarrowVOI, true);
+	            fileName = "Left Marrow.xml";
+	            fileVOI = new FileVOI(fileName, imageDir, boneImage);
+	            fileVOI.writeVOI(leftMarrowVOI, true);
+	        } catch (IOException ex) {
+	            System.err.println("Error segmentImage():  Opening VOI file");
+	            return;
+	        }        
+        } else
+        	System.err.println("Automatic VOIs not created");
    } // end segmentImage()
     
     /**
@@ -271,7 +279,7 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
     /**
 	 * Uses a fixed threshold range to identify bone in CT images
 	 */
-	private void segmentBone() {
+	private boolean segmentBone() {
 	    // thresholds for bone in CT images
 	    float[] thresholds = { 750.0f, 2000.0f };
 	    boneImage = threshold(srcImage, thresholds);
@@ -293,16 +301,17 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
 	    // make sure we only found 2 objects
 	    int numBones = (int)boneImage.getMax();
 	    if (numBones != 2) {
-	        MipavUtil.displayError("computeBoneImage() Did NOT find two leg bones!!!");
+	        System.err.println("computeBoneImage() Did NOT find two leg bones!!!");
+	        return false;
 	    }
 	    // compute center-of-mass for each region on each slice
-	    computeBoneCMs();
+	    return computeBoneCMs();
 	} // end segmentBone(...)
 
 
 
 	// Bone marrow in CT images is "inside" the bone
-    private void segmentBoneMarrow() {
+    private boolean segmentBoneMarrow() {
 	   float[] thresholds = { 750.0f, 2000.0f };
        boneImage = threshold(srcImage, thresholds);
 	   
@@ -332,9 +341,11 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
                boneMarrowImage.importData(sliceNum * sliceSize, sliceBuffer, false);
            } catch (IOException ex) {
                System.err.println("computeBoneMarrowImage(): Error importing data");
+               return false;
            }
        } // end for (int bitSetIdx = 0, sliceNum = 0; ...)
-   } // end segmentBoneMarrow(...)
+       return true;
+    } // end segmentBoneMarrow(...)
    
    
    
@@ -366,13 +377,14 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
     
     
     
-    private void computeBoneCMs() {
+    private boolean computeBoneCMs() {
 
         for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
             try {
                 boneImage.exportData((sliceNum * sliceSize), sliceSize, sliceBuffer);
             } catch (IOException ex) {
                 System.err.println("Error exporting data");
+                return false;
             }
             
             // find the center-of-mass of the two bones (average x and y location)
@@ -392,10 +404,12 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
             } // end for (int i = 0; ...)
             
             if (count1 == 0) {
-                MipavUtil.displayError("computeBoneCMs() Could NOT find any pixels in the first bone");
+                System.err.println("computeBoneCMs() Could NOT find any pixels in the first bone");
+                return false;
             }
             if (count2 == 0) {
-                MipavUtil.displayError("computeBoneCMs() Could NOT find any pixels in the second bone");
+            	System.err.println("computeBoneCMs() Could NOT find any pixels in the second bone");
+            	return false;
             }
             
             x1CMs[sliceNum] = xSum1 / count1;
@@ -404,6 +418,7 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
             x2CMs[sliceNum] = xSum2 / count2;
             y2CMs[sliceNum] = ySum2 / count2;
          } // end for (int sliceNum = 0; ...)
+        return true;
     } // end computeBoneCMs(...)
     
     

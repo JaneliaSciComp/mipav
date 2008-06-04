@@ -47,6 +47,8 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
     private boolean initializedFlag = false;
     
     private BitSet volumeBitSet;
+    
+    private String imageDir;
 
     /**The final left outside bone VOI*/
     private VOI leftBoneVOI;
@@ -61,8 +63,10 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
      * @param  resultImage  Result image model
      * @param  srcImg       Source image model.
      */
-    public PlugInAlgorithmCTBone(ModelImage resultImage, ModelImage srcImg) {
+    public PlugInAlgorithmCTBone(ModelImage resultImage, ModelImage srcImg, String imageDir) {
         super(resultImage, srcImg);
+        
+        this.imageDir = imageDir;
         
         leftBoneVOI = null;
         rightBoneVOI = null;
@@ -148,39 +152,43 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
      */
     private void segmentImage() {
         long time = System.currentTimeMillis();
+        boolean doVOI = false;
         // compute the bone label image
-        segmentBone();
+        doVOI =  segmentBone();
         System.out.println("Bone segmentation: "+(System.currentTimeMillis() - time));
 
         time = System.currentTimeMillis();
-        VOI totalVOI = makeBoneVOI();
+        VOI totalVOI = null;
+        if(doVOI)
+        	totalVOI = makeBoneVOI();
         System.out.println("Bone/Bone marrow VOIs: "+(System.currentTimeMillis() - time));
+        if(totalVOI != null) {
+        	rightBoneVOI = makeRightBoneVOI(totalVOI);
+        	leftBoneVOI = makeLeftBoneVOI(totalVOI);
         
-        rightBoneVOI = makeRightBoneVOI(totalVOI);
-        leftBoneVOI = makeLeftBoneVOI(totalVOI);
-        
-        //boneImage.unregisterAllVOIs();
-        //boneImage.registerVOI(rightBoneVOI);
-        //boneImage.registerVOI(leftBoneVOI);
-        
-        //boneImage.getParentFrame().updateImages(true);
-        
-        // save the VOI to a file(s)
-        String directory = System.getProperty("user.dir");
-        System.out.println("directory: " +directory);
-        FileVOI fileVOI;
-        
-        String fileName = "Right Bone.xml";
-        try {
-            fileVOI = new FileVOI(fileName, directory, boneImage);
-            fileVOI.writeVOI(rightBoneVOI, true);
-            fileName = "Left Bone.xml";
-            fileVOI = new FileVOI(fileName, directory, boneImage);
-            fileVOI.writeVOI(leftBoneVOI, true);
-        } catch (IOException ex) {
-            System.err.println("Error segmentImage():  Opening VOI file");
-            return;
-        }
+	        //boneImage.unregisterAllVOIs();
+	        //boneImage.registerVOI(rightBoneVOI);
+	        //boneImage.registerVOI(leftBoneVOI);
+	        
+	        //boneImage.getParentFrame().updateImages(true);
+	        
+	        // save the VOI to a file(s)
+	        System.out.println("directory: " +imageDir);
+	        FileVOI fileVOI;
+	        
+	        String fileName = "Right Bone.xml";
+	        try {
+	            fileVOI = new FileVOI(fileName, imageDir, boneImage);
+	            fileVOI.writeVOI(rightBoneVOI, true);
+	            fileName = "Left Bone.xml";
+	            fileVOI = new FileVOI(fileName, imageDir, boneImage);
+	            fileVOI.writeVOI(leftBoneVOI, true);
+	        } catch (IOException ex) {
+	            System.err.println("Error segmentImage():  Opening VOI file");
+	            return;
+	        }
+        } else
+        	System.err.println("No automatic VOI created");
         
    } // end segmentImage()
     
@@ -253,13 +261,13 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
         // make sure we got one VOI composed of two curves
         VOIVector vois = boneImage.getVOIs();
         if(vois.size() != 1) {
-            MipavUtil.displayError("makeBoneVOI() Error, did not get 1 VOI");
+            System.err.println("makeBoneVOI() Error, did not get 1 VOI");
             return null;
         }
         VOI theVOI = vois.get(0);
         theVOI.setName("Bone");
         if (theVOI.getCurves()[0].size() != 4) {
-            MipavUtil.displayError("makeBoneVOI() Error, did not get 4 curves in the VOI.  Expected 1 outside and 1 inside for both legs.");
+        	System.err.println("makeBoneVOI() Error, did not get 4 curves in the VOI.  Expected 1 outside and 1 inside for both legs.");
             return null;
         }
         
@@ -354,13 +362,14 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
     
     
     
-    private void computeBoneCMs() {
+    private boolean computeBoneCMs() {
 
         for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
             try {
                 boneImage.exportData((sliceNum * sliceSize), sliceSize, sliceBuffer);
             } catch (IOException ex) {
                 System.err.println("Error exporting data");
+                return false;
             }
             
             // find the center-of-mass of the two bones (average x and y location)
@@ -380,10 +389,12 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
             } // end for (int i = 0; ...)
             
             if (count1 == 0) {
-                MipavUtil.displayError("computeBoneCMs() Could NOT find any pixels in the first bone");
+                System.err.println("computeBoneCMs() Could NOT find any pixels in the first bone");
+                return false;
             }
             if (count2 == 0) {
-                MipavUtil.displayError("computeBoneCMs() Could NOT find any pixels in the second bone");
+            	System.err.println("computeBoneCMs() Could NOT find any pixels in the second bone");
+            	return false;
             }
             
             x1CMs[sliceNum] = xSum1 / count1;
@@ -392,6 +403,7 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
             x2CMs[sliceNum] = xSum2 / count2;
             y2CMs[sliceNum] = ySum2 / count2;
          } // end for (int sliceNum = 0; ...)
+        return true;
     } // end computeBoneCMs(...)
     
     
@@ -399,8 +411,9 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
     /**
      * Uses a fixed threshold range to identify bone in CT images
      */
-    private void segmentBone() {
-        // thresholds for bone in CT images
+    private boolean segmentBone() {
+    	
+    	// thresholds for bone in CT images
         float[] thresholds = { 750.0f, 2000.0f };
         boneImage = threshold(srcImage, thresholds);
         
@@ -421,23 +434,23 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
         // make sure we only found 2 objects
         int numBones = (int)boneImage.getMax();
         if (numBones != 2) {
-            MipavUtil.displayError("computeBoneImage() Did NOT find two leg bones!!!");
+            System.err.println("computeBoneImage() Did NOT find two leg bones!!!");
+            return false;
         }
         
         // One bone has a label value of 1 and the other has a value of 2
- 
         // test to insure we got a reasonable bone segmentation
-
         // compute center-of-mass for each region on each slice
-        computeBoneCMs();
- 
+        if(!computeBoneCMs())
+        	return false;
         // compute statics about the center-of-mass for each region on each slice
         // and insures that the distance and standard deviations of the distances between
         // the center-of-mass for each region between each slice are "close"
         if (!boneRegionsOK()) {
-            MipavUtil.displayError("Error segmentBone(), Bone segmentation error");
-            return;
+            System.err.println("Error segmentBone(), Bone segmentation error");
+            return false;
         }
+        return true;
     } // end segmentBone(...)
     
     
