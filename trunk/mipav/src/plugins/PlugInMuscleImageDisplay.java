@@ -1169,9 +1169,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     private void initMuscleButton(int pane) {
     	VOIVector vec = getActiveImage().getVOIs();
     	for(int i=0; i<vec.size(); i++) { 
-        	VOI temp = null;
-        	if((temp = voiBuffer.get(vec.get(i).getName())) != null && temp.getCurves()[getViewableSlice()].size() > 0) 
+        	PlugInSelectableVOI temp = null;
+        	if((temp = voiBuffer.get(vec.get(i).getName())) != null && temp.getCurves()[getViewableSlice()].size() > 0) {
         		((MuscleDialogPrompt)tabs[pane]).setButton(temp, temp.getName(), temp.getColor());
+        		if(temp.isComputerGenerated()) {
+        			((MuscleDialogPrompt)tabs[pane]).setButtonAutomatic(temp.getName());
+        		}
+        	}
+        	
         } 
     }
     
@@ -1489,7 +1494,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         private boolean voiExists;
         
+        /**Describes the voi properties (ex. 1 closed curve)*/
         private JLabel selectText;
+
+        /**Warns user that VOI was created by MIPAV*/
+        private JLabel warningText;
         
         /**Buffer for hide/show functions related to HIDE_ALL button**/
         private VOIVector voiPromptBuffer;
@@ -1554,7 +1563,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 
                         MipavUtil.displayInfo(objectName+" VOI saved in folder\n " + dir);
                         completed = true;
-                        voiBuffer.get(goodVoi.getName()).setCreated(true);
+                        warningText.setText("");
+                        PlugInSelectableVOI voi;
+                        (voi = voiBuffer.get(goodVoi.getName())).setCreated(true);
+                        voi.setComputerGenerated(false);
                         getActiveImage().unregisterAllVOIs();
                         updateImages(true);
                     } else {
@@ -1624,6 +1636,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         
         public void takeDownDialog() {
+        	
         	removeAll();
         	voiPromptBuffer.removeAllElements();
         }
@@ -1645,6 +1658,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        }
             
             updateSelectionLabel();
+            
+            if(voiExists && voiBuffer.get(name).isComputerGenerated()) 
+            	createWarningLabel();
         }
         
 
@@ -1653,7 +1669,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         }
         
         /**
-         * Updates the selection label for each VOI.  The calling method will have updated closedVoi, numVoi, voiExists, and objectName
+         * Updates the selection label for each VOI.  The calling method will have updated 
+         * closedVoi, numVoi, voiExists, and objectName
          */
         private void updateSelectionLabel() { 
             //Whether the user needs to select closed curves
@@ -1669,6 +1686,17 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                                         objectName.toLowerCase()+".");
             
             selectText.setText(voiStr); //automatically updates
+        }
+        
+        /**
+         * Creates a warning label to notify the user that the VOI was created by MIPAV and has not been checked.
+         */
+        private void createWarningLabel() {
+        	String warning = "<html>NOTE: This VOI was created by MIPAV and has not been checked."+
+        						" Please review this VOI carefully.</html>";
+        	
+        	warningText.setText(warning);
+        	warningText.setForeground(Color.RED);
         }
         
         /**
@@ -1698,9 +1726,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             //JLabel propLabel = new JLabel(propStr);
             
             selectText = new JLabel("");
+            warningText = new JLabel("");
             
             selectText.setFont(MipavUtil.font12);
+            warningText.setFont(MipavUtil.font12);
             mainPanel.add(selectText, BorderLayout.NORTH);
+            mainPanel.add(warningText, BorderLayout.CENTER);
+            
+            
             //mainPanel.add(propLabel, BorderLayout.CENTER);
             
             JPanel buttonPanel = new JPanel();
@@ -2049,12 +2082,27 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         		if(buttonName.equals(mirrorButtonArr[i].getText())) {
         			mirrorCheckArr[i].setColor(c);
         			v.addVOIListener(mirrorCheckArr[i].getColorButton());
+        			mirrorButtonArr[i].setForeground(Color.BLACK);
         		}
         	}
         	for(int i=0; i<noMirrorButtonArr.length; i++) {
         		if(buttonName.equals(noMirrorButtonArr[i].getText())) {
         			noMirrorCheckArr[i].setColor(c);
         			v.addVOIListener(noMirrorCheckArr[i].getColorButton());
+        			noMirrorButtonArr[i].setForeground(Color.BLACK);
+        		}
+        	}
+        }
+        
+        public void setButtonAutomatic(String buttonName) {
+        	for(int i=0; i<mirrorButtonArr.length; i++) {
+        		if(buttonName.equals(mirrorButtonArr[i].getText())) {
+        			mirrorButtonArr[i].setForeground(Color.RED);
+        		}
+        	}
+        	for(int i=0; i<noMirrorButtonArr.length; i++) {
+        		if(buttonName.equals(noMirrorButtonArr[i].getText())) {
+        			noMirrorButtonArr[i].setForeground(Color.RED);
         		}
         	}
         }
