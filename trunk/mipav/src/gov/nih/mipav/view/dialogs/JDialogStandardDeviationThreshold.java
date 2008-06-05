@@ -115,6 +115,10 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
     /** boolean telling if script failed **/
     private boolean scriptFail = false;
     
+    private int numPixels;
+    
+    double sumPixelInten, sumPixelIntenR, sumPixelIntenG, sumPixelIntenB;
+    
 	
 	
     /**
@@ -132,6 +136,11 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
 	public JDialogStandardDeviationThreshold(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         srcImage = im;
+        if (srcImage.getNDims() == 4) {
+        	MipavUtil.displayError("Algorithm will not work on 4D images");
+        	return;
+        }
+        
         if(srcImage.isColorImage()) {
         	isColorImage = true;
         }else {
@@ -145,71 +154,107 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
         nVOI = VOIs.size();
         
         if (nVOI == 0) {
-        	MipavUtil.displayError("Image must contain 1 VOI");
-            dispose();
-            return;
-        }
-        int numActive = 0;
-        int activeGroupNum = 0;
-        
-        for (groupNum = 0; groupNum < nVOI; groupNum++) {
-            if ((VOIs.VOIAt(groupNum).isActive() == true) && (VOIs.VOIAt(groupNum).getCurveType() == VOI.CONTOUR)) {
-            	numActive = numActive + 1;
-            }
-        }
-        
-        if (srcImage.getNDims() == 4) {
-        	MipavUtil.displayError("Algorithm will not work on 4D images");
-        	return;
-        }
-        if(numActive == 0) {
-        	MipavUtil.displayError("Please make sure VOI is selected and is a contour type.");
-        	return;
-        }
-        if(numActive != 1) {
-        	MipavUtil.displayError("Please make sure only 1 VOI is selected.");
-        	return;
-        }
-    
-
-        srcVOI = VOIs.VOIAt(activeGroupNum);
-        
-        algoVOI = new AlgorithmVOIProps(srcImage);
-        algoVOI.setDoOnlyActiveContours(true);
-        algoVOI.setRunningInSeparateThread(false);
-        algoVOI.run();
-
-        if (!algoVOI.isCompleted()) {
-            MipavUtil.displayError("Please make sure 1 VOI is selected.");
-            return;
-        }
-        
-        UI.setDataText("\n -----------------------------------------------------------------------------\n");
-        UI.setDataText("Image:     " + srcImage.getImageName() + "\n");
-        UI.setDataText("VOI  :     " + srcVOI.getName() + "\n");
-        UI.setDataText("              Number of pixels:     " + algoVOI.getNVoxels() + "\n");
-        if (srcImage.isColorImage()) {
-        	UI.setDataText("              Sum pixel intensities:     "  + algoVOI.getSumIntensitiesR() + " R,  " + algoVOI.getSumIntensitiesG() + " G,  " + algoVOI.getSumIntensitiesB() + " B, " + "\n");
+        	//do thresholding based on whole image stats
+        	srcImage.calcAvgIntenStdDev();
+        	UI.setDataText("\n -----------------------------------------------------------------------------\n");
+	        UI.setDataText("Image:     " + srcImage.getImageName() + "\n");
+	        UI.setDataText("              Number of pixels:     " + srcImage.getNumPixels() + "\n");
+	        numPixels = srcImage.getNumPixels();
+	        if (srcImage.isColorImage()) {
+	        	UI.setDataText("              Sum pixel intensities:     "  + srcImage.getSumPixelIntenR() + " R,  " + srcImage.getSumPixelIntenG() + " G,  " + srcImage.getSumPixelIntenB() + " B, " + "\n");
+	        	sumPixelIntenR = srcImage.getSumPixelIntenR();
+	        	sumPixelIntenG = srcImage.getSumPixelIntenG();
+	        	sumPixelIntenB = srcImage.getSumPixelIntenB();
+	        	
+	        }else {
+	        	UI.setDataText("              Sum pixel intensities:     "  + srcImage.getSumPixelInten() + "\n");
+	        	sumPixelInten = srcImage.getSumPixelInten();
+	        }
+	        if (srcImage.isColorImage()) {
+	            UI.setDataText("              Average pixel intensity:     " + srcImage.getAvgIntenR() + " R,  " + srcImage.getAvgIntenG() + " G,  " + srcImage.getAvgIntenB() + " B, " + "\n");
+	            avgIntensityR = Float.valueOf(srcImage.getAvgIntenR());
+	            avgIntensityG = Float.valueOf(srcImage.getAvgIntenG());
+	            avgIntensityB = Float.valueOf(srcImage.getAvgIntenB());
+	        } else {
+	            UI.setDataText("              Average pixel intensity:     " + srcImage.getAvgInten() + "\n");
+	            avgIntensity = Float.valueOf(srcImage.getAvgInten());
+	        }
+	        if (srcImage.isColorImage()) {
+	            UI.setDataText("              Standard deviation of pixel intensity:     " + srcImage.getStdDeviationR() + " R,  " + srcImage.getStdDeviationG() + " G,  " + srcImage.getStdDeviationB() + " B, " + "\n");
+	            stdDevR = Float.valueOf(srcImage.getStdDeviationR());
+	            stdDevG = Float.valueOf(srcImage.getStdDeviationG());
+	            stdDevB = Float.valueOf(srcImage.getStdDeviationB());
+	        } else {
+	            UI.setDataText("              Standard deviation of pixel intensity:     " + srcImage.getStdDeviation() + "\n");
+	            stdDev = Float.valueOf(srcImage.getStdDeviation());
+	        }
         }else {
-        	UI.setDataText("              Sum pixel intensities:     "  + algoVOI.getSumIntensities() + "\n");
-        }
-        if (srcImage.isColorImage()) {
-            UI.setDataText("              Average pixel intensity:     " + algoVOI.getAvgIntenR() + " R,  " + algoVOI.getAvgIntenG() + " G,  " + algoVOI.getAvgIntenB() + " B, " + "\n");
-            avgIntensityR = Float.valueOf(algoVOI.getAvgIntenR());
-            avgIntensityG = Float.valueOf(algoVOI.getAvgIntenG());
-            avgIntensityB = Float.valueOf(algoVOI.getAvgIntenB());
-        } else {
-            UI.setDataText("              Average pixel intensity:     " + algoVOI.getAvgInten() + "\n");
-            avgIntensity = Float.valueOf(algoVOI.getAvgInten());
-        }
-        if (srcImage.isColorImage()) {
-            UI.setDataText("              Standard deviation of pixel intensity:     " + algoVOI.getStdDevR() + " R,  " + algoVOI.getStdDevG() + " G,  " + algoVOI.getStdDevB() + " B, " + "\n");
-            stdDevR = Float.valueOf(algoVOI.getStdDevR());
-            stdDevG = Float.valueOf(algoVOI.getStdDevG());
-            stdDevB = Float.valueOf(algoVOI.getStdDevB());
-        } else {
-            UI.setDataText("              Standard deviation of pixel intensity:     " + algoVOI.getStdDev() + "\n");
-            stdDev = Float.valueOf(algoVOI.getStdDev());
+        	//do thesholding based on active voi stats
+	        int numActive = 0;
+	        int activeGroupNum = 0;
+	        
+	        for (groupNum = 0; groupNum < nVOI; groupNum++) {
+	            if ((VOIs.VOIAt(groupNum).isActive() == true) && (VOIs.VOIAt(groupNum).getCurveType() == VOI.CONTOUR)) {
+	            	numActive = numActive + 1;
+	            }
+	        }
+
+	        if(numActive == 0) {
+	        	MipavUtil.displayError("Please make sure VOI is selected and is a contour type.");
+	        	return;
+	        }
+	        if(numActive != 1) {
+	        	MipavUtil.displayError("Please make sure only 1 VOI is selected.");
+	        	return;
+	        }
+	    
+	
+	        srcVOI = VOIs.VOIAt(activeGroupNum);
+	        
+	        algoVOI = new AlgorithmVOIProps(srcImage);
+	        algoVOI.setDoOnlyActiveContours(true);
+	        algoVOI.setRunningInSeparateThread(false);
+	        algoVOI.run();
+	
+	        if (!algoVOI.isCompleted()) {
+	            MipavUtil.displayError("Please make sure 1 VOI is selected.");
+	            return;
+	        }
+	        
+	        UI.setDataText("\n -----------------------------------------------------------------------------\n");
+	        UI.setDataText("Image:     " + srcImage.getImageName() + "\n");
+	        UI.setDataText("VOI  :     " + srcVOI.getName() + "\n");
+	        UI.setDataText("              Number of pixels:     " + algoVOI.getNVoxels() + "\n");
+	        numPixels = algoVOI.getNVoxels();
+	        if (srcImage.isColorImage()) {
+	        	UI.setDataText("              Sum pixel intensities:     "  + algoVOI.getSumIntensitiesR() + " R,  " + algoVOI.getSumIntensitiesG() + " G,  " + algoVOI.getSumIntensitiesB() + " B, " + "\n");
+	        	sumPixelIntenR = algoVOI.getSumIntensitiesR();
+	        	sumPixelIntenG = algoVOI.getSumIntensitiesG();
+	        	sumPixelIntenB = algoVOI.getSumIntensitiesB();
+	        }else {
+	        	UI.setDataText("              Sum pixel intensities:     "  + algoVOI.getSumIntensities() + "\n");
+	        	sumPixelInten = algoVOI.getSumIntensities();
+	        }
+	        if (srcImage.isColorImage()) {
+	            UI.setDataText("              Average pixel intensity:     " + algoVOI.getAvgIntenR() + " R,  " + algoVOI.getAvgIntenG() + " G,  " + algoVOI.getAvgIntenB() + " B, " + "\n");
+	            avgIntensityR = Float.valueOf(algoVOI.getAvgIntenR());
+	            avgIntensityG = Float.valueOf(algoVOI.getAvgIntenG());
+	            avgIntensityB = Float.valueOf(algoVOI.getAvgIntenB());
+	        } else {
+	            UI.setDataText("              Average pixel intensity:     " + algoVOI.getAvgInten() + "\n");
+	            avgIntensity = Float.valueOf(algoVOI.getAvgInten());
+	        }
+	        if (srcImage.isColorImage()) {
+	            UI.setDataText("              Standard deviation of pixel intensity:     " + algoVOI.getStdDevR() + " R,  " + algoVOI.getStdDevG() + " G,  " + algoVOI.getStdDevB() + " B, " + "\n");
+	            stdDevR = Float.valueOf(algoVOI.getStdDevR());
+	            stdDevG = Float.valueOf(algoVOI.getStdDevG());
+	            stdDevB = Float.valueOf(algoVOI.getStdDevB());
+	        } else {
+	            UI.setDataText("              Standard deviation of pixel intensity:     " + algoVOI.getStdDev() + "\n");
+	            stdDev = Float.valueOf(algoVOI.getStdDev());
+	        }
+	        
+	       
         }
         
         init();
@@ -231,7 +276,13 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
 		
 		//voiStatsPanel
 		voiStatsPanel = new JPanel(gbl);
-		voiStatsPanel.setBorder(buildTitledBorder("Active VOI Statistics"));
+		String borderLabel;
+		if (VOIs.size() == 0) {
+			borderLabel = "Image Statistics";
+		}else {
+			borderLabel = "Active VOI Statistics";
+		}
+		voiStatsPanel.setBorder(buildTitledBorder(borderLabel));
 		voiStatsLeftPanel = new JPanel(gbl); 
 		gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
@@ -259,16 +310,16 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
         gbc.gridx = 0;
         gbc.gridy = 0;
         JLabel numPixelsVOIValue;
-        numPixelsVOIValue = new JLabel(String.valueOf(algoVOI.getNVoxels()));
+        numPixelsVOIValue = new JLabel(String.valueOf(numPixels));
         numPixelsVOIValue.setFont(serif12);
         voiStatsRightPanel.add(numPixelsVOIValue,gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         JLabel sumIntensitiesVOIValue;
         if (srcImage.isColorImage()) {
-        	sumIntensitiesVOIValue = new JLabel(algoVOI.getSumIntensitiesR() + " R,  " + algoVOI.getSumIntensitiesG() + " G,  " + algoVOI.getSumIntensitiesB() + " B");
+        	sumIntensitiesVOIValue = new JLabel(sumPixelIntenR + " R,  " + sumPixelIntenG + " G,  " + sumPixelIntenB + " B");
         } else {
-        	sumIntensitiesVOIValue = new JLabel(String.valueOf(algoVOI.getSumIntensities()));
+        	sumIntensitiesVOIValue = new JLabel(String.valueOf(sumPixelInten));
         }
         sumIntensitiesVOIValue.setFont(serif12);
         voiStatsRightPanel.add(sumIntensitiesVOIValue,gbc);
@@ -276,9 +327,9 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
         gbc.gridy = 2;
         JLabel avgVoxIntVOIValue;
         if (srcImage.isColorImage()) {
-        	avgVoxIntVOIValue = new JLabel(algoVOI.getAvgIntenR() + " R,  " + algoVOI.getAvgIntenG() + " G,  " + algoVOI.getAvgIntenB() + " B");
+        	avgVoxIntVOIValue = new JLabel(avgIntensityR + " R,  " + avgIntensityG + " G,  " + avgIntensityB + " B");
         } else {
-        	avgVoxIntVOIValue = new JLabel(String.valueOf(algoVOI.getAvgInten()));
+        	avgVoxIntVOIValue = new JLabel(String.valueOf(avgIntensity));
         }
         avgVoxIntVOIValue.setFont(serif12);
         voiStatsRightPanel.add(avgVoxIntVOIValue,gbc);
@@ -286,9 +337,9 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
         gbc.gridy = 3;
         JLabel stdDevVOIValue;
         if (srcImage.isColorImage()) {
-        	stdDevVOIValue = new JLabel(algoVOI.getStdDevR() + " R,  " + algoVOI.getStdDevG() + " G,  " + algoVOI.getStdDevB() + " B");
+        	stdDevVOIValue = new JLabel(stdDevR + " R,  " + stdDevG + " G,  " + stdDevB + " B");
         } else {
-        	stdDevVOIValue = new JLabel(String.valueOf(algoVOI.getStdDev()));
+        	stdDevVOIValue = new JLabel(String.valueOf(stdDev));
         }
         stdDevVOIValue.setFont(serif12);
         voiStatsRightPanel.add(stdDevVOIValue,gbc);
@@ -531,8 +582,14 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
         wholeImageRadio = new JRadioButton("Whole image");
         wholeImageRadio.setFont(serif12);
         wholeImageRadio.setSelected(true);
+        if (VOIs.size() == 0) {
+        	wholeImageRadio.setEnabled(false);
+        }
         voiRegionsRadio = new JRadioButton("VOI region(s)");
         voiRegionsRadio.setFont(serif12);
+        if (VOIs.size() == 0) {
+        	voiRegionsRadio.setEnabled(false);
+        }
         thresholdRadioGroup.add(wholeImageRadio);
         thresholdRadioGroup.add(voiRegionsRadio);
         gbc.gridx = 0;
