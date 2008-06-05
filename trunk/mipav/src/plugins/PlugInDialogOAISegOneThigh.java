@@ -60,7 +60,6 @@ public class PlugInDialogOAISegOneThigh extends JDialogBase implements Algorithm
      */
     public PlugInDialogOAISegOneThigh(Frame theParentFrame, ModelImage imA) {
     	super(theParentFrame, false);
-    	System.out.println("name of image: " + imA.getImageName());
         imageA = imA;
         resultImage = (ModelImage)imA.clone();
         obMaskA = (ModelImage)imA.clone();
@@ -128,13 +127,11 @@ public class PlugInDialogOAISegOneThigh extends JDialogBase implements Algorithm
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        System.out.println("PlugInAlgorithmPipeline completed");
 
         imageA.clearMask();
 
        if (algorithm instanceof PlugInAlgorithmOAISegOneThigh) {
 
-    	   		System.out.println("Displaying result.");
                 // The algorithm has completed and produced a new image to be displayed.
                 resultImage = segThighAlgo.getResultImageA();
 
@@ -170,7 +167,6 @@ public class PlugInDialogOAISegOneThigh extends JDialogBase implements Algorithm
 //            userInterface.getMessageFrame().addTab(leftRightString+ " Thigh");
         userInterface.getMessageFrame().addTab("Segmented Images - Results:  " + PlugInAlgorithmOAICropImage.patientID);
 
-            System.out.println("Making algorithm");
             // Make algorithm
             segThighAlgo = new PlugInAlgorithmOAISegOneThigh(resultImage, obMaskA, leftThigh);
 
