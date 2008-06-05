@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -69,6 +71,12 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private double[] y;
+    
+    private int testOrientation;
+    private final int testTop = 1;
+    private final int testBottom = 2;
+    private final int testRight = 3;
+    private final int testLeft = 4;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -154,7 +162,9 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         boolean maxRadiusRight = false;
         boolean maxRadiusLeft = false;
         
+        
         if (test) {
+            testOrientation = testLeft;
             selfTest2();
         }
 
@@ -413,7 +423,11 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
     }
     
     private void selfTest() {
-        // Call up JDialogCircularSectorToRectangle with any 512 by 512 image
+        // Maximum radius on top originally
+        // Put maximum radius on bottom with testOrientation == testBottom
+        // Put maximum radius on right with testOrientation == testRight
+        // Put maximum radius on left with testOrienation == testLeft
+        // Call up JDialogCircularSectorToRectangle with any image
         // In a 512 x 512 image create an image which is a circular sector going from -45 degrees to 45 degrees with
         // white -45 to -40
         // black -40 to -35
@@ -441,7 +455,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         // White and black radial segements in input image transformed in to vertical white and black in output image
         int xDim = 512;
         int yDim = 512;
-        int sliceSize = 512 * 512;
+        int sliceSize = xDim * yDim;
         int extents[] = new int[2];
         extents[0] = xDim;
         extents[1] = yDim;
@@ -454,6 +468,13 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         double r;
         double theta;
         double thetaAbs;
+        AlgorithmFlip flipx;
+        AlgorithmRotate rotateAlgo;
+        double tempX;
+        double tempY;
+        double xCen;
+        double yCen;
+        int i;
         double tMax = Math.PI/4.0;
         for (ys = 35; ys <= 180; ys++) {
             for (xs = 100; xs <= 411; xs++) {
@@ -483,13 +504,19 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
                 } // if ((r >= 106.7731239) && (r <= 219.91020894))
             } // for (x = 100; x <= 411; x++)
         } // for (y = 36; y <= 180; y++)
+        if ((srcImage.getExtents()[0] != extents[0]) || (srcImage.getExtents()[1] != extents[1])) {
+            srcImage.changeExtents(extents);
+            srcImage.recomputeDataSize();
+        }
+        srcImage.getParentFrame().dispose();
+        srcImage.getVOIs().removeAllElements();
         try {
             srcImage.importData(0, buffer, true);
         }
         catch(IOException e) {
             MipavUtil.displayError("IOException on srcImage.importData");
         }
-        new ViewJFrameImage(srcImage);
+        
         x = new double[4];
         y = new double[4];
         x[0] = 411.0;
@@ -500,10 +527,76 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         y[1] = 100.0;
         y[2] = 180.0;
         y[3] = 180.0;
+        
+        if (testOrientation == testBottom) {
+            flipx = new AlgorithmFlip(srcImage, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
+            flipx.run();
+            flipx.finalize();
+            flipx = null;
+            // 1 -> 0, 0 -> 1, 2 -> 3, 3 -> 2
+            tempX = x[1];
+            tempY = extents[1] - 1 - y[1];
+            x[1] = x[0];
+            y[1] = extents[1] - 1 - y[0];
+            x[0] = tempX;
+            y[0] = tempY;
+            
+            tempX = x[3];
+            tempY = extents[1] - 1 - y[3];
+            x[3] = x[2];
+            y[3] = extents[1] - 1 - y[2];
+            x[2] = tempX;
+            y[2] = tempY;
+        } // if (testOrientation == testBottom)
+        else if (testOrientation == testRight) {
+            xCen = (xDim - 1.0)/2.0;
+            yCen = (yDim - 1.0)/2.0;
+            for (i = 0; i < 4; i++) {
+                x[i] = x[i] - xCen;
+                y[i] = y[i] - yCen;
+                tempX = -y[i];
+                y[i] = x[i];
+                x[i] = tempX;
+                x[i] = x[i] + xCen;
+                y[i] = y[i] + yCen;
+            }
+            rotateAlgo = new AlgorithmRotate(srcImage, AlgorithmRotate.Z_AXIS_PLUS);
+            rotateAlgo.run();
+            srcImage.disposeLocal();
+            srcImage = null;
+            srcImage = rotateAlgo.returnImage();
+            rotateAlgo.finalize();
+            rotateAlgo = null;  
+        } // else if (testOrientation == testRight)
+        else if (testOrientation == testLeft) {
+            xCen = (xDim - 1.0)/2.0;
+            yCen = (yDim - 1.0)/2.0;
+            for (i = 0; i < 4; i++) {
+                x[i] = x[i] - xCen;
+                y[i] = y[i] - yCen;
+                tempX = y[i];
+                y[i] = -x[i];
+                x[i] = tempX;
+                x[i] = x[i] + xCen;
+                y[i] = y[i] + yCen;
+            }
+            rotateAlgo = new AlgorithmRotate(srcImage, AlgorithmRotate.Z_AXIS_MINUS);
+            rotateAlgo.run();
+            srcImage.disposeLocal();
+            srcImage = null;
+            srcImage = rotateAlgo.returnImage();
+            rotateAlgo.finalize();
+            rotateAlgo = null;      
+        } // else if (testOrientation == testLeft)
+        
+        new ViewJFrameImage(srcImage);
     }
     
     private void selfTest2() {
-        // Call up JDialogCircularSectorToRectangle with any 512 by 512 image
+        // Maximum radius on top originally
+        // Put maximum radius on bottom with testOrientation == testBottom
+        // Put maximum radius on left with testOrienation == testLeft
+        // Call up JDialogCircularSectorToRectangle with any image
         // In a 512 x 512 image create an image which is a circular sector going from -45 degrees to 45 degrees with
         // rmin to rmin + .1*(rmax - rmin) on
         // rmin + .1*(rmax - rmin) to rmin + .2*(rmax - rmin) off
@@ -524,7 +617,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         // White and black circular segments transformed into white and black horizontal lines
         int xDim = 512;
         int yDim = 512;
-        int sliceSize = 512 * 512;
+        int sliceSize = xDim * yDim;
         int extents[] = new int[2];
         extents[0] = xDim;
         extents[1] = yDim;
@@ -537,6 +630,13 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         double r;
         double theta;
         double thetaAbs;
+        AlgorithmFlip flipx;
+        AlgorithmRotate rotateAlgo;
+        double tempX;
+        double tempY;
+        double xCen;
+        double yCen;
+        int i;
         double tMax = Math.PI/4.0;
         double rmax = 155.5*Math.sqrt(2.0);
         double rmin = 75.5*Math.sqrt(2.0);
@@ -569,13 +669,19 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
                 }
             } // for (x = 100; x <= 411; x++)
         } // for (y = 36; y <= 180; y++)
+        if ((srcImage.getExtents()[0] != extents[0]) || (srcImage.getExtents()[1] != extents[1])) {
+            srcImage.changeExtents(extents);
+            srcImage.recomputeDataSize();
+        }
+        srcImage.getParentFrame().dispose();
+        srcImage.getVOIs().removeAllElements();
         try {
             srcImage.importData(0, buffer, true);
         }
         catch(IOException e) {
             MipavUtil.displayError("IOException on srcImage.importData");
         }
-        new ViewJFrameImage(srcImage);
+        
         x = new double[4];
         y = new double[4];
         x[0] = 411.0;
@@ -586,5 +692,68 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         y[1] = 100.0;
         y[2] = 180.0;
         y[3] = 180.0;
+        
+        if (testOrientation == testBottom) {
+            flipx = new AlgorithmFlip(srcImage, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
+            flipx.run();
+            flipx.finalize();
+            flipx = null;
+            // 1 -> 0, 0 -> 1, 2 -> 3, 3 -> 2
+            tempX = x[1];
+            tempY = extents[1] - 1 - y[1];
+            x[1] = x[0];
+            y[1] = extents[1] - 1 - y[0];
+            x[0] = tempX;
+            y[0] = tempY;
+            
+            tempX = x[3];
+            tempY = extents[1] - 1 - y[3];
+            x[3] = x[2];
+            y[3] = extents[1] - 1 - y[2];
+            x[2] = tempX;
+            y[2] = tempY;
+        } // if (testOrientation == testBottom)
+        else if (testOrientation == testRight) {
+            xCen = (xDim - 1.0)/2.0;
+            yCen = (yDim - 1.0)/2.0;
+            for (i = 0; i < 4; i++) {
+                x[i] = x[i] - xCen;
+                y[i] = y[i] - yCen;
+                tempX = -y[i];
+                y[i] = x[i];
+                x[i] = tempX;
+                x[i] = x[i] + xCen;
+                y[i] = y[i] + yCen;
+            }
+            rotateAlgo = new AlgorithmRotate(srcImage, AlgorithmRotate.Z_AXIS_PLUS);
+            rotateAlgo.run();
+            srcImage.disposeLocal();
+            srcImage = null;
+            srcImage = rotateAlgo.returnImage();
+            rotateAlgo.finalize();
+            rotateAlgo = null;  
+        } // else if (testOrientation == testRight)
+        else if (testOrientation == testLeft) {
+            xCen = (xDim - 1.0)/2.0;
+            yCen = (yDim - 1.0)/2.0;
+            for (i = 0; i < 4; i++) {
+                x[i] = x[i] - xCen;
+                y[i] = y[i] - yCen;
+                tempX = y[i];
+                y[i] = -x[i];
+                x[i] = tempX;
+                x[i] = x[i] + xCen;
+                y[i] = y[i] + yCen;
+            }
+            rotateAlgo = new AlgorithmRotate(srcImage, AlgorithmRotate.Z_AXIS_MINUS);
+            rotateAlgo.run();
+            srcImage.disposeLocal();
+            srcImage = null;
+            srcImage = rotateAlgo.returnImage();
+            rotateAlgo.finalize();
+            rotateAlgo = null;      
+        } // else if (testOrientation == testLeft)
+        
+        new ViewJFrameImage(srcImage);
     }
 }
