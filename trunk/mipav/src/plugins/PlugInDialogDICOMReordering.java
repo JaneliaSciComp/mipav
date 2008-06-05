@@ -11,7 +11,11 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.border.LineBorder;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
@@ -21,15 +25,19 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 /**
- * 
  * @author pandyan
+ * 
+ * The plugin is used for sorting DICOM image slices based on the
+ * patient location <0020,0037>
+ * 
+ * New dirs are created using patientID info as well as studyID and series...as well as whether the initial images were
+ * in a "pre" or "post" folder
  *
  */
 public class PlugInDialogDICOMReordering extends JDialogScriptableBase implements AlgorithmInterface {
 	
 	/** text field **/
 	private JTextField studyPathTextField;
-	
 	
 	/** button **/
 	private JButton studyPathBrowseButton;
@@ -42,10 +50,16 @@ public class PlugInDialogDICOMReordering extends JDialogScriptableBase implement
     
     /** algorithm **/
     private PlugInAlgorithmDICOMReordering alg;
+    
+    /** output text area **/
+    protected JTextArea outputTextArea;
+    
+    /** Scroll Pane for the Text Area **/
+    private JScrollPane scrollPane;
 	
 	
 	/**
-	 * 
+	 * constructor
 	 *
 	 */
 	public PlugInDialogDICOMReordering(){
@@ -53,7 +67,7 @@ public class PlugInDialogDICOMReordering extends JDialogScriptableBase implement
 	}
 	
 	/**
-	 * 
+	 * constructor
 	 * @param modal
 	 */
 	public PlugInDialogDICOMReordering(boolean modal){
@@ -62,7 +76,7 @@ public class PlugInDialogDICOMReordering extends JDialogScriptableBase implement
 	}
 	
 	/**
-	 * 
+	 * init
 	 *
 	 */
 	public void init() {
@@ -96,6 +110,18 @@ public class PlugInDialogDICOMReordering extends JDialogScriptableBase implement
 		studyPathBrowseButton.setActionCommand("studyPathBrowse");
 		mainPanel.add(studyPathBrowseButton, mainPanelConstraints);
 		
+		mainPanelConstraints.gridx = 0;
+		mainPanelConstraints.gridy = 2;
+		mainPanelConstraints.gridwidth = 3;
+		mainPanelConstraints.insets = new Insets(15,5,15,5);
+		outputTextArea = new JTextArea(15, 70);
+		outputTextArea.setEditable(false);
+		outputTextArea.setBackground(Color.lightGray);
+		outputTextArea.setBorder(new LineBorder(Color.black));
+		outputTextArea.setForeground(Color.black);
+		scrollPane = new JScrollPane(outputTextArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		mainPanel.add(scrollPane, mainPanelConstraints);
+		
 		JPanel OKCancelPanel = new JPanel();
         buildOKButton();
         OKButton.setActionCommand("ok");
@@ -115,7 +141,7 @@ public class PlugInDialogDICOMReordering extends JDialogScriptableBase implement
 	}
 	
 	/**
-	 * 
+	 * action performed
 	 */
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
@@ -137,7 +163,7 @@ public class PlugInDialogDICOMReordering extends JDialogScriptableBase implement
 			}
 			dispose();
 		}else if(command.equalsIgnoreCase("ok")) {
-			
+			outputTextArea.setText("");
 			boolean success = validateStudyPath();
 			if(!success) {
 				MipavUtil.displayError("One or both of the paths provided is not accurate");
@@ -145,7 +171,9 @@ public class PlugInDialogDICOMReordering extends JDialogScriptableBase implement
 				return;
 			}
 			
+			
 			OKButton.setEnabled(false);
+			cancelButton.setText("Cancel");
 			studyPathBrowseButton.setEnabled(false);
 			setStudyPath(studyPathTextField.getText().trim());
 			setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -155,10 +183,15 @@ public class PlugInDialogDICOMReordering extends JDialogScriptableBase implement
 
 
 	/**
-	 * 
+	 * call algorithm
 	 */
 	protected void callAlgorithm() {
-		alg = new PlugInAlgorithmDICOMReordering(studyPath);
+		
+		if(outputTextArea != null) {
+			outputTextArea.append("*** Beginning DICOM Reordering *** \n");
+		}
+		
+		alg = new PlugInAlgorithmDICOMReordering(studyPath,outputTextArea);
 		alg.addListener(this);
 		
 		
@@ -176,7 +209,7 @@ public class PlugInDialogDICOMReordering extends JDialogScriptableBase implement
 	}
 
 	/**
-	 * 
+	 * setGUIFromPArams
 	 */
 	protected void setGUIFromParams() {
 		// TODO Auto-generated method stub
@@ -184,7 +217,7 @@ public class PlugInDialogDICOMReordering extends JDialogScriptableBase implement
 	}
 
 	/**
-	 * 
+	 * storeParamsFromGUI
 	 */
 	protected void storeParamsFromGUI() throws ParserException {
 		// TODO Auto-generated method stub
@@ -193,7 +226,7 @@ public class PlugInDialogDICOMReordering extends JDialogScriptableBase implement
 
 	
 	/**
-	 * 
+	 * algorithmPerformed
 	 */
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		if(alg.isCompleted()) {
@@ -201,9 +234,11 @@ public class PlugInDialogDICOMReordering extends JDialogScriptableBase implement
 			//if OKButton is not null, then the rest are not null
 			//we don't want to do these if this algoritm was done via a script
 			if(OKButton != null) {
+				cancelButton.setText("Close");
 				OKButton.setEnabled(true);
 				studyPathBrowseButton.setEnabled(true);
 				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+				outputTextArea.append("*** End DICOM Reordering *** \n");
 			}
 		}
 
