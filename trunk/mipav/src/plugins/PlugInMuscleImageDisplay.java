@@ -2269,12 +2269,19 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					checkBoxLocationTree.get(it.next()).setColor(Color.BLACK);
 				}
 			}
+			boolean voiExists = false;
 			for(int index=0; index<mirrorButtonArr.length; index++) {
 				for(int i=0; i<mirrorButtonArr[index].length; i++) {
-					mirrorButtonArr[index][i].setEnabled(voiExists(mirrorButtonArr[index][i].getText(), getViewableSlice()));
+					mirrorButtonArr[index][i].setEnabled(voiExists = voiExists(mirrorButtonArr[index][i].getText(), getViewableSlice()));
+					mirrorButtonArr[index][i].setForeground(Color.BLACK);
+					if(voiExists && voiBuffer.get(mirrorButtonArr[index][i].getText()).isComputerGenerated())
+						mirrorButtonArr[index][i].setForeground(Color.RED);
 				}
 				for(int i=0; i<noMirrorButtonArr[index].length; i++) {
 					noMirrorButtonArr[index][i].setEnabled(voiExists(noMirrorButtonArr[index][i].getText(), getViewableSlice()));
+					noMirrorButtonArr[index][i].setForeground(Color.BLACK);
+					if(voiExists && voiBuffer.get(noMirrorButtonArr[index][i].getText()).isComputerGenerated())
+						noMirrorButtonArr[index][i].setForeground(Color.RED);
 				}
 			}
 		}

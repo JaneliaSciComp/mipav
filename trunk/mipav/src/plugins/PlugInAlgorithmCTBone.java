@@ -358,10 +358,10 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
        // maxDistance between the bones on each slice should be close to the mean distance, so maxDistance
        // should be close to 0
        maxDistance -= meanDistance1;
-       if ((maxDistance + 3.0f * stdDev1) > 10.0f) {
-        return false;
+       if ((maxDistance + 3.0f * stdDev1) > 30.0f) {
+    	   System.err.println("boneRegionsOK() (max - mean) distance + 3 * (std dev.) of bone is greater than 30");
+    	   return false;
        }
-       
        // Detected bone regions seems reasonable
        return true;
     } // end boneRegionsOK(...)
