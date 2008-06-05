@@ -22,6 +22,10 @@ import javax.vecmath.Point3i;
  * @version  1.0 Sept 1, 1998
  * @author   Matthew J. McAuliffe
  */
+/**
+ * @author pandyan
+ *
+ */
 public class ModelStorageBase extends ModelSerialCloneable {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -314,6 +318,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /** Locking write count. */
     private int writeLockCount = 0;
+    
+    private float avgInten, avgIntenR, avgIntenG, avgIntenB, stdDeviation, stdDeviationR, stdDeviationG, stdDeviationB;
+    
+    private int numPixels;
+    
+    private double sumPixelInten, sumPixelIntenR, sumPixelIntenG, sumPixelIntenB;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -7134,8 +7144,219 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
     }
     
-
+    
     /**
+     * computes the avg intensity got 2d and 3d greyscale and color images
+     * @return
+     */
+    public void calcAvgIntenStdDev() {
+    	if(getNDims() == 2) {
+    		int numPixelsPerSlice = getSliceSize();
+    		if ((bufferType != ARGB) && (bufferType != ARGB_USHORT) && (bufferType != ARGB_FLOAT)) { //greyscale image
+	    		float[] imageBuffer = new float[numPixelsPerSlice];
+	    		
+	    		try {
+	    			exportData(0, imageBuffer.length, imageBuffer);
+	    		}catch(Exception e){
+	    			e.printStackTrace();
+	    		}
+	
+	    		for(int i=0;i<imageBuffer.length;i++) {
+	    			numPixels = numPixels + 1;
+	    			sumPixelInten = sumPixelInten + imageBuffer[i];
+	    		}
+	
+	    		avgInten = (float)(sumPixelInten/numPixels);
+	    		
+	    		float dev;
+	    		float devSqrd;
+	    		double sumDevSqrd= 0;
+	    		for(int i=0;i<imageBuffer.length;i++) {
+	    			dev = imageBuffer[i] - avgInten;
+	    			devSqrd = dev * dev;
+	    			sumDevSqrd = sumDevSqrd + devSqrd;
+	    		}
+	    		
+	    		stdDeviation = (float) Math.sqrt(sumDevSqrd / (imageBuffer.length-1));
+    		}else { //color image
+    			float[] imageBuffer = new float[numPixelsPerSlice * 4];
+    			
+    			try {
+	    			exportData(0, imageBuffer.length, imageBuffer);
+	    		}catch(Exception e){
+	    			e.printStackTrace();
+	    		}
+	    		
+	    		for(int i=0;i<imageBuffer.length;i=i+4) {
+	    			numPixels = numPixels + 1;
+	    			sumPixelIntenR = sumPixelIntenR + imageBuffer[i+1];
+	    			sumPixelIntenG = sumPixelIntenG + imageBuffer[i+2];
+	    			sumPixelIntenB = sumPixelIntenB + imageBuffer[i+3];
+	    		}
+	    		
+	    		avgIntenR = (float)(sumPixelIntenR/numPixels);
+	    		avgIntenG = (float)(sumPixelIntenG/numPixels);
+	    		avgIntenB = (float)(sumPixelIntenB/numPixels);
+	    		
+	    		float devR,devG,devB;
+	    		float devSqrdR,devSqrdG,devSqrdB;
+	    		double sumDevSqrdR= 0, sumDevSqrdG= 0, sumDevSqrdB= 0;
+	    		
+	    		for(int i=0;i<imageBuffer.length;i=i+4) {
+	    			devR = imageBuffer[i+1] - avgIntenR;
+	    			devSqrdR = devR * devR;
+	    			sumDevSqrdR = sumDevSqrdR + devSqrdR;
+	    			
+	    			devG = imageBuffer[i+2] - avgIntenG;
+	    			devSqrdG = devG * devG;
+	    			sumDevSqrdG = sumDevSqrdG + devSqrdG;
+	    			
+	    			devB = imageBuffer[i+3] - avgIntenB;
+	    			devSqrdB = devB * devB;
+	    			sumDevSqrdB = sumDevSqrdB + devSqrdB;
+	    		}
+	    		
+	    		stdDeviationR = (float) Math.sqrt(sumDevSqrdR / (imageBuffer.length-1));
+	    		stdDeviationG = (float) Math.sqrt(sumDevSqrdG / (imageBuffer.length-1));
+	    		stdDeviationB = (float) Math.sqrt(sumDevSqrdB / (imageBuffer.length-1));
+    		}
+    	}else if(getNDims() == 3) {
+    		int numSlices = getExtents()[2];
+    		int numPixelsPerSlice = getSliceSize();
+    		if ((bufferType != ARGB) && (bufferType != ARGB_USHORT) && (bufferType != ARGB_FLOAT)) { //greyscale image
+	    		float[] imageBuffer = new float[numSlices * numPixelsPerSlice];
+	    		
+	    		try {
+	    			exportData(0, imageBuffer.length, imageBuffer);
+	    		}catch(Exception e){
+	    			e.printStackTrace();
+	    		}
+	
+	    		for(int i=0;i<imageBuffer.length;i++) {
+	    			numPixels = numPixels + 1;
+	    			sumPixelInten = sumPixelInten + imageBuffer[i];
+	    		}
+	
+	    		avgInten = (float)(sumPixelInten/numPixels);
+	    		
+	    		float dev;
+	    		float devSqrd;
+	    		double sumDevSqrd= 0;
+	    		for(int i=0;i<imageBuffer.length;i++) {
+	    			dev = imageBuffer[i] - avgInten;
+	    			devSqrd = dev * dev;
+	    			sumDevSqrd = sumDevSqrd + devSqrd;
+	    		}
+	    		
+	    		stdDeviation = (float) Math.sqrt(sumDevSqrd / (imageBuffer.length-1));
+    		}else { //color image
+    			float[] imageBuffer = new float[numSlices * numPixelsPerSlice * 4];
+    			
+    			try {
+	    			exportData(0, imageBuffer.length, imageBuffer);
+	    		}catch(Exception e){
+	    			e.printStackTrace();
+	    		}
+	    		
+	    		for(int i=0;i<imageBuffer.length;i=i+4) {
+	    			numPixels = numPixels + 1;
+	    			sumPixelIntenR = sumPixelIntenR + imageBuffer[i+1];
+	    			sumPixelIntenG = sumPixelIntenG + imageBuffer[i+2];
+	    			sumPixelIntenB = sumPixelIntenB + imageBuffer[i+3];
+	    		}
+	    		
+	    		avgIntenR = (float)(sumPixelIntenR/numPixels);
+	    		avgIntenG = (float)(sumPixelIntenG/numPixels);
+	    		avgIntenB = (float)(sumPixelIntenB/numPixels);
+	    		
+	    		float devR,devG,devB;
+	    		float devSqrdR,devSqrdG,devSqrdB;
+	    		double sumDevSqrdR= 0, sumDevSqrdG= 0, sumDevSqrdB= 0;
+	    		
+	    		for(int i=0;i<imageBuffer.length;i=i+4) {
+	    			devR = imageBuffer[i+1] - avgIntenR;
+	    			devSqrdR = devR * devR;
+	    			sumDevSqrdR = sumDevSqrdR + devSqrdR;
+	    			
+	    			devG = imageBuffer[i+2] - avgIntenG;
+	    			devSqrdG = devG * devG;
+	    			sumDevSqrdG = sumDevSqrdG + devSqrdG;
+	    			
+	    			devB = imageBuffer[i+3] - avgIntenB;
+	    			devSqrdB = devB * devB;
+	    			sumDevSqrdB = sumDevSqrdB + devSqrdB;
+	    		}
+	    		stdDeviationR = (float) Math.sqrt(sumDevSqrdR / ((imageBuffer.length/4)-1));
+	    		stdDeviationG = (float) Math.sqrt(sumDevSqrdG / ((imageBuffer.length/4)-1));
+	    		stdDeviationB = (float) Math.sqrt(sumDevSqrdB / ((imageBuffer.length/4)-1));
+	    		
+	    		
+    		}
+    	}
+    }
+    
+    
+    
+    
+    
+    
+    
+
+    public float getStdDeviation() {
+		return stdDeviation;
+	}
+
+	public float getAvgInten() {
+		return avgInten;
+	}
+
+	public int getNumPixels() {
+		return numPixels;
+	}
+
+	public double getSumPixelInten() {
+		return sumPixelInten;
+	}
+	
+	
+
+	public float getAvgIntenB() {
+		return avgIntenB;
+	}
+
+	public float getAvgIntenG() {
+		return avgIntenG;
+	}
+
+	public float getAvgIntenR() {
+		return avgIntenR;
+	}
+
+	public float getStdDeviationB() {
+		return stdDeviationB;
+	}
+
+	public float getStdDeviationG() {
+		return stdDeviationG;
+	}
+
+	public float getStdDeviationR() {
+		return stdDeviationR;
+	}
+
+	public double getSumPixelIntenB() {
+		return sumPixelIntenB;
+	}
+
+	public double getSumPixelIntenG() {
+		return sumPixelIntenG;
+	}
+
+	public double getSumPixelIntenR() {
+		return sumPixelIntenR;
+	}
+
+	/**
      * Computes the datasize based on the type of buffer.
      */
     protected void computeDataSize() {
