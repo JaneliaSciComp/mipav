@@ -171,7 +171,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
      */
     private void segmentImage() {
         long time = System.currentTimeMillis();
-        boolean doVOI = false;
+        boolean doVOI = false, completeVOI = false;
         // compute the bone label image
         doVOI = segmentBone();
         System.out.println("Bone segmentation: "+(System.currentTimeMillis() - time));
@@ -182,20 +182,10 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
         System.out.println("Thigh tissue segmentation: "+(System.currentTimeMillis() - time));
 
         time = System.currentTimeMillis();
-        VOI totalVOI = null;
         if(doVOI)
-        	totalVOI = makeThighTissueVOI();
+        	completeVOI = makeThighTissueVOI();
         System.out.println("Thigh tissue VOIs: "+(System.currentTimeMillis() - time));
-        //ShowImage(thighTissueImage, "Thigh tissue")
-        if(totalVOI != null) {
-	        rightThighVOI = makeRightThighVOI(totalVOI);
-	        leftThighVOI = makeLeftThighVOI(totalVOI);
-	        
-	        //boneImage.unregisterAllVOIs();
-	        //boneImage.registerVOI(rightThighVOI);
-	        //boneImage.registerVOI(leftThighVOI);
-	        
-	        //boneImage.getParentFrame().updateImages(true);
+        if(completeVOI) {
 	        
 	     // save the VOI to a file(s)
 	        String directory = System.getProperty("user.dir");
@@ -261,7 +251,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
 	    
 
 	// create a voi for the bone.  Assumes the boneImage has been created.
-    private VOI makeThighTissueVOI() {
+    private boolean makeThighTissueVOI() {
         // make the volumeBitSet for the boneImage
         int sliceByteOffset;
 
@@ -292,7 +282,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
         VOIVector vois = thighTissueImage.getVOIs();
         if(vois.size() != 1) {
             System.err.println("makeThighTissueVOI() Error, did not get 1 VOI");
-            return null;
+            return false;
         }
         VOI theVOI = vois.get(0);
         theVOI.setName("Thigh Tissue");
@@ -446,13 +436,6 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
             }
             leftThighVOI.importCurve(x2, y2, z2, 0);
             
-            
-            boneImage.unregisterAllVOIs();
-            boneImage.registerVOI(rightThighVOI);            
-            boneImage.registerVOI(leftThighVOI);            
-            new ViewJFrameImage(boneImage).updateImages(true);
-            
-            
             System.out.println("VOI name: " +maxContour.getName());
             
         } else if (theVOI.getCurves()[0].size() != 4) {
@@ -460,9 +443,12 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
             boneImage.registerVOI(theVOI);            
             new ViewJFrameImage(boneImage).updateImages(true);
             System.err.println("makeThighTissueVOI() Error, did not get 2 curves in the VOI");
-            return null;
+            return false;
+        } else {
+        	rightThighVOI = makeRightThighVOI(theVOI);
+        	leftThighVOI = makeLeftThighVOI(theVOI);
         }
-        return theVOI;
+        return true;
 
     } // end makeThighTissueVOI()
     
