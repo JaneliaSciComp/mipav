@@ -440,8 +440,12 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
         IDObjects(bMarrow, 90 * zDim, 500 * zDim);
         // PFH        ShowImage(bMarrow, "IDObjects");
 
+        // find the most round object
+        mostRoundObject(bMarrow);
+        // PFH        ShowImage(bMarrow, "mostRoundObject");
+        
         // find the single object closest to the center of the image
-        isolatingCenterObject(bMarrow);
+//        isolatingCenterObject(bMarrow);
         // bMarrow is a binary image where 1's label bone marrow and 0's are elsewhere
         // PFH        ShowImage(bMarrow, "isolatingCenterObject");
 
@@ -646,6 +650,196 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
         isnAlgo.finalize();
         isnAlgo = null;
     }
+    
+    
+    /**
+     * Returns a binary image with the "most" round object identified (kept) on each slice
+     * 
+     * @param srcImage  --image with the most round object
+     */
+    public void mostRoundObject(ModelImage srcImage) {
+       
+        // find the maximum number of objects on a slice
+        int maxNumObjects = (int)srcImage.getMax();
+        if (maxNumObjects < 2) return;
+        
+        // determine these values for each labeled region
+        float[] eccentricity = new float [maxNumObjects+1];
+        float[] majorAxis = new float [maxNumObjects+1];
+        float[] minorAxis = new float [maxNumObjects+1];
+        
+        // constants for the image
+        float xRes = srcImage.getFileInfo(0).getResolutions()[0];
+        float yRes = srcImage.getFileInfo(0).getResolutions()[1];
+        float xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
+        float yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
+        
+        // work on the slices
+        for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
+            try {
+                srcImage.exportData((sliceNum * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
+
+                // compute the stats about the different objects
+                for (int idx = 1; idx <= maxNumObjects; idx++) {
+                    secondOrderStats(idx, imgBuffer1, xRes, yRes, xUnits, yUnits, eccentricity, majorAxis, minorAxis);
+                }
+                
+                // The most round object is the one with the smallest difference between the major
+                // and minor axes.  There are really the major and minor axis lengths.
+                int mostRoundLabelVal = 1;
+                float minAxisLengthDifference = majorAxis[1] - minorAxis[1];
+                for (int idx = 2; idx <= maxNumObjects; idx++) {
+                    if ((majorAxis[idx] - minorAxis[idx]) < minAxisLengthDifference) {
+                        mostRoundLabelVal = idx;
+                    }
+//                    System.out.println("region: " +idx +"  ecc: " +eccentricity[idx] +"  major: " + majorAxis[idx] +"  minor: " + minorAxis[idx]);
+                } // end for (int = 2; ...)
+
+                // relabel the imagBuffer1 so that only the mostRoundLabelVal has the value of 1
+                for (int idx = 0; idx < imgBuffer1.length; idx++) {
+                    if (imgBuffer1[idx] == mostRoundLabelVal) {
+                        imgBuffer1[idx] = 1;
+                    } else {
+                        imgBuffer1[idx] = 0;                        
+                    }
+                } // end for (int idx = 0; ...)
+         
+                // put the data back into the image
+                srcImage.importData((sliceNum * imgBuffer1.length), imgBuffer1, false);
+            } catch (IOException ex) {
+                System.err.println("mostRoundObject()  Error exporting/importing the data");
+            }
+        } // end for(int sliceNum = 0; ...)
+    } // end mostRoundObject(...)
+    
+    
+    /**
+     * Functions computes the eccentricity, major and minor axis lengths for a region identified
+     * with labelVal in the imgBuf.  Values are returned in the arrays at the index of the labelVal.
+     * 
+     * I took this routine from VOIContour::secondOrderAttributes(), otherwise, I would
+     * need to convert the region to a VOI and call the above routine, which then creates
+     * a BitSet to perform the calculation.  A label image is like a BitSet, so why do all
+     * conversions?
+     * 
+     * @param labelVal  --identifier of the region to compute the statistics about
+     * @param imgBuf    --2D array filled with the label image
+     * @param xRes      --x resolution of the image data in the buffer
+     * @param yRes      --y resolution of the image data in the buffer
+     * @param xUnits
+     * @param yUnits
+     * @param eccentricity  --value to be computed and filled in
+     * @param majorAxis     --value to be computed and filled in
+     * @param minorAxis     --value to be computed and filled in
+     */
+    public void secondOrderStats(int labelVal, int[] imgBuf, float xRes, float yRes, float xUnits, float yUnits,
+            float[] eccentricity, float[] majorAxis, float[] minorAxis) {
+        
+        // compute the bounding rectangle of the region
+        int xbs = xDim, xbe = 0, ybs = yDim, ybe = 0, numPix = 0;
+        for (int idx = 0, y = 0; y < yDim; y++) {
+            for (int x = 0; x < xDim; x++, idx++) {
+                if (imgBuf[idx] == labelVal) {
+//                    System.out.println("x: " +x +" y: " +y +"    imgBuf[" +idx +"]: " +imgBuf[idx]);
+                    numPix++;
+                    if (x < xbs) xbs = x;
+                    if (x > xbe) xbe = x;
+                    if (y < ybs) ybs = y;
+                    if (y > ybe) ybe = y;
+                }
+            } // end for (int x = 0; ...)
+        } // end for (int y = 0; ...)
+        
+//        System.out.println("LabelVal: " +labelVal +"   numPix: " +numPix);
+//        System.out.println(xbs +" " +ybs +"   " +xbe +" " +ybe);
+        
+        // sanity check
+        if(numPix == 0) {
+            // set the values of eccentricity[labelVal], majorAxis[labelVal], minorAxis[labelVal]
+            // to some non-circular value
+            return;
+        }
+        
+        // compute some stats about the region
+        double m10 = 0.0, m01 = 0.0;
+        int idx;
+        for (int y = ybs; y <= ybe; y++) {
+            idx = y * xDim;
+//            System.out.println("y: " +y +"   idx: " +idx);
+            for (int x = xbs; x <= xbe; x++) {
+                if (imgBuf[idx + x] == labelVal) {
+                    if (xUnits == yUnits) {
+                        m10 += x * xRes;
+                        m01 += y * yRes;
+                    } else {
+                        m10 += x;
+                        m01 += y;
+                    }
+//                    System.out.println("x: " +x +" y: " +y +"    imgBuf[" +idx +"]: " +imgBuf[idx]);
+//                    System.out.println("   m10: " +m10 +" m01: " +m01);
+                } // end if(imgBuf[idx] == labelVal)
+            } // end for (int x = xbs; ...)
+        } // end for (int idx = ybs * xDim, y = ybs; ...)
+
+//        System.out.println("m10: " +m10 +"   m01: " + m01);
+        m10 /= numPix;
+        m01 /= numPix;
+//        System.out.println("m10: " +m10 +"   m01: " + m01);
+
+        double m20 = 0.0;
+        double m11 = 0.0;
+        double m02 = 0.0;
+        double xdiff;
+        double ydiff;
+
+        for (int y = ybs; y <= ybe; y++) {
+            idx = y * xDim;
+            for (int x = xbs; x <= xbe; x++) {
+                if (imgBuf[idx + x] == labelVal) {
+                    if (xUnits == yUnits) {
+                        xdiff = (x * xRes) - m10;
+                        ydiff = (y * yRes) - m01;
+                    } else {
+                        xdiff = x - m10;
+                        ydiff = y - m01;
+                    }
+
+                    m20 += xdiff * xdiff;
+                    m11 += xdiff * ydiff;
+                    m02 += ydiff * ydiff;
+                } // end if(imgBuf[idx] == labelVal)
+            } // end for (int x = xbs; ...)
+        }// end for (int idx = ybs * xDim, y = ybs; ...)
+
+//        System.out.println("m20: " +m20 +"   m11: " + m11 +"    m02: " +m02);
+        m20 /= numPix;
+        m11 /= numPix;
+        m02 /= numPix;
+//        System.out.println("m20: " +m20 +"   m11: " + m11 +"    m02: " +m02);
+
+        // The eigenvalues of
+        // m20 m11
+        // m11 m02
+        // are proportional to the square of the semiaxes
+        // (m20 - e)*(m02 - e) - m11*m11 = 0;
+        double root = Math.sqrt(((m20 - m02) * (m20 - m02)) + (4 * m11 * m11));
+        majorAxis[labelVal] = (float) Math.sqrt(2.0 * (m20 + m02 + root));
+        minorAxis[labelVal] = (float) Math.sqrt(2.0 * (m20 + m02 - root));
+
+        double areaEllipse = (Math.PI / 4.0) * majorAxis[labelVal] * minorAxis[labelVal];
+        double normFactor;
+
+        if (xUnits == yUnits) {
+            normFactor = Math.sqrt(xRes * yRes * numPix / areaEllipse);
+        } else {
+            normFactor = Math.sqrt(numPix / areaEllipse);
+        }
+
+        majorAxis[labelVal] = (float) (normFactor * majorAxis[labelVal]);
+        minorAxis[labelVal] = (float) (normFactor * minorAxis[labelVal]);
+        eccentricity[labelVal] = (float) Math.sqrt(1.0 - ((minorAxis[labelVal] * minorAxis[labelVal]) / (majorAxis[labelVal] * majorAxis[labelVal])));
+    } // end secondOrderStats(...)
+    
 
     /**
      * Returns binary image at center object.
@@ -854,7 +1048,7 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
         ModelImage boneMarrow = extractedBoneMarrow(CMeansSeg);
         // boneMarrow is a binary image containing only the bone marrow
 
-        //  PFH        ShowImage(boneMarrow, "bone/morrow image");
+        //  PFH        ShowImage(boneMarrow, "bone morrow image");
 
         // use the bone marrow and input thigh image to segment out the bone
         ModelImage bone = extractBone(boneMarrow, thighInputImage);
@@ -995,7 +1189,6 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
 
             // processedImage is the right or left thigh image
             voiMask = makeVOI(processedImage);
-            System.out.println("VOI Mask: "+voiMask);
             // voiMask: binary image where 1's are inside the VOI otherwise values are 0's used in processHardFat(),
             // should probably be made later!! 
             // PFH            ShowImage(voiMask, "voi  mask");
@@ -1217,7 +1410,6 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
 
             fireProgressStateChanged(50 * aa);
 
-        System.out.println("thigh cleanup done --destImage");
         setCompleted(true);
 
     }
