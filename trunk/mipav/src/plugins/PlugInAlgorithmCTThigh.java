@@ -311,7 +311,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
             } // end while(idx2 < numCurves)
          } // end for (int idx = 0; ...)
 
-/**/
+/*
         // print out the curves and their sizes
         for (int idx = 0; idx < zDim; idx++) {
             numCurves = theVOI.getCurves()[idx].size();
@@ -324,7 +324,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                 System.out.println("  curve: " +idx2 +"  num points: " +numPoints);
             } // end for (int idx2 = 0; ...)
         } // end for (int idx = 0; ...)
-/**/        
+*/        
 
         leftThighVOI  = (VOI)theVOI.clone();
         rightThighVOI = (VOI)theVOI.clone();
@@ -342,7 +342,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                     }
                 }
                 
-                System.out.println("Slice num: " +sliceIdx +"   thigh curve idx: " +maxIdx);
+//                System.out.println("Slice num: " +sliceIdx +"   thigh curve idx: " +maxIdx);
                 
                 // split the curve with the maxIdx through its middle
                 VOIContour maxContour = ((VOIContour)theVOI.getCurves()[sliceIdx].get(maxIdx));
@@ -354,6 +354,28 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                 // remove the curve from the VOI
                 leftThighVOI.getCurves()[sliceIdx].remove(maxIdx);
                 rightThighVOI.getCurves()[sliceIdx].remove(maxIdx);
+                
+                // remove the right bone from the leftThighVOI
+//                System.out.println("Num curves: " +leftThighVOI.getCurves()[sliceIdx].size());
+                
+                // only the right and left bone should be in the VOIs
+                float[] xBounds1 = new float [2];
+                float[] yBounds1 = new float [2];
+                float[] zBounds1 = new float [2];
+                ((VOIContour)leftThighVOI.getCurves()[sliceIdx].get(0)).getBounds(xBounds1, yBounds1, zBounds1);
+                
+                float[] xBounds2 = new float [2];
+                float[] yBounds2 = new float [2];
+                float[] zBounds2 = new float [2];
+                ((VOIContour)leftThighVOI.getCurves()[sliceIdx].get(1)).getBounds(xBounds2, yBounds2, zBounds2);
+                
+                if (xBounds1[0] < xBounds2[0] && xBounds1[1] < xBounds2[1]) {
+                    leftThighVOI.getCurves()[sliceIdx].remove(1);
+                    rightThighVOI.getCurves()[sliceIdx].remove(0);
+                } else {
+                    leftThighVOI.getCurves()[sliceIdx].remove(0);
+                    rightThighVOI.getCurves()[sliceIdx].remove(1);
+                }
                                
                 
                 // find the indices of an upper and lower section of the contour that is "close" to the image center
