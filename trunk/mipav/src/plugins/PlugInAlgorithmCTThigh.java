@@ -489,7 +489,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                 }
 
                 leftThighVOI.importCurve(x2, y2, z2, sliceIdx);
-                                
+                                               
             } else if (theVOI.getCurves()[0].size() != 4) {
                 boneImage.unregisterAllVOIs();
                 boneImage.registerVOI(theVOI);            
@@ -505,167 +505,15 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
         
         
         // show the split VOIs
-        boneImage.unregisterAllVOIs();
-        boneImage.registerVOI(rightThighVOI);            
-        boneImage.registerVOI(leftThighVOI);            
-        new ViewJFrameImage(boneImage).updateImages(true);
+        //boneImage.unregisterAllVOIs();
+        //boneImage.registerVOI(rightThighVOI);            
+        //boneImage.registerVOI(leftThighVOI);            
+        //new ViewJFrameImage(boneImage).updateImages(true);
         return completedThigh;
 
         
         
-/*   this splits the largest curve on slice 0
-        if (theVOI.getCurves()[0].size() == 3) {
-            
-            // find the VOI with the greatest area
-            float maxArea = ((VOIContour)theVOI.getCurves()[0].get(0)).area();
-            int maxIdx = 0;
-            for (int idx = 1; idx < theVOI.getCurves()[0].size(); idx++) {
-                if (((VOIContour)theVOI.getCurves()[0].get(idx)).area() > maxArea) {
-                    maxIdx = idx;
-                }
-            }
-            
-            // split the VOI with the maxIdx through its middle
-            VOIContour maxContour = ((VOIContour)theVOI.getCurves()[0].get(maxIdx));
-            int[] xVals = new int [maxContour.size()];
-            int[] yVals = new int [maxContour.size()];
-            int[] zVals = new int [maxContour.size()];
-            maxContour.exportArrays(xVals, yVals, zVals);
-            System.out.println("VOI name: " +maxContour.getName());
-            
-            // find the bounding box of the contour
-            int[] xBounds = new int[2];
-            int[] yBounds = new int[2];
-            int[] zBounds = new int[2];
-            maxContour.getBounds(xBounds, yBounds, zBounds);
-            System.out.println("X  min: " +xBounds[0] +"  max: " +xBounds[1]);
-            System.out.println("Y  min: " +yBounds[0] +"  max: " +yBounds[1]);
-            System.out.println("Z  min: " +zBounds[0] +"  max: " +zBounds[1]);
-            
-            // print out two sections of the contour whose x-components are near the center of the image
-//            for (int idx = 0; idx < maxContour.size(); idx++) {
-//                if (xVals[idx] > ((xDim / 2) - 20) && xVals[idx] < ((xDim / 2) + 20)) {
-//                    System.out.println("point: " +idx +"  (" +xVals[idx] +", " +yVals[idx] +", " +zVals[idx] +")");
-//                }
-//            }
-            
-            // find the indices of an upper and lower section of the contour that is "close" to the image center
-            // find the index of the first contour point whose x-component is "close" to the middle
-            int startIdx1 = 0;
-            while (xVals[startIdx1] < ((xDim / 2) - 20) || xVals[startIdx1] > ((xDim / 2) + 20)) {
-                startIdx1++;
-            }
-            
-            int endIdx1 = startIdx1 + 1;
-            while (xVals[endIdx1] > ((xDim / 2) - 20) && xVals[endIdx1] < ((xDim / 2) + 20)) {
-                endIdx1++;
-            }
-            // subtract 1 since we indexed one element too far
-            endIdx1--;
-            System.out.println("Start index 1: " +startIdx1 +"   end index 1: " +endIdx1);
 
-            // find the index of the second contour section whose x-component is "close" to the middle
-            int startIdx2 = endIdx1 + 1;
-            while (xVals[startIdx2] < ((xDim / 2) - 20) || xVals[startIdx2] > ((xDim / 2) + 20)) {
-                startIdx2++;
-            }
-            
-            int endIdx2 = startIdx2 + 1;
-            while (xVals[endIdx2] > ((xDim / 2) - 20) && xVals[endIdx2] < ((xDim / 2) + 20)) {
-                endIdx2++;
-            }
-            // subtract 1 since we indexed one element too far
-            endIdx2--;
-            System.out.println("Start index 2: " +startIdx2 +"   end index 1: " +endIdx2);
-
- 
-            // find the index of the two closest points between these two sections, this is where we will split the contour
-            // one contour section goes from startIdx1 to endIdx1
-            // the other goes from startIdx2 to endIdx2
-            int minIdx1 = startIdx1;
-            int minIdx2 = startIdx2;
-            float dx = xVals[startIdx1] - xVals[startIdx2];
-            float dy = yVals[startIdx1] - yVals[startIdx2];
-            // all computations will be on the same slice, forget about the z-component
-            float minDistance = dx*dx + dy*dy;
-            float dist;
-            
-            for (int idx1 = startIdx1; idx1 <= endIdx1; idx1++) {
-                for (int idx2 = startIdx2; idx2 <= endIdx2; idx2++) {
-                    dx = xVals[idx1] - xVals[idx2];
-                    dy = yVals[idx1] - yVals[idx2];
-                    dist = dx*dx + dy*dy;
-                    if (dist < minDistance) {
-                        minDistance = dist;
-                        minIdx1 = idx1;
-                        minIdx2 = idx2;
-                    } // end if
-                } // end for (int idx2 = startIdx2; ...
-            } // end for (int idx1 = startIdx1; ...
-            
-            System.out.println("Minimum distance: " +minDistance);
-            System.out.println(xVals[minIdx1] +"  " +yVals[minIdx1] +"   and  " +xVals[minIdx2] +"  " +yVals[minIdx2]);
-            
-            // make the two contours
-            ArrayList<Integer> x1Arr = new ArrayList<Integer>(maxContour.size());
-            ArrayList<Integer> y1Arr = new ArrayList<Integer>(maxContour.size());
-            ArrayList<Integer> z1Arr = new ArrayList<Integer>(maxContour.size());
-            
-            ArrayList<Integer> x2Arr = new ArrayList<Integer>(maxContour.size());
-            ArrayList<Integer> y2Arr = new ArrayList<Integer>(maxContour.size());
-            ArrayList<Integer> z2Arr = new ArrayList<Integer>(maxContour.size());
-            
-            if (minIdx1 < minIdx2) {
-                // the first contour goes from minIdx1 to minIdx2 to minIdx1
-                int newIdx = 0;
-                for (int idx = minIdx1; idx < minIdx2; idx++, newIdx++) {
-                    x1Arr.add(newIdx, xVals[idx]);
-                    y1Arr.add(newIdx, yVals[idx]);
-                    z1Arr.add(newIdx, zVals[idx]);
-                }
-
-                // the second contour goes from minIdx2 to maxContour.size(), 0 , 1, to minIdx1 to minIdx2
-                newIdx = 0;
-                for (int idx = minIdx2; idx < maxContour.size(); idx++, newIdx++) {
-                    x2Arr.add(newIdx, xVals[idx]);
-                    y2Arr.add(newIdx, yVals[idx]);
-                    z2Arr.add(newIdx, zVals[idx]);
-                }
-                for (int idx = 0; idx < minIdx1; idx++, newIdx++) {
-                    x2Arr.add(newIdx, xVals[idx]);
-                    y2Arr.add(newIdx, yVals[idx]);
-                    z2Arr.add(newIdx, zVals[idx]);
-                }
-            } // end if (minIdx1 < minIdx2)
-
-            leftThighVOI  = (VOI)theVOI.clone();
-            rightThighVOI = (VOI)theVOI.clone();
-
-            rightThighVOI.removeCurves(0);
-            int[] x1 = new int[x1Arr.size()];
-            int[] y1 = new int[x1Arr.size()];
-            int[] z1 = new int[x1Arr.size()];
-            for(int idx = 0; idx < x1Arr.size(); idx++) {
-                x1[idx] = x1Arr.get(idx);
-                y1[idx] = y1Arr.get(idx);
-                z1[idx] = z1Arr.get(idx);
-            }
-            rightThighVOI.importCurve(x1, y1, z1, 0);
-            
-            leftThighVOI.removeCurves(0);
-            int[] x2 = new int[x2Arr.size()];
-            int[] y2 = new int[x2Arr.size()];
-            int[] z2 = new int[x2Arr.size()];
-            for(int idx = 0; idx < x2Arr.size(); idx++) {
-                x2[idx] = x2Arr.get(idx);
-                y2[idx] = y2Arr.get(idx);
-                z2[idx] = z2Arr.get(idx);
-            }
-            leftThighVOI.importCurve(x2, y2, z2, 0);
-            
-            System.out.println("VOI name: " +maxContour.getName());
-<<<<<<< .mine
-            */
 
     } // end makeThighTissueVOI()
     
@@ -927,6 +775,162 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
 
 	public VOI getRightThighVOI() {
 		return rightThighVOI;
+	}
+	
+	private void oldCode() {
+		/*   this splits the largest curve on slice 0
+        if (theVOI.getCurves()[0].size() == 3) {
+            
+            // find the VOI with the greatest area
+            float maxArea = ((VOIContour)theVOI.getCurves()[0].get(0)).area();
+            int maxIdx = 0;
+            for (int idx = 1; idx < theVOI.getCurves()[0].size(); idx++) {
+                if (((VOIContour)theVOI.getCurves()[0].get(idx)).area() > maxArea) {
+                    maxIdx = idx;
+                }
+            }
+            
+            // split the VOI with the maxIdx through its middle
+            VOIContour maxContour = ((VOIContour)theVOI.getCurves()[0].get(maxIdx));
+            int[] xVals = new int [maxContour.size()];
+            int[] yVals = new int [maxContour.size()];
+            int[] zVals = new int [maxContour.size()];
+            maxContour.exportArrays(xVals, yVals, zVals);
+            System.out.println("VOI name: " +maxContour.getName());
+            
+            // find the bounding box of the contour
+            int[] xBounds = new int[2];
+            int[] yBounds = new int[2];
+            int[] zBounds = new int[2];
+            maxContour.getBounds(xBounds, yBounds, zBounds);
+            System.out.println("X  min: " +xBounds[0] +"  max: " +xBounds[1]);
+            System.out.println("Y  min: " +yBounds[0] +"  max: " +yBounds[1]);
+            System.out.println("Z  min: " +zBounds[0] +"  max: " +zBounds[1]);
+            
+            // print out two sections of the contour whose x-components are near the center of the image
+//            for (int idx = 0; idx < maxContour.size(); idx++) {
+//                if (xVals[idx] > ((xDim / 2) - 20) && xVals[idx] < ((xDim / 2) + 20)) {
+//                    System.out.println("point: " +idx +"  (" +xVals[idx] +", " +yVals[idx] +", " +zVals[idx] +")");
+//                }
+//            }
+            
+            // find the indices of an upper and lower section of the contour that is "close" to the image center
+            // find the index of the first contour point whose x-component is "close" to the middle
+            int startIdx1 = 0;
+            while (xVals[startIdx1] < ((xDim / 2) - 20) || xVals[startIdx1] > ((xDim / 2) + 20)) {
+                startIdx1++;
+            }
+            
+            int endIdx1 = startIdx1 + 1;
+            while (xVals[endIdx1] > ((xDim / 2) - 20) && xVals[endIdx1] < ((xDim / 2) + 20)) {
+                endIdx1++;
+            }
+            // subtract 1 since we indexed one element too far
+            endIdx1--;
+            System.out.println("Start index 1: " +startIdx1 +"   end index 1: " +endIdx1);
+
+            // find the index of the second contour section whose x-component is "close" to the middle
+            int startIdx2 = endIdx1 + 1;
+            while (xVals[startIdx2] < ((xDim / 2) - 20) || xVals[startIdx2] > ((xDim / 2) + 20)) {
+                startIdx2++;
+            }
+            
+            int endIdx2 = startIdx2 + 1;
+            while (xVals[endIdx2] > ((xDim / 2) - 20) && xVals[endIdx2] < ((xDim / 2) + 20)) {
+                endIdx2++;
+            }
+            // subtract 1 since we indexed one element too far
+            endIdx2--;
+            System.out.println("Start index 2: " +startIdx2 +"   end index 1: " +endIdx2);
+
+ 
+            // find the index of the two closest points between these two sections, this is where we will split the contour
+            // one contour section goes from startIdx1 to endIdx1
+            // the other goes from startIdx2 to endIdx2
+            int minIdx1 = startIdx1;
+            int minIdx2 = startIdx2;
+            float dx = xVals[startIdx1] - xVals[startIdx2];
+            float dy = yVals[startIdx1] - yVals[startIdx2];
+            // all computations will be on the same slice, forget about the z-component
+            float minDistance = dx*dx + dy*dy;
+            float dist;
+            
+            for (int idx1 = startIdx1; idx1 <= endIdx1; idx1++) {
+                for (int idx2 = startIdx2; idx2 <= endIdx2; idx2++) {
+                    dx = xVals[idx1] - xVals[idx2];
+                    dy = yVals[idx1] - yVals[idx2];
+                    dist = dx*dx + dy*dy;
+                    if (dist < minDistance) {
+                        minDistance = dist;
+                        minIdx1 = idx1;
+                        minIdx2 = idx2;
+                    } // end if
+                } // end for (int idx2 = startIdx2; ...
+            } // end for (int idx1 = startIdx1; ...
+            
+            System.out.println("Minimum distance: " +minDistance);
+            System.out.println(xVals[minIdx1] +"  " +yVals[minIdx1] +"   and  " +xVals[minIdx2] +"  " +yVals[minIdx2]);
+            
+            // make the two contours
+            ArrayList<Integer> x1Arr = new ArrayList<Integer>(maxContour.size());
+            ArrayList<Integer> y1Arr = new ArrayList<Integer>(maxContour.size());
+            ArrayList<Integer> z1Arr = new ArrayList<Integer>(maxContour.size());
+            
+            ArrayList<Integer> x2Arr = new ArrayList<Integer>(maxContour.size());
+            ArrayList<Integer> y2Arr = new ArrayList<Integer>(maxContour.size());
+            ArrayList<Integer> z2Arr = new ArrayList<Integer>(maxContour.size());
+            
+            if (minIdx1 < minIdx2) {
+                // the first contour goes from minIdx1 to minIdx2 to minIdx1
+                int newIdx = 0;
+                for (int idx = minIdx1; idx < minIdx2; idx++, newIdx++) {
+                    x1Arr.add(newIdx, xVals[idx]);
+                    y1Arr.add(newIdx, yVals[idx]);
+                    z1Arr.add(newIdx, zVals[idx]);
+                }
+
+                // the second contour goes from minIdx2 to maxContour.size(), 0 , 1, to minIdx1 to minIdx2
+                newIdx = 0;
+                for (int idx = minIdx2; idx < maxContour.size(); idx++, newIdx++) {
+                    x2Arr.add(newIdx, xVals[idx]);
+                    y2Arr.add(newIdx, yVals[idx]);
+                    z2Arr.add(newIdx, zVals[idx]);
+                }
+                for (int idx = 0; idx < minIdx1; idx++, newIdx++) {
+                    x2Arr.add(newIdx, xVals[idx]);
+                    y2Arr.add(newIdx, yVals[idx]);
+                    z2Arr.add(newIdx, zVals[idx]);
+                }
+            } // end if (minIdx1 < minIdx2)
+
+            leftThighVOI  = (VOI)theVOI.clone();
+            rightThighVOI = (VOI)theVOI.clone();
+
+            rightThighVOI.removeCurves(0);
+            int[] x1 = new int[x1Arr.size()];
+            int[] y1 = new int[x1Arr.size()];
+            int[] z1 = new int[x1Arr.size()];
+            for(int idx = 0; idx < x1Arr.size(); idx++) {
+                x1[idx] = x1Arr.get(idx);
+                y1[idx] = y1Arr.get(idx);
+                z1[idx] = z1Arr.get(idx);
+            }
+            rightThighVOI.importCurve(x1, y1, z1, 0);
+            
+            leftThighVOI.removeCurves(0);
+            int[] x2 = new int[x2Arr.size()];
+            int[] y2 = new int[x2Arr.size()];
+            int[] z2 = new int[x2Arr.size()];
+            for(int idx = 0; idx < x2Arr.size(); idx++) {
+                x2[idx] = x2Arr.get(idx);
+                y2[idx] = y2Arr.get(idx);
+                z2[idx] = z2Arr.get(idx);
+            }
+            leftThighVOI.importCurve(x2, y2, z2, 0);
+            
+            System.out.println("VOI name: " +maxContour.getName());
+<<<<<<< .mine
+            */
 	}
     
 
