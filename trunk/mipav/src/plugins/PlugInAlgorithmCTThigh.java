@@ -392,7 +392,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                 }
                 // subtract 1 since we indexed one element too far
                 endIdx1--;
-                System.out.println("\nStart index 1: " +startIdx1 +"   end index 1: " +endIdx1);
+//                System.out.println("\nStart index 1: " +startIdx1 +"   end index 1: " +endIdx1);
 
                 // find the index of the second contour section whose x-component is "close" to the middle
                 int startIdx2 = endIdx1 + 1;
@@ -406,7 +406,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                 }
                 // subtract 1 since we indexed one element too far
                 endIdx2--;
-                System.out.println("Start index 2: " +startIdx2 +"   end index 1: " +endIdx2);
+//                System.out.println("Start index 2: " +startIdx2 +"   end index 1: " +endIdx2);
 
      
                 // find the index of the two closest points between these two sections, this is where we will split the contour
@@ -433,8 +433,8 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                     } // end for (int idx2 = startIdx2; ...
                 } // end for (int idx1 = startIdx1; ...
                 
-                System.out.println("Slice: " + sliceIdx +"   Minimum distance: " +minDistance);
-                System.out.println(xVals[minIdx1] +"  " +yVals[minIdx1] +"   and  " +xVals[minIdx2] +"  " +yVals[minIdx2]);
+//                System.out.println("Slice: " + sliceIdx +"   Minimum distance: " +minDistance);
+//                System.out.println(xVals[minIdx1] +"  " +yVals[minIdx1] +"   and  " +xVals[minIdx2] +"  " +yVals[minIdx2]);
                 
                 // make the two contours resulting from the split
                 ArrayList<Integer> x1Arr = new ArrayList<Integer>(maxContour.size());
@@ -477,7 +477,6 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                     z1[idx] = z1Arr.get(idx);
                 }
 
-//                rightThighVOI.removeCurves(sliceIdx);
                 rightThighVOI.importCurve(x1, y1, z1, sliceIdx);
                 
                 int[] x2 = new int[x2Arr.size()];
@@ -489,7 +488,6 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                     z2[idx] = z2Arr.get(idx);
                 }
 
-//                leftThighVOI.removeCurves(sliceIdx);
                 leftThighVOI.importCurve(x2, y2, z2, sliceIdx);
                                 
             } else if (theVOI.getCurves()[0].size() != 4) {
