@@ -355,7 +355,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                 leftThighVOI.getCurves()[sliceIdx].remove(maxIdx);
                 rightThighVOI.getCurves()[sliceIdx].remove(maxIdx);
                 
-                // remove the right bone from the leftThighVOI
+                // remove the right bone from the leftThighVOI and the left bone from the rightThighVOI
 //                System.out.println("Num curves: " +leftThighVOI.getCurves()[sliceIdx].size());
                 
                 // only the right and left bone should be in the VOIs
@@ -369,6 +369,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                 float[] zBounds2 = new float [2];
                 ((VOIContour)leftThighVOI.getCurves()[sliceIdx].get(1)).getBounds(xBounds2, yBounds2, zBounds2);
                 
+                // see which bone is left most in the image, which means it is in the right thigh
                 if (xBounds1[0] < xBounds2[0] && xBounds1[1] < xBounds2[1]) {
                     leftThighVOI.getCurves()[sliceIdx].remove(1);
                     rightThighVOI.getCurves()[sliceIdx].remove(0);
