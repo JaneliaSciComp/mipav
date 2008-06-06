@@ -513,7 +513,7 @@ public class FileDicom extends FileDicomBase {
             if ((elementWord == 0) && (elementLength == 0)) { // End of file
 
                 if (!isQuiet()) {
-                    MipavUtil.displayError("Error:  Unexpected end of file.  Unable to load image.");
+                    MipavUtil.displayError("Error:  Unexpected end of file: " + fileName + "  Unable to load image.");
                 }
 
                 throw new IOException("Error while reading header");

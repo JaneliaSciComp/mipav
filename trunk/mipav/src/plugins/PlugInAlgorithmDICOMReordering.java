@@ -99,6 +99,9 @@ public class PlugInAlgorithmDICOMReordering extends AlgorithmBase {
             }
             success = parse(studyPathRoot);
             if(success == false) {
+            	if (outputTextArea != null) {
+                    outputTextArea.append("\n");
+                }
             	setCompleted(true);
                 return;
             }
@@ -113,6 +116,9 @@ public class PlugInAlgorithmDICOMReordering extends AlgorithmBase {
             }
             success = copyFiles();
             if(success == false) {
+            	if (outputTextArea != null) {
+                    outputTextArea.append("\n");
+                }
             	setCompleted(true);
                 return;
             }
@@ -180,7 +186,7 @@ public class PlugInAlgorithmDICOMReordering extends AlgorithmBase {
 
 	                    } catch (IOException error) {
 	                    	error.printStackTrace();
-	                    	throw error;
+	                    	return false;
 
 	                    }
 	                    numImages++;
