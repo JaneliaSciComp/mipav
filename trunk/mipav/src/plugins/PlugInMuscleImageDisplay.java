@@ -31,7 +31,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     //~ Static fields --------------------------------------------------------------------------------------------------
     
     public static final Color[] colorPick = {Color.GREEN, Color.ORANGE, Color.CYAN, 
-                                                Color.YELLOW, Color.MAGENTA};
+                                                Color.YELLOW, Color.MAGENTA, Color.RED};
     
     //~ Instance fields ------------------------------------------------------------------------------------------------    
     
