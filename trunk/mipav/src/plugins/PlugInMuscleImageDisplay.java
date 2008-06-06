@@ -2,8 +2,6 @@ import gov.nih.mipav.model.algorithms.AlgorithmArcLength;
 import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
@@ -89,16 +87,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     private boolean voiChangeState = false;
 
-	private boolean displayChanged = false;
-
     private int colorChoice = 0;
     
     long time = 0;
     
     /**Buffer containing exact copies of VOIs on file system along with program relevant material.*/
     private Map<String, PlugInSelectableVOI> voiBuffer;
-    
-    private PlugInSelectableVOI[][] voiList;
     
     private PlugInAlgorithmCTBone boneSeg;
     
@@ -153,7 +147,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.noMirrorZ = new boolean[voiList.length][];
         this.calcTree = new TreeMap();
         this.voiBuffer = Collections.synchronizedMap(new TreeMap<String, PlugInSelectableVOI>());
-        this.voiList = voiList;
         this.imageType = imageType;
         this.symmetry = symmetry;
         this.multipleSlices = multipleSlices;
@@ -652,7 +645,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     @Override
     public void actionPerformed(ActionEvent e) {
-    	displayChanged = false;
         String command = e.getActionCommand();
         //run through toggle buttons to see if a menu selected one (updates the button status)
         getControls().getTools().setToggleButtonSelected(command);
@@ -664,12 +656,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             lockToPanel(voiTabLoc, "VOI"); //includes making visible
             //TODO: add here
             initVoiImage(activeTab); //replacing current image and updating
-	    	displayChanged = true;
         } else if(command.equals(DialogPrompt.CALCULATE)) {
         	lockToPanel(resultTabLoc, "Analysis"); //includes making visible
         	getActiveImage().unregisterAllVOIs();
 	    	updateImages(true);
-	    	displayChanged = true;
         	((AnalysisPrompt)tabs[resultTabLoc]).setButtons();
         	((AnalysisPrompt)tabs[resultTabLoc]).performCalculations();
         } else if (!(command.equals(DialogPrompt.OUTPUT) ||
@@ -836,7 +826,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    			getActiveImage().unregisterAllVOIs();
 	    			initMuscleImage(i);
 	    			activeTab = i;
-	    			displayChanged = true;
 	    		}
 	    	}
 	    } 
@@ -1567,6 +1556,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                         PlugInSelectableVOI voi;
                         (voi = voiBuffer.get(goodVoi.getName())).setCreated(true);
                         voi.setComputerGenerated(false);
+                        for(int i=0; i<buttonGroup.length; i++) {
+                    		if(buttonGroup[i].getText().equals(SHOW_ALL)) {
+                    			buttonGroup[i].setText(HIDE_ALL);
+                    			buttonGroup[i].setActionCommand(HIDE_ALL);
+                    		} 
+                    	}
                         getActiveImage().unregisterAllVOIs();
                         updateImages(true);
                     } else {
@@ -1574,6 +1569,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                     }
                 } else if (command.equals(CANCEL)) {
                 	voiChangeState = true;
+                	for(int i=0; i<buttonGroup.length; i++) {
+                		if(buttonGroup[i].getText().equals(SHOW_ALL)) {
+                			buttonGroup[i].setText(HIDE_ALL);
+                			buttonGroup[i].setActionCommand(HIDE_ALL);
+                		} 
+                	}
                 	getActiveImage().unregisterAllVOIs();
                 } else if (command.equals(HELP)) {
                     PlugInMuscleSegmentation.showHelp("MS00001");
@@ -2583,7 +2584,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    public void actionPerformed(ActionEvent e) {
 	    	System.out.println("Caught 2: "+e.getActionCommand());
 	    	String command = e.getActionCommand();
-	        displayChanged = false;
 	        if(command.equals(HIDE_ALL)) {
 	            //clear all VOIs drawn
 	        	muscleFrame.getImageA().unregisterAllVOIs();
@@ -3597,11 +3597,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    public CustomLivewire(Component component, int selection) {
 	    	super(component, selection);
 	    
-	    	xRes = getActiveImage().getExtents(0)[0];
-	    	
-	    	
+	    	xRes = getActiveImage().getExtents(0)[0];    	
 	    }
-		
 		
 	    /**
 	     * Stretch the rubberband to this point.
@@ -3609,15 +3606,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	     * @param  p  point to stretch to
 	     */
 	    public void stretch(Point p) {
-	        boolean stretchRight = false;
-	    	
 	    	if(voiSearch(p)) {
 	    		lastPt.x = stretchedPt.x;
 	            lastPt.y = stretchedPt.y;
-	            
-	            
 	        }
-
 	        super.stretch(p);
 	    }
 	    
