@@ -139,6 +139,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
 
         int totalPercent = 10;
         int mod = attenuationBuffer.length / totalPercent;
+        BitSet srcMask = srcImage.generateVOIMask();
 
         for (int i = 0; i < attenuationBuffer.length; i++) {
 
@@ -147,7 +148,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
                                          srcImage.getImageName(), "Filling object interior ...");
             }
 
-            if ((attenuationBuffer[i] == 0) && (maskImage.getFloat(i) == 1)) {
+            if ((attenuationBuffer[i] == 0) && (srcMask.get(i))) {
                 attenuationBuffer[i] = 1;
             }
         }
@@ -176,7 +177,16 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         // start percentage now @ 50... will go to 70%
         AlgorithmGaussianBlurSep blurAlgo = new AlgorithmGaussianBlurSep(tmpImg, sigmas, false, false);
         blurAlgo.setProgressValues(generateProgressValues(50, 70));
-        blurAlgo.setMask(srcImage.generateVOIMask());
+        BitSet compMask = new BitSet(xDim * yDim * zDim);
+        for (int i = 0; i < srcMask.length(); i++) {
+            if (srcMask.get(i)) {
+                compMask.clear(i);
+            }
+            else {
+                compMask.set(i);
+            }
+        }
+        blurAlgo.setMask(compMask);
         linkProgressToAlgorithm(blurAlgo);
         blurAlgo.run();
 
