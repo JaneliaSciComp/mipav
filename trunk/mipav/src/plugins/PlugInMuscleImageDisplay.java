@@ -2,6 +2,8 @@ import gov.nih.mipav.model.algorithms.AlgorithmArcLength;
 import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
@@ -21,7 +23,9 @@ import java.awt.*;
 import java.awt.Rectangle;
 import java.awt.event.*;
 import java.io.*;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import javax.swing.*;
@@ -3366,14 +3370,21 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			Font fontNormal = FontFactory.getFont("Helvetica", 10, Font.NORMAL, Color.DARK_GRAY);
 			Font fontBold = FontFactory.getFont("Helvetica", 10, Font.BOLD, Color.BLACK);
 	
+			FileInfoDicom fileInfo = (FileInfoDicom)getActiveImage().getFileInfo()[0];
+			
+			DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+			Date date = new Date();
+			String dateStr = dateFormat.format(date);
+			String userName = System.getProperty("user.name");
+			
 			// Comment here to return paragraph /**
 			MultiColumnText mct = new MultiColumnText(20);
 			mct.setAlignment(Element.ALIGN_LEFT);
 			mct.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
 			mct.addElement(new Paragraph("Analyst:", fontBold));
-			mct.addElement(new Paragraph("akoyama", fontNormal));
+			mct.addElement(new Paragraph(userName, fontNormal));
 			mct.addElement(new Paragraph("Analysis Date:", fontBold));
-			mct.addElement(new Paragraph("05/06/2007", fontNormal));
+			mct.addElement(new Paragraph(dateStr, fontNormal));
 			pdfDocument.add(mct);
 			
 			MultiColumnText mct2 = new MultiColumnText(20);
@@ -3382,16 +3393,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			mct2.addElement(new Paragraph("Name:", fontBold));
 			mct2.addElement(new Paragraph(getActiveImage().getFileInfo()[getViewableSlice()].getFileName(), fontNormal));
 			mct2.addElement(new Paragraph("Center:", fontBold));
-			mct2.addElement(new Paragraph("Hjartavernd", fontNormal));
+			mct2.addElement(new Paragraph(((String)fileInfo.getTagTable().getValue("0008,0080")).trim(), fontNormal));
 			pdfDocument.add(mct2);
 			
 			MultiColumnText mct3 = new MultiColumnText(20);
 			mct3.setAlignment(Element.ALIGN_LEFT);
 			mct3.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
-			mct3.addElement(new Paragraph("ID:", fontBold));
-			mct3.addElement(new Paragraph("Slice "+getViewableSlice(), fontNormal));
+			mct3.addElement(new Paragraph("Patient ID:", fontBold));
+			mct3.addElement(new Paragraph(((String)fileInfo.getTagTable().getValue("0010,0020")).trim(), fontNormal));
 			mct3.addElement(new Paragraph("Scan Date:", fontBold));
-			mct3.addElement(new Paragraph("05/09/2003", fontNormal));
+			mct3.addElement(new Paragraph(((String)fileInfo.getTagTable().getValue("0008,0020")).trim(), fontNormal));
 			pdfDocument.add(mct3);
 			
 			//add the scanning parameters table
@@ -3409,7 +3420,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			spTable.addCell("Slice Thickness: (mm)");
 			spTable.addCell(Float.toString(getActiveImage().getFileInfo()[getViewableSlice()].getSliceThickness()));
 			spTable.addCell("Table Height: (cm)");
-			spTable.addCell("143.00");
+			spTable.addCell(((String)fileInfo.getTagTable().getValue("0018,1130")).trim());
+			
+			
 			
 			Paragraph pTable = new Paragraph();
 			pTable.add(new Paragraph());
@@ -3467,7 +3480,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			if (name.endsWith(".xml")) {
 				name = name.substring(0, name.length() - 4);
 			}
-			DecimalFormat dec = new DecimalFormat("0.##");
+			DecimalFormat dec = new DecimalFormat("0.00");
 			
 			//name of area
 			aTable.addCell(new Paragraph( name, fontNormal) );
