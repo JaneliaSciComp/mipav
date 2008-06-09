@@ -995,7 +995,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                         values[(((j * iBound) + i) * 4) + 3] = getFloat((index * 4) + 3);
                     }
                     /* if complex: */
-                    else if (bufferType == COMPLEX) {
+                    else if ((bufferType == COMPLEX) || (bufferType == DCOMPLEX)) {
 
                         if (exportComplex) {
                             values[(((j * iBound) + i) * 2) + 0] = getFloat(index * 2);
