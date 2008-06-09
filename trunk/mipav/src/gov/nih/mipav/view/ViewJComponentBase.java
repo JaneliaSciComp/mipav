@@ -460,12 +460,14 @@ public abstract class ViewJComponentBase extends JComponent {
         int maxCharWidth = g.getFontMetrics(g.getFont()).charWidth('8');
 
         if ((((imageType == ModelImage.FLOAT) || (imageType == ModelImage.DOUBLE) ||
-                  (imageType == ModelImage.COMPLEX) || (imageType == ModelImage.ARGB) ||
-                  (imageType == ModelImage.ARGB_USHORT)) &&
+                  (imageType == ModelImage.COMPLEX) || (imageType == ModelImage.DCOMPLEX) ||
+                  (imageType == ModelImage.ARGB) || (imageType == ModelImage.ARGB_USHORT)) ||
+                  (imageType == ModelImage.ARGB_FLOAT) &&
                  ((maxStrWidth < (xwidth - 1 - (2 * maxCharWidth))) && (fontHeight < (yheight - 1)))) ||
                 (((imageType != ModelImage.FLOAT) && (imageType != ModelImage.DOUBLE) &&
-                      (imageType != ModelImage.COMPLEX) && (imageType != ModelImage.ARGB) &&
-                      (imageType != ModelImage.ARGB_USHORT)) &&
+                      (imageType != ModelImage.COMPLEX) && (imageType != ModelImage.DCOMPLEX) &&
+                      (imageType != ModelImage.ARGB) && (imageType != ModelImage.ARGB_USHORT) &&
+                      (imageType != ModelImage.ARGB_FLOAT)) &&
                      ((maxStrWidth < (xwidth - 1)) && (fontHeight < (yheight - 1))))) {
 
             return true;
