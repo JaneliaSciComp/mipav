@@ -23,28 +23,28 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 	private boolean created = false;
 	
 	/** Total area of this VOI using calculating method. */
-	private double totalAreaCalc = Double.MIN_VALUE;
+	private double[] totalAreaCalc;
 	
 	/** Total area of this VOI using counting method (subject to partial voluming). */
-	private double totalAreaCount = Double.MIN_VALUE;
+	private double[] totalAreaCount;
 	
 	/** Total area of this VOI that is neither muscle or fat. */
-	private double partialArea = Double.MIN_VALUE;
+	private double[] partialArea;
 	
 	/** Total fat area of this VOI. */
-	private double fatArea = Double.MIN_VALUE;
+	private double[] fatArea;
 	
 	/** Total muscle area of this VOI. */
-	private double leanArea = Double.MIN_VALUE;
+	private double[] leanArea;
 	
 	/** Mean Hounsfield unit for the fat area of this VOI. */
-	private double meanFatH = Double.MIN_VALUE;
+	private double[] meanFatH;
 	
 	/** Mean Hounsfield unit for the muscle area of this VOI. */
-	private double meanLeanH = Double.MIN_VALUE;
+	private double[] meanLeanH;
 	
 	/** Mean Hounsfield unit for this VOI. */
-	private double meanTotalH = Double.MIN_VALUE;
+	private double[] meanTotalH;
 
 	//~ Static fields --------------------------------------------------------------------------------------------------
 	
@@ -61,6 +61,27 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 		this.fillEligible = fillEligible;
 		this.calcEligible = calcEligible;
 		this.computerGenerated = false;
+		
+		this.totalAreaCalc = new double[imageSize+1];
+		this.totalAreaCount = new double[imageSize+1];
+		this.partialArea = new double[imageSize+1];
+		this.fatArea = new double[imageSize+1];
+		this.leanArea = new double[imageSize+1];
+		this.meanFatH = new double[imageSize+1];
+		this.meanLeanH = new double[imageSize+1];
+		this.meanTotalH = new double[imageSize+1];
+		
+		for(int i=0; i<imageSize+1; i++) {
+			totalAreaCalc[i] = Double.MIN_VALUE;
+			totalAreaCount[i] = Double.MIN_VALUE;
+			partialArea[i] = Double.MIN_VALUE;
+			fatArea[i] = Double.MIN_VALUE;
+			leanArea[i] = Double.MIN_VALUE;
+			meanFatH[i] = Double.MIN_VALUE;
+			meanLeanH[i] = Double.MIN_VALUE;
+			meanTotalH[i] = Double.MIN_VALUE;
+		}
+		
 		setColor(INVALID_COLOR);
 	}
 
@@ -97,67 +118,211 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 	}
 
 	public double getTotalAreaCalc() {
-		return totalAreaCalc;
+		return totalAreaCalc[getZDim()];
+	}
+	
+	/**
+	 * 
+	 * @param slice zero based slice number
+	 * @return
+	 */
+	public double getTotalAreaCalc(int slice) {
+		return totalAreaCalc[slice];
 	}
 
 	public void setTotalAreaCalc(double totalAreaCalc) {
-		this.totalAreaCalc = totalAreaCalc;
+		this.totalAreaCalc[getZDim()] = totalAreaCalc;
+	}
+	
+	/**
+	 * 
+	 * @param totalAreaCalc
+	 * @param slice zero based slice number
+	 */
+	public void setTotalAreaCalc(double totalAreaCalc, int slice) {
+		this.totalAreaCalc[slice] = totalAreaCalc;
 	}
 
 	public double getTotalAreaCount() {
-		return totalAreaCount;
+		return totalAreaCount[getZDim()];
 	}
-
+	
+	/**
+	 * 
+	 * @param slice zero based slice number
+	 * @return
+	 */
+	public double getTotalAreaCount(int slice) {
+		return totalAreaCount[slice];
+	}
+	
 	public void setTotalAreaCount(double totalAreaCount) {
-		this.totalAreaCount = totalAreaCount;
+		this.totalAreaCount[getZDim()] = totalAreaCount;
+	}
+	
+	/**
+	 * 
+	 * @param totalAreaCount
+	 * @param slice zero based slice number
+	 */
+	public void setTotalAreaCount(double totalAreaCount, int slice) {
+		this.totalAreaCount[slice] = totalAreaCount;
 	}
 
 	public double getPartialArea() {
-		return partialArea;
+		return partialArea[getZDim()];
+	}
+	
+	/**
+	 * 
+	 * @param slice zero based slice number
+	 * @return
+	 */
+	public double getPartialArea(int slice) {
+		return partialArea[slice];
 	}
 
 	public void setPartialArea(double partialArea) {
-		this.partialArea = partialArea;
+		this.partialArea[getZDim()] = partialArea;
+	}
+	
+	/**
+	 * 
+	 * @param partialArea
+	 * @param slice zero based slice number
+	 */
+	public void setPartialArea(double partialArea, int slice) {
+		this.partialArea[slice] = partialArea;
 	}
 
 	public double getFatArea() {
-		return fatArea;
+		return fatArea[getZDim()];
+	}
+	
+	/**
+	 * 
+	 * @param slice zero based slice number
+	 * @return
+	 */
+	public double getFatArea(int slice) {
+		return fatArea[slice];
 	}
 
 	public void setFatArea(double fatArea) {
-		this.fatArea = fatArea;
+		this.fatArea[getZDim()] = fatArea;
+	}
+	
+	/**
+	 * 
+	 * @param fatArea
+	 * @param slice zero based slice number
+	 */
+	public void setFatArea(double fatArea, int slice) {
+		this.fatArea[slice] = fatArea;
 	}
 
 	public double getLeanArea() {
-		return leanArea;
+		return leanArea[getZDim()];
+	}
+	
+	/**
+	 * 
+	 * @param slice zero based slice number
+	 * @return
+	 */
+	public double getLeanArea(int slice) {
+		return leanArea[slice];
 	}
 
 	public void setLeanArea(double leanArea) {
-		this.leanArea = leanArea;
+		this.leanArea[getZDim()] = leanArea;
+	}
+	
+	/**
+	 * 
+	 * @param leanArea
+	 * @param slice zero based slice number
+	 */
+	public void setLeanArea(double leanArea, int slice) {
+		this.leanArea[slice] = leanArea;
 	}
 
 	public double getMeanFatH() {
-		return meanFatH;
+		return meanFatH[getZDim()];
+	}
+	
+	/**
+	 * 
+	 * @param slice zero based slice number
+	 * @return
+	 */
+	public double getMeanFatH(int slice) {
+		return meanFatH[slice];
 	}
 
 	public void setMeanFatH(double meanFatH) {
-		this.meanFatH = meanFatH;
+		this.meanFatH[getZDim()] = meanFatH;
+	}
+	
+	/**
+	 * 
+	 * @param meanFatH
+	 * @param slice zero based slice number
+	 */
+	public void setMeanFatH(double meanFatH, int slice) {
+		this.meanFatH[slice] = meanFatH;
 	}
 
 	public double getMeanLeanH() {
-		return meanLeanH;
+		return meanLeanH[getZDim()];
+	}
+	
+	/**
+	 * 
+	 * @param slice zero based slice number
+	 * @return
+	 */
+	public double getMeanLeanH(int slice) {
+		return meanLeanH[slice];
 	}
 
 	public void setMeanLeanH(double meanLeanH) {
-		this.meanLeanH = meanLeanH;
+		this.meanLeanH[getZDim()] = meanLeanH;
+	}
+	
+	/**
+	 * 
+	 * @param meanLeanH
+	 * @param slice zero based slice number
+	 */
+	public void setMeanLeanH(double meanLeanH, int slice) {
+		this.meanLeanH[slice] = meanLeanH;
 	}
 
 	public double getMeanTotalH() {
-		return meanTotalH;
+		return meanTotalH[getZDim()];
+	}
+	
+	/**
+	 * 
+	 * @param slice zero based slice number
+	 * @return
+	 */
+	public double getMeanTotalH(int slice) {
+		return meanTotalH[slice];
 	}
 
 	public void setMeanTotalH(double meanTotalH) {
-		this.meanTotalH = meanTotalH;
+		this.meanTotalH[getZDim()] = meanTotalH;
+	}
+	
+	/**
+	 * 
+	 * @param meanTotalH zero based slice number
+	 * @param slice
+	 */
+	public void setMeanTotalH(double meanTotalH, int slice) {
+		this.meanTotalH[slice] = meanTotalH;
 	}
 
 	public boolean isComputerGenerated() {

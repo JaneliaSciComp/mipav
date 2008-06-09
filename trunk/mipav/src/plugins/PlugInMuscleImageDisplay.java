@@ -2830,18 +2830,22 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    	private boolean done = false;
 	    	
 	    	public void run() {
+	    		ViewJProgressBar progressBar = new ViewJProgressBar("Calculations", "Initializing...", 0, 100, true);
 	    		long time = System.currentTimeMillis();
 	    		getVOIs(totalList, 0);
 	    		VOIVector vec = (VOIVector)getActiveImage().getVOIs().clone();
 	    		getActiveImage().unregisterAllVOIs();
+	    		progressBar.setMessage("Whole image calculations...");
+	    		progressBar.updateValue(5);
 	    		for(int i=0; i<vec.size(); i++) {
 	    			VOI v = vec.get(i);
 	    			String name = v.getName();
+	    			progressBar.updateValue((int)(10.0+(80.0*(((double)i)/((double)vec.size())))));
 	    			double multiplier = 0.0;
-	    			if(!multipleSlices)
-	    				multiplier = Math.pow(muscleFrame.getActiveImage().getResolutions(0)[0]*.1, 2);
-	    			else
+	    			multiplier = Math.pow(muscleFrame.getActiveImage().getResolutions(0)[0]*.1, 2);
+	    			if(multipleSlices)
 	    				multiplier *= muscleFrame.getActiveImage().getResolutions(0)[2];
+	    			System.out.println("Multiplier: "+multiplier);
 	    			PlugInSelectableVOI temp = voiBuffer.get(name);
 	    			
 	    			//note that even for 3D images this will still be called area, even though refers to volume
@@ -2854,11 +2858,30 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    			temp.setMeanFatH(getMeanH(v, FAT_LOWER_BOUND, FAT_UPPER_BOUND));
 	    			temp.setMeanLeanH(getMeanH(v, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND));
 	    			temp.setMeanTotalH(getMeanH(v, FAT_LOWER_BOUND, MUSCLE_UPPER_BOUND));
+	    			
+	    			System.out.println("Number of slices: "+temp.getZDim());
+	    			for(int j=0; j<temp.getZDim(); j++) {
+	    				progressBar.setMessage("Calculating "+name.toLowerCase()+" slice "+j+"...");
+	    				VOI v2 = (VOI)v.clone();
+	    				for(int k=0; k<temp.getZDim(); k++) {
+	    					if(k != j)
+	    						v2.removeCurves(k);
+	    				}
+	    				temp.setFatArea(getPieceCount(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*multiplier, j);
+		    			temp.setPartialArea(getPieceCount(v2, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*multiplier, j);
+		    			temp.setLeanArea(getPieceCount(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND)*multiplier, j);
+		    			temp.setTotalAreaCalc(getTotalAreaCalc(v2)*multiplier, j);
+		    			temp.setTotalAreaCount(getTotalAreaCount(v2)*multiplier, j);
+		    			
+		    			temp.setMeanFatH(getMeanH(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND), j);
+		    			temp.setMeanLeanH(getMeanH(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND), j);
+		    			temp.setMeanTotalH(getMeanH(v2, FAT_LOWER_BOUND, MUSCLE_UPPER_BOUND), j);
+	    			}
 	    		}
 	    		time = System.currentTimeMillis() - time;
 	    		
 	    		enableCalcOutput();
-	    		
+	    		progressBar.dispose();
 	    		getActiveImage().unregisterAllVOIs();
 				updateImages(true);
 	    		
@@ -2878,7 +2901,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
 			        mark = getImageA().getDouble(i);
 					if(mark  >= lowerBound && mark <= upperBound) 
-						area++;
+						area++;	
 				}
 				return area;
 			}
@@ -2888,7 +2911,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			}
 
 			public double getTotalAreaCount(VOI v) {
-				int totalArea = 0;
+				int totalArea = 0, sliceArea;
 				BitSet fullMask = new BitSet();
 				v.createBinaryMask(fullMask, getActiveImage().getExtents()[0], getActiveImage().getExtents()[1]);
 				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) 

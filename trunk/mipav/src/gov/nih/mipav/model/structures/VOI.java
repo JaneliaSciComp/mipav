@@ -2753,8 +2753,17 @@ public class VOI extends ModelSerialCloneable {
     public short getWatershedID() {
         return watershedID;
     }
-
+    
     /**
+     * Accessor that returns number of slices.
+     * 
+     * @return
+     */
+    public int getZDim() {
+		return zDim;
+	}
+
+	/**
      * Imports the curve into the VOI.
      *
      * @param  curve  curve to import
