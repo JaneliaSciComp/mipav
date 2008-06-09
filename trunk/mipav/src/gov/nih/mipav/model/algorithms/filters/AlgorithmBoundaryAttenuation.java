@@ -107,13 +107,11 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
 
         fireProgressStateChanged(0, srcImage.getImageName(), "Boundary Attenuation ...");
 
-
-        AlgorithmMask maskAlgo = new AlgorithmMask(maskImage, srcImage, 1, true, true);
+        AlgorithmMask maskAlgo = new AlgorithmMask(maskImage, srcImage, 0, true, true);
         maskAlgo.setProgressValues(generateProgressValues(0, 5));
         linkProgressToAlgorithm(maskAlgo);
         maskAlgo.run();
-
-
+        
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         zDim = srcImage.getExtents()[2];
@@ -315,12 +313,11 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
             return;
         }
 
-
-        float linearStep = (1.0f - maxAttenuation) / iterations;
+        float linearStep = maxAttenuation / iterations;
         float linearAttenuation;
 
         for (curIter = 0; (curIter < iterations) && !threadStopped; curIter++) {
-            linearAttenuation = maxAttenuation + (linearStep * curIter);
+            linearAttenuation = (1.0f - maxAttenuation) + (linearStep * curIter);
 
             fireProgressStateChanged((startPercent + ((float) (curIter / iterations) * percentChange)),
                                      srcImage.getImageName(), "Eroding image ...");
