@@ -250,9 +250,9 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
 
 	    
 
-	// create a voi for the bone.  Assumes the boneImage has been created.
+	// create a voi for the outside of the thigh.  Assumes the thighTissueImage has been created.
     private boolean makeThighTissueVOI() {
-        // make the volumeBitSet for the boneImage
+        // make the volumeBitSet for the thigh tissue
         boolean completedThigh = true;
         int sliceByteOffset;
 
@@ -271,7 +271,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
             } // end for (int sliceIdx = 0; ...)
         } // end for(int sliceNum = 0; ...)
         
-        // volumeBitSet should be set for the bone
+        // volumeBitSet should be set for the thigh tissue
         short voiID = 0;
         AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(thighTissueImage,
                 volumeBitSet, xDim, yDim, zDim, voiID);
@@ -326,8 +326,16 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
         } // end for (int idx = 0; ...)
 */        
 
+        // make a left/right VOI for the thighs
         leftThighVOI  = (VOI)theVOI.clone();
         rightThighVOI = (VOI)theVOI.clone();
+        
+        // remove all the curves from the VOI's.  I will import the ones corresponding to
+        // the right and left thigh once it has been split
+        for (int sliceIdx = 0; sliceIdx < zDim; sliceIdx++) {
+            leftThighVOI.getCurves()[sliceIdx].removeAllElements();
+            rightThighVOI.getCurves()[sliceIdx].removeAllElements();
+        }
 
         // split the thigh curves when the legs touch (there are only 3 curves, not 4)
         for (int sliceIdx = 0; sliceIdx < zDim; sliceIdx++) {
@@ -343,49 +351,34 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                 }
                 
 //                System.out.println("Slice num: " +sliceIdx +"   thigh curve idx: " +maxIdx);
-                
-                // split the curve with the maxIdx through its middle
+
+                /*
+                 The next part of the code may be error prone.  startIdx1 should be between 
+                 the zeroth contour point and the minimum point on the top part of the contour,
+                 the point a index upperCurveMinIdx.  endIdx2 should be after minIdx.  startIdx2
+                 should come next, followed by the maximum point on the bottom part of the contour
+                 (lowerCurveMaxIdx) and finally endIdx2, which should be less than the number of points
+                 in the contour.  If these assumptions are not correct, this part of the code
+                 will fail, and we will not be able to split a joined single thigh contour into
+                 a left and right thigh contour
+                 
+                 */
+                // split the curve through its middle with the maxIdx
                 VOIContour maxContour = ((VOIContour)theVOI.getCurves()[sliceIdx].get(maxIdx));
                 int[] xVals = new int [maxContour.size()];
                 int[] yVals = new int [maxContour.size()];
                 int[] zVals = new int [maxContour.size()];
                 maxContour.exportArrays(xVals, yVals, zVals);
                 
-                // remove the curve from the VOI
-                leftThighVOI.getCurves()[sliceIdx].remove(maxIdx);
-                rightThighVOI.getCurves()[sliceIdx].remove(maxIdx);
-                
-                // remove the right bone from the leftThighVOI and the left bone from the rightThighVOI
-//                System.out.println("Num curves: " +leftThighVOI.getCurves()[sliceIdx].size());
-                
-                // only the right and left bone should be in the VOIs
-                float[] xBounds1 = new float [2];
-                float[] yBounds1 = new float [2];
-                float[] zBounds1 = new float [2];
-                ((VOIContour)leftThighVOI.getCurves()[sliceIdx].get(0)).getBounds(xBounds1, yBounds1, zBounds1);
-                
-                float[] xBounds2 = new float [2];
-                float[] yBounds2 = new float [2];
-                float[] zBounds2 = new float [2];
-                ((VOIContour)leftThighVOI.getCurves()[sliceIdx].get(1)).getBounds(xBounds2, yBounds2, zBounds2);
-                
-                // see which bone is left most in the image, which means it is in the right thigh
-                if (xBounds1[0] < xBounds2[0] && xBounds1[1] < xBounds2[1]) {
-                    leftThighVOI.getCurves()[sliceIdx].remove(1);
-                    rightThighVOI.getCurves()[sliceIdx].remove(0);
-                } else {
-                    leftThighVOI.getCurves()[sliceIdx].remove(0);
-                    rightThighVOI.getCurves()[sliceIdx].remove(1);
-                }
-                               
-                
                 // find the indices of an upper and lower section of the contour that is "close" to the image center
                 // find the index of the first contour point whose x-component is "close" to the middle
+                // startIdx1 represents the first point on the contour that is within 20 units of the image center
                 int startIdx1 = 0;
                 while (xVals[startIdx1] <= ((xDim / 2) - 20) || xVals[startIdx1] >= ((xDim / 2) + 20)) {
                     startIdx1++;
                 }
                 
+                // endIdx1 is the last point on the top curve
                 int endIdx1 = startIdx1 + 1;
                 while (xVals[endIdx1] >= ((xDim / 2) - 20) && xVals[endIdx1] <= ((xDim / 2) + 20)) {
                     endIdx1++;
@@ -412,8 +405,8 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                 // find the index of the two closest points between these two sections, this is where we will split the contour
                 // one contour section goes from startIdx1 to endIdx1
                 // the other goes from startIdx2 to endIdx2
-                int minIdx1 = startIdx1;
-                int minIdx2 = startIdx2;
+                int upperCurveMinIdx = startIdx1;
+                int lowerCurveMaxIdx = startIdx2;
                 float dx = xVals[startIdx1] - xVals[startIdx2];
                 float dy = yVals[startIdx1] - yVals[startIdx2];
                 // all computations will be on the same slice, forget about the z-component
@@ -427,14 +420,14 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                         dist = dx*dx + dy*dy;
                         if (dist < minDistance) {
                             minDistance = dist;
-                            minIdx1 = idx1;
-                            minIdx2 = idx2;
+                            upperCurveMinIdx = idx1;
+                            lowerCurveMaxIdx = idx2;
                         } // end if
                     } // end for (int idx2 = startIdx2; ...
                 } // end for (int idx1 = startIdx1; ...
                 
 //                System.out.println("Slice: " + sliceIdx +"   Minimum distance: " +minDistance);
-//                System.out.println(xVals[minIdx1] +"  " +yVals[minIdx1] +"   and  " +xVals[minIdx2] +"  " +yVals[minIdx2]);
+//                System.out.println(xVals[upperCurveMinIdx] +"  " +yVals[upperCurveMinIdx] +"   and  " +xVals[lowerCurveMaxIdx] +"  " +yVals[lowerCurveMaxIdx]);
                 
                 // make the two contours resulting from the split
                 ArrayList<Integer> x1Arr = new ArrayList<Integer>(maxContour.size());
@@ -445,23 +438,23 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                 ArrayList<Integer> y2Arr = new ArrayList<Integer>(maxContour.size());
                 ArrayList<Integer> z2Arr = new ArrayList<Integer>(maxContour.size());
                 
-                if (minIdx1 < minIdx2) {
-                    // the first contour goes from minIdx1 to minIdx2 to minIdx1
+                if (upperCurveMinIdx < lowerCurveMaxIdx) {
+                    // the first contour (left thigh) goes from minIdx1 to minIdx2 to minIdx1
                     int newIdx = 0;
-                    for (int idx = minIdx1; idx < minIdx2; idx++, newIdx++) {
+                    for (int idx = upperCurveMinIdx; idx < lowerCurveMaxIdx; idx++, newIdx++) {
                         x1Arr.add(newIdx, xVals[idx]);
                         y1Arr.add(newIdx, yVals[idx]);
                         z1Arr.add(newIdx, zVals[idx]);
                     }
 
-                    // the second contour goes from minIdx2 to maxContour.size(), 0 , 1, to minIdx1 to minIdx2
+                    // the second contour (right thigh) goes from minIdx2 to maxContour.size(), 0 , 1, to minIdx1 to minIdx2
                     newIdx = 0;
-                    for (int idx = minIdx2; idx < maxContour.size(); idx++, newIdx++) {
+                    for (int idx = lowerCurveMaxIdx; idx < maxContour.size(); idx++, newIdx++) {
                         x2Arr.add(newIdx, xVals[idx]);
                         y2Arr.add(newIdx, yVals[idx]);
                         z2Arr.add(newIdx, zVals[idx]);
                     }
-                    for (int idx = 0; idx < minIdx1; idx++, newIdx++) {
+                    for (int idx = 0; idx < upperCurveMinIdx; idx++, newIdx++) {
                         x2Arr.add(newIdx, xVals[idx]);
                         y2Arr.add(newIdx, yVals[idx]);
                         z2Arr.add(newIdx, zVals[idx]);
@@ -477,7 +470,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                     z1[idx] = z1Arr.get(idx);
                 }
 
-                rightThighVOI.importCurve(x1, y1, z1, sliceIdx);
+                leftThighVOI.importCurve(x1, y1, z1, sliceIdx);
                 
                 int[] x2 = new int[x2Arr.size()];
                 int[] y2 = new int[x2Arr.size()];
@@ -488,7 +481,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
                     z2[idx] = z2Arr.get(idx);
                 }
 
-                leftThighVOI.importCurve(x2, y2, z2, sliceIdx);
+                rightThighVOI.importCurve(x2, y2, z2, sliceIdx);
                                                
             } else if (theVOI.getCurves()[0].size() != 4) {
                 boneImage.unregisterAllVOIs();
