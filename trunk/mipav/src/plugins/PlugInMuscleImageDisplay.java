@@ -2818,10 +2818,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		}
 
 		private void performCalculations() {
-			getActiveImage().unregisterAllVOIs();
-			updateImages(true);
-	    	Thread calc = new Thread(muscleCalc);
-	    	calc.start();
+			if(!muscleCalc.isFinished()) {
+				getActiveImage().unregisterAllVOIs();
+				updateImages(true);
+		    	Thread calc = new Thread(muscleCalc);
+		    	calc.start();
+			}
 	    }
 	    
 		/**
@@ -2893,7 +2895,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    		
 	    		enableCalcOutput();
 	    		progressBar.dispose();
-	    		getActiveImage().unregisterAllVOIs();
+	    		//getActiveImage().unregisterAllVOIs();
 				updateImages(true);
 	    		
 	    		System.out.println("Finished in "+time);
