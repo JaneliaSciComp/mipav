@@ -10,6 +10,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.Point3Ds;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
 
 import gov.nih.mipav.view.MipavUtil;
@@ -185,6 +186,29 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
 	        rightMarrowVOI = makeRightMarrowVOI(totalVOI);
 	        leftMarrowVOI = makeLeftMarrowVOI(totalVOI);
 	        
+	        // Right leg marrow VOI is the left most in the image
+            int[] rightBoundsX = new int [2];
+            int[] rightBoundsY = new int [2];
+            int[] rightBoundsZ = new int [2];
+            VOIContour rightCurve;
+            rightCurve = ((VOIContour)rightMarrowVOI.getCurves()[0].get(0));
+            rightCurve.getBounds(rightBoundsX, rightBoundsY, rightBoundsZ);
+        
+            int[] leftBoundsX = new int [2];
+            int[] leftBoundsY = new int [2];
+            int[] leftBoundsZ = new int [2];
+            VOIContour leftCurve;
+            leftCurve = ((VOIContour)leftMarrowVOI.getCurves()[0].get(0));
+            leftCurve.getBounds(leftBoundsX, leftBoundsY, leftBoundsZ);
+            
+            // the rightBoneVOI should be the leftmost
+            if (rightBoundsX[0] > leftBoundsX[0] && rightBoundsX[1] > leftBoundsX[1]) {
+                VOI tmp = rightMarrowVOI;
+                rightMarrowVOI = leftMarrowVOI;
+                leftMarrowVOI = tmp;
+            }
+        
+
 	        //boneImage.unregisterAllVOIs();
 	        //boneImage.registerVOI(rightMarrowVOI);
 	        //boneImage.registerVOI(leftMarrowVOI);

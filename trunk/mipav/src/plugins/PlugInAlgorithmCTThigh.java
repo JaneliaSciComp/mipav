@@ -492,6 +492,30 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
             } else {
                 rightThighVOI = makeRightThighVOI(theVOI);
                 leftThighVOI = makeLeftThighVOI(theVOI);
+                
+                // Right leg VOI is the left most in the image
+                int[] rightBoundsX = new int [2];
+                int[] rightBoundsY = new int [2];
+                int[] rightBoundsZ = new int [2];
+                VOIContour rightCurve;
+                rightCurve = ((VOIContour)rightThighVOI.getCurves()[0].get(0));
+                rightCurve.getBounds(rightBoundsX, rightBoundsY, rightBoundsZ);
+            
+                int[] leftBoundsX = new int [2];
+                int[] leftBoundsY = new int [2];
+                int[] leftBoundsZ = new int [2];
+                VOIContour leftCurve;
+                leftCurve = ((VOIContour)leftThighVOI.getCurves()[0].get(0));
+                leftCurve.getBounds(leftBoundsX, leftBoundsY, leftBoundsZ);
+                
+                // the rightBoneVOI should be the leftmost
+                if (rightBoundsX[0] > leftBoundsX[0] && rightBoundsX[1] > leftBoundsX[1]) {
+                    VOI tmp = rightThighVOI;
+                    rightThighVOI = leftThighVOI;
+                    leftThighVOI = tmp;
+                }
+            
+
             }
 
         } // end for (sliceIdx = 0; ...)
