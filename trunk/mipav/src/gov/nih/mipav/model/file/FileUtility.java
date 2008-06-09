@@ -1,21 +1,23 @@
 package gov.nih.mipav.model.file;
 
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.dialogs.JDialogAnalyzeNIFTIChoice;
 
-import ncsa.hdf.object.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 
-import java.util.*;
+import ncsa.hdf.object.FileFormat;
 
 
 /**
  * Constants and static methods which relate to file input, output or processing.
  */
 public class FileUtility {
-
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** New File Types should be added to the bottom and not inserted somewhere in the middle. */
 
@@ -43,9 +45,11 @@ public class FileUtility {
     /** extension: .bmp. */
     public static final int BMP = 6;
 
-    /** Bruker file format. 
-     * Reads a BRUKER file by first reading in the d3proc header file, second the reco header file, third the acqp file int the 
-     * same directory or up one or two two parent directories, and finally the 2dseq binary file. */
+    /**
+     * Bruker file format. Reads a BRUKER file by first reading in the d3proc header file, second the reco header file,
+     * third the acqp file int the same directory or up one or two two parent directories, and finally the 2dseq binary
+     * file.
+     */
     public static final int BRUKER = 7;
 
     /** Cheshire file type (a kind of Analyze). extension: .imc */
@@ -54,8 +58,10 @@ public class FileUtility {
     /** Cheshire overlay file type. Contains VOIs. extension: .oly */
     public static final int CHESHIRE_OVERLAY = 9;
 
-    /** Used by FreeSurfer software. extension: -.info or -.info~ for header file
-     *  -.nnn for slice data file where nnn is the slice number */
+    /**
+     * Used by FreeSurfer software. extension: -.info or -.info~ for header file -.nnn for slice data file where nnn is
+     * the slice number
+     */
     public static final int COR = 10;
 
     /** extension: .cur. */
@@ -99,7 +105,6 @@ public class FileUtility {
 
     /** Used by the Zeiss LSM 510 Dataserver. extension: .lsm */
     public static final int LSM = 24;
-
 
     /** Used by the Zeiss LSM 510 Dataserver. */
     public static final int LSM_MULTIFILE = 25;
@@ -214,62 +219,28 @@ public class FileUtility {
 
     /** MINC 2.0 (HDF5) */
     public static final int MINC_HDF = 61;
-    
+
     /** Improvision OpenLab LIFF .liff */
     /** Do not confuse with Leica image file format .lif */
     public static final int LIFF = 62;
-    
+
     /** Extension: .hdr for header, .bfloat for data */
     public static final int BFLOAT = 63;
-    
-    /** Arrary of strings describing the file formats. These are in synch with the above constants (same order) */
-    private static String[] fileFormatStr = {
-        "Undefined", "AFNI", "Analyze", "Analyze multifile", "Avi", "Bio-Rad", "BMP", "BRUKER", "Chesire",
-        "Chesire Overlay", "COR", "CUR", "DIB", "DICOM", "DM3", "FITS", "GE Genesis", "GE Signa4x", "GIF", "ICO", "ICS",
-        "Interfile", "JIMI", "JPEG", "LSM", "LSM multifile", "Magnetom Vision", "Map", "Medvision", "MGH", "Micro CAT",
-        "MINC", "MIPAV", "MRC", "NIFTI", "NIFTI multifile", "NRRD", "OSM", "PCX", "PIC", "PICT", "PNG", "Project",
-        "PSD", "QT", "Raw", "Raw multifile", "SPM", "STK", "Surface XML", "TGA", "Tiff", "Tiff multifile", "TMG", "VOI",
-        "XBM", "XML", "XML multifile", "XPM", "Philips PARREC", "Surface Reference XML", "MINC 2.0", "LIFF",
-        "BFLOAT"
-    };
-
-    /**
-     * Supported File Extensions.
-     *
-     * <p>New file extensions should be added here and also need to be associated to a FileType (This is done in the
-     * getFileTypeFromSuffix(String suffix) method)</p>
-     */
-    private static String[] supportedFileExtensions = new String[] {
-                                                          "tif", "tiff", "lsm", "stk", "jpeg", "jpg", "bmp", "gif",
-                                                          "pict", "pic", "png", "psd", "dib", "tga", "xbm", "xpm",
-                                                          "xml", "pcx", "ico", "cur", "mgh", "mgz", "raw", "img", "nii",
-                                                          "nhdr", "nrrd", "ima", "dcm", "bin", "map", "mnc", "avi",
-                                                          "imc", "oly", "qt", "mov", "head", "brik", "ics", "ids",
-                                                          "hdr", "spm", "fits", "dm3", "tmg", "mrc", "wu", "sig",
-                                                          "gedno", "log", "ct", "info", "info~", "voi", "afni", "par",
-                                                          "parv2", "rec", "frec", "liff", "bfloat"
-                                                      };
-
-    /** This map is needed in order to populate JDialogUnknownIO typeNames. */
-    private static TreeMap<String,String> typeNamesTreeMap;
-
-    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
      * Only for FreeSurfer COR volume files Looks in the image directory and returns all images with the same root up to
-     * the hyphen, sorted in lexicographical order. Will set the number of images (<code>nImages</code>) for the calling
-     * program.
-     *
-     * @param   fileDir   Directory to look for images.
-     * @param   fileName  File name of the image.
-     * @param   quiet     Whether to avoid displaying errors using the GUI.
-     *
-     * @return  An array of the image names to be read in or saved as.
-     *
-     * @throws  OutOfMemoryError  If there is a problem allocating required memory.
+     * the hyphen, sorted in lexicographical order. Will set the number of images (<code>nImages</code>) for the
+     * calling program.
+     * 
+     * @param fileDir Directory to look for images.
+     * @param fileName File name of the image.
+     * @param quiet Whether to avoid displaying errors using the GUI.
+     * 
+     * @return An array of the image names to be read in or saved as.
+     * 
+     * @throws OutOfMemoryError If there is a problem allocating required memory.
      */
-    public static final String[] getCORFileList(String fileDir, String fileName, boolean quiet)
-            throws OutOfMemoryError {
+    public static final String[] getCORFileList(String fileDir, String fileName, boolean quiet) throws OutOfMemoryError {
         int i;
         int j = 0;
         int k;
@@ -299,7 +270,7 @@ public class FileUtility {
 
             for (k = 1; k < suffix2.length(); k++) {
 
-                if (!Character.isDigit(suffix2.charAt(k))) {
+                if ( !Character.isDigit(suffix2.charAt(k))) {
 
                     // modified to use Java.lang version 20 July 2004/parsonsd
                     // if ( suffix2.charAt( k ) < '0' || suffix2.charAt( k ) > '9' ) {
@@ -321,7 +292,7 @@ public class FileUtility {
 
         if (nImages == 0) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: No COR images with that base name: " + subName);
             }
 
@@ -356,10 +327,11 @@ public class FileUtility {
     /**
      * Only used for COR volume files with hyphen in name Breaks the filename into basename and suffix, then returns the
      * suffix.
-     *
-     * @param   fn  The filename.
-     *
-     * @return  The suffix or file-extension. For example, <q>-info</q>. Note that suffix includes the separator '-'
+     * 
+     * @param fn The filename.
+     * 
+     * @return The suffix or file-extension. For example,
+     *         <q>-info</q>. Note that suffix includes the separator '-'
      */
     public static final String getCORSuffixFrom(String fn) {
         int s;
@@ -375,269 +347,17 @@ public class FileUtility {
 
         return sfx.toLowerCase();
     }
-    
-    /**
-     * Gets a list of file extensions based on the filetype of the image.
-     *
-     * @param   fileType  Type of file, found in FileBase.
-     *
-     * @return  An Vector containing the allowed file extension(s).
-     */
-    public static final Vector<String> getSuffixes(int fileType) {
-	Vector<String> suffixList = new Vector<String>(5);
-
-        switch (fileType) {
-
-            case FileUtility.JIMI:
-        	// TODO: is this the correct extension?  any others?
-        	suffixList.add(".jpg");
-                break;
-
-            case FileUtility.RAW:
-        	suffixList.add(".raw");
-                break;
-
-            case FileUtility.DICOM:
-        	suffixList.add(".dcm");
-        	suffixList.add(".ima");
-                break;
-
-            case FileUtility.MEDIVISION:
-        	suffixList.add(".bin");
-                break;
-
-            case FileUtility.MAP:
-        	suffixList.add(".map");
-                break;
-
-            case FileUtility.MINC:
-        	suffixList.add(".mnc");
-                break;
-
-            case FileUtility.MINC_HDF:
-        	suffixList.add(".mnc");
-            	break;
-                
-            case FileUtility.AVI:
-        	suffixList.add(".avi");
-                break;
-
-            case FileUtility.QT:
-        	suffixList.add(".mov");
-                break;
-
-            case FileUtility.CHESHIRE:
-        	suffixList.add(".imc");
-                break;
-
-            case FileUtility.CHESHIRE_OVERLAY:
-        	suffixList.add(".oly");
-                break;
-
-            case FileUtility.VOI_FILE:
-        	suffixList.add(".voi");
-                break;
-
-            case FileUtility.ANALYZE:
-        	suffixList.add(".img");
-                break;
-
-            case FileUtility.MGH:
-
-                // Uses .mgh for uncompressed storage
-                // Uses .mgz or .mgh.gz for compressed storage
-        	suffixList.add(".mgh");
-        	suffixList.add(".mgz");
-        	suffixList.add(".mgh.gz");
-                break;
-
-            case FileUtility.NIFTI:
-
-                // uses .hdr and .img for 2 file storage
-                // uses .nii for 1 file storage
-        	suffixList.add(".nii");
-        	suffixList.add(".img");
-                break;
-
-            case FileUtility.NRRD:
-
-                // uses .nhdr for header and any nhdr designated extension for data
-                // in 2 file storage
-                // uses .nrrd for 1 file storage
-        	suffixList.add(".nrrd");
-        	suffixList.add(".nhdr");
-                break;
-
-            case FileUtility.SPM:
-        	suffixList.add(".spm");
-                break;
-
-            case FileUtility.TIFF:
-        	suffixList.add(".tif");
-        	suffixList.add(".tiff");
-                break;
-
-            case FileUtility.LSM:
-        	suffixList.add(".lsm");
-                break;
-
-            case FileUtility.STK:
-        	suffixList.add(".stk");
-                break;
-
-            case FileUtility.AFNI:
-        	suffixList.add(".afni");
-                break;
-
-            case FileUtility.ICS:
-        	suffixList.add(".ics");
-                break;
-
-            case FileUtility.INTERFILE:
-        	suffixList.add(".hdr");
-                break;
-
-            case FileUtility.BIORAD:
-        	suffixList.add(".pic");
-                break;
-
-            case FileUtility.FITS:
-        	suffixList.add(".fits");
-                break;
-
-            case FileUtility.DM3:
-        	suffixList.add(".dm3");
-                break;
-
-            case FileUtility.TMG:
-        	suffixList.add(".tmg");
-                break;
-
-            case FileUtility.MRC:
-        	suffixList.add(".mrc");
-                break;
-
-            case FileUtility.OSM:
-        	suffixList.add(".wu");
-                break;
-
-            case FileUtility.MAGNETOM_VISION:
-        	suffixList.add(".ima");
-                break;
-
-            case FileUtility.GE_GENESIS:
-        	suffixList.add(".sig");
-                break;
-
-            case FileUtility.GE_SIGNA4X:
-        	suffixList.add(".gedno");
-                break;
-
-            case FileUtility.MICRO_CAT:
-        	suffixList.add(".log");
-                break;
-
-            case FileUtility.XML:
-        	suffixList.add(".xml");
-                break;
-
-            case FileUtility.COR:
-        	suffixList.add(".info");
-                break;
-
-            case FileUtility.BMP:
-        	suffixList.add(".bmp");
-                break;
-
-            case FileUtility.CUR:
-        	suffixList.add(".cur");
-                break;
-
-            case FileUtility.DIB:
-        	suffixList.add(".dib");
-                break;
-
-            case FileUtility.GIF:
-        	suffixList.add(".gif");
-                break;
-
-            case FileUtility.ICO:
-        	suffixList.add(".ico");
-                break;
-
-            case FileUtility.JPEG:
-        	suffixList.add(".jpg");
-        	suffixList.add(".jpeg");
-                break;
-
-            case FileUtility.PCX:
-        	suffixList.add(".pcx");
-                break;
-
-            case FileUtility.PICT:
-        	suffixList.add(".pict");
-                break;
-
-            case FileUtility.PNG:
-        	suffixList.add(".png");
-                break;
-
-            case FileUtility.PSD:
-        	suffixList.add(".psd");
-                break;
-
-            case FileUtility.TGA:
-        	suffixList.add(".tga");
-                break;
-
-            case FileUtility.XBM:
-        	suffixList.add(".xbm");
-                break;
-
-            case FileUtility.XPM:
-        	suffixList.add(".xpm");
-                break;
-
-            case FileUtility.PARREC:
-        	// TODO: is this the correct extension?  any others?
-        	suffixList.add(".par");
-        	suffixList.add(".rec");
-                break;
-                
-            case FileUtility.LIFF:
-        	// TODO: is this the correct extension?  any others?
-        	suffixList.add(".liff");
-                break;
-                
-            case FileUtility.BFLOAT:
-            suffixList.add("bfloat");
-                break;
-        }
-        
-        return suffixList;
-    }
-
-    /**
-     * Gets the file extension based on the filetype of the image. This returns the DEFAULT suffix
-     *
-     * @param   fileType  Type of file, found in FileBase.
-     *
-     * @return  The appropriate file extension.
-     */
-    public static final String getDefaultSuffix(int fileType) {
-        return FileUtility.getSuffixes(fileType).elementAt(0);
-    }
 
     /**
      * Returns the extension of the file name, if file name does not have extension, then return empty string.
-     *
-     * @param   absolutePath  the file name.
-     *
-     * @return  The file's extension.
+     * 
+     * @param absolutePath the file name.
+     * 
+     * @return The file's extension.
      */
     public static final String getExtension(String absolutePath) {
 
-        if ((absolutePath == null) || (absolutePath.length() == 0)) {
+        if ( (absolutePath == null) || (absolutePath.length() == 0)) {
             return "";
         }
 
@@ -652,14 +372,14 @@ public class FileUtility {
 
     /**
      * Returns the path information from the file name with the path information.
-     *
-     * @param   fileName  the file name wiht the path information.
-     *
-     * @return  The path information.
+     * 
+     * @param fileName the file name wiht the path information.
+     * 
+     * @return The path information.
      */
     public static final String getFileDirectory(String fileName) {
 
-        if ((fileName == null) || (fileName.length() == 0)) {
+        if ( (fileName == null) || (fileName.length() == 0)) {
             return null;
         }
 
@@ -673,32 +393,12 @@ public class FileUtility {
     }
 
     /**
-     * Returns the string for a particular file format.
-     *
-     * @param   format  int representing the file format (see the static definitions)
-     *
-     * @return  string representing the file format
-     */
-    public static String getFileFormatStr(int format) {
-
-        if (format == FileUtility.ERROR) {
-            return "Error";
-        }
-
-        try {
-            return FileUtility.fileFormatStr[format];
-        } catch (ArrayIndexOutOfBoundsException ae) { }
-
-        return "";
-    }
-
-    /**
      * Trims off the file extension and file name, but leaves the file index. An index might be 0001, or 140, for
      * example.
-     *
-     * @param   fName  String file name to get index
-     *
-     * @return  String (index string)
+     * 
+     * @param fName String file name to get index
+     * 
+     * @return String (index string)
      */
     public static final int getFileIndex(String fName) {
         int i;
@@ -708,7 +408,7 @@ public class FileUtility {
 
         for (i = length - 1; i > -1; i--) {
 
-            if (!Character.isDigit(fName.charAt(i))) {
+            if ( !Character.isDigit(fName.charAt(i))) {
                 break;
             }
         }
@@ -717,20 +417,20 @@ public class FileUtility {
             return -1;
         }
 
-        return (new Integer(fName.substring((i + 1), length)).intValue());
+        return (new Integer(fName.substring( (i + 1), length)).intValue());
     }
 
     /**
      * Looks in the image directory and returns all images with the same suffix as <code>fileName</code>, sorted in
      * lexicographical order.
-     *
-     * @param   fileDir   Directory to look for images.
-     * @param   fileName  File name of the image.
-     * @param   quiet     Whether to avoid displaying errors using the GUI.
-     *
-     * @return  An array of the image names to be read in or saved as.
-     *
-     * @throws  OutOfMemoryError  If there is a problem allocating required memory.
+     * 
+     * @param fileDir Directory to look for images.
+     * @param fileName File name of the image.
+     * @param quiet Whether to avoid displaying errors using the GUI.
+     * 
+     * @return An array of the image names to be read in or saved as.
+     * 
+     * @throws OutOfMemoryError If there is a problem allocating required memory.
      */
     public static final String[] getFileList(String fileDir, String fileName, boolean quiet) throws OutOfMemoryError {
         int i;
@@ -761,14 +461,15 @@ public class FileUtility {
 
         fileList = new String[fileListBuffer.length];
 
-        String subName = FileUtility.trimNumbersAndSpecial(fileName); // subName = name without indexing numbers at end
-        String suffix = FileUtility.getExtension(fileName); // suffix  = ie. .ima or .img ...
+        String subName = FileUtility.trimNumbersAndSpecial(fileName); // subName = name without indexing numbers at
+        // end
+        String suffix = FileUtility.getExtension(fileName); // suffix = ie. .ima or .img ...
 
-        // System.out.println( "Suffix = _" + suffix + "_" +  " subName = " + subName);
+        // System.out.println( "Suffix = _" + suffix + "_" + " subName = " + subName);
 
         for (i = 1; i < suffix.length(); i++) {
 
-            if (!Character.isDigit(suffix.charAt(i))) {
+            if ( !Character.isDigit(suffix.charAt(i))) {
 
                 // modified to use Java.lang check 20 July 2004/parsonsd
                 // if ( suffix.charAt( i ) < '0' || suffix.charAt( i ) > '9' ) {
@@ -785,7 +486,7 @@ public class FileUtility {
 
             for (i = 0; i < fileListBuffer.length; i++) {
 
-                if (!files[i].isDirectory()) {
+                if ( !files[i].isDirectory()) {
                     fileName2 = fileListBuffer[i].trim();
                     suffix2 = FileUtility.getExtension(fileName2);
 
@@ -794,7 +495,7 @@ public class FileUtility {
 
                     for (k = 1; k < suffix2.length(); k++) {
 
-                        if (!Character.isDigit(suffix2.charAt(k))) {
+                        if ( !Character.isDigit(suffix2.charAt(k))) {
 
                             // modified to use Java.lang check 20 July 2004/parsonsd
                             // if ( suffix2.charAt( k ) < '0' || suffix2.charAt( k ) > '9' ) {
@@ -816,7 +517,7 @@ public class FileUtility {
 
             for (i = 0; i < fileListBuffer.length; i++) {
 
-                if (!files[i].isDirectory()) {
+                if ( !files[i].isDirectory()) {
                     String fileSubName = FileUtility.trimNumbersAndSpecial(fileListBuffer[i].trim());
                     String fileExtension = FileUtility.getExtension(fileListBuffer[i]);
 
@@ -830,14 +531,14 @@ public class FileUtility {
 
         } else { // numberSuffix == false. I.e. ".img".
 
-            // check to see that they end in suffix.  If so, store, count.
+            // check to see that they end in suffix. If so, store, count.
 
             for (i = 0; i < fileListBuffer.length; i++) {
 
-                if (!files[i].isDirectory()) {
+                if ( !files[i].isDirectory()) {
 
                     if (fileListBuffer[i].trim().toLowerCase().endsWith(suffix.toLowerCase())) { // note: not case
-                                                                                                 // sensitive!
+                        // sensitive!
 
                         if (FileUtility.trimNumbersAndSpecial(fileListBuffer[i].trim()).equals(subName)) {
                             fileList[j] = fileListBuffer[i];
@@ -853,7 +554,7 @@ public class FileUtility {
 
         if (nImages == 0) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: No images with that suffix: " + suffix);
             }
 
@@ -873,11 +574,11 @@ public class FileUtility {
 
             for (j = i + 1; j < nImages; j++) {
                 result = FilenameSorter.compareToLastNumericalSequence(fileList2[i], fileList2[j]); // compare based on
-                                                                                                    // last numerical
-                                                                                                    // sequence
-                                                                                                    // result =
-                                                                                                    // fileList2[i].compareTo(
-                                                                                                    // fileList2[j] );
+                // last numerical
+                // sequence
+                // result =
+                // fileList2[i].compareTo(
+                // fileList2[j] );
 
                 if (result > 0) {
                     fileTemp = fileList2[i];
@@ -892,14 +593,14 @@ public class FileUtility {
 
     /**
      * Returns the file name without path information from file name with the path information.
-     *
-     * @param   absolutePath  the file name with the path information.
-     *
-     * @return  The file name without path information.
+     * 
+     * @param absolutePath the file name with the path information.
+     * 
+     * @return The file name without path information.
      */
     public static final String getFileName(String absolutePath) {
 
-        if ((absolutePath == null) || (absolutePath.length() == 0)) {
+        if ( (absolutePath == null) || (absolutePath.length() == 0)) {
             return null;
         }
 
@@ -920,14 +621,14 @@ public class FileUtility {
     /**
      * Sets the FileBase.(filetype) based on the file extension of the given filename. Also sets file "suffix", if
      * required.
-     *
-     * @param   fileName  Filename of the image to read in. Must include the file extension.
-     * @param   fileDir   Directory where fileName exists.
-     * @param   quiet     Whether to avoid any user interaction (ie, from error popups).
-     *
-     * @return  Filetype from FileBase.
-     *
-     * @see     FileBase
+     * 
+     * @param fileName Filename of the image to read in. Must include the file extension.
+     * @param fileDir Directory where fileName exists.
+     * @param quiet Whether to avoid any user interaction (ie, from error popups).
+     * 
+     * @return Filetype from FileBase.
+     * 
+     * @see FileBase
      */
     public static final int getFileType(String fileName, String fileDir, boolean quiet) {
         return getFileType(fileName, fileDir, false, quiet);
@@ -936,15 +637,15 @@ public class FileUtility {
     /**
      * Sets the FileBase.(filetype) based on the file extension of the given filename. Also sets file "suffix", if
      * required.
-     *
-     * @param   fileName  Filename of the image to read in. Must include the file extension.
-     * @param   fileDir   Directory where fileName exists.
-     * @param   doWrite   If true about to write a file
-     * @param   quiet     Whether to avoid any user interaction (ie, from error popups).
-     *
-     * @return  Filetype from FileBase.
-     *
-     * @see     FileBase
+     * 
+     * @param fileName Filename of the image to read in. Must include the file extension.
+     * @param fileDir Directory where fileName exists.
+     * @param doWrite If true about to write a file
+     * @param quiet Whether to avoid any user interaction (ie, from error popups).
+     * 
+     * @return Filetype from FileBase.
+     * 
+     * @see FileBase
      */
     public static final int getFileType(String fileName, String fileDir, boolean doWrite, boolean quiet) {
         int fileType;
@@ -952,8 +653,8 @@ public class FileUtility {
 
         String beginString = FileUtility.stripExtension(fileName);
 
-        if ((beginString.equalsIgnoreCase("d3proc")) || (beginString.equalsIgnoreCase("reco")) ||
-                (beginString.equalsIgnoreCase("2dseq"))) {
+        if ( (beginString.equalsIgnoreCase("d3proc")) || (beginString.equalsIgnoreCase("reco"))
+                || (beginString.equalsIgnoreCase("2dseq"))) {
             fileType = FileUtility.BRUKER;
 
             return fileType;
@@ -963,37 +664,42 @@ public class FileUtility {
 
         String suffix = FileUtility.getExtension(fileName);
 
-        fileType = FileUtility.getFileTypeFromSuffix(suffix);
-        
+        fileType = FileTypeTable.getFileTypeFromSuffix(suffix);
+
+        // check to see if we're being asked to look at an empty file
+        if (new File(fileDir + File.separator + fileName).length() == 0) {
+            return fileType;
+        }
+
         // handle when the .mnc extension but MINC_HDF file
         if (fileType == FileUtility.MINC) {
             try {
-        	// inspect the file to see if it is really a MINC1 (suppressing any error dialogs).
-        	// if not, set the file type using isMincHDF()
-        	if (isMinc(fileName, fileDir, true) != FileUtility.MINC) {
-        	    fileType = isMincHDF(fileName, fileDir, quiet);
-        	}
+                // inspect the file to see if it is really a MINC1 (suppressing any error dialogs).
+                // if not, set the file type using isMincHDF()
+                if (isMinc(fileName, fileDir, true) != FileUtility.MINC) {
+                    fileType = isMincHDF(fileName, fileDir, quiet);
+                }
             } catch (IOException ioe) {
-        	if (ioe instanceof FileNotFoundException) {
-        	    MipavUtil.displayError("File does not exist '" + fileDir + fileName + "'.");
-        	    ioe.printStackTrace();
+                if (ioe instanceof FileNotFoundException) {
+                    MipavUtil.displayError("File does not exist '" + fileDir + fileName + "'.");
+                    ioe.printStackTrace();
 
-        	    return FileUtility.ERROR;
-        	}
+                    return FileUtility.ERROR;
+                }
 
-        	if (!quiet) {
-        	    MipavUtil.displayError("FileIO: " + ioe);
-        	    Preferences.debug("FileIO: " + ioe + "\n", Preferences.DEBUG_FILEIO);
-        	    ioe.printStackTrace();
-        	} else {
-        	    Preferences.debug("FileIO: " + ioe + "\n", Preferences.DEBUG_FILEIO);
-        	    ioe.printStackTrace();
-        	}
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + ioe);
+                    Preferences.debug("FileIO: " + ioe + "\n", Preferences.DEBUG_FILEIO);
+                    ioe.printStackTrace();
+                } else {
+                    Preferences.debug("FileIO: " + ioe + "\n", Preferences.DEBUG_FILEIO);
+                    ioe.printStackTrace();
+                }
 
-        	fileType = FileUtility.UNDEFINED;
+                fileType = FileUtility.UNDEFINED;
             }
         }
-        
+
         if (fileType == FileUtility.UNDEFINED) {
 
             if (suffix.equalsIgnoreCase(".pic")) {
@@ -1008,7 +714,7 @@ public class FileUtility {
                     // little endian unsigned short
                     int b1 = raFile.readUnsignedByte();
                     int b2 = raFile.readUnsignedByte();
-                    int fileID = ((b2 << 8) | b1); // Little Endian
+                    int fileID = ( (b2 << 8) | b1); // Little Endian
 
                     raFile.close();
 
@@ -1028,12 +734,12 @@ public class FileUtility {
 
                 // ANALYZE, Interfile, and NIFTI use .img and .hdr
                 if (doWrite) {
-                    JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(ViewUserInterface.getReference().getMainFrame());
+                    JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(ViewUserInterface.getReference()
+                            .getMainFrame());
 
-                    if (!choice.okayPressed()) {
+                    if ( !choice.okayPressed()) {
                         fileType = FileUtility.ERROR;
-                    } 
-                    else {
+                    } else {
                         fileType = choice.fileType();
                     }
                 } else { // read
@@ -1043,27 +749,25 @@ public class FileUtility {
                     String headerFile = FileInterfile.isInterfile(fileHeaderName, fileDir);
                     if (headerFile != null) {
                         fileType = FileUtility.INTERFILE;
-                    }
-                    else {
+                    } else {
                         fileType = FileUtility.ANALYZE;
-    
 
                         try {
                             File file = new File(fileDir + fileHeaderName);
                             RandomAccessFile raFile = new RandomAccessFile(file, "r");
-    
+
                             raFile.seek(344L);
-    
+
                             char[] niftiName = new char[4];
-    
+
                             for (i = 0; i < 4; i++) {
                                 niftiName[i] = (char) raFile.readUnsignedByte();
                             }
-    
+
                             raFile.close();
-    
-                            if ((niftiName[0] == 'n') && ((niftiName[1] == 'i') || (niftiName[1] == '+')) &&
-                                    (niftiName[2] == '1') && (niftiName[3] == '\0')) {
+
+                            if ( (niftiName[0] == 'n') && ( (niftiName[1] == 'i') || (niftiName[1] == '+'))
+                                    && (niftiName[2] == '1') && (niftiName[3] == '\0')) {
                                 fileType = FileUtility.NIFTI;
                             }
                         } catch (OutOfMemoryError error) {
@@ -1078,12 +782,12 @@ public class FileUtility {
             } else if (suffix.equalsIgnoreCase(".hdr")) {
                 if (doWrite) {
                     // ANALYZE, Interfile, and NIFTI use .img and .hdr
-                    JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(ViewUserInterface.getReference().getMainFrame());
+                    JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(ViewUserInterface.getReference()
+                            .getMainFrame());
 
-                    if (!choice.okayPressed()) {
+                    if ( !choice.okayPressed()) {
                         fileType = FileUtility.ERROR;
-                    } 
-                    else {
+                    } else {
                         fileType = choice.fileType();
                     }
                 } else { // read
@@ -1092,31 +796,29 @@ public class FileUtility {
                     File bfloatFile = new File(fileDir + bfloatDataName);
                     if (bfloatFile.exists()) {
                         fileType = FileUtility.BFLOAT;
-                    }
-                    else {
+                    } else {
                         String headerFile = FileInterfile.isInterfile(fileName, fileDir);
                         if (headerFile != null) {
                             fileType = FileUtility.INTERFILE;
-                        }
-                        else {
+                        } else {
                             fileType = FileUtility.ANALYZE;
-        
+
                             try {
                                 File file = new File(fileDir + fileName);
                                 RandomAccessFile raFile = new RandomAccessFile(file, "r");
-        
+
                                 raFile.seek(344L);
-        
+
                                 char[] niftiName = new char[4];
-        
+
                                 for (i = 0; i < 4; i++) {
                                     niftiName[i] = (char) raFile.readUnsignedByte();
                                 }
-        
+
                                 raFile.close();
-        
-                                if ((niftiName[0] == 'n') && ((niftiName[1] == 'i') || (niftiName[1] == '+')) &&
-                                        (niftiName[2] == '1') && (niftiName[3] == '\0')) {
+
+                                if ( (niftiName[0] == 'n') && ( (niftiName[1] == 'i') || (niftiName[1] == '+'))
+                                        && (niftiName[2] == '1') && (niftiName[3] == '\0')) {
                                     fileType = FileUtility.NIFTI;
                                 }
                             } catch (OutOfMemoryError error) {
@@ -1125,7 +827,7 @@ public class FileUtility {
                                 System.gc();
                             } catch (IOException e) {
                                 System.gc();
-                            } 
+                            }
                         }
                     }
                 }
@@ -1162,7 +864,7 @@ public class FileUtility {
                 }
             } else if (suffix.equalsIgnoreCase("") && doWrite) {
                 Preferences.debug("FileIO: Cannot save a file without an extension: " + fileName + "\n",
-                                  Preferences.DEBUG_FILEIO);
+                        Preferences.DEBUG_FILEIO);
 
                 return FileUtility.UNDEFINED;
             }
@@ -1204,16 +906,16 @@ public class FileUtility {
             if (fileType == FileUtility.UNDEFINED) {
                 fileType = FileUtility.isMinc(fileName, fileDir, quiet);
             }
-            
+
             if (fileType == FileUtility.UNDEFINED) {
                 fileType = isMincHDF(fileName, fileDir, quiet);
             }
-            
+
             if (fileType == FileUtility.UNDEFINED) {
 
                 fileType = FileUtility.isAnalyze(fileName, fileDir, quiet);
             }
-            
+
             if (fileType == FileUtility.UNDEFINED) {
                 fileType = FileUtility.isInterfile(fileName, fileDir, quiet);
             }
@@ -1234,7 +936,7 @@ public class FileUtility {
                 return FileUtility.ERROR;
             }
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + ioe);
                 Preferences.debug("FileIO: " + ioe + "\n", Preferences.DEBUG_FILEIO);
                 ioe.printStackTrace();
@@ -1249,369 +951,17 @@ public class FileUtility {
         return fileType;
     }
 
-
-    /**
-     * Gets the file type based upon the suffix.
-     *
-     * @param   suffix  the suffix
-     *
-     * @return  The file type for the given suffix (or UNDEFINED if the suffix is null or unrecognized).
-     */
-    public static int getFileTypeFromSuffix(String suffix) {
-        int fileType = FileUtility.UNDEFINED;
-
-        if (suffix == null) {
-            return FileUtility.UNDEFINED;
-        }
-
-        if (suffix.equalsIgnoreCase(".tif")) {
-            fileType = FileUtility.TIFF;
-        } else if (suffix.equalsIgnoreCase(".tiff")) {
-            fileType = FileUtility.TIFF;
-        } else if (suffix.equalsIgnoreCase(".lsm")) {
-            fileType = FileUtility.LSM;
-        } else if (suffix.equalsIgnoreCase(".stk")) {
-            fileType = FileUtility.STK;
-        } else if (suffix.equalsIgnoreCase(".jpeg")) {
-            fileType = FileUtility.JIMI;
-        } else if (suffix.equalsIgnoreCase(".jpg")) {
-            fileType = FileUtility.JIMI;
-        } else if (suffix.equalsIgnoreCase(".bmp")) {
-            fileType = FileUtility.JIMI;
-        } else if (suffix.equalsIgnoreCase(".gif")) {
-            fileType = FileUtility.JIMI;
-        } else if (suffix.equalsIgnoreCase(".pict")) {
-            fileType = FileUtility.JIMI;
-        } else if (suffix.equalsIgnoreCase(".pic")) {
-
-            // Both Biorad and JIMI use the pic suffix
-            fileType = FileUtility.UNDEFINED;
-        } else if (suffix.equalsIgnoreCase(".png")) {
-            fileType = FileUtility.JIMI;
-        } else if (suffix.equalsIgnoreCase(".psd")) {
-            fileType = FileUtility.JIMI;
-        } else if (suffix.equalsIgnoreCase(".dib")) {
-            fileType = FileUtility.JIMI;
-        } else if (suffix.equalsIgnoreCase(".tga")) {
-            fileType = FileUtility.JIMI;
-        } else if (suffix.equalsIgnoreCase(".xbm")) {
-            fileType = FileUtility.JIMI;
-        } else if (suffix.equalsIgnoreCase(".xpm")) {
-            fileType = FileUtility.JIMI;
-        } else if (suffix.equalsIgnoreCase(".xml")) {
-            fileType = FileUtility.XML;
-        } else if (suffix.equalsIgnoreCase(".pcx")) {
-            fileType = FileUtility.JIMI;
-        } else if (suffix.equalsIgnoreCase(".ico")) {
-            fileType = FileUtility.JIMI;
-        } else if (suffix.equalsIgnoreCase(".cur")) {
-            fileType = FileUtility.JIMI;
-        } else if (suffix.equalsIgnoreCase(".mgh")) {
-            fileType = FileUtility.MGH;
-        } else if (suffix.equalsIgnoreCase(".mgz")) {
-            fileType = FileUtility.MGH;
-        } else if (suffix.equalsIgnoreCase(".raw")) {
-            fileType = FileUtility.RAW;
-        } else if (suffix.equalsIgnoreCase(".img")) {
-
-            // Both ANALYZE and NIFTI use .img and .hdr
-            fileType = FileUtility.UNDEFINED;
-        } else if (suffix.equalsIgnoreCase(".nii")) {
-            fileType = FileUtility.NIFTI;
-        } else if (suffix.equalsIgnoreCase(".nhdr")) {
-            fileType = FileUtility.NRRD;
-        } else if (suffix.equalsIgnoreCase(".nrrd")) {
-            fileType = FileUtility.NRRD;
-        } else if (suffix.equalsIgnoreCase(".ima")) {
-
-            // Both Dicom and Siemens Magnetom Vision file type have the ima suffix
-            fileType = FileUtility.UNDEFINED;
-        } else if (suffix.equalsIgnoreCase(".dcm")) {
-            fileType = FileUtility.DICOM;
-        } else if (suffix.equalsIgnoreCase(".bin")) {
-            fileType = FileUtility.MEDIVISION;
-        } else if (suffix.equalsIgnoreCase(".map")) {
-            fileType = FileUtility.MAP;
-        }
-        // Benes Trus special
-        else if (suffix.equalsIgnoreCase(".mnc")) {
-            fileType = FileUtility.MINC;
-        } else if (suffix.equalsIgnoreCase(".avi")) {
-            fileType = FileUtility.AVI;
-        } else if (suffix.equalsIgnoreCase(".imc")) {
-            fileType = FileUtility.CHESHIRE;
-        } else if (suffix.equalsIgnoreCase(".oly")) {
-            fileType = FileUtility.CHESHIRE_OVERLAY;
-        }
-        // QuickTime on WIndows uses .QT and on MAC uses .mov
-        else if (suffix.equalsIgnoreCase(".qt")) {
-            fileType = FileUtility.QT;
-        } else if (suffix.equalsIgnoreCase(".mov")) {
-            fileType = FileUtility.QT;
-        } else if (suffix.equalsIgnoreCase(".head")) {
-            fileType = FileUtility.AFNI;
-        } else if (suffix.equalsIgnoreCase(".brik")) {
-            fileType = FileUtility.AFNI;
-        } else if (suffix.equalsIgnoreCase(".ics")) {
-            fileType = FileUtility.ICS;
-        } else if (suffix.equalsIgnoreCase(".ids")) {
-            fileType = FileUtility.ICS;
-        } else if (suffix.equalsIgnoreCase(".hdr")) {
-            // .hdr found in ANALYZE, BFLOAT, INTERFILE, and NIFTI
-            fileType = FileUtility.UNDEFINED;
-        } else if (suffix.equalsIgnoreCase(".spm")) {
-            fileType = FileUtility.SPM;
-        } else if (suffix.equalsIgnoreCase(".fits")) {
-            fileType = FileUtility.FITS;
-        } else if (suffix.equalsIgnoreCase(".dm3")) {
-            fileType = FileUtility.DM3;
-        } else if (suffix.equalsIgnoreCase(".tmg")) {
-            fileType = FileUtility.TMG;
-        } else if (suffix.equalsIgnoreCase(".mrc")) {
-            fileType = FileUtility.MRC;
-        } else if (suffix.equalsIgnoreCase(".wu")) {
-            fileType = FileUtility.OSM;
-        } else if (suffix.equalsIgnoreCase(".sig")) {
-            fileType = FileUtility.GE_GENESIS;
-        } else if (suffix.equalsIgnoreCase(".gedno")) {
-            fileType = FileUtility.GE_SIGNA4X;
-        } else if (suffix.equalsIgnoreCase(".log")) {
-            fileType = FileUtility.MICRO_CAT;
-        } else if (suffix.equalsIgnoreCase(".ct")) {
-            fileType = FileUtility.MICRO_CAT;
-        } else if (suffix.equalsIgnoreCase(".info")) {
-            fileType = FileUtility.COR;
-        } else if (suffix.equalsIgnoreCase(".info~")) {
-            fileType = FileUtility.COR;
-        } else if (suffix.equalsIgnoreCase(".voi")) {
-            fileType = FileUtility.VOI_FILE;
-        } else if (suffix.equalsIgnoreCase(".afni")) {
-            fileType = FileUtility.AFNI;
-        } else if (suffix.equalsIgnoreCase(".par")) { /*for PAR/REC Supported*/
-            fileType = FileUtility.PARREC;
-        } else if (suffix.equalsIgnoreCase(".parv2")) {
-            fileType = FileUtility.PARREC;
-        } else if (suffix.equalsIgnoreCase(".rec")) {
-            fileType = FileUtility.PARREC;
-        } else if (suffix.equalsIgnoreCase(".frec")) { /*for PAR/REC Supported*/
-            fileType = FileUtility.PARREC;
-        } else if (suffix.equalsIgnoreCase(".liff")) {
-            fileType = FileUtility.LIFF;
-        } else if (suffix.equalsIgnoreCase(".bfloat")) {
-            fileType = FileUtility.BFLOAT;
-        } else {
-
-            // cannot automatically determine the filetype from the filename extension
-            fileType = FileUtility.UNDEFINED;
-        }
-
-        return fileType;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public static String[] getSupportedFileExtensions() {
-        return supportedFileExtensions;
-    }
-
-
-    /**
-     * This method is called by JDialogUnknownIO in order to populate its typeInts.
-     *
-     * @return  String[] Array of typeInts
-     */
-    public static int[] getUnknownDialogsTypeInts() {
-        String[] exts = getUnknownDialogsTypeSuffices();
-        int[] fileTypes = new int[exts.length];
-
-        for (int i = 0; i < exts.length; i++) {
-            String suffix = exts[i];
-            int fileType = getFileTypeFromSuffix(suffix);
-
-            if (exts[i].equals("pic")) {
-                fileType = FileUtility.BIORAD;
-            } else if (exts[i].equals("img")) {
-                fileType = FileUtility.NIFTI;
-            } else if (exts[i].equals("ima")) {
-                fileType = FileUtility.MAGNETOM_VISION;
-            }
-
-            fileTypes[i] = fileType;
-        }
-
-        return fileTypes;
-    }
-
-
-    /**
-     * This method is called by JDialogUnknownIO in order to populate its typeNames.
-     *
-     * @return  Strin[] Array of descriptions
-     */
-    public static String[] getUnknownDialogsTypeNames() {
-        typeNamesTreeMap = new TreeMap<String,String>();
-
-        String description = "";
-
-        for (int i = 0; i < supportedFileExtensions.length; i++) {
-            int fileType = getFileTypeFromSuffix("." + supportedFileExtensions[i]);
-
-            if (fileType == FileUtility.JIMI) {
-
-                if (supportedFileExtensions[i].equals("jpeg") || (supportedFileExtensions[i].equals("jpg"))) {
-                    description = fileFormatStr[FileUtility.JPEG];
-                } else if (supportedFileExtensions[i].equals("bmp")) {
-                    description = fileFormatStr[FileUtility.BMP];
-                } else if (supportedFileExtensions[i].equals("gif")) {
-                    description = fileFormatStr[FileUtility.GIF];
-                } else if (supportedFileExtensions[i].equals("pict")) {
-                    description = fileFormatStr[FileUtility.PICT];
-                } else if (supportedFileExtensions[i].equals("png")) {
-                    description = fileFormatStr[FileUtility.PNG];
-                } else if (supportedFileExtensions[i].equals("psd")) {
-                    description = fileFormatStr[FileUtility.PSD];
-                } else if (supportedFileExtensions[i].equals("dib")) {
-                    description = fileFormatStr[FileUtility.DIB];
-                } else if (supportedFileExtensions[i].equals("tga")) {
-                    description = fileFormatStr[FileUtility.TGA];
-                } else if (supportedFileExtensions[i].equals("xbm")) {
-                    description = fileFormatStr[FileUtility.XBM];
-                } else if (supportedFileExtensions[i].equals("xpm")) {
-                    description = fileFormatStr[FileUtility.XPM];
-                } else if (supportedFileExtensions[i].equals("pcx")) {
-                    description = fileFormatStr[FileUtility.PCX];
-                } else if (supportedFileExtensions[i].equals("ico")) {
-                    description = fileFormatStr[FileUtility.ICO];
-                } else if (supportedFileExtensions[i].equals("cur")) {
-                    description = fileFormatStr[FileUtility.CUR];
-                }
-            } else if (fileType == FileUtility.UNDEFINED) {
-
-                if (supportedFileExtensions[i].equals("pic")) {
-                    description = fileFormatStr[FileUtility.BIORAD];
-                }
-
-                // *.ima and *.img each go to 2 diff file types
-                if (supportedFileExtensions[i].equals("ima")) {
-                    description = fileFormatStr[FileUtility.DICOM];
-
-                    if (typeNamesTreeMap.containsKey(description)) {
-                        String value = (String) typeNamesTreeMap.get(description);
-                        typeNamesTreeMap.put(description, value + ",." + supportedFileExtensions[i]);
-                    } else {
-                        typeNamesTreeMap.put(description, "." + supportedFileExtensions[i]);
-                    }
-
-                    description = fileFormatStr[FileUtility.MAGNETOM_VISION];
-
-                    if (typeNamesTreeMap.containsKey(description)) {
-                        String value = (String) typeNamesTreeMap.get(description);
-                        typeNamesTreeMap.put(description, value + ",." + supportedFileExtensions[i]);
-                    } else {
-                        typeNamesTreeMap.put(description, "." + supportedFileExtensions[i]);
-                    }
-
-                    continue;
-                }
-
-                if (supportedFileExtensions[i].equals("img")) {
-                    description = fileFormatStr[FileUtility.ANALYZE];
-
-                    if (typeNamesTreeMap.containsKey(description)) {
-                        String value = (String) typeNamesTreeMap.get(description);
-                        typeNamesTreeMap.put(description, value + ", ." + supportedFileExtensions[i]);
-                    } else {
-                        typeNamesTreeMap.put(description, "." + supportedFileExtensions[i]);
-                    }
-
-                    description = fileFormatStr[FileUtility.NIFTI];
-
-                    if (typeNamesTreeMap.containsKey(description)) {
-                        String value = (String) typeNamesTreeMap.get(description);
-                        typeNamesTreeMap.put(description, value + ", ." + supportedFileExtensions[i]);
-                    } else {
-                        typeNamesTreeMap.put(description, "." + supportedFileExtensions[i]);
-                    }
-
-                    continue;
-                }
-            } else {
-                description = fileFormatStr[fileType];
-            }
-
-            if (typeNamesTreeMap.containsKey(description)) {
-                String value = (String) typeNamesTreeMap.get(description);
-                typeNamesTreeMap.put(description, value + ", ." + supportedFileExtensions[i]);
-            } else {
-                typeNamesTreeMap.put(description, "." + supportedFileExtensions[i]);
-            }
-        }
-
-
-        ArrayList<String> descripArrayList = new ArrayList<String>();
-
-        for (Iterator<String> iter = typeNamesTreeMap.keySet().iterator(); iter.hasNext();) {
-            String key = (String) iter.next();
-            String value = (String) typeNamesTreeMap.get(key);
-            String descrip = key + " (" + value + ")";
-            descripArrayList.add(descrip);
-        }
-
-
-        String[] descripArray = new String[descripArrayList.size()];
-
-        for (int i = 0; i < descripArrayList.size(); i++) {
-            descripArray[i] = (String) descripArrayList.get(i);
-        }
-
-        return descripArray;
-    }
-
-
-    /**
-     * This method is called by JDialogUnknownIO in order to populate its typeSuffices.
-     *
-     * @return  String[] Array of suffices
-     */
-    public static String[] getUnknownDialogsTypeSuffices() {
-        ArrayList<String> typeSufficesAL = new ArrayList<String>();
-
-        for (Iterator<String> iter = typeNamesTreeMap.keySet().iterator(); iter.hasNext();) {
-            String key = (String) iter.next();
-
-            // since the fileFormetStr array ant the static final ints are in synch, getting the position
-            // in the array is the same as getting the file type...so that we can get the default suffix
-            for (int i = 0; i < fileFormatStr.length; i++) {
-
-                if (key.equals(fileFormatStr[i])) {
-                    typeSufficesAL.addAll(FileUtility.getSuffixes(i));
-                }
-            }
-        }
-
-        String[] typeSuffices = new String[typeSufficesAL.size()];
-
-        for (int i = 0; i < typeSufficesAL.size(); i++) {
-            typeSuffices[i] = (String) typeSufficesAL.get(i);
-        }
-
-        return typeSuffices;
-    }
-
     /**
      * Tests if the unknown file is of type Analyze.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   quiet     Whether to avoid any user interaction (ie, from error popups).
-     *
-     * @return  <code>FileUtility.ANALYZE</code> if the file is a ANALYZE type, and <code>FileUtility.UNDEFINED</code>
-     *          otherwise
-     *
-     * @throws  IOException  If there is a problem determining the type of the given file.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param quiet Whether to avoid any user interaction (ie, from error popups).
+     * 
+     * @return <code>FileUtility.ANALYZE</code> if the file is a ANALYZE type, and <code>FileUtility.UNDEFINED</code>
+     *         otherwise
+     * 
+     * @throws IOException If there is a problem determining the type of the given file.
      */
     public static final int isAnalyze(String fileName, String fileDir, boolean quiet) throws IOException {
 
@@ -1626,7 +976,7 @@ public class FileUtility {
             return FileUtility.UNDEFINED;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             } else {
@@ -1639,15 +989,15 @@ public class FileUtility {
 
     /**
      * Tests if the unknown file is of type Dicom.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   quiet     Whether to avoid any user interaction (ie, from error popups).
-     *
-     * @return  <code>FileUtility.DICOM</code> if the file is a DICOM file, and <code>FileUtility.UNDEFINED</code>
-     *          otherwise
-     *
-     * @throws  IOException  If there is a problem determining the type of the given file.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param quiet Whether to avoid any user interaction (ie, from error popups).
+     * 
+     * @return <code>FileUtility.DICOM</code> if the file is a DICOM file, and <code>FileUtility.UNDEFINED</code>
+     *         otherwise
+     * 
+     * @throws IOException If there is a problem determining the type of the given file.
      */
     public static final int isDicom(String fileName, String fileDir, boolean quiet) throws IOException {
 
@@ -1668,7 +1018,7 @@ public class FileUtility {
             return FileUtility.UNDEFINED;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             } else {
@@ -1682,15 +1032,16 @@ public class FileUtility {
 
     /**
      * Tests if the unknown file is of type GE Signa 4X type.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   quiet     Whether to avoid any user interaction (ie, from error popups).
-     *
-     * @return  <code>FileUtility.GE_SIGNA4X</code> if the file is a GE MR Signa 4.x file, and <code>
-     *          FileUtility.UNDEFINED</code> otherwise
-     *
-     * @throws  IOException  If there is a problem determining the type of the given file.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param quiet Whether to avoid any user interaction (ie, from error popups).
+     * 
+     * @return <code>FileUtility.GE_SIGNA4X</code> if the file is a GE MR Signa 4.x file, and <code>
+     *          FileUtility.UNDEFINED</code>
+     *         otherwise
+     * 
+     * @throws IOException If there is a problem determining the type of the given file.
      */
     public static final int isGESigna4X(String fileName, String fileDir, boolean quiet) throws IOException {
 
@@ -1708,7 +1059,7 @@ public class FileUtility {
             return FileUtility.UNDEFINED;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             } else {
@@ -1721,15 +1072,16 @@ public class FileUtility {
 
     /**
      * Tests if the unknown file is of type GE Signa 5X type.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   quiet     Whether to avoid any user interaction (ie, from error popups).
-     *
-     * @return  <code>FileUtility.GE_GENESIS</code> if the file is a GE MR Signa 5.x file, and <code>
-     *          FileUtility.UNDEFINED</code> otherwise
-     *
-     * @throws  IOException  If there is a problem determining the type of the given file.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param quiet Whether to avoid any user interaction (ie, from error popups).
+     * 
+     * @return <code>FileUtility.GE_GENESIS</code> if the file is a GE MR Signa 5.x file, and <code>
+     *          FileUtility.UNDEFINED</code>
+     *         otherwise
+     * 
+     * @throws IOException If there is a problem determining the type of the given file.
      */
     public static final int isGESigna5X(String fileName, String fileDir, boolean quiet) throws IOException {
 
@@ -1747,7 +1099,7 @@ public class FileUtility {
             return FileUtility.UNDEFINED;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             } else {
@@ -1757,18 +1109,18 @@ public class FileUtility {
             return FileUtility.UNDEFINED;
         }
     }
-    
+
     /**
      * Tests if the unknown file is of type Interfile.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   quiet     Whether to avoid any user interaction (ie, from error popups).
-     *
-     * @return  <code>FileUtility.Interfile</code> if the file is a Interfile type, and <code>FileUtility.UNDEFINED</code>
-     *          otherwise
-     *
-     * @throws  IOException  If there is a problem determining the type of the given file.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param quiet Whether to avoid any user interaction (ie, from error popups).
+     * 
+     * @return <code>FileUtility.Interfile</code> if the file is a Interfile type, and
+     *         <code>FileUtility.UNDEFINED</code> otherwise
+     * 
+     * @throws IOException If there is a problem determining the type of the given file.
      */
     public static final int isInterfile(String fileName, String fileDir, boolean quiet) throws IOException {
 
@@ -1783,7 +1135,7 @@ public class FileUtility {
             return FileUtility.UNDEFINED;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             } else {
@@ -1796,15 +1148,16 @@ public class FileUtility {
 
     /**
      * Tests if the unknown file is of type Siemens Magnetom Vision.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   quiet     Whether to avoid any user interaction (ie, from error popups).
-     *
-     * @return  <code>FileUtility.MAGNETOM_VISION</code> if the file is a Siemens Magnetom Vision type, and <code>
-     *          FileUtility.UNDEFINED</code> otherwise
-     *
-     * @throws  IOException  If there is a problem determining the type of the given file.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param quiet Whether to avoid any user interaction (ie, from error popups).
+     * 
+     * @return <code>FileUtility.MAGNETOM_VISION</code> if the file is a Siemens Magnetom Vision type, and <code>
+     *          FileUtility.UNDEFINED</code>
+     *         otherwise
+     * 
+     * @throws IOException If there is a problem determining the type of the given file.
      */
     public static final int isMagnetomVision(String fileName, String fileDir, boolean quiet) throws IOException {
 
@@ -1822,7 +1175,7 @@ public class FileUtility {
             return FileUtility.UNDEFINED;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             } else {
@@ -1835,15 +1188,15 @@ public class FileUtility {
 
     /**
      * Tests if the unknown file is of type Minc.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   quiet     Whether to avoid any user interaction (ie, from error popups).
-     *
-     * @return  <code>FileUtility.MINC</code> if the file is a MINC type, and <code>FileUtility.UNDEFINED</code>
-     *          otherwise
-     *
-     * @throws  IOException  If there is a problem determining the type of the given file.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param quiet Whether to avoid any user interaction (ie, from error popups).
+     * 
+     * @return <code>FileUtility.MINC</code> if the file is a MINC type, and <code>FileUtility.UNDEFINED</code>
+     *         otherwise
+     * 
+     * @throws IOException If there is a problem determining the type of the given file.
      */
     public static final int isMinc(String fileName, String fileDir, boolean quiet) throws IOException {
 
@@ -1861,7 +1214,7 @@ public class FileUtility {
             return FileUtility.UNDEFINED;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             } else {
@@ -1874,63 +1227,71 @@ public class FileUtility {
 
     /**
      * Determines whether the file on disk is of type MINC 2.0
+     * 
      * @param fileName name of the file
      * @param fileDir directory
      * @param quiet
      * @return whether the file is HDF5 type
      */
     public static final int isMincHDF(String fileName, String fileDir, boolean quiet) {
-	try {
-	    FileFormat h5F = FileFormat.getFileFormat(FileFormat.FILE_TYPE_HDF5);
-	    
-	    // if the FileFormat object is null, there was probably a problem loading the hdf5 libraries
-	    if (h5F == null) {
-		if (!quiet) {
-		    MipavUtil.displayError("Unable to load HDF5 libraries required for MINC-2.0 HDF files.");
-		}
-		
-		return FileUtility.ERROR;
-	    }
+        try {
+            FileFormat h5F = FileFormat.getFileFormat(FileFormat.FILE_TYPE_HDF5);
 
-	    boolean isMincHDF = h5F.isThisType(fileDir + File.separator + fileName);
-	    if (isMincHDF) {
-		return FileUtility.MINC_HDF;
-	    } else {
-		return FileUtility.UNDEFINED;
-	    }
-	} catch (SecurityException e) {
-	    if (!quiet) {
-		MipavUtil.displayError("Unable to load HDF libraries: " + e.getMessage());
-	    }
-	    
-	    e.printStackTrace();
-	    
-	    return FileUtility.ERROR;
-	} catch (UnsatisfiedLinkError e) {
-	    if (!quiet) {
-		MipavUtil.displayError("Unable to load HDF libraries: " + e.getMessage());
-	    }
-	    
-	    e.printStackTrace();
-	    
-	    return FileUtility.ERROR;
-	}
+            // if the FileFormat object is null, there was probably a problem loading the hdf5 libraries
+            if (h5F == null) {
+                if ( !quiet) {
+                    MipavUtil.displayError("Unable to load HDF5 libraries required for MINC-2.0 HDF files.");
+                }
+
+                return FileUtility.ERROR;
+            }
+
+            boolean isMincHDF = h5F.isThisType(fileDir + File.separator + fileName);
+            if (isMincHDF) {
+                return FileUtility.MINC_HDF;
+            } else {
+                return FileUtility.UNDEFINED;
+            }
+        } catch (NoClassDefFoundError e) {
+            if ( !quiet) {
+                MipavUtil.displayError("Unable to load HDF libraries: " + e.getMessage());
+            }
+
+            e.printStackTrace();
+
+            return FileUtility.ERROR;
+        } catch (SecurityException e) {
+            if ( !quiet) {
+                MipavUtil.displayError("Unable to load HDF libraries: " + e.getMessage());
+            }
+
+            e.printStackTrace();
+
+            return FileUtility.ERROR;
+        } catch (UnsatisfiedLinkError e) {
+            if ( !quiet) {
+                MipavUtil.displayError("Unable to load HDF libraries: " + e.getMessage());
+            }
+
+            e.printStackTrace();
+
+            return FileUtility.ERROR;
+        }
     }
-    
+
     /**
      * Tests if the unknown file is of type Nifti.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   quiet     Whether to avoid any user interaction (ie, from error popups).
-     *
-     * @return  <code>FileUtility.NIFTI</code> if the file is a NIFTI type, and <code>FileUtility.UNDEFINED</code>
-     *          otherwise
-     *
-     * @throws  IOException  If there is a problem determining the type of the given file.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param quiet Whether to avoid any user interaction (ie, from error popups).
+     * 
+     * @return <code>FileUtility.NIFTI</code> if the file is a NIFTI type, and <code>FileUtility.UNDEFINED</code>
+     *         otherwise
+     * 
+     * @throws IOException If there is a problem determining the type of the given file.
      */
     public static final int isNIFTI(String fileName, String fileDir, boolean quiet) throws IOException {
-
 
         try {
             boolean isNIFTI = FileNIFTI.isNIFTI(fileName, fileDir);
@@ -1942,7 +1303,7 @@ public class FileUtility {
             return FileUtility.UNDEFINED;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             } else {
@@ -1955,14 +1316,15 @@ public class FileUtility {
 
     /**
      * Tests if the unknown file is of type SPM.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   quiet     Whether to avoid any user interaction (ie, from error popups).
-     *
-     * @return  <code>FileUtility.SPM</code> if the file is a SPM type, and <code>FileUtility.UNDEFINED</code> otherwise
-     *
-     * @throws  IOException  If there is a problem determining the type of the given file.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param quiet Whether to avoid any user interaction (ie, from error popups).
+     * 
+     * @return <code>FileUtility.SPM</code> if the file is a SPM type, and <code>FileUtility.UNDEFINED</code>
+     *         otherwise
+     * 
+     * @throws IOException If there is a problem determining the type of the given file.
      */
     public static final int isSPM(String fileName, String fileDir, boolean quiet) throws IOException {
 
@@ -1976,7 +1338,7 @@ public class FileUtility {
             return FileUtility.UNDEFINED;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             } else {
@@ -1990,10 +1352,10 @@ public class FileUtility {
     /**
      * Helper method to strip the image name of the extension, so when we save we don't have double extensions (like
      * genormcor.img.tif).
-     *
-     * @param   fileName  Original name.
-     *
-     * @return  Name without extension, or original name if there was no extension.
+     * 
+     * @param fileName Original name.
+     * 
+     * @return Name without extension, or original name if there was no extension.
      */
     public static final String stripExtension(String fileName) {
         int index = fileName.lastIndexOf(".");
@@ -2006,13 +1368,16 @@ public class FileUtility {
     }
 
     /**
-     * Trims the numbers or file extension from COR file names. Any numbers or <q>.info</q> or <q>.info~</q> will be
-     * removed from after a hyphen in the given fname.
-     *
-     * @param   fName  File name where the last characters are alpha-numerics indicating the image number or .info or
-     *                 .info~
-     *
-     * @return  File name without numbers on the end.
+     * Trims the numbers or file extension from COR file names. Any numbers or
+     * <q>.info</q>
+     * or
+     * <q>.info~</q>
+     * will be removed from after a hyphen in the given fname.
+     * 
+     * @param fName File name where the last characters are alpha-numerics indicating the image number or .info or
+     *            .info~
+     * 
+     * @return File name without numbers on the end.
      */
     public static final String trimCOR(String fName) {
         int length = fName.lastIndexOf("-");
@@ -2026,11 +1391,12 @@ public class FileUtility {
 
     /**
      * Trims the numbers and special character from the file name. Numerics and some special characters <code>[ - _
-     * .</code> are removed from the end of the file.
-     *
-     * @param   fName  File name where the last characters are alpha-numerics indicating the image number.
-     *
-     * @return  File name without numbers on the end.
+     * .</code>
+     * are removed from the end of the file.
+     * 
+     * @param fName File name where the last characters are alpha-numerics indicating the image number.
+     * 
+     * @return File name without numbers on the end.
      */
     public static final String trimNumbersAndSpecial(String fName) {
         int i;
@@ -2040,7 +1406,7 @@ public class FileUtility {
         for (i = length - 1; i > -1; i--) {
             ch = fName.charAt(i);
 
-            if (!Character.isDigit(ch) && (ch != '-') && (ch != '.') && (ch != '_')) {
+            if ( !Character.isDigit(ch) && (ch != '-') && (ch != '.') && (ch != '_')) {
                 break;
             }
         }

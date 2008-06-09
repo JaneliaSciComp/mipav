@@ -1,30 +1,44 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.model.file.FileTypeTable;
 
-import java.awt.*;
-import java.awt.event.*;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewImageDirectory;
+import gov.nih.mipav.view.ViewImageFileFilter;
 
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.util.Enumeration;
+
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 
 /**
  * Simple dialog to choose the filter for the view image directory.
- *
- * @author   Neva Cherniavsky
- * @version  1.0 June 1, 2002
- * @see      ViewImageFileFilter
- * @see      ViewImageDirectory
+ * 
+ * @author Neva Cherniavsky
+ * @version 1.0 June 1, 2002
+ * @see ViewImageFileFilter
+ * @see ViewImageDirectory
  */
 public class JDialogFilterChoice extends JDialogBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 3198970819287117617L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private JCheckBox[] checkImages;
@@ -32,24 +46,32 @@ public class JDialogFilterChoice extends JDialogBase {
     /** DOCUMENT ME! */
     private ViewImageFileFilter imageFilter;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    private String[] fileTypeDescriptions = JDialogUnknownIO.getTypeNames();
+
+    private int[] fileTypeInts = JDialogUnknownIO.getTypeInts();
+
+    private String[] fileTypeExtensions = JDialogUnknownIO.getTypeDefaultExtensions();
+
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Initializes the dialog.
-     *
-     * @param  parent  PArent frame of dialog.
+     * 
+     * @param parent PArent frame of dialog.
      */
     public JDialogFilterChoice(Frame parent) {
         super(parent, true);
         init();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Sets the appropriate file filter when the "OK" button is pressed; otherwise disposes of the dialog.
-     *
-     * @param  e  Event that triggered this function.
+     * 
+     * @param e Event that triggered this function.
      */
     public void actionPerformed(ActionEvent e) {
         String command = e.getActionCommand();
@@ -60,7 +82,7 @@ public class JDialogFilterChoice extends JDialogBase {
             for (int i = 0; i < checkImages.length; i++) {
 
                 if (checkImages[i].isSelected()) {
-                    count++;
+                    count += FileTypeTable.getFileTypeInfo(fileTypeInts[i]).getExtensionList().size();
                 }
             }
 
@@ -70,7 +92,11 @@ public class JDialogFilterChoice extends JDialogBase {
             for (int i = 0; i < checkImages.length; i++) {
 
                 if (checkImages[i].isSelected()) {
-                    exts[count++] = JDialogUnknownIO.getSuffixFromIndex(i);
+                    Enumeration<String> typeExts = FileTypeTable.getFileTypeInfo(fileTypeInts[i]).getExtensionList()
+                            .elements();
+                    while (typeExts.hasMoreElements()) {
+                        exts[count++] = typeExts.nextElement();
+                    }
                 }
             }
 
@@ -94,8 +120,8 @@ public class JDialogFilterChoice extends JDialogBase {
 
     /**
      * Accessor that gets the file filter.
-     *
-     * @return  The file filter.
+     * 
+     * @return The file filter.
      */
     public ViewImageFileFilter getFilter() {
         return imageFilter;
@@ -107,11 +133,9 @@ public class JDialogFilterChoice extends JDialogBase {
     private void init() {
         setTitle("Choose Image Filter");
 
-        String[] names = JDialogUnknownIO.getTypeNames();
-        JPanel panel = new JPanel(new GridLayout(names.length, 1));
+        JPanel panel = new JPanel(new GridLayout(fileTypeDescriptions.length, 1));
         panel.setForeground(Color.white);
         panel.setBackground(Color.white);
-
 
         // set the filter type to the preferences saved filter
         int filter = 0;
@@ -126,15 +150,15 @@ public class JDialogFilterChoice extends JDialogBase {
 
         imageFilter = new ViewImageFileFilter(filter);
 
-        checkImages = new JCheckBox[names.length];
+        checkImages = new JCheckBox[fileTypeDescriptions.length];
 
-        for (int i = 0; i < names.length; i++) {
-            checkImages[i] = new JCheckBox(names[i]);
+        for (int i = 0; i < fileTypeDescriptions.length; i++) {
+            checkImages[i] = new JCheckBox(fileTypeDescriptions[i]);
             checkImages[i].setFont(serif12);
             checkImages[i].setForeground(Color.black);
             checkImages[i].setBackground(Color.white);
 
-            if (imageFilter.accept(JDialogUnknownIO.getSuffixFromIndex(i))) {
+            if (imageFilter.accept(fileTypeExtensions[i])) {
                 checkImages[i].setSelected(true);
             }
 
@@ -142,7 +166,7 @@ public class JDialogFilterChoice extends JDialogBase {
         }
 
         JScrollPane sp = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(sp);
         mainPanel.setBorder(buildTitledBorder("Choose types of images to display"));
