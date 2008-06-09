@@ -5,31 +5,35 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelSerialCloneable;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
+
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogText;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Point3i;
-
 
 /**
  * This structure contains the basic information that describes how the image is stored on disk.
- *
- * <p>Subclasses add additional information which is particular to that image-format.</p>
- *
- * <p>This class needs work</p>
- *
- * <p>1. fixing (making consistance what to do when null pointers encountered. see getStartLocation and
- * getUnitsOfMeasure</p>
- *
- * @version  0.9 June 30, 1998
- * @author   Matthew J. McAuliffe, Ph.D.
- * @see      FileBase
+ * 
+ * <p>
+ * Subclasses add additional information which is particular to that image-format.
+ * </p>
+ * 
+ * <p>
+ * This class needs work
+ * </p>
+ * 
+ * <p>
+ * 1. fixing (making consistance what to do when null pointers encountered. see getStartLocation and getUnitsOfMeasure
+ * </p>
+ * 
+ * @version 0.9 June 30, 1998
+ * @author Matthew J. McAuliffe, Ph.D.
+ * @see FileBase
  */
 public abstract class FileInfoBase extends ModelSerialCloneable {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 6605143084958470864L;
@@ -90,7 +94,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /** Radians per second. */
     public static final int RADS = 19;
-    
+
     public static final int DEGREES = 20;
 
     /** String version of units of measurement - unknown. */
@@ -149,39 +153,32 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /** String version of units of measurement - radians per second. */
     public static final String RADS_STRING = "Radians_Per_Second";
-    
+
     /** String version of units of measurement - degrees. */
     public static final String DEGREES_STRING = "Degrees";
 
     /**
      * Array of all units --- the first value is unknown since all of the* static definitions start at 1 instead of 0.
      */
-    private static final String[] allUnits = {
-        UNKNOWN_STRING, UNKNOWN_STRING, INCHES_STRING, CENTIMETERS_STRING, ANGSTROMS_STRING, NANOMETERS_STRING,
-        MICROMETERS_STRING, MILLIMETERS_STRING, METERS_STRING, KILOMETERS_STRING, MILES_STRING, NANOSEC_STRING,
-        MICROSEC_STRING, MILLISEC_STRING, SECONDS_STRING, MINUTES_STRING, HOURS_STRING, HZ_STRING, PPM_STRING,
-        RADS_STRING,DEGREES_STRING
-    };
+    private static final String[] allUnits = {UNKNOWN_STRING, UNKNOWN_STRING, INCHES_STRING, CENTIMETERS_STRING,
+            ANGSTROMS_STRING, NANOMETERS_STRING, MICROMETERS_STRING, MILLIMETERS_STRING, METERS_STRING,
+            KILOMETERS_STRING, MILES_STRING, NANOSEC_STRING, MICROSEC_STRING, MILLISEC_STRING, SECONDS_STRING,
+            MINUTES_STRING, HOURS_STRING, HZ_STRING, PPM_STRING, RADS_STRING, DEGREES_STRING};
 
     /**
      * Array of all abbreviated units --- the first value is unknown since all of the* static definitions start at 1
      * instead of 0. Each string* can be no more than 4 characters.
      */
-    private static final String[] allAbbrevUnits = {
-        "unk", "unk", "in", "cm", "A", "nm", "um", "mm", "m", "km", "mi", "nsec", "usec", "msec", "sec", "min", "hr",
-        "hz", "ppm", "rads", "deg"
-    };
+    private static final String[] allAbbrevUnits = {"unk", "unk", "in", "cm", "A", "nm", "um", "mm", "m", "km", "mi",
+            "nsec", "usec", "msec", "sec", "min", "hr", "hz", "ppm", "rads", "deg"};
 
     /** Array of space units: inches, mm, etc. */
-    public static final String[] sUnits = {
-        "Unknown", "Unknown", "Inches", "cm", "A", "nm", "um", "mm", "m", "km", "miles"
-    };
+    public static final String[] sUnits = {"Unknown", "Unknown", "Inches", "cm", "A", "nm", "um", "mm", "m", "km",
+            "miles"};
 
     /** Array of time units: seconds, minutes, etc. */
-    public static final String[] tUnits = {
-        "nano seconds", "micro seconds", "milli seconds", "seconds", "minutes", "hours", "hertz", "part per million",
-        "radians per second"
-    };
+    public static final String[] tUnits = {"nano seconds", "micro seconds", "milli seconds", "seconds", "minutes",
+            "hours", "hertz", "part per million", "radians per second"};
 
     /** Image modality unknown. */
     public static final int UNKNOWN_MODALITY = 0;
@@ -295,16 +292,15 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     public static final int ICG = 36;
 
     /** Array of modality strings -- again, numbering starts at 1, not 0. */
-    private static final String[] modalityStr = {
-        "Unknown Modality", "Biomagenetic Imaging", "Color Flow Doppler", "Computed Radiography", "Computed Tomography",
-        "Duplex Doppler", "Diaphanography", "Digital Radiography", "Endoscopy", "General Microscopy", "Hardcody",
-        "Intraoral Radiography", "Laser Surface Scan", "Magnetic Resonance Angiography", "Mammography",
-        "Magnetic Resonance", "Magnetic Resonance Spectroscopy", "Nuclear Medicine", "Other",
-        "Positron Emission Tomography", "Panoramic XRay", "Radio Fluoroscopy", "Radiographic Imaging",
-        "Radiotherapy Dose", "Radiotherapy Image", "Radiotherapy Plan", "Radiotherapy Record",
-        "Radiotherapy Structure Set", "Slide Microscopy", "Single Photon Emission Computed Tomography", "Thermography",
-        "Ultrasound", "XRay Angiography", "External Camera Photography", "Red Free", "FA", "ICG"
-    };
+    private static final String[] modalityStr = {"Unknown Modality", "Biomagenetic Imaging", "Color Flow Doppler",
+            "Computed Radiography", "Computed Tomography", "Duplex Doppler", "Diaphanography", "Digital Radiography",
+            "Endoscopy", "General Microscopy", "Hardcody", "Intraoral Radiography", "Laser Surface Scan",
+            "Magnetic Resonance Angiography", "Mammography", "Magnetic Resonance", "Magnetic Resonance Spectroscopy",
+            "Nuclear Medicine", "Other", "Positron Emission Tomography", "Panoramic XRay", "Radio Fluoroscopy",
+            "Radiographic Imaging", "Radiotherapy Dose", "Radiotherapy Image", "Radiotherapy Plan",
+            "Radiotherapy Record", "Radiotherapy Structure Set", "Slide Microscopy",
+            "Single Photon Emission Computed Tomography", "Thermography", "Ultrasound", "XRay Angiography",
+            "External Camera Photography", "Red Free", "FA", "ICG"};
 
     /** Axis orientation unknown. */
     public static final int ORI_UNKNOWN_TYPE = 0;
@@ -328,10 +324,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     public static final int ORI_S2I_TYPE = 6;
 
     /** Array of axis orientation strings. */
-    private static final String[] axisOrientationStr = {
-        "Unknown", "Right to Left", "Left to Right", "Posterior to Anterior", "Anterior to Posterior",
-        "Inferior to Superior", "Superior to Inferior"
-    };
+    private static final String[] axisOrientationStr = {"Unknown", "Right to Left", "Left to Right",
+            "Posterior to Anterior", "Anterior to Posterior", "Inferior to Superior", "Superior to Inferior"};
 
     /** Axial orientation. */
     public static final int AXIAL = 0;
@@ -346,7 +340,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     public static final int UNKNOWN_ORIENT = 3;
 
     /** Array of image orientation strings. */
-    private static final String[] imageOrientationStr = { "Axial", "Coronal", "Sagittal", "Unknown" };
+    private static final String[] imageOrientationStr = {"Axial", "Coronal", "Sagittal", "Unknown"};
 
     /** Unknown transform ID. */
     public static final int TRANSFORM_UNKNOWN = 0;
@@ -364,9 +358,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     public static final int TRANSFORM_MNI_152 = 4;
 
     /** Array of transform ID strings. */
-    private static final String[] transformIDStr = {
-        "Unknown", "Scanner Anatomical", "Another Dataset", "Talairach Tournoux", "MNI 152"
-    };
+    private static final String[] transformIDStr = {"Unknown", "Scanner Anatomical", "Another Dataset",
+            "Talairach Tournoux", "MNI 152"};
 
     /** Indicates no compression. */
     public static final int COMPRESSION_NONE = 0;
@@ -377,15 +370,18 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /** Indicates gzip compression of an image. */
     public static final int COMPRESSION_GZIP = 2;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /**
      * axis orientation used to support image ordering and display for medical images. We support the right hand rule
      * where the origin is the upper left hand of the image with the positive axis.
-     *
-     * <p>x - left to right y - top to botton z - into the screen</p>
+     * 
+     * <p>
+     * x - left to right y - top to botton z - into the screen
+     * </p>
      */
-    protected int[] axisOrientation = { ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE };
+    protected int[] axisOrientation = {ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE};
 
     /** File name the the image was read from (image extension included - foo.img, foo.dcm ). */
     /** The file name which includes the path information. */
@@ -403,8 +399,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /**
      * The origin to support image locations (ie. DICOM, MINC ...) it is relative to the image origin. the positive axis
      * are right hand rule.
-     *
-     * <p>x - left to right y - top to botton z - into the screen</p>
+     * 
+     * <p>
+     * x - left to right y - top to botton z - into the screen
+     * </p>
      */
     protected float[] origin = new float[4]; // { 0, 0, 0, 0};
 
@@ -418,7 +416,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * Pixel or voxel resolutions for each dimension - default = 1.0. The z-dim resolution should be the spacing between
      * the centers of adjacent slices; sometimes this will match the slice thickness, but not always.
      */
-    private float[] dimResolutions = { (float) 1.0, (float) 1.0, (float) 1.0, (float) 1.0, (float) 1.0 };
+    private float[] dimResolutions = {(float) 1.0, (float) 1.0, (float) 1.0, (float) 1.0, (float) 1.0};
 
     /**
      * The Endianess of the data. Intel, DEC Alpha ***** LSB first byte LITTLE_ENDIAN (false) Motorola (MAC), SPARC
@@ -434,7 +432,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /** If the image is 2.5D. */
     private boolean is2_5D = false;
-    
+
     /** Image maximum intensity for single channel image. */
     private double max;
 
@@ -459,7 +457,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /** Image minimum intensity for the red channel of an RGB image. */
     private double minR;
 
-    // 0 indicates  0 is white
+    // 0 indicates 0 is white
     // 2 RGB
     // 3 indexed color LUT is saved with image
 
@@ -470,7 +468,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     private int offset;
 
     /** Image minimum intensity for single channel image. */
-    private short photometric = 1; // 1 indicates  0 is black
+    private short photometric = 1; // 1 indicates 0 is black
 
     /** Some file formats have a pad value for pixels outside the acquisition domain. */
     private Short pixelPadValue;
@@ -491,16 +489,17 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     private int transformID = TRANSFORM_UNKNOWN;
 
     /** Describes the units of measure for the dataset. */
-    private int[] unitsOfMeasure = { MILLIMETERS, MILLIMETERS, MILLIMETERS, SECONDS, UNKNOWN_MEASURE };
+    private int[] unitsOfMeasure = {MILLIMETERS, MILLIMETERS, MILLIMETERS, SECONDS, UNKNOWN_MEASURE};
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * fileInfo constructor.
-     *
-     * @param  name       name of file
-     * @param  directory  file directory
-     * @param  format     file storage format -- see FileBase.java
+     * 
+     * @param name name of file
+     * @param directory file directory
+     * @param format file storage format -- see FileBase.java
      */
     public FileInfoBase(String name, String directory, int format) {
 
@@ -514,21 +513,22 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         fileSuffix = FileUtility.getExtension(name);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Abstract method which is used by the extending class to display information about the window.
-     *
-     * @param  dialog  Area where image information is to be displayed.
-     * @param  matrix  Transformation matrix
+     * 
+     * @param dialog Area where image information is to be displayed.
+     * @param matrix Transformation matrix
      */
     public abstract void displayAboutInfo(JDialogBase dialog, TransMatrix matrix);
 
     /**
      * Helper method to copy important file info type to another file info type.
-     *
-     * @param  originalInfo  source file info.
-     * @param  newInfo       destination file info.
+     * 
+     * @param originalInfo source file info.
+     * @param newInfo destination file info.
      */
     public static void copyCoreInfo(FileInfoBase[] originalInfo, FileInfoBase[] newInfo) {
         FileInfoBase curInfo;
@@ -568,10 +568,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /**
      * Helper method to copy core information from one fileinfo into another, this method also has a list of fileinfos
      * NOT to copy (used by JDialogRemoveSlices).
-     *
-     * @param  originalInfo  FileInfoBase[] original file infos (longer list)
-     * @param  newInfo       FileInfoBase[] new file infos (shorter list)
-     * @param  listNoCopy    boolean[] boolean array of indices into the original fileinfos that should not be copied
+     * 
+     * @param originalInfo FileInfoBase[] original file infos (longer list)
+     * @param newInfo FileInfoBase[] new file infos (shorter list)
+     * @param listNoCopy boolean[] boolean array of indices into the original fileinfos that should not be copied
      */
     public static void copyCoreInfo(FileInfoBase[] originalInfo, FileInfoBase[] newInfo, boolean[] listNoCopy) {
         FileInfoBase curInfo;
@@ -584,7 +584,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
                 curInfo = originalInfo[0];
             }
 
-            if (!listNoCopy[i % listNoCopy.length]) {
+            if ( !listNoCopy[i % listNoCopy.length]) {
                 newInfo[j].setAxisOrientation(curInfo.getAxisOrientation());
                 newInfo[j].setDataType(curInfo.getDataType());
                 newInfo[j].setEndianess(curInfo.getEndianess());
@@ -613,10 +613,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the axis orientation associated with a string.
-     *
-     * @param   s  String to test
-     *
-     * @return  axis orientation
+     * 
+     * @param s String to test
+     * 
+     * @return axis orientation
      */
     public static int getAxisOrientationFromStr(String s) {
 
@@ -626,7 +626,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < axisOrientationStr.length; i++) {
 
                 if (FileInfoBase.getAxisOrientationStr(i).regionMatches(true, 0, s, 0,
-                                                                        FileInfoBase.getAxisOrientationStr(i).length())) {
+                        FileInfoBase.getAxisOrientationStr(i).length())) {
                     return i;
                 }
             }
@@ -640,16 +640,16 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Return the string associated with an axis orientation.
-     *
-     * @param   m  int representing the axis orientation (see the static definitions)
-     *
-     * @return  String representing the string associated with the axis orientation.
+     * 
+     * @param m int representing the axis orientation (see the static definitions)
+     * 
+     * @return String representing the string associated with the axis orientation.
      */
     public static String getAxisOrientationStr(int m) {
 
         try {
             return FileInfoBase.axisOrientationStr[m];
-        } catch (ArrayIndexOutOfBoundsException aie) { }
+        } catch (ArrayIndexOutOfBoundsException aie) {}
 
         return "";
 
@@ -657,10 +657,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the image data type associated with a string.
-     *
-     * @param   s  String to test
-     *
-     * @return  data type
+     * 
+     * @param s String to test
+     * 
+     * @return data type
      */
     public static int getDataTypeFromStr(String s) {
 
@@ -676,16 +676,16 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the endianess associated with a string.
-     *
-     * @param   s  String to test
-     *
-     * @return  Big endian or little endian
+     * 
+     * @param s String to test
+     * 
+     * @return Big endian or little endian
      */
     public static boolean getEndianessFromStr(String s) {
 
-        if ((s.indexOf("Big") != -1) || (s.indexOf("big") != -1) || (s.indexOf("BIG") != -1)) {
+        if ( (s.indexOf("Big") != -1) || (s.indexOf("big") != -1) || (s.indexOf("BIG") != -1)) {
             return FileBase.BIG_ENDIAN;
-        } else if ((s.indexOf("Little") != -1) || (s.indexOf("little") != -1) || (s.indexOf("LITTLE") != -1)) {
+        } else if ( (s.indexOf("Little") != -1) || (s.indexOf("little") != -1) || (s.indexOf("LITTLE") != -1)) {
             return FileBase.LITTLE_ENDIAN;
         }
 
@@ -694,10 +694,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the image orientation associated with a string.
-     *
-     * @param   s  String to test
-     *
-     * @return  image orientation
+     * 
+     * @param s String to test
+     * 
+     * @return image orientation
      */
     public static int getImageOrientationFromStr(String s) {
 
@@ -707,7 +707,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < 3; i++) {
 
                 if (FileInfoBase.getImageOrientationStr(i).regionMatches(true, 0, s, 0,
-                                                                         FileInfoBase.getImageOrientationStr(i).length())) {
+                        FileInfoBase.getImageOrientationStr(i).length())) {
                     return i;
                 }
             }
@@ -721,16 +721,16 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Return the string associated with an image orientation.
-     *
-     * @param   m  the orientation (see the static definitions)
-     *
-     * @return  the string associated with the orientation.
+     * 
+     * @param m the orientation (see the static definitions)
+     * 
+     * @return the string associated with the orientation.
      */
     public static String getImageOrientationStr(int m) {
 
         try {
             return FileInfoBase.imageOrientationStr[m];
-        } catch (ArrayIndexOutOfBoundsException aie) { }
+        } catch (ArrayIndexOutOfBoundsException aie) {}
 
         return "";
 
@@ -738,10 +738,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the modality associated with a string.
-     *
-     * @param   s  String to test
-     *
-     * @return  modality
+     * 
+     * @param s String to test
+     * 
+     * @return modality
      */
     public static int getModalityFromStr(String s) {
 
@@ -750,8 +750,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
             for (int i = 0; i < modalityStr.length; i++) {
 
-                if (FileInfoBase.getModalityStr(i).regionMatches(true, 0, s, 0,
-                                                                 FileInfoBase.getModalityStr(i).length())) {
+                if (FileInfoBase.getModalityStr(i)
+                        .regionMatches(true, 0, s, 0, FileInfoBase.getModalityStr(i).length())) {
                     return i;
                 }
             }
@@ -765,8 +765,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Return all the modality strings as an array.
-     *
-     * @return  String[] - array containing the strings associated with modalities.
+     * 
+     * @return String[] - array containing the strings associated with modalities.
      */
     public static String[] getModalityStr() {
 
@@ -776,16 +776,16 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Return the string associated with a modality.
-     *
-     * @param   m  the modality (see the static definitions)
-     *
-     * @return  the string associated with the modality.
+     * 
+     * @param m the modality (see the static definitions)
+     * 
+     * @return the string associated with the modality.
      */
     public static String getModalityStr(int m) {
 
         try {
             return FileInfoBase.modalityStr[m];
-        } catch (ArrayIndexOutOfBoundsException aie) { }
+        } catch (ArrayIndexOutOfBoundsException aie) {}
 
         return "";
 
@@ -793,12 +793,12 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the number of bytes per pixel based on the data type.
-     *
-     * @param   dataType  the data type.
-     *
-     * @return  the number of bytes per pixel.
-     *
-     * @throws  IllegalArgumentException  DOCUMENT ME!
+     * 
+     * @param dataType the data type.
+     * 
+     * @return the number of bytes per pixel.
+     * 
+     * @throws IllegalArgumentException DOCUMENT ME!
      */
     public static int getNumOfBytesPerPixel(int dataType) {
 
@@ -848,8 +848,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Return all the abbreviated units of measure strings as an array.
-     *
-     * @return  String[] - array containing the abbreviated strings associated with units of measure.
+     * 
+     * @return String[] - array containing the abbreviated strings associated with units of measure.
      */
     public static String[] getUnitsOfMeasureAbbrevStr() {
 
@@ -857,19 +857,18 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     } // end getUnitsOfMeasureAbbrevStr()
 
-
     /**
      * Return the abbreviated string associated with a units of measure.
-     *
-     * @param   units  the units of measure (see the static definitions)
-     *
-     * @return  the abbreviated string associated with the units.
+     * 
+     * @param units the units of measure (see the static definitions)
+     * 
+     * @return the abbreviated string associated with the units.
      */
     public static String getUnitsOfMeasureAbbrevStr(int units) {
 
         try {
             return FileInfoBase.allAbbrevUnits[units];
-        } catch (ArrayIndexOutOfBoundsException aie) { }
+        } catch (ArrayIndexOutOfBoundsException aie) {}
 
         return "";
 
@@ -877,10 +876,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the units of measure.
-     *
-     * @param   s  DOCUMENT ME!
-     *
-     * @return  int units (Inches or millimeters);
+     * 
+     * @param s DOCUMENT ME!
+     * 
+     * @return int units (Inches or millimeters);
      */
     public static int getUnitsOfMeasureFromStr(String s) {
 
@@ -891,14 +890,14 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < allUnits.length; i++) {
 
                 if (FileInfoBase.getUnitsOfMeasureStr(i).regionMatches(true, 0, s, 0,
-                                                                      FileInfoBase.getUnitsOfMeasureStr(i).length())) {
+                        FileInfoBase.getUnitsOfMeasureStr(i).length())) {
                     if (i == 0) {
                         // i = 1
                         return FileInfoBase.UNKNOWN_MEASURE;
                     }
                     return i;
                 } else if (FileInfoBase.getUnitsOfMeasureAbbrevStr(i).regionMatches(true, 0, s, 0,
-                                                                                    FileInfoBase.getUnitsOfMeasureAbbrevStr(i).length())) {
+                        FileInfoBase.getUnitsOfMeasureAbbrevStr(i).length())) {
                     if (i == 0) {
                         // i = 1;
                         return FileInfoBase.UNKNOWN_MEASURE;
@@ -916,8 +915,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Return all the units of measure strings as an array.
-     *
-     * @return  String[] - array containing the strings associated with units of measure.
+     * 
+     * @return String[] - array containing the strings associated with units of measure.
      */
     public static String[] getUnitsOfMeasureStr() {
 
@@ -927,16 +926,16 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Return the string associated with a units of measure.
-     *
-     * @param   units  the units of measure (see the static definitions)
-     *
-     * @return  the string associated with the units.
+     * 
+     * @param units the units of measure (see the static definitions)
+     * 
+     * @return the string associated with the units.
      */
     public static String getUnitsOfMeasureStr(int units) {
 
         try {
             return FileInfoBase.allUnits[units];
-        } catch (ArrayIndexOutOfBoundsException aie) { }
+        } catch (ArrayIndexOutOfBoundsException aie) {}
 
         return "";
 
@@ -945,10 +944,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /**
      * Helper method that returns the opposite axis orientation of the one sent in; that is, R2L for L2R, A2P for P2A,
      * etc.
-     *
-     * @param   orient  DOCUMENT ME!
-     *
-     * @return  int Opposite image orientation
+     * 
+     * @param orient DOCUMENT ME!
+     * 
+     * @return int Opposite image orientation
      */
     public static int oppositeOrient(int orient) {
         int neworient = -1;
@@ -986,31 +985,31 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /**
      * Helper method to determine if axis A and axis B are the same axis: that is, if both are the patient x-axis, they
      * will be either R2L or L2R.
-     *
-     * @param   axisA  Axis A: one of the defined ORI_ types.
-     * @param   axisB  Axis B: one of the defined ORI_ types.
-     *
-     * @return  boolean <code>true</code> if axis A and axis B are the same axis
+     * 
+     * @param axisA Axis A: one of the defined ORI_ types.
+     * @param axisB Axis B: one of the defined ORI_ types.
+     * 
+     * @return boolean <code>true</code> if axis A and axis B are the same axis
      */
     public static boolean sameAxis(int axisA, int axisB) {
 
-        if ((axisA == ORI_R2L_TYPE) || (axisA == ORI_L2R_TYPE)) {
+        if ( (axisA == ORI_R2L_TYPE) || (axisA == ORI_L2R_TYPE)) {
 
-            if ((axisB == ORI_R2L_TYPE) || (axisB == ORI_L2R_TYPE)) {
+            if ( (axisB == ORI_R2L_TYPE) || (axisB == ORI_L2R_TYPE)) {
                 return true;
             } else {
                 return false;
             }
-        } else if ((axisA == ORI_A2P_TYPE) || (axisA == ORI_P2A_TYPE)) {
+        } else if ( (axisA == ORI_A2P_TYPE) || (axisA == ORI_P2A_TYPE)) {
 
-            if ((axisB == ORI_A2P_TYPE) || (axisB == ORI_P2A_TYPE)) {
+            if ( (axisB == ORI_A2P_TYPE) || (axisB == ORI_P2A_TYPE)) {
                 return true;
             } else {
                 return false;
             }
-        } else if ((axisA == ORI_S2I_TYPE) || (axisA == ORI_I2S_TYPE)) {
+        } else if ( (axisA == ORI_S2I_TYPE) || (axisA == ORI_I2S_TYPE)) {
 
-            if ((axisB == ORI_S2I_TYPE) || (axisB == ORI_I2S_TYPE)) {
+            if ( (axisB == ORI_S2I_TYPE) || (axisB == ORI_I2S_TYPE)) {
                 return true;
             } else {
                 return false;
@@ -1022,8 +1021,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Displays the file information.
-     *
-     * @param  dialog  dialog box that is written to
+     * 
+     * @param dialog dialog box that is written to
      */
     public void displayAboutInfo(JDialogBase dialog) {
         displayAboutInfo(dialog, null);
@@ -1031,9 +1030,9 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Method called by many extending classes to display basic information in the dialog common to all images.
-     *
-     * @param  dialog  Area where image information is to be displayed.
-     * @param  matrix  Transformation matrix
+     * 
+     * @param dialog Area where image information is to be displayed.
+     * @param matrix Transformation matrix
      */
     public void displayPrimaryInfo(JDialogText dialog, TransMatrix matrix) {
         dialog.setMessage("\n                     Image information\n\n");
@@ -1044,7 +1043,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         dialog.append("Type:                 " + ModelStorageBase.getBufferTypeStr(dataType) + "\n");
 
-        if (!ModelImage.isColorImage(getDataType())) {
+        if ( !ModelImage.isColorImage(getDataType())) {
             dialog.append("Min:                  " + min + "\n");
             dialog.append("Max:                  " + max + "\n");
         } else {
@@ -1263,19 +1262,19 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
                     case HOURS:
                         dialog.append("Hours \n");
                         break;
-                        
+
                     case HZ:
                         dialog.append("Hertz \n");
                         break;
-                        
+
                     case PPM:
                         dialog.append("Parts per million \n");
                         break;
-                        
+
                     case RADS:
                         dialog.append("Radians per second \n");
                         break;
-                        
+
                     case DEGREES:
                         dialog.append("Degrees \n");
                         break;
@@ -1320,7 +1319,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         try {
             super.finalize();
-        } catch (Throwable er) { }
+        } catch (Throwable er) {}
     }
 
     /* ********************************************************************** */
@@ -1331,8 +1330,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the area unit for the data. Assumes both dimensions are the same units.
-     *
-     * @return  String associated volume unit of measure.
+     * 
+     * @return String associated volume unit of measure.
      */
     public String getAreaUnitsOfMeasureStr() {
         String mStr = new String();
@@ -1367,8 +1366,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Get the direction for accessing each axis of data. This is based on the values in the axisOrientation array.
-     *
-     * @return  int[] Array of +/-1 values with one entry for each axis. A -1 indicates that the direction is reversed.
+     * 
+     * @return int[] Array of +/-1 values with one entry for each axis. A -1 indicates that the direction is reversed.
      */
     public int[] getAxisDirection() {
 
@@ -1377,7 +1376,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         for (int i = 0; i < axisOrient.length; i++) {
 
-            if ((axisOrient[i] == ORI_R2L_TYPE) || (axisOrient[i] == ORI_A2P_TYPE) || (axisOrient[i] == ORI_I2S_TYPE)) {
+            if ( (axisOrient[i] == ORI_R2L_TYPE) || (axisOrient[i] == ORI_A2P_TYPE) || (axisOrient[i] == ORI_I2S_TYPE)) {
                 direction[i] = 1;
             } else {
                 direction[i] = -1;
@@ -1389,10 +1388,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns orientation of each axis.
-     *
-     * @return  int[] orientation of each axis
-     *
-     * @see     #setAxisOrientation(int[])
+     * 
+     * @return int[] orientation of each axis
+     * 
+     * @see #setAxisOrientation(int[])
      */
     public int[] getAxisOrientation() {
         return axisOrientation;
@@ -1400,12 +1399,12 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns orientation of entered axis.
-     *
-     * @param   axis  Axis to get orientation for
-     *
-     * @return  int orientation of specified axis
-     *
-     * @see     #setAxisOrientation(int, int)
+     * 
+     * @param axis Axis to get orientation for
+     * 
+     * @return int orientation of specified axis
+     * 
+     * @see #setAxisOrientation(int, int)
      */
     public int getAxisOrientation(int axis) {
         return axisOrientation[axis];
@@ -1413,8 +1412,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Gets the compression type.
-     *
-     * @return  the compression type
+     * 
+     * @return the compression type
      */
     public int getCompressionType() {
         return this.compressionType;
@@ -1422,8 +1421,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns data type.
-     *
-     * @return  int type of data in file
+     * 
+     * @return int type of data in file
      */
     public final int getDataType() {
         return dataType;
@@ -1431,8 +1430,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Descibes file endianess.
-     *
-     * @return  boolean <code>false</code> = litteEndian format <code>true</code> = bigEndian format
+     * 
+     * @return boolean <code>false</code> = litteEndian format <code>true</code> = bigEndian format
      */
     public final boolean getEndianess() {
         return endianess;
@@ -1440,8 +1439,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the dimensionality of the image.
-     *
-     * @return  int[] units (Inches or millimeters);
+     * 
+     * @return int[] units (Inches or millimeters);
      */
     public final int[] getExtents() {
         return extents;
@@ -1449,8 +1448,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns counter to start of image data.
-     *
-     * @return  String that indicates location of the file
+     * 
+     * @return String that indicates location of the file
      */
     public final String getFileDirectory() {
         return FileUtility.getFileDirectory(fileName);
@@ -1458,8 +1457,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns file format.
-     *
-     * @return  int file format (TIFF, raw, Analyze...)
+     * 
+     * @return int file format (TIFF, raw, Analyze...)
      */
     public final int getFileFormat() {
         return fileFormat;
@@ -1467,8 +1466,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the file name.
-     *
-     * @return  String indicating file name
+     * 
+     * @return String indicating file name
      */
     public final String getFileName() {
         return FileUtility.getFileName(fileName);
@@ -1476,8 +1475,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the file suffix.
-     *
-     * @return  String representing the filename suffix
+     * 
+     * @return String representing the filename suffix
      */
     public final String getFileSuffix() {
         return fileSuffix;
@@ -1485,8 +1484,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the image orientation.
-     *
-     * @return  int representing orientation
+     * 
+     * @return int representing orientation
      */
     public final int getImageOrientation() {
         return imageOrientation;
@@ -1494,12 +1493,12 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Return whether or not the image is 2.5D (Z resolution).
-     *
-     * @return  boolean is 2.5 D
+     * 
+     * @return boolean is 2.5 D
      */
     public final boolean getIs2_5D() {
 
-        if ((unitsOfMeasure.length > 2) && ((unitsOfMeasure[2] > 10) && (unitsOfMeasure[2] < 17))) {
+        if ( (unitsOfMeasure.length > 2) && ( (unitsOfMeasure[2] > 10) && (unitsOfMeasure[2] < 17))) {
             return true;
         }
 
@@ -1508,8 +1507,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  float[] LPSOrigin
+     * 
+     * @return float[] LPSOrigin
      */
     public float[] getLPSOrigin() {
         float[] LPSOrigin = new float[3];
@@ -1519,16 +1518,16 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         for (int j = 0; j < 3; j++) {
 
-            if ((getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE) ||
-                    (getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE)) {
+            if ( (getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE)
+                    || (getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE)) {
                 LPSOrigin[0] = getOrigin()[j];
 
-            } else if ((getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE) ||
-                           (getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE)) {
+            } else if ( (getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE)
+                    || (getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE)) {
                 LPSOrigin[1] = getOrigin()[j];
 
-            } else if ((getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE) ||
-                           (getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE)) {
+            } else if ( (getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE)
+                    || (getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE)) {
                 LPSOrigin[2] = getOrigin()[j];
 
             }
@@ -1539,8 +1538,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns max pixel value of the image.
-     *
-     * @return  double Returns double max pixel value of the image
+     * 
+     * @return double Returns double max pixel value of the image
      */
     public final double getMax() {
         return max;
@@ -1548,8 +1547,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns max blue pixel value of the image.
-     *
-     * @return  double Returns double blue max pixel value of the image
+     * 
+     * @return double Returns double blue max pixel value of the image
      */
     public final double getMaxB() {
         return maxB;
@@ -1557,8 +1556,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns max green pixel value of the image.
-     *
-     * @return  double Returns double green max pixel value of the image
+     * 
+     * @return double Returns double green max pixel value of the image
      */
     public final double getMaxG() {
         return maxG;
@@ -1566,8 +1565,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns max red pixel value of the image.
-     *
-     * @return  double Returns double red max pixel value of the image
+     * 
+     * @return double Returns double red max pixel value of the image
      */
     public final double getMaxR() {
         return maxR;
@@ -1575,8 +1574,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns min pixel value of the image.
-     *
-     * @return  double Returns double min pixel value of the image
+     * 
+     * @return double Returns double min pixel value of the image
      */
     public final double getMin() {
         return min;
@@ -1584,8 +1583,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns min blue pixel value of the image.
-     *
-     * @return  double Returns double blue min pixel value of the image
+     * 
+     * @return double Returns double blue min pixel value of the image
      */
     public final double getMinB() {
         return minB;
@@ -1593,8 +1592,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns min green pixel value of the image.
-     *
-     * @return  couble Returns double green min pixel value of the image
+     * 
+     * @return couble Returns double green min pixel value of the image
      */
     public final double getMinG() {
         return minG;
@@ -1602,8 +1601,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns min red pixel value of the image.
-     *
-     * @return  couble Returns double red min pixel value of the image
+     * 
+     * @return couble Returns double red min pixel value of the image
      */
     public final double getMinR() {
         return minR;
@@ -1611,8 +1610,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the modality.
-     *
-     * @return  int indicating modality
+     * 
+     * @return int indicating modality
      */
     public final int getModality() {
         return modality;
@@ -1620,8 +1619,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns whether or not the image is in multiple files (tiff).
-     *
-     * @return  boolean true indicates multiple files, false o.w.
+     * 
+     * @return boolean true indicates multiple files, false o.w.
      */
     public final boolean getMultiFile() {
         return multiFile;
@@ -1629,8 +1628,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the header offset.
-     *
-     * @return  int header offset
+     * 
+     * @return int header offset
      */
     public final int getOffset() {
         return offset;
@@ -1638,8 +1637,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the origin.
-     *
-     * @return  float[] the origin
+     * 
+     * @return float[] the origin
      */
     public float[] getOrigin() {
         return origin;
@@ -1647,10 +1646,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the origin value of the requested axis.
-     *
-     * @param   axis  requested axis; x is 0, y is 1, z is 2
-     *
-     * @return  float orientation of axis
+     * 
+     * @param axis requested axis; x is 0, y is 1, z is 2
+     * 
+     * @return float orientation of axis
      */
     public float getOrigin(int axis) {
 
@@ -1665,10 +1664,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Gets the origin of a particular slice; resets for the z dimension.
-     *
-     * @param   slice  Z-dimension slice.
-     *
-     * @return  float[] New start locations
+     * 
+     * @param slice Z-dimension slice.
+     * 
+     * @return float[] New start locations
      */
     public float[] getOriginAtSlice(int slice) {
         float[] newOrigin = new float[4];
@@ -1679,8 +1678,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         int direction = 1;
 
-        if ((axisOrientation[2] == ORI_L2R_TYPE) || (axisOrientation[2] == ORI_P2A_TYPE) ||
-                (axisOrientation[2] == ORI_S2I_TYPE)) {
+        if ( (axisOrientation[2] == ORI_L2R_TYPE) || (axisOrientation[2] == ORI_P2A_TYPE)
+                || (axisOrientation[2] == ORI_S2I_TYPE)) {
             direction = -1;
         }
 
@@ -1691,31 +1690,31 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Photometric interpretion.
-     *
+     * 
      * <table border=true>
-     *   <tr>
-     *     <td>1 indicates</td>
-     *     <td>0 is black</td>
-     *   </tr>
-     *   <tr>
-     *     <td>0 indicates</td>
-     *     <td>0 is white</td>
-     *   </tr>
-     *   <tr>
-     *     <td>2</td>
-     *     <td>RGB</td>
-     *   </tr>
-     *   <tr>
-     *     <td>3</td>
-     *     <td>indexed color LUT is saved with image</td>
-     *   </tr>
-     *   <tr>
-     *     <td>4</td>
-     *     <td>Transparency Mask</td>
-     *   </tr>
+     * <tr>
+     * <td>1 indicates</td>
+     * <td>0 is black</td>
+     * </tr>
+     * <tr>
+     * <td>0 indicates</td>
+     * <td>0 is white</td>
+     * </tr>
+     * <tr>
+     * <td>2</td>
+     * <td>RGB</td>
+     * </tr>
+     * <tr>
+     * <td>3</td>
+     * <td>indexed color LUT is saved with image</td>
+     * </tr>
+     * <tr>
+     * <td>4</td>
+     * <td>Transparency Mask</td>
+     * </tr>
      * </table>
-     *
-     * @return  short Returns interpretation
+     * 
+     * @return short Returns interpretation
      */
     public final short getPhotometric() {
         return photometric;
@@ -1723,8 +1722,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns pixel pad value.
-     *
-     * @return  Short Returns pixel pad value
+     * 
+     * @return Short Returns pixel pad value
      */
     public final Short getPixelPadValue() {
         return pixelPadValue;
@@ -1732,8 +1731,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the intercept.
-     *
-     * @return  double rescale intercept
+     * 
+     * @return double rescale intercept
      */
     public final double getRescaleIntercept() {
         return rescaleIntercept;
@@ -1741,8 +1740,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the slope.
-     *
-     * @return  double rescale slope
+     * 
+     * @return double rescale slope
      */
     public final double getRescaleSlope() {
         return rescaleSlope;
@@ -1750,10 +1749,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the resolution of the requested dimension.
-     *
-     * @param   dim  The dimension to return the resolution of.
-     *
-     * @return  The resolution of one of the image dimensions.
+     * 
+     * @param dim The dimension to return the resolution of.
+     * 
+     * @return The resolution of one of the image dimensions.
      */
     public final float getResolution(int dim) {
         return dimResolutions[dim];
@@ -1761,8 +1760,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns each dimension's resolution.
-     *
-     * @return  float[] dimension resolutions
+     * 
+     * @return float[] dimension resolutions
      */
     public final float[] getResolutions() {
         return dimResolutions;
@@ -1770,13 +1769,13 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the size of the slice image in byte which represented by this object.
-     *
-     * @return  the size of the slice image in byte which represented by this object.
+     * 
+     * @return the size of the slice image in byte which represented by this object.
      */
     public int getSize() {
         int[] extents = this.getExtents();
 
-        if ((extents == null) || (extents.length < 2)) {
+        if ( (extents == null) || (extents.length < 2)) {
             return -1;
         }
 
@@ -1787,8 +1786,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the thickness of the image slices.
-     *
-     * @return  slice thickness
+     * 
+     * @return slice thickness
      */
     public final float getSliceThickness() {
         return sliceThickness;
@@ -1796,17 +1795,16 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the transform ID associated with the matrix.
-     *
-     * @return  int transform ID
+     * 
+     * @return int transform ID
      */
     // public final int getTransformID() {
     // return transformID;
     // }
-
     /**
      * Returns the units of measure.
-     *
-     * @return  int[] units (Inches or millimeters);
+     * 
+     * @return int[] units (Inches or millimeters);
      */
     public final int[] getUnitsOfMeasure() {
         for (int i = 0; i < unitsOfMeasure.length; i++) {
@@ -1819,15 +1817,15 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the units of measure.
-     *
-     * @param   dim  dimension index
-     *
-     * @return  int units (Inches or millimeters);
+     * 
+     * @param dim dimension index
+     * 
+     * @return int units (Inches or millimeters);
      */
     public int getUnitsOfMeasure(int dim) {
 
         // could try catch array out of bounds ...
-        if ((unitsOfMeasure != null) && (dim < unitsOfMeasure.length) && (dim >= 0)) {
+        if ( (unitsOfMeasure != null) && (dim < unitsOfMeasure.length) && (dim >= 0)) {
             if (unitsOfMeasure[dim] == 0) {
                 // = 1
                 unitsOfMeasure[dim] = FileInfoBase.UNKNOWN_MEASURE;
@@ -1840,11 +1838,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         }
     }
 
-
     /**
      * Returns the volume unit for the data. Assumes all three dimensions are the same units.
-     *
-     * @return  String associated volume unit of measure.
+     * 
+     * @return String associated volume unit of measure.
      */
     public String getVolumeUnitsOfMeasureStr() {
         String mStr = new String();
@@ -1879,13 +1876,13 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * isDicomOrdered() returns true if the file is in dicom order, false otherwise.
-     *
-     * @return  true if the file is in dicom order, false otherwise
+     * 
+     * @return true if the file is in dicom order, false otherwise
      */
     public boolean isDicomOrdered() {
 
-        if ((axisOrientation[0] == FileInfoBase.ORI_R2L_TYPE) && (axisOrientation[1] == FileInfoBase.ORI_A2P_TYPE) &&
-                (axisOrientation[2] == FileInfoBase.ORI_I2S_TYPE)) {
+        if ( (axisOrientation[0] == FileInfoBase.ORI_R2L_TYPE) && (axisOrientation[1] == FileInfoBase.ORI_A2P_TYPE)
+                && (axisOrientation[2] == FileInfoBase.ORI_I2S_TYPE)) {
             return true;
         }
 
@@ -1894,14 +1891,14 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets (copies) orientation of each axis.
-     *
-     * @param  axOrient  axis orientation array
-     *
-     * @see    #getAxisOrientation()
+     * 
+     * @param axOrient axis orientation array
+     * 
+     * @see #getAxisOrientation()
      */
     public void setAxisOrientation(int[] axOrient) {
 
-        if ((axOrient == null) || (axOrient.length != 3)) {
+        if ( (axOrient == null) || (axOrient.length != 3)) {
             Preferences.debug("Axis orientations array must be of length 3.\n");
 
             return;
@@ -1915,22 +1912,22 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /**
      * Sets the image orientation in the specified axis. Creates the axisOrientation if the array has not yet been
      * created.
-     *
-     * @param  axOrient  orientation
-     * @param  axis      axis of orientation; x is 0, y is 1, z is 2.
+     * 
+     * @param axOrient orientation
+     * @param axis axis of orientation; x is 0, y is 1, z is 2.
      */
     public void setAxisOrientation(int axOrient, int axis) {
 
         // System.out.println("axis orient is " + axOrient);
-        if ((axis < 0) || (axis > 2)) {
+        if ( (axis < 0) || (axis > 2)) {
             Preferences.debug("Error: Axis must be 0, 1, or 2.\n");
 
             return;
         }
 
-        if ((axOrient == ORI_UNKNOWN_TYPE) || (axOrient == ORI_A2P_TYPE) || (axOrient == ORI_P2A_TYPE) ||
-                (axOrient == ORI_R2L_TYPE) || (axOrient == ORI_L2R_TYPE) || (axOrient == ORI_S2I_TYPE) ||
-                (axOrient == ORI_I2S_TYPE)) {
+        if ( (axOrient == ORI_UNKNOWN_TYPE) || (axOrient == ORI_A2P_TYPE) || (axOrient == ORI_P2A_TYPE)
+                || (axOrient == ORI_R2L_TYPE) || (axOrient == ORI_L2R_TYPE) || (axOrient == ORI_S2I_TYPE)
+                || (axOrient == ORI_I2S_TYPE)) {
             axisOrientation[axis] = axOrient;
         } else {
             axisOrientation[axis] = ORI_UNKNOWN_TYPE;
@@ -1940,8 +1937,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets the compression type.
-     *
-     * @param  type  compression type
+     * 
+     * @param type compression type
      */
     public void setCompressionType(int type) {
         this.compressionType = type;
@@ -1949,8 +1946,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets format of image data.
-     *
-     * @param  type  data type defined in ModelStorageBase
+     * 
+     * @param type data type defined in ModelStorageBase
      */
     public final void setDataType(int type) {
         dataType = type;
@@ -1958,8 +1955,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Describes file endianess.
-     *
-     * @param  endness  endianess of the file format
+     * 
+     * @param endness endianess of the file format
      */
     public void setEndianess(boolean endness) {
         endianess = endness;
@@ -1967,8 +1964,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets dimensionality of the images.
-     *
-     * @param  dims  dimensionality for x,y, and z ... dimensions
+     * 
+     * @param dims dimensionality for x,y, and z ... dimensions
      */
     public final void setExtents(int[] dims) {
 
@@ -1979,9 +1976,9 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets dimensionality for image, on a per dimension basis.
-     *
-     * @param  extent  Extent of this dimension
-     * @param  dim     Dimension to set extent in
+     * 
+     * @param extent Extent of this dimension
+     * @param dim Dimension to set extent in
      */
     public void setExtents(int extent, int dim) {
         extents[dim] = extent;
@@ -1989,8 +1986,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  directory  DOCUMENT ME!
+     * 
+     * @param directory DOCUMENT ME!
      */
     public final void setFileDirectory(String directory) {
         setFileName(directory + FileUtility.getFileName(fileName));
@@ -1998,8 +1995,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets the file format.
-     *
-     * @param  format  File format
+     * 
+     * @param format File format
      */
     public final void setFileFormat(int format) {
         fileFormat = format;
@@ -2007,12 +2004,12 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets the file name.
-     *
-     * @param  fname  image file name
+     * 
+     * @param fname image file name
      */
     public void setFileName(String fname) {
 
-        if ((fname == null) || (fname.length() == 0)) {
+        if ( (fname == null) || (fname.length() == 0)) {
             fileName = FileUtility.getFileDirectory(fileName);
         } else if (FileUtility.getFileDirectory(fname) == null) {
 
@@ -2028,8 +2025,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets the file suffix.
-     *
-     * @param  suffix  file suffix
+     * 
+     * @param suffix file suffix
      */
     public final void setFileSuffix(String suffix) {
         fileSuffix = suffix;
@@ -2037,8 +2034,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets the image orientation.
-     *
-     * @param  orient  Orientation.
+     * 
+     * @param orient Orientation.
      */
     public void setImageOrientation(int orient) {
         imageOrientation = orient;
@@ -2046,8 +2043,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets max pixel value of image.
-     *
-     * @param  Max  max pixel value
+     * 
+     * @param Max max pixel value
      */
     public void setMax(double Max) {
         max = Max;
@@ -2055,8 +2052,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets max blue pixel value of image.
-     *
-     * @param  Max  max blue pixel value
+     * 
+     * @param Max max blue pixel value
      */
     public final void setMaxB(double Max) {
         maxB = Max;
@@ -2064,8 +2061,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets max green pixel value of image.
-     *
-     * @param  Max  max green pixel value
+     * 
+     * @param Max max green pixel value
      */
     public void setMaxG(double Max) {
         maxG = Max;
@@ -2073,8 +2070,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets max red pixel value of image.
-     *
-     * @param  Max  max red pixel value
+     * 
+     * @param Max max red pixel value
      */
     public void setMaxR(double Max) {
         maxR = Max;
@@ -2082,8 +2079,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets min pixel value of image.
-     *
-     * @param  Min  Min pixel value
+     * 
+     * @param Min Min pixel value
      */
     public final void setMin(double Min) {
         min = Min;
@@ -2091,8 +2088,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets min blue pixel value of image.
-     *
-     * @param  Min  min blue pixel value
+     * 
+     * @param Min min blue pixel value
      */
     public final void setMinB(double Min) {
         minB = Min;
@@ -2100,8 +2097,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets min green pixel value of image.
-     *
-     * @param  Min  min green pixel value
+     * 
+     * @param Min min green pixel value
      */
     public final void setMinG(double Min) {
         minG = Min;
@@ -2109,8 +2106,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets min red pixel value of image.
-     *
-     * @param  Min  min red pixel value
+     * 
+     * @param Min min red pixel value
      */
     public final void setMinR(double Min) {
         minR = Min;
@@ -2118,8 +2115,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets the modality.
-     *
-     * @param  mod  modality
+     * 
+     * @param mod modality
      */
     public final void setModality(int mod) {
         modality = mod;
@@ -2127,8 +2124,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets the flag for multiple files.
-     *
-     * @param  flag  <code>true</code> indicates multiple files for image, <code>false</code> o.w.
+     * 
+     * @param flag <code>true</code> indicates multiple files for image, <code>false</code> o.w.
      */
     public final void setMultiFile(boolean flag) {
         multiFile = flag;
@@ -2136,8 +2133,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets the header offset.
-     *
-     * @param  off  the header offset
+     * 
+     * @param off the header offset
      */
     public final void setOffset(int off) {
         offset = off;
@@ -2145,14 +2142,14 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets the origin.
-     *
-     * @param  originlocat  origin location array
-     *
-     * @see    #getStartLocations()
+     * 
+     * @param originlocat origin location array
+     * 
+     * @see #getStartLocations()
      */
     public void setOrigin(float[] originlocat) {
 
-        if ((originlocat == null) || (originlocat.length > 4)) {
+        if ( (originlocat == null) || (originlocat.length > 4)) {
             Preferences.debug("Start locations array must be of length less than or equal to 4.\n");
 
             return;
@@ -2163,15 +2160,15 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets the start location in the specified axis. creates the startLocations if the arrray has not yet been created.
-     *
-     * @param  originCoord  start location
-     * @param  axis         axis of orientation; x is 0, y is 1, z is 2
-     *
-     * @see    #getStartLocations(int)
+     * 
+     * @param originCoord start location
+     * @param axis axis of orientation; x is 0, y is 1, z is 2
+     * 
+     * @see #getStartLocations(int)
      */
     public void setOrigin(float originCoord, int axis) {
 
-        if ((axis < 0) || (axis > 3)) {
+        if ( (axis < 0) || (axis > 3)) {
             Preferences.debug("Error: Axis must be 0, 1, 2, or 3.\n");
 
             return;
@@ -2182,27 +2179,27 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets photometric interpretation.
-     *
+     * 
      * <table border=true>
-     *   <tr>
-     *     <td>1 indicates</td>
-     *     <td>0 is black</td>
-     *   </tr>
-     *   <tr>
-     *     <td>0 indicates</td>
-     *     <td>0 is white</td>
-     *   </tr>
-     *   <tr>
-     *     <td>2</td>
-     *     <td>RGB</td>
-     *   </tr>
-     *   <tr>
-     *     <td>3</td>
-     *     <td>indexed color LUT is saved with image</td>
-     *   </tr>
+     * <tr>
+     * <td>1 indicates</td>
+     * <td>0 is black</td>
+     * </tr>
+     * <tr>
+     * <td>0 indicates</td>
+     * <td>0 is white</td>
+     * </tr>
+     * <tr>
+     * <td>2</td>
+     * <td>RGB</td>
+     * </tr>
+     * <tr>
+     * <td>3</td>
+     * <td>indexed color LUT is saved with image</td>
+     * </tr>
      * </table>
-     *
-     * @param  value  photometric value
+     * 
+     * @param value photometric value
      */
     public void setPhotometric(short value) {
         photometric = value;
@@ -2210,8 +2207,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets pixel pad value: used in some Dicom images.
-     *
-     * @param  value  pixel pad value
+     * 
+     * @param value pixel pad value
      */
     public final void setPixelPadValue(Short value) {
         pixelPadValue = value;
@@ -2219,8 +2216,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets the rescale intercept.
-     *
-     * @param  intercept  the intercept
+     * 
+     * @param intercept the intercept
      */
     public final void setRescaleIntercept(double intercept) {
         rescaleIntercept = intercept;
@@ -2228,8 +2225,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets the rescale slope.
-     *
-     * @param  slope  the slope
+     * 
+     * @param slope the slope
      */
     public final void setRescaleSlope(double slope) {
         rescaleSlope = slope;
@@ -2237,8 +2234,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets the resolutions of the image.
-     *
-     * @param  resolutions  resolution object
+     * 
+     * @param resolutions resolution object
      */
     public final void setResolutions(float[] resolutions) {
 
@@ -2249,9 +2246,9 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets the resolutions of the image, on a per dimension basis.
-     *
-     * @param  resolution  Resolution for the dimension
-     * @param  dim         Dimension to set resolution in
+     * 
+     * @param resolution Resolution for the dimension
+     * @param dim Dimension to set resolution in
      */
     public final void setResolutions(float resolution, int dim) {
         dimResolutions[dim] = resolution;
@@ -2259,8 +2256,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets the thickness of the image slices.
-     *
-     * @param  thickness  The slice thickness.
+     * 
+     * @param thickness The slice thickness.
      */
     public void setSliceThickness(float thickness) {
         sliceThickness = thickness;
@@ -2268,17 +2265,16 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets the transform ID for the matrix.
-     *
-     * @param  unitMeasure  transform ID
+     * 
+     * @param unitMeasure transform ID
      */
     // public void setTransformID(int t_id) {
     // transformID = t_id;
     // }
-
     /**
      * Sets (copies) units of measure for image.
-     *
-     * @param  unitMeasure  unit of measure for a specified dimension
+     * 
+     * @param unitMeasure unit of measure for a specified dimension
      */
     public final void setUnitsOfMeasure(int[] unitMeasure) {
 
@@ -2289,9 +2285,9 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Sets units of measure for image, on a per dimension basis.
-     *
-     * @param  unitMeasure  Unit of measure for the dimension
-     * @param  dim          Dimension to set unit of measure in
+     * 
+     * @param unitMeasure Unit of measure for the dimension
+     * @param dim Dimension to set unit of measure in
      */
     public final void setUnitsOfMeasure(int unitMeasure, int dim) {
         unitsOfMeasure[dim] = unitMeasure;
@@ -2299,8 +2295,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Gives the information contained in FileInfo in a string.
-     *
-     * @return  String information contained in the FileInfo object
+     * 
+     * @return String information contained in the FileInfo object
      */
     public String toString() {
         String s = "";
@@ -2311,7 +2307,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         s += "\nFile name: " + fileName + "\n";
         s += "File suffix: " + fileSuffix + "\n";
         s += "File format: ";
-        s += FileUtility.getFileFormatStr(fileFormat) + "\n";
+        s += FileTypeTable.getFileTypeInfo(fileFormat).getDescription() + "\n";
         s += "Data type: ";
         s += ModelStorageBase.getBufferTypeStr(dataType) + "\n";
         s += "Offset: " + offset + "\n";

@@ -2,49 +2,47 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.dicomcomm.*;
-import gov.nih.mipav.model.file.xcede.*;
+import gov.nih.mipav.model.dicomcomm.DICOM_Constants;
+import gov.nih.mipav.model.file.xcede.XCEDEElement;
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
+import gov.nih.mipav.model.provenance.actions.ActionOpenImage;
 import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.provenance.*;
-import gov.nih.mipav.model.provenance.actions.*;
 import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
-import com.sun.jimi.core.*;
-
 import java.awt.*;
 import java.awt.image.*;
-
 import java.io.*;
-
 import java.util.*;
 import java.util.zip.GZIPInputStream;
 
-import javax.imageio.*;
+import javax.imageio.ImageIO;
+import javax.swing.JOptionPane;
 
-import javax.swing.*;
+import com.sun.jimi.core.*;
 
 
 /**
  * This class controls the file input/output of most formats that MIPAV supports, including tiff, raw, analyze, DICOM,
  * and Medvision. It switches based on file type and calls the file constructors, readers, and writers for the specific
  * file type. However, note the FileAvi and FileQT are called directly from ViewJFrameBase for file writes.
- *
- * @version  0.1 Sept 5, 1997
- * @author   Matthew J. McAuliffe, Ph.D.
- * @author   Neva Cherniavsky
- * @see      FileAnalyze
- * @see      FileDicom
- * @see      FileMedVision
- * @see      FileRaw
- * @see      FileTiff
+ * 
+ * @version 0.1 Sept 5, 1997
+ * @author Matthew J. McAuliffe, Ph.D.
+ * @author Neva Cherniavsky
+ * @see FileAnalyze
+ * @see FileDicom
+ * @see FileMedVision
+ * @see FileRaw
+ * @see FileTiff
  */
 public class FileIO {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private static final String FILE_READ = "Opening ";
@@ -52,7 +50,8 @@ public class FileIO {
     /** DOCUMENT ME! */
     private static final String FILE_WRITE = "Saving ";
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** Directory where the image file can be found. */
     private String fileDir;
@@ -87,13 +86,15 @@ public class FileIO {
 
     /** flag telling IO this is a paint brush bitmap */
     private boolean isPaintBrush = false;
-    
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
-     * Creates the FileIO and displays <q>Choose File Type</q> unknown file dialog. Constructs a new FileIO object, sets
-     * the user interface, and initializes the unknown file dialog. Also gets the userDefinedFileTypeAssociations
-     * preferences
+     * Creates the FileIO and displays
+     * <q>Choose File Type</q>
+     * unknown file dialog. Constructs a new FileIO object, sets the user interface, and initializes the unknown file
+     * dialog. Also gets the userDefinedFileTypeAssociations preferences
      */
     public FileIO() {
         UI = ViewUserInterface.getReference();
@@ -103,11 +104,12 @@ public class FileIO {
     }
 
     /**
-     * Creates the FileIO and displays <q>Choose File Type</q> unknown file dialog. Constructs a new FileIO object, sets
-     * the user interface, sets the LUT, and initializes the unknown file dialog. Also gets the
-     * userDefinedFileTypeAssociations preferences
-     *
-     * @param  _LUT  Passes LUT into file IO object so that LUT can be store with image (i.e. TIFF).
+     * Creates the FileIO and displays
+     * <q>Choose File Type</q>
+     * unknown file dialog. Constructs a new FileIO object, sets the user interface, sets the LUT, and initializes the
+     * unknown file dialog. Also gets the userDefinedFileTypeAssociations preferences
+     * 
+     * @param _LUT Passes LUT into file IO object so that LUT can be store with image (i.e. TIFF).
      */
     public FileIO(ModelLUT _LUT) {
         UI = ViewUserInterface.getReference();
@@ -116,19 +118,20 @@ public class FileIO {
         unknownIODialog = new JDialogUnknownIO(UI.getMainFrame(), "Choose File Type");
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Sets specific types to be multifile based on the input argument. Not all file types are supported to handle
      * multifiles. Those that do support building a 3D image out of a series of 2D images are defined to have that input
      * capability here.
-     *
-     * @param   fileType   Input file type. File types which MIPAV does not allow multifile images get the file type
-     *                     returned as sent.
-     * @param   multiFile  If <code>true</code>, returns a new filetype corresponding to the input filetype + MULTIFILE.
-     *                     If <code>false</code>, returns the given filetype.
-     *
-     * @return  The new or old fileType.
+     * 
+     * @param fileType Input file type. File types which MIPAV does not allow multifile images get the file type
+     *            returned as sent.
+     * @param multiFile If <code>true</code>, returns a new filetype corresponding to the input filetype + MULTIFILE.
+     *            If <code>false</code>, returns the given filetype.
+     * 
+     * @return The new or old fileType.
      */
     public static final int chkMultiFile(int fileType, boolean multiFile) {
         int fType = fileType;
@@ -162,10 +165,10 @@ public class FileIO {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   modelImage  ModelImage - the image to resample to UBYTE
-     *
-     * @return  ModelImage
+     * 
+     * @param modelImage ModelImage - the image to resample to UBYTE
+     * 
+     * @return ModelImage
      */
     public static final ModelImage convertToARGB(ModelImage modelImage) {
         float min = (float) modelImage.getMin();
@@ -173,19 +176,22 @@ public class FileIO {
 
         float[] oneSliceBuffer = new float[modelImage.getExtents()[0] * modelImage.getExtents()[1] * 4];
 
-        ModelImage modelImageResultARGB = new ModelImage(ModelStorageBase.ARGB, modelImage.getExtents(),
-                                                         modelImage.getImageName());
+        ModelImage modelImageResultARGB = new ModelImage(ModelStorageBase.ARGB, modelImage.getExtents(), modelImage
+                .getImageName());
 
         try {
 
             for (int i = 0; i < modelImage.getExtents()[2]; i++) // loop through images
             {
-                modelImage.exportData(i * oneSliceBuffer.length, oneSliceBuffer.length, oneSliceBuffer); // export a 2d buffer from modelImageResult
+                modelImage.exportData(i * oneSliceBuffer.length, oneSliceBuffer.length, oneSliceBuffer); // export a
+                // 2d buffer
+                // from
+                // modelImageResult
 
                 oneSliceBuffer = resample255(oneSliceBuffer, min, max);
 
                 modelImageResultARGB.importData(i * oneSliceBuffer.length, oneSliceBuffer, false); // import into
-                                                                                                   // modelImageResultUB
+                // modelImageResultUB
 
                 FileIO.copyResolutions(modelImage, modelImageResultARGB, i);
             }
@@ -202,10 +208,10 @@ public class FileIO {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   modelImageResult  ModelImage - the image to resample to UBYTE
-     *
-     * @return  ModelImage
+     * 
+     * @param modelImageResult ModelImage - the image to resample to UBYTE
+     * 
+     * @return ModelImage
      */
     public static final ModelImage convertToUBYTE(ModelImage modelImageResult) {
         float min = (float) modelImageResult.getMin();
@@ -214,18 +220,22 @@ public class FileIO {
         float[] oneSliceBuffer = new float[modelImageResult.getExtents()[0] * modelImageResult.getExtents()[1]];
 
         ModelImage modelImageResultUB = new ModelImage(ModelStorageBase.UBYTE, modelImageResult.getExtents(),
-                                                       modelImageResult.getImageName());
+                modelImageResult.getImageName());
 
         try {
 
             for (int i = 0; i < modelImageResult.getExtents()[2]; i++) // loop through images
             {
-                modelImageResult.exportData(i * oneSliceBuffer.length, oneSliceBuffer.length, oneSliceBuffer); // export a 2d buffer from modelImageResult
+                modelImageResult.exportData(i * oneSliceBuffer.length, oneSliceBuffer.length, oneSliceBuffer); // export
+                // a 2d
+                // buffer
+                // from
+                // modelImageResult
 
                 oneSliceBuffer = resample255(oneSliceBuffer, min, max);
 
                 modelImageResultUB.importData(i * oneSliceBuffer.length, oneSliceBuffer, false); // import into
-                                                                                                 // modelImageResultUB
+                // modelImageResultUB
 
                 FileIO.copyResolutions(modelImageResult, modelImageResultUB, i);
             }
@@ -243,26 +253,23 @@ public class FileIO {
     /**
      * The purpose of this method is to subsample a ModelImage to the dimensions specified by the subsampleDimension
      * parameter.
-     *
-     * @param   modelImage          ModelImage - the image to be subsampled. This image will be destroyed in the course
-     *                              of the algorithm
-     * @param   subsampleDimension  Dimension - the dimensions to subsample to.
-     *
-     * @return  ModelImage - the subsampled image
+     * 
+     * @param modelImage ModelImage - the image to be subsampled. This image will be destroyed in the course of the
+     *            algorithm
+     * @param subsampleDimension Dimension - the dimensions to subsample to.
+     * 
+     * @return ModelImage - the subsampled image
      */
     private static final ModelImage subsample(ModelImage modelImage, Dimension subsampleDimension) {
-        int[] subsampledExtents = new int[] { subsampleDimension.getSize().width, subsampleDimension.getSize().height };
-        // SubSample dialog now allows users to pad image so that extents are divisible by the subsampling scalar. 
+        int[] subsampledExtents = new int[] {subsampleDimension.getSize().width, subsampleDimension.getSize().height};
+        // SubSample dialog now allows users to pad image so that extents are divisible by the subsampling scalar.
         int[] padExtents = modelImage.getExtents();
-        ModelImage modelImageResult = new ModelImage(modelImage.getType(),
-                                                     new int[] {
-                                                         subsampleDimension.getSize().width,
-                                                         subsampleDimension.getSize().height
-                                                     }, modelImage.getImageName() + "_subsampled");
+        ModelImage modelImageResult = new ModelImage(modelImage.getType(), new int[] {
+                subsampleDimension.getSize().width, subsampleDimension.getSize().height}, modelImage.getImageName()
+                + "_subsampled");
 
         AlgorithmSubsample algorithmSubsample = new AlgorithmSubsample(modelImage, modelImageResult, subsampledExtents,
-                                                                       padExtents, new float[] { 1.0f, 1.0f, 1.0f }, false, false,
-                                                                       null, false);
+                padExtents, new float[] {1.0f, 1.0f, 1.0f}, false, false, null, false);
         algorithmSubsample.run();
 
         modelImage.disposeLocal(false);
@@ -272,11 +279,11 @@ public class FileIO {
 
     /**
      * Presents a dialog for a user-entered definition of the image type.
-     *
-     * @return  The image file type entered by the user, or FileUtility.ERROR if FileIO is quiet or the dialog is
-     *          cancelled. see FileUtility.ERROR see isQuiet()
-     *
-     * @see     JDialogUnknownIO
+     * 
+     * @return The image file type entered by the user, or FileUtility.ERROR if FileIO is quiet or the dialog is
+     *         cancelled. see FileUtility.ERROR see isQuiet()
+     * 
+     * @see JDialogUnknownIO
      */
     public int getFileType() {
         int fileType;
@@ -298,8 +305,8 @@ public class FileIO {
 
     /**
      * Returns LUT associated with the image file.
-     *
-     * @return  The LUT associated with the image although it may be null.
+     * 
+     * @return The LUT associated with the image although it may be null.
      */
     public ModelLUT getModelLUT() {
         return LUT;
@@ -307,8 +314,8 @@ public class FileIO {
 
     /**
      * Gets the model RGB.
-     *
-     * @return  ModelRGB
+     * 
+     * @return ModelRGB
      */
     public ModelRGB getModelRGB() {
         return modelRGB;
@@ -317,8 +324,8 @@ public class FileIO {
     /**
      * Returns address of TIFF header of second image if present in CZ-Private Tag of LSM 510 file Returns zero if not
      * present.
-     *
-     * @return  secondImage
+     * 
+     * @return secondImage
      */
     public int getSecondImage() {
         return secondImage;
@@ -326,8 +333,8 @@ public class FileIO {
 
     /**
      * Refers to whether or not the FileIO will send alerts to the user about progress or errors.
-     *
-     * @return  Whether to suppress GUI elements which would require user interaction (ie, error dialogs).
+     * 
+     * @return Whether to suppress GUI elements which would require user interaction (ie, error dialogs).
      */
     public boolean isQuiet() {
         return quiet;
@@ -338,15 +345,15 @@ public class FileIO {
      * different information in each header. The position of the slice in the image is determined by information found
      * in the header so all the headers must be read before the images can be read. That's why this method goes through
      * all the images twice.
-     *
-     * @param   selectedFileName  Name of the image file selected to be readin <code>this#fileDir</code> to read. Used
-     *                            to ID study and series number
-     * @param   fileList          List of all the files to be read in.
-     * @param   performSort       <code>true</code> if this method is to sort the files in the list, or, <code>
-     *                            false</code> will apply the images in each file in the order they appear as the order
-     *                            to use in the ModelImage.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param selectedFileName Name of the image file selected to be readin <code>this#fileDir</code> to read. Used to
+     *            ID study and series number
+     * @param fileList List of all the files to be read in.
+     * @param performSort <code>true</code> if this method is to sort the files in the list, or, <code>
+     *                            false</code>
+     *            will apply the images in each file in the order they appear as the order to use in the ModelImage.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     public ModelImage readDicom(String selectedFileName, String[] fileList, boolean performSort) {
         ModelImage image = null;
@@ -376,8 +383,10 @@ public class FileIO {
             return null;
         }
         // System.err.println("quiet: " + quiet);
-        /*System.out.println("selectedFileName = " + selectedFileName);
-         * for (int m = 0; m < fileList.length; m++) { System.out.println("Filelist = " + m + "  " + fileList[m]);}*/
+        /*
+         * System.out.println("selectedFileName = " + selectedFileName); for (int m = 0; m < fileList.length; m++) {
+         * System.out.println("Filelist = " + m + " " + fileList[m]);}
+         */
 
         try {
             nListImages = fileList.length;
@@ -397,25 +406,25 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             } else {
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             }
-            
+
             error.printStackTrace();
 
             return null;
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             } else {
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -426,7 +435,7 @@ public class FileIO {
 
         try {
 
-            // image2d  = new ModelImage(myFileInfo.getDataType(), myFileInfo.getExtents(), UI);
+            // image2d = new ModelImage(myFileInfo.getDataType(), myFileInfo.getExtents(), UI);
             if (ModelImage.isColorImage(refFileInfo.getDataType())) { // / other type of ARGB
                 length = refFileInfo.getExtents()[0] * refFileInfo.getExtents()[1] * 4;
             } else {
@@ -441,13 +450,13 @@ public class FileIO {
             bufferShort = null;
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             } else {
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -455,7 +464,7 @@ public class FileIO {
 
         // look for number of frames tag (0028,0008) != null && > 1 nImages = number of frames
         if (refFileInfo.getTagTable().getValue("0028,0008") != null) {
-            nImages = Integer.valueOf(((String) (refFileInfo.getTagTable().getValue("0028,0008"))).trim()).intValue();
+            nImages = Integer.valueOf( ((String) (refFileInfo.getTagTable().getValue("0028,0008"))).trim()).intValue();
 
             if (nImages > 1) {
                 refFileInfo.multiFrame = true;
@@ -493,9 +502,8 @@ public class FileIO {
                 seriesNoRef = "";
             }
 
-            createProgressBar(null,
-                              FileUtility.trimNumbersAndSpecial(selectedFileName) +
-                              FileUtility.getExtension(selectedFileName), FILE_READ);
+            createProgressBar(null, FileUtility.trimNumbersAndSpecial(selectedFileName)
+                    + FileUtility.getExtension(selectedFileName), FILE_READ);
 
         } catch (OutOfMemoryError error) {
 
@@ -506,13 +514,13 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             } else {
                 Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -522,12 +530,13 @@ public class FileIO {
         int[] orient = new int[3]; // for FileInfoBase values. eg:FileInfoBase.ORI_S2I_TYPE;
         int pBarVal = 0;
 
-        if (!refFileInfo.isMultiFrame()) {
+        if ( !refFileInfo.isMultiFrame()) {
 
-            /* this code is for setting the fixed axis in the 3-D image
-             * needed for displaying overlay information properly we look at the first two images and see which position
-             * varies by the third resolution.  that position indicates which axis the image is sliced on, which
-             * indicates the orientation first go through headers and find out where in the array to store the image
+            /*
+             * this code is for setting the fixed axis in the 3-D image needed for displaying overlay information
+             * properly we look at the first two images and see which position varies by the third resolution. that
+             * position indicates which axis the image is sliced on, which indicates the orientation first go through
+             * headers and find out where in the array to store the image
              */
             // files are loaded into the appropriate place in the image
             // buffer as indicated by the slice numbers provided in indicies.
@@ -548,14 +557,14 @@ public class FileIO {
 
                 try {
 
-                    if (((float) i / (nListImages - 1) * 100) > pBarVal) {
+                    if ( ((float) i / (nListImages - 1) * 100) > pBarVal) {
                         pBarVal += 10;
                         progressBar.updateValue(Math.round((float) i / (10 * (nListImages - 1)) * 100), false);
                     }
 
                     FileInfoDicom fileInfoTemp;
 
-                    if (!fileList[i].equals(selectedFileName)) {
+                    if ( !fileList[i].equals(selectedFileName)) {
                         imageFile.setFileName(fileList[i], refFileInfo);
                         imageFile.readHeader(true);
                         fileInfoTemp = (FileInfoDicom) imageFile.getFileInfo();
@@ -582,8 +591,8 @@ public class FileIO {
                     if (performSort) {
 
                         if (seriesNo.equals(seriesNoMaster) && studyID.equals(studyIDMaster)) { // &&
-                                                                                                // acqNo.equals(acqNoMaster))
-                                                                                                // {
+                            // acqNo.equals(acqNoMaster))
+                            // {
                             savedFileInfos[nImages] = fileInfoTemp;
 
                             // this matrix is the matrix that converts this image into
@@ -592,16 +601,17 @@ public class FileIO {
 
                             if (matrix != null) {
 
-                                /* transform the x location, y location, and z location, found
-                                 * from the Image Position tag, by the matrix.  The tPt array now has the three numbers
-                                 * arranged as if this image had been transformed.  The third place in the array holds
-                                 * the number that the axis is being sliced along. xlocation, ylocation, zlocation are
-                                 * from the DICOM tag 0020,0032 patient location;
+                                /*
+                                 * transform the x location, y location, and z location, found from the Image Position
+                                 * tag, by the matrix. The tPt array now has the three numbers arranged as if this image
+                                 * had been transformed. The third place in the array holds the number that the axis is
+                                 * being sliced along. xlocation, ylocation, zlocation are from the DICOM tag 0020,0032
+                                 * patient location;
                                  */
                                 matrix.transform(savedFileInfos[nImages].xLocation, savedFileInfos[nImages].yLocation,
-                                                 savedFileInfos[nImages].zLocation, tPt);
+                                        savedFileInfos[nImages].zLocation, tPt);
 
-                                // tPt[2] is MIPAV's z-axis.  It is the position of the patient
+                                // tPt[2] is MIPAV's z-axis. It is the position of the patient
                                 // along the axis that the image was sliced on.
                                 zOrients[nImages] = tPt[2];
                             } else {
@@ -620,7 +630,7 @@ public class FileIO {
 
                         if (matrix != null) {
                             matrix.transform(savedFileInfos[nImages].xLocation, savedFileInfos[nImages].yLocation,
-                                             savedFileInfos[nImages].zLocation, tPt);
+                                    savedFileInfos[nImages].zLocation, tPt);
                             zOrients[nImages] = tPt[2];
                         } else {
                             zOrients[nImages] = 1;
@@ -634,7 +644,7 @@ public class FileIO {
                     }
                 } catch (IOException error) {
 
-                    if (!quiet) {
+                    if ( !quiet) {
                         MipavUtil.displayError("FileIO: " + error);
                         Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
                     } else {
@@ -645,7 +655,7 @@ public class FileIO {
                         image.disposeLocal();
                         image = null;
                     }
-                    
+
                     error.printStackTrace();
 
                     System.gc();
@@ -671,16 +681,16 @@ public class FileIO {
                 Preferences.debug("Dicom matrix = \n" + matrix + "\n", Preferences.DEBUG_FILEIO);
             }
 
-            /* if this method was told to, we will sort in more than one way:
-             * we will first try to order the image set based on orientation of slices.  If there are slices in the
-             * image set which have the same location on the Z-axis, the data may be a time-based set.  If we guess that
-             * it is (and there aren't nearly enough test-datasets), we attempt to re-order the ordered Z-locations
-             * based on instance number to pull out the time-data (ie., of two images with the same Z-axis, a lower
-             * instance number was taken at an earlier time; all such earlier-time images are grouped).  If neither
-             * solution seemed to work, then we order all the images strictly on the instance number.  There might be
-             * some problems if we had to do this. If the list sent to this method was found using the getFileList()
-             * method, all the names are in lexicographical order.  This is the default ordering if neither sorting
-             * method works, or if performSort is false.
+            /*
+             * if this method was told to, we will sort in more than one way: we will first try to order the image set
+             * based on orientation of slices. If there are slices in the image set which have the same location on the
+             * Z-axis, the data may be a time-based set. If we guess that it is (and there aren't nearly enough
+             * test-datasets), we attempt to re-order the ordered Z-locations based on instance number to pull out the
+             * time-data (ie., of two images with the same Z-axis, a lower instance number was taken at an earlier time;
+             * all such earlier-time images are grouped). If neither solution seemed to work, then we order all the
+             * images strictly on the instance number. There might be some problems if we had to do this. If the list
+             * sent to this method was found using the getFileList() method, all the names are in lexicographical order.
+             * This is the default ordering if neither sorting method works, or if performSort is false.
              */
             boolean valid = false; // !valid, !performSort, !fourthDimensional
 
@@ -692,7 +702,7 @@ public class FileIO {
                 // sort so that instance numbers are in ascending order.
                 // rint is the index to associate input file-list with the
                 // instance number
-                if (!sort(instanceNums, rint, nImages)) {
+                if ( !sort(instanceNums, rint, nImages)) {
                     Preferences.debug("FileIO: instance numbers sort failed\n", Preferences.DEBUG_FILEIO);
                     System.err.println("FileIO: instance numbers sort failed on " + fileList[0]);
                 }
@@ -709,13 +719,13 @@ public class FileIO {
                 }
 
                 // If valid is false then one or more of the images has the
-                // same position.  Most likely it is a 4D dataset.
+                // same position. Most likely it is a 4D dataset.
                 // let's deal with that possibility:
-                if ((nImages > 1) && !valid) {
+                if ( (nImages > 1) && !valid) {
 
                     // Follow-on ordering:
                     // pre-order the orientation numbers to match the instance
-                    // numbers.  This is done to accomodate 4D dicom sets.
+                    // numbers. This is done to accomodate 4D dicom sets.
                     // To describe the algo: I and L value lists which are
                     // independant of each other, and M, which is a copy of L.
                     // a & b are index lists for I and L, respectivly.
@@ -757,7 +767,7 @@ public class FileIO {
                     // locations taken at the same time (in the same time-zone)
                     // we check on different times by going through the list of
                     // images and looking for the next lowest image instance
-                    // with the same z location.  essentially, we
+                    // with the same z location. essentially, we
                     // pass through the orientation list multiple times,
                     // filling a single zone with each pass.
                     Vector tz;
@@ -767,17 +777,17 @@ public class FileIO {
                         tz = new Vector(); // create a new timezone
                         ref0 = (OrientStatus) orientsList.remove(0);
                         tz.add(ref0); // remove 1st orient, put in timezone
-                        Preferences.debug("Loading, and making comparison to: " + ref0.getIndex() + ".." +
-                                          ref0.getLocation() + "\n", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("Loading, and making comparison to: " + ref0.getIndex() + ".."
+                                + ref0.getLocation() + "\n", Preferences.DEBUG_FILEIO);
 
                         Vector orientsClone = (Vector) orientsList.clone();
 
                         for (Enumeration e = orientsClone.elements(); e.hasMoreElements();) {
                             refi = (OrientStatus) e.nextElement();
                             Preferences.debug("Looking at: " + refi.getIndex() + "..." + refi.getLocation(),
-                                              Preferences.DEBUG_FILEIO);
+                                    Preferences.DEBUG_FILEIO);
 
-                            if (!refi.equals(ref0)) {
+                            if ( !refi.equals(ref0)) {
                                 ref0 = null;
                                 ref0 = refi;
                                 tz.add(refi);
@@ -785,11 +795,11 @@ public class FileIO {
 
                                 if (orientsList.remove(refi)) {
                                     Preferences.debug(" .... Successfully removed " + refi.getIndex(),
-                                                      Preferences.DEBUG_FILEIO);
+                                            Preferences.DEBUG_FILEIO);
                                 }
 
-                                Preferences.debug("!!  Comparison to: " + ref0.getIndex() + ".." + ref0.getLocation() +
-                                                  "\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("!!  Comparison to: " + ref0.getIndex() + ".." + ref0.getLocation()
+                                        + "\n", Preferences.DEBUG_FILEIO);
 
                             } else {
                                 Preferences.debug("\n", Preferences.DEBUG_FILEIO);
@@ -820,7 +830,7 @@ public class FileIO {
                                 zOri[k] = t;
                                 zOrients[k] = ref.getLocation();
                                 Preferences.debug("reordering: (" + k + "): " + zOri[k] + "..." + zOrients[k] + "\n",
-                                                  Preferences.DEBUG_FILEIO);
+                                        Preferences.DEBUG_FILEIO);
                                 t++;
                             }
                         }
@@ -843,18 +853,19 @@ public class FileIO {
 
             } // end of performSort
 
-            // A separate and equally valid explanation of the Image Orientation matrix is: X patient  Y patient  Z
-            // patient X image     1          0         0 Y image     0          1         0 Z image     0          0 1
+            // A separate and equally valid explanation of the Image Orientation matrix is: X patient Y patient Z
+            // patient X image 1 0 0 Y image 0 1 0 Z image 0 0 1
             // In this case, the number "1" at X image, X patient means the x in the image is the same as the x in the
-            // patient and goes in the same direction; thus, the image x goes from right to left.  If it were a "-1",
+            // patient and goes in the same direction; thus, the image x goes from right to left. If it were a "-1",
             // that would mean the image x goes from left to right. If it were a "0", and there was a "1" in X image, Y
-            // patient, that would mean that the image x goes from the anterior of the patient to the posterior.  This
+            // patient, that would mean that the image x goes from the anterior of the patient to the posterior. This
             // is the case in sagittal images, for example.
             //
-            // We're concerned with what the z image is, because that tells us what the orientation is.  If there is a "1"
-            // in X patient, the patient x is the image's z-axis, making this a sagittal image.  If there is a "1" in Y
-            // patient, the patient y is the image's z-axis, making this a coronal image.  And if there is a "1" in Z
-            // patient, the patient z is the image's z-axis, making this an axial image.  We look at absolute value
+            // We're concerned with what the z image is, because that tells us what the orientation is. If there is a
+            // "1"
+            // in X patient, the patient x is the image's z-axis, making this a sagittal image. If there is a "1" in Y
+            // patient, the patient y is the image's z-axis, making this a coronal image. And if there is a "1" in Z
+            // patient, the patient z is the image's z-axis, making this an axial image. We look at absolute value
             // because here we are not concerned about right to left vs left to right, only which patient axis the
             // slices were taken along.
             float xCos = 0, yCos = 0, zCos = 0;
@@ -896,34 +907,34 @@ public class FileIO {
             }
 
             // System.out.println( " xcos = " + xCos + " ycos = " + yCos + " zcos = " + zCos );
-            if ((xCos > yCos) && (xCos > zCos)) {
+            if ( (xCos > yCos) && (xCos > zCos)) {
                 orientation = FileInfoBase.SAGITTAL;
 
                 if (valid) {
                     indicies = zOri;
-                } else if (!valid && fourthDimensional) {
+                } else if ( !valid && fourthDimensional) {
                     indicies = zOri;
                     Preferences.debug("Reading image as 4th Dimensional.\n", Preferences.DEBUG_FILEIO);
                 } else {
                     indicies = rint;
                 }
-            } else if ((yCos > xCos) && (yCos > zCos)) {
+            } else if ( (yCos > xCos) && (yCos > zCos)) {
                 orientation = FileInfoBase.CORONAL;
 
                 if (valid == true) {
                     indicies = zOri;
-                } else if (!valid && fourthDimensional) {
+                } else if ( !valid && fourthDimensional) {
                     indicies = zOri;
                     Preferences.debug("Reading image as a 4th Dimensional " + "order.\n", Preferences.DEBUG_FILEIO);
                 } else {
                     indicies = rint;
                 }
-            } else if ((zCos > xCos) && (zCos > yCos)) {
+            } else if ( (zCos > xCos) && (zCos > yCos)) {
                 orientation = FileInfoBase.AXIAL;
 
                 if (valid == true) {
                     indicies = zOri;
-                } else if (!valid && fourthDimensional) {
+                } else if ( !valid && fourthDimensional) {
                     indicies = zOri;
                     Preferences.debug("Reading image as a 4th Dimensional " + "order.\n", Preferences.DEBUG_FILEIO);
                 } else {
@@ -932,7 +943,7 @@ public class FileIO {
             } // matrix was null, set orients based on instance number
 
             // problems if we reach this point!
-            else if ((instanceNums.length > 1) && (instanceNums[0] != instanceNums[1])) {
+            else if ( (instanceNums.length > 1) && (instanceNums[0] != instanceNums[1])) {
                 orientation = FileInfoBase.AXIAL;
                 indicies = rint;
                 orient[0] = FileInfoBase.ORI_R2L_TYPE;
@@ -1002,7 +1013,7 @@ public class FileIO {
 
                 if (i == (nImages - 1)) {
                     progressBar.updateValue(100, false);
-                } else if (((float) i / (nImages - 1) * 100) > pBarVal) {
+                } else if ( ((float) i / (nImages - 1) * 100) > pBarVal) {
                     pBarVal += 10;
                     progressBar.updateValue(10 + Math.round((float) i / (nImages - 1) * 90), false);
                 }
@@ -1013,7 +1024,7 @@ public class FileIO {
                 // Reuse header that was read in above !!!!
                 FileInfoDicom curFileInfo;
 
-                if (!multiframe) {
+                if ( !multiframe) {
                     curFileInfo = savedFileInfos[i];
                 } else {
                     curFileInfo = refFileInfo;
@@ -1022,7 +1033,7 @@ public class FileIO {
                 imageFile.setFileInfo(curFileInfo);
 
                 // Read the image
-                if (image.getType() == ModelStorageBase.FLOAT) {   	
+                if (image.getType() == ModelStorageBase.FLOAT) {
                     imageFile.readImage(bufferFloat, curFileInfo.getDataType(), start);
                 } else {
                     imageFile.readImage(bufferShort, curFileInfo.getDataType(), start);
@@ -1045,11 +1056,11 @@ public class FileIO {
 
                 for (int j = 0; j < 3; j++) {
 
-                    if ((orient[j] == FileInfoBase.ORI_L2R_TYPE) || (orient[j] == FileInfoBase.ORI_R2L_TYPE)) {
+                    if ( (orient[j] == FileInfoBase.ORI_L2R_TYPE) || (orient[j] == FileInfoBase.ORI_R2L_TYPE)) {
                         newOriginPt[j] = origin[0];
-                    } else if ((orient[j] == FileInfoBase.ORI_P2A_TYPE) || (orient[j] == FileInfoBase.ORI_A2P_TYPE)) {
+                    } else if ( (orient[j] == FileInfoBase.ORI_P2A_TYPE) || (orient[j] == FileInfoBase.ORI_A2P_TYPE)) {
                         newOriginPt[j] = origin[1];
-                    } else if ((orient[j] == FileInfoBase.ORI_S2I_TYPE) || (orient[j] == FileInfoBase.ORI_I2S_TYPE)) {
+                    } else if ( (orient[j] == FileInfoBase.ORI_S2I_TYPE) || (orient[j] == FileInfoBase.ORI_I2S_TYPE)) {
                         newOriginPt[j] = origin[2];
                     }
                 }
@@ -1064,7 +1075,7 @@ public class FileIO {
                 }
             } catch (IOException error) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                     Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
                 } else {
@@ -1083,7 +1094,7 @@ public class FileIO {
                 return null;
             } catch (OutOfMemoryError error) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                     Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
                 } else {
@@ -1094,7 +1105,7 @@ public class FileIO {
                     image.disposeLocal();
                     image = null;
                 }
-                
+
                 error.printStackTrace();
 
                 System.gc();
@@ -1139,13 +1150,14 @@ public class FileIO {
             float sliceSpacing = -1;
 
             // First check slice thickness tag:
-            if ((firstSliceTagTable.get("0018,0050") != null) || (firstSliceTagTable.get("0018,0088") != null)) {
+            if ( (firstSliceTagTable.get("0018,0050") != null) || (firstSliceTagTable.get("0018,0088") != null)) {
 
                 if ((String) firstSliceTagTable.getValue("0018,0050") != null) {
                     try {
                         sliceThickness = Float.parseFloat((String) firstSliceTagTable.getValue("0018,0050"));
                     } catch (NumberFormatException nfe) {
-                        Preferences.debug("0018,0050:\tInvalid float value found in slice thickness tag.", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("0018,0050:\tInvalid float value found in slice thickness tag.",
+                                Preferences.DEBUG_FILEIO);
                     }
                 }
 
@@ -1155,7 +1167,8 @@ public class FileIO {
                     try {
                         sliceSpacing = Float.parseFloat((String) firstSliceTagTable.getValue("0018,0088"));
                     } catch (NumberFormatException nfe) {
-                        Preferences.debug("0018,0088:\tInvalid float value found in slice spacing tag.", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("0018,0088:\tInvalid float value found in slice spacing tag.",
+                                Preferences.DEBUG_FILEIO);
                     }
                 }
 
@@ -1187,15 +1200,15 @@ public class FileIO {
 
                 double res3Dim = 1;
 
-                res3Dim = ((xLoc0 - xLoc1) * (xLoc0 - xLoc1)) + ((yLoc0 - yLoc1) * (yLoc0 - yLoc1)) +
-                          ((zLoc0 - zLoc1) * (zLoc0 - zLoc1));
+                res3Dim = ( (xLoc0 - xLoc1) * (xLoc0 - xLoc1)) + ( (yLoc0 - yLoc1) * (yLoc0 - yLoc1))
+                        + ( (zLoc0 - zLoc1) * (zLoc0 - zLoc1));
                 res3Dim = Math.sqrt(res3Dim);
 
                 // System.err.println("res3Dim Spacing: " + res3Dim);
-                if ((res3Dim != 0)) {
+                if ( (res3Dim != 0)) {
                     image.getFileInfo(0).setResolutions((float) res3Dim, 2);
 
-                    // System.out.println (" res3Dim 1  = " + res3Dim);
+                    // System.out.println (" res3Dim 1 = " + res3Dim);
                     for (int m = 1; m < (nImages - 1); m++) {
 
                         xLoc0 = ((FileInfoDicom) image.getFileInfo(m)).xLocation;
@@ -1206,8 +1219,8 @@ public class FileIO {
                         yLoc1 = ((FileInfoDicom) image.getFileInfo(m + 1)).yLocation;
                         zLoc1 = ((FileInfoDicom) image.getFileInfo(m + 1)).zLocation;
 
-                        res3Dim = ((xLoc0 - xLoc1) * (xLoc0 - xLoc1)) + ((yLoc0 - yLoc1) * (yLoc0 - yLoc1)) +
-                                  ((zLoc0 - zLoc1) * (zLoc0 - zLoc1));
+                        res3Dim = ( (xLoc0 - xLoc1) * (xLoc0 - xLoc1)) + ( (yLoc0 - yLoc1) * (yLoc0 - yLoc1))
+                                + ( (zLoc0 - zLoc1) * (zLoc0 - zLoc1));
                         res3Dim = Math.sqrt(res3Dim);
 
                         image.getFileInfo(m).setResolutions((float) res3Dim, 2);
@@ -1220,40 +1233,37 @@ public class FileIO {
             float sliceDifference = -1;
 
             // if slice thickness tag wasn't there or was 0, check slice location (and take the difference)
-            if ((firstSliceTagTable.get("0020,1041") != null) && (sliceThickness == -1)) {
+            if ( (firstSliceTagTable.get("0020,1041") != null) && (sliceThickness == -1)) {
 
                 if ((String) firstSliceTagTable.getValue("0020,1041") != null) {
-                    sliceDifference = Float.parseFloat((String)
-                                                       ((FileInfoDicom) image.getFileInfo(1)).getTagTable().getValue("0020,1041")) -
-                                      Float.parseFloat((String) firstSliceTagTable.getValue("0020,1041"));
+                    sliceDifference = Float.parseFloat((String) ((FileInfoDicom) image.getFileInfo(1)).getTagTable()
+                            .getValue("0020,1041"))
+                            - Float.parseFloat((String) firstSliceTagTable.getValue("0020,1041"));
 
                     // System.err.println("Slice difference: " + sliceDifference);
 
                     // TODO: is this check ever true?
-                    if ((Math.abs(sliceDifference) < sliceThickness) && (Math.abs(sliceDifference) > 0.001)) {
+                    if ( (Math.abs(sliceDifference) < sliceThickness) && (Math.abs(sliceDifference) > 0.001)) {
                         image.getFileInfo(0).setResolutions(sliceDifference, 2);
 
                         for (int m = 1; m < (nImages - 1); m++) {
-                            image.getFileInfo(m).setResolutions(Float.parseFloat((String)
-                                                                                 ((FileInfoDicom)
-                                                                                      image.getFileInfo(m + 1))
-                                                                                     .getTagTable().getValue("0020,1041")) -
-                                                                Float.parseFloat((String)
-                                                                                 ((FileInfoDicom) image.getFileInfo(m))
-                                                                                     .getTagTable().getValue("0020,1041")),
-                                                                2);
+                            image.getFileInfo(m).setResolutions(
+                                    Float.parseFloat((String) ((FileInfoDicom) image.getFileInfo(m + 1)).getTagTable()
+                                            .getValue("0020,1041"))
+                                            - Float.parseFloat((String) ((FileInfoDicom) image.getFileInfo(m))
+                                                    .getTagTable().getValue("0020,1041")), 2);
                         }
 
                         if (nImages > 2) {
-                            image.getFileInfo(nImages - 1).setResolutions(image.getFileInfo(nImages - 2).getResolution(2),
-                                                                          2);
+                            image.getFileInfo(nImages - 1).setResolutions(
+                                    image.getFileInfo(nImages - 2).getResolution(2), 2);
                         }
                     }
                 }
             }
 
             // see if we found z-res somewhere
-            if ((sliceThickness == -1) && (sliceDifference == -1)) {
+            if ( (sliceThickness == -1) && (sliceDifference == -1)) {
                 System.err.println("error calculating z-resolution in FileIO.readDicom()");
             }
         }
@@ -1276,10 +1286,10 @@ public class FileIO {
 
     /**
      * Reads generic file from an absolute filename.
-     *
-     * @param   absoluteFilename  String - the absolute filename, including the path
-     *
-     * @return  ModelImage
+     * 
+     * @param absoluteFilename String - the absolute filename, including the path
+     * 
+     * @return ModelImage
      */
     public ModelImage readImage(String absoluteFilename) {
 
@@ -1305,11 +1315,11 @@ public class FileIO {
      * Reads file, determines file type, and calls a read function specific to the file. That read function returns an
      * image and this function stores it in ModelImage. File is not multi file, file info is not previously known,
      * there's no "second address" for AFNI, and this is not an image B.
-     *
-     * @param   fileName  File name where image is located.
-     * @param   fileDir   File directory where image is located.
-     *
-     * @return  The image that was read in from the file.
+     * 
+     * @param fileName File name where image is located.
+     * @param fileDir File directory where image is located.
+     * 
+     * @return The image that was read in from the file.
      */
     public ModelImage readImage(String fileName, String fileDir) {
         return readImage(fileName, fileDir, false, null, 0, false, false);
@@ -1318,13 +1328,13 @@ public class FileIO {
     /**
      * Reads file, determines file type, and calls a read function specific to the file. That read function returns an
      * image and this function stores it in ModelImage.
-     *
-     * @param   fileName   File name where image is located.
-     * @param   fileDir    File directory where image is located.
-     * @param   multiFile  Flag indicating multi file.
-     * @param   fileInfo   File info already known; will usually be null, but valid if called from script parser.
-     *
-     * @return  The image that was read in from the file.
+     * 
+     * @param fileName File name where image is located.
+     * @param fileDir File directory where image is located.
+     * @param multiFile Flag indicating multi file.
+     * @param fileInfo File info already known; will usually be null, but valid if called from script parser.
+     * 
+     * @return The image that was read in from the file.
      */
     public ModelImage readImage(String fileName, String fileDir, boolean multiFile, FileInfoBase fileInfo) {
         return readImage(fileName, fileDir, multiFile, fileInfo, 0, false, false);
@@ -1333,57 +1343,54 @@ public class FileIO {
     /**
      * Reads file, determines file type, and calls a read function specific to the file. That read function returns an
      * image and this function stores it in ModelImage.
-     *
-     * @param   fileName   File name where image is located.
-     * @param   fileDir    File directory where image is located.
-     * @param   multiFile  Flag indicating multi file.
-     * @param   fileInfo   File info already known; will usually be null, but valid if called from script parser.
-     * @param   loadB      Flag indicating if this is an image B.
-     *
-     * @return  The image that was read in from the file.
+     * 
+     * @param fileName File name where image is located.
+     * @param fileDir File directory where image is located.
+     * @param multiFile Flag indicating multi file.
+     * @param fileInfo File info already known; will usually be null, but valid if called from script parser.
+     * @param loadB Flag indicating if this is an image B.
+     * 
+     * @return The image that was read in from the file.
      */
-    public ModelImage readImage(String fileName, String fileDir, boolean multiFile, FileInfoBase fileInfo,
-                                boolean loadB) {
+    public ModelImage readImage(String fileName, String fileDir, boolean multiFile, FileInfoBase fileInfo, boolean loadB) {
         return readImage(fileName, fileDir, multiFile, fileInfo, 0, loadB, false);
     }
 
     /**
      * Reads file, determines file type, and calls a read function specific to the file. That read function returns an
      * image and this function stores it in ModelImage.
-     *
-     * @param   fileName       File name where image is located.
-     * @param   fileDir        File directory where image is located.
-     * @param   multiFile      Flag indicating multi file.
-     * @param   fileInfo       File info already known; will usually be null, but valid if called from script parser.
-     * @param   secondAddress  Address of second TIFF header
-     *
-     * @return  The image that was read in from the file.
+     * 
+     * @param fileName File name where image is located.
+     * @param fileDir File directory where image is located.
+     * @param multiFile Flag indicating multi file.
+     * @param fileInfo File info already known; will usually be null, but valid if called from script parser.
+     * @param secondAddress Address of second TIFF header
+     * 
+     * @return The image that was read in from the file.
      */
     public ModelImage readImage(String fileName, String fileDir, boolean multiFile, FileInfoBase fileInfo,
-                                int secondAddress) {
+            int secondAddress) {
         return readImage(fileName, fileDir, multiFile, fileInfo, secondAddress, false, false);
     }
-
 
     /**
      * Reads file, determines file type, and calls a read function specific to the file. That read function returns an
      * image and this function stores it in ModelImage.
-     *
-     * @param   fileName       File name where image is located.
-     * @param   fileDir        File directory where image is located.
-     * @param   multiFile      Flag indicating multi file loading of images from directory. <code>true</code> is load
-     *                         images of this filetype to be loaded as a set (when this feature is supported).
-     * @param   fileInfo       File info already known; will usually be null, but valid if called from script parser.
-     * @param   secondAddress  Address of second TIFF header
-     * @param   loadB          Flag indicating if this is an image B.
-     * @param   one            A load-single flag. <code>true</code> indicates that the method is to load only the file
-     *                         that is defined by the <code>fileName</code>, rather than a multiple file load of a 3d
-     *                         Image.
-     *
-     * @return  The image that was read in from the file.
+     * 
+     * @param fileName File name where image is located.
+     * @param fileDir File directory where image is located.
+     * @param multiFile Flag indicating multi file loading of images from directory. <code>true</code> is load images
+     *            of this filetype to be loaded as a set (when this feature is supported).
+     * @param fileInfo File info already known; will usually be null, but valid if called from script parser.
+     * @param secondAddress Address of second TIFF header
+     * @param loadB Flag indicating if this is an image B.
+     * @param one A load-single flag. <code>true</code> indicates that the method is to load only the file that is
+     *            defined by the <code>fileName</code>, rather than a multiple file load of a 3d Image.
+     * 
+     * @return The image that was read in from the file.
      */
     public ModelImage readImage(String fileName, String fileDir, boolean multiFile, FileInfoBase fileInfo,
-                                int secondAddress, boolean loadB, boolean one) {
+            int secondAddress, boolean loadB, boolean one) {
         int index;
         boolean gunzip;
         File file;
@@ -1395,7 +1402,7 @@ public class FileIO {
         int fileType = FileUtility.UNDEFINED;
         int userDefinedFileType = 0;
         String userDefinedSuffix = null;
-        if ((fileName == null) || (fileDir == null)) {
+        if ( (fileName == null) || (fileDir == null)) {
             return null;
         }
 
@@ -1417,28 +1424,23 @@ public class FileIO {
 
             try {
                 fis = new FileInputStream(file);
-            }
-            catch(FileNotFoundException e) {
+            } catch (FileNotFoundException e) {
                 MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + fileName);
                 return null;
             }
 
             try {
                 gzin = new GZIPInputStream(new BufferedInputStream(fis));
-            }
-            catch(IOException e) {
+            } catch (IOException e) {
                 MipavUtil.displayError("IOException on GZIPInputStream for " + fileName);
                 return null;
             }
-            
 
-            
             fileName = fileName.substring(0, index);
             String uncompressedName = fileDir + fileName;
             try {
                 out = new FileOutputStream(uncompressedName);
-            }
-            catch(IOException e) {
+            } catch (IOException e) {
                 MipavUtil.displayError("IOException on FileOutputStream for " + uncompressedName);
                 return null;
             }
@@ -1447,8 +1449,7 @@ public class FileIO {
             while (true) {
                 try {
                     bytesRead = gzin.read(buffer);
-                }
-                catch(IOException e) {
+                } catch (IOException e) {
                     MipavUtil.displayError("IOException on gzin.read(buffer) for " + uncompressedName);
                     return null;
                 }
@@ -1460,8 +1461,7 @@ public class FileIO {
                 totalBytesRead += bytesRead;
                 try {
                     out.write(buffer, 0, bytesRead);
-                }
-                catch(IOException e) {
+                } catch (IOException e) {
                     MipavUtil.displayError("IOException on out.write for " + uncompressedName);
                     return null;
                 }
@@ -1469,8 +1469,7 @@ public class FileIO {
 
             try {
                 out.close();
-            }
-            catch(IOException e) {
+            } catch (IOException e) {
                 MipavUtil.displayError("IOException on out.close for " + uncompressedName);
                 return null;
             }
@@ -1498,7 +1497,7 @@ public class FileIO {
                 case FileUtility.LIFF:
                     image = readLIFF(fileName, fileDir, one);
                     break;
-                
+
                 case FileUtility.TIFF:
                     image = readTiff(fileName, fileDir, one);
                     break;
@@ -1576,9 +1575,9 @@ public class FileIO {
                     break;
 
                 case FileUtility.DICOM:
-                    if (!multiFile) {
+                    if ( !multiFile) {
                         this.fileDir = fileDir;
-                        image = readDicom(fileName, new String[] { fileName.trim() }, false);
+                        image = readDicom(fileName, new String[] {fileName.trim()}, false);
                     } else {
                         image = readDicom(fileName, FileUtility.getFileList(fileDir, fileName, quiet), true);
                     }
@@ -1638,7 +1637,7 @@ public class FileIO {
                 case FileUtility.OSM:
                     image = readOSM(fileName, fileDir);
                     break;
-                    
+
                 case FileUtility.BFLOAT:
                     image = readBFLOAT(fileName, fileDir, one);
                     break;
@@ -1676,38 +1675,37 @@ public class FileIO {
             }
 
             if (image != null) {
-            	if (ProvenanceRecorder.getReference().getRecorderStatus() == ProvenanceRecorder.RECORDING) {
-            		int idx = fileName.lastIndexOf(".");
-            		String fName;
-            		if (idx == -1 ){
-            			fName = new String (fileName);
-            		}
-            		else {
-            			fName = fileName.substring(0, idx);
-            		}
-            		if (new File(fileDir + File.separator + fName + ".xmp").exists()) {
-	            		try {
-	            			FileDataProvenance fdp = 
-	            				new FileDataProvenance(fName + ".xmp", fileDir, image.getProvenanceHolder());
-	            			
-	            			fdp.readHeader(fName + ".xmp", fileDir, Preferences.DATA_PROVENANCE_SCHEMA);
-	            			
-	            		} catch (Exception e) {
-	            			e.printStackTrace();
-	            		}
-            		}
-            	}
-            	
-            	//tell mipav system data provenance to record this opening of an image
-            	if (!isPaintBrush) {
-            		ProvenanceRecorder.getReference().addLine(new ActionOpenImage(image));
-            	}
-            	
+                if (ProvenanceRecorder.getReference().getRecorderStatus() == ProvenanceRecorder.RECORDING) {
+                    int idx = fileName.lastIndexOf(".");
+                    String fName;
+                    if (idx == -1) {
+                        fName = new String(fileName);
+                    } else {
+                        fName = fileName.substring(0, idx);
+                    }
+                    if (new File(fileDir + File.separator + fName + ".xmp").exists()) {
+                        try {
+                            FileDataProvenance fdp = new FileDataProvenance(fName + ".xmp", fileDir, image
+                                    .getProvenanceHolder());
+
+                            fdp.readHeader(fName + ".xmp", fileDir, Preferences.DATA_PROVENANCE_SCHEMA);
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+
+                // tell mipav system data provenance to record this opening of an image
+                if ( !isPaintBrush) {
+                    ProvenanceRecorder.getReference().addLine(new ActionOpenImage(image));
+                }
+
                 if (progressBar != null) {
                     progressBar.dispose();
                 }
 
-                if ((image.getType() == ModelStorageBase.COMPLEX) || (image.getType() == ModelStorageBase.DCOMPLEX)) {
+                if ( (image.getType() == ModelStorageBase.COMPLEX) || (image.getType() == ModelStorageBase.DCOMPLEX)) {
                     image.calcMinMaxMag(true);
                 } else {
                     image.calcMinMax();
@@ -1724,20 +1722,22 @@ public class FileIO {
 
                     if (Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC) != null) {
 
-                        if (!Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC).trim().equals("")) {
-                            String[] userDefinedFileTypeAssociations = Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC).split(Preferences.ITEM_SEPARATOR);
+                        if ( !Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC).trim().equals("")) {
+                            String[] userDefinedFileTypeAssociations = Preferences.getProperty(
+                                    Preferences.PREF_USER_FILETYPE_ASSOC).split(Preferences.ITEM_SEPARATOR);
 
                             for (int i = 0; i < userDefinedFileTypeAssociations.length; i++) {
 
-                                if (userDefinedSuffix.equals(userDefinedFileTypeAssociations[i].split(Preferences.DEFINITION_SEPARATOR)[0])) {
+                                if (userDefinedSuffix.equals(userDefinedFileTypeAssociations[i]
+                                        .split(Preferences.DEFINITION_SEPARATOR)[0])) {
                                     isPresent = true;
                                 }
                             }
 
-                            if (!isPresent) {
-                                Preferences.setProperty(Preferences.PREF_USER_FILETYPE_ASSOC,
-                                                        Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC) +
-                                                        Preferences.ITEM_SEPARATOR + association);
+                            if ( !isPresent) {
+                                Preferences.setProperty(Preferences.PREF_USER_FILETYPE_ASSOC, Preferences
+                                        .getProperty(Preferences.PREF_USER_FILETYPE_ASSOC)
+                                        + Preferences.ITEM_SEPARATOR + association);
                                 setUserDefinedFileTypesPref(userDefinedSuffix);
                                 setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
                             }
@@ -1762,12 +1762,12 @@ public class FileIO {
 
             error.printStackTrace();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("Unable to load image.  See debug window for more details.");
             }
 
             Preferences.debug("Error while loading " + fileDir + fileName + ".\n" + error + "\n",
-                              Preferences.DEBUG_FILEIO);
+                    Preferences.DEBUG_FILEIO);
 
             return null;
         }
@@ -1775,17 +1775,16 @@ public class FileIO {
         return image;
     }
 
-
     /**
      * Reads file, determines file type, and calls a read function specific to the file. That read function returns an
      * image and this function stores it in ModelImage. File is not multi file, file info is not previously known,
      * there's no "second address" for AFNI, and this is not an image B. This is just one image regardless of how many
      * slices there are; the middle slice of a 3D dataset will be displayed.
-     *
-     * @param   fileName  File name where image is located.
-     * @param   fileDir   File directory where image is located.
-     *
-     * @return  The image that was read in from the file.
+     * 
+     * @param fileName File name where image is located.
+     * @param fileDir File directory where image is located.
+     * 
+     * @return The image that was read in from the file.
      */
     public ModelImage readOneImage(String fileName, String fileDir) {
         return readImage(fileName, fileDir, false, null, 0, false, true);
@@ -1795,27 +1794,25 @@ public class FileIO {
      * This method examines parameter <i>fileList <i>and loads TIFF files according to the order in the list. It can
      * load 2, 3, or 4 channel images. The method will examine channelMap to determine in which order the ARGB channels
      * should be interleaved.</i></i>
-     *
-     * @param   fileList                File[] - the list of File objects, preordered
-     * @param   numChannels             int - the number of channels the result image is to have
-     * @param   channelMap              int[] - a mapping of channels (ARGB) to positions. For example, a channelMap
-     *                                  parameter of {2, 1, 0, 3} means the first channel will be G, the second will be
-     *                                  R, the third will be A and the last will be B.
-     * @param   showOrderedProgressBar  boolean - This parameter is used to control whether the local progress bar is
-     *                                  shown. Note this is different than FileIO's global progress bar. The reason for
-     *                                  the difference is because this method uses FileIO's readOneImage() method. That
-     *                                  method uses the global progress bar. Its useless to have two progress bars, and
-     *                                  FileIO isn't set up in a way that allows this method to directly control the
-     *                                  global progress bar, hence the need for its own local one.
-     * @param   subsampleDimension      - the dimensions of the result image if subsampling is desired. To skip
-     *                                  subsampling, this parameter should be null
-     * @param   forceUBYTE              boolean - force the image to be constructed with an unsigned byte data type
-     *
-     * @return  ModelImage
+     * 
+     * @param fileList File[] - the list of File objects, preordered
+     * @param numChannels int - the number of channels the result image is to have
+     * @param channelMap int[] - a mapping of channels (ARGB) to positions. For example, a channelMap parameter of {2,
+     *            1, 0, 3} means the first channel will be G, the second will be R, the third will be A and the last
+     *            will be B.
+     * @param showOrderedProgressBar boolean - This parameter is used to control whether the local progress bar is
+     *            shown. Note this is different than FileIO's global progress bar. The reason for the difference is
+     *            because this method uses FileIO's readOneImage() method. That method uses the global progress bar. Its
+     *            useless to have two progress bars, and FileIO isn't set up in a way that allows this method to
+     *            directly control the global progress bar, hence the need for its own local one.
+     * @param subsampleDimension - the dimensions of the result image if subsampling is desired. To skip subsampling,
+     *            this parameter should be null
+     * @param forceUBYTE boolean - force the image to be constructed with an unsigned byte data type
+     * 
+     * @return ModelImage
      */
     public ModelImage readOrderedARGB(File[] fileList, int numChannels, int[] channelMap,
-                                      boolean showOrderedProgressBar, Dimension subsampleDimension,
-                                      boolean forceUBYTE) {
+            boolean showOrderedProgressBar, Dimension subsampleDimension, boolean forceUBYTE) {
         ModelImage modelImageTemp = null;
         ModelImage modelImageResult = null;
         float[] oneSliceBuffer;
@@ -1825,8 +1822,8 @@ public class FileIO {
 
         try // read one image in order to get image dimensions
         {
-            modelImageTemp = readOneImage(fileList[0].getName(),
-                                          fileList[0].getParentFile().getAbsolutePath() + File.separator);
+            modelImageTemp = readOneImage(fileList[0].getName(), fileList[0].getParentFile().getAbsolutePath()
+                    + File.separator);
 
             if (subsampleDimension != null) {
                 modelImageTemp = subsample(modelImageTemp, subsampleDimension);
@@ -1848,7 +1845,7 @@ public class FileIO {
         createProgressBar(null, "files", FILE_READ);
 
         // allocate memory for the result ModelImage.
-        int[] extents = { imageExtents[0], imageExtents[1], fileList.length / numChannels };
+        int[] extents = {imageExtents[0], imageExtents[1], fileList.length / numChannels};
 
         if (modelImageTemp.getType() == ModelStorageBase.USHORT) {
             modelImageResult = new ModelImage(ModelStorageBase.ARGB_USHORT, extents, modelImageTemp.getImageName());
@@ -1868,18 +1865,19 @@ public class FileIO {
             if (fileList[n].exists()) {
 
                 try {
-                    modelImageTemp = readOneImage(fileList[n].getName(),
-                                                  fileList[n].getParentFile().getAbsolutePath() + File.separator);
+                    modelImageTemp = readOneImage(fileList[n].getName(), fileList[n].getParentFile().getAbsolutePath()
+                            + File.separator);
 
                     if (subsampleDimension != null) {
                         modelImageTemp = subsample(modelImageTemp, subsampleDimension);
                     }
 
-                    modelImageTemp.exportData(0, oneSliceBuffer.length, oneSliceBuffer); // export one slice at a time
-                                                                                         // to result ModelImage
+                    modelImageTemp.exportData(0, oneSliceBuffer.length, oneSliceBuffer); // export one slice at a
+                    // time
+                    // to result ModelImage
 
                     for (int i = 0; i < oneSliceBuffer.length; i++) {
-                        resultImageBuffer[(i * 4) + channel] = oneSliceBuffer[i]; // arrange interleaved pixels
+                        resultImageBuffer[ (i * 4) + channel] = oneSliceBuffer[i]; // arrange interleaved pixels
                     }
 
                     modelImageResult.importData(currentSlice * sliceSize * 4, resultImageBuffer, false);
@@ -1895,11 +1893,10 @@ public class FileIO {
                 Preferences.debug("File does not exist: " + fileList[n].getName() + "\n", Preferences.DEBUG_FILEIO);
             }
 
-            progressBar.updateValue((int) (((n + 1) / (float) fileList.length) * 100), false);
+            progressBar.updateValue((int) ( ( (n + 1) / (float) fileList.length) * 100), false);
         }
 
         modelImageResult.calcMinMax();
-
 
         progressBar = null;
         resultImageBuffer = null;
@@ -1907,33 +1904,31 @@ public class FileIO {
         channelMap = null;
         modelImageTemp = null;
 
-        if ((forceUBYTE == true) && (modelImageResult.getType() != ModelStorageBase.ARGB)) {
+        if ( (forceUBYTE == true) && (modelImageResult.getType() != ModelStorageBase.ARGB)) {
             return convertToARGB(modelImageResult);
         }
 
         return modelImageResult;
     }
 
-
     /**
-     * This method will load a group of files in the order of <i>fileList<i>. The result will be a grayscale ModelImage.
-     * </i></i>
-     *
-     * @param   fileList              File[] - list of File objects, preordered
-     * @param   showLocalProgressBar  boolean - This parameter is used to control whether the local progress bar is
-     *                                shown. Note this is different than FileIO's global progress bar. The reason for
-     *                                the difference is because this method uses FileIO's readOneImage() method. That
-     *                                method uses the global progress bar. Its useless to have two progress bars, and
-     *                                FileIO isn't set up in a way that allows this method to directly control the
-     *                                global progress bar, hence the need for its own local one.
-     * @param   subsampleDimension    - the dimensions of the result image if subsampling is desired. To skip
-     *                                subsampling, this parameter should be null
-     * @param   forceUBYTE            boolean - force the image to be constructed with an unsigned byte data type
-     *
-     * @return  ModelImage
+     * This method will load a group of files in the order of <i>fileList<i>. The result will be a grayscale
+     * ModelImage. </i></i>
+     * 
+     * @param fileList File[] - list of File objects, preordered
+     * @param showLocalProgressBar boolean - This parameter is used to control whether the local progress bar is shown.
+     *            Note this is different than FileIO's global progress bar. The reason for the difference is because
+     *            this method uses FileIO's readOneImage() method. That method uses the global progress bar. Its useless
+     *            to have two progress bars, and FileIO isn't set up in a way that allows this method to directly
+     *            control the global progress bar, hence the need for its own local one.
+     * @param subsampleDimension - the dimensions of the result image if subsampling is desired. To skip subsampling,
+     *            this parameter should be null
+     * @param forceUBYTE boolean - force the image to be constructed with an unsigned byte data type
+     * 
+     * @return ModelImage
      */
     public ModelImage readOrderedGrayscale(File[] fileList, boolean showLocalProgressBar, Dimension subsampleDimension,
-                                           boolean forceUBYTE) {
+            boolean forceUBYTE) {
         ModelImage modelImageTemp = null;
         ModelImage modelImageResult = null;
         float[] oneSliceBuffer;
@@ -1943,8 +1938,8 @@ public class FileIO {
         try {
 
             // read one image so we can get extents
-            modelImageTemp = readOneImage(fileList[0].getName(),
-                                          fileList[0].getParentFile().getAbsolutePath() + File.separator);
+            modelImageTemp = readOneImage(fileList[0].getName(), fileList[0].getParentFile().getAbsolutePath()
+                    + File.separator);
 
             if (subsampleDimension != null) // subsample the image if we have subsampling dimensions
             {
@@ -1959,7 +1954,7 @@ public class FileIO {
             modelImageTemp.exportData(0, oneSliceBuffer.length, oneSliceBuffer);
 
             // the result image's dimensions (possibly subsampled dimensions)
-            int[] extents = { modelImageTemp.getExtents()[0], modelImageTemp.getExtents()[1], fileList.length };
+            int[] extents = {modelImageTemp.getExtents()[0], modelImageTemp.getExtents()[1], fileList.length};
 
             modelImageResult = new ModelImage(modelImageTemp.getType(), extents, modelImageTemp.getImageName());
             copyResolutions(modelImageTemp, modelImageResult, 0); // save the resolutions from the file info structure
@@ -1970,7 +1965,7 @@ public class FileIO {
             // import first slice to result image from modelImageTemp
             modelImageResult.importData(0, oneSliceBuffer, false);
 
-            progressBar.updateValue((int) ((1.0f / (float) fileList.length) * 100), false);
+            progressBar.updateValue((int) ( (1.0f / (float) fileList.length) * 100), false);
 
             for (int i = 1; i < fileList.length; i++) {
 
@@ -1979,8 +1974,9 @@ public class FileIO {
                     try {
 
                         // read images one slice at a time
-                        modelImageTemp = readOneImage(fileList[i].getName(),
-                                                      fileList[i].getParentFile().getAbsolutePath() + File.separator);
+                        modelImageTemp = readOneImage(fileList[i].getName(), fileList[i].getParentFile()
+                                .getAbsolutePath()
+                                + File.separator);
 
                         if (subsampleDimension != null) // subsample if we have subsampling dimensions
                         {
@@ -2002,12 +1998,12 @@ public class FileIO {
                     Preferences.debug("File does not exist: " + fileList[i].getName() + "\n", Preferences.DEBUG_FILEIO);
                 }
 
-                progressBar.updateValue((int) (((float) (i + 1) / (float) fileList.length) * 100), false);
+                progressBar.updateValue((int) ( ((float) (i + 1) / (float) fileList.length) * 100), false);
             }
 
             modelImageResult.calcMinMax();
 
-            if ((forceUBYTE == true) && (modelImageResult.getType() != ModelStorageBase.UBYTE)) {
+            if ( (forceUBYTE == true) && (modelImageResult.getType() != ModelStorageBase.UBYTE)) {
                 oneSliceBuffer = null;
 
                 return convertToUBYTE(modelImageResult);
@@ -2032,11 +2028,11 @@ public class FileIO {
 
     /**
      * Reads the XCEDE schema file.
-     *
-     * @param   fileName   the file name of the XCEDE file.
-     * @param   directory  the directory of the XCEDE file.
-     *
-     * @return  the root element of the XCEDE schema.
+     * 
+     * @param fileName the file name of the XCEDE file.
+     * @param directory the directory of the XCEDE file.
+     * 
+     * @return the root element of the XCEDE schema.
      */
     public XCEDEElement readXCEDE(String fileName, String directory) {
         FileXCEDEXML xcedeFile;
@@ -2047,11 +2043,11 @@ public class FileIO {
 
     /**
      * Reads a thumbnail image from an XML file. if thumbnail is empty, will returned FileImageXML will be null.
-     *
-     * @param   name       filename
-     * @param   directory  file's directory
-     *
-     * @return  FileImageXML containing thumbnail or null
+     * 
+     * @param name filename
+     * @param directory file's directory
+     * 
+     * @return FileImageXML containing thumbnail or null
      */
     public FileImageXML readXMLThumbnail(String name, String directory) {
         FileImageXML xmlTemp = new FileImageXML(name, directory);
@@ -2061,7 +2057,7 @@ public class FileIO {
             TalairachTransformInfo talairach = new TalairachTransformInfo();
             res = xmlTemp.readHeader(name, directory, talairach);
 
-            if ((res != null) && (xmlTemp.getThumbnail() != null)) {
+            if ( (res != null) && (xmlTemp.getThumbnail() != null)) {
                 return xmlTemp;
             }
         } catch (IOException ioex) {
@@ -2073,8 +2069,8 @@ public class FileIO {
 
     /**
      * Sets the directory where the file will be saved or opened.
-     *
-     * @param  dir  String directory
+     * 
+     * @param dir String directory
      */
     public void setFileDir(String dir) {
         this.fileDir = dir;
@@ -2082,8 +2078,8 @@ public class FileIO {
 
     /**
      * Sets the LUT.
-     *
-     * @param  lut  the lookup table.
+     * 
+     * @param lut the lookup table.
      */
     public void setModelLUT(ModelLUT lut) {
         this.LUT = lut;
@@ -2091,8 +2087,8 @@ public class FileIO {
 
     /**
      * Sets the RGB.
-     *
-     * @param  rgb  lut the lookup table.
+     * 
+     * @param rgb lut the lookup table.
      */
     public void setModelRGB(ModelRGB rgb) {
         this.modelRGB = rgb;
@@ -2100,19 +2096,20 @@ public class FileIO {
 
     /**
      * Sets the progress bar (either panel or frame) to be used in image opening to update status.
-     *
-     * @param  pBar  ProgressBarInterface
+     * 
+     * @param pBar ProgressBarInterface
      */
     public void setPBar(ProgressBarInterface pBar) {
-        // this.pInterface = pBar;
+    // this.pInterface = pBar;
     }
 
     /**
      * Refers to whether or not the FileIO will send alerts to the user about progress or errors.
-     *
-     * @param  q  Indicates if the output from the methods in this object are to display dialogs interrupting flow in a
+     * 
+     * @param q Indicates if the output from the methods in this object are to display dialogs interrupting flow in a
      *            locally-defined manner. <code>true</code> indicates that the process is to NOT inform the user and
-     *            therefore be <q>quiet</q>.
+     *            therefore be
+     *            <q>quiet</q>.
      */
     public void setQuiet(boolean q) {
         quiet = q;
@@ -2120,16 +2117,17 @@ public class FileIO {
 
     /**
      * Tells IO that this is a paint brush image to be loaded
+     * 
      * @param isPB if this is a paint brush
      */
     public void setIsPaintBrush(boolean isPB) {
-    	this.isPaintBrush = isPB;
+        this.isPaintBrush = isPB;
     }
-    
+
     /**
      * DOCUMENT ME!
-     *
-     * @param  rawInfo  DOCUMENT ME!
+     * 
+     * @param rawInfo DOCUMENT ME!
      */
     public void setRawImageInfo(RawImageInfo rawInfo) {
         this.rawInfo = rawInfo;
@@ -2137,8 +2135,8 @@ public class FileIO {
 
     /**
      * This method sets the userDefinedFileTypes_textField preference.
-     *
-     * @param  udefSuffix  the user defined suffix
+     * 
+     * @param udefSuffix the user defined suffix
      */
 
     public void setUserDefinedFileTypes_textFieldPref(String udefSuffix) {
@@ -2162,10 +2160,10 @@ public class FileIO {
                     }
                 }
 
-                if (!isPresent) {
-                    Preferences.setProperty(Preferences.PREF_USER_FILETYPES_TEXTFIELDS,
-                                            Preferences.getProperty(Preferences.PREF_USER_FILETYPES_TEXTFIELDS) + ";*" +
-                                            udefSuffix);
+                if ( !isPresent) {
+                    Preferences.setProperty(Preferences.PREF_USER_FILETYPES_TEXTFIELDS, Preferences
+                            .getProperty(Preferences.PREF_USER_FILETYPES_TEXTFIELDS)
+                            + ";*" + udefSuffix);
                 }
             }
         } else {
@@ -2173,11 +2171,10 @@ public class FileIO {
         }
     }
 
-
     /**
      * This method sets the userDefinedFileTypes preference.
-     *
-     * @param  udefSuffix  the user defined suffix
+     * 
+     * @param udefSuffix the user defined suffix
      */
     public void setUserDefinedFileTypesPref(String udefSuffix) {
 
@@ -2200,16 +2197,15 @@ public class FileIO {
                     }
                 }
 
-                if (!isPresent) {
-                    Preferences.setProperty(Preferences.PREF_USER_FILETYPES,
-                                            Preferences.getProperty(Preferences.PREF_USER_FILETYPES) + "; *" +
-                                            udefSuffix);
+                if ( !isPresent) {
+                    Preferences.setProperty(Preferences.PREF_USER_FILETYPES, Preferences
+                            .getProperty(Preferences.PREF_USER_FILETYPES)
+                            + "; *" + udefSuffix);
                 }
             }
         } else {
             Preferences.setProperty(Preferences.PREF_USER_FILETYPES, "*" + udefSuffix);
         }
-
 
     }
 
@@ -2217,9 +2213,9 @@ public class FileIO {
      * Determines file type from the file name and calls different write functions based on the file type. Stores file
      * in the specified file name and directory given by the options. Calls appropriate dialogs if necessary. Supports
      * files of type raw, analyze, and DICOM.
-     *
-     * @param  image    Image to write.
-     * @param  options  Needed info to write this image.
+     * 
+     * @param image Image to write.
+     * @param options Needed info to write this image.
      */
     public void writeImage(ModelImage image, FileWriteOptions options) {
         int fileType;
@@ -2233,10 +2229,10 @@ public class FileIO {
 
         if (options.isSaveAs()) { // if we're doing a save-as op, then try to get the filetype from the name
             fileType = FileUtility.getFileType(options.getFileName(), options.getFileDirectory(), true, quiet);
-            
-            //System.err.println("FileType: " + fileType);
-            
-            options.setDefault(true); // this would already be set....  hrmm....
+
+            // System.err.println("FileType: " + fileType);
+
+            options.setDefault(true); // this would already be set.... hrmm....
         } else { // otherwise, get the file-type from the file-info.
             fileType = image.getFileInfo(0).getFileFormat();
         }
@@ -2245,7 +2241,7 @@ public class FileIO {
             fileType = options.getFileType(); // get saved file type from options
             options.setSaveAs(true); // can't tell from extension, so must be a save as.
 
-            // options.setSaveInSubdirectory(true);//  .... "" ...., so save into its own subdirectory.
+            // options.setSaveInSubdirectory(true);// .... "" ...., so save into its own subdirectory.
             if (fileType == FileUtility.UNDEFINED) { // file type wasn't set, so call dialog
                 fileType = getFileType(); // popup dialog to determine filetype
 
@@ -2260,13 +2256,14 @@ public class FileIO {
                 suffix = image.getFileInfo(0).getFileSuffix();
 
                 // if suffix wasn't set, then use the default suffix for fileType
-                if ((suffix == null) || suffix.equals("")) {
-                    suffix = FileUtility.getDefaultSuffix(fileType);
+                if ( (suffix == null) || suffix.equals("")) {
+                    suffix = FileTypeTable.getFileTypeInfo(fileType).getDefaultExtension();
                 }
 
                 Preferences.debug("FileIO save:  suffix = " + suffix + "\n", Preferences.DEBUG_FILEIO);
             } else {
-                suffix = FileUtility.getDefaultSuffix(fileType); // get suffix from what the file type should be
+                suffix = FileTypeTable.getFileTypeInfo(fileType).getDefaultExtension(); // get suffix from what the file
+                // type should be
             }
 
             options.setFileName(options.getFileName() + suffix); // append file extension
@@ -2277,8 +2274,8 @@ public class FileIO {
                 suffix = image.getFileInfo(0).getFileSuffix();
 
                 // if suffix wasn't set, then use the default suffix for fileType
-                if ((suffix == null) || suffix.equals("")) {
-                    suffix = FileUtility.getDefaultSuffix(fileType);
+                if ( (suffix == null) || suffix.equals("")) {
+                    suffix = FileTypeTable.getFileTypeInfo(fileType).getDefaultExtension();
                 }
 
                 Preferences.debug("FileIO save:  suffix = " + suffix + "\n", Preferences.DEBUG_FILEIO);
@@ -2286,20 +2283,20 @@ public class FileIO {
                 options.setFileName(options.getFileName() + suffix); // append file extension
             }
         } else if (fileType == FileUtility.MINC) {
-        	fileType = new JDialogSaveMincVersionChoice(ViewUserInterface.getReference().getMainFrame()).fileType();
+            fileType = new JDialogSaveMincVersionChoice(ViewUserInterface.getReference().getMainFrame()).fileType();
         }
 
-        if (!options.isSet()) {
+        if ( !options.isSet()) {
             options.setFileType(fileType);
             options.setMultiFile(image.getFileInfo(0).getMultiFile());
-            options.setPackBitEnabled((fileType == FileUtility.TIFF) &&
-                                          ((image.getFileInfo(0).getDataType() == ModelStorageBase.BYTE) ||
-                                               (image.getFileInfo(0).getDataType() == ModelStorageBase.UBYTE)));
+            options.setPackBitEnabled( (fileType == FileUtility.TIFF)
+                    && ( (image.getFileInfo(0).getDataType() == ModelStorageBase.BYTE) || (image.getFileInfo(0)
+                            .getDataType() == ModelStorageBase.UBYTE)));
         }
 
         if (options.isSaveAs() && !options.isSet()) {
 
-            if (!callDialog(image.getExtents(), (fileType == FileUtility.TIFF), options)) {
+            if ( !callDialog(image.getExtents(), (fileType == FileUtility.TIFF), options)) {
                 return;
             }
         }
@@ -2345,9 +2342,9 @@ public class FileIO {
                 break;
 
             case FileUtility.MINC_HDF:
-            	success = writeMincHDF(image, options);
-            	break;
-                
+                success = writeMincHDF(image, options);
+                break;
+
             case FileUtility.INTERFILE:
                 success = writeInterfile(image, options);
                 break;
@@ -2386,14 +2383,15 @@ public class FileIO {
             case FileUtility.PARREC:
                 success = writePARREC(image, options);
                 break;
-                
+
             case FileUtility.NRRD:
-            	success = writeNRRD(image, options);
-            	break;
+                success = writeNRRD(image, options);
+                break;
 
             default:
-                if (!quiet) {
-                    MipavUtil.displayError("File type unknown.  Try Save Image As; \notherwise, the file type is not supported.");
+                if ( !quiet) {
+                    MipavUtil
+                            .displayError("File type unknown.  Try Save Image As; \notherwise, the file type is not supported.");
                 }
 
                 return;
@@ -2403,37 +2401,36 @@ public class FileIO {
             progressBar.dispose();
         }
 
-        //now checks to make sure we're not writing NDAR srb transfers (xml header only)
-        if (success && ProvenanceRecorder.getReference().getRecorderStatus() == ProvenanceRecorder.RECORDING &&
-        		!options.writeHeaderOnly()) {
-        	
-        	ScriptableActionInterface action;
+        // now checks to make sure we're not writing NDAR srb transfers (xml header only)
+        if (success && ProvenanceRecorder.getReference().getRecorderStatus() == ProvenanceRecorder.RECORDING
+                && !options.writeHeaderOnly()) {
 
-        	if (options.isSaveAs()) {
-        		action = new ActionSaveImageAs(image, options);
-        	} else {
-        		action = new ActionSaveImage(image, options);
-        	}
-        	
-        	ProvenanceRecorder.getReference().addLine(action);
-                
-        	if (Preferences.is(Preferences.PREF_IMAGE_LEVEL_DATA_PROVENANCE)) {
+            ScriptableActionInterface action;
+
+            if (options.isSaveAs()) {
+                action = new ActionSaveImageAs(image, options);
+            } else {
+                action = new ActionSaveImage(image, options);
+            }
+
+            ProvenanceRecorder.getReference().addLine(action);
+
+            if (Preferences.is(Preferences.PREF_IMAGE_LEVEL_DATA_PROVENANCE)) {
                 FileDataProvenance fdp;
                 if (options.getFileName().lastIndexOf(".") != -1) {
-        		fdp = 
-        			new FileDataProvenance(options.getFileName().substring(0, options.getFileName().lastIndexOf(".")) + ".xmp", 
-        				options.getFileDirectory(), image.getProvenanceHolder());
+                    fdp = new FileDataProvenance(options.getFileName().substring(0,
+                            options.getFileName().lastIndexOf("."))
+                            + ".xmp", options.getFileDirectory(), image.getProvenanceHolder());
+                } else {
+                    fdp = new FileDataProvenance(options.getFileName() + ".xmp", options.getFileDirectory(), image
+                            .getProvenanceHolder());
                 }
-                else {
-                    fdp = new FileDataProvenance(options.getFileName() + ".xmp", options.getFileDirectory(), image.getProvenanceHolder());
-                }
-        		try {
-        			fdp.writeXML();
-        		} catch (Exception e) {}
-        	}
+                try {
+                    fdp.writeXML();
+                } catch (Exception e) {}
+            }
         }
-        
-        
+
         // if the flag is set to put the image into the quicklist, do so
         if (success && options.doPutInQuicklist()) {
 
@@ -2446,26 +2443,26 @@ public class FileIO {
                     start = "0" + start;
                 }
 
-                fName = fName.substring(0, fName.indexOf(".")) + start +
-                        fName.substring(fName.indexOf("."), fName.length());
-                
-                //check to see if we are actually switching dims (split into multi-file)
+                fName = fName.substring(0, fName.indexOf(".")) + start
+                        + fName.substring(fName.indexOf("."), fName.length());
+
+                // check to see if we are actually switching dims (split into multi-file)
                 if (options.getBeginSlice() == options.getEndSlice()) {
-                	if (image.getNDims() == 3) {
-                		Preferences.setLastImage(options.getFileDirectory() + fName, false, 2);
-                	} else {
-                		//image nDims is 4
-                		if (options.getBeginTime() == options.getEndTime()) {
-                			Preferences.setLastImage(options.getFileDirectory() + fName, false, 2);
-                		} else {
-                			Preferences.setLastImage(options.getFileDirectory() + fName, false, 3);
-                		}
-                	}
+                    if (image.getNDims() == 3) {
+                        Preferences.setLastImage(options.getFileDirectory() + fName, false, 2);
+                    } else {
+                        // image nDims is 4
+                        if (options.getBeginTime() == options.getEndTime()) {
+                            Preferences.setLastImage(options.getFileDirectory() + fName, false, 2);
+                        } else {
+                            Preferences.setLastImage(options.getFileDirectory() + fName, false, 3);
+                        }
+                    }
                 } else {
-                	Preferences.setLastImage(options.getFileDirectory() + fName, true, image.getNDims());
+                    Preferences.setLastImage(options.getFileDirectory() + fName, true, image.getNDims());
                 }
             } else {
-            	//single file format
+                // single file format
                 Preferences.setLastImage(options.getFileDirectory() + options.getFileName(), false, image.getNDims());
             }
 
@@ -2502,14 +2499,13 @@ public class FileIO {
         }
     }
 
-
     /**
      * Writes project information to a file.
-     *
-     * @param   projectInfo  The project information to be written to the file
-     * @param   options      Write options that control aspects of writing the project information.
-     *
-     * @return  True if the file was successfully saved to a file.
+     * 
+     * @param projectInfo The project information to be written to the file
+     * @param options Write options that control aspects of writing the project information.
+     * 
+     * @return True if the file was successfully saved to a file.
      */
     public boolean writeProject(FileInfoProject projectInfo, FileWriteOptions options) {
         FileProject projectFile;
@@ -2521,19 +2517,19 @@ public class FileIO {
             projectFile.writeProject(projectInfo, options.getFileName(), options.getFileDirectory());
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
@@ -2543,23 +2539,27 @@ public class FileIO {
     }
 
     /**
-     * Provides a method of conversion from <code>FileInfoDicom</CODE> to <CODE>FileInfoImageXML</CODE>, by filling the
-     * <CODE>FileInfoImageXML</CODE> with sets of chosen image information (from the DICOM tags).
-     *
-     * <p>The XML format suggests that each DICOM tag become a seperate set, and any multiple values stored in the DICOM
+     * Provides a method of conversion from <code>FileInfoDicom</CODE> to <CODE>FileInfoImageXML</CODE>, by filling
+     * the <CODE>FileInfoImageXML</CODE> with sets of chosen image information (from the DICOM tags).
+     * 
+     * <p>
+     * The XML format suggests that each DICOM tag become a seperate set, and any multiple values stored in the DICOM
      * tag, becomes parameter data. The set name is the DICOM tag name. Each value of the tag is stored as a separate
      * parameter in the set, and its description is stored as the DICOM key (group and element number, as displayed in
      * the file, &quot;dicom.dictionary&quot;) along with its position in the value multiplicity. All values stored are
      * stored as value-type &quot;string&quot;, and neither date nor time are set. Order of entries is not guaranteed,
-     * as order is not meaningful in XML.</p>
-     *
-     * <p>Be sure to see the image.xsd file for more information.</p>
-     *
-     * @see    #getDicomSaveList(FileInfoDicom)
-     * @see    JDialogDicom2XMLSelection
-     *
-     * @param  sourceInfo  The FileInfoDicom which is the source for user-selectable tags
-     * @param  destInfo    The FileInfoBase that holds the image information to be stored in XML (or MincHDF)format.
+     * as order is not meaningful in XML.
+     * </p>
+     * 
+     * <p>
+     * Be sure to see the image.xsd file for more information.
+     * </p>
+     * 
+     * @see #getDicomSaveList(FileInfoDicom)
+     * @see JDialogDicom2XMLSelection
+     * 
+     * @param sourceInfo The FileInfoDicom which is the source for user-selectable tags
+     * @param destInfo The FileInfoBase that holds the image information to be stored in XML (or MincHDF)format.
      */
     protected boolean dataConversion(FileInfoBase sourceInfo, FileInfoBase destInfo) {
 
@@ -2567,25 +2567,24 @@ public class FileIO {
         // XML, so look, or ask, for a dicom dictionary list of tags to save
         // into the XML
         // load the tags to keep:
-    	
-    	Hashtable tags2save = null;
-    	if (sourceInfo instanceof FileInfoDicom) {
-    		tags2save = getDicomSaveList((FileInfoDicom)sourceInfo, destInfo instanceof FileInfoImageXML);
-    	} else if (sourceInfo instanceof FileInfoMincHDF) {
-    		tags2save = ((FileInfoMincHDF)sourceInfo).getDicomTable();
-    	}
-    	
+
+        Hashtable tags2save = null;
+        if (sourceInfo instanceof FileInfoDicom) {
+            tags2save = getDicomSaveList((FileInfoDicom) sourceInfo, destInfo instanceof FileInfoImageXML);
+        } else if (sourceInfo instanceof FileInfoMincHDF) {
+            tags2save = ((FileInfoMincHDF) sourceInfo).getDicomTable();
+        }
+
         if (tags2save == null) {
             return false;
         }
 
-       
         if (destInfo instanceof FileInfoImageXML) {
-        	FileInfoImageXML dInfo = (FileInfoImageXML)destInfo;
-        	        	
-        	//now convert that DICOM tags list into an XML tags List:
-        	Enumeration e = tags2save.keys();
-        	while (e.hasMoreElements()) {
+            FileInfoImageXML dInfo = (FileInfoImageXML) destInfo;
+
+            // now convert that DICOM tags list into an XML tags List:
+            Enumeration e = tags2save.keys();
+            while (e.hasMoreElements()) {
                 FileDicomKey tagKey = (FileDicomKey) e.nextElement();
                 FileDicomTag dicomTag = (FileDicomTag) tags2save.get(tagKey);
 
@@ -2628,8 +2627,8 @@ public class FileIO {
                                 dInfo.getCurrentPSet().getCurrentParameter().setValue(noNulls.toString());
                             } catch (StringIndexOutOfBoundsException nullNotThere) {
                                 dInfo.getCurrentPSet().getCurrentParameter().setValue("");
-                                System.err.println("(" + tagKey + ") Trying to output " + "current string bounded by " +
-                                                   "colons, nulls and all:");
+                                System.err.println("(" + tagKey + ") Trying to output " + "current string bounded by "
+                                        + "colons, nulls and all:");
 
                                 try {
                                     System.err.println(":" + noNulls.toString() + ":");
@@ -2652,21 +2651,22 @@ public class FileIO {
                     }
                 }
             }
-        } else if (destInfo instanceof FileInfoMincHDF){
-        	((FileInfoMincHDF)destInfo).setDicomTable(tags2save);
+        } else if (destInfo instanceof FileInfoMincHDF) {
+            ((FileInfoMincHDF) destInfo).setDicomTable(tags2save);
         }
-        
 
         return true;
     }
 
     /**
      * Returns a list of tags that are a subset of the DICOM dictionary. This method chooses the tags to be saved by
-     * presenting a dialog for the user to select a list of tags or by reading the <q>dicomsave.dictionary</q> file.
-     *
-     * @param   sourceInfo  Source of DICOM information.
-     *
-     * @return  The Hashtable filled as an XML
+     * presenting a dialog for the user to select a list of tags or by reading the
+     * <q>dicomsave.dictionary</q>
+     * file.
+     * 
+     * @param sourceInfo Source of DICOM information.
+     * 
+     * @return The Hashtable filled as an XML
      */
     protected Hashtable getDicomSaveList(FileInfoDicom sourceInfo, boolean isXML) {
         Hashtable tags2save;
@@ -2701,9 +2701,9 @@ public class FileIO {
         while (e.hasMoreElements()) {
             FileDicomKey tagKey = (FileDicomKey) e.nextElement();
 
-            if (fullTagsList.containsKey(tagKey) &&
-                    (((FileDicomTag) fullTagsList.get(tagKey)).getValue(false) != null) &&
-                    (((FileDicomTag) fullTagsList.get(tagKey)).getNumberOfValues() > 0)) {
+            if (fullTagsList.containsKey(tagKey)
+                    && ( ((FileDicomTag) fullTagsList.get(tagKey)).getValue(false) != null)
+                    && ( ((FileDicomTag) fullTagsList.get(tagKey)).getNumberOfValues() > 0)) {
                 tags2save.put(tagKey, fullTagsList.get(tagKey));
             } else {
                 tags2save.remove(tagKey);
@@ -2714,11 +2714,11 @@ public class FileIO {
     }
 
     /**
-     * Provides a method of conversion from <code>FileInfoLSM</CODE> to <CODE>FileInfoImageXML</CODE>, by filling the
-     * <CODE>FileInfoImageXML</CODE> with sets of chosen image information.
-     *
-     * @param  sourceInfo  the LSM-formatted Source information
-     * @param  destInfo    the XML-format file information that is the output.
+     * Provides a method of conversion from <code>FileInfoLSM</CODE> to <CODE>FileInfoImageXML</CODE>, by filling
+     * the <CODE>FileInfoImageXML</CODE> with sets of chosen image information.
+     * 
+     * @param sourceInfo the LSM-formatted Source information
+     * @param destInfo the XML-format file information that is the output.
      */
     protected void LSMDataConversion(FileInfoLSM sourceInfo, FileInfoImageXML destInfo) {
         int firstSliceAfterBleach;
@@ -2801,13 +2801,12 @@ public class FileIO {
 
     }
 
-
     /**
      * DOCUMENT ME!
-     *
-     * @param  modelImageSrc     DOCUMENT ME!
-     * @param  modelImageResult  DOCUMENT ME!
-     * @param  sliceNum          DOCUMENT ME!
+     * 
+     * @param modelImageSrc DOCUMENT ME!
+     * @param modelImageResult DOCUMENT ME!
+     * @param sliceNum DOCUMENT ME!
      */
     private static void copyResolutions(ModelImage modelImageSrc, ModelImage modelImageResult, int sliceNum) {
         float[] resolutions = new float[3];
@@ -2820,18 +2819,18 @@ public class FileIO {
 
     /**
      * The purpose of this method is to take a buffer of float and resample the values to proper UBYTE values.
-     *
-     * @param   buffer  float[] - the buffer to be sampled
-     * @param   min     - the image's minimum pixel value
-     * @param   max     - the image's maximum pixel value
-     *
-     * @return  float[] - the resampled buffer with min and max values in the range 0 - 255
+     * 
+     * @param buffer float[] - the buffer to be sampled
+     * @param min - the image's minimum pixel value
+     * @param max - the image's maximum pixel value
+     * 
+     * @return float[] - the resampled buffer with min and max values in the range 0 - 255
      */
     private static float[] resample255(float[] buffer, float min, float max) {
         float precalculatedDenominator = max - min; // precalculated (max - min) for speed
 
         for (int i = 0; i < buffer.length; i++) {
-            buffer[i] = ((buffer[i] - min) / precalculatedDenominator) * 255;
+            buffer[i] = ( (buffer[i] - min) / precalculatedDenominator) * 255;
         }
 
         return buffer;
@@ -2842,12 +2841,12 @@ public class FileIO {
      * thus, the final value of B[i] is for the ith image read in, put that image at location B[i] in the image buffer.
      * This is necessary for images labeled dicom1, dicom2, etc because dicom11, dicom12, ... will come before dicom2.
      * Also our only indication of the "true" ordering is slice location.
-     *
-     * @param   A     Array to be sorted.
-     * @param   B     Array it goes into.
-     * @param   size  Size of the array (both arrays are the same size).
-     *
-     * @return  <code>false</code> only if any of the numbers in the array are equal.
+     * 
+     * @param A Array to be sorted.
+     * @param B Array it goes into.
+     * @param size Size of the array (both arrays are the same size).
+     * 
+     * @return <code>false</code> only if any of the numbers in the array are equal.
      */
     private static boolean sort(float[] A, int[] B, int size) {
         boolean flag = true;
@@ -2893,12 +2892,12 @@ public class FileIO {
      * thus, the final value of B[i] is for the ith image read in, put that image at location B[i] in the image buffer.
      * This is necessary for images labeled dicom1, dicom2, etc because dicom11, dicom12, ... will come before dicom2.
      * Also our only indication of the "true" ordering is image number.
-     *
-     * @param   A     Array to be sorted.
-     * @param   B     Array it goes into.
-     * @param   size  Size of the array (both arrays are the same size).
-     *
-     * @return  <code>false</code> only if any of the numbers in the array are equal.
+     * 
+     * @param A Array to be sorted.
+     * @param B Array it goes into.
+     * @param size Size of the array (both arrays are the same size).
+     * 
+     * @return <code>false</code> only if any of the numbers in the array are equal.
      */
     private static boolean sort(int[] A, int[] B, int size) {
         boolean flag = true;
@@ -2941,14 +2940,14 @@ public class FileIO {
 
     /**
      * Helper method for finding biggest (absolute value) of three numbers.
-     *
-     * @param   zero  First value
-     * @param   one   Second value
-     * @param   two   Third value
-     *
-     * @return  Index of argument that is the biggest. That is, if <code>zero</code> is the largest of the three
-     *          numbers, the value 0 is returned; alternatively, if the second argument is the largest of the three
-     *          numbers, the value 1 is returned; and so on.
+     * 
+     * @param zero First value
+     * @param one Second value
+     * @param two Third value
+     * 
+     * @return Index of argument that is the biggest. That is, if <code>zero</code> is the largest of the three
+     *         numbers, the value 0 is returned; alternatively, if the second argument is the largest of the three
+     *         numbers, the value 1 is returned; and so on.
      */
     private int absBiggest(double zero, double one, double two) {
 
@@ -2971,20 +2970,19 @@ public class FileIO {
 
     /**
      * Calls GUI dialogs based on what type of image this is and the number of dimensions.
-     *
-     * @param   extents  Extents of the image, used to determine what type of dialog to call and initialize variables.
-     * @param   isTiff   Flag indicating if this is a TIFF file; TIFF files require more options.
-     * @param   options  Options to get from the dialog and save.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param extents Extents of the image, used to determine what type of dialog to call and initialize variables.
+     * @param isTiff Flag indicating if this is a TIFF file; TIFF files require more options.
+     * @param options Options to get from the dialog and save.
+     * 
+     * @return DOCUMENT ME!
      */
     private boolean callDialog(int[] extents, boolean isTiff, FileWriteOptions options) {
         JDialogSaveSlices dialogSave = null;
 
-        if ((extents.length == 2) && isTiff && options.isPackBitEnabled()) {
+        if ( (extents.length == 2) && isTiff && options.isPackBitEnabled()) {
             int response = JOptionPane.showConfirmDialog(UI.getMainFrame(), "Save with pack bit compression?",
-                                                         "Compression", JOptionPane.YES_NO_OPTION,
-                                                         JOptionPane.QUESTION_MESSAGE);
+                    "Compression", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
             if (response == JOptionPane.YES_OPTION) {
                 options.setWritePackBit(true);
@@ -2995,9 +2993,9 @@ public class FileIO {
         } else if (extents.length > 2) {
 
             if (extents.length == 3) {
-                dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, extents[2]-1, options);
+                dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, extents[2] - 1, options);
             } else if (extents.length == 4) {
-                dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, extents[2]-1, 0, extents[3]-1, options);
+                dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, extents[2] - 1, 0, extents[3] - 1, options);
             }
 
             if (dialogSave.isCancelled()) {
@@ -3008,7 +3006,7 @@ public class FileIO {
 
             if (extents.length == 3) {
 
-                if (!((options.getBeginSlice() == 0) && (options.getEndSlice() == (extents[2] - 1)))) {
+                if ( ! ( (options.getBeginSlice() == 0) && (options.getEndSlice() == (extents[2] - 1)))) {
                     options.setDefault(false);
                 }
 
@@ -3017,10 +3015,10 @@ public class FileIO {
                 }
             } else if (extents.length == 4) {
 
-                if ((options.getFileType() == FileUtility.TIFF) || (options.getFileType() == FileUtility.MINC)) {
+                if ( (options.getFileType() == FileUtility.TIFF) || (options.getFileType() == FileUtility.MINC)) {
 
-                    if (!((options.getBeginSlice() == 0) && (options.getEndSlice() == (extents[2] - 1)) &&
-                              (options.getTimeSlice() == 0))) {
+                    if ( ! ( (options.getBeginSlice() == 0) && (options.getEndSlice() == (extents[2] - 1)) && (options
+                            .getTimeSlice() == 0))) {
                         options.setDefault(false);
                     }
 
@@ -3029,9 +3027,9 @@ public class FileIO {
                     }
                 } else {
 
-                    // if these are the defaults, don't append them, it's not necessary.  otherwise will append all 4.
-                    if (!((options.getBeginSlice() == 0) && (options.getEndSlice() == (extents[2] - 1)) &&
-                              (options.getBeginTime() == 0) && (options.getEndTime() == (extents[3] - 1)))) {
+                    // if these are the defaults, don't append them, it's not necessary. otherwise will append all 4.
+                    if ( ! ( (options.getBeginSlice() == 0) && (options.getEndSlice() == (extents[2] - 1))
+                            && (options.getBeginTime() == 0) && (options.getEndTime() == (extents[3] - 1)))) {
                         options.setDefault(false);
                     }
                 }
@@ -3045,16 +3043,15 @@ public class FileIO {
      * Creates the progress bar and links (if not null) the progress bar to a FileBase for reading/writing if the
      * progress bar should not be updated within the FileBase's readImage/writeImage, pass in null to the fBase and
      * update within FileIO's read[ImageType] or write[ImageType] methods.
-     *
-     * @param  fBase    the FileBase that will add the Progress Bar as a listener (for fireProgressStateChanged())
-     * @param  fName    the filename (will be displayed in the title and part of the message)
-     * @param  message  this message should FILE_READ, FILE_OPEN
+     * 
+     * @param fBase the FileBase that will add the Progress Bar as a listener (for fireProgressStateChanged())
+     * @param fName the filename (will be displayed in the title and part of the message)
+     * @param message this message should FILE_READ, FILE_OPEN
      */
     private void createProgressBar(FileBase fBase, String fName, String message) {
 
         // progressBar = new ViewJProgressBar(fName, message + fName + " ...", 0, 100, true);
         // progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible() && !quiet);
-
 
         // the quiet flag is needed to determine if progress bar is visible or not
         progressBar = new ViewJProgressBar(fName, message + fName + " ...", 0, 100, true, null, null, !quiet);
@@ -3067,12 +3064,12 @@ public class FileIO {
 
     /**
      * Reads an AFNI file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   loadB     true if loading imageB
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param loadB true if loading imageB
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readAfni(String fileName, String fileDir, boolean loadB) {
         ModelImage image = null;
@@ -3083,7 +3080,7 @@ public class FileIO {
             imageFile = new FileAfni(fileName, fileDir, loadB, doRead);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
-            // LUT      = imageFile.getModelLUT();
+            // LUT = imageFile.getModelLUT();
         } catch (IOException error) {
 
             if (image != null) {
@@ -3093,10 +3090,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -3109,10 +3106,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -3123,17 +3120,17 @@ public class FileIO {
     }
 
     /**
-     * Reads an analyze file by calling the read method of the file. Also checks if it's a Cheshire
-     * and if so, calls that method instead. This method contains special code to not display the progress bar should
-     * the image be <q>splash.img</q>.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * Reads an analyze file by calling the read method of the file. Also checks if it's a Cheshire and if so, calls
+     * that method instead. This method contains special code to not display the progress bar should the image be
+     * <q>splash.img</q>.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readAnalyze(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
@@ -3157,10 +3154,10 @@ public class FileIO {
 
                 System.gc();
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 return null;
@@ -3173,10 +3170,10 @@ public class FileIO {
 
                 System.gc();
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 return null;
@@ -3188,11 +3185,11 @@ public class FileIO {
 
     /**
      * Reads a multi Analyze file. Gets a list of the images from the file directory and reads them each in.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readAnalyzeMulti(String fileName, String fileDir) {
         ModelImage image = null;
@@ -3207,7 +3204,6 @@ public class FileIO {
         int nImages;
         // of proper extents (in case there is a file with the consistent filename but
         // inconsistent extents.) we do assume the 1st header is correct
-
 
         int i = 0;
 
@@ -3224,17 +3220,16 @@ public class FileIO {
             }
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
         }
 
         nImages = i; // total number of suspected files to import into an image
-
 
         if (nImages == 1) {
             return readAnalyze(fileName, fileDir, false);
@@ -3249,15 +3244,15 @@ public class FileIO {
 
         try {
 
-            if (!imageFile.readHeader(fileList[0], fileDir)) {
+            if ( !imageFile.readHeader(fileList[0], fileDir)) {
                 throw (new IOException(" Analyze header file error"));
             }
         } catch (IOException ioe) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("Error reading header file.");
             }
-            
+
             ioe.printStackTrace();
         }
 
@@ -3303,7 +3298,7 @@ public class FileIO {
                 progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
                 imageFile = new FileAnalyze(fileList[i], fileDir);
 
-                if (!((FileAnalyze) imageFile).readHeader(fileList[i], fileDir)) {
+                if ( ! ((FileAnalyze) imageFile).readHeader(fileList[i], fileDir)) {
                     throw (new IOException(" Analyze header file error"));
                 }
 
@@ -3313,8 +3308,9 @@ public class FileIO {
 
                 if (extents.length != fileInfo.getExtents().length) {
 
-                    if (!quiet) {
-                        MipavUtil.displayError("Inconsistent analyze image file found.  This File will be skipped.  The number of dimensions does not match.");
+                    if ( !quiet) {
+                        MipavUtil
+                                .displayError("Inconsistent analyze image file found.  This File will be skipped.  The number of dimensions does not match.");
                     }
 
                     continue;
@@ -3323,10 +3319,11 @@ public class FileIO {
                     switch (extents.length) { // check that they extend as far in all dimensions:
 
                         case 2:
-                            if ((extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])) {
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])) {
 
-                                if (!quiet) {
-                                    MipavUtil.displayError("Inconsistent analyze image file found.  This File will be skipped.  One or more of the X-Y dimensions do not match.");
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent analyze image file found.  This File will be skipped.  One or more of the X-Y dimensions do not match.");
                                 }
 
                                 continue;
@@ -3335,11 +3332,12 @@ public class FileIO {
                             break;
 
                         case 3:
-                            if ((extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1]) ||
-                                    (extents[2] != fileInfo.getExtents()[2])) {
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])) {
 
-                                if (!quiet) {
-                                    MipavUtil.displayError("Inconsistent analyze image file found.  This File will be skipped.  One or more of the X-Y-Z dimensions do not match.");
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent analyze image file found.  This File will be skipped.  One or more of the X-Y-Z dimensions do not match.");
                                 }
 
                                 continue;
@@ -3348,12 +3346,13 @@ public class FileIO {
                             break;
 
                         case 4:
-                            if ((extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1]) ||
-                                    (extents[2] != fileInfo.getExtents()[2]) ||
-                                    (extents[3] != fileInfo.getExtents()[3])) {
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])
+                                    || (extents[3] != fileInfo.getExtents()[3])) {
 
-                                if (!quiet) {
-                                    MipavUtil.displayError("Inconsistent analyze image file found.  This File will be skipped.  One or more of the X-Y-Z-T dimensions do not match.");
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent analyze image file found.  This File will be skipped.  One or more of the X-Y-Z-T dimensions do not match.");
                                 }
 
                                 continue;
@@ -3390,11 +3389,10 @@ public class FileIO {
                 imageCount++; // image was okay, so count it.(can't do it before b/c of offset)
             } catch (IOException error) {
 
-
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -3407,12 +3405,11 @@ public class FileIO {
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
 
-
-                if (!quiet) {
-                    MipavUtil.displayError("Unable to read images: the image\nnumber in the file " +
-                                           fileInfo.getFileName() + " is corrupted.");
+                if ( !quiet) {
+                    MipavUtil.displayError("Unable to read images: the image\nnumber in the file "
+                            + fileInfo.getFileName() + " is corrupted.");
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -3425,10 +3422,10 @@ public class FileIO {
                 return null;
             } catch (OutOfMemoryError error) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -3442,9 +3439,9 @@ public class FileIO {
             }
         }
 
-        // i goes 1 too far anyway, but if  we skipped files, be sure to account for it,
+        // i goes 1 too far anyway, but if we skipped files, be sure to account for it,
         // because our basic model was that all prperly named files were good analyze images.
-        // only we found one or more didn't fit.  We must now take that into account.
+        // only we found one or more didn't fit. We must now take that into account.
         // ie., we read in imageCount # of images, we expected nImages.
         if (imageCount < nImages) {
             FileInfoBase[] fileInfoArr = image.getFileInfo();
@@ -3466,7 +3463,7 @@ public class FileIO {
                 }
             } catch (IOException ioe) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO reports: " + ioe.getMessage());
                 }
 
@@ -3489,16 +3486,16 @@ public class FileIO {
 
     /**
      * Reads an AVI file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     * @param   readQT    Indicates that a QuickTime movie file is being read. <code>true</code> if this file represents
-     *                    QuickTime.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * @param readQT Indicates that a QuickTime movie file is being read. <code>true</code> if this file represents
+     *            QuickTime.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readAvi(String fileName, String fileDir, boolean one, boolean readQT) {
         FileAvi imageFile;
@@ -3523,10 +3520,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -3539,10 +3536,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -3554,14 +3551,14 @@ public class FileIO {
 
     /**
      * Reads a BioRad PIC file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readBioRad(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
@@ -3570,7 +3567,7 @@ public class FileIO {
         try {
             imageFile = new FileBioRad(fileName, fileDir);
             image = imageFile.readImage(one);
-            // LUT      = imageFile.getModelLUT();
+            // LUT = imageFile.getModelLUT();
         } catch (IOException error) {
 
             if (image != null) {
@@ -3580,10 +3577,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -3596,10 +3593,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -3612,14 +3609,14 @@ public class FileIO {
     /**
      * Reads a BRUKER file by first reading in the d3proc header file, second the reco header file, third the acqp file,
      * and finally the 2dseq binary file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readBRUKER(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
@@ -3634,19 +3631,19 @@ public class FileIO {
             imageFile.readd3proc();
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("d3proc FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("d3proc Out of memory: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -3661,10 +3658,10 @@ public class FileIO {
             myFileInfo.setEndianess(FileBase.BIG_ENDIAN);
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("reco out of memory: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -3675,7 +3672,7 @@ public class FileIO {
 
         File tmpFile = new File(fileDir + File.separator + "acqp");
 
-        if (!tmpFile.exists()) {
+        if ( !tmpFile.exists()) {
 
             // go up 2 parent directories
             parentDirectoryName = directoryFile.getParent();
@@ -3690,14 +3687,14 @@ public class FileIO {
         } catch (IOException error) {
             Preferences.debug("IOExceoption in FileIO.readBRUKER\n", Preferences.DEBUG_FILEIO);
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("IOException in FileIO.readBRUKER: " + error);
             }
 
             return null;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("acqp out of memory: " + error);
             }
 
@@ -3718,10 +3715,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -3734,10 +3731,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("Out of memory: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -3748,11 +3745,11 @@ public class FileIO {
 
     /**
      * Reads a Cheshire file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readCheshire(String fileName, String fileDir) {
         ModelImage image = null;
@@ -3771,10 +3768,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -3787,10 +3784,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -3801,14 +3798,14 @@ public class FileIO {
 
     /**
      * Reads a COR file by first reading the header file then reading in each separate slice file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readCOR(String fileName, String fileDir) {
-        int[] extents; // extent of image  (!def!)
+        int[] extents; // extent of image (!def!)
         int length = 0;
         int i;
 
@@ -3835,10 +3832,10 @@ public class FileIO {
             tryAgain = true;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("Out of memory: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -3855,10 +3852,10 @@ public class FileIO {
                 tryAgain = true;
             } catch (OutOfMemoryError error) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("Out of memory: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 return null;
@@ -3873,19 +3870,19 @@ public class FileIO {
                 imageFile.readInfoImage();
             } catch (IOException error) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 return null;
             } catch (OutOfMemoryError error) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("Out of memory: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 return null;
@@ -3922,10 +3919,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("Out of memory: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -3937,10 +3934,10 @@ public class FileIO {
             imageFile = new FileCOR(fileList[0], fileDir);
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             if (image != null) {
@@ -3971,11 +3968,10 @@ public class FileIO {
                 }
             } catch (IOException error) {
 
-
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -3988,11 +3984,11 @@ public class FileIO {
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
 
-                if (!quiet) {
-                    MipavUtil.displayError("Unable to read images: the image\n" + "number in the file " +
-                                           myFileInfo.getFileName() + " is corrupted.");
+                if ( !quiet) {
+                    MipavUtil.displayError("Unable to read images: the image\n" + "number in the file "
+                            + myFileInfo.getFileName() + " is corrupted.");
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -4005,10 +4001,10 @@ public class FileIO {
                 return null;
             } catch (OutOfMemoryError error) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("Out of memory: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -4023,21 +4019,20 @@ public class FileIO {
             }
         }
 
-
         return image;
 
     }
 
     /**
      * Reads a Dm3 file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readDM3(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
@@ -4046,7 +4041,7 @@ public class FileIO {
         try {
             imageFile = new FileDM3(fileName, fileDir);
             image = imageFile.readImage(one);
-            // LUT      = imageFile.getModelLUT();
+            // LUT = imageFile.getModelLUT();
         } catch (IOException error) {
 
             if (image != null) {
@@ -4056,10 +4051,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -4072,10 +4067,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -4087,14 +4082,14 @@ public class FileIO {
 
     /**
      * Reads a FITS file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readFits(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
@@ -4104,7 +4099,7 @@ public class FileIO {
             imageFile = new FileFits(fileName, fileDir);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(one);
-            // LUT      = imageFile.getModelLUT();
+            // LUT = imageFile.getModelLUT();
         } catch (IOException error) {
 
             if (image != null) {
@@ -4114,10 +4109,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -4130,10 +4125,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -4145,11 +4140,11 @@ public class FileIO {
 
     /**
      * Reads in a GE Genesis 5x type file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readGEGenesis5X(String fileName, String fileDir) {
 
@@ -4165,7 +4160,7 @@ public class FileIO {
         int imageSize = 0;
         int width, height;
         int nImages;
-        int[] orient = { 0, 0, 0 };
+        int[] orient = {0, 0, 0};
         float slice0Pos = 0.0f;
         float slice1Pos = 0.0f;
 
@@ -4179,7 +4174,7 @@ public class FileIO {
 
             if (imageSize == -1) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: Compression not supported for Signa 5X");
                 }
 
@@ -4188,7 +4183,7 @@ public class FileIO {
 
             if (imageSize == -2) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: Not a Signa 5X file.");
                 }
 
@@ -4197,7 +4192,7 @@ public class FileIO {
 
             if (imageSize == 0) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: Image length.");
                 }
 
@@ -4211,7 +4206,7 @@ public class FileIO {
             length = width * height;
             buffer = new float[length];
 
-            if ((fileList.length == 1) || (imageFile.getStartAdjust() > 0)) {
+            if ( (fileList.length == 1) || (imageFile.getStartAdjust() > 0)) {
                 extents = new int[2];
                 extents[0] = width;
                 extents[1] = height;
@@ -4232,24 +4227,24 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
-            if (progressBar != null) { }
+            if (progressBar != null) {}
 
             return null;
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
-            if (progressBar != null) { }
+            if (progressBar != null) {}
 
             return null;
         }
@@ -4340,18 +4335,18 @@ public class FileIO {
                     }
 
                     myFileInfo.setExtents(extents);
-                    myFileInfo.setOrigin(((FileInfoGESigna5X) (myFileInfo)).getOriginAtSlice(imageFile.getImageNumber() -
-                                                                                             1));
+                    myFileInfo.setOrigin( ((FileInfoGESigna5X) (myFileInfo)).getOriginAtSlice(imageFile
+                            .getImageNumber() - 1));
                     image.setFileInfo(myFileInfo, imageFile.getImageNumber() - 1);
-                    image.importData((imageFile.getImageNumber() - 1) * length, buffer, false);
+                    image.importData( (imageFile.getImageNumber() - 1) * length, buffer, false);
                 } // if (fileList[i] != null)
             } // try
             catch (IOException error) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -4364,11 +4359,10 @@ public class FileIO {
                 return null;
             } catch (OutOfMemoryError error) {
 
-
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -4390,11 +4384,11 @@ public class FileIO {
 
     /**
      * Reads in a GE Signa 4x type file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readGESigna4X(String fileName, String fileDir) {
 
@@ -4410,7 +4404,7 @@ public class FileIO {
         int width, height;
         int nImages;
         int imageSize;
-        int[] orient = { 0, 0, 0 };
+        int[] orient = {0, 0, 0};
         float slice0Pos = 0.0f;
         float slice1Pos = 0.0f;
 
@@ -4424,7 +4418,7 @@ public class FileIO {
 
             if (imageSize == -1) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: Compression not supported for Signa 4X");
                 }
 
@@ -4433,7 +4427,7 @@ public class FileIO {
 
             if (imageSize == -2) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: Not a Signa 4X file.");
                 }
 
@@ -4442,7 +4436,7 @@ public class FileIO {
 
             if (imageSize == 0) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: Image length.");
                 }
 
@@ -4475,19 +4469,19 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -4567,7 +4561,6 @@ public class FileIO {
                                 break;
                         } // switch (myFileInfo.getImageOrientation())
 
-
                         if (myFileInfo0 != null) {
                             image.setFileInfo(myFileInfo0, 0);
                             myFileInfo0.setAxisOrientation(orient);
@@ -4579,19 +4572,19 @@ public class FileIO {
                     }
 
                     myFileInfo.setExtents(extents);
-                    myFileInfo.setOrigin(((FileInfoGESigna4X) (myFileInfo)).getOriginAtSlice(imageFile.getImageNumber() -
-                                                                                             1));
+                    myFileInfo.setOrigin( ((FileInfoGESigna4X) (myFileInfo)).getOriginAtSlice(imageFile
+                            .getImageNumber() - 1));
 
                     image.setFileInfo(myFileInfo, imageFile.getImageNumber() - 1);
-                    image.importData((imageFile.getImageNumber() - 1) * length, buffer, false);
+                    image.importData( (imageFile.getImageNumber() - 1) * length, buffer, false);
                 } // if (fileList[i] != null)
             } // try
             catch (IOException error) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -4604,10 +4597,10 @@ public class FileIO {
                 return null;
             } catch (OutOfMemoryError error) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -4623,17 +4616,16 @@ public class FileIO {
 
         image.setImageName(imageFile.getFileInfo().getImageNameFromInfo(), false);
 
-
         return image;
     }
 
     /**
      * Reads an ICS file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readICS(String fileName, String fileDir) {
         ModelImage image = null;
@@ -4643,7 +4635,7 @@ public class FileIO {
             imageFile = new FileICS(fileName, fileDir);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
-            // LUT      = imageFile.getModelLUT();
+            // LUT = imageFile.getModelLUT();
         } catch (IOException error) {
 
             if (image != null) {
@@ -4653,10 +4645,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -4669,10 +4661,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -4684,14 +4676,14 @@ public class FileIO {
 
     /**
      * Reads an Interfile file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readInterfile(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
@@ -4701,7 +4693,7 @@ public class FileIO {
             imageFile = new FileInterfile(fileName, fileDir);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(one);
-            // LUT      = imageFile.getModelLUT();
+            // LUT = imageFile.getModelLUT();
         } catch (IOException error) {
 
             if (image != null) {
@@ -4711,10 +4703,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -4727,10 +4719,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -4742,14 +4734,14 @@ public class FileIO {
 
     /**
      * Reads a JIMI file by calling the read method of the file.
-     *
-     * @param   fileName   Name of the image file to read.
-     * @param   fileDir    Directory of the image file to read.
-     * @param   multifile  Indication whether this file is be read alone, or if the reader is to read all matching
-     *                     filenames as a part of the dataset. <code>true</code> if want to read all matching files to
-     *                     form an image into a 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param multifile Indication whether this file is be read alone, or if the reader is to read all matching
+     *            filenames as a part of the dataset. <code>true</code> if want to read all matching files to form an
+     *            image into a 3D dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readJimi(String fileName, String fileDir, boolean multifile) {
         ModelImage modelImage = null;
@@ -4760,15 +4752,14 @@ public class FileIO {
         int[] buffer = null;
         String[] fileList;
 
-
         if (multifile) {
             fileList = FileUtility.getFileList(fileDir, fileName, quiet);
         } else {
-            fileList = new String[] { fileName };
+            fileList = new String[] {fileName};
         }
 
         MediaTracker mediaTracker = new MediaTracker(UI.getMainFrame());
-        extents = new int[] { 0, 0, fileList.length };
+        extents = new int[] {0, 0, fileList.length};
 
         for (int j = 0; j < fileList.length; j++) {
 
@@ -4778,7 +4769,7 @@ public class FileIO {
 
                 boolean loaded = mediaTracker.waitForAll(20000);
 
-                if (!loaded || (image == null)) {
+                if ( !loaded || (image == null)) {
 
                     try {
                         image = (Image) ImageIO.read(new File(fileDir + fileList[j])); // if JIMI fails, try this
@@ -4812,7 +4803,7 @@ public class FileIO {
 
                     if (image == null) {
 
-                        if (!quiet) {
+                        if ( !quiet) {
                             MipavUtil.displayError("Unable to load image. Image format may not be supported.");
                         }
 
@@ -4833,12 +4824,12 @@ public class FileIO {
             imageWidth = image.getWidth(null);
             imageHeight = image.getHeight(null);
 
-            if ((imageWidth <= 0) || (imageHeight <= 0)) {
+            if ( (imageWidth <= 0) || (imageHeight <= 0)) {
                 return null;
             }
 
-            // More to be added if animated gifs ...  are required
-            // LUT      = img.getProperty("", UI.getMainFrame());
+            // More to be added if animated gifs ... are required
+            // LUT = img.getProperty("", UI.getMainFrame());
             // This is for RGB images
             int[] pixels = new int[imageWidth * imageHeight];
             PixelGrabber pg = new PixelGrabber(image, 0, 0, imageWidth, imageHeight, pixels, 0, imageWidth);
@@ -4851,15 +4842,16 @@ public class FileIO {
                 return null;
             }
 
-            if ((pg.getStatus() & ImageObserver.ABORT) != 0) {
+            if ( (pg.getStatus() & ImageObserver.ABORT) != 0) {
                 Preferences.debug("JIMI: Image fetch aborted or errored" + "\n", Preferences.DEBUG_FILEIO);
 
                 return null;
             }
 
-            if ((extents[0] != 0) && ((extents[0] != imageWidth) || (extents[1] != imageHeight))) {
-                MipavUtil.displayError("Images files with similar names in the directory do not have the same X-Y dimensions.\n" +
-                                       "You may want to disable the Multi-file option.");
+            if ( (extents[0] != 0) && ( (extents[0] != imageWidth) || (extents[1] != imageHeight))) {
+                MipavUtil
+                        .displayError("Images files with similar names in the directory do not have the same X-Y dimensions.\n"
+                                + "You may want to disable the Multi-file option.");
 
                 return null;
             }
@@ -4878,7 +4870,7 @@ public class FileIO {
             for (int y = 0; y < imageHeight; y++) {
 
                 for (int x = 0; x < imageWidth; x++) {
-                    pixel = pixels[(y * imageWidth) + x];
+                    pixel = pixels[ (y * imageWidth) + x];
                     a = (pixel >> 24) & 0xff;
                     r = (pixel >> 16) & 0xff;
                     g = (pixel >> 8) & 0xff;
@@ -4896,9 +4888,9 @@ public class FileIO {
         }
 
         if (extents[2] == 1) {
-            int[] tmp = new int[] { extents[0], extents[1] };
+            int[] tmp = new int[] {extents[0], extents[1]};
 
-            extents = new int[] { tmp[0], tmp[1] };
+            extents = new int[] {tmp[0], tmp[1]};
         }
 
         modelImage = new ModelImage(ModelStorageBase.ARGB, extents, fileName);
@@ -4929,15 +4921,15 @@ public class FileIO {
 
     /**
      * Reads a LSM file by calling the read method of the file.
-     *
-     * @param   fileName       Name of the image file to read.
-     * @param   fileDir        Directory of the image file to read.
-     * @param   secondAddress  DOCUMENT ME!
-     * @param   one            Indicates that only the named file should be read, as opposed to reading the matching
-     *                         files in the directory, as defined by the filetype. <code>true</code> if only want to
-     *                         read one image from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param secondAddress DOCUMENT ME!
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readLSM(String fileName, String fileDir, int secondAddress, boolean one) {
         ModelImage image = null;
@@ -4958,10 +4950,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -4974,10 +4966,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -4989,17 +4981,17 @@ public class FileIO {
 
     /**
      * Reads a multi LSM file by first reading the headers then reading in each separate file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readLSMMulti(String fileName, String fileDir) {
         float[] resols;
         int[] singleExtents;
         int[] singleUnitsOfMeasure;
-        int[] extents; // extent of image  (!def!)
+        int[] extents; // extent of image (!def!)
         int[] unitsOfMeasure;
         int length = 0;
         int i, j;
@@ -5029,19 +5021,19 @@ public class FileIO {
             imageFile.readImage(true, false);
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("Out of memory: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -5059,7 +5051,6 @@ public class FileIO {
         } else {
             length = singleExtents[0] * singleExtents[1] * singleExtents[2];
         }
-
 
         try {
             resols = new float[5];
@@ -5105,7 +5096,7 @@ public class FileIO {
             image = new ModelImage(myFileInfo.getDataType(), extents, myFileInfo.getFileName());
 
             createProgressBar(null, FileUtility.trimNumbersAndSpecial(fileName) + FileUtility.getExtension(fileName),
-                              FILE_READ);
+                    FILE_READ);
 
         } catch (OutOfMemoryError error) {
 
@@ -5116,10 +5107,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("Out of memory: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -5131,10 +5122,10 @@ public class FileIO {
             imageFile = new FileLSM(fileList[0], fileDir, secondAddress);
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             if (image != null) {
@@ -5188,10 +5179,10 @@ public class FileIO {
 
                 } catch (IOException error) {
 
-                    if (!quiet) {
+                    if ( !quiet) {
                         MipavUtil.displayError("FileIO: " + error);
                     }
-                    
+
                     error.printStackTrace();
 
                     if (image != null) {
@@ -5204,11 +5195,11 @@ public class FileIO {
                     return null;
                 } catch (ArrayIndexOutOfBoundsException error) {
 
-                    if (!quiet) {
-                        MipavUtil.displayError("Unable to read images: the image\n" + "number in the file " +
-                                               myFileInfo.getFileName() + " is corrupted.");
+                    if ( !quiet) {
+                        MipavUtil.displayError("Unable to read images: the image\n" + "number in the file "
+                                + myFileInfo.getFileName() + " is corrupted.");
                     }
-                    
+
                     error.printStackTrace();
 
                     if (image != null) {
@@ -5221,10 +5212,10 @@ public class FileIO {
                     return null;
                 } catch (OutOfMemoryError error) {
 
-                    if (!quiet) {
+                    if ( !quiet) {
                         MipavUtil.displayError("Out of memory: " + error);
                     }
-                    
+
                     error.printStackTrace();
 
                     if (image != null) {
@@ -5273,19 +5264,19 @@ public class FileIO {
                         // float[] tmpBuffer = fileLSM.getImageBuffer();
 
                         if (image.isColorImage()) {
-                            image.importData((i * 4 * length) + (j * 4 * extents[0] * extents[1]),
-                                             ((FileLSM) imageFile).getImage3DMultiBuffer()[j], false);
+                            image.importData( (i * 4 * length) + (j * 4 * extents[0] * extents[1]),
+                                    ((FileLSM) imageFile).getImage3DMultiBuffer()[j], false);
                         } else {
-                            image.importData((i * length) + (j * extents[0] * extents[1]),
-                                             ((FileLSM) imageFile).getImage3DMultiBuffer()[j], false);
+                            image.importData( (i * length) + (j * extents[0] * extents[1]), ((FileLSM) imageFile)
+                                    .getImage3DMultiBuffer()[j], false);
                         }
                     } // for (j = 0; j < extents[2]; j++) {
                 } catch (IOException error) {
 
-                    if (!quiet) {
+                    if ( !quiet) {
                         MipavUtil.displayError("FileIO: " + error);
                     }
-                    
+
                     error.printStackTrace();
 
                     if (image != null) {
@@ -5298,11 +5289,11 @@ public class FileIO {
                     return null;
                 } catch (ArrayIndexOutOfBoundsException error) {
 
-                    if (!quiet) {
-                        MipavUtil.displayError("Unable to read images: the image\n" + "number in the file " +
-                                               myFileInfo.getFileName() + " is corrupted.");
+                    if ( !quiet) {
+                        MipavUtil.displayError("Unable to read images: the image\n" + "number in the file "
+                                + myFileInfo.getFileName() + " is corrupted.");
                     }
-                    
+
                     error.printStackTrace();
 
                     if (image != null) {
@@ -5315,10 +5306,10 @@ public class FileIO {
                     return null;
                 } catch (OutOfMemoryError error) {
 
-                    if (!quiet) {
+                    if ( !quiet) {
                         MipavUtil.displayError("Out of memory: " + error);
                     }
-                    
+
                     error.printStackTrace();
 
                     if (image != null) {
@@ -5340,15 +5331,15 @@ public class FileIO {
 
             for (i = 0; i < (nImages - 1); i++) {
 
-                if ((haveTimeStamp[i] && haveTimeStamp[i + 1]) && (timeStamp[i] != timeStamp[i + 1])) {
+                if ( (haveTimeStamp[i] && haveTimeStamp[i + 1]) && (timeStamp[i] != timeStamp[i + 1])) {
                     resols = fileInfo[i].getResolutions();
                     resols[2] = (float) (timeStamp[i + 1] - timeStamp[i]);
                     fileInfo[i].setResolutions(resols);
                 }
             }
 
-            if ((haveTimeStamp[nImages - 2] && haveTimeStamp[nImages - 1]) &&
-                    (timeStamp[nImages - 2] != timeStamp[nImages - 1])) {
+            if ( (haveTimeStamp[nImages - 2] && haveTimeStamp[nImages - 1])
+                    && (timeStamp[nImages - 2] != timeStamp[nImages - 1])) {
                 fileInfo[nImages - 1].setResolutions(resols);
             }
         } // if (singleDims == 2)
@@ -5356,23 +5347,23 @@ public class FileIO {
 
             for (i = 0; i < (nImages - 1); i++) {
 
-                if ((haveTimeStamp[i] && haveTimeStamp[i + 1]) && (timeStamp[i] != timeStamp[i + 1])) {
+                if ( (haveTimeStamp[i] && haveTimeStamp[i + 1]) && (timeStamp[i] != timeStamp[i + 1])) {
 
                     for (j = 0; j < extents[2]; j++) {
-                        resols = fileInfo[(i * extents[2]) + j].getResolutions();
+                        resols = fileInfo[ (i * extents[2]) + j].getResolutions();
                         resols[3] = (float) (timeStamp[i + 1] - timeStamp[i]);
-                        fileInfo[(i * extents[2]) + j].setResolutions(resols);
+                        fileInfo[ (i * extents[2]) + j].setResolutions(resols);
                     }
                 }
             }
 
-            if ((haveTimeStamp[nImages - 2] && haveTimeStamp[nImages - 1]) &&
-                    (timeStamp[nImages - 2] != timeStamp[nImages - 1])) {
+            if ( (haveTimeStamp[nImages - 2] && haveTimeStamp[nImages - 1])
+                    && (timeStamp[nImages - 2] != timeStamp[nImages - 1])) {
 
                 for (j = 0; j < extents[2]; j++) {
-                    resols = fileInfo[((nImages - 1) * extents[2]) + j].getResolutions();
+                    resols = fileInfo[ ( (nImages - 1) * extents[2]) + j].getResolutions();
                     resols[3] = (float) (timeStamp[nImages - 1] - timeStamp[nImages - 2]);
-                    fileInfo[((nImages - 1) * extents[2]) + j].setResolutions(resols);
+                    fileInfo[ ( (nImages - 1) * extents[2]) + j].setResolutions(resols);
                 }
             }
         } // else for singleDims == 3
@@ -5380,17 +5371,16 @@ public class FileIO {
         return image;
     }
 
-
     /**
      * Reads a Magnetom Vision file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readMagnetomVision(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
@@ -5461,19 +5451,19 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -5502,10 +5492,10 @@ public class FileIO {
             imageFile.close();
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             if (image != null) {
@@ -5518,10 +5508,10 @@ public class FileIO {
             return null;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             if (image != null) {
@@ -5537,17 +5527,16 @@ public class FileIO {
 
         image.setImageName(imageFile.getFileInfo().getImageNameFromInfo(), false);
 
-
         return image;
     }
 
     /**
      * Reads a Map file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readMap(String fileName, String fileDir) {
         ModelImage image = null;
@@ -5575,10 +5564,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -5611,10 +5600,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -5627,10 +5616,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -5642,11 +5631,11 @@ public class FileIO {
 
     /**
      * Reads a MedVision file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readMedVision(String fileName, String fileDir) {
         ModelImage image = null;
@@ -5665,10 +5654,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -5681,10 +5670,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -5696,14 +5685,14 @@ public class FileIO {
 
     /**
      * Reads a MGH file by calling the read method of the file. if so, calls that method instead.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readMGH(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
@@ -5722,10 +5711,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -5738,10 +5727,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -5752,14 +5741,14 @@ public class FileIO {
 
     /**
      * Reads an Micro Cat file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readMicroCat(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
@@ -5781,8 +5770,8 @@ public class FileIO {
                         imageFile.setFileName(fileList[i]);
                         fileInfoMicro = imageFile.readHeader();
 
-                        if (FileMicroCat.trimmer(fileName).equals(fileInfoMicro.getBaseNameforReconstructedSlices() +
-                                                                  "_")) {
+                        if (FileMicroCat.trimmer(fileName).equals(
+                                fileInfoMicro.getBaseNameforReconstructedSlices() + "_")) {
                             break;
                         }
                     }
@@ -5790,7 +5779,7 @@ public class FileIO {
 
                 if (i == fileList.length) {
 
-                    if (!quiet) {
+                    if ( !quiet) {
                         MipavUtil.displayError("No appropriate header files for " + fileName);
                     }
 
@@ -5814,10 +5803,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -5830,10 +5819,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -5844,14 +5833,14 @@ public class FileIO {
 
     /**
      * Reads a MINC file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readMinc(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
@@ -5870,11 +5859,11 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug(error + "\n", Preferences.DEBUG_FILEIO);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -5887,10 +5876,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -5916,11 +5905,11 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug(error + "\n", Preferences.DEBUG_FILEIO);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -5933,10 +5922,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -5944,14 +5933,14 @@ public class FileIO {
 
         return image;
     }
-    
+
     /**
      * Reads a MRC file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readMRC(String fileName, String fileDir) {
         ModelImage image = null;
@@ -5961,7 +5950,7 @@ public class FileIO {
             imageFile = new FileMRC(fileName, fileDir);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
-            // LUT      = imageFile.getModelLUT();
+            // LUT = imageFile.getModelLUT();
         } catch (IOException error) {
 
             if (image != null) {
@@ -5971,10 +5960,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -5987,10 +5976,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -5999,15 +5988,15 @@ public class FileIO {
         return image;
 
     }
-    
+
     /**
      * Reads a BFLOAT file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       If true, read in only one middle slice
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one If true, read in only one middle slice
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readBFLOAT(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
@@ -6026,10 +6015,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -6042,10 +6031,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -6057,14 +6046,14 @@ public class FileIO {
 
     /**
      * Reads a NIFTI file by calling the read method of the file. if so, calls that method instead.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readNIFTI(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
@@ -6083,10 +6072,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -6099,10 +6088,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -6113,11 +6102,11 @@ public class FileIO {
 
     /**
      * Reads a multi NIFTI file. Gets a list of the images from the file directory and reads them each in.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readNIFTIMulti(String fileName, String fileDir) {
         ModelImage image = null;
@@ -6134,7 +6123,6 @@ public class FileIO {
         // of proper extents (in case there is a file with the consistent filename but
         // inconsistent extents.) we do assume the 1st header is correct
 
-
         int i = 0;
 
         try {
@@ -6150,10 +6138,10 @@ public class FileIO {
             }
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -6166,7 +6154,7 @@ public class FileIO {
         }
 
         createProgressBar(null, FileUtility.trimNumbersAndSpecial(fileName) + FileUtility.getExtension(fileName),
-                          FILE_READ);
+                FILE_READ);
 
         // System.out.println("nImage = " + i);
         // System.out.println(" filelist[0] = " + fileList[0]);
@@ -6177,16 +6165,16 @@ public class FileIO {
         imageFile = new FileNIFTI(fileList[0], fileDir);
 
         try {
-        
-            if (!imageFile.readHeader(fileList[0], fileDir)) {
+
+            if ( !imageFile.readHeader(fileList[0], fileDir)) {
                 throw (new IOException(" NIFTI header file error"));
             }
         } catch (IOException ioe) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("Error reading header file.");
             }
-            
+
             ioe.printStackTrace();
         }
 
@@ -6231,7 +6219,7 @@ public class FileIO {
                 progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
                 imageFile = new FileNIFTI(fileList[i], fileDir);
 
-                if (!((FileNIFTI) imageFile).readHeader(fileList[i], fileDir)) {
+                if ( ! ((FileNIFTI) imageFile).readHeader(fileList[i], fileDir)) {
                     throw (new IOException(" NIFTI header file error"));
                 }
 
@@ -6241,8 +6229,9 @@ public class FileIO {
 
                 if (extents.length != fileInfo.getExtents().length) {
 
-                    if (!quiet) {
-                        MipavUtil.displayError("Inconsistent nifti image file found.  This File will be skipped.  The number of dimensions does not match.");
+                    if ( !quiet) {
+                        MipavUtil
+                                .displayError("Inconsistent nifti image file found.  This File will be skipped.  The number of dimensions does not match.");
                     }
 
                     continue;
@@ -6251,10 +6240,11 @@ public class FileIO {
                     switch (extents.length) { // check that they extend as far in all dimensions:
 
                         case 2:
-                            if ((extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])) {
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])) {
 
-                                if (!quiet) {
-                                    MipavUtil.displayError("Inconsistent nifti image file found.  One or more of the X-Y dimensions do not match.");
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent nifti image file found.  One or more of the X-Y dimensions do not match.");
                                 }
 
                                 continue;
@@ -6263,11 +6253,12 @@ public class FileIO {
                             break;
 
                         case 3:
-                            if ((extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1]) ||
-                                    (extents[2] != fileInfo.getExtents()[2])) {
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])) {
 
-                                if (!quiet) {
-                                    MipavUtil.displayError("Inconsistent nifti image file found.  One or more of the X-Y-Z dimensions do not match.");
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent nifti image file found.  One or more of the X-Y-Z dimensions do not match.");
                                 }
 
                                 continue;
@@ -6276,12 +6267,13 @@ public class FileIO {
                             break;
 
                         case 4:
-                            if ((extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1]) ||
-                                    (extents[2] != fileInfo.getExtents()[2]) ||
-                                    (extents[3] != fileInfo.getExtents()[3])) {
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])
+                                    || (extents[3] != fileInfo.getExtents()[3])) {
 
-                                if (!quiet) {
-                                    MipavUtil.displayError("Inconsistent nifti image file found.  One or more of the X-Y-Z-T dimensions do not match.");
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent nifti image file found.  One or more of the X-Y-Z-T dimensions do not match.");
                                 }
 
                                 continue;
@@ -6314,13 +6306,13 @@ public class FileIO {
                     image.setFileInfo(fileInfo, imageCount);
                 }
 
-                imageCount++;   
+                imageCount++;
             } catch (IOException error) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -6333,11 +6325,11 @@ public class FileIO {
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
 
-                if (!quiet) {
-                    MipavUtil.displayError("Unable to read images: the image\nnumber in the file " +
-                                           fileInfo.getFileName() + " is corrupted.");
+                if ( !quiet) {
+                    MipavUtil.displayError("Unable to read images: the image\nnumber in the file "
+                            + fileInfo.getFileName() + " is corrupted.");
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -6350,10 +6342,10 @@ public class FileIO {
                 return null;
             } catch (OutOfMemoryError error) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -6366,9 +6358,9 @@ public class FileIO {
                 return null;
             }
         }
-        // i goes 1 too far anyway, but if  we skipped files, be sure to account for it,
+        // i goes 1 too far anyway, but if we skipped files, be sure to account for it,
         // because our basic model was that all prperly named files were good analyze images.
-        // only we found one or more didn't fit.  We must now take that into account.
+        // only we found one or more didn't fit. We must now take that into account.
         // ie., we read in imageCount # of images, we expected nImages.
 
         if (imageCount < nImages) {
@@ -6391,10 +6383,10 @@ public class FileIO {
                 }
             } catch (IOException ioe) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO reports: " + ioe.getMessage());
                 }
-                
+
                 ioe.printStackTrace();
 
                 return null;
@@ -6415,14 +6407,14 @@ public class FileIO {
 
     /**
      * Reads a NRRD file by calling the read method of the file. if so, calls that method instead.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readNRRD(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
@@ -6441,10 +6433,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -6457,10 +6449,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -6471,11 +6463,11 @@ public class FileIO {
 
     /**
      * Reads in a single GE Genesis type file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readOneGEGenesis5X(String fileName, String fileDir) {
         ModelImage image = null;
@@ -6493,7 +6485,7 @@ public class FileIO {
 
             if (imageSize == -1) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: Compression not supported for Signa 5X");
                 }
 
@@ -6502,7 +6494,7 @@ public class FileIO {
 
             if (imageSize == -2) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: Not a Signa 5X file.");
                 }
 
@@ -6511,7 +6503,7 @@ public class FileIO {
 
             if (imageSize == 0) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: Image length.");
                 }
 
@@ -6542,19 +6534,19 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -6565,11 +6557,11 @@ public class FileIO {
 
     /**
      * Reads in a single GE Signa 4x type file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readOneGESigna4X(String fileName, String fileDir) {
         ModelImage image = null;
@@ -6587,7 +6579,7 @@ public class FileIO {
 
             if (imageSize == -1) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: Compression not supported for Signa 4X");
                 }
 
@@ -6596,7 +6588,7 @@ public class FileIO {
 
             if (imageSize == -2) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: Not a Signa 4X file.");
                 }
 
@@ -6605,7 +6597,7 @@ public class FileIO {
 
             if (imageSize == 0) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: Image length.");
                 }
 
@@ -6636,19 +6628,19 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -6659,11 +6651,11 @@ public class FileIO {
 
     /**
      * Reads a Magnetom Vision file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readOneMagnetomVision(String fileName, String fileDir) {
         ModelImage image = null;
@@ -6694,10 +6686,10 @@ public class FileIO {
             imageFile.close();
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             if (image != null) {
@@ -6710,10 +6702,10 @@ public class FileIO {
             return null;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             if (image != null) {
@@ -6732,11 +6724,11 @@ public class FileIO {
 
     /**
      * Reads an OSM file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readOSM(String fileName, String fileDir) {
         ModelImage image = null;
@@ -6746,7 +6738,7 @@ public class FileIO {
             imageFile = new FileOSM(fileName, fileDir);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
-            // LUT      = imageFile.getModelLUT();
+            // LUT = imageFile.getModelLUT();
         } catch (IOException error) {
 
             if (image != null) {
@@ -6756,10 +6748,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -6772,10 +6764,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -6787,15 +6779,16 @@ public class FileIO {
 
     /**
      * Reads a PARREC file by calling the read method of the file. This method contains special code to not display the
-     * progress bar should the image be <q>splash.img</q>.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * progress bar should the image be
+     * <q>splash.img</q>.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readPARREC(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
@@ -6814,10 +6807,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -6830,37 +6823,35 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
         }
-
 
         return image;
     }
 
     /**
      * Reads a QT file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readQT(String fileName, String fileDir) {
 
         // QuickTime
         /*
          * FileQT imageFile; ModelImage image = null; try { imageFile = new FileQT(UI, fileName, fileDir); image =
-         * imageFile.readImage(); //LUT      = ((FileQT)imageFile).getModelLUT(); } catch (IOException error) { if
-         * (image != null) { image.disposeLocal(); image = null; } System.gc(); if (!quiet) {
-         * MipavUtil.displayError("FileIO: " + error); } return null; } catch (OutOfMemoryError error) { if (image !=
+         * imageFile.readImage(); //LUT = ((FileQT)imageFile).getModelLUT(); } catch (IOException error) { if (image !=
          * null) { image.disposeLocal(); image = null; } System.gc(); if (!quiet) { MipavUtil.displayError("FileIO: " +
-         * error); } return null; }
+         * error); } return null; } catch (OutOfMemoryError error) { if (image != null) { image.disposeLocal(); image =
+         * null; } System.gc(); if (!quiet) { MipavUtil.displayError("FileIO: " + error); } return null; }
          */
         return null;
 
@@ -6868,14 +6859,14 @@ public class FileIO {
 
     /**
      * Reads a RAW file by calling the read method of the file. Gets the necessary information from a dialog, if the
-     * <code>fileInfo</code> parameter is null, and otherwise relies on the information stored in <code>fileInfo</code>
-     * to properly read in the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   fileInfo  File info of the image file; usually null, but if defined no dialog appears.
-     *
-     * @return  The image that was read in, or null if failure.
+     * <code>fileInfo</code> parameter is null, and otherwise relies on the information stored in
+     * <code>fileInfo</code> to properly read in the file.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param fileInfo File info of the image file; usually null, but if defined no dialog appears.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readRaw(String fileName, String fileDir, FileInfoBase fileInfo) {
         ModelImage image = null;
@@ -6921,10 +6912,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -6952,10 +6943,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -6968,10 +6959,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -6982,14 +6973,14 @@ public class FileIO {
 
     /**
      * Reads a RAW file by calling the read method of the file. Gets the necessary information from a dialog, if the
-     * <code>fileInfo</code> parameter is null, and otherwise relies on the information stored in <code>fileInfo</code>
-     * to properly read in the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   fileInfo  File info of the image file; usually null, but if defined no dialog appears.
-     *
-     * @return  The image that was read in, or null if failure.
+     * <code>fileInfo</code> parameter is null, and otherwise relies on the information stored in
+     * <code>fileInfo</code> to properly read in the file.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param fileInfo File info of the image file; usually null, but if defined no dialog appears.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readRawMulti(String fileName, String fileDir, FileInfoBase fileInfo) {
         ModelImage image = null;
@@ -7024,10 +7015,10 @@ public class FileIO {
             fileList = FileUtility.getFileList(fileDir, fileName, quiet);
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO.readRawMulti: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -7079,10 +7070,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -7104,7 +7095,7 @@ public class FileIO {
 
             try {
                 imageFile = new FileRaw(fileList[m], fileDir, fileInfo, FileBase.READ);
-                progressBar.updateValue((int) (((float) m / (float) nImages) * 100.0f), false);
+                progressBar.updateValue((int) ( ((float) m / (float) nImages) * 100.0f), false);
                 imageFile.readImage(buffer, fileInfo.getOffset(), fileInfo.getDataType());
                 image.importData(m * length, buffer, false);
             } catch (IOException error) {
@@ -7118,10 +7109,10 @@ public class FileIO {
 
                 System.gc();
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 return null;
@@ -7136,16 +7127,15 @@ public class FileIO {
 
                 System.gc();
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 return null;
             }
         }
-
 
         return image;
 
@@ -7153,14 +7143,14 @@ public class FileIO {
 
     /**
      * Reads an SPM file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readSPM(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
@@ -7179,10 +7169,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -7195,10 +7185,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -7209,14 +7199,14 @@ public class FileIO {
 
     /**
      * Reads a STK file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readSTK(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
@@ -7236,10 +7226,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -7252,10 +7242,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -7264,17 +7254,17 @@ public class FileIO {
         return image;
 
     }
-    
+
     /**
      * Reads a Improvision OpenLab LIFF file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readLIFF(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
@@ -7295,7 +7285,7 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
 
@@ -7309,7 +7299,7 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
 
@@ -7318,19 +7308,17 @@ public class FileIO {
 
         return image;
     }
-    
-    
 
     /**
      * Reads a TIFF file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readTiff(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
@@ -7351,10 +7339,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -7367,10 +7355,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -7381,15 +7369,15 @@ public class FileIO {
 
     /**
      * Reads a multi TIFF file by first reading the headers then reading in each separate file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readTiffMulti(String fileName, String fileDir) {
         float[] resols;
-        int[] extents; // extent of image  (!def!)
+        int[] extents; // extent of image (!def!)
         int length = 0;
         int i;
         FileInfoBase myFileInfo;
@@ -7406,7 +7394,7 @@ public class FileIO {
             imageFile.setFileName(fileList[0]);
 
             if (nFiles == 1) { // The multiFile flag is true but there is only one image in the
-                               // directory with the prefix name so read and return image as a single file.
+                // directory with the prefix name so read and return image as a single file.
                 image = imageFile.readImage(false, false);
                 LUT = imageFile.getModelLUT();
 
@@ -7416,19 +7404,19 @@ public class FileIO {
             }
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("Out of memory: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -7444,7 +7432,7 @@ public class FileIO {
                 extents[2] = myFileInfo.getExtents()[2];
                 extents[3] = nFiles;
                 length = myFileInfo.getExtents()[0] * myFileInfo.getExtents()[1] * myFileInfo.getExtents()[2];
-            } else if ((myFileInfo.getExtents().length == 2) && (nFiles > 1)) {
+            } else if ( (myFileInfo.getExtents().length == 2) && (nFiles > 1)) {
                 extents = new int[3];
                 extents[2] = nFiles;
                 length = myFileInfo.getExtents()[0] * myFileInfo.getExtents()[1];
@@ -7461,7 +7449,7 @@ public class FileIO {
 
             image = new ModelImage(myFileInfo.getDataType(), extents, myFileInfo.getFileName());
             createProgressBar(null, FileUtility.trimNumbersAndSpecial(fileName) + FileUtility.getExtension(fileName),
-                              FILE_READ);
+                    FILE_READ);
 
         } catch (OutOfMemoryError error) {
 
@@ -7472,10 +7460,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: Out of memory: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -7487,10 +7475,10 @@ public class FileIO {
             imageFile = new FileTiff(fileList[0], fileDir);
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             if (image != null) {
@@ -7531,10 +7519,10 @@ public class FileIO {
                 }
             } catch (IOException error) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -7547,11 +7535,11 @@ public class FileIO {
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
 
-                if (!quiet) {
-                    MipavUtil.displayError("Unable to read images: the image\n" + "number in the file " +
-                                           myFileInfo.getFileName() + " is corrupted.");
+                if ( !quiet) {
+                    MipavUtil.displayError("Unable to read images: the image\n" + "number in the file "
+                            + myFileInfo.getFileName() + " is corrupted.");
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -7564,10 +7552,10 @@ public class FileIO {
                 return null;
             } catch (OutOfMemoryError error) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("Out of memory: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -7584,14 +7572,13 @@ public class FileIO {
         return image;
     }
 
-
     /**
      * Reads a TMG file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readTMG(String fileName, String fileDir) {
         ModelImage image = null;
@@ -7601,7 +7588,7 @@ public class FileIO {
             imageFile = new FileTMG(fileName, fileDir);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
-            // LUT      = imageFile.getModelLUT();
+            // LUT = imageFile.getModelLUT();
         } catch (IOException error) {
 
             if (image != null) {
@@ -7611,10 +7598,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -7627,10 +7614,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -7642,26 +7629,26 @@ public class FileIO {
 
     /**
      * Reads an XML file by calling the read method of the file. This method contains special code to not display the
-     * progress bar should it load <q>splash.xml</q>.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * progress bar should it load
+     * <q>splash.xml</q>.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readXML(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
         FileImageXML imageFile;
         // don't show splash screen:
 
-
         try {
             imageFile = new FileImageXML(fileName, fileDir);
 
-            if (!(fileName.equals("splash.xml") || (one == true))) {
+            if ( ! (fileName.equals("splash.xml") || (one == true))) {
                 createProgressBar(imageFile, fileName, FILE_READ);
             }
 
@@ -7677,10 +7664,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -7693,10 +7680,10 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -7708,11 +7695,11 @@ public class FileIO {
 
     /**
      * Reads a multi XML file. Gets a list of the images from the file directory and reads them each in.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readXMLMulti(String fileName, String fileDir) {
         ModelImage image = null;
@@ -7729,7 +7716,6 @@ public class FileIO {
         // of proper extents (in case there is a file with the consistent filename but
         // inconsistent extents.) we do assume the 1st header is correct
 
-
         int i = 0;
 
         try {
@@ -7745,10 +7731,10 @@ public class FileIO {
             }
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return null;
@@ -7761,7 +7747,7 @@ public class FileIO {
         }
 
         createProgressBar(null, FileUtility.trimNumbersAndSpecial(fileName) + FileUtility.getExtension(fileName),
-                          FILE_READ);
+                FILE_READ);
 
         // System.out.println(" filelist[1] = " + fileList[1]);
         // if one of the images has the wrong extents, the following must be changed.
@@ -7780,10 +7766,10 @@ public class FileIO {
             }
         } catch (IOException ioe) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("Error reading header file.");
             }
-            
+
             ioe.printStackTrace();
         }
 
@@ -7842,8 +7828,9 @@ public class FileIO {
 
                 if (extents.length != fileInfo.getExtents().length) {
 
-                    if (!quiet) {
-                        MipavUtil.displayError("Inconsistent xml image file found.  This file will be skipped.  The number of dimensions does not match.");
+                    if ( !quiet) {
+                        MipavUtil
+                                .displayError("Inconsistent xml image file found.  This file will be skipped.  The number of dimensions does not match.");
                     }
 
                     continue;
@@ -7852,10 +7839,11 @@ public class FileIO {
                     switch (extents.length) { // check that they extend as far in all dimensions:
 
                         case 2:
-                            if ((extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])) {
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])) {
 
-                                if (!quiet) {
-                                    MipavUtil.displayError("Inconsistent xml image file found.  This file will be skipped.  One or more of the X-Y dimensions do not match.");
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent xml image file found.  This file will be skipped.  One or more of the X-Y dimensions do not match.");
                                 }
 
                                 continue;
@@ -7864,11 +7852,12 @@ public class FileIO {
                             break;
 
                         case 3:
-                            if ((extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1]) ||
-                                    (extents[2] != fileInfo.getExtents()[2])) {
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])) {
 
-                                if (!quiet) {
-                                    MipavUtil.displayError("Inconsistent xml image file found.  This file will be skipped.  One or more of the X-Y-Z dimensions do not match.");
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent xml image file found.  This file will be skipped.  One or more of the X-Y-Z dimensions do not match.");
                                 }
 
                                 continue;
@@ -7877,12 +7866,13 @@ public class FileIO {
                             break;
 
                         case 4:
-                            if ((extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1]) ||
-                                    (extents[2] != fileInfo.getExtents()[2]) ||
-                                    (extents[3] != fileInfo.getExtents()[3])) {
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])
+                                    || (extents[3] != fileInfo.getExtents()[3])) {
 
-                                if (!quiet) {
-                                    MipavUtil.displayError("Inconsistent xml image file found.  This file will be skipped.  One or more of the X-Y-Z-T dimensions do not match.");
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent xml image file found.  This file will be skipped.  One or more of the X-Y-Z-T dimensions do not match.");
                                 }
 
                                 continue;
@@ -7909,12 +7899,14 @@ public class FileIO {
 
             } catch (IOException error) {
 
-                if (!quiet) {
-                    Preferences.debug("Failed to read XML multifile. This error can be caused by attempting to read an XML file that is not actually a multi-file.\n",
-                                      Preferences.DEBUG_FILEIO);
+                if ( !quiet) {
+                    Preferences
+                            .debug(
+                                    "Failed to read XML multifile. This error can be caused by attempting to read an XML file that is not actually a multi-file.\n",
+                                    Preferences.DEBUG_FILEIO);
                     MipavUtil.displayError("Failed to read XML multifile.");
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -7927,11 +7919,11 @@ public class FileIO {
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
 
-                if (!quiet) {
-                    MipavUtil.displayError("Unable to read images: the image\nnumber in the file " +
-                                           fileInfo.getFileName() + " is corrupted.");
+                if ( !quiet) {
+                    MipavUtil.displayError("Unable to read images: the image\nnumber in the file "
+                            + fileInfo.getFileName() + " is corrupted.");
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -7944,10 +7936,10 @@ public class FileIO {
                 return null;
             } catch (OutOfMemoryError error) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 if (image != null) {
@@ -7960,9 +7952,9 @@ public class FileIO {
                 return null;
             }
         }
-        // i goes 1 too far anyway, but if  we skipped files, be sure to account for it,
+        // i goes 1 too far anyway, but if we skipped files, be sure to account for it,
         // because our basic model was that all prperly named files were good analyze images.
-        // only we found one or more didn't fit.  We must now take that into account.
+        // only we found one or more didn't fit. We must now take that into account.
         // ie., we read in imageCount # of images, we expected nImages.
 
         if (imageCount < nImages) {
@@ -7985,10 +7977,10 @@ public class FileIO {
                 }
             } catch (IOException ioe) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO reports: " + ioe.getMessage());
                 }
-                
+
                 ioe.printStackTrace();
 
                 return null;
@@ -8008,11 +8000,11 @@ public class FileIO {
 
     /**
      * Writes an AFNI file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
     private boolean writeAfni(ModelImage image, FileWriteOptions options) {
         FileAfni afniFile;
@@ -8033,19 +8025,19 @@ public class FileIO {
             afniFile.writeImage(image, options);
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
@@ -8056,11 +8048,11 @@ public class FileIO {
 
     /**
      * Writes an analyze file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
     private boolean writeAnalyze(ModelImage image, FileWriteOptions options) {
         FileAnalyze analyzeFile;
@@ -8084,19 +8076,19 @@ public class FileIO {
                 xmlFile.writeHeader(image, options, fBase, options.getFileDirectory(), false);
             } catch (IOException error) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 return false;
             } catch (OutOfMemoryError error) {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                 }
-                
+
                 error.printStackTrace();
 
                 return false;
@@ -8109,19 +8101,19 @@ public class FileIO {
             analyzeFile.writeImage(image, options);
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
@@ -8132,11 +8124,11 @@ public class FileIO {
 
     /**
      * Writes an AVI file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
     private boolean writeAvi(ModelImage image, FileWriteOptions options) {
 
@@ -8154,10 +8146,9 @@ public class FileIO {
             aviFile.setMicroSecPerFrame(options.getMicroSecPerFrame());
             aviFile.setCompressionQuality(options.getMJPEGQuality());
 
-            if (!aviFile.writeImage(image, options.getImageB(), options.getLUTa(), options.getLUTb(),
-                                    options.getRGBTa(), options.getRGBTb(), options.getRed(), options.getGreen(),
-                                    options.getBlue(), options.getOpacity(), options.getAlphaBlend(),
-                                    options.getPaintBitmap(), options.getAVICompression())) {
+            if ( !aviFile.writeImage(image, options.getImageB(), options.getLUTa(), options.getLUTb(), options
+                    .getRGBTa(), options.getRGBTb(), options.getRed(), options.getGreen(), options.getBlue(), options
+                    .getOpacity(), options.getAlphaBlend(), options.getPaintBitmap(), options.getAVICompression())) {
                 System.err.println("AVI write cancelled");
             }
 
@@ -8174,14 +8165,13 @@ public class FileIO {
         return true;
     }
 
-
     /**
      * Writes a Freesurfer COR file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
     private boolean writeCOR(ModelImage image, FileWriteOptions options) {
         FileCOR corFile;
@@ -8214,31 +8204,31 @@ public class FileIO {
                 return false;
             }
 
-            if ((options.getEndSlice() - options.getBeginSlice() + 1) != 256) {
+            if ( (options.getEndSlice() - options.getBeginSlice() + 1) != 256) {
                 MipavUtil.displayError("Error! Z dimension must be 256");
 
                 return false;
             }
 
-            if ((image.getFileInfo(0).getResolution(0) != 1.0f) ||
-                    ((image.getFileInfo(0).getUnitsOfMeasure()[0] != FileInfoBase.MILLIMETERS) &&
-                         (image.getFileInfo(0).getUnitsOfMeasure()[0] != FileInfoBase.UNKNOWN_MEASURE))) {
+            if ( (image.getFileInfo(0).getResolution(0) != 1.0f)
+                    || ( (image.getFileInfo(0).getUnitsOfMeasure()[0] != FileInfoBase.MILLIMETERS) && (image
+                            .getFileInfo(0).getUnitsOfMeasure()[0] != FileInfoBase.UNKNOWN_MEASURE))) {
                 MipavUtil.displayError("Error! x resolution must be 1.0 millimeter");
 
                 return false;
             }
 
-            if ((image.getFileInfo(0).getResolution(1) != 1.0f) ||
-                    ((image.getFileInfo(0).getUnitsOfMeasure()[1] != FileInfoBase.MILLIMETERS) &&
-                         (image.getFileInfo(0).getUnitsOfMeasure()[1] != FileInfoBase.UNKNOWN_MEASURE))) {
+            if ( (image.getFileInfo(0).getResolution(1) != 1.0f)
+                    || ( (image.getFileInfo(0).getUnitsOfMeasure()[1] != FileInfoBase.MILLIMETERS) && (image
+                            .getFileInfo(0).getUnitsOfMeasure()[1] != FileInfoBase.UNKNOWN_MEASURE))) {
                 MipavUtil.displayError("Error! y resolution must be 1.0 millimeter");
 
                 return false;
             }
 
-            if ((image.getFileInfo(0).getResolution(2) != 1.0f) ||
-                    ((image.getFileInfo(0).getUnitsOfMeasure()[2] != FileInfoBase.MILLIMETERS) &&
-                         (image.getFileInfo(0).getUnitsOfMeasure()[2] != FileInfoBase.UNKNOWN_MEASURE))) {
+            if ( (image.getFileInfo(0).getResolution(2) != 1.0f)
+                    || ( (image.getFileInfo(0).getUnitsOfMeasure()[2] != FileInfoBase.MILLIMETERS) && (image
+                            .getFileInfo(0).getUnitsOfMeasure()[2] != FileInfoBase.UNKNOWN_MEASURE))) {
                 MipavUtil.displayError("Error! z resolution must be 1.0 millimeter");
 
                 return false;
@@ -8248,19 +8238,19 @@ public class FileIO {
             corFile.writeImage(image, options);
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
@@ -8272,11 +8262,11 @@ public class FileIO {
     /**
      * Writes a DICOM file to store the image. Calls a dialog if the source isn't a DICOM image. DICOM images are each
      * written to a separate file with a different header.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
     private boolean writeDicom(ModelImage image, FileWriteOptions options) {
         int i;
@@ -8316,7 +8306,7 @@ public class FileIO {
         // make sure fileDir exists
         File tmpFile = new File(fileDir);
 
-        if (!tmpFile.exists()) {
+        if ( !tmpFile.exists()) {
 
             try {
                 tmpFile.mkdirs();
@@ -8324,7 +8314,7 @@ public class FileIO {
                 // options.setFileDirectory(fileDir);
             } catch (Exception e) {
                 MipavUtil.displayError("Unable to create directory for DICOM file: \n" + fileDir);
-                
+
                 e.printStackTrace();
 
                 return false;
@@ -8358,8 +8348,8 @@ public class FileIO {
         } else { // Non DICOM images
             myFileInfo = new FileInfoDicom(options.getFileName(), fileDir, FileUtility.DICOM);
 
-            JDialogSaveDicom dialog = new JDialogSaveDicom(UI.getMainFrame(), image.getFileInfo(0), myFileInfo,
-                                                           options.isScript());
+            JDialogSaveDicom dialog = new JDialogSaveDicom(UI.getMainFrame(), image.getFileInfo(0), myFileInfo, options
+                    .isScript());
 
             if (dialog.isCancelled()) {
                 return false;
@@ -8372,44 +8362,43 @@ public class FileIO {
             myFileInfo.vr_type = FileInfoDicom.EXPLICIT;
 
             // necessary to save (non-pet) floating point minc files to dicom
-            if ((image.getFileInfo(0).getFileFormat() == FileUtility.MINC) && (image.getType() == ModelImage.FLOAT) &&
-                    (myFileInfo.getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) {
+            if ( (image.getFileInfo(0).getFileFormat() == FileUtility.MINC) && (image.getType() == ModelImage.FLOAT)
+                    && (myFileInfo.getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) {
                 ModelImage newImage = (ModelImage) image.clone();
 
                 // in-place conversion is required so that the minc file info is retained
-                AlgorithmChangeType convertType = new AlgorithmChangeType(newImage, ModelImage.SHORT, newImage.getMin(),
-                                                                          newImage.getMax(), newImage.getMin(),
-                                                                          newImage.getMax(), false);
+                AlgorithmChangeType convertType = new AlgorithmChangeType(newImage, ModelImage.SHORT,
+                        newImage.getMin(), newImage.getMax(), newImage.getMin(), newImage.getMax(), false);
                 convertType.run();
 
                 image = newImage;
             }
 
-            if ((image.getType() == ModelImage.SHORT) || (image.getType() == ModelImage.USHORT) ||
-                    (image.getFileInfo(0).getDataType() == ModelImage.SHORT) ||
-                    (image.getFileInfo(0).getDataType() == ModelImage.USHORT)) {
+            if ( (image.getType() == ModelImage.SHORT) || (image.getType() == ModelImage.USHORT)
+                    || (image.getFileInfo(0).getDataType() == ModelImage.SHORT)
+                    || (image.getFileInfo(0).getDataType() == ModelImage.USHORT)) {
                 myFileInfo.getTagTable().setValue("0028,0100", new Short((short) 16), 2);
                 myFileInfo.getTagTable().setValue("0028,0101", new Short((short) 16), 2);
                 myFileInfo.getTagTable().setValue("0028,0102", new Short((short) 15), 2);
                 myFileInfo.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
                 myFileInfo.getTagTable().setValue("0028,0004", new String("MONOCHROME2"), 11); // photometric
 
-                if ((image.getType() == ModelImage.USHORT) ||
-                        (image.getFileInfo(0).getDataType() == ModelImage.USHORT)) {
+                if ( (image.getType() == ModelImage.USHORT)
+                        || (image.getFileInfo(0).getDataType() == ModelImage.USHORT)) {
                     myFileInfo.getTagTable().setValue("0028,0103", new Short((short) 0), 2);
                 } else {
                     myFileInfo.getTagTable().setValue("0028,0103", new Short((short) 1), 2);
                 }
-            } else if ((image.getType() == ModelImage.BYTE) || (image.getType() == ModelImage.UBYTE) ||
-                           (image.getFileInfo(0).getDataType() == ModelImage.BYTE) ||
-                           (image.getFileInfo(0).getDataType() == ModelImage.UBYTE)) {
+            } else if ( (image.getType() == ModelImage.BYTE) || (image.getType() == ModelImage.UBYTE)
+                    || (image.getFileInfo(0).getDataType() == ModelImage.BYTE)
+                    || (image.getFileInfo(0).getDataType() == ModelImage.UBYTE)) {
                 myFileInfo.getTagTable().setValue("0028,0100", new Short((short) 8), 2);
                 myFileInfo.getTagTable().setValue("0028,0101", new Short((short) 8), 2);
                 myFileInfo.getTagTable().setValue("0028,0102", new Short((short) 7), 2);
                 myFileInfo.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
                 myFileInfo.getTagTable().setValue("0028,0004", new String("MONOCHROME2")); // photometric
 
-                if ((image.getType() == ModelImage.UBYTE) || (image.getFileInfo(0).getDataType() == ModelImage.UBYTE)) {
+                if ( (image.getType() == ModelImage.UBYTE) || (image.getFileInfo(0).getDataType() == ModelImage.UBYTE)) {
                     myFileInfo.getTagTable().setValue("0028,0103", new Short((short) 0), 2);
                 } else {
                     myFileInfo.getTagTable().setValue("0028,0103", new Short((short) 1), 2);
@@ -8423,12 +8412,14 @@ public class FileIO {
                 myFileInfo.getTagTable().setValue("0028,0006", new Short((short) 0), 2); // planar Config
             } else {
 
-                if (!quiet) {
+                if ( !quiet) {
                     MipavUtil.displayError("Saving the original image type in DICOM format is not yet supported.");
 
                     if (image.getType() != image.getFileInfo(0).getDataType()) {
-                        Preferences.debug("writeDicom:\tThe image file type in memory and the data type in the file info do not match.\n",
-                                          Preferences.DEBUG_FILEIO);
+                        Preferences
+                                .debug(
+                                        "writeDicom:\tThe image file type in memory and the data type in the file info do not match.\n",
+                                        Preferences.DEBUG_FILEIO);
                     }
                 }
 
@@ -8444,7 +8435,6 @@ public class FileIO {
             double slLoc;
 
             double sliceResolution = myFileInfo.getResolution(2);
-
 
             if (image.getExtents().length > 2) { // This sets the fileinfo to the same for all slices !!
 
@@ -8472,7 +8462,7 @@ public class FileIO {
 
                 slLoc = axialOrigin[2];
 
-                // see if the original dicom a minc was created from was part of a larger volume.  if so, preserve the
+                // see if the original dicom a minc was created from was part of a larger volume. if so, preserve the
                 // instance number it had
                 int baseInstanceNumber = -1;
 
@@ -8484,7 +8474,7 @@ public class FileIO {
                     }
 
                     if (obj != null) {
-                        baseInstanceNumber = Integer.parseInt(((String) obj).trim());
+                        baseInstanceNumber = Integer.parseInt( ((String) obj).trim());
                         options.setRecalculateInstanceNumber(false);
                     }
                 }
@@ -8515,15 +8505,14 @@ public class FileIO {
 
                     // Add code to modify the slice location attribute (0020, 1041) VR = DS = decimal string
                     ((FileInfoDicom) (fBase[k])).getTagTable().setValue("0020,1041", Double.toString(slLoc),
-                                                                        Double.toString(slLoc).length());
+                            Double.toString(slLoc).length());
                     slLoc += sliceResolution;
 
                     // transform the slice position back into dicom space and store it in the file info
                     invMatrix.transform(axialOrigin, dicomOrigin);
 
-                    String tmpStr = new String(Float.toString((float) dicomOrigin[0]) + "\\" +
-                                               Float.toString((float) dicomOrigin[1]) + "\\" +
-                                               Float.toString((float) dicomOrigin[2]));
+                    String tmpStr = new String(Float.toString((float) dicomOrigin[0]) + "\\"
+                            + Float.toString((float) dicomOrigin[1]) + "\\" + Float.toString((float) dicomOrigin[2]));
                     ((FileInfoDicom) (fBase[k])).getTagTable().setValue("0020,0032", tmpStr, tmpStr.length());
 
                     // move the slice position to the next slice in the image
@@ -8532,13 +8521,12 @@ public class FileIO {
                     if (baseInstanceNumber != -1) {
                         String instanceStr = "" + (baseInstanceNumber + k);
                         ((FileInfoDicom) (fBase[k])).getTagTable().setValue("0020,0013", instanceStr,
-                                                                            instanceStr.length());
+                                instanceStr.length());
                     }
 
                     // rescaling intercepts and slopes for each slice.
-                    if ((fBase[k].getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) &&
-                            ((image.getType() == ModelStorageBase.FLOAT) ||
-                                 (image.getType() == ModelStorageBase.DOUBLE))) {
+                    if ( (fBase[k].getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)
+                            && ( (image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE))) {
 
                         double smin, smax; // slice min and max
 
@@ -8549,10 +8537,10 @@ public class FileIO {
 
                             ioe.printStackTrace();
 
-                            if (!quiet) {
+                            if ( !quiet) {
                                 MipavUtil.displayError("FileIO: " + ioe);
                             }
-                            
+
                             ioe.printStackTrace();
 
                             return false;
@@ -8573,11 +8561,11 @@ public class FileIO {
                             }
                         }
 
-                        fBase[k].setRescaleSlope((smax - smin) / slopeDivisor);
+                        fBase[k].setRescaleSlope( (smax - smin) / slopeDivisor);
                         fBase[k].setRescaleIntercept(smin - (fBase[k].getRescaleSlope() * vmin));
 
                         ((FileInfoDicom) fBase[k]).getTagTable().setValue("0028,1052",
-                                                                          "" + fBase[k].getRescaleIntercept());
+                                "" + fBase[k].getRescaleIntercept());
                         ((FileInfoDicom) fBase[k]).getTagTable().setValue("0028,1053", "" + fBase[k].getRescaleSlope());
                     }
                 }
@@ -8599,7 +8587,7 @@ public class FileIO {
         try {
             String name;
 
-            if (!((FileInfoDicom) (myFileInfo)).isMultiFrame()) {
+            if ( ! ((FileInfoDicom) (myFileInfo)).isMultiFrame()) {
 
                 for (i = options.getBeginSlice(); i <= options.getEndSlice(); i++) {
                     progressBar.updateValue(Math.round((float) i / (options.getEndSlice()) * 100), false);
@@ -8614,11 +8602,11 @@ public class FileIO {
 
                     if (options.isSaveAs()) {
 
-                        if ((i < 9) && (options.getEndSlice() != options.getBeginSlice())) {
+                        if ( (i < 9) && (options.getEndSlice() != options.getBeginSlice())) {
                             name = prefix + "000" + (i + 1) + fileSuffix;
-                        } else if ((i >= 9) && (i < 99) && (options.getEndSlice() != options.getBeginSlice())) {
+                        } else if ( (i >= 9) && (i < 99) && (options.getEndSlice() != options.getBeginSlice())) {
                             name = prefix + "00" + (i + 1) + fileSuffix;
-                        } else if ((i >= 99) && (i < 999) && (options.getEndSlice() != options.getBeginSlice())) {
+                        } else if ( (i >= 99) && (i < 999) && (options.getEndSlice() != options.getBeginSlice())) {
                             name = prefix + "0" + (i + 1) + fileSuffix;
                         } else if (options.getEndSlice() != options.getBeginSlice()) {
                             name = prefix + (i + 1) + fileSuffix;
@@ -8635,7 +8623,7 @@ public class FileIO {
             } else { // its a multi frame image to be saved!!!
 
                 // progressBar.updateValue( Math.round((float)i/(endSlice) * 100));
-                dicomFile = new FileDicom(fileName, fileDir); // was (UI, fileDir, fileDir).  think this fixes...
+                dicomFile = new FileDicom(fileName, fileDir); // was (UI, fileDir, fileDir). think this fixes...
 
                 // String s=""+(i+1);
                 // myFileInfo = (FileInfoDicom)image.getFileInfo(i);
@@ -8647,7 +8635,7 @@ public class FileIO {
 
             error.printStackTrace();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
 
@@ -8659,10 +8647,10 @@ public class FileIO {
 
             error.printStackTrace();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
@@ -8675,11 +8663,11 @@ public class FileIO {
 
     /**
      * Writes a Fits file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
     private boolean writeFits(ModelImage image, FileWriteOptions options) {
         FileFits fitsFile;
@@ -8690,19 +8678,19 @@ public class FileIO {
             fitsFile.writeImage(image, options);
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
@@ -8713,11 +8701,11 @@ public class FileIO {
 
     /**
      * Writes an ICS file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
     private boolean writeICS(ModelImage image, FileWriteOptions options) {
         FileICS ICSFile;
@@ -8729,19 +8717,19 @@ public class FileIO {
             ICSFile.writeImage(image, options);
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
@@ -8752,11 +8740,11 @@ public class FileIO {
 
     /**
      * Writes an Interfile file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
     private boolean writeInterfile(ModelImage image, FileWriteOptions options) {
         FileInterfile interfileFile;
@@ -8767,19 +8755,19 @@ public class FileIO {
             interfileFile.writeImage(image, options);
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
@@ -8790,11 +8778,11 @@ public class FileIO {
 
     /**
      * Writes a JIMI file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
     private boolean writeJimi(ModelImage image, FileWriteOptions options) {
         int index = options.getFileName().indexOf(".");
@@ -8812,9 +8800,9 @@ public class FileIO {
 
             Image im = ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().getImage();
 
-            if ((i < 9) && (endSlice != beginSlice)) {
+            if ( (i < 9) && (endSlice != beginSlice)) {
                 name = options.getFileDirectory() + prefix + "00" + (i + 1) + fileSuffix;
-            } else if ((i >= 9) && (i < 99) && (endSlice != beginSlice)) {
+            } else if ( (i >= 9) && (i < 99) && (endSlice != beginSlice)) {
                 name = options.getFileDirectory() + prefix + "0" + (i + 1) + fileSuffix;
             } else if (endSlice != beginSlice) {
                 name = options.getFileDirectory() + prefix + (i + 1) + fileSuffix;
@@ -8834,18 +8822,18 @@ public class FileIO {
         }
 
         ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().show(0, slice, null, null,
-                                                                                                  true, -1);
+                true, -1);
 
         return true;
     }
 
     /**
      * Writes a MGH or MGZ file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
     private boolean writeMGH(ModelImage image, FileWriteOptions options) {
         FileMGH mghFile;
@@ -8856,19 +8844,19 @@ public class FileIO {
             mghFile.writeImage(image, options);
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
@@ -8879,11 +8867,11 @@ public class FileIO {
 
     /**
      * Writes a Minc file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
     private boolean writeMinc(ModelImage image, FileWriteOptions options) {
         FileMinc mincFile;
@@ -8920,20 +8908,20 @@ public class FileIO {
 
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug(error.getMessage() + "\n", Preferences.DEBUG_FILEIO);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
@@ -8942,12 +8930,13 @@ public class FileIO {
 
     /**
      * Writes out a MINC 2.0 HDF5 formatted file
+     * 
      * @param image
      * @param options
      * @return
      */
     private boolean writeMincHDF(ModelImage image, FileWriteOptions options) {
-    	FileMincHDF mincFile;
+        FileMincHDF mincFile;
 
         if (image.getNDims() != 3) {
             MipavUtil.displayError("FileIO: MINC writer only writes 3D images.");
@@ -8956,13 +8945,13 @@ public class FileIO {
         }
 
         try { // Construct a new file object
-            
+
             mincFile = new FileMincHDF(options.getFileName(), options.getFileDirectory());
             createProgressBar(mincFile, options.getFileName(), FILE_READ);
-            
-            if (!(image.getFileInfo()[0] instanceof FileInfoMincHDF)) {
-            	JDialogSaveMinc dialog = new JDialogSaveMinc(UI.getMainFrame(), image.getFileInfo()[0], options);
-            	dialog.setVisible(true);
+
+            if ( ! (image.getFileInfo()[0] instanceof FileInfoMincHDF)) {
+                JDialogSaveMinc dialog = new JDialogSaveMinc(UI.getMainFrame(), image.getFileInfo()[0], options);
+                dialog.setVisible(true);
 
                 if (dialog.isCancelled()) {
                     return false;
@@ -8970,47 +8959,47 @@ public class FileIO {
 
                 options = dialog.getOptions();
             }
-            
+
             if (image.getFileInfo()[0] instanceof FileInfoDicom) {
 
-                if (!dataConversion(((FileInfoDicom) image.getFileInfo()[0]), mincFile.getFileInfo())) {
-                    //do nothing
+                if ( !dataConversion( ((FileInfoDicom) image.getFileInfo()[0]), mincFile.getFileInfo())) {
+                    // do nothing
                 }
             }
-            
+
             mincFile.writeImage(image, options);
 
             return true;
 
         } catch (Exception error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug(error.getMessage() + "\n", Preferences.DEBUG_FILEIO);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         }
     }
-    
+
     /**
      * Writes a MRC file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
     private boolean writeMRC(ModelImage image, FileWriteOptions options) {
         FileMRC mrcFile;
@@ -9021,19 +9010,19 @@ public class FileIO {
             mrcFile.writeImage(image, options);
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
@@ -9044,11 +9033,11 @@ public class FileIO {
 
     /**
      * Writes a NIFTI file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
     private boolean writeNIFTI(ModelImage image, FileWriteOptions options) {
         FileNIFTI NIFTIFile;
@@ -9059,19 +9048,19 @@ public class FileIO {
             NIFTIFile.writeImage(image, options);
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
@@ -9082,11 +9071,11 @@ public class FileIO {
 
     /**
      * Writes an OSM file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
     private boolean writeOSM(ModelImage image, FileWriteOptions options) {
         FileOSM osmFile;
@@ -9097,19 +9086,19 @@ public class FileIO {
             osmFile.writeImage(image, options);
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
@@ -9120,11 +9109,11 @@ public class FileIO {
 
     /**
      * Writes a raw file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
     private boolean writeRaw(ModelImage image, FileWriteOptions options) {
         FileRaw rawFile;
@@ -9137,19 +9126,19 @@ public class FileIO {
             rawFile.writeImage(image, options);
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
@@ -9160,11 +9149,11 @@ public class FileIO {
 
     /**
      * Writes a SPM file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
     private boolean writeSPM(ModelImage image, FileWriteOptions options) {
         FileSPM spmFile;
@@ -9175,19 +9164,19 @@ public class FileIO {
             spmFile.writeImage(image, options);
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
@@ -9198,11 +9187,11 @@ public class FileIO {
 
     /**
      * Writes a TIFF file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
     private boolean writeTiff(ModelImage image, FileWriteOptions options) {
         FileTiff imageFile;
@@ -9222,19 +9211,19 @@ public class FileIO {
             }
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
@@ -9245,11 +9234,11 @@ public class FileIO {
 
     /**
      * Writes the image in our MIPAV XML format.
-     *
-     * @param   image    The image to be saved to the file.
-     * @param   options  Write options that control aspects of writing the image.
-     *
-     * @return  True if the file was successfully saved to a file.
+     * 
+     * @param image The image to be saved to the file.
+     * @param options Write options that control aspects of writing the image.
+     * 
+     * @return True if the file was successfully saved to a file.
      */
     private boolean writeXML(ModelImage image, FileWriteOptions options) {
         FileImageXML xmlFile;
@@ -9265,38 +9254,38 @@ public class FileIO {
 
             if (image.getFileInfo()[0] instanceof FileInfoDicom) {
 
-                if (!dataConversion(( image.getFileInfo()[0]), xmlFile.getFileInfo())) {
+                if ( !dataConversion( (image.getFileInfo()[0]), xmlFile.getFileInfo())) {
                     return false;
                 }
 
                 xmlFile.setAdditionalSets(xmlFile.getFileInfo().getPSetHashtable().elements());
             } else if (image.getFileInfo()[0] instanceof FileInfoLSM) {
-                LSMDataConversion(((FileInfoLSM) image.getFileInfo()[0]), xmlFile.getFileInfo());
+                LSMDataConversion( ((FileInfoLSM) image.getFileInfo()[0]), xmlFile.getFileInfo());
                 xmlFile.setAdditionalSets(xmlFile.getFileInfo().getPSetHashtable().elements());
             } else if (image.getFileInfo()[0] instanceof FileInfoMincHDF) {
-            	 if (!dataConversion(( image.getFileInfo()[0]), xmlFile.getFileInfo())) {
-                     return false;
-                 }
-       
-            	 xmlFile.setAdditionalSets(xmlFile.getFileInfo().getPSetHashtable().elements());
+                if ( !dataConversion( (image.getFileInfo()[0]), xmlFile.getFileInfo())) {
+                    return false;
+                }
+
+                xmlFile.setAdditionalSets(xmlFile.getFileInfo().getPSetHashtable().elements());
             }
 
             xmlFile.writeImage(image, options);
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
@@ -9307,11 +9296,11 @@ public class FileIO {
 
     /**
      * Writes a PAR/REC file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
 
     private boolean writePARREC(ModelImage image, FileWriteOptions options) {
@@ -9319,25 +9308,26 @@ public class FileIO {
         try { // Construct new file info and file objects
 
             FileInfoBase fileBase = image.getFileInfo()[0];
-            if(!(fileBase instanceof FileInfoPARREC)) {
-            	MipavUtil.displayError("MIPAV only supports Par/Rec to Par/Rec");
-            	return false;
+            if ( ! (fileBase instanceof FileInfoPARREC)) {
+                MipavUtil.displayError("MIPAV only supports Par/Rec to Par/Rec");
+                return false;
             }
-            if(fileBase.getDataType()!=ModelStorageBase.FLOAT &&
-                    fileBase.getDataType()!=ModelStorageBase.USHORT &&
-                    fileBase.getDataType()!=ModelStorageBase.UBYTE ) {
+            if (fileBase.getDataType() != ModelStorageBase.FLOAT && fileBase.getDataType() != ModelStorageBase.USHORT
+                    && fileBase.getDataType() != ModelStorageBase.UBYTE) {
                 throw new IOException("Format PAR/REC does not support this data type.");
             }
 
-            if(FilePARREC.isImageFile(options.getFileName())) {
-                if(fileBase.getDataType()==ModelStorageBase.FLOAT) {
-                	if (FileUtility.getExtension(options.getFileName()).equalsIgnoreCase(".rec")) {
-                		options.setFileName(options.getFileName().substring(0, options.getFileName().length()-4) + ".frec");
-                	}
+            if (FilePARREC.isImageFile(options.getFileName())) {
+                if (fileBase.getDataType() == ModelStorageBase.FLOAT) {
+                    if (FileUtility.getExtension(options.getFileName()).equalsIgnoreCase(".rec")) {
+                        options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 4)
+                                + ".frec");
+                    }
                 } else {
-                	if (FileUtility.getExtension(options.getFileName()).equalsIgnoreCase(".frec")) {
-                		options.setFileName(options.getFileName().substring(0, options.getFileName().length()-5) + ".rec");
-                	}
+                    if (FileUtility.getExtension(options.getFileName()).equalsIgnoreCase(".frec")) {
+                        options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 5)
+                                + ".rec");
+                    }
                 }
             }
 
@@ -9347,19 +9337,19 @@ public class FileIO {
             pr.writeImage(image, options);
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
@@ -9367,48 +9357,45 @@ public class FileIO {
 
         return true;
     }
-    
-    
-    
+
     /**
      * Writes a NRRD file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
-     */ 
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
+     */
     private boolean writeNRRD(ModelImage image, FileWriteOptions options) {
-    	try {
-    		FileNRRD fileNRRD = new FileNRRD(options.getFileName(), options.getFileDirectory());
-    		createProgressBar(fileNRRD, options.getFileName(), FileIO.FILE_WRITE);
-    		fileNRRD.writeImage(image, options);	
-    	} catch (IOException error) {
+        try {
+            FileNRRD fileNRRD = new FileNRRD(options.getFileName(), options.getFileDirectory());
+            createProgressBar(fileNRRD, options.getFileName(), FileIO.FILE_WRITE);
+            fileNRRD.writeImage(image, options);
+        } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-            
+
             error.printStackTrace();
 
             return false;
         }
-    	
-    	
-    	return true;
+
+        return true;
     }
 
-    
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
+    // ~ Inner Classes
+    // --------------------------------------------------------------------------------------------------
 
     /**
      * Orientation information held by orientation.
@@ -9423,9 +9410,9 @@ public class FileIO {
 
         /**
          * Creates an Orientation Status with a given index and location.
-         *
-         * @param  ind  DOCUMENT ME!
-         * @param  loc  DOCUMENT ME!
+         * 
+         * @param ind DOCUMENT ME!
+         * @param loc DOCUMENT ME!
          */
         public OrientStatus(int ind, float loc) {
             index = ind;
@@ -9434,16 +9421,16 @@ public class FileIO {
 
         /**
          * Determines if the given orientation is the same as the current one.
-         *
-         * @param   o  DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @param o DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public boolean equals(Object o) {
 
             if (o instanceof OrientStatus) {
 
-                if (((OrientStatus) o).getLocation() == location) {
+                if ( ((OrientStatus) o).getLocation() == location) {
                     return true;
                 }
             } else {
@@ -9455,8 +9442,8 @@ public class FileIO {
 
         /**
          * Provides the index.
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public int getIndex() {
             return index;
@@ -9464,8 +9451,8 @@ public class FileIO {
 
         /**
          * Provides the value of the location.
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public float getLocation() {
             return location;

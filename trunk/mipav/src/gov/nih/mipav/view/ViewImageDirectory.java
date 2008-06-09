@@ -35,16 +35,10 @@ public class ViewImageDirectory extends JFrame
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    // ~ Static fields/initializers
-    // -------------------------------------------------------------------------------------
-
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -1262294439731204344L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    // ~ Instance fields
-    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     protected String directory;
@@ -149,9 +143,6 @@ public class ViewImageDirectory extends JFrame
     private JCheckBoxMenuItem thumbnailOption;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
-
-    // ~ Constructors
-    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates new tree of images and sets up file filter. Calls initialization method.

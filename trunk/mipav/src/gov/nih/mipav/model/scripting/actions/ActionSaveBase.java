@@ -1,15 +1,21 @@
 package gov.nih.mipav.model.scripting.actions;
 
 
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.parameters.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.file.FileTypeTable;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.file.FileWriteOptions;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.dialogs.JDialogSaveMinc;
 
-import java.io.*;
+import java.io.File;
 
 
 /**
@@ -17,7 +23,8 @@ import java.io.*;
  */
 public abstract class ActionSaveBase extends ActionImageProcessorBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Label for the file name prefix parameter. */
     public static final String SAVE_PREFIX = "file_name_prefix";
@@ -61,7 +68,8 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
     /** Label for the avi compression parameter. */
     public static final String AVI_COMPRESSION = "avi_compression";
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /**
      * The file saving options used to save the image, which should be recording in the script. The action saving must
@@ -69,7 +77,8 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
      */
     protected FileWriteOptions recordingOptions;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Constructor for the dynamic instantiation and execution of the script action.
@@ -80,21 +89,22 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
 
     /**
      * Constructor used to record the script action line.
-     *
-     * @param  input    The image which was saved.
-     * @param  options  The options used during the image save.
+     * 
+     * @param input The image which was saved.
+     * @param options The options used during the image save.
      */
     public ActionSaveBase(ModelImage input, FileWriteOptions options) {
         super(input);
         recordingOptions = options;
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Changes the set of options used to save the image.
-     *
-     * @param  options  The options used to save the image.
+     * 
+     * @param options The options used to save the image.
      */
     public void setSaveOptions(FileWriteOptions options) {
         recordingOptions = options;
@@ -102,15 +112,15 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
 
     /**
      * Create a new set of image saving options from a save action's parameters.
-     *
-     * @param   parameters      The save script action parameters.
-     * @param   image           The image to create the save options for.
-     * @param   isSaveAsAction  Whether this save action is a SaveAs or just a Save.
-     *
-     * @return  The options which should be used to save the given image.
+     * 
+     * @param parameters The save script action parameters.
+     * @param image The image to create the save options for.
+     * @param isSaveAsAction Whether this save action is a SaveAs or just a Save.
+     * 
+     * @return The options which should be used to save the given image.
      */
     protected static final FileWriteOptions getSaveImageOptions(ParameterTable parameters, ModelImage image,
-                                                                boolean isSaveAsAction) {
+            boolean isSaveAsAction) {
         String savePrefix = "";
 
         if (parameters.containsParameter(SAVE_PREFIX)) {
@@ -126,7 +136,7 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
         String saveFileName = null;
         String saveFileDir = image.getImageDirectory();
 
-        if ((saveFileDir == null) || saveFileDir.equals("")) {
+        if ( (saveFileDir == null) || saveFileDir.equals("")) {
             saveFileDir = ViewUserInterface.getReference().getDefaultDirectory();
         }
 
@@ -157,8 +167,8 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
             while (testImageFile.exists()) {
                 Preferences.debug(testImageFile.getAbsolutePath() + " already exists.\n", Preferences.DEBUG_SCRIPTING);
 
-                String newSaveFileName = FileUtility.stripExtension(saveFileName) + "_" + collisionAvoidanceIndex +
-                                         extension;
+                String newSaveFileName = FileUtility.stripExtension(saveFileName) + "_" + collisionAvoidanceIndex
+                        + extension;
                 testImageFile = null;
                 testImageFile = new File(saveFileDir, newSaveFileName);
 
@@ -174,8 +184,8 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
             while (testImageFile.exists()) {
                 Preferences.debug(testImageFile.getAbsolutePath() + " already exists.\n", Preferences.DEBUG_SCRIPTING);
 
-                saveFileName = savePrefix + image.getImageName() + saveSuffix + "_" + collisionAvoidanceIndex +
-                               extension;
+                saveFileName = savePrefix + image.getImageName() + saveSuffix + "_" + collisionAvoidanceIndex
+                        + extension;
                 testImageFile = null;
                 testImageFile = new File(saveFileDir, saveFileName);
 
@@ -193,8 +203,8 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
             while (testImageFile.exists()) {
                 Preferences.debug(testImageFile.getAbsolutePath() + " already exists.\n", Preferences.DEBUG_SCRIPTING);
 
-                saveFileName = savePrefix + image.getImageName() + saveSuffix + "_" + collisionAvoidanceIndex +
-                               extension;
+                saveFileName = savePrefix + image.getImageName() + saveSuffix + "_" + collisionAvoidanceIndex
+                        + extension;
                 testImageFile = null;
                 testImageFile = new File(saveFileDir, saveFileName);
 
@@ -213,9 +223,9 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
         opts.setFileType(fileType);
 
         // tiff only parameter (and may be optional even for tiffs)
-        opts.setPackBitEnabled((fileType == FileUtility.TIFF) &&
-                                   ((image.getFileInfo(0).getDataType() == ModelStorageBase.BYTE) ||
-                                        (image.getFileInfo(0).getDataType() == ModelStorageBase.UBYTE)));
+        opts.setPackBitEnabled( (fileType == FileUtility.TIFF)
+                && ( (image.getFileInfo(0).getDataType() == ModelStorageBase.BYTE) || (image.getFileInfo(0)
+                        .getDataType() == ModelStorageBase.UBYTE)));
 
         if (parameters.containsParameter(TIFF_SET_WRITE_PACK_BIT)) {
             boolean isWritePackBitSet = parameters.getBoolean(TIFF_SET_WRITE_PACK_BIT);
@@ -232,8 +242,8 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
                 opts.setWritePackBit(false);
                 opts.setMultiFile(false);
             } else if (fileType == FileUtility.MINC) {
-                JDialogSaveMinc minc = new JDialogSaveMinc(ViewUserInterface.getReference().getMainFrame(),
-                                                           image.getFileInfo(0), opts);
+                JDialogSaveMinc minc = new JDialogSaveMinc(ViewUserInterface.getReference().getMainFrame(), image
+                        .getFileInfo(0), opts);
                 opts = minc.setOptionsDefault();
             }
         } else if (image.getNDims() == 4) {
@@ -247,8 +257,8 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
                 opts.setWritePackBit(false);
                 opts.setMultiFile(false);
             } else if (fileType == FileUtility.MINC) {
-                JDialogSaveMinc minc = new JDialogSaveMinc(ViewUserInterface.getReference().getMainFrame(),
-                                                           image.getFileInfo(0), opts);
+                JDialogSaveMinc minc = new JDialogSaveMinc(ViewUserInterface.getReference().getMainFrame(), image
+                        .getFileInfo(0), opts);
                 opts = minc.setOptionsDefault();
             }
         }
@@ -265,7 +275,7 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
                 opts.setMultiFile(true);
             } catch (ParameterException pe) {
                 Preferences.debug(pe + ".  It is an optional parameter.  Using defaults.\n",
-                                  Preferences.DEBUG_SCRIPTING);
+                        Preferences.DEBUG_SCRIPTING);
             }
         } else if (fileType == FileUtility.AVI) {
 
@@ -276,7 +286,7 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
 
                 // the above params are optional
                 Preferences.debug(pe + ".  It is an optional parameter.  Using defaults.\n",
-                                  Preferences.DEBUG_SCRIPTING);
+                        Preferences.DEBUG_SCRIPTING);
             }
         }
 
@@ -292,7 +302,7 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
 
                 // the above params are optional
                 Preferences.debug(pe + ".  It is an optional parameter.  Using defaults.\n",
-                                  Preferences.DEBUG_SCRIPTING);
+                        Preferences.DEBUG_SCRIPTING);
             }
         }
 
@@ -314,12 +324,12 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
 
     /**
      * Add the save options needed to record the saving of an image to a parameter table.
-     *
-     * @param   parameters  The parameter table to add the save parameters to.
-     * @param   options     The save options used in the image save.
-     * @param   extents     The extents of the image which was saved.
-     *
-     * @throws  ParserException  If there is a problem creating the parameters.
+     * 
+     * @param parameters The parameter table to add the save parameters to.
+     * @param options The save options used in the image save.
+     * @param extents The extents of the image which was saved.
+     * 
+     * @throws ParserException If there is a problem creating the parameters.
      */
     protected void addSaveOptionsToParameters(ParameterTable parameters, FileWriteOptions options, int[] extents)
             throws ParserException {
@@ -327,44 +337,44 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
 
         // if not a save as, always save the same type of file
         if (options.isSaveAs()) {
-            parameters.put(ParameterFactory.newString(SAVE_FILE_TYPE,
-                                                      FileUtility.getDefaultSuffix(options.getFileType())));
-            
+            parameters.put(ParameterFactory.newString(SAVE_FILE_TYPE, FileTypeTable.getFileTypeInfo(
+                    options.getFileType()).getDefaultExtension()));
+
             // do not record the file name used if recording a script line
-            if (!isScript()) {
+            if ( !isScript()) {
                 // added this here specifically for ProvenanceRecorder so that the save-as filename will be shown
                 parameters.put(ParameterFactory.newString(SAVE_FILE_NAME, options.getFileName()));
             }
         }
 
-        if ((options.getFileType() == FileUtility.TIFF) && options.isPackBitEnabled()) {
+        if ( (options.getFileType() == FileUtility.TIFF) && options.isPackBitEnabled()) {
             parameters.put(ParameterFactory.newBoolean(TIFF_SET_WRITE_PACK_BIT, options.isWritePackBit()));
         }
 
-        if ((options.getFileType() == FileUtility.AVI)) {
+        if ( (options.getFileType() == FileUtility.AVI)) {
             parameters.put(ParameterFactory.newInt(AVI_COMPRESSION, options.getAVICompression()));
         }
 
         if (nDims == 3) {
 
-            if ((options.getBeginSlice() != 0) || (options.getEndSlice() != (extents[2] - 1))) {
+            if ( (options.getBeginSlice() != 0) || (options.getEndSlice() != (extents[2] - 1))) {
                 parameters.put(ParameterFactory.newInt(START_SLICE, options.getBeginSlice()));
                 parameters.put(ParameterFactory.newInt(END_SLICE, options.getEndSlice()));
             }
 
-            if ((options.getFileType() == FileUtility.TIFF) && options.isMultiFile()) {
+            if ( (options.getFileType() == FileUtility.TIFF) && options.isMultiFile()) {
                 parameters.put(ParameterFactory.newInt(TIFF_START_NUMBER, options.getStartNumber()));
                 parameters.put(ParameterFactory.newInt(TIFF_DIGIT_NUMBER, options.getDigitNumber()));
             }
         } else if (nDims == 4) {
 
-            if ((options.getBeginSlice() != 0) || (options.getEndSlice() != (extents[2] - 1))) {
+            if ( (options.getBeginSlice() != 0) || (options.getEndSlice() != (extents[2] - 1))) {
                 parameters.put(ParameterFactory.newInt(START_SLICE, options.getBeginSlice()));
                 parameters.put(ParameterFactory.newInt(END_SLICE, options.getEndSlice()));
             }
 
             // we can read 4d minc and tiff, but can't write out again as 4d (so just save a specific time point)
-            if ((options.getFileType() == FileUtility.TIFF) || (options.getFileType() == FileUtility.MINC)) {
+            if ( (options.getFileType() == FileUtility.TIFF) || (options.getFileType() == FileUtility.MINC)) {
                 parameters.put(ParameterFactory.newInt(TIME_SLICE, options.getTimeSlice()));
 
                 if (options.isMultiFile()) {
@@ -373,7 +383,7 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
                 }
             } else {
 
-                if ((options.getBeginTime() != 0) || (options.getEndTime() != (extents[3] - 1))) {
+                if ( (options.getBeginTime() != 0) || (options.getEndTime() != (extents[3] - 1))) {
                     parameters.put(ParameterFactory.newInt(START_TIME, options.getBeginTime()));
                     parameters.put(ParameterFactory.newInt(END_TIME, options.getEndTime()));
                 }

@@ -1,15 +1,24 @@
 package gov.nih.mipav.model.file;
 
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.GetPath;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
-import java.io.*;
-
-import java.net.*;
-
-import java.text.*;
-
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.text.DateFormat;
+import java.util.Calendar;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.NoSuchElementException;
+import java.util.StringTokenizer;
 
 
 /**
@@ -17,43 +26,50 @@ import java.util.*;
  * these in a static Hashtable. We assume the dictionary file is found in the working directory of mipav or in the root
  * of the jar file MIPAV is being run from (see the ClassLoader.getResource() method, with the default name
  * &quot;dicom_dictionary.txt&quot;.
- *
- * <p>The dictionary defines each tag on its own line, begining with the tag's ID in parenthesis, for example: <code>
- * (01AC,1101)</code>, where the initial 4 digits are the group number, and the second for digits are the element
- * number. Following the group and element, each attribute of the tag definition is specified by attribute type,
- * followed by an &quot;=&quot;, then the attribute value in quotations. The attributes are separated by tabs, and are
- * held in order:</p>
- *
+ * 
+ * <p>
+ * The dictionary defines each tag on its own line, begining with the tag's ID in parenthesis, for example: <code>
+ * (01AC,1101)</code>,
+ * where the initial 4 digits are the group number, and the second for digits are the element number. Following the
+ * group and element, each attribute of the tag definition is specified by attribute type, followed by an &quot;=&quot;,
+ * then the attribute value in quotations. The attributes are separated by tabs, and are held in order:
+ * </p>
+ * 
  * <ol>
- *   <li>VERS (DICOM version)</li>
- *   <li>VR (Value Representation)</li>
- *   <li>VM (Value Multiplicity)</li>
- *   <li>KEYWORD (the NAME, without white-space)</li>
- *   <li>NAME (A real-world description of the meaning of this tag)</li>
+ * <li>VERS (DICOM version)</li>
+ * <li>VR (Value Representation)</li>
+ * <li>VM (Value Multiplicity)</li>
+ * <li>KEYWORD (the NAME, without white-space)</li>
+ * <li>NAME (A real-world description of the meaning of this tag)</li>
  * </ol>
- *
- * <p>Once the dictionary is parsed, the tag values are blank, so that when FileDicom reads the new file, it sets the
+ * 
+ * <p>
+ * Once the dictionary is parsed, the tag values are blank, so that when FileDicom reads the new file, it sets the
  * Hashtable in FileInfoDicom to this Hashtable and then sets the value attributes as it reads them in. This way all
  * standard tags are accounted for and if their value attribute is null, the FileInfoDicom table will not display that
- * tag.</p>
- *
- * <p>Furthermore, the utility of this class is enhanced to provide two additional functions:</p>
- *
+ * tag.
+ * </p>
+ * 
+ * <p>
+ * Furthermore, the utility of this class is enhanced to provide two additional functions:
+ * </p>
+ * 
  * <ul>
- *   <li>It parses a dictionary file</li>
- *   <li>It has a static method to write out a dicom dictionary out to a file.</li>
+ * <li>It parses a dictionary file</li>
+ * <li>It has a static method to write out a dicom dictionary out to a file.</li>
  * </ul>
- *
- * @version  1.0 Aug 1, 1999
- * @author   Neva Cherniavsky
- * @see      #parseFile
- * @see      FileInfoDicom
- * @see      FileDicom
- * @see      FileDicomInfo
+ * 
+ * @version 1.0 Aug 1, 1999
+ * @author Neva Cherniavsky
+ * @see #parseFile
+ * @see FileInfoDicom
+ * @see FileDicom
+ * @see FileDicomInfo
  */
 public class DicomDictionary {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -8388829175738482222L;
@@ -71,22 +87,23 @@ public class DicomDictionary {
     private static final int SUBSET_DICTIONARY = 2;
 
     /** Hashtable filled with known DICOM tags with empty value attributes. */
-    private static Hashtable masterHashtable;
+    private static Hashtable<FileDicomKey, FileDicomTagInfo> masterHashtable;
 
     /**
      * Hashtable filled with DICOM tags which are a subset (not necessarily a proper subset) of dicom tags in the master
      * table. This subset is then used to export dicom tags to the XML image format.
      */
-    private static Hashtable subsetHashtable;
+    private static Hashtable<FileDicomKey, FileDicomTagInfo> subsetHashtable;
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Returns whether the dicom dictionary contains a tag with the given key identifier.
-     *
-     * @param   key  the key for this tag
-     *
-     * @return  whether a tag matching the given key is contained in the dicom dictionary.
+     * 
+     * @param key the key for this tag
+     * 
+     * @return whether a tag matching the given key is contained in the dicom dictionary.
      */
     public static boolean containsTag(FileDicomKey key) {
 
@@ -99,32 +116,33 @@ public class DicomDictionary {
 
     /**
      * Returns a reference to the DICOM Hashtable.
-     *
-     * @return  a reference to the dicom tag table
+     * 
+     * @return a reference to the dicom tag table
      */
-    public static Hashtable getDicomTagTable() {
+    public static Hashtable<FileDicomKey, FileDicomTagInfo> getDicomTagTable() {
         return getDicomTagTable(false);
     }
 
     /**
      * Returns a reference to the DICOM Hashtable.
-     *
-     * @param   forceReload  If true, forces the master tag table to be re-read from the dicom dictionary file
-     *
-     * @return  a reference to the dicom tag table
+     * 
+     * @param forceReload If true, forces the master tag table to be re-read from the dicom dictionary file
+     * 
+     * @return a reference to the dicom tag table
      */
-    public static Hashtable getDicomTagTable(boolean forceReload) {
+    public static Hashtable<FileDicomKey, FileDicomTagInfo> getDicomTagTable(boolean forceReload) {
 
-        if ((masterHashtable == null) || (forceReload == true)) {
+        if ( (masterHashtable == null) || (forceReload == true)) {
             parseFile(DEFAULT_DICTIONARY);
         }
 
-        Hashtable clonedHashtable = new Hashtable((int) (masterHashtable.size() / 0.7));
-        Enumeration e = masterHashtable.keys();
+        Hashtable<FileDicomKey, FileDicomTagInfo> clonedHashtable = new Hashtable<FileDicomKey, FileDicomTagInfo>(
+                (int) (masterHashtable.size() / 0.7));
+        Enumeration<FileDicomKey> e = masterHashtable.keys();
 
         while (e.hasMoreElements()) {
-            Object key = e.nextElement();
-            Object value = ((FileDicomTagInfo) masterHashtable.get(key)).clone();
+            FileDicomKey key = e.nextElement();
+            FileDicomTagInfo value = (FileDicomTagInfo) masterHashtable.get(key).clone();
 
             clonedHashtable.put(key, value);
         }
@@ -134,10 +152,10 @@ public class DicomDictionary {
 
     /**
      * Return information about a key in the dicom dictionary.
-     *
-     * @param   key  the key to retreive information about
-     *
-     * @return  information about the requested key
+     * 
+     * @param key the key to retreive information about
+     * 
+     * @return information about the requested key
      */
     public static FileDicomTagInfo getInfo(FileDicomKey key) {
 
@@ -145,29 +163,29 @@ public class DicomDictionary {
             parseFile(DEFAULT_DICTIONARY);
         }
 
-        return (FileDicomTagInfo) masterHashtable.get(key);
+        return masterHashtable.get(key);
     }
 
     /**
      * Find the key of the corresponding tag name in the hashtable. Returns null if it no key is found.
-     *
-     * @param   searchTagName  The name of the tag for which you want the key.
-     *
-     * @return  The key as a String, for example "0010,0028" If the tag name is not in the hashtable, <code>null</code>
-     *          is returned.
+     * 
+     * @param searchTagName The name of the tag for which you want the key.
+     * 
+     * @return The key as a String, for example "0010,0028" If the tag name is not in the hashtable, <code>null</code>
+     *         is returned.
      */
     public static String getKeyFromTagName(String searchTagName) {
-        Enumeration enumeration = masterHashtable.keys();
+        Enumeration<FileDicomKey> enumeration = masterHashtable.keys();
 
         while (enumeration.hasMoreElements()) {
-            Object key = enumeration.nextElement();
+            FileDicomKey key = enumeration.nextElement();
 
-            FileDicomTagInfo tag = (FileDicomTagInfo) masterHashtable.get(key);
+            FileDicomTagInfo tag = masterHashtable.get(key);
 
             String foundTagName = tag.getName();
 
             if (foundTagName.equals(searchTagName)) {
-                return ((FileDicomKey) key).getKey();
+                return key.getKey();
             }
         }
 
@@ -176,11 +194,11 @@ public class DicomDictionary {
 
     /**
      * Find the keyword of the tag given by the key in the hashtable.
-     *
-     * @param   key  the key of the desired name.
-     *
-     * @return  the keyword (the 2nd-to-last entry in &quot;dicom_dictionary.txt&quot;). if the tag is not in the
-     *          hashtable, <code>null</code> is returned.
+     * 
+     * @param key the key of the desired name.
+     * 
+     * @return the keyword (the 2nd-to-last entry in &quot;dicom_dictionary.txt&quot;). if the tag is not in the
+     *         hashtable, <code>null</code> is returned.
      */
     public static String getKeyword(FileDicomKey key) {
 
@@ -188,7 +206,7 @@ public class DicomDictionary {
             parseFile(DEFAULT_DICTIONARY);
         }
 
-        FileDicomTagInfo tag = (FileDicomTagInfo) masterHashtable.get(key);
+        FileDicomTagInfo tag = masterHashtable.get(key);
 
         if (tag == null) {
             return null;
@@ -199,11 +217,11 @@ public class DicomDictionary {
 
     /**
      * Find the realworld name of the tag given by the key in the hashtable.
-     *
-     * @param   key  the key of the desired name.
-     *
-     * @return  the realworld name (the last enry in &quot;dicom_dictionary.txt&quot;). if the tag is not in the
-     *          hashtable, <code>null</code> is returned.
+     * 
+     * @param key the key of the desired name.
+     * 
+     * @return the realworld name (the last enry in &quot;dicom_dictionary.txt&quot;). if the tag is not in the
+     *         hashtable, <code>null</code> is returned.
      */
     public static String getName(FileDicomKey key) {
 
@@ -211,7 +229,7 @@ public class DicomDictionary {
             parseFile(DEFAULT_DICTIONARY);
         }
 
-        FileDicomTagInfo tag = (FileDicomTagInfo) masterHashtable.get(key);
+        FileDicomTagInfo tag = masterHashtable.get(key);
 
         if (tag == null) {
             return null;
@@ -221,24 +239,42 @@ public class DicomDictionary {
     }
 
     /**
-     * Returns a reference to the subset dicom tag table.
-     *
-     * @return  A reference to the subset dicom tag table
+     * Quietly checks to see if the subset dicom dictionary exists on disk. Can be used to avoid a call to
+     * getSubsetDicomTagTable() that might cause a warning dialog to appear.
+     * 
+     * @return True if {@link SUBSET_DICTIONARY_FILENAME} exists.
      */
-    public static Hashtable getSubsetDicomTagTable() {
+    public static boolean doesSubsetDicomTagTableExist() {
+        BufferedReader dictionaryReference = getFileReader(SUBSET_DICTIONARY_FILENAME);
+
+        if (dictionaryReference == null) {
+            Preferences.debug("Failed to read DICOM dictionary file from " + SUBSET_DICTIONARY_FILENAME);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Returns a reference to the subset dicom tag table.
+     * 
+     * @return A reference to the subset dicom tag table
+     */
+    public static Hashtable<FileDicomKey, FileDicomTagInfo> getSubsetDicomTagTable() {
         return getSubsetDicomTagTable(false);
     }
 
     /**
      * Returns a reference to the subset dicom tag table.
-     *
-     * @param   forceReload  If true, forces the subset tag table to be re-read from the dicom save dictionary file
-     *
-     * @return  A reference to the subset dicom tag table
+     * 
+     * @param forceReload If true, forces the subset tag table to be re-read from the dicom save dictionary file
+     * 
+     * @return A reference to the subset dicom tag table
      */
-    public static Hashtable getSubsetDicomTagTable(boolean forceReload) {
+    public static Hashtable<FileDicomKey, FileDicomTagInfo> getSubsetDicomTagTable(boolean forceReload) {
 
-        if ((subsetHashtable == null) || (forceReload == true)) {
+        if ( (subsetHashtable == null) || (forceReload == true)) {
             parseFile(SUBSET_DICTIONARY);
         }
 
@@ -247,10 +283,10 @@ public class DicomDictionary {
 
     /**
      * Accessor that returns the type of the tag (different from, but related to the vr).
-     *
-     * @param   key  the key of the desired name.
-     *
-     * @return  the type if the tag is not in the hashtable, <code>null</code> is returned.
+     * 
+     * @param key the key of the desired name.
+     * 
+     * @return the type if the tag is not in the hashtable, <code>null</code> is returned.
      */
     public static String getType(FileDicomKey key) {
 
@@ -270,10 +306,10 @@ public class DicomDictionary {
     /**
      * Accessor that returns the value multiplicity of the tag. The value multiplicity is how many instances of this
      * value representation (VR) there can be in one tag.
-     *
-     * @param   key  the key of the desired name.
-     *
-     * @return  the value multiplicity if the tag is not in the hashtable, <code>0</code> is returned.
+     * 
+     * @param key the key of the desired name.
+     * 
+     * @return the value multiplicity if the tag is not in the hashtable, <code>0</code> is returned.
      */
     public static int getVM(FileDicomKey key) {
 
@@ -294,10 +330,10 @@ public class DicomDictionary {
      * Accessor that returns the value representation of the tag. The value representation allows the reader the read
      * and interpret the tag properly. Because private tags are not unique, the VR is null and they may be read and/or
      * displayed improperly.
-     *
-     * @param   key  the key of the desired name.
-     *
-     * @return  the value representation if the tag is not in the hashtable, <code>null</code> is returned.
+     * 
+     * @param key the key of the desired name.
+     * 
+     * @return the value representation if the tag is not in the hashtable, <code>null</code> is returned.
      */
     public static String getVR(FileDicomKey key) {
 
@@ -317,19 +353,19 @@ public class DicomDictionary {
     /**
      * Sorts the list of tags using a slightly modified shell-sort and returns it as an array in order of FileDicomKeys.
      * This sorting routine is taken from <u>Numerical Recipes in C</u>, 2nd ed. by William H. Press, et al, page 332.
-     *
-     * @param   dicomTagsList  The hashtable of DICOM tags (the keys are FileDicomKey and the object referred to by that
-     *                         key is the FileDicomTagInfo).
-     *
-     * @return  a sorted array of DICOM Keys.
+     * 
+     * @param dicomTagsList The hashtable of DICOM tags (the keys are FileDicomKey and the object referred to by that
+     *            key is the FileDicomTagInfo).
+     * 
+     * @return a sorted array of DICOM Keys.
      */
-    public static FileDicomKey[] sortTagKeys(Hashtable dicomTagsList) {
+    public static FileDicomKey[] sortTagKeys(Hashtable<FileDicomKey, FileDicomTagInfo> dicomTagsList) {
         FileDicomKey[] dicomKeys;
 
         dicomKeys = new FileDicomKey[dicomTagsList.size()];
 
         int q = 0;
-        Enumeration e = dicomTagsList.keys();
+        Enumeration<FileDicomKey> e = dicomTagsList.keys();
 
         while (e.hasMoreElements()) // collect list of keys we will consider
 
@@ -392,7 +428,7 @@ public class DicomDictionary {
                 }
 
                 // check on both group and element numbers at the same time:
-                while ((tempGN > valGN) || ((tempGN == valGN) && (tempEN > valEN))) {
+                while ( (tempGN > valGN) || ( (tempGN == valGN) && (tempEN > valEN))) {
                     dicomKeys[j] = dicomKeys[j - inc];
                     j -= inc;
 
@@ -423,28 +459,29 @@ public class DicomDictionary {
 
     /**
      * Writes the DICOMHashtable given to the file that the CreateDicomFiles points to.
-     *
-     * @param   dictFile   the dicom dictionary file to write out
-     * @param   dicomHash  the dicom tag mapping to write out
-     *
-     * @throws  IOException  when the file cannot be written to.
+     * 
+     * @param dictFile the dicom dictionary file to write out
+     * @param dicomHash the dicom tag mapping to write out
+     * 
+     * @throws IOException when the file cannot be written to.
      */
-    public static void writeFile(File dictFile, Hashtable dicomHash) throws IOException {
+    public static void writeFile(File dictFile, Hashtable<FileDicomKey, FileDicomTagInfo> dicomHash) throws IOException {
         writeFile(dictFile, dicomHash, null);
     }
 
     /**
      * Writes the DICOMHashtable given to the file that the CreateDicomFiles points to.
-     *
-     * @param   dictFile    the dicom dictionary file to write out
-     * @param   dicomHash   the dicom tag mapping to write out
-     * @param   altComment  an additional comment to write out to the file
-     *
-     * @throws  IOException  when the file cannot be written to.
+     * 
+     * @param dictFile the dicom dictionary file to write out
+     * @param dicomHash the dicom tag mapping to write out
+     * @param altComment an additional comment to write out to the file
+     * 
+     * @throws IOException when the file cannot be written to.
      */
-    public static void writeFile(File dictFile, Hashtable dicomHash, String altComment) throws IOException {
+    public static void writeFile(File dictFile, Hashtable<FileDicomKey, FileDicomTagInfo> dicomHash, String altComment)
+            throws IOException {
 
-        if (!dictFile.canWrite()) {
+        if ( !dictFile.canWrite()) {
             throw new IOException(dictFile + " cannot be written.");
         }
 
@@ -485,10 +522,10 @@ public class DicomDictionary {
 
     /**
      * Gets a buffered reader for a given file name.
-     *
-     * @param   filename  The file we will be reading.
-     *
-     * @return  A reader for the given file name.
+     * 
+     * @param filename The file we will be reading.
+     * 
+     * @return A reader for the given file name.
      */
     private static BufferedReader getFileReader(String filename) {
 
@@ -509,17 +546,16 @@ public class DicomDictionary {
 
             File dictionaryFile = new File(filepath + filename);
 
-            if (!dictionaryFile.exists()) {
+            if ( !dictionaryFile.exists()) {
                 throw new FileNotFoundException(dictionaryFile.getAbsolutePath() + " does not exist.");
             }
 
-            if (!dictionaryFile.isFile()) {
+            if ( !dictionaryFile.isFile()) {
                 throw new FileNotFoundException(dictionaryFile.getAbsolutePath() + " is not a file.");
             }
 
-            if (!dictionaryFile.canRead()) {
-                throw new FileNotFoundException(dictionaryFile.getAbsolutePath() +
-                                                " does not have 'read' permissions.");
+            if ( !dictionaryFile.canRead()) {
+                throw new FileNotFoundException(dictionaryFile.getAbsolutePath() + " does not have 'read' permissions.");
             }
 
             return new BufferedReader(new FileReader(dictionaryFile));
@@ -532,12 +568,12 @@ public class DicomDictionary {
      * Method called once when the user opens MIPAV. It parses the dictionary file, normally called
      * &quot;dicom_dictionary.txt&quot;. The dictionary file is where all the tags are listed and stores these in the
      * DICOMHashtable, with empty value attributes.
-     *
-     * @see  FileDicomTagInfo
+     * 
+     * @see FileDicomTagInfo
      */
     private static void parseFile(int dictionary_type) {
         String filename;
-        Hashtable hashtable = new Hashtable();
+        Hashtable<FileDicomKey, FileDicomTagInfo> hashtable = new Hashtable<FileDicomKey, FileDicomTagInfo>();
 
         if (dictionary_type == SUBSET_DICTIONARY) {
             filename = SUBSET_DICTIONARY_FILENAME;
@@ -559,7 +595,7 @@ public class DicomDictionary {
         try {
             String s;
 
-            while ((s = dictionaryReference.readLine()) != null) {
+            while ( (s = dictionaryReference.readLine()) != null) {
                 s = s.trim();
 
                 try {
@@ -586,7 +622,7 @@ public class DicomDictionary {
                 // Key is the hash key and can have values 60xx where xx yet undefined.
                 key = new FileDicomKey(values.substring(1, 10));
 
-                if (!tok.hasMoreElements()) {
+                if ( !tok.hasMoreElements()) {
 
                     // so we will ignore additional information about the tag
                     // but will instead
@@ -602,7 +638,7 @@ public class DicomDictionary {
 
                 String vr = values.substring(1, 5);
 
-                if (!vr.equals("NONE")) {
+                if ( !vr.equals("NONE")) {
                     vr = vr.substring(0, 2);
                 }
 
@@ -687,6 +723,5 @@ public class DicomDictionary {
                 masterHashtable = hashtable;
             }
         }
-
     }
 }
