@@ -358,7 +358,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     		if(voiBuffer.get("Left Marrow").area() == 0 && voiBuffer.get("Right Marrow").area() == 0) {
 		    	ModelImage resultImage2 = (ModelImage)srcImage.clone();
 		    	marrowSeg = new PlugInAlgorithmCTMarrow(resultImage2, srcImage, imageDir, voiBuffer.get("Left Marrow").getColor());
-		    	performSegmentation(marrowSeg, resultImage2);
+		    	//while(!boneSeg.reachedCheckPoint()) {
+		    	//    
+		    	//}
+		    	//if(boneSeg.reachedCheckPoint() && boneSeg.boneOK()) {   	
+		    	//    marrowSeg.setCM(boneSeg.getX1CMs(), boneSeg.getX2CMs(), boneSeg.getY1CMs(), boneSeg.getY2CMs());
+		    	    performSegmentation(marrowSeg, resultImage2);
+		    	    
+		    	//}
     		}
 	    	
     		if(voiBuffer.get("Left Thigh").area() == 0 && voiBuffer.get("Right Thigh").area() == 0) {
