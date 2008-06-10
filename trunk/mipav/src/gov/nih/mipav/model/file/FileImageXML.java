@@ -3,45 +3,19 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
-import gov.nih.mipav.model.file.FileInfoImageXML.Investigator;
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelLUT;
-import gov.nih.mipav.model.structures.ModelRGB;
-import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.model.structures.Point2Df;
-import gov.nih.mipav.model.structures.Point3Df;
-import gov.nih.mipav.model.structures.TalairachTransformInfo;
-import gov.nih.mipav.model.structures.TransMatrix;
-import gov.nih.mipav.model.structures.TransferFunction;
-import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIText;
+import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJFilterAnimate;
+import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogNDAR.NDARData;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Image;
-import java.awt.image.FilteredImageSource;
-import java.awt.image.MemoryImageSource;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.StringTokenizer;
-import java.util.Vector;
+import java.awt.*;
+import java.awt.image.*;
+import java.io.*;
+import java.util.*;
 
 import javax.swing.JComponent;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
+import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
 
@@ -784,30 +758,9 @@ public class FileImageXML extends FileXML {
         if (options.writeHeaderOnly()) {
             NDARData data = options.getNDARData();
 
-            Investigator[] invests = new Investigator[3];
-
-            invests[0] = new Investigator(data.piName);
-            invests[0].setEmail(data.piEmail);
-            invests[0].setPhone(data.piPhone);
-            invests[0].setTitle(data.piTitle);
-
-            ((FileInfoImageXML) fileInfo).setInvestigators(invests);
-            ((FileInfoImageXML) fileInfo).setInvestigatorsComplete(new boolean[] {true, false, false});
-
             ((FileInfoImageXML) fileInfo).setSubjectID(data.validGUID);
 
             ((FileInfoImageXML) fileInfo).setHistory(data.zipFileName);
-
-            ((FileInfoImageXML) fileInfo).createPSet("Abstract");
-
-            ((FileInfoImageXML) fileInfo).getCurrentPSet().addParameter("Title");
-            ((FileInfoImageXML) fileInfo).getCurrentPSet().getCurrentParameter().setValueType("string");
-            ((FileInfoImageXML) fileInfo).getCurrentPSet().getCurrentParameter().setValue(data.abstractTitle);
-
-            ((FileInfoImageXML) fileInfo).getCurrentPSet().addParameter("Body");
-            ((FileInfoImageXML) fileInfo).getCurrentPSet().getCurrentParameter().setValueType("string");
-            ((FileInfoImageXML) fileInfo).getCurrentPSet().getCurrentParameter().setValue(data.abstractBody);
-
         }
 
         fileName = headerName + rawExtension;
