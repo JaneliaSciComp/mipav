@@ -89,9 +89,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     	if(srcImage.getNDims() > 2)
     		imageSize = srcImage.getExtents()[2];
     	//String name, boolean closed, int numCurves, int location, boolean fillable, doCalc
-    	voiList[0] = new PlugInSelectableVOI[2];
+    	voiList[0] = new PlugInSelectableVOI[3];
     	voiList[0][0] = new PlugInSelectableVOI("Abdomen", true, 1, 0, false, true, imageSize);
-    	voiList[0][1] = new PlugInSelectableVOI("Phantom", true, 1, 0, false, false, imageSize);
+    	voiList[0][1] = new PlugInSelectableVOI("Subcutaneous area", true, 1, 0, false, true, imageSize);
+    	voiList[0][2] = new PlugInSelectableVOI("Phantom", true, 1, 0, false, false, imageSize);
     	
     	voiList[1] = new PlugInSelectableVOI[3];
     	voiList[1][0] = new PlugInSelectableVOI("Visceral cavity", true, 1, 1, false, true, imageSize);
@@ -107,7 +108,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     	voiList[2][5] = new PlugInSelectableVOI("Right Paraspinous", true, 1, 2, true, true, imageSize);
     	voiList[2][6] = new PlugInSelectableVOI("Left Rectus", true, 1, 2, true, true, imageSize);
     	voiList[2][7] = new PlugInSelectableVOI("Right Rectus", true, 1, 2, true, true, imageSize);
-    	voiList[2][8] = new PlugInSelectableVOI("Aortic Calcium", true, 2, 2, true, true, imageSize);
+    	voiList[2][8] = new PlugInSelectableVOI("Aortic Calcium", true, 5, 2, true, true, imageSize);
         
         String[] titles = new String[3];
         titles[0] = "Abdomen";

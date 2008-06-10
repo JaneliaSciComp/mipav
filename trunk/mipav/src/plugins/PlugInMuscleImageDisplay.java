@@ -671,6 +671,23 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	lockToPanel(resultTabLoc, "Analysis"); //includes making visible
         	getActiveImage().unregisterAllVOIs();
 	    	updateImages(true);
+	    	boolean leftMarrow = false, rightMarrow = false, rightBone = false, leftBone = false;
+        	if(imageType.equals(ImageType.Thigh) && ((leftMarrow = !voiBuffer.get("Left Marrow").isCreated()) || 
+        												(rightMarrow = !voiBuffer.get("Right Marrow").isCreated()) || 
+        												(rightBone = !voiBuffer.get("Right Bone").isCreated()) || 
+        												(leftBone = !voiBuffer.get("Left Bone").isCreated()))) {
+        		String createStr = new String();
+        		if(!leftMarrow)
+        			createStr += "\tLeft Marrow\n";
+        		if(!rightMarrow)
+        			createStr += "\tRight Marrow\n";
+        		if(!leftBone)
+        			createStr += "\tLeft Bone\n";
+        		if(!rightBone)
+        			createStr += "\tRightBone\n";
+        		MipavUtil.displayWarning("This tab calculates VOIs that depend on the following being created.\n"+
+        				"Note that only muscle calculations will be correct.\n"+createStr);
+        	}
         	((AnalysisPrompt)tabs[resultTabLoc]).setButtons();
         	((AnalysisPrompt)tabs[resultTabLoc]).performCalculations();
         } else if (!(command.equals(DialogPrompt.OUTPUT) ||
@@ -2225,6 +2242,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		private int colorChoice = 0;
 		
 		private MuscleCalculation muscleCalc = new MuscleCalculation();
+		
+		private CustomOutput ucsdOutput = new CustomOutput();
 
 		private boolean lutOn = false;
 		
@@ -2695,6 +2714,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				return;
 			}
 			
+			if(imageType.equals(ImageType.Abdomen) && !ucsdOutput.isFinished()) {
+				Thread output = new Thread(ucsdOutput);
+		    	output.start();
+			}
+			
 			boolean pdfCreated = false;
 			
 			//if PDF hasnt been created and we're saving, create it now
@@ -2739,7 +2763,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					meanLeanH = temp.getMeanLeanH();
 					meanTotalH = temp.getMeanTotalH();
 					
-					System.out.println("Compare areas: "+totalAreaCalc+"\tcount: "+totalAreaCount);
+					System.out.println("Compare areas of "+temp.getName()+": "+totalAreaCalc+"\tcount: "+totalAreaCount);
 					
 					if (doSave) {
 						addToPDF((String)itrObj, fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH);
@@ -2826,6 +2850,41 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			}
 	    }
 	    
+		private class CustomOutput implements Runnable {
+			
+			private boolean done = false;
+			
+			public void run() {
+				long time = System.currentTimeMillis();
+				ArrayList<PlugInSelectableVOI> calcList = new ArrayList();
+				Iterator<String> tempItr = voiBuffer.keySet().iterator();
+				PlugInSelectableVOI temp = null;
+				while(tempItr.hasNext()) {
+					if((temp = voiBuffer.get(tempItr.next())).calcEligible())
+						calcList.add(temp);
+				}
+				
+				File textFile = new File(imageDir+"\\ucsd.txt");
+				System.out.println("Text path: "+textFile.getAbsolutePath());
+				
+				try {
+					BufferedWriter writer = new BufferedWriter(new FileWriter(textFile));
+					
+					writer.close();
+				} catch(IOException e) {
+					System.err.println("Error creating, writing or closing ucsd file.");
+					e.printStackTrace();
+					return;
+				}
+				System.out.println("Time for output: "+(System.currentTimeMillis() - time));
+				done = true;
+			}
+			
+			public boolean isFinished() {
+				return done;
+			}
+		}
+		
 		/**
 		 * Performs required calculations for plugin. Partial voluming error ~2%
 		 * 
@@ -2853,6 +2912,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    		for(int i=0; i<vec.size(); i++) {
 	    			VOI v = vec.get(i);
 	    			String name = v.getName();
+	    			progressBar.setMessage("Calculating "+v.getName()+"...");
 	    			progressBar.updateValue((int)(10.0+(80.0*(((double)i)/((double)vec.size())))));
 	    			double multiplier = 0.0;
 	    			multiplier = Math.pow(muscleFrame.getActiveImage().getResolutions(0)[0]*.1, 2);
