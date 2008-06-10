@@ -239,15 +239,34 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
             } else if (comboBoxOperator.getSelectedIndex() == 5) {
                 opType = AlgorithmImageCalculator.MAXIMUM;
             } else if (comboBoxOperator.getSelectedIndex() == 6) {
-                opType = AlgorithmImageCalculator.MINIMUM;
+                opType = AlgorithmImageCalculator.MEAN_SQUARED_ERROR;
             } else if (comboBoxOperator.getSelectedIndex() == 7) {
-                opType = AlgorithmImageCalculator.MULTIPLY;
+                opType = AlgorithmImageCalculator.MINIMUM;
             } else if (comboBoxOperator.getSelectedIndex() == 8) {
-                opType = AlgorithmImageCalculator.OR;
+                opType = AlgorithmImageCalculator.MULTIPLY;
             } else if (comboBoxOperator.getSelectedIndex() == 9) {
-                opType = AlgorithmImageCalculator.SUBTRACT;
+                opType = AlgorithmImageCalculator.OR;
             } else if (comboBoxOperator.getSelectedIndex() == 10) {
+                opType = AlgorithmImageCalculator.SUBTRACT;
+            } else if (comboBoxOperator.getSelectedIndex() == 11) {
                 opType = AlgorithmImageCalculator.XOR;
+            }
+            
+            if (opType == AlgorithmImageCalculator.MEAN_SQUARED_ERROR) {
+                radioNew.setEnabled(false);
+                radioReplace.setEnabled(false);
+                radioNew.setSelected(false);
+                radioReplace.setSelected(true);
+                radioClip.setEnabled(false);
+                radioPromote.setEnabled(false);
+            }
+            else {
+                radioNew.setEnabled(true);
+                radioReplace.setEnabled(true);
+                radioNew.setSelected(true);
+                radioReplace.setSelected(false);
+                radioClip.setEnabled(true);
+                radioPromote.setEnabled(true);    
             }
         }
     }
@@ -545,6 +564,7 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
         comboBoxOperator.addItem("Difference");
         comboBoxOperator.addItem("Divide");
         comboBoxOperator.addItem("Maximum");
+        comboBoxOperator.addItem("Mean squared error");
         comboBoxOperator.addItem("Minimum");
         comboBoxOperator.addItem("Multiply");
         comboBoxOperator.addItem("OR");
