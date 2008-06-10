@@ -671,19 +671,22 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	lockToPanel(resultTabLoc, "Analysis"); //includes making visible
         	getActiveImage().unregisterAllVOIs();
 	    	updateImages(true);
-	    	boolean leftMarrow = false, rightMarrow = false, rightBone = false, leftBone = false;
-        	if(imageType.equals(ImageType.Thigh) && ((leftMarrow = !voiBuffer.get("Left Marrow").isCreated()) || 
+	    	boolean leftMarrow = false, rightMarrow = false, rightBone = false, leftBone = false, abdomen = false;
+        	if((imageType.equals(ImageType.Thigh) && ((leftMarrow = !voiBuffer.get("Left Marrow").isCreated()) || 
         												(rightMarrow = !voiBuffer.get("Right Marrow").isCreated()) || 
         												(rightBone = !voiBuffer.get("Right Bone").isCreated()) || 
-        												(leftBone = !voiBuffer.get("Left Bone").isCreated()))) {
+        												(leftBone = !voiBuffer.get("Left Bone").isCreated()))) || 
+				(imageType.equals(ImageType.Abdomen) && ((abdomen = !voiBuffer.get("Abdomen").isCreated())))) {
         		String createStr = new String();
-        		if(!leftMarrow)
+        		if(abdomen)
+        			createStr += "\tAbdomen\n";
+        		if(leftMarrow)
         			createStr += "\tLeft Marrow\n";
-        		if(!rightMarrow)
+        		if(rightMarrow)
         			createStr += "\tRight Marrow\n";
-        		if(!leftBone)
+        		if(leftBone)
         			createStr += "\tLeft Bone\n";
-        		if(!rightBone)
+        		if(rightBone)
         			createStr += "\tRightBone\n";
         		MipavUtil.displayWarning("This tab calculates VOIs that depend on the following being created.\n"+
         				"Note that only muscle calculations will be correct.\n"+createStr);
@@ -1113,7 +1116,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      * @return a panel where 0 is first
      */
     public int getLocationStatus(String name) {
-    	int loc = PlugInSelectableVOI.INVALID_PANE_NUMBER;
+    	int loc = PlugInSelectableVOI.INVALID_LOC_NUMBER;
     	if(voiBuffer.get(name) != null)
     		loc = voiBuffer.get(name).getLocation();
     	return loc;
@@ -1674,6 +1677,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	this.objectName = name;
         	this.closedVoi = closedVoi;
         	this.numVoi = numVoi;
+        	warningText.setText("");
         	
         	voiPromptBuffer.removeAllElements();
         	
@@ -1821,7 +1825,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             if(countQualifiedVOIs != 1) {
 	            //else VOI no longer exists, look for a VOI that doesn't fit to call objectName
 	            for(int i=0; i<srcVOI.size(); i++) {
-	            	if(getLocationStatus(srcVOI.get(i).getName()) == PlugInSelectableVOI.INVALID_PANE_NUMBER) {
+	            	if(getLocationStatus(srcVOI.get(i).getName()) == PlugInSelectableVOI.INVALID_LOC_NUMBER) {
             			goodVOI = srcVOI.get(i);
             			countQualifiedVOIs++;
 	            	}
@@ -2714,7 +2718,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				return;
 			}
 			
-			if(imageType.equals(ImageType.Abdomen) && !ucsdOutput.isFinished()) {
+			if(!ucsdOutput.isFinished()) {
 				Thread output = new Thread(ucsdOutput);
 		    	output.start();
 			}
@@ -2864,11 +2868,19 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 						calcList.add(temp);
 				}
 				
-				File textFile = new File(imageDir+"\\ucsd.txt");
+				File textFile = new File(imageDir+"\\text.txt");
 				System.out.println("Text path: "+textFile.getAbsolutePath());
+				
+				String[] output = assembleOutput();
 				
 				try {
 					BufferedWriter writer = new BufferedWriter(new FileWriter(textFile));
+					
+					//write output
+					for(int i=0; i<output.length; i++) {
+						writer.write(output[i]);
+						writer.newLine();
+					}
 					
 					writer.close();
 				} catch(IOException e) {
@@ -2878,6 +2890,66 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				}
 				System.out.println("Time for output: "+(System.currentTimeMillis() - time));
 				done = true;
+			}
+			
+			private String[] assembleOutput() {
+				String[] sliceStr = new String[getActiveImage().getExtents()[2]];
+				
+				for(int i=0; i<sliceStr.length; i++) {
+					sliceStr[i] = new String();
+					
+					//insert static elements
+					FileInfoDicom fileInfo = (FileInfoDicom)getActiveImage().getFileInfo()[0];
+					DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+					Date date = new Date();
+					DecimalFormat dec = new DecimalFormat("0.0000");
+					//patient id
+					sliceStr[i] += ((String)fileInfo.getTagTable().getValue("0010,0020")).trim()+"\t";
+					//slice number
+					sliceStr[i] += Integer.toString(i)+"\t";
+					//scan date
+					sliceStr[i] += ((String)fileInfo.getTagTable().getValue("0008,0020")).trim()+"\t";
+					//center
+					sliceStr[i] += ((String)fileInfo.getTagTable().getValue("0008,0080")).trim()+"\t";
+					//analysis date
+					sliceStr[i] += dateFormat.format(date)+"\t";
+					//analyst
+					sliceStr[i] += System.getProperty("user.name")+"\t";
+					//pixel size
+					sliceStr[i] += dec.format(getActiveImage().getResolutions(0)[0]*.1)+"\t";
+					//slice thickness (mm)
+					sliceStr[i] += dec.format(getActiveImage().getFileInfo()[getViewableSlice()].getSliceThickness())+"\t";
+					//table height (cm)
+					sliceStr[i] += dec.format(Double.valueOf((String)fileInfo.getTagTable().getValue("0018,1130")))+"\t";
+					
+					//insertCalculations
+					PlugInSelectableVOI temp = null;
+					ArrayList<PlugInSelectableVOI> calcItems = new ArrayList(voiBuffer.keySet().size());
+					Iterator<PlugInSelectableVOI> firstItr = voiBuffer.values().iterator();
+					while(firstItr.hasNext()) {
+						if((temp = firstItr.next()).calcEligible())
+							calcItems.add(temp);
+					}
+					ArrayList<PlugInSelectableVOI> orderedCalcItems = (ArrayList)calcItems.clone();
+					for(int j=0; j<calcItems.size(); j++) 
+						orderedCalcItems.set(calcItems.get(j).getOutputLoc(), calcItems.get(j));
+					dec = new DecimalFormat("0.##");
+					for(int j=0; j<orderedCalcItems.size(); j++) {
+						temp = orderedCalcItems.get(j);
+						if(temp.isCreated()) {
+							sliceStr[i] += dec.format(temp.getTotalAreaCount(i))+"\t";
+							sliceStr[i] += dec.format(temp.getFatArea(i))+"\t";
+							sliceStr[i] += dec.format(temp.getLeanArea(i))+"\t";
+							sliceStr[i] += dec.format(temp.getMeanFatH(i))+"\t";
+							sliceStr[i] += dec.format(temp.getMeanLeanH(i))+"\t";
+							sliceStr[i] += dec.format(temp.getMeanTotalH(i))+"\t";
+						} else {
+							sliceStr[i] += new String("0\t0\t0\t0\t0\t0\t");
+						}
+					}
+				}
+				
+				return sliceStr;
 			}
 			
 			public boolean isFinished() {
@@ -2912,7 +2984,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    		for(int i=0; i<vec.size(); i++) {
 	    			VOI v = vec.get(i);
 	    			String name = v.getName();
-	    			progressBar.setMessage("Calculating "+v.getName()+"...");
+	    			progressBar.setMessage("Calculating "+v.getName().toLowerCase()+"...");
 	    			progressBar.updateValue((int)(10.0+(80.0*(((double)i)/((double)vec.size())))));
 	    			double multiplier = 0.0;
 	    			multiplier = Math.pow(muscleFrame.getActiveImage().getResolutions(0)[0]*.1, 2);
@@ -3006,6 +3078,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					}
 				}
 				meanH /= area;
+				if(new Double(meanH).equals(Double.NaN))
+					meanH = 0;
 				return meanH;
 			}
 	    }
@@ -3389,8 +3463,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			pdfDocument.add(pImage);
 			pdfDocument.close();
 			
-			MipavUtil.displayInfo("PDF saved to: " + pdfFile);
-			ViewUserInterface.getReference().getMessageFrame().append("PDF saved to: " + pdfFile + "\n", ViewJFrameMessage.DATA);
+			MipavUtil.displayInfo("PDF saved to: " + pdfFile+"\nText saved to: "+pdfFile.getParent()+"\\text.txt");
+			ViewUserInterface.getReference().getMessageFrame().append("PDF saved to: " + pdfFile + 
+										"\nText saved to: "+pdfFile.getAbsolutePath()+"\\text.txt", ViewJFrameMessage.DATA);
 			
 			} catch (Exception e) {
 				e.printStackTrace();

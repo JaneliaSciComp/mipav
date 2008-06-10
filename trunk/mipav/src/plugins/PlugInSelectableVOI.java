@@ -4,16 +4,25 @@ import java.awt.Color;
 
 public class PlugInSelectableVOI extends VOI{//extends VOI{
 	
-	public static final double NOT_CALC = Double.MIN_VALUE;
 	
+	/**Whether the VOI most be closed.*/
 	private boolean closed;
 	
+	/**Max number of curves that this VOI can have on any particular slice.*/
 	private int maxCurvesPerSlice;
 	
-	private int paneNum = INVALID_PANE_NUMBER;
+	/**Position in output file this VOI should have.  In such output files, VOIs where isCreated() == false should
+	 * display 0 for calculations. If not calculable should be INVALID_LOC_NUMBER
+	 */
+	private int outputLoc = INVALID_LOC_NUMBER;
 	
+	/**Pane location of this VOI on the MuscleDialogPrompt*/
+	private int paneNum = INVALID_LOC_NUMBER;
+	
+	/**Whether this VOI can be filled. */
 	private boolean fillEligible;
 	
+	/**Whether calculations should be performed on this VOI.*/
 	private boolean calcEligible;
 	
 	/**When true, automatic segmentation methods were used 
@@ -48,12 +57,19 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 
 	//~ Static fields --------------------------------------------------------------------------------------------------
 	
-	public static final int INVALID_PANE_NUMBER = -1;
+	public static final double NOT_CALC = Double.MIN_VALUE;
+	
+	public static final int INVALID_LOC_NUMBER = -1;
 
 	public static final Color INVALID_COLOR = new Color(234, 123, 123);
 	
 	public PlugInSelectableVOI(String name, boolean closed, int maxCurvesPerSlice, int paneNum, 
-								boolean fillEligible, boolean calcEligible, int imageSize) {
+			boolean fillEligible, boolean calcEligible, int imageSize) {
+		this(name, closed, maxCurvesPerSlice, paneNum, fillEligible, calcEligible, imageSize, INVALID_LOC_NUMBER);
+	}
+	
+	public PlugInSelectableVOI(String name, boolean closed, int maxCurvesPerSlice, int paneNum, 
+								boolean fillEligible, boolean calcEligible, int imageSize, int outputLoc) {
 		super((short)0, name, imageSize);
 		this.closed = closed;
 		this.maxCurvesPerSlice = maxCurvesPerSlice;
@@ -61,6 +77,7 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 		this.fillEligible = fillEligible;
 		this.calcEligible = calcEligible;
 		this.computerGenerated = false;
+		this.outputLoc = outputLoc;
 		
 		this.totalAreaCalc = new double[imageSize+1];
 		this.totalAreaCount = new double[imageSize+1];
@@ -331,5 +348,9 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 
 	public void setComputerGenerated(boolean computerGenerated) {
 		this.computerGenerated = computerGenerated;
+	}
+
+	public int getOutputLoc() {
+		return outputLoc;
 	}
 }
