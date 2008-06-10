@@ -2893,7 +2893,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			}
 			
 			private String[] assembleOutput() {
-				String[] sliceStr = new String[getActiveImage().getExtents()[2]];
+				String[] sliceStr;
+				if(getActiveImage().getExtents().length > 2)
+					sliceStr = new String[getActiveImage().getExtents()[2]];
+				else
+					sliceStr = new String[1];
 				
 				for(int i=0; i<sliceStr.length; i++) {
 					sliceStr[i] = new String();
@@ -2964,12 +2968,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		 *
 		 */
 	    private class MuscleCalculation implements Runnable {
+	    	public static final int OFFSET = 1024;
 	    	public static final int FAT_LOWER_BOUND = -190;
 	    	public static final int FAT_UPPER_BOUND = -30;
 	    	public static final int MUSCLE_LOWER_BOUND = 0;
 	    	public static final int MUSCLE_UPPER_BOUND = 100;
-	    	public static final int FAR_LOWER_BOUND = -1000;
-	    	public static final int FAR_UPPER_BOUND = 1000;
+	    	public static final int FAR_LOWER_BOUND = -2048;
+	    	public static final int FAR_UPPER_BOUND = 2048;
 	    	
 	    	private boolean done = false;
 	    	
@@ -2977,10 +2982,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    		ViewJProgressBar progressBar = new ViewJProgressBar("Calculations", "Initializing...", 0, 100, true);
 	    		long time = System.currentTimeMillis();
 	    		getVOIs(totalList, 0);
-	    		VOIVector vec = (VOIVector)getActiveImage().getVOIs().clone();
+	    		VOIVector vec = reorderVOIs((VOIVector)getActiveImage().getVOIs().clone());
 	    		getActiveImage().unregisterAllVOIs();
 	    		progressBar.setMessage("Whole image calculations...");
 	    		progressBar.updateValue(5);
+	    		ArrayList<PlugInSelectableVOI> residuals = new ArrayList();
 	    		for(int i=0; i<vec.size(); i++) {
 	    			VOI v = vec.get(i);
 	    			String name = v.getName();
@@ -2992,35 +2998,120 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    				multiplier *= muscleFrame.getActiveImage().getResolutions(0)[2];
 	    			System.out.println("Multiplier: "+multiplier);
 	    			PlugInSelectableVOI temp = voiBuffer.get(name);
-	    			
+	    			residuals = getResiduals(temp);
 	    			//note that even for 3D images this will still be called area, even though refers to volume
-	    			temp.setFatArea(getPieceCount(v, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*multiplier);
-	    			temp.setPartialArea(getPieceCount(v, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*multiplier);
-	    			temp.setLeanArea(getPieceCount(v, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND)*multiplier);
-	    			temp.setTotalAreaCalc(getTotalAreaCalc(v)*multiplier);
-	    			temp.setTotalAreaCount(getTotalAreaCount(v)*multiplier);
+	    			double fatArea = getPieceCount(v, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*multiplier;
+	    			double partialArea = getPieceCount(v, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*multiplier; 
+	    			double leanArea = getPieceCount(v, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND)*multiplier; 
+	    			double totalAreaCalc = getTotalAreaCalc(v)*multiplier;
+	    			double totalAreaCount = getTotalAreaCount(v)*multiplier;
+	    			double fatAreaLarge = fatArea, leanAreaLarge = leanArea, totalAreaLarge = totalAreaCalc;
+	    			//corrected area = abs(oldArea - sum(residual areas))
+	    			for(int j=0; j<residuals.size(); j++) {
+	    				fatArea = Math.abs(fatArea - residuals.get(j).getFatArea());
+	    				partialArea = Math.abs(partialArea - residuals.get(j).getPartialArea());
+	    				leanArea = Math.abs(leanArea - residuals.get(j).getLeanArea());
+	    				totalAreaCalc = Math.abs(totalAreaCalc - residuals.get(j).getTotalAreaCalc());
+	    				totalAreaCount = Math.abs(totalAreaCount - residuals.get(j).getTotalAreaCount());
+	    			}
 	    			
-	    			temp.setMeanFatH(getMeanH(v, FAT_LOWER_BOUND, FAT_UPPER_BOUND));
-	    			temp.setMeanLeanH(getMeanH(v, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND));
-	    			temp.setMeanTotalH(getMeanH(v, FAT_LOWER_BOUND, MUSCLE_UPPER_BOUND));
+	    			temp.setFatArea(fatArea);
+	    			temp.setPartialArea(partialArea);
+	    			temp.setLeanArea(leanArea);
+	    			temp.setTotalAreaCalc(totalAreaCalc);
+	    			temp.setTotalAreaCount(totalAreaCount);
+	    			
+	    			double meanFatH = getMeanH(v, FAT_LOWER_BOUND, FAT_UPPER_BOUND);// + OFFSET;
+	    			double meanLeanH = getMeanH(v, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND);// + OFFSET;
+	    		    double meanTotalH = getMeanH(v, FAR_LOWER_BOUND, FAR_UPPER_BOUND);// + OFFSET;
+	    		    double meanFatHLarge = meanFatH, meanLeanHLarge = meanLeanH, meanTotalHLarge = meanTotalH;
+	    		    double meanFatHResidual = 0, meanLeanHResidual = 0, meanTotalHResidual = 0;
+	    		    
+	    		    //corrected mean = abs(oldMean*oldArea - sum(residualMean*residualArea))/abs(oldArea - sum(residualArea))
+	    		    for(int j=0; j<residuals.size(); j++) {
+	    		    	meanFatHResidual += residuals.get(j).getMeanFatH()*residuals.get(j).getFatArea();
+	    		    	meanLeanHResidual += residuals.get(j).getMeanLeanH()*residuals.get(j).getLeanArea();
+	    		    	meanTotalHResidual += residuals.get(j).getMeanTotalH()*residuals.get(j).getTotalAreaCalc();
+	    		    }
+	    		    
+	    		    meanFatH = (meanFatH*fatAreaLarge - meanFatHResidual) / fatArea;
+	    		    meanLeanH = (meanLeanH*leanAreaLarge - meanLeanHResidual) / leanArea;
+	    		    meanTotalH = (meanTotalH*totalAreaLarge - meanTotalHResidual) / totalAreaCalc;
+	    		    
+	    		    if(new Double(meanFatH).equals(Double.NaN))
+	    		    	meanFatH = 0;
+	    		    if(new Double(meanLeanH).equals(Double.NaN))
+	    		    	meanLeanH = 0;
+	    		    if(new Double(meanTotalH).equals(Double.NaN))
+	    		    	meanTotalH = 0;
+	    		    temp.setMeanFatH(meanFatH);
+	    			temp.setMeanLeanH(meanLeanH);
+	    			temp.setMeanTotalH(meanTotalH);
 	    			
 	    			System.out.println("Number of slices: "+temp.getZDim());
-	    			for(int j=0; j<temp.getZDim(); j++) {
-	    				progressBar.setMessage("Calculating "+name.toLowerCase()+" slice "+j+"...");
+	    			for(int k=0; k<temp.getZDim(); k++) {
+	    				progressBar.setMessage("Calculating "+name.toLowerCase()+" slice "+k+"...");
 	    				VOI v2 = (VOI)v.clone();
-	    				for(int k=0; k<temp.getZDim(); k++) {
-	    					if(k != j)
-	    						v2.removeCurves(k);
+	    				for(int n=0; n<temp.getZDim(); n++) {
+	    					if(n != k)
+	    						v2.removeCurves(n);
 	    				}
-	    				temp.setFatArea(getPieceCount(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*multiplier, j);
-		    			temp.setPartialArea(getPieceCount(v2, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*multiplier, j);
-		    			temp.setLeanArea(getPieceCount(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND)*multiplier, j);
-		    			temp.setTotalAreaCalc(getTotalAreaCalc(v2)*multiplier, j);
-		    			temp.setTotalAreaCount(getTotalAreaCount(v2)*multiplier, j);
+		    			residuals = getResiduals(temp);
+		    			//note that even for 3D images this will still be called area, even though refers to volume
+		    			fatArea = getPieceCount(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*multiplier;
+		    			partialArea = getPieceCount(v2, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*multiplier; 
+		    			leanArea = getPieceCount(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND)*multiplier; 
+		    			totalAreaCalc = getTotalAreaCalc(v2)*multiplier;
+		    			totalAreaCount = getTotalAreaCount(v2)*multiplier;
+		    			fatAreaLarge = fatArea;
+		    			leanAreaLarge = leanArea; 
+		    			totalAreaLarge = totalAreaCalc;
+		    			//corrected area = abs(oldArea - sum(residual areas))
+		    			for(int j=0; j<residuals.size(); j++) {
+		    				fatArea = Math.abs(fatArea - residuals.get(j).getFatArea(k));
+		    				partialArea = Math.abs(partialArea - residuals.get(j).getPartialArea(k));
+		    				leanArea = Math.abs(leanArea - residuals.get(j).getLeanArea(k));
+		    				totalAreaCalc = Math.abs(totalAreaCalc - residuals.get(j).getTotalAreaCalc(k));
+		    				totalAreaCount = Math.abs(totalAreaCount - residuals.get(j).getTotalAreaCount(k));
+		    			}
 		    			
-		    			temp.setMeanFatH(getMeanH(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND), j);
-		    			temp.setMeanLeanH(getMeanH(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND), j);
-		    			temp.setMeanTotalH(getMeanH(v2, FAT_LOWER_BOUND, MUSCLE_UPPER_BOUND), j);
+		    			temp.setFatArea(fatArea, k);
+		    			temp.setPartialArea(partialArea, k);
+		    			temp.setLeanArea(leanArea, k);
+		    			temp.setTotalAreaCalc(totalAreaCalc, k);
+		    			temp.setTotalAreaCount(totalAreaCount, k);
+		    			
+		    			meanFatH = getMeanH(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND) + OFFSET;
+		    			meanLeanH = getMeanH(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND);// + OFFSET;
+		    		    meanTotalH = getMeanH(v2, FAR_LOWER_BOUND, FAR_UPPER_BOUND);// + OFFSET;
+		    		    meanFatHLarge = meanFatH;
+		    		    meanLeanHLarge = meanLeanH;
+		    		    meanTotalHLarge = meanTotalH;
+		    		    meanFatHResidual = 0;
+		    		    meanLeanHResidual = 0;
+		    		    meanTotalHResidual = 0;
+		    		    
+		    		    //corrected mean = abs(oldMean*oldArea - sum(residualMean*residualArea))/abs(oldArea - sum(residualArea))
+		    		    for(int j=0; j<residuals.size(); j++) {
+		    		    	meanFatHResidual += (residuals.get(j).getMeanFatH()+OFFSET)*residuals.get(j).getFatArea(k);
+		    		    	meanLeanHResidual += residuals.get(j).getMeanLeanH()*residuals.get(j).getLeanArea(k);
+		    		    	meanTotalHResidual += residuals.get(j).getMeanTotalH()*residuals.get(j).getTotalAreaCalc(k);
+		    		    }
+		    		    
+		    		    meanFatH = (Math.abs(meanFatH*fatAreaLarge - meanFatHResidual) / fatArea)-OFFSET;
+		    		    meanLeanH = Math.abs(meanLeanH*leanAreaLarge - meanLeanHResidual) / leanArea;
+		    		    meanTotalH = Math.abs(meanTotalH*totalAreaLarge - meanTotalHResidual) / totalAreaCalc;
+		    		    
+		    		    if(new Double(meanFatH).equals(Double.NaN))
+		    		    	meanFatH = 0;
+		    		    if(new Double(meanLeanH).equals(Double.NaN))
+		    		    	meanLeanH = 0;
+		    		    if(new Double(meanTotalH).equals(Double.NaN))
+		    		    	meanTotalH = 0;
+		    		    
+		    		    temp.setMeanFatH(meanFatH, k);
+		    			temp.setMeanLeanH(meanLeanH, k);
+		    			temp.setMeanTotalH(meanTotalH, k);
 	    			}
 	    		}
 	    		time = System.currentTimeMillis() - time;
@@ -3056,7 +3147,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			}
 
 			public double getTotalAreaCount(VOI v) {
-				int totalArea = 0, sliceArea;
+				int totalArea = 0;
 				BitSet fullMask = new BitSet();
 				v.createBinaryMask(fullMask, getActiveImage().getExtents()[0], getActiveImage().getExtents()[1]);
 				for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) 
@@ -3081,6 +3172,73 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				if(new Double(meanH).equals(Double.NaN))
 					meanH = 0;
 				return meanH;
+			}
+			
+			/**
+			 * Produces residuals of a given VOI that are used to subtract out irrelevant portions of that VOI
+			 */
+			
+			private ArrayList<PlugInSelectableVOI> getResiduals(VOI v) {
+				ArrayList<PlugInSelectableVOI> arr = new ArrayList();
+				if(imageType.equals(ImageType.Abdomen)) {
+					if(v.getName().equals("Subcutaneous Area")) {
+						arr.add(voiBuffer.get("Abdomen"));
+					} 
+				} else if(imageType.equals(ImageType.Thigh)) {
+					if(v.getName().equals("Left Thigh")) {
+						arr.add(voiBuffer.get("Left Bone"));
+						arr.add(voiBuffer.get("Left Marrow"));
+					} else if(v.getName().equals("Right Thigh")) {
+						arr.add(voiBuffer.get("Right Bone"));
+						arr.add(voiBuffer.get("Right Marrow"));
+					} else if(v.getName().equals("Left Bone")) {
+						arr.add(voiBuffer.get("Left Marrow"));
+					} else if(v.getName().equals("Right Bone")) {
+						arr.add(voiBuffer.get("Right Marrow"));
+					} 
+				}
+				return arr;
+			}
+
+			/**
+			 * Makes sure independent VOIs are calculated before their dependencies.  Example
+			 * left marrow calculated before left bone by properly ordering them.
+			 * @param tempVec
+			 * @return
+			 */
+			private VOIVector reorderVOIs(VOIVector tempVec) {
+				VOIVector vec = (VOIVector)tempVec.clone();
+				if(imageType.equals(ImageType.Abdomen)) {
+					int size = vec.size(), i = 0, count = 0;
+					while(count<size) {
+						if(vec.get(i).getName().equals("Subcutaneous Area")) {
+							VOI tempVOI = vec.remove(i);
+							vec.add(size-1, tempVOI);
+						} else
+							i++;
+						count++;
+					}
+				} else if(imageType.equals(ImageType.Thigh)) {
+					int size = vec.size(), i = 0, count = 0;
+					while(count<size) {
+						if(vec.get(i).getName().equals("Left Thigh")) {
+							VOI tempVOI = vec.remove(i);
+							vec.add(size-1, tempVOI);
+						} else if(vec.get(i).getName().equals("Right Thigh")) {
+							VOI tempVOI = vec.remove(i);
+							vec.add(size-2, tempVOI);
+						} else if(vec.get(i).getName().equals("Left Bone")) {
+							VOI tempVOI = vec.remove(i);
+							vec.add(size-3, tempVOI);
+						} else if(vec.get(i).getName().equals("Right Bone")) {
+							VOI tempVOI = vec.remove(i);
+							vec.add(size-4, tempVOI);
+						} else
+							i++;
+						count++;
+					}
+				}
+				return vec;
 			}
 	    }
 	}
@@ -3465,7 +3623,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			
 			MipavUtil.displayInfo("PDF saved to: " + pdfFile+"\nText saved to: "+pdfFile.getParent()+"\\text.txt");
 			ViewUserInterface.getReference().getMessageFrame().append("PDF saved to: " + pdfFile + 
-										"\nText saved to: "+pdfFile.getAbsolutePath()+"\\text.txt", ViewJFrameMessage.DATA);
+										"\nText saved to: "+pdfFile.getParent()+"\\text.txt", ViewJFrameMessage.DATA);
 			
 			} catch (Exception e) {
 				e.printStackTrace();
