@@ -698,6 +698,8 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
             ui.setDataText("\nMean squared error = " + mse + "\n");
         }
         
+        setCompleted(true);
+        
     }
 
     /**
