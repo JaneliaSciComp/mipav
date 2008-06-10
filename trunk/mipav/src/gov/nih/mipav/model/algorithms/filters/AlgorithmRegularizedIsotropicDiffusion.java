@@ -635,17 +635,17 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
             // make the magnitude of the gradient image of the gaussian smoothed source image
             if (useRed) {
                 algoSepConvolverR = new AlgorithmSeparableConvolver(sourceBufferR, extents, new float[][]{xDataRound,
-                                                                    yDataRound}, srcImage.isColorImage());
+                                                                    yDataRound}, false);
             }
 
             if (useGreen) {
                 algoSepConvolverG = new AlgorithmSeparableConvolver(sourceBufferG, extents, new float[][]{xDataRound,
-                                                                    yDataRound}, srcImage.isColorImage());
+                                                                    yDataRound}, false);
             }
 
             if (useBlue) {
                 algoSepConvolverB = new AlgorithmSeparableConvolver(sourceBufferB, extents, new float[][]{xDataRound,
-                                                                    yDataRound}, srcImage.isColorImage());
+                                                                    yDataRound}, false);
             }
 
             for (int iterNum = 0; iterNum < numIterations; iterNum++) {
@@ -1046,17 +1046,17 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
         // make the magnitude of the gradient image of the gaussian smoothed source image
         if (useRed) {
             algoSepConvolverR = new AlgorithmSeparableConvolver(sourceBufferR, extents, new float[][]{xDataRound,
-                                                                yDataRound, zDataRound}, srcImage.isColorImage());
+                                                                yDataRound, zDataRound}, false);
         }
 
         if (useGreen) {
             algoSepConvolverG = new AlgorithmSeparableConvolver(sourceBufferG, extents, new float[][]{xDataRound,
-                                                                yDataRound, zDataRound}, srcImage.isColorImage());
+                                                                yDataRound, zDataRound}, false);
         }
 
         if (useBlue) {
             algoSepConvolverB = new AlgorithmSeparableConvolver(sourceBufferB, extents, new float[][]{xDataRound,
-                                                                yDataRound, zDataRound}, srcImage.isColorImage());
+                                                                yDataRound, zDataRound}, false);
         }
 
         for (int iterNum = 0; iterNum < numIterations; iterNum++) {
