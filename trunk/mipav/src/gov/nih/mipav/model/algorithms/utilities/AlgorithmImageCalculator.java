@@ -49,21 +49,23 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 
     /** DOCUMENT ME! */
     public static final int MAXIMUM = 6;
+    
+    public static final int MEAN_SQUARED_ERROR = 7;
 
     /** DOCUMENT ME! */
-    public static final int MINIMUM = 7;
+    public static final int MINIMUM = 8;
 
     /** DOCUMENT ME! */
-    public static final int MULTIPLY = 8;
+    public static final int MULTIPLY = 9;
 
     /** DOCUMENT ME! */
-    public static final int OR = 9;
+    public static final int OR = 10;
 
     /** DOCUMENT ME! */
-    public static final int SUBTRACT = 10;
+    public static final int SUBTRACT = 11;
 
     /** DOCUMENT ME! */
-    public static final int XOR = 11;
+    public static final int XOR = 12;
 
 
     /** DOCUMENT ME! */
@@ -513,6 +515,8 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 	
 	        if (destImage != null) {
 	            calcStoreInDest();
+            } else if (opType == AlgorithmImageCalculator.MEAN_SQUARED_ERROR) {
+                calcMSE();
 	        } else {
 	            calcInPlace();
 	        }
@@ -525,6 +529,175 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
     			performBulkAveraging();
     		}	
     	}
+    }
+    
+    private void calcMSE() {
+        int i, j, k, m;
+        int z, t, f;
+        int c;
+        int offset;
+        int length; // total number of data-elements (pixels) in image slice
+        double[] bufferA;
+        double[] bufferB;
+        double[] bufferAI = null;
+        double[] bufferBI = null;
+        boolean doComplex = false;
+        double mse = 0.0;
+        double mseR = 0.0;
+        double mseG = 0.0;
+        double mseB = 0.0;
+        ViewUserInterface ui = ViewUserInterface.getReference();
+        try {
+            length = srcImageA.getSliceSize() * colorFactor;
+            bufferA = new double[length];
+            bufferB = new double[length];
+
+            if ((srcImageA.getType() == ModelStorageBase.COMPLEX) ||
+                    (srcImageA.getType() == ModelStorageBase.DCOMPLEX)) {
+                bufferAI = new double[length];
+                bufferBI = new double[length];
+                doComplex = true;
+            }
+
+            fireProgressStateChanged("Image Calculator", "Calculating image ...");
+
+        } catch (OutOfMemoryError e) {
+            bufferA = null;
+            bufferB = null;
+            System.gc();
+            displayError("AlgorithmImageCalculator reports: Out of memory when creating image buffer");
+            setCompleted(false);
+            setThreadStopped(true);
+
+            return;
+        }
+        
+        int mod = length / 20;
+
+        if (srcImageA.getNDims() == 5) {
+            f = srcImageA.getExtents()[4];
+        } else {
+            f = 1;
+        }
+
+        if (srcImageA.getNDims() >= 4) {
+            t = srcImageA.getExtents()[3];
+        } else {
+            t = 1;
+        }
+
+        if (srcImageA.getNDims() >= 3) {
+            z = srcImageA.getExtents()[2];
+        } else {
+            z = 1;
+        }
+
+        // determine if we are dealing with a 3D minus a 2D
+        boolean diffExtents = false;
+
+        if ((srcImageA.getNDims() == 3) && (srcImageB.getNDims() == 2)) {
+            diffExtents = true;
+        }
+
+        boolean doneOnce = false;
+
+        int totalLength = f * t * z * length;
+
+        for (m = 0; (m < f) && !threadStopped; m++) {
+
+            for (k = 0; (k < t) && !threadStopped; k++) {
+
+                for (j = 0; (j < z) && !threadStopped; j++) {
+
+                    try {
+                        offset = (m * t * z * length) + (k * z * length) + (j * length);
+
+                        if (doComplex) {
+                            srcImageA.exportDComplexData(2 * offset, length, bufferA, bufferAI);
+                        } else {
+                            srcImageA.exportData(offset, length, bufferA); // locks and releases lock
+                        }
+
+                        if (!diffExtents || !doneOnce) {
+
+                            if (doComplex) {
+                                srcImageB.exportDComplexData(2 * offset, length, bufferB, bufferBI);
+                            } else {
+                                srcImageB.exportData(offset, length, bufferB); // locks and releases lock
+                            }
+
+                            doneOnce = true;
+                        }
+                    } catch (IOException error) {
+                        displayError("Algorithm ImageCalculator : Image(s) locked");
+                        setCompleted(false);
+                        setThreadStopped(true);
+
+                        return;
+                    }
+
+                    for (i = 0, c = 0; (i < length) && !threadStopped; i++) {
+
+                        try {
+
+                            if (((i % mod) == 0)) {
+                                fireProgressStateChanged(Math.round((float) (i + offset) / (totalLength - 1) * 100));
+                            }
+                        } catch (NullPointerException npe) {
+
+                            if (threadStopped) {
+                                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                                                  Preferences.DEBUG_ALGORITHM);
+                            }
+                        }
+
+                        // Get slice
+                        if ((entireImage == true) || mask.get(i/colorFactor + offset)) {
+                            bufferA[i] = bufferA[i] - bufferB[i];
+                            if (doComplex) {
+                                bufferAI[i] = bufferAI[i] - bufferBI[i];
+                            }
+                            if (srcImageA.isColorImage()) {
+                               if (c == 0) {
+                                   c = 1;
+                               }
+                               else if (c == 1) {
+                                   mseR += bufferA[i] * bufferA[i];
+                                   c = 2;
+                               }
+                               else if (c == 2) {
+                                   mseG += bufferA[i] * bufferA[i];
+                                   c = 3;
+                               }
+                               else if (c == 3) {
+                                   mseB += bufferA[i] * bufferA[i];
+                                   c = 0;
+                               }
+                            } // if (srcImageA.isColorImage())
+                            else if (doComplex) {
+                                mse += (bufferA[i]* bufferA[i] + bufferAI[i] * bufferAI[i]);
+                            }
+                            else {
+                                mse += bufferA[i] * bufferA[i];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (srcImageA.isColorImage()) {
+            mseR = mseR/(totalLength/colorFactor);
+            mseG = mseG/(totalLength/colorFactor);
+            mseB = mseB/(totalLength/colorFactor);
+            ui.setDataText("\nRed mean squared error = " + mseR + "\n");
+            ui.setDataText("\nGreen mean squared error = " + mseG + "\n");
+            ui.setDataText("\nBlue mean squared error = " + mseB + "\n");
+        }
+        else {
+            mse = mse/totalLength;
+            ui.setDataText("\nMean squared error = " + mse + "\n");
+        }
+        
     }
 
     /**
@@ -1072,7 +1245,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                         }
 
                         // Get slice
-                        if ((entireImage == true) || mask.get(i + offset)) {
+                        if ((entireImage == true) || mask.get((i + offset)/colorFactor)) {
 
                             switch (opType) {
 
@@ -1949,7 +2122,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                         }
 
                         // Get slice
-                        if ((entireImage == true) || mask.get(i + offset)) {
+                        if ((entireImage == true) || mask.get((i + offset)/colorFactor)) {
 
                             // if (i < 300) { for testing     System.err.println(i + " Buffer A is: " + bufferA[i] + ",
                             // Buffer B is: "+ bufferB[i]); }
