@@ -15,6 +15,13 @@ import java.util.*;
  * Calculates the EdgeLap of an image at a scale defined by the user. This algorithm produces an edge map of the zero
  * crossings of the laplacian of the gaussian for 2D images and 2.5D images. This version uses the separable kernel
  * convolution algorithm (faster, but uses more memory).
+ * 
+ * <p>Note: From Design of FIR bilevel Laplacian-of-Gaussian filter by Soo-Chang Pei and Ji-Hwei Horng:
+ * "Wiejak showed that the LoG filter may be decomposed into the sum of two separable filters:
+ * LoG(X,Y) = -G"(x)*G(y) - G(x)*G"(y)
+ * where G and G" are the 1D Gaussian and the second derivative of the 1D Gaussian."
+ * The reference is J.S. Wiejak, H. Buxton, and B. F. Buxton, "Convolution with separable masks for early
+ * image processing", Computer Vision, Graphics, and Image Processing, 32, 1985, pp. 279-290.
  *
  * <p>Note: this algorithm does not produce the exact same result images as AlgorithmEdgeLaplacian -- they look
  * equivalent, but the AlgorithmEdgeLaplacianSep has intensity values whose range is about twice as much, that is,
