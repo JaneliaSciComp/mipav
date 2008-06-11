@@ -322,7 +322,7 @@ public class ViewJFrameGraph extends JFrame
 
     /**
      * Constructor Constructs the frame, with the graph component in one panel and the user options in the other. No
-     * funciton is loaded by default, but the user can open a new function to be displayed
+     * function is loaded by default, but the user can open a new function to be displayed
      *
      * @param  title        DOCUMENT ME!
      * @param  openFileGUI  DOCUMENT ME!
@@ -1444,7 +1444,7 @@ public class ViewJFrameGraph extends JFrame
             print(); // calls the os's default print dialog to print the graph to the printer
         } else if (command.equals("PasteFunct")) {
 
-            if (graph.getFuncts().length > 4) {
+            if (graph.getFuncts().length > 5) {
                 MipavUtil.displayError("A Maximum of 5 Functions are Allowed in One Graph");
 
                 return;
@@ -3363,7 +3363,7 @@ public class ViewJFrameGraph extends JFrame
                 }
 
                 legendLabel[i] = new JLabel("Function " + (i + 1) + " Name"); // sets the label to the corresponding
-                                                                              // funciton
+                                                                              // function
 
                 // index number
             } catch (OutOfMemoryError error) {
