@@ -203,6 +203,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
      * @return The list of descriptions.
      */
     public static String[] getDescriptions() {
+    	setUserDefinedExtensions();
         return descriptions;
     }
 
@@ -449,7 +450,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
 
     /** This sets the user defined Exts String as well as the Arraay of exts from the Preferences */
     public static void setUserDefinedExtensions() {
-        udefExtsString = Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC);
+        udefExtsString = Preferences.getProperty(Preferences.PREF_USER_FILETYPES);
         if (udefExtsString != null && ( ! (udefExtsString.trim().equals("")))) {
             String desc = "User Defined (" + udefExtsString + ")";
             setUdefDescription(desc);
