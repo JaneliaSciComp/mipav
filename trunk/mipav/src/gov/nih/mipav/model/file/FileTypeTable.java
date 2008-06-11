@@ -202,6 +202,7 @@ public class FileTypeTable {
 
         FILE_TYPE_TABLE.put(FileUtility.LIFF, new FileTypeInfo("LIFF", ".liff"));
         FILE_EXT_TABLE.put(".liff", FileUtility.LIFF);
+        FILE_EXT_TABLE.put(".LIFF", FileUtility.LIFF);
 
         FILE_TYPE_TABLE.put(FileUtility.BFLOAT, new FileTypeInfo("BFLOAT", ".bfloat"));
         FILE_EXT_TABLE.put(".bfloat", FileUtility.BFLOAT);
