@@ -2995,6 +2995,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    	private boolean done = false;
 	    	
 	    	public void run() {
+	    		done = false;
 	    		ViewJProgressBar progressBar = new ViewJProgressBar("Calculations", "Initializing...", 0, 100, true);
 	    		long time = System.currentTimeMillis();
 	    		getVOIs(totalList, 0);
@@ -3728,7 +3729,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			mct3.setAlignment(Element.ALIGN_LEFT);
 			mct3.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
 			mct3.addElement(new Paragraph("Patient ID:", fontBold));
-			String id = "Removed";//((String)fileInfo.getTagTable().getValue("0010,0020")).trim();
+			String id = ((String)fileInfo.getTagTable().getValue("0010,0020")).trim();
 			mct3.addElement(new Paragraph((id.length() > 0 ? id : "      "), fontNormal));
 			mct3.addElement(new Paragraph("Scan Date:", fontBold));
 			String scanDate = ((String)fileInfo.getTagTable().getValue("0008,0020")).trim();
@@ -3768,23 +3769,20 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			aTable = new PdfPTable(new float[] {1.8f, 1f, 1f, 1f, 1f, 1f, 1f});
 			
 			// add Column Titles (in bold)
+			String type = new String();
 			if(multipleSlices) {
 				aTable.addCell(new PdfPCell(new Paragraph("Volume (cm^3)", fontBold)));
-				aTable.addCell(new PdfPCell(new Paragraph("Total Vol", fontBold)));
-				aTable.addCell(new PdfPCell(new Paragraph("Fat Vol", fontBold)));
-				aTable.addCell(new PdfPCell(new Paragraph("Lean Vol", fontBold)));
-				aTable.addCell(new PdfPCell(new Paragraph("Fat HU", fontBold)));
-				aTable.addCell(new PdfPCell(new Paragraph("Lean HU", fontBold)));
-				aTable.addCell(new PdfPCell(new Paragraph("Total HU", fontBold)));
+				type = "Vol";	
 			} else {
 				aTable.addCell(new PdfPCell(new Paragraph("Area (cm^2)", fontBold)));
-				aTable.addCell(new PdfPCell(new Paragraph("Total Area", fontBold)));
-				aTable.addCell(new PdfPCell(new Paragraph("Fat Area", fontBold)));
-				aTable.addCell(new PdfPCell(new Paragraph("Lean Area", fontBold)));
-				aTable.addCell(new PdfPCell(new Paragraph("Fat HU", fontBold)));
-				aTable.addCell(new PdfPCell(new Paragraph("Lean HU", fontBold)));
-				aTable.addCell(new PdfPCell(new Paragraph("Total HU", fontBold)));
+				type = "Area";
 			}
+			aTable.addCell(new PdfPCell(new Paragraph("Total "+type, fontBold)));
+			aTable.addCell(new PdfPCell(new Paragraph("Fat "+type, fontBold)));
+			aTable.addCell(new PdfPCell(new Paragraph("Lean "+type, fontBold)));
+			aTable.addCell(new PdfPCell(new Paragraph("Fat HU", fontBold)));
+			aTable.addCell(new PdfPCell(new Paragraph("Lean HU", fontBold)));
+			aTable.addCell(new PdfPCell(new Paragraph("Total HU", fontBold)));
 			
 			
 			return;
