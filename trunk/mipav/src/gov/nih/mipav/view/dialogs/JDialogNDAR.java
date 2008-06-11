@@ -242,7 +242,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
                     MipavUtil.showHelp("ISPMain01");
                     break;
                 case TAB_SOURCE:
-                    MipavUtil.showHelp("ISPSource01");
+                    MipavUtil.showHelp("ISPImages01");
                     break;
                 case TAB_GUID:
                     MipavUtil.showHelp("ISPGUID01");
