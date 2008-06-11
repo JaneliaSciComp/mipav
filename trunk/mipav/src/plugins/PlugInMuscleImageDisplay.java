@@ -44,6 +44,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     private Document pdfDocument = null;
 	private PdfWriter pdfWriter = null;
 	private File pdfFile = null;
+	private File textFile = null;
 	private PdfPTable aTable = null;
 	private PdfPTable imageTable = null;
     
@@ -2868,7 +2869,18 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 						calcList.add(temp);
 				}
 				
-				File textFile = new File(imageDir+"\\text.txt");
+				String fileDir = imageDir;
+				String fileName = "Text_Report.txt";
+				textFile = new File(fileDir + File.separator + fileName);
+				if(textFile.exists()) {
+					int i=0;
+					while(textFile.exists() && i<1000) {
+						fileName = "Text_Report-"+(++i)+ ".txt";
+						if(i == 1000) 
+							MipavUtil.displayError("Too many text documents have been created, overwriting "+fileName);
+						textFile = new File(fileDir + File.separator + fileName);
+					}
+				}
 				System.out.println("Text path: "+textFile.getAbsolutePath());
 				
 				String[] output = assembleOutput();
@@ -2908,13 +2920,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					Date date = new Date();
 					DecimalFormat dec = new DecimalFormat("0.0000");
 					//patient id
-					sliceStr[i] += ((String)fileInfo.getTagTable().getValue("0010,0020")).trim()+"\t";
+					String id = ((String)fileInfo.getTagTable().getValue("0010,0020")).trim();
+					sliceStr[i] += (id.length() > 0 ? id : "0")+"\t";
 					//slice number
 					sliceStr[i] += Integer.toString(i)+"\t";
 					//scan date
-					sliceStr[i] += ((String)fileInfo.getTagTable().getValue("0008,0020")).trim()+"\t";
+					String dateStr = ((String)fileInfo.getTagTable().getValue("0008,0020")).trim();
+					sliceStr[i] += (dateStr.length() > 0 ? dateStr : "0")+"\t";
 					//center
-					sliceStr[i] += ((String)fileInfo.getTagTable().getValue("0008,0080")).trim()+"\t";
+					String center = ((String)fileInfo.getTagTable().getValue("0008,0080")).trim();
+					sliceStr[i] += (center.length() > 0 ? center : "0")+"\t";
 					//analysis date
 					sliceStr[i] += dateFormat.format(date)+"\t";
 					//analyst
@@ -2924,7 +2939,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					//slice thickness (mm)
 					sliceStr[i] += dec.format(getActiveImage().getFileInfo()[getViewableSlice()].getSliceThickness())+"\t";
 					//table height (cm)
-					sliceStr[i] += dec.format(Double.valueOf((String)fileInfo.getTagTable().getValue("0018,1130")))+"\t";
+					String height = dec.format(Double.valueOf((String)fileInfo.getTagTable().getValue("0018,1130")));
+					sliceStr[i] += (height.length() > 0 ? height : "0")+"\t";
 					
 					//insertCalculations
 					PlugInSelectableVOI temp = null;
@@ -3630,9 +3646,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			pdfDocument.add(pImage);
 			pdfDocument.close();
 			
-			MipavUtil.displayInfo("PDF saved to: " + pdfFile+"\nText saved to: "+pdfFile.getParent()+"\\text.txt");
+			MipavUtil.displayInfo("PDF saved to: " + pdfFile+"\nText saved to: "+textFile);
 			ViewUserInterface.getReference().getMessageFrame().append("PDF saved to: " + pdfFile + 
-										"\nText saved to: "+pdfFile.getParent()+"\\text.txt", ViewJFrameMessage.DATA);
+										"\nText saved to: "+textFile+"\n", ViewJFrameMessage.DATA);
 			
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -3704,16 +3720,19 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			mct2.addElement(new Paragraph("Name:", fontBold));
 			mct2.addElement(new Paragraph(getActiveImage().getFileInfo()[getViewableSlice()].getFileName(), fontNormal));
 			mct2.addElement(new Paragraph("Center:", fontBold));
-			mct2.addElement(new Paragraph(((String)fileInfo.getTagTable().getValue("0008,0080")).trim(), fontNormal));
+			String center = ((String)fileInfo.getTagTable().getValue("0008,0080")).trim();
+			mct2.addElement(new Paragraph((center.length() > 0 ? center : "      "), fontNormal));
 			pdfDocument.add(mct2);
 			
 			MultiColumnText mct3 = new MultiColumnText(20);
 			mct3.setAlignment(Element.ALIGN_LEFT);
 			mct3.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
 			mct3.addElement(new Paragraph("Patient ID:", fontBold));
-			mct3.addElement(new Paragraph(((String)fileInfo.getTagTable().getValue("0010,0020")).trim(), fontNormal));
+			String id = "Removed";//((String)fileInfo.getTagTable().getValue("0010,0020")).trim();
+			mct3.addElement(new Paragraph((id.length() > 0 ? id : "      "), fontNormal));
 			mct3.addElement(new Paragraph("Scan Date:", fontBold));
-			mct3.addElement(new Paragraph(((String)fileInfo.getTagTable().getValue("0008,0020")).trim(), fontNormal));
+			String scanDate = ((String)fileInfo.getTagTable().getValue("0008,0020")).trim();
+			mct3.addElement(new Paragraph((scanDate.length() > 0 ? scanDate : "      "), fontNormal));
 			pdfDocument.add(mct3);
 			
 			//add the scanning parameters table
@@ -3731,7 +3750,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			spTable.addCell("Slice Thickness: (mm)");
 			spTable.addCell(Float.toString(getActiveImage().getFileInfo()[getViewableSlice()].getSliceThickness()));
 			spTable.addCell("Table Height: (cm)");
-			spTable.addCell(((String)fileInfo.getTagTable().getValue("0018,1130")).trim());
+			String height = ((String)fileInfo.getTagTable().getValue("0018,1130")).trim();
+			spTable.addCell((height.length() > 0 ? height : "      "));
 			
 			
 			
