@@ -3891,6 +3891,7 @@ public class ViewJFrameGraph extends JFrame
     private void save() throws IOException {
         FileWriter outstream = null;
         JFileChooser chooser;
+        String fileName;
 
         try {
 
@@ -3909,8 +3910,12 @@ public class ViewJFrameGraph extends JFrame
             int returnVal = chooser.showSaveDialog(this);
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
+                fileName = chooser.getSelectedFile().getName();
+                if ((!fileName.contains(".plt")) && (!fileName.contains("."))) {
+                    fileName = fileName.concat(".plt");
+                }
                 outstream = new FileWriter(chooser.getCurrentDirectory() + "" + File.separatorChar + "" +
-                                           chooser.getSelectedFile().getName());
+                                           fileName);
             } else {
                 return;
             }
