@@ -182,6 +182,8 @@ public class ViewJFrameGraph extends JFrame
 
     /** DOCUMENT ME! */
     private JMenuItem itemSaveGraph;
+    
+    private JMenuItem itemTableOutput;
 
     /** DOCUMENT ME! */
     private String lastUnits = null;
@@ -1440,6 +1442,8 @@ public class ViewJFrameGraph extends JFrame
             } catch (IOException e) {
                 MipavUtil.displayError("Error: " + e);
             }
+        } else if (command.equals("TableOutput")) {
+            tableOutput();
         } else if (command.equals("PrintGraph")) {
             print(); // calls the os's default print dialog to print the graph to the printer
         } else if (command.equals("PasteFunct")) {
@@ -3411,6 +3415,7 @@ public class ViewJFrameGraph extends JFrame
             itemOpenGraph = new JMenuItem("Open Graph", MipavUtil.getIcon("open.gif"));
             itemSaveGraph = new JMenuItem("Save Graph", MipavUtil.getIcon("save.gif"));
             itemPrintGraph = new JMenuItem("Print Graph");
+            itemTableOutput = new JMenuItem("Table Output");
             itemClose = new JMenuItem("Close Graph");
             vectorCopyFunct = new Vector(graph.getFuncts().length);
             vectorDeleteFunct = new Vector(graph.getFuncts().length);
@@ -3452,6 +3457,11 @@ public class ViewJFrameGraph extends JFrame
         itemPrintGraph.setActionCommand("PrintGraph");
         itemPrintGraph.setFont(font12B);
         fileMenu.add(itemPrintGraph);
+        
+        itemTableOutput.addActionListener(this);
+        itemTableOutput.setActionCommand("TableOutput");
+        itemTableOutput.setFont(font12B);
+        fileMenu.add(itemTableOutput);
 
         fileMenu.addSeparator();
 
@@ -3956,6 +3966,38 @@ public class ViewJFrameGraph extends JFrame
 
         outstream.close();
     }
+    
+    private void tableOutput() {
+        ViewUserInterface ui = ViewUserInterface.getReference();
+        String s;
+        int len = -1;
+
+        for (int i = 0; i < graph.getFuncts().length; i++) {
+
+            if (len < graph.getFuncts()[i].getXs().length) {
+                len = graph.getFuncts()[i].getXs().length;
+            }
+        }
+
+        ui.setDataText("\n");
+        for (int i = 0; i < len; i++) {
+
+            for (int j = 0; j < graph.getFuncts().length; j++) { // writes to the file the pairs of x and y coordinates
+                s = Float.toString(graph.getFuncts()[j].getXs()[i]);
+                ui.setDataText(s);
+                ui.setDataText("\t");
+                s = Float.toString(graph.getFuncts()[j].getYs()[i]);
+                ui.setDataText(s);
+                if (j == graph.getFuncts().length - 1) {
+                    ui.setDataText("\n");
+                }
+                else {
+                    ui.setDataText("\t");
+                }
+            }
+        }
+        
+    } // private void tableOutput()
 
     /**
      * Tests that the entered parameter is above maxValue.
