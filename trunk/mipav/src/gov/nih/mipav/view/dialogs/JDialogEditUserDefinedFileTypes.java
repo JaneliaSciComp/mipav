@@ -194,6 +194,7 @@ public class JDialogEditUserDefinedFileTypes extends JDialogBase {
                 ViewImageFileFilter.setUdefDescription("User Defined (" + sb.toString() + ")");
             }
 
+
             // set the preferences
             Preferences.setProperty(Preferences.PREF_USER_FILETYPES, sb.toString());
             StringBuffer inputStringSB = new StringBuffer();
@@ -207,9 +208,12 @@ public class JDialogEditUserDefinedFileTypes extends JDialogBase {
             }
             Preferences.setProperty(Preferences.PREF_USER_FILETYPES_TEXTFIELDS, inputStringSB.toString());
 
+            //don't remember why i had this following code...the comment makes no sense....i commented out the 
+            //whole thing...and everything seems to work
+            
             // need to disasscociate and reset userdefinedFileTypesAssociations if user
             // has deleted a userDefined Extension that was part of that preferences
-            if (userInput.getText().trim().equals("")) {
+            /*if (userInput.getText().trim().equals("")) {
                 Preferences.setProperty(Preferences.PREF_USER_FILETYPES, "");
             } else {
                 if (Preferences.getProperty(Preferences.PREF_USER_FILETYPES) != null) {
@@ -230,10 +234,11 @@ public class JDialogEditUserDefinedFileTypes extends JDialogBase {
                                 }
                             }
                         }
+                        System.out.println("assocSB is " + assocSB.toString());
                         Preferences.setProperty(Preferences.PREF_USER_FILETYPES, assocSB.toString());
                     }
                 }
-            }
+            }*/
 
             // set the cancel button text to 'close' since the changes were accepted
             cancelButton.setText("Close");
