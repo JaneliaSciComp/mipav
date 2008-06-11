@@ -1,15 +1,13 @@
 package gov.nih.mipav.model.file;
 
 
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.model.structures.ModelImage;
+
+import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogAnalyzeNIFTIChoice;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
+import java.util.*;
 
 import ncsa.hdf.object.FileFormat;
 
@@ -1447,5 +1445,124 @@ public class FileUtility {
         }
 
         return (tmpStr);
+    }
+
+    /**
+     * Gets the file name list from which this ModelImage is opened.
+     * 
+     * @param image the ModelImage object.
+     * 
+     * @return the actual file name list.
+     */
+    public static final List<String> getFileNameList(ModelImage image) {
+
+        if (image == null) {
+            return null;
+        }
+
+        FileInfoBase[] fileInfoList = image.getFileInfo();
+
+        if ( (fileInfoList == null) || (fileInfoList.length == 0)) {
+            return null;
+        }
+
+        FileInfoBase fileInfo = fileInfoList[0];
+        int fileFormat = fileInfo.getFileFormat();
+        Vector<String> fileNameList = new Vector<String>();
+
+        // TODO: maybe move out to FileUtility?
+
+        switch (fileFormat) {
+            case FileUtility.ANALYZE:
+            case FileUtility.ANALYZE_MULTIFILE:
+            case FileUtility.NIFTI:
+            case FileUtility.NIFTI_MULTIFILE:
+                if (fileInfoList[0].getFileName().toLowerCase().endsWith(".nii")) {
+                    String file;
+                    for (int i = 0; i < fileInfoList.length; i++) {
+                        file = fileInfo.getFileDirectory() + File.separator + fileInfoList[i].getFileName();
+                        if (file != null && !fileNameList.contains(file)) {
+                            fileNameList.add(file);
+                        }
+                    }
+                } else {
+                    // TODO: what about extension case?
+                    String imgFileName;
+                    String hdrFileName;
+                    for (int i = 0; i < fileInfoList.length; i++) {
+                        imgFileName = fileInfoList[i].getFileName();
+                        hdrFileName = imgFileName.replaceFirst(".img", ".hdr");
+
+                        if (imgFileName != null
+                                && !fileNameList.contains(fileInfo.getFileDirectory() + File.separator + imgFileName)) {
+                            fileNameList.add(fileInfo.getFileDirectory() + File.separator + hdrFileName);
+                            fileNameList.add(fileInfo.getFileDirectory() + File.separator + imgFileName);
+                        }
+                    }
+                }
+                break;
+
+            case FileUtility.BFLOAT:
+                // TODO: what about extension case?
+                String bfloatFileName = fileInfo.getFileName();
+                String hdrFileName = bfloatFileName.replaceFirst(".bfloat", ".hdr");
+                fileNameList.add(fileInfo.getFileDirectory() + File.separator + hdrFileName);
+                fileNameList.add(fileInfo.getFileDirectory() + File.separator + bfloatFileName);
+                break;
+
+            case FileUtility.AFNI:
+                // TODO: what about extension case?
+                String headFileName = fileInfo.getFileName();
+                String brikFileName = headFileName.replaceFirst(".HEAD", ".BRIK");
+                fileNameList.add(fileInfo.getFileDirectory() + File.separator + headFileName);
+                fileNameList.add(fileInfo.getFileDirectory() + File.separator + brikFileName);
+                break;
+
+            case FileUtility.XML:
+            case FileUtility.XML_MULTIFILE:
+                String xmlFileName;
+                String rawFileName;
+                for (int i = 0; i < fileInfoList.length; i++) {
+                    xmlFileName = fileInfoList[i].getFileName();
+                    rawFileName = ((FileInfoXML) fileInfoList[i]).getImageDataFileName();
+
+                    if (xmlFileName != null
+                            && !fileNameList.contains(fileInfo.getFileDirectory() + File.separator + xmlFileName)) {
+                        fileNameList.add(fileInfo.getFileDirectory() + File.separator + xmlFileName);
+                        fileNameList.add(fileInfo.getFileDirectory() + File.separator + rawFileName);
+                    }
+                }
+                break;
+
+            case FileUtility.PARREC:
+                // TODO: what about extension case? need to support other parrec extensions
+                String parFileName = fileInfo.getFileName();
+                String recFileName = parFileName.replaceFirst(".par", ".rec");
+                fileNameList.add(fileInfo.getFileDirectory() + File.separator + parFileName);
+                fileNameList.add(fileInfo.getFileDirectory() + File.separator + recFileName);
+                break;
+
+            case FileUtility.UNDEFINED:
+            case FileUtility.ERROR:
+            case FileUtility.VOI_FILE:
+            case FileUtility.MIPAV:
+            case FileUtility.CHESHIRE_OVERLAY:
+            case FileUtility.PROJECT:
+            case FileUtility.SURFACE_XML:
+            case FileUtility.SURFACEREF_XML:
+                fileNameList = null;
+                break;
+
+            default:
+                String file;
+                for (int i = 0; i < fileInfoList.length; i++) {
+                    file = fileInfo.getFileDirectory() + File.separator + fileInfoList[i].getFileName();
+                    if (file != null && !fileNameList.contains(file)) {
+                        fileNameList.add(file);
+                    }
+                }
+        }
+
+        return fileNameList;
     }
 }
