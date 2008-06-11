@@ -17,11 +17,10 @@ import java.util.zip.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
+import javax.swing.table.*;
 
 
 public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeListener, ItemListener {
-
-    private JTextField[] guidFields;
 
     /** Scrolling text area for log output */
     private WidgetFactory.ScrollTextArea logOutputArea;
@@ -29,6 +28,8 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     private JScrollPane listPane;
 
     private JButton loadGUIDsButton;
+
+    private JTable guidTable;
 
     private JList sourceList;
 
@@ -65,6 +66,11 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     private static final int TAB_GUID = 2;
 
     private static final int TAB_LOG = 3;
+
+    /** GUID table column indices */
+    private static final int GUID_TABLE_IMAGE_COLUMN = 0;
+
+    private static final int GUID_TABLE_GUID_COLUMN = 1;
 
     public JDialogNDAR(Frame theParentFrame) {
         super(theParentFrame, false);
@@ -151,10 +157,44 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
             }
         } else if (command.equals("AddSource")) {
             ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
+            fileChooser.setMulti(ViewUserInterface.getReference().getLastStackFlag());
+
             JFileChooser chooser = fileChooser.getFileChooser();
             chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
 
-            int returnVal = chooser.showOpenDialog(null);
+            // default to TECH filter
+            int filter = ViewImageFileFilter.TECH;
+
+            try {
+                filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
+            } catch (NumberFormatException nfe) {
+
+                // an invalid value was set in preferences -- so don't use it!
+                filter = -1;
+            }
+
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
+
+            if (filter != -1) {
+                // it seems that the set command adds the filter again...
+                // chooser.addChoosableFileFilter(new ViewImageFileFilter(filter));
+
+                // if filter is something we already added, then remove it before
+                // setting it..... (kludgy, kludgy....)
+                javax.swing.filechooser.FileFilter found = ViewOpenFileUI.findFilter(chooser, filter);
+
+                if (found != null) {
+                    chooser.removeChoosableFileFilter(found);
+                }
+
+                // initially set to the preferences
+                chooser.setFileFilter(new ViewImageFileFilter(filter));
+            }
+
+            int returnVal = chooser.showOpenDialog(this);
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 boolean isMultiFile = fileChooser.isMulti();
@@ -171,7 +211,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
             removeSourceButton.setEnabled(sourceModel.size() > 0);
             nextButton.setEnabled(sourceModel.size() > 0);
 
-            listPane.setBorder(buildTitledBorder(sourceModel.size() + " image(s) selected for transfer"));
+            listPane.setBorder(buildTitledBorder(sourceModel.size() + " image(s) selected"));
 
         } else if (command.equals("RemoveSource")) {
             int[] selected = sourceList.getSelectedIndices();
@@ -181,7 +221,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
             }
             removeSourceButton.setEnabled(sourceModel.size() > 0);
             nextButton.setEnabled(sourceModel.size() > 0);
-            listPane.setBorder(buildTitledBorder(sourceModel.size() + " image(s) selected for transfer"));
+            listPane.setBorder(buildTitledBorder(sourceModel.size() + " image(s) selected"));
         } else if (command.equals("Source")) {
             tabbedPane.setSelectedIndex(TAB_SOURCE);
         } else if (command.equals("LoadGUIDs")) {
@@ -197,7 +237,20 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 
             }
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("20040");
+            switch (tabbedPane.getSelectedIndex()) {
+                case TAB_MAIN:
+                    MipavUtil.showHelp("ISPMain01");
+                    break;
+                case TAB_SOURCE:
+                    MipavUtil.showHelp("ISPSource01");
+                    break;
+                case TAB_GUID:
+                    MipavUtil.showHelp("ISPGUID01");
+                    break;
+                case TAB_LOG:
+                    MipavUtil.showHelp("ISPLog01");
+                    break;
+            }
         }
     }
 
@@ -252,7 +305,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
                 if (tempStr != null) {
                     validGUID = getValidGUID(tempStr);
                     if (validGUID != null) {
-                        guidFields[counter].setText(validGUID);
+                        guidTable.getModel().setValueAt(validGUID, counter, GUID_TABLE_GUID_COLUMN);
                     }
                 }
                 counter++;
@@ -270,7 +323,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 
         tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Main", buildMainTab());
-        tabbedPane.addTab("Source", buildSourcePanel());
+        tabbedPane.addTab("Images", buildSourcePanel());
         tabbedPane.addTab("GUIDs", buildGUIDPane());
         tabbedPane.addTab("Log", buildLogTab());
 
@@ -355,77 +408,65 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         sourceList = new JList(sourceModel);
 
         listPane = WidgetFactory.buildScrollPane(sourceList);
-        listPane.setBorder(buildTitledBorder(0 + " image(s) selected for transfer"));
+        listPane.setBorder(buildTitledBorder(0 + " image(s) selected"));
         sourcePanel.add(listPane, gbc);
 
         return listPane;
     }
 
     private JScrollPane buildGUIDPane() {
-        guidPanel = new JPanel(new GridBagLayout());
+        guidPanel = new JPanel(new GridLayout());
         JScrollPane guidPane = WidgetFactory.buildScrollPane(guidPanel);
 
         return guidPane;
     }
 
     private void generateGUIFields() {
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 0;
-        gbc.weighty = 0;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-
-        gbc.fill = GridBagConstraints.REMAINDER;
-
         int numImages = sourceModel.size();
 
-        JTextField[] guidLabels = new JTextField[numImages];
+        GUIDTableModel guidTableModel = new GUIDTableModel(numImages);
+        guidTable = new JTable(guidTableModel);
 
-        guidFields = new JTextField[numImages];
+        JScrollPane guidScrollPane = new JScrollPane(guidTable);
+
+        guidTable.setFillsViewportHeight(true);
+        guidTable.getTableHeader().setReorderingAllowed(false);
+        guidTable.getTableHeader().setResizingAllowed(true);
+
+        String longestValue = new String();
 
         for (int i = 0; i < numImages; i++) {
-            guidLabels[i] = new JTextField(45);
-            guidLabels[i].setFont(WidgetFactory.font12);
-            guidLabels[i].setForeground(Color.black);
+            guidTable.getModel().setValueAt(sourceModel.elementAt(i).toString(), i, GUID_TABLE_IMAGE_COLUMN);
 
-            guidFields[i] = new JTextField(15);
-            guidFields[i].setFont(WidgetFactory.font12);
-            guidFields[i].setForeground(Color.black);
+            if (sourceModel.elementAt(i).toString().length() > longestValue.length()) {
+                longestValue = sourceModel.elementAt(i).toString();
+            }
 
-            gbc.gridx = 0;
-            gbc.weightx = 1;
-            guidPanel.add(guidLabels[i], gbc);
-
-            gbc.gridx++;
-            gbc.weightx = 1;
-            guidPanel.add(guidFields[i], gbc);
-            gbc.gridy++;
-        }
-        for (int i = 0; i < numImages; i++) {
-            guidLabels[i].setText(sourceModel.elementAt(i).toString());
-            guidLabels[i].setCaretPosition(guidLabels[i].getText().length());
-
-            guidLabels[i].setEditable(false);
-        }
-
-        // parse the potential GUIDs into the fields NDARCJ743PV3
-
-        String guidString = null;
-        for (int i = 0; i < numImages; i++) {
-            guidString = getValidGUID(sourceModel.elementAt(i).toString());
+            String guidString = getValidGUID(sourceModel.elementAt(i).toString());
             if (guidString != null) {
-                guidFields[i].setText(guidString);
+                guidTable.getModel().setValueAt(guidString, i, GUID_TABLE_GUID_COLUMN);
             }
         }
+
+        // set the file name column width based on the longest file path
+        TableCellRenderer headerRenderer = guidTable.getTableHeader().getDefaultRenderer();
+        TableColumn column = guidTable.getColumnModel().getColumn(GUID_TABLE_IMAGE_COLUMN);
+        Component comp = headerRenderer
+                .getTableCellRendererComponent(null, column.getHeaderValue(), false, false, 0, 0);
+        int headerWidth = comp.getPreferredSize().width;
+        comp = guidTable.getDefaultRenderer(guidTableModel.getColumnClass(GUID_TABLE_IMAGE_COLUMN))
+                .getTableCellRendererComponent(guidTable, longestValue, false, false, 0, GUID_TABLE_IMAGE_COLUMN);
+        int cellWidth = comp.getPreferredSize().width;
+        column.setPreferredWidth(Math.max(headerWidth, cellWidth));
+
+        // the guids are of a fixed length
+        guidTable.getColumnModel().getColumn(GUID_TABLE_GUID_COLUMN).setPreferredWidth(50);
+
+        guidPanel.setBorder(buildTitledBorder("Assign a GUID to each image dataset"));
+        guidPanel.add(guidScrollPane);
     }
 
     private String getValidGUID(String testString) {
-        System.err.println("getValidGUID():\t" + testString);
-
         String validGUID = null;
         int ndarIndex = testString.indexOf("NDAR");
         if (ndarIndex != -1 && (ndarIndex + GUID_LENGTH < testString.length())) {
@@ -512,7 +553,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
             ModelImage origImage = fileIO.readImage(imageFile.getName(), imageFile.getParent() + File.separator,
                     multiFileTable.get(imageFile), null);
 
-            List<String> origFiles = getFileNameList(origImage);
+            List<String> origFiles = FileUtility.getFileNameList(origImage);
 
             String zipFilePath = outputDirBase + outputFileNameBase + ".zip";
             try {
@@ -533,7 +574,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
             ndarData.zipFileName = FileUtility.getFileName(zipFilePath);
 
             // set the valid GUID into the NDAR data object
-            ndarData.validGUID = guidFields[i].getText();
+            ndarData.validGUID = (String) guidTable.getModel().getValueAt(i, GUID_TABLE_GUID_COLUMN);
 
             writeMetaDataFiles(outputDirBase, outputFileNameBase, imageFile, origImage);
 
@@ -594,7 +635,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         options.setMultiFile(false);
         options.setOptionsSet(true);
 
-        printlnToLog("Saving header: " + fName + " to: " + outputDir);
+        printlnToLog("Saving XML header: " + fName + " to: " + outputDir);
 
         // write out only the header to userdir/mipav/temp
         fileIO.writeImage(image, options);
@@ -637,125 +678,6 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     }
 
     /**
-     * Gets the file name list from which this ModelImage is opened.
-     * 
-     * @param image the ModelImage object.
-     * 
-     * @return the actual file name list.
-     */
-    public static final List<String> getFileNameList(ModelImage image) {
-
-        if (image == null) {
-            return null;
-        }
-
-        FileInfoBase[] fileInfoList = image.getFileInfo();
-
-        if ( (fileInfoList == null) || (fileInfoList.length == 0)) {
-            return null;
-        }
-
-        FileInfoBase fileInfo = fileInfoList[0];
-        int fileFormat = fileInfo.getFileFormat();
-        Vector<String> fileNameList = new Vector<String>();
-
-        // TODO: maybe move out to FileUtility?
-
-        switch (fileFormat) {
-            case FileUtility.ANALYZE:
-            case FileUtility.ANALYZE_MULTIFILE:
-            case FileUtility.NIFTI:
-            case FileUtility.NIFTI_MULTIFILE:
-                if (fileInfoList[0].getFileName().toLowerCase().endsWith(".nii")) {
-                    String file;
-                    for (int i = 0; i < fileInfoList.length; i++) {
-                        file = fileInfo.getFileDirectory() + File.separator + fileInfoList[i].getFileName();
-                        if (file != null && !fileNameList.contains(file)) {
-                            fileNameList.add(file);
-                        }
-                    }
-                } else {
-                    // TODO: what about extension case?
-                    String imgFileName;
-                    String hdrFileName;
-                    for (int i = 0; i < fileInfoList.length; i++) {
-                        imgFileName = fileInfoList[i].getFileName();
-                        hdrFileName = imgFileName.replaceFirst(".img", ".hdr");
-
-                        if (imgFileName != null
-                                && !fileNameList.contains(fileInfo.getFileDirectory() + File.separator + imgFileName)) {
-                            fileNameList.add(fileInfo.getFileDirectory() + File.separator + hdrFileName);
-                            fileNameList.add(fileInfo.getFileDirectory() + File.separator + imgFileName);
-                        }
-                    }
-                }
-                break;
-
-            case FileUtility.BFLOAT:
-                // TODO: what about extension case?
-                String bfloatFileName = fileInfo.getFileName();
-                String hdrFileName = bfloatFileName.replaceFirst(".bfloat", ".hdr");
-                fileNameList.add(fileInfo.getFileDirectory() + File.separator + hdrFileName);
-                fileNameList.add(fileInfo.getFileDirectory() + File.separator + bfloatFileName);
-                break;
-
-            case FileUtility.AFNI:
-                // TODO: what about extension case?
-                String headFileName = fileInfo.getFileName();
-                String brikFileName = headFileName.replaceFirst(".HEAD", ".BRIK");
-                fileNameList.add(fileInfo.getFileDirectory() + File.separator + headFileName);
-                fileNameList.add(fileInfo.getFileDirectory() + File.separator + brikFileName);
-                break;
-
-            case FileUtility.XML:
-            case FileUtility.XML_MULTIFILE:
-                String xmlFileName;
-                String rawFileName;
-                for (int i = 0; i < fileInfoList.length; i++) {
-                    xmlFileName = fileInfoList[i].getFileName();
-                    rawFileName = ((FileInfoXML) fileInfoList[i]).getImageDataFileName();
-
-                    if (xmlFileName != null
-                            && !fileNameList.contains(fileInfo.getFileDirectory() + File.separator + xmlFileName)) {
-                        fileNameList.add(fileInfo.getFileDirectory() + File.separator + xmlFileName);
-                        fileNameList.add(fileInfo.getFileDirectory() + File.separator + rawFileName);
-                    }
-                }
-                break;
-
-            case FileUtility.PARREC:
-                // TODO: what about extension case? need to support other parrec extensions
-                String parFileName = fileInfo.getFileName();
-                String recFileName = parFileName.replaceFirst(".par", ".rec");
-                fileNameList.add(fileInfo.getFileDirectory() + File.separator + parFileName);
-                fileNameList.add(fileInfo.getFileDirectory() + File.separator + recFileName);
-                break;
-
-            case FileUtility.UNDEFINED:
-            case FileUtility.ERROR:
-            case FileUtility.VOI_FILE:
-            case FileUtility.MIPAV:
-            case FileUtility.CHESHIRE_OVERLAY:
-            case FileUtility.PROJECT:
-            case FileUtility.SURFACE_XML:
-            case FileUtility.SURFACEREF_XML:
-                fileNameList = null;
-                break;
-
-            default:
-                String file;
-                for (int i = 0; i < fileInfoList.length; i++) {
-                    file = fileInfo.getFileDirectory() + File.separator + fileInfoList[i].getFileName();
-                    if (file != null && !fileNameList.contains(file)) {
-                        fileNameList.add(file);
-                    }
-                }
-        }
-
-        return fileNameList;
-    }
-
-    /**
      * Append a line to the log output area in the Log tab.
      * 
      * @param line The line to append (do not include the trailing newline).
@@ -773,12 +695,8 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     private boolean checkGUIDs() {
         int numImages = sourceModel.size();
         for (int i = 0; i < numImages; i++) {
-            if ( !isValidGUID(guidFields[i].getText())) {
-                MipavUtil.displayWarning("Invalid GUID");
-                tabbedPane.setSelectedIndex(TAB_GUID);
-                guidFields[i].requestFocus();
-                guidFields[i].setSelectionStart(0);
-                guidFields[i].setSelectionEnd(guidFields[i].getText().length());
+            if ( !isValidGUID((String) guidTable.getModel().getValueAt(i, GUID_TABLE_GUID_COLUMN))) {
+                MipavUtil.displayWarning("Invalid GUID: " + guidTable.getModel().getValueAt(i, GUID_TABLE_GUID_COLUMN));
                 return false;
             }
         }
@@ -789,8 +707,9 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         JPanel buttonPanel = new JPanel();
         previousButton = WidgetFactory.buildTextButton("Previous", "Go to previous tab", "Previous", this);
         nextButton = WidgetFactory.buildTextButton("Next", "Go to next tab", "Next", this);
-        addSourceButton = WidgetFactory.buildTextButton("Add files", "Add source files", "AddSource", this);
-        removeSourceButton = WidgetFactory.buildTextButton("Remove files", "Remove source files", "RemoveSource", this);
+        addSourceButton = WidgetFactory.buildTextButton("Add images", "Add image datasets", "AddSource", this);
+        removeSourceButton = WidgetFactory.buildTextButton("Remove images", "Remove the selected image datasets",
+                "RemoveSource", this);
         loadGUIDsButton = WidgetFactory.buildTextButton("Load GUIDs", "Parse GUIDs from text file", "LoadGUIDs", this);
         helpButton = WidgetFactory.buildTextButton("Help", "Show MIPAV help", "", this);
 
@@ -821,5 +740,53 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         public String validGUID;
 
         public String zipFileName;
+    }
+
+    private class GUIDTableModel extends AbstractTableModel {
+        private String[] columnNames = {"Image", "GUID"};
+
+        private Object[][] data;
+
+        public GUIDTableModel(int numGUIDs) {
+            super();
+
+            data = new Object[numGUIDs][columnNames.length];
+
+            for (int i = 0; i < numGUIDs; i++) {
+                data[i][GUID_TABLE_IMAGE_COLUMN] = new String();
+                data[i][GUID_TABLE_GUID_COLUMN] = new String();
+            }
+        }
+
+        public int getColumnCount() {
+            return columnNames.length;
+        }
+
+        public int getRowCount() {
+            return data.length;
+        }
+
+        public String getColumnName(int col) {
+            return columnNames[col];
+        }
+
+        public Object getValueAt(int row, int col) {
+            return data[row][col];
+        }
+
+        public boolean isCellEditable(int row, int col) {
+            // Note that the data/cell address is constant,
+            // no matter where the cell appears onscreen.
+            if (col == 0) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        public void setValueAt(Object value, int row, int col) {
+            data[row][col] = value;
+            fireTableCellUpdated(row, col);
+        }
     }
 }
