@@ -22,28 +22,8 @@ import java.util.*;
  * where G and G" are the 1D Gaussian and the second derivative of the 1D Gaussian."
  * The reference is J.S. Wiejak, H. Buxton, and B. F. Buxton, "Convolution with separable masks for early
  * image processing", Computer Vision, Graphics, and Image Processing, 32, 1985, pp. 279-290.
- *
- * <p>Note: this algorithm does not produce the exact same result images as AlgorithmEdgeLaplacian -- they look
- * equivalent, but the AlgorithmEdgeLaplacianSep has intensity values whose range is about twice as much, that is,
- * are significantly lower and higher than AlgorithmEdgeLaplacian's. This, however, does not seem to affect (much)
- * the edge crossing bitmasks that are generated from the Lapacian image. Therefore, this version should be okay
- * for use in functions which call calcZeroXMaskBitset() (eg - RubberbandLivewire).</p>
  * 
- * <p>Note: No signficant difference occurs between the 2 algorithms in 2D if only 1 convolution dimension is involved.
- * If in, AlgorithmEdgeLaplacianSep we change destImage.set(idx, -(xResultBuffer[i] + yResultBuffer[i]));
- * to destImage.set(idx, -xResultBuffer[i]) and in AlgorithmEdgeLaplacian we change 
- * GxxData[i] = -(GxxData[i] + GyyData[i]); to GxxData[i] = -GxxData[i], the results are identical within rounding
- * error.  Likewise, if in AlgorithmEdgeLaplacianSep we change 
- * destImage.set(idx, -(xResultBuffer[i] + yResultBuffer[i])); to to destImage.set(idx, -yResultBuffer[i]) and
- * in AlgorithmEdgeLaplacian we change GxxData[i] = -(GxxData[i] + GyyData[i]); to GxxData[i] = -GyyData[i], 
- * the results are identical within rounding error.</p>
- * 
- * <p>Note: We expect this difference because in AlgorithmEdgeLaplacian we are calculating:
- *             sum((kernelx[count] + kernely[count]) * image[i])/sum(kernelx[count] + kernely[count])
- * while in AlgorithmEdgeLaplacianSep we are calculating:
- * sum(kernelx[count] * image[i])/sum(kernelx[count)   +    sum(kernely[count] * image[i])/sum(kernely[count]),
- * so the 2 should values should not be equal and the range of the AlgorithmEdgeLaplacianSep values will be
- * approximately twice that of the AlgorithmEdgeLaplacian values.</p>
+ * Results almost exactly match those of AlgorithmEdgeLaplacian.
  *
  * <p>Does not work with color images (neither does AlgorithmEdgeLaplacian).</p>
  *
