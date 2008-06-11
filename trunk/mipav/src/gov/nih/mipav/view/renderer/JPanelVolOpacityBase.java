@@ -960,11 +960,13 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
     
     public void update()
     {
-        if ( renderBase instanceof gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
+        /*
+    	if ( renderBase instanceof gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
         {
-            ((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).updateParent();
+             ((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).updateParent();
         }
-        else if ( m_kVolumeViewer != null )
+        else */
+        if ( m_kVolumeViewer != null )
         {
             m_kVolumeViewer.updateImages(true);
         }
