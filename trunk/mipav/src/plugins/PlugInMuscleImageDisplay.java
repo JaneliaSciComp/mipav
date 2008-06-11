@@ -3038,12 +3038,18 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    		    meanLeanH = (meanLeanH*leanAreaLarge - meanLeanHResidual) / leanArea;
 	    		    meanTotalH = (meanTotalH*totalAreaLarge - meanTotalHResidual) / totalAreaCalc;
 	    		    
-	    		    if(new Double(meanFatH).equals(Double.NaN))
+	    		    if(meanFatH > 0) {
+	    		    	meanFatH = -meanFatH;
+	    		    	meanTotalH = -meanTotalH;
+	    		    } else if(new Double(meanFatH).equals(Double.NaN)) 
 	    		    	meanFatH = 0;
-	    		    if(new Double(meanLeanH).equals(Double.NaN))
+	    		    if(meanLeanH < 0)
+	    		    	meanLeanH = -meanLeanH;
+	    		    else if(new Double(meanLeanH).equals(Double.NaN))
 	    		    	meanLeanH = 0;
 	    		    if(new Double(meanTotalH).equals(Double.NaN))
 	    		    	meanTotalH = 0;
+	    		    
 	    		    temp.setMeanFatH(meanFatH);
 	    			temp.setMeanLeanH(meanLeanH);
 	    			temp.setMeanTotalH(meanTotalH);
@@ -3081,7 +3087,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		    			temp.setTotalAreaCalc(totalAreaCalc, k);
 		    			temp.setTotalAreaCount(totalAreaCount, k);
 		    			
-		    			meanFatH = getMeanH(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND) + OFFSET;
+		    			meanFatH = getMeanH(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND);// + OFFSET;
 		    			meanLeanH = getMeanH(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND);// + OFFSET;
 		    		    meanTotalH = getMeanH(v2, FAR_LOWER_BOUND, FAR_UPPER_BOUND);// + OFFSET;
 		    		    meanFatHLarge = meanFatH;
@@ -3093,18 +3099,23 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		    		    
 		    		    //corrected mean = abs(oldMean*oldArea - sum(residualMean*residualArea))/abs(oldArea - sum(residualArea))
 		    		    for(int j=0; j<residuals.size(); j++) {
-		    		    	meanFatHResidual += (residuals.get(j).getMeanFatH()+OFFSET)*residuals.get(j).getFatArea(k);
-		    		    	meanLeanHResidual += residuals.get(j).getMeanLeanH()*residuals.get(j).getLeanArea(k);
-		    		    	meanTotalHResidual += residuals.get(j).getMeanTotalH()*residuals.get(j).getTotalAreaCalc(k);
+		    		    	meanFatHResidual += residuals.get(j).getMeanFatH(k)*residuals.get(j).getFatArea(k);
+		    		    	meanLeanHResidual += residuals.get(j).getMeanLeanH(k)*residuals.get(j).getLeanArea(k);
+		    		    	meanTotalHResidual += residuals.get(j).getMeanTotalH(k)*residuals.get(j).getTotalAreaCalc(k);
 		    		    }
 		    		    
-		    		    meanFatH = (Math.abs(meanFatH*fatAreaLarge - meanFatHResidual) / fatArea)-OFFSET;
-		    		    meanLeanH = Math.abs(meanLeanH*leanAreaLarge - meanLeanHResidual) / leanArea;
-		    		    meanTotalH = Math.abs(meanTotalH*totalAreaLarge - meanTotalHResidual) / totalAreaCalc;
+		    		    meanFatH = (meanFatH*fatAreaLarge - meanFatHResidual) / fatArea;
+		    		    meanLeanH = (meanLeanH*leanAreaLarge - meanLeanHResidual) / leanArea;
+		    		    meanTotalH = (meanTotalH*totalAreaLarge - meanTotalHResidual) / totalAreaCalc;
 		    		    
-		    		    if(new Double(meanFatH).equals(Double.NaN))
+		    		    if(meanFatH > 0) {
+		    		    	meanFatH = -meanFatH;
+		    		    	meanTotalH = -meanTotalH;
+		    		    } else if(new Double(meanFatH).equals(Double.NaN)) 
 		    		    	meanFatH = 0;
-		    		    if(new Double(meanLeanH).equals(Double.NaN))
+		    		    if(meanLeanH < 0)
+		    		    	meanLeanH = -meanLeanH;
+		    		    else if(new Double(meanLeanH).equals(Double.NaN))
 		    		    	meanLeanH = 0;
 		    		    if(new Double(meanTotalH).equals(Double.NaN))
 		    		    	meanTotalH = 0;
@@ -3181,7 +3192,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			private ArrayList<PlugInSelectableVOI> getResiduals(VOI v) {
 				ArrayList<PlugInSelectableVOI> arr = new ArrayList();
 				if(imageType.equals(ImageType.Abdomen)) {
-					if(v.getName().equals("Subcutaneous Area")) {
+					if(v.getName().equals("Subcutaneous area")) {
 						arr.add(voiBuffer.get("Abdomen"));
 					} 
 				} else if(imageType.equals(ImageType.Thigh)) {
@@ -3211,7 +3222,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				if(imageType.equals(ImageType.Abdomen)) {
 					int size = vec.size(), i = 0, count = 0;
 					while(count<size) {
-						if(vec.get(i).getName().equals("Subcutaneous Area")) {
+						if(vec.get(i).getName().equals("Subcutaneous area")) {
 							VOI tempVOI = vec.remove(i);
 							vec.add(size-1, tempVOI);
 						} else
@@ -3393,12 +3404,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             } else {
             	Vector <VOIBase>[] voiVecTemp = voiVec[0].getCurves();
             	for(int i=0; i<voiVecTemp.length; i++) {
-            		if(voiVecTemp[i].size() > 0) {
-            			for(int j=0; j<temp.getMaxCurvesPerSlice(); j++) { 
-            				temp.importCurve((VOIContour)(voiVecTemp[i].get(j)), i);
-            			}
-            		}
-            	}
+        			for(int j=0; j<voiVecTemp[i].size(); j++) { 
+        				temp.importCurve((VOIContour)(voiVecTemp[i].get(j)), i);
+        			}
+        		}
             }
         }
         return temp;
