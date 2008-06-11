@@ -3911,7 +3911,7 @@ public class ViewJFrameGraph extends JFrame
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
-                if ((!fileName.contains(".plt")) && (!fileName.contains("."))) {
+                if (!fileName.contains(".")) {
                     fileName = fileName.concat(".plt");
                 }
                 outstream = new FileWriter(chooser.getCurrentDirectory() + "" + File.separatorChar + "" +
