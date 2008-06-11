@@ -27,6 +27,12 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase implements AlgorithmIn
 
     /** Mark negative areas of the laplacian image as edges (makes thicker edges - used in BSE). */
     public static final int NEGATIVE_EDGES = 2;
+    
+    private static final int xOp = 1;
+    
+    private static final int yOp = 2;
+    
+    private static final int zOp = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -64,7 +70,13 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase implements AlgorithmIn
     private ModelImage zXMask;
     
     // Buffer to receive result of convolution operation
-    private float[] outputBuffer;
+    private float[] outputBufferX;
+    
+    private float[] outputBufferY;
+    
+    private float[] outputBufferZ;
+    
+    private int operationType = xOp;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -443,6 +455,7 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase implements AlgorithmIn
      */
     public void runAlgorithm() {
         int[] destExtents = null;
+        AlgorithmConvolver convolver;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -460,15 +473,51 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase implements AlgorithmIn
             makeKernels2D();
         }
         
-        AlgorithmConvolver convolver = new AlgorithmConvolver(srcImage, GxxData, kExtents,entireImage, image25D);
+        convolver = new AlgorithmConvolver(srcImage, GxxData, kExtents,entireImage, image25D);
         convolver.setMinProgressValue(0);
-        convolver.setMaxProgressValue(80);
+        if ((srcImage.getNDims() == 3) && (image25D == false)) {
+            convolver.setMaxProgressValue(27);
+        }
+        else {
+            convolver.setMaxProgressValue(40);
+        }
         linkProgressToAlgorithm(convolver);
         convolver.addListener(this);
         if (!entireImage) {
             convolver.setMask(mask);
         }
+        operationType = xOp;
         convolver.run();
+        
+        convolver = new AlgorithmConvolver(srcImage, GyyData, kExtents,entireImage, image25D);
+        if ((srcImage.getNDims() == 3) && (image25D == false)) {
+            convolver.setMinProgressValue(28);
+            convolver.setMaxProgressValue(51);
+        }
+        else {
+            convolver.setMinProgressValue(41);
+            convolver.setMaxProgressValue(80);
+        }
+        linkProgressToAlgorithm(convolver);
+        convolver.addListener(this);
+        if (!entireImage) {
+            convolver.setMask(mask);
+        }
+        operationType = yOp;
+        convolver.run();
+        
+        if ((srcImage.getNDims() == 3) && (image25D == false)) {
+            convolver = new AlgorithmConvolver(srcImage, GzzData, kExtents,entireImage, image25D); 
+            convolver.setMinProgressValue(52);
+            convolver.setMaxProgressValue(80);
+            linkProgressToAlgorithm(convolver);
+            convolver.addListener(this);
+            if (!entireImage) {
+                convolver.setMask(mask);
+            }
+            operationType = zOp;
+            convolver.run();
+        } // if ((srcImage.getNDims() == 3) && (image25D == true))
 
         try {
 
@@ -566,7 +615,7 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase implements AlgorithmIn
                     fireProgressStateChanged(80 + (20 * (start + i)) / (totalLength - 1));
                 }
 
-                destImage.set(idx, outputBuffer[idx]);
+                destImage.set(idx, -(outputBufferX[idx] + outputBufferY[idx]));
             }
 
             try {
@@ -635,7 +684,7 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase implements AlgorithmIn
                     fireProgressStateChanged(80 + (20 * i) / (totalLength - 1));
                 }
 
-                destImage.set(i, outputBuffer[i]);
+                destImage.set(i, -(outputBufferX[i] + outputBufferY[i] + outputBufferZ[i]));
             }
 
             try {
@@ -715,10 +764,13 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase implements AlgorithmIn
         Gyy.calc(false);
         Gyy.finalize();
         Gyy = null;
-
-        for (int i = 0; i < GyyData.length; i++) {
-            GxxData[i] = -(GxxData[i] + GyyData[i]);
-        }
+        
+        // Do not sum GxxData and GyyData here
+        // That yields a different answer than summing after the convolutions and
+        // summing after the convolutions is the correct procedure.
+        // The LOG filter is decomposed into the sum of two separable filters
+        // Log(x,y) = -G"(x)G(y) -G(x)G"(y) 
+        // where G and G" are the 1D Gaussian and the second derivative of the 1D Gaussian.
     }
 
     /**
@@ -798,10 +850,13 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase implements AlgorithmIn
         Gzz.calc(false);
         Gzz.finalize();
         Gzz = null;
-
-        for (int i = 0; i < GyyData.length; i++) {
-            GxxData[i] = -(GxxData[i] + GyyData[i] + GzzData[i]);
-        }
+        
+        // Do not sum GxxData, GyyData. and GzzData here
+        // That yields a different answer than summing after the convolutions and
+        // summing after the convolutions is the correct procedure.
+        // The LOG filter is decomposed into the sum of three separable filters
+        // Log(x,y,z) = -G"(x)G(y)G(z) - G(x)G"(y)G(z) - G(x)G(y)G"(z) 
+        // where G and G" are the 1D Gaussian and the second derivative of the 1D Gaussian.
     }
     
     public void algorithmPerformed(AlgorithmBase algorithm){
@@ -811,7 +866,15 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase implements AlgorithmIn
         }
         if (algorithm instanceof AlgorithmConvolver) {
             AlgorithmConvolver convolver = (AlgorithmConvolver) algorithm;
-            outputBuffer = convolver.getOutputBuffer();
+            if (operationType == xOp) {
+                outputBufferX = convolver.getOutputBuffer();
+            }
+            else if (operationType == yOp) {
+                outputBufferY = convolver.getOutputBuffer();
+            }
+            else {
+                outputBufferZ = convolver.getOutputBuffer();
+            }
         }
     }
 }
