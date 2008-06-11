@@ -3945,7 +3945,12 @@ public class ViewJFrameGraph extends JFrame
                 outstream.write('\t');
                 s = Float.toString(graph.getFuncts()[j].getYs()[i]);
                 outstream.write(s);
-                outstream.write('\n');
+                if (j == graph.getFuncts().length - 1) {
+                    outstream.write('\n');
+                }
+                else {
+                    outstream.write('\t');
+                }
             }
         }
 
