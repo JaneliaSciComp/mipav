@@ -2,6 +2,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmArcLength;
 import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.AlgorithmSnake;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
@@ -409,7 +410,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 resultImage = null;
             }
 
-            System.err.println("Kidney segmentation: unable to allocate enough memory");
+            System.err.println("Segmentation error: unable to allocate enough memory");
 
             return false;
         }
@@ -1380,7 +1381,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         public abstract void actionPerformed(ActionEvent e);
     }
 
-    private class VoiDialogPrompt extends DialogPrompt implements ActionListener {
+    private class VoiDialogPrompt extends DialogPrompt implements ActionListener, AlgorithmInterface {
 
         private final String[] buttonStringList = {OK, HIDE_ALL, CANCEL, RESET, HIDE_ONE};
     	
@@ -1400,6 +1401,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         /**Buffer for hide/show functions related to HIDE_ALL button**/
         private VOIVector voiPromptBuffer;
+        
+        /**Snake algorithm for 3D propagating operation/ */
+        private AlgorithmSnake snakeAlgo;
+        
+        /**Progress bar for snake algorithm*/
+        private ViewJProgressBar snakeProgress;
 
         private JMenu propMenu;
         
@@ -1529,20 +1536,85 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 	
                 } else if (command.equals("PropVOIUp")) {
                 	//TODO: Perform propogate  + smooth on one VOI here
-                    if (componentImage.getVOIHandler().propVOI(1, false) == true) {
-                        incSlice();
-                    }
+                    //if (componentImage.getVOIHandler().propVOI(1, false) == true) {
+                    //    incSlice();
+                    //}
+                	performSnake(AlgorithmSnake.PROP_NEXT);
                 } else if (command.equals("PropVOIDown")) {
                 	//TODO: Perform propogate  + smooth on one VOI here
-                    if (componentImage.getVOIHandler().propVOI(-1, false) == true) {
-                        decSlice();
-                    }
+                    //if (componentImage.getVOIHandler().propVOI(-1, false) == true) {
+                    //    decSlice();
+                    //}
+                	performSnake(AlgorithmSnake.PROP_PREV);
                 } else if (command.equals("PropVOIAll")) {
                 	//TODO: Perform propogate  + smooth on all VOIs here
-                    componentImage.getVOIHandler().propVOIAll();
+                    //componentImage.getVOIHandler().propVOIAll();
+                	performSnake(AlgorithmSnake.PROP_ALL);
                 } 
             }
             
+        public void algorithmPerformed(AlgorithmBase algorithm) {
+			// TODO Auto-generated method stub
+			if(algorithm instanceof AlgorithmSnake) {
+				snakeProgress.updateValue(75);
+				System.out.println("Performed successfully");
+				getActiveImage().registerVOI(snakeAlgo.getResultVOI());
+				
+				//getActiveImage().unregisterAllVOIs();
+				//for(int i=0; i<voiPromptBuffer.size(); i++) {
+				//	getActiveImage().registerVOI(voiPromptBuffer.get(i));
+				//}
+				snakeProgress.updateValue(95);
+				snakeProgress.dispose();
+			}
+		}
+
+		/**
+         * Performs snaking operation on a pre-selected VOI of given tape propagation type
+         * @param propagationType
+         */
+        private void performSnake(int propagationType) {
+        	VOI v = null;
+        	if((v = getInterestingVOI()) == null) {
+        		MipavUtil.displayError("Please select a VOI");
+        		return;
+        	}
+        	snakeProgress = new ViewJProgressBar("Propogate", "Propagating...", 0, 100, false);
+        	VOIVector tempBuffer = getActiveImage().getVOIs();
+        	tempBuffer.remove(v);
+        	voiPromptBuffer.removeAllElements();
+        	voiPromptBuffer.addAll(tempBuffer);
+            float[] sigmas = {(float)1.0, (float)1.0, getActiveImage().getExtents()[2]};
+            int boundaryIterations = 50;
+            int smoothness = 2;
+            int boundaryDir = AlgorithmSnake.IN_DIR; 
+            snakeAlgo = new AlgorithmSnake(getActiveImage(), sigmas, boundaryIterations, smoothness, v, boundaryDir);
+
+            snakeAlgo.setPropagation(propagationType);
+            
+            snakeAlgo.addListener(this);
+            snakeProgress.updateValue(25); 
+            if (snakeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+               MipavUtil.displayError("A thread is already running on this object");
+            }
+            snakeProgress.updateValue(52);
+        }
+        
+        private VOI getInterestingVOI() {
+        	VOIVector testVec = getActiveImage().getVOIs();
+        	VOI goodVOI = null;
+        	for(int i=0; i<testVec.size(); i++) {
+        		if(testVec.get(i).isActive()) {
+        			return goodVOI = testVec.get(i);	
+        		}
+        	}
+        	for(int i=0; i<testVec.size(); i++) {
+        		if(testVec.get(i).equals(objectName)) {
+        			return goodVOI = testVec.get(i);
+        		}
+        	}
+        	return goodVOI;
+        }
         
         
         public void takeDownDialog() {
