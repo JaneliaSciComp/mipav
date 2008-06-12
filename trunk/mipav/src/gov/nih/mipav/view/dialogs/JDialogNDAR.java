@@ -96,8 +96,8 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 
             if (index == TAB_SOURCE) {
                 if ( !doneAddingFiles) {
-                    int response = JOptionPane.showConfirmDialog(this, "Done adding source files?",
-                            "Done adding source files?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    int response = JOptionPane.showConfirmDialog(this, "Done adding image datasets?",
+                            "Done adding image datasets?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
                     if (response == JOptionPane.YES_OPTION) {
                         doneAddingFiles = true;
