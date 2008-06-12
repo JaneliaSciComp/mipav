@@ -2,7 +2,6 @@ import gov.nih.mipav.model.algorithms.AlgorithmArcLength;
 import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
@@ -536,7 +535,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         imageA.addImageDisplayListener(this);
 
         windowLevel = new JDialogWinLevel[2];      
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
         pack();
         
@@ -583,77 +582,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	}
     	
     }
-        
-    /**
-     * This method saves all VOIs for the active image to a given directory.  Note:  This method differs quite a bit in execution 
-     * compared with saveALLVOIsTo(voiDir) in ViewJFrameBase.
-     *
-     * @param  voiDir  directory that contains VOIs for this image.
-     */
-    public void saveAllVOIsTo(String voiDir, String currentVoi) {
-
-        int nVOI;
-        int i;
-        ViewVOIVector VOIs;
-        FileVOI fileVOI;
-        ModelImage currentImage;
-
-        try {
-
-            if (displayMode == IMAGE_A) {
-                currentImage = componentImage.getImageA();
-                VOIs = currentImage.getVOIs();
-            } else if (displayMode == IMAGE_B) {
-                currentImage = componentImage.getImageB();
-                VOIs =  currentImage.getVOIs();
-            } else {
-                MipavUtil.displayError(" Cannot save VOIs when viewing both images");
-
-                return;
-            }
-
-            // Might want to bring up warning message before deleting VOIs !!!!
-            // or not do it at all.
-            // if voiDir exists, then empty it
-            // if voiDir does not exist, then create it
-            File voiFileDir = new File(voiDir);
-
-            if (voiFileDir.exists() && voiFileDir.isDirectory()) {
-
-                // only clean out the vois if this is a default voi directory
-                if (voiFileDir.getName().startsWith("defaultVOIs_")) {
-                    File[] files = voiFileDir.listFiles();
-
-                    if (files != null) {
-
-                        for (int k = 0; k < files.length; k++) {
-
-                            if (files[k].getName().endsWith(".voi") || files[k].getName().endsWith(".xml")) { // files[k].delete();
-                            }
-                        }
-                    } // if (files != null)
-                }
-            } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
-            } else { // voiFileDir does not exist
-                voiFileDir.mkdir();
-            }
-
-            nVOI = VOIs.size();
-
-            System.err.println("Number of VOIs: " + nVOI);
-
-            for (i = 0; i < nVOI; i++) {
-
-                fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir, currentImage);
-
-                fileVOI.writeVOI(VOIs.VOIAt(i), true);
-            }
-
-        } catch (IOException error) {
-            MipavUtil.displayError("Error writing all VOIs to " + voiDir + ": " + error);
-        }
-
-    } // end saveAllVOIsTo()
     
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -667,7 +595,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             		true, voiBuffer.get(name).getMaxCurvesPerSlice());
             lockToPanel(voiTabLoc, "VOI"); //includes making visible
             //TODO: add here
-            initVoiImage(activeTab); //replacing current image and updating
+            initVoiImage(); //replacing current image and updating
         } else if(command.equals(DialogPrompt.CALCULATE)) {
         	lockToPanel(resultTabLoc, "Analysis"); //includes making visible
         	getActiveImage().unregisterAllVOIs();
@@ -1136,57 +1064,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	return fill;
     }
     
-    private void loadVOI(int pane) {
-    	System.err.println("calling loadVOI");
-        
-    	//getImageA().unregisterAllVOIs();
-        String fileDir;
-    	fileDir = getImageA().getFileInfo(0).getFileDirectory()+VOI_DIR+"\\";
-        File allVOIs = new File(fileDir);
-        //ArrayList paneVOIs = new ArrayList();
-        if(allVOIs.isDirectory()) {
-            String[] voiName = allVOIs.list();
-            for(int i=0; i<voiName.length; i++) {
-            	//voiName[i] = voiName[i].substring(0, voiName[i].indexOf(".xml"));
-            	//if(getLocationStatus(voiName[i]) == pane)
-            	//	paneVOIs.add(voiName[i]);
-            	
-            	if(voiName[i].indexOf(".xml") != -1) {
-	            	
-	            	String name = voiName[i].substring(0, voiName[i].indexOf(".xml"));
-	            	String ext = ".xml";
-	            	VOI v;
-	            	System.out.println(name);
-	            	if(voiBuffer.get(name).getLocation() == pane) {
-	            		v = getSingleVOI(name+ext);
-	            		if(v != null) {
-	            			v.setThickness(2);
-	            			Color c = PlugInSelectableVOI.INVALID_COLOR;
-	            			
-	            			if((c = voiBuffer.get(v.getName()).getColor()).equals(PlugInSelectableVOI.INVALID_COLOR)) {
-		            			//System.out.println("A new one: "+v.getColor());
-		                    	if((c = hasColor(v)).equals(PlugInSelectableVOI.INVALID_COLOR))
-		                            v.setColor(c = colorPick[colorChoice++ % colorPick.length]);
-		                    	else
-		                    		v.setColor(c);
-		                    	voiBuffer.get(v.getName()).setColor(c);
-	            			} else
-	            				v.setColor(c);
-	            			v.setDisplayMode(PlugInSelectableVOI.BOUNDARY);
-	            			getActiveImage().registerVOI(v);
-	            		}
-	            	}
-            	}
-            	
-            }
-            //String[] nameList = new String[paneVOIs.size()];
-            //for(int i=0; i<nameList.length; i++)
-           // 	nameList[i] = (String)paneVOIs.get(i);
-            //loadVOIs(nameList, false);
-            updateImages(true);
-        }
-    }
-    
     private void initMuscleButton(int pane) {
     	VOIVector vec = getActiveImage().getVOIs();
     	for(int i=0; i<vec.size(); i++) { 
@@ -1249,7 +1126,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	}
     }
     
-    private void initVoiImage(int pane) {
+    private void initVoiImage() {
     	//VOIs of pane already loaded, just need to make relevant ones solid
         VOIVector voiVec = getActiveImage().getVOIs();
     	for(int i=0; i<voiVec.size(); i++) {
@@ -1620,7 +1497,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 	voiPromptBuffer.removeAllElements();
                 	getActiveImage().unregisterAllVOIs();
                 	initMuscleImage(activeTab);
-                	initVoiImage(activeTab); //replacing current image and updating
+                	initVoiImage(); //replacing current image and updating
                 	updateImages(true);
                 	
                 } else if (command.equals(HIDE_ONE)) {
@@ -2389,7 +2266,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			VOIVector vec = getActiveImage().getVOIs();
 			for(int i=0; i<vec.size(); i++) {
 				if(getZeroStatus(vec.get(i).getName())) {
-                	vec.get(i).setDisplayMode(PlugInSelectableVOI.SOLID);
+                	vec.get(i).setDisplayMode(VOI.SOLID);
                 	vec.get(i).setOpacity((float)0.7);
                 }
 			}
@@ -2409,7 +2286,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			
 			VOIVector vec = getActiveImage().getVOIs();
 			for(int i=0; i<vec.size(); i++) 
-				vec.get(i).setDisplayMode(PlugInSelectableVOI.CONTOUR);
+				vec.get(i).setDisplayMode(VOI.CONTOUR);
 			
 			updateImages(true);
 			
@@ -2446,7 +2323,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        //guaranteed (for now) that mirrorArr.length = noMirrorArr.length
 	        for(int i=0; i<mirrorArr.length; i++) {
 	        	
-	        	JPanel subPanel = initSymmetricalObjects(i, title = titles[i]);
+	        	JPanel subPanel = initSymmetricalObjects(i);
 	        	initNonSymmetricalObjects(subPanel, i);
 	        	
 	        	mirrorPanel[i] = new JScrollPane(subPanel, 
@@ -2454,7 +2331,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		        									ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 	        	
 	        	mirrorPanel[i].setForeground(Color.black);
-		        String vowel = (title.charAt(0) == 'a' || 
+		        String vowel = ((title = titles[i]).charAt(0) == 'a' || 
 	            		title.charAt(0) == 'e' || 
 	            		title.charAt(0) == 'i' || 
 	            		title.charAt(0) == 'o' || 
@@ -2513,7 +2390,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        return instructionPanel;
 	    }
 		
-		private JPanel initSymmetricalObjects(int index, String title) {
+		private JPanel initSymmetricalObjects(int index) {
 
             mirrorCheckArr[index] = new ColorButtonPanel[mirrorArr[index].length * 2];
             mirrorButtonArr[index] = new JButton[mirrorArr[index].length * 2];
@@ -2625,28 +2502,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        	muscleFrame.updateImages();
 	        } else {
 	
-	            if (command.equals(OK)) {
-	                PlugInSelectableVOI goodVoi = null; //was checkVOI, why check exists
-	                if (goodVoi != null) { 
-	                    //save modified/created VOI to file
-	                	muscleFrame.getImageA().unregisterAllVOIs();
-	                	muscleFrame.getImageA().registerVOI(goodVoi);
-	                	String dir;
-	                	if(multipleSlices)
-	                		dir = muscleFrame.getImageA().getImageDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"_"+getViewableSlice()+"\\";
-	                	else
-	                		dir = muscleFrame.getImageA().getImageDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
-	                    muscleFrame.saveAllVOIsTo(dir);
-	
-	                    MipavUtil.displayInfo(/*objectName*/"test"+" VOI saved in folder\n " + dir);
-	                    
-	                    muscleFrame.getImageA().unregisterAllVOIs();
-	                    muscleFrame.updateImages();
-	                } else {
-	                    //individual error messages are already displayed
-	                }
-	            } else if (command.equals(OUTPUT)) {
-	            	System.err.println("imagepane size: " + dialogTabs.size());
+	            if (command.equals(OUTPUT)) {
 	            	processCalculations(false, false);
 	            } else if (command.equals(OUTPUT_ALL)) { 
 	            	processCalculations(true, false);
@@ -2692,7 +2548,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	            		rec.setThickness(2);
 	            		
 	            		if(lutOn && getZeroStatus(rec.getName())) {
-	                    	rec.setDisplayMode(PlugInSelectableVOI.SOLID);
+	                    	rec.setDisplayMode(VOI.SOLID);
 	                    	rec.setOpacity((float)0.7);
 	                    }
 	            		
@@ -2718,12 +2574,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				MipavUtil.displayError("Still processing calculations.  Please try again");
 				return;
 			}
-			
-			if(!ucsdOutput.isFinished()) {
-				Thread output = new Thread(ucsdOutput);
-		    	output.start();
-			}
-			
+
 			boolean pdfCreated = false;
 			
 			//if PDF hasnt been created and we're saving, create it now
@@ -2786,6 +2637,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		
 			if (doSave) {
 					    		
+				Thread output = new Thread(ucsdOutput);
+		    	output.start();
+				
 				//now load all VOIs at once:
 				ArrayList totalList = new ArrayList(), subList = new ArrayList();
 				for (int listNum = 0; listNum < mirrorButtonArr.length; listNum++, subList = new ArrayList())  {   	
@@ -3041,7 +2895,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    			double meanFatH = getMeanH(v, FAT_LOWER_BOUND, FAT_UPPER_BOUND);// + OFFSET;
 	    			double meanLeanH = getMeanH(v, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND);// + OFFSET;
 	    		    double meanTotalH = getMeanH(v, FAR_LOWER_BOUND, FAR_UPPER_BOUND);// + OFFSET;
-	    		    double meanFatHLarge = meanFatH, meanLeanHLarge = meanLeanH, meanTotalHLarge = meanTotalH;
 	    		    double meanFatHResidual = 0, meanLeanHResidual = 0, meanTotalHResidual = 0;
 	    		    
 	    		    //corrected mean = abs(oldMean*oldArea - sum(residualMean*residualArea))/abs(oldArea - sum(residualArea))
@@ -3107,9 +2960,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		    			meanFatH = getMeanH(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND);// + OFFSET;
 		    			meanLeanH = getMeanH(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND);// + OFFSET;
 		    		    meanTotalH = getMeanH(v2, FAR_LOWER_BOUND, FAR_UPPER_BOUND);// + OFFSET;
-		    		    meanFatHLarge = meanFatH;
-		    		    meanLeanHLarge = meanLeanH;
-		    		    meanTotalHLarge = meanTotalH;
 		    		    meanFatHResidual = 0;
 		    		    meanLeanHResidual = 0;
 		    		    meanTotalHResidual = 0;
@@ -3333,7 +3183,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                     		voiVec[0].setColor(voiBuffer.get(voiVec[0].getName()).getColor());
                         voiVec[0].setThickness(2);
                         if(fillVOIs != 0 && getZeroStatus(voiVec[0].getName())) {
-                        	voiVec[0].setDisplayMode(PlugInSelectableVOI.SOLID);
+                        	voiVec[0].setDisplayMode(VOI.SOLID);
                         	voiVec[0].setOpacity((float)fillVOIs);
                         }
                         getActiveImage().registerVOI(voiVec[0]);
@@ -3406,7 +3256,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
     	String ext = name.contains(".xml") ? "" : ".xml";
     	PlugInSelectableVOI temp = voiBuffer.get(name);
-    	VOIContour tempCurve;
         if(new File(fileDir+name+ext).exists()) {
             FileVOI v;
             VOI[] voiVec = null;
@@ -3646,6 +3495,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			pImage.add(imageTable);
 			pdfDocument.add(pImage);
 			pdfDocument.close();
+			pdfWriter.close();
 			
 			MipavUtil.displayInfo("PDF saved to: " + pdfFile+"\nText saved to: "+textFile);
 			ViewUserInterface.getReference().getMessageFrame().append("PDF saved to: " + pdfFile + 
@@ -3988,3 +3838,127 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    }
 	}
 }
+
+//Old loadVOI
+/*private void loadVOI(int pane) {
+System.err.println("calling loadVOI");
+
+//getImageA().unregisterAllVOIs();
+String fileDir;
+fileDir = getImageA().getFileInfo(0).getFileDirectory()+VOI_DIR+"\\";
+File allVOIs = new File(fileDir);
+//ArrayList paneVOIs = new ArrayList();
+if(allVOIs.isDirectory()) {
+    String[] voiName = allVOIs.list();
+    for(int i=0; i<voiName.length; i++) {
+    	//voiName[i] = voiName[i].substring(0, voiName[i].indexOf(".xml"));
+    	//if(getLocationStatus(voiName[i]) == pane)
+    	//	paneVOIs.add(voiName[i]);
+    	
+    	if(voiName[i].indexOf(".xml") != -1) {
+        	
+        	String name = voiName[i].substring(0, voiName[i].indexOf(".xml"));
+        	String ext = ".xml";
+        	VOI v;
+        	System.out.println(name);
+        	if(voiBuffer.get(name).getLocation() == pane) {
+        		v = getSingleVOI(name+ext);
+        		if(v != null) {
+        			v.setThickness(2);
+        			Color c = PlugInSelectableVOI.INVALID_COLOR;
+        			
+        			if((c = voiBuffer.get(v.getName()).getColor()).equals(PlugInSelectableVOI.INVALID_COLOR)) {
+            			//System.out.println("A new one: "+v.getColor());
+                    	if((c = hasColor(v)).equals(PlugInSelectableVOI.INVALID_COLOR))
+                            v.setColor(c = colorPick[colorChoice++ % colorPick.length]);
+                    	else
+                    		v.setColor(c);
+                    	voiBuffer.get(v.getName()).setColor(c);
+        			} else
+        				v.setColor(c);
+        			v.setDisplayMode(VOI.BOUNDARY);
+        			getActiveImage().registerVOI(v);
+        		}
+        	}
+    	}
+    	
+    }
+    //String[] nameList = new String[paneVOIs.size()];
+    //for(int i=0; i<nameList.length; i++)
+   // 	nameList[i] = (String)paneVOIs.get(i);
+    //loadVOIs(nameList, false);
+    updateImages(true);
+}
+}*/
+
+/*Removed custom savesVOIs to
+ * 
+     * This method saves all VOIs for the active image to a given directory.  Note:  This method differs quite a bit in execution 
+     * compared with saveALLVOIsTo(voiDir) in ViewJFrameBase.
+     *
+     * @param  voiDir  directory that contains VOIs for this image.
+     
+    public void saveAllVOIsTo(String voiDir, String currentVoi) {
+
+        int nVOI;
+        int i;
+        ViewVOIVector VOIs;
+        FileVOI fileVOI;
+        ModelImage currentImage;
+
+        try {
+
+            if (displayMode == IMAGE_A) {
+                currentImage = componentImage.getImageA();
+                VOIs = currentImage.getVOIs();
+            } else if (displayMode == IMAGE_B) {
+                currentImage = componentImage.getImageB();
+                VOIs =  currentImage.getVOIs();
+            } else {
+                MipavUtil.displayError(" Cannot save VOIs when viewing both images");
+
+                return;
+            }
+
+            // Might want to bring up warning message before deleting VOIs !!!!
+            // or not do it at all.
+            // if voiDir exists, then empty it
+            // if voiDir does not exist, then create it
+            File voiFileDir = new File(voiDir);
+
+            if (voiFileDir.exists() && voiFileDir.isDirectory()) {
+
+                // only clean out the vois if this is a default voi directory
+                if (voiFileDir.getName().startsWith("defaultVOIs_")) {
+                    File[] files = voiFileDir.listFiles();
+
+                    if (files != null) {
+
+                        for (int k = 0; k < files.length; k++) {
+
+                            if (files[k].getName().endsWith(".voi") || files[k].getName().endsWith(".xml")) { // files[k].delete();
+                            }
+                        }
+                    } // if (files != null)
+                }
+            } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+            } else { // voiFileDir does not exist
+                voiFileDir.mkdir();
+            }
+
+            nVOI = VOIs.size();
+
+            System.err.println("Number of VOIs: " + nVOI);
+
+            for (i = 0; i < nVOI; i++) {
+
+                fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir, currentImage);
+
+                fileVOI.writeVOI(VOIs.VOIAt(i), true);
+            }
+
+        } catch (IOException error) {
+            MipavUtil.displayError("Error writing all VOIs to " + voiDir + ": " + error);
+        }
+
+    } // end saveAllVOIsTo()*/
