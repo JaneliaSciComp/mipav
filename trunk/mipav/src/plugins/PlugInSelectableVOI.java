@@ -1,6 +1,7 @@
 import gov.nih.mipav.model.structures.*;
 
 import java.awt.Color;
+import java.util.Date;
 
 public class PlugInSelectableVOI extends VOI{//extends VOI{
 	
@@ -54,6 +55,12 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 	
 	/** Mean Hounsfield unit for this VOI. */
 	private double[] meanTotalH;
+	
+	/**If lastCalculated.compareTo(lastModified) < 0, do calculate*/
+	private Date lastCalculated = null;
+	
+	/**Keeps track of when this VOI was last saved*/
+	private Date lastModified = null;
 
 	//~ Static fields --------------------------------------------------------------------------------------------------
 	
@@ -352,5 +359,21 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 
 	public int getOutputLoc() {
 		return outputLoc;
+	}
+
+	public Date getLastCalculated() {
+		return lastCalculated;
+	}
+
+	public void setLastCalculated(long time) {
+		this.lastCalculated = new Date(time);
+	}
+
+	public Date getLastModified() {
+		return lastModified;
+	}
+
+	public void setLastModified(long time) {
+		this.lastModified = new Date(time);
 	}
 }
