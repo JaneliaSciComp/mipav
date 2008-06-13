@@ -48,8 +48,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	private PdfPTable aTable = null;
 	private PdfPTable imageTable = null;
     
-    public static final String VOI_DIR = "NIA_Seg";
-        
     /** Location of the VOI tab. */
     private int voiTabLoc;
     
@@ -81,7 +79,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     private DialogPrompt[] tabs;
     
-    private boolean changeSlice = false;
+    private int currentSlice = 0;
     
     /**Whether the algorithm is dealing with a 3D CT image. */
     private boolean multipleSlices;
@@ -157,6 +155,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.imageType = imageType;
         this.symmetry = symmetry;
         this.multipleSlices = multipleSlices;
+        this.currentSlice = getViewableSlice();
+        
+        //already added from super constructor
+        //image.addImageDisplayListener(this);
         
         for(int i=0; i<voiList.length; i++) {
         	ArrayList mirrorArrList = new ArrayList(), noMirrorArrList = new ArrayList(), 
@@ -962,21 +964,29 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     @Override
     public void setSlice(int slice, boolean updateLinkedImages) {
     	
-    	if(slice != getViewableSlice())
-    		changeSlice = true;
-    	super.setSlice(slice, updateLinkedImages);
-    	if(changeSlice && activeTab < voiTabLoc) {
-    		if(tabs[resultTabLoc].isVisible()) 
-    			((AnalysisPrompt)tabs[resultTabLoc]).setButtons();
-    		else { 
-    			((MuscleDialogPrompt)tabs[activeTab]).clearButtons();
-    			//TODO: Fix buttons
-    			//initMuscleButton(activeTab);
-    		}
-    		updateImages(true);
-    		changeSlice = false;
-    	}
-    	
+    	zSlice = slice;
+        controls.setZSlider(zSlice);
+        updateImages(true);
+        
+        // livewire grad mag. should be recalculated for the new slice
+        // componentImage.deactivateAllVOI();
+        
+        if(currentSlice != slice) {
+        	System.out.println("Changed Slice!");
+        	currentSlice = slice;
+        }
+        
+        componentImage.getVOIHandler().resetLivewire();
+        setTitle();
+        	//if(changeSlice && activeTab < voiTabLoc) {
+        	//if(tabs[resultTabLoc].isVisible()) 
+        	//((AnalysisPrompt)tabs[resultTabLoc]).setButtons();
+			//((MuscleDialogPrompt)tabs[activeTab]).clearButtons();
+        
+    	//if(slice != getViewableSlice())
+    	//	changeSlice = true;
+    	//super.setSlice(slice, updateLinkedImages);
+
     }
     
     /**
@@ -2974,7 +2984,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			System.out.println("Multiplier: "+multiplier);
 			PlugInSelectableVOI temp = voiBuffer.get(name);
 			residuals = getResiduals(temp);
-			//TODO: Recalculate residuals here
 			ArrayList<Thread> calc = new ArrayList(residuals.size());
 			Thread tempThread = null;
 			for(int i=0; i<residuals.size(); i++) {
@@ -3645,7 +3654,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	 */
 	protected void createPDF() {		
 		String fileDir, fileName;
-		fileDir = getActiveImage().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
+		fileDir = getActiveImage().getFileInfo(getViewableSlice()).getFileDirectory()+VOI_DIR+"\\";
 		fileName = fileDir + File.separator + "NIA_Report.pdf";
 		pdfFile = new File(fileName);
 		if(pdfFile.exists()) {
@@ -3968,6 +3977,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    	return voiMap.get(pt.x+pt.y*xRes);
 	    }
 	}
+
+	public static final String VOI_DIR = "NIA_Seg";
 }
 
 //Old loadVOI
@@ -3976,6 +3987,8 @@ System.err.println("calling loadVOI");
 
 //getImageA().unregisterAllVOIs();
 String fileDir;
+
+
 fileDir = getImageA().getFileInfo(0).getFileDirectory()+VOI_DIR+"\\";
 File allVOIs = new File(fileDir);
 //ArrayList paneVOIs = new ArrayList();
