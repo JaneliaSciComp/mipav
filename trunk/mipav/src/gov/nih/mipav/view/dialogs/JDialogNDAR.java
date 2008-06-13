@@ -710,7 +710,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         removeSourceButton = WidgetFactory.buildTextButton("Remove images", "Remove the selected image datasets",
                 "RemoveSource", this);
         loadGUIDsButton = WidgetFactory.buildTextButton("Load GUIDs", "Parse GUIDs from text file", "LoadGUIDs", this);
-        helpButton = WidgetFactory.buildTextButton("Help", "Show MIPAV help", "", this);
+        helpButton = WidgetFactory.buildTextButton("Help", "Show MIPAV help", "Help", this);
 
         previousButton.setPreferredSize(MipavUtil.defaultButtonSize);
         nextButton.setPreferredSize(MipavUtil.defaultButtonSize);
