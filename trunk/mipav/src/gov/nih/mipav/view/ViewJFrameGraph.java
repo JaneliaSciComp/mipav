@@ -164,9 +164,11 @@ public class ViewJFrameGraph extends JFrame
 
     /** DOCUMENT ME! */
     private JMenuItem itemNormalize;
+    
+    private JMenuItem itemOpenNewGraph;
 
     /** DOCUMENT ME! */
-    private JMenuItem itemOpenGraph;
+    private JMenuItem itemOpenSameGraph;
 
     /** DOCUMENT ME! */
     private JMenuItem itemPasteFunct;
@@ -410,7 +412,7 @@ public class ViewJFrameGraph extends JFrame
 
             if (openFileGUI == true) {
 
-                if (!open()) {
+                if (!openSame()) {
                     dispose();
 
                     return;
@@ -1307,10 +1309,17 @@ public class ViewJFrameGraph extends JFrame
             }
 
             dispose();
-        } else if (command.equals("OpenGraph")) {
+        } else if (command.equals("OpenNewGraph")) {
 
             try {
-                open();
+                openNew();
+            } catch (IOException e) {
+                MipavUtil.displayError("Error: " + e);
+            }
+        } else if (command.equals("OpenSameGraph")) {
+
+            try {
+                openSame();
             } catch (IOException e) {
                 MipavUtil.displayError("Error: " + e);
             }
@@ -1920,6 +1929,161 @@ public class ViewJFrameGraph extends JFrame
         graph.setRangeSymmetric();
         update(getGraphics());
     }
+    
+    /**
+     * Opens Excel data (tab-delimited fields) into a new graph. The graphs could also have been saved using MIPAV
+     *
+     * @return  DOCUMENT ME!
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public boolean openNew() throws IOException {
+        FileReader instream;
+        BufferedReader dataStream;
+        String fileName;
+        String directory;
+        JFileChooser chooser;
+        ViewJComponentFunct[] functions;
+        String s;
+        int k;
+        float[] fields;
+        float[][] X2 = null;
+        float[][] Y2 = null;
+        Color colorArray[] = null;
+
+        try {
+            fields = new float[ViewJComponentGraph.MAX_NUM_FUNCTS * 2];
+
+            chooser = new JFileChooser();
+            chooser.setCurrentDirectory(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.PLOT)); // adds a choosable file
+
+            // filter to only show plot files
+            chooser.setDialogTitle("Open Graph Data");
+
+            int returnVal = chooser.showOpenDialog(this);
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+
+                try { // stores the location of the desired file
+                    fileName = chooser.getSelectedFile().getName();
+                    directory = chooser.getCurrentDirectory() + "" + File.separatorChar;
+                } catch (NullPointerException e) {
+                    Preferences.debug("Returning.");
+
+                    return false;
+                }
+            } else {
+                return false;
+            }
+
+            instream = new FileReader(directory + fileName);
+            dataStream = new BufferedReader(instream);
+            Preferences.setProperty(Preferences.PREF_IMAGE_DIR, directory);
+
+        } catch (OutOfMemoryError error) {
+            MipavUtil.displayError("Out of memory: ViewJFrameGraph.open");
+
+            return false;
+        }
+
+        s = dataStream.readLine();
+        fields = parseString(s, -1);
+
+        if ((fields.length % 2) != 0) { // can only use files which contain pairs of x and y coordinates
+            MipavUtil.displayError("There must be an even number of fields in your input file.");
+        }
+
+        try {
+            functions = new ViewJComponentFunct[fields.length / 2]; // creates the required number of functions
+        } catch (OutOfMemoryError error) {
+            MipavUtil.displayError("Out of memory: ViewJFrameGraph.open");
+
+            return false;
+        }
+
+        int j = 0;
+
+        for (int i = 0; i < functions.length; i++) {
+
+            try { // creates the appropriate sizes of the x and y coordinates of the functions in the array
+                functions[i] = new ViewJComponentFunct();
+                functions[i].X = new float[ViewJComponentFunct.MAX_NUM_COORDS];
+                functions[i].Y = new float[ViewJComponentFunct.MAX_NUM_COORDS];
+            } catch (OutOfMemoryError error) {
+                MipavUtil.displayError("Out of memory: ViewJFrameGraph.open");
+
+                return false;
+            }
+
+            functions[i].X[0] = fields[j];
+            j++;
+            functions[i].Y[0] = fields[j];
+            j++;
+        }
+
+        s = dataStream.readLine();
+        k = 1;
+
+        while (s != null) { // assigns the appropriate x and y coordinates to the appropriate function
+            fields = parseString(s, functions.length * 2);
+            j = 0;
+
+            for (int i = 0; i < (fields.length / 2); i++) {
+                functions[i].X[k] = fields[j];
+                j++;
+                functions[i].Y[k] = fields[j];
+                j++;
+            }
+
+            k++;
+            s = dataStream.readLine();
+        }
+
+        for (int i = 0; i < functions.length; i++) {
+            functions[i].X[k] = Float.NaN;
+            functions[i].Y[k] = Float.NaN;
+        }
+
+        dataStream.close();
+        
+        X2 = new float[functions.length][];
+        Y2 = new float[functions.length][];
+        colorArray = new Color[functions.length];
+
+        for (int i = 0; i < functions.length; i++) {
+
+            // Count number of points
+            j = 0;
+
+            while ((j < ViewJComponentFunct.MAX_NUM_COORDS) && !Float.isNaN(functions[i].X[j])) {
+                j++;
+            }
+
+            try {
+                X2[i] = new float[j];
+                Y2[i] = new float[j];
+            } catch (OutOfMemoryError error) {
+                MipavUtil.displayError("Out of memory: ViewJFrameGraph.open");
+
+                return false;
+            }
+
+            for (j = 0; j < X2[i].length; j++) {
+                X2[i][j] = functions[i].X[j];
+                Y2[i][j] = functions[i].Y[j];
+            }
+            
+            colorArray[i] = graph.getFuncts()[i].getColor();
+        }
+
+        
+        new ViewJFrameGraph(X2, Y2, graph.getTitle(), graph.getXLabel(), graph.getYLabel(), colorArray);
+        
+        update(getGraphics());
+
+        return true;
+    }
 
     /**
      * Opens Excel data (tab-delimited fields) into this graph. The graphs could also have been saved using MIPAV
@@ -1928,7 +2092,7 @@ public class ViewJFrameGraph extends JFrame
      *
      * @throws  IOException  DOCUMENT ME!
      */
-    public boolean open() throws IOException {
+    public boolean openSame() throws IOException {
         FileReader instream;
         BufferedReader dataStream;
         String fileName;
@@ -3412,7 +3576,8 @@ public class ViewJFrameGraph extends JFrame
             fileMenu = new JMenu("File");
             viewMenu = new JMenu("Views");
             editMenu = new JMenu("Edit");
-            itemOpenGraph = new JMenuItem("Open Graph", MipavUtil.getIcon("open.gif"));
+            itemOpenNewGraph = new JMenuItem("Open Graph to New Frame", MipavUtil.getIcon("open.gif"));
+            itemOpenSameGraph = new JMenuItem("Open Graph to Same Frame", MipavUtil.getIcon("open.gif"));
             itemSaveGraph = new JMenuItem("Save Graph", MipavUtil.getIcon("save.gif"));
             itemPrintGraph = new JMenuItem("Print Graph");
             itemTableOutput = new JMenuItem("Table Output");
@@ -3439,12 +3604,17 @@ public class ViewJFrameGraph extends JFrame
         viewMenu.setFont(font12B);
         copyMenu.setFont(font12B);
         deleteMenu.setFont(font12B);
+        
+        itemOpenNewGraph.addActionListener(this);
+        itemOpenNewGraph.setActionCommand("OpenNewGraph");
+        itemOpenNewGraph.setFont(font12B);
+        fileMenu.add(itemOpenNewGraph);
 
-        itemOpenGraph.addActionListener(this);
-        itemOpenGraph.setAccelerator(KeyStroke.getKeyStroke('O', Event.CTRL_MASK, false));
-        itemOpenGraph.setActionCommand("OpenGraph");
-        itemOpenGraph.setFont(font12B);
-        fileMenu.add(itemOpenGraph);
+        itemOpenSameGraph.addActionListener(this);
+        itemOpenSameGraph.setAccelerator(KeyStroke.getKeyStroke('O', Event.CTRL_MASK, false));
+        itemOpenSameGraph.setActionCommand("OpenSameGraph");
+        itemOpenSameGraph.setFont(font12B);
+        fileMenu.add(itemOpenSameGraph);
 
         itemSaveGraph.addActionListener(this);
         itemSaveGraph.setAccelerator(KeyStroke.getKeyStroke('S', Event.CTRL_MASK, false));
