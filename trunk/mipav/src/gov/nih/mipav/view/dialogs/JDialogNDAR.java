@@ -429,7 +429,6 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 
         JScrollPane guidScrollPane = new JScrollPane(guidTable);
 
-        guidTable.setFillsViewportHeight(true);
         guidTable.getTableHeader().setReorderingAllowed(false);
         guidTable.getTableHeader().setResizingAllowed(true);
 
