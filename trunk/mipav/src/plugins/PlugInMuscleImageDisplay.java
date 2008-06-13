@@ -232,6 +232,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         while(itr.hasNext()) {
         	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
         	if(voi.calcEligible() && voi.area() > 0) {
+        		long timeVOI = System.currentTimeMillis();
+		        voi.setLastModified(timeVOI);
+        	}
+        }
+        
+        itr = voiBuffer.keySet().iterator();
+        //always perform new calculation here, no need to check
+        while(itr.hasNext()) {
+        	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
+        	if(voi.calcEligible() && voi.area() > 0) {
 		        MuscleCalculation muscleCalc = new MuscleCalculation(voi, voi.getName());
 		        Thread calc = new Thread(calcGroup, muscleCalc, voi.getName());
 		        calc.start();
@@ -1492,6 +1502,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                     			buttonGroup[i].setActionCommand(HIDE_ALL);
                     		} 
                     	}
+                        voi.setLastModified(System.currentTimeMillis());
+                        //always perform new calculation here, no need to check
                         if(voiBuffer.get(objectName).calcEligible()) {
 	                        MuscleCalculation muscleCalc = new MuscleCalculation(goodVoi, objectName);
 	                        Thread calc = new Thread(calcGroup, muscleCalc, objectName);
@@ -2963,18 +2975,23 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			PlugInSelectableVOI temp = voiBuffer.get(name);
 			residuals = getResiduals(temp);
 			//TODO: Recalculate residuals here
-			Thread[] calc = new Thread[residuals.size()];
+			ArrayList<Thread> calc = new ArrayList(residuals.size());
+			Thread tempThread = null;
 			for(int i=0; i<residuals.size(); i++) {
-				MuscleCalculation muscleCalc = new MuscleCalculation(residuals.get(i), residuals.get(i).getName());
-	            //No thread group this time since just joining all later
-				calc[i] = new Thread(muscleCalc);
-	            calc[i].start();
+				if(residuals.get(i).getLastCalculated() == null || 
+						residuals.get(i).getLastCalculated().compareTo(residuals.get(i).getLastModified()) < 0) {
+					MuscleCalculation muscleCalc = new MuscleCalculation(residuals.get(i), residuals.get(i).getName());
+		            //No thread group this time since just joining all later
+					calc.add(tempThread = new Thread(muscleCalc));
+		            tempThread.start();
+				} else
+					System.out.println("Just avoided calculating "+residuals.get(i).getName());
 			}
 			long time2 = System.currentTimeMillis();
 			System.out.println("Waiting for threads to complete");
 			try {
-				for(int i=0; i<calc.length; i++)
-					calc[i].join();
+				for(int i=0; i<calc.size(); i++)
+					calc.get(i).join();
 			} catch(InterruptedException e) {
 				System.err.println("Algorithm failed, calculations may be inaccurate.");
 				e.printStackTrace();
@@ -3103,10 +3120,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			}
 			time = System.currentTimeMillis() - time;
 			
-			//enableCalcOutput();
-			//progressBar.dispose();
-			//getActiveImage().unregisterAllVOIs();
-			//updateImages(true);
+			//only place where calculations are generated, setLastCalculated should only appear here
+			temp.setLastCalculated(System.currentTimeMillis());
 			
 			System.out.println("Finished "+currentVOI.getName()+" in "+time);
 			done = true;
