@@ -103,6 +103,8 @@ public class JDialogAutoCovariance extends JDialogScriptableBase implements Algo
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if (command.equals("Help")) {
+            MipavUtil.showHelp("Autocovar01");
         }
     }
     
@@ -551,8 +553,10 @@ public class JDialogAutoCovariance extends JDialogScriptableBase implements Algo
 
         buildOKButton();
         buildCancelButton();
+        buildHelpButton();
         buttonPanel.add(OKButton);
         buttonPanel.add(cancelButton);
+        buttonPanel.add(helpButton);
 
         if (mainPanel != null) {
             mainDialogPanel.add(mainPanel);

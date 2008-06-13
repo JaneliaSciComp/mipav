@@ -103,6 +103,8 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if (command.equals("Help")) {
+            MipavUtil.showHelp("Autocor001");
         }
     }
 
@@ -558,8 +560,10 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
 
         buildOKButton();
         buildCancelButton();
+        buildHelpButton();
         buttonPanel.add(OKButton);
         buttonPanel.add(cancelButton);
+        buttonPanel.add(helpButton);
 
         if (mainPanel != null) {
             mainDialogPanel.add(mainPanel);
