@@ -241,7 +241,7 @@
 
         <!-- wildmagic shader files -->
         <copy todir="${dir.dest}/Shaders">
-            <fileset dir="${dir.source}/gov/nih/mipav/view/WildMagic/Shaders"/>
+            <fileset dir="${dir.source}/WildMagic/Shaders"/>
         </copy>
 
         <!-- /// TODO: placeholder installshield config file would be nice.. -->
@@ -253,7 +253,6 @@
             <fileset file="${dir.source}/dicom_dictionary.txt"/>
             <fileset file="${dir.source}/DICOMhelp.txt"/>
             <fileset file="${dir.source}/license.html"/>
-            <fileset file="${dir.source}/VR Muscles-Bones.txt"/>
         </copy>
     </target>
 
