@@ -2985,7 +2985,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			double multiplier = 0.0;
 			multiplier = Math.pow(getActiveImage().getResolutions(0)[0]*.1, 2);
 			if(multipleSlices)
-				multiplier *= getActiveImage().getResolutions(0)[2];
+				multiplier *= (getActiveImage().getResolutions(0)[2]*0.1);
 			System.out.println("Multiplier: "+multiplier);
 			PlugInSelectableVOI temp = voiBuffer.get(name);
 			residuals = getResiduals(temp);
