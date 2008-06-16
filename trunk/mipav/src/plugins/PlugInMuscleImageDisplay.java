@@ -974,6 +974,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         if(currentSlice != slice) {
         	System.out.println("Changed Slice!");
+        	//if(changeSlice && activeTab < voiTabLoc) {
+        	//if(tabs[resultTabLoc].isVisible()) 
+        	//((AnalysisPrompt)tabs[resultTabLoc]).setButtons();
+			//((MuscleDialogPrompt)tabs[activeTab]).clearButtons();
         	currentSlice = slice;
         }
         
