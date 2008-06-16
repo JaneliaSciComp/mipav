@@ -4,10 +4,6 @@ package gov.nih.mipav.model.algorithms.filters;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
-
-import java.awt.*;
-
 import java.io.*;
 
 
@@ -43,16 +39,16 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
     float timeStep = 0.25f;
 
 
-    /** Handle to the seperable convolution kernel. */
+    /** Handle to the separable convolution kernel. */
     private AlgorithmSeparableConvolver algoSepConvolver;
 
-    /** Handle to the seperable convolution kernel. */
+    /** Handle to the separable convolution kernel. */
     private AlgorithmSeparableConvolver algoSepConvolverB;
 
-    /** Handle to the seperable convolution kernel. */
+    /** Handle to the separable convolution kernel. */
     private AlgorithmSeparableConvolver algoSepConvolverG;
 
-    /** Handle to the seperable convolution kernel. */
+    /** Handle to the separable convolution kernel. */
     private AlgorithmSeparableConvolver algoSepConvolverR;
 
     /** Diffusion contrast parameter. */
@@ -123,7 +119,7 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
     public void runAlgorithm() {
 
         if (srcImage == null) {
-            MipavUtil.displayError("AlgorithmRegularizedIsotropicDiffusion.run()  Source Image is null");
+            displayError("AlgorithmRegularizedIsotropicDiffusion.run()  Source Image is null");
 
             return;
         }
@@ -158,16 +154,16 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
     /**
      * Returns the weighting for values used in computing new (diffused) pixel values.
      *
-     * @param   d  float Value to compute the diffusivitivy
+     * @param   d  float Value to compute the diffusivity
      *
-     * @return  float The value of the diffusitivy corresponding to the d value
+     * @return  float The value of the diffusivity corresponding to the d value
      */
-    private float diffusitivity(float d) {
+    private float diffusivity(float d) {
         return (1.0f / (1.0f + ((d * d) / (lambda * lambda))));
-    } // end diffusitivity(...)
+    } // end diffusivity(...)
 
     /**
-     * Returns the value in a 2D image buffer of the pixel at location row, col.
+     * Returns the value in a 2D image buffer of the pixel at location col, row.
      *
      * @param   buffer  float[] The image buffer
      * @param   col     int Column index
@@ -200,7 +196,7 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
     } // end getVal(...)
 
     /**
-     * Returns the value in a 3D image buffer of the pixel at location slice, row, col.
+     * Returns the value in a 3D image buffer of the pixel at location col, row, slice.
      *
      * @param   buffer  float[] The image buffer
      * @param   col     int Column index
@@ -259,8 +255,8 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
 
                 rVal = getVal(img, col + 1, row);
                 lVal = getVal(img, col - 1, row);
-                tVal = getVal(img, col, row + 1);
-                bVal = getVal(img, col, row - 1);
+                bVal = getVal(img, col, row + 1);
+                tVal = getVal(img, col, row - 1);
 
                 mag[cIndex] = (float) Math.sqrt(((rVal - lVal) * (rVal - lVal)) + ((tVal - bVal) * (tVal - bVal)));
             } // for (col = 0; ...)
@@ -289,8 +285,8 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
 
                     rVal = getVal(img, col + 1, row, slice);
                     lVal = getVal(img, col - 1, row, slice);
-                    tVal = getVal(img, col, row + 1, slice);
-                    bVal = getVal(img, col, row - 1, slice);
+                    bVal = getVal(img, col, row + 1, slice);
+                    tVal = getVal(img, col, row - 1, slice);
                     zLowVal = getVal(img, col, row, slice - 1);
                     zHighVal = getVal(img, col, row, slice + 1);
 
@@ -381,13 +377,11 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
     /**
      * Iterates the Regularized Isotropic Nonlinear Diffusion algorithm for 2D and 2.5D images.
      *
-     * @param  numImages  int number of images to be blurred. If 2D image then nImage = 1, if 3D image where each image
+     * @param  numImages  int number of images to be blurred. If 2D image then nImage = 1, if 3D image where each slice
      *                    is to processed independently then nImages equals the number of slices in the volume.
      */
     private void run2D(int numImages) {
         fireProgressStateChanged(0, srcImage.getImageName(), "Regularized Isotropic Diffusion ...");
-
-        int computationCount = 0;
 
         // OK, here is where the meat of the algorithm goes
 
@@ -442,14 +436,20 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
                 return;
             } // catch()
 
-            // make the magnitude of the gradient image of the gaussian smoothed source image
-            algoSepConvolver = new AlgorithmSeparableConvolver(sourceBuffer, extents, new float[][]{xDataRound,
-                                                               yDataRound}, srcImage.isColorImage());
-
             for (int iterNum = 0; iterNum < numIterations; iterNum++) {
-                fireProgressStateChanged(0 + Math.round(stepProgressValue * computationCount));
+                fireProgressStateChanged(Math.round(stepProgressValue * iterNum));
+                // make the magnitude of the gradient image of the gaussian smoothed source image
+                // A separate constructor AlgorithmSeparableConvolver call is needed for each iteration
+                // because the constructor has the line
+                // MipavUtil.arrayCopy(srcBuffer, 0, inputBuffer, 0, srcBuffer.length);
+                // so having the constructor before the iteration loop would result in
+                // using the initial srcBuffer for each iteration.
+                algoSepConvolver = new AlgorithmSeparableConvolver(sourceBuffer, extents, new float[][]{xDataRound,
+                                                                   yDataRound}, srcImage.isColorImage());
                 algoSepConvolver.run();
                 gaussianBuffer = algoSepConvolver.getOutputBuffer();
+                algoSepConvolver.finalize();
+                algoSepConvolver = null;
                 gradientMagnitude(gaussianBuffer, gradientBuffer);
                 upDateImage(resultBuffer, sourceBuffer, gradientBuffer);
 
@@ -460,13 +460,8 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
                         sourceBuffer[i] = resultBuffer[i];
                     }
                 }
-
-                computationCount++;
                 
             } // end for (int iterNum = 0; ...)
-
-            algoSepConvolver.finalize();
-            algoSepConvolver = null;
 
             // OK, the resultBuffer is filled with the results of the algorithm,
             // put this data into the destination image so it will be displayed in
@@ -498,14 +493,11 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
     /**
      * Iterates the Regularized Isotropic Nonlinear Diffusion algorithm for 2D and 2.5D color images.
      *
-     * @param  numImages  int number of images to be blurred. If 2D image then nImage = 1, if 3D image where each image
+     * @param  numImages  int number of slices to be blurred. If 2D image then nImage = 1, if 3D image where each slice
      *                    is to processed independently then nImages equals the number of slices in the volume.
      */
     private void run2DC(int numImages) {
         fireProgressStateChanged(0, srcImage.getImageName(), "Regularized Isotropic Diffusion ...");
-
-        int totalComputation = numImages * numIterations;
-        int computationCount = 0;
 
         // OK, here is where the meat of the algorithm goes
 
@@ -632,27 +624,21 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
                 return;
             } // catch()
 
-            // make the magnitude of the gradient image of the gaussian smoothed source image
-            if (useRed) {
-                algoSepConvolverR = new AlgorithmSeparableConvolver(sourceBufferR, extents, new float[][]{xDataRound,
-                                                                    yDataRound}, false);
-            }
-
-            if (useGreen) {
-                algoSepConvolverG = new AlgorithmSeparableConvolver(sourceBufferG, extents, new float[][]{xDataRound,
-                                                                    yDataRound}, false);
-            }
-
-            if (useBlue) {
-                algoSepConvolverB = new AlgorithmSeparableConvolver(sourceBufferB, extents, new float[][]{xDataRound,
-                                                                    yDataRound}, false);
-            }
-
             for (int iterNum = 0; iterNum < numIterations; iterNum++) {
-                fireProgressStateChanged(0 + Math.round(stepProgressValue * computationCount));
+                fireProgressStateChanged(Math.round(stepProgressValue * iterNum));
                 if (useRed) {
+                    // make the magnitude of the gradient image of the gaussian smoothed source image
+                    // A separate constructor AlgorithmSeparableConvolver call is needed for each iteration
+                    // because the constructor has the line
+                    // MipavUtil.arrayCopy(srcBuffer, 0, inputBuffer, 0, srcBuffer.length);
+                    // so having the constructor before the iteration loop would result in
+                    // using the initial srcBuffer for each iteration.
+                    algoSepConvolverR = new AlgorithmSeparableConvolver(sourceBufferR, extents, new float[][]{xDataRound,
+                                                                            yDataRound}, false);
                     algoSepConvolverR.run();
                     gaussianBufferR = algoSepConvolverR.getOutputBuffer();
+                    algoSepConvolverR.finalize();
+                    algoSepConvolverR = null;
                     gradientMagnitude(gaussianBufferR, gradientBufferR);
 
                     for (i = 0; i < length; i++) {
@@ -661,8 +647,12 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
                 }
 
                 if (useGreen) {
+                    algoSepConvolverG = new AlgorithmSeparableConvolver(sourceBufferG, extents, new float[][]{xDataRound,
+                            yDataRound}, false);
                     algoSepConvolverG.run();
                     gaussianBufferG = algoSepConvolverG.getOutputBuffer();
+                    algoSepConvolverG.finalize();
+                    algoSepConvolverG = null;
                     gradientMagnitude(gaussianBufferG, gradientBufferG);
 
                     for (i = 0; i < length; i++) {
@@ -671,8 +661,12 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
                 }
 
                 if (useBlue) {
+                    algoSepConvolverB = new AlgorithmSeparableConvolver(sourceBufferB, extents, new float[][]{xDataRound,
+                            yDataRound}, false);
                     algoSepConvolverB.run();
                     gaussianBufferB = algoSepConvolverB.getOutputBuffer();
+                    algoSepConvolverB.finalize();
+                    algoSepConvolverB = null;
                     gradientMagnitude(gaussianBufferB, gradientBufferB);
 
                     for (i = 0; i < length; i++) {
@@ -721,23 +715,7 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
                     } // if (useBlue)
                 } // if (iterNum < (numIterations - 1))
 
-                computationCount++;
             } // end for (int iterNum = 0; ...)
-
-            if (useRed) {
-                algoSepConvolverR.finalize();
-                algoSepConvolverR = null;
-            }
-
-            if (useGreen) {
-                algoSepConvolverG.finalize();
-                algoSepConvolverG = null;
-            }
-
-            if (useBlue) {
-                algoSepConvolverB.finalize();
-                algoSepConvolverB = null;
-            }
 
             // OK, the resultBuffer is filled with the results of the algorithm,
             // put this data into the destination image so it will be displayed in
@@ -867,18 +845,23 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
 
         float stepProgressValue = ((float)100)/numIterations;
 
-        
-        // make the magnitude of the gradient image of the gaussian smoothed
-        // source image
-        algoSepConvolver = new AlgorithmSeparableConvolver(sourceBuffer, extents, new float[][]{xDataRound, 
-        		yDataRound, zDataRound}, srcImage.isColorImage());
-        linkProgressToAlgorithm(algoSepConvolver);
-
         for (int iterNum = 0; iterNum < numIterations; iterNum++) {
+            // make the magnitude of the gradient image of the gaussian smoothed
+            // source image
+            // A separate constructor AlgorithmSeparableConvolver call is needed for each iteration
+            // because the constructor has the line
+            // MipavUtil.arrayCopy(srcBuffer, 0, inputBuffer, 0, srcBuffer.length);
+            // so having the constructor before the iteration loop would result in
+            // using the initial srcBuffer for each iteration.
+            algoSepConvolver = new AlgorithmSeparableConvolver(sourceBuffer, extents, new float[][]{xDataRound, 
+                    yDataRound, zDataRound}, srcImage.isColorImage());
+            linkProgressToAlgorithm(algoSepConvolver);
         	algoSepConvolver.setProgressValues(generateProgressValues(getMinProgressValue() + Math.round(stepProgressValue * iterNum),
         			getMinProgressValue() + Math.round(stepProgressValue * (iterNum+1))));
             algoSepConvolver.run();
             gaussianBuffer = algoSepConvolver.getOutputBuffer();
+            algoSepConvolver.finalize();
+            algoSepConvolver = null;
 
             gradientMagnitude3D(gaussianBuffer, gradientBuffer);
             upDateImage3D(resultBuffer, sourceBuffer, gradientBuffer);
@@ -893,9 +876,6 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
         } // end for (int iterNum = 0; ...)
 
         fireProgressStateChanged(100);
-        
-        algoSepConvolver.finalize();
-        algoSepConvolver = null;
 
         // OK, the resultBuffer is filled with the results of the algorithm,
         // put this data into the destination image so it will be displayed in
@@ -1043,28 +1023,23 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
         } // catch()
 
         float stepProgressValue = ((float)100)/numIterations;
-        // make the magnitude of the gradient image of the gaussian smoothed source image
-        if (useRed) {
-            algoSepConvolverR = new AlgorithmSeparableConvolver(sourceBufferR, extents, new float[][]{xDataRound,
-                                                                yDataRound, zDataRound}, false);
-        }
-
-        if (useGreen) {
-            algoSepConvolverG = new AlgorithmSeparableConvolver(sourceBufferG, extents, new float[][]{xDataRound,
-                                                                yDataRound, zDataRound}, false);
-        }
-
-        if (useBlue) {
-            algoSepConvolverB = new AlgorithmSeparableConvolver(sourceBufferB, extents, new float[][]{xDataRound,
-                                                                yDataRound, zDataRound}, false);
-        }
 
         for (int iterNum = 0; iterNum < numIterations; iterNum++) {
-            fireProgressStateChanged(0 + Math.round(stepProgressValue * iterNum));
+            fireProgressStateChanged(Math.round(stepProgressValue * iterNum));
             
             if (useRed) {
+                // make the magnitude of the gradient image of the gaussian smoothed source image
+                // A separate constructor AlgorithmSeparableConvolver call is needed for each iteration
+                // because the constructor has the line
+                // MipavUtil.arrayCopy(srcBuffer, 0, inputBuffer, 0, srcBuffer.length);
+                // so having the constructor before the iteration loop would result in
+                // using the initial srcBuffer for each iteration.
+                algoSepConvolverR = new AlgorithmSeparableConvolver(sourceBufferR, extents, new float[][]{xDataRound,
+                        yDataRound, zDataRound}, false);
                 algoSepConvolverR.run();
                 gaussianBufferR = algoSepConvolverR.getOutputBuffer();
+                algoSepConvolverR.finalize();
+                algoSepConvolverR = null;
                 gradientMagnitude3D(gaussianBufferR, gradientBufferR);
 
                 for (i = 0; i < length; i++) {
@@ -1073,8 +1048,12 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
             }
 
             if (useGreen) {
+                algoSepConvolverG = new AlgorithmSeparableConvolver(sourceBufferG, extents, new float[][]{xDataRound,
+                        yDataRound, zDataRound}, false);
                 algoSepConvolverG.run();
                 gaussianBufferG = algoSepConvolverG.getOutputBuffer();
+                algoSepConvolverG.finalize();
+                algoSepConvolverG = null;
                 gradientMagnitude3D(gaussianBufferG, gradientBufferG);
 
                 for (i = 0; i < length; i++) {
@@ -1083,8 +1062,12 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
             }
 
             if (useBlue) {
+                algoSepConvolverB = new AlgorithmSeparableConvolver(sourceBufferB, extents, new float[][]{xDataRound,
+                        yDataRound, zDataRound}, false);
                 algoSepConvolverB.run();
                 gaussianBufferB = algoSepConvolverB.getOutputBuffer();
+                algoSepConvolverB.finalize();
+                algoSepConvolverB = null;
                 gradientMagnitude3D(gaussianBufferB, gradientBufferB);
 
                 for (i = 0; i < length; i++) {
@@ -1136,22 +1119,6 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
         } // end for (int iterNum = 0; ...)
 
         fireProgressStateChanged(100);
-        
-
-        if (useRed) {
-            algoSepConvolverR.finalize();
-            algoSepConvolverR = null;
-        }
-
-        if (useGreen) {
-            algoSepConvolverG.finalize();
-            algoSepConvolverG = null;
-        }
-
-        if (useBlue) {
-            algoSepConvolverB.finalize();
-            algoSepConvolverB = null;
-        }
 
         // OK, the resultBuffer is filled with the results of the algorithm,
         // put this data into the destination image so it will be displayed in
@@ -1253,26 +1220,26 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
             for (col = 0, cIndex += col; col < xDim; cIndex++, col++) {
 
                 centerGradVal = gradBuffer[cIndex];
-                centerDiffVal = diffusitivity(centerGradVal);
+                centerDiffVal = diffusivity(centerGradVal);
 
                 rightGradVal = getVal(gradBuffer, col + 1, row);
-                rightDiffVal = diffusitivity(rightGradVal);
+                rightDiffVal = diffusivity(rightGradVal);
 
                 leftGradVal = getVal(gradBuffer, col - 1, row);
-                leftDiffVal = diffusitivity(leftGradVal);
+                leftDiffVal = diffusivity(leftGradVal);
 
-                topGradVal = getVal(gradBuffer, col, row + 1);
-                topDiffVal = diffusitivity(topGradVal);
+                bottomGradVal = getVal(gradBuffer, col, row + 1);
+                bottomDiffVal = diffusivity(bottomGradVal);
 
-                bottomGradVal = getVal(gradBuffer, col, row - 1);
-                bottomDiffVal = diffusitivity(bottomGradVal);
+                topGradVal = getVal(gradBuffer, col, row - 1);
+                topDiffVal = diffusivity(topGradVal);
 
 
                 centerImgVal = srcBuffer[cIndex];
                 leftImgVal = getVal(srcBuffer, col - 1, row);
                 rightImgVal = getVal(srcBuffer, col + 1, row);
-                topImgVal = getVal(srcBuffer, col, row + 1);
-                bottomImgVal = getVal(srcBuffer, col, row - 1);
+                bottomImgVal = getVal(srcBuffer, col, row + 1);
+                topImgVal = getVal(srcBuffer, col, row - 1);
 
                 resltBuffer[cIndex] = centerImgVal +
                                       (0.5f * timeStep *
@@ -1326,32 +1293,32 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
                 for (col = 0, cIndex += col; col < xDim; cIndex++, col++) {
 
                     centerGradVal = gradBuffer[cIndex];
-                    centerDiffVal = diffusitivity(centerGradVal);
+                    centerDiffVal = diffusivity(centerGradVal);
 
                     rightGradVal = getVal(gradBuffer, col + 1, row, slice);
-                    rightDiffVal = diffusitivity(rightGradVal);
+                    rightDiffVal = diffusivity(rightGradVal);
 
                     leftGradVal = getVal(gradBuffer, col - 1, row, slice);
-                    leftDiffVal = diffusitivity(leftGradVal);
+                    leftDiffVal = diffusivity(leftGradVal);
 
-                    topGradVal = getVal(gradBuffer, col, row + 1, slice);
-                    topDiffVal = diffusitivity(topGradVal);
+                    bottomGradVal = getVal(gradBuffer, col, row + 1, slice);
+                    bottomDiffVal = diffusivity(bottomGradVal);
 
-                    bottomGradVal = getVal(gradBuffer, col, row - 1, slice);
-                    bottomDiffVal = diffusitivity(bottomGradVal);
+                    topGradVal = getVal(gradBuffer, col, row - 1, slice);
+                    topDiffVal = diffusivity(topGradVal);
 
                     zLowGradVal = getVal(gradBuffer, col, row, slice - 1);
-                    zLowDiffVal = diffusitivity(zLowGradVal);
+                    zLowDiffVal = diffusivity(zLowGradVal);
 
                     zHighGradVal = getVal(gradBuffer, col, row, slice + 1);
-                    zHighDiffVal = diffusitivity(zHighGradVal);
+                    zHighDiffVal = diffusivity(zHighGradVal);
 
 
                     centerImgVal = srcBuffer[cIndex];
                     leftImgVal = getVal(srcBuffer, col - 1, row, slice);
                     rightImgVal = getVal(srcBuffer, col + 1, row, slice);
-                    topImgVal = getVal(srcBuffer, col, row + 1, slice);
-                    bottomImgVal = getVal(srcBuffer, col, row - 1, slice);
+                    bottomImgVal = getVal(srcBuffer, col, row + 1, slice);
+                    topImgVal = getVal(srcBuffer, col, row - 1, slice);
                     zLowImgVal = getVal(srcBuffer, col, row, slice - 1);
                     zHighImgVal = getVal(srcBuffer, col, row, slice + 1);
 
