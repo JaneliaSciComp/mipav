@@ -55,7 +55,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase implements Algo
     /** Dimensionality of the kernel. */
     private int[] kExtents;
 
-    /** Dimensionality fo the Laplacian kernel. */
+    /** Dimensionality for the Laplacian kernel. */
     private int[] klapExtents;
 
     /**
