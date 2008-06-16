@@ -112,7 +112,7 @@ public class PlugInDialogCenterDistance2 extends JDialogScriptableBase implement
     
     private JTextField blueValueText;
     
-    /** Nucleus boundary reuqires a minimum blue value >=
+    /** Nucleus boundary requires a minimum blue value >=
      *  image blue min + blueBoundaryFraction * (image blue max - image blue min)
      */
     private float blueBoundaryFraction = 0.15f;
