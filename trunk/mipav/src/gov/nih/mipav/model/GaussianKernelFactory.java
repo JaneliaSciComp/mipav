@@ -213,7 +213,7 @@ public class GaussianKernelFactory implements KernelFactory {
 	}
 	
 	private int determineExtent(float sigma){
-		int extent = Math.round(5 * sigma);
+		int extent = Math.round(8 * sigma);
 		if(extent % 2 == 0){
 			extent++;
 		}
