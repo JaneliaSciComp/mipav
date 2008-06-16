@@ -199,7 +199,7 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
      */
     private boolean twoGreenLevels;
     
-    /** Nucleus boundary reuqires a minimum blue value >=
+    /** Nucleus boundary requires a minimum blue value >=
      *  image blue min + blueBoundaryFraction * (image blue max - image blue min)
      */
     private float blueBoundaryFraction = 0.15f;
