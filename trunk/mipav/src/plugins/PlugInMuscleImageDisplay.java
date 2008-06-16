@@ -198,9 +198,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
         
         File f;
-        if(!(f = new File(imageDir+"\\")).exists())
+        if(!(f = new File(imageDir+File.separator)).exists())
         	f.mkdir();
-        
+
+	System.out.println("Exists? "+f.exists());
         createVOIBuffer();
         
         initNext();
@@ -1456,7 +1457,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         private boolean voiExists(String objectName) {     	
             String fileDir;
-            fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
+            fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator;
             
             if(new File(fileDir+objectName+".xml").exists()) {
                 return true;
@@ -1497,7 +1498,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                         //save modified/created VOI to file
                         getActiveImage().unregisterAllVOIs();
                         getActiveImage().registerVOI(goodVoi);
-                        String dir = getImageA().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
+                        String dir = getImageA().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator;
                         saveAllVOIsTo(dir);
 
                         MipavUtil.displayInfo(objectName+" VOI saved in folder\n " + dir);
@@ -3293,7 +3294,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         getActiveImage().unregisterAllVOIs();
         int colorChoice = new Random().nextInt(colorPick.length);
         String fileDir;
-        fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
+        fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator;
         File allVOIs = new File(fileDir);
         if(allVOIs.isDirectory()) {
             for(int i=0; i<voiName.length; i++) {
@@ -3393,7 +3394,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      */
     public PlugInSelectableVOI loadVOI(String name) {
     	String fileDir;
-    	fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+"\\";
+    	fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator;
     	String ext = name.contains(".xml") ? "" : ".xml";
     	PlugInSelectableVOI temp = voiBuffer.get(name);
         if(new File(fileDir+name+ext).exists()) {
@@ -3654,7 +3655,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	 */
 	protected void createPDF() {		
 		String fileDir, fileName;
-		fileDir = getActiveImage().getFileInfo(getViewableSlice()).getFileDirectory()+VOI_DIR+"\\";
+		fileDir = getActiveImage().getFileInfo(getViewableSlice()).getFileDirectory()+VOI_DIR;
 		fileName = fileDir + File.separator + "NIA_Report.pdf";
 		pdfFile = new File(fileName);
 		if(pdfFile.exists()) {
@@ -3666,6 +3667,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				pdfFile = new File(fileDir + File.separator + fileName);
 			}
 		}
+		System.out.println("Entering try loop.");
 		try {
 			pdfDocument = new Document();
 			pdfWriter = PdfWriter.getInstance(pdfDocument, new FileOutputStream(pdfFile));
@@ -3676,6 +3678,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			
 			Paragraph p = new Paragraph();
 			
+			System.out.println("GOT HERE!!!!");
+
 			//add the Title and subtitle
 			p.setAlignment(Element.ALIGN_CENTER);
 			p.add(new Chunk("MIPAV: Segmentation", new Font(Font.TIMES_ROMAN, 18)));
@@ -3687,7 +3691,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			
 			Font fontNormal = FontFactory.getFont("Helvetica", 10, Font.NORMAL, Color.DARK_GRAY);
 			Font fontBold = FontFactory.getFont("Helvetica", 10, Font.BOLD, Color.BLACK);
-	
+			
+			System.out.println("NOW HERE");
+
 			FileInfoDicom fileInfo = (FileInfoDicom)getActiveImage().getFileInfo()[0];
 			
 			DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
@@ -3757,7 +3763,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			
 			//create the Table where we will insert the data:
 			aTable = new PdfPTable(new float[] {1.8f, 1f, 1f, 1f, 1f, 1f, 1f});
-			
+			System.out.println("CREATED");
 			// add Column Titles (in bold)
 			String type = new String();
 			if(multipleSlices) {
@@ -3777,7 +3783,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			
 			return;
 		} catch (Exception e) {
-			return;
+		    System.out.println("Error occured in addCell's calling method");
+		    e.printStackTrace();
 		}
 	}
 	
@@ -3794,11 +3801,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	protected void addToPDF(String name, double fatArea, double leanArea, double totalAreaCount, 
 			double meanFatH, double meanLeanH, double meanTotalH) {
 		
-		try {
+	    try {
 			Font fontNormal = FontFactory.getFont("Helvetica", 10, Font.NORMAL, Color.DARK_GRAY);
 			if (name.endsWith(".xml")) {
 				name = name.substring(0, name.length() - 4);
 			}
+			if(name == null) {
+			    name = new String("Temp name.");
+			    System.out.println("Unexpected null encountered");
+			}
+			System.out.println("To test: "+name);
 			DecimalFormat dec = new DecimalFormat("0.00");
 			
 			//name of area
@@ -3827,7 +3839,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			imageTable.addCell("VOI Image");
 					
 		} catch (Exception e) {
-			e.printStackTrace();
+		    System.out.println("Error adding PDF element.");
+		    if(aTable == null) 
+			System.out.println("aTable");
+		    if(name == null) 
+			System.out.println("name");
+		    e.printStackTrace();
 		}
 	}
 	
@@ -3989,7 +4006,7 @@ System.err.println("calling loadVOI");
 String fileDir;
 
 
-fileDir = getImageA().getFileInfo(0).getFileDirectory()+VOI_DIR+"\\";
+fileDir = getImageA().getFileInfo(0).getFileDirectory()+VOI_DIR+File.separator;
 File allVOIs = new File(fileDir);
 //ArrayList paneVOIs = new ArrayList();
 if(allVOIs.isDirectory()) {
