@@ -1023,7 +1023,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
     }
 
     /**
-     * Creates 2D Gaussian kernels for the blurring process. The kernel size is always odd and proportional (6X) to the
+     * Creates 2D Gaussian kernels for the blurring process. The kernel size is always odd and proportional (8X) to the
      * standard deviation of the Gaussian.
      */
     private void makeKernels2D() {
@@ -1034,7 +1034,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
         derivOrder[0] = 0;
         derivOrder[1] = 0;
 
-        xkDim = Math.round(6 * sigmas[0]);
+        xkDim = Math.round(8 * sigmas[0]);
 
         if ((xkDim % 2) == 0) {
             xkDim++;
@@ -1042,7 +1042,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
 
         kExtents[0] = xkDim;
 
-        ykDim = Math.round(6 * sigmas[1]);
+        ykDim = Math.round(8 * sigmas[1]);
 
         if ((ykDim % 2) == 0) {
             ykDim++;
@@ -1059,7 +1059,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
     }
 
     /**
-     * Creates 3D Gaussian kernels for the blurring process. The kernel size is always odd and proportional (6X) to the
+     * Creates 3D Gaussian kernels for the blurring process. The kernel size is always odd and proportional (8X) to the
      * standard deviation of the Gaussian.
      */
     private void makeKernels3D() {
@@ -1071,7 +1071,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
         derivOrder[1] = 0;
         derivOrder[2] = 0;
 
-        xkDim = Math.round(6 * sigmas[0]);
+        xkDim = Math.round(8 * sigmas[0]);
         // System.out.println("Sigma 0 = " + sigmas[0]);
         // System.out.println("Sigma 1 = " + sigmas[1]);
         // System.out.println("Sigma 2 = " + sigmas[2]);
@@ -1082,7 +1082,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
 
         kExtents[0] = xkDim;
 
-        ykDim = Math.round(6 * sigmas[1]);
+        ykDim = Math.round(8 * sigmas[1]);
 
         if ((ykDim % 2) == 0) {
             ykDim++;
@@ -1090,7 +1090,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
 
         kExtents[1] = ykDim;
 
-        zkDim = Math.round(6 * sigmas[2]);
+        zkDim = Math.round(8 * sigmas[2]);
 
         if ((zkDim % 2) == 0) {
             zkDim++;
