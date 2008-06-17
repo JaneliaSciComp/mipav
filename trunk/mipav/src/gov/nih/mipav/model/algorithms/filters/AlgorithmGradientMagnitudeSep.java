@@ -54,6 +54,8 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 	private boolean directionNeeded;
 	private float[] xDerivativeDirections;
 	private float[] yDerivativeDirections;
+    private int zEnd;
+    private boolean doEndSlices = false;
 
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -90,6 +92,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 	}
 
 	public void execute() {
+        int i;
 		if(threadStopped){
 			return;
 		}
@@ -125,7 +128,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 		if(srcImage.is2DImage()){
 			progressTo = (int)((maxProgressValue - minProgressValue) * 0.3)-1;
 		}else{
-			progressTo = (int)((maxProgressValue - minProgressValue) * 0.25)-1;
+			progressTo = (int)((maxProgressValue - minProgressValue) * 0.14)-1;
 		}
 		GaussianKernelFactory gkf = GaussianKernelFactory.getInstance(sigmas);
 		gkf.setKernelType(GaussianKernelFactory.X_DERIVATIVE_KERNEL);
@@ -143,7 +146,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 		if(srcImage.is2DImage() || !is3DKernel()){
 			progressTo = progressFrom + (int)((maxProgressValue - minProgressValue) * 0.3)-1;
 		}else{
-			progressTo = progressFrom + (int)((maxProgressValue - minProgressValue) * 0.25)-1;
+			progressTo = progressFrom + (int)((maxProgressValue - minProgressValue) * 0.14)-1;
 		}
 		gkf.setKernelType(GaussianKernelFactory.Y_DERIVATIVE_KERNEL);
 		gaussianKernel = gkf.createKernel();
@@ -157,10 +160,11 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 		// Calculate the z derivative of the image.
 		if (srcImage.is3DImage() && is3DKernel()) {
 			progressFrom = progressTo+1;
-			progressTo = progressFrom + (int)((maxProgressValue - minProgressValue) * 0.25)-1;
+			progressTo = progressFrom + (int)((maxProgressValue - minProgressValue) * 0.14)-1;
 
 			gkf.setKernelType(GaussianKernelFactory.Z_DERIVATIVE_KERNEL);
 			gaussianKernel = gkf.createKernel();
+            int kExtents[] = gaussianKernel.getExtents();
 
 			float[] zDerivativeBuffer = calculateDerivativeImage(buffer, color,
 					gaussianKernel.getData(), progressFrom, progressTo);
@@ -169,15 +173,91 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 				return;
 			}
 			
-			// Calculate the gradient magnitude of the image.
+			// Calculate the gradient magnitude of the image for slices where 3D kernels fit.
 			progressFrom = progressTo+1;
-			progressTo = progressFrom + (int)((maxProgressValue - minProgressValue) * 0.25)-1;
-			progress = progressFrom;
+			progressTo = progressFrom + (int)((maxProgressValue - minProgressValue) * 0.14)-1;
+            progress = progressFrom;
 			outputBuffer = magnitude(buffer, cFactor, xDerivativeBuffer,
 					yDerivativeBuffer, zDerivativeBuffer, progressFrom, progressTo);
 			xDerivativeBuffer = null;
 			yDerivativeBuffer = null;
 			zDerivativeBuffer = null;
+            
+            // Start of slice at which full 3D kernels fit
+            int min3DLength = cFactor * (kExtents[2]/2) * srcImage.getSliceSize();
+            // Start of slice at which full 3D kernels no longer fit
+            int max3DLength = cFactor * (srcImage.getExtents()[2] - kExtents[2] + kExtents[2]/2 + 1) *
+                              srcImage.getSliceSize();
+            zEnd = 2 * (kExtents[2]/2);
+            doEndSlices = true;
+            buffer = null;
+            buffer = new float[2 * min3DLength];
+            float buffer2DLast[] = new float[min3DLength];
+       
+            try {
+                srcImage.exportData(0, min3DLength, buffer);
+            } catch (IOException e) {
+                errorCleanUp(
+                        "Algorithm Gradient Magnitude exportData: Image(s) locked.",
+                        false);
+                fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+                return;
+            }
+          
+            try {
+                srcImage.exportData(max3DLength, min3DLength, buffer2DLast);
+            } catch (IOException e) {
+                errorCleanUp(
+                        "Algorithm Gradient Magnitude exportData: Image(s) locked.",
+                        false);
+                fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+                return;
+            }
+            for (i = 0; i < min3DLength; i++) {
+                buffer[i + min3DLength] = buffer2DLast[i];    
+            }
+            buffer2DLast = null;
+            float sigmas2D[] = new float[2];
+            sigmas2D[0] = sigmas[0];
+            sigmas2D[1] = sigmas[1];
+            sigmas = null;
+            sigmas = new float[2];
+            sigmas[0] = sigmas2D[0];
+            sigmas[1] = sigmas2D[1];
+            sigmas2D = null;
+            
+            // Calculate derivatives for start and end slices where 3D kernels do not fit
+            gkf = GaussianKernelFactory.getInstance(sigmas);
+            gkf.setKernelType(GaussianKernelFactory.X_DERIVATIVE_KERNEL);
+            gaussianKernel = gkf.createKernel();
+            progressFrom = progressTo + 1;
+            progressTo = progressFrom + (int)((maxProgressValue - minProgressValue) * 0.14)-1;
+
+            xDerivativeBuffer = calculateDerivativeImage(buffer, color,
+                    gaussianKernel.getData(), progressFrom, progressTo);
+            
+            gkf.setKernelType(GaussianKernelFactory.Y_DERIVATIVE_KERNEL);
+            gaussianKernel = gkf.createKernel();
+            progressFrom = progressTo + 1;
+            progressTo = progressFrom + (int)((maxProgressValue - minProgressValue) * 0.14)-1;
+
+            yDerivativeBuffer = calculateDerivativeImage(buffer, color,
+                    gaussianKernel.getData(), progressFrom, progressTo);
+            
+            
+            // Calculate the 2D gradient magnitude of the image for the start and end slices
+            // where the 3D kernels do not fit
+            progressFrom = progressTo + 1;
+            progressTo = progressFrom + (int)((maxProgressValue - minProgressValue) * 0.14)-1;
+            progress = progressFrom;
+            float[] outputBuffer2D = magnitude(buffer, cFactor, xDerivativeBuffer,
+                    yDerivativeBuffer, null, progressFrom, progressTo);
+            
+            for (i = 0; i < min3DLength; i++) {
+                outputBuffer[i] = outputBuffer2D[i];
+                outputBuffer[max3DLength + i] = outputBuffer2D[min3DLength + i];
+            }
+            
 			return;
 		}
 		progressFrom = progressTo+1;
@@ -410,14 +490,17 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 	}
 	public int calculateValidStartZIndex(){
 		if(srcImage.is3DImage() && is3DKernel()){
-			return (gaussianKernel.getExtents()[2]+1)/2;
+			return (gaussianKernel.getExtents()[2])/2;
 		}
 		return 0;
 	}
 	
 	public int calculateValidEndZIndex(){
+        if (doEndSlices) {
+            return zEnd;
+        }
 		if(srcImage.is3DImage() && is3DKernel()){
-			return srcImage.getExtents()[2]-(gaussianKernel.getExtents()[2]+1)/2;
+			return srcImage.getExtents()[2]-gaussianKernel.getExtents()[2]+ gaussianKernel.getExtents()[2]/2 + 1;
 		}
 		if(srcImage.is3DImage()){
 			return srcImage.getExtents()[2];
