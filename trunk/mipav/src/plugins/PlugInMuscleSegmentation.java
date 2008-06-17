@@ -55,6 +55,7 @@ public class PlugInMuscleSegmentation implements PlugInAlgorithm, PlugInGeneric 
 
         if (parentFrame instanceof ViewJFrameImage) {
         	//clones the ModelImage before passing into the plugin dialog
+        	System.out.println("Directory: "+((ViewJFrameImage)parentFrame).getImageA().getImageDirectory());
             new PlugInDialogMuscleSegmentation(ViewUserInterface.getReference().getMainFrame(), 
             		(ModelImage)image.clone(JDialogBase.makeImageName(image.getImageName(), "_muscle_seg")));
         } 

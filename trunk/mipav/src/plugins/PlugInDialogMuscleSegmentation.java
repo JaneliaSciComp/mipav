@@ -65,14 +65,17 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
 
         image = im;
         imageType = detectImageType(im);
-        imageFile = detectImageSequence(im);
-        if(imageFile.length > 1) {
-        	image = createImage(imageFile);
-        	float[] origin = {0, 0, 0};
-        	image.getFileInfo()[0].setOrigin(origin);
-        	image.getFileInfo()[0].setFileFormat(FileUtility.XML);
+        if(image.getNDims() < 3) {
+        	imageFile = detectImageSequence(im);
+	        if(imageFile.length > 1) {
+	        	image = createImage(imageFile);
+	        	float[] origin = {0, 0, 0};
+	        	image.getFileInfo()[0].setOrigin(origin);
+	        	image.getFileInfo()[0].setFileFormat(FileUtility.XML);
+	        	multipleSlices = true;
+	        }
+        } else
         	multipleSlices = true;
-        }
         if(imageType == PlugInMuscleImageDisplay.ImageType.Unknown)
         	init();
         else
@@ -394,24 +397,87 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     }
     
     private File[] detectImageSequence(ModelImage im) {
-    	File dir = new File(im.getFileInfo()[0].getFileDirectory());
-    	String name = im.getFileInfo()[0].getFileName();
-    	if(name.indexOf('.') > name.length() - 5)
-    		name = name.substring(0, name.lastIndexOf('.')-2);
-    	else	
-    		name = name.substring(0, im.getFileInfo()[0].getFileName().length()-2);
-    	File[] contain = dir.listFiles();
-    	int size = 0;
-    	ArrayList<File> fileList = new ArrayList();
-    	for(int i=0; i<contain.length; i++) {
-    		if(contain[i].getName().contains(name)) {
-    			size++;
-    			fileList.add(contain[i]);
-    		}
+    	try {
+    		File dir = new File(im.getFileInfo()[0].getFileDirectory());
+	    	String name = im.getFileInfo()[0].getFileName();
+	    	boolean likelyMultiple = false;
+	    	if(name.indexOf('.') > name.length() - 5)
+	    		name = name.substring(0, name.lastIndexOf('.')-2);
+	    	else	
+	    		name = name.substring(0, im.getFileInfo()[0].getFileName().length()-2);
+	    	File[] contain = dir.listFiles();
+	    	int size = 0;
+	    	ArrayList<File> fileList = new ArrayList();
+	    	for(int i=0; i<contain.length; i++) {
+	    		if(contain[i].getName().contains(name)) {
+	    			size++;
+	    			fileList.add(contain[i]);
+	    		}
+	    	}
+	    	if(size > 1)
+	    		likelyMultiple = true;
+	    	
+	    	if(!likelyMultiple) {
+	    		return new File[1];
+	    	}
+	    	
+	    	String[] commonExt = new String[fileList.size()];
+	    	int[] commonCount = new int[fileList.size()];
+	    	for(int i=0; i<fileList.size(); i++) {
+	    		if(fileList.get(i).getName().lastIndexOf(".") != -1) 
+	    			commonExt[i] = fileList.get(i).getName().substring(fileList.get(i).getName().lastIndexOf("."));
+	    		else
+	    			commonExt[i] = "";
+	    		commonCount[i] = 0;
+	    	}
+	    	
+	    	//find most frequent extension
+	    	String ext = "";
+	    	for(int i=0; i<fileList.size(); i++) {
+	    		for(int j=0; j<fileList.size(); j++) {
+	    			if(fileList.get(j).getName().lastIndexOf(".") != -1) 
+	    				ext = fileList.get(j).getName().substring(fileList.get(j).getName().lastIndexOf("."));
+	    			else
+	    				ext = "";
+		    			if(commonExt[i].equals(ext)) {
+		        			commonCount[i]++;
+		        		} 
+	    		}
+	    	}
+	    	
+	    	int bestCount = 0, numFound = 1;
+	    	for(int i=0; i<commonCount.length; i++) {
+	    		if(commonCount[i] > numFound) {
+	    			numFound = commonCount[i];
+	    			bestCount = i;
+	    		}
+	    	}
+	    	
+	    	File[] imageSet = new File[numFound];
+	    	int imageIndex = 0;
+	    	ext = "";
+	    	for(int i=0; i<fileList.size(); i++) {
+	    		if(fileList.get(i).getName().lastIndexOf(".") != -1) 
+					ext = fileList.get(i).getName().substring(fileList.get(i).getName().lastIndexOf("."));
+				else
+					ext = "";
+	    		if(commonExt[bestCount].equals(ext)) {
+	    			imageSet[imageIndex] = fileList.get(i);
+	    			imageIndex++;
+	    		}
+	    	}
+	    	
+	    	if(imageSet.length == 1 && likelyMultiple) {
+	    		MipavUtil.displayInfo("This image is likely a 3D CT image file, but the algorithm was unable to extract the image.\n"+
+	    								"Try reopening the image as a multi-slice image and reload the algorithm");
+	    		return null;
+	    	}
+	    	
+	    	return imageSet;
+    	} catch(Exception e) {
+    		MipavUtil.displayInfo("Opening image as a single slice.  If this is a multi-slice image, please reload the image");
+    		e.printStackTrace();
+    		return null;
     	}
-    	File[] fileArr = new File[size];
-    	for(int i=0; i<size; i++)
-    		fileArr[i] = fileList.get(i);
-    	return fileArr;
     }
 }
