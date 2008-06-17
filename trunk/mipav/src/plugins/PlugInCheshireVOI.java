@@ -124,7 +124,7 @@ public class PlugInCheshireVOI implements PlugInGeneric {
                         tempImage = cheshireComposite;
                     }
 
-                    cheshireArray[i] = new FileCheshireVOI(tempFile.getName(), tempFile.getParent() + "\\", tempImage);
+                    cheshireArray[i] = new FileCheshireVOI(tempFile.getName(), tempFile.getParent() + File.separatorChar, tempImage);
                     cheshireNames[i] = tempFile.getName().substring(0, tempFile.getName().lastIndexOf("."));
                     voiListArr = cheshireArray[i].readVOI();
                 } catch (IOException e) {
