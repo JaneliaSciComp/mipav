@@ -507,7 +507,17 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				secondBufferVOI.setComputerGenerated(true);
 			}
 		} else if(algorithm instanceof PlugInAlgorithmCTAbdomen) {
-			System.out.println("Abdomen alg completed");
+			if(((PlugInAlgorithmCTAbdomen)algorithm).getAbdomenVOI() != null) {
+				System.out.println("Abdomen alg completed");
+				firstVOI = ((PlugInAlgorithmCTAbdomen)algorithm).getAbdomenVOI().getCurves();
+				firstBufferVOI = voiBuffer.get("Abdomen");
+				for(int i=0; i<firstVOI.length; i++) {
+					for(int j=0; j<firstVOI[i].size(); j++) {
+						firstBufferVOI.importCurve((VOIContour)firstVOI[i].get(j), i);
+					}
+				}
+				firstBufferVOI.setComputerGenerated(true);
+			}
 		}
 
         if (algorithm != null) {
@@ -1848,42 +1858,54 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 return null;  
             }
             
-            if(goodVOI != null) {
-            	Vector<VOIBase>[] curves = goodVOI.getCurves();
-            	for(int i=0; i<curves.length; i++) { 
-            		for(int j=0; j<curves[i].size(); j++) {
-            			if(curveReplace) 
-            				voiBuffer.get(objectName).removeCurve(j, i);
-            		    voiBuffer.get(objectName).importCurve((VOIContour)curves[i].get(j), i);
+            
+            Vector<VOIBase>[] curves = goodVOI.getCurves();           
+       
+            boolean maxCurve = false, closedProblem = false;
+            int sliceCurves = 0, sliceClosed = 0, slice=0;
+            while(slice<curves.length && !maxCurve) {
+            	if(curves[slice].size() > numVoi) { 
+            		maxCurve = true;
+            		sliceCurves = slice;
+            	}
+            	for(int j=0; j<curves[slice].size(); j++) {
+            		if(((VOIContour)curves[slice].get(j)).isClosed() != closedVoi) {
+            			closedProblem = true;
+            			sliceClosed = slice;
             		}
             	}
+            	slice++;
             }
             
-            return voiBuffer.get(objectName);
-           
-            /*Vector[] curves = goodVOI.getCurves();
-            VOI voi = goodVOI;
-            if(curves[getViewableSlice()].size() <= numVoi) {
-                for(int i=0; i<numVoi; i++) {
-                    if(closedVoi) {
-                        goodVOI.setName(objectName);
-                        return goodVOI;
-                    } else {
-                        goodVOI.setName(objectName);
-                        return goodVOI;
-                    } 
-                }
-                String error = closedVoi ? "Any curves made must be closed." : 
-                                            "Any curves made must be open.";
+            if(maxCurve) {
+            	String error = "You have created too many curves";
+            	if(multipleSlices)
+            		error += " on slice "+sliceCurves;
+            	error += ". Please remove these curves.";
                 MipavUtil.displayError(error);
-            } 
+                return null;
+            }
             
-            String error = "You have created too many curves.";
-            MipavUtil.displayError(error);
+            if(closedProblem) {
+            	String error = closedVoi ? "Any curves made must be closed." : 
+                    "Any curves made must be open.";
+            	if(multipleSlices)
+            		error += " Please currect the curve on slice "+sliceClosed+".";
+            	MipavUtil.displayError(error);
+            	return null;
+            }
             
-            return null;*/
-        }
-        
+            
+        	for(int i=0; i<curves.length; i++) { 
+        		for(int j=0; j<curves[i].size(); j++) {
+        			if(curveReplace) 
+        				voiBuffer.get(objectName).removeCurve(j, i);
+        		    voiBuffer.get(objectName).importCurve((VOIContour)curves[i].get(j), i);
+        		}
+        	}
+            
+            return voiBuffer.get(objectName);
+        }   
     }
     
    
@@ -1911,6 +1933,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         /** Labels for instructions. */
         private JLabel[] instructionLabel;
         
+        /** Check boxes for mirror object buttons. */
         private ColorButtonPanel[] mirrorCheckArr;
         
         /** Check boxes for non-mirror object buttons. */
@@ -3352,6 +3375,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         return c;
     }
     
+    /**
+     * Whether a particular VOI exists
+     * @param name of the VOI to search for
+     * @return
+     */
     public boolean voiExists(String name) {
     	return voiBuffer.get(name).isCreated();
     }
