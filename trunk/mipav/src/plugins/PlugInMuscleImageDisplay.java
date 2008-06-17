@@ -647,7 +647,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         		MipavUtil.displayWarning("This tab calculates VOIs that depend on the following being created.\n"+
         				"Note that only muscle calculations will be correct.\n"+createStr);
         	}
-        	((AnalysisPrompt)tabs[resultTabLoc]).setButtons();
+        	((AnalysisPrompt)tabs[resultTabLoc]).setButtons(getViewableSlice());
 
         	((AnalysisPrompt)tabs[resultTabLoc]).enableCalcOutput();
         } else if (!(command.equals(DialogPrompt.OUTPUT) ||
@@ -973,7 +973,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         // componentImage.deactivateAllVOI();
         
         if(currentSlice != slice) {
-        	System.out.println("Changed Slice!");
+        	if(tabs[resultTabLoc].isVisible()) {
+        		((AnalysisPrompt)tabs[resultTabLoc]).setButtons(slice);
+    			//((AnalysisPrompt)tabs[resultTabLoc]).clearButtons(slice);
+        	} else {
+        		for(int i=0; i<tabs.length-2; i++) {
+        			if(tabs[i].isVisible())
+        				((MuscleDialogPrompt)tabs[activeTab]).clearButtons(slice);
+        		}
+        	}
+        	System.out.println("Changed Slice from "+currentSlice+" to "+slice);
         	//if(changeSlice && activeTab < voiTabLoc) {
         	//if(tabs[resultTabLoc].isVisible()) 
         	//((AnalysisPrompt)tabs[resultTabLoc]).setButtons();
@@ -1976,14 +1985,27 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             return instructionPanel;
         }
         
-        public void clearButtons() {
+        public void clearButtons(int slice) {
+        	PlugInSelectableVOI temp;
         	for(int i=0; i<mirrorCheckArr.length; i++) {
-        		mirrorCheckArr[i].setColor(Color.pink);
-        		mirrorCheckArr[i].getColorButton().colorChanged(Color.PINK);
+        		if((temp = voiBuffer.get(mirrorButtonArr[i].getText())).getCurves()[slice].size() == 0) {
+	        		mirrorCheckArr[i].setColor(Color.black);
+	        		mirrorCheckArr[i].getColorButton().colorChanged(Color.black);
+        		} else {
+        			mirrorCheckArr[i].setColor(temp.getColor());
+	        		mirrorCheckArr[i].getColorButton().colorChanged(temp.getColor());
+        		}
+        		//System.out.println("Size of "+temp.getName()+": "+temp.getCurves()[slice].size());
         	}
         	for(int i=0; i<noMirrorCheckArr.length; i++) {
-        		noMirrorCheckArr[i].setColor(Color.black);
-        		
+        		if((temp = voiBuffer.get(noMirrorButtonArr[i].getText())).getCurves()[slice].size() == 0) {
+	        		noMirrorCheckArr[i].setColor(Color.black);
+	        		noMirrorCheckArr[i].getColorButton().colorChanged(Color.black);
+        		} else {
+        			noMirrorCheckArr[i].setColor(temp.getColor());
+	        		noMirrorCheckArr[i].getColorButton().colorChanged(temp.getColor());
+        		}	
+        		//System.out.println("Size of "+temp.getName()+": "+temp.getCurves()[slice].size());
         	}
         }
         
@@ -2291,7 +2313,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			return resultArr;
 		}
 		
-		private void setButtons() {
+		private void setButtons(int slice) {
 			if (checkBoxLocationTree != null) {
 				Set<String> keySet = checkBoxLocationTree.keySet();
 				Iterator<String> it = keySet.iterator();
@@ -2303,19 +2325,45 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			boolean voiExists = false;
 			for(int index=0; index<mirrorButtonArr.length; index++) {
 				for(int i=0; i<mirrorButtonArr[index].length; i++) {
-					mirrorButtonArr[index][i].setEnabled(voiExists = voiExists(mirrorButtonArr[index][i].getText(), getViewableSlice()));
+					mirrorButtonArr[index][i].setEnabled(voiExists = voiExists(mirrorButtonArr[index][i].getText(), slice));
 					mirrorButtonArr[index][i].setForeground(Color.BLACK);
 					if(voiExists && voiBuffer.get(mirrorButtonArr[index][i].getText()).isComputerGenerated())
 						mirrorButtonArr[index][i].setForeground(Color.RED);
 				}
 				for(int i=0; i<noMirrorButtonArr[index].length; i++) {
-					noMirrorButtonArr[index][i].setEnabled(voiExists(noMirrorButtonArr[index][i].getText(), getViewableSlice()));
+					noMirrorButtonArr[index][i].setEnabled(voiExists(noMirrorButtonArr[index][i].getText(), slice));
 					noMirrorButtonArr[index][i].setForeground(Color.BLACK);
 					if(voiExists && voiBuffer.get(noMirrorButtonArr[index][i].getText()).isComputerGenerated())
 						noMirrorButtonArr[index][i].setForeground(Color.RED);
 				}
 			}
 		}
+		
+		/*public void clearButtons(int slice) {
+        	PlugInSelectableVOI temp;
+        	for(int i=0; i<mirrorCheckArr.length; i++) {
+        		for(int j=0; j<mirrorCheckArr[i].length; j++) {
+	        		if((temp = voiBuffer.get(mirrorButtonArr[i][j].getText())).getCurves()[slice].size() == 0) {
+		        		mirrorCheckArr[i][j].setColor(Color.black);
+		        		mirrorCheckArr[i][j].getColorButton().colorChanged(Color.black);
+	        		} else {
+	        			mirrorCheckArr[i][j].setColor(temp.getColor());
+		        		mirrorCheckArr[i][j].getColorButton().colorChanged(temp.getColor());
+	        		}
+        		}	
+        	}
+        	for(int i=0; i<noMirrorCheckArr.length; i++) {
+        		for(int j=0; j<noMirrorCheckArr[i].length; j++) {
+	        		if((temp = voiBuffer.get(noMirrorButtonArr[i][j].getText())).getCurves()[slice].size() == 0) {
+		        		noMirrorCheckArr[i][j].setColor(Color.black);
+		        		noMirrorCheckArr[i][j].getColorButton().colorChanged(Color.black);
+	        		} else {
+	        			noMirrorCheckArr[i][j].setColor(temp.getColor());
+		        		noMirrorCheckArr[i][j].getColorButton().colorChanged(temp.getColor());
+	        		}	
+        		}
+        	}
+        }*/
 		
 		private String[] populateTotalList() {
 			int totalSize = 0;
