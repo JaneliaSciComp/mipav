@@ -175,7 +175,7 @@ public class JDialogWatershed extends JDialogScriptableBase implements Algorithm
     // ************************************************************************
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithm when it
-     * has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
+     * has completed or failed to to complete, so that the dialog can display the result image and/or clean up.
      *
      * @param  algorithm  Algorithm that caused the event.
      */
