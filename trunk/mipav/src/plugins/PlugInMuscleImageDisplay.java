@@ -105,6 +105,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     private PlugInAlgorithmCTThigh thighSeg;
     
+    private PlugInAlgorithmCTAbdomen abdomenSeg;
+    
     private TreeMap<String, Boolean> calcTree;
         
     public enum ImageType{
@@ -385,20 +387,20 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     		if(voiBuffer.get("Left Marrow").area() == 0 && voiBuffer.get("Right Marrow").area() == 0) {
 		    	ModelImage resultImage2 = (ModelImage)srcImage.clone();
 		    	marrowSeg = new PlugInAlgorithmCTMarrow(resultImage2, srcImage, imageDir, voiBuffer.get("Left Marrow").getColor());
-		    	//while(!boneSeg.reachedCheckPoint()) {
-		    	//    
-		    	//}
-		    	//if(boneSeg.reachedCheckPoint() && boneSeg.boneOK()) {   	
-		    	//    marrowSeg.setCM(boneSeg.getX1CMs(), boneSeg.getX2CMs(), boneSeg.getY1CMs(), boneSeg.getY2CMs());
-		    	    performSegmentation(marrowSeg, resultImage2);
-		    	    
-		    	//}
+		    	performSegmentation(marrowSeg, resultImage2);
     		}
 	    	
     		if(voiBuffer.get("Left Thigh").area() == 0 && voiBuffer.get("Right Thigh").area() == 0) {
 		    	ModelImage resultImage3 = (ModelImage)srcImage.clone();
 		    	thighSeg = new PlugInAlgorithmCTThigh(resultImage3, srcImage, imageDir, voiBuffer.get("Left Thigh").getColor());
 		    	performSegmentation(thighSeg, resultImage3);
+    		}
+    	} else if(imageType.equals(ImageType.Abdomen)) {
+    		ModelImage srcImage = (ModelImage)getActiveImage().clone();
+    		if(voiBuffer.get("Abdomen").area() == 0) {
+    			ModelImage resultImage = (ModelImage)srcImage.clone();
+    			abdomenSeg = new PlugInAlgorithmCTAbdomen(resultImage, srcImage, imageDir, voiBuffer.get("Abdomen").getColor());
+    			performSegmentation(abdomenSeg, resultImage);
     		}
     	}
     }
@@ -504,6 +506,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				firstBufferVOI.setComputerGenerated(true);
 				secondBufferVOI.setComputerGenerated(true);
 			}
+		} else if(algorithm instanceof PlugInAlgorithmCTAbdomen) {
+			System.out.println("Abdomen alg completed");
 		}
 
         if (algorithm != null) {
@@ -2287,8 +2291,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        this.mirrorArr = getCalcItems(mirrorArr);
 	        
 	        checkBoxLocationTree = new TreeMap();
-	        
-	        populateTotalList();
+
 	        colorChoice = 0;
 	        
 	        initDialog();
@@ -2333,38 +2336,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 						noMirrorButtonArr[index][i].setForeground(Color.RED);
 				}
 			}
-		}
-		
-		private String[] populateTotalList() {
-			int totalSize = 0;
-    		for(int i=0; i<mirrorArr.length; i++) 
-    			totalSize += mirrorArr[i].length*2;
-    		for(int i=0; i<noMirrorArr.length; i++) 
-    			totalSize += noMirrorArr[i].length;
-    		String[] totalList = new String[totalSize];
-    		int index = 0;
-    		for(int i=0; i<mirrorArr.length; i++) {
-    			for(int j=0; j<mirrorArr[i].length * 2; j++, index++) {
-    				String symmetry1 = "", symmetry2 = "";
-    				if(symmetry.equals(Symmetry.LEFT_RIGHT)) {
-    					symmetry1 = "Left ";
-    					symmetry2 = "Right ";
-    				} else if(symmetry.equals(Symmetry.TOP_BOTTOM)) {
-    					symmetry1 = "Top ";
-    					symmetry2 = "Bottom ";
-    				}
-	            
-    				totalList[index] = (j % 2) == 0 ? new String(symmetry1+mirrorArr[i][j/2]+".xml") : 
-    													new String(symmetry2+mirrorArr[i][j/2]+".xml");
-    			}
-    		}
-    		for(int i=0; i<noMirrorArr.length; i++) {
-    			for(int j=0; j<noMirrorArr[i].length; j++, index++) {
-    				totalList[index] = noMirrorArr[i][j]+".xml";
-    			}
-    		}
-    		
-	        return totalList;  
 		}
 		
 		/**
