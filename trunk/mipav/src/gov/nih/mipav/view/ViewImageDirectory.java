@@ -1,6 +1,7 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubsample;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -141,6 +142,39 @@ public class ViewImageDirectory extends JFrame
 
     /** DOCUMENT ME! */
     private JCheckBoxMenuItem thumbnailOption;
+    
+    
+    
+    
+    
+    /*
+     * These next fields that were associated with adding ability to subsample/force UBYTE 
+     * when opening images and the code in places further down have been commented out becasue
+     * we currently do not have the ability to read 3d volumes on a slice by slice basis that 
+     * would then be subsampled.
+     * 
+     * we can address this at a later time
+     * 
+     * nish
+     * 6/17/2008
+     * 
+     */
+    /** DOCUMENT ME! */
+    //protected JCheckBox enableCheckbox;
+    
+    /** DOCUMENT ME! */
+    //protected static final String ENABLE = "Enable";
+    
+    /** DOCUMENT ME! */
+    //protected JTextField txtHeight;
+
+    /** DOCUMENT ME! */
+    //protected JTextField txtWidth;
+    
+    /** DOCUMENT ME! */
+    //protected JCheckBox chkForceUBYTE;
+
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -222,7 +256,11 @@ public class ViewImageDirectory extends JFrame
                 buildSourceTreeListing(false);
                 validate();
             }
-        } else if (command.equals("Refresh")) {
+        } /*else if (command.equals(ENABLE)) {
+            txtHeight.setEnabled(enableCheckbox.isSelected());
+            txtWidth.setEnabled(enableCheckbox.isSelected());
+            chkForceUBYTE.setEnabled(enableCheckbox.isSelected());
+        }*/else if (command.equals("Refresh")) {
             treePanel.removeAll();
             buildSourceTreeListing(false);
             validate();
@@ -254,8 +292,24 @@ public class ViewImageDirectory extends JFrame
             double[] buffer;
             TreePath[] selected = directoryTree.getSelectionPaths();
             FileIO io = new FileIO();
+            //Dimension subsampleDimension = null;
+            boolean forceUBYTE = false;
 
             // progressPanel.getProgressBar().setBackground(Color.DARK_GRAY);
+            /*
+            if (enableCheckbox.isSelected() && (subsamplingSanityCheck() == false)) {
+                MipavUtil.displayError("Subsampling dimensions are invalid.");
+
+                return;
+            }
+
+            if (enableCheckbox.isSelected()) {
+                subsampleDimension = new Dimension(Integer.parseInt(txtWidth.getText()),
+                                                   Integer.parseInt(txtHeight.getText()));
+                forceUBYTE = chkForceUBYTE.isSelected();
+            }
+            
+            */
 
             if (command.equals("OpenToSingle")) {
                 openSeparateOption.setSelected(false);
@@ -285,7 +339,20 @@ public class ViewImageDirectory extends JFrame
                 if (image == null) {
                     return;
                 }
-
+                
+                /*
+                if(image.getNDims() == 2) {
+                	if(subsampleDimension != null) {
+                        image = FileIO.subsample(image, subsampleDimension);
+                	}
+                	if(forceUBYTE) {
+                		if(!image.isColorImage() && image.getType() != ModelStorageBase.UBYTE) {
+                			image = FileIO.convertToUBYTE(image);
+                		}
+                	}
+                }
+				*/
+                
                 new ViewJFrameImage(image, io.getModelLUT());
                 // progressPanel.getProgressBar().setBorderPainted(false);
                 // progressPanel.getProgressBar().setBackground(this.getBackground());
@@ -405,7 +472,18 @@ public class ViewImageDirectory extends JFrame
                         // if are no matching images (numMatches == 1), open it
                         if (numMatches == 1) {
                             table.remove(matchingImageNames.elementAt(0));
-
+                            /*
+                            if(newImage.getNDims() == 2) {
+                            	if(subsampleDimension != null) {
+                            		newImage = FileIO.subsample(newImage, subsampleDimension);
+                            	}
+                            	if(forceUBYTE) {
+                            		if(!newImage.isColorImage() && newImage.getType() != ModelStorageBase.UBYTE) {
+                            			newImage = FileIO.convertToUBYTE(newImage);
+                            		}
+                            	}
+                            }
+							*/
                             // put the image (only 1) into a new frame
                             new ViewJFrameImage(newImage);
                             matchingImageNames.removeAllElements();
@@ -415,7 +493,18 @@ public class ViewImageDirectory extends JFrame
 
                             for (i = 0; i < matchingImageNames.size(); i++) {
                                 ModelImage image = (ModelImage) table.remove(matchingImageNames.elementAt(i));
-
+                                /*
+                                if(image.getNDims() == 2) {
+                                	if(subsampleDimension != null) {
+                                		image = FileIO.subsample(image, subsampleDimension);
+                                	}
+                                	if(forceUBYTE) {
+                                		if(!image.isColorImage() && image.getType() != ModelStorageBase.UBYTE) {
+                                			image = FileIO.convertToUBYTE(image);
+                                		}
+                                	}
+                                }
+								*/
                                 new ViewJFrameImage(image);
                             }
                         } else { // otherwise concatenate images into a
@@ -453,7 +542,19 @@ public class ViewImageDirectory extends JFrame
                             for (i = 0; i < matchingImageNames.size(); i++) {
 
                                 newImage = (ModelImage) table.remove(matchingImageNames.elementAt(i));
-
+                                /*
+                                if(newImage.getNDims() == 2) {
+                                	if(subsampleDimension != null) {
+                                		newImage = FileIO.subsample(newImage, subsampleDimension);
+                                	}
+                                	if(forceUBYTE) {
+                                		if(!newImage.isColorImage() && newImage.getType() != ModelStorageBase.UBYTE) {
+                                			newImage = FileIO.convertToUBYTE(newImage);
+                                		}
+                                	}
+                                	
+                                }
+								*/
                                 try {
                                     newImage.exportData(0, bufferLength, buffer);
                                 } catch (IOException error) {
@@ -463,6 +564,8 @@ public class ViewImageDirectory extends JFrame
 
                                     return;
                                 }
+                                
+                                
 
                                 try {
                                     concatImage.importData(i * bufferLength, buffer, false);
@@ -824,7 +927,7 @@ public class ViewImageDirectory extends JFrame
         JScrollPane treeScroll = new JScrollPane(directoryTree);
 
         treePanel.add(treeScroll, BorderLayout.CENTER);
-        treePanel.setPreferredSize(new Dimension(200, 350));
+        treePanel.setPreferredSize(new Dimension(200, 450));
         directoryTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
         directoryTree.addTreeSelectionListener(this);
         directoryTree.addTreeExpansionListener(this);
@@ -1095,6 +1198,10 @@ public class ViewImageDirectory extends JFrame
 
         gbc2.gridy = 2;
         centerPanel.add(sliderPanel, gbc2);
+        
+        
+        //gbc2.gridy = 4;
+        //centerPanel.add(buildSubsamplePanel(), gbc2);
 
         gbc2.gridheight = 1;
         gbc2.gridy = 4;
@@ -1109,9 +1216,9 @@ public class ViewImageDirectory extends JFrame
         brightPanel = new JPanel(new BorderLayout());
         brightPanel.add(centerPanel);
         brightPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        brightPanel.setPreferredSize(new Dimension(120, 90));
+        brightPanel.setPreferredSize(new Dimension(190, 100));
 
-        brightPanel.setMinimumSize(new Dimension(120, 90));
+        brightPanel.setMinimumSize(new Dimension(190, 100));
 
     }
 
@@ -1266,6 +1373,83 @@ public class ViewImageDirectory extends JFrame
         menuBar.add(menu);
         setJMenuBar(menuBar);
     }
+    
+    
+    /*
+    protected JPanel buildSubsamplePanel() {
+        GridBagLayout gbLayout = new GridBagLayout();
+        GridBagConstraints gbConstraints = new GridBagConstraints();
+
+        JPanel subsamplePanel = new JPanel(gbLayout);
+        subsamplePanel.setBorder(new TitledBorder(BorderFactory.createEtchedBorder(), "Subsampling"));
+
+        gbConstraints.gridx = 1;
+        gbConstraints.anchor = GridBagConstraints.WEST;
+        enableCheckbox = new JCheckBox(ENABLE);
+        enableCheckbox.addActionListener(this);
+        enableCheckbox.setActionCommand(ENABLE);
+        gbLayout.setConstraints(enableCheckbox, gbConstraints);
+        subsamplePanel.add(enableCheckbox);
+
+        gbConstraints.gridx = 0;
+        gbConstraints.gridy = 1;
+        gbConstraints.anchor = GridBagConstraints.EAST;
+
+        JLabel lblWidth = new JLabel("Width: ");
+        gbLayout.setConstraints(lblWidth, gbConstraints);
+        subsamplePanel.add(lblWidth);
+
+        gbConstraints.gridx = 1;
+        gbConstraints.anchor = GridBagConstraints.WEST;
+        txtWidth = new JTextField(5);
+        txtWidth.setEnabled(enableCheckbox.isSelected());
+        gbLayout.setConstraints(txtWidth, gbConstraints);
+        subsamplePanel.add(txtWidth);
+
+        gbConstraints.gridx = 0;
+        gbConstraints.gridy = 2;
+        gbConstraints.anchor = GridBagConstraints.EAST;
+
+        JLabel lblHeight = new JLabel("Height: ");
+        gbLayout.setConstraints(lblHeight, gbConstraints);
+        subsamplePanel.add(lblHeight);
+
+        gbConstraints.gridx = 1;
+        gbConstraints.anchor = GridBagConstraints.WEST;
+        txtHeight = new JTextField(5);
+        txtHeight.setEnabled(enableCheckbox.isSelected());
+        gbLayout.setConstraints(txtHeight, gbConstraints);
+        subsamplePanel.add(txtHeight);
+
+        gbConstraints.gridy++;
+        chkForceUBYTE = new JCheckBox("Force 8-bit");
+        chkForceUBYTE.setToolTipText("Force result images to use 8-bit channels");
+        chkForceUBYTE.setEnabled(enableCheckbox.isSelected());
+        gbLayout.setConstraints(chkForceUBYTE, gbConstraints);
+        subsamplePanel.add(chkForceUBYTE);
+
+        return subsamplePanel;
+    }
+    
+    
+    
+
+    protected boolean subsamplingSanityCheck() {
+
+        try {
+            int height = Integer.parseInt(txtHeight.getText());
+            int width = Integer.parseInt(txtWidth.getText());
+
+            if ((height < 1) || (width < 1)) {
+                return false;
+            }
+
+            return true;
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
+    }
+    */
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
