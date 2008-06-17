@@ -216,29 +216,35 @@ public class FileIO {
     public static final ModelImage convertToUBYTE(ModelImage modelImageResult) {
         float min = (float) modelImageResult.getMin();
         float max = (float) modelImageResult.getMax();
-
         float[] oneSliceBuffer = new float[modelImageResult.getExtents()[0] * modelImageResult.getExtents()[1]];
 
         ModelImage modelImageResultUB = new ModelImage(ModelStorageBase.UBYTE, modelImageResult.getExtents(),
                 modelImageResult.getImageName());
 
         try {
-
-            for (int i = 0; i < modelImageResult.getExtents()[2]; i++) // loop through images
-            {
-                modelImageResult.exportData(i * oneSliceBuffer.length, oneSliceBuffer.length, oneSliceBuffer); // export
-                // a 2d
-                // buffer
-                // from
-                // modelImageResult
-
-                oneSliceBuffer = resample255(oneSliceBuffer, min, max);
-
-                modelImageResultUB.importData(i * oneSliceBuffer.length, oneSliceBuffer, false); // import into
-                // modelImageResultUB
-
-                FileIO.copyResolutions(modelImageResult, modelImageResultUB, i);
-            }
+        	if(modelImageResult.getNDims() > 2) {
+	            for (int i = 0; i < modelImageResult.getExtents()[2]; i++) // loop through images
+	            {
+	                modelImageResult.exportData(i * oneSliceBuffer.length, oneSliceBuffer.length, oneSliceBuffer); // export
+	                // a 2d
+	                // buffer
+	                // from
+	                // modelImageResult
+	
+	                oneSliceBuffer = resample255(oneSliceBuffer, min, max);
+	
+	                modelImageResultUB.importData(i * oneSliceBuffer.length, oneSliceBuffer, false); // import into
+	                // modelImageResultUB
+	
+	                FileIO.copyResolutions(modelImageResult, modelImageResultUB, i);
+	            }
+        	}else {
+        		//2d image
+        		modelImageResult.exportData(0, oneSliceBuffer.length, oneSliceBuffer);
+        		oneSliceBuffer = resample255(oneSliceBuffer, min, max);
+        		modelImageResultUB.importData(0, oneSliceBuffer, false);
+        		FileIO.copyResolutions(modelImageResult, modelImageResultUB, 0);
+        	}
 
             modelImageResultUB.calcMinMax();
         } catch (Exception e) {
@@ -260,7 +266,7 @@ public class FileIO {
      * 
      * @return ModelImage - the subsampled image
      */
-    private static final ModelImage subsample(ModelImage modelImage, Dimension subsampleDimension) {
+    public static final ModelImage subsample(ModelImage modelImage, Dimension subsampleDimension) {
         int[] subsampledExtents = new int[] {subsampleDimension.getSize().width, subsampleDimension.getSize().height};
         // SubSample dialog now allows users to pad image so that extents are divisible by the subsampling scalar.
         int[] padExtents = modelImage.getExtents();
