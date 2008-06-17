@@ -14,6 +14,7 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.awt.Color;
+import java.io.File;
 import java.io.IOException;
 import java.util.BitSet;
 
@@ -70,7 +71,7 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
     public PlugInAlgorithmCTBone(ModelImage resultImage, ModelImage srcImg, String imageDir, Color color) {
         super(resultImage, srcImg);
         
-        this.imageDir = imageDir+"\\";
+        this.imageDir = imageDir+File.separator;
         this.voiColor = color;
         
         leftBoneVOI = null;

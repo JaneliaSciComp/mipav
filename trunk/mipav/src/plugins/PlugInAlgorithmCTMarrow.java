@@ -18,6 +18,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.io.File;
 import java.io.IOException;
 import java.util.BitSet;
 
@@ -73,7 +74,7 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
     public PlugInAlgorithmCTMarrow(ModelImage resultImage, ModelImage srcImg, String imageDir, Color color) {
         super(resultImage, srcImg);
         
-        this.imageDir = imageDir+"\\";
+        this.imageDir = imageDir+File.separator;
         this.voiColor = color;
         
         leftMarrowVOI = null;

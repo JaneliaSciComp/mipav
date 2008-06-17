@@ -18,6 +18,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -70,7 +71,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase {
     public PlugInAlgorithmCTAbdomen(ModelImage resultImage, ModelImage srcImg, String imageDir, Color color) {
         super(resultImage, srcImg);
         
-        this.imageDir = imageDir+"\\";
+        this.imageDir = imageDir+File.separator;
         this.voiColor = color;
         
         abdomenVOI = null;
@@ -562,7 +563,9 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase {
 
    } // regionGrowMuscle(...)
    
-   
+   public VOI getAbdomenVOI() {
+	   return abdomenVOI;
+   }
    
    public ModelImage threshold(ModelImage threshSourceImg, float[] thresh) {
         ModelImage resultImage = null;
