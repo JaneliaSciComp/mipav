@@ -2245,8 +2245,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		 * Text for muscles where a mirror muscle may exist. 
 		 */
 		private String[][] mirrorArr;
-		
-		private String[] totalList;
 
 		/**
 		 * Text for muscles where mirror muscles are not considered. 
@@ -2262,8 +2260,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		private JButton[][] noMirrorButtonArr;
 		
 		private int colorChoice = 0;
-		
-		//private MuscleCalculation muscleCalc = new MuscleCalculation();
 		
 		private CustomOutput ucsdOutput = new CustomOutput();
 
@@ -2292,7 +2288,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        
 	        checkBoxLocationTree = new TreeMap();
 	        
-	        totalList = populateTotalList();
+	        populateTotalList();
 	        colorChoice = 0;
 	        
 	        initDialog();
@@ -2338,32 +2334,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				}
 			}
 		}
-		
-		/*public void clearButtons(int slice) {
-        	PlugInSelectableVOI temp;
-        	for(int i=0; i<mirrorCheckArr.length; i++) {
-        		for(int j=0; j<mirrorCheckArr[i].length; j++) {
-	        		if((temp = voiBuffer.get(mirrorButtonArr[i][j].getText())).getCurves()[slice].size() == 0) {
-		        		mirrorCheckArr[i][j].setColor(Color.black);
-		        		mirrorCheckArr[i][j].getColorButton().colorChanged(Color.black);
-	        		} else {
-	        			mirrorCheckArr[i][j].setColor(temp.getColor());
-		        		mirrorCheckArr[i][j].getColorButton().colorChanged(temp.getColor());
-	        		}
-        		}	
-        	}
-        	for(int i=0; i<noMirrorCheckArr.length; i++) {
-        		for(int j=0; j<noMirrorCheckArr[i].length; j++) {
-	        		if((temp = voiBuffer.get(noMirrorButtonArr[i][j].getText())).getCurves()[slice].size() == 0) {
-		        		noMirrorCheckArr[i][j].setColor(Color.black);
-		        		noMirrorCheckArr[i][j].getColorButton().colorChanged(Color.black);
-	        		} else {
-	        			noMirrorCheckArr[i][j].setColor(temp.getColor());
-		        		noMirrorCheckArr[i][j].getColorButton().colorChanged(temp.getColor());
-	        		}	
-        		}
-        	}
-        }*/
 		
 		private String[] populateTotalList() {
 			int totalSize = 0;
@@ -2939,16 +2909,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					Date date = new Date();
 					DecimalFormat dec = new DecimalFormat("0.0000");
 					//patient id
-					String id = ((String)fileInfo.getTagTable().getValue("0010,0020")).trim();
-					sliceStr[i] += (id.length() > 0 ? id : "0")+"\t";
+					String id = (String)fileInfo.getTagTable().getValue("0010,0020");
+					sliceStr[i] += id != null ? id.trim() : "0"+"\t";
 					//slice number
 					sliceStr[i] += Integer.toString(i)+"\t";
 					//scan date
-					String dateStr = ((String)fileInfo.getTagTable().getValue("0008,0020")).trim();
-					sliceStr[i] += (dateStr.length() > 0 ? dateStr : "0")+"\t";
+					String dateStr = (String)fileInfo.getTagTable().getValue("0008,0020");
+					sliceStr[i] += dateStr != null ? dateStr.trim() : "0"+"\t";
 					//center
-					String center = ((String)fileInfo.getTagTable().getValue("0008,0080")).trim();
-					sliceStr[i] += (center.length() > 0 ? center : "0")+"\t";
+					String center = (String)fileInfo.getTagTable().getValue("0008,0080");
+					sliceStr[i] += center != null ? center.trim() : "0"+"\t";
 					//analysis date
 					sliceStr[i] += dateFormat.format(date)+"\t";
 					//analyst
@@ -2958,8 +2928,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					//slice thickness (mm)
 					sliceStr[i] += dec.format(getActiveImage().getFileInfo()[getViewableSlice()].getSliceThickness())+"\t";
 					//table height (cm)
-					String height = dec.format(Double.valueOf((String)fileInfo.getTagTable().getValue("0018,1130")));
-					sliceStr[i] += (height.length() > 0 ? height : "0")+"\t";
+					String heightUnformat = (String)fileInfo.getTagTable().getValue("0018,1130");
+					String height = heightUnformat != null ? dec.format(Double.valueOf(heightUnformat.trim())) : "0";
+					sliceStr[i] += height+"\t";
 					
 					//insertCalculations
 					PlugInSelectableVOI temp = null;
@@ -3769,19 +3740,19 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			mct2.addElement(new Paragraph("Name:", fontBold));
 			mct2.addElement(new Paragraph(getActiveImage().getFileInfo()[getViewableSlice()].getFileName(), fontNormal));
 			mct2.addElement(new Paragraph("Center:", fontBold));
-			String center = ((String)fileInfo.getTagTable().getValue("0008,0080")).trim();
-			mct2.addElement(new Paragraph((center.length() > 0 ? center : "      "), fontNormal));
+			String center = (String)fileInfo.getTagTable().getValue("0008,0080");
+			mct2.addElement(new Paragraph((center != null ? center.trim() : "Unknown"), fontNormal));
 			pdfDocument.add(mct2);
 			
 			MultiColumnText mct3 = new MultiColumnText(20);
 			mct3.setAlignment(Element.ALIGN_LEFT);
 			mct3.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
 			mct3.addElement(new Paragraph("Patient ID:", fontBold));
-			String id = ((String)fileInfo.getTagTable().getValue("0010,0020")).trim();
-			mct3.addElement(new Paragraph((id.length() > 0 ? id : "      "), fontNormal));
+			String id = (String)fileInfo.getTagTable().getValue("0010,0020");
+			mct3.addElement(new Paragraph((id != null ? id.trim() : "Removed"), fontNormal));
 			mct3.addElement(new Paragraph("Scan Date:", fontBold));
-			String scanDate = ((String)fileInfo.getTagTable().getValue("0008,0020")).trim();
-			mct3.addElement(new Paragraph((scanDate.length() > 0 ? scanDate : "      "), fontNormal));
+			String scanDate = (String)fileInfo.getTagTable().getValue("0008,0020");
+			mct3.addElement(new Paragraph((scanDate != null ? scanDate.trim() : "Unknown"), fontNormal));
 			pdfDocument.add(mct3);
 			
 			//add the scanning parameters table
@@ -3799,8 +3770,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			spTable.addCell("Slice Thickness: (mm)");
 			spTable.addCell(Float.toString(getActiveImage().getFileInfo()[getViewableSlice()].getSliceThickness()));
 			spTable.addCell("Table Height: (cm)");
-			String height = ((String)fileInfo.getTagTable().getValue("0018,1130")).trim();
-			spTable.addCell((height.length() > 0 ? height : "      "));
+			String height = (String)fileInfo.getTagTable().getValue("0018,1130");
+			spTable.addCell((height != null ? height.trim() : "Unknown"));
 			
 			
 			
@@ -3859,7 +3830,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				name = name.substring(0, name.length() - 4);
 			}
 			if(name == null) {
-			    name = new String("Temp name.");
+			    name = new String("Removed");
 			    System.out.println("Unexpected null encountered");
 			}
 			System.out.println("To test: "+name);
