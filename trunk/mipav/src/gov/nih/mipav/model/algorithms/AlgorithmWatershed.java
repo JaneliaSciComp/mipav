@@ -216,6 +216,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
                     }
 
                     energyImage = null;
+                    gradMagAlgo.finalize();
                     gradMagAlgo = null;
                     System.gc();
 
@@ -296,6 +297,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
                 return;
             }
 
+            gradMagAlgo.finalize();
             gradMagAlgo = null;
         }
 
@@ -779,7 +781,7 @@ Found:
         int nVOI;
         int i, j, k, slice;
         int length;
-        AlgorithmGradientMagnitudeSep gradMagAlgo;
+        AlgorithmGradientMagnitudeSep gradMagAlgo = null;
         ViewVOIVector VOIs;
         int xDim, yDim, zDim;
         Vector[] contours;
@@ -821,6 +823,7 @@ Found:
                 if (gradMagAlgo.isCompleted() == false) {
                     setCompleted(false);
                     energyImage.disposeLocal();
+                    gradMagAlgo.finalize();
                     gradMagAlgo = null;
                     System.gc();
 
@@ -925,7 +928,10 @@ Found:
                 }
 
                 energyImage = null;
-                gradMagAlgo = null;
+                if (gradMagAlgo != null) {
+                    gradMagAlgo.finalize();
+                    gradMagAlgo = null;
+                }
                 System.gc();
                 displayError("Watershed: unable to allocate enough memory");
                 setCompleted(false);
@@ -933,6 +939,7 @@ Found:
                 return;
             }
 
+            gradMagAlgo.finalize();
             gradMagAlgo = null;
         }
 
