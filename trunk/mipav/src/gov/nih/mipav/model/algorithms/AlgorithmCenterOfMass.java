@@ -32,6 +32,15 @@ public class AlgorithmCenterOfMass extends AlgorithmBase {
     
     /** If true, allow data window output */
     private boolean allowDataWindow = true;
+    
+    /** x coordinate for center of mass, normalized by image resolution*/
+    private double xCOM;
+    
+    /** y coordinate for center of mass, normalized by image resolution*/
+    private double yCOM;
+    
+    /** z coordinate for center of mass, normalized by image resolution, if srcImage is 2D = 0*/
+    private double zCOM;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -48,7 +57,10 @@ public class AlgorithmCenterOfMass extends AlgorithmBase {
 
         this.threshold = threshold;
         entireImage = maskFlag;
-
+        xCOM = 0.0;
+        yCOM = 0.0;
+        zCOM = 0.0;
+        
         if (entireImage == false) {
             mask = srcImage.generateVOIMask();
         }
@@ -104,8 +116,6 @@ public class AlgorithmCenterOfMass extends AlgorithmBase {
         double xMass = 0.0;
         double yMass = 0.0;
         double valTot = 0.0;
-        double xCOM;
-        double yCOM;
         String comStr;
         DecimalFormat nf;
         ViewUserInterface UI = ViewUserInterface.getReference();
@@ -195,9 +205,6 @@ public class AlgorithmCenterOfMass extends AlgorithmBase {
         double yMass = 0.0;
         double zMass = 0.0;
         double valTot = 0.0;
-        double xCOM;
-        double yCOM;
-        double zCOM;
         String comStr;
         DecimalFormat nf;
         ViewUserInterface UI = ViewUserInterface.getReference();
@@ -271,6 +278,26 @@ public class AlgorithmCenterOfMass extends AlgorithmBase {
 
         setCompleted(true);
 
+    }
+    
+    /**
+     * Returns the computed center of mass.  
+     * If algorithm is not completed: returns null.  
+     * If 2D: returns {xCenter, yCenter, 0}
+     * If 3D: returns {xCenter, yCenter, zCenter}
+     */
+    public double[] getCenterOfMass() {
+    	if(!isCompleted())
+    		return null;
+    	double[] center = new double[3];
+    	center[0] = xCOM;
+    	center[1] = yCOM;
+    	if(srcImage.getNDims() == 2)
+    		center[2] = 0.0;
+    	else if(srcImage.getNDims() == 3)
+    		center[2] = zCOM;
+    	//else isCompleted() will be false
+    	return center;
     }
 
     
