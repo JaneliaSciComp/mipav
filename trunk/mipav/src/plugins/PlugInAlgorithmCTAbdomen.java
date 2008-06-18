@@ -176,7 +176,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      */
     private void segmentImage() {
         long time = System.currentTimeMillis();
-        boolean doVOI = false, completeVOI = false;
+        boolean doVOI = true, completeVOI = false;
         // compute the bone label image
 
         time = System.currentTimeMillis();
@@ -185,6 +185,8 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         	doVOI = segmentAbdomenTissue(center);
         System.out.println("Abdomen tissue segmentation: "+(System.currentTimeMillis() - time));
 
+        ShowImage(destImage, "Segmented Image");
+        
         time = System.currentTimeMillis();
         if(doVOI)
         	completeVOI = makeAbdomenTissueVOI();
@@ -493,7 +495,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     	boolean included = false, foundLeft = false, foundRight = false;
     	
     	//iterate over all clear bits from firstSet to lastSet
-    	for(int i=abdomenSet.nextClearBit(firstSet); i>=0 && i<lastSet; i=abdomenSet.nextClearBit(i+1)) {
+    	for(int i=abdomenSet.nextClearBit(firstSet); i>=0 || i<lastSet; i=abdomenSet.nextClearBit(i+1)) {
     		clearBit = i;
     		included = false;
     		foundLeft = false;
@@ -546,13 +548,13 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         BitSet abdomenSet = new BitSet();
         regionGrowAbdomen((short)center[0], (short)center[1], (short)center[2], abdomenSet);
         
-        volumeBitSet = expandAbdomen(abdomenSet);
+        volumeBitSet = abdomenSet;//expandAbdomen(abdomenSet);
         
         // make the abdomenTissue label image slice by slice from the 3D region grown BitSet
         // bitSetIdx is a cumulative index into the 3D BitSet
         for (int bitSetIdx = 0, sliceNum = 0; sliceNum < zDim; sliceNum++) {
             for (int sliceIdx = 0; sliceIdx < sliceSize; sliceIdx++, bitSetIdx++) {
-                if (abdomenSet.get(bitSetIdx)) {
+                if (volumeBitSet.get(bitSetIdx)) {
                     sliceBuffer[sliceIdx] = abdomenTissueLabel;
                 } else {
                     sliceBuffer[sliceIdx] = 0;
@@ -561,7 +563,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             
             // save the sliceBuffer into the boneMarrowImage
             try {
-                srcImage.importData(sliceNum * sliceSize, sliceBuffer, false);
+                destImage.importData(sliceNum * sliceSize, sliceBuffer, false);
             } catch (IOException ex) {
                 System.err.println("segmentThighTissue(): Error importing data");
             }
