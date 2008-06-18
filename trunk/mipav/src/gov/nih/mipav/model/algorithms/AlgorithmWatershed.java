@@ -500,17 +500,13 @@ Found:
         gmMin = (float) energyImage.getMin();
         gmMax = (float) energyImage.getMax();
 
-        int queueSize = 4000;
+        int queueSize;
         float eRange = gmMax - gmMin;
 
-        if (eRange < 4000) {
+        if (eRange <= 4000) {
             queueSize = 4000;
-        } else if (eRange > 4000) {
-            queueSize = (int) (2 * eRange);
-
-            if (queueSize > 6000) {
-                queueSize = 6000;
-            }
+        } else {
+            queueSize = 6000;
         }
 
         int[] energyHisto;
@@ -1164,17 +1160,13 @@ Found:
         int pixC, pixN, pixS, pixE, pixW, pixU, pixD;
         int imageSize;
 
-        int queueSize = 4000;
+        int queueSize;
         float eRange = gmMax - gmMin;
 
-        if (eRange < 4000) {
+        if (eRange <= 4000) {
             queueSize = 4000;
         } else if (eRange > 4000) {
-            queueSize = (int) (2 * eRange);
-
-            if (queueSize > 6000) {
-                queueSize = 6000;
-            }
+            queueSize = 6000;
         }
 
         int[] energyHisto;
