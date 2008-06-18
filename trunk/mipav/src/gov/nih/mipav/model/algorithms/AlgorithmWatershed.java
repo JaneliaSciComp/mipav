@@ -180,7 +180,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
      */
     private void calc2D() {
         int nVOI;
-        int i, c;
+        int i, j, c;
         int xDim, yDim;
         int length;
         ViewVOIVector VOIs;
@@ -188,6 +188,16 @@ public class AlgorithmWatershed extends AlgorithmBase {
         AlgorithmGradientMagnitudeSep gradMagAlgo;
         int x, y;
         float[] xB = null, yB = null, zB = null;
+        // The dimensions of the Gaussian kernel used in AlgorithmGradientMagSep
+        int kExtents[];
+        int startX;
+        int endX;
+        int startY;
+        int endY;
+        
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        length = xDim * yDim;
 
         // Calculate the gradient magnitude if energyImage is null.
         if (energyImage == null) {
@@ -222,16 +232,43 @@ public class AlgorithmWatershed extends AlgorithmBase {
                 length = energyImage.getSize();
 
                 float max = (float) energyImage.getMax();
-                //System.out.println(energyImage);
-
-                // All points that are set to -1 are positions on the edge of the
-                // image where the gradient magnitude could not be calculated and
-                // should be set to the highest value for the watershed to work best
-                for (i = 0; i < length; i++) {
-                    if (energyImage.getFloat(i) == -1) {
+                // All points on the edge of the image where the gradient magnitude
+                // could not be calculated should be set to the highest value for
+                // the watershed to work best
+                kExtents = gradMagAlgo.getKExtents();
+                startX = kExtents[0]/2;
+                endX = xDim - kExtents[0]+ kExtents[0]/2 + 1;
+                startY = kExtents[1]/2;
+                endY = yDim - kExtents[1]+ kExtents[1]/2 + 1;
+                for (y = 0; y < startY; y++) {
+                    j = y*xDim;
+                    for (x = 0; x < xDim; x++) {
+                        i = j + x;
                         energyImage.set(i, max);
                     }
                 }
+                
+                for (y = endY; y < yDim; y++) {
+                    j = y*xDim;
+                    for (x = 0; x < xDim; x++) {
+                        i = j + x;
+                        energyImage.set(i, max);
+                    }    
+                }
+                
+                for (y = 0; y < yDim; y++) {
+                    j = y*xDim;
+                    for (x = 0; x < startX; x++) {
+                        i = j + x;
+                        energyImage.set(i, max);
+                    }
+                    for (x = endX; x < xDim; x++) {
+                        i = j + x;
+                        energyImage.set(i, max);
+                    }
+                }
+                
+                //System.out.println(energyImage);
 
                 boolean wasRecording = ScriptRecorder.getReference().getRecorderStatus() == ScriptRecorder.RECORDING;
 
@@ -264,9 +301,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
 
         System.gc(); // Free memory resources
 
-        xDim = srcImage.getExtents()[0];
-        yDim = srcImage.getExtents()[1];
-        length = xDim * yDim;
+        
 
         float gradMagMin = (float) energyImage.getMin();
 
@@ -742,16 +777,32 @@ Found:
      */
     private void calc3D() {
         int nVOI;
-        int i, slice;
+        int i, j, k, slice;
         int length;
         AlgorithmGradientMagnitudeSep gradMagAlgo;
         ViewVOIVector VOIs;
         int xDim, yDim, zDim;
         Vector[] contours;
-        int x, y;
+        int x, y, z;
         short currentBasin = 0;
+        // The dimensions of the Gaussian kernel used in 3D calculations of AlgorithmGradientMagSep
+        // 2D calculations are performed on the end slices where the 3D kernel does not fit
+        int kExtents[];
+        int startX;
+        int endX;
+        int startY;
+        int endY;
+        int startZ;
+        int endZ;
+        int sliceSize;
 
         float[] xB = null, yB = null, zB = null;
+        
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        sliceSize = xDim * yDim;
+        zDim = srcImage.getExtents()[2];
+        length = sliceSize * zDim;
 
         // Calculate the gradient magnitude
         if (energyImage == null) {
@@ -787,14 +838,69 @@ Found:
                 length = energyImage.getSize();
 
                 float max = (float) energyImage.getMax();
-
-                // All points that are set to -1 are positions on the edge of the
-                // image where the gradient magnitude could not be calculated and
-                // should be set to the highest value for the watershed to work best
-                for (i = 0; i < length; i++) {
-
-                    if (energyImage.getFloat(i) == -1) {
-                        energyImage.set(i, max);
+                // All points on the edge of the image where the 3D gradient magnitude
+                // could not be calculated should be set to the highest value for
+                // the watershed to work best
+                kExtents = gradMagAlgo.getKExtents();
+                startX = kExtents[0]/2;
+                endX = xDim - kExtents[0] + kExtents[0]/2 + 1;
+                startY = kExtents[1]/2;
+                endY = yDim - kExtents[1] + kExtents[1]/2 + 1;
+                startZ = kExtents[2]/2;
+                endZ = zDim - kExtents[2] + kExtents[2]/2 + 1;
+                
+                for (z = 0; z < startZ; z++) {
+                    k = z * sliceSize;
+                    for (y = 0; y < yDim; y++) {
+                        j = k + y*xDim;
+                        for (x = 0; x < xDim; x++) {
+                            i = j + x;
+                            energyImage.set(i, max);
+                        }
+                    }
+                }
+                
+                for (z = endZ; z < zDim; z++) {
+                    k = z * sliceSize;
+                    for (y = 0; y < yDim; y++) {
+                        j = k + y*xDim;
+                        for (x = 0; x < xDim; x++) {
+                            i = j + x;
+                            energyImage.set(i, max);
+                        }
+                    }    
+                }
+                
+                for (z = 0; z < zDim; z++) {
+                    k = z * sliceSize;
+                    for (y = 0; y < startY; y++) {
+                        j = k + y*xDim;
+                        for (x = 0; x < xDim; x++) {
+                            i = j + x;
+                            energyImage.set(i, max);
+                        }
+                    }
+                    for (y = endY; y < yDim; y++) {
+                        j = k + y*xDim;
+                        for (x = 0; x < xDim; x++) {
+                            i = j + x;
+                            energyImage.set(i, max);
+                        }    
+                    }
+                }
+                
+                for (z = 0; z < zDim; z++) {
+                    k = z * sliceSize;
+                    for (y = 0; y < yDim; y++) {
+                        j = k + y*xDim;
+                        for (x = 0; x < startX; x++) {
+                            i = j + x;
+                            energyImage.set(i, max);
+                        }
+                        for (x = endX; x < xDim; x++) {
+                            i = j + x;
+                            energyImage.set(i, max);
+                        }
                     }
                 }
 
@@ -833,10 +939,6 @@ Found:
         fireProgressStateChanged("Watershed ...");
 
         System.gc();
-        xDim = srcImage.getExtents()[0];
-        yDim = srcImage.getExtents()[1];
-        zDim = srcImage.getExtents()[2];
-        length = xDim * yDim * zDim;
 
         float gmMin = (float) energyImage.getMin();
         float gmMax = (float) energyImage.getMax();
