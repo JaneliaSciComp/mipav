@@ -396,12 +396,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		    	performSegmentation(thighSeg, resultImage3);
     		}
     	} else if(imageType.equals(ImageType.Abdomen)) {
-    		ModelImage srcImage = (ModelImage)getActiveImage().clone();
-    		if(voiBuffer.get("Abdomen").area() == 0) {
-    			ModelImage resultImage = (ModelImage)srcImage.clone();
-    			abdomenSeg = new PlugInAlgorithmCTAbdomen(resultImage, srcImage, imageDir, voiBuffer.get("Abdomen").getColor());
-    			performSegmentation(abdomenSeg, resultImage);
-    		}
+    		//TODO: Abdomen segmentation
+    		//ModelImage srcImage = (ModelImage)getActiveImage().clone();
+    		//if(voiBuffer.get("Abdomen").area() == 0) {
+    		//	ModelImage resultImage = (ModelImage)srcImage.clone();
+    		//	abdomenSeg = new PlugInAlgorithmCTAbdomen(resultImage, srcImage, imageDir, voiBuffer.get("Abdomen").getColor());
+    		//	performSegmentation(abdomenSeg, resultImage);
+    		//}
     	}
     }
     
