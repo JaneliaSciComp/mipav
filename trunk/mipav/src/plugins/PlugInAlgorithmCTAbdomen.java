@@ -1,4 +1,6 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmCenterOfMass;
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
 import gov.nih.mipav.model.algorithms.AlgorithmMorphology3D;
 import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
@@ -25,7 +27,7 @@ import java.util.BitSet;
 
 
 
-public class PlugInAlgorithmCTAbdomen extends AlgorithmBase {
+public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements AlgorithmInterface {
     
     /** X dimension of the CT image */
     private int xDim;
@@ -40,11 +42,9 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase {
     private int sliceSize;
 
     private ModelImage abdomenImage;
+    
     // center-of-mass array for region 1 and 2 (the thresholded bone)
-    private int[] x1CMs;
-    private int[] y1CMs;
-    private int[] x2CMs;
-    private int[] y2CMs;
+    private double[] center;
     
     // temp buffer to store slices.  Needed in many member functions.
     private short[] sliceBuffer;
@@ -62,6 +62,8 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase {
     
     private Color voiColor;
     
+    private AlgorithmCenterOfMass comAlgo;
+    
     /**
      * Constructor.
      *
@@ -74,6 +76,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase {
         this.imageDir = imageDir+File.separator;
         this.voiColor = color;
         
+        abdomenImage = (ModelImage)srcImage.clone();
         abdomenVOI = null;
     }
 
@@ -92,15 +95,26 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase {
         if (!initializedFlag) {
             return;
         }
-        
-        segmentImage();
+        getCenterOfMass();
+        while(!comAlgo.isCompleted()) {}
+        if(comAlgo.isCompleted()) {
+        	center = comAlgo.getCenterOfMass();
+            System.out.println("Found center: "+center[0]+"\t"+center[1]+"\t"+center[2]);
+            segmentImage();
+        }
     } // end runAlgorithm()
-    
-    
 
-//  ~ Methods --------------------------------------------------------------------------------------------------------
+    public void algorithmPerformed(AlgorithmBase algorithm) {
+		// TODO Auto-generated method stub
+    	if (algorithm instanceof AlgorithmCenterOfMass) {
+            
+            System.out.println("Center of mass completed");
+    	}        
+	}
 
-    /**
+
+
+	/**
      * Prepares this class for destruction.
      */
     public void finalize() {
@@ -130,10 +144,6 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase {
 
         try {
             sliceBuffer = new short[sliceSize];
-            x1CMs = new int [sliceSize];
-            y1CMs = new int [sliceSize];
-            x2CMs = new int [sliceSize];
-            y2CMs = new int [sliceSize];
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: init()");
@@ -168,12 +178,12 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase {
         long time = System.currentTimeMillis();
         boolean doVOI = false, completeVOI = false;
         // compute the bone label image
-        System.out.println("Bone segmentation: "+(System.currentTimeMillis() - time));
 
         time = System.currentTimeMillis();
-        if(doVOI)
-        	doVOI = segmentAbdomenTissue();
-        System.out.println("Thigh tissue segmentation: "+(System.currentTimeMillis() - time));
+        
+        if(comAlgo.isCompleted())
+        	doVOI = segmentAbdomenTissue(center);
+        System.out.println("Abdomen tissue segmentation: "+(System.currentTimeMillis() - time));
 
         time = System.currentTimeMillis();
         if(doVOI)
@@ -201,26 +211,12 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase {
     private boolean makeAbdomenTissueVOI() {
         // make the volumeBitSet for the thigh tissue
         boolean completedThigh = true;
-        int sliceByteOffset;
-
-        for (int volumeIdx = 0, sliceNum = 0; sliceNum < zDim; sliceNum++) {
-            sliceByteOffset = sliceNum * sliceSize;
-            try {
-                abdomenImage.exportData(sliceByteOffset, sliceSize, sliceBuffer);
-            } catch (IOException ex) {
-                System.err.println("Error exporting data");
-                return false;
-            }
-            for (int sliceIdx = 0; sliceIdx < sliceSize; sliceIdx++, volumeIdx++) {
-                if (sliceBuffer[sliceIdx] > 0) {
-                    volumeBitSet.set(volumeIdx);
-                }
-            } // end for (int sliceIdx = 0; ...)
-        } // end for(int sliceNum = 0; ...)
+        
+        srcImage.setMask(volumeBitSet);
         
         // volumeBitSet should be set for the thigh tissue
         short voiID = 0;
-        AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(abdomenImage,
+        AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(srcImage,
                 volumeBitSet, xDim, yDim, zDim, voiID);
 
         algoPaintToVOI.setRunningInSeparateThread(false);
@@ -228,7 +224,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase {
         setCompleted(true);
         
         // make sure we got one VOI composed of two curves
-        VOIVector vois = abdomenImage.getVOIs();
+        VOIVector vois = srcImage.getVOIs();
         if(vois.size() != 1) {
             System.err.println("makeThighTissueVOI() Error, did not get 1 VOI");
             return false;
@@ -455,70 +451,108 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase {
 
     } // end makeThighTissueVOI()
     
-    
-    private boolean segmentAbdomenTissue() {
-         
-        // let's just grow a region
-        // we need a seed point
-        // walk out along the x-axis from the center-of-mass of the bone on the first slice
+    private void getCenterOfMass() {
+    	float[] thresholds = new float[2];
+        thresholds[0] = -1024;
+        thresholds[1] = 1103;
+        
+        boolean wholeImage = true;
+        
         try {
-            srcImage.exportData(0, sliceSize, sliceBuffer);
-        } catch (IOException ex) {
-            System.err.println("Error exporting data");
-        }
-        
-        int xcm = x1CMs[0];
-        int ycm = y1CMs[0];
-        
-        // the center-of-mass should be in the marrow, increment x until we get to bone
-        int idx = ycm * xDim + xcm;
-        while(sliceBuffer[idx] < 750) {
-            xcm++;
-            idx++;
-        }
-        // increment x until we get past the bone
-        while(sliceBuffer[idx] > 750) {
-            xcm++;
-            idx++;
-        }
-        // use the seed point that is 5 more x units away from the bone
-        short seedX = (short)(xcm + 5);
-        short seedY = (short)ycm;
-        short seedZ = 0;
-        short seedVal = sliceBuffer[idx + 5];
-        
-        BitSet thigh1Bitmap = new BitSet();
-        regionGrowMuscle(seedX, seedY, seedZ, seedVal, thigh1Bitmap);
-        
-        // segment the second muscle bundle
-        xcm = x2CMs[0];
-        ycm = y2CMs[0];
-        
-        // the center-of-mass should be in the marrow, increment x until we get to bone
-        idx = ycm * xDim + xcm;
-        while(sliceBuffer[idx] < 750) {
-            xcm++;
-            idx++;
-        }
-        // increment x until we get past the bone
-        while(sliceBuffer[idx] > 750) {
-            xcm++;
-            idx++;
-        }
-        // use the seed point that is 5 more x units away from the bone
-        seedX = (short)(xcm + 5);
-        seedY = (short)ycm;
-        seedZ = 0;
-        seedVal = sliceBuffer[idx + 5];
-        
-        BitSet thigh2Bitmap = new BitSet();
-        regionGrowMuscle(seedX, seedY, seedZ, seedVal, thigh2Bitmap);
 
-        // make the thighTissue label image slice by slice from the 3D region grown BitSet
+            // No need to make new image space because the user has choosen to replace the source image
+            // Make the algorithm class
+            comAlgo = new AlgorithmCenterOfMass((ModelImage)srcImage.clone(), thresholds, wholeImage);
+
+            // This is very important. Adding this object as a listener allows the algorithm to
+            // notify this object when it has completed of failed. See algorithm performed event.
+            // This is made possible by implementing AlgorithmedPerformed interface
+            comAlgo.addListener(this);
+            
+            comAlgo.join();
+
+            // Start the thread as a low priority because we wish to still have user interface work fast.
+            if (comAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                MipavUtil.displayError("A thread is already running on this object");
+            }
+        } catch (OutOfMemoryError x) {
+            MipavUtil.displayError("Dialog Center Of Mass: unable to allocate enough memory");
+
+            return;
+        } catch(InterruptedException x) {
+        	MipavUtil.displayError("Did not compute center of mass.");
+        }
+        
+    }
+    
+    private BitSet expandAbdomen(BitSet abdomenSet) {
+    	int firstSet = abdomenSet.nextSetBit(0);
+    	//size returns the last set bit-1
+    	int lastSet = abdomenSet.size() - 1;
+    	int clearBit;
+    	boolean included = false, foundLeft = false, foundRight = false;
+    	
+    	//iterate over all clear bits from firstSet to lastSet
+    	for(int i=abdomenSet.nextClearBit(firstSet); i>=0 && i<lastSet; i=abdomenSet.nextClearBit(i+1)) {
+    		clearBit = i;
+    		included = false;
+    		foundLeft = false;
+    		foundRight = false;
+    		
+        hL: for(int j=clearBit-10; j<clearBit; j++) {
+    			if(abdomenSet.get(j) == true) {
+    				foundLeft = true;
+    				break hL;
+    			}
+    		}
+    		if(foundLeft) {
+	    hR:		for(int j=clearBit-10; j<clearBit; j++) {
+	    			if(abdomenSet.get(j) == true) {
+	    				foundRight = true;
+	    				break hR;
+	    			}
+	    		}
+    		}
+    		if(foundLeft && foundRight)
+    			included = true;
+    		if(!included) {
+    			foundLeft = false;
+    			foundRight = false;
+      vL:		for(int j=clearBit-10*xDim; j<clearBit; j += xDim) {
+    				if(abdomenSet.get(j) == true) {
+        				foundLeft = true;
+        				break vL;
+    				}
+      			}
+      vR: 		for(int j=clearBit; j<clearBit+10*xDim; j += xDim) {
+    				if(abdomenSet.get(j) == true) {
+        				foundRight = true;
+        				break vR;
+        			}
+    			}
+      			if(foundLeft && foundRight)
+      				included = true;
+    		}
+    		if(included)
+    			abdomenSet.set(clearBit);
+    	}
+    	
+    	return abdomenSet;
+    }
+    
+    private boolean segmentAbdomenTissue(double[] center) {
+         
+    	center = getSeedPoint(center);
+        BitSet abdomenSet = new BitSet();
+        regionGrowAbdomen((short)center[0], (short)center[1], (short)center[2], abdomenSet);
+        
+        volumeBitSet = expandAbdomen(abdomenSet);
+        
+        // make the abdomenTissue label image slice by slice from the 3D region grown BitSet
         // bitSetIdx is a cumulative index into the 3D BitSet
         for (int bitSetIdx = 0, sliceNum = 0; sliceNum < zDim; sliceNum++) {
             for (int sliceIdx = 0; sliceIdx < sliceSize; sliceIdx++, bitSetIdx++) {
-                if (thigh1Bitmap.get(bitSetIdx) || thigh2Bitmap.get(bitSetIdx)) {
+                if (abdomenSet.get(bitSetIdx)) {
                     sliceBuffer[sliceIdx] = abdomenTissueLabel;
                 } else {
                     sliceBuffer[sliceIdx] = 0;
@@ -527,17 +561,51 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase {
             
             // save the sliceBuffer into the boneMarrowImage
             try {
-                abdomenImage.importData(sliceNum * sliceSize, sliceBuffer, false);
+                srcImage.importData(sliceNum * sliceSize, sliceBuffer, false);
             } catch (IOException ex) {
                 System.err.println("segmentThighTissue(): Error importing data");
             }
         } // end for(int bitSetIdx = 0, sliceNum = 0; ...)
         return true;
-    } // end segmentThighTissue(...)
+    } // end segmentAbdomenTissue(...)
+    
+    /**
+     * Moves seed point to ideal intensity
+     * @param center image center of mass
+     * @return
+     */
+    private double[] getSeedPoint(double[] center) {
+    	double lowIntensity = -50;
+    	double highIntensity = 50;
+    	
+    	int originalX = (int)center[0], currentX = (int)center[0];
+    	int originalY = (int)center[1], currentY = (int)center[1];
+    	
+    	boolean pointFound = false;
+    	
+    	while(!pointFound && currentX < xDim) {
+    		if(srcImage.get(currentX, currentY, (int)center[2]).doubleValue() < highIntensity &&
+    				srcImage.get(currentX, currentY, (int)center[2]).doubleValue() > lowIntensity) {
+    			pointFound = true;
+    			break;
+    		}
+    		if(currentX - originalX > currentY - originalY)
+    			currentY++;
+    		else
+    			currentX++;
+    	}
+    	
+    	if(pointFound) {
+    		center[0] = currentX;
+    		center[1] = currentY;
+    	}
+    	
+    	return center;
+    	
+    }
     
     
-    
-    private void regionGrowMuscle(short sX, short sY, short sZ, short seedVal, BitSet muscleBits) {
+    private void regionGrowAbdomen(short sX, short sY, short sZ, BitSet muscleBits) {
        try {
            AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(srcImage, 1.0f, 1.0f);
 
@@ -545,14 +613,14 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase {
 
            if (srcImage.getNDims() == 2) {
                regionGrowAlgo.regionGrow2D(muscleBits, new Point(sX, sY), -1,
-                                           false, false, null, seedVal - 300,
-                                           seedVal + 1000, -1, -1, false);
+                                           false, false, null, -100,
+                                           500, -1, -1, false);
            } else if (srcImage.getNDims() == 3) {
                CubeBounds regionGrowBounds;
                regionGrowBounds = new CubeBounds(xDim, 0, yDim, 0, zDim, 0);
                regionGrowAlgo.regionGrow3D(muscleBits, new Point3Ds(sX, sY, sZ), -1,
-                                                   false, false, null, seedVal - 300,
-                                                   seedVal + 1000, -1, -1, false,
+                                                   false, false, null, -100,
+                                                   500, -1, -1, false,
                                                    0, regionGrowBounds);
 //               System.out.println("Muscle Count: " +count);
            }
