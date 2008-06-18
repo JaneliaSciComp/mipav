@@ -75,8 +75,8 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         
         this.imageDir = imageDir+File.separator;
         this.voiColor = color;
-        
-        abdomenImage = (ModelImage)srcImage.clone();
+
+        abdomenImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "thighTissueImage");
         abdomenVOI = null;
     }
 
@@ -95,6 +95,10 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         if (!initializedFlag) {
             return;
         }
+        
+        //  This finds a center of mass in mm coordinates and it is weighted by pixel intensity
+        // I don't think we want this
+/*        
         getCenterOfMass();
         while(!comAlgo.isCompleted()) {}
         if(comAlgo.isCompleted()) {
@@ -102,6 +106,13 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             System.out.println("Found center: "+center[0]+"\t"+center[1]+"\t"+center[2]);
             segmentImage();
         }
+*/
+        if (srcImage.getNDims() == 2) {
+            segmentThigh2D();
+            ShowImage(abdomenImage, "Segmented Abdomen");
+        }
+
+
     } // end runAlgorithm()
 
     public void algorithmPerformed(AlgorithmBase algorithm) {
@@ -169,6 +180,66 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         // set initialized flag to true so the data structures are not reallocated
         initializedFlag = true;
     } // end init()
+    
+    
+    
+    /**
+     * Find the body in a 2D slice
+     */
+    private void segmentThigh2D() {
+        // find a seed point inside the fat for a region grow
+        try {
+            srcImage.exportData(0, sliceSize, sliceBuffer);
+        } catch (IOException ex) {
+            System.err.println("Error exporting data");
+            return;
+        }
+        boolean found = false;
+        int seedX = 0, seedY = 0;
+        short seedVal = 0;
+        for (int idx = 0, y = 0; !found && y < yDim; y++) {
+            for (int x = 0; x < xDim; x++, idx++) {
+                if (sliceBuffer[idx] > -90 && sliceBuffer[idx] < -30) {
+                    seedX = x;
+                    seedY = y;
+                    seedVal = sliceBuffer[idx];
+                    found = true;
+                    break;
+                }
+            }
+        }        
+        System.out.println("seedX: " +seedX +"  seedY: " +seedY);
+        if (seedX < 0 || seedX >= xDim || seedY < 0 || seedY >= yDim) {
+            MipavUtil.displayError("PlugINAlgorithmCTAbdomen::segmentThigh2D(): Failed to find a seed location for the region grow");
+            return;
+        }
+        
+        AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(srcImage, 1.0f, 1.0f);
+        regionGrowAlgo.setRunningInSeparateThread(false);
+
+        BitSet abdomenBits = new BitSet();
+        regionGrowAlgo.regionGrow2D(abdomenBits, new Point(seedX, seedY), -1,
+                                    false, false, null, seedVal - 50,
+                                    seedVal + 1500, -1, -1, false);
+        for (int idx = 0; idx < sliceSize; idx++) {
+            if (abdomenBits.get(idx)) {
+                sliceBuffer[idx] = abdomenTissueLabel;
+            } else {
+                sliceBuffer[idx] = 0;
+            }
+        } // end for (int idx = 0; ...)
+        
+        // save the sliceBuffer into the boneMarrowImage
+        try {
+            abdomenImage.importData(0, sliceBuffer, false);
+        } catch (IOException ex) {
+            System.err.println("segmentThighTissue(): Error importing data");
+        }
+
+    
+    } // end segmentThigh2D  
+    
+    
     
     
     /**
