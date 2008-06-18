@@ -56,6 +56,8 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 	private float[] yDerivativeDirections;
     private int zEnd;
     private boolean doEndSlices = false;
+    // Extents of the Gaussian kernel
+    private int[] kExtents = null;
 
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -133,6 +135,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 		GaussianKernelFactory gkf = GaussianKernelFactory.getInstance(sigmas);
 		gkf.setKernelType(GaussianKernelFactory.X_DERIVATIVE_KERNEL);
 		gaussianKernel = gkf.createKernel();
+        kExtents = gaussianKernel.getExtents();
 
 		float[] xDerivativeBuffer = calculateDerivativeImage(buffer, color,
 				gaussianKernel.getData(), progressFrom, progressTo);
@@ -164,7 +167,6 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 
 			gkf.setKernelType(GaussianKernelFactory.Z_DERIVATIVE_KERNEL);
 			gaussianKernel = gkf.createKernel();
-            int kExtents[] = gaussianKernel.getExtents();
 
 			float[] zDerivativeBuffer = calculateDerivativeImage(buffer, color,
 					gaussianKernel.getData(), progressFrom, progressTo);
@@ -508,4 +510,8 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 		
 		return 1;
 	}
+    
+    public int[] getKExtents() {
+        return kExtents;
+    }
 }
