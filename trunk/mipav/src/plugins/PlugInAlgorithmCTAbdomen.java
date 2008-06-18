@@ -108,8 +108,10 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         }
 */
         if (srcImage.getNDims() == 2) {
-            segmentThigh2D();
+            segmentAbdomen2D();
+            makeAbdomen2DVOI();
             ShowImage(abdomenImage, "Segmented Abdomen");
+            segmentVisceralFat2D();
         }
 
 
@@ -186,7 +188,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     /**
      * Find the body in a 2D slice
      */
-    private void segmentThigh2D() {
+    private void segmentAbdomen2D() {
         // find a seed point inside the fat for a region grow
         try {
             srcImage.exportData(0, sliceSize, sliceBuffer);
@@ -199,6 +201,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         short seedVal = 0;
         for (int idx = 0, y = 0; !found && y < yDim; y++) {
             for (int x = 0; x < xDim; x++, idx++) {
+                // search for a fat pixel.  These are Hounsfeild units
                 if (sliceBuffer[idx] > -90 && sliceBuffer[idx] < -30) {
                     seedX = x;
                     seedY = y;
@@ -206,29 +209,29 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                     found = true;
                     break;
                 }
-            }
-        }        
-        System.out.println("seedX: " +seedX +"  seedY: " +seedY);
+            } // end for (int x = 0; ...)
+        } // end for int idx = 0, y = 0; ...)
+
         if (seedX < 0 || seedX >= xDim || seedY < 0 || seedY >= yDim) {
             MipavUtil.displayError("PlugINAlgorithmCTAbdomen::segmentThigh2D(): Failed to find a seed location for the region grow");
             return;
         }
-        
+
         AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(srcImage, 1.0f, 1.0f);
         regionGrowAlgo.setRunningInSeparateThread(false);
 
-        BitSet abdomenBits = new BitSet();
-        regionGrowAlgo.regionGrow2D(abdomenBits, new Point(seedX, seedY), -1,
+        // under segment so that we do not get the blanket
+        regionGrowAlgo.regionGrow2D(volumeBitSet, new Point(seedX, seedY), -1,
                                     false, false, null, seedVal - 50,
                                     seedVal + 1500, -1, -1, false);
         for (int idx = 0; idx < sliceSize; idx++) {
-            if (abdomenBits.get(idx)) {
+            if (volumeBitSet.get(idx)) {
                 sliceBuffer[idx] = abdomenTissueLabel;
             } else {
                 sliceBuffer[idx] = 0;
             }
         } // end for (int idx = 0; ...)
-        
+
         // save the sliceBuffer into the boneMarrowImage
         try {
             abdomenImage.importData(0, sliceBuffer, false);
@@ -236,10 +239,142 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             System.err.println("segmentThighTissue(): Error importing data");
         }
 
+        // do a mathematical morphology closing operation to fill the small gaps
+        closeImage(abdomenImage);
+        
+        // update the volumeBitSet to match the closed abdomenImage
+        try {
+            abdomenImage.exportData(0, sliceSize, sliceBuffer);
+        } catch (IOException ex) {
+            System.err.println("Error exporting data");
+            return;
+        }
+        volumeBitSet.clear();
+        for (int idx = 0; idx < sliceSize; idx++) {
+            if (sliceBuffer[idx] == abdomenTissueLabel) {
+                volumeBitSet.set(idx);
+            }
+        }
+
+
+    } // end segmentAbdomen2D()  
     
-    } // end segmentThigh2D  
     
     
+    /**
+     * Extract a 2D VOI from the volumeBitSet that was set during the segmentAbdomen2D call
+     */
+    private boolean makeAbdomen2DVOI() {
+        abdomenImage.setMask(volumeBitSet);
+        
+        // volumeBitSet should be set for the abdomen tissue
+        short voiID = 0;
+        AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(abdomenImage,
+                volumeBitSet, xDim, yDim, zDim, voiID);
+
+        algoPaintToVOI.setRunningInSeparateThread(false);
+        algoPaintToVOI.run();
+        setCompleted(true);
+        
+        // make sure we got one VOI composed of two curves
+        VOIVector vois = abdomenImage.getVOIs();
+        if(vois.size() != 1) {
+            System.err.println("makeAbdomen2DVOI() Error, did not get 1 VOI");
+            return false;
+        }
+        
+        // thighTissueImage has one VOI, lets get it
+        VOI theVOI = vois.get(0);
+        theVOI.setName("Abdomen Tissue");
+
+        // Remove small (10 points or less) curves from the VOI
+        int numCurves, numPoints;
+        VOIContour curve;
+        for (int idx = 0; idx < zDim; idx++) {
+            numCurves = theVOI.getCurves()[idx].size();
+            
+            int idx2 = 0;
+            while(idx2 < numCurves) {
+                curve = ((VOIContour)theVOI.getCurves()[idx].get(idx2));
+                numPoints = curve.size();
+                if (numPoints < 10) {
+                    // remove the curve
+                    theVOI.getCurves()[idx].remove(idx2);
+                    numCurves--;
+                } else {
+                    idx2++;
+                }
+            } // end while(idx2 < numCurves)
+         } // end for (int idx = 0; ...)
+
+        return true;
+    } // end makeAbdomen2DVOI()
+    
+    
+    
+    /**
+     * segment out the visceral fat from the image
+     */
+    private void segmentVisceralFat2D() {
+        
+        // get the VOI for the external boundary of the abdomen
+        VOIVector vois = abdomenImage.getVOIs();
+        if(vois.size() != 1) {
+            System.err.println("segmentVisceralFat2D() Error, did not get 1 VOI");
+            return;
+        }
+
+        // abdomenImage has one VOI, lets get it
+        VOI theVOI = vois.get(0);
+ 
+        // find the center-of-mass of the contour
+        VOIContour maxContour = ((VOIContour)theVOI.getCurves()[0].get(0));
+        int[] xVals = new int [maxContour.size()];
+        int[] yVals = new int [maxContour.size()];
+        int[] zVals = new int [maxContour.size()];
+        maxContour.exportArrays(xVals, yVals, zVals);
+        
+        int xcm = 0, ycm = 0, zcm = 0;
+        for (int idx = 0; idx < maxContour.size(); idx++) {
+            xcm += xVals[idx];
+            ycm += yVals[idx];
+            zcm += zVals[idx];
+        }
+        
+        xcm /= maxContour.size();
+        ycm /= maxContour.size();
+        zcm /= maxContour.size();
+        
+        System.out.println("Xcm: " +xcm +"  Ycm: " +ycm +"  Zcm: " +zcm);
+        
+        // This point should be inside the abdomen
+        // walk right until you find the external border of the abdomen
+        
+        // update the volumeBitSet to match the closed abdomenImage
+        short[] srcSliceBuffer = new short[sliceSize];
+        short[] profile = new short[xDim];
+        try {
+            abdomenImage.exportData(0, sliceSize, sliceBuffer);
+            srcImage.exportData(0, sliceSize, srcSliceBuffer);
+                   } catch (IOException ex) {
+            System.err.println("Error exporting data");
+            return;
+        }
+
+        int x = xcm;
+        int elementCount = 0;
+        int yOffset = ycm * xDim;
+        while (x < xDim && sliceBuffer[x + yOffset] == abdomenTissueLabel) {
+            profile[elementCount] = srcSliceBuffer[x + yOffset];
+            x++;
+            elementCount++;
+        } // end while(...)
+        
+        // profile has an intensity profile of the pixels along the ray from the 
+        // contour CM to the external skin boundary. 
+        
+        
+    } // end segmentVisceralFat2D()
     
     
     /**
@@ -718,6 +853,18 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
         return resultImage;
     } // end threshold(...)
+   
+   
+   
+   /**
+    * Mathematical Morphological closing operation
+    */
+   public void closeImage(ModelImage img) {
+       AlgorithmMorphology2D MorphIDObj = null;
+       MorphIDObj = new AlgorithmMorphology2D(img, 2, 1, AlgorithmMorphology2D.CLOSE, 4, 4, 0, 0, true);
+       MorphIDObj.run();
+   } // end closeImage(...)
+   
 
     /**
      * morphological ID_OBJECTS.
