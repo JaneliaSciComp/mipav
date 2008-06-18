@@ -386,8 +386,26 @@ Found:
                                 return;
                             }
                         }
-                    }
-                }
+                    } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
+                    else if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
+                        //  Add VOI point to the seed vector
+                        try {
+                            seedVector.addElement(new Seed(VOIs.VOIAt(i).exportPoint(), VOIs.VOIAt(i).getWatershedID()));
+                        } catch (OutOfMemoryError error) {
+
+                            if (energyImage != null) {
+                                energyImage.disposeLocal();
+                            }
+
+                            energyImage = null;
+                            System.gc();
+                            displayError("Watershed: unable to allocate enough memory");
+                            setCompleted(false);
+
+                            return;
+                        }    
+                    } // else if (VOIs.VOIAt(i).getCurveType() == VOI.POINT)
+                } // for (i = 0; i < nVOI; i++)
             } // if (!entireImage)
         } // if (seedVector == null)
 
@@ -1027,9 +1045,27 @@ Found:
                                 }
                             }
                         }
-                    }
+                    } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
+                    else if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
+                        //  Add VOI point to the seed vector
+                        try {
+                            seedVector.addElement(new Seed(VOIs.VOIAt(i).exportPoint(), VOIs.VOIAt(i).getWatershedID()));
+                        } catch (OutOfMemoryError error) {
+
+                            if (energyImage != null) {
+                                energyImage.disposeLocal();
+                            }
+
+                            energyImage = null;
+                            System.gc();
+                            displayError("Watershed: unable to allocate enough memory");
+                            setCompleted(false);
+
+                            return;
+                        }    
+                    } // else if (VOIs.VOIAt(i).getCurveType() == VOI.POINT)
     
-                }
+                } // for (i = 0; i < nVOI; i++)
             } // if (!entireImage)
         } // if (seedVector == null)
 
