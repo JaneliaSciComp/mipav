@@ -1165,7 +1165,7 @@ Found:
 
         if (eRange <= 4000) {
             queueSize = 4000;
-        } else if (eRange > 4000) {
+        } else {
             queueSize = 6000;
         }
 
