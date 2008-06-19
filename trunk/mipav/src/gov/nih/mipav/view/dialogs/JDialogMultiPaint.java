@@ -67,12 +67,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     /** array of colors to use for the labels. */
     private Color[] color;
 
-    /** private String title; private boolean useTriplanar=false;. */
-    private BitSet currentMask;
+    /** saved opacity parameter when hiding the paint */
+    private float currentOpacity;
     
-    /** masks in tr-planar **/
-    private BitSet[] triPlanarCurrentMasks;
-
     /** display masks toggle button. */
     private JToggleButton displayMasksButton;
 
@@ -450,6 +447,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 				isVisiblePaint = false;
             	displayPaintButton.setSelected(true);
 				
+				/* not proper: set the opacity to zero instead
                 currentMask = (BitSet) image.getParentFrame().getComponentImage().getPaintMask().clone();
                 refreshImagePaint(image, new BitSet());
                 if(image.getTriImageFrame() != null) {
@@ -460,10 +458,18 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                         }
                     }
                 } 
+				*/
+				
+				currentOpacity = image.getParentFrame().getControls().getTools().getOpacity();
+				
+				image.getParentFrame().getControls().getTools().setOpacity(0.0f);
+				refreshImagePaint(image);
             } else {
                 isVisiblePaint = true;
             	displayPaintButton.setSelected(false);
-				refreshImagePaint(image, currentMask);
+				image.getParentFrame().getControls().getTools().setOpacity(currentOpacity);
+				//refreshImagePaint(image, currentMask);
+				refreshImagePaint(image);
             }
         } else if (command.equals("AdvancedPaint:HideMasks")) {
 
@@ -1155,7 +1161,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 numberYField.setText("" + Nby);
 
                 if (selected > (Nbx * Nby)) {
-                    commitPaintToMask(selected);
+                   commitPaintToMask(selected);
                 }
 
                 newLabelList(Nbx, Nby);
@@ -1350,23 +1356,66 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         }
 
         // record selected image; set to image B
-        // ModelImage active = image.getParentFrame().getActiveImage();
+        ModelImage active = image.getParentFrame().getActiveImage();
         image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_B);
 
         // create new color
-        if (color[num] == null) {
+        //if (color[num] == null) {
             color[num] = lutB.getColor(num);
 
-        }
+        //}
 
         multiButton[num].setBackground(color[num]);
         listButton[num].setBackground(color[num]);
 
-        // call the paint to mask program for exiting mask
-        image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[num].getText()).intValue()));
-        image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "CommitPaint"));
+        if (indeterminateProgressBar != null) {
+            indeterminateProgressBar.setIndeterminate(true);
+        }
 
-        selected = 0;
+		// must convert variables to final for use in inner class
+        final int _num = num;
+		final ModelImage imageB = image.getParentFrame().getImageB();
+
+        image.getParentFrame().getComponentImage().setModifyFlag(false);
+        
+			 // call the paint to mask program for existing mask
+			image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[_num].getText()).intValue()));
+			image.getParentFrame().getComponentImage().commitMask(imageB, true, true, intensityLockVector, false);
+
+			 // call the mask to paint program for starting mask
+			if (color[_num] == null) {
+				color[_num] = lutB.getColor(_num);
+			}
+
+			image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[_num].getText()).intValue()));
+			image.getParentFrame().getControls().getTools().setPaintColor(color[_num]);
+
+			image.getParentFrame().getComponentImage().updatePaintBrushCursor();
+			
+			if (image.getTriImageFrame() != null) {
+				image.getTriImageFrame().setIntensityDropper((float) (new Integer(multiButton[_num].getText()).intValue()));
+				image.getTriImageFrame().setPaintColor(color[_num]);
+
+			}
+
+			((ViewJFrameImage) image.getParentFrame()).handleMaskToPaint(false);
+
+			if (indeterminateProgressBar != null) {
+				indeterminateProgressBar.setIndeterminate(false);
+			}
+
+			image.getParentFrame().getComponentImage().setModifyFlag(true);
+
+			image.notifyImageDisplayListeners();
+
+        // reset the active image and intensity label
+        if (!active.equals(image.getParentFrame().getActiveImage())) {
+            image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_A);
+        }
+
+        selected = num;
+        multiButton[selected].setSelected(true);
+        listButton[selected].setSelected(true);
 
         refreshImagePaint(image, obj);
     }
@@ -2112,7 +2161,18 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     }
 
     
+    /**
+     * Refreshes the displayed paint mask.
+     *
+     * @param  img  DOCUMENT ME!
+	 */
+    private void refreshImagePaint(ModelImage img) {
 
+       img.getParentFrame().updateImages(true);
+	   if (img.getTriImageFrame() != null) img.getTriImageFrame().updateImages(true);
+    }
+
+    
     /**
      * Reinstantiates the labels for redisplay. Purpose: unknown
      */
