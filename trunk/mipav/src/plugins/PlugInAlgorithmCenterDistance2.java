@@ -15,7 +15,7 @@ import java.util.*;
 
 /**
  *
- * @version  June 16, 2008
+ * @version  June 19, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -449,7 +449,9 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
         int index3;
         int blueBoundaryValue;
         double maxBlueValue;
+        long time;
 
+        time = System.currentTimeMillis();
         df = new DecimalFormat("0.000E0");
         dfFract = new DecimalFormat("0.000");
         
@@ -1858,6 +1860,8 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
             return;
         }
 
+        time = System.currentTimeMillis() - time;
+        Preferences.debug("PlugInAlgorithmCenterDistance2 elapsed time in seconds = " + (time/1000.0));
         setCompleted(true);
     }
     
@@ -2054,7 +2058,10 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
         int numGreenTotal;
         int blueBoundaryValue;
         double maxBlueValue;
-
+        long time;
+        
+        
+        time = System.currentTimeMillis();
         df = new DecimalFormat("0.000E0");
         dfFract = new DecimalFormat("0.000");
 
@@ -3610,7 +3617,8 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
 
             return;
         }
-
+        time = System.currentTimeMillis() - time;
+        Preferences.debug("PlugInAlgorithmCenterDistance2 elapsed time in seconds = " + (time/1000.0));
         setCompleted(true);
     }
 
