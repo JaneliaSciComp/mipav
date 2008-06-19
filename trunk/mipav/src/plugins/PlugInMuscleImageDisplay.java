@@ -34,8 +34,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     //~ Static fields --------------------------------------------------------------------------------------------------
     
-    public static final Color[] colorPick = {Color.GREEN, Color.ORANGE, Color.CYAN, 
+    /** Available colors.*/
+	public static final Color[] colorPick = {Color.GREEN, Color.ORANGE, Color.CYAN, 
                                                 Color.YELLOW, Color.MAGENTA, Color.RED};
+    
+    /**Folder for saving all information to.*/
+    public static final String VOI_DIR = "NIA_Seg";
     
     //~ Instance fields ------------------------------------------------------------------------------------------------    
     
@@ -57,12 +61,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     /** Text for muscles where a mirror muscle may exist. */
     private String[][] mirrorArr;
 
-    private boolean[][] mirrorZ;
+    //private boolean[][] mirrorZ;
 
     /** Text for muscles where mirror muscles are not considered. */
     private String[][] noMirrorArr;
 
-    private boolean[][] noMirrorZ;
+    //private boolean[][] noMirrorZ;
 
     /** 
      * Denotes the anatomical part represented in the image. Implemented seperatly in case 
@@ -73,42 +77,57 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     /** Whether this image has mirror image muscles (eg VIEWS of thighs, abdomen. */
     private Symmetry symmetry;
     
+    /**The dialog tabs that exist in this frame.*/
     private JTabbedPane dialogTabs;
     
+    /**Currently open muscle tab, used to return from VOI tabs or Analysis tabs.*/
     private int activeTab;
     
+    /**All tabs within this plugin. */
     private DialogPrompt[] tabs;
     
+    /**The current slice of a 3D image.*/
     private int currentSlice = 0;
     
     /**Whether the algorithm is dealing with a 3D CT image. */
     private boolean multipleSlices;
     
+    /**The titles of all tabs. */
     private String[] titles; 
     
+    /**The directory of the current image.*/
     private String imageDir;
     
+    /**Whether the previously called VOI was modified and needs to be saved to the file system.*/
     private boolean voiChangeState = false;
 
+    /**The seed point for chosing a color. */
     private int colorChoice = 0;
-    
-    private long time = 0;
     
     /**Buffer containing exact copies of VOIs on file system along with program relevant material.*/
     private Map<String, PlugInSelectableVOI> voiBuffer;
     
+    /**The top-level group of threads used for calulating. */
     private ThreadGroup calcGroup = new ThreadGroup("CalcVOI");
     
+    /**The algorithm for producing bones automatically. */
     private PlugInAlgorithmCTBone boneSeg;
     
+    /**The algorithm for producing marrow automatically. */
     private PlugInAlgorithmCTMarrow marrowSeg;
     
+    /**The algorithm for producing a thighs automatically. */
     private PlugInAlgorithmCTThigh thighSeg;
     
+    /**The algorithm for producing an abdomen automatically. */
     private PlugInAlgorithmCTAbdomen abdomenSeg;
     
+    /**A map indicating whether a VOI of a particular name should be calculated. */
     private TreeMap<String, Boolean> calcTree;
-        
+     
+    /**User specified preference for whether to ask on closing. */
+    private boolean oldPrefCloseFrameCheckValue = Preferences.is(Preferences.PREF_CLOSE_FRAME_CHECK);
+    
     public enum ImageType{
         
         /** denotes that the srcImg is an abdomen */
@@ -132,13 +151,20 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         /** Indicates the image has top-bottom symmetry. */
         TOP_BOTTOM
     }
-    
-    private boolean oldPrefCloseFrameCheckValue = Preferences.is(Preferences.PREF_CLOSE_FRAME_CHECK);
-   
+ 
+    /**
+     * Constructor for creating pluging within MIPAV system.
+     * @param image
+     * @param titles
+     * @param voiList
+     * @param imageType
+     * @param symmetry
+     * @param multipleSlices
+     */
     public PlugInMuscleImageDisplay(ModelImage image, String[] titles,
             PlugInSelectableVOI[][] voiList,  
             ImageType imageType, Symmetry symmetry, boolean multipleSlices) {
-    	//calls the super that will invoke ViewJFrameImage's init() function
+
     	super(image);
     	ViewJProgressBar progressBar = new ViewJProgressBar("Automatic Seg", "Initializing...", 0, 100, true);
     	setVisible(false);
@@ -149,9 +175,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.setActiveImage(IMAGE_A);
         this.titles = titles;
         this.mirrorArr = new String[voiList.length][];
-        this.mirrorZ = new boolean[voiList.length][];
         this.noMirrorArr = new String[voiList.length][];
-        this.noMirrorZ = new boolean[voiList.length][];
         this.calcTree = new TreeMap();
         this.voiBuffer = Collections.synchronizedMap(new TreeMap<String, PlugInSelectableVOI>());
         this.imageType = imageType;
@@ -180,17 +204,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         		}
         	}
         	mirrorArr[i] = new String[mirrorArrList.size()];
-        	mirrorZ[i] = new boolean[mirrorZList.size()];
-        	for(int j=0; j<mirrorArr[i].length; j++) {
+        	for(int j=0; j<mirrorArr[i].length; j++) 
         		mirrorArr[i][j] = (String)mirrorArrList.get(j);
-        		mirrorZ[i][j] = (Boolean)mirrorZList.get(j);
-        	}
         	noMirrorArr[i] = new String[noMirrorArrList.size()];
-        	noMirrorZ[i] = new boolean[noMirrorZList.size()];
-        	for(int j=0; j<noMirrorArr[i].length; j++) {
+        	for(int j=0; j<noMirrorArr[i].length; j++) 
         		noMirrorArr[i][j] = (String)noMirrorArrList.get(j);
-        		noMirrorZ[i][j] = (Boolean)noMirrorZList.get(j);
-        	}
         }
         
         if (imageA == null) {
@@ -203,7 +221,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         if(!(f = new File(imageDir+File.separator)).exists())
         	f.mkdir();
 
-	System.out.println("Exists? "+f.exists());
+        System.out.println("Exists? "+f.exists());
         createVOIBuffer();
         
         initNext();
@@ -277,9 +295,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         this.titles = titles;
         this.mirrorArr = new String[voiList.length][];
-        this.mirrorZ = new boolean[voiList.length][];
         this.noMirrorArr = new String[voiList.length][];
-        this.noMirrorZ = new boolean[voiList.length][];
         this.calcTree = new TreeMap();
         this.voiBuffer = new TreeMap();
         
@@ -305,26 +321,18 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         		}
         	}
         	mirrorArr[i] = new String[mirrorArrList.size()];
-        	mirrorZ[i] = new boolean[mirrorZList.size()];
-        	for(int j=0; j<mirrorArr.length; j++) {
+        	for(int j=0; j<mirrorArr.length; j++) 
         		mirrorArr[i][j] = (String)mirrorArrList.get(j);
-        		mirrorZ[i][j] = (Boolean)mirrorZList.get(j);
-        	}
         	noMirrorArr[i] = new String[noMirrorArrList.size()];
-        	noMirrorZ[i] = new boolean[noMirrorZList.size()];
-        	for(int j=0; j<noMirrorArr.length; j++) {
+        	for(int j=0; j<noMirrorArr.length; j++) 
         		noMirrorArr[i][j] = (String)noMirrorArrList.get(j);
-        		noMirrorZ[i][j] = (Boolean)noMirrorZList.get(j);
-        	}
         }
         this.imageType = imageType;
         this.symmetry = symmetry;
         this.multipleSlices = multipleSlices;
         
         Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(true));
-          
-        
-        
+
     	initStandAlone();
     	this.setActiveImage(IMAGE_A);
     	setVisible(true);
@@ -339,42 +347,61 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	
     }
     
+    /**
+     * Waits for automatic segmentation algorithms to complete.
+     */
     private void waitAlg(ViewJProgressBar progressBar) {
     	long time = System.currentTimeMillis();
     	int extend = 0;
-    	if(marrowSeg != null) {
-    		while(marrowSeg.isAlive()) {
-        		if((System.currentTimeMillis() - time) / 2000 > extend) {
-        			progressBar.updateValue(20+(++extend));
-        		}
-        	}
-        	progressBar.updateValue(60);
-        	progressBar.setMessage("Marrow segmentation complete...");
-        	System.out.println("Marrow seg alg finished");
-        }
-    	if(boneSeg != null) {
-    		extend = (int)(System.currentTimeMillis() - time) / 2000 - 1;
-        	while(boneSeg.isAlive()) {
-        		if((System.currentTimeMillis() - time) / 2000 > extend) {
-        			progressBar.updateValue(60+(++extend));
-        		}
-        	}
-        	progressBar.updateValue(70);
-        	progressBar.setMessage("Bone segmentation complete...");
-        	System.out.println("Bone seg alg finished");
-        }
-        if(thighSeg != null) {
-        	extend = (int)(System.currentTimeMillis() - time) / 2000 - 1;
-        	while(thighSeg.isAlive()) {
-        		if((System.currentTimeMillis() - time) / 2000 > extend) {
-        			progressBar.updateValue(70+(++extend));
-        		}
-        	}
-        	progressBar.setMessage("Thigh segmentation complete...");
-        	System.out.println("Thigh seg alg finished");
-        }
+    	if(imageType.equals(ImageType.Thigh)) {
+	    	if(marrowSeg != null) {
+	    		while(marrowSeg.isAlive()) {
+	        		if((System.currentTimeMillis() - time) / 2000 > extend) {
+	        			progressBar.updateValue(20+(++extend));
+	        		}
+	        	}
+	        	progressBar.updateValue(60);
+	        	progressBar.setMessage("Marrow segmentation complete...");
+	        	System.out.println("Marrow seg alg finished");
+	        }
+	    	if(boneSeg != null) {
+	    		extend = (int)(System.currentTimeMillis() - time) / 2000 - 1;
+	        	while(boneSeg.isAlive()) {
+	        		if((System.currentTimeMillis() - time) / 2000 > extend) {
+	        			progressBar.updateValue(60+(++extend));
+	        		}
+	        	}
+	        	progressBar.updateValue(70);
+	        	progressBar.setMessage("Bone segmentation complete...");
+	        	System.out.println("Bone seg alg finished");
+	        }
+	        if(thighSeg != null) {
+	        	extend = (int)(System.currentTimeMillis() - time) / 2000 - 1;
+	        	while(thighSeg.isAlive()) {
+	        		if((System.currentTimeMillis() - time) / 2000 > extend) {
+	        			progressBar.updateValue(70+(++extend));
+	        		}
+	        	}
+	        	progressBar.setMessage("Thigh segmentation complete...");
+	        	System.out.println("Thigh seg alg finished");
+	        }
+    	} else if(imageType.equals(ImageType.Abdomen)) {
+    		if(abdomenSeg != null) {
+	    		while(abdomenSeg.isAlive()) {
+	        		if((System.currentTimeMillis() - time) / 5000 > extend) {
+	        			progressBar.updateValue(20+(++extend));
+	        		}
+	        	}
+	        	progressBar.updateValue(70);
+	        	progressBar.setMessage("Abdomen segmentation complete...");
+	        	System.out.println("Abdomen seg alg finished");
+	        }
+    	}
     }
     
+    /**
+     * Performs automatic segmentation for various images.
+     */
     private void autoSegmentation() {
     	if(imageType.equals(ImageType.Thigh)) {
     		ModelImage srcImage = (ModelImage)getActiveImage().clone();
@@ -406,33 +433,25 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	}
     }
     
+    /**
+     * Performs a given segmentation on resultImage represented by the given algorithm
+     */
     private boolean performSegmentation(AlgorithmBase genericAlgo, ModelImage resultImage) {
     	try {
             String name = JDialogBase.makeImageName(getActiveImage().getImageName(), "_kidneys");
             resultImage.setImageName(name);
-            
-            //genericAlgo = new PlugInAlgorithmNewGeneric2(resultImage, image);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             genericAlgo.addListener(this);
-            //createProgressBar(srcImage.getImageName(), " ...", genericAlgo);
 
-            //setVisible(false); // Hide dialog
-
-            //if (isRunInSeparateThread()) {
-
-                // Start the thread as a low priority because we wish to still
-                // have user interface work fast.
-                if (genericAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    System.err.println("A thread is already running on this object");
-                    return false;
-                }
-            //} else {
-           //     genericAlgo.run();
-            //}
-                return true;
+            if (genericAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                System.err.println("A thread is already running on this object");
+                return false;
+            }
+                
+            return true;
         } catch (OutOfMemoryError x) {
             if (resultImage != null) {
                 resultImage.disposeLocal(); // Clean up memory of result image
@@ -445,6 +464,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         }
     }
     
+    /**
+     * Handles automatic segmentation algorithm completions.
+     */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 		Vector<VOIBase>[] firstVOI = null;
 		Vector<VOIBase>[] secondVOI = null;
@@ -529,7 +551,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 
 	/**
      * Initializes the frame and variables.
-     *
      */
     private void initStandAlone() throws OutOfMemoryError {
         initResolutions();
@@ -632,11 +653,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         getControls().getTools().setToggleButtonSelected(command);
                 
         if(command.equals(DialogPrompt.CHECK_VOI)) {
-        	String name;
-            ((VoiDialogPrompt)tabs[voiTabLoc]).setUpDialog(name = ((JButton)(e.getSource())).getText(), 
-            		true, voiBuffer.get(name).getMaxCurvesPerSlice());
+            ((VoiDialogPrompt)tabs[voiTabLoc]).setUpDialog(((JButton)(e.getSource())).getText());
             lockToPanel(voiTabLoc, "VOI"); //includes making visible
-            //TODO: add here
             initVoiImage(); //replacing current image and updating
         } else if(command.equals(DialogPrompt.CALCULATE)) {
         	lockToPanel(resultTabLoc, "Analysis"); //includes making visible
@@ -662,7 +680,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         		MipavUtil.displayWarning("This tab calculates VOIs that depend on the following being created.\n"+
         				"Note that only muscle calculations will be correct.\n"+createStr);
         	}
-        	((AnalysisPrompt)tabs[resultTabLoc]).setButtons(getViewableSlice());
+        	((AnalysisPrompt)tabs[resultTabLoc]).setSlice(getViewableSlice());
 
         	((AnalysisPrompt)tabs[resultTabLoc]).enableCalcOutput();
         } else if (!(command.equals(DialogPrompt.OUTPUT) ||
@@ -785,7 +803,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     private void initNext() {
         
-    	time = System.currentTimeMillis();
+    	long time = System.currentTimeMillis();
     	JPanel mainPanel = buildMainPanel();
     	
     	//if this is standalone (app frame hidden), add the tabbedpane from the messageframe to the bottom of the plugin's frame
@@ -984,38 +1002,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         controls.setZSlider(zSlice);
         updateImages(true);
         
-        // livewire grad mag. should be recalculated for the new slice
-        // componentImage.deactivateAllVOI();
-        
+        // livewire grad mag. should be recalculated for the new slice    
         if(currentSlice != slice) {
-        	if(tabs[resultTabLoc].isVisible()) {
-        		((AnalysisPrompt)tabs[resultTabLoc]).setButtons(slice);
-    			//((AnalysisPrompt)tabs[resultTabLoc]).clearButtons(slice);
-        	} else {
-        		for(int i=0; i<tabs.length-2; i++) {
-        			if(tabs[i].isVisible())
-        				((MuscleDialogPrompt)tabs[activeTab]).clearButtons(slice);
-        		}
-        	}
-        	System.out.println("Changed Slice from "+currentSlice+" to "+slice);
-        	//if(changeSlice && activeTab < voiTabLoc) {
-        	//if(tabs[resultTabLoc].isVisible()) 
-        	//((AnalysisPrompt)tabs[resultTabLoc]).setButtons();
-			//((MuscleDialogPrompt)tabs[activeTab]).clearButtons();
+        	for(int i=0; i<tabs.length; i++) 
+    			if(tabs[i].isVisible())
+    				tabs[i].setSlice(slice);
         	currentSlice = slice;
         }
         
         componentImage.getVOIHandler().resetLivewire();
         setTitle();
-        	//if(changeSlice && activeTab < voiTabLoc) {
-        	//if(tabs[resultTabLoc].isVisible()) 
-        	//((AnalysisPrompt)tabs[resultTabLoc]).setButtons();
-			//((MuscleDialogPrompt)tabs[activeTab]).clearButtons();
-        
-    	//if(slice != getViewableSlice())
-    	//	changeSlice = true;
-    	//super.setSlice(slice, updateLinkedImages);
-
     }
     
     /**
@@ -1029,8 +1025,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         boolean addInsets = true;
         int newWidth = getContentPane().getWidth();
         int newHeight = getContentPane().getHeight();
-       // int newWidth = getScrollPaneSize().width;
-       // int newHeight = getScrollPaneSize().height;
 
         final float IMAGE_SCREEN_RATIO = 3.0f / 5.0f; // image will not be resized past 3/5 of screen size
 
@@ -1128,33 +1122,37 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	return fill;
     }
     
-    private void initMuscleButton(int pane) {
+    /**
+     * Initializes the VOI buttons for a particular pane.
+     */
+    private void initMuscleButtons(int pane) {
     	VOIVector vec = getActiveImage().getVOIs();
-    	for(int i=0; i<vec.size(); i++) { 
-        	PlugInSelectableVOI temp = null;
-        	if((temp = voiBuffer.get(vec.get(i).getName())) != null && temp.getCurves()[getViewableSlice()].size() > 0) {
-        		((MuscleDialogPrompt)tabs[pane]).setButton(temp, temp.getName(), temp.getColor());
-        		if(temp.isComputerGenerated()) {
-        			((MuscleDialogPrompt)tabs[pane]).setButtonAutomatic(temp.getName());
-        		}
-        	}
-        	
-        } 
+    	PlugInSelectableVOI temp = null;
+    	for(int i=0; i<vec.size(); i++) 	
+        	if((temp = voiBuffer.get(vec.get(i).getName())) != null && temp.getCurves()[getViewableSlice()].size() > 0) 
+        		((MuscleDialogPrompt)tabs[pane]).setButton(temp);
     }
     
+    /**
+     * Initializes the image for a given pane, loads the relevant VOIs and updates the correct buttons.
+     * @param pane the current pane
+     */
     private void initMuscleImage(int pane) {        
-    	
     	componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
     	getVOIs(pane);
         
         System.out.println("Active tab: :"+activeTab);
-    	initMuscleButton(pane);
+    	initMuscleButtons(pane);
         
     	this.repaint();
 
         updateImages(true);
     }
     
+    /**
+     * Initializes the voiBuffer at program creation by loading all VOIs from the
+     * file system for the first time.
+     */
     private void createVOIBuffer() {
     	Iterator voiItr = voiBuffer.keySet().iterator();
     	
@@ -1174,6 +1172,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	}
     }
     
+    /**
+     * Loads all VOIs for a partiular pane by retrieving them from the VOI buffer.
+     * @param pane the current pane
+     */
     private void getVOIs(int pane) {
     	
     	Iterator voiItr = voiBuffer.keySet().iterator();
@@ -1182,7 +1184,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     		String name = (String)voiItr.next();
     	
 	    	if(voiBuffer.get(name).getLocation() == pane) {
-	    		v = getSingleVOI(name);
+	    		v = voiBuffer.get(name);
 	    		v.setThickness(2);
 	    		v.setDisplayMode(VOI.BOUNDARY);
     			getActiveImage().registerVOI(v);
@@ -1190,6 +1192,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	}
     }
     
+    /**
+     * Initializes the image of the a voiDialogPrompt by setting relevant VOIs to
+     * solid mode, note does not retrieve VOIs from the buffer 
+     */
     private void initVoiImage() {
     	//VOIs of pane already loaded, just need to make relevant ones solid
         VOIVector voiVec = getActiveImage().getVOIs();
@@ -1310,7 +1316,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
 
     
-
+    /**
+     * Abstract class to represent any of the dialog prompts.  Classes that extend this one
+     * need to initialize their own dialog as well as create an actionedPerformed() method 
+     * to handle button calls.
+     * 
+     * @author senseneyj
+     *
+     */
     private abstract class DialogPrompt extends JPanel implements ActionListener {
     	
     	//~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -1338,27 +1351,46 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	/** default button list*/
     	protected String buttonStringList[] = {OK, HIDE_ALL, HELP};
     	
+    	/** The group of buttons in this dialog prompt*/
     	protected JButton buttonGroup[];
     	
+    	/**The containing frame*/
     	protected PlugInMuscleImageDisplay muscleFrame;
     	
+    	/**The ActionListeners of a given initialization of this class*/
     	private Vector<ActionListener> objectList = new Vector<ActionListener>();
     	
+    	/**The title of this DialogPrompt*/
     	protected String title;
     	
     	protected boolean completed = false;
     	
+    	/**
+    	 * Constructor requires containing frame and title, initializes using default button
+    	 * list unless another is specified through setButtons.
+    	 * @param theParentFrame the containing frame
+    	 * @param title
+    	 */
     	public DialogPrompt(PlugInMuscleImageDisplay theParentFrame, String title) {
     		this.muscleFrame = theParentFrame;
     		this.title = title;
     	}
     	
+    	/**
+    	 * Constructor requires containing frame, title and a list of buttons. 
+    	 * @param theParentFrame the containg frame
+    	 * @param title
+    	 * @param buttonString the list of buttons to replace buttonStringList
+    	 */
     	public DialogPrompt(PlugInMuscleImageDisplay theParentFrame, String title, String[] buttonString) {
     		this.muscleFrame = theParentFrame;
     		this.title = title;
     		this.buttonStringList = buttonString;
     	}
     	
+    	/**
+    	 * Returns the current title of this dialog prompt.
+    	 */
     	public String getTitle() {
     		return title;
     	}
@@ -1367,16 +1399,24 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     		return completed;
     	}
     	
+    	/**
+    	 * Replaces buttonStringList with the given buttons.  
+    	 * @param buttonString
+    	 */
     	protected void setButtons(String[] buttonString) {
     		this.buttonStringList = buttonString;
     	}
     	
+    	/**
+    	 * Abstract method required for initializing display.
+    	 */
     	protected abstract void initDialog();
     	
     	/**
-         * Builds button panel consisting of OK, Cancel and Help buttons.
+         * Builds button panel consisting of buttonStringList.  If none is specified uses
+         * default OK, CANCEL, and HELP
          *
-         * @return  JPanel that has ok, cancel, and help buttons
+         * @return  JPanel that has OK, CANCEL, and HELP buttons
          */
         protected JPanel buildButtons() {
             JPanel buttonPanel = new JPanel();
@@ -1441,19 +1481,33 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	objectList.addElement(obj);
         }
         
+        /**
+         * Abstract actionPerformed required to deal with events such as button clicks.
+         */
         public abstract void actionPerformed(ActionEvent e);
+        
+        /**
+         * Abstract method for dealing with a change in slice.
+         * @param slice
+         */
+        public abstract void setSlice(int slice);
     }
 
     private class VoiDialogPrompt extends DialogPrompt implements ActionListener, AlgorithmInterface {
 
-        private final String[] buttonStringList = {OK, HIDE_ALL, CANCEL, RESET, HIDE_ONE};
+        /**Valid buttons for this DialogPrompt. */
+    	protected final String[] buttonStringList = {OK, HIDE_ALL, CANCEL, RESET, HIDE_ONE};
     	
+    	/**The name of the current VOI*/
         private String objectName;
         
+        /**Whether the current VOI is closed, also accesible via voiBuffer.get(objectName).isClosed()*/
         private boolean closedVoi;
         
+        /**The number of curves that can be created, also reached via voiBuffer.get(objectName).getNumOfMaxCurves()*/
         private int numVoi;
         
+        /**Whether the voiExists when dialogPrompt is first called*/
         private boolean voiExists;
         
         /**Describes the voi properties (ex. 1 closed curve)*/
@@ -1471,8 +1525,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         /**Progress bar for snake algorithm*/
         private ViewJProgressBar snakeProgress;
 
+        /**Propagation menu for smoothing if 3D image*/
         private JMenu propMenu;
         
+        /**
+         * Constructor that only requires containing frame. Title equals "VOI"
+         * @param theParentFrame the containing frame.
+         */
         public VoiDialogPrompt(PlugInMuscleImageDisplay theParentFrame) {
             super(theParentFrame, "VOI");
            
@@ -1483,16 +1542,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             initDialog();
         }
         
-        private boolean voiExists(String objectName) {     	
-            String fileDir;
-            fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator;
-            
-            if(new File(fileDir+objectName+".xml").exists()) {
-                return true;
-            } 
-            return false;
-        }
-        
+        /**
+         * Implementing abstract method to handle dialog buttons
+         */
         public void actionPerformed(ActionEvent e) {
 
             String command = e.getActionCommand();
@@ -1605,26 +1657,18 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 	}
                 	
                 } else if (command.equals("PropVOIUp")) {
-                	//TODO: Perform propogate  + smooth on one VOI here
-                    //if (componentImage.getVOIHandler().propVOI(1, false) == true) {
-                    //    incSlice();
-                    //}
                 	performSnake(AlgorithmSnake.PROP_NEXT);
+                	incSlice();
                 } else if (command.equals("PropVOIDown")) {
-                	//TODO: Perform propogate  + smooth on one VOI here
-                    //if (componentImage.getVOIHandler().propVOI(-1, false) == true) {
-                    //    decSlice();
-                    //}
                 	performSnake(AlgorithmSnake.PROP_PREV);
+                	decSlice();
                 } else if (command.equals("PropVOIAll")) {
-                	//TODO: Perform propogate  + smooth on all VOIs here
-                    //componentImage.getVOIHandler().propVOIAll();
                 	performSnake(AlgorithmSnake.PROP_ALL);
                 } 
             }
             
+        /**Method for dealing with algorithms*/
         public void algorithmPerformed(AlgorithmBase algorithm) {
-			// TODO Auto-generated method stub
 			if(algorithm instanceof AlgorithmSnake) {
 				snakeProgress.updateValue(75);
 				System.out.println("Performed successfully");
@@ -1670,6 +1714,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             snakeProgress.updateValue(52);
         }
         
+        /**
+         * Gets the VOI that should have the snake algorithm performed on it.
+         * @return the VOI to snake
+         */
         private VOI getInterestingVOI() {
         	VOIVector testVec = getActiveImage().getVOIs();
         	VOI goodVOI = null;
@@ -1686,22 +1734,29 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	return goodVOI;
         }
         
-        
+        /**
+         * Prepares to leave voi dialog, clears the voiPromptBuffer.
+         */
         public void takeDownDialog() {
         	
         	removeAll();
         	voiPromptBuffer.removeAllElements();
         }
         
-        public void setUpDialog(String name, boolean closedVoi, int numVoi) {	
+        /**
+         * Sets up the dialog given the VOI name, uses voiBuffer.get(name).X() for initializing
+         * all other VOI properties.
+         * @param name the name of the VOI
+         */
+        public void setUpDialog(String name) {	
         	this.objectName = name;
-        	this.closedVoi = closedVoi;
-        	this.numVoi = numVoi;
+        	this.closedVoi = voiBuffer.get(objectName).isClosed();
+        	this.numVoi = voiBuffer.get(objectName).getMaxCurvesPerSlice();
         	warningText.setText("");
         	
         	voiPromptBuffer.removeAllElements();
         	
-        	voiExists = voiExists(objectName);
+        	voiExists = voiBuffer.get(objectName).isCreated();
         	
         	for(int i=0; i<buttonGroup.length; i++) {
 	        	if(buttonGroup[i].getText().contains(HIDE_ONE)) {
@@ -1716,7 +1771,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             	createWarningLabel();
         }
         
-
+        /**
+         * @return the current VOI
+         */
         public String getObjectName() {
             return objectName;
         }
@@ -1829,7 +1886,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         private PlugInSelectableVOI checkVoi() {
             VOIVector srcVOI = muscleFrame.getActiveImage().getVOIs();
-            int countQualifiedVOIs = 0; //equal to numVoi when the right  amount of VOIs have been created
+            //equal to numVoi when the right  amount of VOIs have been created
+            int countQualifiedVOIs = 0;
             VOI goodVOI = null;
             //see if the VOI has been modified
             boolean curveReplace = false;
@@ -1891,7 +1949,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             	String error = closedVoi ? "Any curves made must be closed." : 
                     "Any curves made must be open.";
             	if(multipleSlices)
-            		error += " Please currect the curve on slice "+sliceClosed+".";
+            		error += " Please correct the curve on slice "+sliceClosed+".";
             	MipavUtil.displayError(error);
             	return null;
             }
@@ -1906,12 +1964,22 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	}
             
             return voiBuffer.get(objectName);
-        }   
+        }
+
+		@Override
+		public void setSlice(int slice) {
+			//Do nothing since this dialog does not depend on a changing slice (though could in the future)
+		}   
     }
     
-   
-
-    private class MuscleDialogPrompt extends DialogPrompt {
+    /**
+     * Instances of this class are main dialog prompts that allow users to view created VOIs
+     * and to select VOIs to modify in a VoiDialogPrompt.
+     * 
+     * @author senseneyj
+     *
+     */
+    private class MuscleDialogPrompt extends DialogPrompt implements ActionListener {
         
         //~ Static fields/initializers -------------------------------------------------------------------------------------
     
@@ -1923,7 +1991,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         //~ Instance fields ------------------------------------------------------------------------------------------------
         
-        /** Denotes the anatomical part represented in the image. Implemented seperatly in case this class
+        /** Denotes the anatomical part represented in the image. Implemented in case this class
          *  is moved to its own class at a later time.  
          */
         private ImageType imageType;
@@ -1952,6 +2020,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         /** Text for muscles where mirror muscles are not considered. */
         private String[] noMirrorArr;
 
+        /**Allows dialog to know its place in the world. */
         private int index;
         
         /**
@@ -1960,9 +2029,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
          * @param  theParentFrame  Parent frame.
          */
         public MuscleDialogPrompt(PlugInMuscleImageDisplay theParentFrame, String title, String[] mirrorArr, 
-                String[] noMirrorArr, 
-                ImageType imageType, Symmetry symmetry, int index) {
-            //super(theParentFrame, false);
+                String[] noMirrorArr, ImageType imageType, Symmetry symmetry, int index) {
+
             super(theParentFrame, title);
             
             setButtons(buttonStringList);
@@ -1977,15 +2045,20 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             initDialog();    
         }
         
+        /**The location of this dialog in the parentFrame's array*/
         public int getIndex() {
         	return index;
         }
         
+        //TODO: Put PlugInMuscleImageDisplay's actions here
         public void actionPerformed(ActionEvent e) {
             System.err.println(e.getActionCommand());
             System.out.println(e.getActionCommand());
         }
         
+        /**
+         * Builds the panel of instructions for this dialog.
+         */
         private JPanel initInstructionPanel() {
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.anchor = GridBagConstraints.WEST;
@@ -2013,7 +2086,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             return instructionPanel;
         }
         
-        public void clearButtons(int slice) {
+        /**
+         * Implemented abstract method for dealing with slice changes, currently sets check boxes of
+         * VOIs that have a curve on the given slice to that VOIs color.
+         */
+        public void setSlice(int slice) {
         	PlugInSelectableVOI temp;
         	for(int i=0; i<mirrorCheckArr.length; i++) {
         		if((temp = voiBuffer.get(mirrorButtonArr[i].getText())).getCurves()[slice].size() == 0) {
@@ -2037,6 +2114,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	}
         }
         
+        /**
+         * Builds the panel of symmetrical objects for the dialog box initialization.
+         */
         private JPanel initSymmetricalObjects() {
             
             ButtonGroup mirrorGroup = new ButtonGroup();
@@ -2098,6 +2178,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             return mirrorPanel;      
         }
         
+        /**
+         * Builds the panel of non-symmetrical objects for the dialog box initialization.
+         */
         private JPanel initNonSymmetricalObjects() {
 
             ButtonGroup noMirrorGroup = new ButtonGroup();
@@ -2154,38 +2237,39 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             return noMirrorPanel;
         }
         
-        public void setButton( VOI v, String buttonName, Color c) {
+        /**
+         * Sets a particular button to the correct colors.  Used in initialization.
+         */
+        public void setButton(PlugInSelectableVOI v) {
+        	String name = v.getName();
+        	Color c = v.getColor();
         	if(!c.equals(Color.BLACK)) 
-        		voiBuffer.get(buttonName).setCreated(true);
+        		voiBuffer.get(name).setCreated(true);
         	for(int i=0; i<mirrorButtonArr.length; i++) {
-        		if(buttonName.equals(mirrorButtonArr[i].getText())) {
+        		if(name.equals(mirrorButtonArr[i].getText())) {
         			mirrorCheckArr[i].setColor(c);
         			v.addVOIListener(mirrorCheckArr[i].getColorButton());
-        			mirrorButtonArr[i].setForeground(Color.BLACK);
+        			if(v.isComputerGenerated())
+        				mirrorButtonArr[i].setForeground(Color.RED);
+        			else
+        				mirrorButtonArr[i].setForeground(Color.BLACK);
         		}
         	}
         	for(int i=0; i<noMirrorButtonArr.length; i++) {
-        		if(buttonName.equals(noMirrorButtonArr[i].getText())) {
+        		if(name.equals(noMirrorButtonArr[i].getText())) {
         			noMirrorCheckArr[i].setColor(c);
         			v.addVOIListener(noMirrorCheckArr[i].getColorButton());
-        			noMirrorButtonArr[i].setForeground(Color.BLACK);
+        			if(v.isComputerGenerated())
+        				noMirrorButtonArr[i].setForeground(Color.RED);
+        			else
+        				noMirrorButtonArr[i].setForeground(Color.BLACK);
         		}
         	}
         }
         
-        public void setButtonAutomatic(String buttonName) {
-        	for(int i=0; i<mirrorButtonArr.length; i++) {
-        		if(buttonName.equals(mirrorButtonArr[i].getText())) {
-        			mirrorButtonArr[i].setForeground(Color.RED);
-        		}
-        	}
-        	for(int i=0; i<noMirrorButtonArr.length; i++) {
-        		if(buttonName.equals(noMirrorButtonArr[i].getText())) {
-        			noMirrorButtonArr[i].setForeground(Color.RED);
-        		}
-        	}
-        }
-        
+        /**
+         * Implemented abstract method constructs dialog.
+         */
         protected void initDialog() {
             setForeground(Color.black);
             
@@ -2229,70 +2313,72 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             add(buildButtons(), gbc);                
         }
         
+        /**
+         * Gets the symmetric buttons in this panel.
+         */
         public JButton[] getMirrorButton() {
         	if(mirrorButtonArr != null)
         		return mirrorButtonArr;
         	return new JButton[0];
         }
         
+        /**
+         * Gets the non-symmetric buttons in this panel.
+         */
         public JButton[] getNoMirrorButton() {
         	if(noMirrorButtonArr != null)
         		return noMirrorButtonArr;
         	return new JButton[0];
         }
-
-        public String[] getMirrorButtonArr() {
-            String[] arr = new String[mirrorButtonArr.length];
-            for(int i=0; i<arr.length; i++) {
-                arr[i] = mirrorButtonArr[i].getText();
-            }
-            return arr;
-        }
- 
-	    public String[] getNoMirrorButtonArr() {
-	        String[] arr = new String[noMirrorButtonArr.length];
-	        for(int i=0; i<arr.length; i++) {
-	            arr[i] = noMirrorButtonArr[i].getText();
-	        }
-	        return arr;
-	    }
     }
     
+    /**
+     * This extension of DialogPrompt displays performed calculations.
+     * 
+     * @author senseneyj
+     *
+     */
     private class AnalysisPrompt extends DialogPrompt implements ActionListener {
 		
-		public static final String LOAD_VOI = "Load VOI";
+    	//~ Static fields/initializers -------------------------------------------------------------------------------------
+    	
+    	public static final String LOAD_VOI = "Load VOI";
     	
     	private final String[] buttonStringList = {OUTPUT, OUTPUT_ALL, SAVE, TOGGLE_LUT, HELP, BACK};
 	
-		/**
-		 * Labels for instructions. 
-		 */
+    	//~ Instance fields -------------------------------------------------------------------------------------
+    	
+    	/** Labels for instructions. */
 		private JLabel[] instructionLabel;
 
-		/**
-		 * Text for muscles where a mirror muscle may exist. 
-		 */
+		/** Text for muscles where a mirror muscle may exist. */
 		private String[][] mirrorArr;
 
-		/**
-		 * Text for muscles where mirror muscles are not considered. 
-		 */
+		/** Text for muscles where mirror muscles are not considered. */
 		private String[][] noMirrorArr;
 		
+		/** Side check box for all symmetric objects. */
 		private ColorButtonPanel[][] mirrorCheckArr;
 		
+		/** Side check box for all non-symmetric objects. */
 		private ColorButtonPanel[][] noMirrorCheckArr;
 		
+		/** Buttons for all symmetric objects. */
 		private JButton[][] mirrorButtonArr;
 		
+		/** Buttons for all non-symmetric objects. */
 		private JButton[][] noMirrorButtonArr;
 		
+		/**Seed for random color chooser for VOIs that have not had a color assigned to them. */
 		private int colorChoice = 0;
 		
+		/**Text output generated after hitting SAVE*/
 		private CustomOutput ucsdOutput = new CustomOutput();
-
+		
+		/**Whether the custom lookup table is being displayed*/
 		private boolean lutOn = false;
 		
+		/**A mapping of names to color panels for easy referencing. */
 		private TreeMap<String,ColorButtonPanel> checkBoxLocationTree;
 	
 		/**
@@ -2303,7 +2389,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		 * @param mirrorArr
 		 * @param noMirrorArr
 		 */
-		
 		public AnalysisPrompt(PlugInMuscleImageDisplay theParentFrame, String[][] mirrorArr, String[][] noMirrorArr) {
 	        super(theParentFrame, "Analysis");
 	        
@@ -2321,6 +2406,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        initDialog();
 	    }
 		
+		/**
+		 * Gets all items (symmetric and non-symmetric) that are calulated.
+		 */
 		private String[][] getCalcItems(String[][] objectArr) {
 			String[][] resultArr = new String[objectArr.length][];
 			String tempStr = "";
@@ -2336,7 +2424,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			return resultArr;
 		}
 		
-		private void setButtons(int slice) {
+		/**
+         * Implemented abstract method for dealing with slice changes, currently sets buttons of VOIs that
+         * have curves in the given slice to ENABLED, disables buttons where a VOI has no curve on that slice.
+         */
+		public void setSlice(int slice) {
 			if (checkBoxLocationTree != null) {
 				Set<String> keySet = checkBoxLocationTree.keySet();
 				Iterator<String> it = keySet.iterator();
@@ -2364,7 +2456,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		
 		/**
 		 * Loads the CT Thigh specific lut
-		 *
 		 */
 		private void loadLUT() {
 			float min = (float)getActiveImage().getMin();
@@ -2408,6 +2499,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			lutOn = true;
 		}
 		
+		/**
+		 * Removes the CT Thigh specific lut
+		 */
 		private void removeLUT() {
 			
 			ctMode(getActiveImage(), -175, 275);
@@ -2426,9 +2520,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		
 		/**
 	     * Initializes the dialog box.
-	     *
-	     */
-	    
+	     */    
 		protected void initDialog() {
 	        setForeground(Color.black);
 	        
@@ -2495,6 +2587,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        
 	    }
 		
+		/**
+		 * Initializes the instruction panel.
+		 */
 		private JPanel initInstructionPanel() {
 	        GridBagConstraints gbc = new GridBagConstraints();
 	        gbc.anchor = GridBagConstraints.NORTHWEST;
@@ -2521,6 +2616,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        return instructionPanel;
 	    }
 		
+		/**
+		 * Initializes the symmetric buttons from a particular pane.
+		 */
 		private JPanel initSymmetricalObjects(int index) {
 
             mirrorCheckArr[index] = new ColorButtonPanel[mirrorArr[index].length * 2];
@@ -2582,6 +2680,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        return subPanel;         
 	    }
 	    
+		/**
+		 * Initializes the non-symmetric buttons from a particular pane.
+		 */
 	    private JPanel initNonSymmetricalObjects(JPanel subPanel, int index) {
       
 	    	noMirrorCheckArr[index] = new ColorButtonPanel[noMirrorArr[index].length];
@@ -2624,6 +2725,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        return subPanel;
 	    }
 	    
+	    /**
+         * Implementing abstract method to handle calculating buttons
+         */
 	    public void actionPerformed(ActionEvent e) {
 	    	System.out.println("Caught 2: "+e.getActionCommand());
 	    	String command = e.getActionCommand();
@@ -2666,7 +2770,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	            			checkBoxLocationTree.get(text).repaint();
 	            		}
 	            	if(!exists) {
-	            		VOI rec = getSingleVOI(text);
+	            		VOI rec = voiBuffer.get(text);
 	            		Color c = null;
 	            		if((c = voiBuffer.get(rec.getName()).getColor()).equals(PlugInSelectableVOI.INVALID_COLOR) && 
 	            				(c = hasColor(rec)).equals(PlugInSelectableVOI.INVALID_COLOR)) {
@@ -2827,6 +2931,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			}	
 		}
 		
+		/**
+		 * Enables buttons that rely on calculating being completed.
+		 */
 		public void enableCalcOutput() {
 			for(int i=0; i<buttonGroup.length; i++) {
 	        	if(buttonGroup[i].getText().equals(OUTPUT)) {
@@ -2839,10 +2946,20 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        }
 		}
 	    
+		/**
+		 * Generates tab-delimited text output.
+		 * 
+		 * @author senseneyj
+		 *
+		 */
 		private class CustomOutput implements Runnable {
 			
+			/** Whether this Runnable has completed*/
 			private boolean done = false;
 			
+			/**
+			 * Produces output into text file in NIA_Seg
+			 */
 			public void run() {
 				long time = System.currentTimeMillis();
 				ArrayList<PlugInSelectableVOI> calcList = new ArrayList();
@@ -2888,6 +3005,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				done = true;
 			}
 			
+			/**
+			 * Assembles output for all slices of image.
+			 * @return array of slice data
+			 */
 			private String[] assembleOutput() {
 				String[] sliceStr;
 				if(getActiveImage().getExtents().length > 2)
@@ -2957,6 +3078,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				return sliceStr;
 			}
 			
+			/**
+			 * Whether the output has finished.
+			 */
 			public boolean isFinished() {
 				return done;
 			}
@@ -2969,6 +3093,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	 *
 	 */
 	private class MuscleCalculation implements Runnable {
+		
+		//~ Static fields/initializers -------------------------------------------------------------------------------------
+		
 		public static final int OFFSET = 1024;
 		public static final int FAT_LOWER_BOUND = -190;
 		public static final int FAT_UPPER_BOUND = -30;
@@ -2977,18 +3104,31 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		public static final int FAR_LOWER_BOUND = -2048;
 		public static final int FAR_UPPER_BOUND = 2048;
 		
+		//~ Instance fields -------------------------------------------------------------------------------------
+		
+		/**The current VOI being calculated.*/
 		private VOI currentVOI;
 		
+		/**Whether the Runnable has completed.*/
 		private boolean done = false;
 		
+		/**The name of the current VOI being calculated.*/
 		private String name;
 		
+		/**
+		 * 
+		 * @param newVOI the VOI to work on
+		 * @param name the name of the VOI
+		 */
 		public MuscleCalculation(VOI newVOI, String name) {
 			super();
 			this.currentVOI = newVOI;
 			this.name = name;
 		}
 		
+		/**
+		 * Performs all calculations for a particular VOI.
+		 */
 		public void run() {
 			done = false;
 			//ViewJProgressBar progressBar = new ViewJProgressBar("Calculations", "Initializing...", 0, 100, true);
@@ -3155,10 +3295,17 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			done = true;
 		}
 		
+		/**
+		 * Whether the runnable has finished.
+		 */
 		public boolean isFinished() {
 			return done;
 		}
 	
+		/**
+		 * Gets the total number of pixels that are bounded by lowerBound and upperBound in the VOI.
+		 * @return total number of pixels
+		 */
 		private double getPieceCount(VOI v, int lowerBound, int upperBound) {
 			int area = 0;
 			BitSet fullMask = new BitSet();
@@ -3172,10 +3319,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			return area;
 		}
 		
+		/**
+		 * Gets MIPAV calculated number of pixels that are in the area of the VOI.
+		 */
 		private double getTotalAreaCalc(VOI v) {
 			return v.area(); //returns volume in 3D
 		}
 	
+		/**
+		 * Gets new calculated number of pixels that are in the area of the VOI.
+		 */
 		private double getTotalAreaCount(VOI v) {
 			int totalArea = 0;
 			BitSet fullMask = new BitSet();
@@ -3185,6 +3338,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			return totalArea;
 		}
 	
+		/**
+		 * Gets mean H-unit of all pixels that are bounded by lowerBound and upperBound.
+		 */
 		private double getMeanH(VOI v, int lowerBound, int upperBound) {
 			int area = 0;
 			double meanH = 0;
@@ -3271,12 +3427,19 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			return vec;
 		}
 	
+		/**
+		 * Gets the VOI being calculated in this runnable.
+		 */
 		public VOI getCurrentVOI() {
 			return currentVOI;
 		}
-	
+		
+		/**
+		 * Sets the VOI being calculated in this runnable to a new value. Also resets name.
+		 */
 		public void setCurrentVOI(VOI currentVOI) {
 			this.currentVOI = currentVOI;
+			this.name = currentVOI.getName();
 		}
 	}
 	/**
@@ -3352,6 +3515,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         }  
     }
     
+    /**
+     * Determines whether the mirror of the given VOI has a color; if so, returns it.
+     * Otherwise this method returns PlugInSelectableVOI.INVALID_COLOR.
+     */
     private Color hasColor(VOI voi) {
         Color c = PlugInSelectableVOI.INVALID_COLOR;
         Iterator voiListItr = voiBuffer.keySet().iterator();
@@ -3443,10 +3610,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         return temp;
     }
     
-    public PlugInSelectableVOI getSingleVOI(String name) {
-    	return voiBuffer.get(name);
-    }
-
+    /**
+     * Builds thigh axis through two thigh image.
+     * 
+     * @author senseneyj
+     *
+     */
 	private class BuildThighAxes implements AlgorithmInterface {
 		
 	    private int zSlice;
@@ -3600,6 +3769,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    }
 	}
 		
+	/**
+	 * Captures the entire currently displayed image, not just area being shown in frame.
+	 */
 	protected java.awt.Image captureImage() {
 		getActiveImage().getParentFrame().requestFocus();
 		Rectangle currentRectangle;
@@ -3913,25 +4085,43 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			return true;
 		}
 		
+		/**
+		 * Returns the name of the VOI corresponding to this colorButton.
+		 */
 		public String getVOIName() {
 			return voiName;
 		}
 		
+		/**
+		 * Sets the color of this colorButton.
+		 */
 		public void setColor(Color c) {
 			colorButton.getColorIcon().setColor(c);
 		}
 		
+		/**
+		 * Returns the actual colorButton inside of the panel.
+		 */
 		public ColorButton getColorButton() {
 			return colorButton;
 		}
 	}
 	
+	/**
+	 * The ColorButton inside of a ColorButtonPanel
+	 */
 	private class ColorButton extends JButton implements VOIListener {
 
+		/**The icon displaying the current color.*/
 		private ColorIcon cIcon;
 		
+		/**The name of the voi corresponding to this button.*/
 		private String voiName;
 		
+		/**
+		 * Constructs a colorButton with the given color and name 
+		 * with standard dimension of 20px by 20px.
+		 */
 		public ColorButton(Color c, String voiName) {
 			super();
 			cIcon = new ColorIcon(c, 13, 13);
@@ -3945,19 +4135,24 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			setPreferredSize(new Dimension(20,20));
 		}
 		
+		/**
+		 * Returns the colorIcon inside of the colorButton.
+		 */
 		public ColorIcon getColorIcon() {
 			return cIcon;
 		}
 		
+		/**
+         * We are not interested in adding curves, so this method is empty.
+         */
 		public void addedCurve(VOIEvent added) {
             /* not interested in adding curves */
-        }
+		}
+		
         /**
          * We are not interested in removing Curves, so this method is empty.
-         *tp
-         * @param  added  DOCUMENT ME!
          */
-        public void removedCurve(VOIEvent added) {
+        public void removedCurve(VOIEvent removed) {
             /* not interested in removing curves */
         }
 
@@ -3970,11 +4165,20 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	this.repaint();
         }
         
+        /**
+         * We are not interested in selecting Curves, so this method is empty.
+         */
         public void selectedVOI(VOIEvent selection) {
         	/* not interested in having the ColorButon select VOIs */
         }
 	}
 	
+	/**
+	 * Custom livewire for adhering to edges of already created VOIs.
+	 * 
+	 * @author senseneyj
+	 *
+	 */
 	private class CustomLivewire extends RubberbandLivewire {
 		/**A set representing all VOIs that should be avoided */
 		private BitSet voiMap; 
@@ -4017,132 +4221,4 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    	return voiMap.get(pt.x+pt.y*xRes);
 	    }
 	}
-
-	public static final String VOI_DIR = "NIA_Seg";
 }
-
-//Old loadVOI
-/*private void loadVOI(int pane) {
-System.err.println("calling loadVOI");
-
-//getImageA().unregisterAllVOIs();
-String fileDir;
-
-
-fileDir = getImageA().getFileInfo(0).getFileDirectory()+VOI_DIR+File.separator;
-File allVOIs = new File(fileDir);
-//ArrayList paneVOIs = new ArrayList();
-if(allVOIs.isDirectory()) {
-    String[] voiName = allVOIs.list();
-    for(int i=0; i<voiName.length; i++) {
-    	//voiName[i] = voiName[i].substring(0, voiName[i].indexOf(".xml"));
-    	//if(getLocationStatus(voiName[i]) == pane)
-    	//	paneVOIs.add(voiName[i]);
-    	
-    	if(voiName[i].indexOf(".xml") != -1) {
-        	
-        	String name = voiName[i].substring(0, voiName[i].indexOf(".xml"));
-        	String ext = ".xml";
-        	VOI v;
-        	System.out.println(name);
-        	if(voiBuffer.get(name).getLocation() == pane) {
-        		v = getSingleVOI(name+ext);
-        		if(v != null) {
-        			v.setThickness(2);
-        			Color c = PlugInSelectableVOI.INVALID_COLOR;
-        			
-        			if((c = voiBuffer.get(v.getName()).getColor()).equals(PlugInSelectableVOI.INVALID_COLOR)) {
-            			//System.out.println("A new one: "+v.getColor());
-                    	if((c = hasColor(v)).equals(PlugInSelectableVOI.INVALID_COLOR))
-                            v.setColor(c = colorPick[colorChoice++ % colorPick.length]);
-                    	else
-                    		v.setColor(c);
-                    	voiBuffer.get(v.getName()).setColor(c);
-        			} else
-        				v.setColor(c);
-        			v.setDisplayMode(VOI.BOUNDARY);
-        			getActiveImage().registerVOI(v);
-        		}
-        	}
-    	}
-    	
-    }
-    //String[] nameList = new String[paneVOIs.size()];
-    //for(int i=0; i<nameList.length; i++)
-   // 	nameList[i] = (String)paneVOIs.get(i);
-    //loadVOIs(nameList, false);
-    updateImages(true);
-}
-}*/
-
-/*Removed custom savesVOIs to
- * 
-     * This method saves all VOIs for the active image to a given directory.  Note:  This method differs quite a bit in execution 
-     * compared with saveALLVOIsTo(voiDir) in ViewJFrameBase.
-     *
-     * @param  voiDir  directory that contains VOIs for this image.
-     
-    public void saveAllVOIsTo(String voiDir, String currentVoi) {
-
-        int nVOI;
-        int i;
-        ViewVOIVector VOIs;
-        FileVOI fileVOI;
-        ModelImage currentImage;
-
-        try {
-
-            if (displayMode == IMAGE_A) {
-                currentImage = componentImage.getImageA();
-                VOIs = currentImage.getVOIs();
-            } else if (displayMode == IMAGE_B) {
-                currentImage = componentImage.getImageB();
-                VOIs =  currentImage.getVOIs();
-            } else {
-                MipavUtil.displayError(" Cannot save VOIs when viewing both images");
-
-                return;
-            }
-
-            // Might want to bring up warning message before deleting VOIs !!!!
-            // or not do it at all.
-            // if voiDir exists, then empty it
-            // if voiDir does not exist, then create it
-            File voiFileDir = new File(voiDir);
-
-            if (voiFileDir.exists() && voiFileDir.isDirectory()) {
-
-                // only clean out the vois if this is a default voi directory
-                if (voiFileDir.getName().startsWith("defaultVOIs_")) {
-                    File[] files = voiFileDir.listFiles();
-
-                    if (files != null) {
-
-                        for (int k = 0; k < files.length; k++) {
-
-                            if (files[k].getName().endsWith(".voi") || files[k].getName().endsWith(".xml")) { // files[k].delete();
-                            }
-                        }
-                    } // if (files != null)
-                }
-            } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
-            } else { // voiFileDir does not exist
-                voiFileDir.mkdir();
-            }
-
-            nVOI = VOIs.size();
-
-            System.err.println("Number of VOIs: " + nVOI);
-
-            for (i = 0; i < nVOI; i++) {
-
-                fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir, currentImage);
-
-                fileVOI.writeVOI(VOIs.VOIAt(i), true);
-            }
-
-        } catch (IOException error) {
-            MipavUtil.displayError("Error writing all VOIs to " + voiDir + ": " + error);
-        }
-
-    } // end saveAllVOIsTo()*/
