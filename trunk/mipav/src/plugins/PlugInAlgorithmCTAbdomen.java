@@ -6,6 +6,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmMorphology3D;
 import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
 import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
+import gov.nih.mipav.model.algorithms.AlgorithmSnake;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.CubeBounds;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -80,6 +81,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
         abdomenImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "thighTissueImage");
         abdomenVOI = null;
+        visceralVOI = null;
     }
 
     
@@ -116,7 +118,13 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 //            JCATmakeAbdomen2DVOI();
 //            ShowImage(abdomenImage, "Segmented Abdomen");
             
-            JCATsegmentVisceralFat2D();
+            JCATsegmentSubcutaneousFat2D();
+            snakeViseralVOI();
+
+            srcImage.unregisterAllVOIs();
+            srcImage.registerVOI(abdomenVOI);
+            srcImage.registerVOI(visceralVOI);
+
         }
 
 
@@ -187,6 +195,30 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         // set initialized flag to true so the data structures are not reallocated
         initializedFlag = true;
     } // end init()
+    
+    
+    /**
+     * Apply the snake algorithm to the visceral VOI
+     */
+    private void snakeViseralVOI() {
+        
+        // set the visceral VOI as active
+        visceralVOI.setActive(true);
+        visceralVOI.getCurves()[0].elementAt(0).setActive(true);
+        
+        float[] sigmas = new float[2];
+        sigmas[0] = 1.0f;
+        sigmas[1] = 1.0f;
+        
+        AlgorithmSnake snake = new AlgorithmSnake(srcImage, sigmas, 50, 2, visceralVOI, AlgorithmSnake.OUT_DIR);
+        snake.run();
+
+        visceralVOI = snake.getResultVOI();
+        
+    } // end snakeViseralVOI
+    
+    
+    
     
     
     
@@ -326,8 +358,9 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      * Method not based on having the abdomen VOI, but rather determining both the
      * abdominal and visceral  VOI in this step using the segmented abdomenImage
      */
-    private void JCATsegmentVisceralFat2D() {
+    private void JCATsegmentSubcutaneousFat2D() {
         
+        // a buffer to store a slice from the source Image
         short[] srcBuffer;
         try {
             srcBuffer = new short [sliceSize];
@@ -337,7 +370,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             return;
         }
         
-        // find the center of mass of the abdomen in the abdomenImage
+        // get the data from the segmented abdomenImage and the srcImage
         try {
             abdomenImage.exportData(0, sliceSize, sliceBuffer);
             srcImage.exportData(0, sliceSize, srcBuffer);
@@ -347,6 +380,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             return;
         }
         
+        // center-of-mass array, so we can pass by reference into a function
         int[] cmArray;
         try {
             cmArray = new int [2];
@@ -356,31 +390,33 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             return;
         }
         
+        // find the center of mass of the single label object in the sliceBuffer (abdomenImage)
         findAbdomenCM(cmArray);
         int xcm = cmArray[0];
         int ycm = cmArray[1];
 
-        // The center-of-mass seems reasonable, now use it and the abdomenImage
-        // to define points on the abdomen VOI
-        ArrayList<Integer> xArr = new ArrayList<Integer>();
-        ArrayList<Integer> yArr = new ArrayList<Integer>();
+        // Use the CM, the abdomenImage, and the srcImage to define points on the
+        // abdomen and visceral VOI's
+        ArrayList<Integer> xArrAbdom = new ArrayList<Integer>();
+        ArrayList<Integer> yArrAbdom = new ArrayList<Integer>();
         ArrayList<Integer> xArrVis = new ArrayList<Integer>();
         ArrayList<Integer> yArrVis = new ArrayList<Integer>();
-        findAbdomenVOI(cmArray, xArr, yArr, srcBuffer, xArrVis, yArrVis);
+        findVOIs(cmArray, xArrAbdom, yArrAbdom, srcBuffer, xArrVis, yArrVis);
         
-        int[] x1 = new int[xArr.size()];
-        int[] y1 = new int[xArr.size()];
-        int[] z1 = new int[xArr.size()];
-        for(int idx = 0; idx < xArr.size(); idx++) {
-            x1[idx] = xArr.get(idx);
-            y1[idx] = yArr.get(idx);
+        int[] x1 = new int[xArrAbdom.size()];
+        int[] y1 = new int[xArrAbdom.size()];
+        int[] z1 = new int[xArrAbdom.size()];
+        for(int idx = 0; idx < xArrAbdom.size(); idx++) {
+            x1[idx] = xArrAbdom.get(idx);
+            y1[idx] = yArrAbdom.get(idx);
             z1[idx] = 0;
         }
 
+        // make the VOI's and add the points to them
         abdomenVOI = new VOI((short)0, "Abdomen", 0);
         Vector[] v = new Vector[zDim];
-        for(int i=0; i<zDim; i++) {
-            v[i] = new Vector();
+        for(int idx = 0; idx < zDim; idx++) {
+            v[idx] = new Vector();
         }
         abdomenVOI.setCurves(v);
         abdomenVOI.importCurve(x1, y1, z1, 0);
@@ -394,10 +430,6 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         visceralVOI = new VOI((short)0, "Visceral", 1);
         visceralVOI.importCurve(x1, y1, z1, 0);
         
-
-        srcImage.unregisterAllVOIs();
-        srcImage.registerVOI(abdomenVOI);
-        srcImage.registerVOI(visceralVOI);
 /*
         System.out.println("Xcm: " +xcm +"  Ycm: " +ycm);
         sliceBuffer[ycm * xDim + xcm] = 20;
@@ -412,7 +444,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             System.err.println("segmentThighTissue(): Error importing data");
         }
 */
-        ShowImage(srcImage, "Segmented Abdomen");
+//        ShowImage(srcImage, "Segmented Abdomen");
 
 
 //        System.out.println("Abdomen VOI points:");
@@ -420,21 +452,28 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 //            System.out.println(xArr.get(idx) +"  " + yArr.get(idx));
 //        }
 
-    } // end JCATsegmentVisceralFat2D()
+    } // end JCATsegmentSubcutaneousFat2D()
     
     
     
     /**
+     * Compute both the abdominal and visercal VOI and store the points in ArrayLists
      * 
+     * Starting at the center of mass of the label region, form intensity profiles from
+     * the source image data and use thresholds to determine where the muscle starts.
+     * 
+     * Make radial lines every 3 degrees
      */
-    private void findAbdomenVOI(int[] cm, ArrayList<Integer> xValsAbdomenVOI, ArrayList<Integer> yValsAbdomenVOI, short[] srcBuffer, ArrayList<Integer> xValsVisceralVOI, ArrayList<Integer> yValsVisceralVOI) {
+    private void findVOIs(int[] cm, ArrayList<Integer> xValsAbdomenVOI, ArrayList<Integer> yValsAbdomenVOI, short[] srcBuffer, ArrayList<Integer> xValsVisceralVOI, ArrayList<Integer> yValsVisceralVOI) {
         
+        // angle in radians
        double angleRad;
-       // the intensity profile along a radial line
+       
+       // the intensity profile along a radial line for a given angle
        short[] profile;
        
-       // the x, y location of all the pixels along a radial line
-       int [] xLocs;
+       // the x, y location of all the pixels along a radial line for a given angle
+       int[] xLocs;
        int[] yLocs;
        try {
            profile = new short[xDim];
@@ -445,7 +484,12 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
            MipavUtil.displayError("findAbdomenVOI(): Can NOT allocate profile");
            return;
        }
+       
+       // the number of pixels along the radial line for a given angle
        int count;
+       
+       // The threholds value for muscle as specified in the JCAT paper
+       int muscleThresholdHU = 16;
        
        for (int angle = 0; angle < 360; angle += 3) {
            count = 0;
@@ -465,6 +509,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                     yLocs[count] = y;
                     count++;
                     
+                    // walk out in x and compute the value of y for the given radial line
                     x++;
                     y = cm[1] - (int)((x - cm[0]) * scaleFactor);
                     yOffset = y * xDim;
@@ -474,14 +519,18 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                 
                 // profile contains all the source image intensity values along the line from
                 // the center-of-mass to the newly computed abdomen VOI point
-                // Find where the subcutaneous fat ends
+                // Find where the subcutaneous fat ends and the muscle starts
+                
+                // start at the end of the profile array since its order is from the
+                // center-of-mass to the abdomen voi point
+                
                 int idx = count - 5;  // skip over the skin
-                while (idx >= 0 && profile[idx] < 16) {
+                while (idx >= 0 && profile[idx] < muscleThresholdHU) {
                     idx--;
                 }
                 if (idx == 0) {
                     MipavUtil.displayError("findAbdomenVOI(): Can NOT find visceral cavity in the intensity profile");
-                    return;
+                    break;
                 }
                 xValsVisceralVOI.add(xLocs[idx]);
                 yValsVisceralVOI.add(yLocs[idx]);
@@ -496,6 +545,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                     yLocs[count] = y;
                     count++;
                     
+                    // walk to the top of the image and compute values of x for the given radial line
                     y--;
                     x = cm[0] + (int)((cm[1] - y) * scaleFactor);
                     yOffset = y * xDim;
@@ -507,7 +557,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                 // the center-of-mass to the newly computed abdomen VOI point
                 // Find where the subcutaneous fat ends
                 int idx = count - 5;  // skip over the skin
-                while (idx >= 0 && profile[idx] < 16) {
+                while (idx >= 0 && profile[idx] < muscleThresholdHU) {
                     idx--;
                 }
                 if (idx == 0) {
@@ -538,7 +588,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                 // the center-of-mass to the newly computed abdomen VOI point
                 // Find where the subcutaneous fat ends
                 int idx = count - 5;  // skip over the skin
-                while (idx >= 0 && profile[idx] < 16) {
+                while (idx >= 0 && profile[idx] < muscleThresholdHU) {
                     idx--;
                 }
                 if (idx == 0) {
@@ -569,7 +619,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                 // the center-of-mass to the newly computed abdomen VOI point
                 // Find where the subcutaneous fat ends
                 int idx = count - 5;  // skip over the skin
-                while (idx >= 0 && profile[idx] < 16) {
+                while (idx >= 0 && profile[idx] < muscleThresholdHU) {
                     idx--;
                 }
                 if (idx == 0) {
@@ -582,7 +632,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             }
         } // end for (angle = 0; ...
 
-    } // end findAbdomenVOI(...)
+    } // end findVOIs(...)
     
     /**
      * Find the center of mass of the object in sliceBuffer that has the abdomenTissueLabel value
