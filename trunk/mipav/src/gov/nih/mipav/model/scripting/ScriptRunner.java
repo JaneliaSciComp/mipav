@@ -1,11 +1,11 @@
 package gov.nih.mipav.model.scripting;
 
 
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.*;
 
-import java.util.*;
+import java.util.Vector;
 
 
 /**
@@ -13,12 +13,14 @@ import java.util.*;
  */
 public class ScriptRunner {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** The reference to the only occurrance of this class. */
     protected static ScriptRunner singletonReference = null;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** The table containing image-placeholder-to-image-name mappings for the script we want to run. */
     protected ImageVariableTable imageTable;
@@ -32,7 +34,8 @@ public class ScriptRunner {
     /** The table containing VOIs to be used in the script. */
     protected VOITable voiTable;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new ScriptRunner object.
@@ -42,12 +45,13 @@ public class ScriptRunner {
         Preferences.debug("script runner:\tCreated." + "\n", Preferences.DEBUG_SCRIPTING);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Returns a reference to the script recorder.
-     *
-     * @return  A reference to the script recorder.
+     * 
+     * @return A reference to the script recorder.
      */
     public static final synchronized ScriptRunner getReference() {
 
@@ -60,10 +64,10 @@ public class ScriptRunner {
 
     /**
      * Retrieves an image from the image table being used by the current script we are running.
-     *
-     * @param   imageVar  The image placeholder variable associated with the image we want.
-     *
-     * @return  The image associated with the given image variable.
+     * 
+     * @param imageVar The image placeholder variable associated with the image we want.
+     * 
+     * @return The image associated with the given image variable.
      */
     public synchronized ModelImage getImage(String imageVar) {
         Preferences.debug("script runner:\tRetrieving image:\t" + imageVar + "\n", Preferences.DEBUG_SCRIPTING);
@@ -73,9 +77,9 @@ public class ScriptRunner {
 
     /**
      * Returns a reference to the image table being used to run the current script.
-     *
-     * @return  The image table which should be used to run the current script, or <code>null</code> if no script is
-     *          being run at the moment.
+     * 
+     * @return The image table which should be used to run the current script, or <code>null</code> if no script is
+     *         being run at the moment.
      */
     public synchronized ImageVariableTable getImageTable() {
 
@@ -85,16 +89,16 @@ public class ScriptRunner {
 
         MipavUtil.displayError("Scripting error: tried to retrieve the image table while no script is being run.");
         Preferences.debug("script runner:\tRetrieved image table while no script is being run." + "\n",
-                          Preferences.DEBUG_SCRIPTING);
+                Preferences.DEBUG_SCRIPTING);
 
         return null;
     }
 
     /**
      * Returns a reference to the VOI table being used to run the current script.
-     *
-     * @return  The VOI table which should be used to run the current script, or <code>null</code> if no script is being
-     *          run at the moment.
+     * 
+     * @return The VOI table which should be used to run the current script, or <code>null</code> if no script is
+     *         being run at the moment.
      */
     public synchronized VOITable getVOITable() {
 
@@ -104,15 +108,15 @@ public class ScriptRunner {
 
         MipavUtil.displayError("Scripting error: tried to retrieve the VOI table while no script is being run.");
         Preferences.debug("script runner:\tRetrieved VOI table while no script is being run." + "\n",
-                          Preferences.DEBUG_SCRIPTING);
+                Preferences.DEBUG_SCRIPTING);
 
         return null;
     }
 
     /**
      * Returns whether we are currently running a script.
-     *
-     * @return  <code>True</code> if a script is being run, <code>false</code> otherwise.
+     * 
+     * @return <code>True</code> if a script is being run, <code>false</code> otherwise.
      */
     public synchronized boolean isRunning() {
         return isRunning;
@@ -120,14 +124,14 @@ public class ScriptRunner {
 
     /**
      * Execute a script, using a set of images.
-     *
-     * @param   file           The path to the script file we want to run.
-     * @param   imageNameList  The list of the names of images to use while executing the script.
-     * @param   voiPathList    A list of VOI paths, in the order returned by Parser.getImageVarsUsedInScript().
-     *
-     * @return  <code>True</code> if execution of the script was successful, <code>false</code> otherwise.
+     * 
+     * @param file The path to the script file we want to run.
+     * @param imageNameList The list of the names of images to use while executing the script.
+     * @param voiPathList A list of VOI paths, in the order returned by Parser.getImageVarsUsedInScript().
+     * 
+     * @return <code>True</code> if execution of the script was successful, <code>false</code> otherwise.
      */
-    public synchronized boolean runScript(String file, Vector imageNameList, Vector voiPathList) {
+    public synchronized boolean runScript(String file, Vector<String> imageNameList, Vector<String> voiPathList) {
 
         if (isRunning()) {
             MipavUtil.displayError("A script is already being executed.");
@@ -155,7 +159,7 @@ public class ScriptRunner {
             Parser.runScript(scriptFile);
 
             Preferences.debug("script runner:\tFinished script execution:\t" + scriptFile + "\n",
-                              Preferences.DEBUG_SCRIPTING);
+                    Preferences.DEBUG_SCRIPTING);
 
             setRunning(false);
         } catch (ParserException pe) {
@@ -166,16 +170,14 @@ public class ScriptRunner {
 
         return true;
     }
-    
-    
 
     /**
      * Convenience method used to store the name of an image in the image table being used by the current script.
-     *
-     * @param   imageName  The name of the image to store.
-     *
-     * @return  The image variable placeholder which has been assigned to the image name (may not be a new variable if
-     *          the name is already in the table).
+     * 
+     * @param imageName The name of the image to store.
+     * 
+     * @return The image variable placeholder which has been assigned to the image name (may not be a new variable if
+     *         the name is already in the table).
      */
     public synchronized String storeImage(String imageName) {
         Preferences.debug("script runner:\tStoring image:\t" + imageName + "\n", Preferences.DEBUG_SCRIPTING);
@@ -185,30 +187,30 @@ public class ScriptRunner {
 
     /**
      * Populate the image table based on a list of image names we want to use in the execution of the script.
-     *
-     * @param   imageNameList  A list of image names, in the order they should be used in the script.
-     *
-     * @throws  ParserException  If there is a problem encountered while reading the image variables used in the script.
+     * 
+     * @param imageNameList A list of image names, in the order they should be used in the script.
+     * 
+     * @throws ParserException If there is a problem encountered while reading the image variables used in the script.
      */
-    protected synchronized void fillImageTable(Vector imageNameList) throws ParserException {
+    protected synchronized void fillImageTable(Vector<String> imageNameList) throws ParserException {
         String[] imageVars = Parser.getImageVarsUsedInScript(scriptFile);
 
         for (int i = 0; i < imageNameList.size(); i++) {
             imageTable.put(imageVars[i], imageNameList.elementAt(i));
 
-            Preferences.debug("script runner:\tAdded image to image table:\t" + imageVars[i] + "\t->\t" +
-                              imageNameList.elementAt(i) + "\n", Preferences.DEBUG_SCRIPTING);
+            Preferences.debug("script runner:\tAdded image to image table:\t" + imageVars[i] + "\t->\t"
+                    + imageNameList.elementAt(i) + "\n", Preferences.DEBUG_SCRIPTING);
         }
     }
 
     /**
      * Handle a script parser exception by printing out the location of the problem and stopping script execution.
-     *
-     * @param  pe  The parser exception to handle.
+     * 
+     * @param pe The parser exception to handle.
      */
     protected void handleParserException(ParserException pe) {
         Preferences.debug("script runner:\tAborted script execution:\t" + pe.getParsedFileName() + "\n",
-                          Preferences.DEBUG_SCRIPTING);
+                Preferences.DEBUG_SCRIPTING);
 
         // if this exception was caused by another exception, print it to stderr
         if (pe.getCause() != null) {
@@ -230,14 +232,15 @@ public class ScriptRunner {
 
     /**
      * Changes the flag indicating whether a script is currently being run.
-     *
-     * @param  running  Whether we are running a script.
+     * 
+     * @param running Whether we are running a script.
      */
     protected synchronized void setRunning(boolean running) {
         isRunning = running;
     }
 
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
+    // ~ Inner Classes
+    // --------------------------------------------------------------------------------------------------
 
     /**
      * A separate thread used to execute a given script (the image and voi table should already be set up before the
@@ -250,8 +253,8 @@ public class ScriptRunner {
 
         /**
          * Creates a new ScriptThread object.
-         *
-         * @param  file  The script file to execute in this thread.
+         * 
+         * @param file The script file to execute in this thread.
          */
         public ScriptThread(String file) {
             curScriptFile = file;
@@ -268,7 +271,7 @@ public class ScriptRunner {
                 setRunning(false);
 
                 Preferences.debug("script runner:\tFinished script execution:\t" + curScriptFile + "\n",
-                                  Preferences.DEBUG_SCRIPTING);
+                        Preferences.DEBUG_SCRIPTING);
             } catch (ParserException pe) {
                 handleParserException(pe);
             }

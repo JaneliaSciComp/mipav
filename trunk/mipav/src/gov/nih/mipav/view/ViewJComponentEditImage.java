@@ -3,39 +3,37 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.*;
 
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmMask;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.view.icons.*;
+import gov.nih.mipav.view.icons.PlaceHolder;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.*;
+import java.awt.geom.AffineTransform;
 import java.awt.image.*;
-
 import java.io.*;
-
 import java.text.*;
-
 import java.util.*;
 
-import javax.swing.*;
+import javax.swing.JOptionPane;
 
 
 /**
  * Basic displayable image object in MIPAV. Contains the viewable objects such as VOIs and carries listeners to most any
  * action that can happen in a window.
- *
- * @version  0.1 Nov 18, 1997
- * @author   Matthew J. McAuliffe, Ph.D.
+ * 
+ * @version 0.1 Nov 18, 1997
+ * @author Matthew J. McAuliffe, Ph.D.
  */
-public class ViewJComponentEditImage extends ViewJComponentBase
-        implements MouseMotionListener, MouseWheelListener, MouseListener, KeyListener, PaintGrowListener {
+public class ViewJComponentEditImage extends ViewJComponentBase implements MouseMotionListener, MouseWheelListener,
+        MouseListener, KeyListener, PaintGrowListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -3799092616373463766L;
@@ -46,12 +44,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public static Color ACTIVE_IMAGE_COLOR = Color.cyan;
 
-    /* * In painting COMPLEX images the COMPLEX image is assumed to have been a result of
-     * transforming real data.  x(n1,n2) real <-> X(k1,k2) = X*(-k1,-k2) for 2D and x(n1,n2,n3) real <-> X(k1,k2,k3) =
-     * X*(-k1,-k2,-k3).  Therefore, when one pixel is painted in a COMPLEX image, the above defined complementary pixel
-     * is also painted. The zero point for k1, k2, k3 occur such that there is one more pixel below the zero point than
-     * there is above it.  For example, if the FFT is 2048 by 2048 by 2048, the center occurs at (1024,1024,1024) so
-     * that (0,0,0) is further away than (2047,2047,2047) */
+    /*
+     * * In painting COMPLEX images the COMPLEX image is assumed to have been a result of transforming real data.
+     * x(n1,n2) real <-> X(k1,k2) = X*(-k1,-k2) for 2D and x(n1,n2,n3) real <-> X(k1,k2,k3) = X*(-k1,-k2,-k3).
+     * Therefore, when one pixel is painted in a COMPLEX image, the above defined complementary pixel is also painted.
+     * The zero point for k1, k2, k3 occur such that there is one more pixel below the zero point than there is above
+     * it. For example, if the FFT is 2048 by 2048 by 2048, the center occurs at (1024,1024,1024) so that (0,0,0) is
+     * further away than (2047,2047,2047)
+     */
 
     /** Used to indicte geometric zoom steps (2x, 4x, 8x, 16x ...). */
     public static final int GEOMETRIC_ZOOM = 0;
@@ -59,7 +59,16 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** Used to indicte linear zoom steps (2x, 3x, 4x, 5x ...). */
     public static final int LINEAR_ZOOM = 1;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    /** Bilinear interpolation image component rendering mode. */
+    public static final RenderingHints renderBilinear = new RenderingHints(RenderingHints.KEY_INTERPOLATION,
+            RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+
+    /** Nearest neighbor interpolation image component rendering mode. */
+    public static final RenderingHints renderNearestNeighbor = new RenderingHints(RenderingHints.KEY_INTERPOLATION,
+            RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /**
      * Dialog used to set properties of the checkerboard display:(Image A displayed in alternating squares with Image B.
@@ -93,9 +102,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     protected float alphaPrime = 0.5f;
 
-    /** String representing RGB components used in applied paint*/
+    /** String representing RGB components used in applied paint */
     protected String rgbString = null;
-    
+
     /** Buffer used to store ARGB images of the image presently being displayed. */
     protected int[] cleanImageBufferA = null;
 
@@ -231,7 +240,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** DOCUMENT ME! */
     protected Dimension paintBrushDimPrevious = null;
 
-
     /** DOCUMENT ME! */
     protected BitSet paintBrushPrevious = null;
 
@@ -255,7 +263,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * shortcuts (by pressing 1, 2, 3, 4).
      */
     protected int previousPaintBrush = -1;
-
 
     /** DOCUMENT ME! */
     protected ModelRGB RGBTA;
@@ -341,7 +348,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** DOCUMENT ME! */
     private Image cleanImageB = null;
 
-
     /** If true then the x,y location and pixel/voxel intensity should be displayed (x,y: intensity). */
     private boolean intensityLabel = false;
 
@@ -380,34 +386,36 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     private int windowedRegionSize = 100;
 
     private boolean useRComp = true;
+
     private boolean useGComp = true;
+
     private boolean useBComp = true;
-    
-    
-    /** flag indicating whethere there is 0 to 1 LUT Adjustment **/
+
+    /** flag indicating whethere there is 0 to 1 LUT Adjustment * */
     private boolean zeroToOneLUTAdj = false;
-    
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Constructor: ImageA and ImageB are expected to be of the same dimensionality !!
-     *
-     * @param  _frame         frame where image(s) will be displayed
-     * @param  _imageA        Model of the image that will be displayed
-     * @param  _LUTa          LUT used to display imageA
-     * @param  imgBufferA     storage buffer used to display image A
-     * @param  _imageB        Model of the image that will be displayed
-     * @param  _LUTb          LUT used to display imageB
-     * @param  imgBufferB     storage buffer used to display image B
-     * @param  pixelBuffer    storage buffer used to build a displayable image
-     * @param  zoom           initial magnification of image
-     * @param  extents        initial display dimensions of the image
-     * @param  logMagDisplay  display log magnitude of image
-     * @param  _orientation   orientation of the image
+     * 
+     * @param _frame frame where image(s) will be displayed
+     * @param _imageA Model of the image that will be displayed
+     * @param _LUTa LUT used to display imageA
+     * @param imgBufferA storage buffer used to display image A
+     * @param _imageB Model of the image that will be displayed
+     * @param _LUTb LUT used to display imageB
+     * @param imgBufferB storage buffer used to display image B
+     * @param pixelBuffer storage buffer used to build a displayable image
+     * @param zoom initial magnification of image
+     * @param extents initial display dimensions of the image
+     * @param logMagDisplay display log magnitude of image
+     * @param _orientation orientation of the image
      */
     public ViewJComponentEditImage(ViewJFrameBase _frame, ModelImage _imageA, ModelLUT _LUTa, float[] imgBufferA,
-                                   ModelImage _imageB, ModelLUT _LUTb, float[] imgBufferB, int[] pixelBuffer,
-                                   float zoom, int[] extents, boolean logMagDisplay, int _orientation) {
+            ModelImage _imageB, ModelLUT _LUTb, float[] imgBufferB, int[] pixelBuffer, float zoom, int[] extents,
+            boolean logMagDisplay, int _orientation) {
         super(_imageA.getWidth(_orientation), _imageA.getHeight(_orientation), _imageA);
 
         frame = _frame;
@@ -421,13 +429,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         LUTa = _LUTa;
         LUTb = _LUTb;
 
-        showSliceNumber = (imageA.getNDims() > 2) && !(this instanceof ViewJComponentTriImage);
+        showSliceNumber = (imageA.getNDims() > 2) && ! (this instanceof ViewJComponentTriImage);
 
         // active image color: get preset
         if (Preferences.getProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR) == null) {
             Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, MipavUtil.makeColorString(ACTIVE_IMAGE_COLOR));
         } else {
-            this.setHighlightColor(MipavUtil.extractColor(Preferences.getProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR)));
+            this
+                    .setHighlightColor(MipavUtil.extractColor(Preferences
+                            .getProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR)));
         }
 
         // Custom crosshair cursors
@@ -445,13 +455,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 Toolkit toolkit = Toolkit.getDefaultToolkit();
 
                 this.setCrosshairCursor(toolkit.createCustomCursor(MipavUtil.getIcon(crosshairName).getImage(),
-                                                                   new Point(15, 15), crosshairName));
+                        new Point(15, 15), crosshairName));
             } catch (NullPointerException noIcon) {
 
-                // specfied icon cannot be found.  Instead, we load default:
+                // specfied icon cannot be found. Instead, we load default:
                 this.setCrosshairCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
-                Preferences.debug("ViewJComponentEditImage: Crosshair icon \"" + crosshairName +
-                                  "\" cannot be found.  " + "Instead, using default crosshair pointer.\n", 2);
+                Preferences.debug("ViewJComponentEditImage: Crosshair icon \"" + crosshairName
+                        + "\" cannot be found.  " + "Instead, using default crosshair pointer.\n", 2);
             }
         }
 
@@ -462,7 +472,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             imgBufferA = new float[bufferFactor * imageDim.width * imageDim.height];
         }
 
-        if ((imgBufferB == null) && (imageB != null)) {
+        if ( (imgBufferB == null) && (imageB != null)) {
             int bufferFactor = (imageB.isColorImage() ? 4 : 1);
             imgBufferB = new float[bufferFactor * imageDim.width * imageDim.height];
         }
@@ -483,7 +493,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         super.setZoom(zoom, zoom);
 
-
         if (this instanceof ViewJComponentSingleRegistration) {
             voiHandler = new VOIRegistrationHandler(this);
         } else {
@@ -496,7 +505,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             voiHandler.setOverlay(Preferences.is(Preferences.PREF_SHOW_IMAGE_OVERLAYS));
         }
 
-        if (!(this instanceof ViewJComponentTriImage)) {
+        if ( ! (this instanceof ViewJComponentTriImage)) {
             addMouseListener(voiHandler);
             addMouseMotionListener(voiHandler);
         }
@@ -507,7 +516,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         addKeyListener(this);
         addMouseWheelListener(this);
-
 
         if (frame != null) {
             magSettings = new JDialogMagnificationControls((Frame) frame, this, getZoomX(), imageA.getImageName());
@@ -523,39 +531,40 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         /* create the WindowLevel controller: */
         m_kWinLevel = new WindowLevel();
 
-        if (!(_frame instanceof ViewJFrameLightBox)) {
-        	loadPaintBrush(Preferences.getProperty(Preferences.PREF_LAST_PAINT_BRUSH), false);
-        	
-        	rgbString = Preferences.getProperty(Preferences.PREF_RGB_PAINT_COMPONENTS);
-        	if (rgbString == null) {
-        		Preferences.setProperty(Preferences.PREF_RGB_PAINT_COMPONENTS, "RGB");
-        		rgbString = "RGB";
-        	} else {
-        		useRComp = rgbString.indexOf("R") != -1;
-        		useGComp = rgbString.indexOf("G") != -1;
-        		useBComp = rgbString.indexOf("B") != -1;
-        	}
-        	
+        if ( ! (_frame instanceof ViewJFrameLightBox)) {
+            loadPaintBrush(Preferences.getProperty(Preferences.PREF_LAST_PAINT_BRUSH), false);
+
+            rgbString = Preferences.getProperty(Preferences.PREF_RGB_PAINT_COMPONENTS);
+            if (rgbString == null) {
+                Preferences.setProperty(Preferences.PREF_RGB_PAINT_COMPONENTS, "RGB");
+                rgbString = "RGB";
+            } else {
+                useRComp = rgbString.indexOf("R") != -1;
+                useGComp = rgbString.indexOf("G") != -1;
+                useBComp = rgbString.indexOf("B") != -1;
+            }
+
         }
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Gets position data to display in message bar - for DICOM and MINC images, gives patient position as well. The
      * image's associated transformation must be FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL, or the orientations must be
      * set up correctly, or else the function returns null.
-     *
-     * @param   image     The image the point lies within.
-     * @param   position  (x,y,z(slice)) position in FileCoordinates
-     *
-     * @return  An array of strings that represent patient position.
+     * 
+     * @param image The image the point lies within.
+     * @param position (x,y,z(slice)) position in FileCoordinates
+     * 
+     * @return An array of strings that represent patient position.
      */
     public static final String[] getScannerPositionLabels(ModelImage image, Point3Df position) {
         DecimalFormat nf = new DecimalFormat("#####0.0##");
         Point3Df kOut = new Point3Df();
         if (image.getNDims() < 3) {
-       // 	return null;
+            // return null;
         }
         MipavCoordinateSystems.fileToScanner(position, kOut, image);
 
@@ -564,9 +573,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         tCoord[1] = kOut.y;
         tCoord[2] = kOut.z;
 
-        String[] labels = { "R-L: ", "A-P: ", "I-S: " };
+        String[] labels = {"R-L: ", "A-P: ", "I-S: "};
 
-        if (!image.getRadiologicalView()) {
+        if ( !image.getRadiologicalView()) {
             labels[0] = new String("L-R: ");
         }
 
@@ -574,14 +583,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         if (image.getRadiologicalView()) {
 
-            if ((tCoord[0] < 0)) {
+            if ( (tCoord[0] < 0)) {
                 strs[0] = new String(labels[0] + labels[0].charAt(0) + ": " + String.valueOf(nf.format(tCoord[0])));
             } else {
                 strs[0] = new String(labels[0] + labels[0].charAt(2) + ": " + String.valueOf(nf.format(tCoord[0])));
             }
         } else {
 
-            if ((tCoord[0] < 0)) {
+            if ( (tCoord[0] < 0)) {
                 strs[0] = new String(labels[0] + labels[0].charAt(2) + ": " + String.valueOf(nf.format(tCoord[0])));
             } else {
                 strs[0] = new String(labels[0] + labels[0].charAt(0) + ": " + String.valueOf(nf.format(tCoord[0])));
@@ -590,7 +599,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         for (int i = 1; i < 3; i++) {
 
-            if ((tCoord[i] < 0)) {
+            if ( (tCoord[i] < 0)) {
                 strs[i] = new String(labels[i] + labels[i].charAt(0) + ": " + String.valueOf(nf.format(tCoord[i])));
             } else {
                 strs[i] = new String(labels[i] + labels[i].charAt(2) + ": " + String.valueOf(nf.format(tCoord[i])));
@@ -602,8 +611,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Calculates the volume of the painted voxels.
-     *
-     * @param  str  string in showRegionGrow {@link #showRegionGrow(int, String)}
+     * 
+     * @param str string in showRegionGrow {@link #showRegionGrow(int, String)}
      */
     public void calcPaintedVolume(String str) {
         int count = 0;
@@ -623,7 +632,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         float stdDev[] = null;
         float diff;
         int paintSize = paintBitmap.size();
-        
+
         zEnd = 1;
         tEnd = 1;
         if (imageA.getNDims() >= 4) {
@@ -634,14 +643,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
         if (imageA.isColorImage()) {
             cf = 4;
-        }
-        else if ((imageA.getType() == ModelStorageBase.COMPLEX) || (imageA.getType() == ModelStorageBase.DCOMPLEX)) {
+        } else if ( (imageA.getType() == ModelStorageBase.COMPLEX) || (imageA.getType() == ModelStorageBase.DCOMPLEX)) {
             cf = 2;
-        }
-        else {
+        } else {
             cf = 1;
         }
-        
+
         if (cf == 2) {
             for (i = 0; i < paintSize; i++) {
                 if (paintBitmap.get(i)) {
@@ -651,7 +658,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             showRegionInfo(count, str);
             return;
         }
-        
+
         total = new float[cf];
         mean = new float[cf];
         stdDev = new float[cf];
@@ -665,87 +672,86 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             for (z = 0; z < zEnd; z++) {
                 offset = t * volSize + z * sliceSize;
                 try {
-                  imageA.exportData(cf * offset, imgLength, buffer); // locks and releases
-                                                                                                  // lock
-              } catch (IOException error) {
-                  MipavUtil.displayError("ViewJComponentImage: Image(s) locked");
+                    imageA.exportData(cf * offset, imgLength, buffer); // locks and releases
+                    // lock
+                } catch (IOException error) {
+                    MipavUtil.displayError("ViewJComponentImage: Image(s) locked");
 
-                  return;
-              } 
-              if (cf == 4) {
-                  for (i = 0; i < sliceSize; i++) {
-                      if (paintBitmap.get(offset + i)) {
-                          count++;
-                          total[0] += buffer[4*i + 1];
-                          total[1] += buffer[4*i + 2];
-                          total[2] += buffer[4*i + 3];
-                      } // if (paintBitmap.get(offset + i))
-                  } // for (i = 0; i < sliceSize; i++)
-              } // if (cf == 4)
-              else {
-                  for (i = 0; i < sliceSize; i++) {
-                      if (paintBitmap.get(offset + i)) {
-                          count++;
-                          total[0] += buffer[i];
-                      } // if (paintBitmap.get(offset + i))
-                  } // for (i = 0; i < sliceSize; i++)        
-              }
-          } // for (z = 0; z < zEnd; z++)
-      } // for (t = 0; t < tEnd; t++)
-        
-      mean[0] = total[0]/count;
-      if (cf == 4) {
-          mean[1] = total[1]/count;
-          mean[2] = total[2]/count;
-      }
-     
-      for (t = 0; t < tEnd; t++) {
-          for (z = 0; z < zEnd; z++) {
-              offset = t * volSize + z * sliceSize;
-              try {
-                imageA.exportData(cf * offset, imgLength, buffer); // locks and releases
-                                                                                                // lock
-              } catch (IOException error) {
-                  MipavUtil.displayError("ViewJComponentImage: Image(s) locked");
+                    return;
+                }
+                if (cf == 4) {
+                    for (i = 0; i < sliceSize; i++) {
+                        if (paintBitmap.get(offset + i)) {
+                            count++;
+                            total[0] += buffer[4 * i + 1];
+                            total[1] += buffer[4 * i + 2];
+                            total[2] += buffer[4 * i + 3];
+                        } // if (paintBitmap.get(offset + i))
+                    } // for (i = 0; i < sliceSize; i++)
+                } // if (cf == 4)
+                else {
+                    for (i = 0; i < sliceSize; i++) {
+                        if (paintBitmap.get(offset + i)) {
+                            count++;
+                            total[0] += buffer[i];
+                        } // if (paintBitmap.get(offset + i))
+                    } // for (i = 0; i < sliceSize; i++)
+                }
+            } // for (z = 0; z < zEnd; z++)
+        } // for (t = 0; t < tEnd; t++)
 
-                  return;
-              } 
-              if (cf == 4) {
-                  for (i = 0; i < sliceSize; i++) {
-                      if (paintBitmap.get(offset + i)) {
-                          diff = buffer[4*i + 1] - mean[0];
-                          stdDev[0] += diff * diff;
-                          diff = buffer[4*i + 2] - mean[1];
-                          stdDev[1] += diff * diff;
-                          diff = buffer[4*i + 3] - mean[2];
-                          stdDev[2] += diff * diff;
-                      } // if (paintBitmap.get(offset + i))
-                  } // for (i = 0; i < sliceSize; i++)
-              } // if (cf == 4)
-              else {
-                  for (i = 0; i < sliceSize; i++) {
-                      if (paintBitmap.get(offset + i)) {
-                          diff = buffer[i] - mean[0];
-                          stdDev[0] += diff * diff;
-                      } // if (paintBitmap.get(offset + i))
-                  } // for (i = 0; i < sliceSize; i++)        
-              }
-          } // for (z = 0; z < zEnd; z++)
-      } // for (t = 0; t < tEnd; t++)
-      stdDev[0] = (float)Math.sqrt(stdDev[0]/count);
-      if (cf == 4) {
-          stdDev[1] = (float)Math.sqrt(stdDev[1]/count);
-          stdDev[2] = (float)Math.sqrt(stdDev[2]/count);
-      }
-    
+        mean[0] = total[0] / count;
+        if (cf == 4) {
+            mean[1] = total[1] / count;
+            mean[2] = total[2] / count;
+        }
 
-      showRegionInfo(count, total, mean, stdDev, str);
+        for (t = 0; t < tEnd; t++) {
+            for (z = 0; z < zEnd; z++) {
+                offset = t * volSize + z * sliceSize;
+                try {
+                    imageA.exportData(cf * offset, imgLength, buffer); // locks and releases
+                    // lock
+                } catch (IOException error) {
+                    MipavUtil.displayError("ViewJComponentImage: Image(s) locked");
+
+                    return;
+                }
+                if (cf == 4) {
+                    for (i = 0; i < sliceSize; i++) {
+                        if (paintBitmap.get(offset + i)) {
+                            diff = buffer[4 * i + 1] - mean[0];
+                            stdDev[0] += diff * diff;
+                            diff = buffer[4 * i + 2] - mean[1];
+                            stdDev[1] += diff * diff;
+                            diff = buffer[4 * i + 3] - mean[2];
+                            stdDev[2] += diff * diff;
+                        } // if (paintBitmap.get(offset + i))
+                    } // for (i = 0; i < sliceSize; i++)
+                } // if (cf == 4)
+                else {
+                    for (i = 0; i < sliceSize; i++) {
+                        if (paintBitmap.get(offset + i)) {
+                            diff = buffer[i] - mean[0];
+                            stdDev[0] += diff * diff;
+                        } // if (paintBitmap.get(offset + i))
+                    } // for (i = 0; i < sliceSize; i++)
+                }
+            } // for (z = 0; z < zEnd; z++)
+        } // for (t = 0; t < tEnd; t++)
+        stdDev[0] = (float) Math.sqrt(stdDev[0] / count);
+        if (cf == 4) {
+            stdDev[1] = (float) Math.sqrt(stdDev[1] / count);
+            stdDev[2] = (float) Math.sqrt(stdDev[2] / count);
+        }
+
+        showRegionInfo(count, total, mean, stdDev, str);
     }
 
     /**
      * Loops through the images and displays them.
-     *
-     * @param  ms  how long to wait between each image
+     * 
+     * @param ms how long to wait between each image
      */
     public synchronized void cine(int ms) {
         int i;
@@ -781,10 +787,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Replace intensities in the image using painted mask.
-     *
-     * @param  imagesDone      IMAGE_A, IMAGE_B, or BseedVOTH
-     * @param  clearPaintMask  if true clear paint mask
-     * @param  polarity        DOCUMENT ME!
+     * 
+     * @param imagesDone IMAGE_A, IMAGE_B, or BseedVOTH
+     * @param clearPaintMask if true clear paint mask
+     * @param polarity DOCUMENT ME!
      */
     public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity) {
         commitMask(imagesDone, clearPaintMask, polarity, null);
@@ -792,12 +798,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Replace intensities in the image using painted mask.
-     *
-     * @param  imagesDone           IMAGE_A, IMAGE_B, or BseedVOTH
-     * @param  clearPaintMask       if true clear paint mask
-     * @param  polarity             DOCUMENT ME!
-     * @param  intensityLockVector  Vector containing Integers values which are indexed to the locked intensity values
-     *                              in the image
+     * 
+     * @param imagesDone IMAGE_A, IMAGE_B, or BseedVOTH
+     * @param clearPaintMask if true clear paint mask
+     * @param polarity DOCUMENT ME!
+     * @param intensityLockVector Vector containing Integers values which are indexed to the locked intensity values in
+     *            the image
      */
     public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity, Vector intensityLockVector) {
         commitMask(imagesDone, clearPaintMask, polarity, intensityLockVector, true);
@@ -805,39 +811,38 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Replace intensities in the image using painted mask.
-     *
-     * @param  affectedImage        IMAGE_A, IMAGE_B, or BseedVOTH
-     * @param  clearPaintMask       if true clear paint mask
-     * @param  polarity             DOCUMENT ME!
-     * @param  intensityLockVector  Vector containing Integers values which are indexed to the locked intensity values
-     *                              in the image
-     * @param  showProgressBar      if true, shows the progress bar for this algorithm
+     * 
+     * @param affectedImage IMAGE_A, IMAGE_B, or BseedVOTH
+     * @param clearPaintMask if true clear paint mask
+     * @param polarity DOCUMENT ME!
+     * @param intensityLockVector Vector containing Integers values which are indexed to the locked intensity values in
+     *            the image
+     * @param showProgressBar if true, shows the progress bar for this algorithm
      */
     public void commitMask(ModelImage affectedImage, boolean clearPaintMask, boolean polarity,
-                           Vector intensityLockVector, boolean showProgressBar) {
+            Vector intensityLockVector, boolean showProgressBar) {
 
         if (affectedImage == imageA) {
             commitMask(IMAGE_A, clearPaintMask, polarity, intensityLockVector, showProgressBar);
         }
 
-        if ((imageB != null) && (affectedImage == imageB)) {
+        if ( (imageB != null) && (affectedImage == imageB)) {
             commitMask(IMAGE_B, clearPaintMask, polarity, intensityLockVector, showProgressBar);
         }
     }
 
-
     /**
      * Replace intensities in the image using painted mask.
-     *
-     * @param  imagesDone           IMAGE_A, IMAGE_B, or BseedVOTH
-     * @param  clearPaintMask       if true clear paint mask
-     * @param  polarity             DOCUMENT ME!
-     * @param  intensityLockVector  Vector containing Integers values which are indexed to the locked intensity values
-     *                              in the image
-     * @param  showProgressBar      if true, shows the progress bar for this algorithm
+     * 
+     * @param imagesDone IMAGE_A, IMAGE_B, or BseedVOTH
+     * @param clearPaintMask if true clear paint mask
+     * @param polarity DOCUMENT ME!
+     * @param intensityLockVector Vector containing Integers values which are indexed to the locked intensity values in
+     *            the image
+     * @param showProgressBar if true, shows the progress bar for this algorithm
      */
     public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity, Vector intensityLockVector,
-                           boolean showProgressBar) {
+            boolean showProgressBar) {
 
         float min, max;
         Color fillColor = new Color(128, 0, 0);
@@ -857,7 +862,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
         }
 
-        if ((imagesDone == IMAGE_A) || (imagesDone == BOTH)) {
+        if ( (imagesDone == IMAGE_A) || (imagesDone == BOTH)) {
             float imgMinOrig = (float) imageA.getMin();
             float imgMaxOrig = (float) imageA.getMax();
 
@@ -896,7 +901,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     float imgMin = (float) imageA.getMin();
                     float imgMax = (float) imageA.getMax();
 
-                    if ((intensityDropper < imgMinOrig) || (intensityDropper > imgMaxOrig)) {
+                    if ( (intensityDropper < imgMinOrig) || (intensityDropper > imgMaxOrig)) {
                         LUTa.resetTransferLine(min, imgMin, max, imgMax);
 
                         if (imageA.getHistoLUTFrame() != null) {
@@ -909,7 +914,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         maskAlgo = null;
 
-        if (((imagesDone == IMAGE_B) || (imagesDone == BOTH)) && (imageB != null)) {
+        if ( ( (imagesDone == IMAGE_B) || (imagesDone == BOTH)) && (imageB != null)) {
 
             if (imageB.isColorImage() == true) {
                 maskAlgo = new AlgorithmMask(imageB, fillColor, polarity, false);
@@ -953,8 +958,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Creates a new ubyte image from the paint mask.
-     *
-     * @return  the name of the new ubyte image
+     * 
+     * @return the name of the new ubyte image
      */
     public String commitPaintToUbyteMask() {
         AlgorithmMask maskAlgo = null;
@@ -972,7 +977,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         ViewJProgressBar progressBar = new ViewJProgressBar(imageActive.getImageName(), "Masking ...", 0, 100, true);
         progressBar.setSeparateThread(false);
-
 
         imageACopy = (ModelImage) imageA.clone();
 
@@ -1077,14 +1081,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                     buffer = new double[length];
 
-                    if ((imageACopy.getType() == ModelStorageBase.COMPLEX) ||
-                            (imageACopy.getType() == ModelStorageBase.DCOMPLEX)) {
+                    if ( (imageACopy.getType() == ModelStorageBase.COMPLEX)
+                            || (imageACopy.getType() == ModelStorageBase.DCOMPLEX)) {
                         bufferI = new double[length];
                         imageACopy.exportDComplexData(0, length, buffer, bufferI);
                         imageACopy.reallocate(ModelStorageBase.UBYTE);
 
                         for (i = 0; i < length; i++) {
-                            buffer[i] = Math.round(Math.sqrt((buffer[i] * buffer[i]) + (bufferI[i] * bufferI[i])));
+                            buffer[i] = Math.round(Math.sqrt( (buffer[i] * buffer[i]) + (bufferI[i] * bufferI[i])));
                         }
 
                         imageACopy.importData(0, buffer, true);
@@ -1099,9 +1103,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                         for (i = 0; i < lengthUbyte; i++) {
 
-                            if ((Math.round((byte) buffer[(4 * i) + 1]) == red) &&
-                                    (Math.round((byte) buffer[(4 * i) + 2]) == green) &&
-                                    (Math.round((byte) buffer[(4 * i) + 3]) == blue)) {
+                            if ( (Math.round((byte) buffer[ (4 * i) + 1]) == red)
+                                    && (Math.round((byte) buffer[ (4 * i) + 2]) == green)
+                                    && (Math.round((byte) buffer[ (4 * i) + 3]) == blue)) {
                                 bufferUbyte[i] = 1;
                             }
                         }
@@ -1158,8 +1162,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                     buffer = new double[length];
 
-                    if ((imageBCopy.getType() == ModelStorageBase.COMPLEX) ||
-                            (imageBCopy.getType() == ModelStorageBase.DCOMPLEX)) {
+                    if ( (imageBCopy.getType() == ModelStorageBase.COMPLEX)
+                            || (imageBCopy.getType() == ModelStorageBase.DCOMPLEX)) {
                         bufferI = new double[length];
                         imageBCopy.exportDComplexData(0, length, buffer, bufferI);
                         imageBCopy.reallocate(ModelStorageBase.UBYTE);
@@ -1175,9 +1179,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                         for (i = 0; i < lengthUbyte; i++) {
 
-                            if ((Math.round((byte) buffer[(4 * i) + 1]) == red) &&
-                                    (Math.round((byte) buffer[(4 * i) + 2]) == green) &&
-                                    (Math.round((byte) buffer[(4 * i) + 3]) == blue)) {
+                            if ( (Math.round((byte) buffer[ (4 * i) + 1]) == red)
+                                    && (Math.round((byte) buffer[ (4 * i) + 2]) == green)
+                                    && (Math.round((byte) buffer[ (4 * i) + 3]) == blue)) {
                                 bufferUbyte[i] = 1;
                             }
                         }
@@ -1251,11 +1255,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             return imageBCopy.getImageName();
         }
     }
-    
+
     /**
      * Creates a new short image from the paint mask.
-     *
-     * @return  the name of the new short image
+     * 
+     * @return the name of the new short image
      */
     public String commitPaintToMask() {
         AlgorithmMask maskAlgo = null;
@@ -1273,7 +1277,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         ViewJProgressBar progressBar = new ViewJProgressBar(imageActive.getImageName(), "Masking ...", 0, 100, true);
         progressBar.setSeparateThread(false);
-
 
         imageACopy = (ModelImage) imageA.clone();
 
@@ -1378,14 +1381,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                     buffer = new double[length];
 
-                    if ((imageACopy.getType() == ModelStorageBase.COMPLEX) ||
-                            (imageACopy.getType() == ModelStorageBase.DCOMPLEX)) {
+                    if ( (imageACopy.getType() == ModelStorageBase.COMPLEX)
+                            || (imageACopy.getType() == ModelStorageBase.DCOMPLEX)) {
                         bufferI = new double[length];
                         imageACopy.exportDComplexData(0, length, buffer, bufferI);
                         imageACopy.reallocate(ModelStorageBase.SHORT);
 
                         for (i = 0; i < length; i++) {
-                            buffer[i] = Math.round(Math.sqrt((buffer[i] * buffer[i]) + (bufferI[i] * bufferI[i])));
+                            buffer[i] = Math.round(Math.sqrt( (buffer[i] * buffer[i]) + (bufferI[i] * bufferI[i])));
                         }
 
                         imageACopy.importData(0, buffer, true);
@@ -1400,9 +1403,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                         for (i = 0; i < lengthShort; i++) {
 
-                            if ((Math.round((byte) buffer[(4 * i) + 1]) == red) &&
-                                    (Math.round((byte) buffer[(4 * i) + 2]) == green) &&
-                                    (Math.round((byte) buffer[(4 * i) + 3]) == blue)) {
+                            if ( (Math.round((byte) buffer[ (4 * i) + 1]) == red)
+                                    && (Math.round((byte) buffer[ (4 * i) + 2]) == green)
+                                    && (Math.round((byte) buffer[ (4 * i) + 3]) == blue)) {
                                 bufferShort[i] = 1;
                             }
                         }
@@ -1459,8 +1462,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                     buffer = new double[length];
 
-                    if ((imageBCopy.getType() == ModelStorageBase.COMPLEX) ||
-                            (imageBCopy.getType() == ModelStorageBase.DCOMPLEX)) {
+                    if ( (imageBCopy.getType() == ModelStorageBase.COMPLEX)
+                            || (imageBCopy.getType() == ModelStorageBase.DCOMPLEX)) {
                         bufferI = new double[length];
                         imageBCopy.exportDComplexData(0, length, buffer, bufferI);
                         imageBCopy.reallocate(ModelStorageBase.SHORT);
@@ -1476,9 +1479,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                         for (i = 0; i < lengthShort; i++) {
 
-                            if ((Math.round((byte) buffer[(4 * i) + 1]) == red) &&
-                                    (Math.round((byte) buffer[(4 * i) + 2]) == green) &&
-                                    (Math.round((byte) buffer[(4 * i) + 3]) == blue)) {
+                            if ( (Math.round((byte) buffer[ (4 * i) + 1]) == red)
+                                    && (Math.round((byte) buffer[ (4 * i) + 2]) == green)
+                                    && (Math.round((byte) buffer[ (4 * i) + 3]) == blue)) {
                                 bufferShort[i] = 1;
                             }
                         }
@@ -1557,14 +1560,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * Deletes the selected contour of an VOI.
      */
     public void deleteSelectedContours() {
-        this.deleteSelectedContours(-1, false);
+        this.deleteSelectedContours( -1, false);
     }
 
     /**
      * Deletes the selected contour of an VOI.
-     *
-     * @param  centerPtLocation  DOCUMENT ME!
-     * @param  btest             DOCUMENT ME!
+     * 
+     * @param centerPtLocation DOCUMENT ME!
+     * @param btest DOCUMENT ME!
      */
     public void deleteSelectedContours(int centerPtLocation, boolean btest) {
         int i, s, nVOI;
@@ -1579,7 +1582,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         for (i = 0; i < nVOI; i++) {
 
-            if ((VOIs.VOIAt(i).isActive() == true) && (!btest || (i != centerPtLocation))) {
+            if ( (VOIs.VOIAt(i).isActive() == true) && ( !btest || (i != centerPtLocation))) {
 
                 break;
             } // Set i
@@ -1605,13 +1608,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         if (VOIs.VOIAt(i).isEmpty() == true) {
             imageActive.unregisterVOI(VOIs.VOIAt(i));
 
-            int id = (getActiveImage().getVOIs().size() > 0)
-                     ? (((VOI) (getActiveImage().getVOIs().lastElement())).getID() + 1) : 0;
-            int lastUID = (getActiveImage().getVOIs().size() > 0)
-                          ? (((VOI) (getActiveImage().getVOIs().lastElement())).getUID() + 1) : -1;
+            int id = (getActiveImage().getVOIs().size() > 0) ? ( ((VOI) (getActiveImage().getVOIs().lastElement()))
+                    .getID() + 1) : 0;
+            int lastUID = (getActiveImage().getVOIs().size() > 0) ? ( ((VOI) (getActiveImage().getVOIs().lastElement()))
+                    .getUID() + 1)
+                    : -1;
 
             getVOIHandler().updateVOIColor(id, lastUID);
-            voiHandler.setVOI_ID(-1);
+            voiHandler.setVOI_ID( -1);
         }
 
         imageActive.notifyImageDisplayListeners(null, true);
@@ -1619,8 +1623,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets all variables to null, disposes, and garbage collects.
-     *
-     * @param  flag  if true garbage collector should be called.
+     * 
+     * @param flag if true garbage collector should be called.
      */
     public void disposeLocal(boolean flag) {
         imageBufferA = null;
@@ -1648,7 +1652,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             paintImagePrevious.flush();
             paintImagePrevious = null;
         }
-
 
         if (imageStatList != null) {
 
@@ -1689,15 +1692,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             super.disposeLocal();
         }
 
-
     }
 
     /**
      * Draws the gradicules (the half-image lines which demarcate lengths in the image).
-     *
-     * @param  g     The graphics object which will do the painting.
-     * @param  xRes  The resolutions in the <i>x</i>-direction.
-     * @param  yRes  The resolutions in the <i>y</i>-direction.
+     * 
+     * @param g The graphics object which will do the painting.
+     * @param xRes The resolutions in the <i>x</i>-direction.
+     * @param yRes The resolutions in the <i>y</i>-direction.
      */
     public void drawGradicules(Graphics g, float xRes, float yRes) {
         Insets insets = frame.getInsets();
@@ -1705,58 +1707,58 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         int bottomOffset = getBounds().height - insets.bottom - 15;
 
         // Draw gradicules
-        if ((getZoomX() >= 1.0) && (getZoomY() >= 1.0)) {
+        if ( (getZoomX() >= 1.0) && (getZoomY() >= 1.0)) {
             float XCMPerPix = (float) (xRes / 10.0 / getZoomX());
             float YCMPerPix = (float) (yRes / 10.0 / getZoomY());
 
-            int XGradcmLen = (int) ((getBounds().width / 3.0) * (XCMPerPix));
-            int YGradcmLen = (int) ((getBounds().height / 3.0) * (YCMPerPix));
+            int XGradcmLen = (int) ( (getBounds().width / 3.0) * (XCMPerPix));
+            int YGradcmLen = (int) ( (getBounds().height / 3.0) * (YCMPerPix));
 
             int XGradpixLen = (int) (XGradcmLen / XCMPerPix);
             int YGradpixLen = (int) (YGradcmLen / XCMPerPix);
 
             g.setColor(Color.white);
             g.drawLine(XGradpixLen, bottomOffset - 30, XGradpixLen, bottomOffset - 43);
-            g.drawLine(XGradpixLen + (int) (XGradcmLen / XCMPerPix), bottomOffset - 30,
-                       XGradpixLen + (int) (XGradcmLen / XCMPerPix), bottomOffset - 43);
+            g.drawLine(XGradpixLen + (int) (XGradcmLen / XCMPerPix), bottomOffset - 30, XGradpixLen
+                    + (int) (XGradcmLen / XCMPerPix), bottomOffset - 43);
             g.drawLine(rightOffset - 22, YGradpixLen, rightOffset - 35, YGradpixLen);
-            g.drawLine(rightOffset - 22, YGradpixLen + (int) (YGradcmLen / YCMPerPix), rightOffset - 35,
-                       YGradpixLen + (int) (YGradcmLen / YCMPerPix));
+            g.drawLine(rightOffset - 22, YGradpixLen + (int) (YGradcmLen / YCMPerPix), rightOffset - 35, YGradpixLen
+                    + (int) (YGradcmLen / YCMPerPix));
 
             g.setColor(Color.black);
             g.drawLine(XGradpixLen + 1, bottomOffset - 30, XGradpixLen + 1, bottomOffset - 43);
             g.drawLine(XGradpixLen - 1, bottomOffset - 30, XGradpixLen - 1, bottomOffset - 43);
-            g.drawLine(XGradpixLen + (int) (XGradcmLen / XCMPerPix) + 1, bottomOffset - 30,
-                       XGradpixLen + (int) (XGradcmLen / XCMPerPix) + 1, bottomOffset - 43);
-            g.drawLine(XGradpixLen + (int) (XGradcmLen / XCMPerPix) - 1, bottomOffset - 30,
-                       XGradpixLen + (int) (XGradcmLen / XCMPerPix) - 1, bottomOffset - 43);
+            g.drawLine(XGradpixLen + (int) (XGradcmLen / XCMPerPix) + 1, bottomOffset - 30, XGradpixLen
+                    + (int) (XGradcmLen / XCMPerPix) + 1, bottomOffset - 43);
+            g.drawLine(XGradpixLen + (int) (XGradcmLen / XCMPerPix) - 1, bottomOffset - 30, XGradpixLen
+                    + (int) (XGradcmLen / XCMPerPix) - 1, bottomOffset - 43);
             g.drawLine(rightOffset - 22, YGradpixLen + 1, rightOffset - 35, YGradpixLen + 1);
             g.drawLine(rightOffset - 22, YGradpixLen - 1, rightOffset - 35, YGradpixLen - 1);
             g.drawLine(rightOffset - 22, YGradpixLen + (int) (YGradcmLen / YCMPerPix) + 1, rightOffset - 35,
-                       YGradpixLen + (int) (YGradcmLen / YCMPerPix) + 1);
+                    YGradpixLen + (int) (YGradcmLen / YCMPerPix) + 1);
             g.drawLine(rightOffset - 22, YGradpixLen + (int) (YGradcmLen / YCMPerPix) - 1, rightOffset - 35,
-                       YGradpixLen + (int) (YGradcmLen / YCMPerPix) - 1);
+                    YGradpixLen + (int) (YGradcmLen / YCMPerPix) - 1);
 
             for (int i = 1; i < XGradcmLen; i++) {
                 g.setColor(Color.white);
                 g.drawLine(XGradpixLen + (int) (i / XCMPerPix), bottomOffset - 30, XGradpixLen + (int) (i / XCMPerPix),
-                           bottomOffset - 35);
+                        bottomOffset - 35);
                 g.setColor(Color.black);
-                g.drawLine(XGradpixLen + (int) (i / XCMPerPix) + 1, bottomOffset - 30,
-                           XGradpixLen + (int) (i / XCMPerPix) + 1, bottomOffset - 35);
-                g.drawLine(XGradpixLen + (int) (i / XCMPerPix) - 1, bottomOffset - 30,
-                           XGradpixLen + (int) (i / XCMPerPix) - 1, bottomOffset - 35);
+                g.drawLine(XGradpixLen + (int) (i / XCMPerPix) + 1, bottomOffset - 30, XGradpixLen
+                        + (int) (i / XCMPerPix) + 1, bottomOffset - 35);
+                g.drawLine(XGradpixLen + (int) (i / XCMPerPix) - 1, bottomOffset - 30, XGradpixLen
+                        + (int) (i / XCMPerPix) - 1, bottomOffset - 35);
             }
 
             for (int i = 1; i < YGradcmLen; i++) {
                 g.setColor(Color.white);
-                g.drawLine(rightOffset - 22, YGradpixLen + (int) (i / YCMPerPix), rightOffset - 27,
-                           YGradpixLen + (int) (i / YCMPerPix));
+                g.drawLine(rightOffset - 22, YGradpixLen + (int) (i / YCMPerPix), rightOffset - 27, YGradpixLen
+                        + (int) (i / YCMPerPix));
                 g.setColor(Color.black);
-                g.drawLine(rightOffset - 22, YGradpixLen + (int) (i / YCMPerPix) + 1, rightOffset - 27,
-                           YGradpixLen + (int) (i / YCMPerPix) + 1);
-                g.drawLine(rightOffset - 22, YGradpixLen + (int) (i / YCMPerPix) - 1, rightOffset - 27,
-                           YGradpixLen + (int) (i / YCMPerPix) - 1);
+                g.drawLine(rightOffset - 22, YGradpixLen + (int) (i / YCMPerPix) + 1, rightOffset - 27, YGradpixLen
+                        + (int) (i / YCMPerPix) + 1);
+                g.drawLine(rightOffset - 22, YGradpixLen + (int) (i / YCMPerPix) - 1, rightOffset - 27, YGradpixLen
+                        + (int) (i / YCMPerPix) - 1);
             }
 
             g.setColor(Color.black);
@@ -1776,11 +1778,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Draws a white character on a black surround.
-     *
-     * @param  str  string to be displayed
-     * @param  g    graphics contexts (where to draw the string)
-     * @param  x    x coordinate of where the string is to be drawn
-     * @param  y    y coordinate of where the string is to be drawn
+     * 
+     * @param str string to be displayed
+     * @param g graphics contexts (where to draw the string)
+     * @param x x coordinate of where the string is to be drawn
+     * @param y y coordinate of where the string is to be drawn
      */
     public final void drawStringBW(String str, Graphics g, int x, int y) {
 
@@ -1799,8 +1801,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Erases all paint.
-     *
-     * @param  onlyCurrent  DOCUMENT ME!
+     * 
+     * @param onlyCurrent DOCUMENT ME!
      */
     public void eraseAllPaint(boolean onlyCurrent) {
 
@@ -1835,8 +1837,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Returns the active image.
-     *
-     * @return  active image
+     * 
+     * @return active image
      */
     public ModelImage getActiveImage() {
         return imageActive;
@@ -1844,8 +1846,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Returns the active image buffer.
-     *
-     * @return  active image buffer
+     * 
+     * @return active image buffer
      */
     public float[] getActiveImageBuffer() {
         return imageBufferActive;
@@ -1853,8 +1855,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Returns the active image buffer for this slice.
-     *
-     * @return  active image buffer for this slice
+     * 
+     * @return active image buffer for this slice
      */
     public float[] getActiveImageSliceBuffer() {
         int cFactor = 1;
@@ -1886,8 +1888,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Returns the active image.
-     *
-     * @return  active image
+     * 
+     * @return active image
      */
     public ModelLUT getActiveLUT() {
         return (ModelLUT) m_kPatientSlice.getActiveLookupTable();
@@ -1895,8 +1897,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Returns float alphaBlend. The value used to blend two images displayed in the same frame.
-     *
-     * @return  alphaBlend
+     * 
+     * @return alphaBlend
      */
     public float getAlphaBlend() {
         return alphaBlend;
@@ -1904,8 +1906,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Returns the VOI mode.
-     *
-     * @return  drawing mode for the VOI tools (i.e. ELLIPSE, LINE ...)
+     * 
+     * @return drawing mode for the VOI tools (i.e. ELLIPSE, LINE ...)
      */
     public int getCursorMode() {
         return cursorMode;
@@ -1913,8 +1915,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Returns the frame.
-     *
-     * @return  frame
+     * 
+     * @return frame
      */
     public ViewJFrameBase getFrame() {
         return frame;
@@ -1922,8 +1924,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Returns the imageA.
-     *
-     * @return  imageA
+     * 
+     * @return imageA
      */
     public ModelImage getImageA() {
         return imageA;
@@ -1931,8 +1933,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Returns the imageB.
-     *
-     * @return  imageB
+     * 
+     * @return imageB
      */
     public ModelImage getImageB() {
         return imageB;
@@ -1940,8 +1942,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Gets imageA's image buffer of intensities.
-     *
-     * @return  float[] imageA's intensity buffer
+     * 
+     * @return float[] imageA's intensity buffer
      */
     public float[] getImageBufferA() {
         return imageBufferA;
@@ -1949,8 +1951,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Gets imageB's image buffer of intensities.
-     *
-     * @return  float[] imageB's intensity buffer
+     * 
+     * @return float[] imageB's intensity buffer
      */
 
     public float[] getImageBufferB() {
@@ -1959,8 +1961,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Gets the intensityDropper intensity.
-     *
-     * @return  the intensity dropper
+     * 
+     * @return the intensity dropper
      */
     public float getIntensityDropper() {
         return intensityDropper;
@@ -1968,8 +1970,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Returns the model lut for the imageA.
-     *
-     * @return  the model LUT for imageA
+     * 
+     * @return the model LUT for imageA
      */
     public ModelLUT getLUTa() {
         return LUTa;
@@ -1977,8 +1979,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Returns the model lut for the imageB.
-     *
-     * @return  the model LUT for imageB
+     * 
+     * @return the model LUT for imageB
      */
     public ModelLUT getLUTb() {
         return LUTb;
@@ -1986,8 +1988,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  boolean
+     * 
+     * @return boolean
      */
     public boolean getModifyFlag() {
         return modifyFlag;
@@ -1995,8 +1997,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Finds the number of points in the active VOI contour.
-     *
-     * @return  the number of points in the selected VOI
+     * 
+     * @return the number of points in the selected VOI
      */
     public int getNumPoints() {
         ViewVOIVector VOIs = imageActive.getVOIs();
@@ -2010,8 +2012,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Returns the number of VOIs in the active image.
-     *
-     * @return  int number of VOIs
+     * 
+     * @return int number of VOIs
      */
     public int getnVOI() {
         ViewVOIVector VOIs = imageActive.getVOIs();
@@ -2021,8 +2023,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Returns float opacity.
-     *
-     * @return  opacity
+     * 
+     * @return opacity
      */
     public float getOpacity() {
         return frame.getControls().getTools().getOpacity();
@@ -2030,8 +2032,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Returns the image's orientation.
-     *
-     * @return  image orientation
+     * 
+     * @return image orientation
      */
     public int getOrientation() {
         return orientation;
@@ -2039,8 +2041,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Returns BitSet paintBitmap.
-     *
-     * @return  paintBitmap
+     * 
+     * @return paintBitmap
      */
     public BitSet getPaintBitmap() {
         return paintBitmap;
@@ -2048,8 +2050,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Gets the paint buffer.
-     *
-     * @return  int[] paint buffer
+     * 
+     * @return int[] paint buffer
      */
     public int[] getPaintBuffer() {
         return paintImageBuffer;
@@ -2057,8 +2059,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Gets the paint mask.
-     *
-     * @return  the current paint mask
+     * 
+     * @return the current paint mask
      */
     public BitSet getPaintMask() {
         return paintBitmap;
@@ -2066,8 +2068,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Gets the buffer used to store ARGB images of the image presently being displayed.
-     *
-     * @return  int[] buffer of ARGB image A
+     * 
+     * @return int[] buffer of ARGB image A
      */
     public int[] getPixBuffer() {
         return pixBuffer;
@@ -2075,18 +2077,17 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Gets the buffer used to store ARGB images of the image presently being displayed.
-     *
-     * @return  int[] buffer of ARGB image A
+     * 
+     * @return int[] buffer of ARGB image A
      */
     public int[] getPixBufferB() {
         return pixBufferB;
     }
 
-
     /**
      * Returns the ModelRGB RGBTA for imageA.
-     *
-     * @return  RGBTA for imageA
+     * 
+     * @return RGBTA for imageA
      */
     public ModelRGB getRGBTA() {
         return RGBTA;
@@ -2094,18 +2095,17 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Returns the ModelRGB for imageB.
-     *
-     * @return  RGBTB for imageB
+     * 
+     * @return RGBTB for imageB
      */
     public ModelRGB getRGBTB() {
         return RGBTB;
     }
 
-
     /**
      * Determines whether to enable the showIntensity checkbox for magnification box.
-     *
-     * @return  whether to enable showIntensity checkbox
+     * 
+     * @return whether to enable showIntensity checkbox
      */
     public boolean getShowMagIntensityEnabled() {
         Graphics g = getGraphics();
@@ -2117,14 +2117,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         g.setFont(MipavUtil.font10);
 
         return super.getShowMagIntensityEnabled(g, MAGR_WIDTH, MAGR_HEIGHT, MAGR_MAG, imageActive.getType(),
-                                                getActiveImage().getMin(), getActiveImage().getMax());
+                getActiveImage().getMin(), getActiveImage().getMax());
 
     }
 
     /**
      * Returns the slice of the image.
-     *
-     * @return  the slice
+     * 
+     * @return the slice
      */
     public int getSlice() {
         return slice;
@@ -2132,8 +2132,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Gets the time slice of the image.
-     *
-     * @return  the current time slice
+     * 
+     * @return the current time slice
      */
     public int getTimeSlice() {
         return timeSlice;
@@ -2141,8 +2141,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public VOIHandler getVOIHandler() {
         return this.voiHandler;
@@ -2150,13 +2150,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Tells whether or not the image is being displayed in checkerboard mode.
-     *
-     * @return  boolean
+     * 
+     * @return boolean
      */
     public boolean isCheckerboarded() {
-        return ((nRowCheckers > 1) && (nColumnCheckers > 1));
+        return ( (nRowCheckers > 1) && (nColumnCheckers > 1));
     }
-
 
     // ************************************************************************
     // **************************** Key Events *****************************
@@ -2164,15 +2163,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Does nothing.
-     *
-     * @param  e  event
+     * 
+     * @param e event
      */
-    public void keyPressed(KeyEvent e) { }
+    public void keyPressed(KeyEvent e) {}
 
     /**
      * If the shift key is pressed, updates the graphics.
-     *
-     * @param  e  the key released event
+     * 
+     * @param e the key released event
      */
     public void keyReleased(KeyEvent e) {
         int keyCode = e.getKeyCode();
@@ -2189,20 +2188,20 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Does nothing.cent.
-     *
-     * @param  e  event
+     * 
+     * @param e event
      */
-    public void keyTyped(KeyEvent e) { }
+    public void keyTyped(KeyEvent e) {}
 
     /**
      * This method loads the LUT for the active image. If the image is not a color image then both the functions and the
      * LUT data are loaded. If this is a color image, then only the functions are loaded.
-     *
-     * @param  loadAll    boolean boolean indicating that both lut and transfer functions should be loaded. If false,
-     *                    then only transfer functions are loaded.
-     * @param  filename   String filename to save LUT as
-     * @param  dirName    String directory to save LUT to
-     * @param  quietMode  boolean if true indicates that warnings should not be displayed.
+     * 
+     * @param loadAll boolean boolean indicating that both lut and transfer functions should be loaded. If false, then
+     *            only transfer functions are loaded.
+     * @param filename String filename to save LUT as
+     * @param dirName String directory to save LUT to
+     * @param quietMode boolean if true indicates that warnings should not be displayed.
      */
     public void loadOnlyLUTFrom(boolean loadAll, String filename, String dirName, boolean quietMode) {
         ModelRGB rgb;
@@ -2240,7 +2239,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         // if not using a lut (i.e. rgb only), then you
         // can't loadAll.... there are only functions, so
         // reset the loadAll variable
-        if (!useLUT) {
+        if ( !useLUT) {
             loadAll = false;
         }
 
@@ -2280,7 +2279,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         } catch (IOException error) {
 
-            if (!quietMode) {
+            if ( !quietMode) {
                 MipavUtil.displayError("Error reading LUT: \n" + error.getMessage());
             }
         }
@@ -2288,8 +2287,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Loads built-in (.gif) or custom (.png) paint brushes based on the last-used paint brush in preferences.
-     *
-     * @param  paintName  the name of the brush to load
+     * 
+     * @param paintName the name of the brush to load
      */
     public void loadPaintBrush(String paintName) {
         String fullPath = null;
@@ -2301,10 +2300,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             try {
                 fullPath = PlaceHolder.class.getResource(paintName).getPath();
             } catch (Exception e) {
-                fullPath = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes" +
-                           File.separator + paintName;
+                fullPath = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes"
+                        + File.separator + paintName;
 
-                if (!(new File(fullPath)).exists()) {
+                if ( ! (new File(fullPath)).exists()) {
                     fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath();
                 }
 
@@ -2320,13 +2319,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         // read in the .gif or .png as a model image to create the BitSet
         ModelImage brushImage = fileIO.readImage(paintFile.getPath());
-        
+
         if (brushImage == null) {
             return;
         }
 
         int[] brushExtents = brushImage.getExtents();
-        
+
         // create the bitset and the brush dimensions
         paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
         paintBrush = new BitSet(brushExtents[0] * brushExtents[1]);
@@ -2344,7 +2343,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             return;
         }
 
-
         int length = buffer.length;
 
         if (paintImage != null) {
@@ -2354,7 +2352,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         // create a buffered image that will be drawn in place of a cursor (with red transparent pixels)
         paintImage = new BufferedImage(paintBrushDim.width, paintBrushDim.height, BufferedImage.TYPE_INT_ARGB);
-
 
         // set or clear the bitset based on the black pixels (black == on)
         for (int i = 0; i < length; i += 4, counter++) {
@@ -2371,16 +2368,16 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         // remove the image created as it is no longer needed
         brushImage.disposeLocal();
 
-        if ( buffer != null ) {
-        	buffer = null;
+        if (buffer != null) {
+            buffer = null;
         }
     }
 
     /**
      * Loads built-in (.gif) or custom (.png) paint brushes based on the last-used paint brush in preferences.
-     *
-     * @param  paintName  the name of the brush to load
-     * @param  isQuick    DOCUMENT ME!
+     * 
+     * @param paintName the name of the brush to load
+     * @param isQuick DOCUMENT ME!
      */
     public void loadPaintBrush(String paintName, boolean isQuick) {
 
@@ -2397,10 +2394,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             try {
                 fullPath = PlaceHolder.class.getResource(paintName).getPath();
             } catch (Exception e) {
-                fullPath = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes" +
-                           File.separator + paintName;
+                fullPath = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes"
+                        + File.separator + paintName;
 
-                if (!(new File(fullPath)).exists()) {
+                if ( ! (new File(fullPath)).exists()) {
                     fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath();
                 }
 
@@ -2420,9 +2417,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         if (brushImage == null) {
             return;
         }
-        
+
         int[] brushExtents = brushImage.getExtents();
-         
+
         // create the bitset and the brush dimensions
         paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
         paintBrush = new BitSet(brushExtents[0] * brushExtents[1]);
@@ -2440,7 +2437,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             return;
         }
 
-
         int length = buffer.length;
 
         if (paintImage != null) {
@@ -2450,7 +2446,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         // create a buffered image that will be drawn in place of a cursor (with red transparent pixels)
         paintImage = new BufferedImage(paintBrushDim.width, paintBrushDim.height, BufferedImage.TYPE_INT_ARGB);
-
 
         // set or clear the bitset based on the black pixels (black == on)
         for (int i = 0; i < length; i += 4, counter++) {
@@ -2466,13 +2461,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         // remove the image created as it is no longer needed
         brushImage.disposeLocal();
-        
-        if ( buffer != null ) {
-        	buffer = null;
+
+        if (buffer != null) {
+            buffer = null;
         }
 
     }
-
 
     // ************************************************************************
     // ***************************** Mouse Events *****************************
@@ -2483,13 +2477,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * Interest (VOI) is selected and the click count is 2, a VOI dialog should pop up. If the click count is 1 and the
      * mouse is in an VOI, it should select the VOI. In all other cases, a click within the image but not in an VOI
      * should deselect all VOIs.
-     *
-     * @param  mouseEvent  event that triggers function; contains click count
+     * 
+     * @param mouseEvent event that triggers function; contains click count
      */
     public void mouseClicked(MouseEvent mouseEvent) {
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
-
 
         if (frame instanceof ViewJFrameLightBox) {
 
@@ -2522,7 +2515,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     }
 
-
     // ************************************************************************
     // ************************** Mouse Motion Events *************************
     // ************************************************************************
@@ -2530,8 +2522,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /**
      * A mouse event. Drags a VOI real time by calling a series of translations and draws. Once the mouse is released,
      * the positions are reset permenantly. Also rubberbands points if the cursor indicates it by calling rubberbandVOI.
-     *
-     * @param  mouseEvent  event that triggered function
+     * 
+     * @param mouseEvent event that triggered function
      */
     public void mouseDragged(MouseEvent mouseEvent) {
         int mouseMods = mouseEvent.getModifiers();
@@ -2541,17 +2533,17 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
-        if ((pixBuffer == null) || (imageBufferActive == null) || (modifyFlag == false)) {
+        if ( (pixBuffer == null) || (imageBufferActive == null) || (modifyFlag == false)) {
             return;
         }
 
-        xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
-        yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
+        xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor
+        yS = getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
         int xDim = imageActive.getExtents()[0];
         int yDim = imageActive.getExtents()[1];
 
-        if ((xS < 0) || (xS >= xDim) || (yS < 0) || (yS >= yDim)) {
+        if ( (xS < 0) || (xS >= xDim) || (yS < 0) || (yS >= yDim)) {
             return;
         }
 
@@ -2559,16 +2551,16 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         processDefaultMouseDrag(mouseEvent, xS, yS);
         // }
 
-
         if (cursorMode == DROPPER_PAINT) {
 
             if (imageActive.isColorImage() == true) {
-                dropperColor = new Color((int) imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1],
-                                         (int) imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2],
-                                         (int) imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]);
+                dropperColor = new Color(
+                        (int) imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 1],
+                        (int) imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 2],
+                        (int) imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 3]);
                 frame.getControls().getTools().setPaintColor(dropperColor);
             } else {
-                intensityDropper = imageBufferActive[(yS * imageActive.getExtents()[0]) + xS];
+                intensityDropper = imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS];
                 frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
             }
         } else if (cursorMode == ERASER_PAINT) {
@@ -2582,8 +2574,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Store the lastMouse position.
-     *
-     * @param  mouseEvent  event
+     * 
+     * @param mouseEvent event
      */
     public void mouseEntered(MouseEvent mouseEvent) {
         lastMouseX = mouseEvent.getX();
@@ -2592,15 +2584,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Resets the level set stack.
-     *
-     * @param  mouseEvent  event that triggered function
+     * 
+     * @param mouseEvent event that triggered function
      */
     public void mouseExited(MouseEvent mouseEvent) {
         lastMouseX = OUT_OF_BOUNDS;
         lastMouseY = OUT_OF_BOUNDS;
 
-        if ((cursorMode == MAG_REGION) || (cursorMode == PAINT_VOI) || (cursorMode == ERASER_PAINT) ||
-                (cursorMode == WIN_REGION)) {
+        if ( (cursorMode == MAG_REGION) || (cursorMode == PAINT_VOI) || (cursorMode == ERASER_PAINT)
+                || (cursorMode == WIN_REGION)) {
 
             // repaint();
             paintComponent(getGraphics());
@@ -2615,8 +2607,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /**
      * A mouse event. If the mode is level set, draws level sets as user moves mouse. Otherwise, changes the cursor
      * depending on where the mouse is in relation to the VOI.
-     *
-     * @param  mouseEvent  event that triggered the function
+     * 
+     * @param mouseEvent event that triggered the function
      */
     public void mouseMoved(MouseEvent mouseEvent) {
         int xS, yS;
@@ -2626,28 +2618,28 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         lastMouseY = mouseEvent.getY();
         shiftDown = mouseEvent.isShiftDown();
 
-        if ((cursorMode == ZOOMING_IN) || (cursorMode == ZOOMING_OUT)) {
+        if ( (cursorMode == ZOOMING_IN) || (cursorMode == ZOOMING_OUT)) {
 
             // if we are in zoom mode, we don't care about any of the other things
             // that are happening here, in fact, zoom breaks if we don't return
             return;
-        } else if ((cursorMode == RECTANGLE) || (cursorMode == ELLIPSE) || (cursorMode == LINE) ||
-                       (cursorMode == RECTANGLE3D) || (cursorMode == POINT_VOI) || (cursorMode == POLYLINE) ||
-                       (cursorMode == LEVELSET) || (cursorMode == PAINT_VOI) || (cursorMode == DROPPER_PAINT) ||
-                       (cursorMode == ERASER_PAINT) || (cursorMode == QUICK_LUT) || (cursorMode == PROTRACTOR) ||
-                       (cursorMode == LIVEWIRE) || (cursorMode == ANNOTATION) || (cursorMode == POLYLINE_SLICE_VOI) ||
-                       (cursorMode == MOVE) || (cursorMode == MOVE_POINT) || (cursorMode == NEW_POINT) ||
-                       (cursorMode == RETRACE) || (cursorMode == DELETE_POINT) || (cursorMode == TRANSLATE) || 
-                       (cursorMode == SPLIT_VOI)) {
+        } else if ( (cursorMode == RECTANGLE) || (cursorMode == ELLIPSE) || (cursorMode == LINE)
+                || (cursorMode == RECTANGLE3D) || (cursorMode == POINT_VOI) || (cursorMode == POLYLINE)
+                || (cursorMode == LEVELSET) || (cursorMode == PAINT_VOI) || (cursorMode == DROPPER_PAINT)
+                || (cursorMode == ERASER_PAINT) || (cursorMode == QUICK_LUT) || (cursorMode == PROTRACTOR)
+                || (cursorMode == LIVEWIRE) || (cursorMode == ANNOTATION) || (cursorMode == POLYLINE_SLICE_VOI)
+                || (cursorMode == MOVE) || (cursorMode == MOVE_POINT) || (cursorMode == NEW_POINT)
+                || (cursorMode == RETRACE) || (cursorMode == DELETE_POINT) || (cursorMode == TRANSLATE)
+                || (cursorMode == SPLIT_VOI)) {
             g.dispose();
 
             return;
         }
 
-        xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
-        yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
+        xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor
+        yS = getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
-        if ((cursorMode == PAINT_VOI) && mouseEvent.isShiftDown()) {
+        if ( (cursorMode == PAINT_VOI) && mouseEvent.isShiftDown()) {
             performPaint(mouseEvent, false);
             imageActive.notifyImageDisplayListeners(null, true);
 
@@ -2656,25 +2648,25 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         // the user can erase by holding down shift while in eraser mode
         // or by holding down control while in paint mode
-        if (((cursorMode == ERASER_PAINT) && mouseEvent.isShiftDown()) ||
-                ((cursorMode == PAINT_VOI) && mouseEvent.isControlDown())) {
+        if ( ( (cursorMode == ERASER_PAINT) && mouseEvent.isShiftDown())
+                || ( (cursorMode == PAINT_VOI) && mouseEvent.isControlDown())) {
             performPaint(mouseEvent, true);
             imageActive.notifyImageDisplayListeners(null, true);
 
             return;
         }
 
-        if ((g == null) || (modifyFlag == false) || (slice == -99)) {
+        if ( (g == null) || (modifyFlag == false) || (slice == -99)) {
             return;
         }
 
-        if ((pixBuffer == null) || (imageBufferActive == null)) {
+        if ( (pixBuffer == null) || (imageBufferActive == null)) {
             g.dispose();
 
             return;
         }
 
-        if ((xS < 0) || (xS >= imageActive.getExtents()[0]) || // Check to ensure point is within
+        if ( (xS < 0) || (xS >= imageActive.getExtents()[0]) || // Check to ensure point is within
                 (yS < 0) || (yS >= imageActive.getExtents()[1])) { // the image bounds
             g.dispose();
 
@@ -2689,35 +2681,27 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             repaint();
 
             return;
-        } else if ((cursorMode == PAINT_VOI) || (cursorMode == ERASER_PAINT)) {
+        } else if ( (cursorMode == PAINT_VOI) || (cursorMode == ERASER_PAINT)) {
 
             // repaint();
             paintComponent(getGraphics());
 
             return;
-        } else if ((cursorMode == PAINT_CAN) || (cursorMode == PAINT_VASC)) {
+        } else if ( (cursorMode == PAINT_CAN) || (cursorMode == PAINT_VASC)) {
 
             if (growDialog != null) {
 
                 if (imageActive.isColorImage()) {
-                    growDialog.setPositionText("  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) +
-                                               "  R:  " +
-                                               String.valueOf(imageBufferActive[(4 *
-                                                                                     ((yS *
-                                                                                           imageActive.getExtents()[0]) +
-                                                                                          xS)) + 1]) + "  G:  " +
-                                               String.valueOf(imageBufferActive[(4 *
-                                                                                     ((yS *
-                                                                                           imageActive.getExtents()[0]) +
-                                                                                          xS)) + 2]) + "  B:  " +
-                                               String.valueOf(imageBufferActive[(4 *
-                                                                                     ((yS *
-                                                                                           imageActive.getExtents()[0]) +
-                                                                                          xS)) + 3]));
+                    growDialog.setPositionText("  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  R:  "
+                            + String.valueOf(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 1])
+                            + "  G:  "
+                            + String.valueOf(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 2])
+                            + "  B:  "
+                            + String.valueOf(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 3]));
                 } else {
-                    growDialog.setPositionText("  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) +
-                                               "  Intensity:  " +
-                                               String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]));
+                    growDialog.setPositionText("  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS)
+                            + "  Intensity:  "
+                            + String.valueOf(imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS]));
                 }
             }
 
@@ -2731,12 +2715,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         setCursorMode(DEFAULT);
     } // end mouseMoved
 
-
     /**
      * A mouse event. Sets the mode of the program depending on the cursor mode. If the mode is move, activates the
      * contour or line and enables the delete button.
-     *
-     * @param  mouseEvent  event that triggered function
+     * 
+     * @param mouseEvent event that triggered function
      */
     public void mousePressed(MouseEvent mouseEvent) {
         lastMouseX = mouseEvent.getX();
@@ -2762,8 +2745,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
         }
 
-
-        if ((cursorMode == DEFAULT) && mouseEvent.isControlDown()) { // center the image around cursor (no zooming)
+        if ( (cursorMode == DEFAULT) && mouseEvent.isControlDown()) { // center the image around cursor (no zooming)
 
             int centerX = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().width / 2;
             int centerY = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().height / 2;
@@ -2771,16 +2753,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             ((ViewJFrameImage) frame).getScrollPane().getHorizontalScrollBar().setValue(mouseEvent.getX() - centerX);
             ((ViewJFrameImage) frame).getScrollPane().getVerticalScrollBar().setValue(mouseEvent.getY() - centerY);
 
-
         }
 
-        if ((cursorMode == ZOOMING_IN) || (cursorMode == ZOOMING_OUT)) {
-            // int xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor int yS =
-            // getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
+        if ( (cursorMode == ZOOMING_IN) || (cursorMode == ZOOMING_OUT)) {
+            // int xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor int yS =
+            // getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
             ((ViewJFrameImage) frame).updateFrame(getZoomMagnitudeX(mouseEvent.getButton() == MouseEvent.BUTTON3),
-                                                  getZoomMagnitudeY(mouseEvent.getButton() == MouseEvent.BUTTON3), xS,
-                                                  yS);
+                    getZoomMagnitudeY(mouseEvent.getButton() == MouseEvent.BUTTON3), xS, yS);
 
             if (mouseEvent.isShiftDown() == false) {
                 cursorMode = DEFAULT;
@@ -2793,9 +2773,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         try {
             mousePressedPaint(mouseEvent);
 
-            if ((cursorMode == WIN_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {
-                String newValue = JOptionPane.showInputDialog(frame, "Enter new size for windowed region:",
-                                                              String.valueOf(windowedRegionSize));
+            if ( (cursorMode == WIN_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {
+                String newValue = JOptionPane.showInputDialog(frame, "Enter new size for windowed region:", String
+                        .valueOf(windowedRegionSize));
 
                 try {
 
@@ -2815,17 +2795,16 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     }
 
-
     /**
      * A mouse event. This function sets up and draws the VOI according to the mode.
-     *
-     * @param  mouseEvent  event that triggered function
+     * 
+     * @param mouseEvent event that triggered function
      */
     public void mouseReleased(MouseEvent mouseEvent) {
-    	
-    	//calling garbage collect here to clean up any memory used while getting the LPS coordinates
-    	System.gc();
-    	
+
+        // calling garbage collect here to clean up any memory used while getting the LPS coordinates
+        System.gc();
+
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
@@ -2838,10 +2817,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             return;
         }
 
-        int xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
-        int yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
+        int xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor
+        int yS = getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
-        if ((xS < 0) || (xS >= imageActive.getExtents()[0]) || (yS < 0) || (yS >= imageActive.getExtents()[1])) {
+        if ( (xS < 0) || (xS >= imageActive.getExtents()[0]) || (yS < 0) || (yS >= imageActive.getExtents()[1])) {
             return;
         }
 
@@ -2849,11 +2828,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             setPixelInformationAtLocation(xS, yS);
         }
 
-       
-        
         // clicking with the right mouse button in a regular image frame updates the image's
         // tri-image frame (if one is open) to show that point in all of the components
-        if ((mouseEvent.getModifiers() & InputEvent.BUTTON2_MASK) != 0) {
+        if ( (mouseEvent.getModifiers() & InputEvent.BUTTON2_MASK) != 0) {
             ViewJFrameTriImage triFrame = imageActive.getTriImageFrame();
 
             if (triFrame != null) {
@@ -2861,18 +2838,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
         }
 
-        if (cursorMode == POINT_VOI) { }
-        else if (cursorMode == POLYLINE_SLICE_VOI) { }
-        else if (cursorMode == ANNOTATION) { }
-        else if (cursorMode == LEVELSET) { }
-        else if (cursorMode == RECTANGLE) { }
-        else if (cursorMode == RECTANGLE3D) { }
-        else if (cursorMode == ELLIPSE) { }
-        else if (cursorMode == LINE) { }
-        else if (cursorMode == PROTRACTOR) { }
-        else if (cursorMode == NEW_POINT) { }
-        else if (cursorMode == DELETE_POINT) { }
-        else if (cursorMode == PAINT_CAN) {
+        if (cursorMode == POINT_VOI) {} else if (cursorMode == POLYLINE_SLICE_VOI) {} else if (cursorMode == ANNOTATION) {} else if (cursorMode == LEVELSET) {} else if (cursorMode == RECTANGLE) {} else if (cursorMode == RECTANGLE3D) {} else if (cursorMode == ELLIPSE) {} else if (cursorMode == LINE) {} else if (cursorMode == PROTRACTOR) {} else if (cursorMode == NEW_POINT) {} else if (cursorMode == DELETE_POINT) {} else if (cursorMode == PAINT_CAN) {
             xPG = (short) xS;
             yPG = (short) yS;
             zPG = (short) slice;
@@ -2884,7 +2850,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 seedValB = imageBufferActive[index + 3];
                 regionGrow((short) xS, (short) yS, (short) slice, seedValR, seedValG, seedValB, null, true);
             } else {
-                seedVal = imageBufferActive[(yS * imageActive.getExtents()[0]) + xS];
+                seedVal = imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS];
                 regionGrow((short) xS, (short) yS, (short) slice, seedVal, null, true);
             }
 
@@ -2892,21 +2858,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         } else if (cursorMode == PAINT_VASC) {
             int index = xS + (yS * imageActive.getExtents()[0]);
-            int z = MipavMath.round(((ViewJFramePaintVasculature) frame).getMIPZValue(index));
+            int z = MipavMath.round( ((ViewJFramePaintVasculature) frame).getMIPZValue(index));
             float value = ((ViewJFramePaintVasculature) frame).imageBuffer[index + (z * imageActive.getSliceSize())];
 
             ((ViewJFrameImage) ((ViewJFramePaintVasculature) frame).parent).getComponentImage().regionGrow((short) xS,
-                                                                                                           (short) yS,
-                                                                                                           (short) z,
-                                                                                                           value, null,
-                                                                                                           true);
-            ((ViewJFrameImage) ((ViewJFramePaintVasculature) frame).parent).getComponentImage().setRegionGrowVars((short)
-                                                                                                                  xS,
-                                                                                                                  (short)
-                                                                                                                  yS,
-                                                                                                                  (short)
-                                                                                                                  z,
-                                                                                                                  value);
+                    (short) yS, (short) z, value, null, true);
+            ((ViewJFrameImage) ((ViewJFramePaintVasculature) frame).parent).getComponentImage().setRegionGrowVars(
+                    (short) xS, (short) yS, (short) z, value);
             imageActive.notifyImageDisplayListeners(null, true);
         } else if (cursorMode == QUICK_LUT) {
             int wS, hS;
@@ -2921,7 +2879,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 if (imageA == imageActive) {
                     this.quickLUT(xS, wS, yS, hS, imageBufferA, imageA, LUTa);
                     imageActive.notifyImageDisplayListeners(LUTa, true);
-                } else if ((imageB != null) && (imageActive == imageB)) {
+                } else if ( (imageB != null) && (imageActive == imageB)) {
                     this.quickLUT(xS, wS, yS, hS, imageBufferB, imageB, LUTb);
                     imageActive.notifyImageDisplayListeners(LUTb, true);
                 }
@@ -2930,19 +2888,19 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 if (imageA == imageActive) {
                     this.quickRGB(xS, wS, yS, hS, imageBufferA, imageA, RGBTA);
                     imageActive.notifyImageDisplayListeners(true, 1, RGBTA);
-                } else if ((imageBufferB != null) && (imageB != null) && (imageB == imageActive)) {
+                } else if ( (imageBufferB != null) && (imageB != null) && (imageB == imageActive)) {
                     this.quickRGB(xS, wS, yS, hS, imageBufferB, imageB, RGBTB);
                     imageActive.notifyImageDisplayListeners(true, 1, RGBTB);
                 }
             }
-            
-            if ((getActiveImage().isColorImage()) && (getActiveImage().getHistoRGBFrame() != null)) {
+
+            if ( (getActiveImage().isColorImage()) && (getActiveImage().getHistoRGBFrame() != null)) {
                 getActiveImage().getHistoRGBFrame().update();
             } else if (getActiveImage().getHistoLUTFrame() != null) {
                 getActiveImage().getHistoLUTFrame().update();
             }
-            
-            if (!((mouseEvent.isShiftDown() == true) || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
+
+            if ( ! ( (mouseEvent.isShiftDown() == true) || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
                 setCursorMode(DEFAULT);
             }
         } else if (cursorMode == DEFAULT) {
@@ -2955,12 +2913,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     } // end mouseReleased()
 
-
     /**
      * ************************************************************************ ************************** Mouse Wheel
      * Events *************************.************************************************************************
-     *
-     * @param  mouseWheelEvent  DOCUMENT ME!
+     * 
+     * @param mouseWheelEvent DOCUMENT ME!
      */
     public void mouseWheelMoved(MouseWheelEvent mouseWheelEvent) {
         int wheelRotation = mouseWheelEvent.getWheelRotation();
@@ -2973,7 +2930,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                     if (mouseWheelEvent.isShiftDown()) {
 
-                        if (((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
+                        if ( ((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
                             ((ViewJFrameImage) frame).setShiftDown(true);
                         }
                     }
@@ -2988,7 +2945,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                     if (mouseWheelEvent.isShiftDown()) {
 
-                        if (((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
+                        if ( ((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
                             ((ViewJFrameImage) frame).setShiftDown(true);
                         }
                     }
@@ -3024,27 +2981,20 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     }
 
     public String getRGBPaintComponents() {
-    	return this.rgbString;
+        return this.rgbString;
     }
-    
+
     public void setRGBPaintComponents(String rgb) {
-    	this.rgbString = rgb;
+        this.rgbString = rgb;
     }
-    
+
     /**
      * Paints the image and calls drawSelf for all VOIs.
-     *
-     * @param  graphics  graphics
+     * 
+     * @param graphics graphics
      */
     public void paintComponent(Graphics graphics) {
-
-        if (this instanceof ViewJComponentRegistration) {
-
-            // System.err.println("Paint component ViewJComponent Registration in EditImage");
-        }
-
         try {
-
             if (modifyFlag == false) {
                 return;
             }
@@ -3062,8 +3012,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 int width = Math.round(zoomX * imageDim.width * resolutionX);
                 int height = Math.round(zoomY * imageDim.height * resolutionY);
 
-                if ((offscreenImage == null) || (offscreenImage.getWidth(null) != width) ||
-                        (offscreenImage.getHeight(null) != height)) {
+                if ( (offscreenImage == null) || (offscreenImage.getWidth(null) != width)
+                        || (offscreenImage.getHeight(null) != height)) {
                     offscreenImage = createImage(width, height);
                 }
 
@@ -3081,16 +3031,16 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             offscreenGraphics2d.setColor(Color.black);
             offscreenGraphics2d.fillRect(0, 0, getSize().width, getSize().height);
 
-            if ((paintImageBuffer == null) || (paintImageBuffer.length != (imageDim.width * imageDim.height))) {
+            if ( (paintImageBuffer == null) || (paintImageBuffer.length != (imageDim.width * imageDim.height))) {
                 paintImageBuffer = new int[imageDim.width * imageDim.height]; // make the buffer that will hold the
-                                                                              // paint
+                // paint
             } else {
                 Arrays.fill(paintImageBuffer, 0); // ensure erasure of old image, otherwise ghosting occurs
             }
 
+            // clip graphics to visible area on screen - this saves rendering time
             Rectangle visibleRect = getVisibleRect();
-            offscreenGraphics2d.setClip(visibleRect); // clip graphics to visible area on screen - this saves rendering
-                                                      // time
+            offscreenGraphics2d.setClip(visibleRect);
 
             // build the paint image that will be blended on-screen
             makePaintImage(paintImageBuffer, paintBitmap, slice, frame, (imageExtents.length < 3));
@@ -3098,11 +3048,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             if (Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
                 makePaintBitmapBorder(paintImageBuffer, paintBitmap, slice, frame);
             }
-            
-            if (!(this instanceof ViewJComponentRegistration)) {
+
+            if ( ! (this instanceof ViewJComponentRegistration)) {
                 voiHandler.paintSolidVOIinImage(offscreenGraphics2d);
             }
-
 
             if (memImageA == null) { // create imageA if it hasn't already been created
                 memImageA = new MemoryImageSource(imageDim.width, imageDim.height, pixBuffer, 0, imageDim.width);
@@ -3115,35 +3064,31 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             int zoomedWidth = Math.round(zoomX * img.getWidth(this) * resolutionX);
             int zoomedHeight = Math.round(zoomY * img.getHeight(this) * resolutionY);
 
-            if ((interpMode == INTERPOLATE_A) || (interpMode == INTERPOLATE_BOTH)) {
-                offscreenGraphics2d.setRenderingHints(new RenderingHints(RenderingHints.KEY_INTERPOLATION,
-                                                                         RenderingHints.VALUE_INTERPOLATION_BILINEAR));
+            if ( (interpMode == INTERPOLATE_A) || (interpMode == INTERPOLATE_BOTH)) {
+                offscreenGraphics2d.setRenderingHints(renderBilinear);
             }
 
             // draw image A
-            offscreenGraphics2d.drawImage(img, 0, 0, zoomedWidth, zoomedHeight, 0, 0, img.getWidth(this),
-                                          img.getHeight(this), null);
+            offscreenGraphics2d.drawImage(img, 0, 0, zoomedWidth, zoomedHeight, 0, 0, img.getWidth(this), img
+                    .getHeight(this), null);
 
             if (imageB != null) {
 
-                if ((interpMode == INTERPOLATE_B) || (interpMode == INTERPOLATE_BOTH)) {
-                    offscreenGraphics2d.setRenderingHints(new RenderingHints(RenderingHints.KEY_INTERPOLATION,
-                                                                             RenderingHints.VALUE_INTERPOLATION_BILINEAR));
+                if ( (interpMode == INTERPOLATE_B) || (interpMode == INTERPOLATE_BOTH)) {
+                    offscreenGraphics2d.setRenderingHints(renderBilinear);
                 } else {
-                    offscreenGraphics2d.setRenderingHints(new RenderingHints(RenderingHints.KEY_INTERPOLATION,
-                                                                             RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR));
+                    offscreenGraphics2d.setRenderingHints(renderNearestNeighbor);
                 }
 
                 // if checkerboarding is OFF, this means blending should be enabled
-                if (!(frame instanceof ViewJFrameLightBox)) {
+                if ( ! (frame instanceof ViewJFrameLightBox)) {
                     cleanBuffer(BOTH);
                 }
 
-                if (!isCheckerboarded()) {
+                if ( !isCheckerboarded()) {
                     adjustOpacityFor000Color();
-                    offscreenGraphics2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,
-                                                                                1 - alphaBlend));
-
+                    offscreenGraphics2d.setComposite(AlphaComposite
+                            .getInstance(AlphaComposite.SRC_OVER, 1 - alphaBlend));
                 } else {
                     makeCheckerboard();
                 }
@@ -3157,83 +3102,74 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 }
 
                 // draw image B
-                offscreenGraphics2d.drawImage(imgB, 0, 0, zoomedWidth, zoomedHeight, 0, 0, imgB.getWidth(this),
-                                              imgB.getHeight(this), null);
+                offscreenGraphics2d.drawImage(imgB, 0, 0, zoomedWidth, zoomedHeight, 0, 0, imgB.getWidth(this), imgB
+                        .getHeight(this), null);
 
             }
 
-            
-            memImageA = new MemoryImageSource(imageDim.width, imageDim.height, paintImageBuffer, 0, imageDim.width);
+            // TODO: already new'ed above?
+            // memImageA = new MemoryImageSource(imageDim.width, imageDim.height, paintImageBuffer, 0, imageDim.width);
+            memImageA.newPixels(paintImageBuffer, ColorModel.getRGBdefault(), 0, imageDim.width);
 
             Image paintImage = createImage(memImageA); // the image representing the paint mask
 
-
             // change rendering hint back from BILINEAR to nearest neighbor so that
             // all other painting will not be in interpolated mode
-            offscreenGraphics2d.setRenderingHints(new RenderingHints(RenderingHints.KEY_INTERPOLATION,
-                                                                     RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR));
+            offscreenGraphics2d.setRenderingHints(renderNearestNeighbor);
 
             offscreenGraphics2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
 
-            offscreenGraphics2d.drawImage(paintImage, 0, 0, zoomedWidth, zoomedHeight, 0, 0, img.getWidth(this),
-                                          img.getHeight(this), null);
+            offscreenGraphics2d.drawImage(paintImage, 0, 0, zoomedWidth, zoomedHeight, 0, 0, img.getWidth(this), img
+                    .getHeight(this), null);
+
             // remove the local buffer memory allocation
-            // It turns out that Java VM 32 system calls the gc() automatically without the performance hurdle. 
-            // Java VM 64 system has to call the gc() implicitly, and will not affect the performance. 
             paintImage.flush();
-            paintImage= null;
-           
-            if ( Preferences.isJVM64bit() ) {
-            	System.gc();
-            } 
-            
-            if ((cursorMode == PAINT_VOI) ||
-                    ((cursorMode == ERASER_PAINT) && ((lastMouseX != OUT_OF_BOUNDS) || (lastMouseY !=
-                                                                                            OUT_OF_BOUNDS)))) {
+            paintImage = null;
+
+            if ( (cursorMode == PAINT_VOI)
+                    || ( (cursorMode == ERASER_PAINT) && ( (lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS)))) {
 
                 // this method repaints the paint brush cursor without repainting the entire image
                 repaintPaintBrushCursorFast(offscreenGraphics2d);
             }
 
-            if (!(this instanceof ViewJComponentRegistration)) {
+            if ( ! (this instanceof ViewJComponentRegistration)) {
                 voiHandler.drawVOIs(offscreenGraphics2d); // draw all VOI regions
             }
 
             drawImageText(offscreenGraphics2d); // draw image text, i.e. slice number
 
-            if ((cursorMode == WIN_REGION) && ((lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS)) &&
-                    (shiftDown == false)) {
+            if ( (cursorMode == WIN_REGION) && ( (lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS))
+                    && (shiftDown == false)) {
 
-                if ((interpMode == INTERPOLATE_B) || (interpMode == INTERPOLATE_BOTH)) {
-                    offscreenGraphics2d.setRenderingHints(new RenderingHints(RenderingHints.KEY_INTERPOLATION,
-                                                                             RenderingHints.VALUE_INTERPOLATION_BILINEAR));
+                if ( (interpMode == INTERPOLATE_B) || (interpMode == INTERPOLATE_BOTH)) {
+                    offscreenGraphics2d.setRenderingHints(renderBilinear);
                 }
 
-                if ((lastWinRegionSlice != slice) || (cleanImageB == null)) {
+                if ( (lastWinRegionSlice != slice) || (cleanImageB == null)) {
                     cleanBuffer(IMAGE_B);
 
                     MemoryImageSource memImageSource = new MemoryImageSource(imageDim.width, imageDim.height,
-                                                                             cleanImageBufferB, 0, imageDim.width);
+                            cleanImageBufferB, 0, imageDim.width);
 
                     cleanImageB = createImage(memImageSource);
                 }
 
                 super.paintWindowComponent(offscreenGraphics2d, lastMouseX, lastMouseY, windowedRegionSize,
-                                           windowedRegionSize, getZoomX(), cleanImageB);
+                        windowedRegionSize, getZoomX(), cleanImageB);
 
                 lastWinRegionSlice = slice;
-            } else if ((cursorMode == MAG_REGION) && ((lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS))) {
+            } else if ( (cursorMode == MAG_REGION) && ( (lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS))) {
                 paintMagComponent(offscreenGraphics2d);
             } else if (cursorMode == DEFAULT) {
 
-                if (!(this instanceof ViewJComponentSingleRegistration) &&
-                		!(frame instanceof ViewJFrameLightBox)) {
+                if ( ! (this instanceof ViewJComponentSingleRegistration) && ! (frame instanceof ViewJFrameLightBox)) {
 
                     if (intensityLabel) {
-                    	if (frame instanceof ViewJFrameImage) {
-                        // display intensity values on screen
-                    		repaintImageIntensityLabelFast(offscreenGraphics2d);
-                    	}
+                        if (frame instanceof ViewJFrameImage) {
+                            // display intensity values on screen
+                            repaintImageIntensityLabelFast(offscreenGraphics2d);
+                        }
                     }
                 }
             }
@@ -3243,7 +3179,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 // paint the on-top notifier for the user when this component is on the top of the user-interface
                 offscreenGraphics2d.setColor(toppedColor);
                 offscreenGraphics2d.drawRect(visibleRect.x, visibleRect.y, visibleRect.width - 1,
-                                             visibleRect.height - 1);
+                        visibleRect.height - 1);
             }
 
             graphics.drawImage(offscreenImage, 0, 0, null);
@@ -3252,6 +3188,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 offscreenGraphics2d.dispose();
                 offscreenGraphics2d = null;
             }
+
+            // TODO: hack to avoid running out of memory on some systems. this slows down the painting a lot
+            // try to reclaim memory if getting close to the limit
+            /*
+             * double memoryInUse = ( (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) /
+             * 1048576); double totalMemory = (Runtime.getRuntime().totalMemory() / 1048576); if ( (memoryInUse /
+             * totalMemory) > 0.8) { System.err.println("repaint gc() called:\t" + memoryInUse + "\t" + totalMemory);
+             * System.gc(); }
+             */
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentEditImge.paintComponent.");
@@ -3262,10 +3207,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Paints the image and calls drawSelf for all VOIs and also resizes the image if it is too big for printer.
-     *
-     * @param  tx  x translation
-     * @param  ty  y translation
-     * @param  g   graphics
+     * 
+     * @param tx x translation
+     * @param ty y translation
+     * @param g graphics
      */
     public void paintComponentForPrinter(int tx, int ty, Graphics g) {
         ViewVOIVector VOIs = imageActive.getVOIs();
@@ -3286,8 +3231,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             for (int i = nVOI - 1; i >= 0; i--) {
                 VOIs.VOIAt(i).drawSelf(getZoomX(), getZoomY(), resolutionX, resolutionY, 0, 0,
-                                       imageActive.getFileInfo(0).getResolutions(),
-                                       imageActive.getFileInfo(0).getUnitsOfMeasure(), slice, orientation, g);
+                        imageActive.getFileInfo(0).getResolutions(), imageActive.getFileInfo(0).getUnitsOfMeasure(),
+                        slice, orientation, g);
             }
         }
 
@@ -3304,15 +3249,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Paints a magnified window over the image centered about the cursor.
-     *
-     * @param  graphics2d  graphics component
+     * 
+     * @param graphics2d graphics component
      */
     public void paintMagComponent(Graphics2D graphics2d) {
         int xNew = lastMouseX;
         int yNew = lastMouseY;
         int width = MAGR_WIDTH;
         int height = MAGR_HEIGHT;
-        float mag = ((shiftDown == false) ? MAGR_MAG : getZoomX());
+        float mag = ( (shiftDown == false) ? MAGR_MAG : getZoomX());
         int imageType = imageActive.getType();
         int imageXDim = imageActive.getExtents()[0];
         double minIntensity = getActiveImage().getMin();
@@ -3324,16 +3269,16 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         if (zoomX >= 2) {
 
-            while (((Math.round(width / zoomX) - (width / zoomX)) != 0) ||
-                       ((Math.round(width / zoomX / 2.0f) - (width / zoomX / 2.0f)) != 0)) {
+            while ( ( (Math.round(width / zoomX) - (width / zoomX)) != 0)
+                    || ( (Math.round(width / zoomX / 2.0f) - (width / zoomX / 2.0f)) != 0)) {
                 width++;
             }
         }
 
         height = width;
 
-        xNew = (int) (((int) (xNew / (float) zoomX) * zoomX) + 0.5);
-        yNew = (int) (((int) (yNew / (float) zoomY) * zoomY) + 0.5);
+        xNew = (int) ( ((int) (xNew / (float) zoomX) * zoomX) + 0.5);
+        yNew = (int) ( ((int) (yNew / (float) zoomY) * zoomY) + 0.5);
 
         int sIWidth = (int) (width / mag);
         int sIHeight = (int) (height / mag);
@@ -3345,11 +3290,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             int sX = (int) (xNew / zoomX);
             int sY = (int) (yNew / zoomY);
 
-            if ((sX - (int) (sIWidth / 2)) < 0) {
+            if ( (sX - (int) (sIWidth / 2)) < 0) {
                 return;
             }
 
-            if ((sY - (int) (sIHeight / 2)) < 0) {
+            if ( (sY - (int) (sIHeight / 2)) < 0) {
                 return;
             }
 
@@ -3361,39 +3306,34 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             y1 = yNewO;
             yh1 = height + yNewO;
 
-            if ((interpMode == INTERPOLATE_A) || (interpMode == INTERPOLATE_BOTH)) {
-                graphics2d.setRenderingHints(new RenderingHints(RenderingHints.KEY_INTERPOLATION,
-                                                                RenderingHints.VALUE_INTERPOLATION_BILINEAR));
+            if ( (interpMode == INTERPOLATE_A) || (interpMode == INTERPOLATE_BOTH)) {
+                graphics2d.setRenderingHints(renderBilinear);
             } else {
-                graphics2d.setRenderingHints(new RenderingHints(RenderingHints.KEY_INTERPOLATION,
-                                                                RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR));
+                graphics2d.setRenderingHints(renderNearestNeighbor);
             }
 
             graphics2d.drawImage(img, x1, y1, xw1, yh1, x2, y2, sX + (int) (sIWidth / 2), sY + (int) (sIHeight / 2),
-                                 this);
+                    this);
 
-            if ((imageB != null) && (imgB != null)) {
+            if ( (imageB != null) && (imgB != null)) {
 
-                if ((interpMode == INTERPOLATE_B) || (interpMode == INTERPOLATE_BOTH)) {
-                    graphics2d.setRenderingHints(new RenderingHints(RenderingHints.KEY_INTERPOLATION,
-                                                                    RenderingHints.VALUE_INTERPOLATION_BILINEAR));
+                if ( (interpMode == INTERPOLATE_B) || (interpMode == INTERPOLATE_BOTH)) {
+                    graphics2d.setRenderingHints(renderBilinear);
                 } else {
-                    graphics2d.setRenderingHints(new RenderingHints(RenderingHints.KEY_INTERPOLATION,
-                                                                    RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR));
+                    graphics2d.setRenderingHints(renderNearestNeighbor);
                 }
 
-                if (!isCheckerboarded()) {
+                if ( !isCheckerboarded()) {
                     graphics2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - alphaBlend));
                 }
 
-                graphics2d.drawImage(imgB, x1, y1, xw1, yh1, x2, y2, sX + (int) (sIWidth / 2),
-                                     sY + (int) (sIHeight / 2), this);
+                graphics2d.drawImage(imgB, x1, y1, xw1, yh1, x2, y2, sX + (int) (sIWidth / 2), sY
+                        + (int) (sIHeight / 2), this);
 
                 graphics2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
             }
 
-            graphics2d.setRenderingHints(new RenderingHints(RenderingHints.KEY_INTERPOLATION,
-                                                            RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR));
+            graphics2d.setRenderingHints(renderNearestNeighbor);
 
             graphics2d.setColor(Color.red.darker());
             graphics2d.drawRect(xNewO, yNewO, width - 1, height - 1);
@@ -3403,7 +3343,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             if (zoomX >= 1.0) {
 
-                if (((imageDim.height - 10) > 0) && (sliceString != null)) {
+                if ( ( (imageDim.height - 10) > 0) && (sliceString != null)) {
                     graphics2d.drawString(Float.toString(mag) + "x", xNewO + 5, yNewO + height - 5);
                 }
             }
@@ -3420,17 +3360,17 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             float yheight = (float) height / (endX - startX);
 
             int fontHeight = graphics2d.getFontMetrics(graphics2d.getFont()).getHeight();
-            int minStrWidth = graphics2d.getFontMetrics(graphics2d.getFont()).stringWidth(Integer.toString((int)
-                                                                                                           minIntensity));
-            int maxStrWidth = graphics2d.getFontMetrics(graphics2d.getFont()).stringWidth(Integer.toString((int)
-                                                                                                           maxIntensity));
+            int minStrWidth = graphics2d.getFontMetrics(graphics2d.getFont()).stringWidth(
+                    Integer.toString((int) minIntensity));
+            int maxStrWidth = graphics2d.getFontMetrics(graphics2d.getFont()).stringWidth(
+                    Integer.toString((int) maxIntensity));
 
             if (minStrWidth > maxStrWidth) {
                 maxStrWidth = minStrWidth;
             }
 
             int maxCharWidth = graphics2d.getFontMetrics(graphics2d.getFont()).charWidth('8');
-            int maxFracDigs = (((int) (xwidth) - maxStrWidth) / maxCharWidth) - 2;
+            int maxFracDigs = ( ((int) (xwidth) - maxStrWidth) / maxCharWidth) - 2;
             NumberFormat nf = NumberFormat.getNumberInstance();
 
             if (maxFracDigs > 1) {
@@ -3439,14 +3379,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 nf.setMaximumFractionDigits(1);
             }
 
-            if ((((imageType == ModelImage.FLOAT) || (imageType == ModelImage.DOUBLE) ||
-                      (imageType == ModelImage.COMPLEX) || (imageType == ModelImage.ARGB) ||
-                      (imageType == ModelImage.ARGB_USHORT)) &&
-                     ((maxStrWidth < (xwidth - 1 - (2 * maxCharWidth))) && (fontHeight < (yheight - 1)))) ||
-                    (((imageType != ModelImage.FLOAT) && (imageType != ModelImage.DOUBLE) &&
-                          (imageType != ModelImage.COMPLEX) && (imageType != ModelImage.ARGB) &&
-                          (imageType != ModelImage.ARGB_USHORT)) &&
-                         ((maxStrWidth < (xwidth - 1)) && (fontHeight < (yheight - 1))))) {
+            if ( ( ( (imageType == ModelImage.FLOAT) || (imageType == ModelImage.DOUBLE)
+                    || (imageType == ModelImage.COMPLEX) || (imageType == ModelImage.ARGB) || (imageType == ModelImage.ARGB_USHORT)) && ( (maxStrWidth < (xwidth - 1 - (2 * maxCharWidth))) && (fontHeight < (yheight - 1))))
+                    || ( ( (imageType != ModelImage.FLOAT) && (imageType != ModelImage.DOUBLE)
+                            && (imageType != ModelImage.COMPLEX) && (imageType != ModelImage.ARGB) && (imageType != ModelImage.ARGB_USHORT)) && ( (maxStrWidth < (xwidth - 1)) && (fontHeight < (yheight - 1))))) {
 
                 if (showMagIntensity) {
 
@@ -3457,11 +3393,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                             pix = (y * imageXDim) + x;
 
-                            if ((pix >= 0) && (pix < imageBufferActive.length)) {
+                            if ( (pix >= 0) && (pix < imageBufferActive.length)) {
 
-                                if ((imageType == ModelImage.FLOAT) || (imageType == ModelImage.DOUBLE) ||
-                                        (imageType == ModelImage.COMPLEX) || (imageType == ModelImage.ARGB) ||
-                                        (imageType == ModelImage.ARGB_USHORT)) {
+                                if ( (imageType == ModelImage.FLOAT) || (imageType == ModelImage.DOUBLE)
+                                        || (imageType == ModelImage.COMPLEX) || (imageType == ModelImage.ARGB)
+                                        || (imageType == ModelImage.ARGB_USHORT)) {
                                     sliceString = nf.format(imageBufferActive[pix]);
                                 } else {
                                     sliceString = Integer.toString((int) imageBufferActive[pix]);
@@ -3502,7 +3438,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             int prevWidth = paintImagePrevious.getWidth();
             int prevHeight = paintImagePrevious.getHeight();
-
 
             BufferedImage tempBImage = new BufferedImage(prevWidth, prevHeight, paintImagePrevious.getType());
 
@@ -3561,8 +3496,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /**
      * Grows a region based on a starting supplied. A voxel is added to the the paintBitmap mask if its intensity is
      * between previously supplied bounds.
-     *
-     * @param  str  the string to prepend to message containing region growth statistics
+     * 
+     * @param str the string to prepend to message containing region growth statistics
      */
     public void regionGrow(String str) {
 
@@ -3574,17 +3509,19 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /**
      * Grows a region based on a starting supplied. A voxel is added to the the paintBitmap mask if its intensity is
      * between the the bounds which are also supplied. Used on black and white images.
-     *
-     * <p>when click <code>false</code>, adds points in the newly grown region which weren't in the old one remove
+     * 
+     * <p>
+     * when click <code>false</code>, adds points in the newly grown region which weren't in the old one remove
      * points which were in the old region but aren't in the new one (and which weren't in the region painted before the
-     * last click), otherwise, the regions are simply added into the new set.</p>
-     *
-     * @param  x      x coordinate of the seed point
-     * @param  y      y coordinate of the seed point
-     * @param  z      z coordinate of the seed point
-     * @param  value  Intensity value at the seed point
-     * @param  str    String to start line with
-     * @param  click  whether this region grow was initiated by a click on the image
+     * last click), otherwise, the regions are simply added into the new set.
+     * </p>
+     * 
+     * @param x x coordinate of the seed point
+     * @param y y coordinate of the seed point
+     * @param z z coordinate of the seed point
+     * @param value Intensity value at the seed point
+     * @param str String to start line with
+     * @param click whether this region grow was initiated by a click on the image
      */
     public void regionGrow(short x, short y, short z, float value, String str, boolean click) {
         this.regionGrow(x, y, z, value, imageActive, str, click);
@@ -3593,18 +3530,20 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /**
      * Grows a region based on a starting supplied. A voxel is added to the the paintBitmap mask if its intensity is
      * between the the bounds which are also supplied. Used for black and white images.
-     *
-     * <p>When click is <code>false</code>, adds points in the newly grown region which weren't in the old one remove
+     * 
+     * <p>
+     * When click is <code>false</code>, adds points in the newly grown region which weren't in the old one remove
      * points which were in the old region but aren't in the new one (and which weren't in the region painted before the
-     * last click), otherwise, the regions are simply added into the new set.</p>
-     *
-     * @param  x           x coordinate of the seed point
-     * @param  y           y coordinate of the seed point
-     * @param  z           z coordinate of the seed point
-     * @param  value       Intensity value at the seed point
-     * @param  image       the image to perform the region grow in
-     * @param  leadString  the string to append to the region grow output
-     * @param  click       whether this region grow was initiated by a click on the image
+     * last click), otherwise, the regions are simply added into the new set.
+     * </p>
+     * 
+     * @param x x coordinate of the seed point
+     * @param y y coordinate of the seed point
+     * @param z z coordinate of the seed point
+     * @param value Intensity value at the seed point
+     * @param image the image to perform the region grow in
+     * @param leadString the string to append to the region grow output
+     * @param click whether this region grow was initiated by a click on the image
      */
     public void regionGrow(short x, short y, short z, float value, ModelImage image, String leadString, boolean click) {
         Cursor cursor = getCursor();
@@ -3651,7 +3590,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             variableThresholds = growDialog.getVariableThresholds();
         }
 
-        if ((fuzzyThreshold == -2.0f) || (sizeLimit == -2) || (maxDistance == -2)) {
+        if ( (fuzzyThreshold == -2.0f) || (sizeLimit == -2) || (maxDistance == -2)) {
             return;
         }
 
@@ -3667,13 +3606,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             if (image.getNDims() == 2) {
                 count = regionGrowAlgo.regionGrow2D(seedPaintBitmap, new Point(saveX, saveY), fuzzyThreshold, useVOI,
-                                                    displayFuzzy, growDialog, saveValue - less, saveValue + more,
-                                                    sizeLimit, maxDistance, variableThresholds);
+                        displayFuzzy, growDialog, saveValue - less, saveValue + more, sizeLimit, maxDistance,
+                        variableThresholds);
                 showRegionInfo(count, leadString);
-            } else if ((image.getNDims() == 3) || (image.getNDims() == 4)) {
+            } else if ( (image.getNDims() == 3) || (image.getNDims() == 4)) {
                 CubeBounds regionGrowBounds;
 
-                if (((JDialogPaintGrow) growDialog).boundsConstrained()) {
+                if ( ((JDialogPaintGrow) growDialog).boundsConstrained()) {
 
                     // constrain bounds to cropping volume
                     regionGrowBounds = ((ViewJFrameTriImage) frame).getBoundedVolume();
@@ -3684,9 +3623,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 }
 
                 count = regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3Ds(saveX, saveY, saveZ), fuzzyThreshold,
-                                                    useVOI, displayFuzzy, growDialog, saveValue - less,
-                                                    saveValue + more, sizeLimit, maxDistance, variableThresholds,
-                                                    timeSlice, regionGrowBounds);
+                        useVOI, displayFuzzy, growDialog, saveValue - less, saveValue + more, sizeLimit, maxDistance,
+                        variableThresholds, timeSlice, regionGrowBounds);
                 showRegionInfo(count, leadString);
             }
         } catch (OutOfMemoryError error) {
@@ -3694,7 +3632,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             MipavUtil.displayError("Out of memory: ComponentEditImage.regionGrow");
         }
 
-        if (!click) {
+        if ( !click) {
 
             // add points in the newly grown region which weren't in the old one
             BitSet diff = (BitSet) seedPaintBitmap.clone();
@@ -3723,45 +3661,49 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /**
      * Grows a region based on a starting supplied. A voxel is added to the the paintBitmap mask if its intensity is
      * between the the bounds which are also supplied. Used on color images.
-     *
-     * <p>when click <code>false</code>, adds points in the newly grown region which weren't in the old one remove
+     * 
+     * <p>
+     * when click <code>false</code>, adds points in the newly grown region which weren't in the old one remove
      * points which were in the old region but aren't in the new one (and which weren't in the region painted before the
-     * last click), otherwise, the regions are simply added into the new set.</p>
-     *
-     * @param  x       x coordinate of the seed point
-     * @param  y       y coordinate of the seed point
-     * @param  z       z coordinate of the seed point
-     * @param  valueR  Red intensity value at the seed point
-     * @param  valueG  Green intensity value at the seed point
-     * @param  valueB  Blue intensity value at the seed point
-     * @param  str     String to start line with
-     * @param  click   whether this region grow was initiated by a click on the image
+     * last click), otherwise, the regions are simply added into the new set.
+     * </p>
+     * 
+     * @param x x coordinate of the seed point
+     * @param y y coordinate of the seed point
+     * @param z z coordinate of the seed point
+     * @param valueR Red intensity value at the seed point
+     * @param valueG Green intensity value at the seed point
+     * @param valueB Blue intensity value at the seed point
+     * @param str String to start line with
+     * @param click whether this region grow was initiated by a click on the image
      */
     public void regionGrow(short x, short y, short z, float valueR, float valueG, float valueB, String str,
-                           boolean click) {
+            boolean click) {
         this.regionGrow(x, y, z, valueR, valueG, valueB, imageActive, str, click);
     }
 
     /**
      * Grows a region based on a starting supplied. A voxel is added to the the paintBitmap mask if its intensity is
      * between the the bounds which are also supplied. Used for color images.
-     *
-     * <p>When click is <code>false</code>, adds points in the newly grown region which weren't in the old one remove
+     * 
+     * <p>
+     * When click is <code>false</code>, adds points in the newly grown region which weren't in the old one remove
      * points which were in the old region but aren't in the new one (and which weren't in the region painted before the
-     * last click), otherwise, the regions are simply added into the new set.</p>
-     *
-     * @param  x           x coordinate of the seed point
-     * @param  y           y coordinate of the seed point
-     * @param  z           z coordinate of the seed point
-     * @param  valueR      Red value at the seed point
-     * @param  valueG      Green value at the seed point
-     * @param  valueB      Blue value at the seed point
-     * @param  image       the image to perform the region grow in
-     * @param  leadString  the string to append to the region grow output
-     * @param  click       whether this region grow was initiated by a click on the image
+     * last click), otherwise, the regions are simply added into the new set.
+     * </p>
+     * 
+     * @param x x coordinate of the seed point
+     * @param y y coordinate of the seed point
+     * @param z z coordinate of the seed point
+     * @param valueR Red value at the seed point
+     * @param valueG Green value at the seed point
+     * @param valueB Blue value at the seed point
+     * @param image the image to perform the region grow in
+     * @param leadString the string to append to the region grow output
+     * @param click whether this region grow was initiated by a click on the image
      */
     public void regionGrow(short x, short y, short z, float valueR, float valueG, float valueB, ModelImage image,
-                           String leadString, boolean click) {
+            String leadString, boolean click) {
         Cursor cursor = getCursor();
 
         setCursor(MipavUtil.waitCursor);
@@ -3810,7 +3752,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             moreB = growDialog.getUpperBoundB();
         }
 
-        if ((fuzzyThreshold == -2.0f) || (sizeLimit == -2) || (maxDistance == -2)) {
+        if ( (fuzzyThreshold == -2.0f) || (sizeLimit == -2) || (maxDistance == -2)) {
             return;
         }
 
@@ -3821,14 +3763,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             if (image.getNDims() == 2) {
                 count = regionGrowAlgo.regionGrow2D(seedPaintBitmap, new Point(saveX, saveY), fuzzyThreshold, useVOI,
-                                                    displayFuzzy, growDialog, saveValueR - lessR, saveValueR + moreR,
-                                                    saveValueG - lessG, saveValueG + moreG, saveValueB - lessB,
-                                                    saveValueB + moreB, sizeLimit, maxDistance);
+                        displayFuzzy, growDialog, saveValueR - lessR, saveValueR + moreR, saveValueG - lessG,
+                        saveValueG + moreG, saveValueB - lessB, saveValueB + moreB, sizeLimit, maxDistance);
                 showRegionInfo(count, leadString);
-            } else if ((image.getNDims() == 3) || (image.getNDims() == 4)) {
+            } else if ( (image.getNDims() == 3) || (image.getNDims() == 4)) {
                 CubeBounds regionGrowBounds;
 
-                if (((JDialogPaintGrow) growDialog).boundsConstrained()) {
+                if ( ((JDialogPaintGrow) growDialog).boundsConstrained()) {
 
                     // constrain bounds to cropping volume
                     regionGrowBounds = ((ViewJFrameTriImage) frame).getBoundedVolume();
@@ -3839,10 +3780,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 }
 
                 count = regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3Ds(saveX, saveY, saveZ), fuzzyThreshold,
-                                                    useVOI, displayFuzzy, growDialog, saveValueR - lessR,
-                                                    saveValueR + moreR, saveValueG - lessG, saveValueG + moreG,
-                                                    saveValueB - lessB, saveValueB + moreB, sizeLimit, maxDistance,
-                                                    timeSlice, regionGrowBounds);
+                        useVOI, displayFuzzy, growDialog, saveValueR - lessR, saveValueR + moreR, saveValueG - lessG,
+                        saveValueG + moreG, saveValueB - lessB, saveValueB + moreB, sizeLimit, maxDistance, timeSlice,
+                        regionGrowBounds);
                 showRegionInfo(count, leadString);
             }
         } catch (OutOfMemoryError error) {
@@ -3850,7 +3790,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             MipavUtil.displayError("Out of memory: ComponentEditImage.regionGrow");
         }
 
-        if (!click) {
+        if ( !click) {
 
             // add points in the newly grown region which weren't in the old one
             BitSet diff = (BitSet) seedPaintBitmap.clone();
@@ -3879,8 +3819,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /**
      * Grows a region based on a starting supplied. A voxel is added to the the paintBitmap mask if its intensity is
      * between previously supplied bounds.
-     *
-     * @param  str  the string to prepend to message containing region growth statistics
+     * 
+     * @param str the string to prepend to message containing region growth statistics
      */
     public void regionGrowColor(String str) {
 
@@ -3911,7 +3851,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                 if (imageA == imageActive) {
                     this.resetLUT(LUTa, imageA);
-                } else if ((imageB != null) && (imageB == imageActive)) {
+                } else if ( (imageB != null) && (imageB == imageActive)) {
                     this.resetLUT(LUTb, imageB);
                 }
                 imageA.notifyImageDisplayListeners(null, false);
@@ -3919,17 +3859,17 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 if (imageB != null) {
                     imageB.notifyImageDisplayListeners(null, false);
                 }
-                
+
             } else { // RGB image
 
                 if (imageA == imageActive) {
                     this.resetRGB(RGBTA);
-                } else if ((imageB != null) && (imageB == imageActive)) {
+                } else if ( (imageB != null) && (imageB == imageActive)) {
                     this.resetRGB(RGBTB);
                 }
                 imageA.notifyImageDisplayListeners(true, 1, RGBTA);
                 if (imageB != null) {
-                	imageB.notifyImageDisplayListeners(true, 1, RGBTB);
+                    imageB.notifyImageDisplayListeners(true, 1, RGBTB);
                 }
             }
 
@@ -3955,9 +3895,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /**
      * This method saves the LUT for the active image. If the image is not a color image then both the functions and the
      * LUT data are saved. If this is a color image, then only the functions are saved.
-     *
-     * @param  filename  filename to save LUT as
-     * @param  dirName   directory to save LUT to
+     * 
+     * @param filename filename to save LUT as
+     * @param dirName directory to save LUT to
      */
     public void saveOnlyLUTAs(String filename, String dirName) {
         ModelRGB rgb;
@@ -4033,18 +3973,18 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets the active image for drawing VOIs.
-     *
-     * @param  active  IMAGE_A or IMAGE_B
+     * 
+     * @param active IMAGE_A or IMAGE_B
      */
     public void setActiveImage(int active) {
         winLevelSet = false;
         voiHandler.setActiveVOI_ID(active);
 
-        if ((active == IMAGE_A) || (imageB == null)) {
+        if ( (active == IMAGE_A) || (imageB == null)) {
             imageActive = imageA;
             imageBufferActive = imageBufferA;
 
-            if (!paintBitmapSwitch) {
+            if ( !paintBitmapSwitch) {
                 paintBitmap = imageA.getMask();
             }
         } else if (active == IMAGE_B) {
@@ -4057,12 +3997,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets the alpha blending of parameter for two image displaying.
-     *
-     * @param  value  amount [0,100] that is the percentage of Image A to be displayed
+     * 
+     * @param value amount [0,100] that is the percentage of Image A to be displayed
      */
     public void setAlphaBlend(int value) {
 
-        if ((value >= 0) && (value <= 100)) {
+        if ( (value >= 0) && (value <= 100)) {
             alphaBlend = value / 100.0f;
             alphaPrime = 1 - alphaBlend;
         }
@@ -4071,11 +4011,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /**
      * The frame in which the image(s) is displayed, allocates the memory and uses this method to pass the references to
      * the buffers.
-     *
-     * @param  imgBufferA  storage buffer used to display image A
-     * @param  imgBufferB  storage buffer used to display image B
-     * @param  pixBuff     storage buffer used to build a displayable image
-     * @param  pixBuffB    storage buffer used to build a displayable imageB for the window
+     * 
+     * @param imgBufferA storage buffer used to display image A
+     * @param imgBufferB storage buffer used to display image B
+     * @param pixBuff storage buffer used to build a displayable image
+     * @param pixBuffB storage buffer used to build a displayable imageB for the window
      */
     public void setBuffers(float[] imgBufferA, float[] imgBufferB, int[] pixBuff, int[] pixBuffB) {
         imageBufferA = imgBufferA;
@@ -4088,9 +4028,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets the image to display in "Checkerboard" mode with the given numbers of rows and columns.
-     *
-     * @param  rowCheckers     int # of rows
-     * @param  columnCheckers  int # of columns
+     * 
+     * @param rowCheckers int # of rows
+     * @param columnCheckers int # of columns
      */
     public void setCheckerboard(int rowCheckers, int columnCheckers) {
         this.nRowCheckers = rowCheckers;
@@ -4101,7 +4041,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         if (vci != null) {
 
-            if ((rowCheckers < 1) || (columnCheckers < 1)) {
+            if ( (rowCheckers < 1) || (columnCheckers < 1)) {
                 vci.setAlphaSliderEnabled(true);
             } else {
                 vci.setAlphaSliderEnabled(false);
@@ -4111,8 +4051,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Changes the Crosshair cursor to be either the default crosshair or a pre-existing gif.
-     *
-     * @param  curs  the new crosshair cursor
+     * 
+     * @param curs the new crosshair cursor
      */
     public void setCrosshairCursor(Cursor curs) {
         this.crosshairCursor = curs;
@@ -4120,8 +4060,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Switches modes based on the variable mode. Sets voiHandler.getRubberband() activity and the cursor.
-     *
-     * @param  mode  the integer mode
+     * 
+     * @param mode the integer mode
      */
     public void setCursorMode(int mode) {
         this.cursorMode = mode;
@@ -4130,8 +4070,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets whether a fuzzy image is displayed.
-     *
-     * @param  val  whether to show the fuzzy connectedness image
+     * 
+     * @param val whether to show the fuzzy connectedness image
      */
     public void setDisplayFuzzy(boolean val) {
         this.displayFuzzy = val;
@@ -4139,8 +4079,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Enables or disables the component for modification.
-     *
-     * @param  flag  true = modify, and false = locked
+     * 
+     * @param flag true = modify, and false = locked
      */
     public void setEnabled(boolean flag) {
         modifyFlag = flag;
@@ -4149,8 +4089,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets the frameControls.
-     *
-     * @param  controls  the controls with color and opacity information
+     * 
+     * @param controls the controls with color and opacity information
      */
     public void setFrameControls(ViewControlsImage controls) {
         frameControls = controls;
@@ -4159,8 +4099,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     // When the apply button is pressed, JDialogPaintGrow sets the following 7 parameters used in regionGrow.
     /**
      * Sets whether fuzzy connectedness is used and the fuzzy threshold.
-     *
-     * @param  val  the fuzzy connectedness threshold value
+     * 
+     * @param val the fuzzy connectedness threshold value
      */
     public void setFuzzyThreshold(float val) {
         this.fuzzyThreshold = val;
@@ -4168,8 +4108,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets the RegionGrowDialog for this class (usually used to set it to null).
-     *
-     * @param  dialog  the paint grow dialog
+     * 
+     * @param dialog the paint grow dialog
      */
     public void setGrowDialog(RegionGrowDialog dialog) {
         growDialog = dialog;
@@ -4177,8 +4117,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets the hasThreshold1 for setPaintBuffers.
-     *
-     * @param  hasThreshold1  whether the paint buffer has a threshold1
+     * 
+     * @param hasThreshold1 whether the paint buffer has a threshold1
      */
     public void setHasThreshold1(boolean hasThreshold1) {
         m_kPatientSlice.setHasThreshold1(hasThreshold1);
@@ -4186,8 +4126,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets the hasThreshold2 for setPaintBuffers.
-     *
-     * @param  hasThreshold2  whether the paint buffer has a threshold2
+     * 
+     * @param hasThreshold2 whether the paint buffer has a threshold2
      */
     public void setHasThreshold2(boolean hasThreshold2) {
         m_kPatientSlice.setHasThreshold2(hasThreshold2);
@@ -4195,8 +4135,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Changes the color used to highlight the currently on-top image.
-     *
-     * @param  c  the new color to use.
+     * 
+     * @param c the new color to use.
      */
     public void setHighlightColor(Color c) {
         toppedColor = c;
@@ -4204,8 +4144,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets component's ImageA. assumes dimensionality same as image B's for now.
-     *
-     * @param  image  imageA
+     * 
+     * @param image imageA
      */
     public void setImageA(ModelImage image) {
         imageA = image;
@@ -4215,8 +4155,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets component's ImageB. !!!!!! assumes dimensionality same as image A's for now will fix soon.
-     *
-     * @param  image  imageB
+     * 
+     * @param image imageB
      */
     public void setImageB(ModelImage image) {
         imageB = image;
@@ -4232,8 +4172,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets component's ImageB buffer.
-     *
-     * @param  buffer  image buffer to put in the buffer for Image B
+     * 
+     * @param buffer image buffer to put in the buffer for Image B
      */
     public void setImageBufferB(float[] buffer) {
         imageBufferB = buffer;
@@ -4241,8 +4181,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets the colocalize image.
-     *
-     * @param  imageColocalize  the colocalization image
+     * 
+     * @param imageColocalize the colocalization image
      */
     public void setImageColocalize(ModelImage imageColocalize) {
         m_kPatientSlice.setImageColocalize(imageColocalize);
@@ -4254,8 +4194,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  imageExtents  int[]
+     * 
+     * @param imageExtents int[]
      */
     public void setImageExtents(int[] imageExtents) {
         this.imageExtents = imageExtents;
@@ -4266,8 +4206,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets the intensityDropper intensity.
-     *
-     * @param  intensityDropper  the dropper intensity
+     * 
+     * @param intensityDropper the dropper intensity
      */
     public void setIntensityDropper(float intensityDropper) {
         this.intensityDropper = intensityDropper;
@@ -4275,8 +4215,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets less for regionGrow.
-     *
-     * @param  val  lower region grow delta
+     * 
+     * @param val lower region grow delta
      */
     public void setLess(float val) {
         this.less = val;
@@ -4284,8 +4224,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets lessB for regionGrow.
-     *
-     * @param  val  lower region grow delta
+     * 
+     * @param val lower region grow delta
      */
     public void setLessB(float val) {
         this.lessB = val;
@@ -4293,8 +4233,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets lessG for regionGrow.
-     *
-     * @param  val  lower region grow delta
+     * 
+     * @param val lower region grow delta
      */
     public void setLessG(float val) {
         this.lessG = val;
@@ -4302,8 +4242,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets lessR for regionGrow.
-     *
-     * @param  val  lower region grow delta
+     * 
+     * @param val lower region grow delta
      */
     public void setLessR(float val) {
         this.lessR = val;
@@ -4311,8 +4251,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets the log magnitude display flag.
-     *
-     * @param  flag  if true display log of the Magnitude of the complex image
+     * 
+     * @param flag if true display log of the Magnitude of the complex image
      */
     public void setLogMagDisplay(boolean flag) {
         logMagDisplay = flag;
@@ -4320,8 +4260,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * accessor that sets the model LUT for the imageA.
-     *
-     * @param  LUT  the model LUT
+     * 
+     * @param LUT the model LUT
      */
     public void setLUTa(ModelLUT LUT) {
         LUTa = LUT;
@@ -4330,8 +4270,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets the model LUTb for the imageB.
-     *
-     * @param  LUT  the model LUT
+     * 
+     * @param LUT the model LUT
      */
     public void setLUTb(ModelLUT LUT) {
         LUTb = LUT;
@@ -4340,8 +4280,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets maxDistance for regionGrow.
-     *
-     * @param  val  the maximum region grow distance
+     * 
+     * @param val the maximum region grow distance
      */
     public void setMaxDistance(int val) {
         this.maxDistance = val;
@@ -4349,8 +4289,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  flag  DOCUMENT ME!
+     * 
+     * @param flag DOCUMENT ME!
      */
     public void setModifyFlag(boolean flag) {
         modifyFlag = flag;
@@ -4358,8 +4298,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets more for regionGrow.
-     *
-     * @param  val  upper region grow delta
+     * 
+     * @param val upper region grow delta
      */
     public void setMore(float val) {
         this.more = val;
@@ -4367,8 +4307,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets moreB for regionGrow.
-     *
-     * @param  val  upper region grow delta
+     * 
+     * @param val upper region grow delta
      */
     public void setMoreB(float val) {
         this.moreB = val;
@@ -4376,8 +4316,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets moreG for regionGrow.
-     *
-     * @param  val  upper region grow delta
+     * 
+     * @param val upper region grow delta
      */
     public void setMoreG(float val) {
         this.moreG = val;
@@ -4385,8 +4325,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets moreR for regionGrow.
-     *
-     * @param  val  upper region grow delta
+     * 
+     * @param val upper region grow delta
      */
     public void setMoreR(float val) {
         this.moreR = val;
@@ -4394,8 +4334,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * If true do not getMask on a setActiveImage command so as to keep the mask from the old active image.
-     *
-     * @param  paintBitmapSwitch  if true do not getMask on a setActiveImage command
+     * 
+     * @param paintBitmapSwitch if true do not getMask on a setActiveImage command
      */
     public void setPaintBitmapSwitch(boolean paintBitmapSwitch) {
         this.paintBitmapSwitch = paintBitmapSwitch;
@@ -4403,8 +4343,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Switches modes based on the variable mode. Sets the number of pixels to be drawn when painting.
-     *
-     * @param  paintBrushSize  the integer mode
+     * 
+     * @param paintBrushSize the integer mode
      */
     public void setPaintBrushSize(int paintBrushSize) {
         this.paintBrushSize = paintBrushSize;
@@ -4412,58 +4352,71 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets the paint mask.
-     *
-     * @param  mask  the new paint mask
+     * 
+     * @param mask the new paint mask
      */
     public void setPaintMask(BitSet mask) {
         paintBitmap = mask;
     }
 
-
     /**
      * Prints ModelImage information at the mouse location.
-     *
-     * @param  xS  mouse x location
-     * @param  yS  mouse y location
+     * 
+     * @param xS mouse x location
+     * @param yS mouse y location
      */
     public void setPixelInformationAtLocation(int xS, int yS) {
 
         try {
             String str;
 
-            if ((imageActive.getOrigin()[0] != 0) || (imageActive.getOrigin()[1] != 0) ||
-                    ((imageActive.getNDims() > 2) && (imageActive.getOrigin()[2] != 0))) {
+            if ( (imageActive.getOrigin()[0] != 0) || (imageActive.getOrigin()[1] != 0)
+                    || ( (imageActive.getNDims() > 2) && (imageActive.getOrigin()[2] != 0))) {
                 String[] values = getScannerPositionLabels(imageActive, new Point3Df(xS, yS, slice));
 
                 if (values != null) {
 
                     if (imageActive.isColorImage()) {
-                        str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  R:  " +
-                              String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]) +
-                              "  G:  " +
-                              String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]) +
-                              "  B:  " +
-                              String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]) +
-                              " Position: " + values[0] + " " + values[1] + " " + values[2];
+                        str = "  X: "
+                                + String.valueOf(xS)
+                                + " Y: "
+                                + String.valueOf(yS)
+                                + "  R:  "
+                                + String
+                                        .valueOf(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 1])
+                                + "  G:  "
+                                + String
+                                        .valueOf(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 2])
+                                + "  B:  "
+                                + String
+                                        .valueOf(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 3])
+                                + " Position: " + values[0] + " " + values[1] + " " + values[2];
                     } else {
-                        str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  Intensity:  " +
-                              String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]) +
-                              " Position: " + values[0] + " " + values[1] + " " + values[2];
+                        str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  Intensity:  "
+                                + String.valueOf(imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS])
+                                + " Position: " + values[0] + " " + values[1] + " " + values[2];
                     }
 
                     frame.setMessageText(str);
                 } else {
 
                     if (imageActive.isColorImage()) {
-                        str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  R:  " +
-                              String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]) +
-                              "  G:  " +
-                              String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]) +
-                              "  B:  " +
-                              String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]);
+                        str = "  X: "
+                                + String.valueOf(xS)
+                                + " Y: "
+                                + String.valueOf(yS)
+                                + "  R:  "
+                                + String
+                                        .valueOf(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 1])
+                                + "  G:  "
+                                + String
+                                        .valueOf(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 2])
+                                + "  B:  "
+                                + String
+                                        .valueOf(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 3]);
                     } else {
-                        str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  Intensity:  " +
-                              String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]);
+                        str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  Intensity:  "
+                                + String.valueOf(imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS]);
                     }
 
                     frame.setMessageText(str);
@@ -4471,31 +4424,31 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             } else {
 
                 if (imageActive.isColorImage() == true) {
-                    str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  R:  " +
-                          String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]) +
-                          "  G:  " +
-                          String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]) +
-                          "  B:  " +
-                          String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]);
+                    str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  R:  "
+                            + String.valueOf(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 1])
+                            + "  G:  "
+                            + String.valueOf(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 2])
+                            + "  B:  "
+                            + String.valueOf(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 3]);
                     frame.setMessageText(str);
                 } else {
-                    str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  Intensity:  " +
-                          String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]);
+                    str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  Intensity:  "
+                            + String.valueOf(imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS]);
                     frame.setMessageText(str);
                 }
             }
         } catch (ArrayIndexOutOfBoundsException error) {
-            frame.setMessageText("  X: " + String.valueOf((xS)) + " Y: " + String.valueOf((yS)));
+            frame.setMessageText("  X: " + String.valueOf( (xS)) + " Y: " + String.valueOf( (yS)));
         }
     }
 
     /**
      * Sets the variables used to remember the point where the last region grow was started from.
-     *
-     * @param  x    x coordinate
-     * @param  y    y coordinate
-     * @param  z    z coordinate
-     * @param  val  intensity at the point (x,y,z)
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param val intensity at the point (x,y,z)
      */
     public void setRegionGrowVars(short x, short y, short z, float val) {
         xPG = x;
@@ -4507,8 +4460,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     // The following 2 functions set the RGB tables for ARGB images A and B.
     /**
      * Sets the RGB table for ARGB image A.
-     *
-     * @param  RGBT  RGB table
+     * 
+     * @param RGBT RGB table
      */
     public void setRGBTA(ModelRGB RGBT) {
         RGBTA = RGBT;
@@ -4517,8 +4470,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets the RGB table for ARGB image B.
-     *
-     * @param  RGBT  RGB table
+     * 
+     * @param RGBT RGB table
      */
     public void setRGBTB(ModelRGB RGBT) {
         RGBTB = RGBT;
@@ -4527,8 +4480,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets whether to show intensity in mag. box
-     *
-     * @param  flag  whether to show intensity in mag. box
+     * 
+     * @param flag whether to show intensity in mag. box
      */
     public void setShowMagIntensity(boolean flag) {
         showMagIntensity = flag;
@@ -4536,8 +4489,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets whether the slice number will be shown in the lower left hand corner of the image.
-     *
-     * @param  flag  whether to display the slice number
+     * 
+     * @param flag whether to display the slice number
      */
     public void setShowSliceNum(boolean flag) {
         showSliceNumber = flag;
@@ -4545,8 +4498,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets sizeLimit for regionGrow.
-     *
-     * @param  val  the maximum region grow size
+     * 
+     * @param val the maximum region grow size
      */
     public void setSizeLimit(int val) {
         this.sizeLimit = val;
@@ -4554,8 +4507,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets the slice of the image.
-     *
-     * @param  _slice  image slice to be displayed
+     * 
+     * @param _slice image slice to be displayed
      */
     public void setSlice(int _slice) {
         slice = _slice;
@@ -4564,8 +4517,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets the string painted on the lower left.
-     *
-     * @param  str  str that is painted on the lower left of image
+     * 
+     * @param str str that is painted on the lower left of image
      */
     public void setStringOverride(String str) {
         stringOverride = str;
@@ -4573,10 +4526,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets the booleans for using thresholds in setColorPaintBuffers.
-     *
-     * @param  useRedThreshold    whether to threshold the red paint buffer
-     * @param  useGreenThreshold  whether to threshold the green paint buffer
-     * @param  useBlueThreshold   whether to threshold the blue paint buffer
+     * 
+     * @param useRedThreshold whether to threshold the red paint buffer
+     * @param useGreenThreshold whether to threshold the green paint buffer
+     * @param useBlueThreshold whether to threshold the blue paint buffer
      */
     public void setThresholdColors(boolean useRedThreshold, boolean useGreenThreshold, boolean useBlueThreshold) {
         m_kPatientSlice.setThresholdColors(useRedThreshold, useGreenThreshold, useBlueThreshold);
@@ -4584,9 +4537,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets the thresholds.
-     *
-     * @param  threshold1  the first threshold
-     * @param  threshold2  the second threshold
+     * 
+     * @param threshold1 the first threshold
+     * @param threshold2 the second threshold
      */
     public void setThresholds(float threshold1, float threshold2) {
         m_kPatientSlice.setThresholds(threshold1, threshold2);
@@ -4594,8 +4547,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets the time slice of the image.
-     *
-     * @param  _slice  the time slice to be displayed
+     * 
+     * @param _slice the time slice to be displayed
      */
     public void setTimeSlice(int _slice) {
         timeSlice = _slice;
@@ -4603,8 +4556,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Sets whether a selected VOI is used to calculate the initial variance.
-     *
-     * @param  val  whether to use the selected VOI to get the initial variance for the fuzzy regionGrow
+     * 
+     * @param val whether to use the selected VOI to get the initial variance for the fuzzy regionGrow
      */
     public void setUseVOI(boolean val) {
         this.useVOI = val;
@@ -4612,8 +4565,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * If true varies thresholds with region growth.
-     *
-     * @param  variableThresholds  boolean
+     * 
+     * @param variableThresholds boolean
      */
     public void setVariableThresholds(boolean variableThresholds) {
         this.variableThresholds = variableThresholds;
@@ -4621,12 +4574,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * For generating the display of 1 or 2 images.
-     *
-     * @param   tSlice     t (time) slice to show
-     * @param   zSlice     z slice to show
-     * @param   forceShow  forces this method to import image and recalculate java image
-     *
-     * @return  boolean to indicate if the show was successful
+     * 
+     * @param tSlice t (time) slice to show
+     * @param zSlice z slice to show
+     * @param forceShow forces this method to import image and recalculate java image
+     * 
+     * @return boolean to indicate if the show was successful
      */
     public boolean show(int tSlice, int zSlice, boolean forceShow) {
         return show(tSlice, zSlice, null, null, forceShow, interpMode);
@@ -4634,14 +4587,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Shows the image and the VOI(s).
-     *
-     * @param   tSlice     t (time) slice to show
-     * @param   zSlice     z slice to show
-     * @param   _LUTa      LUTa - to change to new LUT for imageA else null
-     * @param   _LUTb      LUTb - to change to new LUT for imageB else null
-     * @param   forceShow  forces this method to import image and recalculate java image
-     *
-     * @return  boolean to indicate if the show was successful
+     * 
+     * @param tSlice t (time) slice to show
+     * @param zSlice z slice to show
+     * @param _LUTa LUTa - to change to new LUT for imageA else null
+     * @param _LUTb LUTb - to change to new LUT for imageB else null
+     * @param forceShow forces this method to import image and recalculate java image
+     * 
+     * @return boolean to indicate if the show was successful
      */
     public boolean show(int tSlice, int zSlice, ModelLUT _LUTa, ModelLUT _LUTb, boolean forceShow) {
         return show(tSlice, zSlice, _LUTa, _LUTb, forceShow, interpMode);
@@ -4649,15 +4602,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Shows the image and the VOI(s).
-     *
-     * @param   tSlice      t (time) slice to show
-     * @param   zSlice      z slice to show
-     * @param   _LUTa       LUTa - to change to new LUT for imageA else null
-     * @param   _LUTb       LUTb - to change to new LUT for imageB else null
-     * @param   forceShow   forces this method to import image and recalculate java image
-     * @param   interpMode  image interpolation method (Nearest or Smooth)
-     *
-     * @return  boolean to indicate if the show was successful
+     * 
+     * @param tSlice t (time) slice to show
+     * @param zSlice z slice to show
+     * @param _LUTa LUTa - to change to new LUT for imageA else null
+     * @param _LUTb LUTb - to change to new LUT for imageB else null
+     * @param forceShow forces this method to import image and recalculate java image
+     * @param interpMode image interpolation method (Nearest or Smooth)
+     * 
+     * @return boolean to indicate if the show was successful
      */
     public boolean show(int tSlice, int zSlice, ModelLUT _LUTa, ModelLUT _LUTb, boolean forceShow, int interpMode) {
 
@@ -4674,7 +4627,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
 
         if (m_kPatientSlice.showUsingOrientation(tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, false, 0,
-                                                     false)) {
+                false)) {
             cleanImageB = null;
             cleanBuffer(IMAGE_A);
             cleanBuffer(IMAGE_B);
@@ -4691,8 +4644,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Resets the buffer to 0s and displays a blank image.
-     *
-     * @return  boolean to indicate that the show was successful
+     * 
+     * @return boolean to indicate that the show was successful
      */
     public boolean showBlank() {
 
@@ -4711,9 +4664,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Display statistics about the grown region.
-     *
-     * @param  count       Number of pixels (voxels)
-     * @param  leadString  the string to prepend to message containing region growth statistics
+     * 
+     * @param count Number of pixels (voxels)
+     * @param leadString the string to prepend to message containing region growth statistics
      */
     public void showRegionInfo(int count, String leadString) {
         float volume;
@@ -4727,25 +4680,25 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 str = imageActive.getFileInfo(0).getAreaUnitsOfMeasureStr();
 
                 if (leadString != null) {
-                    frame.getUserInterface().setDataText(leadString + " region grow: pixels = " + count +
-                                                         "\t  area = " + area + str + "\n");
+                    frame.getUserInterface().setDataText(
+                            leadString + " region grow: pixels = " + count + "\t  area = " + area + str + "\n");
                 } else {
-                    frame.getUserInterface().setDataText("statistics pixels = " + count + "\t  area = " + area + str +
-                                                         "\n");
+                    frame.getUserInterface().setDataText(
+                            "statistics pixels = " + count + "\t  area = " + area + str + "\n");
                 }
 
             } else {
-                volume = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1] *
-                             imageActive.getResolutions(0)[2];
+                volume = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1]
+                        * imageActive.getResolutions(0)[2];
 
                 str = imageActive.getFileInfo(0).getVolumeUnitsOfMeasureStr();
 
                 if (leadString != null) {
-                    frame.getUserInterface().setDataText(leadString + " region grow: pixels = " + count +
-                                                         "\t  volume = " + volume + str + "\n");
+                    frame.getUserInterface().setDataText(
+                            leadString + " region grow: pixels = " + count + "\t  volume = " + volume + str + "\n");
                 } else {
-                    frame.getUserInterface().setDataText("statistics pixels = " + count + "\t  volume = " + volume +
-                                                         str + "\n");
+                    frame.getUserInterface().setDataText(
+                            "statistics pixels = " + count + "\t  volume = " + volume + str + "\n");
                 }
             }
         } catch (OutOfMemoryError error) {
@@ -4753,15 +4706,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             MipavUtil.displayError("Out of memory: ComponentEditImage.showRegionInfo");
         }
     }
-    
+
     /**
      * Display statistics about the grown region.
-     *
-     * @param  count       Number of pixels (voxels)
-     * @param  total       Sum of pixel intensities
-     * @param  mean        Average pixel intensity
-     * @param  stdDev      Standard deviation of pixel intensities
-     * @param  leadString  the string to prepend to message containing region growth statistics
+     * 
+     * @param count Number of pixels (voxels)
+     * @param total Sum of pixel intensities
+     * @param mean Average pixel intensity
+     * @param stdDev Standard deviation of pixel intensities
+     * @param leadString the string to prepend to message containing region growth statistics
      */
     public void showRegionInfo(int count, float total[], float mean[], float stdDev[], String leadString) {
         float volume;
@@ -4770,7 +4723,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         int i;
         String areaString;
         String volumeString;
-        
+
         if (leadString.length() < 25) {
             pad = 25 - leadString.length();
             for (i = 0; i < pad; i++) {
@@ -4788,7 +4741,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     pad = 20 - areaString.length();
                     for (i = 0; i < pad; i++) {
                         areaString = areaString.concat(" ");
-                    }   
+                    }
                 }
 
                 if (leadString != null) {
@@ -4797,16 +4750,16 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     frame.getUserInterface().setDataText("\nstatistics              " + "\tpixels" + "\t\tarea");
                 }
                 if (total.length == 1) {
-                    frame.getUserInterface().setDataText("\t\ttotal intensity\t\tmean intensity\t\tstandard deviation\n"); 
+                    frame.getUserInterface().setDataText(
+                            "\t\ttotal intensity\t\tmean intensity\t\tstandard deviation\n");
                     frame.getUserInterface().setDataText("\n\t\t" + count + "\t\t" + areaString);
-                }
-                else {
+                } else {
                     frame.getUserInterface().setDataText("\n\t\t" + count + "\t\t" + areaString + "\n");
                 }
 
             } else {
-                volume = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1] *
-                             imageActive.getResolutions(0)[2];
+                volume = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1]
+                        * imageActive.getResolutions(0)[2];
 
                 str = imageActive.getFileInfo(0).getVolumeUnitsOfMeasureStr();
                 volumeString = String.valueOf(volume) + str;
@@ -4814,7 +4767,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     pad = 20 - volumeString.length();
                     for (i = 0; i < pad; i++) {
                         volumeString = volumeString.concat(" ");
-                    }   
+                    }
                 }
 
                 if (leadString != null) {
@@ -4823,23 +4776,24 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     frame.getUserInterface().setDataText("\nstatistics              " + "\tpixels" + "\t\tvolume");
                 }
                 if (total.length == 1) {
-                    frame.getUserInterface().setDataText("\t\ttotal intensity\t\tmean intensity\t\tstandard deviation\n"); 
+                    frame.getUserInterface().setDataText(
+                            "\t\ttotal intensity\t\tmean intensity\t\tstandard deviation\n");
                     frame.getUserInterface().setDataText("\n\t\t" + count + "\t\t" + volumeString);
-                }
-                else {
+                } else {
                     frame.getUserInterface().setDataText("\n\t\t" + count + "\t\t" + volumeString + "\n");
                 }
             }
-           
-            
+
             if (total.length == 1) {
                 frame.getUserInterface().setDataText("\t" + total[0] + "\t\t" + mean[0] + "\t\t" + stdDev[0] + "\n");
-            }
-            else {
+            } else {
                 frame.getUserInterface().setDataText("\t\ttotal intensity\t\tmean intensity\t\tstandard deviation\n");
-                frame.getUserInterface().setDataText("red\t\t" + total[0] + "\t\t" + mean[0] + "\t\t" + stdDev[0] + "\n"); 
-                frame.getUserInterface().setDataText("green\t\t" + total[1] + "\t\t" + mean[1] + "\t\t" + stdDev[1] + "\n");
-                frame.getUserInterface().setDataText("blue\t\t" + total[2] + "\t\t" + mean[2] + "\t\t" + stdDev[2] + "\n");  
+                frame.getUserInterface().setDataText(
+                        "red\t\t" + total[0] + "\t\t" + mean[0] + "\t\t" + stdDev[0] + "\n");
+                frame.getUserInterface().setDataText(
+                        "green\t\t" + total[1] + "\t\t" + mean[1] + "\t\t" + stdDev[1] + "\n");
+                frame.getUserInterface().setDataText(
+                        "blue\t\t" + total[2] + "\t\t" + mean[2] + "\t\t" + stdDev[2] + "\n");
             }
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -4854,7 +4808,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         if (imageStatList == null) {
 
-            if ((imageActive.getVOIs() != null) && (imageActive.getVOIs().size() != 0)) {
+            if ( (imageActive.getVOIs() != null) && (imageActive.getVOIs().size() != 0)) {
                 imageStatList = new JDialogVOIStatistics(imageActive.getVOIs());
                 imageStatList.setVisible(true);
                 // addVOIUpdateListener(imageStatList); // i'd rather not do it this way...
@@ -4883,7 +4837,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
 
         if (growDialog != null) {
-            growDialog.notifyPaintListeners((growDialog instanceof JDialogPaintGrow), false, paintBitmap);
+            growDialog.notifyPaintListeners( (growDialog instanceof JDialogPaintGrow), false, paintBitmap);
         } else {
             imageActive.notifyImageDisplayListeners(null, true);
         }
@@ -4891,10 +4845,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Causes the image to update its paint bit mask and redisplay itself.
-     *
-     * @param  region    new paint region bit set
-     * @param  backup    whether to save the previous paint mask to allow the update to be un-done
-     * @param  isGrower  whether this paint listener is the one that did the region grow
+     * 
+     * @param region new paint region bit set
+     * @param backup whether to save the previous paint mask to allow the update to be un-done
+     * @param isGrower whether this paint listener is the one that did the region grow
      */
     public void updatePaint(BitSet region, boolean backup, boolean isGrower) {
 
@@ -4917,7 +4871,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             for (int i = 0; i < imageBufferActive.length; i++) {
 
                 if (frame instanceof ViewJFramePaintVasculature) {
-                    z = MipavMath.round(((ViewJFramePaintVasculature) frame).getMIPZValue(i));
+                    z = MipavMath.round( ((ViewJFramePaintVasculature) frame).getMIPZValue(i));
                     index = (z * imageExtents[0] * imageExtents[1]) + i;
                 } else {
 
@@ -4943,7 +4897,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         try {
             opacity = (int) (frame.getControls().getTools().getOpacity() * 255);
             paintColor = frame.getControls().getTools().getPaintColor();
-        } catch (Exception e) { }
+        } catch (Exception e) {}
 
         Color brushColor = new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), opacity);
         int counter = 0;
@@ -4963,10 +4917,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * Sets this component to paint the "on top" high-light. It is not required to use the coloured rectangle to
      * high-light the on-top component, but the component is not aware of its position in the user-interface, and thus,
      * that the user-interface controls point to it.
-     *
-     * @param  hilite  <code>true</code> will set this component to paint the 'on-top' high-light the next time it is
-     *                 redrawn. <code>false</code>, of course, will not let the component paint the coloured rectangle
-     *                 when repainted.
+     * 
+     * @param hilite <code>true</code> will set this component to paint the 'on-top' high-light the next time it is
+     *            redrawn. <code>false</code>, of course, will not let the component paint the coloured rectangle
+     *            when repainted.
      */
     public void useHighlight(boolean hilite) {
         onTop = hilite;
@@ -4974,8 +4928,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Calls dispose to dump this instance.
-     *
-     * @throws  Throwable  DOCUMENT ME!
+     * 
+     * @throws Throwable DOCUMENT ME!
      */
     protected void finalize() throws Throwable {
         disposeLocal(false);
@@ -4984,8 +4938,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected int getBrushSize() {
 
@@ -5010,20 +4964,19 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected int getHBrushSize() {
         return getBrushSize() / 2;
     }
 
-
     /**
      * DOCUMENT ME!
-     *
-     * @param   reverse  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param reverse DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected float getZoomMagnitudeX(boolean reverse) {
         return getZoomMagnitude(getZoomX(), reverse);
@@ -5031,10 +4984,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   reverse  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param reverse DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected float getZoomMagnitudeY(boolean reverse) {
         return getZoomMagnitude(getZoomY(), reverse);
@@ -5043,32 +4996,30 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /**
      * When a mousePressed event is triggered and the mode is DROPPER_PAINT, ERASER_PAINT, PAINT_VOI, or MAG_REGION this
      * function is called. It is shared with the derived classes.
-     *
-     * @param  mouseEvent  the mouseEvent that triggered this function call.
+     * 
+     * @param mouseEvent the mouseEvent that triggered this function call.
      */
     protected void mousePressedPaint(MouseEvent mouseEvent) {
-        int xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
-        int yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
+        int xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor
+        int yS = getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
         int x = mouseEvent.getX();
         int y = mouseEvent.getY();
 
-        if ((xS < 0) || (xS >= imageActive.getExtents()[0]) || (yS < 0) || (yS >= imageActive.getExtents()[1])) {
+        if ( (xS < 0) || (xS >= imageActive.getExtents()[0]) || (yS < 0) || (yS >= imageActive.getExtents()[1])) {
             return;
         }
 
         if (cursorMode == DROPPER_PAINT) {
 
             if (imageActive.isColorImage() == true) {
-                Color dropperColor = new Color((int)
-                                               imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1],
-                                               (int)
-                                               imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2],
-                                               (int)
-                                               imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]);
+                Color dropperColor = new Color(
+                        (int) imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 1],
+                        (int) imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 2],
+                        (int) imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 3]);
                 frame.getControls().getTools().setPaintColor(dropperColor);
             } else {
-                intensityDropper = imageBufferActive[(yS * imageActive.getExtents()[0]) + xS];
+                intensityDropper = imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS];
                 frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
             }
         }
@@ -5081,27 +5032,26 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             // backup paintBitmap to paintBitmapBU
             backupPaintBitmap();
 
-            xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
-            yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
+            xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor
+            yS = getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
             performPaint(mouseEvent, mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK);
             imageActive.notifyImageDisplayListeners();
         }
 
-        if ((cursorMode == MAG_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {
+        if ( (cursorMode == MAG_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {
 
-            if ((magSettings != null) && !magSettings.isVisible()) {
+            if ( (magSettings != null) && !magSettings.isVisible()) {
                 magSettings.setWidthText((int) (frame.getSize().width * 0.25));
                 magSettings.setVisible(true);
             }
         }
     }
 
-
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
     protected void performPaint(MouseEvent event) {
         performPaint(event, false);
@@ -5109,15 +5059,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * This method will set or clear the paint bitmap as the user paints on-screen.
-     *
-     * @param  mouseEvent  MouseEvent the mouseEvent associated with this paint action
-     * @param  erase       boolean if true, paintBitmap is cleared (erased), otherwise paintBitmap is set (painted)
+     * 
+     * @param mouseEvent MouseEvent the mouseEvent associated with this paint action
+     * @param erase boolean if true, paintBitmap is cleared (erased), otherwise paintBitmap is set (painted)
      */
     protected void performPaint(MouseEvent mouseEvent, boolean erase) {
-    	
-    	int xS = (int)((mouseEvent.getX() / (zoomX * resolutionX)) + 0.5);
-    	
-        int yS = (int)((mouseEvent.getY() / (zoomY * resolutionY)) + 0.5);
+
+        int xS = (int) ( (mouseEvent.getX() / (zoomX * resolutionX)) + 0.5);
+
+        int yS = (int) ( (mouseEvent.getY() / (zoomY * resolutionY)) + 0.5);
 
         int brushSize = getBrushSize();
         int hBrushSize = getHBrushSize();
@@ -5137,10 +5087,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                 for (int width = 0; width < brushXDim; width++, counter++) {
 
-                    if (paintBrush.get((height * brushYDim) + width)) {
+                    if (paintBrush.get( (height * brushYDim) + width)) {
 
-                        if (((xS + width) < xDim) && ((yS + height) < yDim)) {
-                            int st = ((yS + height) * imageActive.getExtents()[0]) + (xS + width);
+                        if ( ( (xS + width) < xDim) && ( (yS + height) < yDim)) {
+                            int st = ( (yS + height) * imageActive.getExtents()[0]) + (xS + width);
 
                             if (erase == true) {
                                 paintBitmap.clear(offset + st);
@@ -5161,7 +5111,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             int iMax = Math.min(xS - hBrushSize + brushSize - 1, imageActive.getExtents()[0] - 1);
 
             int offset = imageActive.getSliceSize() * slice;
-
 
             for (int j = jMin; j <= jMax; j++) {
 
@@ -5206,7 +5155,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
         // changethis
 
-
         // imageActive.notifyImageDisplayListeners();
     }
 
@@ -5214,10 +5162,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * processDefaultMouseDrag performs the mouseDrag operations when in DEFAULT mode. The default operation when the
      * right mouse button is held down is the window-level image adjustment, and setting the ModelImage information at
      * the pixel location. This function in shared with the deried classes.
-     *
-     * @param  mouseEvent  the mouse event
-     * @param  xS          the mouse x location on screen
-     * @param  yS          the mouse y location on screen
+     * 
+     * @param mouseEvent the mouse event
+     * @param xS the mouse x location on screen
+     * @param yS the mouse y location on screen
      */
     protected void processDefaultMouseDrag(MouseEvent mouseEvent, int xS, int yS) {
         int xDim = imageActive.getExtents()[0];
@@ -5228,7 +5176,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             if (cursorMode == DEFAULT) {
 
-                if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0) {
+                if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0) {
 
                     // Dragging the mouse with the right mouse button pressed
                     // increases the window when going from left to right.
@@ -5240,20 +5188,19 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     float fY = yS / (float) yDim;
 
                     m_kWinLevel.updateWinLevel(fX, fY, !winLevelSet, m_kPatientSlice.getActiveLookupTable(),
-                                               imageActive);
+                            imageActive);
 
-                    if (!winLevelSet) {
+                    if ( !winLevelSet) {
                         setCursor(MipavUtil.winLevelCursor);
                         winLevelSet = true;
                     }
                 } // if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0)
 
                 // check is left mouse button was pressed...if so...we need to show intensity values
-                if ((mouseEvent.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK) {
+                if ( (mouseEvent.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK) {
                     intensityLabel = true;
                     paintComponent(getGraphics());
                 }
-
 
             } // if (mode == DEFAULT))
 
@@ -5262,7 +5209,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             str = "  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS);
             frame.setMessageText(str);
 
-            if ((mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
+            if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
                 frame.getUserInterface().setDataText("\n" + str);
             }
         }
@@ -5293,15 +5240,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     zeroIndexColor = modelLUT.getColor(0);
 
                     // test to see if the color is R == 0, G == 0, B == 0
-                    zeroIndexColorIs000 = ((zeroIndexColor.getRed() == 0) && (zeroIndexColor.getGreen() == 0) &&
-                                               (zeroIndexColor.getBlue() == 0));
+                    zeroIndexColorIs000 = ( (zeroIndexColor.getRed() == 0) && (zeroIndexColor.getGreen() == 0) && (zeroIndexColor
+                            .getBlue() == 0));
 
                     if (zeroIndexColorIs000) {
 
                         for (int i = 0; i < pixBufferB.length; i++) {
                             int temp = pixBufferB[i];
                             temp = temp & 0x00ffffff; // apply mask. temp will equal zero if the pixel should be
-                                                      // transparent
+                            // transparent
 
                             if (temp == 0) {
                                 pixBufferB[i] = pixBufferB[i] & 0x00ffffff; // make pixel transparent
@@ -5310,28 +5257,27 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     }
                 }
             }
-            
-            if(imageA.isColorImage() && imageB != null) {
-            		int temp2, temp3;
-                    for (int i = 0; i < pixBufferB.length; i++) {
-                        int temp = pixBufferB[i];
-                        if(!zeroToOneLUTAdj) {
-                        	temp2 = temp & 0x00ffffff; // apply mask. temp will equal zero if the pixel should be
-                                                  // transparent
-                        	if (temp2 == 0) {
-                        		pixBufferB[i] = pixBufferB[i] & 0x00ffffff; // make pixel transparent
-                        	}
+
+            if (imageA.isColorImage() && imageB != null) {
+                int temp2, temp3;
+                for (int i = 0; i < pixBufferB.length; i++) {
+                    int temp = pixBufferB[i];
+                    if ( !zeroToOneLUTAdj) {
+                        temp2 = temp & 0x00ffffff; // apply mask. temp will equal zero if the pixel should be
+                        // transparent
+                        if (temp2 == 0) {
+                            pixBufferB[i] = pixBufferB[i] & 0x00ffffff; // make pixel transparent
                         }
-                        else {
-                        	temp3 = temp & 0xffffffff;
-                        	
-                        	if(temp3 == 0) {
-                        		pixBufferB[i] = pixBufferB[i] & 0xffffffff;
-                        	}
+                    } else {
+                        temp3 = temp & 0xffffffff;
+
+                        if (temp3 == 0) {
+                            pixBufferB[i] = pixBufferB[i] & 0xffffffff;
                         }
-                        
                     }
-                }       
+
+                }
+            }
         }
     }
 
@@ -5353,17 +5299,16 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     }
 
-
     /**
      * DOCUMENT ME!
-     *
-     * @param  buffer  DOCUMENT ME!
+     * 
+     * @param buffer DOCUMENT ME!
      */
     private void cleanBuffer(int buffer) {
 
         if (buffer == IMAGE_A) {
 
-            if ((pixBuffer == null) || (pixBuffer.length != cleanImageBufferA.length)) {
+            if ( (pixBuffer == null) || (pixBuffer.length != cleanImageBufferA.length)) {
                 pixBuffer = new int[cleanImageBufferA.length];
             }
 
@@ -5373,7 +5318,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             if (cleanImageBufferB != null) {
 
-                if ((pixBufferB == null) || (pixBufferB.length != cleanImageBufferB.length)) {
+                if ( (pixBufferB == null) || (pixBufferB.length != cleanImageBufferB.length)) {
                     pixBufferB = new int[cleanImageBufferB.length];
                 }
 
@@ -5381,11 +5326,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
         } else if (buffer == BOTH) {
 
-            if ((pixBuffer == null) || (pixBuffer.length != cleanImageBufferA.length)) {
+            if ( (pixBuffer == null) || (pixBuffer.length != cleanImageBufferA.length)) {
                 pixBuffer = new int[cleanImageBufferA.length];
             }
 
-            if ((pixBufferB == null) || (pixBufferB.length != cleanImageBufferB.length)) {
+            if ( (pixBufferB == null) || (pixBufferB.length != cleanImageBufferB.length)) {
                 pixBufferB = new int[cleanImageBufferB.length];
             }
 
@@ -5398,31 +5343,32 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * Draws text onto the image, such as the slice number.
-     *
-     * @param  offscreenGraphics2d  Graphics2D graphics context to draw in
+     * 
+     * @param offscreenGraphics2d Graphics2D graphics context to draw in
      */
     private void drawImageText(Graphics2D offscreenGraphics2d) {
 
-        if ((((int) ((zoomX * imageDim.width) + 0.5) - 40) > 0) && (sliceString != null) && (showSliceNumber == true)) {
+        if ( ( ((int) ( (zoomX * imageDim.width) + 0.5) - 40) > 0) && (sliceString != null)
+                && (showSliceNumber == true)) {
             offscreenGraphics2d.setFont(MipavUtil.font12);
             offscreenGraphics2d.setColor(Color.black);
-            offscreenGraphics2d.drawString(sliceString, 5, (int) ((zoomY * resolutionY * imageDim.height) + 0.5f) - 5);
-            offscreenGraphics2d.drawString(sliceString, 5, (int) ((zoomY * resolutionY * imageDim.height) + 0.5f) - 6);
-            offscreenGraphics2d.drawString(sliceString, 5, (int) ((zoomY * resolutionY * imageDim.height) + 0.5f) - 4);
-            offscreenGraphics2d.drawString(sliceString, 6, (int) ((zoomY * resolutionY * imageDim.height) + 0.5f) - 5);
-            offscreenGraphics2d.drawString(sliceString, 4, (int) ((zoomY * resolutionY * imageDim.height) + 0.5f) - 5);
+            offscreenGraphics2d.drawString(sliceString, 5, (int) ( (zoomY * resolutionY * imageDim.height) + 0.5f) - 5);
+            offscreenGraphics2d.drawString(sliceString, 5, (int) ( (zoomY * resolutionY * imageDim.height) + 0.5f) - 6);
+            offscreenGraphics2d.drawString(sliceString, 5, (int) ( (zoomY * resolutionY * imageDim.height) + 0.5f) - 4);
+            offscreenGraphics2d.drawString(sliceString, 6, (int) ( (zoomY * resolutionY * imageDim.height) + 0.5f) - 5);
+            offscreenGraphics2d.drawString(sliceString, 4, (int) ( (zoomY * resolutionY * imageDim.height) + 0.5f) - 5);
             offscreenGraphics2d.setColor(Color.white);
-            offscreenGraphics2d.drawString(sliceString, 5, (int) ((zoomY * resolutionY * imageDim.height) + 0.5f) - 5);
+            offscreenGraphics2d.drawString(sliceString, 5, (int) ( (zoomY * resolutionY * imageDim.height) + 0.5f) - 5);
         }
     }
 
     /**
      * Returns the magnitude zoom depending on the zoom mode.
-     *
-     * @param   zoom     the zoom factor (x or y)
-     * @param   reverse  for reverse zoom
-     *
-     * @return  the calculated zoom factor
+     * 
+     * @param zoom the zoom factor (x or y)
+     * @param reverse for reverse zoom
+     * 
+     * @return the calculated zoom factor
      */
     private float getZoomMagnitude(float zoom, boolean reverse) {
 
@@ -5438,20 +5384,20 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                     return zoom - 1.0f;
                 } else {
-                	if (zoom <= 1.0f) {
-                		return zoom * 2.0f;
-                	} else {
-                		return zoom + 1.0f;
-                	}
+                    if (zoom <= 1.0f) {
+                        return zoom * 2.0f;
+                    } else {
+                        return zoom + 1.0f;
+                    }
                 }
             } else { // mode == ZOOMING_OUT
 
                 if (reverse) {
-                	if (zoom <= 1.0f) {
-                		return zoom * 2.0f;
-                	} else {
-                		return zoom + 1.0f;
-                	}
+                    if (zoom <= 1.0f) {
+                        return zoom * 2.0f;
+                    } else {
+                        return zoom + 1.0f;
+                    }
                 } else {
 
                     if (zoom <= 1.0f) {
@@ -5481,12 +5427,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     }
 
-
     /**
      * Loads the User Defined transfer function into the lut.
-     *
-     * @param  fName  String file name
-     * @param  dName  String directory name
+     * 
+     * @param fName String file name
+     * @param dName String directory name
      */
     private void loadUDTransferFunction(String fName, String dName) {
         FileHistoLUT fileHistoLUT;
@@ -5520,7 +5465,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         int[] yStart;
         boolean doA;
 
-        if ((imageB == null) || (pixBufferB == null)) {
+        if ( (imageB == null) || (pixBufferB == null)) {
             return;
         }
 
@@ -5586,8 +5531,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             y++;
 
-            if (y == yDim) { }
-            else if (y == yStart[yIndex]) {
+            if (y == yDim) {} else if (y == yStart[yIndex]) {
                 yIndex++;
                 y = yStart[yIndex];
                 yIndex++;
@@ -5620,8 +5564,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             y++;
 
-            if (y == yDim) { }
-            else if (y == yStart[yIndex]) {
+            if (y == yDim) {} else if (y == yStart[yIndex]) {
                 yIndex++;
                 y = yStart[yIndex];
                 yIndex++;
@@ -5631,14 +5574,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  xS           DOCUMENT ME!
-     * @param  wS           DOCUMENT ME!
-     * @param  yS           DOCUMENT ME!
-     * @param  hS           DOCUMENT ME!
-     * @param  imageBuffer  DOCUMENT ME!
-     * @param  image        DOCUMENT ME!
-     * @param  LUT          DOCUMENT ME!
+     * 
+     * @param xS DOCUMENT ME!
+     * @param wS DOCUMENT ME!
+     * @param yS DOCUMENT ME!
+     * @param hS DOCUMENT ME!
+     * @param imageBuffer DOCUMENT ME!
+     * @param image DOCUMENT ME!
+     * @param LUT DOCUMENT ME!
      */
     private void quickLUT(int xS, int wS, int yS, int hS, float[] imageBuffer, ModelImage image, ModelLUT LUT) {
         int xDim = image.getExtents()[0];
@@ -5656,12 +5599,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             for (int i = xS; i < (xS + wS); i++) {
 
-                if (imageBuffer[(j * xDim) + i] > max) {
-                    max = imageBuffer[(j * xDim) + i];
+                if (imageBuffer[ (j * xDim) + i] > max) {
+                    max = imageBuffer[ (j * xDim) + i];
                 }
 
-                if (imageBuffer[(j * xDim) + i] < min) {
-                    min = imageBuffer[(j * xDim) + i];
+                if (imageBuffer[ (j * xDim) + i] < min) {
+                    min = imageBuffer[ (j * xDim) + i];
                 }
             }
         }
@@ -5688,27 +5631,26 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         y[2] = 0;
         y[3] = 0;
 
-
         LUT.getTransferFunction().importArrays(x, y, 4);
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  xS           DOCUMENT ME!
-     * @param  wS           DOCUMENT ME!
-     * @param  yS           DOCUMENT ME!
-     * @param  hS           DOCUMENT ME!
-     * @param  imageBuffer  DOCUMENT ME!
-     * @param  image        DOCUMENT ME!
-     * @param  RGB          DOCUMENT ME!
+     * 
+     * @param xS DOCUMENT ME!
+     * @param wS DOCUMENT ME!
+     * @param yS DOCUMENT ME!
+     * @param hS DOCUMENT ME!
+     * @param imageBuffer DOCUMENT ME!
+     * @param image DOCUMENT ME!
+     * @param RGB DOCUMENT ME!
      */
     private void quickRGB(int xS, int wS, int yS, int hS, float[] imageBuffer, ModelImage image, ModelRGB RGB) {
         int xDim = image.getExtents()[0];
         int yDim = image.getExtents()[1];
 
-        float[] minC = { Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE };
-        float[] maxC = { -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE };
+        float[] minC = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
+        float[] maxC = { -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
 
         float min = Float.MAX_VALUE;
         float max = -100000000;
@@ -5723,12 +5665,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                 for (int c = 0; c < 3; c++) {
 
-                    if (imageBuffer[(j * xDim * 4) + (i * 4) + c + 1] > maxC[c]) {
-                        maxC[c] = imageBuffer[(j * xDim * 4) + (i * 4) + c + 1];
+                    if (imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1] > maxC[c]) {
+                        maxC[c] = imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1];
                     }
 
-                    if (imageBuffer[(j * xDim * 4) + (i * 4) + c + 1] < minC[c]) {
-                        minC[c] = imageBuffer[(j * xDim * 4) + (i * 4) + c + 1];
+                    if (imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1] < minC[c]) {
+                        minC[c] = imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1];
                     }
                 }
             }
@@ -5761,28 +5703,26 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         RGB.getRedFunction().importArrays(x[0], y[0], 4);
         RGB.getGreenFunction().importArrays(x[1], y[1], 4);
         RGB.getBlueFunction().importArrays(x[2], y[2], 4);
-        RGB.makeRGB(-1);
+        RGB.makeRGB( -1);
     }
-
 
     /**
      * Repaints the image intensity label.
-     *
-     * @param  graphics2d  Graphics2D the graphics context to draw in
+     * 
+     * @param graphics2d Graphics2D the graphics context to draw in
      */
     private void repaintImageIntensityLabelFast(Graphics2D graphics2d) {
 
-        if ((graphics2d == null) || (lastMouseX == OUT_OF_BOUNDS) || (lastMouseY == OUT_OF_BOUNDS)) {
+        if ( (graphics2d == null) || (lastMouseX == OUT_OF_BOUNDS) || (lastMouseY == OUT_OF_BOUNDS)) {
             return;
         }
 
-        int xS = getScaledX(lastMouseX); // zoomed x.  Used as cursor
-        int yS = getScaledY(lastMouseY); // zoomed y.  Used as cursor
+        int xS = getScaledX(lastMouseX); // zoomed x. Used as cursor
+        int yS = getScaledY(lastMouseY); // zoomed y. Used as cursor
 
         // position where label should go
         int x = (MipavMath.round(xS * zoomX) + 15);
         int y = (MipavMath.round(yS * zoomY) + 35);
-
 
         // positions needed to determine when label should be flipped over when getting too close to edge
         int wC = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().width;
@@ -5814,129 +5754,120 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         graphics2d.setColor(backgroundColor);
 
         if (imageActive.isColorImage()) {
-            String red = df.format(new Float(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]).doubleValue());
-            String green = df.format(new Float(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]).doubleValue());
-            String blue = df.format(new Float(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]).doubleValue());
+            String red = df.format(new Float(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 1])
+                    .doubleValue());
+            String green = df
+                    .format(new Float(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 2])
+                            .doubleValue());
+            String blue = df.format(new Float(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 3])
+                    .doubleValue());
 
-            if (((wC - xC) > 170) && ((hC - yC) > 40)) {
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x + 1, y);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x - 1, y);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x, y - 1);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x, y + 1);
-
-                graphics2d.setColor(textColor);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x, y);
-            } else if (((wC - xC) <= 170) && ((hC - yC) > 40)) {
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x - 159, y);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x - 161, y);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x - 160, y - 1);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x - 160, y + 1);
+            if ( ( (wC - xC) > 170) && ( (hC - yC) > 40)) {
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x + 1, y);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x - 1, y);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x, y - 1);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x, y + 1);
 
                 graphics2d.setColor(textColor);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x - 160, y);
-            } else if (((wC - xC) <= 170) && ((hC - yC) <= 40)) {
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x - 159, y - 40);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x - 161, y - 40);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x - 160, y - 41);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x - 160, y - 39);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x, y);
+            } else if ( ( (wC - xC) <= 170) && ( (hC - yC) > 40)) {
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x - 159, y);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x - 161, y);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x - 160, y - 1);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x - 160, y + 1);
 
                 graphics2d.setColor(textColor);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x - 160, y - 40);
-            } else if (((wC - xC) > 170) && ((hC - yC) <= 40)) {
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x + 1, y - 40);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x - 1, y - 40);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x, y - 41);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x, y - 39);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x - 160, y);
+            } else if ( ( (wC - xC) <= 170) && ( (hC - yC) <= 40)) {
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x - 159, y - 40);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x - 161, y - 40);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x - 160, y - 41);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x - 160, y - 39);
 
                 graphics2d.setColor(textColor);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," +
-                                      green + "," + blue, x, y - 40);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x - 160, y - 40);
+            } else if ( ( (wC - xC) > 170) && ( (hC - yC) <= 40)) {
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x + 1, y - 40);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x - 1, y - 40);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x, y - 41);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x, y - 39);
+
+                graphics2d.setColor(textColor);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + red + "," + green + ","
+                        + blue, x, y - 40);
             }
         } else {
-            String intensity = df.format(new Float(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]).doubleValue());
+            String intensity = df.format(new Float(imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS])
+                    .doubleValue());
 
-            if (((wC - xC) > 100) && ((hC - yC) > 50)) {
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x + 1,
-                                      y);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 1,
-                                      y);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x,
-                                      y - 1);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x,
-                                      y + 1);
+            if ( ( (wC - xC) > 100) && ( (hC - yC) > 50)) {
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x + 1, y);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 1, y);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x, y - 1);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x, y + 1);
 
                 graphics2d.setColor(textColor);
                 graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x, y);
-            } else if (((wC - xC) <= 100) && ((hC - yC) > 50)) {
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 79,
-                                      y);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 81,
-                                      y);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 80,
-                                      y - 1);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 80,
-                                      y + 1);
+            } else if ( ( (wC - xC) <= 100) && ( (hC - yC) > 50)) {
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 79, y);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 81, y);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 80, y - 1);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 80, y + 1);
 
                 graphics2d.setColor(textColor);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 80,
-                                      y);
-            } else if (((wC - xC) <= 100) && ((hC - yC) <= 50)) {
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 79,
-                                      y - 40);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 81,
-                                      y - 40);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 80,
-                                      y - 41);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 80,
-                                      y - 39);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 80, y);
+            } else if ( ( (wC - xC) <= 100) && ( (hC - yC) <= 50)) {
+                graphics2d
+                        .drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 79, y - 40);
+                graphics2d
+                        .drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 81, y - 40);
+                graphics2d
+                        .drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 80, y - 41);
+                graphics2d
+                        .drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 80, y - 39);
 
                 graphics2d.setColor(textColor);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 80,
-                                      y - 40);
-            } else if (((wC - xC) > 100) && ((hC - yC) <= 50)) {
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x,
-                                      y - 40);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x,
-                                      y - 40);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x,
-                                      y - 41);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x,
-                                      y - 39);
+                graphics2d
+                        .drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x - 80, y - 40);
+            } else if ( ( (wC - xC) > 100) && ( (hC - yC) <= 50)) {
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x, y - 40);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x, y - 40);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x, y - 41);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x, y - 39);
 
                 graphics2d.setColor(textColor);
-                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x,
-                                      y - 40);
+                graphics2d.drawString(String.valueOf(xS) + "," + String.valueOf(yS) + ":  " + intensity, x, y - 40);
             }
         }
     }
 
     /**
      * Repaints the paint brush cursor without repainting the entire image.
-     *
-     * @param  graphics2d  Graphics2D the graphics context to draw in
+     * 
+     * @param graphics2d Graphics2D the graphics context to draw in
      */
     private void repaintPaintBrushCursorFast(Graphics2D graphics2d) {
 
-        if ((graphics2d == null) || (lastMouseX == OUT_OF_BOUNDS) || (lastMouseY == OUT_OF_BOUNDS)) {
+        if ( (graphics2d == null) || (lastMouseX == OUT_OF_BOUNDS) || (lastMouseY == OUT_OF_BOUNDS)) {
             return;
         }
 
@@ -5946,27 +5877,25 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         // yx, xz
         float factor = 1f;
         float factor2 = 1f;
-        
+
         factor = resolutionX / resolutionY;
 
         if (factor < 1) {
             factor2 = 1f / factor;
             factor = 1f;
         }
-        
-        graphics2d.drawImage(paintImage.getScaledInstance(MipavMath.round(paintImage.getWidth() * zoomX * factor),
-                                                          MipavMath.round(paintImage.getHeight() * zoomY * factor2), 0),
-                             new AffineTransform(1.0f/factor, 0f, 0f, 1.0f/factor2, xS, yS), null);
-        
-        
-    }
 
+        graphics2d.drawImage(paintImage.getScaledInstance(MipavMath.round(paintImage.getWidth() * zoomX * factor),
+                MipavMath.round(paintImage.getHeight() * zoomY * factor2), 0), new AffineTransform(1.0f / factor, 0f,
+                0f, 1.0f / factor2, xS, yS), null);
+
+    }
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  LUT    DOCUMENT ME!
-     * @param  image  DOCUMENT ME!
+     * 
+     * @param LUT DOCUMENT ME!
+     * @param image DOCUMENT ME!
      */
     private void resetLUT(ModelLUT LUT, ModelImage image) {
         float min, max;
@@ -5990,11 +5919,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         x[0] = min;
         y[0] = dim.height - 1;
 
-        x[1] = (min + ((max - min) / 3.0f));
-        y[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
+        x[1] = (min + ( (max - min) / 3.0f));
+        y[1] = (dim.height - 1) - ( (dim.height - 1) / 3.0f);
 
-        x[2] = (min + ((max - min) * 0.67f));
-        y[2] = (dim.height - 1) - ((dim.height - 1) * 0.67f);
+        x[2] = (min + ( (max - min) * 0.67f));
+        y[2] = (dim.height - 1) - ( (dim.height - 1) * 0.67f);
 
         x[3] = max;
         y[3] = 0;
@@ -6004,8 +5933,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  RGBT  DOCUMENT ME!
+     * 
+     * @param RGBT DOCUMENT ME!
      */
     private void resetRGB(ModelRGB RGBT) {
         float[] x = new float[4];
@@ -6018,10 +5947,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         y[0] = dim.height - 1;
 
         x[1] = 255 * 0.333f;
-        y[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
+        y[1] = (dim.height - 1) - ( (dim.height - 1) / 3.0f);
 
         x[2] = 255 * 0.667f;
-        y[2] = (dim.height - 1) - ((dim.height - 1) * 0.67f);
+        y[2] = (dim.height - 1) - ( (dim.height - 1) * 0.67f);
 
         x[3] = 255;
         y[3] = 0;
@@ -6036,14 +5965,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         RGBT.getRedFunction().importArrays(x, y, 4);
         RGBT.getGreenFunction().importArrays(x, y, 4);
         RGBT.getBlueFunction().importArrays(x, y, 4);
-        RGBT.makeRGB(-1);
+        RGBT.makeRGB( -1);
     }
 
     /**
      * Saves the User Defined transfer function (remapped 0->1).
-     *
-     * @param  fName  String file name
-     * @param  dName  String directory name
+     * 
+     * @param fName String file name
+     * @param dName String directory name
      */
     private void saveUDTransferFunction(String fName, String dName) {
         FileHistoLUT fileHistoLUT;
@@ -6064,24 +5993,20 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     }
 
-    
     /**
      * 
      * @param zeroToOneLUTAdj
      */
-	public void setZeroToOneLUTAdj(boolean zeroToOneLUTAdj) {
-		this.zeroToOneLUTAdj = zeroToOneLUTAdj;
-	}
+    public void setZeroToOneLUTAdj(boolean zeroToOneLUTAdj) {
+        this.zeroToOneLUTAdj = zeroToOneLUTAdj;
+    }
 
-	/**
-	 * 
-	 * @return
-	 */
-	public boolean isZeroToOneLUTAdj() {
-		return zeroToOneLUTAdj;
-	}
+    /**
+     * 
+     * @return
+     */
+    public boolean isZeroToOneLUTAdj() {
+        return zeroToOneLUTAdj;
+    }
 
-
-	
-	
 }
