@@ -67,7 +67,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         imageType = detectImageType(im);
         if(image.getNDims() < 3) {
         	imageFile = detectImageSequence(im);
-	        if(imageFile.length > 1) {
+	        if(imageFile != null && imageFile.length > 1) {
 	        	image = createImage(imageFile);
 	        	float[] origin = {0, 0, 0};
 	        	image.getFileInfo()[0].setOrigin(origin);
@@ -401,9 +401,12 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     		File dir = new File(im.getFileInfo()[0].getFileDirectory());
 	    	String name = im.getFileInfo()[0].getFileName();
 	    	boolean likelyMultiple = false;
-	    	if(name.indexOf('.') > name.length() - 5)
-	    		name = name.substring(0, name.lastIndexOf('.')-2);
-	    	else	
+	    	if(name.indexOf('.') > name.length() - 5) {
+	    		int offset = 0;
+	    		if(name.indexOf('.') > 2)
+	    			offset = 2;
+	    		name = name.substring(0, name.lastIndexOf('.')-offset);
+	    	} else	
 	    		name = name.substring(0, im.getFileInfo()[0].getFileName().length()-2);
 	    	File[] contain = dir.listFiles();
 	    	int size = 0;
