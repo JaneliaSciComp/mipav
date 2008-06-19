@@ -3,25 +3,25 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.dialogs.*;
 
-import java.io.*;
-
+import java.awt.Frame;
+import java.io.File;
 import java.util.*;
 
-import javax.swing.*;
+import javax.swing.JFileChooser;
 
 
 /**
  * Opens an image file by calling FileIO.readImage and puts it into an image frame.
- *
- * @version  0.1 Sept 4, 1997
- * @author   Matthew J. McAuliffe, Ph.D.
- * @see      FileIO
+ * 
+ * @version 0.1 Sept 4, 1997
+ * @author Matthew J. McAuliffe, Ph.D.
+ * @see FileIO
  */
 public class ViewOpenFileUI extends ViewFileChooserBase {
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /**
      * Indicate what the current filter should be on opening the the dialog. The values for this are the static ints in
@@ -53,35 +53,34 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
     /** DOCUMENT ME! */
     private boolean setLastImageFlag = true; // default is to put image path into recently opened image list
 
-    /** Document Me. */
-    private String[] userDefinedFileTypeAssociations = null;
-
     /** DOCUMENT ME! */
     private boolean xmlLinked = false;
 
     private RawImageInfo rawInfo = null;
-    
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates the way to open and verify files before they are loaded by the FileIO.
-     *
-     * @param  openDialog  a boolean that selects whether this UI should be built and displayed. <code>true</code>
-     *                     indicates the UI will be displayed, and <code>false</code> is that it will not be displayed.
+     * 
+     * @param openDialog a boolean that selects whether this UI should be built and displayed. <code>true</code>
+     *            indicates the UI will be displayed, and <code>false</code> is that it will not be displayed.
      */
     public ViewOpenFileUI(boolean openDialog) {
         super(openDialog, false);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   chooser     DOCUMENT ME!
-     * @param   filterType  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param chooser DOCUMENT ME!
+     * @param filterType DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public static final javax.swing.filechooser.FileFilter findFilter(JFileChooser chooser, int filterType) {
 
@@ -96,13 +95,12 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
         }
 
         return null;
-
     } // end findFilter()
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public ModelImage getImage() {
         return image;
@@ -110,8 +108,8 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public ModelImage getImage2() {
         return image2;
@@ -119,8 +117,8 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
     /**
      * Returns the path to the last opened image.
-     *
-     * @return  imagePath
+     * 
+     * @return imagePath
      */
     public String getImagePath() {
         return this.directory + this.fileName;
@@ -128,28 +126,26 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
     /**
      * Returns the model LUT from the file.
-     *
-     * @return  ModelLUT -- returns LUT.
+     * 
+     * @return ModelLUT -- returns LUT.
      */
     public ModelLUT getLUT() {
-
         return this.LUT;
     }
 
     /**
      * Returns the model LUT2 from the file.
-     *
-     * @return  ModelLUT -- returns LUT2.
+     * 
+     * @return ModelLUT -- returns LUT2.
      */
     public ModelLUT getLUT2() {
-
         return this.LUT2;
     }
 
     /**
      * Indicates whether there is an xml linked image.
-     *
-     * @return  xmllinked
+     * 
+     * @return xmllinked
      */
     public boolean hasXMLLinked() {
         return this.xmlLinked;
@@ -157,31 +153,30 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
     /**
      * Returns whether or not the new image will be put into a frame.
-     *
-     * @return  boolean -- if true, then image will be put into a frame.
+     * 
+     * @return boolean -- if true, then image will be put into a frame.
      */
     public boolean isPutInFrame() {
 
         return this.putInFrame;
     }
 
-
     /**
      * Open an image based on the suffix of the file.
-     *
-     * @param   multiFile  Flag to indicate if image is an array of 2D image files (<code>true</code>) or if the image
-     *                     is stored in a single file (<code>false</code>).
-     * @param   imageset   DOCUMENT ME!
-     *
-     * @return  List of the names of the images that were opened.
+     * 
+     * @param multiFile Flag to indicate if image is an array of 2D image files (<code>true</code>) or if the image
+     *            is stored in a single file (<code>false</code>).
+     * @param imageset DOCUMENT ME!
+     * 
+     * @return List of the names of the images that were opened.
      */
-    public ArrayList open(boolean multiFile, boolean imageset) {
+    public ArrayList<Vector<String>> open(boolean multiFile, boolean imageset) {
         ViewJFrameImage imageFrame;
         FileIO fileIO;
         FileIO fileIO2 = null;
-        Vector images = new Vector();
+        Vector<String> images = new Vector<String>();
         ModelImage linkedImage = null;
-        ArrayList imagesArrayList = new ArrayList();
+        ArrayList<Vector<String>> imagesArrayList = new ArrayList<Vector<String>>();
         File[] openedFiles = null;
 
         int secondImage = 0; // 0 if not present
@@ -203,7 +198,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
             filter = -1;
         }
 
-        if (!useAWT) {
+        if ( !useAWT) {
 
             try {
                 setMulti(multiFile);
@@ -289,11 +284,10 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                 image = fileIO.readImage(fileName, directory, multiFile, null);
 
                 if (image == null) {
-                    //System.err.println("ViewOpenFileUI: image = null");
+                    // System.err.println("ViewOpenFileUI: image = null");
 
                     return null;
                 }
-
 
                 // imagesArrayList.add(image.getImageName());
 
@@ -311,10 +305,10 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                     // in the case of iaso running, put in frame will be false
                     // this must be changed to true if the modalities are already set up
                     // in the image and linkedImage
-                    if ((((image.getFileInfo(0).getModality() == FileInfoBase.RED_FREE) &&
-                              (linkedImage.getFileInfo(0).getModality() == FileInfoBase.ICG)) ||
-                             ((image.getFileInfo(0).getModality() == FileInfoBase.ICG) &&
-                                  (linkedImage.getFileInfo(0).getModality() == FileInfoBase.RED_FREE))) && !imageset) {
+                    if ( ( ( (image.getFileInfo(0).getModality() == FileInfoBase.RED_FREE) && (linkedImage.getFileInfo(
+                            0).getModality() == FileInfoBase.ICG)) || ( (image.getFileInfo(0).getModality() == FileInfoBase.ICG) && (linkedImage
+                            .getFileInfo(0).getModality() == FileInfoBase.RED_FREE)))
+                            && !imageset) {
 
                         this.putInFrame = true;
                     }
@@ -328,8 +322,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
             try {
 
                 if (putInFrame == true) {
-                    imageFrame = new ViewJFrameImage(image, LUT,
-                                                     ViewUserInterface.getReference().getNewFrameLocation());
+                    imageFrame = new ViewJFrameImage(image, LUT, ViewUserInterface.getReference().getNewFrameLocation());
 
                     if (modelRGB != null) {
                         imageFrame.setRGBTA(modelRGB);
@@ -401,7 +394,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
             }
 
             // updates menubar for each image
-            Vector imageFrames = UI.getImageFrameVector();
+            Vector<Frame> imageFrames = UI.getImageFrameVector();
 
             if (imageFrames.size() < 1) {
                 UI.buildMenu();
@@ -427,13 +420,13 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
     /**
      * Open an image based on the suffix of the file.
-     *
-     * @param   fileName   Full pathname of file to open.
-     * @param   multiFile  Flag to indicate if image is an array of 2D image files (<code>true</code>) or if the image
-     *                     is stored in a single file (<code>false</code>).
-     * @param   fileInfo   File info, can be null. In the case of RAW images read by the script, will not be null.
-     *
-     * @return  The image name of the image that was read in.
+     * 
+     * @param fileName Full pathname of file to open.
+     * @param multiFile Flag to indicate if image is an array of 2D image files (<code>true</code>) or if the image
+     *            is stored in a single file (<code>false</code>).
+     * @param fileInfo File info, can be null. In the case of RAW images read by the script, will not be null.
+     * 
+     * @return The image name of the image that was read in.
      */
     public String open(String fileName, boolean multiFile, FileInfoBase fileInfo) {
         int index;
@@ -446,7 +439,6 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
         // address of TIFF header of second image in file if present
         // for LSM510 image files
-
 
         // separate fileName and directory
         index = fileName.lastIndexOf(File.separatorChar);
@@ -534,8 +526,8 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
             try {
 
                 if (putInFrame == true) {
-                    imageFrame2 = new ViewJFrameImage(image2, LUT2,
-                                                      ViewUserInterface.getReference().getNewFrameLocation());
+                    imageFrame2 = new ViewJFrameImage(image2, LUT2, ViewUserInterface.getReference()
+                            .getNewFrameLocation());
 
                     if (modelRGB2 != null) {
                         imageFrame2.setRGBTA(modelRGB2);
@@ -550,13 +542,12 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
             // UI.getMainFrame().pack();
         } // if (secondImage != 0)
 
-
         if (setLastImageFlag) {
             Preferences.setLastImage(directory + fileName, image.getFileInfo()[0].getMultiFile(), image.getNDims());
         }
 
         // updates menubar for each image
-        Vector imageFrames = UI.getImageFrameVector();
+        Vector<Frame> imageFrames = UI.getImageFrameVector();
 
         if (imageFrames.size() < 1) {
             UI.buildMenu();
@@ -578,9 +569,9 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
     /**
      * Set the current filter type to the given parameter.
-     *
-     * @param  fType  Indicate what the current filter should be on opening the the dialog. The values for this are the
-     *                static ints in ViewImageFileFilter.
+     * 
+     * @param fType Indicate what the current filter should be on opening the the dialog. The values for this are the
+     *            static ints in ViewImageFileFilter.
      */
     public void setFilterType(int fType) {
         this.filterType = fType;
@@ -588,8 +579,8 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
     /**
      * Indicates whether or not to put the image file path into the list of recently opened images.
-     *
-     * @param  flag  if true, then image path is put into recently used image list
+     * 
+     * @param flag if true, then image path is put into recently used image list
      */
     public void setLastImage(boolean flag) {
         this.setLastImageFlag = flag;
@@ -597,8 +588,8 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
     /**
      * Indicates whether or not the new image should be put into a frame.
-     *
-     * @param  putIn  -- if true, then image is put into a frame.
+     * 
+     * @param putIn -- if true, then image is put into a frame.
      */
     public void setPutInFrame(boolean putIn) {
 
@@ -606,17 +597,17 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
     }
 
     public void setRawImageInfo(RawImageInfo rawInfo) {
-    	this.rawInfo = rawInfo;
+        this.rawInfo = rawInfo;
     }
-    
+
     public RawImageInfo getRawImageInfo() {
-    	return this.rawInfo;
+        return this.rawInfo;
     }
-    
+
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     private ModelImage readLinkedImage() {
 
@@ -624,7 +615,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
             FileInfoImageXML fileInfoXML = (FileInfoImageXML) image.getFileInfo(0);
             String linkedFilename = fileInfoXML.getLinkedImagePath();
 
-            if ((linkedFilename != null) && !linkedFilename.equals("")) {
+            if ( (linkedFilename != null) && !linkedFilename.equals("")) {
                 FileIO fileIO = new FileIO();
 
                 return fileIO.readImage(linkedFilename);

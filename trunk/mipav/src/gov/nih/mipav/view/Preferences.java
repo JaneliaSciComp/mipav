@@ -3,21 +3,10 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.view.dialogs.JDialogOverlay;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Event;
+import java.awt.*;
 import java.awt.event.InputEvent;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Properties;
-import java.util.StringTokenizer;
-import java.util.Vector;
+import java.io.*;
+import java.util.*;
 
 import javax.swing.KeyStroke;
 
@@ -1648,19 +1637,6 @@ public class Preferences {
     }
 
     /**
-     * Check the current Java virtual machine is 64 bit or not.
-     * 
-     * @return boolean true 64 bit, otherwise
-     */
-    public static final boolean isJVM64bit() {
-        String javaVMname = System.getProperty("java.vm.name");
-        if (javaVMname.indexOf("64-Bit") > -1) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
      * Gets an int representing the operating system.
      * 
      * @return int operating system
@@ -1830,7 +1806,7 @@ public class Preferences {
                 tok.nextToken(); // Skip IP
 
                 return (Integer.valueOf(tok.nextToken().trim()).intValue()); // return port address from preference
-                                                                                // file
+                // file
             }
 
             key = key.substring(0, 6) + (Integer.valueOf(key.substring(6)).intValue() + 1);
@@ -2286,7 +2262,7 @@ public class Preferences {
             } catch (NumberFormatException nfe) { // older version debug
 
                 if (str.equalsIgnoreCase("true") || str.equalsIgnoreCase("on") || str.equalsIgnoreCase("yes")) { // debug
-                                                                                                                    // YES
+                    // YES
                     return true;
                 }
             } catch (NullPointerException npe) { // property does not exist
