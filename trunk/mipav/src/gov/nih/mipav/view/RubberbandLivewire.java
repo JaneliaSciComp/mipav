@@ -217,7 +217,13 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
             // AlgorithmGradientMagnitude magnitude = new AlgorithmGradientMagnitude(null, new float[] {1.75f, 1.75f},
             // true, false);
-            ModelImage mi = new ModelImage(ModelStorageBase.FLOAT, new int[]{xDim, yDim}, ((ViewJComponentEditImage) component).getActiveImage().getImageName());
+            ModelImage mi;
+            if (((ViewJComponentEditImage) component).getActiveImage().isColorImage()) {
+                mi = new ModelImage(ModelStorageBase.FLOAT, new int[]{4*xDim, yDim}, ((ViewJComponentEditImage) component).getActiveImage().getImageName());    
+            }
+            else {
+                mi = new ModelImage(ModelStorageBase.FLOAT, new int[]{xDim, yDim}, ((ViewJComponentEditImage) component).getActiveImage().getImageName());
+            }
             try{
                 mi.importData(0, ((ViewJComponentEditImage) component).getActiveImageSliceBuffer(), true);
             }catch(IOException e){
