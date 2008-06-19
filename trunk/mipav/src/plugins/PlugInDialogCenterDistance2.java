@@ -15,7 +15,7 @@ import javax.swing.*;
 
 
 /**
- * @version  June 13, 2008
+ * @version  June 19, 2008
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -192,7 +192,7 @@ public class PlugInDialogCenterDistance2 extends JDialogScriptableBase implement
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        if (algorithm instanceof PlugInAlgorithmCenterDistance) {
+        if (algorithm instanceof PlugInAlgorithmCenterDistance2) {
             image.clearMask();
 
             if (algorithm.isCompleted()) {
@@ -419,7 +419,7 @@ public class PlugInDialogCenterDistance2 extends JDialogScriptableBase implement
         String unitStr;
         String distStr;
         setForeground(Color.black);
-        setTitle("Center Distances version 2 06/16/08");
+        setTitle("Center Distances version 2  06/19/08");
         
         df = new DecimalFormat("0.000E0");
 
