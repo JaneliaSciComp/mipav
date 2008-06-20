@@ -666,12 +666,10 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
      * @param  edgelap_sigmas  DOCUMENT ME!
      * @param  kern_weight     DOCUMENT ME!
      * @param  grad_weight     DOCUMENT ME!
-     * @param  loThres         DOCUMENT ME!
-     * @param  hiThres         DOCUMENT ME!
      * @param  smoothVOIFlag   whether to smooth the VOI once the livewire selection is done
      */
     public RubberbandLivewire(Component component, float[] grad_sigmas, float[] edgelap_sigmas, float kern_weight,
-                              float grad_weight, float loThres, float hiThres, boolean smoothVOIFlag) {
+                              float grad_weight, boolean smoothVOIFlag) {
         super(component);
         component.addMouseMotionListener(this);
         component.addMouseListener(this);
