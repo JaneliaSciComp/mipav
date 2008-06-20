@@ -355,18 +355,18 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
             } // not color
 
             float[] sigmas = new float[2];
-            BitSet smallKernel;
+            //BitSet smallKernel;
             BitSet largeKernel;
             AlgorithmEdgeLaplacian lap;
 
             if (((ViewJComponentEditImage) component).getActiveImage().isColorImage()) {
-                BitSet smallKernelR;
+                //BitSet smallKernelR;
                 BitSet largeKernelR;
-                BitSet smallKernelG;
+                //BitSet smallKernelG;
                 BitSet largeKernelG;
-                BitSet smallKernelB;
+                //BitSet smallKernelB;
                 BitSet largeKernelB;
-                smallKernel = new BitSet(length);
+                //smallKernel = new BitSet(length);
                 largeKernel = new BitSet(length);
 
                 float[] colorBuffer = new float[4 * xDim * yDim];
@@ -378,10 +378,10 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                     singleBuffer[i] = colorBuffer[(4 * i) + 1];
                 }
 
-                sigmas[0] = 0.75f;
-                sigmas[1] = 0.75f;
-                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
-                smallKernelR = lap.calcZeroXMaskBitset(singleBuffer, extents);
+                //sigmas[0] = 0.75f;
+                //sigmas[1] = 0.75f;
+                //lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
+                //smallKernelR = lap.calcZeroXMaskBitset(singleBuffer, extents);
 
                 // large kernel edge Laplacian - less noise, poorer localization
                 sigmas[0] = 1.25f;
@@ -394,10 +394,10 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                     singleBuffer[i] = colorBuffer[(4 * i) + 2];
                 }
 
-                sigmas[0] = 0.75f;
-                sigmas[1] = 0.75f;
-                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
-                smallKernelG = lap.calcZeroXMaskBitset(singleBuffer, extents);
+                //sigmas[0] = 0.75f;
+                //sigmas[1] = 0.75f;
+                //lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
+                //smallKernelG = lap.calcZeroXMaskBitset(singleBuffer, extents);
 
                 // large kernel edge Laplacian - less noise, poorer localization
                 sigmas[0] = 1.25f;
@@ -410,10 +410,10 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                     singleBuffer[i] = colorBuffer[(4 * i) + 3];
                 }
 
-                sigmas[0] = 0.75f;
-                sigmas[1] = 0.75f;
-                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
-                smallKernelB = lap.calcZeroXMaskBitset(singleBuffer, extents);
+                //sigmas[0] = 0.75f;
+                //sigmas[1] = 0.75f;
+                //lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
+                //smallKernelB = lap.calcZeroXMaskBitset(singleBuffer, extents);
 
                 // large kernel edge Laplacian - less noise, poorer localization
                 sigmas[0] = 1.25f;
@@ -424,11 +424,11 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
                 for (int i = 0; i < length; i++) {
 
-                    if ((smallKernelR.get(i)) || (smallKernelG.get(i)) || (smallKernelB.get(i))) {
-                        smallKernel.set(i);
-                    } else {
-                        smallKernel.clear(i);
-                    }
+                    //if ((smallKernelR.get(i)) || (smallKernelG.get(i)) || (smallKernelB.get(i))) {
+                        //smallKernel.set(i);
+                    //} else {
+                        //smallKernel.clear(i);
+                    //}
 
                     if ((largeKernelR.get(i)) || (largeKernelG.get(i)) || (largeKernelB.get(i))) {
                         largeKernel.set(i);
@@ -438,11 +438,11 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                 }
 
                 progressBar.updateValueImmed(85);
-                smallKernelR = null;
+                //smallKernelR = null;
                 largeKernelR = null;
-                smallKernelG = null;
+                //smallKernelG = null;
                 largeKernelG = null;
-                smallKernelB = null;
+                //smallKernelB = null;
                 largeKernelB = null;
                 colorBuffer = null;
                 singleBuffer = null;
