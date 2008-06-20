@@ -5219,7 +5219,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
      * Sets the mode to Livewire and provides parameters to the livewire cost function.
      *
      * @param  gradSigma      std dev of gaussian function for the gradient
-     * @param  edgeLap        std dev of function for the edge lapacian and determines lo/hi thresholds
+     * @param  edgeLap        std dev of function for the edge lapacian
      * @param  gradWeight     weight to apply to gradient vector (gradWeight+2*kernWeight == 1)
      * @param  kernWeight     weight to apply to the small kernel (gradWeight+2*kernWeight == 1)
      * @param  smoothVOIFlag  whether to smooth out the voi contour after it is finished
@@ -5229,8 +5229,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         this.mode = ViewJComponentEditImage.LIVEWIRE;
         rubberband.setActive(false);
         rbLivewire = new RubberbandLivewire(this, new float[] { gradSigma, gradSigma },
-                                            new float[] { edgeLap, edgeLap }, kernWeight, gradWeight, -(edgeLap),
-                                            edgeLap, smoothVOIFlag);
+                                            new float[] { edgeLap, edgeLap }, kernWeight, gradWeight, smoothVOIFlag);
         rubberband = rbLivewire;
         rubberband.setActive(true);
         compImage.setCursor(compImage.crosshairCursor);
