@@ -4,8 +4,6 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
-
 import java.io.*;
 
 import java.util.*;
@@ -64,9 +62,6 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
     /** Dimensionality of the kernel. */
     private int[] kExtents;
 
-    /** Lower and upper threshold values used in the generation of the edge map. */
-    private float loThres, hiThres;
-
     /** Standard deviations of the gaussian used to calculate the kernels. */
     private float[] sigmas;
 
@@ -95,36 +90,6 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
                                      boolean img25D) {
         super(destImg, srcImg);
 
-        this.loThres = 0;
-        this.hiThres = 0;
-        this.sigmas = sigmas;
-        image25D = img25D;
-
-        entireImage = maskFlag;
-
-        if (entireImage == false) {
-            mask = srcImage.generateVOIMask();
-        }
-    }
-
-    /**
-     * Creates a new AlgorithmEdgeLaplacianSep object.
-     *
-     * @param  destImg   image model where result image is to stored
-     * @param  srcImg    source image model
-     * @param  sigmas    Gaussian's standard deviations in the each dimension
-     * @param  maskFlag  Flag that indicates that the EdgeLap will be calculated for the whole image if equal to true
-     * @param  img25D    Flag, if true, indicates that each slice of the 3D volume should be processed independently. 2D
-     *                   images disregard this flag.
-     * @param  loThres   used to define the lower threshold to reduce noise (edges) in the laplacian image
-     * @param  hiThres   used to define the upper threshold to reduce noise (edges) in the laplacian image
-     */
-    public AlgorithmEdgeLaplacianSep(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
-                                     boolean img25D, float loThres, float hiThres) {
-        super(destImg, srcImg);
-
-        this.loThres = loThres;
-        this.hiThres = hiThres;
         this.sigmas = sigmas;
         image25D = img25D;
 
@@ -145,13 +110,10 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
      * @param   buffer         array in which to find zero crossing
      * @param   level          level to generate zero crossings at
      * @param   detectionType  the type of zero crossing method to use
-     * @param   loThres        low threshold
-     * @param   hiThres        high threshold
      *
      * @return  Bitset representing zero crossings
      */
-    public static BitSet genLevelMask(int xDim, int yDim, float[] buffer, float level, int detectionType, float loThres,
-                                      float hiThres) {
+    public static BitSet genLevelMask(int xDim, int yDim, float[] buffer, float level, int detectionType) {
         int i0, i1, i2, i3;
         float x0, x1, x2, x3;
         int i, j;
@@ -310,7 +272,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
 
         computeElapsedTime();
 
-        return genLevelMask(extents[0], extents[1], xResultBuffer, 0, zeroDetectionType, loThres, hiThres);
+        return genLevelMask(extents[0], extents[1], xResultBuffer, 0, zeroDetectionType);
 
     }
 
