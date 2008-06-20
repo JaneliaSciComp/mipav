@@ -299,9 +299,9 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         } else {
 
             if ((progressValueBounds[1] - progressValueBounds[0]) < 2) {
-                edgeAlgo = new AlgorithmEdgeLaplacian(tempEdgeImage, resultImage, edgeSigmas, regionFlag, do25D, 0, 0);
+                edgeAlgo = new AlgorithmEdgeLaplacian(tempEdgeImage, resultImage, edgeSigmas, regionFlag, do25D);
             } else {
-                edgeAlgo = new AlgorithmEdgeLaplacian(tempEdgeImage, resultImage, edgeSigmas, regionFlag, do25D, 0, 0);
+                edgeAlgo = new AlgorithmEdgeLaplacian(tempEdgeImage, resultImage, edgeSigmas, regionFlag, do25D);
                 linkProgressToAlgorithm(edgeAlgo);
                 edgeAlgo.setProgressValues(generateProgressValues(progressValueBounds[0], progressValueBounds[1]));
 
