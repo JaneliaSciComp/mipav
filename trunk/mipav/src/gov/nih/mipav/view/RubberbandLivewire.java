@@ -721,7 +721,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
         // ((ViewJComponentEditImage)component).getActiveImage().getUserInterface());
 
         // large kernel edge Laplacian - less noise, poorer localization sigmas[0]   = 2f; sigmas[1]   = 2f;
-        lap = new AlgorithmEdgeLaplacianSep(null, null, edgelap_sigmas, true, false, -1, 1);
+        lap = new AlgorithmEdgeLaplacianSep(null, null, edgelap_sigmas, true, false);
         progressBar.updateValueImmed(75);
         largeKernel = lap.calcZeroXMaskBitset(((ViewJComponentEditImage) component).getActiveImageSliceBuffer(),
                                               extents);
