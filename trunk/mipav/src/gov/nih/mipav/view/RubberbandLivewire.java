@@ -103,9 +103,6 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
     private int count;
 
     /** DOCUMENT ME! */
-    private Point3Df cpt = null;
-
-    /** DOCUMENT ME! */
     private boolean firstPoint = true;
 
     /** DOCUMENT ME! */
@@ -116,9 +113,6 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
     /** DOCUMENT ME! */
     private int mod;
-
-    /** DOCUMENT ME! */
-    private boolean mouseDragged = false;
 
     /** DOCUMENT ME! */
     private float presetHue = -1.0f;
@@ -191,10 +185,6 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
         progressBar = new ViewJProgressBar(((ViewJComponentEditImage) component).getActiveImage().getImageName(),
                                            "Livewire: Computing cost function ...", 0, 100, false, this, this);
 
-        int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-        int yScreen = 100; // Toolkit.getDefaultToolkit().getScreenSize().height;
-        //progressBar.setLocation(xScreen / 2, yScreen / 2);
-
         if (selection == GRADIENT_MAG) {
             progressBar.setVisible(true);
 
@@ -202,17 +192,17 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
             if (((ViewJComponentEditImage) component).getActiveImage().isColorImage()) {
 
                 // direction of the unit vector of the partial derivative in the x direction
-                xDirections = new float[xDim * yDim * 4];
+                xDirections = new float[length * 4];
 
                 // direction of the unit vector of the partial derivative in the y direction
-                yDirections = new float[xDim * yDim * 4];
+                yDirections = new float[length * 4];
             } else {
 
                 // direction of the unit vector of the partial derivative in the x direction
-                xDirections = new float[xDim * yDim];
+                xDirections = new float[length];
 
                 // direction of the unit vector of the partial derivative in the y direction
-                yDirections = new float[xDim * yDim];
+                yDirections = new float[length];
             }
 
             // AlgorithmGradientMagnitude magnitude = new AlgorithmGradientMagnitude(null, new float[] {1.75f, 1.75f},
@@ -234,7 +224,6 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                                                                                         new float[] { 1.75f, 1.75f },
                                                                                         true, true);
         	magnitude.setDirectionNeeded(true);
-        	magnitude.setNormalized(true);
             progressBar.updateValueImmed(10);
 
             if (((ViewJComponentEditImage) component).getActiveImage().isColorImage()) {
@@ -391,13 +380,13 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
                 sigmas[0] = 0.75f;
                 sigmas[1] = 0.75f;
-                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false, 0, 0);
+                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
                 smallKernelR = lap.calcZeroXMaskBitset(singleBuffer, extents);
 
                 // large kernel edge Laplacian - less noise, poorer localization
                 sigmas[0] = 1.25f;
                 sigmas[1] = 1.25f;
-                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false, 0, 0);
+                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
                 largeKernelR = lap.calcZeroXMaskBitset(singleBuffer, extents);
                 progressBar.updateValueImmed(65);
 
@@ -407,13 +396,13 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
                 sigmas[0] = 0.75f;
                 sigmas[1] = 0.75f;
-                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false, 0, 0);
+                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
                 smallKernelG = lap.calcZeroXMaskBitset(singleBuffer, extents);
 
                 // large kernel edge Laplacian - less noise, poorer localization
                 sigmas[0] = 1.25f;
                 sigmas[1] = 1.25f;
-                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false, 0, 0);
+                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
                 largeKernelG = lap.calcZeroXMaskBitset(singleBuffer, extents);
                 progressBar.updateValueImmed(70);
 
@@ -423,13 +412,13 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
                 sigmas[0] = 0.75f;
                 sigmas[1] = 0.75f;
-                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false, 0, 0);
+                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
                 smallKernelB = lap.calcZeroXMaskBitset(singleBuffer, extents);
 
                 // large kernel edge Laplacian - less noise, poorer localization
                 sigmas[0] = 1.25f;
                 sigmas[1] = 1.25f;
-                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false, 0, 0);
+                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
                 largeKernelB = lap.calcZeroXMaskBitset(singleBuffer, extents);
                 progressBar.updateValueImmed(75);
 
@@ -468,7 +457,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                 // large kernel edge Laplacian - less noise, poorer localization
                 sigmas[0] = 1.85f;
                 sigmas[1] = 1.85f;
-                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, true, -1, 1);
+                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, true);
                 lap.setZeroDetectionType(AlgorithmEdgeLaplacian.MARCHING_SQUARES);
                 progressBar.updateValueImmed(75);
                 largeKernel = lap.calcZeroXMaskBitset(((ViewJComponentEditImage) component).getActiveImageSliceBuffer(),
@@ -706,10 +695,10 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
         progressBar.setVisible(true);
 
         // direction of the unit vector of the partial derivative in the x direction
-        xDirections = new float[xDim * yDim];
+        xDirections = new float[length];
 
         // direction of the unit vector of the partial derivative in the y direction
-        yDirections = new float[xDim * yDim];
+        yDirections = new float[length];
 
         progressBar.updateValueImmed(30);
 
@@ -724,8 +713,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
         yDirections = magnitude.getYDerivativeDirections();
         progressBar.updateValueImmed(65);
 
-        float[] sigmas = new float[2];
-        BitSet smallKernel;
+        //BitSet smallKernel;
         BitSet largeKernel;
         AlgorithmEdgeLaplacianSep lap;
 
@@ -1057,8 +1045,6 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
      */
     public void mouseMoved(MouseEvent mouseEvent) {
         Point pt = mouseEvent.getPoint();
-
-        mouseDragged = false;
 
         // System.err.println("Active is: " + isActive() + " firstPoint is: " + firstPoint + " testPoint is: " +
         // testPoint(pt));
