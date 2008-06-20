@@ -792,17 +792,14 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
     // **************************** Action Events *****************************
     // ************************************************************************
     /**
-     * Sets completed to <code>false</code>, stops the thread, and disposes the progress bar.
+     * Stops the thread, and disposes the progress bar.
      *
      * @param  event  Event that triggered function.
      */
     public void actionPerformed(ActionEvent event) {
 
         if ((progressBar != null) && !progressBar.isComplete()) {
-
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
+            progressBar.dispose();
         }
     }
 
