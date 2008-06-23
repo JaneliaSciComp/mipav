@@ -53,6 +53,11 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
     private short abdomenTissueLabel = 10;
     
+      
+    // The threshold value for muscle as specified in the JCAT paper
+    private int muscleThresholdHU = 0;
+    private short airThresholdHU = -200;
+    
     private boolean initializedFlag = false;
     
     private BitSet volumeBitSet;
@@ -230,6 +235,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         snake.run();
 
         subcutaneousVOI = snake.getResultVOI();
+        subcutaneousVOI.setName("Subcutaneous Area");
         
     } // end snakeViseralVOI
     
@@ -373,10 +379,10 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         
         // thighTissueImage has one VOI, lets get it
         VOI theVOI = vois.get(0);
-        theVOI.setName("Abdomen Tissue");
+        theVOI.setName("Abdomen");
 
         // Keep only the largest VOI as the abdomen
-        int numCurves;
+        int numCurves, numRemoved = 0;
         for (int idx = 0; idx < zDim; idx++) {
             numCurves = theVOI.getCurves()[idx].size();
             
@@ -389,7 +395,8 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             }
             for (int idx2 = 0; idx2 < numCurves; idx2++) {
                 if (idx2 != maxIdx) {
-                    theVOI.getCurves()[idx].remove(idx2);
+                    theVOI.getCurves()[idx].remove(idx2 - numRemoved);
+                    numRemoved++;
                 }
             } // end for (int idx2 = 0; ...)
         } // end for (int idx = 0; ...)
@@ -424,6 +431,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         findAbdomenCM(cmArray);
         int xcm = cmArray[0];
         int ycm = cmArray[1];
+        System.out.println("Xcm: " +xcm +"  Ycm: " +ycm);
         
 
         ArrayList<Integer> xValsAbdomenVOI = new ArrayList<Integer>();
@@ -559,14 +567,10 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             System.err.println("JCATsegmentAbdomen2D(): Error exporting data");
             return;
         }
-        
-        
-        // The threshold value for muscle as specified in the JCAT paper
-        int muscleThresholdHU = 16;
 
 
-        // find a subcutaneous fat coutour point for each abdominal contour point
-        // we know the abdominal contour point are located a three degree increments
+        // find a subcutaneous fat contour point for each abdominal contour point
+        // we know the abdominal contour points are located at three degree increments
         double angleRad;
         int count;
         int contourPointIdx = 0;
@@ -602,7 +606,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                  // center-of-mass to the abdomen voi point
                  
                  int idx = count - 5;  // skip over the skin
-                 while (idx >= 0 && profile[idx] < muscleThresholdHU) {
+                 while (idx >= 0 && profile[idx] < muscleThresholdHU && profile[idx] > airThresholdHU) {
                      idx--;
                  }
                  if (idx <= 0) {
@@ -632,7 +636,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                  // the center-of-mass to the newly computed abdomen VOI point
                  // Find where the subcutaneous fat ends
                  int idx = count - 5;  // skip over the skin
-                 while (idx >= 0 && profile[idx] < muscleThresholdHU) {
+                 while (idx >= 0 && profile[idx] < muscleThresholdHU&& profile[idx] > airThresholdHU) {
                      idx--;
                  }
                  if (idx == 0) {
@@ -661,7 +665,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                  // the center-of-mass to the newly computed abdomen VOI point
                  // Find where the subcutaneous fat ends
                  int idx = count - 5;  // skip over the skin
-                 while (idx >= 0 && profile[idx] < muscleThresholdHU) {
+                 while (idx >= 0 && profile[idx] < muscleThresholdHU&& profile[idx] > airThresholdHU) {
                      idx--;
                  }
                  if (idx == 0) {
@@ -690,7 +694,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                  // the center-of-mass to the newly computed abdomen VOI point
                  // Find where the subcutaneous fat ends
                  int idx = count - 5;  // skip over the skin
-                 while (idx >= 0 && profile[idx] < muscleThresholdHU) {
+                 while (idx >= 0 && profile[idx] < muscleThresholdHU&& profile[idx] > airThresholdHU) {
                      idx--;
                  }
                  if (idx == 0) {
