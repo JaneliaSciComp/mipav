@@ -48,13 +48,13 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
     public static final int OUTSIDE = 1;
 
     /** VOI Tab. */
-    private static final int VOI_TAB = 0;
+    protected static final int VOI_TAB = 0;
 
     /** Statistics Tab. */
-    private static final int STAT_TAB = 1;
+    protected static final int STAT_TAB = 1;
 
     /** Logging Tab. */
-    private static final int LOG_TAB = 2;
+    protected static final int LOG_TAB = 2;
 
     /** File handler output mode - append. */
     private static final int APPEND = 0;
@@ -68,20 +68,20 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
     private JPanelAddRemoveVOI addremove;
 
     /** DOCUMENT ME! */
-    private AlgorithmVOIProps calculator = null;
+    protected AlgorithmVOIProps calculator = null;
 
     /** Panel holding statistics options. */
-    private JPanelStatisticsList checkBoxPanel;
+    protected JPanelStatisticsList checkBoxPanel;
 
     /** boolean array mirroring checkbox panel's selection. */
-    private boolean[] checkList = null;
+    protected boolean[] checkList = null;
 
     /** force precision to display at maximum. */
     private boolean doForce = false;
 
     // onscreen objects
     /** Tabbed pane that holds all components. */
-    private JTabbedPane everything;
+    protected JTabbedPane everything;
 
     /** Panel to select files. */
     private JPanelFileSelection fileSelectorPanel;
@@ -90,13 +90,13 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
     private VOIHighlighter highlighter;
 
     /** Global image reference to the currently active image during script running and recording. */
-    private ModelImage image;
+    protected ModelImage image;
 
     /** The text of the log process to be written to file. */
     private StringBuffer logFileText;
 
     /** Model where data is stored for the table. */
-    private ViewTableModel logModel;
+    protected ViewTableModel logModel;
 
     /** Table holding log of statistics calculated. */
     private JTable logTable;
@@ -105,7 +105,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
     private boolean noisyProcess = true;
 
     /** Panel holding statistics output options. */
-    private JPanelStatisticsOptions outputOptionsPanel;
+    protected JPanelStatisticsOptions outputOptionsPanel;
 
     /** Check box item indicating if we're to always overwriteBox the statistics file. */
     private JCheckBoxMenuItem overwriteBox;
@@ -114,7 +114,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
     private int precision = 4;
 
     /** DOCUMENT ME! */
-    private int processType = AlgorithmVOIProps.PROCESS_PER_VOI;
+    protected int processType = AlgorithmVOIProps.PROCESS_PER_VOI;
 
     /** DOCUMENT ME! */
     private int rangeFlag = NO_RANGE;
@@ -126,10 +126,10 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
     private float rangeMinimum = 0f;
 
     /** List of selected VOIs. */
-    private JList selectedList = new JList();
+    protected JList selectedList = new JList();
 
     /** DOCUMENT ME! */
-    private boolean showTotals = false;
+    protected boolean showTotals = false;
 
     // directory file objects
     /** Log file destination. */
@@ -139,17 +139,17 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
     private int tableDestinationUsage;
 
     /** Toolbar. */
-    private JToolBar toolBar;
+    protected JToolBar toolBar;
 
     /** Icon and log access. */
-    private ViewUserInterface userInterface;
+    protected ViewUserInterface userInterface;
 
     // actual things we can see...
     /** List of available VOIs. */
     private JList volumesList = new JList();
 
     /** DOCUMENT ME! */
-    private int xUnits, yUnits, zUnits;
+    protected int xUnits, yUnits, zUnits;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -176,48 +176,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
     public JDialogVOIStatistics(VOIVector voiList) {
         super(ViewUserInterface.getReference().getMainFrame(), false);
 
-
-        setTitle("Calculate Statistics on VOI groups");
-        setJMenuBar(buildMenuEntries());
-        buildToolBar();
-        this.userInterface = ViewUserInterface.getReference();
-        image = ViewUserInterface.getReference().getActiveImageFrame().getComponentImage().getActiveImage();
-        xUnits = image.getFileInfo(0).getUnitsOfMeasure()[0];
-        yUnits = image.getFileInfo(0).getUnitsOfMeasure()[1];
-        zUnits = FileInfoBase.UNKNOWN_MEASURE;
-
-        if (image.getNDims() > 2) {
-            zUnits = image.getFileInfo(0).getUnitsOfMeasure()[2];
-        }
-        // need to take out line VOIs, polyline VOIs, point VOIs
-
-        everything = new JTabbedPane(JTabbedPane.TOP);
-        everything.setFont(MipavUtil.font12B);
-        everything.insertTab("VOI selection", null, buildVOIPanel(voiList), // we must store this panel so we can
-                                                                            // create a new listing later
-                             "Choose VOIs and statistics file", VOI_TAB);
-
-        JPanel statPanel = new JPanel(new BorderLayout());
-        checkBoxPanel = new JPanelStatisticsList();
-        outputOptionsPanel = new JPanelStatisticsOptions();
-
-        if (ViewUserInterface.getReference().getActiveImageFrame().getComponentImage().getActiveImage().getNDims() ==
-                2) {
-            outputOptionsPanel.setBySliceEnabled(false);
-        }
-
-        statPanel.add(outputOptionsPanel, BorderLayout.EAST);
-        statPanel.add(checkBoxPanel, BorderLayout.CENTER);
-        everything.insertTab("Statistics Options", null, statPanel, "Statistic Selection", STAT_TAB);
-
-        everything.insertTab("Logging", null, buildLogPanel(), "Output Log", LOG_TAB);
-
-        getContentPane().add(toolBar, BorderLayout.NORTH);
-        getContentPane().add(everything, BorderLayout.CENTER);
-        getContentPane().add(buildOKCancelPanel(), BorderLayout.SOUTH); // build OK/Cancel button Panel
-
-        pack();
-        setSize(800, 500); // decent size??
+        buildDialog(voiList);
 
         this.addWindowListener(new WindowAdapter() {
                 public void windowClosing(WindowEvent event) {
@@ -658,13 +617,60 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
         scriptParameters.getParams().put(ParameterFactory.newParameter("output_writing_behavior",
                                                                        tableDestinationUsage));
     }
+    
+    /**
+     * Builds main dialog.
+     */
+    protected void buildDialog(VOIVector voiList) {
+    	setTitle("Calculate Statistics on VOI groups");
+        setJMenuBar(buildMenuEntries());
+        buildToolBar();
+        this.userInterface = ViewUserInterface.getReference();
+        image = ViewUserInterface.getReference().getActiveImageFrame().getComponentImage().getActiveImage();
+        xUnits = image.getFileInfo(0).getUnitsOfMeasure()[0];
+        yUnits = image.getFileInfo(0).getUnitsOfMeasure()[1];
+        zUnits = FileInfoBase.UNKNOWN_MEASURE;
 
+        if (image.getNDims() > 2) {
+            zUnits = image.getFileInfo(0).getUnitsOfMeasure()[2];
+        }
+        // need to take out line VOIs, polyline VOIs, point VOIs
+
+        everything = new JTabbedPane(JTabbedPane.TOP);
+        everything.setFont(MipavUtil.font12B);
+        everything.insertTab("VOI selection", null, buildVOIPanel(voiList), // we must store this panel so we can
+                                                                            // create a new listing later
+                             "Choose VOIs and statistics file", VOI_TAB);
+
+        JPanel statPanel = new JPanel(new BorderLayout());
+        checkBoxPanel = new JPanelStatisticsList();
+        outputOptionsPanel = new JPanelStatisticsOptions();
+
+        if (ViewUserInterface.getReference().getActiveImageFrame().getComponentImage().getActiveImage().getNDims() ==
+                2) {
+            outputOptionsPanel.setBySliceEnabled(false);
+        }
+
+        statPanel.add(outputOptionsPanel, BorderLayout.EAST);
+        statPanel.add(checkBoxPanel, BorderLayout.CENTER);
+        everything.insertTab("Statistics Options", null, statPanel, "Statistic Selection", STAT_TAB);
+
+        everything.insertTab("Logging", null, buildLogPanel(), "Output Log", LOG_TAB);
+
+        getContentPane().add(toolBar, BorderLayout.NORTH);
+        getContentPane().add(everything, BorderLayout.CENTER);
+        getContentPane().add(buildOKCancelPanel(), BorderLayout.SOUTH); // build OK/Cancel button Panel
+
+        pack();
+        setSize(800, 500); // decent size??
+    }
+   
     /**
      * creates a panel for the output log.
      *
      * @return  DOCUMENT ME!
      */
-    private JPanel buildLogPanel() {
+    protected JPanel buildLogPanel() {
         JPanel logpan = new JPanel(new BorderLayout());
 
         logModel = new ViewTableModel();
@@ -683,7 +689,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
      *
      * @return  DOCUMENT ME!
      */
-    private JMenuBar buildMenuEntries() {
+    protected JMenuBar buildMenuEntries() {
         JMenuBar anonBar = new JMenuBar();
         JMenu entry = new JMenu("Options");
         JMenuItem logClear = new JMenuItem("Clear Log Window");
@@ -716,7 +722,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
      *
      * @return  DOCUMENT ME!
      */
-    private JPanel buildOKCancelPanel() {
+    protected JPanel buildOKCancelPanel() {
         JPanel ocp = new JPanel(); // flow layout
 
         buildOKButton();
@@ -823,7 +829,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
     /**
      * Build the toolbar control.
      */
-    private void buildToolBar() {
+    protected void buildToolBar() {
         GridBagConstraints gbc = new GridBagConstraints();
 
         gbc.fill = GridBagConstraints.BOTH;
@@ -864,7 +870,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
      *
      * @return  DOCUMENT ME!
      */
-    private JPanel buildVOIPanel(VOIVector VOIlist) {
+    protected JPanel buildVOIPanel(VOIVector VOIlist) {
         JPanel imagePanel = new JPanel(new BorderLayout());
 
         // we must store sourcePanel so we can create a new directory listing later
@@ -898,7 +904,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
      *
      * @return  the new KeyLog String.
      */
-    private String createNewLogfile() {
+    protected String createNewLogfile() {
         int i;
         String kl = "#\tMIPAV will alter.  Conducting statistical computation.\n";
         String str;
@@ -1112,12 +1118,14 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
         for (int i = 0; i < selectedList.getModel().getSize(); i++) {
 
             try {
+            	System.out.println(((VOI) selectedList.getModel().getElementAt(i)).getName());
                 ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnore(outputOptionsPanel.getMaximumExclude().floatValue());
             } catch (NullPointerException noMax) {
                 ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnore(Float.MAX_VALUE);
             }
 
             try {
+            	System.out.println(((VOI) selectedList.getModel().getElementAt(i)).getName());
                 ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnore(outputOptionsPanel.getMinimumExclude().floatValue());
             } catch (NullPointerException noMax) {
                 ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnore(-Float.MAX_VALUE);
@@ -1147,7 +1155,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
     /**
      * Method for updating the table and GUI after the algorithm has completed (Not for script-running).
      */
-    private void updateDialog() {
+    protected void updateDialog() {
 
         // notification will turn buttons back on
         cancelButton.setEnabled(true);
@@ -1443,7 +1451,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
      *
      * @param  logentry  DOCUMENT ME!
      */
-    private void writeLogfileEntry(String logentry) {
+    protected void writeLogfileEntry(String logentry) {
         logFileText.append(logentry + '\n');
     }
 
