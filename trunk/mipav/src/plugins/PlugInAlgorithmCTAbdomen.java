@@ -1688,6 +1688,10 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 	   return abdomenVOI;
    }
    
+   public VOI getSubcutaneousVOI() {
+	   return subcutaneousVOI;
+   }
+   
    public ModelImage threshold(ModelImage threshSourceImg, float[] thresh) {
         ModelImage resultImage = null;
         resultImage = new ModelImage(ModelStorageBase.UBYTE, threshSourceImg.getExtents(), "threshResultImg");

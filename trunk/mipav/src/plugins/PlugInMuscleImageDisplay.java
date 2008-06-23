@@ -463,13 +463,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		    	performSegmentation(thighSeg, resultImage3);
     		}
     	} else if(imageType.equals(ImageType.Abdomen)) {
-    		//TODO: Abdomen segmentation
-    		//ModelImage srcImage = (ModelImage)getActiveImage().clone();
-    		//if(voiBuffer.get("Abdomen").area() == 0) {
-    		//	ModelImage resultImage = (ModelImage)srcImage.clone();
-    		//	abdomenSeg = new PlugInAlgorithmCTAbdomen(resultImage, srcImage, imageDir, voiBuffer.get("Abdomen").getColor());
-    		//	performSegmentation(abdomenSeg, resultImage);
-    		//}
+    		ModelImage srcImage = (ModelImage)getActiveImage().clone();
+    		if(voiBuffer.get("Abdomen").area() == 0) {
+    			ModelImage resultImage = (ModelImage)srcImage.clone();
+    			abdomenSeg = new PlugInAlgorithmCTAbdomen(resultImage, srcImage, imageDir, voiBuffer.get("Abdomen").getColor());
+    			performSegmentation(abdomenSeg, resultImage);
+    		}
     	}
     }
     
@@ -580,6 +579,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					}
 				}
 				firstBufferVOI.setComputerGenerated(true);
+			}
+			if(((PlugInAlgorithmCTAbdomen)algorithm).getSubcutaneousVOI() != null) {
+				secondVOI = ((PlugInAlgorithmCTAbdomen)algorithm).getSubcutaneousVOI().getCurves();
+				secondBufferVOI = voiBuffer.get("Subcutaneous area");
+				for(int i=0; i<secondVOI.length; i++) {
+					for(int j=0; j<secondVOI[i].size(); j++) {
+						secondBufferVOI.importCurve((VOIContour)secondVOI[i].get(j), i);
+					}
+				}
+				secondBufferVOI.setComputerGenerated(true);
 			}
 		}
 
@@ -4534,20 +4543,27 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 
 	    	                    if (checkList[k]) {
 	    	                    	//Guaranteed to not be color image
+	    	                    	DecimalFormat dec = new DecimalFormat("0.00");
 	    	                    	VOI v = (VOI) list.getElementAt(i);
 	    	                    	if(v instanceof PlugInSelectableVOI && ((PlugInSelectableVOI)v).calcEligible()) {
 	    	                    		if(allNames[k].equals(TOTAL_AREA)) {
-	                        				rowData[count] = Double.toString(((PlugInSelectableVOI)v).getTotalAreaCalc());
+	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getTotalAreaCalc(slice));
+	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getTotalAreaCalc(slice));
 	    	                    		} else if(allNames[k].equals(FAT_AREA)) {
-	                        				rowData[count] = Double.toString(((PlugInSelectableVOI)v).getFatArea());
+	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getFatArea(slice));
+	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getFatArea(slice));
 	    	                    		} else if(allNames[k].equals(LEAN_AREA)) {
-	                        				rowData[count] = Double.toString(((PlugInSelectableVOI)v).getLeanArea());
+	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getLeanArea(slice));
+	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getLeanArea(slice));
 	    	                    		} else if(allNames[k].equals(MEAN_TOTAL_HU)) {
-	                        				rowData[count] = Double.toString(((PlugInSelectableVOI)v).getMeanTotalH());
+	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getMeanTotalH(slice));
+	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getMeanTotalH(slice));
 	    	                    		} else if(allNames[k].equals(MEAN_FAT_HU)) {
-	                        				rowData[count] = Double.toString(((PlugInSelectableVOI)v).getMeanFatH());
+	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getMeanFatH(slice));
+	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getMeanFatH(slice));
 	    	                    		} else if(allNames[k].equals(MEAN_LEAN_HU)) {
-	                        				rowData[count] = Double.toString(((PlugInSelectableVOI)v).getMeanLeanH());
+	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getMeanLeanH(slice));
+	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getMeanLeanH(slice));
 	    	                    		}
 	    	                    	}
 	    	                    }
