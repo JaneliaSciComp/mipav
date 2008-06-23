@@ -3,6 +3,8 @@ import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmSnake;
+import gov.nih.mipav.model.algorithms.AlgorithmVOIProps;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
@@ -12,7 +14,10 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.event.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
+import gov.nih.mipav.view.dialogs.JDialogVOIStats;
 import gov.nih.mipav.view.dialogs.JDialogWinLevel;
+import gov.nih.mipav.view.dialogs.JDialogVOIStatistics.JPanelStatisticsOptions;
 
 import com.lowagie.text.*;
 import com.lowagie.text.Font;
@@ -41,6 +46,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     /**Folder for saving all information to.*/
     public static final String VOI_DIR = "NIA_Seg";
     
+    public static final String TOTAL_AREA = "Total Area";   
+    public static final String FAT_AREA = "Fat Area";   
+    public static final String LEAN_AREA = "Lean Area";  
+    public static final String MEAN_TOTAL_HU = "Mean Total HU";  
+    public static final String MEAN_FAT_HU = "Mean Fat HU";
+    public static final String MEAN_LEAN_HU = "Mean Lean HU";
+    
     //~ Instance fields ------------------------------------------------------------------------------------------------    
     
 
@@ -61,15 +73,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     /** Text for muscles where a mirror muscle may exist. */
     private String[][] mirrorArr;
 
-    //private boolean[][] mirrorZ;
-
     /** Text for muscles where mirror muscles are not considered. */
     private String[][] noMirrorArr;
 
-    //private boolean[][] noMirrorZ;
-
     /** 
-     * Denotes the anatomical part represented in the image. Implemented seperatly in case 
+     * Denotes the anatomical part represented in the image. Implemented here in case 
      * this class is moved to its own class at a later time.
      */
     private ImageType imageType;
@@ -101,13 +109,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     /**Whether the previously called VOI was modified and needs to be saved to the file system.*/
     private boolean voiChangeState = false;
 
-    /**The seed point for chosing a color. */
+    /**The seed point for choosing a color. */
     private int colorChoice = 0;
     
     /**Buffer containing exact copies of VOIs on file system along with program relevant material.*/
     private Map<String, PlugInSelectableVOI> voiBuffer;
     
-    /**The top-level group of threads used for calulating. */
+    /**The top-level group of threads used for calculating. */
     private ThreadGroup calcGroup = new ThreadGroup("CalcVOI");
     
     /**The algorithm for producing bones automatically. */
@@ -153,6 +161,37 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     }
  
     /**
+     * Creates and initializes the component image for the given image.
+     *
+     * @param   extents  the image dimensionality.
+     *
+     * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
+     */
+    protected void initComponentImage(int[] extents) throws OutOfMemoryError {
+
+        componentImage = new PlugInMuscleEditImage(this, imageA, LUTa, imageBufferA, null, null, imageBufferB,
+                                                     pixBuffer, zoom, extents, logMagDisplay,
+                                                     FileInfoBase.UNKNOWN_ORIENT);
+
+        componentImage.setBuffers(imageBufferA, imageBufferB, pixBuffer, pixBufferB);
+
+        if (resols[1] >= resols[0]) {
+            componentImage.setResolutions(1, heightResFactor);
+        } else {
+            componentImage.setResolutions(widthResFactor, 1);
+        }
+
+        // if this is a color image, then update the RGB info in the component
+        if (imageA.isColorImage()) {
+
+            if (getRGBTA() == null) {
+                setRGBTA(initRGB(imageA));
+            }
+        } // end if image is an RGB type
+
+    } // end initComponentImage()
+    
+    /**
      * Constructor for creating pluging within MIPAV system.
      * @param image
      * @param titles
@@ -166,6 +205,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             ImageType imageType, Symmetry symmetry, boolean multipleSlices) {
 
     	super(image);
+    	
     	ViewJProgressBar progressBar = new ViewJProgressBar("Automatic Seg", "Initializing...", 0, 100, true);
     	setVisible(false);
         
@@ -273,7 +313,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     }
     
     /**
-     * Constructor for calling this as a standalone.  will invoke the class's own init() function
+     * Constructor for calling this as a stand-alone.  will invoke the class's own init() function
      * for setting up the image rather than ViewJFrameImage's init()
      * @param image the model image
      * @param titles
@@ -648,7 +688,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        String command = e.getActionCommand();
+        System.out.println(e);
+    	String command = e.getActionCommand();
         //run through toggle buttons to see if a menu selected one (updates the button status)
         getControls().getTools().setToggleButtonSelected(command);
                 
@@ -1424,6 +1465,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             
             if (buttonGroup.length > 3) {
             	JPanel topPanel = new JPanel();
+            	JPanel centerPanel = new JPanel();
             	JPanel bottomPanel = new JPanel();
             	for(int i=0; i<buttonStringList.length; i++) {
             		buttonGroup[i] = new JButton(buttonStringList[i]);
@@ -1436,18 +1478,23 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             		} else {
             			buttonGroup[i].setMinimumSize(MipavUtil.widenButtonSize);
             			buttonGroup[i].setPreferredSize(MipavUtil.widenButtonSize);
+            			buttonGroup[i].setMaximumSize(new Dimension(300, 300));
             		}
             		buttonGroup[i].setFont(MipavUtil.font12B);
             	
             		if (i < 3) {
             			topPanel.add(buttonGroup[i]);
+            		} else if(i < 6) {
+            			centerPanel.add(buttonGroup[i]);
             		} else {
             			bottomPanel.add(buttonGroup[i]);
             		}
+            		
             	}
             	buttonPanel.setLayout(new BorderLayout());
             	buttonPanel.add(topPanel, BorderLayout.NORTH);
-            	buttonPanel.add(bottomPanel, BorderLayout.CENTER);
+            	buttonPanel.add(centerPanel, BorderLayout.CENTER);
+            	buttonPanel.add(bottomPanel, BorderLayout.SOUTH);
             	
             } else {
             
@@ -4221,4 +4268,932 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    	return voiMap.get(pt.x+pt.y*xRes);
 	    }
 	}
+	
+	private class PlugInMuscleEditImage extends ViewJComponentEditImage {
+		
+		public PlugInMuscleEditImage(PlugInMuscleImageDisplay _frame, ModelImage _imageA, ModelLUT _LUTa, float[] imgBufferA,
+                ModelImage _imageB, ModelLUT _LUTb, float[] imgBufferB, int[] pixelBuffer,
+                float zoom, int[] extents, boolean logMagDisplay, int _orientation) {
+			super(_frame, _imageA, _LUTa, imgBufferA, _imageB, _LUTb, imgBufferB, pixelBuffer, zoom, extents, logMagDisplay, _orientation);
+			
+			//voiHandler = new PlugInHandler(this);
+			//TODO: Implement new handler here
+		}
+		
+		/**
+	     * Opens a JDialogStatistics to allow computation ofROI statistics.
+	     */
+	    public void showStatisticsCalculator() {
+
+	        if (imageStatList == null) {
+
+	            if ((imageActive.getVOIs() != null) && (imageActive.getVOIs().size() != 0)) {
+	                imageStatList = new PlugInVOIStatistics(imageActive.getVOIs());
+	                imageStatList.setVisible(true);
+	                // addVOIUpdateListener(imageStatList); // i'd rather not do it this way...
+	            } else {
+	                MipavUtil.displayError("A VOI must be present to use the statistics calculator");
+	            }
+	        } else {
+	            imageStatList.refreshVOIList(imageActive.getVOIs());
+	            imageStatList.setVisible(true);
+	        }
+	    }
+	}
+	
+	private class PlugInVOIStatistics extends JDialogVOIStatistics {
+		 /**
+	     * builds and packs the frame. does <i>not</I> set it visible.
+	     *
+	     * <p>install the panels of source directory, destination directory, the checkbox for approving the
+	     * translation-table file and the panel containing the ok and cancel buttons. Installs the checkbox panel.</p>
+	     *
+	     * @param  voiList  DOCUMENT ME!
+	     */
+	    public PlugInVOIStatistics(VOIVector voiList) {
+	        super(voiList);
+
+	        //checkBoxPanel = new PlugInStatisticsList();
+	    }
+	    
+	    protected void buildDialog(VOIVector voiList) {
+	    	setTitle("Calculate Statistics on VOI groups");
+	        setJMenuBar(buildMenuEntries());
+	        buildToolBar();
+	        this.userInterface = ViewUserInterface.getReference();
+	        image = ViewUserInterface.getReference().getActiveImageFrame().getComponentImage().getActiveImage();
+	        xUnits = image.getFileInfo(0).getUnitsOfMeasure()[0];
+	        yUnits = image.getFileInfo(0).getUnitsOfMeasure()[1];
+	        zUnits = FileInfoBase.UNKNOWN_MEASURE;
+
+	        if (image.getNDims() > 2) {
+	            zUnits = image.getFileInfo(0).getUnitsOfMeasure()[2];
+	        }
+	        // need to take out line VOIs, polyline VOIs, point VOIs
+
+	        everything = new JTabbedPane(JTabbedPane.TOP);
+	        everything.setFont(MipavUtil.font12B);
+	        everything.insertTab("VOI selection", null, buildVOIPanel(voiList), // we must store this panel so we can
+	                                                                            // create a new listing later
+	                             "Choose VOIs and statistics file", VOI_TAB);
+
+	        JPanel statPanel = new JPanel(new BorderLayout());
+	        checkBoxPanel = new PlugInStatisticsList();
+	        outputOptionsPanel = new JPanelStatisticsOptions();
+
+	        if (ViewUserInterface.getReference().getActiveImageFrame().getComponentImage().getActiveImage().getNDims() ==
+	                2) {
+	            outputOptionsPanel.setBySliceEnabled(false);
+	        }
+
+	        statPanel.add(outputOptionsPanel, BorderLayout.EAST);
+	        statPanel.add(checkBoxPanel, BorderLayout.CENTER);
+	        everything.insertTab("Statistics Options", null, statPanel, "Statistic Selection", STAT_TAB);
+
+	        everything.insertTab("Logging", null, buildLogPanel(), "Output Log", LOG_TAB);
+
+	        getContentPane().add(toolBar, BorderLayout.NORTH);
+	        getContentPane().add(everything, BorderLayout.CENTER);
+	        getContentPane().add(buildOKCancelPanel(), BorderLayout.SOUTH); // build OK/Cancel button Panel
+
+	        pack();
+	        setSize(800, 500); // decent size??
+	    }
+	    
+	    /**
+	     * Method for updating the table and GUI after the algorithm has completed (Not for script-running).
+	     */
+	    protected void updateDialog() {
+
+	        // notification will turn buttons back on
+	        cancelButton.setEnabled(true);
+	        OKButton.setEnabled(true);
+
+	        // get output data out of the notifier
+	        // getStatisticsData((AlgorithmVOIProps)event);
+
+	        if (!calculator.isCompleted()) {
+	            return;
+	        }
+
+	        int totalCount = 0;
+	        String str;
+	        VOIStatisticalProperties properties;
+	        Vector[] contours;
+
+	        if ((processType == AlgorithmVOIProps.PROCESS_PER_SLICE) ||
+	                (processType == AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR)) {
+	            ListModel list = selectedList.getModel();
+
+	            if (logModel.getColumnIndex("Name, Slice, Contour") == -1) {
+	                logModel.addColumn("Name, Slice, Contour");
+	            }
+
+	            for (int i = 0; i < VOIStatisticList.numberOfStatistics; i++) {
+
+	                if (checkList[i]) {
+
+	                    if (logModel.getColumnStartsWithIndex(VOIStatisticList.statisticDescription[i]) == -1) {
+
+	                        if ((VOIStatisticList.statisticDescription[i].indexOf("Volume") != -1) && (xUnits == yUnits) &&
+	                                (xUnits == zUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+	                            str = image.getFileInfo(0).getVolumeUnitsOfMeasureStr();
+	                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+	                        } else if ((VOIStatisticList.statisticDescription[i].indexOf("Area") != -1) &&
+	                                       (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+	                            str = image.getFileInfo(0).getAreaUnitsOfMeasureStr();
+	                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+	                        } else if ((VOIStatisticList.statisticDescription[i].indexOf("Perimeter") != -1) &&
+	                                       (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+	                            str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+	                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+	                        } else if (VOIStatisticList.statisticDescription[i].indexOf("Principal Axis") != -1) {
+	                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (degrees)");
+	                        } else if ((VOIStatisticList.statisticDescription[i].indexOf("Major axis length") != -1) &&
+	                                       (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+	                            str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+	                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+	                        } else if ((VOIStatisticList.statisticDescription[i].indexOf("Minor axis length") != -1) &&
+	                                       (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+	                            str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+	                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+	                        } else {
+	                            logModel.addColumn(VOIStatisticList.statisticDescription[i]);
+	                        }
+	                    }
+
+	                    // total count used for total # of data elemets, need to add 3 if color
+	                    // image and intensity related (R,G,B)
+	                    totalCount++;
+
+	                    if (calculator.isColor() && (VOIStatisticList.statisticDescription[i].indexOf("Intensity") != -1)) {
+	                        totalCount += 2;
+	                    }
+	                }
+	            }
+	            
+	            String[] allNames = new PlugInStatisticsList().makeCheckboxLabels();
+	            
+	            for(int i=VOIStatisticList.statisticDescription.length; i<checkBoxPanel.getCheckboxLength(); i++) {
+	            	String name = allNames[i];
+	            	if (checkBoxPanel.getSelectedList(name)) {
+
+	                    if (logModel.getColumnIndex(name) == -1) {
+                            logModel.addColumn(name);
+	                    }
+	            	}
+	            }
+
+	            // for each element in the list ....
+	            for (int i = 0; i < list.getSize(); i++) {
+	                properties = calculator.getVOIProperties((VOI) list.getElementAt(i));
+	                contours = ((VOI) list.getElementAt(i)).getCurves();
+
+	                String[] rowData = new String[logModel.getColumnCount()];
+	                String[] totalData = new String[logModel.getColumnCount()];
+
+	                String[] logRowData = new String[rowData.length];
+	                String[] logTotalData = new String[rowData.length];
+
+	                for (int slice = 0; slice < contours.length; slice++) {
+	                    int count = 0;
+	                    int stop = 1;
+	                    String end = slice + ";";
+
+	                    if (calculator.getProcessType() == AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR) {
+	                        stop = contours[slice].size();
+	                    }
+
+	                    if (contours[slice].size() < 1) {
+	                        stop = 0;
+	                    }
+
+	                    // for each contour only print titles and calculations once,
+	                    // if not "calculate by contour" (ie., if we only want totals):
+	                    for (int num = 0; num < stop; num++) {
+
+	                        // first: set up row title:
+	                        rowData[0] = list.getElementAt(i).toString() + ", " + // VOI name
+	                                     (slice + 1) + ", " + // slice #, irrellevent to where contour is in image
+	                                     ((VOIBase) contours[slice].get(num)).getLabel(); // contour #, held in label
+	                        totalData[0] = "Totals:";
+
+	                        logRowData[0] = new String(rowData[0]);
+	                        logTotalData[0] = new String(totalData[0]);
+
+	                        if (calculator.getProcessType() == AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR) {
+	                            end = slice + ";" + num;
+	                        }
+
+	                        // for each column in the row, print the statistic:
+	                        for (int k = 0; k < statisticDescription.length; k++) {
+
+	                            if (logModel.getColumnBaseIndex(VOIStatisticList.statisticDescription[k]) != -1) {
+	                                count++;
+	                            }
+
+	                            if (checkList[k]) {
+
+	                                // if it's a color image and the property is min intensity, max intensity, avg
+	                                // intensity, or standard deviation of intensity, those properties were entered as Red,
+	                                // Green, Blue and we should display them differently.
+	                                if (calculator.isColor() &&
+	                                        (VOIStatisticList.statisticDescription[k].indexOf("Intensity") != -1)) {
+	                                    String temp = "R: " + properties.getProperty(statisticDescription[k] + "Red" + end);
+	                                    temp += " G: " + properties.getProperty(statisticDescription[k] + "Green" + end);
+	                                    temp += " B: " + properties.getProperty(statisticDescription[k] + "Blue" + end);
+	                                    rowData[count] = temp;
+	                                    logRowData[count] = temp;
+
+	                                    if (showTotals) {
+	                                        temp = " R: " + properties.getProperty(statisticDescription[k] + "RedTotal");
+	                                        temp += " G: " + properties.getProperty(statisticDescription[k] + "GreenTotal");
+	                                        temp += " B: " + properties.getProperty(statisticDescription[k] + "BlueTotal");
+	                                        totalData[count] = temp;
+	                                        logTotalData[count] = temp;
+	                                    }
+	                                } else {
+
+	                                    rowData[count] = properties.getProperty(statisticDescription[k] + end).replaceAll("\t",
+	                                                                                                                      ", ");
+	                                    logRowData[count] = properties.getProperty(statisticDescription[k] + end);
+
+	                                    if (showTotals) {
+	                                        totalData[count] = properties.getProperty(statisticDescription[k] + "Total").replaceAll("\t",
+	                                                                                                                                ", ");
+	                                        logTotalData[count] = properties.getProperty(statisticDescription[k] + "Total");
+	                                    }
+	                                }
+	                            }
+	                        } // end for each column
+	                        
+	                        for(int k=statisticDescription.length; k<allNames.length; k++) {
+	    	                	if (logModel.getColumnBaseIndex(allNames[k]) != -1) {
+	    	                        count++;
+	    	                    }
+
+	    	                    if (checkList[k]) {
+	    	                    	//Guaranteed to not be color image
+	    	                    	VOI v = (VOI) list.getElementAt(i);
+	    	                    	if(v instanceof PlugInSelectableVOI && ((PlugInSelectableVOI)v).calcEligible()) {
+	    	                    		if(allNames[k].equals(TOTAL_AREA)) {
+	                        				rowData[count] = Double.toString(((PlugInSelectableVOI)v).getTotalAreaCalc());
+	    	                    		} else if(allNames[k].equals(FAT_AREA)) {
+	                        				rowData[count] = Double.toString(((PlugInSelectableVOI)v).getFatArea());
+	    	                    		} else if(allNames[k].equals(LEAN_AREA)) {
+	                        				rowData[count] = Double.toString(((PlugInSelectableVOI)v).getLeanArea());
+	    	                    		} else if(allNames[k].equals(MEAN_TOTAL_HU)) {
+	                        				rowData[count] = Double.toString(((PlugInSelectableVOI)v).getMeanTotalH());
+	    	                    		} else if(allNames[k].equals(MEAN_FAT_HU)) {
+	                        				rowData[count] = Double.toString(((PlugInSelectableVOI)v).getMeanFatH());
+	    	                    		} else if(allNames[k].equals(MEAN_LEAN_HU)) {
+	                        				rowData[count] = Double.toString(((PlugInSelectableVOI)v).getMeanLeanH());
+	    	                    		}
+	    	                    	}
+	    	                    }
+	    	                	
+	    	                }
+
+	                        count = 0;
+	                        logModel.addRow(rowData);
+
+	                        String logText = "";
+
+	                        for (int j = 0; j < rowData.length; j++) {
+	                            logText += logRowData[j] + "\t";
+	                        }
+
+	                        writeLogfileEntry(logText);
+	                    } // end for contours
+	                }
+
+	                if (showTotals) {
+	                    logModel.addRow(totalData);
+
+	                    String logText = "";
+
+	                    for (int j = 0; j < logTotalData.length; j++) {
+	                        logText += logTotalData[j] + "\t";
+	                    }
+
+	                    writeLogfileEntry(logText);
+	                }
+
+	                for (int k = 0; k < rowData.length; k++) {
+	                    rowData[k] = "";
+	                }
+
+	                logModel.addRow(rowData);
+	            }
+	        } else { // whole 3D VOI data
+
+	            ListModel list = selectedList.getModel();
+
+	            if (logModel.getColumnIndex("Name, Slice, Contour") == -1) {
+	                logModel.addColumn("Name, Slice, Contour");
+	            }
+
+	            // add any columns which will be displayed, but not already displayed:
+	            for (int i = 0; i < VOIStatisticList.numberOfStatistics; i++) {
+
+	                if (checkBoxPanel.getSelectedList(VOIStatisticList.statisticDescription[i])) {
+
+	                    if (logModel.getColumnIndex(VOIStatisticList.statisticDescription[i]) == -1) {
+
+	                        if ((VOIStatisticList.statisticDescription[i].indexOf("Volume") != -1) && (xUnits == yUnits) &&
+	                                (xUnits == zUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+	                            str = image.getFileInfo(0).getVolumeUnitsOfMeasureStr();
+	                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+	                        } else if ((VOIStatisticList.statisticDescription[i].indexOf("Area") != -1) &&
+	                                       (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+	                            str = image.getFileInfo(0).getAreaUnitsOfMeasureStr();
+	                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+	                        } else if ((VOIStatisticList.statisticDescription[i].indexOf("Perimeter") != -1) &&
+	                                       (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+	                            str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+	                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+	                        } else if (VOIStatisticList.statisticDescription[i].indexOf("Principal Axis") != -1) {
+	                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (degrees)");
+	                        } else if ((VOIStatisticList.statisticDescription[i].indexOf("Major axis length") != -1) &&
+	                                       (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+	                            str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+	                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+	                        } else if ((VOIStatisticList.statisticDescription[i].indexOf("Minor axis length") != -1) &&
+	                                       (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+	                            str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+	                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+	                        } else {
+	                            logModel.addColumn(VOIStatisticList.statisticDescription[i]);
+	                        }
+	                    }
+
+	                    // total count used for total # of data elemets, need to add 3 if color image and intensity related
+	                    // (R,G,B)
+	                    totalCount++;
+
+	                    if (calculator.isColor() && (VOIStatisticList.statisticDescription[i].indexOf("Intensity") != -1)) {
+	                        totalCount += 2;
+	                    }
+	                }
+	            }
+	            
+	            String[] allNames = new PlugInStatisticsList().makeCheckboxLabels();
+	            
+	            for(int i=VOIStatisticList.statisticDescription.length; i<checkBoxPanel.getCheckboxLength(); i++) {
+	            	String name = allNames[i];
+	            	if (checkBoxPanel.getSelectedList(name)) {
+
+	                    if (logModel.getColumnIndex(name) == -1) {
+                            logModel.addColumn(name);
+	                    }
+	            	}
+	            }
+
+	            DecimalFormat dec = new DecimalFormat("0.00");
+	            // for each element in the list print properties of each VOI,
+	            // column-by-column:
+	            for (int i = 0; i < list.getSize(); i++) {
+	                properties = calculator.getVOIProperties((VOI) list.getElementAt(i));
+	                contours = ((VOI) list.getElementAt(i)).getCurves();
+
+	                String[] rowData = new String[logModel.getColumnCount()];
+	                rowData[0] = list.getElementAt(i).toString();
+
+	                int count = 0;
+
+	                for (int k = 0; k < statisticDescription.length; k++) {
+
+	                    if (logModel.getColumnBaseIndex(VOIStatisticList.statisticDescription[k]) != -1) {
+	                        count++;
+	                    }
+
+	                    if (checkList[k]) {
+
+	                        // if it's a color image and the property is min intensity, max intensity, avg intensity,
+	                        // or standard deviation of intensity, those properties were entered as Red, Green, Blue and
+	                        // we should display them differently.
+	                        if (calculator.isColor() &&
+	                                (VOIStatisticList.statisticDescription[k].indexOf("Intensity") != -1)) {
+	                            String temp = "R: " + properties.getProperty(statisticDescription[k] + "Red");
+	                            temp += " G: " + properties.getProperty(statisticDescription[k] + "Green");
+	                            temp += " B: " + properties.getProperty(statisticDescription[k] + "Blue");
+	                            rowData[count] = temp;
+	                        } else {
+	                            rowData[count] = properties.getProperty(statisticDescription[k]);
+	                        }
+	                    }
+	                } // end for each column
+	                
+	                for(int k=statisticDescription.length; k<allNames.length; k++) {
+	                	if (logModel.getColumnBaseIndex(allNames[k]) != -1) {
+	                        count++;
+	                    }
+
+	                    if (checkList[k]) {
+	                    	//Guaranteed to not be color image
+	                    	VOI v = (VOI) list.getElementAt(i);
+	                    	if(v instanceof PlugInSelectableVOI && ((PlugInSelectableVOI)v).calcEligible()) {
+	                    		if(allNames[k].equals(TOTAL_AREA)) {
+                    				rowData[count] = dec.format(((PlugInSelectableVOI)v).getTotalAreaCalc());
+	                    		} else if(allNames[k].equals(FAT_AREA)) {
+                    				rowData[count] = dec.format(((PlugInSelectableVOI)v).getFatArea());
+	                    		} else if(allNames[k].equals(LEAN_AREA)) {
+                    				rowData[count] = dec.format(((PlugInSelectableVOI)v).getLeanArea());
+	                    		} else if(allNames[k].equals(MEAN_TOTAL_HU)) {
+                    				rowData[count] = dec.format(((PlugInSelectableVOI)v).getMeanTotalH());
+	                    		} else if(allNames[k].equals(MEAN_FAT_HU)) {
+                    				rowData[count] = dec.format(((PlugInSelectableVOI)v).getMeanFatH());
+	                    		} else if(allNames[k].equals(MEAN_LEAN_HU)) {
+                    				rowData[count] = dec.format(((PlugInSelectableVOI)v).getMeanLeanH());
+	                    		}
+	                    	}
+	                    }
+	                	
+	                }
+
+	                count = 0;
+	                logModel.addRow(rowData);
+
+	                String logText = "";
+
+	                for (int j = 0; j < rowData.length; j++) {
+	                    logText += rowData[j] + "\t";
+	                }
+
+	                writeLogfileEntry(logText);
+
+	                for (int k = 0; k < rowData.length; k++) {
+	                    rowData[k] = "";
+	                }
+
+	                logModel.addRow(rowData);
+	            }
+	        }
+
+	        // finalise the output details
+	    }
+	    
+	    /**
+	     * creates a new keylog, writing which tags are to be removed from the image information; the table header for the
+	     * image read/write logging is added. the string created here is not automatically turned into the keylog string.
+	     * that must be done by the caller.
+	     *
+	     * @return  the new KeyLog String.
+	     */
+	    protected String createNewLogfile() {
+	        int i;
+	        String kl = "#\tMIPAV will alter.  Conducting statistical computation.\n";
+	        String str;
+
+	        // output the labels of the list of statistics to be produced.
+	        String[] checklistLabels = new PlugInStatisticsList().makeCheckboxLabels();
+	        kl += "Name, Slice, Contour\t";
+
+	        for (i = 0; i < checklistLabels.length; i++) {
+
+	            if (checkList[i]) {
+
+	                if ((checklistLabels[i].equals("Volume")) && (xUnits == yUnits) && (xUnits == zUnits) &&
+	                        (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+	                    str = image.getFileInfo(0).getVolumeUnitsOfMeasureStr();
+	                    kl += checklistLabels[i] + " (" + str + ")" + "\t";
+	                } else if ((checklistLabels[i].equals("Area")) && (xUnits == yUnits) &&
+	                               (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+	                    str = image.getFileInfo(0).getAreaUnitsOfMeasureStr();
+	                    kl += checklistLabels[i] + " (" + str + ")" + "\t";
+	                } else if ((checklistLabels[i].equals("Perimeter")) && (xUnits == yUnits) &&
+	                               (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+	                    str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+	                    kl += checklistLabels[i] + " (" + str + ")" + "\t";
+	                } else if (checklistLabels[i].equals("Principal Axis")) {
+	                    kl += checklistLabels[i] + " (degrees)" + "\t";
+	                } else if ((checklistLabels[i].equals("Major axis length")) && (xUnits == yUnits) &&
+	                               (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+	                    str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+	                    kl += checklistLabels[i] + " (" + str + ")" + "\t";
+	                } else if ((checklistLabels[i].equals("Minor axis length")) && (xUnits == yUnits) &&
+	                               (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+	                    str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+	                    kl += checklistLabels[i] + " (" + str + ")" + "\t";
+	                } else {
+	                    kl += checklistLabels[i] + "\t";
+	                }
+	            }
+	        }
+
+	        kl += "\n";
+
+	        return kl;
+	    }
+	}
+	
+	private class PlugInStatisticsList extends JPanelStatisticsList {
+		
+		private String[] calcExtra;
+		
+		/**
+	     * Creates the list of labels to use in the checkboxes.
+	     *
+	     * @return  DOCUMENT ME!
+	     */
+	    public String[] makeCheckboxLabels() {
+	    	calcExtra = new String[6];
+			
+			calcExtra[0] = "Total Area";
+			calcExtra[1] = "Fat Area";
+			calcExtra[2] = "Lean Area";
+			calcExtra[3] = "Mean Total HU";
+			calcExtra[4] = "Mean Fat HU";
+			calcExtra[5] = "Mean Lean HU";
+	    	
+	    	String[] labels = new String[statisticDescription.length+calcExtra.length];
+	    	
+	    	for(int i=0; i<statisticDescription.length; i++) {
+	    		System.out.println("Orginial fill: "+i);
+	        	labels[i] = statisticDescription[i];
+	        }
+	    	
+	    	for(int i=statisticDescription.length; i<labels.length; i++) {
+	    		System.out.println("Next step: "+i);
+	    		labels[i] = calcExtra[i-statisticDescription.length];
+	    	}
+	    	
+	    	return labels;
+	    }
+	    
+	    protected void setListLength() {
+	        listLength = numberOfStatistics+calcExtra.length;
+	    }
+			
+	}
 }
+	/**********************************************************
+	 //TODO: Work with right mouse click
+	
+	private class PlugInVOIStats extends JDialogVOIStats {
+		
+	
+	    public PlugInVOIStats(Frame theParentFrame, ModelImage img, VOI _voi) {
+	        super(theParentFrame, img, null);
+	    }
+	    
+
+	    protected void init() {
+
+	        // setTitle("VOI Statistics");
+	        frameBorder = BorderFactory.createCompoundBorder(BorderFactory.createRaisedBevelBorder(),
+	                                                         BorderFactory.createLoweredBevelBorder());
+
+	        JLabel labelName = new JLabel("Name of VOI:");
+	        labelName.setFont(serif12);
+	        labelName.setForeground(Color.black);
+
+	        JLabel labelColor = new JLabel("Color of VOI:");
+	        labelColor.setFont(serif12);
+	        labelColor.setForeground(Color.black);
+
+	        JLabel labelThickness = new JLabel("Thickness of VOI:");
+	        labelThickness.setFont(serif12);
+	        labelThickness.setForeground(Color.black);
+
+	        colorButton = new JButton();
+	        colorButton.setPreferredSize(new Dimension(25, 25));
+	        colorButton.setToolTipText("Change VOI color");
+	        colorButton.addActionListener(this);
+
+	        VOIName = new JTextField(15);
+	        VOIName.setFont(serif12);
+
+	        VOIThicknessField = new JTextField(3);
+	        VOIThicknessField.setFont(serif12);
+	        MipavUtil.makeNumericsOnly(VOIThicknessField, false);
+
+	        JPanel namePanel = new JPanel(new GridBagLayout());
+	        GridBagConstraints gbc = new GridBagConstraints();
+	        gbc.insets = new Insets(5, 5, 5, 5);
+	        gbc.anchor = GridBagConstraints.WEST;
+	        gbc.weightx = 0;
+	        gbc.weighty = 0;
+	        gbc.fill = GridBagConstraints.NONE;
+	        namePanel.add(labelName, gbc);
+
+	        gbc.weightx = 1;
+	        gbc.weighty = 1;
+	        gbc.gridx = 1;
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        namePanel.add(VOIName, gbc);
+
+	        gbc.weightx = 0;
+	        gbc.weighty = 0;
+	        gbc.gridx = 0;
+	        gbc.gridy = 1;
+	        gbc.fill = GridBagConstraints.NONE;
+	        namePanel.add(labelThickness, gbc);
+
+	        gbc.weightx = 1;
+	        gbc.weighty = 1;
+	        gbc.gridx = 1;
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        namePanel.add(VOIThicknessField, gbc);
+
+	        gbc.gridx = 0;
+	        gbc.gridy = 2;
+	        gbc.weightx = 0;
+	        gbc.weighty = 0;
+	        gbc.fill = GridBagConstraints.NONE;
+	        namePanel.add(labelColor, gbc);
+
+	        gbc.gridx = 1;
+	        gbc.weightx = 1;
+	        gbc.weighty = 1;
+	        namePanel.add(colorButton, gbc);
+
+	        gbc.insets = new Insets(0, 0, 0, 0);
+
+	        checkboxBoundingBox = new JCheckBox("Show contour bounding box");
+	        checkboxBoundingBox.setFont(serif12);
+
+	        checkboxAdditiveOrSubtractive = new JCheckBox("Use additive polarity for VOI");
+	        checkboxAdditiveOrSubtractive.setFont(serif12);
+
+	        checkboxIncludeForProcessing = new JCheckBox("Include for processing");
+	        checkboxIncludeForProcessing.setFont(serif12);
+
+	        checkboxBoundary = new JCheckBox("Display VOI shading");
+	        checkboxBoundary.setFont(serif12);
+	        checkboxBoundary.addItemListener(this);
+
+	        checkboxVOIName = new JCheckBox("Show VOI name");
+	        checkboxVOIName.setFont(serif12);
+	        checkboxVOIName.setSelected(Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
+
+	        JPanel checkboxPanel = new JPanel();
+	        checkboxPanel.setLayout(new BoxLayout(checkboxPanel, BoxLayout.Y_AXIS));
+	        checkboxPanel.add(checkboxBoundingBox);
+	        checkboxPanel.add(checkboxAdditiveOrSubtractive);
+	        checkboxPanel.add(checkboxIncludeForProcessing);
+	        checkboxPanel.add(checkboxVOIName);
+	        checkboxPanel.add(checkboxBoundary);
+
+	        opacitySlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 30);
+
+	        opacitySlider.setMajorTickSpacing(20);
+	        opacitySlider.setValue(30);
+	        opacitySlider.setPaintTicks(true);
+	        opacitySlider.setEnabled(false);
+	        opacitySlider.addChangeListener(this);
+
+	        JLabel maximum = new JLabel(String.valueOf(1));
+	        maximum.setForeground(Color.black);
+	        maximum.setFont(serif12);
+
+	        current = new JLabel(String.valueOf(opacitySlider.getValue() / 100.0f));
+	        current.setForeground(Color.black);
+	        current.setFont(serif12B);
+
+	        JLabel minimum = new JLabel(String.valueOf(0));
+	        minimum.setForeground(Color.black);
+	        minimum.setFont(serif12);
+
+	        JPanel sliderPanel = new JPanel(new GridBagLayout());
+
+	        gbc.gridx = 0;
+	        gbc.gridy = 0;
+	        gbc.gridwidth = 3;
+	        gbc.weightx = 1;
+	        gbc.gridheight = 1;
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+	        sliderPanel.add(opacitySlider, gbc);
+
+	        gbc.gridx = 0;
+	        gbc.gridy = 1;
+	        gbc.gridwidth = 1;
+	        gbc.weightx = 0;
+	        gbc.anchor = GridBagConstraints.WEST;
+	        gbc.fill = GridBagConstraints.NONE;
+
+	        sliderPanel.add(minimum, gbc);
+
+	        gbc.gridx = 1;
+	        gbc.anchor = GridBagConstraints.CENTER;
+	        gbc.weightx = .5;
+
+	        sliderPanel.add(current, gbc);
+
+	        gbc.gridx = 2;
+	        gbc.anchor = GridBagConstraints.EAST;
+	        gbc.weightx = 0;
+
+	        sliderPanel.add(maximum, gbc);
+	        sliderPanel.setBorder(buildTitledBorder("Opacity"));
+
+	        JPanel panelVOIProps = new JPanel(new GridBagLayout());
+	        panelVOIProps.setBorder(buildTitledBorder("VOI properties"));
+	        gbc.gridx = 0;
+	        gbc.gridy = 0;
+	        gbc.gridwidth = 1;
+	        gbc.gridheight = 1;
+	        gbc.weightx = 1;
+	        gbc.anchor = GridBagConstraints.WEST;
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        panelVOIProps.add(namePanel, gbc);
+	        gbc.gridy = 1;
+	        panelVOIProps.add(checkboxPanel, gbc);
+	        gbc.gridy = 2;
+	        gbc.weighty = 1;
+	        gbc.anchor = GridBagConstraints.NORTH; // gbc.fill = GridBagConstraints.BOTH;
+	        panelVOIProps.add(sliderPanel, gbc);
+
+	        listPanel = new PlugInStatisticsList();
+
+	        try {
+	            listPanel.setSliceCount(image.getExtents()[2]);
+	        } catch (ArrayIndexOutOfBoundsException aioobe) {
+
+	            // otherwise, this must be a 2d image.
+	            listPanel.setSliceCount(1);
+	        } finally {
+	            listPanel.setCheckBoxesEnabled();
+	        }
+
+	        checkboxExclude = new JCheckBox("Exclude intensity range");
+	        checkboxExclude.setFont(serif12);
+	        checkboxExclude.addActionListener(this);
+	        
+	        labelMin = new JLabel("Range: ");
+	        labelMin.setFont(serif12);
+	        labelMin.setForeground(Color.black);
+	        labelMin.setEnabled(false);
+
+	        textMin = new JTextField(5);
+	        textMin.setEnabled(false);
+	        textMin.setFont(serif12);
+
+	        labelMax = new JLabel(" to ");
+	        labelMax.setFont(serif12);
+	        labelMax.setForeground(Color.black);
+	        labelMax.setEnabled(false);
+
+	        textMax = new JTextField(5);
+	        textMax.setEnabled(false);
+	        textMax.setFont(serif12);
+	        
+	        checkboxSaveStats = new JCheckBox("Save statistics in header");
+	        checkboxSaveStats.setFont(serif12);
+	        //checkboxSaveStats.addActionListener(this);
+
+	        JPanel checkPanel = new JPanel(new GridBagLayout());
+	        GridBagConstraints gbc2 = new GridBagConstraints();
+	        gbc2.anchor = GridBagConstraints.WEST;
+	        gbc2.fill = gbc2.BOTH;
+	        gbc2.weightx = 1;
+	        gbc2.weighty = 1;
+	        gbc2.gridx = 0;
+	        gbc2.gridy = 0;
+	        checkPanel.add(checkboxExclude, gbc2);
+	        gbc2.gridy++;
+	        checkPanel.add(checkboxSaveStats, gbc2);
+
+	        JPanel rangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+	        rangePanel.add(labelMin);
+	        rangePanel.add(textMin);
+	        rangePanel.add(labelMax);
+	        rangePanel.add(textMax);
+
+	        JPanel intensityPanel = new JPanel();
+	        intensityPanel.setLayout(new BoxLayout(intensityPanel, BoxLayout.Y_AXIS));
+	        intensityPanel.add(checkPanel);
+	        intensityPanel.add(rangePanel);
+
+	        statsPanel = new JPanel(new BorderLayout());
+	        statsPanel.add(listPanel);
+	        statsPanel.add(intensityPanel, BorderLayout.SOUTH);
+
+	        JLabel labelSeed = new JLabel("Seed value (0-32K)");
+	        labelSeed.setFont(serif12);
+	        labelSeed.setForeground(Color.black);
+
+	        seedValueTF = new JTextField(5);
+	        seedValueTF.setFont(serif12);
+	        seedValueTF.addFocusListener(this);
+
+	        JPanel seedValuePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+	        seedValuePanel.setBorder(buildTitledBorder("Watershed seed value"));
+	        seedValuePanel.add(labelSeed);
+	        seedValuePanel.add(seedValueTF);
+
+	        JPanel calcPanel = new JPanel(new BorderLayout());
+	        calcPanel.add(statsPanel);
+	        calcPanel.add(seedValuePanel, BorderLayout.SOUTH);
+
+	        applyButton = new JButton("Apply");
+	        applyButton.setPreferredSize(MipavUtil.defaultButtonSize);
+	        applyButton.setFont(serif12B);
+	        applyButton.addActionListener(this);
+
+	        cancelButton = buildCancelButton();
+	        cancelButton.setPreferredSize(MipavUtil.defaultButtonSize);
+	        
+	        helpButton = buildHelpButton();
+	        helpButton.setPreferredSize(MipavUtil.defaultButtonSize);
+
+	        // build the VOI tree
+	        buildVOITree();
+	        buildVOIContourPane();
+
+	        GridBagConstraints gb = new GridBagConstraints();
+
+	        JPanel mainTreePanel = new JPanel(new GridBagLayout());
+	        mainTreePanel.setBorder(buildTitledBorder("VOI Browser"));
+
+	        gb.anchor = GridBagConstraints.CENTER;
+	        gb.gridx = 0;
+	        gbc.gridy = 0;
+	        gb.weightx = 1.0;
+	        gb.weighty = 1.0;
+	        gb.fill = GridBagConstraints.BOTH;
+
+	        mainTreePanel.add(voiTreePane, gb);
+
+	        JPanel treeOptionPanel = new JPanel(new BorderLayout());
+	        treeOptionPanel.setBorder(buildTitledBorder("Tree options"));
+	        followVOISelectionBox = new JCheckBox("Frame follows VOI selection", true);
+	        followVOISelectionBox.setFont(MipavUtil.font12);
+	        followVOISelectionBox.addActionListener(this);
+	        followVOISelectionBox.setEnabled(image.getNDims() > 2);
+	        treeOptionPanel.add(followVOISelectionBox, BorderLayout.CENTER);
+
+
+	        gb.gridy = 1;
+	        gb.weightx = 1;
+	        gb.weighty = 0;
+	        gb.fill = GridBagConstraints.HORIZONTAL;
+	        mainTreePanel.add(treeOptionPanel, gb);
+
+	        gb.gridy = 2;
+	        gb.weightx = .5;
+	        gb.weighty = .5;
+	        gb.fill = GridBagConstraints.BOTH;
+	        mainTreePanel.add(voiContourPane, gb);
+
+	        JPanel leftButton = new JPanel();
+	        leftButton.add(applyButton);
+	        leftButton.add(cancelButton);
+	        leftButton.add(helpButton);
+
+	        JPanel leftWholePanel = new JPanel(new BorderLayout());
+	        leftWholePanel.add(panelVOIProps, BorderLayout.NORTH);
+	        leftWholePanel.add(mainTreePanel, BorderLayout.CENTER);
+
+	        JPanel leftPanel = new JPanel(new BorderLayout());
+	        leftPanel.add(leftWholePanel);
+	        leftPanel.add(leftButton, BorderLayout.SOUTH);
+
+	        calcButton = new JButton("Calculate");
+	        calcButton.setPreferredSize(new Dimension(100, 30));
+	        calcButton.setFont(serif12B);
+	        calcButton.addActionListener(this);
+
+	        JPanel rightButton = new JPanel();
+	        rightButton.add(calcButton);
+	        //rightButton.add(helpButton);
+
+	        JPanel rightPanel = new JPanel(new BorderLayout());
+	        rightPanel.add(calcPanel);
+	        rightPanel.add(rightButton, BorderLayout.SOUTH);
+
+	        mainDialogPanel.setLayout(new GridBagLayout());
+	        gb.gridx = 0;
+	        gb.gridy = 0;
+	        gb.weightx = 1;
+	        gb.weighty = 1;
+	        gb.fill = GridBagConstraints.BOTH;
+	        mainDialogPanel.add(leftPanel, gb);
+
+	        gb.gridx = 1;
+	        mainDialogPanel.add(rightPanel, gb);
+
+
+	        // mainDialogPanel.setLayout(new BorderLayout());
+	        // mainDialogPanel.add(leftPanel, BorderLayout.WEST);
+	        // mainDialogPanel.add(rightPanel);
+	        mainDialogPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+	        getContentPane().add(mainDialogPanel);
+	        pack();
+
+	    }
+	}
+	
+	private class PlugInHandler extends VOIHandler {
+		
+		public PlugInHandler(ViewJComponentEditImage compImage) {
+			super(compImage);
+			
+			voiDialog = new PlugInVOIStats(compImage.getFrame(), compImage.getActiveImage(), null);
+		}
+	}
+	
+}
+**************************************************************************/
