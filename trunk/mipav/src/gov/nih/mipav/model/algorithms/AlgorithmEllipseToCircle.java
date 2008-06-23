@@ -246,7 +246,7 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         xi = 0.5 * Math.log((1.0 + axisRatio)/(1.0 - axisRatio));
         ellipseRatio = (majorAxis[0]/2.0)/((Math.exp(xi) + Math.exp(-xi))/2.0);
         // To conformal map from the unit disc to the standard ellipse use the transform
-        // sin[(PI/(2*K(s)))*F(z/sqrt(s), s)
+        // sin[(PI/(2*K(s)))*F(z/sqrt(s), s)]
         // where K(s) is the complete elliptic integral of the first kind and
         // F(z/sqrt(s), s) is the incomplete or normal elliptic integral of the first kind with:
         // F(z, s) = integral from 0 to z of dx/sqrt((1 - x*x)*(1 - s*s*x*x))
