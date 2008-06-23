@@ -369,7 +369,7 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
                     xSrc = geometricCenter.x + xp;
                     ySrc = geometricCenter.y + yp;
                     // Use bilinear interpolation to find the contributions from the
-                    // 4 nearest neighbors in the original circle space
+                    // 4 nearest neighbors in the original ellipse space
                     if ((xSrc >= 0.0) && ((xSrc) <= (xDimSource - 1)) && (ySrc >= 0.0) && (ySrc <= (yDimSource - 1))) {
                         xBase = (int) Math.floor(xSrc);
                         delX = (float) (xSrc - xBase);
