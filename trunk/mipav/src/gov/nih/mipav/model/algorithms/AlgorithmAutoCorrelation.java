@@ -11,8 +11,8 @@ import java.io.*;
 /**
  * Reference: Digital Image Processing, Second Edition by Rafael C. Gonzalez and Richard C. Woods, Prentice-Hall, Inc.,
  * 2002, pp. 205 - 208 and pp. 414-417. The autocorrelation coefficient = A(deltaX, deltaY)/A(0,0) where
- * A(deltaX,deltaY) = num/denom with num = sum from deltaX = 0 to deltaX = xDim - 1 - deltaX sum from deltaY = 0 to
- * deltaY = yDim - 1 - deltaY f(x,y)*f(x+deltaX,y+deltaY) denom = (xDim - deltaX)*(yDim - deltaY) Autocorrelation does
+ * A(deltaX,deltaY) = num/denom with num = sum from X = 0 to X = xDim - 1 - deltaX sum from Y = 0 to
+ * Y = yDim - 1 - deltaY f(x,y)*f(x+deltaX,y+deltaY) denom = (xDim - deltaX)*(yDim - deltaY) Autocorrelation does
  * not subtract out the means while autocovariance does subtract out the means.
  *
  * <p>The autocorrelation coefficeints are fitted to a function of the form (1 - a0) + a0*exp(-(x**2 + y**2)/w**2) = (1
