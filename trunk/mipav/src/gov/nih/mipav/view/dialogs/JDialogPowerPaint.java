@@ -123,9 +123,6 @@ public class JDialogPowerPaint extends JDialogBase
     private JToggleButton buttonShortkeys;
 
     /** DOCUMENT ME! */
-    private JButton buttonShowAdvancedPaintControls;
-
-    /** DOCUMENT ME! */
     private int c2x, c2y, c2z; // sturucturing element dimensions (2D)
 
     /** DOCUMENT ME! */
@@ -137,10 +134,7 @@ public class JDialogPowerPaint extends JDialogBase
     /** handling of intensity threshold. */
     private JCheckBox checkThreshold;
 
-    /** DOCUMENT ME! */
-    private JCheckBox checkWheel;
-
-    /** DOCUMENT ME! */
+   /** DOCUMENT ME! */
     private JComboBox comboConnectType;
 
     /** DOCUMENT ME! */
@@ -359,6 +353,12 @@ public class JDialogPowerPaint extends JDialogBase
                 image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).addMouseListener(this);
                 image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).addMouseListener(this);
                 image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).addMouseListener(this);
+                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B).addMouseListener(this);
+                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B).addMouseListener(this);
+                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B).addMouseListener(this);
+                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB).addMouseListener(this);
+                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB).addMouseListener(this);
+                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).addMouseListener(this);
             }
         }
 
@@ -426,19 +426,6 @@ public class JDialogPowerPaint extends JDialogBase
             importFromMask();
         } else if (command.equals("Revert")) {
             revertImage();
-        } else if (command.equals("Wheel")) {
-
-            if ((checkWheel.isSelected()) && (image.getTriImageFrame() != null)) {
-                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).addMouseWheelListener(this);
-                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).addMouseWheelListener(this);
-                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).addMouseWheelListener(this);
-            } else if (image.getTriImageFrame() != null) {
-                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).removeMouseWheelListener(this);
-                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).removeMouseWheelListener(this);
-                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).removeMouseWheelListener(this);
-            } else {
-                checkWheel.setSelected(false);
-            }
         } else if (command.equals("Autosave")) {
 
             if (checkSave.isSelected()) {
@@ -477,6 +464,12 @@ public class JDialogPowerPaint extends JDialogBase
                     image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).addMouseListener(this);
                     image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).addMouseListener(this);
                     image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).addMouseListener(this);
+                    image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B).addMouseListener(this);
+                    image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B).addMouseListener(this);
+                    image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B).addMouseListener(this);
+                    image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB).addMouseListener(this);
+                    image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB).addMouseListener(this);
+                    image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).addMouseListener(this);
                 }
             } else {
                 image.getParentFrame().getComponentImage().removeMouseListener(this);
@@ -485,6 +478,12 @@ public class JDialogPowerPaint extends JDialogBase
                     image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).removeMouseListener(this);
                     image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).removeMouseListener(this);
                     image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).removeMouseListener(this);
+                    image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B).removeMouseListener(this);
+                    image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B).removeMouseListener(this);
+                    image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B).removeMouseListener(this);
+                    image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB).removeMouseListener(this);
+                    image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB).removeMouseListener(this);
+                    image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).removeMouseListener(this);
                 }
             }
         }
@@ -635,6 +634,156 @@ public class JDialogPowerPaint extends JDialogBase
             } else if (origDir == FileInfoBase.SAGITTAL) {
                 sliceDir = XY;
             }
+        } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B))) {
+
+            // triplanar image : XY panel
+            int slice = image.getTriImageFrame().getAxialComponentSlice();
+            Point3Df patientMousePoint = new Point3Df();
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B).ScreenToLocal(new Point3Df(mouseEvent.getX(),
+                                                                                                        mouseEvent.getY(),
+                                                                                                        slice),
+                                                                                           patientMousePoint);
+
+            Point3Df pt = new Point3Df();
+            MipavCoordinateSystems.patientToFile(patientMousePoint, pt, image, FileInfoBase.AXIAL);
+            xS = (int) pt.x;
+            yS = (int) pt.y;
+            zS = (int) pt.z;
+
+            int origDir = image.getImageOrientation();
+
+            if (origDir == FileInfoBase.AXIAL) {
+                sliceDir = XY;
+            } else if (origDir == FileInfoBase.CORONAL) {
+                sliceDir = XZ;
+            } else if (origDir == FileInfoBase.SAGITTAL) {
+                sliceDir = XZ;
+            }
+        } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B))) {
+
+            // triplanar image : XZ panel
+            int slice = image.getTriImageFrame().getCoronalComponentSlice();
+            Point3Df patientMousePoint = new Point3Df();
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B).ScreenToLocal(new Point3Df(mouseEvent.getX(),
+                                                                                                          mouseEvent.getY(),
+                                                                                                          slice),
+                                                                                             patientMousePoint);
+
+            Point3Df pt = new Point3Df();
+            MipavCoordinateSystems.patientToFile(patientMousePoint, pt, image, FileInfoBase.CORONAL);
+            xS = (int) pt.x;
+            yS = (int) pt.y;
+            zS = (int) pt.z;
+
+            int origDir = image.getImageOrientation();
+
+            if (origDir == FileInfoBase.AXIAL) {
+                sliceDir = XZ;
+            } else if (origDir == FileInfoBase.CORONAL) {
+                sliceDir = XY;
+            } else if (origDir == FileInfoBase.SAGITTAL) {
+                sliceDir = ZY;
+            }
+        } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B))) {
+
+            // triplanar image : ZY panel
+            int slice = image.getTriImageFrame().getSagittalComponentSlice();
+            Point3Df patientMousePoint = new Point3Df();
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B).ScreenToLocal(new Point3Df(mouseEvent.getX(),
+                                                                                                           mouseEvent.getY(),
+                                                                                                           slice),
+                                                                                              patientMousePoint);
+
+            Point3Df pt = new Point3Df();
+            MipavCoordinateSystems.patientToFile(patientMousePoint, pt, image, FileInfoBase.SAGITTAL);
+            xS = (int) pt.x;
+            yS = (int) pt.y;
+            zS = (int) pt.z;
+
+            int origDir = image.getImageOrientation();
+
+            if (origDir == FileInfoBase.AXIAL) {
+                sliceDir = ZY;
+            } else if (origDir == FileInfoBase.CORONAL) {
+                sliceDir = ZY;
+            } else if (origDir == FileInfoBase.SAGITTAL) {
+                sliceDir = XY;
+            }
+        } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB))) {
+
+            // triplanar image : XY panel
+            int slice = image.getTriImageFrame().getAxialComponentSlice();
+            Point3Df patientMousePoint = new Point3Df();
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB).ScreenToLocal(new Point3Df(mouseEvent.getX(),
+                                                                                                        mouseEvent.getY(),
+                                                                                                        slice),
+                                                                                           patientMousePoint);
+
+            Point3Df pt = new Point3Df();
+            MipavCoordinateSystems.patientToFile(patientMousePoint, pt, image, FileInfoBase.AXIAL);
+            xS = (int) pt.x;
+            yS = (int) pt.y;
+            zS = (int) pt.z;
+
+            int origDir = image.getImageOrientation();
+
+            if (origDir == FileInfoBase.AXIAL) {
+                sliceDir = XY;
+            } else if (origDir == FileInfoBase.CORONAL) {
+                sliceDir = XZ;
+            } else if (origDir == FileInfoBase.SAGITTAL) {
+                sliceDir = XZ;
+            }
+        } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB))) {
+
+            // triplanar image : XZ panel
+            int slice = image.getTriImageFrame().getCoronalComponentSlice();
+            Point3Df patientMousePoint = new Point3Df();
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).ScreenToLocal(new Point3Df(mouseEvent.getX(),
+                                                                                                          mouseEvent.getY(),
+                                                                                                          slice),
+                                                                                             patientMousePoint);
+
+            Point3Df pt = new Point3Df();
+            MipavCoordinateSystems.patientToFile(patientMousePoint, pt, image, FileInfoBase.CORONAL);
+            xS = (int) pt.x;
+            yS = (int) pt.y;
+            zS = (int) pt.z;
+
+            int origDir = image.getImageOrientation();
+
+            if (origDir == FileInfoBase.AXIAL) {
+                sliceDir = XZ;
+            } else if (origDir == FileInfoBase.CORONAL) {
+                sliceDir = XY;
+            } else if (origDir == FileInfoBase.SAGITTAL) {
+                sliceDir = ZY;
+            }
+        } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB))) {
+
+            // triplanar image : ZY panel
+            int slice = image.getTriImageFrame().getSagittalComponentSlice();
+            Point3Df patientMousePoint = new Point3Df();
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB).ScreenToLocal(new Point3Df(mouseEvent.getX(),
+                                                                                                           mouseEvent.getY(),
+                                                                                                           slice),
+                                                                                              patientMousePoint);
+
+            Point3Df pt = new Point3Df();
+            MipavCoordinateSystems.patientToFile(patientMousePoint, pt, image, FileInfoBase.SAGITTAL);
+            xS = (int) pt.x;
+            yS = (int) pt.y;
+            zS = (int) pt.z;
+
+            int origDir = image.getImageOrientation();
+
+            if (origDir == FileInfoBase.AXIAL) {
+                sliceDir = ZY;
+            } else if (origDir == FileInfoBase.CORONAL) {
+                sliceDir = ZY;
+            } else if (origDir == FileInfoBase.SAGITTAL) {
+                sliceDir = XY;
+            }
         }
 
         Preferences.debug("<" + xS + ", " + yS + ", " + zS + " :" + sliceDir + ">", Preferences.DEBUG_MINOR);
@@ -651,6 +800,12 @@ public class JDialogPowerPaint extends JDialogBase
             image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).removeMouseListener(this);
             image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).removeMouseListener(this);
             image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).removeMouseListener(this);
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B).removeMouseListener(this);
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B).removeMouseListener(this);
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B).removeMouseListener(this);
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB).removeMouseListener(this);
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB).removeMouseListener(this);
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).removeMouseListener(this);
         }
 
         if (getMouseInput == GROWREGION) {
@@ -725,8 +880,14 @@ public class JDialogPowerPaint extends JDialogBase
                 if (mouseEvent.getComponent().equals(image.getParentFrame().getComponentImage()) ||
                         ((image.getTriImageFrame() != null) &&
                              (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A)) ||
-                                  mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A)) ||
-                                  mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A))))) {
+                              mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A)) ||
+                              mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A)) ||
+							  mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B)) ||
+                              mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B)) ||
+                              mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B)) ||
+							  mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB)) ||
+                              mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB)) ||
+                              mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB))))) {
 
                     // System.out.print("2-");
 
@@ -780,6 +941,48 @@ public class JDialogPowerPaint extends JDialogBase
                           tri.getCoronalComponentSlice() + mouseEvent.getWheelRotation(), tri.getAxialComponentSlice());
             tri.updateImages(true);
         } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A))) {
+
+            // triplanar image : ZY panel
+            ViewJFrameTriImage tri = image.getTriImageFrame();
+            tri.setSlices(tri.getSagittalComponentSlice() + mouseEvent.getWheelRotation(),
+                          tri.getCoronalComponentSlice(), tri.getAxialComponentSlice());
+            tri.updateImages(true);
+        } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B))) {
+
+            // triplanar image : XY panel
+            ViewJFrameTriImage tri = image.getTriImageFrame();
+            tri.setSlices(tri.getSagittalComponentSlice(), tri.getCoronalComponentSlice(),
+                          tri.getAxialComponentSlice() + mouseEvent.getWheelRotation());
+            tri.updateImages(true);
+        } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B))) {
+
+            // triplanar image : XZ panel
+            ViewJFrameTriImage tri = image.getTriImageFrame();
+            tri.setSlices(tri.getSagittalComponentSlice(),
+                          tri.getCoronalComponentSlice() + mouseEvent.getWheelRotation(), tri.getAxialComponentSlice());
+            tri.updateImages(true);
+        } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B))) {
+
+            // triplanar image : ZY panel
+            ViewJFrameTriImage tri = image.getTriImageFrame();
+            tri.setSlices(tri.getSagittalComponentSlice() + mouseEvent.getWheelRotation(),
+                          tri.getCoronalComponentSlice(), tri.getAxialComponentSlice());
+            tri.updateImages(true);
+        } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB))) {
+
+            // triplanar image : XY panel
+            ViewJFrameTriImage tri = image.getTriImageFrame();
+            tri.setSlices(tri.getSagittalComponentSlice(), tri.getCoronalComponentSlice(),
+                          tri.getAxialComponentSlice() + mouseEvent.getWheelRotation());
+            tri.updateImages(true);
+        } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB))) {
+
+            // triplanar image : XZ panel
+            ViewJFrameTriImage tri = image.getTriImageFrame();
+            tri.setSlices(tri.getSagittalComponentSlice(),
+                          tri.getCoronalComponentSlice() + mouseEvent.getWheelRotation(), tri.getAxialComponentSlice());
+            tri.updateImages(true);
+        } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB))) {
 
             // triplanar image : ZY panel
             ViewJFrameTriImage tri = image.getTriImageFrame();
@@ -2991,11 +3194,6 @@ public class JDialogPowerPaint extends JDialogBase
         textStructuring.setText(String.valueOf(structureSize));
         textStructuring.setFont(serif12);
 
-        checkWheel = new JCheckBox("Triplanar scrolling");
-        checkWheel.addActionListener(this);
-        checkWheel.setActionCommand("Wheel");
-        checkWheel.setToolTipText("Eanble scrolling in the triplanar view with the mouse wheel");
-
         checkSave = new JCheckBox("Auto save :");
         checkSave.addActionListener(this);
         checkSave.setActionCommand("Autosave");
@@ -3032,14 +3230,6 @@ public class JDialogPowerPaint extends JDialogBase
         buttonRevert.setActionCommand("Revert");
         buttonRevert.setFont(serif12);
 
-        /*
-         * buttonShowAdvancedPaintControls = new JButton("Show advanced paint controls");
-         * buttonShowAdvancedPaintControls.addActionListener(this);
-         * buttonShowAdvancedPaintControls.setActionCommand("show advanced");
-         * buttonShowAdvancedPaintControls.setFont(serif12);
-         * buttonShowAdvancedPaintControls.setEnabled(!image.isColorImage());
-         */
-
         buttonShortkeys = new JToggleButton("Use shortkeys");
         buttonShortkeys.addActionListener(this);
         buttonShortkeys.setActionCommand("Shortkeys");
@@ -3051,23 +3241,6 @@ public class JDialogPowerPaint extends JDialogBase
         checkThreshold.setActionCommand("Threshold");
         checkThreshold.setToolTipText("Enable the use of intensity thresholds when painting");
 
-		/* replaced by a spinner
-        slideLower = new JSlider(0, 1000, 0);
-        slideLower.setMajorTickSpacing(200);
-        slideLower.setMinorTickSpacing(100);
-        slideLower.setPaintTicks(true);
-        slideLower.setPaintLabels(false);
-        slideLower.addChangeListener(this);
-        slideLower.setToolTipText("Minimum relative intensity for painting");
-
-        slideUpper = new JSlider(0, 1000, 1000);
-        slideUpper.setMajorTickSpacing(250);
-        slideUpper.setMinorTickSpacing(100);
-        slideUpper.setPaintTicks(true);
-        slideUpper.setPaintLabels(false);
-        slideUpper.addChangeListener(this);
-        slideUpper.setToolTipText("Maximum relative intensity for painting");
-		*/
 		
 		lowerThreshold = (float)image.getMin();
 		upperThreshold = (float)image.getMax();
@@ -3312,11 +3485,7 @@ public class JDialogPowerPaint extends JDialogBase
         mainPanel.add(movePanel, gbc);
         gbc.gridy = 4;
         mainPanel.add(exportPanel, gbc);
-
-        // gbc.gridy = 5;
-        // gbc.insets = new Insets(2, 2, 2, 2);
-        // mainPanel.add(buttonShowAdvancedPaintControls, gbc);
-        gbc.gridy = 6;
+		gbc.gridy = 6;
         mainPanel.add(buttonShortkeys, gbc);
 
         botPanel = new JPanel();
@@ -3487,6 +3656,12 @@ public class JDialogPowerPaint extends JDialogBase
             img.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).setPaintMask(obj);
             img.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).setPaintMask(obj);
             img.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).setPaintMask(obj);
+            img.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B).setPaintMask(obj);
+            img.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B).setPaintMask(obj);
+            img.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B).setPaintMask(obj);
+            img.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB).setPaintMask(obj);
+            img.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB).setPaintMask(obj);
+            img.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).setPaintMask(obj);
             img.getTriImageFrame().updateImages(true);
         }
     }
