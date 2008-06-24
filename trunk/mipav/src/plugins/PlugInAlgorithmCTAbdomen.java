@@ -667,11 +667,6 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      */
     private void makeSubcutaneousFatVOIfromIntensityProfiles() {
         
-        for(int idx = 0; idx < 360 / 3; idx++) {
-            System.out.println("radial line: " +idx +" number of samples: "
-                    +intensityProfiles[idx].size() +"  " +xProfileLocs[idx].size() +"  " +yProfileLocs[idx].size());
-        }
-        
         int[] xLocsSubcutaneousVOI = new int [360 / 3];
         int[] yLocsSubcutaneousVOI = new int [360 / 3];
         int[] zVals = new int[360 / 3];
