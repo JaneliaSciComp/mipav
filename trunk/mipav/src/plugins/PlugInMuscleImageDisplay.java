@@ -1173,6 +1173,30 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     }
     
     /**
+     * Gets whether calculations are still being performed, vital for whether reliable statistics are available
+     * @return null if all calcs done
+     */
+    public String[] getCalcRunning() {
+    	if(calcGroup.activeCount() != 0) {
+    		Thread[] activeThreads = new Thread[calcGroup.activeCount()];
+    		ArrayList<String> threadStr = new ArrayList();
+    		calcGroup.enumerate(activeThreads);
+    		for(int i=0; i<activeThreads.length; i++) {
+    			if(activeThreads[i] != null) {
+    				threadStr.add(activeThreads[i].getName());
+    			}
+    		}
+    		String[] strArr = new String[threadStr.size()]; 
+    		for(int i=0; i<threadStr.size(); i++) {
+    			strArr[i] = threadStr.get(i);
+    		}
+    		return strArr;
+    	} 
+    		
+    	return null;
+    }
+    
+    /**
      * Initializes the VOI buttons for a particular pane.
      */
     private void initMuscleButtons(int pane) {
@@ -4294,9 +4318,18 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        if (imageStatList == null) {
 
 	            if ((imageActive.getVOIs() != null) && (imageActive.getVOIs().size() != 0)) {
-	                imageStatList = new PlugInVOIStatistics(imageActive.getVOIs());
-	                imageStatList.setVisible(true);
-	                // addVOIUpdateListener(imageStatList); // i'd rather not do it this way...
+	                String[] activeCalc = ((PlugInMuscleImageDisplay)frame).getCalcRunning();
+	                if(activeCalc == null) {
+	                	imageStatList = new PlugInVOIStatistics(imageActive.getVOIs());
+	                	imageStatList.setVisible(true);
+	                	// addVOIUpdateListener(imageStatList);
+	                } else {
+	                	String active = new String();
+	                	for(int i=0; i<activeCalc.length; i++) {
+	                		active += activeCalc[i]+"\n";
+	                	}
+	                	MipavUtil.displayError("Please wait for the following calculations to complete:\n"+active);
+	                }
 	            } else {
 	                MipavUtil.displayError("A VOI must be present to use the statistics calculator");
 	            }
@@ -4755,7 +4788,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	     */
 	    protected String createNewLogfile() {
 	        int i;
-	        String kl = "#\tMIPAV will alter.  Conducting statistical computation.\n";
+	        FileInfoDicom fileInfo = (FileInfoDicom)getActiveImage().getFileInfo()[0];
+	        String id = (String)fileInfo.getTagTable().getValue("0010,0020");
+			id = id != null ? id.trim() : "Removed";
+			String userName = System.getProperty("user.name");
+			userName = userName != null ? userName.trim() : "Unknown";
+	        String kl = "#\tPatient ID:\t"+id+"\tAnalyst:\t"+userName+"\n";//  Conducting statistical computation.\n";
 	        String str;
 
 	        // output the labels of the list of statistics to be produced.
