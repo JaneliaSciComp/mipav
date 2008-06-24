@@ -2462,6 +2462,7 @@ public class FileNIFTI extends FileBase {
             }
         }
 
+        finalize();
         fireProgressStateChanged(100);
 
         // With extents from rawFile
