@@ -28,7 +28,21 @@ import java.util.BitSet;
 import java.util.Vector;
 
 
-
+/**
+ * PlugIn to automatically segment the exterior abdominal boundary and the internal
+ * boundary of the subcutaneous fat in 2D and 3D abdominal CT images.  3D images
+ * are processed as a series of 2D slices.  So they are processed as 2.5D images.
+ * 
+ * The algorithm implemented in this plugin is our version of an algorithm described 
+ * in: 
+ * "Automated Quantification of Body Fat Distribution on Volumetric Computed Tomography",
+ * by Zhao B, Colville J, Kalaigian J, Curran S, Jiang L, Kijewski P, Schwartz LH.,
+ * J Comput Assist Tomogr. 2006 Sep-Oct;30(5):777-83.
+ * 
+ * @author hemlerp
+ * @date June 2008
+ *
+ */
 public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements AlgorithmInterface {
     
     /** X dimension of the CT image */
@@ -42,42 +56,65 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
     /** Slice size for xDim*yDim */
     private int sliceSize;
-
-    private ModelImage abdomenImage;
     
-    // center-of-mass array for region 1 and 2 (the thresholded bone)
-    private double[] center;
-    
-    // temp buffer to store slices.  Needed in many member functions.
+    /** temporary buffer to store slice data.  A buffer like this is needed by
+     * many member functions, so lets allocate it once and use it frequently.
+    */
     private short[] sliceBuffer;
 
+    /** A label image for the abdominal region */
+    private ModelImage abdomenImage;
+    
+    /** center-of-mass array for the segmented abdomen */
+    private short[] centerOfMass;
+    
+    /** flag for finding the center of mass */
+    boolean foundCenterOfMass = false;
+
+    /** a label value for the segmented abdomen */
     private short abdomenTissueLabel = 10;
     
-      
-    // The threshold value for muscle as specified in the JCAT paper
+    /** The threshold value for muscle */
     private int muscleThresholdHU = 0;
+
+    /** The threshold value for air */
     private short airThresholdHU = -200;
     
+    /** flag to insure all buffers are allocated before they are used */
     private boolean initializedFlag = false;
     
+    /** A 2D BitSet for use in the region grow algorithm */
     private BitSet volumeBitSet;
 
-    /**The final abdomen VOI*/
+    /** The final abdomen VOI*/
     private VOI abdomenVOI;
-    private VOI visceralVOI;
+
+    /** The final subcutaneous fat VOI*/
     private VOI subcutaneousVOI;
-       
+
+    /** Image directory */
     private String imageDir;
     
+    /** the color assigned to the various VOI's */
     private Color voiColor;
     
-    private AlgorithmCenterOfMass comAlgo;
+    /** An array of lists of intensity profiles */
+    private ArrayList<Short>[] intensityProfiles;
+    
+    /** An array of lists of X locations where the intensity profiles were acquired */
+    private ArrayList<Integer>[] xProfileLocs;
+    
+    /** An array of lists of Y locations where the intensity profiles were acquired */
+    private ArrayList<Integer>[] yProfileLocs;
+
     
     /**
      * Constructor.
      *
      * @param  resultImage  Result image model
      * @param  srcImg       Source image model.
+     * @param  imageDir     Directory of the source image
+     * @param  color        Color of the VOI
      */
     public PlugInAlgorithmCTAbdomen(ModelImage resultImage, ModelImage srcImg, String imageDir, Color color) {
         super(resultImage, srcImg);
@@ -87,8 +124,8 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
         abdomenImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "thighTissueImage");
         abdomenVOI = null;
-        visceralVOI = null;
-    }
+        subcutaneousVOI = null;
+    } // end PlugInAlgorithmCTAbdomen(...)
 
     
     
@@ -96,43 +133,63 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      * Starts the algorithm.
      */
     public void runAlgorithm() {
-        // Algorithm to determine the outer thigh boundary and boundaries of the bone and bone marrow
         
+        // Algorithm to determine the outer abdominal and inner subcutaneous boundary 
         if (!initializedFlag) {
             init();
         }
-        
         if (!initializedFlag) {
             return;
         }
         
         if (srcImage.getNDims() == 2) {
-            JCATsegmentAbdomen2D();
-            
-            JCATmakeAbdomen2DVOI();
-            JCATmakeSubcutaneousFat2DVOI();
-            snakeSubcutaneousVOI();
-//            ShowImage(abdomenImage, "Segmented Abdomen");
-            
-//            JCATsegmentSubcutaneousFat2D();
-//            snakeViseralVOI();
-
-            srcImage.unregisterAllVOIs();
-            srcImage.registerVOI(abdomenVOI);
-            srcImage.registerVOI(subcutaneousVOI);
-//            srcImage.registerVOI(visceralVOI);
+            calc2D();
+        } else if (srcImage.getNDims() == 3) {
+            calc25D();
         }
     } // end runAlgorithm()
+
+
+
+    private void calc2D() {
+        
+        labelAbdomen2D();
+        makeAbdomen2DVOI();
+
+        // the new way to find the subcutaneous fat VOI
+        makeIntensityProfiles();
+        makeSubcutaneousFatVOIfromIntensityProfiles();
+        snakeSubcutaneousVOI();
+        
+        // the old way to find the subcutaneous fat VOI
+//        makeSubcutaneousFat2DVOI();
+//        snakeSubcutaneousVOI();
+
+//        ShowImage(abdomenImage, "Segmented Abdomen");
+        
+        // the really old way to find the subcutaneous fat VOI
+//        JCATsegmentSubcutaneousFat2D();
+//        snakeViseralVOI();
+
+        srcImage.unregisterAllVOIs();
+        srcImage.registerVOI(abdomenVOI);
+        srcImage.registerVOI(subcutaneousVOI);
+//        srcImage.registerVOI(visceralVOI);
+
+    } // end calc2D()
+
+
+
+    private void calc25D() {
+    } // end calc25D()
+
     
     
+
 
     public void algorithmPerformed(AlgorithmBase algorithm) {
 		// TODO Auto-generated method stub
-    	if (algorithm instanceof AlgorithmCenterOfMass) {
-            
-            System.out.println("Center of mass completed");
-    	}        
-	}
+	} // end algorithmPerformed(...)
 
 
 
@@ -142,6 +199,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     public void finalize() {
         destImage = null;
         srcImage = null;
+        sliceBuffer = null;
         super.finalize();
     }
     
@@ -149,72 +207,67 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     
     /**
      * Create all the data structures that are needed by the various routines to automatically
-     * segment the bone, bone marrow, and muscle bundle in 2D and 3D CT images of the thighs.
+     * segment the abdominal and subcutaneous boundaries in 2D and 3D CT images of the abdomin.
      */
     private void init() {
+        
         // simple error check up front
         if ((srcImage.getNDims() != 2) && srcImage.getNDims() != 3) {
-            MipavUtil.displayError("PlugInAlgorithmNewGeneric2::init() Error image is not 2 or 3 dimensions");
+            MipavUtil.displayError("PlugInAlgorithmCTAbdomen.init() Error image is not 2 or 3 dimensions");
             return;
         }
         
-        // set and allocate know values
+        // set and allocate known values
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
-
         sliceSize = xDim * yDim;
 
+        // allocate the slice buffer
         try {
             sliceBuffer = new short[sliceSize];
         } catch (OutOfMemoryError error) {
             System.gc();
-            MipavUtil.displayError("Out of memory: init()");
+            MipavUtil.displayError("PlugInAlgorithmCTAbdomen.init() Out of memory when making the slice buffer");
+            return;
         }
 
         // set values that depend on the source image being a 2D or 3D image
-        if (srcImage.getNDims() == 2) 
+        if (srcImage.getNDims() == 2) {
             zDim = 1;
-        else if (srcImage.getNDims() == 3) 
+        } else if (srcImage.getNDims() == 3) {
             zDim = srcImage.getExtents()[2];
+        }
 
-        // make the label images and initialize their resolutions
-        abdomenImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "thighTissueImage");
-//        muscleBundleImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "muscleBundleImage");
+        // make the abdomenlabel image and initialize its resolutions
+        abdomenImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "abdomenTissueImage");
        
-        // make the resolutions of the images the same as the source image
+        // make the resolutions of the abdomenImage the same as the source image
         for (int i = 0; i < zDim; i++) {
             abdomenImage.getFileInfo()[i].setResolutions(srcImage.getFileInfo()[i].getResolutions());
         }
         
-        volumeBitSet = new BitSet();
-               
-        // set initialized flag to true so the data structures are not reallocated
+        // make the volume BitSet needed for the region grow algorithm
+        try {
+            volumeBitSet = new BitSet();
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("PlugInAlgorithmCTAbdomen.init() Out of memory when making the volumeBitSet");
+            return;
+        }
+        
+        // make the centerOfMass of the segmented abdomen
+        try {
+            centerOfMass = new short [2];
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("PlugInAlgorithmCTAbdomen.init() Out of memory when making the centerOfMass array");
+            return;
+        }
+
+        // all data was allocated, set initialized flag to true and return
         initializedFlag = true;
     } // end init()
-   
     
-    
-    
-    /**
-     * Apply the snake algorithm to the visceral VOI
-     */
-    private void snakeViseralVOI() {
-        
-        // set the visceral VOI as active
-        visceralVOI.setActive(true);
-        visceralVOI.getCurves()[0].elementAt(0).setActive(true);
-        
-        float[] sigmas = new float[2];
-        sigmas[0] = 1.0f;
-        sigmas[1] = 1.0f;
-        
-        AlgorithmSnake snake = new AlgorithmSnake(srcImage, sigmas, 50, 2, visceralVOI, AlgorithmSnake.OUT_DIR);
-        snake.run();
-
-        visceralVOI = snake.getResultVOI();
-        
-    } // end snakeViseralVOI
-   
     
     
     
@@ -250,14 +303,16 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      * region grow using values to "undersegment" the image.  We then clean up the segmentation
      * using mathematical morphology
      */
-    private void JCATsegmentAbdomen2D() {
-        // find a seed point inside the fat for a region grow
+    private void labelAbdomen2D() {
+        // fill up the slice buffer
         try {
             srcImage.exportData(0, sliceSize, sliceBuffer);
         } catch (IOException ex) {
-            System.err.println("JCATsegmentAbdomen2D(): Error exporting data");
+            System.err.println("PlugInAlgorithmCTAbdomen.JCATsegmentAbdomen2D(): Error exporting data");
             return;
         }
+
+        // find a seed point inside the subcutaneous fat for a region grow
         boolean found = false;
         int seedX = 0, seedY = 0;
         short seedVal = 0;
@@ -275,7 +330,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         } // end for int idx = 0, y = 0; ...)
 
         if (seedX < 0 || seedX >= xDim || seedY < 0 || seedY >= yDim) {
-            MipavUtil.displayError("PlugINAlgorithmCTAbdomen::JCATsegmentAbdomen2D(): Failed to find a seed location for the region grow");
+            MipavUtil.displayError("PlugInAlgorithmCTAbdomen.JCATsegmentAbdomen2D(): Failed to find a seed location for the region grow");
             return;
         }
 
@@ -288,6 +343,8 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         regionGrowAlgo.regionGrow2D(volumeBitSet, new Point(seedX, seedY), -1,
                                     false, false, null, seedVal - 75,
                                     seedVal + 1500, -1, -1, false);
+        
+        // make the abdominal label image from the volume BitSet determined in the region grow
         for (int idx = 0; idx < sliceSize; idx++) {
             if (volumeBitSet.get(idx)) {
                 sliceBuffer[idx] = abdomenTissueLabel;
@@ -324,41 +381,18 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                 volumeBitSet.set(idx);
             }
         } // end for (int idx = 0; ...)
-/*
-        // Seemed to get stuck in this algorithm for the image: CT2D/ser01/00001
-        expandAbdomen(volumeBitSet);
-        
-        try {
-            abdomenImage.exportData(0, sliceSize, sliceBuffer);
-        } catch (IOException ex) {
-            System.err.println("JCATsegmentAbdomen2D(): Error exporting data");
-            return;
-        }
-        for (int idx = 0; idx < sliceSize; idx++) {
-            if (volumeBitSet.get(idx)) {
-                sliceBuffer[idx] = abdomenTissueLabel;
-            }
-        }
 
-        // save the sliceBuffer into the abdomenImage
-        try {
-            abdomenImage.importData(0, sliceBuffer, false);
-        } catch (IOException ex) {
-            System.err.println("JCATsegmentAbdomen2D(): Error importing data");
-        }
-      ShowImage(abdomenImage, "expandAbdomen image");
-*/
-    } // end JCATsegmentAbdomen2D()  
+    } // end labelAbdomen2D()  
     
     
    
     
     /**
-     * Extract a 2D VOI from the volumeBitSet that was set during the JCATsegmentAbdomen2D call
+     * Extract a 2D VOI from the volumeBitSet that was set during the labelAbdomen2D call
      * 
      * Resample the VOI at 3 degree increments
      */
-    private boolean JCATmakeAbdomen2DVOI() {
+    private boolean makeAbdomen2DVOI() {
         abdomenImage.setMask(volumeBitSet);
         
         // volumeBitSet should be set for the abdomen tissue
@@ -370,41 +404,39 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         algoPaintToVOI.run();
         setCompleted(true);
         
-        // make sure we got one VOI composed of two curves
+        // make sure we got one VOI with one curve
         VOIVector vois = abdomenImage.getVOIs();
         if(vois.size() != 1) {
             System.err.println("makeAbdomen2DVOI() Error, did not get 1 VOI");
             return false;
         }
         
-        // thighTissueImage has one VOI, lets get it
+        // abdomenImage has one VOI, lets get it
         VOI theVOI = vois.get(0);
         theVOI.setName("Abdomen");
 
         // Keep only the largest VOI as the abdomen
         int numCurves, numRemoved = 0;
-        for (int idx = 0; idx < zDim; idx++) {
-            numCurves = theVOI.getCurves()[idx].size();
+        numCurves = theVOI.getCurves()[0].size();
             
-            int maxIdx = 0;
-            int maxNumPoints = ((VOIContour)theVOI.getCurves()[idx].get(maxIdx)).size();
-            for (int idx2 = 1; idx2 < numCurves; idx2++) {
-                if (((VOIContour)theVOI.getCurves()[idx].get(idx2)).size() > maxNumPoints) {
-                    maxIdx = idx2;
-                }
+        int maxIdx = 0;
+        int maxNumPoints = ((VOIContour)theVOI.getCurves()[0].get(maxIdx)).size();
+        for (int idx = 1; idx < numCurves; idx++) {
+            if (((VOIContour)theVOI.getCurves()[0].get(idx)).size() > maxNumPoints) {
+                maxIdx = idx;
             }
-            for (int idx2 = 0; idx2 < numCurves; idx2++) {
-                if (idx2 != maxIdx) {
-                    theVOI.getCurves()[idx].remove(idx2 - numRemoved);
-                    numRemoved++;
-                }
-            } // end for (int idx2 = 0; ...)
+        } // end for (int idx = 0; ...)
+        for (int idx = 0; idx < numCurves; idx++) {
+            if (idx != maxIdx) {
+                theVOI.getCurves()[0].remove(idx - numRemoved);
+                numRemoved++;
+            }
         } // end for (int idx = 0; ...)
         
         abdomenVOI = theVOI;
         resampleAbdomenVOI();
         return true;
-    } // end JCATmakeAbdomen2DVOI()
+    } // end makeAbdomen2DVOI()
     
     
     
@@ -417,21 +449,11 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
         VOIContour curve = ((VOIContour)theVOI.getCurves()[0].get(0));
         
-        // center-of-mass array, so we can pass by reference into a function
-        int[] cmArray;
-        try {
-            cmArray = new int [2];
-        } catch (OutOfMemoryError error) {
-            System.gc();
-            MipavUtil.displayError("resampleAbdomenVOI(): Can NOT allocate cmArray");
-            return;
-        }
-        
         // find the center of mass of the single label object in the sliceBuffer (abdomenImage)
-        findAbdomenCM(cmArray);
-        int xcm = cmArray[0];
-        int ycm = cmArray[1];
-        System.out.println("Xcm: " +xcm +"  Ycm: " +ycm);
+        findAbdomenCM();
+        int xcm = centerOfMass[0];
+        int ycm = centerOfMass[1];
+//        System.out.println("Xcm: " +xcm +"  Ycm: " +ycm);
         
 
         ArrayList<Integer> xValsAbdomenVOI = new ArrayList<Integer>();
@@ -494,7 +516,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
              }
          } // end for (angle = 0; ...
         
-        System.out.println("resample VOI number of points: " +xValsAbdomenVOI.size());
+//        System.out.println("resample VOI number of points: " +xValsAbdomenVOI.size());
 
         int[] x1 = new int[xValsAbdomenVOI.size()];
         int[] y1 = new int[xValsAbdomenVOI.size()];
@@ -510,31 +532,205 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     
     
     
+    
+    /**
+     * Method fills in the intensity profile array along radial lines
+     */
+    private void makeIntensityProfiles() {
+
+        // find the center of mass of the single label object in the sliceBuffer (abdomenImage)
+        findAbdomenCM();
+        int xcm = centerOfMass[0];
+        int ycm = centerOfMass[1];
+        
+        // There should be only one VOI
+        VOIVector vois = abdomenImage.getVOIs();
+        VOI theVOI = vois.get(0);
+
+        // there should be only one curve corresponding to the external abdomen boundary
+        VOIContour curve = ((VOIContour)theVOI.getCurves()[0].get(0));
+        int[] xVals = new int [curve.size()];
+        int[] yVals = new int [curve.size()];
+        int[] zVals = new int [curve.size()];
+        curve.exportArrays(xVals, yVals, zVals);
+        
+        // one intensity profile for each radial line.  Each radial line is 3 degrees and
+        // there are 360 degrees in a circle
+        try {
+            intensityProfiles = new ArrayList[120];
+            xProfileLocs = new ArrayList[120];
+            yProfileLocs = new ArrayList[120];
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("makeIntensityProfiles(): Can NOT allocate profiles");
+            return;
+        }
+        
+        // load the srcImage into the slice buffer (it has the segmented abdomen image in it now)
+        try {
+            srcImage.exportData(0, sliceSize, sliceBuffer);
+        } catch (IOException ex) {
+            System.err.println("JCATsegmentAbdomen2D(): Error exporting data");
+            return;
+        }
+
+        double angleRad;
+        int count;
+        int contourPointIdx = 0;
+        for (int angle = 0; angle < 360; angle += 3) {
+            count = 0;
+            int x = xcm;
+            int y = ycm;
+            int yOffset = y * xDim;
+            double scaleFactor;      // reduces the number of trig operations that must be performed
+            
+            // allocate the ArrayLists for each radial line
+            intensityProfiles[contourPointIdx] = new ArrayList<Short>();
+            xProfileLocs[contourPointIdx] = new ArrayList<Integer>();
+            yProfileLocs[contourPointIdx] = new ArrayList<Integer>();
+                
+            angleRad = Math.PI * angle / 180.0;
+             if (angle > 315 || angle <= 45) {
+                 // increment x each step
+                 scaleFactor = Math.tan(angleRad);
+                 while (x < xVals[contourPointIdx]) {
+                     // store the intensity and location of each point along the radial line
+                     intensityProfiles[contourPointIdx].add((short)sliceBuffer[yOffset + x]);
+                     xProfileLocs[contourPointIdx].add(x);
+                     yProfileLocs[contourPointIdx].add(y);
+                     count++;
+                     
+                     // walk out in x and compute the value of y for the given radial line
+                     x++;
+                     y = ycm - (int)((x - xcm) * scaleFactor);
+                     yOffset = y * xDim;
+                 }
+                 
+             } else if (angle > 45 && angle <= 135) {
+                 // decrement y each step
+                 scaleFactor = (Math.tan((Math.PI / 2.0) - angleRad));
+                 while (y > yVals[contourPointIdx]) {
+                     // store the intensity and location of each point along the radial line
+                     intensityProfiles[contourPointIdx].add((short)sliceBuffer[yOffset + x]);
+                     xProfileLocs[contourPointIdx].add(x);
+                     yProfileLocs[contourPointIdx].add(y);
+                     count++;
+                     
+                     // walk to the top of the image and compute values of x for the given radial line
+                     y--;
+                     x = xcm + (int)((ycm - y) * scaleFactor);
+                     yOffset = y * xDim;
+                 }
+                                 
+             } else if (angle > 135 && angle <= 225) {
+                 // decrement x each step
+                 scaleFactor = Math.tan(Math.PI - angleRad);
+                 while (x > xVals[contourPointIdx]) {
+                     // store the intensity and location of each point along the radial line
+                     intensityProfiles[contourPointIdx].add((short)sliceBuffer[yOffset + x]);
+                     xProfileLocs[contourPointIdx].add(x);
+                     yProfileLocs[contourPointIdx].add(y);
+                     count++;
+                     
+                     x--;
+                     y = ycm - (int)((xcm - x) * scaleFactor);
+                     yOffset = y * xDim;
+                 }
+
+             } else if (angle > 225 && angle <= 315) {
+                 // increment y each step
+                 scaleFactor = Math.tan((3.0 * Math.PI / 2.0) - angleRad);
+                 while (y < yVals[contourPointIdx]) {
+                     // store the intensity and location of each point along the radial line
+                     intensityProfiles[contourPointIdx].add((short)sliceBuffer[yOffset + x]);
+                     xProfileLocs[contourPointIdx].add(x);
+                     yProfileLocs[contourPointIdx].add(y);
+                     count++;
+                     
+                     y++;
+                     x = xcm - (int)((y - ycm) * scaleFactor);
+                     yOffset = y * xDim;
+                 }
+              }
+             
+             contourPointIdx++;
+         } // end for (angle = 0; ...
+
+        // intensityProfiles, xProfileLocs, and yProfileLocs are set, we can find the 
+        // internal boundary of the subcutaneous fat now
+    } // end makeIntensityProfiles()
+    
+    
+    
+    /**
+     * find the points on the internal subcutaneous fat VOI from the intensity profiles
+     */
+    private void makeSubcutaneousFatVOIfromIntensityProfiles() {
+        
+        for(int idx = 0; idx < 360 / 3; idx++) {
+            System.out.println("radial line: " +idx +" number of samples: "
+                    +intensityProfiles[idx].size() +"  " +xProfileLocs[idx].size() +"  " +yProfileLocs[idx].size());
+        }
+        
+        int[] xLocsSubcutaneousVOI = new int [360 / 3];
+        int[] yLocsSubcutaneousVOI = new int [360 / 3];
+        int[] zVals = new int[360 / 3];
+        for(int idx = 0; idx < 360 / 3; idx++) {
+            zVals[idx] = 0;
+        }
+        
+        int numSamples;
+        
+        for(int idx = 0; idx < 360 / 3; idx++) {
+            numSamples = intensityProfiles[idx].size();
+                        
+            int sampleIdx = numSamples - 5;  // skip over the skin
+            while (sampleIdx >= 0 &&
+                   intensityProfiles[idx].get(sampleIdx) < muscleThresholdHU &&
+                   intensityProfiles[idx].get(sampleIdx) > airThresholdHU) {
+                sampleIdx--;
+            }
+            if (sampleIdx <= 0) {
+                MipavUtil.displayError("findAbdomenVOI(): Can NOT find visceral cavity in the intensity profile");
+                break;
+            }
+            xLocsSubcutaneousVOI[idx] = xProfileLocs[idx].get(sampleIdx);
+            yLocsSubcutaneousVOI[idx] = yProfileLocs[idx].get(sampleIdx);
+
+        } // end for (int idx = 0; ...)
+        
+        // make the VOI's and add the points to them
+        subcutaneousVOI = new VOI((short)0, "Subcutaneous", 0);
+        Vector[] v = new Vector[zDim];
+        for(int idx = 0; idx < zDim; idx++) {
+            v[idx] = new Vector();
+        }
+        subcutaneousVOI.setCurves(v);
+        subcutaneousVOI.importCurve(xLocsSubcutaneousVOI, yLocsSubcutaneousVOI, zVals, 0);
+
+        
+    } // makeSubcutaneousFatVOIfromIntensityProfiles()
+    
+    
+    
+    
+    
     /**
      * make an intensity profile along radial lines between the abdomen VOI and the
      * abdomen center-of-mass.  Use this profile to determine where the subcutaneous
      * fat ends
      */
-    private void JCATmakeSubcutaneousFat2DVOI() {
+    private void makeSubcutaneousFat2DVOI() {
 
-        // center-of-mass array, so we can pass by reference into a function
-        int[] cmArray;
-        try {
-            cmArray = new int [2];
-        } catch (OutOfMemoryError error) {
-            System.gc();
-            MipavUtil.displayError("resampleAbdomenVOI(): Can NOT allocate cmArray");
-            return;
-        }
-        
         // find the center of mass of the single label object in the sliceBuffer (abdomenImage)
-        findAbdomenCM(cmArray);
-        int xcm = cmArray[0];
-        int ycm = cmArray[1];
+        findAbdomenCM();
+        int xcm = centerOfMass[0];
+        int ycm = centerOfMass[1];
         
         VOIVector vois = abdomenImage.getVOIs();
         VOI theVOI = vois.get(0);
 
+        // there should be only one VOI and one curve
         VOIContour curve = ((VOIContour)theVOI.getCurves()[0].get(0));
         int[] xVals = new int [curve.size()];
         int[] yVals = new int [curve.size()];
@@ -719,14 +915,14 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         subcutaneousVOI.setCurves(v);
         subcutaneousVOI.importCurve(xValsSubcutaneousVOI, yValsSubcutaneousVOI, zVals, 0);
 
-    } // end JCATmakeSubcutaneousFat2DVOI()
+    } // end makeSubcutaneousFat2DVOI()
     
     
     
     
     /**
      * Method not based on having the abdomen VOI, but rather determining both the
-     * abdominal and visceral  VOI in this step using the segmented abdomenImage
+     * abdominal and visceral VOI in this step using the segmented abdomenImage
      */
     private void JCATsegmentSubcutaneousFat2D() {
         
@@ -750,20 +946,10 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             return;
         }
         
-        // center-of-mass array, so we can pass by reference into a function
-        int[] cmArray;
-        try {
-            cmArray = new int [2];
-        } catch (OutOfMemoryError error) {
-            System.gc();
-            MipavUtil.displayError("JCATsegmentVisceralFat2D(): Can NOT allocate cmArray");
-            return;
-        }
-        
         // find the center of mass of the single label object in the sliceBuffer (abdomenImage)
-        findAbdomenCM(cmArray);
-        int xcm = cmArray[0];
-        int ycm = cmArray[1];
+        findAbdomenCM();
+        int xcm = centerOfMass[0];
+        int ycm = centerOfMass[1];
 
         // Use the CM, the abdomenImage, and the srcImage to define points on the
         // abdomen and visceral VOI's
@@ -771,7 +957,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         ArrayList<Integer> yArrAbdom = new ArrayList<Integer>();
         ArrayList<Integer> xArrVis = new ArrayList<Integer>();
         ArrayList<Integer> yArrVis = new ArrayList<Integer>();
-        findVOIs(cmArray, xArrAbdom, yArrAbdom, srcBuffer, xArrVis, yArrVis);
+        findVOIs(centerOfMass, xArrAbdom, yArrAbdom, srcBuffer, xArrVis, yArrVis);
         
         int[] x1 = new int[xArrAbdom.size()];
         int[] y1 = new int[xArrAbdom.size()];
@@ -797,8 +983,8 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             y1[idx] = yArrVis.get(idx);
         }
 
-        visceralVOI = new VOI((short)0, "Visceral", 1);
-        visceralVOI.importCurve(x1, y1, z1, 0);
+        subcutaneousVOI = new VOI((short)0, "Subcutaneous", 1);
+        subcutaneousVOI.importCurve(x1, y1, z1, 0);
         
 /*
         System.out.println("Xcm: " +xcm +"  Ycm: " +ycm);
@@ -834,20 +1020,11 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      * 
      */
     private void findAbdomenVOI() {
-        // center-of-mass array, so we can pass by reference into a function
-        int[] cmArray;
-        try {
-            cmArray = new int [2];
-        } catch (OutOfMemoryError error) {
-            System.gc();
-            MipavUtil.displayError("JCATsegmentVisceralFat2D(): Can NOT allocate cmArray");
-            return;
-        }
         
         // find the center of mass of the single label object in the sliceBuffer (abdomenImage)
-        findAbdomenCM(cmArray);
-        int xcm = cmArray[0];
-        int ycm = cmArray[1];
+        findAbdomenCM();
+        int xcm = centerOfMass[0];
+        int ycm = centerOfMass[1];
 
         ArrayList<Integer> xValsAbdomenVOI = new ArrayList<Integer>();
         ArrayList<Integer> yValsAbdomenVOI = new ArrayList<Integer>();
@@ -946,7 +1123,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      * 
      * Make radial lines every 3 degrees
      */
-    private void findVOIs(int[] cm, ArrayList<Integer> xValsAbdomenVOI, ArrayList<Integer> yValsAbdomenVOI, short[] srcBuffer, ArrayList<Integer> xValsVisceralVOI, ArrayList<Integer> yValsVisceralVOI) {
+    private void findVOIs(short[] cm, ArrayList<Integer> xValsAbdomenVOI, ArrayList<Integer> yValsAbdomenVOI, short[] srcBuffer, ArrayList<Integer> xValsVisceralVOI, ArrayList<Integer> yValsVisceralVOI) {
         
         // angle in radians
        double angleRad;
@@ -1126,8 +1303,9 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      * 
      * @param vals  Array to store the 2D center-of-mass
      */
-    private void findAbdomenCM(int vals[]) {
+    private void findAbdomenCM() {
         
+        if (foundCenterOfMass) return;
         int xcm = 0, ycm = 0, pixCount = 0;
         for (int idx= 0, y = 0; y < yDim; y++) {
             for (int x = 0; x < xDim; x++, idx++) {
@@ -1145,8 +1323,9 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             return;
         }
         
-        vals[0] = xcm / pixCount;
-        vals[1] = ycm / pixCount;
+        centerOfMass[0] = (short)(xcm / pixCount);
+        centerOfMass[1] = (short)(ycm / pixCount);
+        foundCenterOfMass = true;
     } // end findAbdomenCM(...)
     
     
@@ -1222,406 +1401,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     
     
     
-    /**
-     * Find the bone, bone marrow, and the thigh tissue
-     */
-    private void segmentImage() {
-        long time = System.currentTimeMillis();
-        boolean doVOI = true, completeVOI = false;
-        // compute the bone label image
-
-        time = System.currentTimeMillis();
-        
-        if(comAlgo.isCompleted())
-        	doVOI = segmentAbdomenTissue(center);
-        System.out.println("Abdomen tissue segmentation: "+(System.currentTimeMillis() - time));
-
-        ShowImage(destImage, "Segmented Image");
-        
-        time = System.currentTimeMillis();
-        if(doVOI)
-        	completeVOI = makeAbdomenTissueVOI();
-        System.out.println("Thigh tissue VOIs: "+(System.currentTimeMillis() - time));
-        if(completeVOI) {
-	        
-	     // save the VOI to a file(s)
-	        String directory = System.getProperty("user.dir");
-	        System.out.println("directory: " +imageDir);
-	        FileVOI fileVOI;
-	        
-	        String fileName = "Abdomen.xml";
-	        try {
-	            fileVOI = new FileVOI(fileName, imageDir, abdomenImage);
-	            fileVOI.writeVOI(abdomenVOI, true);
-	        } catch (IOException ex) {
-	            System.err.println("Error segmentImage():  Opening VOI file");
-	            return;
-	        }     
-        } else
-        	System.err.println("Automatic VOIs not created");
-
-   } // create a voi for the outside of the thigh.  Assumes the thighTissueImage has been created.
-    private boolean makeAbdomenTissueVOI() {
-        // make the volumeBitSet for the thigh tissue
-        boolean completedThigh = true;
-        
-        srcImage.setMask(volumeBitSet);
-        
-        // volumeBitSet should be set for the thigh tissue
-        short voiID = 0;
-        AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(srcImage,
-                volumeBitSet, xDim, yDim, zDim, voiID);
-
-        algoPaintToVOI.setRunningInSeparateThread(false);
-        algoPaintToVOI.run();
-        setCompleted(true);
-        
-        // make sure we got one VOI composed of two curves
-        VOIVector vois = srcImage.getVOIs();
-        if(vois.size() != 1) {
-            System.err.println("makeThighTissueVOI() Error, did not get 1 VOI");
-            return false;
-        }
-        
-        // thighTissueImage has one VOI, lets get it
-        VOI theVOI = vois.get(0);
-        theVOI.setName("Thigh Tissue");
-
-        // Remove small (10 points or less) curves from the VOI
-        int numCurves, numPoints;
-        VOIContour curve;
-        for (int idx = 0; idx < zDim; idx++) {
-            numCurves = theVOI.getCurves()[idx].size();
-            
-            int idx2 = 0;
-            while(idx2 < numCurves) {
-                curve = ((VOIContour)theVOI.getCurves()[idx].get(idx2));
-                numPoints = curve.size();
-                if (numPoints < 10) {
-                    // remove the curve
-                    theVOI.getCurves()[idx].remove(idx2);
-                    numCurves--;
-                } else {
-                    idx2++;
-                }
-            } // end while(idx2 < numCurves)
-         } // end for (int idx = 0; ...)
-
-/*
-        // print out the curves and their sizes
-        for (int idx = 0; idx < zDim; idx++) {
-            numCurves = theVOI.getCurves()[idx].size();
-            System.out.println("slice: " +idx +"  number of curves: " +numCurves);
-            
-            // print out the size of each curve
-            for (int idx2 = 0; idx2 < numCurves; idx2++) {
-                curve = ((VOIContour)theVOI.getCurves()[idx].get(idx2));
-                numPoints = curve.size();
-                System.out.println("  curve: " +idx2 +"  num points: " +numPoints);
-            } // end for (int idx2 = 0; ...)
-        } // end for (int idx = 0; ...)
-*/        
-
-        // split the thigh curves when the legs touch (there are only 3 curves, not 4)
-        for (int sliceIdx = 0; sliceIdx < zDim; sliceIdx++) {
-            if (theVOI.getCurves()[sliceIdx].size() == 3) {
-                
-                // find the curve with the greatest area (the thigh curve)
-                float maxArea = ((VOIContour)theVOI.getCurves()[sliceIdx].get(0)).area();
-                int maxIdx = 0;
-                for (int idx = 1; idx < theVOI.getCurves()[sliceIdx].size(); idx++) {
-                    if (((VOIContour)theVOI.getCurves()[sliceIdx].get(idx)).area() > maxArea) {
-                        maxIdx = idx;
-                    }
-                }
-                
-//                System.out.println("Slice num: " +sliceIdx +"   thigh curve idx: " +maxIdx);
-
-                /*
-                 The next part of the code may be error prone.  startIdx1 should be between 
-                 the zeroth contour point and the minimum point on the top part of the contour,
-                 the point a index upperCurveMinIdx.  endIdx2 should be after minIdx.  startIdx2
-                 should come next, followed by the maximum point on the bottom part of the contour
-                 (lowerCurveMaxIdx) and finally endIdx2, which should be less than the number of points
-                 in the contour.  If these assumptions are not correct, this part of the code
-                 will fail, and we will not be able to split a joined single thigh contour into
-                 a left and right thigh contour
-                 
-                 */
-                // split the curve through its middle with the maxIdx
-                VOIContour maxContour = ((VOIContour)theVOI.getCurves()[sliceIdx].get(maxIdx));
-                int[] xVals = new int [maxContour.size()];
-                int[] yVals = new int [maxContour.size()];
-                int[] zVals = new int [maxContour.size()];
-                maxContour.exportArrays(xVals, yVals, zVals);
-                
-                // find the indices of an upper and lower section of the contour that is "close" to the image center
-                // find the index of the first contour point whose x-component is "close" to the middle
-                // startIdx1 represents the first point on the contour that is within 20 units of the image center
-                int startIdx1 = 0;
-                while (xVals[startIdx1] <= ((xDim / 2) - 20) || xVals[startIdx1] >= ((xDim / 2) + 20)) {
-                    startIdx1++;
-                }
-                
-                // endIdx1 is the last point on the top curve
-                int endIdx1 = startIdx1 + 1;
-                while (xVals[endIdx1] >= ((xDim / 2) - 20) && xVals[endIdx1] <= ((xDim / 2) + 20)) {
-                    endIdx1++;
-                }
-                // subtract 1 since we indexed one element too far
-                endIdx1--;
-//                System.out.println("\nStart index 1: " +startIdx1 +"   end index 1: " +endIdx1);
-
-                // find the index of the second contour section whose x-component is "close" to the middle
-                int startIdx2 = endIdx1 + 1;
-                while (xVals[startIdx2] <= ((xDim / 2) - 20) || xVals[startIdx2] >= ((xDim / 2) + 20)) {
-                    startIdx2++;
-                }
-                
-                int endIdx2 = startIdx2 + 1;
-                while (xVals[endIdx2] >= ((xDim / 2) - 20) && xVals[endIdx2] <= ((xDim / 2) + 20)) {
-                    endIdx2++;
-                }
-                // subtract 1 since we indexed one element too far
-                endIdx2--;
-//                System.out.println("Start index 2: " +startIdx2 +"   end index 1: " +endIdx2);
-
      
-                // find the index of the two closest points between these two sections, this is where we will split the contour
-                // one contour section goes from startIdx1 to endIdx1
-                // the other goes from startIdx2 to endIdx2
-                int upperCurveMinIdx = startIdx1;
-                int lowerCurveMaxIdx = startIdx2;
-                float dx = xVals[startIdx1] - xVals[startIdx2];
-                float dy = yVals[startIdx1] - yVals[startIdx2];
-                // all computations will be on the same slice, forget about the z-component
-                float minDistance = dx*dx + dy*dy;
-                float dist;
-                
-                for (int idx1 = startIdx1; idx1 <= endIdx1; idx1++) {
-                    for (int idx2 = startIdx2; idx2 <= endIdx2; idx2++) {
-                        dx = xVals[idx1] - xVals[idx2];
-                        dy = yVals[idx1] - yVals[idx2];
-                        dist = dx*dx + dy*dy;
-                        if (dist < minDistance) {
-                            minDistance = dist;
-                            upperCurveMinIdx = idx1;
-                            lowerCurveMaxIdx = idx2;
-                        } // end if
-                    } // end for (int idx2 = startIdx2; ...
-                } // end for (int idx1 = startIdx1; ...
-                
-//                System.out.println("Slice: " + sliceIdx +"   Minimum distance: " +minDistance);
-//                System.out.println(xVals[upperCurveMinIdx] +"  " +yVals[upperCurveMinIdx] +"   and  " +xVals[lowerCurveMaxIdx] +"  " +yVals[lowerCurveMaxIdx]);
-                
-                // make the two contours resulting from the split
-                ArrayList<Integer> x1Arr = new ArrayList<Integer>(maxContour.size());
-                ArrayList<Integer> y1Arr = new ArrayList<Integer>(maxContour.size());
-                ArrayList<Integer> z1Arr = new ArrayList<Integer>(maxContour.size());
-                
-                ArrayList<Integer> x2Arr = new ArrayList<Integer>(maxContour.size());
-                ArrayList<Integer> y2Arr = new ArrayList<Integer>(maxContour.size());
-                ArrayList<Integer> z2Arr = new ArrayList<Integer>(maxContour.size());
-                
-                if (upperCurveMinIdx < lowerCurveMaxIdx) {
-                    // the first contour (left thigh) goes from minIdx1 to minIdx2 to minIdx1
-                    int newIdx = 0;
-                    for (int idx = upperCurveMinIdx; idx < lowerCurveMaxIdx; idx++, newIdx++) {
-                        x1Arr.add(newIdx, xVals[idx]);
-                        y1Arr.add(newIdx, yVals[idx]);
-                        z1Arr.add(newIdx, zVals[idx]);
-                    }
-
-                    // the second contour (right thigh) goes from minIdx2 to maxContour.size(), 0 , 1, to minIdx1 to minIdx2
-                    newIdx = 0;
-                    for (int idx = lowerCurveMaxIdx; idx < maxContour.size(); idx++, newIdx++) {
-                        x2Arr.add(newIdx, xVals[idx]);
-                        y2Arr.add(newIdx, yVals[idx]);
-                        z2Arr.add(newIdx, zVals[idx]);
-                    }
-                    for (int idx = 0; idx < upperCurveMinIdx; idx++, newIdx++) {
-                        x2Arr.add(newIdx, xVals[idx]);
-                        y2Arr.add(newIdx, yVals[idx]);
-                        z2Arr.add(newIdx, zVals[idx]);
-                    }
-                } // end if (minIdx1 < minIdx2)
-
-                int[] x1 = new int[x1Arr.size()];
-                int[] y1 = new int[x1Arr.size()];
-                int[] z1 = new int[x1Arr.size()];
-                for(int idx = 0; idx < x1Arr.size(); idx++) {
-                    x1[idx] = x1Arr.get(idx);
-                    y1[idx] = y1Arr.get(idx);
-                    z1[idx] = z1Arr.get(idx);
-                }
-
-                abdomenVOI.importCurve(x1, y1, z1, sliceIdx);
-                
-                int[] x2 = new int[x2Arr.size()];
-                int[] y2 = new int[x2Arr.size()];
-                int[] z2 = new int[x2Arr.size()];
-                for(int idx = 0; idx < x2Arr.size(); idx++) {
-                    x2[idx] = x2Arr.get(idx);
-                    y2[idx] = y2Arr.get(idx);
-                    z2[idx] = z2Arr.get(idx);
-                }
-                                               
-            } else if (theVOI.getCurves()[0].size() != 4) {
-                abdomenImage.unregisterAllVOIs();
-                abdomenImage.registerVOI(theVOI);            
-                new ViewJFrameImage(abdomenImage).updateImages(true);
-                System.err.println("makeThighTissueVOI() Error, did not get 2 curves in the VOI");
-                completedThigh = false;
-            } else {
-                //abdomenVOI = makeAbdomenTissueVOI();
-                
-                // Right leg VOI is the left most in the image
-                int[] rightBoundsX = new int [2];
-                int[] rightBoundsY = new int [2];
-                int[] rightBoundsZ = new int [2];
-                VOIContour rightCurve;
-                rightCurve = ((VOIContour)abdomenVOI.getCurves()[0].get(0));
-                rightCurve.getBounds(rightBoundsX, rightBoundsY, rightBoundsZ);
-                
-
-            
-
-            }
-
-        } // end for (sliceIdx = 0; ...)
-        
-        
-        // show the split VOIs
-        //boneImage.unregisterAllVOIs();
-        //boneImage.registerVOI(rightThighVOI);            
-        //boneImage.registerVOI(leftThighVOI);            
-        //new ViewJFrameImage(boneImage).updateImages(true);
-        return completedThigh;
-
-        
-        
-
-
-    } // end makeThighTissueVOI()
-    
-    private void getCenterOfMass() {
-    	float[] thresholds = new float[2];
-        thresholds[0] = -1024;
-        thresholds[1] = 1103;
-        
-        boolean wholeImage = true;
-        
-        try {
-
-            // No need to make new image space because the user has choosen to replace the source image
-            // Make the algorithm class
-            comAlgo = new AlgorithmCenterOfMass((ModelImage)srcImage.clone(), thresholds, wholeImage);
-
-            // This is very important. Adding this object as a listener allows the algorithm to
-            // notify this object when it has completed of failed. See algorithm performed event.
-            // This is made possible by implementing AlgorithmedPerformed interface
-            comAlgo.addListener(this);
-            
-            comAlgo.join();
-
-            // Start the thread as a low priority because we wish to still have user interface work fast.
-            if (comAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                MipavUtil.displayError("A thread is already running on this object");
-            }
-        } catch (OutOfMemoryError x) {
-            MipavUtil.displayError("Dialog Center Of Mass: unable to allocate enough memory");
-
-            return;
-        } catch(InterruptedException x) {
-        	MipavUtil.displayError("Did not compute center of mass.");
-        }
-        
-    }
-    
-    private BitSet expandAbdomen(BitSet abdomenSet) {
-    	int firstSet = abdomenSet.nextSetBit(0);
-    	//size returns the last set bit-1
-    	int lastSet = abdomenSet.size() - 1;
-    	int clearBit;
-    	boolean included = false, foundLeft = false, foundRight = false;
-    	
-    	//iterate over all clear bits from firstSet to lastSet
-    	for(int i=abdomenSet.nextClearBit(firstSet); i>=0 || i<lastSet; i=abdomenSet.nextClearBit(i+1)) {
-    		clearBit = i;
-    		included = false;
-    		foundLeft = false;
-    		foundRight = false;
-    		
-        hL: for(int j=clearBit-10; j<clearBit; j++) {
-    			if(abdomenSet.get(j) == true) {
-    				foundLeft = true;
-    				break hL;
-    			}
-    		}
-    		if(foundLeft) {
-	    hR:		for(int j=clearBit-10; j<clearBit; j++) {
-	    			if(abdomenSet.get(j) == true) {
-	    				foundRight = true;
-	    				break hR;
-	    			}
-	    		}
-    		}
-    		if(foundLeft && foundRight)
-    			included = true;
-    		if(!included) {
-    			foundLeft = false;
-    			foundRight = false;
-      vL:		for(int j=clearBit-10*xDim; j<clearBit; j += xDim) {
-    				if(abdomenSet.get(j) == true) {
-        				foundLeft = true;
-        				break vL;
-    				}
-      			}
-      vR: 		for(int j=clearBit; j<clearBit+10*xDim; j += xDim) {
-    				if(abdomenSet.get(j) == true) {
-        				foundRight = true;
-        				break vR;
-        			}
-    			}
-      			if(foundLeft && foundRight)
-      				included = true;
-    		}
-    		if(included)
-    			abdomenSet.set(clearBit);
-    	}
-    	
-    	return abdomenSet;
-    }
-    
-    private boolean segmentAbdomenTissue(double[] center) {
-         
-    	center = getSeedPoint(center);
-        BitSet abdomenSet = new BitSet();
-        regionGrowAbdomen((short)center[0], (short)center[1], (short)center[2], abdomenSet);
-        
-        volumeBitSet = abdomenSet;//expandAbdomen(abdomenSet);
-        
-        // make the abdomenTissue label image slice by slice from the 3D region grown BitSet
-        // bitSetIdx is a cumulative index into the 3D BitSet
-        for (int bitSetIdx = 0, sliceNum = 0; sliceNum < zDim; sliceNum++) {
-            for (int sliceIdx = 0; sliceIdx < sliceSize; sliceIdx++, bitSetIdx++) {
-                if (volumeBitSet.get(bitSetIdx)) {
-                    sliceBuffer[sliceIdx] = abdomenTissueLabel;
-                } else {
-                    sliceBuffer[sliceIdx] = 0;
-                }
-            } // end for (int sliceIdx = 0; ...)
-            
-            // save the sliceBuffer into the boneMarrowImage
-            try {
-                destImage.importData(sliceNum * sliceSize, sliceBuffer, false);
-            } catch (IOException ex) {
-                System.err.println("segmentThighTissue(): Error importing data");
-            }
-        } // end for(int bitSetIdx = 0, sliceNum = 0; ...)
-        return true;
-    } // end segmentAbdomenTissue(...)
-    
     /**
      * Moves seed point to ideal intensity
      * @param center image center of mass
