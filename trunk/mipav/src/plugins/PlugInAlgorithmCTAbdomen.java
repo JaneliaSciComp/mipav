@@ -146,6 +146,22 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             calc2D();
         } else if (srcImage.getNDims() == 3) {
             calc25D();
+            //TODO: When does algorithm fail?
+            System.out.println("directory: " +imageDir);
+	        FileVOI fileVOI;
+	        
+	        String fileName = "Abdomen.xml";
+	        try {
+	            fileVOI = new FileVOI(fileName, imageDir, srcImage);
+	            fileVOI.writeVOI(abdomenVOI, true);
+	            fileName = "Subcutaneous Area.xml";
+	            fileVOI = new FileVOI(fileName, imageDir, srcImage);
+	            fileVOI.writeVOI(subcutaneousVOI, true);
+	        } catch (IOException ex) {
+	            System.err.println("Error segmentImage():  Opening VOI file");
+	            return;
+	        }
+            
         }
     } // end runAlgorithm()
 
