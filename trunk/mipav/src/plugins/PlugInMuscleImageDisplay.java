@@ -3928,9 +3928,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			
 			
 			Paragraph p = new Paragraph();
-			
-			System.out.println("GOT HERE!!!!");
-
 			//add the Title and subtitle
 			p.setAlignment(Element.ALIGN_CENTER);
 			p.add(new Chunk("MIPAV: Segmentation", new Font(Font.TIMES_ROMAN, 18)));
