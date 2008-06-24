@@ -2193,6 +2193,7 @@ public class FileNIFTI extends FileBase {
                 fileInfo.setExtents(extents);
             }
 
+            finalize();
             fireProgressStateChanged(100);
         } catch (IOException error) {
             throw new IOException("FileNIFTI: " + error);
