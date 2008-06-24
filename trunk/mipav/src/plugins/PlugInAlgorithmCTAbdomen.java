@@ -174,7 +174,6 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         srcImage.unregisterAllVOIs();
         srcImage.registerVOI(abdomenVOI);
         srcImage.registerVOI(subcutaneousVOI);
-//        srcImage.registerVOI(visceralVOI);
 
     } // end calc2D()
 
