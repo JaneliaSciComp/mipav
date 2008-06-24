@@ -1482,6 +1482,7 @@ public class FileIO {
         } // if (gunzip)
         fileType = FileUtility.getFileType(fileName, fileDir, false, quiet); // set the fileType
 
+
         if (fileType == FileUtility.ERROR) {
             return null;
         }
@@ -4756,6 +4757,7 @@ public class FileIO {
         int imageHeight = 0;
         int[] extents;
         int[] buffer = null;
+        int[] greyBuffer = null;
         String[] fileList;
 
         if (multifile) {
@@ -4867,6 +4869,9 @@ public class FileIO {
 
             if (buffer == null) {
                 buffer = new int[4 * extents[0] * extents[1] * extents[2]];
+                if(!isPaintBrush) {
+                	greyBuffer = new int[extents[0] * extents[1] * extents[2]];
+                }
             }
 
             int a, r, g, b, pixel;
@@ -4898,11 +4903,39 @@ public class FileIO {
 
             extents = new int[] {tmp[0], tmp[1]};
         }
+        
+        //need to determine if the buffer identifies a grey scale image...but disregard if we 
+        //are dealing with the paintbrush
+        boolean isGrey = false;
+        if(!isPaintBrush) {
+	        int r,g,b;
+	        for(int i=0,k=0;i<buffer.length;i=i+4,k++) {
+	        	r = buffer[i + 1];
+	        	g = buffer[i + 2];
+	        	b = buffer[i + 3];
+	        	if(r == g && g == b) {
+	        		isGrey = true;
+	        		greyBuffer[k] = r;
+	        	}else {
+	        		isGrey = false;
+	        		greyBuffer = null;
+	        		break;
+	        	}
+	        }
+        }
 
-        modelImage = new ModelImage(ModelStorageBase.ARGB, extents, fileName);
+        if(isGrey) {
+        	modelImage = new ModelImage(ModelStorageBase.UBYTE, extents, fileName);
+        }else {
+        	modelImage = new ModelImage(ModelStorageBase.ARGB, extents, fileName);
+        }
 
         try {
-            modelImage.importData(0, buffer, true);
+        	if(isGrey) {
+        		modelImage.importData(0, greyBuffer, true);
+        	}else {
+        		modelImage.importData(0, buffer, true);
+        	}
         } catch (IOException e) {
             Preferences.debug("FileIO.JIMI : " + e + "\n", Preferences.DEBUG_FILEIO);
             e.printStackTrace();
