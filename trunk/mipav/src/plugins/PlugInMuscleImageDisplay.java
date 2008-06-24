@@ -4320,7 +4320,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	            if ((imageActive.getVOIs() != null) && (imageActive.getVOIs().size() != 0)) {
 	                String[] activeCalc = ((PlugInMuscleImageDisplay)frame).getCalcRunning();
 	                if(activeCalc == null) {
-	                	imageStatList = new PlugInVOIStatistics(imageActive.getVOIs());
+	                	VOIVector createdVOIs = new VOIVector();
+	                	for(int i=0; i<imageActive.getVOIs().size(); i++) 
+	                		if(imageActive.getVOIs().get(i).area() > 0)
+	                			createdVOIs.add(imageActive.getVOIs().get(i));
+	                	imageStatList = new PlugInVOIStatistics(createdVOIs);
 	                	imageStatList.setVisible(true);
 	                	// addVOIUpdateListener(imageStatList);
 	                } else {
@@ -4791,9 +4795,29 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        FileInfoDicom fileInfo = (FileInfoDicom)getActiveImage().getFileInfo()[0];
 	        String id = (String)fileInfo.getTagTable().getValue("0010,0020");
 			id = id != null ? id.trim() : "Removed";
+			
+			String dob = (String)fileInfo.getTagTable().getValue("0010,0030");
+			dob = dob != null ? dob.trim() : "Unknown";
+			
+			DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+			Date date = new Date();
+			String analysisDate = dateFormat.format(date);
+
+			String scanDate = (String)fileInfo.getTagTable().getValue("0008,0020");
+			scanDate = scanDate != null ? scanDate.trim() : "Unknown";
+			
+			String sliceNumber = new String();
+			if(!multipleSlices) {
+				sliceNumber = (String)fileInfo.getTagTable().getValue("0020,0013");
+				sliceNumber = sliceNumber != null ? sliceNumber.trim() : "Unknown";
+			}
+				
 			String userName = System.getProperty("user.name");
 			userName = userName != null ? userName.trim() : "Unknown";
-	        String kl = "#\tPatient ID:\t"+id+"\tAnalyst:\t"+userName+"\n";//  Conducting statistical computation.\n";
+			
+	        String kl = "#\tPatient ID:\t"+id+"\tPatient DOB:\t"+dob+"\tScan date:\t"+scanDate+"\n";
+	        kl += "#"+(!multipleSlices ? "\tSlice:\t"+ sliceNumber : "")
+	        			+"\tAnalyst:\t"+userName+"\tAnalysis Date:\t"+analysisDate+"\n";
 	        String str;
 
 	        // output the labels of the list of statistics to be produced.
