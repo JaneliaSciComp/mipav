@@ -66,37 +66,37 @@ public class JDialogVOIStats extends JDialogBase
     private AlgorithmVOIProps algoVOI;
 
     /** DOCUMENT ME! */
-    private JButton applyButton;
+    protected JButton applyButton;
 
     /** DOCUMENT ME! */
-    private JButton calcButton;
+    protected JButton calcButton;
     
     /** DOCUMENT ME! */
-    private JButton helpButton;
+    protected JButton helpButton;
 
     /** DOCUMENT ME! */
-    private JCheckBox checkboxAdditiveOrSubtractive;
+    protected JCheckBox checkboxAdditiveOrSubtractive;
 
     /** DOCUMENT ME! */
-    private JCheckBox checkboxBoundary;
+    protected JCheckBox checkboxBoundary;
 
     /** DOCUMENT ME! */
-    private JCheckBox checkboxBoundingBox;
+    protected JCheckBox checkboxBoundingBox;
 
     /** DOCUMENT ME! */
-    private JCheckBox checkboxExclude;
+    protected JCheckBox checkboxExclude;
     
     /** DOCUMENT ME! */
-    private JCheckBox checkboxSaveStats;
+    protected JCheckBox checkboxSaveStats;
 
     /** DOCUMENT ME! */
-    private JCheckBox checkboxIncludeForProcessing;
+    protected JCheckBox checkboxIncludeForProcessing;
 
     /** DOCUMENT ME! */
-    private JCheckBox checkboxVOIName;
+    protected JCheckBox checkboxVOIName;
 
     /** DOCUMENT ME! */
-    private JButton colorButton;
+    protected JButton colorButton;
 
     /** DOCUMENT ME! */
     private ViewJColorChooser colorChooser;
@@ -108,31 +108,31 @@ public class JDialogVOIStats extends JDialogBase
     private JTextArea contourTextArea;
 
     /** DOCUMENT ME! */
-    private JLabel current;
+    protected JLabel current;
 
     /** DOCUMENT ME! */
-    private JCheckBox followVOISelectionBox = null;
+    protected JCheckBox followVOISelectionBox = null;
 
     /** DOCUMENT ME! */
-    private Border frameBorder = null;
+    protected Border frameBorder = null;
 
     /** DOCUMENT ME! */
     private boolean frameFollowsSelection = true;
 
     /** DOCUMENT ME! */
-    private ModelImage image;
+    protected ModelImage image;
 
     /** DOCUMENT ME! */
-    private JLabel labelMax;
+    protected JLabel labelMax;
 
     /** DOCUMENT ME! */
-    private JLabel labelMin;
+    protected JLabel labelMin;
 
     /** DOCUMENT ME! */
-    private JPanelStatisticsList listPanel;
+    protected JPanelStatisticsList listPanel;
 
     /** DOCUMENT ME! */
-    private JSlider opacitySlider;
+    protected JSlider opacitySlider;
 
     /** DOCUMENT ME! */
     private VOITreePopup popup = null;
@@ -144,16 +144,16 @@ public class JDialogVOIStats extends JDialogBase
     private short seedValue;
 
     /** DOCUMENT ME! */
-    private JTextField seedValueTF;
+    protected JTextField seedValueTF;
 
     /** DOCUMENT ME! */
-    private JPanel statsPanel;
+    protected JPanel statsPanel;
 
     /** DOCUMENT ME! */
-    private JTextField textMax;
+    protected JTextField textMax;
 
     /** DOCUMENT ME! */
-    private JTextField textMin;
+    protected JTextField textMin;
 
     /** DOCUMENT ME! */
     private boolean treeSelectionChange = false;
@@ -162,22 +162,22 @@ public class JDialogVOIStats extends JDialogBase
     private VOI voi;
 
     /** DOCUMENT ME! */
-    private JScrollPane voiContourPane;
+    protected JScrollPane voiContourPane;
 
     /** DOCUMENT ME! */
     private DefaultTreeModel voiModel;
 
     /** DOCUMENT ME! */
-    private JTextField VOIName;
+    protected JTextField VOIName;
 
     /** DOCUMENT ME! */
-    private JTextField VOIThicknessField;
+    protected JTextField VOIThicknessField;
 
     /** DOCUMENT ME! */
     private JTree voiTree;
 
     /** DOCUMENT ME! */
-    private JScrollPane voiTreePane;
+    protected JScrollPane voiTreePane;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1258,7 +1258,7 @@ public class JDialogVOIStats extends JDialogBase
     /**
      * DOCUMENT ME!
      */
-    private void buildVOIContourPane() {
+    protected void buildVOIContourPane() {
         contourTextArea = new JTextArea();
         contourTextArea.setFont(MipavUtil.font10);
         contourTextArea.setEditable(false);
@@ -1271,7 +1271,7 @@ public class JDialogVOIStats extends JDialogBase
     /**
      * DOCUMENT ME!
      */
-    private void buildVOITree() {
+    protected void buildVOITree() {
 
         ViewVOIVector VOIs = image.getVOIs();
 
@@ -1305,7 +1305,7 @@ public class JDialogVOIStats extends JDialogBase
     /**
      * Sets up GUI components - buttons, checkboxes, sliders, etc.
      */
-    private void init() {
+    protected void init() {
 
         // setTitle("VOI Statistics");
         frameBorder = BorderFactory.createCompoundBorder(BorderFactory.createRaisedBevelBorder(),
