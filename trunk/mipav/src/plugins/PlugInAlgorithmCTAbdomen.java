@@ -549,20 +549,29 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
         // there should be only one curve corresponding to the external abdomen boundary
         VOIContour curve = ((VOIContour)theVOI.getCurves()[0].get(0));
-        int[] xVals = new int [curve.size()];
-        int[] yVals = new int [curve.size()];
-        int[] zVals = new int [curve.size()];
+        int[] xVals;
+        int[] yVals;
+        int[] zVals;
+        try {
+            xVals = new int [curve.size()];
+            yVals = new int [curve.size()];
+            zVals = new int [curve.size()];
+        }  catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("makeIntensityProfiles(): Can NOT allocate the abdomen VOI arrays");
+            return;
+        }
         curve.exportArrays(xVals, yVals, zVals);
         
         // one intensity profile for each radial line.  Each radial line is 3 degrees and
         // there are 360 degrees in a circle
         try {
-            intensityProfiles = new ArrayList[120];
-            xProfileLocs = new ArrayList[120];
-            yProfileLocs = new ArrayList[120];
+            intensityProfiles = new ArrayList[360 /3];
+            xProfileLocs = new ArrayList[360 /3];
+            yProfileLocs = new ArrayList[360 /3];
         } catch (OutOfMemoryError error) {
             System.gc();
-            MipavUtil.displayError("makeIntensityProfiles(): Can NOT allocate profiles");
+            MipavUtil.displayError("makeIntensityProfiles(): Can NOT allocate profile arrays");
             return;
         }
         
@@ -585,9 +594,15 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             double scaleFactor;      // reduces the number of trig operations that must be performed
             
             // allocate the ArrayLists for each radial line
-            intensityProfiles[contourPointIdx] = new ArrayList<Short>();
-            xProfileLocs[contourPointIdx] = new ArrayList<Integer>();
-            yProfileLocs[contourPointIdx] = new ArrayList<Integer>();
+            try {
+                intensityProfiles[contourPointIdx] = new ArrayList<Short>();
+                xProfileLocs[contourPointIdx] = new ArrayList<Integer>();
+                yProfileLocs[contourPointIdx] = new ArrayList<Integer>();
+            } catch (OutOfMemoryError error) {
+                System.gc();
+                MipavUtil.displayError("makeIntensityProfiles(): Can NOT allocate profile list: " +contourPointIdx);
+                return;
+            }
                 
             angleRad = Math.PI * angle / 180.0;
              if (angle > 315 || angle <= 45) {
@@ -667,9 +682,19 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      */
     private void makeSubcutaneousFatVOIfromIntensityProfiles() {
         
-        int[] xLocsSubcutaneousVOI = new int [360 / 3];
-        int[] yLocsSubcutaneousVOI = new int [360 / 3];
-        int[] zVals = new int[360 / 3];
+        int[] xLocsSubcutaneousVOI;
+        int[] yLocsSubcutaneousVOI;
+        int[] zVals;
+        try {
+            xLocsSubcutaneousVOI = new int [360 / 3];
+            yLocsSubcutaneousVOI = new int [360 / 3];
+            zVals = new int [360 / 3];
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("makeSubcutaneousFatVOIfromIntensityProfiles(): Can NOT allocate xLocsSubcutaneousVOI");
+            return;
+        }
+        
         for(int idx = 0; idx < 360 / 3; idx++) {
             zVals[idx] = 0;
         }
