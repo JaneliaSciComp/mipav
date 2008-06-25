@@ -8,6 +8,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
 import gov.nih.mipav.model.algorithms.AlgorithmSnake;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRemoveSlices;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.CubeBounds;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -126,7 +127,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         this.imageDir = imageDir+File.separator;
         this.voiColor = color;
 
-        abdomenImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "thighTissueImage");
+        abdomenImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "AbdomenImage");
         abdomenVOI = null;
         subcutaneousVOI = null;
     } // end PlugInAlgorithmCTAbdomen(...)
@@ -204,7 +205,10 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         
         // convert the binary image into a VOI
         AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(binImage);
+        VOIExtractionAlgo.setRunningInSeparateThread(false);
         VOIExtractionAlgo.run();
+        VOIExtractionAlgo.setCompleted(true);
+        
 //        ShowImage(binImage, "After VOI extraction");
 
         // make sure we got one VOI with one curve
@@ -247,7 +251,10 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
 
     private void calc25D() {
-    } // end calc25D()
+        labelAbdomen3D();
+
+        srcImage.unregisterAllVOIs();
+} // end calc25D()
 
     
     
@@ -374,7 +381,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         try {
             srcImage.exportData(0, sliceSize, sliceBuffer);
         } catch (IOException ex) {
-            System.err.println("PlugInAlgorithmCTAbdomen.JCATsegmentAbdomen2D(): Error exporting data");
+            System.err.println("PlugInAlgorithmCTAbdomen.labelAbdomen2D(): Error exporting data");
             return;
         }
 
@@ -396,7 +403,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         } // end for int idx = 0, y = 0; ...)
 
         if (seedX < 0 || seedX >= xDim || seedY < 0 || seedY >= yDim) {
-            MipavUtil.displayError("PlugInAlgorithmCTAbdomen.JCATsegmentAbdomen2D(): Failed to find a seed location for the region grow");
+            MipavUtil.displayError("PlugInAlgorithmCTAbdomen.labelAbdomen2D(): Failed to find a seed location for the region grow");
             return;
         }
 
@@ -423,7 +430,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         try {
             abdomenImage.importData(0, sliceBuffer, false);
         } catch (IOException ex) {
-            System.err.println("JCATsegmentAbdomen2D(): Error importing data");
+            System.err.println("labelAbdomen2D(): Error importing data");
         }
 //        ShowImage(abdomenImage, "Region Grown image");
 
@@ -448,7 +455,94 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             }
         } // end for (int idx = 0; ...)
 
-    } // end labelAbdomen2D()  
+    } // end labelAbdomen2D()
+    
+    
+    
+    
+    private void labelAbdomen3D() {
+        // find a seed point inside the subcutaneous fat for a region grow
+        boolean found = false;
+        short seedX = 0, seedY = 0, seedZ = 0;
+        short seedVal = 0;
+        
+        for (int idx = 0, z = 0; !found && z < zDim; z++) {
+            // fill up the slice buffer
+            try {
+                srcImage.exportData(z * sliceSize, sliceSize, sliceBuffer);
+            } catch (IOException ex) {
+                System.err.println("PlugInAlgorithmCTAbdomen.labelAbdomen3D(): Error exporting data on slice: " +z);
+                return;
+            }
+            
+            for (int y = 0; !found && y < yDim; y++) {
+                for (int x = 0; x < xDim; x++, idx++) {
+                    // search for a fat pixel.  These are Hounsfield units
+                    if (sliceBuffer[idx] > -75 && sliceBuffer[idx] < -30) {
+                        seedX = (short)x;
+                        seedY = (short)y;
+                        seedZ = (short)z;
+                        seedVal = sliceBuffer[idx];
+                        found = true;
+                        break;
+                    }
+                } // end for (int x = 0; ...)
+            } // end for int y = 0; ...)
+        } // end for (int idx = 0, ...
+        
+
+        if (seedX < 0 || seedX >= xDim || seedY < 0 || seedY >= yDim || seedZ < 0 || seedZ >= zDim) {
+            MipavUtil.displayError("PlugInAlgorithmCTAbdomen.labelAbdomen3D(): Failed to find a seed location for the region grow");
+            return;
+        }
+
+//        System.out.println("seed point: " +seedX +"  " +seedY +"  " +seedZ);
+//        System.out.println("seed value: " +seedVal);
+
+        AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(srcImage, 1.0f, 1.0f);
+        regionGrowAlgo.setRunningInSeparateThread(false);
+        
+        CubeBounds regionGrowBounds = new CubeBounds(xDim, 0, yDim, 0, zDim, 0);
+
+        System.out.print("regionGrow3D: ");
+        long time = System.currentTimeMillis();
+
+        // under segment so that we do not get the blanket
+        regionGrowAlgo.regionGrow3D(volumeBitSet, new Point3Ds(seedX, seedY, seedZ), -1,
+                                    false, false, null, seedVal - 50,
+                                    seedVal + 1500, -1, -1, false, 0, regionGrowBounds);
+        
+        System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+
+        // make the abdominal label image from the volume BitSet determined in the region grow
+        for (int volIdx = 0, z = 0; z < zDim; z++) {
+            for (int sliceIdx = 0; sliceIdx < sliceSize; sliceIdx++, volIdx++) {
+                if (volumeBitSet.get(volIdx)) {
+                    sliceBuffer[sliceIdx] = abdomenTissueLabel;
+                } else {
+                    sliceBuffer[sliceIdx] = 0;
+                }
+            } // end for (int sliceIdx = 0; ...)
+            // save the sliceBuffer into the abdomenImage
+            try {
+                abdomenImage.importData(z * sliceSize, sliceBuffer, false);
+            } catch (IOException ex) {
+                System.err.println("labelAbdomen3D(): Error importing data");
+            }
+        } // end for (int idx = 0; ...)
+
+//        ShowImage(abdomenImage, "abdominal label image");
+
+        // do a mathematical morphology closing operation to fill the small gaps
+        System.out.print("closeImage3D: ");
+        time = System.currentTimeMillis();
+        closeImage3D(abdomenImage);
+        System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+
+        ShowImage(abdomenImage, "closed image");
+
+
+    } // end labelAbdomen3D()
     
     
    
@@ -1621,6 +1715,17 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
        MorphIDObj = new AlgorithmMorphology2D(img, 2, 1, AlgorithmMorphology2D.CLOSE, 4, 4, 0, 0, true);
        MorphIDObj.run();
    } // end closeImage(...)
+  
+   
+   
+   /**
+    * Mathematical Morphological closing operation
+    */
+   public void closeImage3D(ModelImage img) {
+       AlgorithmMorphology3D MorphIDObj = null;
+       MorphIDObj = new AlgorithmMorphology3D(img, 2, 1, AlgorithmMorphology3D.CLOSE, 2, 2, 0, 0, true);
+       MorphIDObj.run();
+   } // end closeImage3D(...)
   
    
    
