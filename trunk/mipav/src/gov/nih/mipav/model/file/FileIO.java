@@ -222,29 +222,29 @@ public class FileIO {
                 modelImageResult.getImageName());
 
         try {
-        	if(modelImageResult.getNDims() > 2) {
-	            for (int i = 0; i < modelImageResult.getExtents()[2]; i++) // loop through images
-	            {
-	                modelImageResult.exportData(i * oneSliceBuffer.length, oneSliceBuffer.length, oneSliceBuffer); // export
-	                // a 2d
-	                // buffer
-	                // from
-	                // modelImageResult
-	
-	                oneSliceBuffer = resample255(oneSliceBuffer, min, max);
-	
-	                modelImageResultUB.importData(i * oneSliceBuffer.length, oneSliceBuffer, false); // import into
-	                // modelImageResultUB
-	
-	                FileIO.copyResolutions(modelImageResult, modelImageResultUB, i);
-	            }
-        	}else {
-        		//2d image
-        		modelImageResult.exportData(0, oneSliceBuffer.length, oneSliceBuffer);
-        		oneSliceBuffer = resample255(oneSliceBuffer, min, max);
-        		modelImageResultUB.importData(0, oneSliceBuffer, false);
-        		FileIO.copyResolutions(modelImageResult, modelImageResultUB, 0);
-        	}
+            if (modelImageResult.getNDims() > 2) {
+                for (int i = 0; i < modelImageResult.getExtents()[2]; i++) // loop through images
+                {
+                    modelImageResult.exportData(i * oneSliceBuffer.length, oneSliceBuffer.length, oneSliceBuffer); // export
+                    // a 2d
+                    // buffer
+                    // from
+                    // modelImageResult
+
+                    oneSliceBuffer = resample255(oneSliceBuffer, min, max);
+
+                    modelImageResultUB.importData(i * oneSliceBuffer.length, oneSliceBuffer, false); // import into
+                    // modelImageResultUB
+
+                    FileIO.copyResolutions(modelImageResult, modelImageResultUB, i);
+                }
+            } else {
+                // 2d image
+                modelImageResult.exportData(0, oneSliceBuffer.length, oneSliceBuffer);
+                oneSliceBuffer = resample255(oneSliceBuffer, min, max);
+                modelImageResultUB.importData(0, oneSliceBuffer, false);
+                FileIO.copyResolutions(modelImageResult, modelImageResultUB, 0);
+            }
 
             modelImageResultUB.calcMinMax();
         } catch (Exception e) {
@@ -756,11 +756,10 @@ public class FileIO {
                     // Build a list for all images at a particular location,
                     // although at different times, as judged by image instance.
                     // Create a list for all possible times in the imageset:
-                    Vector timezonesList = new Vector();
+                    Vector<Vector<OrientStatus>> timezonesList = new Vector<Vector<OrientStatus>>();
 
-                    //
                     // Hold the original list of orients and indices:
-                    Vector orientsList = new Vector(nImages); // original index list
+                    Vector<OrientStatus> orientsList = new Vector<OrientStatus>(nImages); // original index list
 
                     for (int k = 0; k < nImages; k++) { // load original list vector
 
@@ -776,20 +775,20 @@ public class FileIO {
                     // with the same z location. essentially, we
                     // pass through the orientation list multiple times,
                     // filling a single zone with each pass.
-                    Vector tz;
+                    Vector<OrientStatus> tz;
                     OrientStatus ref0, refi;
 
                     while (orientsList.size() > 0) {
-                        tz = new Vector(); // create a new timezone
-                        ref0 = (OrientStatus) orientsList.remove(0);
+                        tz = new Vector<OrientStatus>(); // create a new timezone
+                        ref0 = orientsList.remove(0);
                         tz.add(ref0); // remove 1st orient, put in timezone
                         Preferences.debug("Loading, and making comparison to: " + ref0.getIndex() + ".."
                                 + ref0.getLocation() + "\n", Preferences.DEBUG_FILEIO);
 
-                        Vector orientsClone = (Vector) orientsList.clone();
+                        Vector<OrientStatus> orientsClone = (Vector<OrientStatus>) orientsList.clone();
 
-                        for (Enumeration e = orientsClone.elements(); e.hasMoreElements();) {
-                            refi = (OrientStatus) e.nextElement();
+                        for (Enumeration<OrientStatus> e = orientsClone.elements(); e.hasMoreElements();) {
+                            refi = e.nextElement();
                             Preferences.debug("Looking at: " + refi.getIndex() + "..." + refi.getLocation(),
                                     Preferences.DEBUG_FILEIO);
 
@@ -825,11 +824,11 @@ public class FileIO {
                     try {
                         int t = 0;
 
-                        for (Enumeration e = timezonesList.elements(); e.hasMoreElements();) {
+                        for (Enumeration<Vector<OrientStatus>> e = timezonesList.elements(); e.hasMoreElements();) {
                             Preferences.debug("Timezone\n", Preferences.DEBUG_FILEIO);
 
-                            for (Enumeration f = ((Vector) e.nextElement()).elements(); f.hasMoreElements();) {
-                                OrientStatus ref = (OrientStatus) f.nextElement();
+                            for (Enumeration<OrientStatus> f = e.nextElement().elements(); f.hasMoreElements();) {
+                                OrientStatus ref = f.nextElement();
                                 int k = ref.getIndex();
 
                                 // concatenate the sublists into one ordering list.
@@ -1481,7 +1480,6 @@ public class FileIO {
             }
         } // if (gunzip)
         fileType = FileUtility.getFileType(fileName, fileDir, false, quiet); // set the fileType
-
 
         if (fileType == FileUtility.ERROR) {
             return null;
@@ -2474,7 +2472,7 @@ public class FileIO {
             }
 
             // updates menubar for each image
-            Vector imageFrames = UI.getImageFrameVector();
+            Vector<Frame> imageFrames = UI.getImageFrameVector();
 
             if (imageFrames.size() < 1) {
                 UI.buildMenu();
@@ -2575,7 +2573,7 @@ public class FileIO {
         // into the XML
         // load the tags to keep:
 
-        Hashtable tags2save = null;
+        Hashtable<FileDicomKey, FileDicomTag> tags2save = null;
         if (sourceInfo instanceof FileInfoDicom) {
             tags2save = getDicomSaveList((FileInfoDicom) sourceInfo, destInfo instanceof FileInfoImageXML);
         } else if (sourceInfo instanceof FileInfoMincHDF) {
@@ -2590,10 +2588,10 @@ public class FileIO {
             FileInfoImageXML dInfo = (FileInfoImageXML) destInfo;
 
             // now convert that DICOM tags list into an XML tags List:
-            Enumeration e = tags2save.keys();
+            Enumeration<FileDicomKey> e = tags2save.keys();
             while (e.hasMoreElements()) {
-                FileDicomKey tagKey = (FileDicomKey) e.nextElement();
-                FileDicomTag dicomTag = (FileDicomTag) tags2save.get(tagKey);
+                FileDicomKey tagKey = e.nextElement();
+                FileDicomTag dicomTag = tags2save.get(tagKey);
 
                 dInfo.createPSet(dicomTag.getName());
 
@@ -2675,8 +2673,8 @@ public class FileIO {
      * 
      * @return The Hashtable filled as an XML
      */
-    protected Hashtable getDicomSaveList(FileInfoDicom sourceInfo, boolean isXML) {
-        Hashtable tags2save;
+    protected Hashtable<FileDicomKey, FileDicomTag> getDicomSaveList(FileInfoDicom sourceInfo, boolean isXML) {
+        Hashtable<FileDicomKey, FileDicomTagInfo> tags2save;
 
         if (quiet) { // don't bother asking user when running a macro.
             tags2save = DicomDictionary.getSubsetDicomTagTable();
@@ -2696,28 +2694,30 @@ public class FileIO {
         }
 
         if (tags2save == null) {
-            tags2save = new Hashtable();
+            tags2save = new Hashtable<FileDicomKey, FileDicomTagInfo>();
         }
 
-        Hashtable fullTagsList = sourceInfo.getTagTable().getTagList();
+        Hashtable<FileDicomKey, FileDicomTag> fullTagsList = sourceInfo.getTagTable().getTagList();
+        Hashtable<FileDicomKey, FileDicomTag> tagsWithValues = new Hashtable<FileDicomKey, FileDicomTag>(Math.min(
+                tags2save.size(), fullTagsList.size()));
 
         // place DICOM tags (with values) into the save-tags list.
         // Remove any tags from the list that do not have values:
-        Enumeration e = tags2save.keys();
+        Enumeration<FileDicomKey> e = tags2save.keys();
 
         while (e.hasMoreElements()) {
-            FileDicomKey tagKey = (FileDicomKey) e.nextElement();
+            FileDicomKey tagKey = e.nextElement();
 
-            if (fullTagsList.containsKey(tagKey)
-                    && ( ((FileDicomTag) fullTagsList.get(tagKey)).getValue(false) != null)
-                    && ( ((FileDicomTag) fullTagsList.get(tagKey)).getNumberOfValues() > 0)) {
-                tags2save.put(tagKey, fullTagsList.get(tagKey));
+            if (fullTagsList.containsKey(tagKey) && (fullTagsList.get(tagKey).getValue(false) != null)
+                    && (fullTagsList.get(tagKey).getNumberOfValues() > 0)) {
+                tags2save.put(tagKey, fullTagsList.get(tagKey).getInfo());
+                tagsWithValues.put(tagKey, fullTagsList.get(tagKey));
             } else {
                 tags2save.remove(tagKey);
             }
         }
 
-        return tags2save;
+        return tagsWithValues;
     }
 
     /**
@@ -4869,8 +4869,8 @@ public class FileIO {
 
             if (buffer == null) {
                 buffer = new int[4 * extents[0] * extents[1] * extents[2]];
-                if(!isPaintBrush) {
-                	greyBuffer = new int[extents[0] * extents[1] * extents[2]];
+                if ( !isPaintBrush) {
+                    greyBuffer = new int[extents[0] * extents[1] * extents[2]];
                 }
             }
 
@@ -4903,39 +4903,39 @@ public class FileIO {
 
             extents = new int[] {tmp[0], tmp[1]};
         }
-        
-        //need to determine if the buffer identifies a grey scale image...but disregard if we 
-        //are dealing with the paintbrush
+
+        // need to determine if the buffer identifies a grey scale image...but disregard if we
+        // are dealing with the paintbrush
         boolean isGrey = false;
-        if(!isPaintBrush) {
-	        int r,g,b;
-	        for(int i=0,k=0;i<buffer.length;i=i+4,k++) {
-	        	r = buffer[i + 1];
-	        	g = buffer[i + 2];
-	        	b = buffer[i + 3];
-	        	if(r == g && g == b) {
-	        		isGrey = true;
-	        		greyBuffer[k] = r;
-	        	}else {
-	        		isGrey = false;
-	        		greyBuffer = null;
-	        		break;
-	        	}
-	        }
+        if ( !isPaintBrush) {
+            int r, g, b;
+            for (int i = 0, k = 0; i < buffer.length; i = i + 4, k++) {
+                r = buffer[i + 1];
+                g = buffer[i + 2];
+                b = buffer[i + 3];
+                if (r == g && g == b) {
+                    isGrey = true;
+                    greyBuffer[k] = r;
+                } else {
+                    isGrey = false;
+                    greyBuffer = null;
+                    break;
+                }
+            }
         }
 
-        if(isGrey) {
-        	modelImage = new ModelImage(ModelStorageBase.UBYTE, extents, fileName);
-        }else {
-        	modelImage = new ModelImage(ModelStorageBase.ARGB, extents, fileName);
+        if (isGrey) {
+            modelImage = new ModelImage(ModelStorageBase.UBYTE, extents, fileName);
+        } else {
+            modelImage = new ModelImage(ModelStorageBase.ARGB, extents, fileName);
         }
 
         try {
-        	if(isGrey) {
-        		modelImage.importData(0, greyBuffer, true);
-        	}else {
-        		modelImage.importData(0, buffer, true);
-        	}
+            if (isGrey) {
+                modelImage.importData(0, greyBuffer, true);
+            } else {
+                modelImage.importData(0, buffer, true);
+            }
         } catch (IOException e) {
             Preferences.debug("FileIO.JIMI : " + e + "\n", Preferences.DEBUG_FILEIO);
             e.printStackTrace();
@@ -8401,8 +8401,9 @@ public class FileIO {
             myFileInfo.vr_type = FileInfoDicom.EXPLICIT;
 
             // necessary to save (non-pet) floating point minc files to dicom
-            if (( (image.getFileInfo(0).getFileFormat() == FileUtility.MINC) && (image.getType() == ModelImage.FLOAT)
-                    && (myFileInfo.getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) || ((image.getFileInfo(0).getFileFormat() == FileUtility.ANALYZE) && (image.getType() == ModelImage.FLOAT))) {
+            if ( ( (image.getFileInfo(0).getFileFormat() == FileUtility.MINC) && (image.getType() == ModelImage.FLOAT) && (myFileInfo
+                    .getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY))
+                    || ( (image.getFileInfo(0).getFileFormat() == FileUtility.ANALYZE) && (image.getType() == ModelImage.FLOAT))) {
                 ModelImage newImage = (ModelImage) image.clone();
 
                 // in-place conversion is required so that the minc file info is retained

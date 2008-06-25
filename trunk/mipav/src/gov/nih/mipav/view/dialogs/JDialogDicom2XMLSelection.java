@@ -5,13 +5,9 @@ import gov.nih.mipav.model.file.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.event.*;
-
+import java.awt.*;
+import java.awt.event.WindowEvent;
 import java.io.*;
-
 import java.util.*;
 
 import javax.swing.*;
@@ -19,31 +15,34 @@ import javax.swing.*;
 
 /**
  * Dialog to select DICOM files to convert to MIPAV XML or Minc 2.0 HDF format.
- *
- * @author  parsonsd
+ * 
+ * @author parsonsd
  */
 public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -1864581773877529737L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /**
      * Boolean that determines if the window was closed (hitting the X) wasOkay = true means the [x] was not clicked.
      */
     private boolean wasOkay = true;
-    
+
     private String destFormatStr = "XML";
-    
+
     /**
      * FileInfoDicom for source image
      */
     private FileInfoDicom sourceInfo;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new instance of JDialogDicom2XMLSelection.
@@ -52,10 +51,10 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
         super();
         this.sourceInfo = sourceInfo;
 
-        if (!isXML) {
-        	destFormatStr = "Minc 2.0 HDF";
+        if ( !isXML) {
+            destFormatStr = "Minc 2.0 HDF";
         }
-        
+
         setTitle("Select DICOM tags to convert to " + destFormatStr);
         populateLists();
         addSortButtons();
@@ -64,36 +63,35 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
         addWindowListener(this);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Handles the IGNORE button possibility of the ActionEvent, otherwise passes control to the super event handler.
-     *
-     * @param  ae  DOCUMENT ME!
+     * 
+     * @param ae DOCUMENT ME!
      */
     public void actionPerformed(java.awt.event.ActionEvent ae) {
 
         if (ae.getActionCommand().equalsIgnoreCase("ignore")) {
             ignoreAction();
-        } else if (ae.getActionCommand().equalsIgnoreCase("sortKey")) { }
-        else if (ae.getActionCommand().equalsIgnoreCase("sortKeyRev")) { }
-        else if (ae.getActionCommand().equalsIgnoreCase("sortName")) { }
-        else if (ae.getActionCommand().equalsIgnoreCase("sortNameRev")) { }
-        else if (ae.getActionCommand().equalsIgnoreCase("help")) {
-        	MipavUtil.showHelp("U4018");
-        }
-        else {
+        } else if (ae.getActionCommand().equalsIgnoreCase("sortKey")) {} else if (ae.getActionCommand()
+                .equalsIgnoreCase("sortKeyRev")) {} else if (ae.getActionCommand().equalsIgnoreCase("sortName")) {} else if (ae
+                .getActionCommand().equalsIgnoreCase("sortNameRev")) {} else if (ae.getActionCommand()
+                .equalsIgnoreCase("help")) {
+            MipavUtil.showHelp("U4018");
+        } else {
             super.actionPerformed(ae);
         }
     }
 
     /**
      * Returns a hashtable of the keys and associated DICOM tags that are in the right-list.
-     *
-     * @return  a Hashtable of the DICOM tags listed in the save-list.
+     * 
+     * @return a Hashtable of the DICOM tags listed in the save-list.
      */
-    public Hashtable getSaveTable() {
-        Hashtable saveTable = new Hashtable();
+    public Hashtable<FileDicomKey, FileDicomTagInfo> getSaveTable() {
+        Hashtable<FileDicomKey, FileDicomTagInfo> saveTable = new Hashtable<FileDicomKey, FileDicomTagInfo>();
         ListModel saveList = getSelectedList().getModel();
 
         for (int i = 0; i < saveList.getSize(); i++) {
@@ -107,8 +105,8 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
     /**
      * Returns true if the window was not closed using the 'X' and was instead closed after the user clicked the 'Save'
      * button.
-     *
-     * @return  whether the window was closed after the user clicked the 'Save' button
+     * 
+     * @return whether the window was closed after the user clicked the 'Save' button
      */
     public boolean wasOkay() {
         return wasOkay;
@@ -116,8 +114,8 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
 
     /**
      * Closes window and disposes of frame and component.
-     *
-     * @param  event  Event that triggered function
+     * 
+     * @param event Event that triggered function
      */
     public void windowClosing(WindowEvent event) {
         this.wasOkay = false;
@@ -126,8 +124,8 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
     /**
      * Creates an OK Button, which is relabeled &quot;Save&quot;, an &quot;Ignore&quot; button, a &quot;Cancel&quot; and
      * a &quot;Help&quot; button.
-     *
-     * @return  JPanel The button panel containing a collection of buttons to close the dialog and perform some action.
+     * 
+     * @return JPanel The button panel containing a collection of buttons to close the dialog and perform some action.
      */
     protected JPanel buildButtons() {
         JPanel buttonPanel = new JPanel();
@@ -142,8 +140,8 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
 
     /**
      * Creates a button labelled &quot;Ignore&quot; and connects it to the action listener event list.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected JButton buildIgnoreButton() {
         JButton ignoreButton = new JButton("Ignore");
@@ -159,8 +157,8 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
     /**
      * Uses the super method to create a standard OK Button, but then resets the button text to read &quot;Save&quot;
      * leaving the action command string as normal: &quot;OK&quot;.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected JButton buildOKButton() {
         super.buildOKButton();
@@ -181,14 +179,14 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
     /**
      * Creates a single JPanelFileSelector which refers to the file &quot;dicomsave.dictionary&quot; in the user.home
      * (specified by java's properties) directory by default.
-     *
-     * @return  this JPanelFileSelector
+     * 
+     * @return this JPanelFileSelector
      */
     protected JComponent createFileSelectorComponent() {
-    	
+
         // build List to save to:
-        selectFileB = new JPanelFileSelection(new File( /*start directory */Preferences.getDICOMSaveDictionary()),
-            /*title */ "DICOM Tags Dictionary File for saving to " + destFormatStr);
+        selectFileB = new JPanelFileSelection(new File( /* start directory */Preferences.getDICOMSaveDictionary()),
+        /* title */"DICOM Tags Dictionary File for saving to " + destFormatStr);
 
         return selectFileB;
     }
@@ -197,23 +195,23 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
      * Generates and returns the list data for the Source list from the dicom dictionary specified by the save panel as
      * a Vector of <code>DicomTagIdentifier</code>. The Vector returned is empty if the File listed by the save panel
      * contains no tags, is non-existant, or is unspecified.
-     *
-     * @return  An ordered list of <code>DicomTagIdentifier</code> of tags from the DICOM dictionary listed in the save
-     *          tag file panel. The Vector returned is empty if the File listed by the save panel contains no tags, is
-     *          non-existant, or is unspecified.
-     *
-     * @see     DicomDictionary
-     * @see     #getSaveTagFilePanel()
+     * 
+     * @return An ordered list of <code>DicomTagIdentifier</code> of tags from the DICOM dictionary listed in the save
+     *         tag file panel. The Vector returned is empty if the File listed by the save panel contains no tags, is
+     *         non-existant, or is unspecified.
+     * 
+     * @see DicomDictionary
+     * @see #getSaveTagFilePanel()
      */
-    protected Vector getSaveListData() {
+    protected Vector<DicomTagIdentifier> getSaveListData() {
 
         // load the selected list from the pointed-to file, if possible:
-        Vector newTagList = new Vector();
+        Vector<DicomTagIdentifier> newTagList = new Vector<DicomTagIdentifier>();
 
         try {
 
             if (getSaveTagFilePanel().getSelectedFile().exists()) {
-                Hashtable hashtable = DicomDictionary.getSubsetDicomTagTable();
+                Hashtable<FileDicomKey, FileDicomTagInfo> hashtable = DicomDictionary.getSubsetDicomTagTable();
                 FileDicomKey[] saveKeys = DicomDictionary.sortTagKeys(hashtable);
 
                 for (int i = 0; i < saveKeys.length; i++) {
@@ -221,8 +219,8 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
                     newTagList.add(new DicomTagIdentifier(key, (FileDicomTagInfo) hashtable.get(key)));
                 }
 
-                Preferences.setProperty(Preferences.PREF_DICOM_SAVE_DICTIONARY,
-                                        getSaveTagFilePanel().getSelectedFile().getPath());
+                Preferences.setProperty(Preferences.PREF_DICOM_SAVE_DICTIONARY, getSaveTagFilePanel().getSelectedFile()
+                        .getPath());
             }
         } catch (NullPointerException noFile) {
 
@@ -235,8 +233,8 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
 
     /**
      * Returns the SelectFileB panel.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected JPanelFileSelection getSaveTagFilePanel() {
         return selectFileB;
@@ -245,14 +243,14 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
     /**
      * Generates and returns the list data for the Source list from the dicom dictionary as a Vector of <code>
      * DicomTagIdentifier</code>.
-     *
-     * @return  Vector An ordered list of <code>DicomTagIdentifier</code> of tags from the DICOM dictionary
-     *
-     * @see     DicomDictionary
+     * 
+     * @return Vector An ordered list of <code>DicomTagIdentifier</code> of tags from the DICOM dictionary
+     * 
+     * @see DicomDictionary
      */
-    protected Vector getSourceListData() {
-        Vector dicomList = new Vector();
-        Hashtable tagsTable = DicomDictionary.getDicomTagTable();
+    protected Vector<DicomTagIdentifier> getSourceListData() {
+        Vector<DicomTagIdentifier> dicomList = new Vector<DicomTagIdentifier>();
+        Hashtable<FileDicomKey, FileDicomTagInfo> tagsTable = DicomDictionary.getDicomTagTable();
         FileDicomKey[] dictionaryKeyList = DicomDictionary.sortTagKeys(tagsTable);
 
         for (int i = 0; i < dictionaryKeyList.length; i++) {
@@ -267,7 +265,7 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
      * Empties the right-list, then closes the dialog.
      */
     protected void ignoreAction() {
-        getSelectedList().setListData(new Vector());
+        getSelectedList().setListData(new Vector<DicomTagIdentifier>());
         setVisible(false);
     }
 
@@ -303,14 +301,14 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
         try {
 
             if (getSaveTagFilePanel().getSelectedFile().getName().equals(DicomDictionary.DEFAULT_DICTIONARY_FILENAME)) {
-                Preferences.debug("Attempted to write DICOM dictionary file " +
-                                  "for converting DICOM-to-XML images to the master " + "dicom dictionary, \"" +
-                                  DicomDictionary.SUBSET_DICTIONARY_FILENAME + "\"." + "  No file was saved.\n", 2);
+                Preferences.debug("Attempted to write DICOM dictionary file "
+                        + "for converting DICOM-to-XML images to the master " + "dicom dictionary, \""
+                        + DicomDictionary.SUBSET_DICTIONARY_FILENAME + "\"." + "  No file was saved.\n", 2);
             } else {
-                Preferences.setProperty(Preferences.PREF_DICOM_SAVE_DICTIONARY,
-                                        getSaveTagFilePanel().getSelectedFile().getPath());
+                Preferences.setProperty(Preferences.PREF_DICOM_SAVE_DICTIONARY, getSaveTagFilePanel().getSelectedFile()
+                        .getPath());
 
-                if (!getSaveTagFilePanel().getSelectedFile().exists()) {
+                if ( !getSaveTagFilePanel().getSelectedFile().exists()) {
 
                     // create the file if it doesnt yet exist
                     getSaveTagFilePanel().getSelectedFile().createNewFile();
@@ -321,8 +319,8 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
                     // save list only when there are items in the list:
                     if (getSelectedList().getModel().getSize() > 0) {
                         DicomDictionary.writeFile(getSaveTagFilePanel().getSelectedFile(), getSaveTable(),
-                                                  "These tags were saved while converting a DICOM " +
-                                                  "image into MIPAV's " + destFormatStr + " format.");
+                                "These tags were saved while converting a DICOM " + "image into MIPAV's "
+                                        + destFormatStr + " format.");
                     }
                 }
             }
@@ -337,10 +335,11 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
      */
     private void addSortButtons() {
 
-        if (selector != null) { }
+        if (selector != null) {}
     }
 
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
+    // ~ Inner Classes
+    // --------------------------------------------------------------------------------------------------
 
     /**
      * DicomTagIdentifiers allow collecting both the FileDicomTag with the associated FileDicomKey (the Group and
@@ -357,9 +356,9 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
 
         /**
          * Creates a new DicomTagIdentifier object.
-         *
-         * @param  k  DOCUMENT ME!
-         * @param  t  DOCUMENT ME!
+         * 
+         * @param k DOCUMENT ME!
+         * @param t DOCUMENT ME!
          */
         DicomTagIdentifier(FileDicomKey k, FileDicomTagInfo t) {
             key = k;
@@ -368,8 +367,8 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
 
         /**
          * Accessor to the DICOM Key held.
-         *
-         * @return  the DICOM key refering to the tag held.
+         * 
+         * @return the DICOM key refering to the tag held.
          */
         public FileDicomKey getKey() {
             return key;
@@ -377,8 +376,8 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
 
         /**
          * Accessor to the DICOM tag held.
-         *
-         * @return  The dicom tag with Group and Element number represented by the key.
+         * 
+         * @return The dicom tag with Group and Element number represented by the key.
          */
         public FileDicomTagInfo getTag() {
             return tag;
@@ -386,86 +385,81 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
 
         /**
          * Returns the group and element in parenthesis as displayed by the FileDicomKey and the name of the DICOM tag.
-         *
-         * <p>Example: <code>(0018,603A) Doppler Sample Volume Y Position</code></p>
-         *
-         * @return  Returns the group and element in parenthesis as displayed by the FileDicomKey and the name of the
-         *          DICOM tag.
+         * 
+         * <p>
+         * Example: <code>(0018,603A) Doppler Sample Volume Y Position</code>
+         * </p>
+         * 
+         * @return Returns the group and element in parenthesis as displayed by the FileDicomKey and the name of the
+         *         DICOM tag.
          */
         public String toString() {
             return new String("(" + key.toString() + ") -- " + tag.getName());
         }
     }
-    
-    
-    
-    
+
     /**
-     * This inner class is the font style renderer for the dicom tags
-     * The left panel will display all possible DICOM tags...however, if the
-     * image has that particular tag, it will be bold font
+     * This inner class is the font style renderer for the dicom tags The left panel will display all possible DICOM
+     * tags...however, if the image has that particular tag, it will be bold font
      * 
      * @author pandyan
-     *
      */
-    class MyCellRenderer extends JLabel implements ListCellRenderer {
-    	Font arial13 = MipavUtil.arial13;
-    	Font arial13B = MipavUtil.arial13B;
-    	ArrayList sourceTagsAL = new ArrayList();
-    	
-    	public MyCellRenderer() {
-    		populateSourceTagsList();
-    	}
-    	
-    	public void populateSourceTagsList() {
-    		Enumeration e;
-    		String name;
+    private class MyCellRenderer extends JLabel implements ListCellRenderer {
+        private Font arial13 = MipavUtil.arial13;
+
+        private Font arial13B = MipavUtil.arial13B;
+
+        private ArrayList<String> sourceTagsAL = new ArrayList<String>();
+
+        public MyCellRenderer() {
+            populateSourceTagsList();
+        }
+
+        public void populateSourceTagsList() {
+            Enumeration<FileDicomKey> e;
+            String name;
             FileDicomKey key;
-    		Hashtable tagsList = sourceInfo.getTagTable().getTagList();
-    		int ii;
-    		for (ii = 0, e = tagsList.keys(); e.hasMoreElements(); ii++) {
-    			key = (FileDicomKey) e.nextElement();
+            Hashtable<FileDicomKey, FileDicomTag> tagsList = sourceInfo.getTagTable().getTagList();
+            int ii;
+            for (ii = 0, e = tagsList.keys(); e.hasMoreElements(); ii++) {
+                key = e.nextElement();
                 name = key.getKey();
-                if (((FileDicomTag) tagsList.get(key)).getValue(true) != null) {
-                	String tagName = "(" + name + ")";
-                	sourceTagsAL.add(tagName);
+                if (tagsList.get(key).getValue(true) != null) {
+                    String tagName = "(" + name + ")";
+                    sourceTagsAL.add(tagName);
                 }
-    		}
-    	}
-    	
-		public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-			String s = value.toString();
-			String tag = s.substring(0, (s.indexOf(")")+1));
-			if(sourceTagsAL.size() > 0) {
-				for(int i=0;i<sourceTagsAL.size();i++) {
-					String sourceTag = (String)sourceTagsAL.get(i);
-					if(tag.equals(sourceTag)) {
-						setFont(arial13B);
-						break;
-					}else {
-						setFont(arial13);
-					}
-				}
-			}else {
-				setFont(arial13);
-			}
-			if(isSelected) {
-				setBackground(list.getSelectionBackground());
-				setForeground(list.getSelectionForeground());
-			}else {
-				setBackground(list.getBackground());
-				setForeground(list.getForeground());
-			}
-			setEnabled(true);
-			setText(s);
-			setOpaque(true);
-			
-			return this;
-		}
-    	
-    	
-    			
-    	
-    	
+            }
+        }
+
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
+                boolean cellHasFocus) {
+            String s = value.toString();
+            String tag = s.substring(0, (s.indexOf(")") + 1));
+            if (sourceTagsAL.size() > 0) {
+                for (int i = 0; i < sourceTagsAL.size(); i++) {
+                    String sourceTag = sourceTagsAL.get(i);
+                    if (tag.equals(sourceTag)) {
+                        setFont(arial13B);
+                        break;
+                    } else {
+                        setFont(arial13);
+                    }
+                }
+            } else {
+                setFont(arial13);
+            }
+            if (isSelected) {
+                setBackground(list.getSelectionBackground());
+                setForeground(list.getSelectionForeground());
+            } else {
+                setBackground(list.getBackground());
+                setForeground(list.getForeground());
+            }
+            setEnabled(true);
+            setText(s);
+            setOpaque(true);
+
+            return this;
+        }
     }
 }
