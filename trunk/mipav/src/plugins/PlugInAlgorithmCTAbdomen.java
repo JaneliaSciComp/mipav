@@ -253,8 +253,10 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
     private void calc25D() {
         labelAbdomen3D();
+        makeAbdomen3DVOI();
 
         srcImage.unregisterAllVOIs();
+        srcImage.registerVOI(abdomenVOI);
 } // end calc25D()
 
     
@@ -461,7 +463,16 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     
     
     
-    private void labelAbdomen3D() {
+    /**
+     * Our adaptation of the algorithm presented in the 2006 JCAT article.  The published method
+     * included the blanket under the patient as part of the segmentation.  We threshold and
+     * region grow using values to "undersegment" the image.  We then clean up the segmentation
+     * using mathematical morphology
+     */
+     private void labelAbdomen3D() {
+        
+        System.out.println("labelAbdomen3D(): Start");
+        
         // find a seed point inside the subcutaneous fat for a region grow
         boolean found = false;
         short seedX = 0, seedY = 0, seedZ = 0;
@@ -505,7 +516,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         
         CubeBounds regionGrowBounds = new CubeBounds(xDim, 0, yDim, 0, zDim, 0);
 
-        System.out.print("regionGrow3D: ");
+        System.out.print("  regionGrow3D: ");
         long time = System.currentTimeMillis();
 
         // under segment so that we do not get the blanket
@@ -535,13 +546,39 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 //        ShowImage(abdomenImage, "abdominal label image");
 
         // do a mathematical morphology closing operation to fill the small gaps
-        System.out.print("closeImage3D: ");
+        System.out.print("  closeImage3D: ");
         time = System.currentTimeMillis();
         closeImage3D(abdomenImage);
         System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
 
         ShowImage(abdomenImage, "closed image");
 
+        
+        // update the volumeBitSet to match the closed abdomenImage
+        // This needs to happen if we are going to find the VOI's with a region grow technique
+        // that uses the volumeBitSet
+
+        System.out.print("  updating the volume BitSet: ");
+        time = System.currentTimeMillis();
+        volumeBitSet.clear();
+         for (int volIdx = 0, z = 0; z < zDim; z++) {
+            // fill up the slice buffer
+            try {
+                abdomenImage.exportData(z * sliceSize, sliceSize, sliceBuffer);
+            } catch (IOException ex) {
+                System.err.println("PlugInAlgorithmCTAbdomen.labelAbdomen3D(): Error exporting data on slice: " +z);
+                return;
+            }
+            
+            for (int sliceIdx = 0; sliceIdx < sliceSize; sliceIdx++, volIdx++) {
+                if (sliceBuffer[sliceIdx] == abdomenTissueLabel) {
+                    volumeBitSet.set(volIdx);
+                }
+            } // end for (int sliceIdx = 0; ...)
+        } // end for (volIdx = 0, ...)
+         System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+
+         System.out.println("labelAbdomen3D(): End");
 
     } // end labelAbdomen3D()
     
@@ -598,6 +635,61 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         resampleAbdomenVOI();
         return true;
     } // end makeAbdomen2DVOI()
+    
+    
+    
+   
+    
+    /**
+     * Extract a 3D VOI from the volumeBitSet that was set during the labelAbdomen3D call
+     * 
+     */
+    private boolean makeAbdomen3DVOI() {
+        
+        System.out.println("\nmakeAbdomen3DVOI(): Start");
+        
+        System.out.print("  Extracting VOI from mask: ");
+        long time = System.currentTimeMillis();
+
+        abdomenImage.setMask(volumeBitSet);
+        
+        // volumeBitSet should be set for the abdomen tissue
+        short voiID = 0;
+        AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(abdomenImage,
+                volumeBitSet, xDim, yDim, zDim, voiID);
+
+        algoPaintToVOI.setRunningInSeparateThread(false);
+        algoPaintToVOI.run();
+        setCompleted(true);
+        
+        System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+        
+        // make sure we got one VOI with xDim number of curves
+        VOIVector vois = abdomenImage.getVOIs();
+
+        if(vois.size() != 1) {
+            System.err.println("makeAbdomen3DVOI() Error, did not get 1 VOI");
+            return false;
+        }
+        
+        // abdomenImage has one VOI, lets get it
+        VOI theVOI = vois.get(0);
+        theVOI.setName("Abdomen");
+
+        int numCurves = theVOI.getCurves()[0].size();
+        for (int idx = 0; idx < numCurves; idx++) {
+            System.out.println("    curve: " +idx +"  size: "
+                    +((VOIContour)theVOI.getCurves()[0].get(idx)).size());
+        } // end for (int idx = 0; ...)
+
+        abdomenVOI = theVOI;
+
+        System.out.println("makeAbdomen3DVOI(): End");
+        return true;
+    } // end makeAbdomen3DVOI()
+
+    
+    
     
     
     
