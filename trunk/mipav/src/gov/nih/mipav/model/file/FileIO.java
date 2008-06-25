@@ -8401,8 +8401,8 @@ public class FileIO {
             myFileInfo.vr_type = FileInfoDicom.EXPLICIT;
 
             // necessary to save (non-pet) floating point minc files to dicom
-            if ( (image.getFileInfo(0).getFileFormat() == FileUtility.MINC) && (image.getType() == ModelImage.FLOAT)
-                    && (myFileInfo.getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) {
+            if (( (image.getFileInfo(0).getFileFormat() == FileUtility.MINC) && (image.getType() == ModelImage.FLOAT)
+                    && (myFileInfo.getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) || ((image.getFileInfo(0).getFileFormat() == FileUtility.ANALYZE) && (image.getType() == ModelImage.FLOAT))) {
                 ModelImage newImage = (ModelImage) image.clone();
 
                 // in-place conversion is required so that the minc file info is retained
