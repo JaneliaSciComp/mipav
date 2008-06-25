@@ -65,7 +65,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
     /** Nearest neighbor interpolation image component rendering mode. */
     public static final RenderingHints renderNearestNeighbor = new RenderingHints(RenderingHints.KEY_INTERPOLATION,
-            RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
@@ -391,7 +391,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
     private boolean useBComp = true;
 
-    /** flag indicating whethere there is 0 to 1 LUT Adjustment * */
+    /** flag indicating whether there is 0 to 1 LUT Adjustment * */
     private boolean zeroToOneLUTAdj = false;
 
     // ~ Constructors
@@ -805,7 +805,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param intensityLockVector Vector containing Integers values which are indexed to the locked intensity values in
      *            the image
      */
-    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity, Vector intensityLockVector) {
+    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity, Vector<Integer> intensityLockVector) {
         commitMask(imagesDone, clearPaintMask, polarity, intensityLockVector, true);
     }
 
@@ -820,7 +820,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param showProgressBar if true, shows the progress bar for this algorithm
      */
     public void commitMask(ModelImage affectedImage, boolean clearPaintMask, boolean polarity,
-            Vector intensityLockVector, boolean showProgressBar) {
+            Vector<Integer> intensityLockVector, boolean showProgressBar) {
 
         if (affectedImage == imageA) {
             commitMask(IMAGE_A, clearPaintMask, polarity, intensityLockVector, showProgressBar);
@@ -841,8 +841,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      *            the image
      * @param showProgressBar if true, shows the progress bar for this algorithm
      */
-    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity, Vector intensityLockVector,
-            boolean showProgressBar) {
+    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity,
+            Vector<Integer> intensityLockVector, boolean showProgressBar) {
 
         float min, max;
         Color fillColor = new Color(128, 0, 0);
@@ -875,7 +875,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 if (imageA.getNDims() == 4) {
 
                     // Build dialog 3D or 4D
-                    JDialogMask3D4D dialog3D4D = new JDialogMask3D4D(frame, slice);
+                    new JDialogMask3D4D(frame, slice);
 
                     if (slice[0] == -1) {
                         timeSlice = -1;
@@ -925,7 +925,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 if (imageA.getNDims() == 4) {
 
                     // Build dialog 3D or 4D
-                    JDialogMask3D4D dialog3D4D = new JDialogMask3D4D(frame, slice);
+                    new JDialogMask3D4D(frame, slice);
 
                     if (slice[0] == -1) {
                         timeSlice = -1;
@@ -3107,8 +3107,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
             }
 
-            // TODO: already new'ed above?
-            // memImageA = new MemoryImageSource(imageDim.width, imageDim.height, paintImageBuffer, 0, imageDim.width);
             memImageA.newPixels(paintImageBuffer, ColorModel.getRGBdefault(), 0, imageDim.width);
 
             Image paintImage = createImage(memImageA); // the image representing the paint mask
