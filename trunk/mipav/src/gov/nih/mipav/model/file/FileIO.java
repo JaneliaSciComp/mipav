@@ -8412,9 +8412,14 @@ public class FileIO {
                     .getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY))
                     || ( (image.getFileInfo(0).getFileFormat() == FileUtility.ANALYZE) && (image.getType() == ModelImage.FLOAT))) {
                 ModelImage newImage = (ModelImage) image.clone();
-
+                int newType;
+                if(newImage.getMin() >= 0) {
+                	newType = ModelImage.USHORT;
+                }else {
+                	newType = ModelImage.SHORT;
+                }
                 // in-place conversion is required so that the minc file info is retained
-                AlgorithmChangeType convertType = new AlgorithmChangeType(newImage, ModelImage.SHORT,
+                AlgorithmChangeType convertType = new AlgorithmChangeType(newImage, newType,
                         newImage.getMin(), newImage.getMax(), newImage.getMin(), newImage.getMax(), false);
                 convertType.run();
 
