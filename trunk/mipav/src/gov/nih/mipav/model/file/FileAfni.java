@@ -1158,6 +1158,120 @@ public class FileAfni extends FileBase {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        int i;
+        acpcAC = null;
+        acpcMaxPt = null;
+        acpcMinPt = null;
+        acpcName = null;
+        acpcPC = null;
+        anatomyParentnameString = null;
+        anotherPtDicom = null;
+        brickFloatFacs = null;
+        brickKeywordsString = null;
+        brickLabsString = null;
+        brickStatAux = null;
+        brickStats = null;
+        brikFileName = null;
+        dataExtents = null;
+        dataOrient = null;
+        datasetKeywordsString = null;
+        datasetNameString = null;
+        delta = null;
+        dicomDelta = null;
+        dicomOrientation = null;
+        dicomOrigin = null;
+        firstPtDicom = null;
+        historyNoteString = null;
+        idcodeAnatParentString = null;
+        idcodeDateString = null;
+        idcodeString = null;
+        idcodeWarpParentString = null;
+        img2Buffer = null;
+        imgBuffer = null;
+        imgExtents = null;
+        imgResols = null;
+        label1String = null;
+        label2String = null;
+        if (marksHelpString != null) {
+            for (i = 0; i < marksHelpString.length; i++) {
+                marksHelpString[i] = null;
+            }
+        }
+        marksHelpString = null;
+        if (marksLabString != null) {
+            for (i = 0; i < marksLabString.length; i++) {
+                marksLabString[i] = null;
+            }
+        }
+        marksLabString = null;
+        marksXYZ = null;
+        noteDate001String = null;
+        noteDate002String = null;
+        noteDate003String = null;
+        noteDate004String = null;
+        noteDate005String = null;
+        noteNumber001String = null;
+        noteNumber002String = null;
+        noteNumber003String = null;
+        noteNumber004String = null;
+        noteNumber005String = null;
+        orientSpecific = null;
+        origAC = null;
+        origDelta = null; 
+        origExtents = null;
+        origin = null;
+        originalFileName = null;
+        origName = null;
+        origOrigin = null;
+        pcDicom = null; 
+        pointMarker = null;
+        posteriorMarginDicom = null;
+        skip = null;
+        statAux = null;
+        superiorEdgeDicom = null;
+        tagAlignMatvec = null;
+        tagsetFloats = null;
+        tagsetLabelsString = null;
+        tAxisOffsets = null;
+        if (tInfo != null) {
+            tInfo.finalize();
+        }
+        tInfo = null;
+        tlrcRes = null;
+        String typeString = null;
+        volregBaseIdcodeString = null;
+        volregBaseNameString = null;
+        volregCenterBase = null;
+        volregCenterOld = null;
+        volregGridparentIdcodeString = null;
+        volregGridparentNameString = null;
+        volregInputIdcodeString = null;
+        volregInputNameString = null;
+        volregMatvec000000 = null;
+        volregMatvec000001 = null;
+        volregMatvec000002 = null;
+        volregMatvec000003 = null;
+        volregMatvec000004 = null;
+        volregMatvec000005 = null;
+        volregMatvec000006 = null;
+        volregMatvec000007 = null;
+        volregMatvec000008 = null;
+        volregMatvec000009 = null;
+        volregRotparentIdcodeString = null;
+        volregRotparentNameString = null; 
+        warpData = null;
+        warpParentnameString = null;
+        zeroPad = null;
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
+    /**
      * getFileInfo - accessor that returns the file info.
      *
      * @return  FileInfoBase containing the file info
