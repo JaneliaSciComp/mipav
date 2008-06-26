@@ -1998,7 +1998,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         browseButton.setFont(font12B);
         browseButton.setActionCommand("Browse");
-        browseButton.setBackground(Color.gray.brighter());
+        //browseButton.setBackground(Color.gray.brighter());
         browseButton.addActionListener(this);
         gbc = setGBC(2, 0, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -2008,7 +2008,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         upDirButton.setFont(font12B);
         upDirButton.setActionCommand("UpDir");
-        upDirButton.setBackground(Color.gray.brighter());
+        //upDirButton.setBackground(Color.gray.brighter());
         upDirButton.addActionListener(this);
         gbc = setGBC(3, 0, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -2018,7 +2018,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         refreshButton.setFont(font12B);
         refreshButton.setActionCommand("RefreshDir");
-        refreshButton.setBackground(Color.gray.brighter());
+        //refreshButton.setBackground(Color.gray.brighter());
         refreshButton.addActionListener(this);
         gbc = setGBC(4, 0, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -2076,7 +2076,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         sendButton.setFont(font12B);
         sendButton.setActionCommand("SendImages");
-        sendButton.setBackground(Color.gray.brighter());
+        //sendButton.setBackground(Color.gray.brighter());
         sendButton.addActionListener(this);
         gbc = setGBC(2, 4, 2, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -2086,7 +2086,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         testButton.setFont(font12B);
         testButton.setActionCommand("TestConnection");
-        testButton.setBackground(Color.gray.brighter());
+        //testButton.setBackground(Color.gray.brighter());
         testButton.addActionListener(this);
         gbc = setGBC(4, 4, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -2320,7 +2320,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         send.setFont(font12B);
         send.setActionCommand("SendQuery");
-        send.setBackground(Color.gray.brighter());
+        //send.setBackground(Color.gray.brighter());
         send.addActionListener(this);
 
         gbc = setGBC(0, 1, 1, GridBagConstraints.REMAINDER);
@@ -2333,7 +2333,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         move.setFont(font12B);
         move.setActionCommand("Move");
-        move.setBackground(Color.gray.brighter());
+        //move.setBackground(Color.gray.brighter());
         move.addActionListener(this);
 
         gbc = setGBC(1, 1, 1, GridBagConstraints.REMAINDER);
@@ -2547,7 +2547,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         create.setFont(font12B);
         create.setActionCommand("Create");
-        create.setBackground(Color.gray.brighter());
+        //create.setBackground(Color.gray.brighter());
         create.addActionListener(this);
         gbc = setGBC(0, 3, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -2558,7 +2558,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         edit.setFont(font12B);
         edit.setActionCommand("Edit");
-        edit.setBackground(Color.gray.brighter());
+        //edit.setBackground(Color.gray.brighter());
         edit.addActionListener(this);
         edit.setEnabled(false);
         gbc = setGBC(1, 3, 1, 1);
@@ -2570,7 +2570,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         delete.setFont(font12B);
         delete.setActionCommand("Delete");
-        delete.setBackground(Color.gray.brighter());
+        //delete.setBackground(Color.gray.brighter());
         delete.addActionListener(this);
         delete.setEnabled(false);
         gbc = setGBC(2, 3, 1, 1);
@@ -2582,7 +2582,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         set.setFont(font12B);
         set.setActionCommand("SetAs");
-        set.setBackground(Color.gray.brighter());
+        //set.setBackground(Color.gray.brighter());
         set.addActionListener(this);
         set.setEnabled(false);
         gbc = setGBC(3, 3, 1, 1);
@@ -2703,7 +2703,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         createStore.setFont(font12B);
         createStore.setActionCommand("Create");
-        createStore.setBackground(Color.gray.brighter());
+        //createStore.setBackground(Color.gray.brighter());
         createStore.addActionListener(this);
         gbc = setGBC(0, 3, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -2714,7 +2714,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         editStore.setFont(font12B);
         editStore.setActionCommand("Edit");
-        editStore.setBackground(Color.gray.brighter());
+        //editStore.setBackground(Color.gray.brighter());
         editStore.addActionListener(this);
         editStore.setEnabled(false);
         gbc = setGBC(1, 3, 1, 1);
@@ -2726,7 +2726,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         deleteStore.setFont(font12B);
         deleteStore.setActionCommand("Delete");
-        deleteStore.setBackground(Color.gray.brighter());
+        //deleteStore.setBackground(Color.gray.brighter());
         deleteStore.addActionListener(this);
         deleteStore.setEnabled(false);
         gbc = setGBC(2, 3, 1, 1);
@@ -2738,7 +2738,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         setStore.setFont(font12B);
         setStore.setActionCommand("SetAs");
-        setStore.setBackground(Color.gray.brighter());
+        //setStore.setBackground(Color.gray.brighter());
         setStore.addActionListener(this);
         setStore.setEnabled(false);
         gbc = setGBC(3, 3, 1, 1);
