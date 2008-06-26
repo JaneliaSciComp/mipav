@@ -180,8 +180,8 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
         // the new way to find the subcutaneous fat VOI
         // make the intensity profile for slice 0 
-        makeIntensityProfiles(0);
-        makeSubcutaneousFatVOIfromIntensityProfiles(0);
+        makeIntensityProfiles();
+        makeSubcutaneousFatVOIfromIntensityProfiles();
 //        snakeSubcutaneousVOI();
         
         // the old way to find the subcutaneous fat VOI
@@ -269,7 +269,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             makeSubcutaneousFatVOIfromIntensityProfiles(sliceIdx);
         } // end for (sliceIdx = 0; ...)
 
-        fixSubcutaneousFatVOIs();
+ //       fixSubcutaneousFatVOIs();
         srcImage.unregisterAllVOIs();
         srcImage.registerVOI(abdomenVOI);
         srcImage.registerVOI(subcutaneousVOI);
@@ -280,12 +280,12 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
 
     public void algorithmPerformed(AlgorithmBase algorithm) {
-		// TODO Auto-generated method stub
-	} // end algorithmPerformed(...)
+        // TODO Auto-generated method stub
+    } // end algorithmPerformed(...)
 
 
 
-	/**
+    /**
      * Prepares this class for destruction.
      */
     public void finalize() {
@@ -1186,7 +1186,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
         // intensityProfiles, xProfileLocs, and yProfileLocs are set, we can find the 
         // internal boundary of the subcutaneous fat now
-    } // end makeIntensityProfiles()
+    } // end makeIntensityProfiles(...)
     
     
     
@@ -1194,7 +1194,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     /**
      * Method fills in the intensity profile array along radial lines
      */
-    private void makeIntensityProfilesOrig() {
+    private void makeIntensityProfiles() {
 
         // find the center of mass of the single label object in the sliceBuffer (abdomenImage)
         findAbdomenCM();
@@ -1331,12 +1331,13 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
         // intensityProfiles, xProfileLocs, and yProfileLocs are set, we can find the 
         // internal boundary of the subcutaneous fat now
-    } // end makeIntensityProfilesOrig()
+    } // end makeIntensityProfiles()
     
     
     
     /**
      * find the points on the internal subcutaneous fat VOI from the intensity profiles
+     * used for 2.5D images
      */
     private void makeSubcutaneousFatVOIfromIntensityProfiles(int sliceNum) {
         
@@ -1391,8 +1392,78 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             
        } // end for (int idx = 0; ...)
 
-        // make the VOI's and add the points to them        subcutaneousVOI = new VOI((short)0, "Subcutaneous", 0);
+        // make the VOI's and add the points to them
         subcutaneousVOI.importCurve(xLocsSubcutaneousVOI, yLocsSubcutaneousVOI, zVals, sliceNum);
+
+    } // makeSubcutaneousFatVOIfromIntensityProfiles(...)
+    
+    
+    
+    /**
+     * find the points on the internal subcutaneous fat VOI from the intensity profiles
+     * used for 2D images
+     */
+    private void makeSubcutaneousFatVOIfromIntensityProfiles() {
+        
+        double[] distances;
+        int dx, dy;
+        int[] xLocsSubcutaneousVOI;
+        int[] yLocsSubcutaneousVOI;
+        int[] zVals;
+        try {
+            distances = new double[360 / angularResolution];
+            xLocsSubcutaneousVOI = new int [360 / angularResolution];
+            yLocsSubcutaneousVOI = new int [360 / angularResolution];
+            zVals = new int [360 / angularResolution];
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("makeSubcutaneousFatVOIfromIntensityProfiles(): Can NOT allocate xLocsSubcutaneousVOI");
+            return;
+        }
+        
+        for(int idx = 0; idx < 360 / angularResolution; idx++) {
+            zVals[idx] = 0;
+        }
+        
+        int numSamples;
+        
+        for(int idx = 0; idx < 360 / angularResolution; idx++) {
+            numSamples = intensityProfiles[idx].size();
+                        
+            int sampleIdx = numSamples - 10;  // skip over the skin
+            while (sampleIdx >= 0 &&
+                   intensityProfiles[idx].get(sampleIdx) < muscleThresholdHU &&
+                   intensityProfiles[idx].get(sampleIdx) > airThresholdHU) {
+                sampleIdx--;
+            }
+            if (sampleIdx <= 0) {
+                // could not find a valid subcutaneous fat point in the intensity profile
+//                MipavUtil.displayError("findAbdomenVOI(): Can NOT find the subcutaneous fat VOI point in the intensity profile for angle: " +idx * angularResolution);
+                if (idx > 0) {
+                    // assign this subcutaneous fat VOI point to the previous point if one exists
+                    xLocsSubcutaneousVOI[idx] = xLocsSubcutaneousVOI[idx-1];
+                    yLocsSubcutaneousVOI[idx] = yLocsSubcutaneousVOI[idx-1];
+                } else {
+                    // assign this subcutaneous fat VOI point to the abdomen VOI point
+                    xLocsSubcutaneousVOI[idx] = xProfileLocs[idx].get(numSamples - 1);
+                    yLocsSubcutaneousVOI[idx] = yProfileLocs[idx].get(numSamples - 1);
+                }
+            } else {
+                // we found a point in the intensity profile that matches subcutaneous fat
+                xLocsSubcutaneousVOI[idx] = xProfileLocs[idx].get(sampleIdx);
+                yLocsSubcutaneousVOI[idx] = yProfileLocs[idx].get(sampleIdx);
+            }
+            
+       } // end for (int idx = 0; ...)
+
+        // make the VOI's and add the points to them
+        subcutaneousVOI = new VOI((short)0, "Subcutaneous", 0);
+        Vector[] v = new Vector[zDim];
+        for(int idx = 0; idx < zDim; idx++) {
+            v[idx] = new Vector();
+        }
+        subcutaneousVOI.setCurves(v);
+        subcutaneousVOI.importCurve(xLocsSubcutaneousVOI, yLocsSubcutaneousVOI, zVals, 0);
 
     } // makeSubcutaneousFatVOIfromIntensityProfiles()
     
@@ -1408,13 +1479,71 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         VOI theVOI = subcutaneousVOI;
 
         if (theVOI.getName() != "Subcutaneous") {
-            MipavUtil.displayError("fixSubcutaneousFatVOIs(): SubcutaneousVOI is not propoerly set");
+            MipavUtil.displayError("fixSubcutaneousFatVOIs(): SubcutaneousVOI is not properly set");
             return;
         }
-//      System.out.println("    curve: " +curveIdx +"  size: " +((VOIContour)theVOI.getCurves()[sliceIdx].get(curveIdx)).size());
+        
+        // make a 2D image to hold one slice and curve from the VOI
+        int[] extents = new int[2];
+        extents[0] = xDim;
+        extents[1] = yDim;
+        ModelImage sliceImage = new ModelImage(ModelStorageBase.UBYTE, extents, "tmpSliceImage");
+        
+        // make a new VOI
+        VOI sliceVOI = new VOI((short)0, "SliceVOI", 1);
+        Vector[] v = new Vector[1];
+        for(int idx = 0; idx < 1; idx++) {
+            v[idx] = new Vector();
+        }
+        sliceVOI.setCurves(v);
 
-        VOIContour curve;
+        VOIContour sliceCurve = ((VOIContour)sliceVOI.getCurves()[0].get(0));
+        
+        // associate the sliceVOI with the sliceImage
+        sliceImage.registerVOI(sliceVOI);
+
+        // There should be one curve on each slice and
+        // each curve should have the same number of points since each was resampled
+        int numPoints = ((VOIContour)theVOI.getCurves()[0].get(0)).size();
+        int[] xVals;
+        int[] yVals;
+        int[] zVals;
+        try {
+            xVals = new int [numPoints];
+            yVals = new int [numPoints];
+            zVals = new int [numPoints];
+        }  catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("fixSubcutaneousFatVOIs(): Can NOT allocate the subcutaneous fat VOI arrays");
+            return;
+        } 
+        
         int numCurves;
+        VOIContour curve;
+        for (int sliceIdx = 0; sliceIdx < zDim; sliceIdx++) {
+            numCurves = theVOI.getCurves()[sliceIdx].size();
+            if (numCurves > 1) {
+                MipavUtil.displayError("fixSubcutaneousFatVOIs(): more than one curve on slice: " +sliceIdx);
+                continue;
+            }
+            curve = ((VOIContour)theVOI.getCurves()[sliceIdx].get(0));
+            curve.exportArrays(xVals, yVals, zVals);
+            
+            sliceCurve.importArrays(xVals, yVals, zVals, numPoints);
+        } // end for (int sliceIdx = 0; ...)
+
+        ShowImage(sliceImage, "sliceImage");
+    } // fixSubcutaneousFatVOIs()
+    
+    
+    
+    
+    /**
+     * So I don't forget how to print the contents of a VOI
+     */
+    private void printVOI(VOI theVOI) {
+        int numCurves;
+        VOIContour curve;
         for (int sliceIdx = 0; sliceIdx < zDim; sliceIdx++) {
             numCurves = theVOI.getCurves()[sliceIdx].size();
             System.out.println("Slice number: " +sliceIdx +"  number of curves: " +numCurves);
@@ -1423,7 +1552,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
                 System.out.println("  Curve: " +curveIdx +"  number of points: " +curve.size());
             } // end for (int curveIdx = 0; ...)
         } // end for (int sliceIdx = 0; ...)
-    } // fixSubcutaneousFatVOIs()
+    } // end printVOI(...)
     
     
     
@@ -2162,33 +2291,33 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      * @return
      */
     private double[] getSeedPoint(double[] center) {
-    	double lowIntensity = -50;
-    	double highIntensity = 50;
-    	
-    	int originalX = (int)center[0], currentX = (int)center[0];
-    	int originalY = (int)center[1], currentY = (int)center[1];
-    	
-    	boolean pointFound = false;
-    	
-    	while(!pointFound && currentX < xDim) {
-    		if(srcImage.get(currentX, currentY, (int)center[2]).doubleValue() < highIntensity &&
-    				srcImage.get(currentX, currentY, (int)center[2]).doubleValue() > lowIntensity) {
-    			pointFound = true;
-    			break;
-    		}
-    		if(currentX - originalX > currentY - originalY)
-    			currentY++;
-    		else
-    			currentX++;
-    	}
-    	
-    	if(pointFound) {
-    		center[0] = currentX;
-    		center[1] = currentY;
-    	}
-    	
-    	return center;
-    	
+        double lowIntensity = -50;
+        double highIntensity = 50;
+        
+        int originalX = (int)center[0], currentX = (int)center[0];
+        int originalY = (int)center[1], currentY = (int)center[1];
+        
+        boolean pointFound = false;
+        
+        while(!pointFound && currentX < xDim) {
+            if(srcImage.get(currentX, currentY, (int)center[2]).doubleValue() < highIntensity &&
+                    srcImage.get(currentX, currentY, (int)center[2]).doubleValue() > lowIntensity) {
+                pointFound = true;
+                break;
+            }
+            if(currentX - originalX > currentY - originalY)
+                currentY++;
+            else
+                currentX++;
+        }
+        
+        if(pointFound) {
+            center[0] = currentX;
+            center[1] = currentY;
+        }
+        
+        return center;
+        
     }
     
     
@@ -2219,11 +2348,11 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
    } // regionGrowMuscle(...)
    
    public VOI getAbdomenVOI() {
-	   return abdomenVOI;
+       return abdomenVOI;
    }
    
    public VOI getSubcutaneousVOI() {
-	   return subcutaneousVOI;
+       return subcutaneousVOI;
    }
    
    public ModelImage threshold(ModelImage threshSourceImg, float[] thresh) {
@@ -2369,3 +2498,4 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
 
 }
+
