@@ -195,6 +195,10 @@ public class FileTypeTable {
         FILE_EXT_TABLE.put(".parv2", FileUtility.PARREC);
         FILE_EXT_TABLE.put(".rec", FileUtility.PARREC);
         FILE_EXT_TABLE.put(".frec", FileUtility.PARREC);
+        FILE_EXT_TABLE.put(".PAR", FileUtility.PARREC);
+        FILE_EXT_TABLE.put(".PARV2", FileUtility.PARREC);
+        FILE_EXT_TABLE.put(".REC", FileUtility.PARREC);
+        FILE_EXT_TABLE.put(".FREC", FileUtility.PARREC);
 
         FILE_TYPE_TABLE.put(FileUtility.SURFACEREF_XML, new FileTypeInfo("Surface Reference XML", ""));
 
