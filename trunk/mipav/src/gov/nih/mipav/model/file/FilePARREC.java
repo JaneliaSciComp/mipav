@@ -710,6 +710,21 @@ public class FilePARREC extends FileBase {
      * @see        gov.nih.mipav.model.file.FileRaw
      */
     public ModelImage readImage(boolean one) throws IOException, OutOfMemoryError {
+        boolean haveHeader = false;
+        int k;
+        int index;
+        for(k=0;k<hdrEXTENSIONS.length;k++)
+        {
+            if (FileUtility.getExtension(fileName).equals(FilePARREC.hdrEXTENSIONS[k])) {
+                haveHeader = true;
+            }
+        }
+        if (haveHeader && (fileNames[1] != null)) {
+            index = fileName.lastIndexOf('.');
+            fileName = fileName.substring(0,index+1);
+            index = fileNames[1].lastIndexOf('.');
+            fileName = fileName.concat(fileNames[1].substring(index+1));
+        } // if (haveHeader && (fileNames[1] != null))
         fileInfo = new FileInfoPARREC(fileName, fileDir, FileUtility.PARREC);
 
         if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
