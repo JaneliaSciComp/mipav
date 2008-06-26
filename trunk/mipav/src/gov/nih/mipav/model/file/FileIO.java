@@ -6135,6 +6135,8 @@ public class FileIO {
 
             return null;
         }
+        imageFile.finalize();
+        imageFile = null;
 
         return image;
     }
@@ -6246,6 +6248,8 @@ public class FileIO {
         imgResolutions[i] = 1; // resolution in the created axis is not physically defined; is generated.
 
         image = new ModelImage(fileInfo.getDataType(), imgExtents, fileInfo.getFileName());
+        imageFile.finalize();
+        imageFile = null;
 
         int imageCount = 0;
         int fInfoCount = 0;
@@ -6396,6 +6400,8 @@ public class FileIO {
 
                 return null;
             }
+            imageFile.finalize();
+            imageFile = null;
         }
         // i goes 1 too far anyway, but if we skipped files, be sure to account for it,
         // because our basic model was that all prperly named files were good analyze images.
@@ -9106,6 +9112,8 @@ public class FileIO {
             return false;
         }
 
+         NIFTIFile.finalize();
+         NIFTIFile = null;
         return true;
     }
 
