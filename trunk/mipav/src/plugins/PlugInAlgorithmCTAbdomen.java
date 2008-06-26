@@ -13,6 +13,7 @@ import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.CubeBounds;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.Point3Df;
 import gov.nih.mipav.model.structures.Point3Ds;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
@@ -257,9 +258,9 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         makeAbdomen3DVOI();
         
         subcutaneousVOI = new VOI((short)0, "Subcutaneous", 0);
-        Vector[] v = new Vector[zDim];
+        Vector<VOIContour>[] v = new Vector[zDim];
         for(int idx = 0; idx < zDim; idx++) {
-            v[idx] = new Vector();
+            v[idx] = new Vector<VOIContour>();
         }
         subcutaneousVOI.setCurves(v);
         
@@ -269,7 +270,9 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             makeSubcutaneousFatVOIfromIntensityProfiles(sliceIdx);
         } // end for (sliceIdx = 0; ...)
 
- //       fixSubcutaneousFatVOIs();
+        
+        System.out.println("Fixing the subcutaneous fat VOIs");
+        fixSubcutaneousFatVOIs();
         srcImage.unregisterAllVOIs();
         srcImage.registerVOI(abdomenVOI);
         srcImage.registerVOI(subcutaneousVOI);
@@ -1488,19 +1491,6 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         extents[0] = xDim;
         extents[1] = yDim;
         ModelImage sliceImage = new ModelImage(ModelStorageBase.UBYTE, extents, "tmpSliceImage");
-        
-        // make a new VOI
-        VOI sliceVOI = new VOI((short)0, "SliceVOI", 1);
-        Vector[] v = new Vector[1];
-        for(int idx = 0; idx < 1; idx++) {
-            v[idx] = new Vector();
-        }
-        sliceVOI.setCurves(v);
-
-        VOIContour sliceCurve = ((VOIContour)sliceVOI.getCurves()[0].get(0));
-        
-        // associate the sliceVOI with the sliceImage
-        sliceImage.registerVOI(sliceVOI);
 
         // There should be one curve on each slice and
         // each curve should have the same number of points since each was resampled
@@ -1517,25 +1507,216 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             MipavUtil.displayError("fixSubcutaneousFatVOIs(): Can NOT allocate the subcutaneous fat VOI arrays");
             return;
         } 
-        
+
         int numCurves;
         VOIContour curve;
         for (int sliceIdx = 0; sliceIdx < zDim; sliceIdx++) {
+            System.out.print("  Extracting VOI for slice: " +sliceIdx +"  ");
+            long time = System.currentTimeMillis();
+
             numCurves = theVOI.getCurves()[sliceIdx].size();
             if (numCurves > 1) {
                 MipavUtil.displayError("fixSubcutaneousFatVOIs(): more than one curve on slice: " +sliceIdx);
                 continue;
             }
+            // make a new VOI
+            VOI sliceVOI = new VOI((short)0, "SliceVOI", 1);
+            Vector[] v = new Vector[1];
+            for(int idx = 0; idx < 1; idx++) {
+                v[idx] = new Vector();
+            }
+            sliceVOI.setCurves(v);
+            
+            // copy and remove a curve from the 3D image into the 2D image
             curve = ((VOIContour)theVOI.getCurves()[sliceIdx].get(0));
             curve.exportArrays(xVals, yVals, zVals);
+            theVOI.removeCurve(0, sliceIdx);
             
-            sliceCurve.importArrays(xVals, yVals, zVals, numPoints);
+            sliceVOI.importCurve(xVals, yVals, zVals, 0);
+            sliceImage.registerVOI(sliceVOI);
+            
+            System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+
+            
+            // make a binary image out of the subcutaneousVOI on the 2D VOI
+            System.out.print("    Making a binary image from the VOI: ");
+            time = System.currentTimeMillis();
+            ModelImage binImage = sliceImage.generateBinaryImage();            
+            System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+
+            // close the binaryImage with a huge structuring element to fill in all the major gaps
+            System.out.print("    Morphology to the image: ");
+            time = System.currentTimeMillis();
+            closeImage(binImage, 61.0f);
+            System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+            
+            // convert the binary image into a VOI
+            System.out.print("    Extracting the new VOI: ");
+            time = System.currentTimeMillis();
+            AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(binImage);
+            VOIExtractionAlgo.setRunningInSeparateThread(false);
+            VOIExtractionAlgo.run();
+            VOIExtractionAlgo.setCompleted(true);
+
+
+            // make sure we got one VOI with one curve
+            VOIVector vois = binImage.getVOIs();
+            if(vois.size() != 1) {
+                System.err.println("fixSubcutaneousFatVOIs() Error, did not get 1 VOI for the subcutaneous fat VOI");
+                return;
+            }
+            
+            // binImage has one VOI, lets get it
+            VOI theFixedVOI = vois.get(0);
+            
+            // Keep only the largest VOI as the subcutaneous fat
+            int numRemoved = 0;
+            numCurves = theFixedVOI.getCurves()[0].size();
+                
+            int maxIdx = 0;
+            int maxNumPoints = ((VOIContour)theFixedVOI.getCurves()[0].get(maxIdx)).size();
+            for (int idx = 1; idx < numCurves; idx++) {
+                if (((VOIContour)theFixedVOI.getCurves()[0].get(idx)).size() > maxNumPoints) {
+                    maxIdx = idx;
+                }
+            } // end for (int idx = 0; ...)
+            for (int idx = 0; idx < numCurves; idx++) {
+                if (idx != maxIdx) {
+                    theFixedVOI.getCurves()[0].remove(idx - numRemoved);
+                    numRemoved++;
+                }
+            } // end for (int idx = 0; ...)
+            System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+
+            System.out.print("    Copying the new VOI: ");
+            time = System.currentTimeMillis();
+            // copy a curve from the 2D image into the 3D image
+            // new arrays need to be made for each slice because the array size
+            // is used when importing the curve to the VOI.  The extracted VOI
+            // cannot be determined, unless we resample the subcutaneous VOI
+            
+            curve = ((VOIContour)theFixedVOI.getCurves()[0].get(0));
+//            resampleCurve(theFixedVOI, sliceIdx);
+
+            int[] newXVals;
+            int[] newYVals;
+            int[] newZVals;
+            numPoints = curve.size();        try {
+                newXVals = new int [numPoints];
+                newYVals = new int [numPoints];
+                newZVals = new int [numPoints];
+            }  catch (OutOfMemoryError error) {
+                System.gc();
+                MipavUtil.displayError("fixSubcutaneousFatVOIs(): Can NOT allocate the subcutaneous fat VOI arrays");
+                return;
+            } 
+            
+            curve.exportArrays(newXVals, newYVals, newZVals);
+            theVOI.importCurve(newXVals, newYVals, newZVals, sliceIdx);
+
+//            curve.exportArrays(xVals, yVals, zVals);
+//            theVOI.importCurve(xVals, yVals, zVals, sliceIdx);
+            System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+            
+            // need to remove the curve because registering a VOI makes a copy of it
+            sliceVOI.removeCurves(0);
+            sliceImage.unregisterAllVOIs();
+
         } // end for (int sliceIdx = 0; ...)
 
-        ShowImage(sliceImage, "sliceImage");
+//        ShowImage(sliceImage, "sliceImage");
+
     } // fixSubcutaneousFatVOIs()
     
     
+    
+    
+    private void resampleCurve(VOI theVOI, int sliceIdx) {
+        
+        VOIContour curve = ((VOIContour)theVOI.getCurves()[0].get(0));
+        
+        // use the same CM as for the abdomen VOI
+        findAbdomenCM(sliceIdx);
+        int xcm = centerOfMass[0];
+        int ycm = centerOfMass[1];
+//        System.out.println("Xcm: " +xcm +"  Ycm: " +ycm);
+        
+
+        ArrayList<Integer> xValsVOI = new ArrayList<Integer>();
+        ArrayList<Integer> yValsVOI = new ArrayList<Integer>();
+
+        // angle in radians
+        double angleRad;
+       
+        for (int angle = 0; angle < 360; angle += angularResolution) {
+            int x = xcm;
+            int y = ycm;
+            double scaleFactor;      // reduces the number of trig operations that must be performed
+     
+            angleRad = Math.PI * angle / 180.0;
+             if (angle > 315 || angle <= 45) {
+                 // increment x each step
+                 scaleFactor = Math.tan(angleRad);
+                 while (x < xDim && curve.contains(x, y, false)) {
+                     
+                     // walk out in x and compute the value of y for the given radial line
+                     x++;
+                     y = ycm - (int)((x - xcm) * scaleFactor);
+                 }
+                 xValsVOI.add(x);
+                 yValsVOI.add(y);
+                 
+             } else if (angle > 45 && angle <= 135) {
+                 // decrement y each step
+                 scaleFactor = (Math.tan((Math.PI / 2.0) - angleRad));
+                 while (y > 0 && curve.contains(x, y, false)) {
+
+                     // walk to the top of the image and compute values of x for the given radial line
+                     y--;
+                     x = xcm + (int)((ycm - y) * scaleFactor);
+                 }
+                 xValsVOI.add(x);
+                 yValsVOI.add(y);
+                                 
+             } else if (angle > 135 && angle <= 225) {
+                 // decrement x each step
+                 scaleFactor = Math.tan(Math.PI - angleRad);
+                 while (x > 0 && curve.contains(x, y, false)) {
+                     
+                     x--;
+                     y = ycm - (int)((xcm - x) * scaleFactor);
+                 }
+                 xValsVOI.add(x);
+                 yValsVOI.add(y);
+
+             } else if (angle > 225 && angle <= 315) {
+                 // increment y each step
+                 scaleFactor = Math.tan((3.0 * Math.PI / 2.0) - angleRad);
+                 while (y < yDim && curve.contains(x, y, false)) {
+                     
+                     y++;
+                     x = xcm - (int)((y - ycm) * scaleFactor);
+                 }
+                 xValsVOI.add(x);
+                 yValsVOI.add(y);
+             }
+         } // end for (angle = 0; ...
+        
+//        System.out.println("resample VOI number of points: " +xValsAbdomenVOI.size());
+
+        int[] x1 = new int[xValsVOI.size()];
+        int[] y1 = new int[xValsVOI.size()];
+        int[] z1 = new int[xValsVOI.size()];
+        for(int idx = 0; idx < xValsVOI.size(); idx++) {
+            x1[idx] = xValsVOI.get(idx);
+            y1[idx] = yValsVOI.get(idx);
+            z1[idx] = 0;
+        }
+
+        theVOI.removeCurves(0);
+        theVOI.importCurve(x1, y1, z1, 0);
+    } // end resampleCurve(...)
+
     
     
     /**
