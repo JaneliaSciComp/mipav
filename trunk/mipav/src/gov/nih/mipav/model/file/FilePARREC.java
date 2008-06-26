@@ -104,7 +104,27 @@ public class FilePARREC extends FileBase {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-
+    /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        VolMap.clear();
+        VolMap = null;
+        SliceMap.clear();
+        SliceMap = null;
+        VolParameters.clear();
+        VolParameters = null;
+        SliceParameters.removeAllElements();
+        SliceParameters = null;
+        Slices.removeAllElements();
+        Slices = null;
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
+    
     /**
      * Returns the complete list of file names according to given file name.
      *
