@@ -2300,7 +2300,6 @@ public class FileIO {
         }
 
         if (options.isSaveAs() && !options.isSet()) {
-
             if ( !callDialog(image.getExtents(), (fileType == FileUtility.TIFF), options)) {
                 return;
             }
@@ -3122,6 +3121,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
 
     }
@@ -3141,7 +3142,7 @@ public class FileIO {
      */
     private ModelImage readAnalyze(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
-        FileAnalyze imageFile;
+        FileAnalyze imageFile = null;
 
         if (FileCheshire.isCheshire(fileName, fileDir)) {
             image = readCheshire(fileName, fileDir);
@@ -3187,6 +3188,10 @@ public class FileIO {
             }
         }
 
+        if (imageFile != null) {
+            imageFile.finalize();
+        }
+        imageFile = null;
         return image;
     }
 
@@ -3200,7 +3205,7 @@ public class FileIO {
      */
     private ModelImage readAnalyzeMulti(String fileName, String fileDir) {
         ModelImage image = null;
-        FileAnalyze imageFile;
+        FileAnalyze imageFile = null;
         FileInfoBase fileInfo;
 
         int length = 0;
@@ -3292,6 +3297,8 @@ public class FileIO {
         imgResolutions[i] = 1; // resolution in the created axis is not physically defined; is generated.
 
         image = new ModelImage(fileInfo.getDataType(), imgExtents, fileInfo.getFileName());
+        imageFile.finalize();
+        imageFile = null;
 
         int imageCount = 0;
         int fInfoCount = 0;
@@ -3444,6 +3451,8 @@ public class FileIO {
 
                 return null;
             }
+            imageFile.finalize();
+            imageFile = null;
         }
 
         // i goes 1 too far anyway, but if we skipped files, be sure to account for it,
@@ -8069,6 +8078,8 @@ public class FileIO {
             afniFile = new FileAfni(options.getFileName(), options.getFileDirectory(), loadB, doRead);
             createProgressBar(afniFile, options.getFileName(), FILE_WRITE);
             afniFile.writeImage(image, options);
+            afniFile.finalize();
+            afniFile = null;
         } catch (IOException error) {
 
             if ( !quiet) {
@@ -8145,6 +8156,8 @@ public class FileIO {
             analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
             createProgressBar(analyzeFile, options.getFileName(), FILE_WRITE);
             analyzeFile.writeImage(image, options);
+            analyzeFile.finalize();
+            analyzeFile = null;
         } catch (IOException error) {
 
             if ( !quiet) {
