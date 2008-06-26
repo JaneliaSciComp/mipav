@@ -101,7 +101,7 @@ public class JDialogCircularSectorToRectangle extends JDialogBase
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Help")) {
-            // MipavUtil.showHelp("");
+             MipavUtil.showHelp("CMSR001");
         } else if (command.equals("Cancel")) {
             dispose();
         }

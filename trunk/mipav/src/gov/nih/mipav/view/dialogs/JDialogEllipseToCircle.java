@@ -95,7 +95,7 @@ public class JDialogEllipseToCircle extends JDialogBase implements AlgorithmInte
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Help")) {
-            // MipavUtil.showHelp("");
+             MipavUtil.showHelp("CMEC001");
         } else if (command.equals("Cancel")) {
             dispose();
         }
