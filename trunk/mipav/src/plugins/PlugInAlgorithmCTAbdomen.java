@@ -243,6 +243,8 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             }
         } // end for (int idx = 0; ...)
 
+        resampleCurve(theVOI, 0);
+        
         // get the new subcutaneous VOI
         subcutaneousVOI = theVOI;
 
@@ -1595,9 +1597,12 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             // is used when importing the curve to the VOI.  The extracted VOI
             // cannot be determined, unless we resample the subcutaneous VOI
             
+            // resample the subcutaneous fat VOI so it has the same number of
+            // sampes as the abdomen VOI. Furthermore, the samples will be on a
+            // throught the center of mass of the abdomen and the abdomen VOI samples
+            resampleCurve(theFixedVOI, sliceIdx);
             curve = ((VOIContour)theFixedVOI.getCurves()[0].get(0));
-//            resampleCurve(theFixedVOI, sliceIdx);
-
+/*
             int[] newXVals;
             int[] newYVals;
             int[] newZVals;
@@ -1613,9 +1618,9 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             
             curve.exportArrays(newXVals, newYVals, newZVals);
             theVOI.importCurve(newXVals, newYVals, newZVals, sliceIdx);
-
-//            curve.exportArrays(xVals, yVals, zVals);
-//            theVOI.importCurve(xVals, yVals, zVals, sliceIdx);
+*/
+            curve.exportArrays(xVals, yVals, zVals);
+            theVOI.importCurve(xVals, yVals, zVals, sliceIdx);
             System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
             
             // need to remove the curve because registering a VOI makes a copy of it
