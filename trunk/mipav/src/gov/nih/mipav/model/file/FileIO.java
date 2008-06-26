@@ -6876,7 +6876,8 @@ public class FileIO {
 
             return null;
         }
-
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -9383,6 +9384,8 @@ public class FileIO {
 
             createProgressBar(pr, options.getFileName(), FileIO.FILE_WRITE);
             pr.writeImage(image, options);
+            pr.finalize();
+            pr = null;
         } catch (IOException error) {
 
             if ( !quiet) {
