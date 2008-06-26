@@ -131,6 +131,36 @@ public class TalairachTransformInfo implements Serializable {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+       int i;
+       acpcAC = null;
+       acpcDim = null;
+       acpcMax = null;
+       acpcMin = null;
+       acpcPC = null;
+       origAC = null;
+       origDim = null;
+       if (origOrient != null) {
+            for (i = 0; i < origOrient.length; i++) {
+                origOrient[i] = null;
+            }
+       }
+        origOrient = null;
+        origPC = null;
+        origRes = null;
+        tlrcAC = null;
+        tlrcDim = null;
+        tlrcPC = null;
+        tlrcRes = null;
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
+    /**
      * DOCUMENT ME!
      *
      * @param  pt     DOCUMENT ME!
