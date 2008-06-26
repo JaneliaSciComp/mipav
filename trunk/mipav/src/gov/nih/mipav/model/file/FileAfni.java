@@ -1242,7 +1242,7 @@ public class FileAfni extends FileBase {
         }
         tInfo = null;
         tlrcRes = null;
-        String typeString = null;
+        typeString = null;
         volregBaseIdcodeString = null;
         volregBaseNameString = null;
         volregCenterBase = null;
