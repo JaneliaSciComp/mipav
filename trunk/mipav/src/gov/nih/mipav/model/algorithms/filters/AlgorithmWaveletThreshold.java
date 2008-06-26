@@ -45,8 +45,10 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
      * Extrapolation "works well in general for smooth signals." The wavelet toolbox uses mirror padding as its default
      * mode. How much padding is required? Claudia Schremmer states: " With padding, the coefficients of the signal on
      * either side of the border are padded with filter_length - 2 coefficients. Consequently, each signal coefficient
-     * enters into filter_length/2 calculations of convolution, and the transform is reversible." transformDir
+     * enters into filter_length/2 calculations of convolution, and the transform is reversible."
      */
+    
+    /** FORWARD and INVERSE are 2 possible transformDir values */
     public static final int INVERSE = -1;
 
     /** DOCUMENT ME! */
