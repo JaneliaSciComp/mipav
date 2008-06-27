@@ -61,7 +61,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	private PdfWriter pdfWriter = null;
 	private File pdfFile = null;
 	private File textFile = null;
-	private PdfPTable aTable = null;
+	private PdfPTable wholeTable = null;
+	private PdfPTable[] sliceTable = null;
 	private PdfPTable imageTable = null;
     
     /** Location of the VOI tab. */
@@ -2131,6 +2132,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         }
         
         //TODO: Put PlugInMuscleImageDisplay's actions here
+        //calculate, help, exit
         public void actionPerformed(ActionEvent e) {
             System.err.println(e.getActionCommand());
             System.out.println(e.getActionCommand());
@@ -2945,7 +2947,19 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					System.out.println("Compare areas of "+temp.getName()+": "+totalAreaCalc+"\tcount: "+totalAreaCount);
 					
 					if (doSave) {
-						addToPDF((String)itrObj, fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH);
+						addToPDF((String)itrObj, fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH, wholeTable);
+						if(multipleSlices) {
+							for(int i=0; i<getActiveImage().getExtents()[2]; i++) {
+								totalAreaCount = temp.getTotalAreaCount(i);
+								fatArea = temp.getFatArea(i);
+								leanArea = temp.getLeanArea(i);
+								meanFatH = temp.getMeanFatH(i);
+								meanLeanH = temp.getMeanLeanH(i);
+								meanTotalH = temp.getMeanTotalH(i);
+								
+								addToPDF((String)itrObj, fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH, sliceTable[i]);
+							}
+						}
 					} else {
 						DecimalFormat dec = new DecimalFormat("0.#");
 						String appMessage = itrObj+" calculations:\n"+"Fat Area: "+dec.format(fatArea)+
@@ -3896,9 +3910,25 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			Paragraph aPar = new Paragraph();
 			aPar.setAlignment(Element.ALIGN_CENTER);
 			aPar.add(new Paragraph());
-			aPar.add(aTable);
+			if(multipleSlices)
+				aPar.add(new Chunk("Volume calculations", new Font(Font.TIMES_ROMAN, 14, Font.BOLD)));
+			else
+				aPar.add(new Chunk("Area calculations", new Font(Font.TIMES_ROMAN, 14, Font.BOLD)));
+			aPar.add(wholeTable);
 			pdfDocument.add(new Paragraph());
 			pdfDocument.add(aPar);
+			if(multipleSlices) {
+				for(int i=0; i<getActiveImage().getExtents()[2]; i++) {
+					Paragraph slicePar = new Paragraph();
+					slicePar.setAlignment(Element.ALIGN_CENTER);
+					slicePar.add(new Paragraph());
+					slicePar.add(new Chunk("Slice "+i, new Font(Font.TIMES_ROMAN, 14, Font.BOLD)));			
+					slicePar.add(sliceTable[i]);
+					pdfDocument.add(new Paragraph());
+					pdfDocument.add(slicePar);
+				}
+			}
+			
 			PdfPTable imageTable = new PdfPTable(2);
 			imageTable.addCell("Edge Image");
 			imageTable.addCell("QA Image");
@@ -3998,7 +4028,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			mct3.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
 			mct3.addElement(new Paragraph("Patient ID:", fontBold));
 			String id = (String)fileInfo.getTagTable().getValue("0010,0020");
-			mct3.addElement(new Paragraph((id != null ? id.trim() : "Removed"), fontNormal));
+			mct3.addElement(new Paragraph(((id != null || id.length() == 0) ? id.trim() : "Removed"), fontNormal));
 			mct3.addElement(new Paragraph("Scan Date:", fontBold));
 			String scanDate = (String)fileInfo.getTagTable().getValue("0008,0020");
 			mct3.addElement(new Paragraph((scanDate != null ? scanDate.trim() : "Unknown"), fontNormal));
@@ -4014,8 +4044,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			spTable.addCell("120");
 			spTable.addCell("mA:");
 			spTable.addCell("213");
-			spTable.addCell("Pixel Size:");
-			spTable.addCell(Double.toString(getActiveImage().getResolutions(0)[0]*.1));
+			//todo: FIX TO MM
+			spTable.addCell("Pixel Size: (mm)");
+			spTable.addCell(Double.toString(getActiveImage().getResolutions(0)[0]));
 			spTable.addCell("Slice Thickness: (mm)");
 			spTable.addCell(Float.toString(getActiveImage().getFileInfo()[getViewableSlice()].getSliceThickness()));
 			spTable.addCell("Table Height: (cm)");
@@ -4034,23 +4065,38 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			// *// end commenting
 			
 			//create the Table where we will insert the data:
-			aTable = new PdfPTable(new float[] {1.8f, 1f, 1f, 1f, 1f, 1f, 1f});
+			wholeTable = new PdfPTable(new float[] {1.8f, 1f, 1f, 1f, 1f, 1f, 1f});
 			System.out.println("CREATED");
 			// add Column Titles (in bold)
 			String type = new String();
 			if(multipleSlices) {
-				aTable.addCell(new PdfPCell(new Paragraph("Volume (cm^3)", fontBold)));
+				wholeTable.addCell(new PdfPCell(new Paragraph("Volume (cm^3)", fontBold)));
 				type = "Vol";	
 			} else {
-				aTable.addCell(new PdfPCell(new Paragraph("Area (cm^2)", fontBold)));
+				wholeTable.addCell(new PdfPCell(new Paragraph("Area (cm^2)", fontBold)));
 				type = "Area";
 			}
-			aTable.addCell(new PdfPCell(new Paragraph("Total "+type, fontBold)));
-			aTable.addCell(new PdfPCell(new Paragraph("Fat "+type, fontBold)));
-			aTable.addCell(new PdfPCell(new Paragraph("Lean "+type, fontBold)));
-			aTable.addCell(new PdfPCell(new Paragraph("Fat HU", fontBold)));
-			aTable.addCell(new PdfPCell(new Paragraph("Lean HU", fontBold)));
-			aTable.addCell(new PdfPCell(new Paragraph("Total HU", fontBold)));
+			wholeTable.addCell(new PdfPCell(new Paragraph("Total "+type, fontBold)));
+			wholeTable.addCell(new PdfPCell(new Paragraph("Fat "+type, fontBold)));
+			wholeTable.addCell(new PdfPCell(new Paragraph("Lean "+type, fontBold)));
+			wholeTable.addCell(new PdfPCell(new Paragraph("Fat HU", fontBold)));
+			wholeTable.addCell(new PdfPCell(new Paragraph("Lean HU", fontBold)));
+			wholeTable.addCell(new PdfPCell(new Paragraph("Total HU", fontBold)));
+			
+			if(multipleSlices) {
+				sliceTable = new PdfPTable[getActiveImage().getExtents()[2]];
+				for(int i=0; i<getActiveImage().getExtents()[2]; i++) {
+					sliceTable[i] = new PdfPTable(new float[] {1.8f, 1f, 1f, 1f, 1f, 1f, 1f});
+					sliceTable[i].addCell(new PdfPCell(new Paragraph("Area (cm^2)", fontBold)));
+					type = "Area";
+					sliceTable[i].addCell(new PdfPCell(new Paragraph("Total "+type, fontBold)));
+					sliceTable[i].addCell(new PdfPCell(new Paragraph("Fat "+type, fontBold)));
+					sliceTable[i].addCell(new PdfPCell(new Paragraph("Lean "+type, fontBold)));
+					sliceTable[i].addCell(new PdfPCell(new Paragraph("Fat HU", fontBold)));
+					sliceTable[i].addCell(new PdfPCell(new Paragraph("Lean HU", fontBold)));
+					sliceTable[i].addCell(new PdfPCell(new Paragraph("Total HU", fontBold)));
+				}
+			}
 			
 			
 			return;
@@ -4071,7 +4117,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	 * @param meanTotalH mean total area HU
 	 */
 	protected void addToPDF(String name, double fatArea, double leanArea, double totalAreaCount, 
-			double meanFatH, double meanLeanH, double meanTotalH) {
+			double meanFatH, double meanLeanH, double meanTotalH, PdfPTable aTable) {
 		
 	    try {
 			Font fontNormal = FontFactory.getFont("Helvetica", 10, Font.NORMAL, Color.DARK_GRAY);
@@ -4112,7 +4158,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					
 		} catch (Exception e) {
 		    System.out.println("Error adding PDF element.");
-		    if(aTable == null) 
+		    if(wholeTable == null) 
 			System.out.println("aTable");
 		    if(name == null) 
 			System.out.println("name");
@@ -4805,7 +4851,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 
 			String scanDate = (String)fileInfo.getTagTable().getValue("0008,0020");
 			scanDate = scanDate != null ? scanDate.trim() : "Unknown";
-			
+		
 			String sliceNumber = new String();
 			if(!multipleSlices) {
 				sliceNumber = (String)fileInfo.getTagTable().getValue("0020,0013");
@@ -4901,8 +4947,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    }
 			
 	}
-}
-	/**********************************************************
+
 	 //TODO: Work with right mouse click
 	
 	private class PlugInVOIStats extends JDialogVOIStats {
@@ -5085,7 +5130,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        try {
 	            listPanel.setSliceCount(image.getExtents()[2]);
 	        } catch (ArrayIndexOutOfBoundsException aioobe) {
-
 	            // otherwise, this must be a 2d image.
 	            listPanel.setSliceCount(1);
 	        } finally {
@@ -5271,4 +5315,3 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	}
 	
 }
-**************************************************************************/
