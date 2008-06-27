@@ -286,7 +286,7 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
     
     
     // create a voi for the bone.  Assumes the boneImage has been created.
-    void makeThighTissueVOI() {
+    private void makeThighTissueVOI() {
         // make the volumeBitSet for the boneImage
         int sliceByteOffset;
         for (int volumeIdx = 0, sliceNum = 0; sliceNum < zDim; sliceNum++) {
@@ -329,7 +329,7 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
     
     
     // create a voi for the bone.  Assumes the boneImage has been created.
-    void makeBoneVOI() {
+    private void makeBoneVOI() {
         // make the volumeBitSet for the boneImage
         int sliceByteOffset;
         for (int volumeIdx = 0, sliceNum = 0; sliceNum < zDim; sliceNum++) {
@@ -372,7 +372,7 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
     
     
     // create a voi for the bone marrow.  Assumes the boneMarrowImage has been created.
-    void makeBoneMarrowVOI() {
+    private void makeBoneMarrowVOI() {
         // make the volumeBitSet for the boneMarrowImage
         int sliceByteOffset;
         for (int volumeIdx = 0, sliceNum = 0; sliceNum < zDim; sliceNum++) {
