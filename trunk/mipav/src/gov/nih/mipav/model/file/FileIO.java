@@ -3571,6 +3571,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
 
     }
@@ -8231,6 +8233,8 @@ public class FileIO {
             return false;
         }
 
+        aviFile.finalize();
+        aviFile = null;
         return true;
     }
 
