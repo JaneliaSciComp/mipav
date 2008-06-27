@@ -1266,6 +1266,9 @@ public class FileAfni extends FileBase {
         warpData = null;
         warpParentnameString = null;
         zeroPad = null;
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
         try {
             super.finalize();
         } catch (Throwable er) { }
