@@ -2245,15 +2245,14 @@ public class FileIO {
         if (fileType == FileUtility.UNDEFINED) { // if type is still undef, look for user input (when not quiet)
             fileType = options.getFileType(); // get saved file type from options
             options.setSaveAs(true); // can't tell from extension, so must be a save as.
-
             // options.setSaveInSubdirectory(true);// .... "" ...., so save into its own subdirectory.
             if (fileType == FileUtility.UNDEFINED) { // file type wasn't set, so call dialog
                 fileType = getFileType(); // popup dialog to determine filetype
-
+                
                 if (unknownIODialog.isCancelled()) {
                     return;
                 }
-
+                
                 suffix = unknownIODialog.getSuffix(); // get the expected suffix from the dialog
 
                 options.setFileType(fileType);
@@ -2271,7 +2270,18 @@ public class FileIO {
                 // type should be
             }
 
-            options.setFileName(options.getFileName() + suffix); // append file extension
+            boolean append = true;
+            int index  = (options.getFileName()).lastIndexOf('.');
+            if (index > 0) {
+                String firstSuffix = (options.getFileName()).substring(index);
+                if (firstSuffix.toUpperCase().equals(suffix.toUpperCase())) {
+                    // Prevent generating a double suffix as in test.img.img
+                    append = false;
+                }
+            }
+            if (append) {
+                options.setFileName(options.getFileName() + suffix); // append file extension
+            }
         } else if (fileType == FileUtility.JIMI) { // if type is JIMI, then try and use suffix from fileInfo
 
             // if filename already has a suffix then don't need to do anything
