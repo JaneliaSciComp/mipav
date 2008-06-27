@@ -113,6 +113,9 @@ public class FileAnalyze extends FileBase {
      */
     public void finalize() {
         bufferImageHeader = null;
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
         try {
             super.finalize();
         } catch (Throwable er) { }
