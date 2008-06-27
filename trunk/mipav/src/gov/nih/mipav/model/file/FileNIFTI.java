@@ -733,6 +733,9 @@ public class FileNIFTI extends FileBase {
         srow_y = null;
         srow_z = null;
         intentName = null;
+        fileDir = null;
+        fileName = null;
+        fileInfo = null;
 
         try {
             super.finalize();
