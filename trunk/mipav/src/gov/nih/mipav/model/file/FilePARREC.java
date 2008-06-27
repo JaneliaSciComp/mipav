@@ -109,16 +109,30 @@ public class FilePARREC extends FileBase {
      * files and sets other elements to <code>null</code>.
      */
     public void finalize() {
-        VolMap.clear();
-        VolMap = null;
-        SliceMap.clear();
-        SliceMap = null;
-        VolParameters.clear();
-        VolParameters = null;
-        SliceParameters.removeAllElements();
-        SliceParameters = null;
-        Slices.removeAllElements();
-        Slices = null;
+        if (VolMap != null) {
+            VolMap.clear();
+            VolMap = null;
+        }
+        if (SliceMap != null) {
+            SliceMap.clear();
+            SliceMap = null;
+        }
+        if (VolParameters != null) {
+            VolParameters.clear();
+            VolParameters = null;
+        }
+        if (SliceParameters != null) {
+            SliceParameters.removeAllElements();
+            SliceParameters = null;
+        }
+        if (Slices != null) {
+            Slices.removeAllElements();
+            Slices = null;
+        }
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        outInfo = null;
         try {
             super.finalize();
         } catch (Throwable er) { }
