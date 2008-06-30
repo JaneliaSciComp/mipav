@@ -1093,8 +1093,8 @@ public class FilePARREC extends FileBase {
                 }
             }
             if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
-            	completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + "." + FilePARREC.imgEXTENSIONS[k];
-                completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + "." + FilePARREC.hdrEXTENSIONS[k0];
+            	completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + FilePARREC.imgEXTENSIONS[k];
+                completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + FilePARREC.hdrEXTENSIONS[k0];
             }
             
             
