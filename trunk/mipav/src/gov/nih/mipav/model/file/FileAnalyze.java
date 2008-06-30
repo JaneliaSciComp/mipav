@@ -116,6 +116,7 @@ public class FileAnalyze extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        image = null;
         try {
             super.finalize();
         } catch (Throwable er) { }
