@@ -2278,6 +2278,11 @@ public class FileIO {
                     // Prevent generating a double suffix as in test.img.img
                     append = false;
                 }
+                else if ((firstSuffix.toUpperCase().equals(".IMG")) && (suffix.toUpperCase().equals(".NII"))) {
+                    // Prevent saving a 2 file nifti as a 1 file nifti by incorrectly changing
+                    // test.img to test.img.nii
+                    append = false;
+                }
             }
             if (append) {
                 options.setFileName(options.getFileName() + suffix); // append file extension
@@ -3630,6 +3635,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
 
     }
@@ -3768,6 +3775,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -4104,6 +4113,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
 
     }
@@ -4162,6 +4173,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
 
     }
@@ -6100,6 +6113,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
 
     }
@@ -8755,6 +8770,8 @@ public class FileIO {
             fitsFile = new FileFits(options.getFileName(), options.getFileDirectory());
             createProgressBar(fitsFile, options.getFileName(), FILE_WRITE);
             fitsFile.writeImage(image, options);
+            fitsFile.finalize();
+            fitsFile = null;
         } catch (IOException error) {
 
             if ( !quiet) {
