@@ -736,6 +736,7 @@ public class FileNIFTI extends FileBase {
         fileDir = null;
         fileName = null;
         fileInfo = null;
+        image = null;
 
         try {
             super.finalize();
