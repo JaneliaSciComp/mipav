@@ -96,6 +96,7 @@ public class FileFits extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        image = null;
         imgExtents = null;
         LUT = null;
         if (flipAlgo != null) {
