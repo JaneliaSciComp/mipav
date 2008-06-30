@@ -556,6 +556,83 @@ public class FileGESigna4X extends FileBase {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        systemID = null;
+        systemConfigHospitalName = null;
+        studyHeaderID = null;
+        studyHeaderRevisionNumber = null;
+        MRIProcessName = null;
+        rawDataStudyNumber = null;
+        studyNumber = null;
+        rawDataSystemID = null;
+        systemGenerationID = null;
+        studyDate = null;
+        studyTime = null;
+        patientName = null;
+        patientID = null;
+        patientAge = null;
+        patientSex = null;
+        referringPhysician = null;
+        diognostician = null;
+        operator = null;
+        studyDescription = null;
+        history = null;
+        hospitalName = null;
+        requestedNumber = null;
+        seriesHeaderID = null;
+        seriesHeaderRevisionNumber = null;
+        seriesProcessName = null;
+        originalSeriesNumber = null;
+        seriesNumber = null;
+        seriesRawDataSystemID = null;
+        seriesSystemGenerationID = null;
+        seriesDate = null;
+        seriesTime = null;
+        seriesDescription = null;
+        coilName = null;
+        contrastDescription = null;
+        planeName = null;
+        longitudinalAnatomicalReference = null;
+        verticalAnatomicalReference = null;
+        gatingTypeString = null;
+        seriesPSDName = null;
+        scanProtocolName = null;
+        satSelectionsString = null;
+        imageHeaderID = null;
+        imageHeaderRevisionNumber = null;
+        imageHeaderCreatorProcess = null;
+        imageCreationDate = null;
+        imageCreationTime = null;
+        imageNumber = null;
+        series = null;
+        imageRawDataSystemID = null;
+        imageSystemGenerationID = null;
+        psdFileName = null;
+        prescribedSeriesNumbers = null;
+        prescribedImageNumbers = null;
+        psdName = null;
+        surfaceCoilsCorrectionType = null;
+        scSer = null;
+        scIma = null;
+        pSeries2 = null;
+        pImage2 = null;
+        contrastAgent = null;
+        changedValuesString = null;
+        byteBuffer = null;
+        orient = null;
+        start = null;
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
+    /**
      * DOCUMENT ME!
      *
      * @return  FileInfoGESigna4X fileInfo
