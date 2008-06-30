@@ -1184,6 +1184,9 @@ public class FileAfni extends FileBase {
         dicomDelta = null;
         dicomOrientation = null;
         dicomOrigin = null;
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
         firstPtDicom = null;
         historyNoteString = null;
         idcodeAnatParentString = null;
@@ -1191,6 +1194,7 @@ public class FileAfni extends FileBase {
         idcodeString = null;
         idcodeWarpParentString = null;
         img2Buffer = null;
+        image = null;
         imgBuffer = null;
         imgExtents = null;
         imgResols = null;
@@ -1266,9 +1270,6 @@ public class FileAfni extends FileBase {
         warpData = null;
         warpParentnameString = null;
         zeroPad = null;
-        fileName = null;
-        fileDir = null;
-        fileInfo = null;
         try {
             super.finalize();
         } catch (Throwable er) { }
