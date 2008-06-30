@@ -66,7 +66,8 @@ public class FileSurface_WM {
 
             if ((kName.indexOf(".sur") != -1) || (kName.indexOf(".wrl") != -1) || 
             	(kName.indexOf(".vtk") != -1) || (kName.indexOf(".vtp") != -1) || 
-            	(kName.indexOf(".stla") != -1) || (kName.indexOf(".stlb") != -1) ) {
+            	(kName.indexOf(".stla") != -1) || (kName.indexOf(".stlb") != -1) || 
+            	(kName.indexOf(".ply") != -1)) {
                 kSurface[i] = readSurface(kImage, akFiles[i], kColor, 1.0f, null, 0 );
             } else if (kName.indexOf(".xml") != -1) {
                 FileSurfaceRefXML kSurfaceXML = new FileSurfaceRefXML(kName, akFiles[i].getParent());
@@ -173,6 +174,10 @@ public class FileSurface_WM {
             } catch (IOException e) {
                 return null;
             }
+        } else if ( file.getName().endsWith("ply") ) {
+        	iType = 0;
+			iQuantity = 1;
+			isSur = false;
         } else {
             //has to be vtk legacy or vtk xml
             try {
@@ -248,6 +253,13 @@ public class FileSurface_WM {
                     	}
                     	else if (file.getName().endsWith("stlb")) {
                     		akComponent[i] = loadSTLBinaryMesh( in );
+                            if ( akComponent[i] != null)
+                            {
+                                akComponent[i].SetName( file.getName() );
+                            }
+                    	}
+                    	else if (file.getName().endsWith("ply")) {
+                    		akComponent[i] = loadPlyAsciiMesh( file );
                             if ( akComponent[i] != null)
                             {
                                 akComponent[i].SetName( file.getName() );
@@ -347,6 +359,12 @@ public class FileSurface_WM {
 
             for (int i = 0; i < akSurfaces.length; i++) {
             	saveSingleSTLMesh(kImage, akSurfaces[i]);
+            }
+       }
+        else if (kCommand.equals("LevelPLY")) {
+
+            for (int i = 0; i < akSurfaces.length; i++) {
+            	saveSinglePlyMesh(kImage, akSurfaces[i]);
             }
        }
     }
@@ -1324,6 +1342,108 @@ public class FileSurface_WM {
         }
     }
 
+    /**
+     * Saves a single level of detail to a STL mesh file.
+     *
+     * @param  kImage  ModelImage displayed in the SurfaceRender object
+     * @param  kMesh   Triangle mesh
+     */
+    private static void saveSinglePlyMesh(ModelImage kImage, TriMesh kMesh ) {
+		int i; 
+    	String name = getFileName(false);
+
+	        if (name == null) {
+	            return;
+	        }
+
+	     // i = name.lastIndexOf('.');
+         
+	   	 try {
+	   		PrintWriter kOut = new PrintWriter(new FileWriter(name));
+	   	    
+	   	 
+	        int index1, index2, index3;
+	        byte[] attribute = new byte[2];
+	        int iTriangleCount = kMesh.IBuffer.GetIndexQuantity() / 3;
+	        int iVertexCount = kMesh.VBuffer.GetVertexQuantity();
+	        int[] aiIndex = kMesh.IBuffer.GetData();
+	        
+            float[] startLocation = kImage.getFileInfo(0).getOrigin();
+            float[] resolution = kImage.getFileInfo(0).getResolutions();
+            int[] extents = kImage.getExtents();
+            int xDim = extents[0];
+            int yDim = extents[1];
+            int zDim = extents[2];
+            
+            float[] resols = kImage.getFileInfo()[0].getResolutions();
+            float xBox = (xDim - 1) * resols[0];
+            float yBox = (yDim - 1) * resols[1];
+            float zBox = (zDim - 1) * resols[2];
+            float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+
+            int[] direction = MipavCoordinateSystems.getModelDirections(kImage);
+            float[] box = new float[]{ xBox, yBox, zBox };
+
+            VertexBuffer kVBuffer = new VertexBuffer( kMesh.VBuffer );
+
+                // The loaded vertices go from -(xDim-1)*resX/maxBox to (xDim-1)*resX/maxBox
+                // The loaded vertex is at 2.0f*pt.x*resX - (xDim-1)*resX
+                // The mesh files must save the verticies as
+                // pt.x*resX*direction[0] + startLocation
+                for (int j = 0; j < kVBuffer.GetVertexQuantity(); j++) {
+                    kVBuffer.SetPosition3( j,
+                                           ((((kMesh.VBuffer.GetPosition3fX(j) * 2.0f * maxBox) + xBox) / 2.0f) * direction[0]) +
+                                           startLocation[0],
+                                           ((((kMesh.VBuffer.GetPosition3fY(j) * 2.0f * maxBox) + yBox) / 2.0f) * direction[1]) +
+                                           startLocation[1],
+                                           ((((kMesh.VBuffer.GetPosition3fZ(j) * 2.0f * maxBox) + zBox) / 2.0f) * direction[2]) +
+                                           startLocation[2] );
+
+                    
+                }
+
+                
+            Vector3f kVertex = new Vector3f();
+	        
+	        // write header
+	    	kOut.println("ply"); // object is ModelTriangleMesh
+	        kOut.println("format ascii 1.0");
+	        kOut.println("element vertex " + iVertexCount);
+	        kOut.println("property float32 x");
+	        kOut.println("property float32 y");
+	        kOut.println("property float32 z");
+	        kOut.println("element face " + iTriangleCount);
+	        kOut.println("property list uint8 int32 vertex_indices");
+	        kOut.println("end_header");
+	       
+
+	        for (i = 0; i < iVertexCount; i++) {
+	        	kVBuffer.GetPosition3(i, kVertex);;    
+	            kOut.print(kVertex.X());
+	            kOut.print(' ');
+	            kOut.print(kVertex.Y());
+	            kOut.print(' ');
+	            kOut.println(kVertex.Z());
+	        }
+	        	        
+	        for (i = 0; i < iTriangleCount; i++) {
+	        	kOut.print('3');
+	        	kOut.print(' ');
+	            kOut.print(aiIndex[3 * i]);
+	            kOut.print(' ');
+	            kOut.print(aiIndex[(3 * i) + 1]);
+	            kOut.print(' ');
+	            kOut.println(aiIndex[(3 * i) + 2]);
+	        }
+	        
+	        kOut.close();
+	   	    
+	   	} catch (IOException error) {
+          MipavUtil.displayError("Error while trying to save single mesh");
+      }
+	        
+	}
+    
     
     /**
      * Saves a single level of detail to a STL mesh file.
@@ -1366,7 +1486,6 @@ public class FileSurface_WM {
             int[] direction = MipavCoordinateSystems.getModelDirections(kImage);
             float[] box = new float[]{ xBox, yBox, zBox };
 
-//             for (int i = 0; i < meshes.length; i++) {
             VertexBuffer kVBuffer = new VertexBuffer( kMesh.VBuffer );
 
                 // The loaded vertices go from -(xDim-1)*resX/maxBox to (xDim-1)*resX/maxBox
@@ -1382,35 +1501,9 @@ public class FileSurface_WM {
                                            ((((kMesh.VBuffer.GetPosition3fZ(j) * 2.0f * maxBox) + zBox) / 2.0f) * direction[2]) +
                                            startLocation[2] );
 
-                    // flip y and z
-//                     kVBuffer.SetPosition3( j, kVBuffer.GetPosition3fX(j),
-//                                            (2 * startLocation[1]) + (box[1] * direction[1]) - kVBuffer.GetPosition3fY(j),
-//                                            (2 * startLocation[2]) + (box[2] * direction[2]) - kVBuffer.GetPosition3fZ(j) );
-                   /*
-                    if (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
-
-                        // Get the DICOM transform that describes the transformation from
-                        // axial to this image orientation
-                        TransMatrix dicomMatrix = (TransMatrix) (kImage.getMatrix().clone());
-                        float[] coord = new float[3];
-                        float[] tCoord = new float[3];
-
-                        // Change the voxel coordinate into millimeter space
-                        coord[0] = (kVBuffer.GetPosition3fX(j) - startLocation[0]) / direction[0];
-                        coord[1] = (kVBuffer.GetPosition3fY(j) - startLocation[1]) / direction[1];
-                        coord[2] = (kVBuffer.GetPosition3fZ(j) - startLocation[2]) / direction[2];
-
-                        // Convert the point to axial millimeter DICOM space
-                        dicomMatrix.transform(coord, tCoord);
-
-                        // Add in the DICOM origin
-                        tCoord[0] = tCoord[0] + startLocation[0];
-                        tCoord[1] = tCoord[1] + startLocation[1];
-                        tCoord[2] = tCoord[2] + startLocation[2];
-                        kVBuffer.SetPosition3(j, tCoord[0], tCoord[1], tCoord[2]);
-                    } */
+                    
                 }
-//             }
+
 
 	        
 	    	Vector3f kVertex = new Vector3f();
@@ -2041,6 +2134,114 @@ public class FileSurface_WM {
 
 	}
 
+	 /** Read a line of ASCII text from the input stream. */
+	  
+	  private static String readLine(InputStream in) throws IOException
+	  {
+	    StringBuffer buf = new StringBuffer();
+	    int c;
+	    while ((c = in.read()) > -1 && c != '\n')
+	      {
+	        buf.append((char) c);
+	      }
+	    return buf.toString();
+	  }
+	
+	public static TriMesh loadPlyAsciiMesh(File file) {
+
+		TriMesh mesh;
+		int i;
+		int iVertexCount = 0;
+		int iTriangleCount = 0;
+		boolean readHeader = true;
+		float x = 0f, y = 0f, z = 0f;
+		int idx1 = 0, idx2 = 0, idx3 = 0;
+		
+		Vector vertexArray = new Vector();
+		Vector<Integer> connectivity = new Vector<Integer>();
+	    VertexBuffer kVBuffer;
+	    int[] aiConnect;
+		
+		try {
+			DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+			String s, token;
+		    while ( (s = readLine(in)).length() > 0) {
+		        StringTokenizer st = new StringTokenizer(s);
+		        while ( st.hasMoreTokens() && readHeader ) {
+		        	// System.err.print(st.nextToken() + " ");
+		        	token = st.nextToken();
+		        	if ( token.equals("vertex")) {
+		        		iVertexCount = Integer.valueOf(st.nextToken());
+		        	} else if ( token.equals("face") ) {
+		        		iTriangleCount = Integer.valueOf(st.nextToken());
+		        		readLine(in);
+		        		readLine(in);  // skip two lines follow the face count attribute in PLY file format.
+		        		readHeader = false;
+		        		break;
+		        	}
+		        }
+		        if ( readHeader == false) break;
+		    }
+		    
+		    // read Vertex 
+		    for ( i = 0; i < iVertexCount; i++ ) {
+		    	s = readLine(in);
+		    	StringTokenizer st = new StringTokenizer(s);
+		    	x = Float.valueOf(st.nextToken());
+		    	y = Float.valueOf(st.nextToken());
+		    	z = Float.valueOf(st.nextToken());
+		    	vertexArray.add(new Vector3f(x, y, z));
+		    }
+		    
+		    // read connectivity
+		    for ( i = 0; i < iTriangleCount; i++ ) {
+		    	s = readLine(in);
+		    	StringTokenizer st = new StringTokenizer(s);
+		    	st.nextToken();  // skip 3
+		    	idx1 = Integer.valueOf(st.nextToken());
+		    	connectivity.add(idx1);
+		    	idx2 = Integer.valueOf(st.nextToken());
+		    	connectivity.add(idx2);
+		    	idx3 = Integer.valueOf(st.nextToken());
+		    	connectivity.add(idx3);
+		    }
+		    
+		    int vertexCount = vertexArray.size();
+			Attributes kAttr = new Attributes();
+			kAttr.SetPChannels(3);
+			kAttr.SetNChannels(3);
+			kAttr.SetTChannels(0, 3);
+			kAttr.SetCChannels(0, 4);
+			kVBuffer = new VertexBuffer(kAttr, vertexCount);
+
+			int index = 0;
+			Vector3f pos;
+			for (i = 0; i < vertexCount; i++) {
+				pos = (Vector3f) vertexArray.elementAt(i);
+				kVBuffer.SetPosition3(index, pos);
+				kVBuffer.SetColor4(0, index, 1.0f, 1.0f, 1.0f, 1.0f);
+				index++;
+			}
+
+			int indexCount = connectivity.size();
+			aiConnect = new int[indexCount];
+			for (i = 0; i < indexCount; i++) {
+				aiConnect[i] = connectivity.get(i);
+			}
+		    
+		    IndexBuffer kIBuffer = new IndexBuffer( aiConnect.length, aiConnect );
+		    mesh = new TriMesh(kVBuffer, kIBuffer);
+	        MaterialState kMaterial = new MaterialState();
+	        mesh.AttachGlobalState( kMaterial );
+	        return mesh;
+		} catch (FileNotFoundException e) {
+			System.err.println("ERROR: Can't find file " + file);
+			return null;
+		} catch (IOException e) {
+			return null;
+		}
+	}
+	
     /**
 	 * Load the STL ASCII file.
 	 * 
@@ -2201,6 +2402,140 @@ public class FileSurface_WM {
         return kMesh;
 	}
 
+	private static TriMesh readPlyAscii(StreamTokenizer tokenizer) throws IOException {
+		
+		Vector3f temp = new Vector3f();
+		Vector3f normal = new Vector3f(); 
+		Vector3f side1 = new Vector3f();
+		Vector3f side2 = new Vector3f();
+		Vector3f surfaceNormal = new Vector3f();
+        Vector vertexArray = new Vector();
+        VertexBuffer kVBuffer;
+        int[] aiConnect;
+        
+        TriMesh kMesh = null;
+        float x, y, z;
+        Vector3f vertex1, vertex2, vertex3;
+        int index = 0;
+        Integer searchIndex;
+        Vector<Integer> connectivity = new Vector<Integer>();
+        HashMap<String, Integer> vertexHashtable = new HashMap<String, Integer>();
+		try {
+			while ( true ) {
+				
+
+				
+
+				if ((temp = readPoint(tokenizer, "normal")) == null)
+					break;
+				normal = new Vector3f(temp);
+
+				vertex1 = readPoint(tokenizer, "vertex");
+				vertex2 = readPoint(tokenizer, "vertex");
+				vertex3 = readPoint(tokenizer, "vertex");
+
+				// Check that the normal is in the correct direction
+				side1.SetData(vertex2);
+				side1.sub(vertex1);
+				side2.SetData(vertex3);
+				side2.sub(vertex2);
+				surfaceNormal.Cross(side1, side2);
+				side1.Cross(side2, surfaceNormal);
+				if (normal.Dot(surfaceNormal) < 0) {
+					// vertices were specified in the wrong order, so reverse
+					// two of them
+					temp.SetData(vertex2);
+					vertex2.SetData(vertex3);
+					vertex3.SetData(temp);
+				}
+
+				// index 1;
+				x = vertex1.X();
+				y = vertex1.Y();
+				z = vertex1.Z();
+
+				searchIndex = vertexHashtable.get((x + " " + y + " " + z));
+				if (searchIndex == null) { // not found
+					vertexHashtable.put((x + " " + y + " " + z), new Integer(
+							index));
+					connectivity.add(new Integer(index));
+					vertexArray.add(new Vector3f(x, y, z));
+					index++;
+				} else {
+					connectivity.add(searchIndex);
+				}
+				
+				// index 2;
+				x = vertex2.X();
+				y = vertex2.Y();
+				z = vertex2.Z();
+
+				searchIndex = vertexHashtable.get((x + " " + y + " " + z));
+				if (searchIndex == null) { // not found
+					vertexHashtable.put((x + " " + y + " " + z), new Integer(
+							index));
+					connectivity.add(new Integer(index));
+					vertexArray.add(new Vector3f(x, y, z));
+					index++;
+				} else {
+					connectivity.add(searchIndex);
+				}
+				
+				// index 3;
+				x = vertex3.X();
+				y = vertex3.Y();
+				z = vertex3.Z();
+
+				searchIndex = vertexHashtable.get((x + " " + y + " " + z));
+				if (searchIndex == null) { // not found
+					vertexHashtable.put((x + " " + y + " " + z), new Integer(
+							index));
+					connectivity.add(new Integer(index));
+					vertexArray.add(new Vector3f(x, y, z));
+					index++;
+				} else {
+					connectivity.add(searchIndex);
+				}
+                
+			}
+
+			if ( true ) System.exit(0);
+			int vertexCount = vertexArray.size();
+			Attributes kAttr = new Attributes();
+			kAttr.SetPChannels(3);
+			kAttr.SetNChannels(3);
+			kAttr.SetTChannels(0, 3);
+			kAttr.SetCChannels(0, 4);
+			kVBuffer = new VertexBuffer(kAttr, vertexCount);
+
+			index = 0;
+			Vector3f pos;
+			for (int i = 0; i < vertexCount; i++) {
+				pos = (Vector3f) vertexArray.elementAt(i);
+				kVBuffer.SetPosition3(index, pos);
+				kVBuffer.SetColor4(0, index, 1.0f, 1.0f, 1.0f, 1.0f);
+				index++;
+			}
+
+			int indexCount = connectivity.size();
+			aiConnect = new int[indexCount];
+			for (int i = 0; i < indexCount; i++) {
+				aiConnect[i] = connectivity.get(i);
+			}
+
+		} catch (IOException e) {
+			throw e;
+		}
+		
+		IndexBuffer kIBuffer = new IndexBuffer( aiConnect.length, aiConnect );
+        kMesh = new TriMesh(kVBuffer, kIBuffer);
+        MaterialState kMaterial = new MaterialState();
+        kMesh.AttachGlobalState( kMaterial );
+        return kMesh;
+        
+	}
+
+	
 	/**
 	 * Find the given label in the tokenizer stream and then return the next
 	 * three numbers as a point. Return null if end of stream

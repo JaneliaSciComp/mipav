@@ -6,6 +6,7 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.WildMagic.*;
 import gov.nih.mipav.view.renderer.surfaceview.JDialogSmoothMesh;
+import gov.nih.mipav.view.renderer.WildMagic.Decimate.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -86,7 +87,7 @@ public class JPanelSurface_WM extends JInterfaceBase
     private boolean findProbe = false;
 
     /** Save surface button. */
-    private JButton levelSButton, levelVButton, levelWButton, levelXMLButton, levelSTLButton;
+    private JButton levelSButton, levelVButton, levelWButton, levelXMLButton, levelSTLButton, levelPLYButton;
 
     // Paint tool-bar (containted in the SurfacePaint class)
     private SurfacePaint_WM m_kSurfacePaint = null;
@@ -182,7 +183,11 @@ public class JPanelSurface_WM extends JInterfaceBase
     /** constant polyline counter */
     private int polylineCounter = 0;
     
-
+    /** Decimation Percentage */
+    private double decimationPercentage = 95.0;
+    
+    private TriangleMesh tmesh;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
     public JPanelSurface_WM( VolumeTriPlanarInterface kVolumeViewer )
     {
@@ -280,7 +285,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         else if (command.equals("ChangePolyMode")) {
             changePolyMode(polygonIndexToMode(polygonModeCB.getSelectedIndex()));
         } else if (command.equals("LevelXML") || command.equals("LevelW") || command.equals("LevelS") ||
-                   command.equals("LevelV") || command.equals("LevelSTL"))
+                   command.equals("LevelV") || command.equals("LevelSTL") || command.equals("LevelPLY"))
         {
             saveSurfaces( surfaceList.getSelectedIndices(), command );
         } 
@@ -294,10 +299,8 @@ public class JPanelSurface_WM extends JInterfaceBase
         else if (command.equals("Decimate")) {
             decimate(surfaceList.getSelectedIndices());
         }
-
     }
-    
-    
+     
     /** 
      * Add polyline to the render.
      */
@@ -412,25 +415,55 @@ public class JPanelSurface_WM extends JInterfaceBase
                 return;
             }
 
+            
+            
             // value in [0,100], corresponds to percent of maximum LOD
             float fValue = 1.0f - (float)detailSlider.getValue() / (float)detailSlider.getMaximum();
-
+            decimationPercentage = fValue * 100.0;
+            
             int numTriangles = 0;
             // construct the lists of items whose LODs need to be changed
             int[] aiSelected = surfaceList.getSelectedIndices();
+            TriMesh[] akSurfaces = new TriMesh[ aiSelected.length ];
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            
             for (int i = 0; i < aiSelected.length; i++) {
-                if ( m_kMeshes.get(aiSelected[i]) instanceof ClodMesh )
+                if ( m_kMeshes.get(aiSelected[i]) instanceof TriMesh )
                 {
-                    ClodMesh kClod = ((ClodMesh)(m_kMeshes.get(aiSelected[i])));
-                    int iValue = (int)(fValue * kClod.GetMaximumLOD());
-                    kClod.TargetRecord(iValue);
-                    numTriangles += kClod.IBuffer.GetIndexQuantity();
-                    System.err.println( "SetTarget " + iValue );
+                    TriMesh kMesh = ((TriMesh)(m_kMeshes.get(aiSelected[i])));
+                    
+                    try {
+                   	 tmesh.doDecimation(decimationPercentage);
+                   	 TriMesh mesh = new TriMesh(tmesh.getDecimatedVBuffer(), tmesh.getDecimatedIBuffer());
+                   	 mesh.SetName(kMesh.GetName());
+                   	 MaterialState kMaterial = new MaterialState();
+                   	 kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+                   	 kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
+                   	 kMaterial.Diffuse = new ColorRGB(ColorRGB.WHITE);
+                   	 kMaterial.Specular = new ColorRGB(ColorRGB.WHITE);
+                     kMaterial.Shininess = 32f;
+            		 mesh.AttachGlobalState(kMaterial);
+                     akSurfaces[i] = mesh;
+                     akSurfaces[i].UpdateMS();
+
+                     m_kVolumeViewer.removeSurface( (String)kList.elementAt(aiSelected[i]) );
+
+                     m_kMeshes.set(aiSelected[i], mesh);
+                   	} catch ( Exception e ) {
+                   		e.printStackTrace();
+                   	}	
+                    
+                    numTriangles = tmesh.getDecimatedIBuffer().GetIndexQuantity();
+                   
                 }
             }
-
             numTriangles /= 3;
             triangleText.setText("" + numTriangles);
+            m_kVolumeViewer.addSurface(akSurfaces, false);
+            // keep the current selected mesh type: fill, points, or lines. 
+            changePolyMode(polygonIndexToMode(polygonModeCB.getSelectedIndex()));
+           
+            
         }
     }
 
@@ -475,7 +508,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         levelWButton = toolbarBuilder.buildButton("LevelW", "Save multi objects (.wrl)", "levelwsave");
         levelXMLButton = toolbarBuilder.buildButton("LevelXML", "Save xml surface (.xml)", "savexml");
         levelSTLButton = toolbarBuilder.buildButton("LevelSTL", "Save STL binary surface (.stl)", "savestl");
-
+        levelPLYButton = toolbarBuilder.buildButton("LevelPLY", "Save PLY surface (.ply)", "saveply");
         toolBar.add(smooth1Button);
         toolBar.add(smooth2Button);
         toolBar.add(smooth3Button);
@@ -485,6 +518,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         toolBar.add(levelWButton);
         toolBar.add(levelXMLButton);
         toolBar.add(levelSTLButton);
+        toolBar.add(levelPLYButton);
 
         JPanel toolBarPanel = new JPanel();
         toolBarPanel.setLayout(new BorderLayout());
@@ -904,25 +938,25 @@ public class JPanelSurface_WM extends JInterfaceBase
         tabbedPane.addChangeListener(this);
         
         tabbedPane.addTab("Surface", null, listPanel);
-        tabbedPane.addTab("Polyline", null, listPanelPolyline);
+        // tabbedPane.addTab("Polyline", null, listPanelPolyline);
         tabbedPane.setSelectedIndex(0);
-        
+     
         // distinguish between the swing Box and the j3d Box
         javax.swing.Box contentBox = new javax.swing.Box(BoxLayout.Y_AXIS);
 
         contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         contentBox.add(tabbedPane);
         contentBox.add(rightPanel);
-
+ 
         mainScrollPanel.add(contentBox, BorderLayout.NORTH);
 
         mainPanel.add(scroller, BorderLayout.CENTER);
 
         // no surfaces yet, so the elements shouldn't be enabled
         setElementsEnabled(false);
-
+ 
+        
     }
-
 
     /**
      * Add surface to the volume image. Calls the FileSurface.openSurfaces function to open a file dialog so the user
@@ -1008,6 +1042,8 @@ public class JPanelSurface_WM extends JInterfaceBase
         smooth2Button.setEnabled(flag);
         smooth3Button.setEnabled(flag);
         levelXMLButton.setEnabled(flag);
+        levelSTLButton.setEnabled(flag);
+        levelPLYButton.setEnabled(flag);
 
         colorLabel.setEnabled(flag);
         m_kAdvancedMaterialOptionsButton.setEnabled(flag);
@@ -1022,7 +1058,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         volumeText.setEnabled(flag);
         areaLabel.setEnabled(flag);
         areaText.setEnabled(flag);
-
+        
         //for (int i = 0; i < detailSliderLabels.length; i++) {
         //    detailSliderLabels[i].setEnabled(flag);
         //}
@@ -1372,16 +1408,40 @@ public class JPanelSurface_WM extends JInterfaceBase
                 TriMesh kMesh = m_kMeshes.get(aiSelected[i]);
                 VertexBuffer kVBuffer = new VertexBuffer(kMesh.VBuffer);
                 IndexBuffer kIBuffer = new IndexBuffer( kMesh.IBuffer);
-                CreateClodMesh kDecimator = new CreateClodMesh(kVBuffer, kIBuffer);
+                
+                
+                /*
+                ClodCreator decimator = new ClodCreator(kVBuffer, kIBuffer);
+               
+                vertices = decimator.getVertices();
+                indices = decimator.getIndices();
+                record = decimator.getRecords();
+               
+        		int iVQuantity = kVBuffer.GetVertexQuantity();
+                
+                int m_iTQuantity = kIBuffer.GetIndexQuantity()/3;
+                int[] m_aiConnect = kIBuffer.GetData();
+                indices.get(m_aiConnect);
+                kIBuffer = new IndexBuffer(m_aiConnect.length, m_aiConnect);
+                
+                WildMagic.LibGraphics.SceneGraph.lod.CollapseRecordArray records = new WildMagic.LibGraphics.SceneGraph.lod.CollapseRecordArray(record.length, record);
+                WildMagic.LibGraphics.SceneGraph.lod.ClodMesh kClod = new WildMagic.LibGraphics.SceneGraph.lod.ClodMesh(kVBuffer, kIBuffer, records);
+                
+                */
+                
+                // CreateClodMesh kDecimator = new CreateClodMesh(kVBuffer, kIBuffer);
 
-                kDecimator.decimate();
-                ClodMesh kClod = new ClodMesh(kVBuffer, kIBuffer, kDecimator.getRecords());
-                kClod.SetName( kMesh.GetName() );
-                akSurfaces[i] = kClod;
+                // kDecimator.decimate();
+                // ClodMesh kClod = new ClodMesh(kVBuffer, kIBuffer, kDecimator.getRecords());
+                // kClod.SetName( kMesh.GetName() );
+                tmesh = new TriangleMesh(kVBuffer, kIBuffer);
+                TriMesh mesh = new TriMesh(kVBuffer, kIBuffer);
+                mesh.SetName( kMesh.GetName() );
+                akSurfaces[i] = mesh;
 
                 m_kVolumeViewer.removeSurface( (String)kList.elementAt(aiSelected[i]) );
 
-                m_kMeshes.set(aiSelected[i], kClod);
+                m_kMeshes.set(aiSelected[i], mesh);
             }
 
 
