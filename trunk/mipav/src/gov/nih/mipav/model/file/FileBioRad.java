@@ -125,6 +125,24 @@ public class FileBioRad extends FileBase {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        byteBuffer = null;
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        fName = null;
+        imgBuffer = null;
+        imgExtents = null;
+        name = null;
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
+    /**
      * reads the BioRad pic file header and data.
      *
      * @param      one  DOCUMENT ME!
