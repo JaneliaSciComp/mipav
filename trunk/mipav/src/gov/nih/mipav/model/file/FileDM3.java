@@ -197,6 +197,55 @@ public class FileDM3 extends FileBase {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        int i, j;
+        arrayLocationArray = null;
+        arraySizeArray = null;
+        dataTypeArray = null;
+        if (desiredPixelUnitsArray != null) {
+            for (i = 0; i < desiredPixelUnitsArray.length; i++) {
+                desiredPixelUnitsArray[i] = null;
+            }
+            desiredPixelUnitsArray = null;
+        }
+        if (dimArray != null) {
+            for (i = 0; i < dimArray.length; i++) {
+                dimArray[i] = null;
+            }
+            dimArray = null;
+        }
+        imgExtents = null;
+        LUT = null;
+        numDimArray = null;
+        if (pixelScaleArray != null) {
+            for (i = 0; i < pixelScaleArray.length; i++) {
+                pixelScaleArray[i] = null;
+            }
+            pixelScaleArray = null;
+        }
+
+        if (pixelUnitsArray != null) {
+            for (i = 0; i < pixelUnitsArray.length; i++) {
+                for (j = 0; j < pixelUnitsArray[i].length; j++) {
+                    pixelUnitsArray[i][j] = null;
+                }
+                pixelUnitsArray[i] = null;
+            }
+            pixelUnitsArray = null;
+        }
+        pixelUnitsNumber = null;
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
+    /**
      * returns LUT if defined.
      *
      * @return  the LUT if defined else it is null
