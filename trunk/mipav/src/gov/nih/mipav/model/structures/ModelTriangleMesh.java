@@ -2292,8 +2292,12 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             	saveAsSTLBinaryFile(kName);
             } else if ( extension.equals("stla")) {
             	saveAsSTLAsciiFile(kName);
+            } else if ( extension.equals("smf")) {
+            	saveAsSMFAsciiFile(kName);
             } else if (extension.equals("txt")) {
                 saveAsTextFile(kName);
+            } else if (extension.equals("ply")) {
+                saveAsPlyFile(kName);
             } else if(extension.equals("vtk")) {
             	saveAsVTKLegacy(kName);
             } else if (extension.equals("wrl")) {
@@ -2458,6 +2462,60 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         kOut.println('0'); // object is ModelTriangleMesh
         kOut.println('1'); // one component
         print(kOut);
+        kOut.close();
+    }
+    
+    
+    public void saveAsPlyFile(String kName) throws IOException {
+    	Point3f kVertex = new Point3f();
+        int iTriangleCount = getIndexCount() / 3;
+        int iVertexCount = getVertexCount();
+        PrintWriter kOut = new PrintWriter(new FileWriter(kName));
+
+        kOut.println("ply"); // object is ModelTriangleMesh
+        kOut.println("format ascii 1.0");
+        kOut.println("element vertex " + iVertexCount);
+        kOut.println("property float32 x");
+        kOut.println("property float32 y");
+        kOut.println("property float32 z");
+        kOut.println("element face " + iTriangleCount);
+        kOut.println("property list uint8 int32 vertex_indices");
+        kOut.println("end_header");
+
+        int i;
+
+        for (i = 0; i < iVertexCount; i++) {
+            getCoordinate(i, kVertex);
+            kOut.print(kVertex.x);
+            kOut.print(' ');
+            kOut.print(kVertex.y);
+            kOut.print(' ');
+            kOut.println(kVertex.z);
+        }
+        
+
+        for (i = 0; i < iTriangleCount; i++) {
+        	kOut.print('3');
+        	kOut.print(' ');
+            kOut.print(getCoordinateIndex(3 * i));
+            kOut.print(' ');
+            kOut.print(getCoordinateIndex((3 * i) + 1));
+            kOut.print(' ');
+            kOut.println(getCoordinateIndex((3 * i) + 2));
+        }
+        
+        kOut.close();
+    }
+    
+    
+    /**
+     * Sate the SMF ACII file format. 
+     * @param kName  file name
+     * @throws IOException
+     */
+    public void saveAsSMFAsciiFile(String kName) throws IOException {
+        PrintWriter kOut = new PrintWriter(new FileWriter(kName));
+        printSMFAscii(kOut);
         kOut.close();
     }
     
@@ -3050,6 +3108,85 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             kOut.print(' ');
             kOut.println(getCoordinateIndex((3 * i) + 2));
         }
+    }
+    
+    protected void printSMFAscii(PrintWriter kOut) throws IOException {
+    	Point3f kVertex = new Point3f();
+        
+        int vertices = getVertexCount();
+        int iTriangleCount = getIndexCount() / 3;
+        int faces = iTriangleCount; 
+        int index1, index2, index3;
+    	
+        kOut.println("#$SMF 1.0");
+        kOut.println("#$vertices " + vertices);
+        kOut.println("#$faces " + faces);
+        kOut.println("#");
+        kOut.println("# --- The canonical view ---");
+        kOut.println("#");
+        kOut.println("# (data originally from powerflip, not avalon)");
+        kOut.println("#");
+        
+        int i;
+        /*
+        for (i = 0; i < getVertexCount(); i++) {
+            getCoordinate(i, kVertex);
+            kOut.print("v");
+            kOut.print(' ');
+            kOut.print(kVertex.x);
+            kOut.print(' ');
+            kOut.print(kVertex.y);
+            kOut.print(' ');
+            kOut.println(kVertex.z);
+        }
+        */
+        for (i = 0; i < iTriangleCount; i++) {
+        	index1 = getCoordinateIndex(3 * i);    
+            index2 = getCoordinateIndex((3 * i) + 1);
+            index3 = getCoordinateIndex((3 * i) + 2);
+            
+            getCoordinate(index1, kVertex);
+            kOut.print("v");
+            kOut.print(' ');
+            kOut.print(kVertex.x);
+            kOut.print(' ');
+            kOut.print(kVertex.y);
+            kOut.print(' ');
+            kOut.println(kVertex.z);
+            
+            getCoordinate(index2, kVertex);;
+            kOut.print("v");
+            kOut.print(' ');
+            kOut.print(kVertex.x);
+            kOut.print(' ');
+            kOut.print(kVertex.y);
+            kOut.print(' ');
+            kOut.println(kVertex.z);
+            
+            getCoordinate(index3, kVertex);;
+            kOut.print("v");
+            kOut.print(' ');
+            kOut.print(kVertex.x);
+            kOut.print(' ');
+            kOut.print(kVertex.y);
+            kOut.print(' ');
+            kOut.println(kVertex.z);
+        }
+        // write connectivity
+
+        for (i = 0; i < iTriangleCount; i++) {
+        	kOut.print("f");
+            kOut.print(' ');
+            kOut.print(getCoordinateIndex(3 * i));
+            kOut.print(' ');
+            kOut.print(getCoordinateIndex((3 * i) + 1));
+            kOut.print(' ');
+            kOut.println(getCoordinateIndex((3 * i) + 2));
+        }
+        
+        
+        
+        
     }
     
     /**
