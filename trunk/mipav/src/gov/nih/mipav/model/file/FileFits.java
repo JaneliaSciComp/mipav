@@ -89,6 +89,25 @@ public class FileFits extends FileBase {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        imgExtents = null;
+        LUT = null;
+        if (flipAlgo != null) {
+            flipAlgo.finalize();
+            flipAlgo = null;
+        }
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
+    /**
      * returns LUT if defined.
      *
      * @return  the LUT if defined else it is null
@@ -1426,6 +1445,7 @@ public class FileFits extends FileBase {
             flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
             flipAlgo.run();
             flipAlgo.finalize();
+            flipAlgo = null;
             return image;
         } catch (Exception e) {
 
@@ -1478,6 +1498,7 @@ public class FileFits extends FileBase {
         flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
         flipAlgo.run();
         flipAlgo.finalize();
+        flipAlgo = null;
 
         if (image.getNDims() >= 3) {
             sBegin = options.getBeginSlice();
