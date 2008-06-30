@@ -4656,6 +4656,8 @@ public class FileIO {
         } // for (i = 0; i < nImages; i++)
 
         image.setImageName(imageFile.getFileInfo().getImageNameFromInfo(), false);
+        imageFile.finalize();
+        imageFile = null;
 
         return image;
     }
@@ -6727,6 +6729,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -8363,7 +8367,7 @@ public class FileIO {
         String fileSuffix = "";
         FileInfoDicom myFileInfo = null;
         FileInfoBase[] originalFileInfos;
-        FileDicom dicomFile;
+        FileDicom dicomFile = null;
         String fileDir = null;
         String fileName = null;
 
@@ -8751,7 +8755,10 @@ public class FileIO {
         }
 
         image.setFileInfo(originalFileInfos);
-
+        if (dicomFile != null) {
+            dicomFile.finalize();
+            dicomFile = null;
+        }
         return true;
     }
 
