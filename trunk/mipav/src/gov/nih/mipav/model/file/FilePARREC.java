@@ -132,6 +132,7 @@ public class FilePARREC extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        image = null;
         outInfo = null;
         try {
             super.finalize();
