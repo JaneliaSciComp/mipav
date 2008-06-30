@@ -69,6 +69,7 @@ public class FileBRUKER extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        image = null;
         imgResols = null;
         LUT = null;
         try {
