@@ -115,6 +115,7 @@ public class FileBFLOAT extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        image = null;
         imgBuffer = null;
         imgExtents = null;
         imgResols = null;
