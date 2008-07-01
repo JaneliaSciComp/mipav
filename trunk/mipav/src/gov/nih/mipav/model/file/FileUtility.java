@@ -79,151 +79,157 @@ public class FileUtility {
 
     /** GE Genesis 5X and LX. extension: .sig */
     public static final int GE_GENESIS = 16;
+    
+    /** Multiple files of type GE_GENESIS */
+    public static final int GE_GENESIS_MULTIFILE = 17;
 
     /** GE Signa 4.x. */
-    public static final int GE_SIGNA4X = 17;
+    public static final int GE_SIGNA4X = 18;
+    
+    /** Multiple files of type GE_SIGNA4X */
+    public static final int GE_SIGNA4X_MULTIFILE = 19;
 
     /** extension: .gif. */
-    public static final int GIF = 18;
+    public static final int GIF = 20;
 
     /** extension: .ico. */
-    public static final int ICO = 19;
+    public static final int ICO = 21;
 
     /** Image Cytometry Standard. extension: .ics, .ids */
-    public static final int ICS = 20;
+    public static final int ICS = 22;
 
     /** Interfile file format used in Nuclear Medicine. extension: .hdr */
-    public static final int INTERFILE = 21;
+    public static final int INTERFILE = 23;
 
     /** Java Image Manangement Interface file type. */
-    public static final int JIMI = 22;
+    public static final int JIMI = 24;
 
     /** extension: .jpeg, .jpg. */
-    public static final int JPEG = 23;
+    public static final int JPEG = 25;
 
     /** Used by the Zeiss LSM 510 Dataserver. extension: .lsm */
-    public static final int LSM = 24;
+    public static final int LSM = 26;
 
     /** Used by the Zeiss LSM 510 Dataserver. */
-    public static final int LSM_MULTIFILE = 25;
+    public static final int LSM_MULTIFILE = 27;
 
     /** Siemens MAGNETOM VISION. extension: .ima */
-    public static final int MAGNETOM_VISION = 26;
+    public static final int MAGNETOM_VISION = 28;
 
     /** Benes Trus special file type. extension: .map */
-    public static final int MAP = 27;
+    public static final int MAP = 29;
 
     /** extension: .bin. */
-    public static final int MEDIVISION = 28;
+    public static final int MEDIVISION = 30;
 
     /** MGH/MGZ volume format. */
-    public static final int MGH = 29;
+    public static final int MGH = 31;
 
     /** Micro CT format for small animal imaging. extension: .log, .ct */
-    public static final int MICRO_CAT = 30;
+    public static final int MICRO_CAT = 32;
 
     /**
      * MINC file type. MINC is a medical imaging oriented extension of the NetCDF file format. NetCDF stands for
      * 'Network Common Data Form'. extension: .mnc
      */
-    public static final int MINC = 31;
+    public static final int MINC = 33;
 
     /** Not presently implemented. */
-    public static final int MIPAV = 32;
+    public static final int MIPAV = 34;
 
     /** extension: .mrc. */
-    public static final int MRC = 33;
+    public static final int MRC = 35;
 
     /** NIFTI format. extension: .img, .hdr, .nii */
-    public static final int NIFTI = 34;
+    public static final int NIFTI = 36;
 
     /** NIFTI multi-file format. */
-    public static final int NIFTI_MULTIFILE = 35;
+    public static final int NIFTI_MULTIFILE = 37;
 
     /** Nearly raw raster data. */
-    public static final int NRRD = 36;
+    public static final int NRRD = 38;
 
     /** Washington University OSM dataset structure. extension: .wu */
-    public static final int OSM = 37;
+    public static final int OSM = 39;
 
     /** extension: .pcx. */
-    public static final int PCX = 38;
+    public static final int PCX = 40;
 
     /** extension: .pic. */
-    public static final int PIC = 39;
+    public static final int PIC = 41;
 
     /** extension: .pict. */
-    public static final int PICT = 40;
+    public static final int PICT = 42;
 
     /** extension: .png. */
-    public static final int PNG = 41;
+    public static final int PNG = 43;
 
     /** MIPAV project format. project file format (.xml) */
-    public static final int PROJECT = 42;
+    public static final int PROJECT = 44;
 
     /** extension: .psd. */
-    public static final int PSD = 43;
+    public static final int PSD = 45;
 
     /** Quicktime file type. extension: .mov, .qt */
-    public static final int QT = 44;
+    public static final int QT = 46;
 
     /** RAW image data, no header. extension: .raw */
-    public static final int RAW = 45;
+    public static final int RAW = 47;
 
     /** RAW MULTIFLE image data, no header. */
-    public static final int RAW_MULTIFILE = 46;
+    public static final int RAW_MULTIFILE = 48;
 
     /** SPM file format. extension: .spm */
-    public static final int SPM = 47;
+    public static final int SPM = 49;
 
     /** MetaMorph Stack (STK) file type. extension: .stk */
-    public static final int STK = 48;
+    public static final int STK = 50;
 
     /** MIPAV Surface XML file format. extension: .xml */
-    public static final int SURFACE_XML = 49;
+    public static final int SURFACE_XML = 51;
 
     /** extension: .tga. */
-    public static final int TGA = 50;
+    public static final int TGA = 52;
 
     /** TIFF file; tagged header. extension: .tif, .tiff */
-    public static final int TIFF = 51;
+    public static final int TIFF = 53;
 
     /** Multiple files of TIFF images. */
-    public static final int TIFF_MULTIFILE = 52;
+    public static final int TIFF_MULTIFILE = 54;
 
     /** Optical coherence tomography. extension: .tmg */
-    public static final int TMG = 53;
+    public static final int TMG = 55;
 
     /** VOI file, used to read VOIs. extension: .voi */
-    public static final int VOI_FILE = 54;
+    public static final int VOI_FILE = 56;
 
     /** extension: .xbm. */
-    public static final int XBM = 55;
+    public static final int XBM = 57;
 
     /** MIPAV XML file format. mipav xml image format. extension: .xml */
-    public static final int XML = 56;
+    public static final int XML = 58;
 
     /** MIPAV XML file format. */
-    public static final int XML_MULTIFILE = 57;
+    public static final int XML_MULTIFILE = 59;
 
     /** extension: .xpm. */
-    public static final int XPM = 58;
+    public static final int XPM = 60;
 
     /** extension: "par","parv2","rec","frec". */
-    public static final int PARREC = 59;
+    public static final int PARREC = 61;
 
     /** MIPAV Surface XML file format. extension: .xml */
-    public static final int SURFACEREF_XML = 60;
+    public static final int SURFACEREF_XML = 62;
 
     /** MINC 2.0 (HDF5) */
-    public static final int MINC_HDF = 61;
+    public static final int MINC_HDF = 63;
 
     /** Improvision OpenLab LIFF .liff */
     /** Do not confuse with Leica image file format .lif */
-    public static final int LIFF = 62;
+    public static final int LIFF = 64;
 
     /** Extension: .hdr for header, .bfloat for data */
-    public static final int BFLOAT = 63;
+    public static final int BFLOAT = 65;
 
     /**
      * Only for FreeSurfer COR volume files Looks in the image directory and returns all images with the same root up to
