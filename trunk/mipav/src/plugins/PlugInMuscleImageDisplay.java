@@ -468,7 +468,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     		if(voiBuffer.get("Abdomen").area() == 0) {
     			String[] options = {"Yes", "No"};
     			String message = new String("The abdomen has not been segmented.  Would you like MIPAV to\n automatically segment"+
-    											"the abdomen and subcutaneous area?");		
+    											" the abdomen and subcutaneous area?");		
     			int segment = JOptionPane.showOptionDialog(this, message, "Automatic segmentation", JOptionPane.YES_NO_OPTION, 
     														JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
     			if(segment == 0) {
