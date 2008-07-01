@@ -157,6 +157,10 @@ public class FileIO {
                 fType = FileUtility.COR;
             } else if (fileType == FileUtility.XML) {
                 fType = FileUtility.XML_MULTIFILE;
+            } else if (fileType == FileUtility.GE_SIGNA4X) {
+                fType = FileUtility.GE_SIGNA4X_MULTIFILE;
+            } else if (fileType == FileUtility.GE_GENESIS) {
+                fType = FileUtility.GE_GENESIS_MULTIFILE;
             }
         }
 
@@ -1654,9 +1658,17 @@ public class FileIO {
                 case FileUtility.GE_GENESIS:
                     image = readGEGenesis5X(fileName, fileDir);
                     break;
+                    
+                case FileUtility.GE_GENESIS_MULTIFILE:
+                    image = readGEGenesis5XMulti(fileName, fileDir);
+                    break;
 
                 case FileUtility.GE_SIGNA4X:
                     image = readGESigna4X(fileName, fileDir);
+                    break;
+                    
+                case FileUtility.GE_SIGNA4X_MULTIFILE:
+                    image = readGESigna4XMulti(fileName, fileDir);
                     break;
 
                 case FileUtility.MICRO_CAT:
@@ -4180,14 +4192,14 @@ public class FileIO {
     }
 
     /**
-     * Reads in a GE Genesis 5x type file.
+     * Reads in multiple GE Genesis 5x type files.
      * 
      * @param fileName Name of the image file to read.
      * @param fileDir Directory of the image file to read.
      * 
      * @return The image that was read in, or null if failure.
      */
-    private ModelImage readGEGenesis5X(String fileName, String fileDir) {
+    private ModelImage readGEGenesis5XMulti(String fileName, String fileDir) {
 
         ModelImage image = null;
         FileGESigna5X imageFile;
@@ -4420,18 +4432,20 @@ public class FileIO {
 
         image.setImageName(imageFile.getFileInfo().getImageNameFromInfo(), false);
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
     /**
-     * Reads in a GE Signa 4x type file.
+     * Reads in multiple GE Signa 4x type files.
      * 
      * @param fileName Name of the image file to read.
      * @param fileDir Directory of the image file to read.
      * 
      * @return The image that was read in, or null if failure.
      */
-    private ModelImage readGESigna4X(String fileName, String fileDir) {
+    private ModelImage readGESigna4XMulti(String fileName, String fileDir) {
 
         ModelImage image = null;
         FileGESigna4X imageFile;
@@ -6552,7 +6566,7 @@ public class FileIO {
      * 
      * @return The image that was read in, or null if failure.
      */
-    private ModelImage readOneGEGenesis5X(String fileName, String fileDir) {
+    private ModelImage readGEGenesis5X(String fileName, String fileDir) {
         ModelImage image = null;
         FileGESigna5X imageFile;
         FileInfoBase myFileInfo;
@@ -6635,6 +6649,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -6646,7 +6662,7 @@ public class FileIO {
      * 
      * @return The image that was read in, or null if failure.
      */
-    private ModelImage readOneGESigna4X(String fileName, String fileDir) {
+    private ModelImage readGESigna4X(String fileName, String fileDir) {
         ModelImage image = null;
         FileGESigna4X imageFile;
         FileInfoBase myFileInfo;
