@@ -280,6 +280,19 @@ public class FileImageXML extends FileXML {
         if (thumbnail != null) {
             thumbnail.finalize();
         }
+        additionalSets = null;
+        if (annotationVector != null) {
+            annotationVector.removeAllElements();
+            annotationVector = null;
+        }
+        if (functionVector != null) {
+            functionVector.removeAllElements();
+            functionVector = null;
+        }
+        if (lutVector != null) {
+            lutVector.removeAllElements();
+            lutVector = null;
+        }
 
         super.finalize();
     }
