@@ -938,6 +938,12 @@ implements MouseListener, ItemListener, ChangeListener {
 
         clipBox = null;
 
+        if ( surfaceGUI != null ) {
+        	surfaceGUI.dispose();
+        	surfaceGUI = null;
+        }
+        
+        
         if (intensityDialog != null) {
             intensityDialog.dispose();
             intensityDialog = null;
@@ -1931,6 +1937,7 @@ implements MouseListener, ItemListener, ChangeListener {
                 {
                     TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
                     m_kVolumeImageA.UpdateImages(kTransfer, 0);
+                    
                 }
                 else
                 {

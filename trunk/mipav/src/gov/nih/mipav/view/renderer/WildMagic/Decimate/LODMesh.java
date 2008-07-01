@@ -130,6 +130,39 @@ public class LODMesh {
 		maxenergy = Math.abs(pqueue.getmax()) - 10.0f;
 	}
 
+	/**
+     * Dispose the local memory.
+     */
+	public void dispose() {
+		initialV = null ;
+		VHead = null;
+		VTail = null;
+		THead = null;
+		TTail = null;
+		for (int i = 0; i < deciV; i++) {
+			NHead[i] = null;
+			NTail[i] = null;
+			NEHead[i] = null;
+			NETail[i] = null;
+			point[i] = null;
+		}
+		NEHead = null;
+		NETail = null;
+		NHead = null;
+		NTail = null;
+		point = null;
+		boundary = null;
+	
+		Root = null;
+		pqueue = null;
+		dummyQE = null;
+		dummyv1 = null;
+		dummyv2 = null;
+		dummyv3 = null;
+		dummyv4 = null;
+	}
+	
+	
 	public void getVFace(Vector3f[] subpoint, int[][] subFace) {
 		int i = 0;
 		Vertices now = VHead;

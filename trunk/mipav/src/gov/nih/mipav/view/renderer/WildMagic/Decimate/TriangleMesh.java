@@ -234,6 +234,55 @@ public class TriangleMesh {
 		bilaplace = new Vector3f[numberV];
 		FaceArray = new int[numberF][3];
 	}
+	
+	/**
+     * Dispose the local memory.
+     */
+	public void dispose() {
+		for ( int i = 0; i < numberV; i++ ) {
+			point[i] = null;
+			laplace[i] = null;
+			bilaplace[i] = null;
+			VHead[i] = null;
+			VTail[i] = null;
+			FHead[i] = null;
+			FTail[i] = null;
+			IHead[i] = null;
+			ITail[i] = null;
+			KnotInit[i] = null;
+		}
+		index = null;
+		point = null;
+		H = null;
+		boundary = null;
+		neighborV = null;
+		neighborF = null;
+		neighborI = null;
+		VHead = null;
+		VTail = null;
+		FHead = null;
+		FTail = null;
+		IHead = null;
+		ITail = null;
+		KnotInit = null;
+		laplace = null;
+		bilaplace = null;
+		FaceArray = null;
+		
+		subpoint = null;
+		subFace = null;
+		
+		if ( myobj != null ) {
+			myobj.dispose();
+			myobj = null;
+		}
+		
+		if ( mydecimate != null ) {
+			mydecimate.dispose();
+			mydecimate = null;
+		}
+	}
+	
 
 	public void Init(IDList h, IDList t) {
 		h.next = new IDList();

@@ -21,9 +21,6 @@ public class Mesh {
 	Vector3f v2v3d = new Vector3f(0.0f, 0.0f, 0.0f);
 	Vector3f tmppoint3d1 = new Vector3f(0.0f, 0.0f, 0.0f);
 	Vector3f tmppoint3d2 = new Vector3f(0.0f, 0.0f, 0.0f);
-	ColorRGB[] mycolor;
-	ColorRGB[] mycolordark;
-	ColorRGB[] mycolordark2;
 
 	boolean pastelnormal = true;
 	int type = 0;
@@ -32,6 +29,21 @@ public class Mesh {
 		type = id;
 	}
 
+	/**
+     * Dispose the local memory.
+     */
+	public void dispose() {
+		for ( int i = 0; i < numberF * 3; i++ ) {
+			verts[i] = null;
+		}
+		verts = null;
+		ddnormalv3d = null;
+		v1v3d = null;
+		v2v3d = null;
+		tmppoint3d1 = null;
+		tmppoint3d2 = null;
+	}
+	
 	public void reNew(int dv, int df, double dcaler) {
 		numberV = dv;
 		numberF = df;
@@ -41,40 +53,11 @@ public class Mesh {
 	
 
 	private void MemoryAllocation() {
-		mycolor = new ColorRGB[(numberF * 3)];
-		mycolordark = new ColorRGB[(numberF * 3)];
-		mycolordark2 = new ColorRGB[(numberF * 3)];
-
 		verts = new Vector3f[(numberF * 3)];
 		int i = 0;
 		int j = 0;
 		for (i = 0; i < numberF; i++) {
 			for (j = 0; j < 3; j++) {
-				mycolordark[(3 * i + j)] = new ColorRGB(0.9f, 0.9f, 0.9f);
-				mycolordark2[(3 * i + j)] = new ColorRGB(0.7f, 0.7f, 0.7f);
-
-				if (type == 1) {
-					mycolor[(3 * i + j)] = new ColorRGB(0.2000f, 0.6300f, 0.0f);
-				} else if (type == 4) {
-					mycolor[(3 * i + j)] = new ColorRGB(0.200f, 0.6300f, 0.0f);
-				} else if (type == 5) {
-
-					mycolor[(3 * i + j)] = new ColorRGB(0.5625f, 0.1875f, 0.0f);
-				} else if (type == 6) {
-					mycolor[(3 * i + j)] = new ColorRGB(0.2000f, 0.300f, 1.0f);
-
-				} else if (type == 7) {
-					mycolor[(3 * i + j)] = new ColorRGB(0.15f, 0.15f, 0.15f);
-
-				} else if (type == -15) {
-					mycolor[(3 * i + j)] = new ColorRGB(0.95f, 0.95f, 0.95f);
-				} else if (type == -16) {
-					mycolor[(3 * i + j)] = new ColorRGB(0.2000f, 0.6300f,
-							0.7900f);
-				} else {
-					mycolor[(3 * i + j)] = new ColorRGB(0.2000f, 0.6300f,
-							0.7900f);
-				}
 				verts[(3 * i + j)] = new Vector3f(0.0f, 0.0f, 0.0f);
 			}
 		}
