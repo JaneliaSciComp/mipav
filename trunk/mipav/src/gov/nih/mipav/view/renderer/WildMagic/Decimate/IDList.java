@@ -12,4 +12,12 @@ public class IDList implements java.io.Serializable {
 	public IDList(int dID) {
 		ID = dID;
 	}
+	
+	/**
+     * Dispose the local memory.
+     */
+	public void dispose() {
+		next = null;
+		back = null;
+	}
 }
