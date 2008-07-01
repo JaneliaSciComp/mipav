@@ -5,9 +5,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-import java.awt.Dialog.*;
-
 import java.io.*;
 
 
@@ -91,6 +88,22 @@ public class FileGESigna5X extends FileBase {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        byteBuffer = null;
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        orient = null;
+        start = null;
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
     /**
      * DOCUMENT ME!
      *
