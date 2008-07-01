@@ -162,7 +162,7 @@ public class ViewJFrameDICOMQuery extends JFrame
     private JTable serverTable;
 
     /** DOCUMENT ME! */
-    private JButton set, createStore, editStore, deleteStore, setStore, cancel, help1;
+    private JButton set, createStore, editStore, deleteStore, setStore, cancel, help1, help2, help3, help4;
 
     /** DOCUMENT ME! */
     private String SOPInstanceUID = "";
@@ -871,7 +871,14 @@ public class ViewJFrameDICOMQuery extends JFrame
             verify.verify();
         } else if (command.equals("Help1")) {
             MipavUtil.showHelp("10308");
+        } else if (command.equals("Help2")) {
+            MipavUtil.showHelp("10309");
+        } else if (command.equals("Help3")) {
+            MipavUtil.showHelp("10305");
+        } else if (command.equals("Help4")) {
+            MipavUtil.showHelp("10304");  
         }
+        
     }
 
     /**
@@ -1926,6 +1933,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             sendStatusPanel = new JPanel();
             sendStatusTArea = new JTextArea();
             sendStatusClearButton = new JButton("Clear");
+            help2 = new JButton("Help");
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildSendPanel");
 
@@ -2113,8 +2121,9 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         sendStatusPanel.setBorder(buildTitledBorder("Send status:"));
         sendStatusPanel.setLayout(new GridBagLayout());
-        gbc = setGBC(0, 0, 1, 5);
+        gbc = setGBC(0, 0, 2, 5);
         gbc.fill = GridBagConstraints.BOTH;
+
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.anchor = GridBagConstraints.CENTER;
@@ -2128,6 +2137,16 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.weighty = 0;
         gbc.anchor = GridBagConstraints.CENTER;
         sendStatusPanel.add(sendStatusClearButton, gbc);
+        
+        help2.setActionCommand("Help2");
+        help2.addActionListener(this);
+        gbc = setGBC(1, 5, 1, 1);
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1.0;
+        gbc.weighty = 0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        sendStatusPanel.add(help2, gbc);
+       
 
         gbc = setGBC(0, 0, 1, 4);
         gbc.fill = GridBagConstraints.BOTH;
@@ -2468,6 +2487,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             edit = new JButton("Edit");
             delete = new JButton("Delete");
             set = new JButton("Set As Default");
+            help3 = new JButton("Help");
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildServerPanel");
 
@@ -2552,7 +2572,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         serverTable.getTableHeader().addMouseListener(this);
         scrollPane.setBackground(Color.black);
 
-        gbc = setGBC(0, 0, 4, 3);
+        gbc = setGBC(0, 0, 5, 3);
         gbc.weightx = 100;
         gbc.weighty = 100;
         gbc.fill = GridBagConstraints.BOTH;
@@ -2603,8 +2623,21 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
-
         serverPanel.add(set, gbc);
+        
+        
+        
+        help3.setFont(font12B);
+        help3.setActionCommand("Help3");
+        //set.setBackground(Color.gray.brighter());
+        help3.addActionListener(this);
+        gbc = setGBC(4, 3, 1, 1);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        serverPanel.add(help3, gbc);
+        
+        
 
         return serverPanel;
     }
@@ -2640,6 +2673,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             editStore = new JButton("Edit");
             deleteStore = new JButton("Delete");
             setStore = new JButton("Set As Default");
+            help4 = new JButton("Help");
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildStoragePanel");
 
@@ -2708,7 +2742,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         storageTable.getTableHeader().addMouseListener(this);
         scrollPane.setBackground(Color.black);
 
-        gbc = setGBC(0, 0, 4, 3);
+        gbc = setGBC(0, 0, 5, 3);
         gbc.weightx = 100;
         gbc.weighty = 100;
         gbc.fill = GridBagConstraints.BOTH;
@@ -2759,9 +2793,23 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
-
         storagePanel.add(setStore, gbc);
+        
+        
+        
+        help4.setFont(font12B);
+        help4.setActionCommand("Help4");
+        //set.setBackground(Color.gray.brighter());
+        help4.addActionListener(this);
+        gbc = setGBC(4, 3, 1, 1);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        storagePanel.add(help4, gbc);
 
+        
+        
+       
         return storagePanel;
     }
 
