@@ -161,6 +161,8 @@ public class FileIO {
                 fType = FileUtility.GE_SIGNA4X_MULTIFILE;
             } else if (fileType == FileUtility.GE_GENESIS) {
                 fType = FileUtility.GE_GENESIS_MULTIFILE;
+            } else if (fileType == FileUtility.MAGNETOM_VISION) {
+                fType = FileUtility.MAGNETOM_VISION_MULTIFILE;
             }
         }
 
@@ -1652,7 +1654,11 @@ public class FileIO {
                     break;
 
                 case FileUtility.MAGNETOM_VISION:
-                    image = readMagnetomVision(fileName, fileDir, one);
+                    image = readMagnetomVision(fileName, fileDir);
+                    break;
+                    
+                case FileUtility.MAGNETOM_VISION_MULTIFILE:
+                    image = readMagnetomVisionMulti(fileName, fileDir);
                     break;
 
                 case FileUtility.GE_GENESIS:
@@ -4727,6 +4733,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
 
     }
@@ -4785,6 +4793,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
 
     }
@@ -5064,6 +5074,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
 
     }
@@ -5206,6 +5218,8 @@ public class FileIO {
         }
 
         image.setFileInfo(myFileInfo, 0);
+        imageFile.finalize();
+        imageFile = null;
 
         try {
             imageFile = new FileLSM(fileList[0], fileDir, secondAddress);
@@ -5457,21 +5471,21 @@ public class FileIO {
             }
         } // else for singleDims == 3
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
     /**
-     * Reads a Magnetom Vision file by calling the read method of the file.
+     * Reads multiple Magnetom Vision files by calling the read method of the file.
      * 
      * @param fileName Name of the image file to read.
      * @param fileDir Directory of the image file to read.
-     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
-     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
-     *            dataset.
+     
      * 
      * @return The image that was read in, or null if failure.
      */
-    private ModelImage readMagnetomVision(String fileName, String fileDir, boolean one) {
+    private ModelImage readMagnetomVisionMulti(String fileName, String fileDir) {
         ModelImage image = null;
         FileMagnetomVision imageFile;
         FileInfoBase myFileInfo;
@@ -5485,10 +5499,6 @@ public class FileIO {
         int i;
         int width, height;
         int nImages;
-
-        if (one) {
-            return readOneMagnetomVision(fileName, fileDir);
-        }
 
         try {
             fileList = FileUtility.getFileList(fileDir, fileName, quiet);
@@ -5616,6 +5626,8 @@ public class FileIO {
 
         image.setImageName(imageFile.getFileInfo().getImageNameFromInfo(), false);
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -6758,7 +6770,7 @@ public class FileIO {
      * 
      * @return The image that was read in, or null if failure.
      */
-    private ModelImage readOneMagnetomVision(String fileName, String fileDir) {
+    private ModelImage readMagnetomVision(String fileName, String fileDir) {
         ModelImage image = null;
         FileMagnetomVision imageFile;
         FileInfoBase myFileInfo;
@@ -6820,6 +6832,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -7408,6 +7422,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -7792,6 +7808,8 @@ public class FileIO {
         }
 
         // System.out.println(" image = " + image);
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -8097,6 +8115,8 @@ public class FileIO {
             }
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -8834,6 +8854,8 @@ public class FileIO {
             ICSFile = new FileICS(options.getFileName(), options.getFileDirectory());
             createProgressBar(ICSFile, options.getFileName(), FILE_WRITE);
             ICSFile.writeImage(image, options);
+            ICSFile.finalize();
+            ICSFile = null;
         } catch (IOException error) {
 
             if ( !quiet) {
@@ -8872,6 +8894,8 @@ public class FileIO {
             interfileFile = new FileInterfile(options.getFileName(), options.getFileDirectory());
             createProgressBar(interfileFile, options.getFileName(), FILE_WRITE);
             interfileFile.writeImage(image, options);
+            interfileFile.finalize();
+            interfileFile = null;
         } catch (IOException error) {
 
             if ( !quiet) {
@@ -9392,6 +9416,8 @@ public class FileIO {
             }
 
             xmlFile.writeImage(image, options);
+            xmlFile.finalize();
+            xmlFile = null;
         } catch (IOException error) {
 
             if ( !quiet) {
