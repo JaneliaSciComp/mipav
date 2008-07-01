@@ -4853,10 +4853,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			scanDate = scanDate != null ? scanDate.trim() : "Unknown";
 		
 			String sliceNumber = new String();
-			if(!multipleSlices) {
-				sliceNumber = (String)fileInfo.getTagTable().getValue("0020,0013");
-				sliceNumber = sliceNumber != null ? sliceNumber.trim() : "Unknown";
-			}
+			sliceNumber = (String)fileInfo.getTagTable().getValue("0020,0013");
+			sliceNumber = sliceNumber != null ? sliceNumber.trim() : "Unknown";
 				
 			String userName = System.getProperty("user.name");
 			userName = userName != null ? userName.trim() : "Unknown";
