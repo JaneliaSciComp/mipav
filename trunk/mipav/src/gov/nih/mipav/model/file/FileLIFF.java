@@ -181,6 +181,25 @@ public class FileLIFF extends FileBase {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        image = null;
+        imageExtents = null;
+        imgBuffer = null;
+        imgResols = null;
+        LUT = null;
+        
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
+    /**
      * Accessor that returns the file info.
      *
      * @return  FileInfoBase containing the file info
