@@ -67,10 +67,9 @@ public class FileTypeTable {
         FILE_TYPE_TABLE.put(FileUtility.DIB, new FileTypeInfo("DIB", ".dib"));
 
         FILE_TYPE_TABLE.put(FileUtility.DICOM, new FileTypeInfo("DICOM", ".dcm,.ima"));
+        // Don't put ".IMA" in FILE_EXT_TABLE; could be MAGNETOM_VISION
         FILE_EXT_TABLE.put(".dcm", FileUtility.DICOM);
-        FILE_EXT_TABLE.put(".ima", FileUtility.DICOM);
         FILE_EXT_TABLE.put(".DCM", FileUtility.DICOM);
-        FILE_EXT_TABLE.put(".IMA", FileUtility.DICOM);
 
         FILE_TYPE_TABLE.put(FileUtility.DM3, new FileTypeInfo("DM3", ".dm3"));
         FILE_EXT_TABLE.put(".dm3", FileUtility.DM3);
