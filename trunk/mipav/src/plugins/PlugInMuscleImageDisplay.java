@@ -4862,8 +4862,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			userName = userName != null ? userName.trim() : "Unknown";
 			
 	        String kl = "#\tPatient ID:\t"+id+"\tPatient DOB:\t"+dob+"\tScan date:\t"+scanDate+"\n";
-	        kl += "#"+(!multipleSlices ? "\tSlice:\t"+ sliceNumber : "")
-	        			+"\tAnalyst:\t"+userName+"\tAnalysis Date:\t"+analysisDate+"\n";
+	        kl += "#"+"\tSlice:\t"+ sliceNumber+"\tAnalyst:\t"+userName+"\tAnalysis Date:\t"+analysisDate+"\n";
 	        String str;
 
 	        // output the labels of the list of statistics to be produced.
