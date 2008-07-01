@@ -313,6 +313,170 @@ public class FileICS extends FileBase {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        int i;
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        image = null;
+        actualHistory = null;
+        captureVersion = null;
+        category = null;
+        if (channels != null) {
+            for (i = 0; i < channels.length; i++) {
+                channels[i] = null;
+            }
+            channels = null;
+        }
+        compression = null;
+        dataFileName = null;
+        dataSetFileName = null;
+        if (exPhotonCnt != null) {
+            for (i = 0; i < exPhotonCnt.length; i++) {
+                exPhotonCnt[i] = null;
+            }
+            exPhotonCnt = null;
+        }
+        filterExposureTimeX = null;
+        if (filterFluorophoreX != null) {
+            for (i = 0; i < filterFluorophoreX.length; i++) {
+                filterFluorophoreX[i] = null;
+            }
+            filterFluorophoreX = null;
+        }
+        format = null;
+        headerFileName = null;
+        if (history != null) {
+            for (i = 0; i < history.length; i++) {
+                history[i] = null;
+            }
+            history = null;
+        }
+        imgBuffer = null;
+        imgBuffer2 = null;
+        imgBufferI = null;
+        imgBufferI2 = null;
+        imgDBuffer = null;
+        imgDBuffer2 = null;
+        imgDBufferI = null;
+        imgDBufferI2 = null;
+        imgExtents = null;
+        imgLBuffer = null;
+        imgLBuffer2 = null;
+        imgResols = null;
+        if (labels != null) {
+            for (i = 0; i < labels.length; i++) {
+                labels[i] = null;
+            }
+            labels = null;
+        }
+        if (lambdaEm != null) {
+            for (i = 0; i < lambdaEm.length; i++) {
+                lambdaEm[i] = null;
+            }
+            lambdaEm = null;
+        }
+        if (lambdaEx != null) {
+            for (i = 0; i < lambdaEx.length; i++) {
+                lambdaEx[i] = null;
+            }
+            lambdaEx = null;
+        }
+        LUT = null;
+        if (mapchannel != null) {
+            for (i = 0; i < mapchannel.length; i++) {
+                mapchannel[i] = null;
+            }
+            mapchannel = null;
+        }
+        if (numAperture != null) {
+            for (i = 0; i < numAperture.length; i++) {
+                numAperture[i] = null;
+            }
+            numAperture = null;
+        }
+        if (order != null) {
+            for (i = 0; i < order.length; i++) {
+                order[i] = null;
+            }
+            order = null;
+        }
+        origin = null;
+        if (pinholeRadius != null) {
+            for (i = 0; i < pinholeRadius.length; i++) {
+                pinholeRadius[i] = null;
+            }
+            pinholeRadius = null;
+        }
+        plateChamberID = null;
+        plateVesselID = null;
+        if (probe != null) {
+            for (i = 0; i < probe.length; i++) {
+                probe[i] = null;
+            }
+            probe = null;
+        }
+        if (refrInxLensMedium != null) {
+            for (i = 0; i < refrInxLensMedium.length; i++) {
+                refrInxLensMedium[i] = null;
+            }
+            refrInxLensMedium = null;
+        }
+        if (refrInxMedium != null) {
+            for (i = 0; i < refrInxMedium.length; i++) {
+                refrInxMedium[i] = null;
+            }
+            refrInxMedium = null;
+        }
+        scale = null;
+        scilType = null;
+        sensorModel = null;
+        sensorType = null;
+        sign = null;
+        sizes = null;
+        if (specimen != null) {
+            for (i = 0; i < specimen.length; i++) {
+                specimen[i] = null;
+            }
+            specimen = null;
+        }
+        if (specimenSpecies != null) {
+            for (i = 0; i < specimenSpecies.length; i++) {
+                specimenSpecies[i] = null;
+            }
+            specimenSpecies = null;
+        }
+        startLocations = null;
+        subcategory = null;
+        if (units != null) {
+            for (i = 0; i < units.length; i++) {
+                units[i] = null;
+            }
+            units = null;
+        }
+        unitsOfMeasure = null;
+        if (unitsStr != null) {
+            for (i = 0; i < unitsStr.length; i++) {
+                unitsStr[i] = null;
+            }
+            unitsStr = null;
+        }
+        if (values != null) {
+            for (i = 0; i < values.length; i++) {
+                values[i] = null;
+            }
+            values = null;
+        }
+        version = null;
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
+    /**
      * getFileInfo - accessor that returns the file info.
      *
      * @return  FileInfoBase containing the file info
@@ -693,7 +857,6 @@ public class FileICS extends FileBase {
         float[] resols;
         float[] startLocation;
         int[] units;
-        float[] origin = new float[3];
         String lineString;
         byte[] line;
         int i, j;
