@@ -1193,6 +1193,77 @@ public class FileLSM extends FileBase {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        int i;
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        image = null;
+        bleachKnotX = null;
+        bleachKnotY = null;
+        blueArray = null;
+        byteBuffer = null;
+        channelDataTypes = null;
+        if (channelNames != null) {
+            for (i = 0; i < channelNames.length; i++) {
+            channelNames[i] = null;
+            }
+            channelNames = null;
+        }
+        if (dataOffsets != null) {
+            for (i = 0; i < dataOffsets.length; i++) {
+                if (dataOffsets[i] != null) {
+                    dataOffsets[i].removeAllElements();
+                    dataOffsets[i] = null;
+                }
+            }
+            dataOffsets = null;
+        }
+        dateTime = null;
+        decomp = null;
+        if (eventDescription != null) {
+            for (i = 0; i < eventDescription.length; i++) {
+                eventDescription[i] = null;
+            }
+            eventDescription = null;
+        }
+        eventTime = null;
+        eventType = null;
+        greenArray = null;
+        IFDoffsets = null;
+        imageDescription = null;
+        if (img3DMultiBuffer != null) {
+            for (i = 0; i < img3DMultiBuffer.length; i++) {
+            img3DMultiBuffer[i] = null;
+            }
+            img3DMultiBuffer = null;
+        }
+        imgBuffer = null;
+        imgResols = null;
+        knotX = null;
+        knotY = null;
+        LUT = null;
+        lzwDecoder = null;
+        redArray = null;
+        scanString = null;
+        software = null;
+        str = null;
+        tileByteCounts = null;
+        tileOffsets = null;
+        tileTemp = null;
+        timeStamp = null;
+        unitsOfMeasure = null;
+        wavelengths = null;
+
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
+    /**
      * Accessor that returns the file info.
      *
      * @return  FileInfoBase containing the file info
