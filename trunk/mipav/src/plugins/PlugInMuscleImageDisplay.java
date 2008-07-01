@@ -466,9 +466,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	} else if(imageType.equals(ImageType.Abdomen)) {
     		ModelImage srcImage = (ModelImage)getActiveImage().clone();
     		if(voiBuffer.get("Abdomen").area() == 0) {
-    			ModelImage resultImage = (ModelImage)srcImage.clone();
-    			abdomenSeg = new PlugInAlgorithmCTAbdomen(resultImage, srcImage, imageDir, voiBuffer.get("Abdomen").getColor());
-    			performSegmentation(abdomenSeg, resultImage);
+    			String[] options = {"Yes", "No"};
+    			String message = new String("The abdomen has not been segmented.  Would you like MIPAV to\n automatically segment"+
+    											"the abdomen and subcutaneous area?");		
+    			int segment = JOptionPane.showOptionDialog(this, message, "Automatic segmentation", JOptionPane.YES_NO_OPTION, 
+    														JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+    			if(segment == 0) {
+	    			ModelImage resultImage = (ModelImage)srcImage.clone();
+	    			abdomenSeg = new PlugInAlgorithmCTAbdomen(resultImage, srcImage, imageDir, voiBuffer.get("Abdomen").getColor());
+	    			performSegmentation(abdomenSeg, resultImage);
+    			}
     		}
     	}
     }
@@ -4028,7 +4035,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			mct3.addRegularColumns(pdfDocument.left(), pdfDocument.right(), 10f, 4);
 			mct3.addElement(new Paragraph("Patient ID:", fontBold));
 			String id = (String)fileInfo.getTagTable().getValue("0010,0020");
-			mct3.addElement(new Paragraph(((id != null || id.length() == 0) ? id.trim() : "Removed"), fontNormal));
+			mct3.addElement(new Paragraph(((id != null && id.length() > 0) ? id.trim() : "Removed"), fontNormal));
 			mct3.addElement(new Paragraph("Scan Date:", fontBold));
 			String scanDate = (String)fileInfo.getTagTable().getValue("0008,0020");
 			mct3.addElement(new Paragraph((scanDate != null ? scanDate.trim() : "Unknown"), fontNormal));
@@ -4840,10 +4847,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        int i;
 	        FileInfoDicom fileInfo = (FileInfoDicom)getActiveImage().getFileInfo()[0];
 	        String id = (String)fileInfo.getTagTable().getValue("0010,0020");
-			id = id != null ? id.trim() : "Removed";
+			id = id != null && id.length() > 0 ? id.trim() : "Removed";
 			
 			String dob = (String)fileInfo.getTagTable().getValue("0010,0030");
-			dob = dob != null ? dob.trim() : "Unknown";
+			dob = dob != null && dob.length() > 0 ? dob.trim() : "Unknown";
 			
 			DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
 			Date date = new Date();
@@ -4854,7 +4861,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		
 			String sliceNumber = new String();
 			sliceNumber = (String)fileInfo.getTagTable().getValue("0020,0013");
-			sliceNumber = sliceNumber != null ? sliceNumber.trim() : "Unknown";
+			sliceNumber = sliceNumber != null && sliceNumber.length() > 0 ? sliceNumber.trim() : "Unknown";
 				
 			String userName = System.getProperty("user.name");
 			userName = userName != null ? userName.trim() : "Unknown";
