@@ -8,8 +8,6 @@ import gov.nih.mipav.view.*;
 
 import java.io.*;
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.zip.*;
 
 
@@ -393,6 +391,115 @@ public class FileNRRD extends FileBase {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        int i, j;
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        image = null;
+        axisMaxs = null;
+        axisMins = null;
+        axisOrientation = null;
+        baseAfterNumber = null;
+        baseBeforeNumber = null;
+        centers = null;
+        if (dwmriGradient != null) {
+            for (i = 0; i < dwmriGradient.length; i++) {
+                if (dwmriGradient[i] != null) {
+                    for (j = 0; j < dwmriGradient[i].length; j++) {
+                        dwmriGradient[i][j] = null;
+                    }
+                    dwmriGradient[i] = null;
+                }
+            }
+            dwmriGradient = null;
+        }
+        if (dwmriNex != null) {
+            for (i = 0; i < dwmriNex.length; i++) {
+                if (dwmriNex[i] != null) {
+                    for (j = 0; j < dwmriNex[i].length; j++) {
+                        dwmriNex[i][j] = null;
+                    }
+                    dwmriNex[i] = null;
+                }
+            }
+            dwmriNex = null;
+        }
+        ext = null;
+        fileInfoSub = null;
+        fileNameSequence = false;
+        if (fileNameSet != null) {
+            for (i = 0; i < fileNameSet.length; i++) {
+                fileNameSet[i] = null;
+            }
+            fileNameSet = null;
+        }
+        finishBlank = null;
+        finishQuote = null;
+        imgExtents = null;
+        if (kindsString != null) {
+            for (i = 0; i < kindsString.length; i++) {
+                kindsString[i] = null;
+            }
+            kindsString = null;
+        }
+        matrix = null;;
+        if (measurementFrame != null) {
+            for (i = 0; i < measurementFrame.length; i++) {
+                measurementFrame[i] = null;
+            }
+            measurementFrame = null;
+        }
+        if (mipavLabels != null) {
+            for (i = 0; i < mipavLabels.length; i++) {
+                mipavLabels[i] = null;
+            }
+            mipavLabels = null;
+        }
+        mipavUnits = null;
+        if (nrrdLabels != null) {
+            for (i = 0; i < nrrdLabels.length; i++) {
+                nrrdLabels[i] = null;
+            }
+            nrrdLabels = null;
+        }
+        nrrdSizes = null;
+        if (nrrdSpaceUnits != null) {
+            for (i = 0; i < nrrdSpaceUnits.length; i++) {
+                nrrdSpaceUnits[i] = null;
+            }
+            nrrdSpaceUnits = null;
+        }
+        if (nrrdUnits != null) {
+            for (i = 0; i < nrrdUnits.length; i++) {
+                nrrdUnits[i] = null;
+            }
+            nrrdUnits = null;
+        }
+        origin = null;
+        resols = null;
+        if (spaceDirections != null) {
+            for (i = 0; i < spaceDirections.length; i++) {
+                spaceDirections[i] = null;
+            }
+            spaceDirections = null;
+        }
+        spaceOrigin = null;
+        spaceUnitsString = null;
+        spacings = null;
+        startBlank = null;
+        startQuote = null;
+        thicknesses = null;
+        
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
     /**
      * Returns the FileInfoNRRD read from the file.
      *
@@ -2738,25 +2845,6 @@ public class FileNRRD extends FileBase {
     }
 
     /**
-     * Reads a NRRD image file by reading the header then making a FileRaw to read the file. Image data is left in
-     * buffer. If the fileInfo cannot be found, the header will be located and read first. Image is not 'flipped', and
-     * neither units of measure nor orientation are set.
-     *
-     * @param      buffer  Image buffer to store image data into.
-     *
-     * @exception  IOException  if there is an error reading the file
-     *
-     * @see        FileRaw
-     */
-    public void readImage(float[] buffer) throws IOException, OutOfMemoryError {
-        int i;
-        int offset;
-
-
-        return;
-    }
-
-    /**
      * Return the 3 axis orientation codes that correspond to the closest standard anatomical orientation of the (i,j,k)
      * axes.
      *
@@ -3427,7 +3515,8 @@ public class FileNRRD extends FileBase {
     	}
     	
     	
-    	//orientation info
+        res = image.getFileInfo(0).getResolutions();
+        //orientation info
     	if(image.getAxisOrientation()[0] != FileInfoBase.ORI_UNKNOWN_TYPE) {
     		spaceString = "left-posterior-superior";
     		if(image.getNDims() == 4) {
@@ -3445,8 +3534,6 @@ public class FileNRRD extends FileBase {
 	    			}
     			}
     		}
-
-    		res = image.getFileInfo(0).getResolutions();
     		
             StringBuffer sb = new StringBuffer();
 
@@ -3531,7 +3618,7 @@ public class FileNRRD extends FileBase {
             }
             sb.append(")");
     		spaceOriginString = sb.toString();
-    	}
+    	} // if(image.getAxisOrientation()[0] != FileInfoBase.ORI_UNKNOWN_TYPE)
     	
     	//per axis info
     	dimension = image.getNDims();
@@ -3794,6 +3881,7 @@ public class FileNRRD extends FileBase {
                 rawFile.close();
             	rawFile.finalize();
         	}else {
+                System.out.println("in here");
                 FileRaw rawFile;
                 rawFile = new FileRaw(fhName + ".raw", fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
                 linkProgress(rawFile);
