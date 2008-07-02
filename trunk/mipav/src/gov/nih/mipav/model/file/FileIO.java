@@ -2320,9 +2320,9 @@ public class FileIO {
 
                 options.setFileName(options.getFileName() + suffix); // append file extension
             }
-        } else if (fileType == FileUtility.MINC) {
-            fileType = new JDialogSaveMincVersionChoice(ViewUserInterface.getReference().getMainFrame()).fileType();
-        }
+        } //else if (fileType == FileUtility.MINC) {
+            //fileType = new JDialogSaveMincVersionChoice(ViewUserInterface.getReference().getMainFrame()).fileType();
+        //}
 
         if ( !options.isSet()) {
             options.setFileType(fileType);
