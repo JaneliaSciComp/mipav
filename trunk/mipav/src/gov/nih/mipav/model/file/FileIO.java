@@ -7502,6 +7502,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -7535,6 +7537,8 @@ public class FileIO {
                 // directory with the prefix name so read and return image as a single file.
                 image = imageFile.readImage(false, false);
                 LUT = imageFile.getModelLUT();
+                imageFile.finalize();
+                imageFile = null;
 
                 return image;
             } else {
@@ -7608,6 +7612,8 @@ public class FileIO {
         }
 
         image.setFileInfo(myFileInfo, 0);
+        imageFile.finalize();
+        imageFile = null;
 
         try {
             imageFile = new FileTiff(fileList[0], fileDir);
@@ -7707,6 +7713,8 @@ public class FileIO {
             }
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -9406,6 +9414,8 @@ public class FileIO {
             return false;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return true;
     }
     
