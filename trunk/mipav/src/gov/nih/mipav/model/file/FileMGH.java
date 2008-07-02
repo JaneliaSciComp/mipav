@@ -222,7 +222,7 @@ public class FileMGH extends FileBase {
     private float zs;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
-
+    
     /**
      * Constructs new file object.
      *
@@ -236,6 +236,33 @@ public class FileMGH extends FileBase {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        int i;
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        image = null;
+        if (cmdlines != null) {
+            for (i = 0; i < cmdlines.length; i++) {
+                cmdlines[i] = null;
+            }
+            cmdlines = null;
+        }
+        axisOrientation = null;
+        extents = null;
+        matrix = null;
+        origin = null;
+        resolutions = null;
+
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
     /**
      * Returns the FileInfoMGH read from the file.
      *
