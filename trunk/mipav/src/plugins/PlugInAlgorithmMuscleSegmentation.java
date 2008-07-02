@@ -155,8 +155,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     	voiList[1][4] = new PlugInSelectableVOI("Bone sample", true, 1, 1, false, false, imageSize);
 	    
     	voiList[2] = new PlugInSelectableVOI[11];
-	    voiList[2][0] = new PlugInSelectableVOI("Left Fascia", true, 1, 2, true, true, imageSize, 6);
-    	voiList[2][1] = new PlugInSelectableVOI("Right Fascia", true, 1, 2, true, true, imageSize, 7);
+	    voiList[2][0] = new PlugInSelectableVOI("Left Fascia", true, 1, 2, false, true, imageSize, 6);
+    	voiList[2][1] = new PlugInSelectableVOI("Right Fascia", true, 1, 2, false, true, imageSize, 7);
 	    voiList[2][2] = new PlugInSelectableVOI("Left Quads", true, 1, 2, true, true, imageSize, 8);
     	voiList[2][3] = new PlugInSelectableVOI("Right Quads", true, 1, 2, true, true, imageSize, 9);
 	    voiList[2][4] = new PlugInSelectableVOI("Left Hamstrings", true, 1, 2, true, true, imageSize, 10);

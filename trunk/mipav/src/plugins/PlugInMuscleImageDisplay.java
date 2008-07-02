@@ -1283,9 +1283,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         VOIVector voiVec = getActiveImage().getVOIs();
     	for(int i=0; i<voiVec.size(); i++) {
     		VOI voi = voiVec.get(i);
-    		if(voiBuffer.get(voi.getName()).fillEligible() && 
-    				!(((VoiDialogPrompt)tabs[voiTabLoc]).getObjectName().equals(voi.getName()))) 
-    			voi.setDisplayMode(VOI.SOLID);
+    		if(voiBuffer.get(voi.getName()).fillEligible()) { 
+    			if(!(((VoiDialogPrompt)tabs[voiTabLoc]).getObjectName().equals(voi.getName()))) {
+    				voi.setDisplayMode(VOI.SOLID);
+    			}
+    		}
     	}
         
         componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
