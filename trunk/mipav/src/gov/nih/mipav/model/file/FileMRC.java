@@ -5,8 +5,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-
 import java.io.*;
 
 
@@ -33,9 +31,6 @@ public class FileMRC extends FileBase {
 
     /** DOCUMENT ME! */
     private boolean endianess;
-
-    /** DOCUMENT ME! */
-    private DataInputStream f;
 
     /** DOCUMENT ME! */
     private File file;
@@ -79,9 +74,6 @@ public class FileMRC extends FileBase {
     /** DOCUMENT ME! */
     private int nXStart, nYStart, nZStart; /* Starting point of each sub image. */
 
-    /** DOCUMENT ME! */
-    private ViewJProgressBar progressBar = null;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -99,6 +91,23 @@ public class FileMRC extends FileBase {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        image = null;
+        imgExtents = null;
+        LUT = null;
+        
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
     /**
      * returns LUT if defined.
      *
@@ -145,10 +154,6 @@ public class FileMRC extends FileBase {
         short wave1, wave2, wave3, wave4, wave5;
 
         try {
-            progressBar = new ViewJProgressBar(fileName, "Reading MRC file...", 0, 100, true, null, null);
-
-            progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-
 
             file = new File(fileDir + fileName);
 
@@ -469,11 +474,6 @@ public class FileMRC extends FileBase {
         float resY = 1.0f;
         float resZ = 1.0f;
         int resXUnit, resYUnit, resZUnit;
-
-        progressBar = new ViewJProgressBar(fileName, "Writing MRC file...", 0, 100, true, null, null);
-
-        progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-
 
         if (image.getNDims() >= 3) {
             sBegin = options.getBeginSlice();
