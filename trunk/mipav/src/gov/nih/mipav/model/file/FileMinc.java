@@ -97,6 +97,22 @@ public class FileMinc extends FileBase {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        if (dicomConvertedTagTable != null) {
+            dicomConvertedTagTable.clear();
+            dicomConvertedTagTable = null;
+        }
+        fileName = null;
+        fileDir = null;
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
+    /**
      * Looks for the CDF tag at the start of the image 'C''D''F''\001' in image header ID. If present, the image is a
      * MINC format.
      *
