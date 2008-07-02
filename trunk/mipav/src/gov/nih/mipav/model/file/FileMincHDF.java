@@ -101,6 +101,40 @@ public class FileMincHDF extends FileBase {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        int i;
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        if (imageNode != null) {
+            imageNode.removeAllChildren();
+            imageNode = null;
+        }
+        step = null;
+        if (dirCosines != null) {
+            for (i = 0; i < dirCosines.length; i++) {
+                dirCosines[i] = null;
+            }
+            dirCosines = null;
+        }
+        isCentered = null;
+        mincStartLoc = null;
+        if (dimOrder != null) {
+            for (i = 0; i < dimOrder.length; i++) {
+                dimOrder[i] = null;
+            }
+            dimOrder = null;
+        }
+     
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
     public void readHeader(DefaultMutableTreeNode rootNode) throws Exception {
 	// before recursively parsing the tree, get the image dim order from the image var attributes
 	parseImageDimOrder(rootNode);
