@@ -5,6 +5,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogAnalyzeNIFTIChoice;
+import gov.nih.mipav.view.dialogs.JDialogSaveMincVersionChoice;
 
 import java.io.*;
 import java.util.*;
@@ -681,9 +682,12 @@ public class FileUtility {
         // handle when the .mnc extension but MINC_HDF file
         if (fileType == FileUtility.MINC) {
             try {
+                if (doWrite) {
+                    fileType = new JDialogSaveMincVersionChoice(ViewUserInterface.getReference().getMainFrame()).fileType();    
+                }
                 // inspect the file to see if it is really a MINC1 (suppressing any error dialogs).
                 // if not, set the file type using isMincHDF()
-                if (isMinc(fileName, fileDir, true) != FileUtility.MINC) {
+                else if (isMinc(fileName, fileDir, true) != FileUtility.MINC) {
                     fileType = isMincHDF(fileName, fileDir, quiet);
                 }
             } catch (IOException ioe) {
