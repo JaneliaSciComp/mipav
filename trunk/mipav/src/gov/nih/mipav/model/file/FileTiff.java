@@ -529,7 +529,7 @@ public class FileTiff extends FileBase {
     private boolean lzwCompression = false; // true if the read data file has LZW compression
 
     /** TIFF files. */
-    private TIFFLZWDecoder lzwDecoder = null; // for decoding LZW compressed images
+    //private TIFFLZWDecoder lzwDecoder = null; // for decoding LZW compressed images
     
     private boolean zlibCompression = false; // true if the read data file has LZW compression
     
@@ -823,20 +823,104 @@ public class FileTiff extends FileBase {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    
+    
     /**
      * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
      * files and sets other elements to <code>null</code>.
      */
     public void finalize() {
+        int i;
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        image = null;
+        byteBuffer = null;
+        if (dataOffsets != null) {
+            for (i = 0; i < dataOffsets.length; i++) {
+                if (dataOffsets[i] != null) {
+                    dataOffsets[i].removeAllElements();
+                    dataOffsets[i] = null;
+                }
+            }
+            dataOffsets = null;
+        }
+        dateTime = null;
 
+        if (filePB != null) {
+            filePB.finalize();
+            filePB = null;
+        }
+        
+        if (fileRW != null) {
+
+            try {
+                fileRW.close();
+                // System.err.println("closed FileTiff: fileRW (FileRawChunk)");
+            } catch (IOException ex) { }
+
+            fileRW.finalize();
+            fileRW = null;
+        }
+
+        IFDoffsets = null;
+        imageDescription = null;
         imgBuffer = null;
-
+        imgResols = null;
+        LUT = null;
+        software = null;
+        str = null;
+        tileByteCounts = null;
+        tileOffsets = null;
+        tileTemp = null;
         sliceBufferFloat = null;
-
         sliceBufferDouble = null;
+        artist = null;
+        doubleBuffer = null;
+        hostComputer = null;
+        pageName = null;
+        make = null;
+        model = null;
+        extraSamples = null;
+        documentName = null;
+        inkNames = null;
+        copyright = null;
+        bitsPerSample = null;
+        jpegTables = null;
+        if (tableStream != null) {
+            try {
+                tableStream.close();
+            }
+            catch (IOException ex) {}
+            tableStream = null;
+        }
         
         if (zlibDecompresser != null) {
             zlibDecompresser.end();
+            zlibDecompresser = null;
+        }
+        
+        isoSpeedRatings = null;
+        exifVersion = null;
+        dateTimeOriginal = null;
+        dateTimeDigitized = null;
+        makerNote = null;
+        characterCode = null;
+        userComment = null;
+        flashPixVersion = null;
+        gdalMetadata = null;
+        next = null;
+        length = null;
+        value = null;
+        firstChar = null;
+       
+        if (flipAlgo != null) {
+            flipAlgo.finalize();
+            flipAlgo = null;
+        }
+        if (rotateAlgo != null) {
+            rotateAlgo.finalize();
+            rotateAlgo = null;
         }
 
         try {
