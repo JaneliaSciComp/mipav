@@ -313,6 +313,60 @@ public class FileSTK extends FileBase {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        int i;
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        image = null;
+        byteBuffer = null;
+        if (dataOffsets != null) {
+            for (i = 0; i < dataOffsets.length; i++) {
+                if (dataOffsets[i] != null) {
+                    dataOffsets[i].removeAllElements();
+                    dataOffsets[i] = null;
+                }
+            }
+            dataOffsets = null;
+        }
+        dateTime = null;
+
+        if (filePB != null) {
+            filePB.finalize();
+            filePB = null;
+        }
+        
+        if (fileRW != null) {
+
+            try {
+                fileRW.close();
+                // System.err.println("closed FileSTK: fileRW (FileRawChunk)");
+            } catch (IOException ex) { }
+
+            fileRW.finalize();
+            fileRW = null;
+        }
+
+        IFDoffsets = null;
+        imageDescription = null;
+        imgBuffer = null;
+        imgResols = null;
+        LUT = null;
+        software = null;
+        str = null;
+        tileByteCounts = null;
+        tileOffsets = null;
+        tileTemp = null;
+       
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
+    /**
      * Accessor that returns the file info.
      *
      * @return  FileInfoBase containing the file info
