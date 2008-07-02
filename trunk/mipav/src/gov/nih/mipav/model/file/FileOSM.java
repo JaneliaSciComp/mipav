@@ -99,6 +99,27 @@ public class FileOSM extends FileBase {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        image = null;
+        imgExtents = null;
+        LUT = null;
+        if (progressBar != null) {
+            progressBar.dispose();
+            progressBar = null;
+        }
+        
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
+    /**
      * returns LUT if defined.
      *
      * @return  the LUT if defined else it is null
