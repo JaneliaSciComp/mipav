@@ -2359,6 +2359,10 @@ public class FileIO {
             case FileUtility.TIFF:
                 success = writeTiff(image, options);
                 break;
+                
+            case FileUtility.STK:
+                success = writeSTK(image, options);
+                break;
 
             case FileUtility.MGH:
                 success = writeMGH(image, options);
@@ -6090,6 +6094,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
 
     }
@@ -6571,6 +6577,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -6892,6 +6900,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
 
     }
@@ -7088,6 +7098,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -7218,6 +7230,8 @@ public class FileIO {
                 progressBar.updateValue((int) ( ((float) m / (float) nImages) * 100.0f), false);
                 imageFile.readImage(buffer, fileInfo.getOffset(), fileInfo.getDataType());
                 image.importData(m * length, buffer, false);
+                imageFile.finalize();
+                imageFile = null;
             } catch (IOException error) {
 
                 if (image != null) {
@@ -7371,6 +7385,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
 
     }
@@ -9161,6 +9177,8 @@ public class FileIO {
             mrcFile = new FileMRC(options.getFileName(), options.getFileDirectory());
             createProgressBar(mrcFile, options.getFileName(), FILE_WRITE);
             mrcFile.writeImage(image, options);
+            mrcFile.finalize();
+            mrcFile = null;
         } catch (IOException error) {
 
             if ( !quiet) {
@@ -9239,6 +9257,8 @@ public class FileIO {
             osmFile = new FileOSM(options.getFileName(), options.getFileDirectory());
             createProgressBar(osmFile, options.getFileName(), FILE_READ);
             osmFile.writeImage(image, options);
+            osmFile.finalize();
+            osmFile = null;
         } catch (IOException error) {
 
             if ( !quiet) {
@@ -9279,6 +9299,8 @@ public class FileIO {
             rawFile = new FileRaw(options.getFileName(), options.getFileDirectory(), fileInfo, FileBase.READ_WRITE);
             createProgressBar(rawFile, options.getFileName(), FILE_WRITE);
             rawFile.writeImage(image, options);
+            rawFile.finalize();
+            rawFile = null;
         } catch (IOException error) {
 
             if ( !quiet) {
@@ -9384,6 +9406,55 @@ public class FileIO {
             return false;
         }
 
+        return true;
+    }
+    
+    /**
+     * Writes a STK file to store the image.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
+     */
+    private boolean writeSTK(ModelImage image, FileWriteOptions options) {
+        FileSTK imageFile;
+        int[] extents;
+
+        try { // Construct a new file object
+            imageFile = new FileSTK(options.getFileName(), options.getFileDirectory());
+            createProgressBar(imageFile, options.getFileName(), FILE_WRITE);
+
+            if (LUT == null) {
+                extents = new int[2];
+                extents[0] = 4;
+                extents[1] = 256;
+                ((FileSTK) imageFile).writeImage(image, new ModelLUT(1, 256, extents), options);
+            } else {
+                ((FileSTK) imageFile).writeImage(image, LUT, options);
+            }
+        } catch (IOException error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return false;
+        } catch (OutOfMemoryError error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return false;
+        }
+
+        imageFile.finalize();
+        imageFile = null;
         return true;
     }
 
@@ -9530,6 +9601,8 @@ public class FileIO {
             FileNRRD fileNRRD = new FileNRRD(options.getFileName(), options.getFileDirectory());
             createProgressBar(fileNRRD, options.getFileName(), FileIO.FILE_WRITE);
             fileNRRD.writeImage(image, options);
+            fileNRRD.finalize();
+            fileNRRD = null;
         } catch (IOException error) {
 
             if ( !quiet) {
