@@ -5836,7 +5836,9 @@ public class FileIO {
 
             return null;
         }
-
+        
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -5986,6 +5988,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -6032,6 +6036,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -8985,6 +8991,8 @@ public class FileIO {
             mghFile = new FileMGH(options.getFileName(), options.getFileDirectory());
             createProgressBar(mghFile, options.getFileName(), FILE_WRITE);
             mghFile.writeImage(image, options);
+            mghFile.finalize();
+            mghFile = null;
         } catch (IOException error) {
 
             if ( !quiet) {
@@ -9046,6 +9054,8 @@ public class FileIO {
             mincFile = new FileMinc(options.getFileName(), options.getFileDirectory());
             createProgressBar(mincFile, options.getFileName(), FILE_READ);
             mincFile.writeImage(image, options);
+            mincFile.finalize();
+            mincFile = null;
 
             return true;
 
@@ -9111,6 +9121,8 @@ public class FileIO {
             }
 
             mincFile.writeImage(image, options);
+            mincFile.finalize();
+            mincFile = null;
 
             return true;
 
