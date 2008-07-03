@@ -1578,7 +1578,10 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 				} else if (storedMatrix.isSelected()) {
 					transformSource = "self";
 					scriptParameters.getParams().put(ParameterFactory.newParameter("transform_source", transformSource));
-				}
+				} else {
+					transformSource = "none";
+					scriptParameters.getParams().put(ParameterFactory.newParameter("transform_source", transformSource));
+				}					
 				
 				boolean invert;
 				if ((invertCheckbox != null) && (invertCheckbox.isSelected())) {
