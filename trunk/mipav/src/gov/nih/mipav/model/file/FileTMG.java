@@ -3,10 +3,6 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
-
-import java.awt.*;
-
 import java.io.*;
 
 
@@ -45,9 +41,6 @@ public class FileTMG extends FileBase {
     private ModelLUT LUT = null;
 
     /** DOCUMENT ME! */
-    private ViewJProgressBar progressBar = null;
-
-    /** DOCUMENT ME! */
     private int rangeX, rangeY;
 
     /** DOCUMENT ME! */
@@ -72,6 +65,23 @@ public class FileTMG extends FileBase {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        image = null;
+        imgExtents = null;
+        LUT = null;
+        sBuffer = null;
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
+    /**
      * returns LUT if defined.
      *
      * @return  the LUT if defined else it is null
@@ -89,21 +99,15 @@ public class FileTMG extends FileBase {
      */
     public ModelImage readImage() throws IOException {
 
-        int i;
         float[] imgBuffer;
         int bufferSize;
         float[] imgResols = new float[] { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-        String s;
         String titleStr = null;
         String nameStr = null;
         String commentStr = null;
         String timeStr = null;
 
         try {
-            progressBar = new ViewJProgressBar(fileName, "Reading TMG file...", 0, 100, true, null, null);
-
-            progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-
 
             file = new File(fileDir + fileName);
 
