@@ -264,6 +264,7 @@ public class FileUtility {
         String suffix2;
         boolean okNumber;
         int nImages;
+        String fileName2Trimmed;
 
         imageDir = new File(fileDir);
 
@@ -289,10 +290,12 @@ public class FileUtility {
             } // for (k = 0; k < suffix2.length(); k++)
 
             if (okNumber) {
-
-                if (FileUtility.trimCOR(fileName2).equals(subName)) {
-                    fileList[j] = fileListBuffer[i];
-                    j++;
+                fileName2Trimmed = FileUtility.trimCOR(fileName2);
+                if (fileName2Trimmed != null) {
+                    if (fileName2Trimmed.equals(subName)) {
+                        fileList[j] = fileListBuffer[i];
+                        j++;
+                    }
                 }
             } // if (okNumber)
         } // for (i = 0; i < fileListBuffer.length; i++)
