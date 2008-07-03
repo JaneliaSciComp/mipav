@@ -70,6 +70,7 @@ public class TriangleMesh {
 	int numberVOrig, numberFOrig;
 	Vector3f[] pointOrig = null;
 	int[][] FaceOrig = null;
+	String meshName = null;
 
 	public TriangleMesh(VertexBuffer pkVBuffer, IndexBuffer pkIBuffer) {
 		int dnumV = 0, dnumF = 0;
@@ -155,6 +156,14 @@ public class TriangleMesh {
 		PropertyUpdate();
 	}
 
+	public void SetName(String name) {
+		meshName = name;
+	}
+	
+	public String GetName() {
+		return meshName;
+	}
+	
 	public void doDecimation(double dv) throws Exception {
 		try {
 			Decimation(dv);

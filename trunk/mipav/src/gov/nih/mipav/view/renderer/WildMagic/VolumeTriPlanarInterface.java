@@ -3097,4 +3097,67 @@ implements MouseListener, ItemListener, ChangeListener {
         }
         return System.getProperties().getProperty("user.dir");
     }
+    
+    /**
+     * Set the camera parameters for displaying.
+     */
+    public void setCameraParameters() {
+    	displayGUI.displayCameraParams(raycastRenderWM.getCameraParameters());
+    }
+
+    /**
+     * Set the object rotation parameters for displaying. 
+     */
+    public void setObjectParameters() {
+    	displayGUI.displayObjectParams(raycastRenderWM.getObjectParameters());
+    }
+    
+    /**
+     * Get the camera parameters. 
+     * @return  camera parameters array. 
+     */
+    public float[] getCameraParameters() {
+    	return raycastRenderWM.getCameraParameters();
+    }
+    
+    /**
+     * Get the object parameters.
+     * @return Get the object rotation parameters array.
+     */
+    public float[] getObjectParameters() {
+    	return raycastRenderWM.getObjectParameters();
+    }
+    
+    /**
+     * Get the camera current location 
+     * @return camera position vector
+     */
+    public Vector3f getCameraLocation() {
+    	return raycastRenderWM.getCameraLocation();
+    }
+    
+    /**
+     * Get the object rotation matrix.
+     * @return rotation matrix
+     */
+    public Matrix3f getObjectRotation() {
+    	return raycastRenderWM.getObjectRotation();
+    }
+    
+    /**
+     * Set the camera location.
+     * @param v  camera position vector
+     */
+    public void setCameraLocation(Vector3f v) {
+    	raycastRenderWM.setCameraLocation(v);
+    }
+    
+    /**
+     * Set the object rotation matrix
+     * @param rot  rotation matrix
+     */
+    public void setObjectRotation(Matrix3f rot) {
+    	raycastRenderWM.setObjectRotation(rot);
+    }
+    
 }
