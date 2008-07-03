@@ -1447,6 +1447,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 					transMat.setMatrix(xMat);
 					xfrm = transMat;
 				} else if (transformSource.equals("self")) {
+					transMat.identity();
+					xfrm = transMat;
 					if (image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
 						isSATransform = true;
 					}
@@ -1457,7 +1459,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 					
 					xfrm.timesEquals(imageMatrix);
 				} else if (transformSource.equals("none")) {
-					xfrm.identity();
+					transMat.identity();
+					xfrm = transMat;
 				}
 					
             }
