@@ -3698,6 +3698,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 voiVec = v.readVOI(false);
             } catch(IOException e) {
                 MipavUtil.displayError("Unable to load old VOI from location:\n"+fileDir+"\nWith name: "+name);
+                e.printStackTrace();
             }
             if(voiVec.length > 1) {
                 MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+name);
@@ -4337,10 +4338,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	     * @param  p  point to stretch to
 	     */
 	    public void stretch(Point p) {
-	    	if(voiSearch(p)) {
-	    		lastPt.x = stretchedPt.x;
-	            lastPt.y = stretchedPt.y;
-	        }
+	    	//if(voiSearch(p)) {
+	    	//	lastPt.x = stretchedPt.x;
+	        //    lastPt.y = stretchedPt.y;
+	        //}
 	        super.stretch(p);
 	    }
 	    
