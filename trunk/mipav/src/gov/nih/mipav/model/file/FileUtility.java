@@ -183,7 +183,9 @@ public class FileUtility {
     /** RAW MULTIFLE image data, no header. */
     public static final int RAW_MULTIFILE = 49;
 
-    /** SPM file format. extension: .spm */
+    /** SPM file format.
+     *  SPM99 and SPM2 are slight variants of analyze with the same 
+     *  .img, .hdr file extensions */
     public static final int SPM = 50;
 
     /** MetaMorph Stack (STK) file type. extension: .stk */
@@ -923,7 +925,10 @@ public class FileUtility {
             }
 
             if (fileType == FileUtility.UNDEFINED) {
-
+                // This will accept Mayo Analyze 7.5, SPM99, and
+                // SPM2 with regular header size == 348 bytes
+                // Only SPM2 with extended header size > 348 will 
+                // not be classified as analyze.
                 fileType = FileUtility.isAnalyze(fileName, fileDir, quiet);
             }
 
