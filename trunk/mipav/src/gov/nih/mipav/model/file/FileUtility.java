@@ -763,6 +763,7 @@ public class FileUtility {
                     if (headerFile != null) {
                         fileType = FileUtility.INTERFILE;
                     } else {
+                        //  Note that SPM99 and SPM2 ANalyze variant files are read as Mayo Analyze 7.5
                         fileType = FileUtility.ANALYZE;
 
                         try {
@@ -814,6 +815,7 @@ public class FileUtility {
                         if (headerFile != null) {
                             fileType = FileUtility.INTERFILE;
                         } else {
+                            // Note that SPM99 and SPM2 Analyze variant files are read as Mayo Analyze 7.5
                             fileType = FileUtility.ANALYZE;
 
                             try {
