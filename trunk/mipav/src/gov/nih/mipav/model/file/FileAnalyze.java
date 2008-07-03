@@ -279,13 +279,13 @@ public class FileAnalyze extends FileBase {
         if (isHeaderFile(absolutePath)) {
             completeFileNameList[0] = absolutePath;
 
-            // completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(".")) + EXTENSIONS[1];
-            completeFileNameList[1] = absolutePath + EXTENSIONS[1];
+            completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(".")) + EXTENSIONS[1];
+            //completeFileNameList[1] = absolutePath + EXTENSIONS[1];
         } else if (isImageFile(absolutePath)) {
             completeFileNameList[1] = absolutePath;
 
-            // completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(".")) + EXTENSIONS[0];
-            completeFileNameList[0] = absolutePath + EXTENSIONS[0];
+            completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(".")) + EXTENSIONS[0];
+            //completeFileNameList[0] = absolutePath + EXTENSIONS[0];
         } else {
             completeFileNameList = null;
         }
@@ -362,6 +362,7 @@ public class FileAnalyze extends FileBase {
             return false;
         }
 
+        System.out.println("absoutePath = " + absolutePath);
         String[] completeFileNames = getCompleteFileNameList(absolutePath);
 
         if ((completeFileNames == null) || (completeFileNames.length != 2)) {
@@ -411,6 +412,7 @@ public class FileAnalyze extends FileBase {
         byte regular = raFile.readByte();
 
         if (regular == 'r') {
+            raFile.close();
             return true;
         }
 
