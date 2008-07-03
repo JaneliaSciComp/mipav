@@ -7769,6 +7769,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
 
     }
