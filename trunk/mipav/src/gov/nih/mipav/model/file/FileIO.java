@@ -3964,9 +3964,6 @@ public class FileIO {
 
             image = new ModelImage(myFileInfo.getDataType(), extents, myFileInfo.getFileName());
 
-            // Progress bar shows what % of images have been read.
-            createProgressBar(null, fileName, FILE_READ);
-
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -4006,6 +4003,8 @@ public class FileIO {
 
             return null;
         }
+        
+        createProgressBar(imageFile, fileName, FILE_READ);
 
         // loop through image and store data in image model
         for (i = 0; i < nImages; i++) {
@@ -4076,6 +4075,8 @@ public class FileIO {
             }
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
 
     }
@@ -8333,6 +8334,8 @@ public class FileIO {
      */
     private boolean writeCOR(ModelImage image, FileWriteOptions options) {
         FileCOR corFile;
+        int i, j;
+        float[] meterResols = new float[3];
 
         try { // Construct a new file object
 
@@ -8367,33 +8370,78 @@ public class FileIO {
 
                 return false;
             }
+            
+            // COR file format requires resolutions to be in meters
+            // Change other units to meters
+            for (i = 0; i < image.getNDims(); i++) {
 
-            if ( (image.getFileInfo(0).getResolution(0) != 1.0f)
-                    || ( (image.getFileInfo(0).getUnitsOfMeasure()[0] != FileInfoBase.MILLIMETERS) && (image
-                            .getFileInfo(0).getUnitsOfMeasure()[0] != FileInfoBase.UNKNOWN_MEASURE))) {
-                MipavUtil.displayError("Error! x resolution must be 1.0 millimeter");
+                switch (image.getFileInfo()[0].getUnitsOfMeasure(i)) {
 
-                return false;
-            }
+                    case FileInfoBase.METERS:
+                        meterResols[i] = image.getFileInfo()[0].getResolutions()[i];
+                        break;
 
-            if ( (image.getFileInfo(0).getResolution(1) != 1.0f)
-                    || ( (image.getFileInfo(0).getUnitsOfMeasure()[1] != FileInfoBase.MILLIMETERS) && (image
-                            .getFileInfo(0).getUnitsOfMeasure()[1] != FileInfoBase.UNKNOWN_MEASURE))) {
-                MipavUtil.displayError("Error! y resolution must be 1.0 millimeter");
+                    case FileInfoBase.UNKNOWN_MEASURE:
+                        meterResols[i] = image.getFileInfo()[0].getResolutions()[i];
+                        break;
 
-                return false;
-            }
+                    case FileInfoBase.CENTIMETERS:
+                        meterResols[i] = 0.01f * image.getFileInfo()[0].getResolutions()[i];
+                        break;
 
-            if ( (image.getFileInfo(0).getResolution(2) != 1.0f)
-                    || ( (image.getFileInfo(0).getUnitsOfMeasure()[2] != FileInfoBase.MILLIMETERS) && (image
-                            .getFileInfo(0).getUnitsOfMeasure()[2] != FileInfoBase.UNKNOWN_MEASURE))) {
-                MipavUtil.displayError("Error! z resolution must be 1.0 millimeter");
+                    case FileInfoBase.MILLIMETERS:
+                        meterResols[i] = 0.001f * image.getFileInfo()[0].getResolutions()[i];
+                        break;
 
-                return false;
+                    case FileInfoBase.INCHES:
+                        meterResols[i] = 0.0254f * image.getFileInfo()[0].getResolutions()[i];
+                        break;
+
+                    case FileInfoBase.MICROMETERS:
+                        meterResols[i] = 1.0e-6f * image.getFileInfo()[0].getResolutions()[i];
+                        break;
+
+                    case FileInfoBase.NANOMETERS:
+                        meterResols[i] = 1.0e-9f * image.getFileInfo()[0].getResolutions()[i];
+                        break;
+
+                    case FileInfoBase.ANGSTROMS:
+                        meterResols[i] = 1.0e-10f * image.getFileInfo()[0].getResolutions()[i];
+                        break;
+
+                    default:
+                        meterResols[i] = image.getFileInfo()[0].getResolutions()[i];
+
+                }
+                
+                if ((meterResols[i] > (1.0E-3 - 1.0E-7)) && (meterResols[i] < (1.0E-3 + 1.0E-7))) {
+                    meterResols[i] = 1.0E-3f;
+                }
+                
+                if (meterResols[i] != 1.0E-3f) {
+                    if (i == 0) {
+                        MipavUtil.displayError("Error! x resolution must be 1.0E-3 meter");    
+                    }
+                    else if (i == 1) {
+                        MipavUtil.displayError("Error! y resolution must be 1.0E-3 meter");    
+                    }
+                    else if (i == 2) {
+                        MipavUtil.displayError("Error! z resolution must be 1.0E-3 meter");    
+                    }
+                    return false;
+                }
+                
+                for (j = 0; j < image.getFileInfo().length; j++) {
+                    image.getFileInfo()[j].setResolutions(meterResols[i],i);
+                    image.getFileInfo()[j].setUnitsOfMeasure(FileInfoBase.METERS, i);
+                }
             }
 
             corFile = new FileCOR(options.getFileName(), options.getFileDirectory());
+            createProgressBar(corFile, options.getFileName(), FILE_WRITE);
             corFile.writeImage(image, options);
+            corFile.finalize();
+            corFile = null;
         } catch (IOException error) {
 
             if ( !quiet) {
