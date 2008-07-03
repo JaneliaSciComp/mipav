@@ -14,28 +14,43 @@ import java.io.*;
  * @see  FileIO
  * @see  FileInfoSPM
  * @see  FileRaw
+ * 
+ * Note that there are actually 3 variants of Analyze, all using .img and .hdr files,
+ * with very slight differences:
+ * Mayo Analyze 7.5, SPM99, and SPM2
+ * Variant differences: 
+ * Location 0 is an int32 with sizeof_hdr.  In Non-SPM2, always 348, used to
+ * test whether the file is big-endian or little-endian.  SPM2 can be 348 or greater.  If SPM2 > 348,
+ * indicates extended header.
+ * 
+ * <p>Original Mayo Analyze 7.5, SPM99, and SPM2 all have at location 60 a uchar[8] for cal_units and at location 
+ * 68 an int16 for unused1.  However, MIPAV analyze only preserves at location 60 a uchar[4] for cal_units and
+ * has hacked locations 64, 66, and 68 with short integers for axis orientation.  MIPAV calls these locations 
+ * unused1, unused2, and unused3.  Note that MIPAV's unused3 is at the same location as unused1 in any
+ * original format.</p>
+ * 
+ * <p>Original Mayo Analyze 7.5 has at locations 112, 116, and 112 3 unused floats, funused1, funused2, and
+ * funused3.  SPM99 and SPM2 have at location 112 a float scale factor.  SPM2 has at location 116 a float 
+ * dcoff, which is an intensity zero-intercept.  MIPAV analyze has hacked these 3 locations to store 3 floats
+ * giving the x-origin, y-origin, and z-origin locations.</p>
+ * 
+ * <p>Mayo Analyze 7.5 has at location 253 a uchar[10] called originator.  SPM99 and SPM2 have at location 253
+ * 5-int16 called origin[0] thru origin[4].  In SPM99 X, Y, and Z are near the anterior commissure. 
+ * If the first 3 shorts of a 3D image are set to 0, 0, 0, the origin is assumed to be at the center of
+ * the volume, since in SPM the corner voxel is at 1, 1, 1. The position(x,y,z) in mm. is determined by the
+ * distance(x,y,z) from the origin multiplied by the vox_units(x,y,z).</p>
  *
- *       <p>Differences between MIPAV ANALYZE and SPM: In MIPAV ANALYZE we have location 60 cal_units 4 unsigned
- *       characters location 64 - X-axis orientation @see FileInfoBase for static variables that are set. location 66 -
- *       Y-axis orientation // All three unused variables are of short type. location 68 - Z-axis orientation In SPM we
- *       have location 60 cal_units 8 unsigned characters location 68 unused1</p>
- *
- *       <p>In MIPAV ANALYZE we have location 112 Funused1 - X-axis starting location (origin from upper left-hand
- *       corner) location 116 Funused2 - Y-axis starting location (origin from upper left-hand corner) location 120
- *       Funused3 - Z-axis starting location (origin is the first image slice) In SPM we have location 112 Funused1
- *       scale a floating point scale factor applied during memory mapping location 116 Funused2 location 120 Funused3
- *       </p>
- *
- *       <p>In MIPAV ANALYZE we have location 253 originator with 10 characters In SPM we have location 253 origin with
- *       5 shorts. If the first 3 shorts of a 3D image are set to 0, 0, 0, the origin is assumed to be at the center of
- *       the volume, since in SPM the corner voxel is at 1, 1, 1. The position(x,y,z) in mm. is determined by the
- *       distance(x,y,z) from the origin multiplied by the vox_units(x,y,z).</p>
- *
- *       <p>In SPM the signed byte datatype was added with DT_BYTE = 130. MIPAV ANALYZE uses UNSIGNED_SHORT = 6 while
- *       SPM uses DT_UNSIGNED_SHORT = 132. The SPM standard also provides for an unsigned int = 136, but MIPAV does not
- *       used the unsigned int data type. Note that in SPM while DATA = datatype * 256 for swapped bytes, only datatype
- *       and not DATA is written to the file, so in this program we need never consider the multiplicative factors of
- *       256.</p>
+ * <p>In SPM the signed byte datatype was added with DT_BYTE = 130. MIPAV ANALYZE uses UNSIGNED_SHORT = 6 while
+ * SPM uses DT_UNSIGNED_SHORT = 132. The SPM standard also provides for an unsigned int = 136, but MIPAV does not
+ * used the unsigned int data type. Note that in SPM while DATA = datatype * 256 for swapped bytes, only datatype
+ * and not DATA is written to the file, so in this program we need never consider the multiplicative factors of
+ * 256.</p>
+ * 
+ * <p>The most obvious way to test for whether a file is Mayo or SPM would be to see if location 112 is a
+ * funused1 = 0 or a nonzero scale factor, but this is complicated by the MIPAV hacking at 112 to store the
+ * x-origin location as a float.  Asking the users what variant there analyze file is would probably cause
+ * massive confusion, so it is probably best for MIPAV just to default to the hacked 7.5 code in
+ * FileAnalyze unless a pressing  need arises.</p>
  */
 
 public class FileSPM extends FileBase {
@@ -106,6 +121,8 @@ public class FileSPM extends FileBase {
 
     /** DOCUMENT ME! */
     private ModelImage image;
+    
+    private int extendedHeaderSize = 0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -147,6 +164,7 @@ public class FileSPM extends FileBase {
      * @throws  IOException            thrown when the I/O error happens.
      */
     public static boolean isSPM(String absolutePath) throws FileNotFoundException, IOException {
+        int b1, b2, b3, b4, tmpInt;
 
         final int HEADER_SIZE = 348;
 
@@ -176,14 +194,26 @@ public class FileSPM extends FileBase {
         raFile.readFully(buffer);
 
         boolean bigEndian = true;
-        int sizeOfHeader = FileBase.bytesToInt(bigEndian, 0, buffer);
+        int sizeOfHeader1 = FileBase.bytesToInt(bigEndian, 0, buffer);
 
-        if (sizeOfHeader != HEADER_SIZE) {
+        if (sizeOfHeader1 != HEADER_SIZE) {
             bigEndian = false;
-            sizeOfHeader = FileBase.bytesToInt(bigEndian, 0, buffer);
+            int sizeOfHeader2 = FileBase.bytesToInt(bigEndian, 0, buffer);
 
-            if (sizeOfHeader != HEADER_SIZE) {
+            if ((sizeOfHeader1 < HEADER_SIZE) && (sizeOfHeader2 < HEADER_SIZE)) {
                 return false;
+            }
+            else {
+                // Assume SPM2 with extended header size
+                if (sizeOfHeader1 < sizeOfHeader2) {
+                    bigEndian = true;
+                    Preferences.debug("If valid must be SPM2 with extended header size = " +
+                                  sizeOfHeader1 + "\n");
+                }
+                else {
+                    Preferences.debug("If valid must be SPM2 with extended header size = " +
+                            sizeOfHeader2 + "\n");    
+                }  
             }
         }
 
@@ -197,18 +227,23 @@ public class FileSPM extends FileBase {
             return false;
         }
 
-        raFile.seek(40);
-
-        int dims = raFile.readShort();
-
-        if (dims != 4) {
-            return false;
-
-        }
+        // Don't test for dims == 4
+        // dims are usually but not always 4
 
         raFile.seek(112);
+        
+        b1 = (raFile.readByte() & 0xff);
+        b2 = (raFile.readByte() & 0xff);
+        b3 = (raFile.readByte() & 0xff);
+        b4 = (raFile.readByte() & 0xff);
 
-        float scale = raFile.readFloat();
+        if (bigEndian) {
+            tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
+        } else {
+            tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+        }
+
+        float scale = Float.intBitsToFloat(tmpInt);
 
         if (scale == 0.0) {
             return false;
@@ -453,20 +488,35 @@ public class FileSPM extends FileBase {
         raFile.close();
 
         fileInfo.setEndianess(BIG_ENDIAN);
-        fileInfo.setSizeOfHeader(getBufferInt(bufferByte, 0, BIG_ENDIAN));
-
-        if (fileInfo.getSizeOfHeader() != headerSize) { // Set the endianess based on header size = 348 Big Endian
-            fileInfo.setEndianess(LITTLE_ENDIAN); // or 1,543,569,408 Little endian
-            fileInfo.setSizeOfHeader(getBufferInt(bufferByte, 0, LITTLE_ENDIAN));
-            Preferences.debug("FileSPM:readHeader Endianess = Little endian.\n", 2);
-        } else {
+        int headerSize1 = getBufferInt(bufferByte, 0, BIG_ENDIAN);
+        if (headerSize1 == headerSize) {
+            fileInfo.setSizeOfHeader(headerSize1);
             Preferences.debug("FileSPM:readHeader Endianess = Big endian.\n", 2);
         }
+        else { // Set the endianess based on header size = 348 Big Endian
+            fileInfo.setEndianess(LITTLE_ENDIAN); // or 1,543,569,408 Little endian
+            int headerSize2 = getBufferInt(bufferByte, 0, LITTLE_ENDIAN);
+            if (headerSize2 == headerSize) {
+                fileInfo.setSizeOfHeader(headerSize2);
+                Preferences.debug("FileSPM:readHeader Endianess = Little endian.\n", 2);
+            }
+            else if ((headerSize1 < headerSize) && (headerSize2 < headerSize)) {
+                Preferences.debug("FileSPM:readHeader SPM header length != 348.\n", 2);
 
-        if (fileInfo.getSizeOfHeader() != headerSize) {
-            Preferences.debug("FileSPM:readHeader SPM header length != 348.\n", 2);
-
-            return false;
+                return false;   
+            }
+            else {
+                // Assume SPM2 with extended header size > 348
+                if (headerSize1 < headerSize2) {
+                    fileInfo.setEndianess(BIG_ENDIAN);
+                    fileInfo.setSizeOfHeader(headerSize1);
+                    Preferences.debug("FileSPM:readHeader Endianess = Big endian.\n", 2);    
+                }
+                else {
+                    fileInfo.setSizeOfHeader(headerSize2);
+                    Preferences.debug("FileSPM:readHeader Endianess = Little endian.\n", 2);    
+                }
+            }
         }
 
         endianess = fileInfo.getEndianess();
