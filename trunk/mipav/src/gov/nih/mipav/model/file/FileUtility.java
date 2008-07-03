@@ -763,8 +763,15 @@ public class FileUtility {
                     if (headerFile != null) {
                         fileType = FileUtility.INTERFILE;
                     } else {
-                        //  Note that SPM99 and SPM2 ANalyze variant files are read as Mayo Analyze 7.5
-                        fileType = FileUtility.ANALYZE;
+                        //  Note that SPM99 and SPM2 Analyze variant files are read as Mayo Analyze 7.5
+                        //  unless a SPM2 with extended header size > 348 is present.
+                        try {
+                            fileType = FileUtility.isAnalyze(fileHeaderName, fileDir, quiet);
+                        }
+                        catch (IOException ex) {}
+                        if (fileType != FileUtility.ANALYZE) {
+                            fileType = FileUtility.SPM;
+                        }
 
                         try {
                             File file = new File(fileDir + fileHeaderName);
@@ -816,7 +823,14 @@ public class FileUtility {
                             fileType = FileUtility.INTERFILE;
                         } else {
                             // Note that SPM99 and SPM2 Analyze variant files are read as Mayo Analyze 7.5
-                            fileType = FileUtility.ANALYZE;
+                            // unless a SPM2 with extended header size > 348 is present.
+                            try {
+                                fileType = FileUtility.isAnalyze(fileName, fileDir, quiet);
+                            }
+                            catch (IOException ex) {}
+                            if (fileType != FileUtility.ANALYZE) {
+                                fileType = FileUtility.SPM;
+                            }
 
                             try {
                                 File file = new File(fileDir + fileName);
