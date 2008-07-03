@@ -10,6 +10,42 @@ import java.io.*;
 
 /**
  * The class reads and writes Analyze Version 7.5.x files.
+ * Note that there are actually 3 variants of Analyze, all using .img and .hdr files,
+ * with very slight differences:
+ * Mayo Analyze 7.5, SPM99, and SPM2
+ * Variant differences: 
+ * Location 0 is an int32 with sizeof_hdr.  In Non-SPM2, always 348, used to
+ * test whether the file is big-endian or little-endian.  SPM2 can be 348 or greater.  If SPM2 > 348,
+ * indicates extended header.
+ * 
+ * Original Mayo Analyze 7.5, SPM99, and SPM2 all have at location 60 a uchar[8] for cal_units and at location 
+ * 68 an int16 for unused1.  However, MIPAV analyze only preserves at location 60 a uchar[4] for cal_units and
+ * has hacked locations 64, 66, and 68 with short integers for axis orientation.  MIPAV calls these locations 
+ * unused1, unused2, and unused3.  Note that MIPAV's unused3 is at the same location as unused1 in any
+ * original format.
+ * 
+ * Original Mayo Analyze 7.5 has at locations 112, 116, and 112 3 unused floats, funused1, funused2, and
+ * funused3.  SPM99 and SPM2 have at location 112 a float scale factor.  SPM2 has at location 116 a float 
+ * dcoff, which is an intensity zero-intercept.  MIPAV analyze has hacked these 3 locations to store 3 floats
+ * giving the x-origin, y-origin, and z-origin locations.
+ * 
+ * Mayo Analyze 7.5 has at location 253 a uchar[10] called originator.  SPM99 and SPM2 have at location 253
+ * 5-int16 called origin[0] thru origin[4].  In SPM99 X, Y, and Z are near the anterior commissure. 
+ * If the first 3 shorts of a 3D image are set to 0, 0, 0, the origin is assumed to be at the center of
+ * the volume, since in SPM the corner voxel is at 1, 1, 1. The position(x,y,z) in mm. is determined by the
+ * distance(x,y,z) from the origin multiplied by the vox_units(x,y,z).</p>
+ *
+ * <p>In SPM the signed byte datatype was added with DT_BYTE = 130. MIPAV ANALYZE uses UNSIGNED_SHORT = 6 while
+ * SPM uses DT_UNSIGNED_SHORT = 132. The SPM standard also provides for an unsigned int = 136, but MIPAV does not
+ * used the unsigned int data type. Note that in SPM while DATA = datatype * 256 for swapped bytes, only datatype
+ * and not DATA is written to the file.
+ * 
+ * The most obvious way to test for whether a file is Mayo or SPM would be to see if location 112 is a
+ * funused1 = 0 or a nonzero scale factor, but this is complicated by the MIPAV hacking at 112 to store the
+ * x-origin location as a float.  Asking the users what variant there analyze file is would probably cause
+ * massive confusion, so it is probably best just to default to the hacked 7.5 code here unless a pressing 
+ * need arises.
+ *  
  *
  * @version  0.1 Oct 14, 1997
  * @author   Matthew J. McAuliffe, Ph.D.
@@ -309,7 +345,9 @@ public class FileAnalyze extends FileBase {
 
     /**
      * Determines whether this file is ANALYZE file or not based on three fields of the header file: sizeof_hdr, extent
-     * and regular.
+     * and regular.  Note that all Mayo Analyze 7.5 and all SPM99 variants will pass this test.  SPM2 variants with
+     * a regular header size of 348 will also pass.  Only SPM2 files with an extended header > 348 in size will
+     * fail.
      *
      * @param   absolutePath  the file name.
      *
