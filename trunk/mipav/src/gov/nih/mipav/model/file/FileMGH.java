@@ -245,6 +245,7 @@ public class FileMGH extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        file = null;
         image = null;
         if (cmdlines != null) {
             for (i = 0; i < cmdlines.length; i++) {
