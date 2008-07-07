@@ -51,7 +51,8 @@ public class FileUtility {
      */
     public static final int BRUKER = 7;
 
-    /** Cheshire file type (a kind of Analyze). extension: .imc */
+    /** Cheshire file type (a kind of Analyze). extension: .imc
+     *  Can also have .img extension */
     public static final int CHESHIRE = 8;
 
     /** Cheshire overlay file type. Contains VOIs. extension: .oly */
@@ -761,47 +762,51 @@ public class FileUtility {
                         fileType = choice.fileType();
                     }
                 } else { // read
-
-                    int p = fileName.lastIndexOf(".");
-                    String fileHeaderName = fileName.substring(0, p + 1) + "hdr";
-                    String headerFile = FileInterfile.isInterfile(fileHeaderName, fileDir);
-                    if (headerFile != null) {
-                        fileType = FileUtility.INTERFILE;
-                    } else {
-                        //  Note that SPM99 and SPM2 Analyze variant files are read as Mayo Analyze 7.5
-                        //  unless a SPM2 with extended header size > 348 is present.
-                        try {
-                            fileType = FileUtility.isAnalyze(fileHeaderName, fileDir, quiet);
-                        }
-                        catch (IOException ex) {}
-                        if (fileType != FileUtility.ANALYZE) {
-                            fileType = FileUtility.SPM;
-                        }
-
-                        try {
-                            File file = new File(fileDir + fileHeaderName);
-                            RandomAccessFile raFile = new RandomAccessFile(file, "r");
-
-                            raFile.seek(344L);
-
-                            char[] niftiName = new char[4];
-
-                            for (i = 0; i < 4; i++) {
-                                niftiName[i] = (char) raFile.readUnsignedByte();
+                    if (FileCheshire.isCheshire(fileName, fileDir)) {
+                        fileType = FileUtility.CHESHIRE;
+                    }
+                    else {
+                        int p = fileName.lastIndexOf(".");
+                        String fileHeaderName = fileName.substring(0, p + 1) + "hdr";
+                        String headerFile = FileInterfile.isInterfile(fileHeaderName, fileDir);
+                        if (headerFile != null) {
+                            fileType = FileUtility.INTERFILE;
+                        } else {
+                            //  Note that SPM99 and SPM2 Analyze variant files are read as Mayo Analyze 7.5
+                            //  unless a SPM2 with extended header size > 348 is present.
+                            try {
+                                fileType = FileUtility.isAnalyze(fileHeaderName, fileDir, quiet);
                             }
-
-                            raFile.close();
-
-                            if ( (niftiName[0] == 'n') && ( (niftiName[1] == 'i') || (niftiName[1] == '+'))
-                                    && (niftiName[2] == '1') && (niftiName[3] == '\0')) {
-                                fileType = FileUtility.NIFTI;
+                            catch (IOException ex) {}
+                            if (fileType != FileUtility.ANALYZE) {
+                                fileType = FileUtility.SPM;
                             }
-                        } catch (OutOfMemoryError error) {
-                            System.gc();
-                        } catch (FileNotFoundException e) {
-                            System.gc();
-                        } catch (IOException e) {
-                            System.gc();
+    
+                            try {
+                                File file = new File(fileDir + fileHeaderName);
+                                RandomAccessFile raFile = new RandomAccessFile(file, "r");
+    
+                                raFile.seek(344L);
+    
+                                char[] niftiName = new char[4];
+    
+                                for (i = 0; i < 4; i++) {
+                                    niftiName[i] = (char) raFile.readUnsignedByte();
+                                }
+    
+                                raFile.close();
+    
+                                if ( (niftiName[0] == 'n') && ( (niftiName[1] == 'i') || (niftiName[1] == '+'))
+                                        && (niftiName[2] == '1') && (niftiName[3] == '\0')) {
+                                    fileType = FileUtility.NIFTI;
+                                }
+                            } catch (OutOfMemoryError error) {
+                                System.gc();
+                            } catch (FileNotFoundException e) {
+                                System.gc();
+                            } catch (IOException e) {
+                                System.gc();
+                            }
                         }
                     }
                 }
