@@ -68,9 +68,9 @@ public class ViewOpenVOIUI {
         }
 
         if (doLabel) {
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".lbl" }));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "lbl" }));
         } else {
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".xml", ".voi" }));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(".xml", ".voi"));
         }
 
         int returnValue = chooser.showOpenDialog(UI.getMainFrame());
