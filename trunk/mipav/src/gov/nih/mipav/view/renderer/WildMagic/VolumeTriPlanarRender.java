@@ -595,7 +595,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             return;
                     */
         }
-
+        m_kParent.setCameraParameters();
+    	m_kParent.setObjectParameters();
         return;
     }
 
@@ -1233,6 +1234,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     public void mouseDragged(MouseEvent e)
     {
+    	
         if ( !getSculptEnabled() )
         {
             if ( !e.isControlDown() )
@@ -1253,6 +1255,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 m_bPickPending = true;
             }
         }
+        m_kParent.setCameraParameters();
+    	m_kParent.setObjectParameters();
     }
 
     /**

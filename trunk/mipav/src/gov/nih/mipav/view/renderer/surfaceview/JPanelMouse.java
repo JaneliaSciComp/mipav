@@ -1242,7 +1242,7 @@ public class JPanelMouse extends JPanelRendererBase
 
         try {
             chooser = new JFileChooser();
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "avi" }));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".avi" }));
 
             if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
                 chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));

@@ -141,7 +141,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
      * @param  dir  Directory.
      */
     public ViewJFrameDICOMParser(String dir) {
-        super(dir, new ViewImageFileFilter(new String[] { "dcm", "DCM", "ima", "IMA" }));
+        super(dir, new ViewImageFileFilter(new String[] { ".dcm", ".DCM", ".ima", ".IMA" }));
 
         addWindowListener(this);
         buildMenu();
@@ -341,7 +341,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
             }
 
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "avi" }));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".avi" }));
 
             int returnVal = chooser.showSaveDialog(this);
 

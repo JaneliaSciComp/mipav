@@ -171,33 +171,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         dynamicExts = exts;
         dynamicDescription = "Specific files (";
         for (int i = 0; i < exts.length; i++) {
-            dynamicDescription += "*." + exts[i];
+            dynamicDescription += "*" + exts[i];
             if (i < (exts.length - 1)) {
-                dynamicDescription += "; ";
-            } else {
-                dynamicDescription += ")";
-            }
-        }
-    }
-    
-    /**
-     * Constructs a dynamic filter, with the given extensions.
-     * The above constructor can't filter from the given extension.  
-     * This constructor is the complementary fix, which is just for two
-     * given extensions. e.g. ".xml" and ".voi" 
-     * 
-     * @param ext1 First extension suffix.
-     * @param ext2 Second extension suffix.
-     */
-    public ViewImageFileFilter(String ext1, String ext2) {
-        this(DYNAMIC);
-        dynamicExts = new String[2];
-        dynamicExts[0] = ext1;
-        dynamicExts[1] = ext2;
-        dynamicDescription = "Specific files (";
-        for (int i = 0; i < dynamicExts.length; i++) {
-            dynamicDescription += "*" + dynamicExts[i];
-            if (i < (dynamicExts.length - 1)) {
                 dynamicDescription += "; ";
             } else {
                 dynamicDescription += ")";

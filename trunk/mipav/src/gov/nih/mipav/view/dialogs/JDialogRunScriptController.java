@@ -103,7 +103,7 @@ public class JDialogRunScriptController implements ActionListener {
             JFileChooser chooser = fileChooser.getFileChooser();
             chooser.setDialogTitle("Open VOI");
             chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "xml", "voi" }));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".xml", ".voi" }));
 
             int returnVal = chooser.showOpenDialog(null);
 
@@ -375,7 +375,7 @@ public class JDialogRunScriptController implements ActionListener {
                                     JFileChooser chooser = new JFileChooser();
                                     chooser.setDialogTitle("Set VOI file location");
                                     chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-                                    chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "xml", "voi" }));
+                                    chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".xml", ".voi" }));
 
                                     int returnValue = chooser.showOpenDialog(view.getFrame());
 

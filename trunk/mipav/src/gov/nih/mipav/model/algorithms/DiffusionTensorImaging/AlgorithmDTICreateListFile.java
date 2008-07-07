@@ -1345,7 +1345,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
      * @throws  OutOfMemoryError 
      */
     public boolean parse(File file) throws IOException, OutOfMemoryError {
-        imageFilter = new ViewImageFileFilter(new String[] { "dcm", "DCM", "ima", "IMA" });
+        imageFilter = new ViewImageFileFilter(new String[] { ".dcm", ".DCM", ".ima", ".IMA" });
 
         File[] children = file.listFiles();
         FileDicom imageFile = null;
