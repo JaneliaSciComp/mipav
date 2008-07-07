@@ -3225,8 +3225,9 @@ public class FileIO {
 
         if (imageFile != null) {
             imageFile.finalize();
+            imageFile = null;
         }
-        imageFile = null;
+        
         return image;
     }
 
@@ -3850,6 +3851,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -5934,6 +5937,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -7329,6 +7334,8 @@ public class FileIO {
             return null;
         }
 
+        imageFile.finalize();
+        imageFile = null;
         return image;
     }
 
@@ -9397,6 +9404,8 @@ public class FileIO {
             spmFile = new FileSPM(options.getFileName(), options.getFileDirectory());
             createProgressBar(spmFile, options.getFileName(), FILE_WRITE);
             spmFile.writeImage(image, options);
+            spmFile.finalize();
+            spmFile = null;
         } catch (IOException error) {
 
             if ( !quiet) {
