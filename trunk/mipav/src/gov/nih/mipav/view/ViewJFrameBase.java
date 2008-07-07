@@ -3197,7 +3197,7 @@ public abstract class ViewJFrameBase extends JFrame
                 chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
             }
 
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(".xml", ".voi"));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[]{".xml", ".voi"}));
 
             int returnVal = chooser.showSaveDialog(this);
 

@@ -689,7 +689,7 @@ public class FileVOI extends FileXML {
                 chooser.setDialogTitle("Save VOI as");
                 chooser.setCurrentDirectory(file);
 
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(".xml", ".voi"));
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[]{".xml", ".voi"}));
 
                 int returnVal = chooser.showSaveDialog(null);
 
