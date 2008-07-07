@@ -321,6 +321,7 @@ public class FileSTK extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        file = null;
         image = null;
         byteBuffer = null;
         if (dataOffsets != null) {
