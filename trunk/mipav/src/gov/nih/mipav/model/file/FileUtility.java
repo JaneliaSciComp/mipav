@@ -186,7 +186,8 @@ public class FileUtility {
     /** SPM file format.
      *  SPM99 and SPM2 are slight variants of analyze with the same 
      *  .img, .hdr file extensions.  The user could also change
-     *  the extension to .spm to indicate SPM. */
+     *  the extension .img to .spm to indicate SPM.
+     *  The header extension would remain .hdr */
     public static final int SPM = 50;
 
     /** MetaMorph Stack (STK) file type. extension: .stk */
