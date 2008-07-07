@@ -1201,6 +1201,7 @@ public class FileLSM extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        file = null;
         image = null;
         bleachKnotX = null;
         bleachKnotY = null;
