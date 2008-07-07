@@ -272,6 +272,7 @@ public class FileInterfile extends FileBase {
         fileDir = null;
         fileInfo = null;
         image = null;
+        dataFile = null;
         dataFileName = null;
         headerFileName = null;
         imgBuffer = null;
@@ -284,6 +285,18 @@ public class FileInterfile extends FileBase {
         originalFileName = null;
         timeFrame = null;
         windowNumber = null;
+        
+        if (fileRW != null) {
+
+            try {
+                fileRW.close();
+                // System.err.println("closed FileInterfile: fileRW (FileRawChunk)");
+            } catch (IOException ex) { }
+
+            fileRW.finalize();
+        }
+
+        fileRW = null;
 
         try {
             super.finalize();
