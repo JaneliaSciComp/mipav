@@ -97,6 +97,7 @@ public class FileGESigna5X extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        fileHeader = null;
         orient = null;
         start = null;
         try {
