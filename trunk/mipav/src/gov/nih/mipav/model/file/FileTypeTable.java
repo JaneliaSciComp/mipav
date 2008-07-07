@@ -215,7 +215,8 @@ public class FileTypeTable {
         // SPM does not by official specification have a .spm extension
         // SPM99 and SPM2 are slight variants of the Mayo Analyze 7.5 file format
         // with the same .hdr and .img extensions
-        // However, user could change extension to .SPM
+        // However, user could change the .img extension to .SPM
+        // The .hdr extension would remain unchanged
         FILE_TYPE_TABLE.put(FileUtility.SPM, new FileTypeInfo("SPM", ".spm"));
         FILE_EXT_TABLE.put(".spm", FileUtility.SPM);
         FILE_EXT_TABLE.put(".SPM", FileUtility.SPM);
