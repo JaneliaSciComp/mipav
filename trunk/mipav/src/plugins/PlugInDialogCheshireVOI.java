@@ -277,7 +277,7 @@ public class PlugInDialogCheshireVOI extends JDialogScriptableBase {
      */
     private boolean setVariables() {
         String[] extensions = new String[1];
-        extensions[0] = "oly";
+        extensions[0] = ".oly";
         ViewImageFileFilter oly = new ViewImageFileFilter(extensions);
         
         String fileNames = new String();

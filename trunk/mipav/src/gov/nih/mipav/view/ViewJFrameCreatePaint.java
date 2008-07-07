@@ -294,7 +294,7 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 			wasLoaded = false;
 		} else {
 			JFileChooser chooser = new JFileChooser();
-	        ViewImageFileFilter filter = new ViewImageFileFilter(new String[] {"png"});
+	        ViewImageFileFilter filter = new ViewImageFileFilter(new String[] {".png"});
 
 	        chooser.setFileFilter(filter);
 

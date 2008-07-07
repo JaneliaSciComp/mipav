@@ -2471,7 +2471,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         int iTriangleCount = getIndexCount() / 3;
         int iVertexCount = getVertexCount();
         PrintWriter kOut = new PrintWriter(new FileWriter(kName));
-
+/*
         kOut.println("ply"); // object is ModelTriangleMesh
         kOut.println("format ascii 1.0");
         kOut.println("element vertex " + iVertexCount);
@@ -2481,19 +2481,27 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         kOut.println("element face " + iTriangleCount);
         kOut.println("property list uint8 int32 vertex_indices");
         kOut.println("end_header");
-
+*/
         int i;
 
-        for (i = 0; i < iVertexCount; i++) {
+        for (i = 0; i < (iVertexCount-2); i = i + 2) {
             getCoordinate(i, kVertex);
             kOut.print(kVertex.x);
             kOut.print(' ');
             kOut.print(kVertex.y);
             kOut.print(' ');
+            kOut.print(kVertex.z);
+            kOut.print(' ');
+            getCoordinate(i+1, kVertex);
+            kOut.print(kVertex.x);
+            kOut.print(' ');
+            kOut.print(kVertex.y);
+            kOut.print(' ');
             kOut.println(kVertex.z);
+         
         }
         
-
+  /*
         for (i = 0; i < iTriangleCount; i++) {
         	kOut.print('3');
         	kOut.print(' ');
@@ -2503,7 +2511,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             kOut.print(' ');
             kOut.println(getCoordinateIndex((3 * i) + 2));
         }
-        
+    */    
         kOut.close();
     }
     

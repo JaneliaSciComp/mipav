@@ -247,7 +247,7 @@ public class FileVOI extends FileXML {
                 chooser.setDialogTitle("Save label(s) as");
                 chooser.setCurrentDirectory(file);
 
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "lbl" }));
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".lbl" }));
 
                 int returnVal = chooser.showSaveDialog(null);
 
