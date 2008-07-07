@@ -133,6 +133,7 @@ public class FileBioRad extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        file = null;
         fName = null;
         image = null;
         imgBuffer = null;
