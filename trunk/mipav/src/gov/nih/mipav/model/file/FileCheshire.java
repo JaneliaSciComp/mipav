@@ -75,6 +75,21 @@ public class FileCheshire extends FileBase {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        image = null;
+        scaleFactor = null;
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
+    /**
      * Method to test to determine if the image format is Cheshire, so appropriate read method may be called.
      *
      * @param   fName  File name of image.
