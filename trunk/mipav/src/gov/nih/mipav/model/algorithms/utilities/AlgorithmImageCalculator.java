@@ -73,16 +73,8 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 
     /** DOCUMENT ME! */
     public static final int PROMOTE = 1; // promote image type so that the range of the result fits into
+                                         // the new image type. ( ie. byte to short).
 
-
-    // the new image type. ( ie. byte to short).
-
-
-    /** DOCUMENT ME! */
-    private static final String[] opString = {
-        "ADD", "ADVANCED", "AND", "AVERAGE", "DIFFERENCE", "DIVIDE", "MAXIMUM", "MINIMUM", "MULTIPLY", "OR", "SUBTRACT",
-        "XOR"
-    };
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -441,6 +433,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
      * Prepares this class for destruction.
      */
     public void finalize() {
+        adOpString = null;
         destImage = null;
         srcImageA = null;
         srcImageB = null;
@@ -1164,6 +1157,8 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 
                     return;
                 }
+                changeTypeAlgo.finalize();
+                changeTypeAlgo = null;
             }
         }
 
