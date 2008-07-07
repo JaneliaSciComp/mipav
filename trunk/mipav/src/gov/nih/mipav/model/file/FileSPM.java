@@ -22,6 +22,7 @@ import java.io.*;
  * Location 0 is an int32 with sizeof_hdr.  In Non-SPM2, always 348, used to
  * test whether the file is big-endian or little-endian.  SPM2 can be 348 or greater.  If SPM2 > 348,
  * indicates extended header.
+ * The user could change .img to .spm to indicate SPM99 or SPM2.  The .hdr extension would remain unchanged.
  * 
  * <p>Original Mayo Analyze 7.5, SPM99, and SPM2 all have at location 60 a uchar[8] for cal_units and at location 
  * 68 an int16 for unused1.  However, MIPAV analyze only preserves at location 60 a uchar[4] for cal_units and
@@ -139,6 +140,21 @@ public class FileSPM extends FileBase {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+        bufferByte = null;
+        fileName = null;
+        fileDir = null;
+        fileInfo = null;
+        image = null;
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+    
     /**
      * Reads the SPM header and stores the information in fileInfo.
      *
