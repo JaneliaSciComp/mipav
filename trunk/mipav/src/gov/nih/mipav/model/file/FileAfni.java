@@ -1184,6 +1184,7 @@ public class FileAfni extends FileBase {
         dicomDelta = null;
         dicomOrientation = null;
         dicomOrigin = null;
+        file = null;
         fileName = null;
         fileDir = null;
         fileInfo = null;
