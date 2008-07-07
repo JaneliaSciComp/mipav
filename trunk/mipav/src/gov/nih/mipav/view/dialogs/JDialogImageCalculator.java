@@ -198,8 +198,10 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
         }
 
         // Update frame
-        mathAlgo.finalize();
-        mathAlgo = null;
+        if (mathAlgo != null) {
+            mathAlgo.finalize();
+            mathAlgo = null;
+        }
         dispose();
     }
 
