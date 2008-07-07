@@ -27,9 +27,6 @@ public class FileOSM extends FileBase {
     private boolean endianess;
 
     /** DOCUMENT ME! */
-    private DataInputStream f;
-
-    /** DOCUMENT ME! */
     private File file;
 
     /** DOCUMENT ME! */
@@ -77,9 +74,6 @@ public class FileOSM extends FileBase {
     /** DOCUMENT ME! */
     private int nXStart, nYStart, nZStart; /* Starting point of each sub image. */
 
-    /** DOCUMENT ME! */
-    private ViewJProgressBar progressBar = null;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -106,13 +100,10 @@ public class FileOSM extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        file = null;
         image = null;
         imgExtents = null;
         LUT = null;
-        if (progressBar != null) {
-            progressBar.dispose();
-            progressBar = null;
-        }
         
         try {
             super.finalize();
@@ -139,7 +130,6 @@ public class FileOSM extends FileBase {
 
         int i;
         float[] imgBuffer;
-        float[] imgBuffer2;
         int bufferSize;
         float xlen, ylen, zlen;
         float[] imgResols = new float[] { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
@@ -158,11 +148,7 @@ public class FileOSM extends FileBase {
         int footerSize;
 
         try {
-            progressBar = new ViewJProgressBar(fileName, "Reading OSM file...", 0, 100, true, null, null);
-
-            progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-
-
+            
             file = new File(fileDir + fileName);
 
             endianess = FileBase.LITTLE_ENDIAN; // false
@@ -374,9 +360,6 @@ public class FileOSM extends FileBase {
 
             image.calcMinMax();
             raFile.close();
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
 
             return image;
         } catch (Exception e) {
@@ -420,11 +403,6 @@ public class FileOSM extends FileBase {
         float resY = 1.0f;
         float resZ = 1.0f;
         int resXUnit, resYUnit, resZUnit;
-
-        progressBar = new ViewJProgressBar(fileName, "Writing OSM file...", 0, 100, true, null, null);
-
-        progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-
 
         if (image.getNDims() >= 3) {
             sBegin = options.getBeginSlice();
