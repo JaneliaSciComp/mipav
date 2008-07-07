@@ -400,6 +400,7 @@ public class FileNRRD extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        file = null;
         image = null;
         axisMaxs = null;
         axisMins = null;
