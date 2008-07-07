@@ -240,6 +240,7 @@ public class FileDM3 extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        file = null;
         image = null;
         try {
             super.finalize();
