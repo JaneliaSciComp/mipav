@@ -91,6 +91,7 @@ public class FileCOR extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        file = null;
         image = null;
         imageExtents = null;
         imgBuffer = null;
