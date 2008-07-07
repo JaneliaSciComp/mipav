@@ -321,6 +321,7 @@ public class FileICS extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        file = null;
         image = null;
         actualHistory = null;
         captureVersion = null;
