@@ -72,6 +72,7 @@ public class FileTMG extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        file = null;
         image = null;
         imgExtents = null;
         LUT = null;
