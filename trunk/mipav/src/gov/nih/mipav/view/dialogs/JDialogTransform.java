@@ -356,52 +356,52 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         userValue = Float.valueOf(userText).floatValue();
 
         if (source == textDimX) {
-            factor = (userValue-1) / (float) (cXdim-1);
+            factor = userValue / (float) cXdim;
             dims[0] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cXdim-1) * cXres;
-                resols[0] = fov / (dims[0]-1);
+                fov = cXdim * cXres;
+                resols[0] = fov / dims[0];
             }
         } else if (source == textDimY) {
-            factor = (userValue-1) / (float) (cYdim-1);
+            factor = userValue / (float) cYdim;
             dims[1] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cYdim-1) * cYres;
-                resols[1] = fov / (dims[1]-1);
+                fov = cYdim * cYres;
+                resols[1] = fov / dims[1];
             }
         } else if (source == textDimZ) {
-            factor = (userValue-1) / (float) (cZdim-1);
+            factor = userValue / (float) cZdim;
             dims[2] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution in z
-                fov = (cZdim-1) * cZres;
-                resols[2] = fov / (dims[2]-1);
+                fov = cZdim * cZres;
+                resols[2] = fov / dims[2];
             }
         } else if (source == textResX) {
             factor = cXres / userValue;
             resols[0] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cXdim-1) * cXres;
-                dims[0] = fov / resols[0] + 1;
+                fov = cXdim * cXres;
+                dims[0] = fov / resols[0];
             }
         } else if (source == textResY) {
             factor = cYres / userValue;
             resols[1] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cYdim-1) * cYres;
-                dims[1] = fov / resols[1] + 1;
+                fov = cYdim * cYres;
+                dims[1] = fov / resols[1];
             }
         } else if (source == textResZ) {
             factor = cZres / userValue;
             resols[2] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cZdim-1) * cZres;
-                dims[2] = fov / resols[2] + 1;
+                fov = cZdim * cZres;
+                dims[2] = fov / resols[2];
             }
         }
 
@@ -409,7 +409,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
             if (xyAspectRatio.isSelected() || xyzAspectRatio.isSelected()) { // update y values
                 if ((source == textDimX) || (fieldOfView.isSelected())) {
-                    dims[1] = (dims[1]-1) * factor + 1;
+                    dims[1] = dims[1] * factor;
                 }
 
                 if (fieldOfView.isSelected()) {
@@ -419,7 +419,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
             if (xyzAspectRatio.isSelected()) { // update z values
                 if ((source == textDimX) || (fieldOfView.isSelected())) {
-                    dims[2] = (dims[2]-1) * factor + 1;
+                    dims[2] = dims[2] * factor;
                 }
 
                 if (fieldOfView.isSelected()) {
@@ -430,7 +430,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
             if (xyAspectRatio.isSelected() || xyzAspectRatio.isSelected()) { // update x
                 if ((source == textDimY) || (fieldOfView.isSelected())) {
-                    dims[0] = (dims[0]-1) * factor + 1;
+                    dims[0] = dims[0] * factor;
                 }
 
                 if (fieldOfView.isSelected()) {
@@ -440,7 +440,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
             if (xyzAspectRatio.isSelected()) { // update z
                 if ((source == textDimY) || (fieldOfView.isSelected())) {
-                    dims[2] = (dims[2]-1) * factor + 1;
+                    dims[2] = dims[2] * factor;
                 }
 
                 if (fieldOfView.isSelected()) {
@@ -453,8 +453,8 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
             if (xyzAspectRatio.isSelected()) { // update x and y accordingly
                 if ((source == textDimZ) || (fieldOfView.isSelected())) {
-                    dims[0] = (dims[0]-1) * factor + 1;
-                    dims[1] = (dims[1]-1) * factor + 1;
+                    dims[0] = dims[0] * factor;
+                    dims[1] = dims[1] * factor;
                 }
 
                 if (fieldOfView.isSelected()) {
@@ -3336,12 +3336,12 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             factor = magSlider.getValue() / (float) 100;
             oXdim = Math.round(image.getExtents()[0] * factor);
             oYdim = Math.round(image.getExtents()[1] * factor);
-            oXres = image.getFileInfo(0).getResolutions()[0] * (float) (image.getExtents()[0]-1) / (float) (oXdim-1);
-            oYres = image.getFileInfo(0).getResolutions()[1] * (float) (image.getExtents()[1]-1) / (float) (oYdim-1);
+            oXres = image.getFileInfo(0).getResolutions()[0] * (float) image.getExtents()[0] / (float) oXdim;
+            oYres = image.getFileInfo(0).getResolutions()[1] * (float) image.getExtents()[1] / (float) oYdim;
 
             if ((image.getNDims() >= 3) && (!do25D)) {
                 oZdim = Math.round(image.getExtents()[2] * factor);
-                oZres = image.getFileInfo(0).getResolutions()[2] * (float) (image.getExtents()[2]-1) / (float) (oZdim-1);
+                oZres = image.getFileInfo(0).getResolutions()[2] * (float) image.getExtents()[2] / (float) oZdim;
             } else if ((image.getNDims() >= 3) && (do25D)) { // cannot change third dimension
                 oZdim = image.getExtents()[2];
                 oZres = image.getFileInfo(0).getResolutions()[2];
