@@ -25,6 +25,13 @@ import javax.swing.event.*;
  * Dialog to get user input, then call algorithmTransform. User may select resample or transform. User may input matrix
  * or use image's associated transformation matrix. User may input desired resolutions and dims. User may select
  * interpolation method. Creates new volume.
+ * 
+ * Remember in interpolating from an image to a rescaled image that while a n1 by n2 image is n1 pixels wide by n2 pixels
+ * high, that for a smooth interpolation you must map from 0 to n1t - 1 in the transformed image to 0 to n1 - 1 in the
+ * original image.  Mapping from n1t - 1 to n1t in the transformed image to n1 - 1 to n1 in the source image would lead
+ * to multiple identical transformed copies for source image values between n1 - 1 and n1 - 0.5 and out of bounds transformed 
+ * values for source values from n1 - 0.5 to n1, since the transformation algo only takes -0.5 < transformed values < n1 - 0.5 
+ * as valid.
  *
  * @version  0.1 Nov. 19, 1999
  * @author   Delia McGarry
