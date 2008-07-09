@@ -4,8 +4,7 @@ package gov.nih.mipav.model.file;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.JDialogAnalyzeNIFTIChoice;
-import gov.nih.mipav.view.dialogs.JDialogSaveMincVersionChoice;
+import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
 import java.util.*;
@@ -81,13 +80,13 @@ public class FileUtility {
 
     /** GE Genesis 5X and LX. extension: .sig */
     public static final int GE_GENESIS = 16;
-    
+
     /** Multiple files of type GE_GENESIS */
     public static final int GE_GENESIS_MULTIFILE = 17;
 
     /** GE Signa 4.x. */
     public static final int GE_SIGNA4X = 18;
-    
+
     /** Multiple files of type GE_SIGNA4X */
     public static final int GE_SIGNA4X_MULTIFILE = 19;
 
@@ -117,7 +116,7 @@ public class FileUtility {
 
     /** Siemens MAGNETOM VISION. extension: .ima */
     public static final int MAGNETOM_VISION = 28;
-    
+
     /** Multiple files of type MAGNETOM_VISION */
     public static final int MAGNETOM_VISION_MULTIFILE = 29;
 
@@ -683,7 +682,7 @@ public class FileUtility {
         fileType = FileTypeTable.getFileTypeFromSuffix(suffix);
 
         // check to see if we're being asked to look at an empty file
-        if (new File(fileDir + File.separator + fileName).length() == 0) {
+        if ( !doWrite && new File(fileDir + File.separator + fileName).length() == 0) {
             return fileType;
         }
 
@@ -691,7 +690,8 @@ public class FileUtility {
         if (fileType == FileUtility.MINC) {
             try {
                 if (doWrite) {
-                    fileType = new JDialogSaveMincVersionChoice(ViewUserInterface.getReference().getMainFrame()).fileType();    
+                    fileType = new JDialogSaveMincVersionChoice(ViewUserInterface.getReference().getMainFrame())
+                            .fileType();
                 }
                 // inspect the file to see if it is really a MINC1 (suppressing any error dialogs).
                 // if not, set the file type using isMincHDF()
