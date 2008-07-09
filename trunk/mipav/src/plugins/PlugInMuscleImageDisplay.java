@@ -3247,11 +3247,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			
 			ArrayList<PlugInSelectableVOI> residuals = new ArrayList();
 			VOI v = currentVOI;
-			double multiplier = 0.0;
-			multiplier = Math.pow(getActiveImage().getResolutions(0)[0]*.1, 2);
+			double wholeMultiplier = 0.0, sliceMultiplier = 0.0;
+			wholeMultiplier = sliceMultiplier = Math.pow(getActiveImage().getResolutions(0)[0]*0.1, 2);
 			if(multipleSlices)
-				multiplier *= (getActiveImage().getResolutions(0)[2]*0.1);
-			System.out.println("Multiplier: "+multiplier);
+				wholeMultiplier *= (getActiveImage().getResolutions(0)[2]*0.1);
+			System.out.println("Whole Multiplier: "+wholeMultiplier+"\tSliceMultiplier: "+sliceMultiplier);
 			PlugInSelectableVOI temp = voiBuffer.get(name);
 			residuals = getResiduals(temp);
 			ArrayList<Thread> calc = new ArrayList(residuals.size());
@@ -3277,11 +3277,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			}
 			System.out.println("Time spent waiting: "+(System.currentTimeMillis() - time2)+" so that "+name+" can finish.");
 			//note that even for 3D images this will still be called area, even though refers to volume
-			double fatArea = getPieceCount(v, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*multiplier;
-			double partialArea = getPieceCount(v, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*multiplier; 
-			double leanArea = getPieceCount(v, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND)*multiplier; 
-			double totalAreaCalc = getTotalAreaCalc(v)*multiplier;
-			double totalAreaCount = getTotalAreaCount(v)*multiplier;
+			double fatArea = getPieceCount(v, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*wholeMultiplier;
+			double partialArea = getPieceCount(v, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*wholeMultiplier; 
+			double leanArea = getPieceCount(v, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND)*wholeMultiplier; 
+			double totalAreaCalc = getTotalAreaCalc(v)*wholeMultiplier;
+			double totalAreaCount = getTotalAreaCount(v)*wholeMultiplier;
 			double fatAreaLarge = fatArea, leanAreaLarge = leanArea, totalAreaLarge = totalAreaCalc;
 			//corrected area = abs(oldArea - sum(residual areas))
 			for(int j=0; j<residuals.size(); j++) {
@@ -3314,6 +3314,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		    meanLeanH = (meanLeanH*leanAreaLarge - meanLeanHResidual) / leanArea;
 		    meanTotalH = (meanTotalH*totalAreaLarge - meanTotalHResidual) / totalAreaCalc;
 		    
+		    //sign errors result from adding areas that should've been subtracted
 		    if(meanFatH > 0) {
 		    	meanFatH = -meanFatH;
 		    	meanTotalH = -meanTotalH;
@@ -3340,11 +3341,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				}
     			residuals = getResiduals(temp);
     			//note that even for 3D images this will still be called area, even though refers to volume
-    			fatArea = getPieceCount(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*multiplier;
-    			partialArea = getPieceCount(v2, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*multiplier; 
-    			leanArea = getPieceCount(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND)*multiplier; 
-    			totalAreaCalc = getTotalAreaCalc(v2)*multiplier;
-    			totalAreaCount = getTotalAreaCount(v2)*multiplier;
+    			fatArea = getPieceCount(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*sliceMultiplier;
+    			partialArea = getPieceCount(v2, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*sliceMultiplier; 
+    			leanArea = getPieceCount(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND)*sliceMultiplier; 
+    			totalAreaCalc = getTotalAreaCalc(v2)*sliceMultiplier;
+    			totalAreaCount = getTotalAreaCount(v2)*sliceMultiplier;
     			fatAreaLarge = fatArea;
     			leanAreaLarge = leanArea; 
     			totalAreaLarge = totalAreaCalc;
