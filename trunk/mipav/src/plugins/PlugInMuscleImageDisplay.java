@@ -1239,7 +1239,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	Iterator voiItr = voiBuffer.keySet().iterator();
     	
     	while(voiItr.hasNext()) {
-    		PlugInSelectableVOI v = loadVOI((String)voiItr.next());
+    		String name;
+    		PlugInSelectableVOI v = loadVOI(name = (String)voiItr.next());
     		
     		Color c = PlugInSelectableVOI.INVALID_COLOR;
 			
@@ -1250,12 +1251,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             		v.setColor(c);
 			} else
 				v.setColor(c);
+			voiBuffer.put(name, v);
 			System.out.println(v.getName() +" "+ v.getColor());
     	}
     }
     
     /**
-     * Loads all VOIs for a partiular pane by retrieving them from the VOI buffer.
+     * Loads all VOIs for a particular pane by retrieving them from the VOI buffer.
      * @param pane the current pane
      */
     private void getVOIs(int pane) {
@@ -1618,6 +1620,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         /**Propagation menu for smoothing if 3D image*/
         private JMenu propMenu;
         
+        /**VOI under investigation, to be replaced if cancel button is pressed.*/
+        private PlugInSelectableVOI voiInvestigated = null;
+        
         /**
          * Constructor that only requires containing frame. Title equals "VOI"
          * @param theParentFrame the containing frame.
@@ -1704,6 +1709,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 		} 
                 	}
                 	getActiveImage().unregisterAllVOIs();
+                	if(voiInvestigated != null) 
+                		voiBuffer.put(objectName, loadVOI(objectName));
                 } else if (command.equals(HELP)) {
                     PlugInMuscleSegmentation.showHelp("MS00001");
                 } else if (command.equals(RESET)) {
@@ -1846,6 +1853,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	voiPromptBuffer.removeAllElements();
         	
         	voiExists = voiBuffer.get(objectName).isCreated();
+        	if(voiExists)
+        		voiInvestigated = ((PlugInSelectableVOI)voiBuffer.get(objectName).clone());
         	
         	for(int i=0; i<buttonGroup.length; i++) {
 	        	if(buttonGroup[i].getText().contains(HIDE_ONE)) {
@@ -3689,6 +3698,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator;
     	String ext = name.contains(".xml") ? "" : ".xml";
     	PlugInSelectableVOI temp = voiBuffer.get(name);
+    	for(int i=0; i<temp.getZDim(); i++) 
+    		temp.removeCurves(i);
         if(new File(fileDir+name+ext).exists()) {
             FileVOI v;
             VOI[] voiVec = null;
@@ -5171,7 +5182,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        JPanel checkPanel = new JPanel(new GridBagLayout());
 	        GridBagConstraints gbc2 = new GridBagConstraints();
 	        gbc2.anchor = GridBagConstraints.WEST;
-	        gbc2.fill = gbc2.BOTH;
+	        gbc2.fill = GridBagConstraints.BOTH;
 	        gbc2.weightx = 1;
 	        gbc2.weighty = 1;
 	        gbc2.gridx = 0;
