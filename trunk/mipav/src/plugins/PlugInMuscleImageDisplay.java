@@ -4062,10 +4062,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			cell.setColspan(2);
 			spTable.addCell(cell);
 			spTable.addCell("kVp:");
-			spTable.addCell("120");
+			String kvp = (String)fileInfo.getTagTable().getValue("0018,0060");
+			spTable.addCell((kvp != null ? kvp.trim() : "Unknown"));
 			spTable.addCell("mA:");
-			spTable.addCell("213");
-			//todo: FIX TO MM
+			String mA = (String)fileInfo.getTagTable().getValue("0018,1151");
+			spTable.addCell((mA != null ? mA.trim() : "Unknown"));
 			spTable.addCell("Pixel Size: (mm)");
 			spTable.addCell(Double.toString(getActiveImage().getResolutions(0)[0]));
 			spTable.addCell("Slice Thickness: (mm)");
