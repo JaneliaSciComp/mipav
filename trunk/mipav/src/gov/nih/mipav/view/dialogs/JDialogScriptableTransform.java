@@ -1383,10 +1383,10 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 					}
 
 					if (setPix) {
-						float fovX = iXres * iXdim;
-						float fovY = iYres * iYdim;
-						oXdim = (int) (fovX / oXres);
-						oYdim = (int) (fovY / oYres);
+						float fovX = iXres * (iXdim-1);
+						float fovY = iYres * (iYdim-1);
+						oXdim = (int) (fovX / oXres) + 1;
+						oYdim = (int) (fovY / oYres) + 1;
 					} else {
 						oXdim = selectedImg.getExtents()[0];
 						oYdim = selectedImg.getExtents()[1];
@@ -1396,8 +1396,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 						oZres = selectedImg.getFileInfo(0).getResolutions()[2];
 						//units[2] = selectedImg.getUnitsOfMeasure(2);
 						if (setPix) {
-							float fovZ = iZres * iZdim;
-							oZdim = (int) (fovZ / oZres);
+							float fovZ = iZres * (iZdim-1);
+							oZdim = (int) (fovZ / oZres) + 1;
 						} else {
 							oZdim = selectedImg.getExtents()[2];
 						}
@@ -3414,10 +3414,10 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             
             
             if (setPix) {
-                fovX = iXres * iXdim;
-                fovY = iYres * iYdim;
-                oXdim = (int) (fovX / oXres);
-                oYdim = (int) (fovY / oYres);
+                fovX = iXres * (iXdim-1);
+                fovY = iYres * (iYdim-1);
+                oXdim = (int) (fovX / oXres) + 1;
+                oYdim = (int) (fovY / oYres) + 1;
             } else {
                 oXdim = selectedImg.getExtents()[0];
                 oYdim = selectedImg.getExtents()[1];
@@ -3427,8 +3427,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 oZres = selectedImg.getFileInfo(0).getResolutions()[2];
                 units[2] = selectedImg.getUnitsOfMeasure(2);
                 if (setPix) {
-                    fovZ = iZres * iZdim;
-                    oZdim = (int) (fovZ / oZres);
+                    fovZ = iZres * (iZdim-1);
+                    oZdim = (int) (fovZ / oZres) + 1;
                 } else {
                     oZdim = selectedImg.getExtents()[2];
                 }
@@ -3733,20 +3733,20 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             if ((image.getNDims() >= 3) && (!do25D)) {
 
-                if (((iXres * (float) (iXdim)) != (oXres * (float) (oXdim))) ||
-                        ((iYres * (float) (iYdim)) != (oYres * (float) (oYdim))) ||
-                        ((iZres * (float) (iZdim)) != ((float) (oZdim) * oZres))) {
-                    Sx = ((float) (oXdim) * oXres) / ((float) (iXdim) * iXres);
-                    Sy = ((float) (oYdim) * oYres) / ((float) (iYdim) * iYres);
-                    Sz = ((float) (oZdim) * oZres) / ((float) (iZdim) * iZres);
+                if (((iXres * (float) (iXdim-1)) != (oXres * (float) (oXdim-1))) ||
+                        ((iYres * (float) (iYdim-1)) != (oYres * (float) (oYdim-1))) ||
+                        ((iZres * (float) (iZdim-1)) != ((float) (oZdim-1) * oZres))) {
+                    Sx = ((float) (oXdim-1) * oXres) / ((float) (iXdim-1) * iXres);
+                    Sy = ((float) (oYdim-1) * oYres) / ((float) (iYdim-1) * iYres);
+                    Sz = ((float) (oZdim-1) * oZres) / ((float) (iZdim-1) * iZres);
                     xfrm.setZoom(Sx, Sy, Sz);
                 }
             } else { // ((image.getNDims() == 2) || (do25D))
 
-                if (((iXres * (float) (iXdim)) != (oXres * (float) (oXdim))) ||
-                        ((iYres * (float) (iYdim)) != (oYres * (float) (oYdim)))) {
-                    Sx = ((float) (oXdim) * oXres) / ((float) (iXdim) * iXres);
-                    Sy = ((float) (oYdim) * oYres) / ((float) (iYdim) * iYres);
+                if (((iXres * (float) (iXdim-1)) != (oXres * (float) (oXdim-1))) ||
+                        ((iYres * (float) (iYdim-1)) != (oYres * (float) (oYdim-1)))) {
+                    Sx = ((float) (oXdim-1) * oXres) / ((float) (iXdim-1) * iXres);
+                    Sy = ((float) (oYdim-1) * oYres) / ((float) (iYdim-1) * iYres);
                     xfrm.setZoom(Sx, Sy);
                 }
             }
