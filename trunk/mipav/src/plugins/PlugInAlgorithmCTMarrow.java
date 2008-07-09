@@ -221,16 +221,12 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
 	        FileVOI fileVOI;
 	        
 	        String fileName = "Right Marrow.xml";
-	        try {
-	            fileVOI = new FileVOI(fileName, imageDir, boneImage);
-	            fileVOI.writeVOI(rightMarrowVOI, true);
-	            fileName = "Left Marrow.xml";
-	            fileVOI = new FileVOI(fileName, imageDir, boneImage);
-	            fileVOI.writeVOI(leftMarrowVOI, true);
-	        } catch (IOException ex) {
-	            System.err.println("Error segmentImage():  Opening VOI file");
-	            return;
-	        }        
+	        System.out.println("directory: " +imageDir);
+	        ViewJFrameImage frame = new ViewJFrameImage(srcImage);
+	    	srcImage.unregisterAllVOIs();
+	    	srcImage.registerVOI(rightMarrowVOI);
+	    	srcImage.registerVOI(leftMarrowVOI);
+	    	frame.saveAllVOIsTo(imageDir);
         } else
         	System.err.println("Automatic VOIs not created");
    } // end segmentImage()
