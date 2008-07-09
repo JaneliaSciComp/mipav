@@ -1741,8 +1741,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	                	} //note: does unregister/register to for faster method execution
 	                	getActiveImage().unregisterAllVOIs();
 	                    if(goodVoi != null)
-	                    	getActiveImage().registerVOI(goodVoi);
-	                    
+	                    	getActiveImage().registerVOI(goodVoi);	                    
 	                	updateImages(true);
                 	}
                 	
@@ -4961,7 +4960,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		
 	
 	    public PlugInVOIStats(Frame theParentFrame, ModelImage img, VOI _voi) {
-	        super(theParentFrame, img, null);
+	        super(theParentFrame, img, _voi);
 	    }
 	    
 
@@ -5062,7 +5061,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        checkboxPanel.add(checkboxVOIName);
 	        checkboxPanel.add(checkboxBoundary);
 
-	        opacitySlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 30);
+	        opacitySlider = new JSlider(SwingConstants.HORIZONTAL, 0, 100, 30);
 
 	        opacitySlider.setMajorTickSpacing(20);
 	        opacitySlider.setValue(30);
