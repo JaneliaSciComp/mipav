@@ -191,19 +191,12 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
 	     // save the VOI to a file(s)
 	        String directory = System.getProperty("user.dir");
 	        System.out.println("directory: " +imageDir);
-	        FileVOI fileVOI;
 	        
-	        String fileName = "Right Thigh.xml";
-	        try {
-	            fileVOI = new FileVOI(fileName, imageDir, boneImage);
-	            fileVOI.writeVOI(rightThighVOI, true);
-	            fileName = "Left Thigh.xml";
-	            fileVOI = new FileVOI(fileName, imageDir, boneImage);
-	            fileVOI.writeVOI(leftThighVOI, true);
-	        } catch (IOException ex) {
-	            System.err.println("Error segmentImage():  Opening VOI file");
-	            return;
-	        }     
+	        ViewJFrameImage frame = new ViewJFrameImage(srcImage);
+	    	srcImage.unregisterAllVOIs();
+	    	srcImage.registerVOI(rightThighVOI);
+	    	srcImage.registerVOI(leftThighVOI);
+	    	frame.saveAllVOIsTo(imageDir);
         } else
         	System.err.println("Automatic VOIs not created");
 

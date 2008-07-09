@@ -157,20 +157,15 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         }
 
         System.out.println("directory: " +imageDir);
-        FileVOI fileVOI;
         
-        String fileName = "Abdomen.xml";
-        try {
-            fileVOI = new FileVOI(fileName, imageDir, srcImage);
-            fileVOI.writeVOI(abdomenVOI, true);
-            fileName = "Subcutaneous Area.xml";
-            fileVOI = new FileVOI(fileName, imageDir, srcImage);
-            fileVOI.writeVOI(subcutaneousVOI, true);
-        } catch (IOException ex) {
-            System.err.println("Error segmentImage():  Opening VOI file");
-            return;
-        }
-        
+    	ViewJFrameImage frame = new ViewJFrameImage(srcImage);
+    	srcImage.unregisterAllVOIs();
+    	srcImage.registerVOI(abdomenVOI);
+    	srcImage.registerVOI(subcutaneousVOI);
+    	frame.saveAllVOIsTo(imageDir);
+    	
+    	frame.dispose();
+ 
     } // end runAlgorithm()
 
 
@@ -224,7 +219,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         
         // abdomenImage has one VOI, lets get it
         VOI theVOI = vois.get(0);
-        theVOI.setName("Subcutaneous");
+        theVOI.setName("Subcutaneous area");
         
         // Keep only the largest VOI as the abdomen
         int numCurves, numRemoved = 0;
@@ -260,7 +255,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         labelAbdomen3D();
         makeAbdomen3DVOI();
         
-        subcutaneousVOI = new VOI((short)0, "Subcutaneous", 0);
+        subcutaneousVOI = new VOI((short)0, "Subcutaneous area", 0);
         Vector<VOIContour>[] v = new Vector[zDim];
         for(int idx = 0; idx < zDim; idx++) {
             v[idx] = new Vector<VOIContour>();
@@ -386,7 +381,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         snake.run();
 
         subcutaneousVOI = snake.getResultVOI();
-        subcutaneousVOI.setName("Subcutaneous Area");
+        subcutaneousVOI.setName("Subcutaneous area");
         
     } // end snakeViseralVOI
     
@@ -1463,7 +1458,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
        } // end for (int idx = 0; ...)
 
         // make the VOI's and add the points to them
-        subcutaneousVOI = new VOI((short)0, "Subcutaneous", 0);
+        subcutaneousVOI = new VOI((short)0, "Subcutaneous area", 0);
         Vector[] v = new Vector[zDim];
         for(int idx = 0; idx < zDim; idx++) {
             v[idx] = new Vector();
@@ -1484,7 +1479,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     private void fixSubcutaneousFatVOIs() {
         VOI theVOI = subcutaneousVOI;
 
-        if (theVOI.getName() != "Subcutaneous") {
+        if (theVOI.getName() != "Subcutaneous area") {
             MipavUtil.displayError("fixSubcutaneousFatVOIs(): SubcutaneousVOI is not properly set");
             return;
         }
@@ -1936,7 +1931,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
 
         // make the VOI's and add the points to them
-        subcutaneousVOI = new VOI((short)0, "Subcutaneous", 0);
+        subcutaneousVOI = new VOI((short)0, "Subcutaneous area", 0);
         Vector[] v = new Vector[zDim];
         for(int idx = 0; idx < zDim; idx++) {
             v[idx] = new Vector();
@@ -2012,7 +2007,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             y1[idx] = yArrVis.get(idx);
         }
 
-        subcutaneousVOI = new VOI((short)0, "Subcutaneous", 1);
+        subcutaneousVOI = new VOI((short)0, "Subcutaneous area", 1);
         subcutaneousVOI.importCurve(x1, y1, z1, 0);
         
 /*

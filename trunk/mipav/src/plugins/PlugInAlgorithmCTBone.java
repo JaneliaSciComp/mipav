@@ -204,19 +204,11 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
 	        
 	        // save the VOI to a file(s)
 	        System.out.println("directory: " +imageDir);
-	        FileVOI fileVOI;
-	        
-	        String fileName = "Right Bone.xml";
-	        try {
-	            fileVOI = new FileVOI(fileName, imageDir, boneImage);
-	            fileVOI.writeVOI(rightBoneVOI, true);
-	            fileName = "Left Bone.xml";
-	            fileVOI = new FileVOI(fileName, imageDir, boneImage);
-	            fileVOI.writeVOI(leftBoneVOI, true);
-	        } catch (IOException ex) {
-	            System.err.println("Error segmentImage():  Opening VOI file");
-	            return;
-	        }
+	        ViewJFrameImage frame = new ViewJFrameImage(srcImage);
+	    	srcImage.unregisterAllVOIs();
+	    	srcImage.registerVOI(rightBoneVOI);
+	    	srcImage.registerVOI(leftBoneVOI);
+	    	frame.saveAllVOIsTo(imageDir);
         } else
         	System.err.println("No automatic VOI created");
         
