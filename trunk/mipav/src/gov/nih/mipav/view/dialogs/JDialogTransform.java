@@ -26,12 +26,20 @@ import javax.swing.event.*;
  * or use image's associated transformation matrix. User may input desired resolutions and dims. User may select
  * interpolation method. Creates new volume.
  * 
- * Remember in interpolating from an image to a rescaled image that while a n1 by n2 image is n1 pixels wide by n2 pixels
- * high, that for a smooth interpolation you must map from 0 to n1t - 1 in the transformed image to 0 to n1 - 1 in the
- * original image.  Mapping from n1t - 1 to n1t in the transformed image to n1 - 1 to n1 in the source image would lead
- * to multiple identical transformed copies for source image values between n1 - 1 and n1 - 0.5 and out of bounds transformed 
- * values for source values from n1 - 0.5 to n1, since the transformation algo only takes -0.5 < transformed values < n1 - 0.5 
- * as valid.
+ * You can choose either of 2 goals in interpolation, but you can choose both.
+ * You can choose to:
+ * 1.) Match the start row, column, and slice in the original image with the start row, column, and
+ * slice in the transformed image and match the end row, column, and slice in the original image with the end row
+ * column, and slice in the transformed image with a smooth interpolation occurring between the beginning and end.
+ * This ensures that no duplicates of the end row, column, and slice values occur with the default bilinear or 
+ * trilinear interpolation.  For a smooth bilinear or trilinear interpolation you must map from 0 to n1t - 1 
+ * in the transformed image to 0 to n1 - 1 in the original image.  Mapping from n1t - 1 to n1t in the transformed image
+ * to n1 - 1 to n1 in the source image would lead to multiple identical transformed copies for source image values
+ * between n1 - 1 and n1 - 0.5 and identical or out of bounds transformed values for source values from n1 - 0.5 to n1.
+ * This necessitates using equations of the form (dim - 1) * res = (transformedDim - 1) * transformedRes.
+ * Since the field of view = dim * res, this does not preserve field of view.
+ * 2.) If a user simply wishes to magnify the field of view and is not worried about duplicate beginning and end values,
+ * then preserve the field of view = dim * res = transformedDim * transformedRes.
  *
  * @version  0.1 Nov. 19, 1999
  * @author   Delia McGarry
