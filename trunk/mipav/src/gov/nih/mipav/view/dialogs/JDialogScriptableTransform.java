@@ -829,21 +829,24 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 padValTxt.setEnabled(false);
                 padLabel.setEnabled(false);
             }
-        } else if ( source == constantFOVradio ) {
-        	constantFOV = 0;
-            if (setPixels != null) {
-                setPixels.setText("Set pixels to preserve FOV.");
+        } else if (( source == constantFOVradio ) || (source == endMatchFOVradio)) {
+            if (constantFOVradio.isSelected()) {
+        	    constantFOV = 0;
+                if (setPixels != null) {
+                    setPixels.setText("Set pixels to preserve FOV.");
+                }
+                if (fieldOfView != null) {
+                    fieldOfView.setText("Preserve FOV.");
+                }
             }
-            if (fieldOfView != null) {
-                fieldOfView.setText("Preserve FOV.");
-            }
-        } else if ( source == endMatchFOVradio ) {
-        	constantFOV = 1;
-            if (setPixels != null) {
-                setPixels.setText("Set pixels to preserve unrepeated begin & end matching.");
-            }
-            if (fieldOfView != null) {
-                fieldOfView.setText("Preserve unrepeated begin & end matching.");
+            else { 
+        	    constantFOV = 1;
+                if (setPixels != null) {
+                    setPixels.setText("Set pixels to preserve unrepeated begin & end matching.");
+                }
+                if (fieldOfView != null) {
+                    fieldOfView.setText("Preserve unrepeated begin & end matching.");
+                }
             }
         } else if (source == resampletoUser) {
 
