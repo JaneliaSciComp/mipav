@@ -1247,45 +1247,31 @@ public class FileNIFTI extends FileBase {
 
             case FileInfoNIFTI.NIFTI_INTENT_GENMATRIX:
                 Preferences.debug("Each voxel has a M x N matrix\n");
-                MipavUtil.displayError("MIPAV cannot handle voxels with M X N matrices");
-
-                return false;
+                break;
 
             case FileInfoNIFTI.NIFTI_INTENT_SYMMATRIX:
                 Preferences.debug("Each voxel has a NxN symmetric matrix\n");
-                MipavUtil.displayError("MIPAV cannot handle voxels with NxN symmetric matrices");
-
-                return false;
+                break;
 
             case FileInfoNIFTI.NIFTI_INTENT_DISPVECT:
                 Preferences.debug("Each voxel has a displacement vector\n");
-                MipavUtil.displayError("MIPAV cannot handle voxels with displacement vectors");
-
-                return false;
+                break;
 
             case FileInfoNIFTI.NIFTI_INTENT_VECTOR:
                 Preferences.debug("Each voxel has a vector\n");
-                MipavUtil.displayError("MIPAV cannot handle voxels with vectors");
-
-                return false;
+                break;
 
             case FileInfoNIFTI.NIFTI_INTENT_POINTSET:
                 Preferences.debug("Each voxel has a spatial coordinate\n");
-                MipavUtil.displayError("MIPAV cannot handle voxels with spatial coordinates");
-
-                return false;
+                break;
 
             case FileInfoNIFTI.NIFTI_INTENT_TRIANGLE:
                 Preferences.debug("Each voxel has a triple of indexes\n");
-                MipavUtil.displayError("MIPAV cannot handle voxels with a triple of indexes");
-
-                return false;
+                break;
 
             case FileInfoNIFTI.NIFTI_INTENT_QUATERNION:
                 Preferences.debug("Each voxel has a quarternion\n");
-                MipavUtil.displayError("MIPAV cannot handle voxels with quarternions");
-
-                return false;
+                break;
 
             case FileInfoNIFTI.NIFTI_INTENT_DIMLESS:
                 Preferences.debug("Each voxel is a dimensionless value\n");
